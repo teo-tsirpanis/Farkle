@@ -1,53 +1,20 @@
-[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/issue)](http://issuestats.com/github/fsprojects/ProjectScaffold)
-[![Issue Stats](http://issuestats.com/github/fsprojects/ProjectScaffold/badge/pr)](http://issuestats.com/github/fsprojects/ProjectScaffold)
+[![Issue Stats](https://img.shields.io/issuestats/i/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpnis/farkle)
+[![Issue Stats](https://img.shields.io/issuestats/p/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpnis/farkle)
 
-# ProjectScaffold
+# Farkle
 
-This project can be used to scaffold a prototypical .NET solution including file system layout and tooling. This includes a build process that: 
+__Farkle is still in early development. You could 👀 or even better ⭐ the project to recieve updates and support its development.__
 
-* updates all AssemblyInfo files
-* compiles the application and runs all test projects
-* generates API docs based on XML document tags
-* generates [documentation based on Markdown files](http://fsprojects.github.io/ProjectScaffold/writing-docs.html)
-* generates [NuGet](http://www.nuget.org) packages
-* and allows a simple [one step release process](http://fsprojects.github.io/ProjectScaffold/release-process.html).
+Farkle is a [LALR](https://en.wikipedia.org/wiki/LALR_parser) parser for .NET languages (mainly F#). In its first stage, it will be another engine implemetation of [GOLD Parser](http://goldparser.org/), an already useful parser generator tool. But in the future it will be much more that this.
 
-In order to start the scaffolding process run 
-
-    > build.cmd // on windows    
-    $ ./build.sh  // on unix
-    
-Read the [Getting started tutorial](http://fsprojects.github.io/ProjectScaffold/index.html#Getting-started) to learn more.
-
-Documentation: http://fsprojects.github.io/ProjectScaffold
-
-
-## Tips for migrating existing project to Scaffold format
-
-    * clone ProjectScaffold to new folder
-    * run the initializing build
-    * delete .git folder
-    * copy intitialized scaffold files and folders to original project folder
-    * git add / commit project -m"first pass migrating to scaffold format" (otherwise git may be confused by next mv)
-    * git mv necessary project file folders into src folder
-    * git commit, and any following cleanup
-
-Be sure to do only ````git mv```` file renames in a single commit. If you try to commit anything else git will treat the renames as file delete / file add and you will loose history on those files.
-
-## Requirements
-
-ProjectScaffold requires a local git installation. You can download git from [Git Downloads](https://git-scm.com/downloads).
+Documentation: _TODO_
 
 ## Build Status
 
 Mono | .NET
 ---- | ----
-[![Mono CI Build Status](https://img.shields.io/travis/fsprojects/ProjectScaffold/master.svg)](https://travis-ci.org/fsprojects/ProjectScaffold) | [![.NET Build Status](https://img.shields.io/appveyor/ci/fsgit/ProjectScaffold/master.svg)](https://ci.appveyor.com/project/fsgit/projectscaffold)
+[![Mono CI Build Status](https://img.shields.io/travis/teo-teistpanis/farkle/master.svg)](https://travis-ci.org/teo-tsirpanis/farkle) | [![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
 
 ## Maintainer(s)
 
-- [@forki](https://github.com/forki)
-- [@pblasucci](https://github.com/pblasucci)
-- [@sergey-tihon](https://github.com/sergey-tihon)
-
-The default maintainer account for projects under "fsprojects" is [@fsprojectsgit](https://github.com/fsprojectsgit) - F# Community Project Incubation Space (repo management)
+- [@teo-tsirpanis](https://github.com/teo-tsirpanis)

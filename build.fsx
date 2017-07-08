@@ -48,7 +48,7 @@ let solutionFile  = !! "Farkle.sln"
 let configuration = "Release"
 
 // Pattern specifying assemblies to be tested using NUnit
-let testAssemblies = "tests/**/bin" </> configuration </> "*Tests*.dll"
+let testAssemblies = !! ("tests/**/bin" </> configuration </> "*Tests*.exe")
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
@@ -121,7 +121,7 @@ Target "CopyBinaries" (fun _ ->
 
 let vsProjFunc x =
     {x with
-        DotNetCli.Configuration = "Release"}
+        DotNetCli.Configuration = configuration}
 
 Target "Clean" (fun _ ->
     DotNetCli.RunCommand id "clean"
@@ -140,12 +140,8 @@ Target "Build" (fun _ ->
 // Run the unit tests using test runner
 
 Target "RunTests" (fun _ ->
-    !! testAssemblies
-    |> NUnit (fun p ->
-        { p with
-            DisableShadowCopy = true
-            TimeOut = TimeSpan.FromMinutes 20.
-            OutputFile = "TestResults.xml" })
+    testAssemblies
+    |> Testing.Expecto.Expecto id
 )
 
 

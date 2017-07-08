@@ -1,5 +1,5 @@
-[![Issue Stats](https://img.shields.io/issuestats/i/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpnis/farkle)
-[![Issue Stats](https://img.shields.io/issuestats/p/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpnis/farkle)
+[![Issue Stats](https://img.shields.io/issuestats/i/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpanis/farkle)
+[![Issue Stats](https://img.shields.io/issuestats/p/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpanis/farkle)
 
 # Farkle
 
@@ -13,7 +13,7 @@ Documentation: _TODO_
 
 Mono | .NET
 ---- | ----
-[![Mono CI Build Status](https://img.shields.io/travis/teo-teistpanis/farkle/master.svg)](https://travis-ci.org/teo-tsirpanis/farkle) | [![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
+[![Mono CI Build Status](https://img.shields.io/travis/teo-tsirpanis/farkle/master.svg)](https://travis-ci.org/teo-tsirpanis/farkle) | [![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
 
 ## Maintainer(s)
 

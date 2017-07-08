@@ -42,7 +42,7 @@ let authors = [ "Theodore Tsirpanis" ]
 let tags = "parser lalr gold-parser"
 
 // File system information
-let solutionFile  = "Farkle.sln"
+let solutionFile  = !! "Farkle.sln"
 
 // Default target configuration
 let configuration = "Release"
@@ -119,15 +119,12 @@ Target "CopyBinaries" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Clean build results
 
-let vsProjProps = 
-#if MONO
-    [ ("DefineConstants","MONO"); ("Configuration", configuration) ]
-#else
-    [ ("Configuration", configuration); ("Platform", "Any CPU") ]
-#endif
+let vsProjFunc x =
+    {x with
+        DotNetCli.Configuration = "Release"}
 
 Target "Clean" (fun _ ->
-    !! solutionFile |> MSBuildReleaseExt "" vsProjProps "Clean" |> ignore
+    DotNetCli.RunCommand id "clean"
     CleanDirs ["bin"; "temp"; "docs"]
 )
 
@@ -135,9 +132,8 @@ Target "Clean" (fun _ ->
 // Build library & test project
 
 Target "Build" (fun _ ->
-    !! solutionFile
-    |> MSBuildReleaseExt "" vsProjProps "Rebuild"
-    |> ignore
+    DotNetCli.Restore id
+    DotNetCli.Build vsProjFunc
 )
 
 // --------------------------------------------------------------------------------------

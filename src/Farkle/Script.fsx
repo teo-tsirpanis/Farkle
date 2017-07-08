@@ -4,5 +4,4 @@
 #load "Library.fs"
 open Farkle
 
-let num = Library.hello 42
-printfn "%i" num
+Say.hello "Yoshi"

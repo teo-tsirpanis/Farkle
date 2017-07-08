@@ -1,0 +1,22 @@
+framework: net462
+source https://nuget.org/api/v2
+
+nuget FSharp.Core
+
+group Build
+  framework: net462
+  source https://nuget.org/api/v2
+  
+  nuget FAKE
+  nuget FSharp.Formatting
+
+  github fsharp/FAKE modules/Octokit/Octokit.fsx
+
+group Test
+
+  framework: net462
+
+  source https://nuget.org/api/v2
+  
+  nuget Expecto
+  nuget Expecto.FsCheck

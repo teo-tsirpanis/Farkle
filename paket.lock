@@ -1,0 +1,38 @@
+RESTRICTION: == net462
+NUGET
+  remote: https://www.nuget.org/api/v2
+    FSharp.Core (4.2.1)
+
+GROUP Build
+RESTRICTION: == net462
+NUGET
+  remote: https://www.nuget.org/api/v2
+    FAKE (4.62.1)
+    FSharp.Compiler.Service (2.0.0.6)
+    FSharp.Formatting (2.14.4)
+      FSharp.Compiler.Service (2.0.0.6)
+      FSharpVSPowerTools.Core (>= 2.3 < 2.4)
+    FSharpVSPowerTools.Core (2.3)
+      FSharp.Compiler.Service (>= 2.0.0.3)
+    Octokit (0.24)
+GITHUB
+  remote: fsharp/FAKE
+    modules/Octokit/Octokit.fsx (b5933798c1944051bf358a460fcdc8ffbd678dfc)
+      Octokit (>= 0.20)
+GROUP Test
+RESTRICTION: == net462
+NUGET
+  remote: https://www.nuget.org/api/v2
+    Argu (3.7)
+    Expecto (5.0)
+      Argu (>= 3.7)
+      FSharp.Core (>= 4.1.12)
+      Mono.Cecil (>= 0.10.0-beta5)
+    Expecto.FsCheck (5.0)
+      Expecto (>= 5.0)
+      FsCheck (>= 2.8)
+      FSharp.Core (>= 4.1.12)
+    FsCheck (2.9)
+      FSharp.Core (>= 4.1)
+    FSharp.Core (4.2.1)
+    Mono.Cecil (0.10.0-beta6)

@@ -14,12 +14,13 @@ module State =
 
     let inline run (State x) = x
     let inline map f (State m) = State (fun s -> let (a, s') = m s in (f a, s'))
+    let inline (<!>) f x = map x f
+    let inline apply (State f) (State x) = State (fun s -> let (f', s1) = f s in let (x', s2) = x s1 in (f' x', s2))
+    let inline (<*>) f x = apply f x
     let inline bind f (State m) = State (fun s -> let (a, s') = m s in run (f a) s')
     let inline (>>=) result f = bind f result
-    let inline apply (State f) (State x) = State (fun s -> let (f', s1) = f s in let (x', s2) = x s1 in (f' x', s2))
     let inline returnM x = (fun s0 -> x, s0) |> State
-
-    let inline (<*>) (f, x) = apply f x
+    let ignore x = map ignore x
 
     let inline eval (State sa) s = fst (sa s)
     let inline exec (State sa) s = snd (sa s)
@@ -69,12 +70,11 @@ type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Re
 
 module StateResult =
 
-    open State
-
     let inline run (StateResult m) = State.run m
     let inline map f (StateResult m) = State.map (lift f) m |> StateResult
-    let inline apply f (StateResult m) = apply (state.Return(Trial.apply f)) m |> StateResult
-    let inline (<*>) (f, x) = apply f x
+    let inline (<!>) f x = map x f
+    let inline apply f (StateResult m) = State.apply (State.returnM(Trial.apply f)) m |> StateResult
+    let inline (<*>) f x = apply f x
     let inline bind f (StateResult (State m)) =
         fun s0 ->
             match m s0 with
@@ -86,6 +86,7 @@ module StateResult =
         |> State |> StateResult
     let inline (>>=) result f = bind f result
     let inline returnM x = x |> ok |> State.returnM |> StateResult
+    let ignore x = map (ignore) x
 
     let inline liftState x = x |> State.map ok |> StateResult
     let inline liftResult x = x |> State.returnM |> StateResult

@@ -43,7 +43,19 @@ module Seq =
         return result
     }
 
+    let takeWhile f = sresult {
+        let! s = get
+        let result = s |> Seq.takeWhile f
+        do! s |> Seq.skipWhile f |> put
+        return result
+    }
+
     let skip count = sresult {
         do! peekNext count >>= put
+        return! get
+    }
+
+    let skipWhile f = sresult {
+        do! takeWhile f |> ignore
         return! get
     }

@@ -3,10 +3,10 @@
     <AssemblyName>Farkle</AssemblyName>
     <TargetFramework>net462</TargetFramework>
   </PropertyGroup>
-    <ItemGroup>
+  <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Library.fs" />
-  </ItemGroup>  
+    <Compile Include="Monads.fs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>

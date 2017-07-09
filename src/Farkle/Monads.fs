@@ -90,6 +90,13 @@ module StateResult =
     let inline liftState x = x |> State.map ok |> StateResult
     let inline liftResult x = x |> State.returnM |> StateResult
 
+    let inline fail message = message |> fail |> liftResult
+
+    let inline mapFailures f (StateResult m) =
+        m |> State.map (function | Ok (x, errs) -> Ok (x, f errs) |Bad errs -> errs |> f |> Bad) |> StateResult
+
+    let inline mapFailure f m = mapFailures (List.map f) m
+
     let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠
 
     let inline put x = StateResult(State(fun s0 -> Ok((), []), x)) // Thank you F#'s type restrictions. 😠
@@ -127,5 +134,5 @@ module StateResult =
             x.Using(s.GetEnumerator(), fun enum ->
                 x.While(enum.MoveNext,
                     x.Delay(fun () -> body enum.Current)))
-    
+
     let sresult = StateResultBuilder()

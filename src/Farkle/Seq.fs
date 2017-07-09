@@ -12,6 +12,14 @@ type SeqError = EOF | InvalidLength
 
 module Seq =
 
+    let rec pairs x = seq {
+        if not <| Seq.isEmpty x then
+            let first, rest = Seq.head x, Seq.tail x
+            if not <| Seq.isEmpty rest then
+                let second, rest = Seq.head rest, Seq.tail rest
+                yield first, second
+                yield! pairs rest}
+
     let takeOne() = sresult {
         let! s = get
         do! s |> Seq.tail |> put

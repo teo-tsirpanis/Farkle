@@ -1,6 +1,7 @@
 framework: net462
 source https://nuget.org/api/v2
 
+nuget Chessie
 nuget FSharp.Core
 
 group Build

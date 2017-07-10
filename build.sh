@@ -4,6 +4,7 @@ set -eu
 
 cd "$(dirname "$0")"
 
+PAKET_BOOTSTRAPPER_EXE=.paket/paket.bootstrapper.exe
 PAKET_EXE=.paket/paket.exe
 FAKE_EXE=packages/build/FAKE/tools/FAKE.exe
 
@@ -36,6 +37,11 @@ yesno() {
   esac
 }
 
+set +e
+run $PAKET_BOOTSTRAPPER_EXE
+bootstrapper_exitcode=$?
+set -e
+
 if [ "$OS" != "Windows_NT" ] &&
        [ $bootstrapper_exitcode -ne 0 ] &&
        [ $(certmgr -list -c Trust | grep X.509 | wc -l) -le 1 ] &&
@@ -60,6 +66,7 @@ then
   fi
   # Re-run bootstrapper whether or not the user ran mozroots, because maybe
   # they fixed the problem in a separate terminal window.
+  run $PAKET_BOOTSTRAPPER_EXE
 fi
 
 run $PAKET_EXE restore
@@ -67,4 +74,3 @@ run $PAKET_EXE restore
 [ ! -e build.fsx ] && run $PAKET_EXE update
 [ ! -e build.fsx ] && run $FAKE_EXE init.fsx
 run $FAKE_EXE "$@" $FSIARGS $FSIARGS2 build.fsx
-

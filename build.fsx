@@ -50,6 +50,8 @@ let configuration = "Release"
 // Pattern specifying assemblies to be tested using NUnit
 let testAssemblies = !! ("tests/**/bin" </> configuration </> "*Tests*.exe")
 
+let nugetPackages = !! "bin/*.nupkg"
+
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
 let gitOwner = "teo-tsirpanis"
@@ -155,6 +157,21 @@ Target "NuGet" (fun _ ->
             Version = release.NugetVersion
             ReleaseNotes = toLines release.Notes})
 )
+
+Target "PushArtifacts" (fun _ ->
+    let makeParams x =
+        {
+            Program = "appveyor"
+            WorkingDirectory = currentDirectory
+            CommandLine = sprintf "push %s" x
+            Args = []
+        }
+    nugetPackages
+    |> Seq.map (makeParams >> asyncShellExec)
+    |> Async.Parallel
+    |> Async.RunSynchronously
+    |> Seq.filter ((<>) 0)
+    |> Seq.iter (failwithf "Process returned error code %d"))
 
 Target "PublishNuget" (fun _ ->
     Paket.Push(fun p ->
@@ -345,6 +362,7 @@ Target "All" DoNothing
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
   ==> "NuGet"
+  =?> ("PushArtifacts", buildServer = AppVeyor)
   ==> "BuildPackage"
   ==> "All"
 

@@ -6,12 +6,21 @@
 namespace Farkle
 
 open Chessie.ErrorHandling
-open Monads.StateResult
+open Farkle.Monads.StateResult
 
-type SeqError = EOF | InvalidLength
+/// What could go wrong with a sequence operation
+type SeqError =
+    /// The sequence reached its end.
+    | EOF
+    /// You took 4 elements from a sequence with 3, or something like this.
+    | InvalidLength
 
+/// Functions on `seq`s that mostly work with the `StateResult` and `State` monads.
 module Seq =
 
+    /// Makes pairs of two from a sequence.
+    /// For example, `pairs [0;1;2;3]` becomes `[(0, 1); (2, 3)]`
+    /// If there is an odd number of elements, the last is discarded.
     let rec pairs x = seq {
         if not <| Seq.isEmpty x then
             let first, rest = Seq.head x, Seq.tail x
@@ -20,14 +29,20 @@ module Seq =
                 yield first, second
                 yield! pairs rest}
 
-    let takeOne() = sresult {
-        let! s = get
-        do! s |> Seq.tail |> put
-        return! s |> Seq.tryHead |> failIfNone EOF |> liftResult
-    }
-
+    /// Looks at the first element of the sequence in the state without modifying it.
+    /// It fails with an `EOF` if the sequence is empty.
     let peekOne() = get >>= (Seq.tryHead >> failIfNone EOF >> liftResult)
 
+    /// Takes the first element of the sequence in the state and leaves the rest of them.
+    /// It fails with an `EOF` if the sequence is empty.
+    let takeOne() = sresult {
+        let! s = peekOne()
+        do! get <!> Seq.tail >>= put
+        return s
+    }
+
+    /// Looks at the first `count` elements of the sequence in the state without modifying it.
+    /// It fails with an `InvalidLength` if you are taking more elements than those it has.
     let peek count = sresult {
         let! s = get
         if Seq.length s < count then
@@ -36,6 +51,8 @@ module Seq =
             return s |> Seq.take count
     }
 
+    /// Skips the first `count` elements of the sequence in the state without modifying it.
+    /// It fails with an `InvalidLength` if you are skipping more elements than those it has.
     let peekNext count = sresult {
         let! s = get
         if Seq.length s < count then
@@ -44,6 +61,8 @@ module Seq =
             return s |> Seq.skip count
     }
 
+    /// Takes the first `count` elements of the sequence in the state and leaves the rest of them.
+    /// It fails with an `InvalidLength` if you are taking more elements than those it has.
     let take count = sresult {
         let! s = get
         let! result = peek count
@@ -51,19 +70,8 @@ module Seq =
         return result
     }
 
-    let takeWhile f = sresult {
-        let! s = get
-        let result = s |> Seq.takeWhile f
-        do! s |> Seq.skipWhile f |> put
-        return result
-    }
-
+    /// Skips the first `count` elements of the sequence in the state and leaves the rest of them.
+    /// It fails with an `InvalidLength` if you are skipping more elements than those it has.
     let skip count = sresult {
         do! peekNext count >>= put
-        return! get
-    }
-
-    let skipWhile f = sresult {
-        do! takeWhile f |> ignore
-        return! get
     }

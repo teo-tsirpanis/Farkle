@@ -8,8 +8,11 @@ namespace Farkle.Monads
 open Chessie.ErrorHandling
 open System
 
+/// The well-known State monad.
 type State<'s, 't> = State of ('s -> ('t * 's))
 
+/// [omit]
+/// It doesn't need documentation. 😜
 module State =
 
     let inline run (State x) = x
@@ -65,9 +68,13 @@ module State =
                     x.Delay(fun () -> body enum.Current)))
 
     let state = StateBuilder()
-
+    
+/// A combination of the `Result` and `State` monads.
+/// F# has no monad transformers, so it was manually done.
 type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
 
+/// [omit]
+/// It doesn't need documentation. 😜
 module StateResult =
 
     let inline run (StateResult m) = State.run m

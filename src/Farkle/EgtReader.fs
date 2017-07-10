@@ -31,10 +31,18 @@ type EGTEntry =
     | UInt16 of uint16
     | String of string
 
+/// What can go wrong with reading an EGT file.
 type EGTError =
+    /// A [sequence error](Farkle.SeqError) did happen.
     | SeqError of SeqError
+    /// Boolean values should only be `0` or `1`.
+    /// If they are not, thet it's undefined by the documentation.
+    /// But we will call it an error.
     | InvalidBoolValue of byte
+    /// An invalid entry code was encountered.
+    /// Valid entry codes are these letters: `EbBIS`.
     | InvalidEntryCode of char
+    /// An entry of `expected` type was requested, but `found` was returned instead.
     | InvalidEntryType of expected: string * found: EGTEntry
 
 module EgtReader =

@@ -9,12 +9,15 @@ open Chessie.ErrorHandling
 open Farkle.Monads
 open Farkle.Monads.StateResult
 
-/// What could go wrong with a sequence operation
+/// What can go wrong with a sequence operation
 type SeqError =
     /// The sequence reached its end.
     | EOF
     /// You took 4 elements from a sequence with 3, or something like this.
     | InvalidLength
+    /// How could you❗
+    /// I expected that the sequence would be single. 😭
+    | ExpectedSingle of actualLength: int
 
 /// Functions on `seq`s that mostly work with the `StateResult` and `State` monads.
 module Seq =
@@ -41,6 +44,17 @@ module Seq =
     /// Looks at the first element of the sequence in the state without modifying it.
     /// It fails with an `EOF` if the sequence is empty.
     let peekOne() = get >>= (Seq.tryHead >> failIfNone EOF >> liftResult)
+
+    /// If the sequence in the state has one element, it is returned.
+    /// Otherwise, `ExpectedSingle` is returned.
+    /// Think of it as a functional monadic equivalent of `System.Linq.Enumerable.Single`.
+    let single() = sresult {
+        let! len = length() |> liftState
+        if len = 1 then
+            return! peekOne()
+        else
+            return! len |> ExpectedSingle |> fail
+    }
 
     /// Takes the first element of the sequence in the state and leaves the rest of them.
     /// It fails with an `EOF` if the sequence is empty.

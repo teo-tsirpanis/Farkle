@@ -68,7 +68,7 @@ module State =
                     x.Delay(fun () -> body enum.Current)))
 
     let state = StateBuilder()
-    
+
 /// A combination of the `Result` and `State` monads.
 /// F# has no monad transformers, so it was manually done.
 type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
@@ -94,6 +94,9 @@ module StateResult =
     let inline (>>=) result f = bind f result
     let inline returnM x = x |> ok |> State.returnM |> StateResult
     let ignore x = map (ignore) x
+
+    let inline eval (StateResult sa) s = State.eval sa s
+    let inline exec (StateResult sa) s = State.exec sa s
 
     let inline liftState x = x |> State.map ok |> StateResult
     let inline liftResult x = x |> State.returnM |> StateResult

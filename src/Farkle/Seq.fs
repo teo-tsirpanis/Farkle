@@ -6,6 +6,7 @@
 namespace Farkle
 
 open Chessie.ErrorHandling
+open Farkle.Monads
 open Farkle.Monads.StateResult
 
 /// What could go wrong with a sequence operation
@@ -28,6 +29,14 @@ module Seq =
                 let second, rest = Seq.head rest, Seq.tail rest
                 yield first, second
                 yield! pairs rest}
+
+    /// Checks whether the sequence in the state is empty.
+    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
+    let isEmpty() = State.get |> State.map Seq.isEmpty
+
+    /// Checks the length of the sequence in the state.
+    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
+    let length() = State.get |> State.map Seq.length
 
     /// Looks at the first element of the sequence in the state without modifying it.
     /// It fails with an `EOF` if the sequence is empty.

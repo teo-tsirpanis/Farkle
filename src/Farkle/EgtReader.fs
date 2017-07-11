@@ -10,7 +10,7 @@ open Farkle
 open Monads.StateResult
 open System
 
-type EGTRecord =
+type Record =
     | Charset = 67uy
     | DFAState = 68uy
     | InitialStates = 73uy
@@ -24,7 +24,7 @@ type EGTRecord =
     | Property = 112uy
     | Counts = 116uy
 
-type EGTEntry =
+type Entry =
     | Empty
     | Byte of byte
     | Boolean of bool
@@ -32,7 +32,7 @@ type EGTEntry =
     | String of string
 
 /// What can go wrong with reading an EGT file.
-type EGTError =
+type EGTReadError =
     /// A [sequence error](Farkle.SeqError) did happen.
     | SeqError of SeqError
     /// Boolean values should only be `0` or `1`.
@@ -43,7 +43,7 @@ type EGTError =
     /// Valid entry codes are these letters: `EbBIS`.
     | InvalidEntryCode of char
     /// An entry of `expected` type was requested, but `found` was returned instead.
-    | InvalidEntryType of expected: string * found: EGTEntry
+    | InvalidEntryType of expected: string * found: Entry
 
 module EgtReader =
     let byteToChar = (*) 1uy >> char

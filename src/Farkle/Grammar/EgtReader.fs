@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.EgtReader
+namespace Farkle.Grammar
 
 open Chessie.ErrorHandling
 open Farkle

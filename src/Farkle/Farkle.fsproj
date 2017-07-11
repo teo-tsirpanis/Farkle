@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Common.fs" />
-    <Compile Include="Monads.fs" />
-    <Compile Include="Seq.fs" />
-    <Compile Include="EgtReader.fs" />
-    <Compile Include="GrammarTypes.fs" />
+    <Compile Include="Utilities\Common.fs" />
+    <Compile Include="Utilities\Monads.fs" />
+    <Compile Include="Utilities\Seq.fs" />
+    <Compile Include="Grammar\EgtReader.fs" />
+    <Compile Include="Grammar\GrammarTypes.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

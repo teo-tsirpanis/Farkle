@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.Types
+namespace Farkle.Grammar
 
 open Chessie.ErrorHandling
 open Farkle
@@ -21,7 +21,7 @@ type TableCounts =
     }
 
 type GrammarError =
-    | EGTReadError of EgtReader.EGTReadError
+    | EGTReadError of EGTReadError
     | InvalidSymbolType of uint16
     | InvalidAdvanceMode of uint16
     | InvalidEndingMode of uint16

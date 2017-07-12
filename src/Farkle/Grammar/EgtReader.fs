@@ -10,7 +10,7 @@ open Farkle
 open Monads.StateResult
 open System
 
-type Record =
+type RecordType =
     | Charset = 67uy
     | DFAState = 68uy
     | InitialStates = 73uy
@@ -44,6 +44,13 @@ type EGTReadError =
     | InvalidEntryCode of char
     /// An entry of `expected` type was requested, but `found` was returned instead.
     | InvalidEntryType of expected: string * found: Entry
+    /// Records should start with `M`, but this one started with something else.
+    | InvalidRecordTag of char
+    /// The file's header is invalid.
+    | UnknownFile
+    /// You have tried to read a CGT file instead of an EGT file.
+    /// The former is _not_ supported.
+    | ReadACGTFile
 
 module EgtReader =
     let byteToChar = (*) 1uy >> char
@@ -67,17 +74,17 @@ module EgtReader =
     }
 
     let takeString =
-            let rec takeString s = sresult {
-                let! num = takeUInt16
-                if num <> 0us then
-                    let c = char num
-                    return! takeString (sprintf "%s%c" s c)
-                else
-                    return s
-            }
-            takeString ""
+        let rec takeString s = sresult {
+            let! num = takeUInt16
+            if num <> 0us then
+                let c = char num
+                return! takeString (sprintf "%s%c" s c)
+            else
+                return s
+        }
+        takeString ""
 
-    let readEntry() = sresult {
+    let readEntry = sresult {
         let! entryCode = takeChar
         match entryCode with
         | 'E' -> return Empty
@@ -115,3 +122,33 @@ module EgtReader =
         let wantUInt16 x = eitherEntry failEmpty failByte failBoolean ok failString x
         let wantString x = eitherEntry failEmpty failByte failBoolean failUInt16 ok x
         wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
+
+type Record = Record of Entry list
+
+module HighLevel =
+
+    open EgtReader
+
+    // "I will not use inperative code in F# again" 
+    // |> Seq.replicate 100
+    // |> Seq.iter (printfn"%s")
+    let readRecord = sresult {
+        let! tag = takeChar
+        if tag <> 'M' then
+            do! tag |> InvalidRecordTag |> fail
+        let! count = takeUInt16 <!> int
+        return! count |> repeatM readEntry <!> List.ofSeq <!> Record
+    }
+
+    [<Literal>]
+    let CGTHeader = "GOLD Parser Tables/1.0"
+    [<Literal>]
+    let EGTHeader = "GOLD Parser Tables/5.0"
+
+    let readEGT = sresult {
+        let! header = takeChars EGTHeader.Length <!> Array.ofSeq <!> System.String
+        match header with
+        | CGTHeader -> do! fail ReadACGTFile
+        | EGTHeader -> do ()
+        | _ -> do! fail UnknownFile
+    }

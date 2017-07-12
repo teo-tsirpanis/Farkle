@@ -44,6 +44,11 @@ type EGTReadError =
     | InvalidEntryCode of char
     /// An entry of `expected` type was requested, but `found` was returned instead.
     | InvalidEntryType of expected: string * found: Entry
+    /// The string you asked for is not terminated
+    | UnterminatedString
+    /// takeString has a bug. The developer _should_ be contacted
+    /// in case this type of error is encountered
+    | TakeStringBug
     /// Records should start with `M`, but this one started with something else.
     | InvalidRecordTag of char
     /// The file's header is invalid.
@@ -73,16 +78,22 @@ module EgtReader =
         return BitConverter.ToUInt16(bytes, 0) |> ensureLittleEndian
     }
 
-    let takeString =
-        let rec takeString s = sresult {
-            let! num = takeUInt16
-            if num <> 0us then
-                let c = char num
-                return! takeString (sprintf "%s%c" s c)
-            else
-                return s
-        }
-        takeString ""
+    let takeString = sresult {
+        let! len =
+            get
+            <!> Seq.pairs
+            <!> Seq.tryFindIndex (fun (x, y) -> x = 0uy && y = 0uy)
+            <!> failIfNone UnterminatedString
+            <!> liftResult
+            |> flatten
+            <!> ((*) 2)
+        let! result = takeChars len <!> Array.ofSeq <!> System.String
+        let! terminator = takeUInt16
+        if terminator = 0us then
+            return result
+        else
+            return! fail TakeStringBug
+    }
 
     let readEntry = sresult {
         let! entryCode = takeChar
@@ -99,7 +110,7 @@ module EgtReader =
         | 'S' -> return! takeString <!> String
         | x -> return! x |> InvalidEntryCode |> fail
     }
-    
+
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString entry =
         match entry with
         | Empty -> fEmpty entry ()
@@ -129,9 +140,6 @@ module HighLevel =
 
     open EgtReader
 
-    // "I will not use inperative code in F# again" 
-    // |> Seq.replicate 100
-    // |> Seq.iter (printfn"%s")
     let readRecord = sresult {
         let! tag = takeChar
         if tag <> 'M' then

@@ -148,7 +148,7 @@ module StateResult =
 
     let sresult = StateResultBuilder()
 
-    // "I will not use imperative code in F# again 😭" 
+    // "I will not use imperative code in F# again 😭"
     // |> Seq.replicate 100
     // |> Seq.iter (printfn"%s")
     let repeatM f times = sresult {
@@ -159,7 +159,7 @@ module StateResult =
         return buf :> seq<_>
     }
 
-    // "I will not use imperative code in F# again 😭" 
+    // "I will not use imperative code in F# again 😭"
     // |> Seq.replicate 100
     // |> Seq.iter (printfn"%s")
     let whileM f action =
@@ -174,4 +174,9 @@ module StateResult =
                 return buf :> seq<_>
         }
         impl()
-        
+
+    let flatten x = sresult {
+        let! x = x
+        let! x = x
+        return x
+    }

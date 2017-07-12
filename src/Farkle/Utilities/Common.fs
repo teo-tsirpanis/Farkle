@@ -17,18 +17,23 @@ type Indexable<'a, 'TIndex> when 'TIndex: comparison =
         Item: 'a
     }
 
-/// A type-safe reference to a value based on its index.
-type Indexed<'a, 'TIndex> when 'TIndex: comparison = Indexed of 'TIndex
-
-/// Functions for working with `Indexable<'a>` and `Indexed<'a>`.
-module Indexed =
+/// Functions for working with `Indexable<'a>`.
+module Indexable =
     /// Gets the value of an `Indexable` object.
     let value {Item = x} = x
     /// Gets the index of an `Indexable` object.
     let index {Index = x} = x
+    /// Creates an `Indexable` object.
+    let create index x = {Index = index; Item = x}
     /// Sorts `Indexable` items based on their index, and removes it.
     /// Duplicate indices do not raise an error.
     let collect x = x |> Seq.sortBy index |> Seq.map value
+
+/// A type-safe reference to a value based on its index.
+type Indexed<'a, 'TIndex> when 'TIndex: comparison = Indexed of 'TIndex
+
+/// Functions for working with `Indexed<'a>`.
+module Indexed =
     /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
     /// In case the index is out of range, the function fails.
     let get f (i: Indexed<'a, 'b>) : Result<'a,'b> =

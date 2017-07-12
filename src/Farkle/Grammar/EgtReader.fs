@@ -7,7 +7,7 @@ namespace Farkle.Grammar
 
 open Chessie.ErrorHandling
 open Farkle
-open Monads.StateResult
+open Farkle.Monads
 open System
 
 type RecordType =
@@ -59,7 +59,10 @@ type EGTReadError =
     /// The file you specified does not exist.
     | FileNotExist of string
 
-module EgtReader =
+module private EgtReaderImpl =
+
+    open StateResult
+
     let byteToChar = (*) 1uy >> char
     let takeChar = Seq.takeOne() |> mapFailure SeqError <!> byteToChar
 
@@ -113,36 +116,14 @@ module EgtReader =
         | x -> return! x |> InvalidEntryCode |> fail
     }
 
-    let eitherEntry fEmpty fByte fBoolean fUInt16 fString entry =
-        match entry with
-        | Empty -> fEmpty entry ()
-        | Byte x -> fByte entry x
-        | Boolean x -> fBoolean entry x
-        | UInt16 x -> fUInt16 entry x
-        | String x -> fString entry x
-
-    let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
-        let fail x = fun entry _ -> (x, entry) |> InvalidEntryType |> Trial.fail
-        let failEmpty x = fail "Empty" x
-        let failByte x = fail "Byte" x
-        let failBoolean x = fail "Boolean" x
-        let failUInt16 x = fail "UInt16" x
-        let failString x = fail "String" x
-        let ok _ x = ok x
-        let wantEmpty x  = eitherEntry ok failByte failBoolean failUInt16 failString x
-        let wantByte x  = eitherEntry failEmpty ok failBoolean failUInt16 failString x
-        let wantBoolean x = eitherEntry failEmpty failByte ok failUInt16 failString x
-        let wantUInt16 x = eitherEntry failEmpty failByte failBoolean ok failString x
-        let wantString x = eitherEntry failEmpty failByte failBoolean failUInt16 ok x
-        wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
-
 type Record = Record of Entry list
 
 type EGTFile = EGTFile of Record list
 
-module HighLevel =
+module EgtReader =
 
-    open EgtReader
+    open EgtReaderImpl
+    open StateResult
     open System.IO
 
     let readRecord = sresult {
@@ -169,13 +150,39 @@ module HighLevel =
         return! whileM (Seq.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 
-    open Chessie.ErrorHandling
-
     let readEGTFromFile path = trial {
         if path |> File.Exists |> not then
-            do! path |> FileNotExist |> fail
+            do! path |> FileNotExist |> Trial.fail
         use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
         return! stream |> Seq.ofByteStream |> eval readEGT
     }
 
     let readEGTFromBytes = eval readEGT
+
+    let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
+        let! entry = Seq.takeOne() |> mapFailure SeqError
+        return!
+            match entry with
+            | Empty -> fEmpty entry ()
+            | Byte x -> fByte entry x
+            | Boolean x -> fBoolean entry x
+            | UInt16 x -> fUInt16 entry x
+            | String x -> fString entry x
+    }
+
+    let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
+        let fail x = fun entry _ -> (x, entry) |> InvalidEntryType |> StateResult.fail
+        let failEmpty x = fail "Empty" x
+        let failByte x = fail "Byte" x
+        let failBoolean x = fail "Boolean" x
+        let failUInt16 x = fail "UInt16" x
+        let failString x = fail "String" x
+        let ok _ x = returnM x
+        let wantEmpty  = eitherEntry ok failByte failBoolean failUInt16 failString
+        let wantByte = eitherEntry failEmpty ok failBoolean failUInt16 failString
+        let wantBoolean = eitherEntry failEmpty failByte ok failUInt16 failString
+        let wantUInt16 = eitherEntry failEmpty failByte failBoolean ok failString
+        let wantString = eitherEntry failEmpty failByte failBoolean failUInt16 ok
+        wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
+
+    let wantUnicodeChar = wantUInt16 <!> char

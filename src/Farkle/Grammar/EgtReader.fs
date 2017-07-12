@@ -56,6 +56,8 @@ type EGTReadError =
     /// You have tried to read a CGT file instead of an EGT file.
     /// The former is _not_ supported.
     | ReadACGTFile
+    /// The file you specified does not exist.
+    | FileNotExist of string
 
 module EgtReader =
     let byteToChar = (*) 1uy >> char
@@ -136,9 +138,12 @@ module EgtReader =
 
 type Record = Record of Entry list
 
+type EGTFile = EGTFile of Record list
+
 module HighLevel =
 
     open EgtReader
+    open System.IO
 
     let readRecord = sresult {
         let! tag = takeChar
@@ -154,9 +159,23 @@ module HighLevel =
     let EGTHeader = "GOLD Parser Tables/5.0"
 
     let readEGT = sresult {
-        let! header = takeChars EGTHeader.Length <!> Array.ofSeq <!> System.String
+        let! header = takeChars (EGTHeader.Length * 2) <!> Array.ofSeq <!> System.String
         match header with
         | CGTHeader -> do! fail ReadACGTFile
         | EGTHeader -> do ()
         | _ -> do! fail UnknownFile
+        let! terminator = takeUInt16
+        if terminator <> 0us then do! fail UnknownFile /// A null terminator should follow.
+        return! whileM (Seq.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
+
+    open Chessie.ErrorHandling
+
+    let readEGTFromFile path = trial {
+        if path |> File.Exists |> not then
+            do! path |> FileNotExist |> fail
+        use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
+        return! stream |> Seq.ofByteStream |> eval readEGT
+    }
+
+    let readEGTFromBytes = eval readEGT

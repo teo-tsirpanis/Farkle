@@ -8,6 +8,7 @@ namespace Farkle
 open Chessie.ErrorHandling
 open Farkle.Monads
 open Farkle.Monads.StateResult
+open System.IO
 
 /// What can go wrong with a sequence operation
 type SeqError =
@@ -32,6 +33,15 @@ module Seq =
                 let second, rest = Seq.head rest, Seq.tail rest
                 yield first, second
                 yield! pairs rest}
+
+    /// Creates a sequence of bytes from a stream.
+    let rec ofByteStream (s: Stream) = seq {
+        match s.ReadByte() with
+        | -1 -> ()
+        | x ->
+            yield byte x
+            yield! ofByteStream s
+    }
 
     /// Checks whether the sequence in the state is empty.
     /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.

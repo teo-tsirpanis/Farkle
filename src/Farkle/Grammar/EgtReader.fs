@@ -142,31 +142,3 @@ module EgtReader =
     }
 
     let readEGTFromBytes = eval readEGT
-
-    let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
-        let! entry = Seq.takeOne() |> mapFailure SeqError
-        return!
-            match entry with
-            | Empty -> fEmpty entry ()
-            | Byte x -> fByte entry x
-            | Boolean x -> fBoolean entry x
-            | UInt16 x -> fUInt16 entry x
-            | String x -> fString entry x
-    }
-
-    let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
-        let fail x = fun entry _ -> (x, entry) |> InvalidEntryType |> StateResult.fail
-        let failEmpty x = fail "Empty" x
-        let failByte x = fail "Byte" x
-        let failBoolean x = fail "Boolean" x
-        let failUInt16 x = fail "UInt16" x
-        let failString x = fail "String" x
-        let ok _ x = returnM x
-        let wantEmpty  = eitherEntry ok failByte failBoolean failUInt16 failString
-        let wantByte = eitherEntry failEmpty ok failBoolean failUInt16 failString
-        let wantBoolean = eitherEntry failEmpty failByte ok failUInt16 failString
-        let wantUInt16 = eitherEntry failEmpty failByte failBoolean ok failString
-        let wantString = eitherEntry failEmpty failByte failBoolean failUInt16 ok
-        wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
-
-    let wantUnicodeChar = wantUInt16 <!> char

@@ -10,6 +10,7 @@
     <Compile Include="Utilities\Seq.fs" />
     <Compile Include="Grammar\EgtReader.fs" />
     <Compile Include="Grammar\GrammarTypes.fs" />
+    <Compile Include="Grammar\GrammarReader.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

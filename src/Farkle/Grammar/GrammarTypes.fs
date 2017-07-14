@@ -7,6 +7,7 @@ namespace Farkle.Grammar
 
 open Chessie.ErrorHandling
 open Farkle
+open Farkle.Monads
 
 type Indexed<'a> = Indexed<'a, uint16>
 
@@ -44,16 +45,19 @@ type SymbolType =
     | Error
 
 module SymbolType =
+
+    open StateResult
+
     let ofUInt16 =
         function
-        | 0us -> ok Nonterminal
-        | 1us -> ok Terminal
-        | 2us -> ok Noise
-        | 3us -> ok EndOfFile
-        | 4us -> ok GroupStart
-        | 5us -> ok GroundEnd
+        | 0us -> returnM Nonterminal
+        | 1us -> returnM Terminal
+        | 2us -> returnM Noise
+        | 3us -> returnM EndOfFile
+        | 4us -> returnM GroupStart
+        | 5us -> returnM GroundEnd
         // 6 is deprecated
-        | 7us -> ok Error
+        | 7us -> returnM Error
         | x -> x |> InvalidSymbolType |> fail
 
 type Symbol =
@@ -61,11 +65,13 @@ type Symbol =
         Name: string
         Kind: SymbolType
     }
+
 type AdvanceMode =
     | Token
     | Character
 
 module AdvanceMode =
+
     let create =
         function
         | 0us -> ok Token
@@ -77,6 +83,7 @@ type EndingMode =
     | Closed
 
 module EndingMode =
+
     let create =
         function
         | 0us -> ok Open
@@ -124,6 +131,7 @@ and LALRActionType =
     | Accept
 
 module LALRActionType =
+
     let create index =
         function
         | 1us -> index |> Indexed |> Shift |> ok
@@ -153,6 +161,7 @@ type Grammar =
         member x.DFAStates = x._DFAStates
 
 module Grammar =
+
     let counts (x: Grammar) =
         {
             SymbolTables = x.Symbols.Length |> uint16

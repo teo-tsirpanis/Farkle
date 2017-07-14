@@ -9,20 +9,7 @@ open Chessie.ErrorHandling
 open Farkle
 open Farkle.Monads
 open System
-
-type RecordType =
-    | Charset = 67uy
-    | DFAState = 68uy
-    | InitialStates = 73uy
-    | LRState = 76uy
-    | Parameter = 80uy
-    | Rule = 82uy
-    | Symbol = 83uy
-    | CharacterRanges = 99uy
-    | Group = 103uy
-    | GroupNesting = 110uy
-    | Property = 112uy
-    | Counts = 116uy
+open System.Text
 
 type Entry =
     | Empty
@@ -63,14 +50,9 @@ module private EgtReaderImpl =
 
     open StateResult
 
-    let byteToChar = (*) 1uy >> char
-    let takeChar = Seq.takeOne() |> mapFailure SeqError <!> byteToChar
+    let takeByte = Seq.takeOne() |> mapFailure SeqError <!> ((*) 1uy)
 
-    let takeChars count = count |> Seq.take |> mapFailure SeqError <!> (Seq.map byteToChar)
-
-    let takeByte = takeChar <!> byte
-
-    let takeBytes count = count |> takeChars <!> (Seq.map byte)
+    let takeBytes count = count |> Seq.take |> mapFailure SeqError <!> (Seq.map ((*) 1uy))
 
     let ensureLittleEndian x =
         if BitConverter.IsLittleEndian then
@@ -92,7 +74,7 @@ module private EgtReaderImpl =
             <!> liftResult
             |> flatten
             <!> ((*) 2)
-        let! result = takeChars len <!> Array.ofSeq <!> System.String
+        let! result = takeBytes len <!> Array.ofSeq <!> Encoding.Unicode.GetString
         let! terminator = takeUInt16
         if terminator = 0us then
             return result
@@ -101,7 +83,7 @@ module private EgtReaderImpl =
     }
 
     let readEntry = sresult {
-        let! entryCode = takeChar
+        let! entryCode = takeByte <!> char
         match entryCode with
         | 'E' -> return Empty
         | 'b' -> return! takeByte <!> Byte
@@ -125,9 +107,10 @@ module EgtReader =
     open EgtReaderImpl
     open StateResult
     open System.IO
+    open System.Text
 
     let readRecord = sresult {
-        let! tag = takeChar
+        let! tag = takeByte <!> char
         if tag <> 'M' then
             do! tag |> InvalidRecordTag |> fail
         let! count = takeUInt16 <!> int
@@ -135,18 +118,19 @@ module EgtReader =
     }
 
     [<Literal>]
-    let CGTHeader = "GOLD Parser Tables/1.0"
+    let CGTHeader = "GOLD Parser Tables/1.0\0"
     [<Literal>]
-    let EGTHeader = "GOLD Parser Tables/5.0"
+    let EGTHeader = "GOLD Parser Tables/5.0\0"
 
     let readEGT = sresult {
-        let! header = takeChars (EGTHeader.Length * 2) <!> Array.ofSeq <!> System.String
+        let! header =
+            takeBytes (Encoding.Unicode.GetByteCount EGTHeader)
+            <!> Array.ofSeq
+            <!> Encoding.Unicode.GetString
         match header with
         | CGTHeader -> do! fail ReadACGTFile
         | EGTHeader -> do ()
         | _ -> do! fail UnknownFile
-        let! terminator = takeUInt16
-        if terminator <> 0us then do! fail UnknownFile /// A null terminator should follow.
         return! whileM (Seq.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 

@@ -21,7 +21,36 @@ type TableCounts =
         GroupTables: uint16
     }
 
+/// What can go wrong with reading an EGT file.
+type EGTReadError =
+    /// A [sequence error](Farkle.SeqError) did happen.
+    | SeqError of SeqError
+    /// Boolean values should only be `0` or `1`.
+    /// If they are not, thet it's undefined by the documentation.
+    /// But we will call it an error.
+    | InvalidBoolValue of byte
+    /// An invalid entry code was encountered.
+    /// Valid entry codes are these letters: `EbBIS`.
+    | InvalidEntryCode of char
+    /// An entry of `expected` type was requested, but something else was returned instead.
+    | InvalidEntryType of expected: string
+    /// The string you asked for is not terminated
+    | UnterminatedString
+    /// takeString has a bug. The developer _should_ be contacted
+    /// in case this type of error is encountered
+    | TakeStringBug
+    /// Records should start with `M`, but this one started with something else.
+    | InvalidRecordTag of char
+    /// The file's header is invalid.
+    | UnknownFile
+    /// You have tried to read a CGT file instead of an EGT file.
+    /// The former is _not_ supported.
+    | ReadACGTFile
+    /// The file you specified does not exist.
+    | FileNotExist of string
+
 type GrammarError =
+    | SeqError of SeqError
     | EGTReadError of EGTReadError
     | InvalidSymbolType of uint16
     | InvalidAdvanceMode of uint16

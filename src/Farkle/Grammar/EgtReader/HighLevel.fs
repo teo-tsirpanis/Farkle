@@ -3,57 +3,32 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar
+namespace Farkle.Grammar.EgtReader
 
 open Chessie.ErrorHandling
 open Farkle
-open Farkle.Grammar.EgtReader
+open Farkle.Grammar
 open Farkle.Monads
 
-module GrammarReader =
+module internal HighLevel =
 
     open StateResult
+    open MidLevel
 
     type Indexable<'a> = Indexable<'a, uint16>
 
     type RecordType =
-        | DFAState of Indexable<DFAState> //= 68uy
-        | InitialStates of InitialStates //= 73uy
-        | LALRState of Indexable<LALRState> //= 76uy
-        | Production of Indexable<Production> //= 82uy
-        | Symbol of Indexable<Symbol> //= 83uy
-        | Charset of Indexable<CharSet> //= 99uy
-        | Group of Indexable<Group> //= 103uy
-        | Property of string * string //= 112uy
-        | TableCounts of TableCounts //= 116uy
+        | DFAState of Indexable<DFAState>
+        | InitialStates of InitialStates
+        | LALRState of Indexable<LALRState>
+        | Production of Indexable<Production>
+        | Symbol of Indexable<Symbol>
+        | Charset of Indexable<CharSet>
+        | Group of Indexable<Group>
+        | Property of string * string
+        | TableCounts of TableCounts
 
     let liftFlatten x = x <!> liftResult |> flatten
-
-    let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
-        let! entry = Seq.takeOne() |> mapFailure (SeqError >> EGTReadError)
-        return!
-            match entry with
-            | Empty -> fEmpty entry ()
-            | Byte x -> fByte entry x
-            | Boolean x -> fBoolean entry x
-            | UInt16 x -> fUInt16 entry x
-            | String x -> fString entry x
-    }
-
-    let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
-        let fail x = fun entry _ -> (x, entry) |> InvalidEntryType |> EGTReadError |> StateResult.fail
-        let failEmpty x = fail "Empty" x
-        let failByte x = fail "Byte" x
-        let failBoolean x = fail "Boolean" x
-        let failUInt16 x = fail "UInt16" x
-        let failString x = fail "String" x
-        let ok _ x = returnM x
-        let wantEmpty  = eitherEntry ok failByte failBoolean failUInt16 failString
-        let wantByte = eitherEntry failEmpty ok failBoolean failUInt16 failString
-        let wantBoolean = eitherEntry failEmpty failByte ok failUInt16 failString
-        let wantUInt16 = eitherEntry failEmpty failByte failBoolean ok failString
-        let wantString = eitherEntry failEmpty failByte failBoolean failUInt16 ok
-        wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
 
     let readProperty = sresult {
         do! wantUInt16 |> ignore /// We do not store based on index
@@ -248,7 +223,7 @@ module GrammarReader =
     let makeGrammar records = trial {
         let none _ = None
         let choose f = records |> List.choose f
-        let exactlyOne x = x |> Seq.exactlyOne |> Trial.mapFailure (List.map (SeqError >> EGTReadError))
+        let exactlyOne x = x |> Seq.exactlyOne |> Trial.mapFailure (List.map SeqError)
         let properties = choose <| eitherRecord Some none none none none none none none none |> Map.ofList |> Properties
         let! tableCounts = choose <| eitherRecord none Some none none none none none none none |> exactlyOne
         let charSets = choose <| eitherRecord none none Some none none none none none none |> Indexable.collect

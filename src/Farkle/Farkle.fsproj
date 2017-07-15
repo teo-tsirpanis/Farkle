@@ -8,9 +8,10 @@
     <Compile Include="Utilities\Common.fs" />
     <Compile Include="Utilities\Monads.fs" />
     <Compile Include="Utilities\Seq.fs" />
-    <Compile Include="Grammar\EgtReader.fs" />
     <Compile Include="Grammar\GrammarTypes.fs" />
-    <Compile Include="Grammar\GrammarReader.fs" />
+    <Compile Include="Grammar\EgtReader\LowLevel.fs" />
+    <Compile Include="Grammar\EgtReader\MidLevel.fs" />
+    <Compile Include="Grammar\EgtReader\HighLevel.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

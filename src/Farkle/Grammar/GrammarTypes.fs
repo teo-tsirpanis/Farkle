@@ -143,6 +143,7 @@ type Grammar =
             _Symbols: Symbol list
             _Groups: Group list
             _Productions: Production list
+            _InitialStates: InitialStates
             _LALRStates: LALRState list
             _DFAStates: DFAState list
         }
@@ -152,6 +153,7 @@ type Grammar =
         member x.Symbols = x._Symbols
         member x.Groups = x._Groups
         member x.Productions = x._Productions
+        member x.InitialStates = x._InitialStates
         member x.LALRStates = x._LALRStates
         member x.DFAStates = x._DFAStates
 
@@ -167,13 +169,14 @@ module Grammar =
             GroupTables = x.Groups.Length |> uint16
         }
     
-    let create properties symbols charSets prods dfas lalrs groups _counts =
+    let create properties symbols charSets prods initialStates dfas lalrs groups _counts =
         let g =
             {
                 _Properties = properties
                 _Symbols = symbols
                 _CharSets = charSets
                 _Productions = prods
+                _InitialStates = initialStates
                 _DFAStates = dfas
                 _LALRStates = lalrs
                 _Groups = groups

@@ -55,9 +55,6 @@ module GrammarReader =
         let wantString = eitherEntry failEmpty failByte failBoolean failUInt16 ok
         wantEmpty, wantByte, wantBoolean, wantUInt16, wantString
 
-    let wantUnicodeChar = wantUInt16 <!> char
-
-
     let readProperty = sresult {
         do! wantUInt16 |> ignore /// We do not store based on index
         let! name = wantString
@@ -84,14 +81,14 @@ module GrammarReader =
             |> TableCounts
     }
 
-    let readCharSetTable = sresult {
+    let readCharSet = sresult {
         let! index = wantUInt16
         do! wantUInt16 |> ignore // Unicode plane is ignored; what exactly does it do?
         do! wantUInt16 |> ignore // Range count is ignored; we just read until the end.
         do! wantEmpty // Reserved field.
         let readCharSet = sresult {
-            let! start = wantUnicodeChar
-            let! finish = wantUnicodeChar
+            let! start = wantUInt16 <!> char
+            let! finish = wantUInt16 <!> char
             return RangeSet.create start finish
         }
         return!
@@ -210,4 +207,56 @@ module GrammarReader =
             <!> LALRState.LALRState
             <!> Indexable.create index
             <!> LALRState
+    }
+
+    let recordLookup =
+        [
+            'P', readProperty
+            't', readTableCounts
+            'c', readCharSet
+            'S', readSymbol
+            'g', readGroup
+            'R', readProduction
+            'I', readInitialStates
+            'D', readDFAState
+            'L', readLALRState
+        ]
+        |> Map.ofList
+
+
+    let readEGTRecords (EGTFile x) =
+        let nailIt = sresult {
+            let! x = wantByte <!> char
+            return! recordLookup.[x]
+        }
+        x
+        |> List.map (fun (Record x) -> x |> Seq.ofList |> eval nailIt)
+        |> collect
+
+    let eitherRecord fProperty fTableCounts fCharSet fSymbol fGroup fProduction fInitialStates fDFA fLALR =
+        function
+        | Property (x, y) -> fProperty (x, y)
+        | TableCounts x -> fTableCounts x
+        | Charset x -> fCharSet x
+        | Symbol x -> fSymbol x
+        | Group x -> fGroup x
+        | Production x -> fProduction x
+        | InitialStates x -> fInitialStates x
+        | DFAState x -> fDFA x
+        | LALRState x -> fLALR x
+
+    let makeGrammar records = trial {
+        let none _ = None
+        let choose f = records |> List.choose f
+        let exactlyOne x = x |> Seq.exactlyOne |> Trial.mapFailure (List.map (SeqError >> EGTReadError))
+        let properties = choose <| eitherRecord Some none none none none none none none none |> Map.ofList |> Properties
+        let! tableCounts = choose <| eitherRecord none Some none none none none none none none |> exactlyOne
+        let charSets = choose <| eitherRecord none none Some none none none none none none |> Indexable.collect
+        let symbols = choose <| eitherRecord none none none Some none none none none none |> Indexable.collect
+        let groups = choose <| eitherRecord none none none none Some none none none none |> Indexable.collect
+        let prods = choose <| eitherRecord none none none none none Some none none none |> Indexable.collect
+        let! initialStates = choose <| eitherRecord none none none none none none Some none none |> exactlyOne
+        let dfas = choose <| eitherRecord none none none none none none none Some none |> Indexable.collect
+        let lalrs = choose <| eitherRecord none none none none none none none none Some |> Indexable.collect
+        return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
     }

@@ -46,18 +46,16 @@ type SymbolType =
 
 module SymbolType =
 
-    open StateResult
-
     let ofUInt16 =
         function
-        | 0us -> returnM Nonterminal
-        | 1us -> returnM Terminal
-        | 2us -> returnM Noise
-        | 3us -> returnM EndOfFile
-        | 4us -> returnM GroupStart
-        | 5us -> returnM GroundEnd
+        | 0us -> ok Nonterminal
+        | 1us -> ok Terminal
+        | 2us -> ok Noise
+        | 3us -> ok EndOfFile
+        | 4us -> ok GroupStart
+        | 5us -> ok GroundEnd
         // 6 is deprecated
-        | 7us -> returnM Error
+        | 7us -> ok Error
         | x -> x |> InvalidSymbolType |> fail
 
 type Symbol =
@@ -115,22 +113,19 @@ type InitialStates =
 
 type DFAState =
     {
-        AcceptState: Indexed<Symbol> option
+        AcceptSymbol: Indexed<Symbol> option
         Edges: Set<Indexed<CharSet> * Indexed<DFAState>>
     }
 
-type LALRState =
-    {
-        Actions: Map<Indexed<Symbol>, LALRActionType>
-    }
+type LALRState = LALRState of Map<Indexed<Symbol>, LALRAction>
 
-and LALRActionType =
+and LALRAction =
     | Shift of Indexed<LALRState>
     | Reduce of Indexed<Production>
     | Goto of Indexed<LALRState>
     | Accept
 
-module LALRActionType =
+module LALRAction =
 
     let create index =
         function

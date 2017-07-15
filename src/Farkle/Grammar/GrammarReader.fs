@@ -27,6 +27,8 @@ module GrammarReader =
         | Property of string * string //= 112uy
         | TableCounts of TableCounts //= 116uy
 
+    let liftFlatten x = x <!> liftResult |> flatten
+
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
         let! entry = Seq.takeOne() |> mapFailure (SeqError >> EGTReadError)
         return!
@@ -105,7 +107,7 @@ module GrammarReader =
         let! stype =
             wantUInt16
             <!> SymbolType.ofUInt16
-            |> flatten
+            |> liftFlatten
         return
             {
                 Name = name
@@ -113,4 +115,99 @@ module GrammarReader =
             }
             |> Indexable.create index
             |> Symbol
+    }
+
+    let readGroup = sresult {
+        let! index = wantUInt16
+        let! name = wantString
+        let! contIndex = wantUInt16 <!> Indexed
+        let! startIndex = wantUInt16 <!> Indexed
+        let! endIndex = wantUInt16 <!> Indexed
+        let! advMode = wantUInt16 <!> AdvanceMode.create |> liftFlatten
+        let! endingMode = wantUInt16 <!> EndingMode.create |> liftFlatten
+        do! wantEmpty // Reserved field.
+        do! wantUInt16 |> ignore // Nesting count is ignored; we just read until the end.
+        let nestingFunc = wantUInt16 <!> Indexed
+        let! nesting = whileM (Seq.isEmpty() |> liftState) nestingFunc <!> set
+        return
+            {
+                Name = name
+                ContainerSymbol = contIndex
+                StartSymbol = startIndex
+                EndSymbol = endIndex
+                AdvanceMode = advMode
+                EndingMode = endingMode
+                Nesting = nesting
+            }
+            |> Indexable.create index
+            |> Group
+    }
+
+    let readProduction = sresult {
+        let! index = wantUInt16
+        let! nonTerminal = wantUInt16 <!> Indexed
+        do! wantEmpty // Reserved field.
+        let symbolFunc = wantUInt16 <!> Indexed
+        let! symbols = whileM (Seq.isEmpty() |> liftState) symbolFunc <!> List.ofSeq
+        return
+            {
+                Nonterminal = nonTerminal
+                Symbols = symbols
+            }
+            |> Indexable.create index
+            |> Production
+    }
+
+    let readInitialStates = sresult {
+        let! dfa = wantUInt16
+        let! lalr = wantUInt16
+        return
+            {
+                DFA = dfa
+                LALR = lalr
+            }
+            |> InitialStates
+    }
+
+    let readDFAState = sresult {
+        let! index = wantUInt16
+        let! isAccept = wantBoolean
+        let! acceptIndex = wantUInt16 <!> Indexed
+        let acceptState =
+            match isAccept with
+            | true -> Some acceptIndex
+            | false -> None
+        do! wantEmpty // Reserved field.
+        let readEdges = sresult {
+            let! charSet = wantUInt16 <!> Indexed
+            let! target = wantUInt16 <!> Indexed
+            do! wantEmpty // Reserved field.
+            return charSet, target
+        }
+        let! edges = whileM (Seq.isEmpty() |> liftState) readEdges <!> set
+        return
+            {
+                AcceptSymbol = acceptState
+                Edges = edges
+            }
+            |> Indexable.create index
+            |> DFAState
+    }
+
+    let readLALRState = sresult {
+        let! index = wantUInt16
+        do! wantEmpty // Reserved field.
+        let readActions = sresult {
+            let! symbolIndex = wantUInt16 <!> Indexed
+            let! actionId = wantUInt16
+            let! targetIndex = wantUInt16
+            do! wantEmpty // Reserved field.
+            let! action = LALRAction.create targetIndex actionId |> liftResult
+            return (symbolIndex, action)
+        }
+        return!
+            whileM (Seq.isEmpty() |> liftState) readActions <!> Map.ofSeq
+            <!> LALRState.LALRState
+            <!> Indexable.create index
+            <!> LALRState
     }

@@ -27,7 +27,7 @@ module Indexable =
     let create index x = {Index = index; Item = x}
     /// Sorts `Indexable` items based on their index, and removes it.
     /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy index |> Seq.map value
+    let collect x = x |> List.ofSeq |> List.sortBy index |> List.map value
 
 /// A type-safe reference to a value based on its index.
 type Indexed<'a, 'TIndex> when 'TIndex: comparison = Indexed of 'TIndex

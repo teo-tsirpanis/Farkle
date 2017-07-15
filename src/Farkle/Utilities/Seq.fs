@@ -55,15 +55,14 @@ module Seq =
     /// It fails with an `EOF` if the sequence is empty.
     let peekOne() = get >>= (Seq.tryHead >> failIfNone EOF >> liftResult)
 
-    /// If the sequence in the state has one element, it is returned.
+    /// If the sequence in the state has only one element, it is returned.
     /// Otherwise, `ExpectedSingle` is returned.
-    /// Think of it as a functional monadic equivalent of `System.Linq.Enumerable.Single`.
-    let single() = sresult {
-        let! len = length() |> liftState
+    let exactlyOne x = trial {
+        let len = x |> Seq.length
         if len = 1 then
-            return! peekOne()
+            return Seq.head x
         else
-            return! len |> ExpectedSingle |> fail
+            return! len |> ExpectedSingle |> Trial.fail
     }
 
     /// Takes the first element of the sequence in the state and leaves the rest of them.

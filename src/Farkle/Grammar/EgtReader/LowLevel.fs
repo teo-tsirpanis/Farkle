@@ -12,14 +12,14 @@ open Farkle.Monads
 open System
 open System.Text
 
-type Entry =
+type internal Entry =
     | Empty
     | Byte of byte
     | Boolean of bool
     | UInt16 of uint16
     | String of string
 
-module private LowLevel =
+module internal LowLevel =
 
     open StateResult
 

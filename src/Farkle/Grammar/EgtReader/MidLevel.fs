@@ -10,9 +10,9 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
-type Record = internal Record of Entry list
+type internal Record = Record of Entry list
 
-type EGTFile = internal EGTFile of Record list
+type internal EGTFile = EGTFile of Record list
 
 module internal MidLevel =
 
@@ -45,15 +45,6 @@ module internal MidLevel =
         | _ -> do! fail UnknownFile
         return! whileM (Seq.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
-
-    let readEGTFromFile path = trial {
-        if path |> File.Exists |> not then
-            do! path |> FileNotExist |> Trial.fail
-        use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
-        return! stream |> Seq.ofByteStream |> eval readEGT
-    }
-
-    let readEGTFromBytes = eval readEGT
 
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
         let! entry = Seq.takeOne() |> mapFailure SeqError

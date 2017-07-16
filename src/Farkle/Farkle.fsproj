@@ -1,7 +1,7 @@
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Farkle</AssemblyName>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />

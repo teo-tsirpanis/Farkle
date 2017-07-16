@@ -1,4 +1,4 @@
-framework: net462
+framework: net462, netstandard1.6
 source https://nuget.org/api/v2
 
 nuget Chessie
@@ -15,9 +15,8 @@ group Build
 
 group Test
 
-  framework: net462
+  framework: netcoreapp1.1
 
   source https://nuget.org/api/v2
   
   nuget Expecto
-  nuget Expecto.FsCheck

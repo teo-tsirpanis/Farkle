@@ -4,7 +4,11 @@
     <TargetFramework>net462</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="GrammarTests.fs" />
     <Compile Include="Program.fs" />
+    <Content Include="resources\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

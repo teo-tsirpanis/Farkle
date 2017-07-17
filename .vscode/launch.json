@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/Farkle.Tests.dll",
+            "args": [],
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Launch (console, no build)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/Farkle.Tests.dll",
+            "args": [],
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

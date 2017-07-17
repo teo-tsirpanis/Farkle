@@ -2,6 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Farkle</AssemblyName>
     <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />

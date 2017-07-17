@@ -1,7 +1,5 @@
 @echo off
 
-attrib +R .paket\Paket.Restore.targets
-
 .paket\paket.bootstrapper.exe
 if errorlevel 1 (
   exit /b %errorlevel%

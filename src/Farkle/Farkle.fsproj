@@ -5,6 +5,10 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\LazyList.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/LazyList.fs</Link>
+    </Compile>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities\Common.fs" />
     <Compile Include="Utilities\Monads.fs" />

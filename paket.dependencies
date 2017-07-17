@@ -4,6 +4,8 @@ source https://nuget.org/api/v2
 nuget Chessie
 nuget FSharp.Core
 
+github fsprojects/FSharpx.Collections /src/FSharpx.Collections/LazyList.fs
+
 group Build
   framework: net462
   source https://nuget.org/api/v2

@@ -12,7 +12,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities\Common.fs" />
     <Compile Include="Utilities\Monads.fs" />
-    <Compile Include="Utilities\Seq.fs" />
+    <Compile Include="Utilities\List.fs" />
     <Compile Include="Grammar\GrammarTypes.fs" />
     <Compile Include="Grammar\EgtReader\LowLevel.fs" />
     <Compile Include="Grammar\EgtReader\MidLevel.fs" />

@@ -43,11 +43,11 @@ module internal MidLevel =
         | CGTHeader -> do! fail ReadACGTFile
         | EGTHeader -> do ()
         | _ -> do! fail UnknownFile
-        return! whileM (Seq.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
+        return! whileM (List.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
-        let! entry = Seq.takeOne() |> mapFailure SeqError
+        let! entry = List.takeOne() |> mapFailure ListError
         return!
             match entry with
             | Empty -> fEmpty ()

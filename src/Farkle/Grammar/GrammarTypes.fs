@@ -24,7 +24,7 @@ type TableCounts =
 /// What can go wrong with reading an EGT file.
 type EGTReadError =
     /// A [sequence error](Farkle.SeqError) did happen.
-    | SeqError of SeqError
+    | ListError of ListError
     /// Boolean values should only be `0` or `1`.
     /// If they are not, thet it's undefined by the documentation.
     /// But we will call it an error.
@@ -50,7 +50,7 @@ type EGTReadError =
     | FileNotExist of string
 
 type GrammarError =
-    | SeqError of SeqError
+    | ListError of ListError
     | EGTReadError of EGTReadError
     | InvalidSymbolType of uint16
     | InvalidAdvanceMode of uint16

@@ -67,7 +67,7 @@ module internal HighLevel =
             return RangeSet.create start finish
         }
         return!
-            whileM (Seq.isEmpty() |> liftState) readCharSet
+            whileM (List.isEmpty() |> liftState) readCharSet
             <!> RangeSet.concat
             <!> Indexable.create index
             <!> Charset
@@ -100,7 +100,7 @@ module internal HighLevel =
         do! wantEmpty // Reserved field.
         do! wantUInt16 |> ignore // Nesting count is ignored; we just read until the end.
         let nestingFunc = wantUInt16 <!> Indexed
-        let! nesting = whileM (Seq.isEmpty() |> liftState) nestingFunc <!> set
+        let! nesting = whileM (List.isEmpty() |> liftState) nestingFunc <!> set
         return
             {
                 Name = name
@@ -120,7 +120,7 @@ module internal HighLevel =
         let! nonTerminal = wantUInt16 <!> Indexed
         do! wantEmpty // Reserved field.
         let symbolFunc = wantUInt16 <!> Indexed
-        let! symbols = whileM (Seq.isEmpty() |> liftState) symbolFunc <!> List.ofSeq
+        let! symbols = whileM (List.isEmpty() |> liftState) symbolFunc <!> List.ofSeq
         return
             {
                 Nonterminal = nonTerminal
@@ -156,7 +156,7 @@ module internal HighLevel =
             do! wantEmpty // Reserved field.
             return charSet, target
         }
-        let! edges = whileM (Seq.isEmpty() |> liftState) readEdges <!> set
+        let! edges = whileM (List.isEmpty() |> liftState) readEdges <!> set
         return
             {
                 AcceptSymbol = acceptState
@@ -178,7 +178,7 @@ module internal HighLevel =
             return (symbolIndex, action)
         }
         return!
-            whileM (Seq.isEmpty() |> liftState) readActions <!> Map.ofSeq
+            whileM (List.isEmpty() |> liftState) readActions <!> Map.ofSeq
             <!> LALRState.LALRState
             <!> Indexable.create index
             <!> LALRState
@@ -205,7 +205,7 @@ module internal HighLevel =
             return! recordLookup.[x]
         }
         x
-        |> List.map (fun (Record x) -> x |> Seq.ofList |> eval nailIt)
+        |> List.map (fun (Record x) -> eval nailIt x)
         |> collect
 
     let eitherRecord fProperty fTableCounts fCharSet fSymbol fGroup fProduction fInitialStates fDFA fLALR =
@@ -223,7 +223,7 @@ module internal HighLevel =
     let makeGrammar records = trial {
         let none _ = None
         let choose f = records |> List.choose f
-        let exactlyOne x = x |> Seq.exactlyOne |> Trial.mapFailure (List.map SeqError)
+        let exactlyOne x = x |> List.exactlyOne |> Trial.mapFailure (List.map ListError)
         let properties = choose <| eitherRecord Some none none none none none none none none |> Map.ofList |> Properties
         let! tableCounts = choose <| eitherRecord none Some none none none none none none none |> exactlyOne
         let charSets = choose <| eitherRecord none none Some none none none none none none |> Indexable.collect

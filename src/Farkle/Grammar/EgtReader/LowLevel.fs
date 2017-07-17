@@ -23,9 +23,9 @@ module internal LowLevel =
 
     open StateResult
 
-    let takeByte = Seq.takeOne() |> mapFailure EGTReadError.SeqError <!> ((*) 1uy)
+    let takeByte = List.takeOne() |> mapFailure EGTReadError.ListError <!> ((*) 1uy)
 
-    let takeBytes count = count |> Seq.take |> mapFailure EGTReadError.SeqError <!> (Seq.map ((*) 1uy))
+    let takeBytes count = count |> List.take |> mapFailure EGTReadError.ListError <!> (Seq.map ((*) 1uy))
 
     let ensureLittleEndian x =
         if BitConverter.IsLittleEndian then
@@ -41,7 +41,7 @@ module internal LowLevel =
     let takeString = sresult {
         let! len =
             get
-            <!> Seq.pairs
+            <!> List.pairs
             <!> Seq.tryFindIndex (fun (x, y) -> x = 0uy && y = 0uy)
             <!> failIfNone UnterminatedString
             <!> liftResult

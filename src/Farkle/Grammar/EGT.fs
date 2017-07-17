@@ -26,7 +26,9 @@ module EGT =
     // PTX4PrQGiFweCaMzZNRmEQUVoyywfWC0MO1LWhn8XckU4UJAYyXrXA==
     // -----END RSA PRIVATE KEY-----
     let fromBytes x =
-        StateResult.eval MidLevel.readEGT x
+        x
+        |> List.ofSeq
+        |> StateResult.eval MidLevel.readEGT
         |> mapFailure (List.map EGTReadError)
         >>= HighLevel.readEGTRecords
         >>= HighLevel.makeGrammar
@@ -50,7 +52,7 @@ module EGT =
     // a9C7nh45H5XJ4s8wT+tKthdcKr5RTTSpkpUZ0ydxRBPagphcYCvd5N1NPUbL62aDXpNgyZA5lIK9krB7
     // MGVOvGQ7LwjqAjZ1Ig+wUcKGU4jebTiU/wJmwDzV
     // -----END RSA PRIVATE KEY-----
-    let fromStream x = x |> Seq.ofByteStream |> fromBytes
+    let fromStream x = x |> List.ofByteStream |> fromBytes
 
     /// Reads an EGT file and returns a `Grammar`.
     // -----BEGIN RSA PRIVATE KEY-----

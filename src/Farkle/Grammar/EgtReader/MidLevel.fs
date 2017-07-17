@@ -37,15 +37,13 @@ module internal MidLevel =
     let readEGT = sresult {
         let! header =
             takeBytes (Encoding.Unicode.GetByteCount EGTHeader)
-            <!> Array.ofSeq
+            <!> Array.ofList
             <!> Encoding.Unicode.GetString
-        match header with
-        | CGTHeader -> do! fail ReadACGTFile
-        | EGTHeader -> do ()
-        | _ -> do! fail UnknownFile
         let! terminator = takeUInt16
-        if terminator <> 0us then
-            do! fail UnknownFile
+        match (header, terminator) with
+        | CGTHeader, 0us -> do! fail ReadACGTFile
+        | EGTHeader, 0us -> do ()
+        | _ -> do! fail UnknownFile
         return! whileM (List.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 

@@ -30,9 +30,9 @@ module internal MidLevel =
     }
 
     [<Literal>]
-    let CGTHeader = "GOLD Parser Tables/1.0\0"
+    let CGTHeader = "GOLD Parser Tables/v1.0"
     [<Literal>]
-    let EGTHeader = "GOLD Parser Tables/5.0\0"
+    let EGTHeader = "GOLD Parser Tables/v5.0"
 
     let readEGT = sresult {
         let! header =
@@ -43,6 +43,9 @@ module internal MidLevel =
         | CGTHeader -> do! fail ReadACGTFile
         | EGTHeader -> do ()
         | _ -> do! fail UnknownFile
+        let! terminator = takeUInt16
+        if terminator <> 0us then
+            do! fail UnknownFile
         return! whileM (List.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 

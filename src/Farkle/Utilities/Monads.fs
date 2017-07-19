@@ -7,12 +7,14 @@ namespace Farkle.Monads
 
 open Chessie.ErrorHandling
 open System
+open System.Diagnostics
 
 /// The well-known State monad.
 type State<'s, 't> = State of ('s -> ('t * 's))
 
 /// [omit]
 /// It doesn't need documentation. 😜
+[<DebuggerNonUserCode>]
 module State =
 
     let inline run (State x) = x
@@ -33,6 +35,7 @@ module State =
     /// Replace the state inside the monad.
     let inline put x = State (fun _ -> ((), x))
 
+    [<DebuggerNonUserCode>]
     type StateBuilder() =
         member __.Zero() = returnM ()
         member __.Bind(m, f) = bind f m
@@ -75,6 +78,7 @@ type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Re
 
 /// [omit]
 /// It doesn't need documentation. 😜
+[<DebuggerNonUserCode>]
 module StateResult =
 
     let inline run (StateResult m) = State.run m
@@ -111,7 +115,8 @@ module StateResult =
     let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠
 
     let inline put x = StateResult(State(fun s0 -> Ok((), []), x)) // Thank you F#'s type restrictions. 😠
-
+    
+    [<DebuggerNonUserCode>]
     type StateResultBuilder() =
         member __.Zero() = returnM ()
         member __.Bind(m, f) = bind f m

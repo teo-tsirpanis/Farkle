@@ -44,7 +44,7 @@ module internal MidLevel =
         | CGTHeader, 0us -> do! fail ReadACGTFile
         | EGTHeader, 0us -> do ()
         | _ -> do! fail UnknownFile
-        return! whileM (List.isEmpty() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
+        return! whileM (List.hasItems() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
     }
 
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {

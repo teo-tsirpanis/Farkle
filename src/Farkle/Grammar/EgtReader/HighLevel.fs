@@ -67,7 +67,7 @@ module internal HighLevel =
             return RangeSet.create start finish
         }
         return!
-            whileM (List.isEmpty() |> liftState) readCharSet
+            whileM (List.hasItems() |> liftState) readCharSet
             <!> RangeSet.concat
             <!> Indexable.create index
             <!> Charset
@@ -100,7 +100,7 @@ module internal HighLevel =
         do! wantEmpty // Reserved field.
         do! wantUInt16 |> ignore // Nesting count is ignored; we just read until the end.
         let nestingFunc = wantUInt16 <!> Indexed
-        let! nesting = whileM (List.isEmpty() |> liftState) nestingFunc <!> set
+        let! nesting = whileM (List.hasItems() |> liftState) nestingFunc <!> set
         return
             {
                 Name = name
@@ -120,7 +120,7 @@ module internal HighLevel =
         let! nonTerminal = wantUInt16 <!> Indexed
         do! wantEmpty // Reserved field.
         let symbolFunc = wantUInt16 <!> Indexed
-        let! symbols = whileM (List.isEmpty() |> liftState) symbolFunc <!> List.ofSeq
+        let! symbols = whileM (List.hasItems() |> liftState) symbolFunc <!> List.ofSeq
         return
             {
                 Nonterminal = nonTerminal
@@ -156,7 +156,7 @@ module internal HighLevel =
             do! wantEmpty // Reserved field.
             return charSet, target
         }
-        let! edges = whileM (List.isEmpty() |> liftState) readEdges <!> set
+        let! edges = whileM (List.hasItems() |> liftState) readEdges <!> set
         return
             {
                 AcceptSymbol = acceptState
@@ -178,7 +178,7 @@ module internal HighLevel =
             return (symbolIndex, action)
         }
         return!
-            whileM (List.isEmpty() |> liftState) readActions <!> Map.ofSeq
+            whileM (List.hasItems() |> liftState) readActions <!> Map.ofSeq
             <!> LALRState.LALRState
             <!> Indexable.create index
             <!> LALRState
@@ -186,7 +186,7 @@ module internal HighLevel =
 
     let recordLookup =
         [
-            'P', readProperty
+            'p', readProperty
             't', readTableCounts
             'c', readCharSet
             'S', readSymbol

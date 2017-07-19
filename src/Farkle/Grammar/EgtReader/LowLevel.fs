@@ -34,7 +34,7 @@ module internal LowLevel =
             ((x &&& 0xffus) <<< 8) ||| ((x >>> 8) &&& 0xffus)
 
     let takeUInt16 = sresult {
-        let! bytes = takeBytes 2 <!> Array.ofSeq
+        let! bytes = takeBytes 2 <!> Array.ofList
         return BitConverter.ToUInt16(bytes, 0) |> ensureLittleEndian
     }
 

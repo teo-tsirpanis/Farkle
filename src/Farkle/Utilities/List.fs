@@ -48,6 +48,10 @@ module List =
     /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
     let isEmpty() = State.get |> State.map List.isEmpty
 
+    /// Checks whether the list has any item.
+    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
+    let hasItems() = isEmpty() |> State.map not
+
     /// Checks the length of the list in the state.
     /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
     let length() = State.get |> State.map List.length

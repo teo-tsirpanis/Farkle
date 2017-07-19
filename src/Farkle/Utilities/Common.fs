@@ -63,3 +63,34 @@ module RangeSet =
     let concat x = x |> Seq.map (fun (RangeSet x) -> x) |> Set.unionMany |> RangeSet
     /// Checks if a `RangeSet` contains an item.
     let contains (RangeSet s) x = s |> Set.exists (fun (a, b) -> x >= a && x <= b)
+
+/// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
+type Position = private Position of (uint32 * uint32)
+
+/// Functions to work with the `Position` type.
+module Position =
+
+    open LanguagePrimitives
+
+    /// Returns the line of a `Position.
+    let line (Position(x, _)) = x
+
+    /// Returns the column of a `Position`.
+    let column (Position(_, x)) = x
+
+    /// Returns a `Position` that points at `(1, 1)`.
+    let initial = (GenericOne, GenericOne) |> Position
+
+    /// Creates a `Position` at the specified coordinates.
+    /// Returns `None` if a coordinate was zero.
+    let create line col =
+        if line <= GenericZero || col <= GenericZero then
+            None
+        else
+            (line, col) |> Position |> Some
+    
+    /// Increases the column index of a `Position` by one.
+    let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
+
+    /// Increades the line index of a `Position` by one and resets the collumn to one.
+    let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position

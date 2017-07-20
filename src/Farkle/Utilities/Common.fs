@@ -124,3 +124,6 @@ module Stack =
         match x with
         | x :: _ -> Some x
         | [] -> None
+
+    /// A lens for the `Stack`'s underlying list.
+    let Stack_ = (fun (Stack x) -> x), (fun x (Stack _) -> x |> Stack)

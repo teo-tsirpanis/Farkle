@@ -11,9 +11,9 @@ open Chessie.ErrorHandling
 
 /// Anything that can be indexed.
 /// The type is just a record with a value and an index.
-type Indexable<'a, 'TIndex> when 'TIndex: comparison =
+type Indexable<'a> =
     {
-        Index: 'TIndex
+        Index: uint16
         Item: 'a
     }
 
@@ -30,19 +30,23 @@ module Indexable =
     let collect x = x |> List.ofSeq |> List.sortBy index |> List.map value
 
 /// A type-safe reference to a value based on its index.
-type Indexed<'a, 'TIndex> when 'TIndex: comparison = Indexed of 'TIndex
+type Indexed<'a> = Indexed of uint16
 
 /// Functions for working with `Indexed<'a>`.
 module Indexed =
     /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
-    /// In case the index is out of range, the function fails.
-    let get f (i: Indexed<'a, 'b>) : Result<'a,'b> =
+    /// In case the index is not found, the function fails.
+    let get f (i: Indexed<'a>) : Result<'a, uint16> =
         let (Indexed i) = i
         match f i with
         | Some x -> ok x
         | None -> fail i
 
-[<NoEquality; NoComparison>]
+    /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
+    let getfromList list i =
+        let fget i = i |> int |> List.tryItem <| list
+        get fget i
+
 /// A simple and efficient set of items based on ranges.
 /// Instead of storing _all_ the elements of a set, only the first and last are.
 /// This closely follows the paradigm of GOLD Parser 5 sets.

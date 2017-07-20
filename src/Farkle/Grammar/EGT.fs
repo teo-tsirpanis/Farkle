@@ -30,7 +30,6 @@ module EGT =
         |> List.ofSeq
         |> StateResult.eval MidLevel.readEGT
         |> mapFailure (List.map EGTReadError)
-        >>= HighLevel.readEGTRecords
         >>= HighLevel.makeGrammar
 
     /// Reads a stream that represents an EGT file and returns a `Grammar`.

@@ -7,9 +7,6 @@ namespace Farkle.Grammar
 
 open Chessie.ErrorHandling
 open Farkle
-open Farkle.Monads
-
-type Indexed<'a> = Indexed<'a, uint16>
 
 type TableCounts =
     {
@@ -57,7 +54,7 @@ type GrammarError =
     | InvalidEndingMode of uint16
     | InvalidLALRActionType of uint16
     | InvalidTableCounts of expected: TableCounts * actual: TableCounts
-    | IndexOutOfRange of uint16
+    | IndexNotFound of uint16
 
 type Properties = Properties of Map<string, string>
 
@@ -120,9 +117,9 @@ module EndingMode =
 type Group =
     {
         Name: string
-        ContainerSymbol: Indexed<Symbol>
-        StartSymbol: Indexed<Symbol>
-        EndSymbol: Indexed<Symbol>
+        ContainerSymbol: Symbol
+        StartSymbol: Symbol
+        EndSymbol: Symbol
         AdvanceMode: AdvanceMode
         EndingMode: EndingMode
         Nesting: Set<Indexed<Group>>
@@ -130,8 +127,8 @@ type Group =
 
 type Production =
     {
-        Nonterminal: Indexed<Symbol>
-        Symbols: Indexed<Symbol> list
+        Nonterminal: Symbol
+        Symbols: Symbol list
     }
 
 type InitialStates =
@@ -142,24 +139,24 @@ type InitialStates =
 
 type DFAState =
     {
-        AcceptSymbol: Indexed<Symbol> option
-        Edges: Set<Indexed<CharSet> * Indexed<DFAState>>
+        AcceptSymbol: Symbol option
+        Edges: Set<CharSet * Indexed<DFAState>>
     }
 
-type LALRState = LALRState of Map<Indexed<Symbol>, LALRAction>
+type LALRState = LALRState of Map<Symbol, LALRAction>
 
 and LALRAction =
     | Shift of Indexed<LALRState>
-    | Reduce of Indexed<Production>
+    | Reduce of Production
     | Goto of Indexed<LALRState>
     | Accept
 
 module LALRAction =
 
-    let create index =
+    let create (fProds: Indexed<Production> -> Result<Production, GrammarError>) index =
         function
         | 1us -> index |> Indexed |> Shift |> ok
-        | 2us -> index |> Indexed |> Reduce |> ok
+        | 2us -> index |> Indexed |> fProds |> lift Reduce
         | 3us -> index |> Indexed |> Goto |> ok
         | 4us -> Accept |> ok
         | x -> x |> InvalidLALRActionType |> fail

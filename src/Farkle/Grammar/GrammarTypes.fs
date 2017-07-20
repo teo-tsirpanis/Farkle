@@ -66,7 +66,7 @@ type SymbolType =
     | Noise
     | EndOfFile
     | GroupStart
-    | GroundEnd
+    | GroupEnd
     // 6 is deprecated
     | Error
 
@@ -79,7 +79,7 @@ module SymbolType =
         | 2us -> ok Noise
         | 3us -> ok EndOfFile
         | 4us -> ok GroupStart
-        | 5us -> ok GroundEnd
+        | 5us -> ok GroupEnd
         // 6 is deprecated
         | 7us -> ok Error
         | x -> x |> InvalidSymbolType |> fail

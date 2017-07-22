@@ -205,6 +205,8 @@ module Grammar =
     let lalr {_LALRStates = x} = x
     let dfa {_DFAStates = x} = x
 
+    let firstSymbolOfType t x = x |> symbols |> List.tryFind (fun {Kind = x} -> x = t)
+
     let create properties symbols charSets prods initialStates dfas lalrs groups _counts =
         let g =
             {

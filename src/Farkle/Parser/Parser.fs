@@ -40,3 +40,9 @@ module Parser =
             return! repeatM consumeSingle n |> ignore
         | _ -> do ()
     }
+
+    type DFAParserState = {}
+
+    let lookAheadDFA pos grammar x =
+        match x with
+        | [] -> {Data = TokenData ""; Position = pos; Symbol = grammar |> Grammar.firstSymbolOfType Error |> Option.v}

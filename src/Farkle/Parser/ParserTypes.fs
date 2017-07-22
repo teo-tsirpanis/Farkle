@@ -10,6 +10,8 @@ open Farkle
 open Farkle.Grammar
 
 type TokenData = TokenData of string
+    with
+        static member TokenData_ :Lens<_, _> = (fun (TokenData x) -> x), (fun v _ -> TokenData v)
 
 type Token =
     {
@@ -17,6 +19,10 @@ type Token =
         Position: Position
         Data: TokenData
     }
+    with
+        static member Symbol_ :Lens<_, _> = (fun x -> x.Symbol), (fun v x -> {x with Symbol = v})
+        static member Position_ :Lens<_, _> = (fun x -> x.Position), (fun v x -> {x with Position = v})
+        static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
 
 type Reduction =
     {

@@ -5,6 +5,7 @@
 
 namespace Farkle.Grammar
 
+open Aether
 open Chessie.ErrorHandling
 open Farkle
 
@@ -175,22 +176,14 @@ type Grammar =
         }
     with
         member x.Properties = x._Properties
-        static member Properties_ = (fun x -> x._Properties), (fun v x -> {x with _Properties = v})
         member x.CharSets = x._CharSets
-        static member CharSets_ = (fun x -> x._CharSets), (fun v x -> {x with _CharSets = v})
         member x.Symbols = x._Symbols
-        static member Symbols_ = (fun x -> x._Symbols), (fun v x -> {x with _Symbols = v})
         member x.Groups = x._Groups
-        static member Groups_ = (fun x -> x._Groups), (fun v x -> {x with _Groups = v})
         member x.Productions = x._Productions
-        static member Productions_ = (fun x -> x._Productions), (fun v x -> {x with _Productions = v})
         member x.InitialStates = x._InitialStates
-        static member InitialStates_ = (fun x -> x._InitialStates), (fun v x -> {x with _InitialStates = v})
         member x.LALRStates = x._LALRStates
-        static member LALRStates_ = (fun x -> x._LALRStates), (fun v x -> {x with _LALRStates = v})
         member x.DFAStates = x._DFAStates
-        static member DFAStates_ = (fun x -> x._DFAStates), (fun v x -> {x with _DFAStates = v})
-
+        
 module Grammar =
 
     let counts (x: Grammar) =
@@ -202,6 +195,15 @@ module Grammar =
             LALRTables = x.LALRStates.Length |> uint16
             GroupTables = x.Groups.Length |> uint16
         }
+    
+    let properties {_Properties = x} = x
+    let charSets {_CharSets = x} = x
+    let symbols {_Symbols = x} = x
+    let groups {_Groups = x} = x
+    let productions {_Productions = x} = x
+    let initialStates {_InitialStates = x} = x
+    let lalr {_LALRStates = x} = x
+    let dfa {_DFAStates = x} = x
 
     let create properties symbols charSets prods initialStates dfas lalrs groups _counts =
         let g =

@@ -565,8 +565,8 @@ NUGET
       System.Threading (>= 4.3) - restriction: || (&& (== net462) (< net45)) (&& (== net462) (>= dnxcore50)) (== netstandard1.6)
       System.Xml.ReaderWriter (>= 4.3) - restriction: || (&& (== net462) (< net45)) (&& (== net462) (>= dnxcore50)) (== netstandard1.6)
 GITHUB
-  remote: fsprojects/FSharpx.Collections
-    src/FSharpx.Collections/LazyList.fs (311c74433fd616611554f38f182bf860c24b91ee)
+  remote: xyncro/aether
+    src/Aether/Aether.fs (dd5f93879216c4cea114f63473fa949bbe2144c4)
 GROUP Build
 RESTRICTION: == net462
 NUGET

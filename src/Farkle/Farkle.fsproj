@@ -18,6 +18,8 @@
     <Compile Include="Grammar\EgtReader\MidLevel.fs" />
     <Compile Include="Grammar\EgtReader\HighLevel.fs" />
     <Compile Include="Grammar\EGT.fs" />
+    <Compile Include="Parser/ParserTypes.fs" />
+    <Compile Include="Parser/Parser.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

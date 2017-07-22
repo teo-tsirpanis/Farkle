@@ -1,0 +1,3 @@
+[submodule "reference/gold-parser-lazarus"]
+	path = reference/gold-parser-lazarus
+	url = https://gitlab.com/teo-tsirpanis-718/gold-parser-lazarus.git

@@ -9,6 +9,18 @@ module Farkle.Common
 
 open Chessie.ErrorHandling
 
+[<AutoOpen>]
+/// Some constants.
+module Constants =
+
+    [<Literal>]
+    /// The line feed character.
+    let LF = '\010'
+
+    [<Literal>]
+    /// The carriage return character.
+    let CR = '\013'
+
 /// Anything that can be indexed.
 /// The type is just a record with a value and an index.
 type Indexable<'a> =
@@ -98,32 +110,3 @@ module Position =
 
     /// Increades the line index of a `Position` by one and resets the collumn to one.
     let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
-
-/// A stack implemented using the ubiquitous F# list.
-type Stack<'a> = Stack of 'a list
-
-/// Functions for working with `Stack`s.
-module Stack =
-
-    /// An empty stack.
-    let empty = Stack []
-
-    /// Pushes an item to the front of a `Stack`.
-    let inline push (Stack xs) x = x :: xs |> Stack
-
-    /// Returns a new `Stack` with its first item removed.
-    /// If the stack is empty, nothing happens.
-    let inline pop (Stack x) =
-        match x with
-        | x :: xs -> Stack xs
-        | [] -> empty
-
-    /// Returns the first item of a `Stack`.
-    /// If there are no items, `None` is returned.
-    let inline tryPeek (Stack x) =
-        match x with
-        | x :: _ -> Some x
-        | [] -> None
-
-    /// A lens for the `Stack`'s underlying list.
-    let Stack_ = (fun (Stack x) -> x), (fun x (Stack _) -> x |> Stack)

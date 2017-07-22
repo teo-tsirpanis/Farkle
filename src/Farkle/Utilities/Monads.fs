@@ -72,6 +72,51 @@ module State =
 
     let state = StateBuilder()
 
+    // "I will not use imperative code in F# again 😭"
+    // |> Seq.replicate 100
+    // |> Seq.iter (printfn"%s")
+    let repeatM f times = state {
+        let buf = new ResizeArray<_>(times + 0)
+        for i = 0 to times - 1 do
+            let! x = f
+            buf.Add x
+        return buf :> seq<_>
+    }
+
+    // "I will not use imperative code in F# again 😭"
+    // |> Seq.replicate 100
+    // |> Seq.iter (printfn"%s")
+    let whileM f action =
+        let buf = ResizeArray<_>()
+        let rec impl() = state {
+            let! x = f
+            if x then
+                let! y = action
+                buf.Add y
+                return! impl()
+            else
+                return buf :> seq<_>
+        }
+        impl()
+
+    open Aether
+
+    let inline getOptic optic = state {
+        let! x = get
+        return Optic.get optic x
+    }
+
+    let inline setOptic optic = state {
+        let! x = get
+        return! Optic.set optic x |> put
+    }
+
+    let inline mapOptic optic f = state {
+        let! x = get
+        let s: 'c -> 'c = Optic.map optic f
+        return! s x |> put
+    }
+
 /// A combination of the `Result` and `State` monads.
 /// F# has no monad transformers, so it was manually done.
 type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
@@ -184,4 +229,22 @@ module StateResult =
         let! x = x
         let! x = x
         return x
+    }
+
+    open Aether
+
+    let inline getOptic optic = sresult {
+        let! x = get
+        return Optic.get optic x
+    }
+
+    let inline setOptic optic = sresult {
+        let! x = get
+        return! Optic.set optic x |> put
+    }
+
+    let inline mapOptic optic f = sresult {
+        let! x = get
+        let s: 'c -> 'c = Optic.map optic f
+        return! s x |> put
     }

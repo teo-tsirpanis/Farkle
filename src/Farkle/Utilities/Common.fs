@@ -48,11 +48,9 @@ type Indexed<'a> = Indexed of uint16
 module Indexed =
     /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
     /// In case the index is not found, the function fails.
-    let get f (i: Indexed<'a>) : Result<'a, uint16> =
+    let get f (i: Indexed<'a>) =
         let (Indexed i) = i
-        match f i with
-        | Some x -> ok x
-        | None -> fail i
+        f i
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
     let getfromList list i =
@@ -110,3 +108,23 @@ module Position =
 
     /// Increades the line index of a `Position` by one and resets the collumn to one.
     let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
+
+/// Some more utilities to work with lists.
+module List =
+
+    /// Builds a character list from the given string.
+    let ofString (x: string) =
+        x.ToCharArray()
+        |> List.ofArray
+    
+    /// Creates a string from the given character list.
+    let toString = Array.ofList >> System.String
+
+/// Some utilities to work with strings
+module String =
+
+    /// See `List.toString`.
+    let ofList = List.toString
+
+    /// See `List.ofString`.
+    let toList = List.ofString

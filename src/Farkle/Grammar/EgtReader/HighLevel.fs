@@ -19,7 +19,7 @@ module internal HighLevel =
 
     let liftFlatten x = x <!> liftResult |> flatten
 
-    let getIndexedfromList x = Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
+    let getIndexedfromList x = Indexed.getfromList x >> failIfNone IndexNotFound >> liftResult
 
     let readProperty = sresult {
         do! wantUInt16 |> ignore /// We do not store based on index

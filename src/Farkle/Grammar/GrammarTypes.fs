@@ -55,7 +55,7 @@ type GrammarError =
     | InvalidEndingMode of uint16
     | InvalidLALRActionType of uint16
     | InvalidTableCounts of expected: TableCounts * actual: TableCounts
-    | IndexNotFound of uint16
+    | IndexNotFound
 
 type Properties = Properties of Map<string, string>
 
@@ -90,6 +90,9 @@ type Symbol =
         Name: string
         Kind: SymbolType
     }
+    with
+        static member Error = {Name = "Error"; Kind = Error}
+        static member EOF = {Name = "EOF"; Kind = EndOfFile}
 
 type AdvanceMode =
     | Token
@@ -143,6 +146,10 @@ type DFAState =
         AcceptSymbol: Symbol option
         Edges: Set<CharSet * Indexed<DFAState>>
     }
+
+module DFAState =
+    let acceptSymbol {AcceptSymbol = x} = x
+    let edges {Edges = x} = x
 
 type LALRState = LALRState of Map<Symbol, LALRAction>
 
@@ -204,8 +211,6 @@ module Grammar =
     let initialStates {_InitialStates = x} = x
     let lalr {_LALRStates = x} = x
     let dfa {_DFAStates = x} = x
-
-    let firstSymbolOfType t x = x |> symbols |> List.tryFind (fun {Kind = x} -> x = t)
 
     let create properties symbols charSets prods initialStates dfas lalrs groups _counts =
         let g =

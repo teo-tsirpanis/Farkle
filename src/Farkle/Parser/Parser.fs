@@ -7,6 +7,7 @@ namespace Farkle.Parser
 
 open Aether
 open Aether.Operators
+open Chessie.ErrorHandling
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -18,6 +19,12 @@ module Parser =
     let lookAhead n =
         getOptic ParserState.InputStream_
         <!> List.tryItem n
+
+    let getLookAheadBuffer n x =
+        let x = x ^. ParserState.InputStream_ |> StateResult.eval (List.take (int n))
+        match x with
+        | Ok (x, _) -> x |> String.ofList
+        | Bad _ -> ""
 
     let consumeBuffer n = state {
         let! len = getOptic ParserState.InputStream_ <!> eval (List.length())
@@ -41,8 +48,27 @@ module Parser =
         | _ -> do ()
     }
 
-    type DFAParserState = {}
-
-    let lookAheadDFA pos grammar x =
-        match x with
-        | [] -> {Data = TokenData ""; Position = pos; Symbol = grammar |> Grammar.firstSymbolOfType Error |> Option.v}
+    let lookAheadDFA state x =
+        let rec impl state currPos currState lastAccept lastAccPos x =
+            let newToken = state ^. ParserState.CurrentPosition_ |> Token.Create
+            let newPos = currPos + 1u
+            match x with
+            | [] -> newToken Symbol.EOF ""
+            | x :: xs ->
+                let dfaStates = state ^. ParserState.Grammar_ |> Grammar.dfa
+                let newDFA =
+                    currState
+                    |> DFAState.edges
+                    |> Set.toSeq
+                    |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x)
+                    |> Option.bind (snd >> Indexed.getfromList dfaStates)
+                match newDFA with
+                | Some dfa ->
+                    match dfa.AcceptSymbol with
+                    | Some x -> impl state newPos dfa (Some x) currPos xs
+                    | None -> impl state newPos dfa lastAccept lastAccPos xs
+                | None ->
+                    match lastAccept with
+                    | Some x -> state |> getLookAheadBuffer lastAccPos |> newToken x
+                    | None -> state |> getLookAheadBuffer 1u |> newToken Symbol.Error 
+        3.1415926535897932384626433

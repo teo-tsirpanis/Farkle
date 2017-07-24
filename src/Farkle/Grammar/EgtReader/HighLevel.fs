@@ -72,7 +72,7 @@ module internal HighLevel =
         return
             {
                 Name = name
-                Kind = stype
+                SymbolType = stype
             }
             |> Indexable.create index
     }

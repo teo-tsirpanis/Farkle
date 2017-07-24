@@ -72,7 +72,7 @@ type EGTReadError =
             | TakeStringBug -> "The function takeString exhibited a very unlikely bug. If you see this error, please file an issue on GitHub."
             | InvalidRecordTag x -> sprintf "The record tag '%c' is not 'M', as it should have been." x
             | UnknownFile -> "The given file is not recognized."
-            | ReadACGTFile -> 
+            | ReadACGTFile ->
                 "The given file is a CGT file, not an EGT one."
                 + " You should update to the latest version of GOLD Parser Builder (at least over Version 5.0.0)"
                 + " and save the tables as \"Enhanced Grammar tables (Version 5.0)\"."
@@ -130,15 +130,21 @@ type Symbol =
         /// The symbol's name.
         Name: string
         /// The symbol's type.
-        Kind: SymbolType
+        SymbolType: SymbolType
     }
     with
         /// A special symbol that signifies an error.
         /// It's the same in all grammars, so it's not worth taking it from the symbol table.
-        static member Error = {Name = "Error"; Kind = Error}
+        static member Error = {Name = "Error"; SymbolType = Error}
         /// A special symbol that signifies the end of input.
         /// It's the same in all grammars, so it's not worth taking it from the symbol table.
-        static member EOF = {Name = "EOF"; Kind = EndOfFile}
+        static member EOF = {Name = "EOF"; SymbolType = EndOfFile}
+
+module Symbol =
+
+    let name {Name = x} = x
+
+    let symbolType {SymbolType = x} = x
 
 type AdvanceMode =
     | Token
@@ -240,7 +246,7 @@ type Grammar =
         member x.InitialStates = x._InitialStates
         member x.LALRStates = x._LALRStates
         member x.DFAStates = x._DFAStates
-        
+
 module Grammar =
 
     let counts (x: Grammar) =
@@ -252,7 +258,7 @@ module Grammar =
             LALRTables = x.LALRStates.Length |> uint16
             GroupTables = x.Groups.Length |> uint16
         }
-    
+
     let properties {_Properties = x} = x
     let charSets {_CharSets = x} = x
     let symbols {_Symbols = x} = x

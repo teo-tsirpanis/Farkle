@@ -9,7 +9,7 @@ open Aether
 open Chessie.ErrorHandling
 open Farkle
 
-/// A record that stores how many of each structures exist in an EGT file.
+/// A record that stores how many of each tables exist in an EGT file.
 /// It's needed only for verifying that the grammar was successfuly read.
 type TableCounts =
     {
@@ -61,23 +61,57 @@ type EGTReadError =
     | InvalidTableCounts of expected: TableCounts * actual: TableCounts
     /// The item at the given index of a list was not found.
     | IndexNotFound of uint16
+    with
+        override x.ToString() =
+            match x with
+            | ListError x -> sprintf "List error: %A" x
+            | InvalidBoolValue x -> sprintf "Invalid boolean value (neither 0 nor 1): %d." x
+            | InvalidEntryCode x -> sprintf "Invalid entry code: '%c'." x
+            | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
+            | UnterminatedString -> "String terminator was not found."
+            | TakeStringBug -> "The function takeString exhibited a very unlikely bug. If you see this error, please file an issue on GitHub."
+            | InvalidRecordTag x -> sprintf "The record tag '%c' is not 'M', as it should have been." x
+            | UnknownFile -> "The given file is not recognized."
+            | ReadACGTFile -> 
+                "The given file is a CGT file, not an EGT one."
+                + " You should update to the latest version of GOLD Parser Builder (at least over Version 5.0.0)"
+                + " and save the tables as \"Enhanced Grammar tables (Version 5.0)\"."
+            | FileNotExist x -> sprintf "The given file (%s) does not exist." x
+            | InvalidSymbolType x -> sprintf "Invalid symbol type (should be 0, 1, 2, 3, 4, 5 or 7): %d." x
+            | InvalidAdvanceMode x -> sprintf "Invalid advance code (should be either 0 or 1): %d." x
+            | InvalidEndingMode x -> sprintf "Invalid ending mode value (should be either 0 or 1): %d." x
+            | InvalidLALRActionType x -> sprintf "Invalid LALR action index (should be 1, 2, 3 or 4): %d." x
+            | InvalidTableCounts (expected, actual) -> "The grammar does not contain the same count of tables as it should. If you see this error, please file an issue on GitHub."
+            | IndexNotFound x -> sprintf "The index %d was not found in a list." x
 
+/// Arbitrary metadata a grammar has.
+/// A simple key-value collection.
 type Properties = Properties of Map<string, string>
 
+/// A set of characters. See `RangeSet` too.
 type CharSet = RangeSet<char>
 
+/// The type of a symbol
 type SymbolType =
+    /// The symbol is a nonterminal.
     | Nonterminal
+    /// The symbol is a terminal.
     | Terminal
+    /// The symbol is noise (comments for example) and is discarded by the parser.
     | Noise
+    /// The symbol signifies the end of input.
     | EndOfFile
+    /// The symbol signifies the start of a group.
     | GroupStart
+    /// The symbol signifies the end of a group.
     | GroupEnd
-    // 6 is deprecated
+    /// The symbol signifies an error.
     | Error
 
+/// Functions to work with the `SymbolType` type.
 module SymbolType =
 
+    /// Creates a `SymbolType`.
     let ofUInt16 =
         function
         | 0us -> ok Nonterminal
@@ -90,13 +124,20 @@ module SymbolType =
         | 7us -> ok Error
         | x -> x |> InvalidSymbolType |> fail
 
+/// A symbol of a grammar.
 type Symbol =
     {
+        /// The symbol's name.
         Name: string
+        /// The symbol's type.
         Kind: SymbolType
     }
     with
+        /// A special symbol that signifies an error.
+        /// It's the same in all grammars, so it's not worth taking it from the symbol table.
         static member Error = {Name = "Error"; Kind = Error}
+        /// A special symbol that signifies the end of input.
+        /// It's the same in all grammars, so it's not worth taking it from the symbol table.
         static member EOF = {Name = "EOF"; Kind = EndOfFile}
 
 type AdvanceMode =

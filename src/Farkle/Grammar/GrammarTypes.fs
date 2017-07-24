@@ -135,12 +135,6 @@ type Production =
         Symbols: Symbol list
     }
 
-type InitialStates =
-    {
-        DFA: uint16
-        LALR: uint16
-    }
-
 type DFAState =
     {
         AcceptSymbol: Symbol option
@@ -168,6 +162,16 @@ module LALRAction =
         | 3us -> index |> Indexed |> Goto |> ok
         | 4us -> Accept |> ok
         | x -> x |> InvalidLALRActionType |> fail
+
+type InitialStates =
+    {
+        DFA: DFAState
+        LALR: LALRState
+    }
+
+module InitialStates =
+    let dfa {DFA = x} = x
+    let lalr {LALR = x} = x
 
 type Grammar =
     private

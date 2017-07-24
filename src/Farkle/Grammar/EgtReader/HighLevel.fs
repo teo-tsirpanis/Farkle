@@ -117,9 +117,9 @@ module internal HighLevel =
             |> Indexable.create index
     }
 
-    let readInitialStates = sresult {
-        let! dfa = wantUInt16
-        let! lalr = wantUInt16
+    let readInitialStates (fDFA: IndexedGetter<_>) (fLALR: IndexedGetter<_>) = sresult {
+        let! dfa = wantUInt16 <!> Indexed <!> fDFA |> flatten
+        let! lalr = wantUInt16 <!> Indexed <!> fLALR |> flatten
         return
             {
                 DFA = dfa
@@ -183,7 +183,6 @@ module internal HighLevel =
         let exactlyOne x = x |> List.exactlyOne |> mapFailure (List.map ListError)
         let! properties = readProperty |> mapMatching 'p' |> lift (Map.ofList >> Properties)
         let! tableCounts = readTableCounts |> mapMatching 't' |> lift exactlyOne |> flatten
-        let! initialStates = readInitialStates |> mapMatching 'I' |> lift exactlyOne |> flatten
         let! charSets = readCharSet |> mapMatching 'c' |> lift Indexable.collect
         let fCharSets = getIndexedfromList charSets
         let! symbols = readSymbol |> mapMatching 'S' |> lift Indexable.collect
@@ -192,7 +191,14 @@ module internal HighLevel =
         let! prods = readProduction fSymbols |> mapMatching 'R' |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
         let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D' |> lift Indexable.collect
+        let fDFA = getIndexedfromList dfas
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L' |> lift Indexable.collect
+        let fLALR = getIndexedfromList lalrs
+        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I' |> lift exactlyOne |> flatten
+        // This is the 198th line of this file.
+        // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
+        // This Number should not be changed, unless it was absolutely neccessary.
+        // Was that a coincidence? Highly unlikely.
+        // But look! Not even the dates were a coincidence! 🔺👁
         return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
     }
-// ⚠ As of 20/7/2017, this file has _exactly_ 198 lines of code. Please try not to change this Number, unless it is absolutely neccessary.

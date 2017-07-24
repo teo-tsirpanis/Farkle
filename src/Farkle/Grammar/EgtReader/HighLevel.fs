@@ -15,11 +15,11 @@ module internal HighLevel =
     open StateResult
     open MidLevel
 
-    type IndexedGetter<'a> = Indexed<'a> -> StateResult<'a, Entry list, GrammarError>
+    type IndexedGetter<'a> = Indexed<'a> -> StateResult<'a, Entry list, EGTReadError>
 
     let liftFlatten x = x <!> liftResult |> flatten
 
-    let getIndexedfromList x = Indexed.getfromList x >> failIfNone IndexNotFound >> liftResult
+    let getIndexedfromList x = Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
 
     let readProperty = sresult {
         do! wantUInt16 |> ignore /// We do not store based on index
@@ -176,13 +176,11 @@ module internal HighLevel =
             return None
     }
 
-    open Chessie.ErrorHandling
-
     let makeGrammar (EGTFile records) = trial {
         let mapMatching mc f = records |> List.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (List.choose id)
-        let exactlyOne x = x |> List.exactlyOne |> mapFailure (List.map ListError)
+        let exactlyOne x = x |> List.exactlyOne |> Trial.mapFailure ListError
         let! properties = readProperty |> mapMatching 'p' |> lift (Map.ofList >> Properties)
-        let! tableCounts = readTableCounts |> mapMatching 't' |> lift exactlyOne |> flatten
+        let! tableCounts = readTableCounts |> mapMatching 't' |> lift exactlyOne |> Trial.flatten
         let! charSets = readCharSet |> mapMatching 'c' |> lift Indexable.collect
         let fCharSets = getIndexedfromList charSets
         let! symbols = readSymbol |> mapMatching 'S' |> lift Indexable.collect
@@ -194,11 +192,10 @@ module internal HighLevel =
         let fDFA = getIndexedfromList dfas
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L' |> lift Indexable.collect
         let fLALR = getIndexedfromList lalrs
-        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I' |> lift exactlyOne |> flatten
-        // This is the 198th line of this file.
-        // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
-        // This Number should not be changed, unless it was absolutely neccessary.
-        // Was that a coincidence? Highly unlikely.
-        // But look! Not even the dates were a coincidence! 🔺👁
+        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I' |> lift exactlyOne |> Trial.flatten
         return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
     }
+    // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
+    // This Number should not be changed, unless it was absolutely neccessary.
+    // Was that a coincidence? Highly unlikely.
+    // Just look! Not even the dates were a coincidence! 🔺👁

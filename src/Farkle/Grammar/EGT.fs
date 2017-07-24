@@ -25,11 +25,11 @@ module EGT =
     // S+7juARvhdnKURnbjZTC1Rh1gnSPRrUgFy0Cmgto9lJP8yJxjpxqktaMWk+M0hLQyAAQSmUahFpngXEg
     // PTX4PrQGiFweCaMzZNRmEQUVoyywfWC0MO1LWhn8XckU4UJAYyXrXA==
     // -----END RSA PRIVATE KEY-----
-    let fromBytes x =
+    [<CompiledName("CreateFromBytes")>]
+    let ofBytes x =
         x
         |> List.ofSeq
         |> StateResult.eval MidLevel.readEGT
-        |> mapFailure (List.map EGTReadError)
         >>= HighLevel.makeGrammar
 
     /// Reads a stream that represents an EGT file and returns a `Grammar`.
@@ -51,7 +51,8 @@ module EGT =
     // a9C7nh45H5XJ4s8wT+tKthdcKr5RTTSpkpUZ0ydxRBPagphcYCvd5N1NPUbL62aDXpNgyZA5lIK9krB7
     // MGVOvGQ7LwjqAjZ1Ig+wUcKGU4jebTiU/wJmwDzV
     // -----END RSA PRIVATE KEY-----
-    let fromStream x = x |> List.ofByteStream |> fromBytes
+    [<CompiledName("CreateFromStream")>]
+    let ofStream x = x |> List.ofByteStream |> ofBytes
 
     /// Reads an EGT file and returns a `Grammar`.
     // -----BEGIN RSA PRIVATE KEY-----
@@ -65,9 +66,10 @@ module EGT =
     // RYjaZT8pUIRBeD6FJwfk6c34YA+M1XzAy96reXO209DzFKdOAvgRdxyh8jFwqnTPVKetKDU3Z8VlNFlR
     // j1rTNOKPYFpKvARh40GtUX7Oic8JAfgDnKwhEQQDAAA=
     // -----END RSA PRIVATE KEY-----
-    let fromFile path = trial {
+    [<CompiledName("CreateFromFile")>]
+    let ofFile path = trial {
         if path |> File.Exists |> not then
-            do! path |> FileNotExist |> EGTReadError |> Trial.fail
+            do! path |> FileNotExist |> Trial.fail
         use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
-        return! stream |> fromStream
+        return! stream |> ofStream
     }

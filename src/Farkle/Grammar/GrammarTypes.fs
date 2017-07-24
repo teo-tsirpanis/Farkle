@@ -9,6 +9,8 @@ open Aether
 open Chessie.ErrorHandling
 open Farkle
 
+/// A record that stores how many of each structures exist in an EGT file.
+/// It's needed only for verifying that the grammar was successfuly read.
 type TableCounts =
     {
         SymbolTables: uint16
@@ -46,16 +48,19 @@ type EGTReadError =
     | ReadACGTFile
     /// The file you specified does not exist.
     | FileNotExist of string
-
-type GrammarError =
-    | ListError of ListError
-    | EGTReadError of EGTReadError
+    /// The type of a symbol is invalid.
     | InvalidSymbolType of uint16
+    /// The advancing mode of a group is invalid.
     | InvalidAdvanceMode of uint16
+    /// The ending mode of a group is invalid.
     | InvalidEndingMode of uint16
+    /// The type of an LALR action is invalid.
     | InvalidLALRActionType of uint16
+    /// Some records of the EGT file were not read.
+    /// More or less were expected.
     | InvalidTableCounts of expected: TableCounts * actual: TableCounts
-    | IndexNotFound
+    /// The item at the given index of a list was not found.
+    | IndexNotFound of uint16
 
 type Properties = Properties of Map<string, string>
 
@@ -155,7 +160,7 @@ and LALRAction =
 
 module LALRAction =
 
-    let create (fProds: Indexed<Production> -> Result<Production, GrammarError>) index =
+    let create (fProds: Indexed<Production> -> Result<Production, EGTReadError>) index =
         function
         | 1us -> index |> Indexed |> Shift |> ok
         | 2us -> index |> Indexed |> fProds |> lift Reduce

@@ -59,7 +59,7 @@ module internal MidLevel =
     }
 
     let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
-        let fail x = fun entry -> x |> InvalidEntryType |> EGTReadError |> StateResult.fail
+        let fail x = fun entry -> x |> InvalidEntryType |> StateResult.fail
         let failEmpty x = fail "Empty" x
         let failByte x = fail "Byte" x
         let failBoolean x = fail "Boolean" x

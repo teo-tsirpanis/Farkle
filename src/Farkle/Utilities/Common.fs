@@ -48,14 +48,16 @@ type Indexed<'a> = Indexed of uint16
 module Indexed =
     /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
     /// In case the index is not found, the function fails.
-    let get f (i: Indexed<'a>) =
+    let get (f: _ -> 'a option) (i: Indexed<'a>) =
         let (Indexed i) = i
-        f i
+        match f i with
+        | Some x -> ok x
+        | None -> fail i
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
     let getfromList list i =
-        let fget i = i |> int |> List.tryItem <| list
-        get fget i
+        let f i = List.tryItem (int i) list
+        get f i
 
 /// A simple and efficient set of items based on ranges.
 /// Instead of storing _all_ the elements of a set, only the first and last are.
@@ -128,3 +130,20 @@ module String =
 
     /// See `List.ofString`.
     let toList = List.ofString
+
+/// Functions to work with the `Chessie.ErrorHandling.Result` type.
+/// I will propably make a PR to add them in the future.
+module Trial =
+
+    /// Converts a `Result` to an `option` discarding the messages.
+    let makeOption =
+        function
+        | Ok (x, _) -> Some x
+        | Bad _ -> None
+
+    /// Changes the failure type of a `Result`.
+    /// A much better alternative of the poorly designed mapFailure function that Chessie provides.
+    let mapFailure f =
+        function
+        | Ok (x, msgs) -> Ok (x, List.map f msgs)
+        | Bad msgs -> msgs |> List.map f |> Bad

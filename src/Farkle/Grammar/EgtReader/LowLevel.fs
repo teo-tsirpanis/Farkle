@@ -23,9 +23,9 @@ module internal LowLevel =
 
     open StateResult
 
-    let takeByte = List.takeOne() |> mapFailure EGTReadError.ListError <!> ((*) 1uy)
+    let takeByte = List.takeOne() |> mapFailure ListError <!> ((*) 1uy)
 
-    let takeBytes count = count |> List.take |> mapFailure EGTReadError.ListError <!> (List.map ((*) 1uy))
+    let takeBytes count = count |> List.take |> mapFailure ListError <!> (List.map ((*) 1uy))
 
     let ensureLittleEndian x =
         if BitConverter.IsLittleEndian then

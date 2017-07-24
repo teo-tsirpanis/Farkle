@@ -8,6 +8,7 @@ namespace Farkle.Monads
 open Chessie.ErrorHandling
 open System
 open System.Diagnostics
+open Farkle
 
 /// The well-known State monad.
 type State<'s, 't> = State of ('s -> ('t * 's))
@@ -152,10 +153,7 @@ module StateResult =
 
     let inline fail message = message |> fail |> liftResult
 
-    let inline mapFailures f (StateResult m) =
-        m |> State.map (function | Ok (x, errs) -> Ok (x, f errs) |Bad errs -> errs |> f |> Bad) |> StateResult
-
-    let inline mapFailure f m = mapFailures (List.map f) m
+    let inline mapFailure f (StateResult m) = m |> State.map (Trial.mapFailure f) |> StateResult
 
     let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠
 

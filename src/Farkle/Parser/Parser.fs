@@ -60,7 +60,7 @@ module Parser =
                     |> DFAState.edges
                     |> Set.toSeq
                     |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x)
-                    |> Option.bind (snd >> Indexed.getfromList dfaStates)
+                    |> Option.bind (snd >> Indexed.getfromList dfaStates >> Trial.makeOption)
                 match newDFA with
                 | Some dfa ->
                     match dfa.AcceptSymbol with

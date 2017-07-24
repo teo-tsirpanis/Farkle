@@ -1,5 +1,5 @@
 // Copyright (c) 2017 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -16,12 +16,9 @@ module Parser =
 
     open State
 
-    let lookAhead n =
-        getOptic ParserState.InputStream_
-        <!> List.tryItem n
-
     let getLookAheadBuffer n x =
-        let x = x ^. ParserState.InputStream_ |> StateResult.eval (List.take (int n))
+        let n = System.Math.Min(int n, Collections.List.length x)
+        let x = x |> StateResult.eval (List.take n)
         match x with
         | Ok (x, _) -> x |> String.ofList
         | Bad _ -> ""
@@ -29,7 +26,7 @@ module Parser =
     let consumeBuffer n = state {
         let! len = getOptic ParserState.InputStream_ <!> eval (List.length())
         let consumeSingle = state {
-            let! x = lookAhead 1
+            let! x = getOptic (ParserState.InputStream_ >-> List.head_)
             match x with
             | Some x ->
                 do! mapOptic ParserState.InputStream_ List.tail // We know that the list has items here.
@@ -48,14 +45,16 @@ module Parser =
         | _ -> do ()
     }
 
-    let lookAheadDFA state x =
-        let rec impl state currPos currState lastAccept lastAccPos x =
-            let newToken = state ^. ParserState.CurrentPosition_ |> Token.Create
+    // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
+    // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
+    // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
+    let tokenizeDFA dfaStates initialState pos input =
+        let rec impl currPos currState lastAccept lastAccPos x =
+            let newToken = Token.Create pos
             let newPos = currPos + 1u
             match x with
             | [] -> newToken Symbol.EOF ""
             | x :: xs ->
-                let dfaStates = state ^. ParserState.Grammar_ |> Grammar.dfa
                 let newDFA =
                     currState
                     |> DFAState.edges
@@ -65,10 +64,10 @@ module Parser =
                 match newDFA with
                 | Some dfa ->
                     match dfa.AcceptSymbol with
-                    | Some x -> impl state newPos dfa (Some x) currPos xs
-                    | None -> impl state newPos dfa lastAccept lastAccPos xs
+                    | Some x -> impl newPos dfa (Some x) currPos xs
+                    | None -> impl newPos dfa lastAccept lastAccPos xs
                 | None ->
                     match lastAccept with
-                    | Some x -> state |> getLookAheadBuffer lastAccPos |> newToken x
-                    | None -> state |> getLookAheadBuffer 1u |> newToken Symbol.Error 
-        3.1415926535897932384626433
+                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
+                    | None -> input |> getLookAheadBuffer 1u |> newToken Symbol.Error
+        impl 1u initialState None 0u input

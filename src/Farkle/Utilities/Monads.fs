@@ -246,3 +246,42 @@ module StateResult =
         let s: 'c -> 'c = Optic.map optic f
         return! s x |> put
     }
+
+module Maybe =
+
+    [<DebuggerNonUserCode>]
+    type MaybeBuilder() =
+        member __.Zero() = Some ()
+        member __.Bind(m, f) = Option.bind f m
+        member __.Return a = Some a
+        member __.ReturnFrom(x) = x
+        member __.Combine (a, b) = bind b a
+        member __.Delay f = f
+        member __.Run f = f ()
+        member __.TryWith (body, handler) =
+            try
+                body()
+            with
+            | e -> handler e
+        member __.TryFinally (body, compensation) =
+            try
+                body()
+            finally
+                compensation()
+        member x.Using(d:#IDisposable, body) =
+            let result = fun () -> body d
+            x.TryFinally (result, fun () ->
+                match d with
+                | null -> ()
+                | d -> d.Dispose())
+        member x.While (guard, body) =
+            if not <| guard () then
+                x.Zero()
+            else
+                Option.bind (fun () -> x.While(guard, body)) (body())
+        member x.For(s:seq<_>, body) =
+            x.Using(s.GetEnumerator(), fun enum ->
+                x.While(enum.MoveNext,
+                    x.Delay(fun () -> body enum.Current)))
+
+    let maybe = MaybeBuilder()

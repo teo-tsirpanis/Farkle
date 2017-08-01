@@ -26,10 +26,10 @@ module Parser =
     let consumeBuffer n = state {
         let! len = getOptic ParserState.InputStream_ <!> Collections.List.length
         let consumeSingle = state {
-            let! x = getOptic (ParserState.InputStream_ >-> List.head_)
+            let! x = getOptic ParserState.InputStream_
             match x with
-            | Some x ->
-                do! mapOptic ParserState.InputStream_ List.tail // We know that the list has items here.
+            | x :: xs ->
+                do! setOptic ParserState.InputStream_ xs
                 match x with
                 | LF ->
                     let! c = getOptic ParserState.CurrentPosition_ <!> Position.column
@@ -37,7 +37,7 @@ module Parser =
                         do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | CR -> do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | _ -> do! mapOptic ParserState.CurrentPosition_ Position.incCol
-            | None -> do ()
+            | [] -> do ()
         }
         match n with
         | n when n > 0 && n <= len ->

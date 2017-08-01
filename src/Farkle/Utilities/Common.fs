@@ -3,38 +3,36 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle
+[<AutoOpen>]
+/// Some useful functions and types that could be used from many points from the library. 
+module Farkle.Common
 
 open Chessie.ErrorHandling
 
-[<AutoOpen>]
-/// Some small utilities.
-module Common =
+[<Literal>]
+/// The line feed character.
+let LF = '\010'
 
-    [<Literal>]
-    /// The line feed character.
-    let LF = '\010'
+[<Literal>]
+/// The carriage return character.
+let CR = '\013'
 
-    [<Literal>]
-    /// The carriage return character.
-    let CR = '\013'
+/// Raises an exception.
+/// This function should be used when handling an impossible edge case is very tedious.
+/// It should be used __very__ sparingly.
+let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am here, then something that was thought to be impossible did happen. And if You are (un)lucky enough to see me, can You please open a Github issue? Thank You very much and I am sorry for any inconvenience!"
 
-    /// Raises an exception.
-    /// This function should be used when handling an impossible edge case is very tedious.
-    /// It should be used __very__ sparingly.
-    let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am here, then something that was thought to be impossible did happen. And if You are (un)lucky enough to see me, can You please open a Github issue? Thank You very much and I am sorry for any inconvenience!"
+/// Returns the value of an `Option`.
+/// Raises an exception if the option was `None`.
+/// Are you inside a `State` monad and don't want to spill your code with `StateResult`?
+/// Are you definitely sure that your `Option` does _really_ contain a value, but the type system disagrees?
+/// In this case, you should use me!
+/// But use me carefully and __very__ sparingly.
+/// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
+let mustBeSome x = x |> Option.defaultWith impossible
 
-    /// Returns the value of an `Option`.
-    /// Raises an exception if the option was `None`.
-    /// Are you inside a `State` monad and don't want to spill your code with `StateResult`?
-    /// Are you definitely sure that your `Option` does _really_ contain a value, but the type system disagrees?
-    /// In this case, you should use me!
-    /// But use me carefully and __very__ sparingly.
-    /// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
-    let mustBeSome x = x |> Option.defaultWith impossible
-
-    /// The simple list cons operator.
-    let cons x xs = x :: xs
+/// The simple list cons operator.
+let cons x xs = x :: xs
 
 /// Anything that can be indexed.
 /// The type is just a record with a value and an index.

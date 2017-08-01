@@ -107,9 +107,9 @@ module State =
         return Optic.get optic x
     }
 
-    let inline setOptic optic = state {
+    let inline setOptic optic value = state {
         let! x = get
-        return! Optic.set optic x |> put
+        return! Optic.set optic value x |> put
     }
 
     let inline mapOptic optic f = state {
@@ -236,9 +236,9 @@ module StateResult =
         return Optic.get optic x
     }
 
-    let inline setOptic optic = sresult {
+    let inline setOptic optic value = sresult {
         let! x = get
-        return! Optic.set optic x |> put
+        return! Optic.set optic value x |> put
     }
 
     let inline mapOptic optic f = sresult {

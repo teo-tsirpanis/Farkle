@@ -181,6 +181,26 @@ type Group =
         Nesting: Set<Indexed<Group>>
     }
 
+module Group =
+
+    let name {Group.Name = x} = x
+    let containerSymbol {ContainerSymbol = x} = x
+    let startSymbol {StartSymbol = x} = x
+    let endSymbol {EndSymbol = x} = x
+    let advanceMode {AdvanceMode = x} = x
+    let endingMode {EndingMode = x} = x
+    let nesting {Nesting = x} = x
+
+    let getSymbolGroupIndexed groups x: Indexed<Group> option =
+        groups
+        |> List.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
+        |> Option.map (uint16 >> Indexed)
+
+    let getSymbolGroup groups x =
+        (groups, x)
+        ||> getSymbolGroupIndexed
+        |> Option.bind (Indexed.getfromList groups >> Trial.makeOption)
+
 type Production =
     {
         Nonterminal: Symbol

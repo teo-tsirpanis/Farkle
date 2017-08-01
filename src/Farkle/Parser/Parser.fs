@@ -24,7 +24,7 @@ module Parser =
         | Bad _ -> ""
 
     let consumeBuffer n = state {
-        let! len = getOptic ParserState.InputStream_ <!> eval (List.length())
+        let! len = getOptic ParserState.InputStream_ <!> Collections.List.length
         let consumeSingle = state {
             let! x = getOptic (ParserState.InputStream_ >-> List.head_)
             match x with
@@ -71,3 +71,64 @@ module Parser =
                     | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
                     | None -> input |> getLookAheadBuffer 1u |> newToken Symbol.Error
         impl 1u initialState None 0u input
+
+    let inline tokenizeDFAForDummies state =
+        let grammar = state |> ParserState.grammar
+        tokenizeDFA grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
+
+    let rec produceToken() = state {
+        let! x = get <!> tokenizeDFAForDummies
+        let! grammar = get <!> ParserState.grammar
+        let! groupStackTop = getOptic (ParserState.GroupStack_ >-> List.head_)
+        let nestGroup =
+            match x ^. Token.Symbol_ |> Symbol.symbolType with
+            | GroupStart | GroupEnd ->
+                Maybe.maybe {
+                    let! groupStackTop = groupStackTop
+                    let! gsTopGroup = groupStackTop ^. Token.Symbol_ |> Group.getSymbolGroup grammar.Groups
+                    let! myIndex = x ^. Token.Symbol_ |> Group.getSymbolGroupIndexed grammar.Groups
+                    return gsTopGroup.Nesting.Contains myIndex
+                } |> Option.defaultValue true
+            | _ -> false
+        if nestGroup then
+            do! x ^. Token.Data_ |> String.length |> consumeBuffer
+            let newToken = Optic.set Token.Data_ "" x
+            do! mapOptic ParserState.GroupStack_ (cons newToken)
+            return! produceToken()
+        else
+            match groupStackTop with
+            | None ->
+                do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                return x
+            | Some groupStackTop ->
+                let groupStackTopGroup =
+                    groupStackTop ^. Token.Symbol_
+                    |> Group.getSymbolGroup grammar.Groups
+                    |> mustBeSome // I am sorry. 😭
+                if groupStackTopGroup.EndSymbol = x.Symbol then
+                    let! pop = state {
+                        do! mapOptic ParserState.GroupStack_ List.tail
+                        if groupStackTopGroup.EndingMode = Closed then
+                            do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                            return groupStackTop |> Token.AppendData x.Data
+                        else
+                            return groupStackTop
+                    }
+                    let! groupStackTop = getOptic (ParserState.GroupStack_ >-> List.head_)
+                    match groupStackTop with
+                        | Some _ ->
+                            do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
+                            return! produceToken()
+                        | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
+                elif x.Symbol.SymbolType = EndOfFile then
+                    return x
+                else
+                    match groupStackTopGroup.AdvanceMode with
+                    | Token ->
+                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
+                        do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                    | Character ->
+                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data |> Seq.head |> sprintf "%c" |> Token.AppendData)
+                        do! consumeBuffer 1
+                    return! produceToken()
+    }

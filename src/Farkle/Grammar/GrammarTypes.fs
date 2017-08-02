@@ -207,6 +207,13 @@ type Production =
         Symbols: Symbol list
     }
 
+module Production =
+
+    let hasOneNonTerminal =
+        function
+        | {Symbols = [{SymbolType = x}]} -> x = Nonterminal
+        | _ -> false
+
 type DFAState =
     {
         AcceptSymbol: Symbol option

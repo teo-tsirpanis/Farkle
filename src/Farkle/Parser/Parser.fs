@@ -132,3 +132,73 @@ module Parser =
                         do! consumeBuffer 1
                     return! produceToken()
     }
+
+    open StateResult
+
+    let parseLALR token = state {
+        let (StateResult impl) = sresult {
+            let! grammar = get <!> ParserState.grammar
+            let states = grammar.LALRStates
+            let lalrStackTop =
+                getOptic (ParserState.LALRStack_ >-> List.head_)
+                >>= (failIfNone LALRStackEmpty >> liftResult)
+            let setCurrentLALR x =
+                Indexed.getfromList states x
+                |> liftResult
+                |> mapFailure LALRError.IndexNotFound
+                >>= setOptic ParserState.CurrentLALRState_
+            let! (LALRState currentState) = getOptic ParserState.CurrentLALRState_
+            match currentState.TryFind (token ^. Token.Symbol_) with
+            | Some (Accept) -> return LALRResult.Accept
+            | Some (Shift x) ->
+                do! setCurrentLALR x
+                do! mapOptic ParserState.LALRStack_ (cons (token, (LALRState currentState, None)))
+                return LALRResult.Shift
+            | Some (Reduce x) ->
+                let! head, result = sresult {
+                    let! shouldTrim = get <!> (ParserState.trimReductions >> ((&&) (Production.hasOneNonTerminal x)))
+                    if shouldTrim then
+                        let! head = lalrStackTop
+                        do! mapOptic ParserState.LALRStack_ List.tail
+                        let head = Optic.set (Optics.fst_ >-> Token.Symbol_) x.Nonterminal head
+                        return head, ReduceEliminated
+                    else
+                        let count = x.Symbols.Length
+                        let popStack optic = sresult {
+                            let! x = getOptic optic
+                            match x with
+                            | x :: xs ->
+                                do! setOptic optic xs
+                                return Some x
+                            | [] -> return None
+                        }
+                        let! tokens =
+                            repeatM (popStack ParserState.LALRStack_) count
+                            <!> (Seq.choose id >> Seq.map fst >> Seq.rev >> List.ofSeq)
+                        let reduction = {Tokens = tokens; Parent = x}
+                        let token = {Symbol = x.Nonterminal; Position = Position.initial; Data = Reduction.data reduction}
+                        let head = token, (LALRState currentState, Some reduction)
+                        return head, ReduceNormal
+                }
+                let! (LALRState newState) = lalrStackTop <!> (snd >> fst)
+                match newState.TryFind x.Nonterminal with
+                | Some (Goto x) ->
+                    do! setCurrentLALR x
+                    let head = fst head, (LALRState newState, (head |> snd |> snd))
+                    do! mapOptic (ParserState.LALRStack_) (cons head)
+                | _ -> do! fail GotoNotFoundAfterReduction
+                return result
+            | Some (Goto _) | None ->
+                return
+                    currentState
+                    |> Map.toList
+                    |> List.map fst
+                    |> List.filter
+                        (Symbol.symbolType >> (function | Terminal | EndOfFile | GroupStart | GroupEnd -> true | _ -> false))
+                    |> SyntaxError
+        }
+        let! x = impl
+        match x with
+        | Ok (x, _) -> return x
+        | Bad x -> return x |> InternalErrors
+    }

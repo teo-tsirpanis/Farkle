@@ -22,16 +22,20 @@ type ListError =
 /// The type of the actual list is subject to change as long as the public API remains stable.
 module List =
 
-    /// Makes pairs of two from a sequence.
+    /// Makes pairs of two from a list.
     /// For example, `pairs [0;1;2;3]` becomes `[(0, 1); (2, 3)]`
     /// If there is an odd number of elements, the last is discarded.
-    let rec pairs x = seq {
-        if not <| Seq.isEmpty x then
-            let first, rest = Seq.head x, Seq.tail x
-            if not <| Seq.isEmpty rest then
-                let second, rest = Seq.head rest, Seq.tail rest
-                yield first, second
-                yield! pairs rest}
+    let rec pairs =
+        function
+        | x1 :: x2 :: xs -> (x1, x2) :: pairs xs
+        | _ -> []
+
+    /// Returns a list with its last element removed.
+    /// It should be called `init`, but there's already a function with that name.
+    let skipLast =
+        function
+        | [] -> []
+        | x -> x |> List.rev |> List.tail |> List.rev 
 
     /// Creates a list of bytes from a stream.
     let ofByteStream s =
@@ -44,13 +48,9 @@ module List =
         }
         s |> impl |> List.ofSeq
 
-    /// Checks whether the list in the state is empty.
-    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
-    let isEmpty() = State.get |> State.map List.isEmpty
-
     /// Checks whether the list has any item.
     /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
-    let hasItems() = isEmpty() |> State.map not
+    let hasItems() = State.get |> State.map (List.isEmpty >> not)
 
     /// Checks the length of the list in the state.
     /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.

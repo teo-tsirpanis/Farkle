@@ -35,7 +35,7 @@ module Reduction =
         |> List.map (Optic.get Token.Data_)
         |> String.concat ""
 
-type LALRError =
+type ParseError =
     | IndexNotFound of uint16
     | GotoNotFoundAfterReduction
     | LALRStackEmpty
@@ -46,7 +46,16 @@ type LALRResult =
     | ReduceNormal
     | ReduceEliminated
     | SyntaxError of expected: Symbol list
-    | InternalErrors of LALRError list
+    | InternalErrors of ParseError list
+
+type ParseMessage =
+    | TokenRead
+    | Reduction
+    | Accept
+    | LexicalError of Token
+    | SyntaxError of expected: Symbol list
+    | GroupError
+    | InternalErrors of ParseError list
 
 type ParserState =
     {

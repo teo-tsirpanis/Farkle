@@ -145,7 +145,7 @@ module Parser =
             let setCurrentLALR x =
                 Indexed.getfromList states x
                 |> liftResult
-                |> mapFailure LALRError.IndexNotFound
+                |> mapFailure ParseError.IndexNotFound
                 >>= setOptic ParserState.CurrentLALRState_
             let! (LALRState currentState) = getOptic ParserState.CurrentLALRState_
             match currentState.TryFind (token ^. Token.Symbol_) with
@@ -195,10 +195,43 @@ module Parser =
                     |> List.map fst
                     |> List.filter
                         (Symbol.symbolType >> (function | Terminal | EndOfFile | GroupStart | GroupEnd -> true | _ -> false))
-                    |> SyntaxError
+                    |> LALRResult.SyntaxError
         }
         let! x = impl
         match x with
         | Ok (x, _) -> return x
-        | Bad x -> return x |> InternalErrors
+        | Bad x -> return x |> LALRResult.InternalErrors
+    }
+
+    open State
+
+    let rec parse() = state {
+        let! tokens = getOptic ParserState.InputStack_
+        let! isGroupStackEmpty = getOptic ParserState.GroupStack_ <!> List.isEmpty
+        match tokens with
+        | [] ->
+            let! newToken = produceToken()
+            do! mapOptic ParserState.InputStack_ (cons newToken)
+            if newToken.Symbol.SymbolType = EndOfFile && not isGroupStackEmpty then
+                return GroupError
+            else
+                return TokenRead
+        | newToken :: xs ->
+            match newToken.Symbol.SymbolType with
+            | Noise ->
+                do! setOptic ParserState.InputStack_ xs
+                return! parse()
+            | Error -> return LexicalError newToken
+            | EndOfFile when not isGroupStackEmpty -> return GroupError
+            | _ ->
+                let! lalrResult = parseLALR newToken
+                match lalrResult with
+                | LALRResult.Accept -> return ParseMessage.Accept
+                | LALRResult.Shift ->
+                    do! mapOptic ParserState.InputStack_ List.skipLast
+                    return! parse()
+                | ReduceNormal -> return ParseMessage.Reduction
+                | ReduceEliminated -> return! parse()
+                | LALRResult.SyntaxError x -> return ParseMessage.SyntaxError x
+                | LALRResult.InternalErrors x -> return ParseMessage.InternalErrors x
     }

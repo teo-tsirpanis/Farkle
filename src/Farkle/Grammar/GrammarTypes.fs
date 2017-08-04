@@ -8,6 +8,7 @@ namespace Farkle.Grammar
 open Aether
 open Chessie.ErrorHandling
 open Farkle
+open System
 
 /// A record that stores how many of each tables exist in an EGT file.
 /// It's needed only for verifying that the grammar was successfuly read.
@@ -139,6 +140,23 @@ type Symbol =
         /// A special symbol that signifies the end of input.
         /// It's the same in all grammars, so it's not worth taking it from the symbol table.
         static member EOF = {Name = "EOF"; SymbolType = EndOfFile}
+        member x.ToString delimitTerminals =
+            let literalFormat forceDelimiter x =
+                let forceDelimiter =
+                    forceDelimiter
+                    || x = ""
+                    || x.[0] |> Char.IsLetter
+                    || x |> String.exists (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') |> not
+                if forceDelimiter then
+                    sprintf "'%s'" x
+                else
+                    x
+            match x.SymbolType with
+            | Nonterminal -> sprintf "<%s>" x.Name
+            | Terminal -> literalFormat delimitTerminals x.Name
+            | _ -> sprintf "(%s)" x.Name
+        
+        override x.ToString() = x.ToString false
 
 module Symbol =
 

@@ -8,6 +8,8 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
+open System
+open System.Text
 
 type Token =
     {
@@ -28,7 +30,7 @@ module Token =
 
 type Reduction =
     {
-        Tokens: Token list
+        Tokens: (Token * Reduction option) list
         Parent: Production
     }
 
@@ -36,7 +38,7 @@ module Reduction =
 
     let data {Tokens = tokens} =
         tokens
-        |> List.map (Optic.get Token.Data_)
+        |> List.map (fst >> Optic.get Token.Data_)
         |> String.concat ""
 
 type ParseError =

@@ -176,7 +176,7 @@ module internal Implementation =
                         }
                         let! tokens =
                             repeatM (popStack ParserState.LALRStack_) count
-                            <!> (Seq.choose id >> Seq.map fst >> Seq.rev >> List.ofSeq)
+                            <!> (Seq.choose id >> Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
                         let reduction = {Tokens = tokens; Parent = x}
                         let token = {Symbol = x.Nonterminal; Position = Position.initial; Data = Reduction.data reduction}
                         let head = token, (LALRState currentState, Some reduction)

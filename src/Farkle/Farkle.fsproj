@@ -19,6 +19,7 @@
     <Compile Include="Grammar\EgtReader\HighLevel.fs" />
     <Compile Include="Grammar\EGT.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
+    <Compile Include="Parser/Implementation.fs" />
     <Compile Include="Parser/Parser.fs" />
   </ItemGroup>
   <ItemGroup>

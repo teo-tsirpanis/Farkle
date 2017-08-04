@@ -153,6 +153,8 @@ module StateResult =
 
     let inline fail message = message |> fail |> liftResult
 
+    let inline warn message = warn message () |> liftResult
+
     let inline mapFailure f (StateResult m) = m |> State.map (Trial.mapFailure f) |> StateResult
 
     let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠

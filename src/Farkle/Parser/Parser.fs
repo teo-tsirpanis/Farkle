@@ -31,7 +31,6 @@ type GOLDParser =
     static member ParseState state =
         let rec impl() = sresult {
             let! x = parse() |> liftState
-            do! warn x
             match x with
             | Accept x ->
                 do! warn <| Accept x

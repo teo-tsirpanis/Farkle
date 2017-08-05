@@ -69,8 +69,8 @@ module ParseMessage =
 
     let isError =
         function
-        | TokenRead _ | Reduction _ | Accept _ -> true
-        | _ -> false
+        | TokenRead _ | Reduction _ | Accept _ -> false
+        | _ -> true
 
 type ParserState =
     internal {

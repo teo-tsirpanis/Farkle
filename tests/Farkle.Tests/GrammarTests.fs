@@ -26,7 +26,7 @@ let tests =
         test "A new grammar is successfuly read" {
             let x = EGT.ofFile "resources/simple.egt"
             match x with
-            | Ok (x, _) -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.info
+            | Ok (x, _) -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.debug
             | Bad x -> failtestf "Test failed: %A" x
         }
     ]

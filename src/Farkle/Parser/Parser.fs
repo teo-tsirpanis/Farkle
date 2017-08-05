@@ -43,7 +43,10 @@ type GOLDParser =
         }
         eval (impl()) state
 
-    static member private fbd x = Option.defaultValue false x
+    /// Converts a parsing result to a result with human-readable error messages.
+    /// ## Parameters
+    /// * `result: The parsing result input.
+    static member FormatErrors (result: Result<Reduction, ParseMessage>) = result |> Trial.mapFailure (sprintf "%O")
 
     /// Parses a string based on the given `Grammar` object, with an option to trim trivial reductions.
     /// Currently, the only way to create `Grammar`s is by using the functions in the `EGT` module.

@@ -65,7 +65,7 @@ type EGTReadError =
     with
         override x.ToString() =
             match x with
-            | ListError x -> sprintf "List error: %A" x
+            | ListError x -> sprintf "List error: %O" x
             | InvalidBoolValue x -> sprintf "Invalid boolean value (neither 0 nor 1): %d." x
             | InvalidEntryCode x -> sprintf "Invalid entry code: '%c'." x
             | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
@@ -224,6 +224,9 @@ type Production =
         Nonterminal: Symbol
         Symbols: Symbol list
     }
+    override x.ToString() =
+        let symbols = x.Symbols |> List.map (sprintf "%O") |> String.concat " "
+        sprintf "%O ::= %s" x.Nonterminal symbols
 
 module Production =
 
@@ -234,15 +237,22 @@ module Production =
 
 type DFAState =
     {
+        Index: uint16
         AcceptSymbol: Symbol option
         Edges: Set<CharSet * Indexed<DFAState>>
     }
+    override x.ToString() = sprintf "%d" x.Index
 
 module DFAState =
     let acceptSymbol {AcceptSymbol = x} = x
     let edges {Edges = x} = x
 
-type LALRState = LALRState of Map<Symbol, LALRAction>
+type LALRState =
+    {
+        States:Map<Symbol, LALRAction>
+        Index: uint16
+    }
+    override x.ToString() = sprintf "%d" x.Index
 
 and LALRAction =
     | Shift of Indexed<LALRState>

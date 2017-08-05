@@ -145,6 +145,7 @@ module internal HighLevel =
         let! edges = whileM (List.hasItems() |> liftState) readEdges <!> set
         return
             {
+                Index = index
                 AcceptSymbol = acceptState
                 Edges = edges
             }
@@ -162,10 +163,8 @@ module internal HighLevel =
             let! action = LALRAction.create fProds targetIndex actionId |> liftResult
             return (symbolIndex, action)
         }
-        return!
-            whileM (List.hasItems() |> liftState) readActions <!> Map.ofSeq
-            <!> LALRState
-            <!> Indexable.create index
+        let! states = whileM (List.hasItems() |> liftState) readActions <!> Map.ofSeq
+        return {States = states; Index = index} |> Indexable.create index
     }
 
     let mapMatching magicChar f = sresult {

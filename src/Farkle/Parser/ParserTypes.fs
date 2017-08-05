@@ -23,6 +23,7 @@ type Token =
         static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
         static member AppendData data x = Optic.map Token.Data_ (fun x -> x + data) x
+        override x.ToString() = x.Data
 
 module Token =
 
@@ -33,20 +34,14 @@ type Reduction =
         Tokens: (Token * Reduction option) list
         Parent: Production
     }
-
-module Reduction =
-
-    let data {Tokens = tokens} =
-        tokens
-        |> List.map (fst >> Optic.get Token.Data_)
-        |> String.concat ""
+    override x.ToString() = x.Tokens |> List.map (fst >> Optic.get Token.Data_) |> String.concat ""
 
 type ParseError =
     | IndexNotFound of uint16
     | GotoNotFoundAfterReduction
     | LALRStackEmpty
 
-type LALRResult =
+type internal LALRResult =
     | Accept of Reduction
     | Shift
     | ReduceNormal of Reduction
@@ -64,6 +59,19 @@ type ParseMessage =
     | GroupError
     | InternalErrors of ParseError list
     | FatalError of ParseMessage
+    override x.ToString() =
+        match x with
+        | EGTReadError x -> sprintf "Error while reading the EGT file: %O" x
+        | TokenRead x -> sprintf "Token read: \"%O\" (%O)" x x.Symbol.SymbolType
+        | Reduction x -> sprintf "Rule reduced: %O" x.Parent
+        | Accept x -> sprintf "Reduction accepted: %O" x
+        | LexicalError x -> sprintf "Cannot recognize token: %O" x
+        | SyntaxError x ->
+            let expected = x |> List.map (sprintf "\"%O\"") |> String.concat ", "
+            sprintf "Expecting one of the following tokens: %O" expected
+        | GroupError -> "Unexpected end of file"
+        | InternalErrors x -> sprintf "Internal errors: %O. This is most probably a bug. If you see this error, please file an issue on GitHub." x
+        | FatalError x -> sprintf "An error stopped the parsing process: %O" x
 
 module ParseMessage =
 

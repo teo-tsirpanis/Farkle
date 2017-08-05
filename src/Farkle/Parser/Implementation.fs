@@ -18,10 +18,7 @@ module internal Implementation =
 
     let getLookAheadBuffer n x =
         let n = System.Math.Min(int n, Collections.List.length x)
-        let x = x |> StateResult.eval (List.take n)
-        match x with
-        | Ok (x, _) -> x |> String.ofList
-        | Bad _ -> ""
+        x |> Collections.List.take n |> String.ofList
 
     let consumeBuffer n = state {
         let! len = getOptic ParserState.InputStream_ <!> Collections.List.length
@@ -49,11 +46,14 @@ module internal Implementation =
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
     let tokenizeDFA dfaStates initialState pos input =
+        let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
-            let newToken = Token.Create pos
             let newPos = currPos + 1u
             match x with
-            | [] -> newToken Symbol.EOF ""
+            | [] ->
+                match lastAccept with
+                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
+                | None -> newToken Symbol.EOF ""
             | x :: xs ->
                 let newDFA =
                     currState
@@ -78,15 +78,15 @@ module internal Implementation =
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
-        let! grammar = get <!> ParserState.grammar
+        let! groups = get <!> (ParserState.grammar >> Grammar.groups)
         let! groupStackTop = getOptic (ParserState.GroupStack_ >-> List.head_)
         let nestGroup =
             match x ^. Token.Symbol_ |> Symbol.symbolType with
             | GroupStart | GroupEnd ->
                 Maybe.maybe {
                     let! groupStackTop = groupStackTop
-                    let! gsTopGroup = groupStackTop ^. Token.Symbol_ |> Group.getSymbolGroup grammar.Groups
-                    let! myIndex = x ^. Token.Symbol_ |> Group.getSymbolGroupIndexed grammar.Groups
+                    let! gsTopGroup = groupStackTop ^. Token.Symbol_ |> Group.getSymbolGroup groups
+                    let! myIndex = x ^. Token.Symbol_ |> Group.getSymbolGroupIndexed groups
                     return gsTopGroup.Nesting.Contains myIndex
                 } |> Option.defaultValue true
             | _ -> false
@@ -103,7 +103,7 @@ module internal Implementation =
             | Some groupStackTop ->
                 let groupStackTopGroup =
                     groupStackTop ^. Token.Symbol_
-                    |> Group.getSymbolGroup grammar.Groups
+                    |> Group.getSymbolGroup groups
                     |> mustBeSome // I am sorry. 😭
                 if groupStackTopGroup.EndSymbol = x.Symbol then
                     let! pop = state {
@@ -137,8 +137,7 @@ module internal Implementation =
 
     let parseLALR token = state {
         let (StateResult impl) = sresult {
-            let! grammar = get <!> ParserState.grammar
-            let states = grammar.LALRStates
+            let! states = get <!> (ParserState.grammar >> Grammar.lalr)
             let lalrStackTop =
                 getOptic (ParserState.LALRStack_ >-> List.head_)
                 >>= (failIfNone LALRStackEmpty >> liftResult)
@@ -147,14 +146,14 @@ module internal Implementation =
                 |> liftResult
                 |> mapFailure ParseError.IndexNotFound
                 >>= setOptic ParserState.CurrentLALRState_
-            let! (LALRState currentState) = getOptic ParserState.CurrentLALRState_
-            match currentState.TryFind (token ^. Token.Symbol_) with
+            let! currentState = getOptic ParserState.CurrentLALRState_
+            match currentState.States.TryFind (token ^. Token.Symbol_) with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >>snd >> mustBeSome) // I am sorry. 😭
                 return LALRResult.Accept topReduction
             | Some (Shift x) ->
                 do! setCurrentLALR x
-                do! mapOptic ParserState.LALRStack_ (cons (token, (LALRState currentState, None)))
+                do! mapOptic ParserState.LALRStack_ (cons (token, (currentState, None)))
                 return LALRResult.Shift
             | Some (Reduce x) ->
                 let! head, result = sresult {
@@ -178,21 +177,21 @@ module internal Implementation =
                             repeatM (popStack ParserState.LALRStack_) count
                             <!> (Seq.choose id >> Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
                         let reduction = {Tokens = tokens; Parent = x}
-                        let token = {Symbol = x.Nonterminal; Position = Position.initial; Data = Reduction.data reduction}
-                        let head = token, (LALRState currentState, Some reduction)
+                        let token = {Symbol = x.Nonterminal; Position = Position.initial; Data = reduction.ToString()}
+                        let head = token, (currentState, Some reduction)
                         return head, ReduceNormal reduction
                 }
-                let! (LALRState newState) = lalrStackTop <!> (snd >> fst)
-                match newState.TryFind x.Nonterminal with
+                let! newState = lalrStackTop <!> (snd >> fst)
+                match newState.States.TryFind x.Nonterminal with
                 | Some (Goto x) ->
                     do! setCurrentLALR x
-                    let head = fst head, (LALRState newState, (head |> snd |> snd))
+                    let head = fst head, (newState, (head |> snd |> snd))
                     do! mapOptic (ParserState.LALRStack_) (cons head)
                 | _ -> do! fail GotoNotFoundAfterReduction
                 return result
             | Some (Goto _) | None ->
                 return
-                    currentState
+                    currentState.States
                     |> Map.toList
                     |> List.map fst
                     |> List.filter

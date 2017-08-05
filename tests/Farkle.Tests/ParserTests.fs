@@ -16,12 +16,12 @@ let logger = Log.create "Parser tests"
 let tests =
     testList "Parser tests" [
         test "A simple mathematical expression can be parsed" {
-            let x = GOLDParser.Parse("resources/simple.egt", "111*555", true)
+            let x = GOLDParser.Parse("resources/simple.egt", "111*555", true) |> GOLDParser.FormatErrors
             let messages = match x with | Ok (_, x) -> x | Bad x -> x
             match x with
             | Ok (x, _) ->
                 x |> sprintf "Result: %A" |> Message.eventX |> logger.info
-                messages |> sprintf "Log: %A" |> Message.eventX |> logger.debug
+                messages |> List.iter (sprintf "Log: %s" >> Message.eventX >> logger.debug)
             | Bad _ -> messages |> failtestf "Error: %A"
         }
     ]

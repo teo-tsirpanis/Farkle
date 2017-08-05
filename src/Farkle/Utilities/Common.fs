@@ -94,7 +94,12 @@ module RangeSet =
     let contains (RangeSet s) x = s |> Set.exists (fun (a, b) -> x >= a && x <= b)
 
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
-type Position = private Position of (uint32 * uint32)
+type Position =
+    private Position of (uint32 * uint32)
+    with
+    override x.ToString() =
+        let (Position (x, y)) = x
+        sprintf "(%d, %d)" x y
 
 /// Functions to work with the `Position` type.
 module Position =
@@ -121,7 +126,7 @@ module Position =
     /// Increases the column index of a `Position` by one.
     let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
 
-    /// Increades the line index of a `Position` by one and resets the collumn to one.
+    /// Increases the line index of a `Position` by one and resets the collumn to one.
     let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
 
 /// Some more utilities to work with lists.

@@ -141,20 +141,22 @@ module internal Implementation =
             let lalrStackTop =
                 getOptic (ParserState.LALRStack_ >-> List.head_)
                 >>= (failIfNone LALRStackEmpty >> liftResult)
+            let getCurrentLALR = getOptic ParserState.CurrentLALRState_
             let setCurrentLALR x =
                 Indexed.getfromList states x
                 |> liftResult
                 |> mapFailure ParseError.IndexNotFound
                 >>= setOptic ParserState.CurrentLALRState_
-            let! currentState = getOptic ParserState.CurrentLALRState_
-            match currentState.States.TryFind (token ^. Token.Symbol_) with
+            let! currentState = getCurrentLALR
+            let nextAction = currentState.States.TryFind (token ^. Token.Symbol_)
+            match nextAction with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >>snd >> mustBeSome) // I am sorry. 😭
                 return LALRResult.Accept topReduction
             | Some (Shift x) ->
                 do! setCurrentLALR x
-                do! mapOptic ParserState.LALRStack_ (cons (token, (currentState, None)))
-                return LALRResult.Shift
+                do! getCurrentLALR >>= (fun x -> mapOptic ParserState.LALRStack_ (cons (token, (x, None))))
+                return LALRResult.Shift x
             | Some (Reduce x) ->
                 let! head, result = sresult {
                     let! shouldTrim = get <!> (ParserState.trimReductions >> ((&&) (Production.hasOneNonTerminal x)))
@@ -182,21 +184,22 @@ module internal Implementation =
                         return head, ReduceNormal reduction
                 }
                 let! newState = lalrStackTop <!> (snd >> fst)
-                match newState.States.TryFind x.Nonterminal with
+                let nextAction = newState.States.TryFind x.Nonterminal
+                match nextAction with
                 | Some (Goto x) ->
                     do! setCurrentLALR x
-                    let head = fst head, (newState, (head |> snd |> snd))
+                    let! head = getCurrentLALR <!> (fun currentLALR -> fst head, (currentLALR, head |> snd |> snd))
                     do! mapOptic (ParserState.LALRStack_) (cons head)
-                | _ -> do! fail GotoNotFoundAfterReduction
+                | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState.Index |> Indexed)
                 return result
             | Some (Goto _) | None ->
-                return
+                let expectedSymbols =
                     currentState.States
                     |> Map.toList
                     |> List.map fst
                     |> List.filter
                         (Symbol.symbolType >> (function | Terminal | EndOfFile | GroupStart | GroupEnd -> true | _ -> false))
-                    |> LALRResult.SyntaxError
+                return LALRResult.SyntaxError (expectedSymbols, token.Symbol)
         }
         let! x = impl
         match x with
@@ -228,11 +231,11 @@ module internal Implementation =
                 let! lalrResult = parseLALR newToken
                 match lalrResult with
                 | LALRResult.Accept x -> return ParseMessage.Accept x
-                | LALRResult.Shift ->
+                | LALRResult.Shift x ->
                     do! mapOptic ParserState.InputStack_ List.skipLast
-                    return! parse()
+                    return ParseMessage.Shift x
                 | ReduceNormal x -> return ParseMessage.Reduction x
                 | ReduceEliminated -> return! parse()
-                | LALRResult.SyntaxError x -> return ParseMessage.SyntaxError x
+                | LALRResult.SyntaxError (x, y) -> return ParseMessage.SyntaxError (x, y)
                 | LALRResult.InternalErrors x -> return ParseMessage.InternalErrors x
     }

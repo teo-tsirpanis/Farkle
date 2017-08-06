@@ -11,6 +11,7 @@ open Farkle.Grammar
 open Farkle.Monads.StateResult
 open Farkle.Parser
 open Farkle.Parser.Implementation
+open System
 open System.IO
 open System.Text
 
@@ -30,6 +31,9 @@ type GOLDParser =
     /// * `state`: The parser state.
     static member ParseState state =
         let rec impl() = sresult {
+            let! pos = getOptic ParserState.CurrentPosition_
+            let warn x = (x, pos) |> warn
+            let fail x = (x, pos) |> fail
             let! x = parse() |> liftState
             match x with
             | Accept x ->
@@ -46,7 +50,20 @@ type GOLDParser =
     /// Converts a parsing result to a result with human-readable error messages.
     /// ## Parameters
     /// * `result: The parsing result input.
-    static member FormatErrors (result: Result<Reduction, ParseMessage>) = result |> Trial.mapFailure (sprintf "%O")
+    static member FormatErrors (result: Result<Reduction, ParseMessage * Position>) =
+        let result = result |> Trial.mapFailure (fun (msg, pos) -> sprintf "%O %O" msg pos)
+        let messages =
+            match result with
+            | Ok (_, messages) -> messages
+            | Bad (_ :: messages) -> messages
+            | Bad [] -> []
+            |> Array.ofList
+        match result with
+        | Ok (r, _) ->
+            Core.Ok r
+        | Bad (error :: _) -> Core.Error error
+        | Bad [] -> Core.Error ""
+        , messages
 
     /// Parses a string based on the given `Grammar` object, with an option to trim trivial reductions.
     /// Currently, the only way to create `Grammar`s is by using the functions in the `EGT` module.
@@ -64,7 +81,7 @@ type GOLDParser =
     /// * `input`: The input string.
     /// * `trimReductions`: Whether the trivial reductions are trimmed.
     static member Parse (egtFile, input, trimReductions) = trial {
-        let! grammar = EGT.ofFile egtFile |> Trial.mapFailure EGTReadError
+        let! grammar = EGT.ofFile egtFile |> Trial.mapFailure (fun x -> EGTReadError x, Position.initial)
         return! GOLDParser.Parse (grammar = grammar, input = input, trimReductions = trimReductions)
     }
 

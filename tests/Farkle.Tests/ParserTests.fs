@@ -5,10 +5,10 @@
 
 module Farkle.Tests.ParserTests
 
-open Chessie.ErrorHandling
 open Expecto
 open Expecto.Logging
 open Farkle.Parser
+open System
 
 let logger = Log.create "Parser tests"
 
@@ -16,13 +16,10 @@ let logger = Log.create "Parser tests"
 let tests =
     testList "Parser tests" [
         test "A simple mathematical expression can be parsed" {
-            let x = GOLDParser.Parse("resources/simple.egt", "111*555", true) |> GOLDParser.FormatErrors
-            let messages = match x with | Ok (_, x) -> x | Bad x -> x
+            let (x, messages) = GOLDParser.Parse("resources/simple.egt", "111*555", false) |> GOLDParser.FormatErrors
+            messages |> String.concat Environment.NewLine |> Message.eventX |> logger.info
             match x with
-            | Ok (x, _) ->
-                x |> sprintf "Result: %A" |> Message.eventX |> logger.info
-                messages |> List.iter (sprintf "Log: %s" >> Message.eventX >> logger.debug)
-            | Bad _ -> messages |> failtestf "Error: %A"
+            | Ok x -> x |> sprintf "Result: %A" |> Message.eventX |> logger.info
+            | Core.Error messages -> messages |> failtestf "Error: %s"
         }
     ]
-

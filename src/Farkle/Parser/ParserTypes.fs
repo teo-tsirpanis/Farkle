@@ -36,6 +36,24 @@ type Reduction =
     }
     override x.ToString() = x.Tokens |> List.map (fst >> Optic.get Token.Data_) |> String.concat ""
 
+module Reduction =
+    let drawReductionTree x =
+        let sb = StringBuilder()
+        let append (x: string) =
+            sb.Append x |> ignore
+            sb.AppendLine() |> ignore
+        let kIndentText = "|  "
+        let rec impl indent {Parent = parent; Tokens = tokens} =
+            let indentText = kIndentText |> Seq.replicate indent |> Seq.concat |> Array.ofSeq |> String
+            sprintf "%s+--%O" indentText parent |> append |> ignore
+            tokens
+            |> List.iter (
+                function
+                | (_, Some x) -> impl (indent + 1) x
+                | (x, None) -> sprintf "%s%s+--%O" indentText kIndentText x.Data |> append |> ignore)
+        impl 0 x
+        sb.ToString()
+
 type ParseError =
     | GotoNotFoundAfterReduction of Production * Indexed<LALRState>
     | IndexNotFound of uint16

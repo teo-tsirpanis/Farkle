@@ -183,3 +183,4 @@ docsrc/tools/FSharp.Formatting.svclog
 AssemblyInfo.fs
 
 .paket/paket.exe
+docs.zip

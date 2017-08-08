@@ -134,7 +134,6 @@ Target "Clean" (fun _ ->
 // Build library & test project
 
 Target "Build" (fun _ ->
-    DotNetCli.Restore id
     DotNetCli.Build vsProjFunc
 )
 
@@ -151,11 +150,16 @@ Target "RunTests" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
-    Paket.Pack(fun p ->
-        { p with
-            OutputPath = "bin"
-            Version = release.NugetVersion
-            ReleaseNotes = toLines release.Notes})
+    DotNetCli.Pack (fun p ->
+            {p with
+                Configuration = configuration
+                OutputPath = __SOURCE_DIRECTORY__ @@ "bin"
+                AdditionalArgs = 
+                [
+                    "--no-build"
+                    release.NugetVersion |> sprintf "/p:PackageVersion=%s"
+                    release.Notes |> String.concat Environment.NewLine |> sprintf "/p:PackageReleaseNotes=\"%s\""
+                ]})
 )
 
 Target "PushArtifacts" (fun _ ->
@@ -167,6 +171,7 @@ Target "PushArtifacts" (fun _ ->
             Args = []
         }
     nugetPackages
+    ++ "docs.zip"
     |> Seq.map (makeParams >> asyncShellExec)
     |> Async.Parallel
     |> Async.RunSynchronously
@@ -175,7 +180,7 @@ Target "PushArtifacts" (fun _ ->
 
 Target "PublishNuget" (fun _ ->
     Paket.Push(fun p ->
-        { p with
+        {p with
             PublishUrl = "https://www.nuget.org"
             WorkingDir = "bin" })
 )
@@ -274,7 +279,9 @@ Target "KeepRunning" (fun _ ->
     watcher.Dispose()
 )
 
-Target "GenerateDocs" DoNothing
+Target "GenerateDocs" (fun _ ->
+    !! "./docs/**" |> Zip "docs" "docs.zip"
+    __SOURCE_DIRECTORY__ @@ "docs" |> CleanDir)
 
 let createIndexFsx lang =
     let content = """(*** hide ***)

@@ -134,6 +134,7 @@ Target "Clean" (fun _ ->
 // Build library & test project
 
 Target "Build" (fun _ ->
+    DotNetCli.Restore id
     DotNetCli.Build vsProjFunc
 )
 

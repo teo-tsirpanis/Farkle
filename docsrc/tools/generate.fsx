@@ -13,7 +13,7 @@ let referenceBinaries = []
 // Web site location for the generated documentation
 let website = "/Farkle"
 
-let githubLink = "https://github.com/teo-tsirpanis/farkle/teo-tsirpanis/farkle"
+let githubLink = "https://github.com/teo-tsirpanis/Farkle/"
 
 // Specify more information about your project
 let info =
@@ -90,7 +90,7 @@ let libDirs =
     let conventionBasedbinDirs =
         directoryInfo bin 
         |> subDirectories
-        |> Array.map (fun d -> d.FullName)
+        |> Array.map (fun x -> x.FullName @@ "net462")
         |> List.ofArray
 
     conventionBasedbinDirs @ [bin]

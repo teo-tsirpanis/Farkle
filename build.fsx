@@ -58,7 +58,7 @@ let gitOwner = "teo-tsirpanis"
 let gitHome = sprintf "%s/%s" "https://github.com" gitOwner
 
 // The name of the project on GitHub
-let gitName = "farkle"
+let gitName = "Farkle"
 
 // The url for the raw files hosted
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.githubusercontent.com/teo-tsirpanis"
@@ -220,6 +220,10 @@ Target "GenerateReferenceDocs" (fun _ ->
     buildDocumentationTarget "-d:RELEASE -d:REFERENCE" "Default"
 )
 
+Target "GenerateReferenceDocsDebug" (fun _ ->
+    buildDocumentationTarget "-d:REFERENCE" "Default"
+)
+
 let generateHelp' fail debug =
     let args =
         if debug then "--define:HELP"
@@ -371,6 +375,7 @@ Target "All" DoNothing
   ==> "GenerateDocs"
 
 "GenerateHelpDebug"
+  ==> "GenerateReferenceDocsDebug"
   ==> "KeepRunning"
 
 "Clean"

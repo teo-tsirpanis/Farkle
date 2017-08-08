@@ -17,7 +17,6 @@ open System.Text
 
 /// Functions that parse strings according to a specific grammar.
 /// This is the definitive reference for all users of the library.
-/// All the functions return a `Result<Reduction, ParseMessage>.
 /// * If the function succeeds, its return value is the top reduction of the grammar.
 /// * If it fails, the first message explains the reason it failed.
 /// The rest of the messages are a kind of a log of the parser.

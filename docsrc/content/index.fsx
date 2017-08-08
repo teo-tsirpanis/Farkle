@@ -59,9 +59,9 @@ The library is available under Public Domain license, which allows modification 
 redistribution for both commercial and non-commercial purposes. For more information see the 
 [License file][license] in the GitHub repository. 
 
-  [content]: https://github.com/fsprojects/Farkle/tree/master/docs/content
-  [gh]: https://github.com/fsprojects/Farkle
-  [issues]: https://github.com/fsprojects/Farkle/issues
-  [readme]: https://github.com/fsprojects/Farkle/blob/master/README.md
-  [license]: https://github.com/fsprojects/Farkle/blob/master/LICENSE.txt
+  [content]: https://github.com/teo-tsirpanis/Farkle/tree/master/docs/content
+  [gh]: https://github.com/teo-tsirpanis/Farkle
+  [issues]: https://github.com/teo-tsirpanis/Farkle/issues
+  [readme]: https://github.com/teo-tsirpanis/Farkle/blob/master/README.md
+  [license]: https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt
 *)

@@ -6,11 +6,11 @@ owners
 authors 
     Theodore Tsirpanis
 projectUrl
-    https://github.com/teo-tsirpanis/farkle/teo-tsirpanis/farkle
+    https://github.com/teo-tsirpanis/Farkle/
 iconUrl
-    https://raw.githubusercontent.com/teo-tsirpanis/farkle/master/docs/files/img/logo.png
+    https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docs/img/logo.png
 licenseUrl
-    https://github.com/teo-tsirpanis/farkle/teo-tsirpanis/farkle/blob/master/LICENSE.txt
+    https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt
 requireLicenseAcceptance
     false
 copyright

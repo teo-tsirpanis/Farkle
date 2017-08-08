@@ -245,6 +245,7 @@ module StateResult =
         return! s x |> put
     }
 
+/// [omit]
 module Maybe =
 
     [<DebuggerNonUserCode>]

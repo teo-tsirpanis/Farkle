@@ -47,6 +47,8 @@ let solutionFile  = !! "Farkle.sln"
 // Default target configuration
 let configuration = "Release"
 
+let sourceProjects = !! "src/**/*.??proj"
+
 // Pattern specifying assemblies to be tested using NUnit
 let testAssemblies = !! ("tests/**/bin" </> configuration </> "*Tests*.exe")
 
@@ -97,7 +99,7 @@ Target "AssemblyInfo" (fun _ ->
           (getAssemblyInfoAttributes projectName)
         )
 
-    !! "src/**/*.??proj"
+    sourceProjects
     |> Seq.map getProjectDetails
     |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
         match projFileName with
@@ -151,8 +153,11 @@ Target "RunTests" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
-    DotNetCli.Pack (fun p ->
+    sourceProjects
+    |> Seq.iter (
+        fun x -> DotNetCli.Pack (fun p ->
             {p with
+                Project = x
                 Configuration = configuration
                 OutputPath = __SOURCE_DIRECTORY__ @@ "bin"
                 AdditionalArgs = 
@@ -160,7 +165,7 @@ Target "NuGet" (fun _ ->
                     "--no-build"
                     release.NugetVersion |> sprintf "/p:PackageVersion=%s"
                     release.Notes |> String.concat Environment.NewLine |> sprintf "/p:PackageReleaseNotes=\"%s\""
-                ]})
+                ]}))
 )
 
 Target "PushArtifacts" (fun _ ->

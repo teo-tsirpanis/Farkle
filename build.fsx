@@ -50,7 +50,7 @@ let configuration = "Release"
 let sourceProjects = !! "src/**/*.??proj"
 
 // Pattern specifying assemblies to be tested using NUnit
-let testAssemblies = !! ("tests/**/bin" </> configuration </> "*Tests*.exe")
+let testAssemblies = !! ("tests/**/bin" </> configuration </> "netcoreapp1.1" </> "*Tests*.dll")
 
 let nugetPackages = !! "bin/*.nupkg"
 
@@ -145,9 +145,8 @@ Target "Build" (fun _ ->
 
 Target "RunTests" (fun _ ->
     testAssemblies
-    |> Testing.Expecto.Expecto id
+    |> Seq.iter (fun x -> DotNetCli.RunCommand (fun p -> {p with WorkingDir = Path.GetDirectoryName x}) x)
 )
-
 
 // --------------------------------------------------------------------------------------
 // Build a NuGet package

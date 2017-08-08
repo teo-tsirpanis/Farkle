@@ -9,7 +9,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tests", "tests\Farkl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EC37407F-B092-4C11-B701-462471EF42A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle", "src\Farkle\Farkle.fsproj", "{847FAA87-2682-469E-84B1-0203DB26FF81}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Engine", "src\Farkle.Engine\Farkle.Engine.fsproj", "{847FAA87-2682-469E-84B1-0203DB26FF81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,9 +1,20 @@
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Farkle</AssemblyName>
     <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
     <DebugType>portable</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Farkle.Core</PackageId>
+    <Authors>Theodore Tsirpanis</Authors>
+    <Company>Theodore Tsirpanis</Company>
+    <Product>Farkle.Core</Product>
+    <Description>Farkle.Engine is a GOLD Parser 5.0 engine for F# (primarly) and other .NET languages. It's still under early development.</Description>
+    <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
+    <PackageLicenseUrl>https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/teo-tsirpanis/Farkle/</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
+    <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\paket-files\xyncro\aether\src\Aether\Aether.fs">

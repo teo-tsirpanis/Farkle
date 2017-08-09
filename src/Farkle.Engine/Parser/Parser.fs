@@ -59,9 +59,9 @@ type GOLDParser =
             |> Array.ofList
         match result with
         | Ok (r, _) ->
-            Core.Ok r
-        | Bad (error :: _) -> Core.Error error
-        | Bad [] -> Core.Error ""
+            Choice1Of2 r
+        | Bad (error :: _) -> Choice2Of2 error
+        | Bad [] -> Choice2Of2 ""
         , messages
 
     /// Parses a string based on the given `Grammar` object, with an option to trim trivial reductions.

@@ -19,7 +19,7 @@ let tests =
             let (x, messages) = GOLDParser.Parse("resources/simple.egt", "111*555", false) |> GOLDParser.FormatErrors
             messages |> String.concat Environment.NewLine |> Message.eventX |> logger.info
             match x with
-            | Ok x -> x |> Reduction.drawReductionTree |> sprintf "Result: %s" |> Message.eventX |> logger.info
-            | Core.Error messages -> messages |> failtestf "Error: %s"
+            | Choice1Of2 x -> x |> Reduction.drawReductionTree |> sprintf "Result: %s" |> Message.eventX |> logger.info
+            | Choice2Of2 messages -> messages |> failtestf "Error: %s"
         }
     ]

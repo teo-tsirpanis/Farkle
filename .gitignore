@@ -185,3 +185,4 @@ AssemblyInfo.fs
 .paket/paket.exe
 docs.zip
 **/*.nupkg
+docs/

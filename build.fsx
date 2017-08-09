@@ -44,6 +44,9 @@ let tags = "parser lalr gold-parser"
 // File system information
 let solutionFile  = !! "Farkle.sln"
 
+// nuspec files. These describe the metapackages.
+let nuspecs = !! "src/*.nuspec"
+
 // Default target configuration
 let configuration = "Release"
 
@@ -152,6 +155,27 @@ Target "RunTests" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
+    // nuspecs
+    // |> Seq.iter
+    //     (NuGet ( fun p ->
+    //         {p with
+    //             ReleaseNotes = String.concat Environment.NewLine release.Notes
+    //             OutputPath = __SOURCE_DIRECTORY__ @@ "bin"
+    //             ToolPath = __SOURCE_DIRECTORY__
+    //         }))
+    nuspecs
+    |> Seq.map ((fun x ->
+        {
+            Program = "nuget"
+            WorkingDirectory = __SOURCE_DIRECTORY__ @@ "bin"
+            CommandLine = sprintf "pack %s" x
+            Args = []
+        }
+    ) >> asyncShellExec)
+    |> Async.Parallel
+    |> Async.RunSynchronously
+    |> Seq.filter ((<>) 0)
+    |> Seq.iter (failwithf "Process returned error code %d")
     sourceProjects
     |> Seq.iter (
         fun x -> DotNetCli.Pack (fun p ->

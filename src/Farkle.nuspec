@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+    <id>Farkle</id>
+    <version>1.0.0</version>
+    <title>The Farkle Parser</title>
+    <authors>Theodore Tsirpanis</authors>
+    <licenseUrl>https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/teo-tsirpanis/Farkle/</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</iconUrl>
+    <summary>A modern parsing system. Made for F#, but can be used from other .NET languages.</summary>
+    <description>Farkle is a parsing system based on the GOLD Parser.
+
+It is written in 100% clean and functional F# code but it is compatible with all .NET languages, although more advanced features will be only for F#.
+
+It is available for NET Framework 4.6.2 or higher, and .NET Standard 1.6 or higher.
+
+While some initial components are written, the real deal is still under early development.
+
+This is a metapackage which depends on all the packages of the project. It contains no code.
+
+10: BTW, Farkle means: "FARkle Recognizes Known Languages Easily".
+
+20: And "FARkle" means: (GOTO 10) 😁
+
+30: I guess you can't read this line. 😛
+
+</description>
+    <copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</copyright>
+    <tags>parser lalr gold-parser</tags>
+    <dependencies>
+        <dependency id="Farkle.Engine" version="1.0.0" />
+    </dependencies>
+    </metadata>
+    <files />
+</package>

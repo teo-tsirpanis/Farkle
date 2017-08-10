@@ -2,12 +2,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp1.1</TargetFramework>
-    <DebugType>portable</DebugType>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="GrammarTests.fs" />
-    <Compile Include="ParserTests.fs" />
+    <Compile Include="Benchmarks.fs" />
     <Compile Include="Program.fs" />
     <Content Include="..\resources\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

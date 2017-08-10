@@ -17,14 +17,14 @@ let tests =
     testList "Grammar tests" [
         test "A legacy CGT grammar fails to be read." {
             let x =
-                match EGT.ofFile "resources/legacy.cgt" with
+                match EGT.ofFile "legacy.cgt" with
                 | Pass _ | Trial.Warn _ -> []
                 | Fail x -> x
             Expect.equal [ReadACGTFile] x "Reading the grammar did not fail"
         }
 
         test "A new grammar is successfuly read" {
-            let x = EGT.ofFile "resources/simple.egt"
+            let x = EGT.ofFile "simple.egt"
             match x with
             | Ok (x, _) -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.debug
             | Bad x -> failtestf "Test failed: %A" x

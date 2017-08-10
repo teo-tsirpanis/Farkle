@@ -21,4 +21,5 @@ group Test
 
   source https://nuget.org/api/v2
   
+  nuget BenchmarkDotNet
   nuget Expecto

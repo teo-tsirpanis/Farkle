@@ -68,6 +68,7 @@ module EGT =
     // -----END RSA PRIVATE KEY-----
     [<CompiledName("CreateFromFile")>]
     let ofFile path = trial {
+        let path = Path.GetFullPath path
         if path |> File.Exists |> not then
             do! path |> FileNotExist |> Trial.fail
         use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)

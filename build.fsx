@@ -52,8 +52,13 @@ let configuration = "Release"
 
 let sourceProjects = !! "src/**/*.??proj"
 
-// Pattern specifying assemblies to be tested using NUnit
-let testAssemblies = !! ("tests/**/bin" </> configuration </> "netcoreapp1.1" </> "*Tests*.dll")
+let projects = !! "**/*.??proj" -- "**/*.shproj"
+
+// Pattern specifying assemblies to be tested
+let testAssemblies = !! ("bin/*Tests*/" </> "netcoreapp1.1" </> "*Tests*.dll")
+
+// Pattern specifying assemblies to be benchmarked
+let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> "netcoreapp1.1" </> "*Benchmarks*.dll")
 
 let nugetPackages = !! "bin/*.nupkg"
 
@@ -118,9 +123,8 @@ Target "AssemblyInfo" (fun _ ->
 // src folder to support multiple project outputs
 Target "CopyBinaries" (fun _ ->
     CleanDir "bin"
-    !! "src/**/*.??proj"
-    -- "src/**/*.shproj"
-    |>  Seq.map (fun f -> ((System.IO.Path.GetDirectoryName f) </> "bin" </> configuration </> "net462", "bin" </> (System.IO.Path.GetFileNameWithoutExtension f)))
+    projects
+    |>  Seq.map (fun f -> ((System.IO.Path.GetDirectoryName f) </> "bin" </> configuration, "bin" </> (System.IO.Path.GetFileNameWithoutExtension f)))
     |>  Seq.iter (fun (fromDir, toDir) -> CopyDir toDir fromDir (fun _ -> true))
 )
 
@@ -149,6 +153,11 @@ Target "Build" (fun _ ->
 
 Target "RunTests" (fun _ ->
     testAssemblies
+    |> Seq.iter (fun x -> DotNetCli.RunCommand (fun p -> {p with WorkingDir = Path.GetDirectoryName x}) x)
+)
+
+Target "Benchmark" (fun _ ->
+    benchmarkAssemblies
     |> Seq.iter (fun x -> DotNetCli.RunCommand (fun p -> {p with WorkingDir = Path.GetDirectoryName x}) x)
 )
 
@@ -400,6 +409,7 @@ Target "All" DoNothing
   ==> "Build"
   ==> "CopyBinaries"
   ==> "RunTests"
+  ==> "Benchmark"
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
   ==> "NuGet"

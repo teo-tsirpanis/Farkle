@@ -50,15 +50,17 @@ let nuspecs = !! "src/*.nuspec"
 // Default target configuration
 let configuration = "Release"
 
+let exeFramework = "netcoreapp1.1"
+
 let sourceProjects = !! "src/**/*.??proj"
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
 // Pattern specifying assemblies to be tested
-let testAssemblies = !! ("bin/*Tests*/" </> "netcoreapp1.1" </> "*Tests*.dll")
+let testAssemblies = !! ("bin/*Tests*/" </> exeFramework </> "*Tests*.dll")
 
 // Pattern specifying assemblies to be benchmarked
-let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> "netcoreapp1.1" </> "*Benchmarks*.dll")
+let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
 
 let nugetPackages = !! "bin/*.nupkg"
 

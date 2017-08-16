@@ -10,10 +10,7 @@ Farkle is a [LALR](https://en.wikipedia.org/wiki/LALR_parser) parser for .NET la
 Documentation: _TODO_
 
 ## Build Status
-
-Mono | .NET
----- | ----
-[![Mono CI Build Status](https://img.shields.io/travis/teo-tsirpanis/farkle/master.svg)](https://travis-ci.org/teo-tsirpanis/farkle) | [![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
+[![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
 
 ## Maintainer(s)
 

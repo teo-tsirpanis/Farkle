@@ -168,7 +168,7 @@ module internal HighLevel =
     }
 
     let mapMatching magicChar f = sresult {
-        let! x = wantByte <!> char
+        let! x = wantByte
         if x = magicChar then
             return! f <!> Some
         else
@@ -178,20 +178,20 @@ module internal HighLevel =
     let makeGrammar (EGTFile records) = trial {
         let mapMatching mc f = records |> List.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (List.choose id)
         let exactlyOne x = x |> List.exactlyOne |> Trial.mapFailure ListError
-        let! properties = readProperty |> mapMatching 'p' |> lift (Map.ofList >> Properties)
-        let! tableCounts = readTableCounts |> mapMatching 't' |> lift exactlyOne |> Trial.flatten
-        let! charSets = readCharSet |> mapMatching 'c' |> lift Indexable.collect
+        let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofList >> Properties)
+        let! tableCounts = readTableCounts |> mapMatching 't'B |> lift exactlyOne |> Trial.flatten
+        let! charSets = readCharSet |> mapMatching 'c'B |> lift Indexable.collect
         let fCharSets = getIndexedfromList charSets
-        let! symbols = readSymbol |> mapMatching 'S' |> lift Indexable.collect
+        let! symbols = readSymbol |> mapMatching 'S'B |> lift Indexable.collect
         let fSymbols = getIndexedfromList symbols
-        let! groups = readGroup fSymbols |> mapMatching 'g' |> lift Indexable.collect
-        let! prods = readProduction fSymbols |> mapMatching 'R' |> lift Indexable.collect
+        let! groups = readGroup fSymbols |> mapMatching 'g'B |> lift Indexable.collect
+        let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
-        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D' |> lift Indexable.collect
+        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift Indexable.collect
         let fDFA = getIndexedfromList dfas
-        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L' |> lift Indexable.collect
+        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift Indexable.collect
         let fLALR = getIndexedfromList lalrs
-        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I' |> lift exactlyOne |> Trial.flatten
+        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I'B |> lift exactlyOne |> Trial.flatten
         return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
     }
     // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.

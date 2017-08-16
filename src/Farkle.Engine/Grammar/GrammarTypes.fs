@@ -32,7 +32,7 @@ type EGTReadError =
     | InvalidBoolValue of byte
     /// An invalid entry code was encountered.
     /// Valid entry codes are these letters: `EbBIS`.
-    | InvalidEntryCode of char
+    | InvalidEntryCode of byte
     /// An entry of `expected` type was requested, but something else was returned instead.
     | InvalidEntryType of expected: string
     /// The string you asked for is not terminated
@@ -41,7 +41,7 @@ type EGTReadError =
     /// in case this type of error is encountered
     | TakeStringBug
     /// Records should start with `M`, but this one started with something else.
-    | InvalidRecordTag of char
+    | InvalidRecordTag of byte
     /// The file's header is invalid.
     | UnknownFile
     /// You have tried to read a CGT file instead of an EGT file.
@@ -67,11 +67,11 @@ type EGTReadError =
             match x with
             | ListError x -> sprintf "List error: %O" x
             | InvalidBoolValue x -> sprintf "Invalid boolean value (neither 0 nor 1): %d." x
-            | InvalidEntryCode x -> sprintf "Invalid entry code: '%c'." x
+            | InvalidEntryCode x -> x |> char |> sprintf "Invalid entry code: '%c'." 
             | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
             | UnterminatedString -> "String terminator was not found."
             | TakeStringBug -> "The function takeString exhibited a very unlikely bug. If you see this error, please file an issue on GitHub."
-            | InvalidRecordTag x -> sprintf "The record tag '%c' is not 'M', as it should have been." x
+            | InvalidRecordTag x -> x |> char |> sprintf "The record tag '%c' is not 'M', as it should have been." 
             | UnknownFile -> "The given file is not recognized."
             | ReadACGTFile ->
                 "The given file is a CGT file, not an EGT one."

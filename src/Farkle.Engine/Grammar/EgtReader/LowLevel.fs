@@ -56,17 +56,17 @@ module internal LowLevel =
     }
 
     let readEntry = sresult {
-        let! entryCode = takeByte <!> char
+        let! entryCode = takeByte
         match entryCode with
-        | 'E' -> return Empty
-        | 'b' -> return! takeByte <!> Byte
-        | 'B' ->
+        | 'E'B -> return Empty
+        | 'b'B -> return! takeByte <!> Byte
+        | 'B'B ->
             let! value = takeByte
             match value with
             | 0uy -> return Boolean false
             | 1uy -> return Boolean true
             | x -> return! x |> InvalidBoolValue |> fail
-        | 'I' -> return! takeUInt16 <!> UInt16
-        | 'S' -> return! takeString <!> String
+        | 'I'B -> return! takeUInt16 <!> UInt16
+        | 'S'B -> return! takeString <!> String
         | x -> return! x |> InvalidEntryCode |> fail
     }

@@ -22,8 +22,8 @@ module internal MidLevel =
     open System.Text
 
     let readRecord = sresult {
-        let! tag = takeByte <!> char
-        if tag <> 'M' then
+        let! tag = takeByte
+        if tag <> 'M'B then
             do! tag |> InvalidRecordTag |> fail
         let! count = takeUInt16 <!> int
         return! count |> repeatM readEntry <!> List.ofSeq <!> Record

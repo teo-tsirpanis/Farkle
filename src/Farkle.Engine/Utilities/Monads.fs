@@ -11,7 +11,7 @@ open System.Diagnostics
 open Farkle
 
 /// The well-known State monad.
-type State<'s, 't> = State of ('s -> ('t * 's))
+type [<Struct>] State<'s, 't> = State of ('s -> ('t * 's))
 
 /// [omit]
 /// It doesn't need documentation. 😜
@@ -118,7 +118,7 @@ module State =
 
 /// A combination of the `Result` and `State` monads.
 /// F# has no monad transformers, so it was manually done.
-type StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
+type [<Struct>] StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
 
 /// [omit]
 /// It doesn't need documentation. 😜

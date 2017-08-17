@@ -17,10 +17,15 @@ type ListError =
     /// How could you❗
     /// I expected that the list would be single. 😭
     | ExpectedSingle
+    /// You tried to take a negative number of items from the list.
+    | TookNegativeItems
 
 /// Functions on lists that mostly deal with the `StateResult` and `State` monads.
 /// The type of the actual list is subject to change as long as the public API remains stable.
 module List =
+
+    /// The simple list cons operator.
+    let cons x xs = x :: xs
 
     /// Makes pairs of two from a list.
     /// For example, `pairs [0;1;2;3]` becomes `[(0, 1); (2, 3)]`
@@ -32,10 +37,7 @@ module List =
 
     /// Returns a list with its last element removed.
     /// It should be called `init`, but there's already a function with that name.
-    let skipLast =
-        function
-        | [] -> []
-        | x -> x |> List.rev |> List.tail |> List.rev 
+    let skipLast x = x |> List.take (x.Length - 1)
 
     /// Creates a list of bytes from a stream.
     let ofByteStream s =
@@ -49,12 +51,7 @@ module List =
         s |> impl |> List.ofSeq
 
     /// Checks whether the list has any item.
-    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
-    let hasItems() = State.get |> State.map (List.isEmpty >> not)
-
-    /// Checks the length of the list in the state.
-    /// Because there is no real way to fail (apart from NRE), the function returns a simple `State` monad.
-    let length() = State.get |> State.map List.length
+    let hasItems x = x |> List.isEmpty |> not
 
     /// If the list in the state has only one element, it is returned.
     /// Otherwise, `ExpectedSingle` is returned.
@@ -75,14 +72,15 @@ module List =
     }
 
     /// Takes the first `count` elements of the list in the state and leaves the rest of them.
-    let rec take count = sresult {
+    let rec takeM count = sresult {
         match count with
+        | x when x < 0 -> return! fail TookNegativeItems
         | 0 -> return []
         | count ->
-            let! x = takeOne()
-            let! rest = take <| count - 1
-            return x :: rest
+            let! x, rest = get <!> List.splitAt count
+            do! put rest
+            return x
     }
 
     /// Skips the first `count` elements of the list in the state and leaves the rest of them.
-    let skip count = count |> take |> ignore
+    let skip count = count |> takeM |> ignore

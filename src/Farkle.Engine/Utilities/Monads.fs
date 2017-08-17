@@ -221,11 +221,6 @@ module StateResult =
         }
         impl()
 
-    let flatten x = sresult {
-        let! x = x
-        let! x = x
-        return x
-    }
 
     open Aether
 

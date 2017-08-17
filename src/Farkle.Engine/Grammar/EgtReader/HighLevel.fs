@@ -17,7 +17,7 @@ module internal HighLevel =
 
     type IndexedGetter<'a> = Indexed<'a> -> StateResult<'a, Entry list, EGTReadError>
 
-    let liftFlatten x = x <!> liftResult |> flatten
+    let liftFlatten x = x >>= liftResult
 
     let getIndexedfromList x = Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
 
@@ -57,7 +57,7 @@ module internal HighLevel =
             return RangeSet.create start finish
         }
         return!
-            whileM (List.hasItems() |> liftState) readCharSet
+            whileFull readCharSet
             <!> RangeSet.concat
             <!> Indexable.create index
     }
@@ -80,7 +80,7 @@ module internal HighLevel =
     let readGroup fSymbols = sresult {
         let! index = wantUInt16
         let! name = wantString
-        let symbolFunc = wantUInt16 <!> Indexed <!> fSymbols |> flatten
+        let symbolFunc = wantUInt16 <!> Indexed >>= fSymbols
         let! contIndex = symbolFunc
         let! startIndex = symbolFunc
         let! endIndex = symbolFunc
@@ -89,7 +89,7 @@ module internal HighLevel =
         do! wantEmpty // Reserved field.
         do! wantUInt16 |> ignore // Nesting count is ignored; we just read until the end.
         let nestingFunc = wantUInt16 <!> Indexed
-        let! nesting = whileM (List.hasItems() |> liftState) nestingFunc <!> set
+        let! nesting = whileFull nestingFunc <!> set
         return
             {
                 Name = name
@@ -105,10 +105,10 @@ module internal HighLevel =
 
     let readProduction (fSymbols: IndexedGetter<_>) = sresult {
         let! index = wantUInt16
-        let symbolFunc = wantUInt16 <!> Indexed <!> fSymbols |> flatten
+        let symbolFunc = wantUInt16 <!> Indexed >>= fSymbols
         let! nonTerminal = symbolFunc
         do! wantEmpty // Reserved field.
-        let! symbols = whileM (List.hasItems() |> liftState) symbolFunc <!> List.ofSeq
+        let! symbols = whileFull symbolFunc <!> List.ofSeq
         return
             {
                 Nonterminal = nonTerminal
@@ -118,8 +118,8 @@ module internal HighLevel =
     }
 
     let readInitialStates (fDFA: IndexedGetter<_>) (fLALR: IndexedGetter<_>) = sresult {
-        let! dfa = wantUInt16 <!> Indexed <!> fDFA |> flatten
-        let! lalr = wantUInt16 <!> Indexed <!> fLALR |> flatten
+        let! dfa = wantUInt16 <!> Indexed >>= fDFA
+        let! lalr = wantUInt16 <!> Indexed >>= fLALR
         return
             {
                 DFA = dfa
@@ -137,12 +137,12 @@ module internal HighLevel =
             | false -> returnM None
         do! wantEmpty // Reserved field.
         let readEdges = sresult {
-            let! charSet = wantUInt16 <!> Indexed <!> fCharSets |> flatten
+            let! charSet = wantUInt16 <!> Indexed >>= fCharSets
             let! target = wantUInt16 <!> Indexed
             do! wantEmpty // Reserved field.
             return charSet, target
         }
-        let! edges = whileM (List.hasItems() |> liftState) readEdges <!> set
+        let! edges = whileFull readEdges <!> set
         return
             {
                 Index = index
@@ -156,14 +156,14 @@ module internal HighLevel =
         let! index = wantUInt16
         do! wantEmpty // Reserved field.
         let readActions = sresult {
-            let! symbolIndex = wantUInt16 <!> Indexed <!> fSymbols |> flatten
+            let! symbolIndex = wantUInt16 <!> Indexed >>= fSymbols
             let! actionId = wantUInt16
             let! targetIndex = wantUInt16
             do! wantEmpty // Reserved field.
             let! action = LALRAction.create fProds targetIndex actionId |> liftResult
             return (symbolIndex, action)
         }
-        let! states = whileM (List.hasItems() |> liftState) readActions <!> Map.ofSeq
+        let! states = whileFull readActions <!> Map.ofSeq
         return {States = states; Index = index} |> Indexable.create index
     }
 

@@ -93,7 +93,7 @@ module internal Implementation =
         if nestGroup then
             do! x ^. Token.Data_ |> String.length |> consumeBuffer
             let newToken = Optic.set Token.Data_ "" x
-            do! mapOptic ParserState.GroupStack_ (cons newToken)
+            do! mapOptic ParserState.GroupStack_ (List.cons newToken)
             return! produceToken()
         else
             match groupStackTop with
@@ -155,7 +155,7 @@ module internal Implementation =
                 return LALRResult.Accept topReduction
             | Some (Shift x) ->
                 do! setCurrentLALR x
-                do! getCurrentLALR >>= (fun x -> mapOptic ParserState.LALRStack_ (cons (token, (x, None))))
+                do! getCurrentLALR >>= (fun x -> mapOptic ParserState.LALRStack_ (List.cons (token, (x, None))))
                 return LALRResult.Shift x
             | Some (Reduce x) ->
                 let! head, result = sresult {
@@ -189,7 +189,7 @@ module internal Implementation =
                 | Some (Goto x) ->
                     do! setCurrentLALR x
                     let! head = getCurrentLALR <!> (fun currentLALR -> fst head, (currentLALR, head |> snd |> snd))
-                    do! mapOptic (ParserState.LALRStack_) (cons head)
+                    do! mapOptic (ParserState.LALRStack_) (List.cons head)
                 | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState.Index |> Indexed)
                 return result
             | Some (Goto _) | None ->
@@ -215,7 +215,7 @@ module internal Implementation =
         match tokens with
         | [] ->
             let! newToken = produceToken()
-            do! mapOptic ParserState.InputStack_ (cons newToken)
+            do! mapOptic ParserState.InputStack_ (List.cons newToken)
             if newToken.Symbol.SymbolType = EndOfFile && not isGroupStackEmpty then
                 return GroupError
             else

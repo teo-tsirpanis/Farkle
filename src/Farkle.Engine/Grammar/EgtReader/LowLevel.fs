@@ -25,7 +25,7 @@ module internal LowLevel =
 
     let takeByte = List.takeOne() |> mapFailure ListError <!> ((*) 1uy)
 
-    let takeBytes count = count |> List.take |> mapFailure ListError <!> (List.map ((*) 1uy))
+    let takeBytes count = count |> List.takeM |> mapFailure ListError <!> (List.map ((*) 1uy))
 
     let ensureLittleEndian x =
         if BitConverter.IsLittleEndian then
@@ -44,8 +44,7 @@ module internal LowLevel =
             <!> List.pairs
             <!> Seq.tryFindIndex (fun (x, y) -> x = 0uy && y = 0uy)
             <!> failIfNone UnterminatedString
-            <!> liftResult
-            |> flatten
+            >>= liftResult
             <!> ((*) 2)
         let! result = takeBytes len <!> Array.ofSeq <!> Encoding.Unicode.GetString
         let! terminator = takeUInt16

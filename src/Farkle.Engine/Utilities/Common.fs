@@ -31,9 +31,6 @@ let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am 
 /// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
 let mustBeSome x = x |> Option.defaultWith impossible
 
-/// The simple list cons operator.
-let cons x xs = x :: xs
-
 /// Anything that can be indexed.
 /// The type is just a record with a value and an index.
 type Indexable<'a> =

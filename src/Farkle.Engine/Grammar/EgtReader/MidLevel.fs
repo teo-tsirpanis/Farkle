@@ -28,6 +28,8 @@ module internal MidLevel =
         let! count = takeUInt16 <!> int
         return! count |> repeatM readEntry <!> List.ofSeq <!> Record
     }
+    
+    let whileFull f = whileM (get <!> List.hasItems) f
 
     [<Literal>]
     let CGTHeader = "GOLD Parser Tables/v1.0"
@@ -44,7 +46,7 @@ module internal MidLevel =
         | CGTHeader, 0us -> do! fail ReadACGTFile
         | EGTHeader, 0us -> do ()
         | _ -> do! fail UnknownFile
-        return! whileM (List.hasItems() |> liftState) readRecord <!> List.ofSeq <!> EGTFile
+        return! whileFull readRecord <!> List.ofSeq <!> EGTFile
     }
 
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {

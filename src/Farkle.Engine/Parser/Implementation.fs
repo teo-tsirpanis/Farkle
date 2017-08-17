@@ -18,14 +18,14 @@ module internal Implementation =
     open State
 
     let getLookAheadBuffer n x =
-        let n = System.Math.Min(int n, LazyList.length x)
-        x |> LazyList.takeSafe n |> String.ofLazyList
+        let n = System.Math.Min(int n, List.length x)
+        x |> List.takeSafe n |> String.ofList
 
     let consumeBuffer n = state {
         let consumeSingle = state {
             let! x = getOptic ParserState.InputStream_
             match x with
-            | LLCons (x, xs) ->
+            | x :: xs ->
                 do! setOptic ParserState.InputStream_ xs
                 match x with
                 | LF ->
@@ -34,7 +34,7 @@ module internal Implementation =
                         do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | CR -> do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | _ -> do! mapOptic ParserState.CurrentPosition_ Position.incCol
-            | LLNil -> do ()
+            | [] -> do ()
         }
         match n with
         | n when n > 0 ->
@@ -50,11 +50,11 @@ module internal Implementation =
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
             match x with
-            | LLNil ->
+            | [] ->
                 match lastAccept with
                 | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
                 | None -> newToken Symbol.EOF ""
-            | LLCons (x, xs) ->
+            | x :: xs ->
                 let newDFA =
                     currState
                     |> DFAState.edges

@@ -13,7 +13,6 @@ type Arguments =
     | [<ExactlyOnce>] EGTFile of string
     | [<ExactlyOnce>] InputFile of string
     | [<Unique>] TrimReductions
-    | [<Unique; AltCommandLine("-e")>] EagerRead
     | [<Unique; AltCommandLine("-o")>] ShowOutput
 with
     interface IArgParserTemplate with
@@ -22,7 +21,6 @@ with
             | EGTFile _ -> "the file containing the grammar to be parsed"
             | InputFile _ -> "the file to be parsed"
             | TrimReductions -> "simplify reductions that have only one nonterminal"
-            | EagerRead -> "read all input at once"
             | ShowOutput -> "show output to console. Setting it may hurt performance"
 
 
@@ -34,11 +32,10 @@ let main argv =
     let egtFile = args.GetResult <@ EGTFile @>
     let inputFile = args.GetResult <@ InputFile @>
     let trimReductions = args.Contains <@ TrimReductions @>
-    let isLazy = args.Contains <@ EagerRead @> |> not
     let showOutput = args.Contains <@ ShowOutput @>
     let grammar = EGT.ofFile egtFile |> Trial.mapFailure EGTReadError |> returnOrFail
     let inputStream = File.OpenRead inputFile
-    let result, log = GOLDParser.Parse(grammar, inputStream, false, isLazy, trimReductions) |> GOLDParser.FormatErrors
+    let result, log = GOLDParser.Parse(grammar, inputStream, trimReductions) |> GOLDParser.FormatErrors
     let print = if showOutput then printfn "%s" else ignore
     log |> Array.iter print
     match result with

@@ -104,7 +104,7 @@ module ParseMessage =
 type ParserState =
     internal {
         Grammar: Grammar
-        InputStream: char LazyList
+        InputStream: char list
         CurrentLALRState: LALRState
         InputStack: Token list
         LALRStack: (Token * (LALRState * Reduction option)) list

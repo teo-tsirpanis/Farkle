@@ -75,6 +75,12 @@ module List =
     /// Skips the first `count` elements of the list in the state and leaves the rest of them.
     let skip count = count |> takeM |> ignore
 
+    let rec takeSafe n =
+        function
+        | _ when n <= 0 -> []
+        | [] -> []
+        | x :: xs -> x :: takeSafe (n - 1) xs
+
 /// Functions to work with sequences.
 module Seq =
 

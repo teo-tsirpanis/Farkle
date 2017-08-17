@@ -8,6 +8,7 @@
 module Farkle.Common
 
 open Chessie.ErrorHandling
+open FSharpx.Collections
 
 [<Literal>]
 /// The line feed character.
@@ -16,6 +17,12 @@ let LF = '\010'
 [<Literal>]
 /// The carriage return character.
 let CR = '\013'
+
+/// An active pattern recognizer for the `LazyList`.
+let (|LLCons|LLNil|) = LazyList.``|Cons|Nil|``
+
+/// An active pattern recognizer for the `RandomAccessList`.
+let (|RALCons|RALNil|) = RandomAccessList.``|Cons|Nil|``
 
 /// Raises an exception.
 /// This function should be used when handling an impossible edge case is very tedious.
@@ -139,6 +146,9 @@ module List =
 
 /// Some utilities to work with strings
 module String =
+
+    /// Creates a string list from the fiven lazy list of characters.
+    let ofLazyList = LazyList.toArray >> System.String
 
     /// See `List.toString`.
     let ofList = List.toString

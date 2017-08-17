@@ -18,18 +18,19 @@ open System.Text
 
 type InceptionBenchmark() =
 
-    [<Benchmark>]
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
-    member x.InceptionBenchmarkFarkle() =
+    member x.InceptionBenchmarkFarkle(isLazy) =
         let grammar = EGT.ofFile "inception.egt" |> returnOrFail
         let (result, log) =
-            File.ReadAllBytes "inception.grm"
-            |> Encoding.UTF8.GetString
-            |> List.ofString
-            |> ParserState.create false grammar
-            |> GOLDParser.ParseState
+            GOLDParser.Parse(grammar, File.OpenRead "inception.grm", true, isLazy, false)
             |> GOLDParser.FormatErrors
         result |> ofChoice |> returnOrFail
+
+    [<Benchmark>]
+    member x.InceptionBenchmarkFarkleEager() = x.InceptionBenchmarkFarkle false
+
+    [<Benchmark>]
+    member x.InceptionBenchmarkFarkleLazy() = x.InceptionBenchmarkFarkle true
 
     [<Benchmark(Baseline = true)>]
     member x.InceptionBenchmarkLazarus() =

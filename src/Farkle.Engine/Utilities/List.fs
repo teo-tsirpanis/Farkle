@@ -9,6 +9,7 @@ open Chessie.ErrorHandling
 open Farkle.Monads
 open Farkle.Monads.StateResult
 open System.IO
+open System.Text
 
 /// What can go wrong with a list operation
 type ListError =
@@ -38,17 +39,6 @@ module List =
     /// Returns a list with its last element removed.
     /// It should be called `init`, but there's already a function with that name.
     let skipLast x = x |> List.take (x.Length - 1)
-
-    /// Creates a list of bytes from a stream.
-    let ofByteStream s =
-        let rec impl (s: Stream) = seq {
-            match s.ReadByte() with
-            | -1 -> ()
-            | x ->
-                yield byte x
-                yield! impl s
-        }
-        s |> impl |> List.ofSeq
 
     /// Checks whether the list has any item.
     let hasItems x = x |> List.isEmpty |> not
@@ -84,3 +74,45 @@ module List =
 
     /// Skips the first `count` elements of the list in the state and leaves the rest of them.
     let skip count = count |> takeM |> ignore
+
+/// Functions to work with sequences.
+module Seq =
+
+    /// Creates a lazily evaluated sequence of bytes from a stream with the option to dispose the stream when it ends.
+    let ofByteStream disposeOnFinish (s: Stream) =
+        let rec impl () = seq {
+            match s.ReadByte() with
+            | -1 -> if disposeOnFinish then s.Dispose()
+            | x ->
+                yield byte x
+                yield! impl()
+        }
+        impl()
+    
+    /// Creates a lazily evaluated sequence of characters from a stream with the option to dispose the stream when it ends.
+    /// The character encoding is automatically detected.
+    let ofCharStream disposeOnFinish stream =
+        let r = new StreamReader(stream, Encoding.UTF8, true, 1024, disposeOnFinish)
+        let rec impl() = seq {
+            match r.Read() with
+            | -1 -> r.Dispose()
+            | x ->
+                yield char x
+                yield! impl()
+        }
+        impl()
+
+/// Functions to work with the `LazyList` type.
+module LazyList =
+
+    open FSharpx.Collections.LazyList
+
+    /// Takes at most `n` elements from a lazy list.
+    /// Returns an empty list on failure.
+    let rec takeSafe n s = 
+      delayed(fun () -> 
+        if n <= 0 then empty
+        else
+          match s with
+          | LLCons(a,s) -> cons a (take (n-1) s)
+          | LLNil -> empty)

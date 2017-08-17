@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Aether
 open Aether.Operators
 open Chessie.ErrorHandling
+open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -17,15 +18,14 @@ module internal Implementation =
     open State
 
     let getLookAheadBuffer n x =
-        let n = System.Math.Min(int n, Collections.List.length x)
-        x |> Collections.List.take n |> String.ofList
+        let n = System.Math.Min(int n, LazyList.length x)
+        x |> LazyList.takeSafe n |> String.ofLazyList
 
     let consumeBuffer n = state {
-        let! len = getOptic ParserState.InputStream_ <!> Collections.List.length
         let consumeSingle = state {
             let! x = getOptic ParserState.InputStream_
             match x with
-            | x :: xs ->
+            | LLCons (x, xs) ->
                 do! setOptic ParserState.InputStream_ xs
                 match x with
                 | LF ->
@@ -34,10 +34,10 @@ module internal Implementation =
                         do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | CR -> do! mapOptic ParserState.CurrentPosition_ Position.incLine
                 | _ -> do! mapOptic ParserState.CurrentPosition_ Position.incCol
-            | [] -> do ()
+            | LLNil -> do ()
         }
         match n with
-        | n when n > 0 && n <= len ->
+        | n when n > 0 ->
             return! repeatM consumeSingle n |> ignore
         | _ -> do ()
     }
@@ -50,11 +50,11 @@ module internal Implementation =
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
             match x with
-            | [] ->
+            | LLNil ->
                 match lastAccept with
                 | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
                 | None -> newToken Symbol.EOF ""
-            | x :: xs ->
+            | LLCons (x, xs) ->
                 let newDFA =
                     currState
                     |> DFAState.edges

@@ -7,7 +7,7 @@
     <PackageId>Farkle.Engine</PackageId>
     <Authors>Theodore Tsirpanis</Authors>
     <Company>Theodore Tsirpanis</Company>
-    <Product>Farkle.Engine</Product>  
+    <Product>Farkle.Engine</Product>
     <Description>Farkle.Engine is a GOLD Parser 5.0 engine for F# (primarily) and other .NET languages.
 
 It's part of the bigger Farkle project, which will be a revolutionary general-purpose parser library.
@@ -29,6 +29,22 @@ I guess you can't read this line. 😛
     <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
+      <Paket>True</Paket>
+      <Link>paket-files/RandomAccessList.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/RandomAccessList.fs</Link>
+    </Compile>
+    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\LazyList.fsi">
+      <Paket>True</Paket>
+      <Link>paket-files/LazyList.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\LazyList.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/LazyList.fs</Link>
+    </Compile>
     <Compile Include="..\..\paket-files\xyncro\aether\src\Aether\Aether.fs">
       <Paket>True</Paket>
       <Link>paket-files/Aether.fs</Link>

@@ -33,6 +33,7 @@ module EGT =
         >>= HighLevel.makeGrammar
 
     /// Reads a stream that represents an EGT file and returns a `Grammar`.
+    /// The stream can be disposed when it ends.
     // -----BEGIN RSA PRIVATE KEY-----
     // eJxlVM2OHDUQvvdTVPaSy9CPwGpBAY20bCI2KNpTx91dM+2M2x7Z7u31lSMKsCTZKBCFuUTKAXFBAonX
     // CS8wj8BX7umREIf5cdn1931f1aXut4YXtKTYabsp6YojWRcpOOqHpiMVKLlhvt3v3vxVLCNF5zakTO9C
@@ -52,7 +53,7 @@ module EGT =
     // MGVOvGQ7LwjqAjZ1Ig+wUcKGU4jebTiU/wJmwDzV
     // -----END RSA PRIVATE KEY-----
     [<CompiledName("CreateFromStream")>]
-    let ofStream x = x |> List.ofByteStream |> ofBytes
+    let ofStream disposeOnFinish x = x |> Seq.ofByteStream disposeOnFinish |> ofBytes
 
     /// Reads an EGT file and returns a `Grammar`.
     // -----BEGIN RSA PRIVATE KEY-----
@@ -72,5 +73,5 @@ module EGT =
         if path |> File.Exists |> not then
             do! path |> FileNotExist |> Trial.fail
         use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
-        return! stream |> ofStream
+        return! stream |> ofStream false // We dispose the steram ourselves
     }

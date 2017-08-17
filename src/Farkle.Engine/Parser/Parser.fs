@@ -6,6 +6,7 @@
 namespace Farkle.Parser
 
 open Chessie.ErrorHandling
+open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads.StateResult
@@ -71,7 +72,7 @@ type GOLDParser =
     /// * `grammar`: The `Grammar` object that contains the parsing logic.
     /// * `input`: The input string.
     /// * `trimReductions`: Whether the trivial reductions are trimmed.
-    static member Parse (grammar, input, trimReductions) = input |> List.ofString |> ParserState.create trimReductions grammar |> GOLDParser.ParseState
+    static member Parse (grammar, input: string, trimReductions) = input |> LazyList.ofSeq |> ParserState.create trimReductions grammar |> GOLDParser.ParseState
 
     /// Parses a string based on the grammar on the given EGT file, with an option to trim trivial reductions.
     /// Please note that _only_ EGT files are supported, _not_ CGT files (an error will be raised in that case).
@@ -88,9 +89,13 @@ type GOLDParser =
     /// ## Parameters
     /// * `grammar`: The `Grammar` object that contains the parsing logic.
     /// * `inputStream`: The input stream.
-    /// * `encoding`: The character encoding of the bytes in the stream.
+    /// * `disposeOnFinish`: Whether to dispose the stream when it ends.
+    /// * `lazyLoad`: Whether to lazily read from the input when required. Set to true for larger files; set to false for speed.
     /// * `trimReductions`: Whether the trivial reductions are trimmed.
-    static member Parse (grammar, inputStream, encoding: Encoding, trimReductions) = trial {
-        let input = inputStream |> List.ofByteStream |> Array.ofList |> encoding.GetString
-        return! GOLDParser.Parse (grammar = grammar, input = input, trimReductions = trimReductions)
-    }
+    static member Parse (grammar, inputStream, disposeOnFinish, lazyLoad, trimReductions) =
+        inputStream
+        |> Seq.ofCharStream disposeOnFinish
+        |> LazyList.ofSeq
+        |> (if lazyLoad then id else LazyList.toList >> LazyList.ofList)
+        |> ParserState.create trimReductions grammar
+        |> GOLDParser.ParseState

@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
+open FSharpx.Collections
 open System
 open System.Text
 
@@ -103,7 +104,7 @@ module ParseMessage =
 type ParserState =
     internal {
         Grammar: Grammar
-        InputStream: char list
+        InputStream: char LazyList
         CurrentLALRState: LALRState
         InputStack: Token list
         LALRStack: (Token * (LALRState * Reduction option)) list

@@ -6,6 +6,7 @@
 namespace Farkle.Grammar.EgtReader
 
 open Chessie.ErrorHandling
+open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -176,9 +177,9 @@ module internal HighLevel =
     }
 
     let makeGrammar (EGTFile records) = trial {
-        let mapMatching mc f = records |> List.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (List.choose id)
-        let exactlyOne x = x |> List.exactlyOne |> Trial.mapFailure ListError
-        let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofList >> Properties)
+        let mapMatching mc f = records |> Seq.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (Seq.choose id >> RandomAccessList.ofSeq)
+        let exactlyOne x = x |> RandomAccessList.exactlyOne |> Trial.mapFailure ListError
+        let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofSeq >> Properties)
         let! tableCounts = readTableCounts |> mapMatching 't'B |> lift exactlyOne |> Trial.flatten
         let! charSets = readCharSet |> mapMatching 'c'B |> lift Indexable.collect
         let fCharSets = getIndexedfromList charSets

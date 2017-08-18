@@ -53,10 +53,10 @@ module Indexable =
     let create index x = {Index = index; Item = x}
     /// Sorts `Indexable` items based on their index, and removes it.
     /// Duplicate indices do not raise an error.
-    let collect x = x |> List.ofSeq |> List.sortBy index |> List.map value
+    let collect x = x |> Seq.sortBy index |> Seq.map value |> RandomAccessList.ofSeq
 
 /// A type-safe reference to a value based on its index.
-type Indexed<'a> = Indexed of uint16
+type [<Struct>] Indexed<'a> = Indexed of uint16
 
 /// Functions for working with `Indexed<'a>`.
 module Indexed =
@@ -70,7 +70,7 @@ module Indexed =
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
     let getfromList list i =
-        let f i = List.tryItem (int i) list
+        let f i = RandomAccessList.tryNth (int i) list
         get f i
 
 /// A simple and efficient set of items based on ranges.

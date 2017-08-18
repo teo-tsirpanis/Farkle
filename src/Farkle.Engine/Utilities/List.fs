@@ -6,6 +6,7 @@
 namespace Farkle
 
 open Chessie.ErrorHandling
+open FSharpx.Collections
 open Farkle.Monads
 open Farkle.Monads.StateResult
 open System.IO
@@ -34,13 +35,6 @@ module List =
 
     /// Checks whether the list has any item.
     let hasItems x = x |> List.isEmpty |> not
-
-    /// If the list in the state has only one element, it is returned.
-    /// Otherwise, `ExpectedSingle` is returned.
-    let exactlyOne =
-        function
-        | [x] -> ok x
-        | _ -> Trial.fail ExpectedSingle
 
     /// Takes the first element of the list in the state and leaves the rest of them.
     /// It fails with an `EOF` if the list is empty.
@@ -109,3 +103,12 @@ module Seq =
                 yield! impl()
         }
         impl()
+
+module RandomAccessList =
+
+    /// If the list in the state has only one element, it is returned.
+    /// Otherwise, `ExpectedSingle` is returned.
+    let exactlyOne =
+        function
+        | RALCons(x, RALNil) -> ok x
+        | _ -> Trial.fail ExpectedSingle

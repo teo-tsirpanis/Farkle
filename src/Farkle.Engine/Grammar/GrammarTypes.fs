@@ -7,6 +7,7 @@ namespace Farkle.Grammar
 
 open Aether
 open Chessie.ErrorHandling
+open FSharpx.Collections
 open Farkle
 open System
 
@@ -211,7 +212,7 @@ module Group =
 
     let getSymbolGroupIndexed groups x: Indexed<Group> option =
         groups
-        |> List.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
+        |> Seq.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
         |> Option.map (uint16 >> Indexed)
 
     let getSymbolGroup groups x =
@@ -284,13 +285,13 @@ type Grammar =
     private
         {
             _Properties: Properties
-            _CharSets: CharSet list
-            _Symbols: Symbol list
-            _Groups: Group list
-            _Productions: Production list
+            _CharSets: CharSet RandomAccessList
+            _Symbols: Symbol RandomAccessList
+            _Groups: Group RandomAccessList
+            _Productions: Production RandomAccessList
             _InitialStates: InitialStates
-            _LALRStates: LALRState list
-            _DFAStates: DFAState list
+            _LALRStates: LALRState RandomAccessList
+            _DFAStates: DFAState RandomAccessList
         }
     with
         member x.Properties = x._Properties

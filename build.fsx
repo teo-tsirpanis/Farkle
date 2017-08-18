@@ -167,27 +167,8 @@ Target "Benchmark" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
-    // nuspecs
-    // |> Seq.iter
-    //     (NuGet ( fun p ->
-    //         {p with
-    //             ReleaseNotes = String.concat Environment.NewLine release.Notes
-    //             OutputPath = __SOURCE_DIRECTORY__ @@ "bin"
-    //             ToolPath = __SOURCE_DIRECTORY__
-    //         }))
-    nuspecs
-    |> Seq.map ((fun x ->
-        {
-            Program = "nuget"
-            WorkingDirectory = __SOURCE_DIRECTORY__ @@ "bin"
-            CommandLine = sprintf "pack %s" x
-            Args = []
-        }
-    ) >> asyncShellExec)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> Seq.filter ((<>) 0)
-    |> Seq.iter (failwithf "Process returned error code %d")
+    CopyFile "Directory.Build.props" "Directory.Build.xml"
+    ReplaceInFile (release.Notes |> String.concat Environment.NewLine |> replace "@ReleaseNotes") "Directory.Build.props"
     sourceProjects
     |> Seq.iter (
         fun x -> DotNetCli.Pack (fun p ->
@@ -199,25 +180,8 @@ Target "NuGet" (fun _ ->
                 [
                     "--no-build"
                     release.NugetVersion |> sprintf "/p:PackageVersion=%s"
-                    release.Notes |> String.concat Environment.NewLine |> sprintf "/p:PackageReleaseNotes=\"%s\""
                 ]}))
 )
-
-Target "PushArtifacts" (fun _ ->
-    let makeParams x =
-        {
-            Program = "appveyor"
-            WorkingDirectory = currentDirectory
-            CommandLine = sprintf "push %s" x
-            Args = []
-        }
-    nugetPackages
-    ++ "docs.zip"
-    |> Seq.map (makeParams >> asyncShellExec)
-    |> Async.Parallel
-    |> Async.RunSynchronously
-    |> Seq.filter ((<>) 0)
-    |> Seq.iter (failwithf "Process returned error code %d"))
 
 Target "PublishNuget" (fun _ ->
     Paket.Push(fun p ->
@@ -394,13 +358,15 @@ Target "Release" (fun _ ->
 
     // release on github
     createClient user pw
-    |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
-    // TODO: |> uploadFile "PATH_TO_FILE"
+    |> createDraft gitOwner gitName ("Version " + release.NugetVersion) (release.SemVer.PreRelease <> None) release.Notes
+    |> uploadFiles nugetPackages
     |> releaseDraft
     |> Async.RunSynchronously
 )
 
 Target "BuildPackage" DoNothing
+
+Target "CI" (fun _ -> ["Benchmark"; "BuildPackage"] |> List.iter Run)
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
@@ -411,11 +377,9 @@ Target "All" DoNothing
   ==> "Build"
   ==> "CopyBinaries"
   ==> "RunTests"
-  ==> "Benchmark"
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
   ==> "NuGet"
-  =?> ("PushArtifacts", buildServer = AppVeyor)
   ==> "BuildPackage"
   ==> "All"
 
@@ -429,6 +393,9 @@ Target "All" DoNothing
 
 "Clean"
   ==> "Release"
+
+"CopyBinaries"
+  ==> "Benchmark"
 
 "BuildPackage"
   ==> "PublishNuget"

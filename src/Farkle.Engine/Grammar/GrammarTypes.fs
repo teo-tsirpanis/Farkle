@@ -239,7 +239,7 @@ type DFAState =
     {
         Index: uint16
         AcceptSymbol: Symbol option
-        Edges: Set<CharSet * Indexed<DFAState>>
+        Edges: (CharSet * Indexed<DFAState>) list
     }
     override x.ToString() = sprintf "%d" x.Index
 

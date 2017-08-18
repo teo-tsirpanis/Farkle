@@ -58,8 +58,7 @@ module internal Implementation =
                 let newDFA =
                     currState
                     |> DFAState.edges
-                    |> Set.toSeq
-                    |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x)
+                    |> List.tryFind (fun (cs, _) -> RangeSet.contains cs x)
                     |> Option.bind (snd >> Indexed.getfromList dfaStates >> Trial.makeOption)
                 match newDFA with
                 | Some dfa ->
@@ -79,7 +78,7 @@ module internal Implementation =
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
         let! groups = get <!> (ParserState.grammar >> Grammar.groups)
-        let! groupStackTop = getOptic (ParserState.GroupStack_ >-> List.head_)
+        let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
         let nestGroup =
             match x ^. Token.Symbol_ |> Symbol.symbolType with
             | GroupStart | GroupEnd ->
@@ -128,7 +127,7 @@ module internal Implementation =
                         do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
                         do! x ^. Token.Data_ |> String.length |> consumeBuffer
                     | Character ->
-                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data |> Seq.head |> sprintf "%c" |> Token.AppendData)
+                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
                         do! consumeBuffer 1
                     return! produceToken()
     }

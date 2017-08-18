@@ -142,7 +142,7 @@ module internal HighLevel =
             do! wantEmpty // Reserved field.
             return charSet, target
         }
-        let! edges = whileFull readEdges <!> set
+        let! edges = whileFull readEdges <!> List.ofSeq
         return
             {
                 Index = index

@@ -28,14 +28,6 @@ module List =
     /// The simple list cons operator.
     let cons x xs = x :: xs
 
-    /// Makes pairs of two from a list.
-    /// For example, `pairs [0;1;2;3]` becomes `[(0, 1); (2, 3)]`
-    /// If there is an odd number of elements, the last is discarded.
-    let rec pairs =
-        function
-        | x1 :: x2 :: xs -> (x1, x2) :: pairs xs
-        | _ -> []
-
     /// Returns a list with its last element removed.
     /// It should be called `init`, but there's already a function with that name.
     let skipLast x = x |> List.take (x.Length - 1)
@@ -75,6 +67,8 @@ module List =
     /// Skips the first `count` elements of the list in the state and leaves the rest of them.
     let skip count = count |> takeM |> ignore
 
+    /// Takes at most `n` elements from a list.
+    /// Returns an empty list on failure.
     let rec takeSafe n =
         function
         | _ when n <= 0 -> []
@@ -83,6 +77,14 @@ module List =
 
 /// Functions to work with sequences.
 module Seq =
+
+    /// Makes pairs of two from a sequence.
+    /// For example, `pairs [0;1;2;3]` becomes `[(0, 1); (2, 3)]`
+    /// If there is an odd number of elements, the last is discarded.
+    let pairs x =
+        x
+        |> Seq.chunkBySize 2
+        |> Seq.map (fun x -> Seq.head x, x |> Seq.tail |> Seq.exactlyOne)
 
     /// Creates a lazily evaluated sequence of bytes from a stream with the option to dispose the stream when it ends.
     let ofByteStream disposeOnFinish (s: Stream) =

@@ -1,7 +1,5 @@
 Chessie
 FSharp.Core
 File: Aether.fs
-File: LazyList.fsi
-File: LazyList.fs
 File: RandomAccessList.fsi
 File: RandomAccessList.fs

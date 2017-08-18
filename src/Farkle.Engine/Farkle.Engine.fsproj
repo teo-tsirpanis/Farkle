@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
@@ -36,14 +37,6 @@ I guess you can't read this line. 😛
     <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fs">
       <Paket>True</Paket>
       <Link>paket-files/RandomAccessList.fs</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\LazyList.fsi">
-      <Paket>True</Paket>
-      <Link>paket-files/LazyList.fsi</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\LazyList.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/LazyList.fs</Link>
     </Compile>
     <Compile Include="..\..\paket-files\xyncro\aether\src\Aether\Aether.fs">
       <Paket>True</Paket>

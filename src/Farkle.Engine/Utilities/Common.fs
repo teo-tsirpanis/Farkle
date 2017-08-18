@@ -18,9 +18,6 @@ let LF = '\010'
 /// The carriage return character.
 let CR = '\013'
 
-/// An active pattern recognizer for the `LazyList`.
-let (|LLCons|LLNil|) = LazyList.``|Cons|Nil|``
-
 /// An active pattern recognizer for the `RandomAccessList`.
 let (|RALCons|RALNil|) = RandomAccessList.``|Cons|Nil|``
 
@@ -146,9 +143,6 @@ module List =
 
 /// Some utilities to work with strings
 module String =
-
-    /// Creates a string list from the fiven lazy list of characters.
-    let ofLazyList = LazyList.toArray >> System.String
 
     /// See `List.toString`.
     let ofList = List.toString

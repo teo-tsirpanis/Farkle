@@ -109,18 +109,3 @@ module Seq =
                 yield! impl()
         }
         impl()
-
-/// Functions to work with the `LazyList` type.
-module LazyList =
-
-    open FSharpx.Collections.LazyList
-
-    /// Takes at most `n` elements from a lazy list.
-    /// Returns an empty list on failure.
-    let rec takeSafe n s = 
-      delayed(fun () -> 
-        if n <= 0 then empty
-        else
-          match s with
-          | LLCons(a,s) -> cons a (take (n-1) s)
-          | LLNil -> empty)

@@ -9,7 +9,6 @@ open Chessie.ErrorHandling
 open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
-open Farkle.Monads.StateResult
 open Farkle.Parser
 open Farkle.Parser.Implementation
 open System
@@ -23,34 +22,55 @@ open System.Text
 /// The rest of the messages are a kind of a log of the parser.
 /// The term "trivial reductions" means a reduction that has only one nonterminal.
 /// They can optionally be trimmed, so that the resulting parse tree is simplified.
-type GOLDParser =
+type GOLDParser(grammar, trimReductions) =
 
-    /// Parses a parser state.
-    /// This is the lowest-level method.
-    /// ## Parameters
-    /// * `state`: The parser state.
-    static member ParseState state =
-        let rec impl() = sresult {
-            let! pos = getOptic ParserState.CurrentPosition_
-            let warn x = (x, pos) |> warn
-            let fail x = (x, pos) |> fail
-            let! x = parse() |> liftState
-            match x with
-            | Accept x ->
-                do! warn <| Accept x
+    let newParser = GOLDParser.CreateParser trimReductions grammar
+
+    new (grammar: Grammar) = GOLDParser(grammar = grammar, trimReductions = false)
+
+    new (egtFile) =
+        let grammar = egtFile |> EGT.ofFile |> returnOrFail
+        GOLDParser grammar
+
+    new (egtFile, trimReductions) =
+        let grammar = egtFile |> EGT.ofFile |> returnOrFail
+        GOLDParser(grammar, trimReductions)
+
+    static member CreateParser trimReductions grammar input = createParser trimReductions grammar input
+
+    /// Evaluates a `Parser` unitl it either succeeds or fails.
+    member x.ParseChars input =
+        let warn x = warn x ()
+        let rec impl p = trial {
+            match p with
+            | Started x -> return! impl x.Value
+            | Continuing (msg, x) ->
+                do! warn msg
+                return! impl x.Value
+            | Failed (pos, msg) ->
+                return! (pos, FatalError msg) |> fail
+            | Finished (pos, x) ->
+                do! (pos, Accept x) |> warn
                 return x
-            | x when x |> ParseMessage.isError |> not ->
-                do! warn x
-                return! impl()
-            | x ->
-                return! x |> FatalError |> fail
         }
-        eval (impl()) state
+        input |> newParser |> impl
+
+    /// Parses a string.
+    member x.ParseString input = input |> List.ofString |> x.ParseChars
+
+    /// Parses a `Stream`. Its character encoding is automatically detected.
+    member x.ParseStream inputStream =
+        inputStream
+        |> Seq.ofCharStream false
+        |> List.ofSeq
+        |> x.ParseChars
+
+    member x.ParseFile path =
+        use stream = File.OpenRead path
+        x.ParseStream stream
 
     /// Converts a parsing result to a result with human-readable error messages.
-    /// ## Parameters
-    /// * `result: The parsing result input.
-    static member FormatErrors (result: Result<Reduction, ParseMessage * Position>) =
+    static member FormatErrors (result: Result<Reduction, Position * ParseMessage>) =
         let result = result |> Trial.mapFailure (fun (msg, pos) -> sprintf "%O %O" msg pos)
         let messages =
             match result with
@@ -64,35 +84,3 @@ type GOLDParser =
         | Bad (error :: _) -> Choice2Of2 error
         | Bad [] -> Choice2Of2 ""
         , messages
-
-    /// Parses a string based on the given `Grammar` object, with an option to trim trivial reductions.
-    /// Currently, the only way to create `Grammar`s is by using the functions in the `EGT` module.
-    /// It's better to use this function if the same grammar is used multiple times, to avoid multiple grammars being constructed.
-    /// ## Parameters
-    /// * `grammar`: The `Grammar` object that contains the parsing logic.
-    /// * `input`: The input string.
-    /// * `trimReductions`: Whether the trivial reductions are trimmed.
-    static member Parse (grammar, input, trimReductions) = input |> List.ofString |> ParserState.create trimReductions grammar |> GOLDParser.ParseState
-
-    /// Parses a string based on the grammar on the given EGT file, with an option to trim trivial reductions.
-    /// Please note that _only_ EGT files are supported, _not_ CGT files (an error will be raised in that case).
-    /// ## Parameters
-    /// * `egtFile`: The path of the EGTfile that contains the parsing logic.
-    /// * `input`: The input string.
-    /// * `trimReductions`: Whether the trivial reductions are trimmed.
-    static member Parse (egtFile, input, trimReductions) = trial {
-        let! grammar = EGT.ofFile egtFile |> Trial.mapFailure (fun x -> EGTReadError x, Position.initial)
-        return! GOLDParser.Parse (grammar = grammar, input = input, trimReductions = trimReductions)
-    }
-
-    /// Parses a `Stream` based on the given `Grammar` object, with an option to trim trivial reductions.
-    /// ## Parameters
-    /// * `grammar`: The `Grammar` object that contains the parsing logic.
-    /// * `inputStream`: The input stream.
-    /// * `trimReductions`: Whether the trivial reductions are trimmed.
-    static member Parse (grammar, inputStream, trimReductions) =
-        inputStream
-        |> Seq.ofCharStream false
-        |> List.ofSeq
-        |> ParserState.create trimReductions grammar
-        |> GOLDParser.ParseState

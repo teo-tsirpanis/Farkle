@@ -101,8 +101,8 @@ module ParseMessage =
         | TokenRead _ | Reduction _ | Accept _ | Shift _ -> false
         | EGTReadError _ | LexicalError _ | SyntaxError _ | GroupError | InternalErrors _ | FatalError _ -> true
 
-type ParserState =
-    internal {
+type internal ParserState =
+    {
         Grammar: Grammar
         InputStream: char list
         CurrentLALRState: LALRState
@@ -113,19 +113,18 @@ type ParserState =
         GroupStack: Token list
     }
     with
-        static member internal  grammar x = x.Grammar
-        static member internal  InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
-        static member internal  CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
-        static member internal  InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
-        static member internal  LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
-        static member internal  trimReductions x = x.TrimReductions
-        static member internal  CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
-        static member internal  GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
+        static member grammar x = x.Grammar
+        static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
+        static member CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
+        static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
+        static member LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
+        static member trimReductions x = x.TrimReductions
+        static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
+        static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
 
-module ParserState =
+module internal ParserState =
 
     /// Creates a parser state.
-    [<CompiledName("Create")>]
     let create trimReductions grammar input =
         {
             Grammar = grammar

@@ -21,9 +21,9 @@ type InceptionBenchmark() =
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
     member x.InceptionBenchmarkFarkle() =
-        let grammar = EGT.ofFile "inception.egt" |> returnOrFail
+        let parser = GOLDParser("inception.egt", false)
         let (result, log) =
-            GOLDParser.Parse(grammar, File.OpenRead "inception.grm", false)
+            parser.ParseFile "inception.grm"
             |> GOLDParser.FormatErrors
         result |> ofChoice |> returnOrFail
 

@@ -13,6 +13,23 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
+/// A type signifying the state of a parser.
+/// The parsing process can be continued by evaluating the lazy `Parser` values.
+/// This type is the lowest-level public API.
+/// It is modeled after the [Designing with Capabilities](https://fsharpforfunandprofit.com/cap/) presentation.
+type Parser =
+    /// The parser has just started.
+    | Started of Parser Lazy
+    /// The parser has completed one step of the parsing process.
+    /// The log message of it is returned as well as a thunk of the next parser.
+    | Continuing of (Position * ParseMessage) * Parser Lazy
+    /// The parser has failed.
+    /// No lazy parser is returned, so the parsing process cannot continue.
+    | Failed of Position * ParseMessage
+    /// The parser has finished parsing.
+    /// No lazy parser is returned, as the parsing process is complete.
+    | Finished of Position * Reduction
+
 module internal Implementation =
 
     open State
@@ -208,33 +225,44 @@ module internal Implementation =
 
     open State
 
-    let rec parse() = state {
-        let! tokens = getOptic ParserState.InputStack_
-        let! isGroupStackEmpty = getOptic ParserState.GroupStack_ <!> List.isEmpty
-        match tokens with
-        | [] ->
-            let! newToken = produceToken()
-            do! mapOptic ParserState.InputStack_ (List.cons newToken)
-            if newToken.Symbol.SymbolType = EndOfFile && not isGroupStackEmpty then
-                return GroupError
-            else
-                return TokenRead newToken
-        | newToken :: xs ->
-            match newToken.Symbol.SymbolType with
-            | Noise ->
-                do! setOptic ParserState.InputStack_ xs
-                return! parse()
-            | Error -> return LexicalError newToken
-            | EndOfFile when not isGroupStackEmpty -> return GroupError
-            | _ ->
-                let! lalrResult = parseLALR newToken
-                match lalrResult with
-                | LALRResult.Accept x -> return ParseMessage.Accept x
-                | LALRResult.Shift x ->
-                    do! mapOptic ParserState.InputStack_ List.skipLast
-                    return ParseMessage.Shift x
-                | ReduceNormal x -> return ParseMessage.Reduction x
-                | ReduceEliminated -> return! parse()
-                | LALRResult.SyntaxError (x, y) -> return ParseMessage.SyntaxError (x, y)
-                | LALRResult.InternalErrors x -> return ParseMessage.InternalErrors x
-    }
+    let rec stepParser p =
+        let rec impl() = state {
+            let! tokens = getOptic ParserState.InputStack_
+            let! isGroupStackEmpty = getOptic ParserState.GroupStack_ <!> List.isEmpty
+            match tokens with
+            | [] ->
+                let! newToken = produceToken()
+                do! mapOptic ParserState.InputStack_ (List.cons newToken)
+                if newToken.Symbol.SymbolType = EndOfFile && not isGroupStackEmpty then
+                    return GroupError
+                else
+                    return TokenRead newToken
+            | newToken :: xs ->
+                match newToken.Symbol.SymbolType with
+                | Noise ->
+                    do! setOptic ParserState.InputStack_ xs
+                    return! impl()
+                | Error -> return LexicalError newToken
+                | EndOfFile when not isGroupStackEmpty -> return GroupError
+                | _ ->
+                    let! lalrResult = parseLALR newToken
+                    match lalrResult with
+                    | LALRResult.Accept x -> return ParseMessage.Accept x
+                    | LALRResult.Shift x ->
+                        do! mapOptic ParserState.InputStack_ List.skipLast
+                        return ParseMessage.Shift x
+                    | ReduceNormal x -> return ParseMessage.Reduction x
+                    | ReduceEliminated -> return! impl()
+                    | LALRResult.SyntaxError (x, y) -> return ParseMessage.SyntaxError (x, y)
+                    | LALRResult.InternalErrors x -> return ParseMessage.InternalErrors x
+        }
+        let (result, nextState) = run (impl()) p
+        let pos = nextState.CurrentPosition
+        match result with
+        | ParseMessage.Accept x -> Finished (pos, x)
+        | x when ParseMessage.isError x -> Failed (pos, x)
+        | x -> Continuing ((pos, x), lazy (stepParser nextState))
+    
+    let createParser trimReductions grammar input =
+        let state = ParserState.create trimReductions grammar input
+        Started (lazy (stepParser state))

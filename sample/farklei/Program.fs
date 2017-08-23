@@ -33,9 +33,8 @@ let main argv =
     let inputFile = args.GetResult <@ InputFile @>
     let trimReductions = args.Contains <@ TrimReductions @>
     let showOutput = args.Contains <@ ShowOutput @>
-    let grammar = EGT.ofFile egtFile |> Trial.mapFailure EGTReadError |> returnOrFail
-    let inputStream = File.OpenRead inputFile
-    let result, log = GOLDParser.Parse(grammar, inputStream, trimReductions) |> GOLDParser.FormatErrors
+    let parser = GOLDParser (egtFile, trimReductions)
+    let result, log = inputFile |> parser.ParseFile |> GOLDParser.FormatErrors
     let print = if showOutput then printfn "%s" else ignore
     log |> Array.iter print
     match result with

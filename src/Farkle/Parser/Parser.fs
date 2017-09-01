@@ -26,19 +26,28 @@ type GOLDParser(grammar, trimReductions) =
 
     let newParser = GOLDParser.CreateParser trimReductions grammar
 
+    /// Creates a parser from a given `Grammar`.
+    /// Trivial reductions are not trimmed.
     new (grammar: Grammar) = GOLDParser(grammar = grammar, trimReductions = false)
 
+    /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
+    /// Trivial reductions are not trimmed.
+    /// If there is a problem with the file, the constructor will throw an exception.
     new (egtFile) =
         let grammar = egtFile |> EGT.ofFile |> returnOrFail
         GOLDParser grammar
 
+    /// Creates a parser from a `Grammar` stored in an EGT file in the given path, with an option to trim trivial reductions.
+    /// If there is a problem with the file, the constructor will throw an exception.
     new (egtFile, trimReductions) =
         let grammar = egtFile |> EGT.ofFile |> returnOrFail
         GOLDParser(grammar, trimReductions)
 
+    /// Creates a parser that parses `input` based on the given `Grammar`, with the option to trim trivial reductions.
     static member CreateParser trimReductions grammar input = createParser trimReductions grammar input
 
-    /// Evaluates a `Parser` unitl it either succeeds or fails.
+    /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
+    /// What it returns is described in the `GOLDParser` class documentation.
     member x.ParseChars input =
         let warn x = warn x ()
         let rec impl p = trial {
@@ -65,11 +74,15 @@ type GOLDParser(grammar, trimReductions) =
         |> List.ofSeq
         |> x.ParseChars
 
+    /// Parses the contents of a file in the given path.
     member x.ParseFile path =
         use stream = File.OpenRead path
         x.ParseStream stream
 
     /// Converts a parsing result to a result with human-readable error messages.
+    /// The result is a tuple.
+    /// The first element is the parsing result as a `Choice` of either the final reduction, or the fatal error message.
+    /// The second element is an array with the log messages as strings.
     static member FormatErrors (result: Result<Reduction, Position * ParseMessage>) =
         let result = result |> Trial.mapFailure (fun (msg, pos) -> sprintf "%O %O" msg pos)
         let messages =

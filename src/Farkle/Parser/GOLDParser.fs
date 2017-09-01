@@ -10,7 +10,7 @@ open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Parser
-open Farkle.Parser.Implementation
+open Farkle.Parser.Internal
 open System
 open System.IO
 open System.Text

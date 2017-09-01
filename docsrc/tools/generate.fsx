@@ -53,6 +53,9 @@ let templates  = __SOURCE_DIRECTORY__ @@ "templates"
 let formatting = __SOURCE_DIRECTORY__ @@ "../../packages/build/FSharp.Formatting/"
 let docTemplate = "docpage.cshtml"
 
+[<Literal>]
+let AppFramework = "netstandard1.6"
+
 // Where to look for *.csproj templates (in this order)
 let layoutRootsAll = new System.Collections.Generic.Dictionary<string, string list>()
 layoutRootsAll.Add("en",[ templates; formatting @@ "templates"
@@ -81,7 +84,8 @@ let binaries =
     let conventionBased = 
         directoryInfo bin 
         |> subDirectories
-        |> Array.map ((fun x -> x.FullName |> directoryInfo, x.Name) >> (fun (d, assemblyName) -> d.FullName @@ (sprintf "%s.dll" assemblyName)))
+        |> Array.map ((fun x -> x, x.Name) >> (fun (d, assemblyName) -> d.FullName @@ AppFramework @@ (sprintf "%s.dll" assemblyName)))
+        |> Array.filter fileExists
         |> List.ofArray
 
     conventionBased @ manuallyAdded

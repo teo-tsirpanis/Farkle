@@ -285,8 +285,8 @@ Target "KeepRunning" (fun _ ->
 )
 
 Target "GenerateDocs" (fun _ ->
-    !! "./docs/**" |> Zip "docs" "docs.zip"
-    __SOURCE_DIRECTORY__ @@ "docs" |> CleanDir)
+    __SOURCE_DIRECTORY__ @@ "docs" |> CleanDir
+    !! "./docs/**" |> Zip "docs" "docs.zip")
 
 let createIndexFsx lang =
     let content = """(*** hide ***)

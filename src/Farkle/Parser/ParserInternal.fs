@@ -13,7 +13,7 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
-module internal Implementation =
+module internal Internal =
 
     open State
 

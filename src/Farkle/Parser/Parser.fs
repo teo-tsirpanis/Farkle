@@ -57,7 +57,7 @@ type GOLDParser(grammar, trimReductions) =
                 do! warn msg
                 return! impl x.Value
             | Failed (pos, msg) ->
-                return! (pos, FatalError msg) |> fail
+                return! (pos, msg) |> fail
             | Finished (pos, x) ->
                 do! (pos, Accept x) |> warn
                 return x

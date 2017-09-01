@@ -13,23 +13,6 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
-/// A type signifying the state of a parser.
-/// The parsing process can be continued by evaluating the lazy `Parser` values.
-/// This type is the lowest-level public API.
-/// It is modeled after the [Designing with Capabilities](https://fsharpforfunandprofit.com/cap/) presentation.
-type Parser =
-    /// The parser has just started.
-    | Started of Parser Lazy
-    /// The parser has completed one step of the parsing process.
-    /// The log message of it is returned as well as a thunk of the next parser.
-    | Continuing of (Position * ParseMessage) * Parser Lazy
-    /// The parser has failed.
-    /// No lazy parser is returned, so the parsing process cannot continue.
-    | Failed of Position * ParseMessage
-    /// The parser has finished parsing.
-    /// No lazy parser is returned, as the parsing process is complete.
-    | Finished of Position * Reduction
-
 module internal Implementation =
 
     open State
@@ -161,7 +144,7 @@ module internal Implementation =
             let setCurrentLALR x =
                 Indexed.getfromList states x
                 |> liftResult
-                |> mapFailure ParseError.IndexNotFound
+                |> mapFailure ParseInternalError.IndexNotFound
                 >>= setOptic ParserState.CurrentLALRState_
             let! currentState = getCurrentLALR
             let nextAction = currentState.States.TryFind (token ^. Token.Symbol_)
@@ -220,7 +203,7 @@ module internal Implementation =
         let! x = impl
         match x with
         | Ok (x, _) -> return x
-        | Bad x -> return x |> LALRResult.InternalErrors
+        | Bad x -> return x |> List.exactlyOne |> LALRResult.InternalError
     }
 
     open State
@@ -242,7 +225,7 @@ module internal Implementation =
                 | Noise ->
                     do! setOptic ParserState.InputStack_ xs
                     return! impl()
-                | Error -> return LexicalError newToken
+                | Error -> return LexicalError newToken.Data.[0]
                 | EndOfFile when not isGroupStackEmpty -> return GroupError
                 | _ ->
                     let! lalrResult = parseLALR newToken
@@ -254,15 +237,15 @@ module internal Implementation =
                     | ReduceNormal x -> return ParseMessage.Reduction x
                     | ReduceEliminated -> return! impl()
                     | LALRResult.SyntaxError (x, y) -> return ParseMessage.SyntaxError (x, y)
-                    | LALRResult.InternalErrors x -> return ParseMessage.InternalErrors x
+                    | LALRResult.InternalError x -> return ParseMessage.InternalError x
         }
         let (result, nextState) = run (impl()) p
         let pos = nextState.CurrentPosition
         match result with
         | ParseMessage.Accept x -> Finished (pos, x)
-        | x when ParseMessage.isError x -> Failed (pos, x)
+        | x when x.IsError -> Failed (pos, x)
         | x -> Continuing ((pos, x), lazy (stepParser nextState))
-    
+
     let createParser trimReductions grammar input =
         let state = ParserState.create trimReductions grammar input
         Started (lazy (stepParser state))

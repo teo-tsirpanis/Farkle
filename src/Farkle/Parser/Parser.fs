@@ -75,14 +75,17 @@ type GOLDParser(grammar, trimReductions) =
         |> x.ParseChars
 
     /// Parses the contents of a file in the given path.
-    member x.ParseFile path =
+    member x.ParseFile path = trial {
+        if path |> File.Exists |> not then
+            do! (Position.initial, InputFileNotExist path) |> fail
         use stream = File.OpenRead path
-        x.ParseStream stream
+        return! x.ParseStream stream
+    }
 
     /// Converts a parsing result to a result with human-readable error messages.
     /// The result is a tuple.
     /// The first element is the parsing result as a `Choice` of either the final reduction, or the fatal error message.
-    /// The second element is an array with the log messages as strings.
+    /// The second element is a sequence with the log messages as strings.
     static member FormatErrors (result: Result<Reduction, Position * ParseMessage>) =
         let result = result |> Trial.mapFailure (fun (msg, pos) -> sprintf "%O %O" msg pos)
         let messages =
@@ -90,7 +93,7 @@ type GOLDParser(grammar, trimReductions) =
             | Ok (_, messages) -> messages
             | Bad (_ :: messages) -> messages
             | Bad [] -> []
-            |> Array.ofList
+            |> Seq.ofList
         match result with
         | Ok (r, _) ->
             Choice1Of2 r

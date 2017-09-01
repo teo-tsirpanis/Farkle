@@ -36,7 +36,7 @@ let main argv =
     let parser = GOLDParser (egtFile, trimReductions)
     let result, log = inputFile |> parser.ParseFile |> GOLDParser.FormatErrors
     let print = if showOutput then printfn "%s" else ignore
-    log |> Array.iter print
+    log |> Seq.iter print
     match result with
     | Choice1Of2 x ->
         x |> Reduction.drawReductionTree |> print

@@ -70,6 +70,7 @@ type internal LALRResult =
 
 type ParseMessage =
     | EGTReadError of EGTReadError
+    | InputFileNotExist of string
     | TokenRead of Token
     | Reduction of Reduction
     | Shift of Indexed<LALRState>
@@ -82,6 +83,7 @@ type ParseMessage =
     override x.ToString() =
         match x with
         | EGTReadError x -> sprintf "Error while reading the EGT file: %O" x
+        | InputFileNotExist x -> sprintf "File \"%s\" does not exist" x
         | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O (%O)" x.Parent x
         | Shift (Indexed x) -> sprintf "The parser shifted to state %d" x
@@ -99,7 +101,7 @@ module ParseMessage =
     let isError =
         function
         | TokenRead _ | Reduction _ | Accept _ | Shift _ -> false
-        | EGTReadError _ | LexicalError _ | SyntaxError _ | GroupError | InternalErrors _ | FatalError _ -> true
+        | EGTReadError _ | InputFileNotExist _ | LexicalError _ | SyntaxError _ | GroupError | InternalErrors _ | FatalError _ -> true
 
 type internal ParserState =
     {

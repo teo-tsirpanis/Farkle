@@ -6,7 +6,7 @@
 // Binaries that have XML documentation (in a corresponding generated XML file)
 // Any binary output / copied to bin/projectName/projectName.dll will
 // automatically be added as a binary to generate API docs for.
-// for binaries output to root bin folder please add the filename only to the 
+// for binaries output to root bin folder please add the filename only to the
 // referenceBinaries list below in order to generate documentation for the binaries.
 // (This is the original behaviour of ProjectScaffold prior to multi project support)
 let referenceBinaries = []
@@ -56,6 +56,9 @@ let docTemplate = "docpage.cshtml"
 [<Literal>]
 let AppFramework = "netstandard1.6"
 
+[<Literal>]
+let ActualFramework = "net462"
+
 // Where to look for *.csproj templates (in this order)
 let layoutRootsAll = new System.Collections.Generic.Dictionary<string, string list>()
 layoutRootsAll.Add("en",[ templates; formatting @@ "templates"
@@ -73,31 +76,32 @@ subDirectories (directoryInfo templates)
 let copyFiles () =
   CopyRecursive files output true |> Log "Copying file: "
   ensureDirectory (output @@ "content")
-  CopyRecursive (formatting @@ "styles") (output @@ "content") true 
+  CopyRecursive (formatting @@ "styles") (output @@ "content") true
     |> Log "Copying styles and scripts: "
 
 let binaries =
-    let manuallyAdded = 
-        referenceBinaries 
+    let manuallyAdded =
+        referenceBinaries
         |> List.map (fun b -> bin @@ b)
-    
-    let conventionBased = 
-        directoryInfo bin 
+
+    let conventionBased =
+        directoryInfo bin
         |> subDirectories
-        |> Array.map ((fun x -> x, x.Name) >> (fun (d, assemblyName) -> d.FullName @@ AppFramework @@ (sprintf "%s.dll" assemblyName)))
+        |> Array.filter (fun x -> x.FullName @@ AppFramework |> directoryExists)
+        |> Array.map ((fun x -> x.FullName @@ ActualFramework @@ (sprintf "%s.dll" x.Name)))
         |> Array.filter fileExists
         |> List.ofArray
 
     conventionBased @ manuallyAdded
 
 let libDirs =
-    let conventionBasedbinDirs =
-        directoryInfo bin 
-        |> subDirectories
-        |> Array.map (fun x -> x.FullName)
-        |> List.ofArray
-
-    conventionBasedbinDirs @ [bin]
+    bin
+    |> directoryInfo
+    |> subDirectories
+    |> Seq.map (fun x -> x.FullName @@ ActualFramework)
+    |> Seq.filter directoryExists
+    |> List.ofSeq
+    |> List.append [bin]
 
 // Build API reference from XML comments
 let buildReference () =

@@ -388,8 +388,7 @@ Target "All" DoNothing
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
 
-"Clean"
-  ==> "GenerateHelpDebug"
+"GenerateHelpDebug"
   ==> "GenerateReferenceDocsDebug"
   ==> "KeepRunning"
 

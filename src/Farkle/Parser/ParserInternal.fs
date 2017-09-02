@@ -158,7 +158,7 @@ module internal Internal =
                 return LALRResult.Shift x
             | Some (Reduce x) ->
                 let! head, result = sresult {
-                    let! shouldTrim = get <!> (ParserState.trimReductions >> ((&&) (Production.hasOneNonTerminal x)))
+                    let! shouldTrim = get <!> (ParserState.trimReductions >> ((&&) x.HasOneNonTerminal))
                     if shouldTrim then
                         let! head = lalrStackTop
                         do! mapOptic ParserState.LALRStack_ List.tail

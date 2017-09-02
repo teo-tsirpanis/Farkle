@@ -15,10 +15,10 @@ open System
 open System.IO
 open System.Text
 
-/// Functions that parse strings according to a specific grammar.
-/// This is the definitive reference for all users of the library.
-/// * If the function succeeds, its return value is the top reduction of the grammar.
-/// * If it fails, the first message explains the reason it failed.
+/// A reusable parser created for a specific grammar that can parse input from multiple sources
+/// This is the highest-level API. THe parsing function's return values merit some explanation.
+/// If parsing succeeds, its return value is the top reduction of the grammar.
+/// If it fails, the first message explains the reason it failed.
 /// The rest of the messages are a kind of a log of the parser.
 /// The term "trivial reductions" means a reduction that has only one nonterminal.
 /// They can optionally be trimmed, so that the resulting parse tree is simplified.

@@ -104,6 +104,7 @@ module Seq =
         }
         impl()
 
+/// Functions to work with `RandomAccessList`s.
 module RandomAccessList =
 
     /// If the list in the state has only one element, it is returned.

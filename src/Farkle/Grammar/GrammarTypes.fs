@@ -15,11 +15,17 @@ open System
 /// It's needed only for verifying that the grammar was successfuly read.
 type TableCounts =
     {
+        /// How many symbols exist.
         SymbolTables: uint16
+        /// How many character sets exist.
         CharSetTables: uint16
+        /// How many productions exist.
         ProductionTables: uint16
+        /// How many DFA states exist.
         DFATables: uint16
+        /// How many LALR states exist.
         LALRTables: uint16
+        /// How many groups exist.
         GroupTables: uint16
     }
 
@@ -68,11 +74,11 @@ type EGTReadError =
             match x with
             | ListError x -> sprintf "List error: %O" x
             | InvalidBoolValue x -> sprintf "Invalid boolean value (neither 0 nor 1): %d." x
-            | InvalidEntryCode x -> x |> char |> sprintf "Invalid entry code: '%c'." 
+            | InvalidEntryCode x -> x |> char |> sprintf "Invalid entry code: '%c'."
             | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
             | UnterminatedString -> "String terminator was not found."
             | TakeStringBug -> "The function takeString exhibited a very unlikely bug. If you see this error, please file an issue on GitHub."
-            | InvalidRecordTag x -> x |> char |> sprintf "The record tag '%c' is not 'M', as it should have been." 
+            | InvalidRecordTag x -> x |> char |> sprintf "The record tag '%c' is not 'M', as it should have been."
             | UnknownFile -> "The given file is not recognized."
             | ReadACGTFile ->
                 "The given file is a CGT file, not an EGT one."
@@ -111,7 +117,7 @@ type SymbolType =
     | Error
 
 /// Functions to work with the `SymbolType` type.
-module SymbolType =
+module internal SymbolType =
 
     /// Creates a `SymbolType`.
     let ofUInt16 =
@@ -156,20 +162,26 @@ type Symbol =
             | Nonterminal -> sprintf "<%s>" x.Name
             | Terminal -> literalFormat delimitTerminals x.Name
             | _ -> sprintf "(%s)" x.Name
-        
+
         override x.ToString() = x.ToString false
 
+/// Functions to work with `Symbol`s.
 module Symbol =
 
+    /// Gets the name of a `Symbol`.
     let name {Name = x} = x
 
+    /// Gets the type of a `Symbol`.
     let symbolType {SymbolType = x} = x
 
+/// A type indicating how a group advances.
 type AdvanceMode =
+    /// The group advances by one token at a time.
     | Token
+    /// The group advances by one character at a time.
     | Character
 
-module AdvanceMode =
+module internal AdvanceMode =
 
     let create =
         function
@@ -177,11 +189,14 @@ module AdvanceMode =
         | 1us -> ok Character
         | x -> x |> InvalidAdvanceMode |> fail
 
+/// A type indicating how the ending symbol of a group is handled.
 type EndingMode =
+    /// The ending symbol is preserved on the input queue.
     | Open
+    /// The ending symbol is consumed.
     | Closed
 
-module EndingMode =
+module internal EndingMode =
 
     let create =
         function
@@ -189,79 +204,119 @@ module EndingMode =
         | 1us -> ok Closed
         | x -> x |> InvalidEndingMode |> fail
 
+/// A structure that describes a lexical group.
+/// In GOLD, lexical groups are used for situations where a number of recognized tokens should be organized into a single "group".
+/// This mechanism is most commonly used to handle line and block comments.
+/// However, it is not limited to "noise", but can be used for any content.
 type Group =
     {
+        /// The name of the group.
         Name: string
+        /// The symbol that represents the group's content.
         ContainerSymbol: Symbol
+        /// The symbol that represents the group's start.
         StartSymbol: Symbol
+        /// The symbol that represents the group's end.
         EndSymbol: Symbol
+        /// The way the group advances. Also see [AdvanceMode].
         AdvanceMode: AdvanceMode
+        /// The way the group ends. Also see [EndingMode].
         EndingMode: EndingMode
+        /// A set of indexes whose corresponding groups can be nested inside this group.
         Nesting: Set<Indexed<Group>>
     }
 
+/// Functions to work with `Group`s.
 module Group =
 
+    /// [omit]
     let name {Group.Name = x} = x
+    /// [omit]
     let containerSymbol {ContainerSymbol = x} = x
+    /// [omit]
     let startSymbol {StartSymbol = x} = x
+    /// [omit]
     let endSymbol {EndSymbol = x} = x
+    /// [omit]
     let advanceMode {AdvanceMode = x} = x
+    /// [omit]
     let endingMode {EndingMode = x} = x
+    /// [omit]
     let nesting {Nesting = x} = x
 
+    /// Gets the index of the group in a list tha has the specified symbol either its start, or end, or container symbol.
+    /// Such index might not exist; in this case, `None` is returned.
     let getSymbolGroupIndexed groups x: Indexed<Group> option =
         groups
         |> Seq.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
         |> Option.map (uint16 >> Indexed)
 
+    /// Like `getSymbolGroupIndexed`, but returns a `Group`, instead of an index.
+    /// Such group might not exist; in this case, `None` is returned.
     let getSymbolGroup groups x =
         (groups, x)
         ||> getSymbolGroupIndexed
         |> Option.bind (Indexed.getfromList groups >> Trial.makeOption)
 
+/// The basic building block of a grammar's syntax.
+/// It consists of a single nonterminal called the "head".
+/// The head is defined to consist of multiple symbols making up the production's "handle".
 type Production =
     {
+        /// The head of the production.
         Nonterminal: Symbol
+        /// The handle of the production.
         Symbols: Symbol list
     }
+    /// Returns true if the production's handle consists of only one `NonTerminal`, and false otherwise.
+    member x.HasOneNonTerminal =
+        match x.Symbols with
+        | [x] -> x.SymbolType = Nonterminal
+        | _ -> false
     override x.ToString() =
         let symbols = x.Symbols |> List.map (sprintf "%O") |> String.concat " "
         sprintf "%O ::= %s" x.Nonterminal symbols
 
-module Production =
-
-    let hasOneNonTerminal =
-        function
-        | {Symbols = [{SymbolType = x}]} -> x = Nonterminal
-        | _ -> false
-
+/// A DFA state. Many of them define the logic that produces `Tokens` out of strings.
 type DFAState =
     {
+        /// The index of the state.
         Index: uint16
+        /// Each DFA state can accept one of the grammar's terminal symbols. If the state accepts a terminal symbol, the value will be set to Some and will contain the symbol.
         AcceptSymbol: Symbol option
+        /// Each edge contains a series of characters that are used to determine whether the Deterministic Finite Automata will follow it. It is linked to state in the DFA Table.
         Edges: (CharSet * Indexed<DFAState>) list
     }
     override x.ToString() = sprintf "%d" x.Index
 
+/// [omit]
 module DFAState =
     let acceptSymbol {AcceptSymbol = x} = x
     let edges {Edges = x} = x
 
+/// A LALR state. Many of them define the parsing logic of a `Grammar`.
 type LALRState =
     {
-        States:Map<Symbol, LALRAction>
+        /// The index of the state.
         Index: uint16
+        /// The available `LALRAction`s of the state.
+        /// Depending on the symbol, the next action to be taken is determined.
+        States:Map<Symbol, LALRAction>
     }
     override x.ToString() = sprintf "%d" x.Index
 
+/// An action to be taken by the parser.
 and LALRAction =
+    /// This action indicates the parser to shift to the specified `LALRState`..
     | Shift of Indexed<LALRState>
+    /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production
+    /// This action is used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
     | Goto of Indexed<LALRState>
+    /// When the parser encounters this action for a given symbol, the input text is accepted as correct and complete.
     | Accept
 
-module LALRAction =
+module internal LALRAction =
 
     let create (fProds: Indexed<Production> -> Result<Production, EGTReadError>) index =
         function
@@ -271,16 +326,24 @@ module LALRAction =
         | 4us -> Accept |> ok
         | x -> x |> InvalidLALRActionType |> fail
 
+/// A structure that specifies the initial DFA and LALR states.
 type InitialStates =
     {
+        /// The initial DFA state.
+        /// Instead of the LALR state, it is reset when a `Token` is produced.
         DFA: DFAState
+        /// The initial LALR state.
+        /// Instead of the DFA state, it is set at the beginning of the parsing process and persists for its entirety.
         LALR: LALRState
     }
 
+/// [omit]
 module InitialStates =
     let dfa {DFA = x} = x
     let lalr {LALR = x} = x
 
+/// A structure that describes a grammar - the logic under which a string is parsed.
+/// Its constructor is private; use functions like these from the `EGT` module to create one.
 type Grammar =
     private
         {
@@ -294,18 +357,29 @@ type Grammar =
             _DFAStates: DFAState RandomAccessList
         }
     with
+        /// The `Properties` of the grammar.
+        /// They are just metadata; they are not used by Farkle.
         member x.Properties = x._Properties
+        /// The `CharSet`s of the grammar.
+        /// This might be removed in the future.
         member x.CharSets = x._CharSets
+        /// The `Symbol`s of the grammar.
         member x.Symbols = x._Symbols
+        /// The `Group`s of the grammar
         member x.Groups = x._Groups
+        /// The `Production`s of the grammar.
         member x.Productions = x._Productions
+        /// The initial LALR and DFA states of a grammar.
         member x.InitialStates = x._InitialStates
+        /// The grammar's LALR state table.
         member x.LALRStates = x._LALRStates
+        /// The grammar's DFA state table.
         member x.DFAStates = x._DFAStates
 
+/// [omit]
 module Grammar =
 
-    let counts (x: Grammar) =
+    let internal counts (x: Grammar) =
         {
             SymbolTables = x.Symbols.Length |> uint16
             CharSetTables = x.CharSets.Length |> uint16

@@ -284,9 +284,7 @@ Target "KeepRunning" (fun _ ->
     watcher.Dispose()
 )
 
-Target "GenerateDocs" (fun _ ->
-    __SOURCE_DIRECTORY__ @@ "docs" |> CleanDir
-    !! "./docs/**" |> Zip "docs" "docs.zip")
+Target "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip "docs" "docs.zip")
 
 let createIndexFsx lang =
     let content = """(*** hide ***)
@@ -373,7 +371,8 @@ Target "CI" (fun _ -> ["Benchmark"; "BuildPackage"] |> List.iter Run)
 
 Target "All" DoNothing
 
-"AssemblyInfo"
+"Clean"
+  ==> "AssemblyInfo"
   ==> "Build"
   ==> "CopyBinaries"
   ==> "RunTests"
@@ -387,12 +386,10 @@ Target "All" DoNothing
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
 
-"GenerateHelpDebug"
+"Clean"
+  ==> "GenerateHelpDebug"
   ==> "GenerateReferenceDocsDebug"
   ==> "KeepRunning"
-
-"Clean"
-  ==> "Release"
 
 "CopyBinaries"
   ==> "Benchmark"

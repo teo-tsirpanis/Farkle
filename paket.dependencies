@@ -1,4 +1,7 @@
 framework: net462, netstandard1.6
+
+storage: none
+
 source https://nuget.org/api/v2
 
 nuget Chessie
@@ -20,6 +23,8 @@ group Build
 group Test
 
   framework: netcoreapp1.1
+
+  storage: none
 
   source https://nuget.org/api/v2
   

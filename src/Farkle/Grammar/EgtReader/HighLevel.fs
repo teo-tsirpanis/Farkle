@@ -107,13 +107,13 @@ module internal HighLevel =
     let readProduction (fSymbols: IndexedGetter<_>) = sresult {
         let! index = wantUInt16
         let symbolFunc = wantUInt16 <!> Indexed >>= fSymbols
-        let! nonTerminal = symbolFunc
+        let! head = symbolFunc
         do! wantEmpty // Reserved field.
-        let! symbols = whileFull symbolFunc <!> List.ofSeq
+        let! handle = whileFull symbolFunc <!> List.ofSeq
         return
             {
-                Nonterminal = nonTerminal
-                Symbols = symbols
+                Head = head
+                Handle = handle
             }
             |> Indexable.create index
     }

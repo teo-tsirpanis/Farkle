@@ -162,10 +162,10 @@ module internal Internal =
                     if shouldTrim then
                         let! head = lalrStackTop
                         do! mapOptic ParserState.LALRStack_ List.tail
-                        let head = Optic.set (Optics.fst_ >-> Token.Symbol_) x.Nonterminal head
+                        let head = Optic.set (Optics.fst_ >-> Token.Symbol_) x.Head head
                         return head, ReduceEliminated
                     else
-                        let count = x.Symbols.Length
+                        let count = x.Handle.Length
                         let popStack optic = sresult {
                             let! x = getOptic optic
                             match x with
@@ -178,12 +178,12 @@ module internal Internal =
                             repeatM (popStack ParserState.LALRStack_) count
                             <!> (Seq.choose id >> Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
                         let reduction = {Tokens = tokens; Parent = x}
-                        let token = {Symbol = x.Nonterminal; Position = Position.initial; Data = reduction.ToString()}
+                        let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
                         let head = token, (currentState, Some reduction)
                         return head, ReduceNormal reduction
                 }
                 let! newState = lalrStackTop <!> (snd >> fst)
-                let nextAction = newState.States.TryFind x.Nonterminal
+                let nextAction = newState.States.TryFind x.Head
                 match nextAction with
                 | Some (Goto x) ->
                     do! setCurrentLALR x

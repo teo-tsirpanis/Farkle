@@ -264,18 +264,18 @@ module Group =
 type Production =
     {
         /// The head of the production.
-        Nonterminal: Symbol
+        Head: Symbol
         /// The handle of the production.
-        Symbols: Symbol list
+        Handle: Symbol list
     }
     /// Returns true if the production's handle consists of only one `NonTerminal`, and false otherwise.
     member x.HasOneNonTerminal =
-        match x.Symbols with
+        match x.Handle with
         | [x] -> x.SymbolType = Nonterminal
         | _ -> false
     override x.ToString() =
-        let symbols = x.Symbols |> List.map (sprintf "%O") |> String.concat " "
-        sprintf "%O ::= %s" x.Nonterminal symbols
+        let symbols = x.Handle |> List.map (sprintf "%O") |> String.concat " "
+        sprintf "%O ::= %s" x.Head symbols
 
 /// A DFA state. Many of them define the logic that produces `Tokens` out of strings.
 type DFAState =

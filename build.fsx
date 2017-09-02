@@ -364,7 +364,7 @@ Target "Release" (fun _ ->
 
 Target "BuildPackage" DoNothing
 
-Target "CI" (fun _ -> ["Benchmark"; "BuildPackage"] |> List.iter Run)
+Target "CI" DoNothing
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
@@ -381,6 +381,8 @@ Target "All" DoNothing
   ==> "NuGet"
   ==> "BuildPackage"
   ==> "All"
+  ==> "Benchmark"
+  ==> "CI"
 
 "GenerateHelp"
   ==> "GenerateReferenceDocs"

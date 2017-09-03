@@ -148,6 +148,8 @@ Target "CleanDocs" (fun _ -> CleanDir "docs")
 // Build library & test project
 
 Target "Build" (fun _ ->
+    CopyFile "Directory.Build.props" "Directory.Build.xml"
+    ReplaceInFile (release.Notes |> String.concat Environment.NewLine |> replace "@ReleaseNotes") "Directory.Build.props"
     DotNetCli.Restore id
     DotNetCli.Build vsProjFunc
 )
@@ -169,8 +171,6 @@ Target "Benchmark" (fun _ ->
 // Build a NuGet package
 
 Target "NuGet" (fun _ ->
-    CopyFile "Directory.Build.props" "Directory.Build.xml"
-    ReplaceInFile (release.Notes |> String.concat Environment.NewLine |> replace "@ReleaseNotes") "Directory.Build.props"
     sourceProjects
     |> Seq.iter (
         fun x -> DotNetCli.Pack (fun p ->

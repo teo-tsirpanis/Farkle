@@ -274,7 +274,7 @@ type Production =
         | [x] -> x.SymbolType = Nonterminal
         | _ -> false
     override x.ToString() =
-        let symbols = x.Handle |> List.map (sprintf "%O") |> String.concat " "
+        let symbols = x.Handle |> List.map (string) |> String.concat " "
         sprintf "%O ::= %s" x.Head symbols
 
 /// A DFA state. Many of them define the logic that produces `Tokens` out of strings.
@@ -287,7 +287,7 @@ type DFAState =
         /// Each edge contains a series of characters that are used to determine whether the Deterministic Finite Automata will follow it. It is linked to state in the DFA Table.
         Edges: (CharSet * Indexed<DFAState>) list
     }
-    override x.ToString() = sprintf "%d" x.Index
+    override x.ToString() = string x.Index
 
 /// [omit]
 module DFAState =
@@ -303,7 +303,7 @@ type LALRState =
         /// Depending on the symbol, the next action to be taken is determined.
         States:Map<Symbol, LALRAction>
     }
-    override x.ToString() = sprintf "%d" x.Index
+    override x.ToString() = string x.Index
 
 /// An action to be taken by the parser.
 and LALRAction =

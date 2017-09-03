@@ -12,32 +12,52 @@ open FSharpx.Collections
 open System
 open System.Text
 
+/// A token is an instance of a `Symbol`.
+/// Tokens carry parsed data, as well as their position within the text file.
 type Token =
     {
+        /// The `Symbol` whose instance is this token.
         Symbol: Symbol
+        /// The `Position` of the token in the input string.
         Position: Position
+        /// The actual content of the token.
         Data: string
     }
     with
+        /// [omit]
         static member Symbol_ :Lens<_, _> = (fun x -> x.Symbol), (fun v x -> {x with Symbol = v})
+        /// [omit]
         static member Position_ :Lens<_, _> = (fun x -> x.Position), (fun v x -> {x with Position = v})
+        /// [omit]
         static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
+        /// A shortcut for creating a token.
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
+        /// Returns a new token which has a string appended to its data.
         static member AppendData data x = Optic.map Token.Data_ (fun x -> x + data) x
         override x.ToString() = x.Data
 
-module Token =
+module internal Token =
 
     let dummy = {Symbol = {SymbolType = Nonterminal; Name = ""}; Position = Position.initial; Data = ""}
 
+/// A reduction  will contain the tokens which correspond to the symbols of a `Production`.
+/// Since a reduction contains the terminals of a rule as well as the nonterminals (reductions made earlier),
+/// the parser engine creates a "parse tree" which contains a break down of the source text along the grammar's rules
 type Reduction =
     {
+        /// The `Token`s of the reduction.
+        /// Some of them also have another reduction assosicated.
         Tokens: (Token * Reduction option) list
+        /// The `Production` which the reduction's tokens correspond to.
         Parent: Production
     }
     override x.ToString() = x.Tokens |> List.map (fst >> Optic.get Token.Data_) |> String.concat ""
 
+/// Functions to work with `Reduction`s.
 module Reduction =
+
+    /// Visualizes a `Reduction` in the form of a textual "parse tree".
+    [<CompiledName("DrawReductionTree")>]
     let drawReductionTree x =
         let sb = StringBuilder()
         let append (x: string) =

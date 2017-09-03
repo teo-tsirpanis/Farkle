@@ -22,8 +22,7 @@ type ListError =
     /// You tried to take a negative number of items from the list.
     | TookNegativeItems
 
-/// Functions on lists that mostly deal with the `StateResult` and `State` monads.
-/// The type of the actual list is subject to change as long as the public API remains stable.
+/// Functions on the standard F# `list` that mostly deal with the `StateResult` and `State` monads.
 module List =
 
     /// The simple list cons operator.

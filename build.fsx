@@ -358,7 +358,7 @@ Target "Release" (fun _ ->
 
     // release on github
     createClient user pw
-    |> createDraft gitOwner gitName ("Version " + release.NugetVersion) (release.SemVer.PreRelease <> None) release.Notes
+    |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
     |> uploadFiles nugetPackages
     |> releaseDraft
     |> Async.RunSynchronously

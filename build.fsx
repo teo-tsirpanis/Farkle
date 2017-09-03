@@ -139,8 +139,10 @@ let vsProjFunc x =
 
 Target "Clean" (fun _ ->
     DotNetCli.RunCommand id "clean"
-    CleanDirs ["bin"; "temp"; "docs"]
+    CleanDirs ["bin"; "temp"]
 )
+
+Target "CleanDocs" (fun _ -> CleanDir "docs")
 
 // --------------------------------------------------------------------------------------
 // Build library & test project
@@ -371,7 +373,8 @@ Target "CI" DoNothing
 
 Target "All" DoNothing
 
-"Clean"
+"CleanDocs"
+  ==> "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
   ==> "CopyBinaries"
@@ -384,11 +387,13 @@ Target "All" DoNothing
   ==> "Benchmark"
   ==> "CI"
 
-"GenerateHelp"
+"CleanDocs"
+  ==> "GenerateHelp"
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
 
-"GenerateHelpDebug"
+"CleanDocs"
+  ==> "GenerateHelpDebug"
   ==> "GenerateReferenceDocsDebug"
   ==> "KeepRunning"
 

@@ -45,7 +45,7 @@ module internal Internal =
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let tokenizeDFA dfaStates initialState pos input =
+    let tokenizeDFA errorSymbol eofSymbol dfaStates initialState pos input =
         let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
@@ -53,7 +53,7 @@ module internal Internal =
             | [] ->
                 match lastAccept with
                 | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                | None -> newToken Symbol.EOF ""
+                | None -> newToken eofSymbol ""
             | x :: xs ->
                 let newDFA =
                     currState
@@ -68,12 +68,12 @@ module internal Internal =
                 | None ->
                     match lastAccept with
                     | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                    | None -> input |> getLookAheadBuffer 1u |> newToken Symbol.Error
+                    | None -> input |> getLookAheadBuffer 1u |> newToken errorSymbol
         impl 1u initialState None 0u input
 
     let inline tokenizeDFAForDummies state =
         let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
+        tokenizeDFA grammar.ErrorSymbol grammar.EOFSymbol grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
@@ -166,17 +166,14 @@ module internal Internal =
                         return head, ReduceEliminated
                     else
                         let count = x.Handle.Length
-                        let popStack optic = sresult {
-                            let! x = getOptic optic
-                            match x with
-                            | x :: xs ->
-                                do! setOptic optic xs
-                                return Some x
-                            | [] -> return None
+                        let popStack optic count = sresult {
+                            let! (first, rest) = getOptic optic <!> List.splitAt count
+                            do! setOptic optic rest
+                            return first
                         }
                         let! tokens =
-                            repeatM (popStack ParserState.LALRStack_) count
-                            <!> (Seq.choose id >> Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
+                            popStack ParserState.LALRStack_ count
+                            <!> (Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
                         let reduction = {Tokens = tokens; Parent = x}
                         let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
                         let head = token, (currentState, Some reduction)

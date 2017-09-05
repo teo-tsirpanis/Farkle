@@ -68,7 +68,11 @@ type EGTReadError =
     /// More or less were expected.
     | InvalidTableCounts of expected: TableCounts * actual: TableCounts
     /// The item at the given index of a list was not found.
-    | IndexNotFound of uint16
+    | IndexNotFound of uint32
+    /// The grammar has no symbol of type `Error`.
+    | NoErrorSymbol
+    /// The grammar has no symbol of type `EndOfFile`.
+    | NoEOFSymbol
     with
         override x.ToString() =
             match x with
@@ -91,6 +95,8 @@ type EGTReadError =
             | InvalidLALRActionType x -> sprintf "Invalid LALR action index (should be 1, 2, 3 or 4): %d." x
             | InvalidTableCounts (expected, actual) -> "The grammar does not contain the same count of tables as it should. If you see this error, please file an issue on GitHub."
             | IndexNotFound x -> sprintf "The index %d was not found in a list." x
+            | NoErrorSymbol -> "The grammar has no symbol that signifies an error."
+            | NoEOFSymbol -> "The grammar has no symbol that signifies the end of input."
 
 /// Arbitrary metadata a grammar has.
 /// A simple key-value collection.
@@ -137,16 +143,14 @@ type Symbol =
     {
         /// The symbol's name.
         Name: string
+        /// The symbol's index as it appears in the grammar file.
+        Index: uint32
         /// The symbol's type.
         SymbolType: SymbolType
     }
     with
-        /// A special symbol that signifies an error.
-        /// It's the same in all grammars, so it's not worth taking it from the symbol table.
-        static member Error = {Name = "Error"; SymbolType = Error}
-        /// A special symbol that signifies the end of input.
-        /// It's the same in all grammars, so it's not worth taking it from the symbol table.
-        static member EOF = {Name = "EOF"; SymbolType = EndOfFile}
+        interface Indexable with
+            member x.Index = x.Index
         member x.ToString delimitTerminals =
             let literalFormat forceDelimiter x =
                 let forceDelimiter =
@@ -212,6 +216,8 @@ type Group =
     {
         /// The name of the group.
         Name: string
+        /// The index of the group as it appears on the grammar file.
+        Index: uint32
         /// The symbol that represents the group's content.
         ContainerSymbol: Symbol
         /// The symbol that represents the group's start.
@@ -225,6 +231,8 @@ type Group =
         /// A set of indexes whose corresponding groups can be nested inside this group.
         Nesting: Set<Indexed<Group>>
     }
+    interface Indexable with
+        member x.Index = x.Index
 
 /// Functions to work with `Group`s.
 module Group =
@@ -249,7 +257,7 @@ module Group =
     let getSymbolGroupIndexed groups x: Indexed<Group> option =
         groups
         |> Seq.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
-        |> Option.map (uint16 >> Indexed)
+        |> Option.map (uint32 >> Indexed)
 
     /// Like `getSymbolGroupIndexed`, but returns a `Group`, instead of an index.
     /// Such group might not exist; in this case, `None` is returned.
@@ -263,11 +271,15 @@ module Group =
 /// The head is defined to consist of multiple symbols making up the production's "handle".
 type Production =
     {
+        /// The index of the production as it appears on the grammar file.
+        Index: uint32
         /// The head of the production.
         Head: Symbol
         /// The handle of the production.
         Handle: Symbol list
     }
+    interface Indexable with
+        member x.Index = x.Index
     /// Returns true if the production's handle consists of only one `NonTerminal`, and false otherwise.
     member x.HasOneNonTerminal =
         match x.Handle with
@@ -281,12 +293,14 @@ type Production =
 type DFAState =
     {
         /// The index of the state.
-        Index: uint16
+        Index: uint32
         /// Each DFA state can accept one of the grammar's terminal symbols. If the state accepts a terminal symbol, the value will be set to Some and will contain the symbol.
         AcceptSymbol: Symbol option
         /// Each edge contains a series of characters that are used to determine whether the Deterministic Finite Automata will follow it. It is linked to state in the DFA Table.
         Edges: (CharSet * Indexed<DFAState>) list
     }
+    interface Indexable with
+        member x.Index = x.Index
     override x.ToString() = string x.Index
 
 /// [omit]
@@ -298,11 +312,13 @@ module DFAState =
 type LALRState =
     {
         /// The index of the state.
-        Index: uint16
+        Index: uint32
         /// The available `LALRAction`s of the state.
         /// Depending on the symbol, the next action to be taken is determined.
         States:Map<Symbol, LALRAction>
     }
+    interface Indexable with
+        member x.Index = x.Index
     override x.ToString() = string x.Index
 
 /// An action to be taken by the parser.
@@ -350,6 +366,8 @@ type Grammar =
             _Properties: Properties
             _CharSets: CharSet RandomAccessList
             _Symbols: Symbol RandomAccessList
+            _ErrorSymbol: Symbol
+            _EOFSymbol: Symbol
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
             _InitialStates: InitialStates
@@ -365,6 +383,10 @@ type Grammar =
         member x.CharSets = x._CharSets
         /// The `Symbol`s of the grammar.
         member x.Symbols = x._Symbols
+        /// The first symbol of type `Error`.
+        member x.ErrorSymbol = x._ErrorSymbol
+        /// THe first symbol of type `EndOfInput`.
+        member x.EOFSymbol = x._EOFSymbol
         /// The `Group`s of the grammar
         member x.Groups = x._Groups
         /// The `Production`s of the grammar.
@@ -398,11 +420,16 @@ module Grammar =
     let lalr {_LALRStates = x} = x
     let dfa {_DFAStates = x} = x
 
-    let create properties symbols charSets prods initialStates dfas lalrs groups _counts =
+    let create properties symbols charSets prods initialStates dfas lalrs groups _counts = trial {
+        let firstOfType err x = symbols |> Seq.tryFind (Symbol.symbolType >> ((=) x)) |> failIfNone err
+        let! errorSymbol = firstOfType NoErrorSymbol Error
+        let! eofSymbol = firstOfType NoEOFSymbol EndOfFile
         let g =
             {
                 _Properties = properties
                 _Symbols = symbols
+                _ErrorSymbol = errorSymbol
+                _EOFSymbol = eofSymbol
                 _CharSets = charSets
                 _Productions = prods
                 _InitialStates = initialStates
@@ -412,6 +439,6 @@ module Grammar =
             }
         let counts = counts g
         if counts = _counts then
-            ok g
+            return g
         else
-            (_counts, counts) |> InvalidTableCounts |> fail
+            return! (_counts, counts) |> InvalidTableCounts |> fail}

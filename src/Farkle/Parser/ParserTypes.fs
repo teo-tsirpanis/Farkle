@@ -38,7 +38,7 @@ type Token =
 
 module internal Token =
 
-    let dummy = {Symbol = {SymbolType = Nonterminal; Name = ""}; Position = Position.initial; Data = ""}
+    let dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
 
 /// A reduction  will contain the tokens which correspond to the symbols of a `Production`.
 /// Since a reduction contains the terminals of a rule as well as the nonterminals (reductions made earlier),
@@ -83,7 +83,7 @@ type ParseInternalError =
     /// But it's not.
     | GotoNotFoundAfterReduction of Production * Indexed<LALRState>
     /// The item at a given index of a list was not found.
-    | IndexNotFound of uint16
+    | IndexNotFound of uint32
     /// The LALR stack is empty; it should never be.
     | LALRStackEmpty
 
@@ -168,7 +168,7 @@ module internal ParserState =
             InputStream = input
             CurrentLALRState = grammar.InitialStates.LALR
             InputStack = []
-            LALRStack = [Token.dummy, (grammar.InitialStates.LALR, None)]
+            LALRStack = [Token.dummy grammar.ErrorSymbol, (grammar.InitialStates.LALR, None)]
             TrimReductions = trimReductions
             CurrentPosition = Position.initial
             GroupStack = []

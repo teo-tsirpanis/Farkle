@@ -36,27 +36,19 @@ let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am 
 let mustBeSome x = x |> Option.defaultWith impossible
 
 /// Anything that can be indexed.
-/// The type is just a record with a value and an index.
-type Indexable<'a> =
-    {
-        Index: uint16
-        Item: 'a
-    }
+type Indexable =
+    /// The object's index.
+    abstract Index: uint32
 
-/// Functions for working with `Indexable<'a>`.
 module Indexable =
-    /// Gets the value of an `Indexable` object.
-    let value {Item = x} = x
     /// Gets the index of an `Indexable` object.
-    let index {Index = x} = x
-    /// Creates an `Indexable` object.
-    let create index x = {Index = index; Item = x}
-    /// Sorts `Indexable` items based on their index, and removes it.
+    let index (x: #Indexable) = x.Index
+    /// Sorts `Indexable` items based on their index.
     /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy index |> Seq.map value |> RandomAccessList.ofSeq
+    let collect x = x |> Seq.sortBy index |> RandomAccessList.ofSeq
 
 /// A type-safe reference to a value based on its index.
-type [<Struct>] Indexed<'a> = Indexed of uint16
+type [<Struct>] Indexed<'a> = Indexed of uint32
 
 /// Functions for working with `Indexed<'a>`.
 module Indexed =
@@ -82,10 +74,6 @@ type RangeSet<'a> when 'a: comparison = RangeSet of Set<('a * 'a)>
 module RangeSet =
     /// Creates a `RangeSet` that spans a single set from `x to `y`, _inclusive_.
     let create x y = (if x < y then (x, y) else (y, x)) |> Set.singleton |> RangeSet
-    /// Creates a `RangeSet` that contains a single element.
-    /// It should _not_ be exclusively used; this set is made for ranges.
-    /// Use an F# set for sets with discrete items.
-    let singleton x = create x x
     /// Combines two `RangeSet`s into a new one.
     let (++) (RangeSet x) (RangeSet y) = (x, y) ||> Set.union |> RangeSet
     /// Combines many `RangeSet`s into one.

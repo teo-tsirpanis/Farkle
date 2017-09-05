@@ -18,6 +18,8 @@ module internal HighLevel =
 
     type IndexedGetter<'a> = Indexed<'a> -> StateResult<'a, Entry list, EGTReadError>
 
+    let wantUInt32 = wantUInt16 <!> uint32
+
     let liftFlatten x = x >>= liftResult
 
     let getIndexedfromList x = Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
@@ -48,7 +50,7 @@ module internal HighLevel =
     }
 
     let readCharSet = sresult {
-        let! index = wantUInt16
+        let! index = wantUInt32
         do! wantUInt16 |> ignore // Unicode plane is ignored; what exactly does it do?
         do! wantUInt16 |> ignore // Range count is ignored; we just read until the end.
         do! wantEmpty // Reserved field.
@@ -60,11 +62,11 @@ module internal HighLevel =
         return!
             whileFull readCharSet
             <!> RangeSet.concat
-            <!> Indexable.create index
+            <!> (fun x -> x, index)
     }
 
     let readSymbol = sresult {
-        let! index = wantUInt16
+        let! index = wantUInt32
         let! name = wantString
         let! stype =
             wantUInt16
@@ -73,15 +75,15 @@ module internal HighLevel =
         return
             {
                 Name = name
+                Index = index
                 SymbolType = stype
             }
-            |> Indexable.create index
     }
 
     let readGroup fSymbols = sresult {
-        let! index = wantUInt16
+        let! index = wantUInt32
         let! name = wantString
-        let symbolFunc = wantUInt16 <!> Indexed >>= fSymbols
+        let symbolFunc = wantUInt32 <!> Indexed >>= fSymbols
         let! contIndex = symbolFunc
         let! startIndex = symbolFunc
         let! endIndex = symbolFunc
@@ -89,11 +91,12 @@ module internal HighLevel =
         let! endingMode = wantUInt16 <!> EndingMode.create |> liftFlatten
         do! wantEmpty // Reserved field.
         do! wantUInt16 |> ignore // Nesting count is ignored; we just read until the end.
-        let nestingFunc = wantUInt16 <!> Indexed
+        let nestingFunc = wantUInt32 <!> Indexed
         let! nesting = whileFull nestingFunc <!> set
         return
             {
                 Name = name
+                Index = index
                 ContainerSymbol = contIndex
                 StartSymbol = startIndex
                 EndSymbol = endIndex
@@ -101,26 +104,25 @@ module internal HighLevel =
                 EndingMode = endingMode
                 Nesting = nesting
             }
-            |> Indexable.create index
     }
 
     let readProduction (fSymbols: IndexedGetter<_>) = sresult {
-        let! index = wantUInt16
-        let symbolFunc = wantUInt16 <!> Indexed >>= fSymbols
+        let! index = wantUInt32
+        let symbolFunc = wantUInt32 <!> Indexed >>= fSymbols
         let! head = symbolFunc
         do! wantEmpty // Reserved field.
         let! handle = whileFull symbolFunc <!> List.ofSeq
         return
             {
+                Index = index
                 Head = head
                 Handle = handle
             }
-            |> Indexable.create index
     }
 
     let readInitialStates (fDFA: IndexedGetter<_>) (fLALR: IndexedGetter<_>) = sresult {
-        let! dfa = wantUInt16 <!> Indexed >>= fDFA
-        let! lalr = wantUInt16 <!> Indexed >>= fLALR
+        let! dfa = wantUInt32 <!> Indexed >>= fDFA
+        let! lalr = wantUInt32 <!> Indexed >>= fLALR
         return
             {
                 DFA = dfa
@@ -129,17 +131,17 @@ module internal HighLevel =
     }
 
     let readDFAState (fSymbols: IndexedGetter<_>) (fCharSets: IndexedGetter<_>) = sresult {
-        let! index = wantUInt16
+        let! index = wantUInt32
         let! isAccept = wantBoolean
-        let! acceptIndex = wantUInt16 <!> Indexed
+        let! acceptIndex = wantUInt32 <!> Indexed
         let! acceptState =
             match isAccept with
             | true -> acceptIndex |> fSymbols <!> Some
             | false -> returnM None
         do! wantEmpty // Reserved field.
         let readEdges = sresult {
-            let! charSet = wantUInt16 <!> Indexed >>= fCharSets
-            let! target = wantUInt16 <!> Indexed
+            let! charSet = wantUInt32 <!> Indexed >>= fCharSets
+            let! target = wantUInt32 <!> Indexed
             do! wantEmpty // Reserved field.
             return charSet, target
         }
@@ -150,22 +152,21 @@ module internal HighLevel =
                 AcceptSymbol = acceptState
                 Edges = edges
             }
-            |> Indexable.create index
     }
 
     let readLALRState (fSymbols: IndexedGetter<_>) fProds = sresult {
-        let! index = wantUInt16
+        let! index = wantUInt32
         do! wantEmpty // Reserved field.
         let readActions = sresult {
-            let! symbolIndex = wantUInt16 <!> Indexed >>= fSymbols
+            let! symbolIndex = wantUInt32 <!> Indexed >>= fSymbols
             let! actionId = wantUInt16
-            let! targetIndex = wantUInt16
+            let! targetIndex = wantUInt32
             do! wantEmpty // Reserved field.
             let! action = LALRAction.create fProds targetIndex actionId |> liftResult
             return (symbolIndex, action)
         }
         let! states = whileFull readActions <!> Map.ofSeq
-        return {States = states; Index = index} |> Indexable.create index
+        return {States = states; Index = index}
     }
 
     let mapMatching magicChar f = sresult {
@@ -177,11 +178,10 @@ module internal HighLevel =
     }
 
     let makeGrammar (EGTFile records) = trial {
-        let mapMatching mc f = records |> Seq.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (Seq.choose id >> RandomAccessList.ofSeq)
-        let exactlyOne x = x |> RandomAccessList.exactlyOne |> Trial.mapFailure ListError
+        let mapMatching mc f = records |> Seq.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (Seq.choose id)
         let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofSeq >> Properties)
-        let! tableCounts = readTableCounts |> mapMatching 't'B |> lift exactlyOne |> Trial.flatten
-        let! charSets = readCharSet |> mapMatching 'c'B |> lift Indexable.collect
+        let! tableCounts = readTableCounts |> mapMatching 't'B |> lift Seq.head
+        let! charSets = readCharSet |> mapMatching 'c'B |> lift (Seq.sortBy snd >> Seq.map fst >> RandomAccessList.ofSeq)
         let fCharSets = getIndexedfromList charSets
         let! symbols = readSymbol |> mapMatching 'S'B |> lift Indexable.collect
         let fSymbols = getIndexedfromList symbols
@@ -192,7 +192,7 @@ module internal HighLevel =
         let fDFA = getIndexedfromList dfas
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift Indexable.collect
         let fLALR = getIndexedfromList lalrs
-        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I'B |> lift exactlyOne |> Trial.flatten
+        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I'B |> lift Seq.head
         return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
     }
     // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.

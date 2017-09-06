@@ -50,7 +50,7 @@ let nuspecs = !! "src/*.nuspec"
 // Default target configuration
 let configuration = "Release"
 
-let exeFramework = "netcoreapp1.1"
+let exeFramework = "netcoreapp2.0"
 
 let sourceProjects = !! "src/**/*.??proj"
 

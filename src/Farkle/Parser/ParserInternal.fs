@@ -245,4 +245,4 @@ module internal Internal =
 
     let createParser trimReductions grammar input =
         let state = ParserState.create trimReductions grammar input
-        Started (lazy (stepParser state))
+        stepParser state

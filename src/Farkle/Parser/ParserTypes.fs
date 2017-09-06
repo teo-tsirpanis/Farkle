@@ -179,8 +179,6 @@ module internal ParserState =
 /// This type is the lowest-level public API.
 /// It is modeled after the [Designing with Capabilities](https://fsharpforfunandprofit.com/cap/) presentation.
 type Parser =
-    /// The parser has just started.
-    | Started of Parser Lazy
     /// The parser has completed one step of the parsing process.
     /// The log message of it is returned as well as a thunk of the next parser.
     | Continuing of (Position * ParseMessage) * Parser Lazy

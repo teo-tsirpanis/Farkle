@@ -34,9 +34,9 @@ The library comes with comprehensible documentation.
 
 Farkle is also bundled with some F# libraries that uses. They are imported as [Paket GitHub dependencies][paket-github] and you can use them without installing another NuGet package. These libraries are:
 
-  * [Aether], an open-source optics library.
+  * [Aether][aether], an open-source optics library.
 
-  * [FSharpx.Collections], a library with efficient immutable collection types. __⚠ Only `RandomAccesList` is bundled from FSharpx.Collections__
+  * [FSharpx.Collections][fsharpx.collections], a library with efficient immutable collection types. __⚠ Only `RandomAccesList` is bundled from FSharpx.Collections__
 
 The second library is not available for .NET Standard. I have filed [an issue](https://github.com/fsprojects/FSharpx.Collections/issues/77) to support .NET Standard, yet it appears that the project is no longer maintained.
 

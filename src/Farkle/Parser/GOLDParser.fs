@@ -52,7 +52,6 @@ type GOLDParser(grammar, trimReductions) =
         let warn x = warn x ()
         let rec impl p = trial {
             match p with
-            | Started x -> return! impl x.Value
             | Continuing (msg, x) ->
                 do! warn msg
                 return! impl x.Value

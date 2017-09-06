@@ -288,6 +288,17 @@ Target "KeepRunning" (fun _ ->
 
 Target "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip "docs" "docs.zip")
 
+Target "ReleaseDocs" (fun _ ->
+    let tempDocsDir = "temp/gh-pages"
+    CleanDir tempDocsDir
+    Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
+
+    CopyRecursive "docs" tempDocsDir true |> tracefn "Copied %A"
+    StageAll tempDocsDir
+    Git.Commit.Commit tempDocsDir (sprintf "Update generated documentation for version %s" release.NugetVersion)
+    Branches.push tempDocsDir
+)
+
 let createIndexFsx lang =
     let content = """(*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use
@@ -391,6 +402,7 @@ Target "All" DoNothing
   ==> "GenerateHelp"
   ==> "GenerateReferenceDocs"
   ==> "GenerateDocs"
+  ==> "ReleaseDocs"
 
 "CleanDocs"
   ==> "GenerateHelpDebug"
@@ -399,6 +411,9 @@ Target "All" DoNothing
 
 "CopyBinaries"
   ==> "Benchmark"
+
+"ReleaseDocs"
+  ==> "Release"
 
 "BuildPackage"
   ==> "PublishNuget"

@@ -33,7 +33,9 @@ The library comes with comprehensible documentation.
 ### 3rd-party bundled libraries
 
 Farkle is also bundled with some F# libraries that uses. They are imported as [Paket GitHub dependencies][paket-github] and you can use them without installing another NuGet package. These libraries are:
+
   * [Aether], an open-source optics library.
+
   * [FSharpx.Collections], a library with efficient immutable collection types. __⚠ Only `RandomAccesList` is bundled from FSharpx.Collections__
 
 The second library is not available for .NET Standard. I have filed [an issue](https://github.com/fsprojects/FSharpx.Collections/issues/77) to support .NET Standard, yet it appears that the project is no longer maintained.
@@ -42,7 +44,9 @@ These libraries __may be removed from the project in any time if they are not ne
 
 ### Respecting SemVer
 
-Farkle is a new library with a growing and developing API. Old designs are replaced with newer ones many times. Moreover, Farkle also contains some code not related with its purpose, but used internally. The purpose of Farkle is to make parsing text easily. [SemVer] is making things harder, and version numbers growing faster. Even worse, taking SemVer into consideration while changing APIs that have no connection with parsing text makes the project harder to be changed.
+Farkle is a new library with a growing and developing API. Old designs are replaced with newer ones many times. Moreover, it also contains some code not related with its purpose, but used internally. Its purpose is to make parsing text easily.
+
+[Semantic Versioning][semver] is making things harder, and version numbers growing faster. Even worse, taking SemVer into consideration while changing APIs that have no connection with parsing text, makes the project harder to be changed.
 
 In a 🌰🐚: __APIs other than some high-level ones (like `GOLDParser` and `EGT`) are subject to breaking changes even between minor releases. You use them at your own risk.__
  

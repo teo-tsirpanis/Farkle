@@ -227,21 +227,21 @@ module internal Internal =
                 | _ ->
                     let! lalrResult = parseLALR newToken
                     match lalrResult with
-                    | LALRResult.Accept x -> return ParseMessage.Accept x
+                    | LALRResult.Accept x -> return ParseMessageType.Accept x
                     | LALRResult.Shift x ->
                         do! mapOptic ParserState.InputStack_ List.skipLast
-                        return ParseMessage.Shift x
-                    | ReduceNormal x -> return ParseMessage.Reduction x
+                        return ParseMessageType.Shift x
+                    | ReduceNormal x -> return ParseMessageType.Reduction x
                     | ReduceEliminated -> return! impl()
-                    | LALRResult.SyntaxError (x, y) -> return ParseMessage.SyntaxError (x, y)
-                    | LALRResult.InternalError x -> return ParseMessage.InternalError x
+                    | LALRResult.SyntaxError (x, y) -> return ParseMessageType.SyntaxError (x, y)
+                    | LALRResult.InternalError x -> return ParseMessageType.InternalError x
         }
         let (result, nextState) = run (impl()) p
-        let pos = nextState.CurrentPosition
+        let makeMessage = nextState.CurrentPosition |> ParseMessage.Create
         match result with
-        | ParseMessage.Accept x -> Finished (pos, x)
-        | x when x.IsError -> Failed (pos, x)
-        | x -> Continuing ((pos, x), lazy (stepParser nextState))
+        | ParseMessageType.Accept x -> Finished (x |> ParseMessageType.Accept |> makeMessage, x)
+        | x when x.IsError -> x |> makeMessage |> Failed
+        | x -> Continuing (makeMessage x, lazy (stepParser nextState))
 
     let createParser trimReductions grammar input =
         let state = ParserState.create trimReductions grammar input

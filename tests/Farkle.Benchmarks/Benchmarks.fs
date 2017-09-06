@@ -20,12 +20,7 @@ type InceptionBenchmark() =
 
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
-    member x.InceptionBenchmarkFarkle() =
-        let parser = GOLDParser("inception.egt", false)
-        let (result, log) =
-            parser.ParseFile "inception.grm"
-            |> GOLDParser.FormatErrors
-        result |> ofChoice |> returnOrFail
+    member x.InceptionBenchmarkFarkle() = GOLDParser("inception.egt", false).ParseFile("inception.grm").ReductionOrFail()
 
     [<Benchmark(Baseline = true)>]
     member x.InceptionBenchmarkLazarus() =

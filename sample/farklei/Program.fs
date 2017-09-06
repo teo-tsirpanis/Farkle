@@ -34,10 +34,10 @@ let main argv =
     let trimReductions = args.Contains <@ TrimReductions @>
     let showOutput = args.Contains <@ ShowOutput @>
     let parser = GOLDParser (egtFile, trimReductions)
-    let result, log = inputFile |> parser.ParseFile |> GOLDParser.FormatErrors
+    let result = inputFile |> parser.ParseFile
     let print = if showOutput then printfn "%s" else ignore
-    log |> Seq.iter print
-    match result with
+    result.MessagesAsString |> Seq.iter print
+    match result.Simple with
     | Choice1Of2 x ->
         x |> Reduction.drawReductionTree |> print
         0

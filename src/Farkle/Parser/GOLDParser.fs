@@ -15,6 +15,31 @@ open System
 open System.IO
 open System.Text
 
+/// A dedicated type to signify the result of a parser.
+type ParseResult =
+    /// Parsing succeeded. The final `Reduction` and the parsing log are returned.
+    | Success of reduction: Reduction * messages: ParseMessage seq
+    /// Parsing failed, The fatal `ParseMessage` is separately returned.
+    | Failure of fatalMessage: ParseMessage * messages: ParseMessage seq
+    /// The parsing log. In case of failure, the fatal `ParseMessage` is _not_ included.
+    member x.Messages =
+        match x with
+        | Success (_, x) -> x
+        | Failure (_, x) -> x
+    /// The parsing log in human-friendly format.
+    member x.MessagesAsString = x.Messages |> Seq.map string
+    /// A simple `Choice` with either the final `Reduction` or the fatal `ParseMessage` as a string.
+    member x.Simple =
+        match x with
+        | Success (x, _) -> Choice1Of2 x
+        | Failure (x, _) -> x |> string |> Choice2Of2
+    /// Returns the final `Reduction` or throws an exception.
+    member x.ReductionOrFail() =
+        match x.Simple with
+        | Choice1Of2 x -> x
+        | Choice2Of2 x -> failwith x
+
+
 /// A reusable parser created for a specific grammar that can parse input from multiple sources
 /// This is the highest-level API. THe parsing function's return values merit some explanation.
 /// If parsing succeeds, its return value is the top reduction of the grammar.
@@ -25,6 +50,12 @@ open System.Text
 type GOLDParser(grammar, trimReductions) =
 
     let newParser = GOLDParser.CreateParser trimReductions grammar
+
+    let makeParseResult =
+        function
+        | Ok (x, messages) -> Success (x, messages)
+        | Bad (x :: xs) -> Failure (x, xs)
+        | Bad [] -> impossible()
 
     /// Creates a parser from a given `Grammar`.
     /// Trivial reductions are not trimmed.
@@ -55,13 +86,13 @@ type GOLDParser(grammar, trimReductions) =
             | Continuing (msg, x) ->
                 do! warn msg
                 return! impl x.Value
-            | Failed (pos, msg) ->
-                return! (pos, msg) |> fail
-            | Finished (pos, x) ->
-                do! (pos, Accept x) |> warn
+            | Failed msg ->
+                return! fail msg
+            | Finished (msg, x) ->
+                do! warn msg
                 return x
         }
-        input |> newParser |> impl
+        input |> newParser |> impl |> makeParseResult
 
     /// Parses a string.
     member x.ParseString input = input |> List.ofString |> x.ParseChars
@@ -74,28 +105,9 @@ type GOLDParser(grammar, trimReductions) =
         |> x.ParseChars
 
     /// Parses the contents of a file in the given path.
-    member x.ParseFile path = trial {
+    member x.ParseFile path =
         if path |> File.Exists |> not then
-            do! (Position.initial, InputFileNotExist path) |> fail
-        use stream = File.OpenRead path
-        return! x.ParseStream stream
-    }
-
-    /// Converts a parsing result to a result with human-readable error messages.
-    /// The result is a tuple.
-    /// The first element is the parsing result as a `Choice` of either the final reduction, or the fatal error message.
-    /// The second element is a sequence with the log messages as strings.
-    static member FormatErrors (result: Result<Reduction, Position * ParseMessage>) =
-        let result = result |> Trial.mapFailure (fun (msg, pos) -> sprintf "%O %O" msg pos)
-        let messages =
-            match result with
-            | Ok (_, messages) -> messages
-            | Bad (_ :: messages) -> messages
-            | Bad [] -> []
-            |> Seq.ofList
-        match result with
-        | Ok (r, _) ->
-            Choice1Of2 r
-        | Bad (error :: _) -> Choice2Of2 error
-        | Bad [] -> Choice2Of2 ""
-        , messages
+            Failure (path |> InputFileNotExist |> ParseMessage.CreateSimple, [])
+        else
+            use stream = File.OpenRead path
+            x.ParseStream stream

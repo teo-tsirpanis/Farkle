@@ -97,7 +97,7 @@ type internal LALRResult =
 
 /// A message describing what a `Parser` did, or what error it encountered.
 /// Some of these will only appear while using the `GOLDParser` API.
-type ParseMessage =
+type ParseMessageType =
     /// A token was read.
     | TokenRead of Token
     /// A rule was reduced.
@@ -137,6 +137,20 @@ type ParseMessage =
             sprintf "Found %O, while expecting one of the following tokens: %O" actual expected
         | GroupError -> "Unexpected end of input"
         | InternalError x -> sprintf "Internal error: %O. This is most probably a bug. If you see this error, please file an issue on GitHub." x
+
+/// A message from a `Parser`, and the position it was encountered.
+type ParseMessage =
+    {
+        /// The type of the message.
+        MessageType: ParseMessageType
+        /// The position the message was encountered.
+        Position: Position
+    }
+    override x.ToString() = sprintf "%O %O" x.Position x.MessageType
+    /// Creates a parse message of the given type at the given position.
+    static member Create position messageType = {MessageType = messageType; Position = position}
+    /// Creates a parse message at the default position.
+    static member CreateSimple = ParseMessage.Create Position.initial
 
 type internal ParserState =
     {
@@ -181,10 +195,10 @@ module internal ParserState =
 type Parser =
     /// The parser has completed one step of the parsing process.
     /// The log message of it is returned as well as a thunk of the next parser.
-    | Continuing of (Position * ParseMessage) * Parser Lazy
+    | Continuing of ParseMessage * Parser Lazy
     /// The parser has failed.
     /// No lazy parser is returned, so the parsing process cannot continue.
-    | Failed of Position * ParseMessage
+    | Failed of ParseMessage
     /// The parser has finished parsing.
     /// No lazy parser is returned, as the parsing process is complete.
-    | Finished of Position * Reduction
+    | Finished of ParseMessage * Reduction

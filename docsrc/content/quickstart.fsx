@@ -88,7 +88,6 @@ After you install the NuGet package with [your favorite NuGet client][paket] (or
 #r "Chessie.dll" // You only need it on FSI.
 #r "Farkle.dll" // You only need it on FSI.
 
-open Chessie.ErrorHandling // Some useful types.
 open Farkle
 open Farkle.Parser // The high-level API resides here.
 
@@ -113,48 +112,37 @@ We want to parse a simple mathematical expression like one of these:
 
 `617 > 198 > 45 > 477`
 
-> __Note:__ We don't _evaluate_ the expression. We just make them in a form that a computer can easier work with.
+> __Note:__ We don't _evaluate_ the expression. We just make it in a form that a computer can easier understand.
 
 We can parse data from many sources like these:
 *)
 
-let result = parser.ParseString "477 = 0" // We can parse a simple string.
+let result = parser.ParseString "477 = 0" // A simple string.
 
 let result2 = parser.ParseFile "WhatAWonderful.file" // A file.
 
 let result3 = System.IO.File.OpenRead "ThisWasA.triumph" |> parser.ParseStream // Or a stream. This is almost the same thing with `ParseFile`.
 
 (**
-See the result's type? It's a `Chessie.ErrorHandling.Result<Reduction,(Position * ParseMessage)>`. Check more about the `Result` type [here][chessie].
+See the result's type? It's a `ParseResult`. It is a simple discriminated union that represents either a parsing success or a parsing failure
 
 In other words, if the functions succeed, they give a `Reduction`, which is a structure that describes a parse tree.
 
-They also carry a "message" paired with the location it appeared. These messages are like the log of a parser.
+It also carries a list of "messages" which are like the log of a parser.
 
-If the parsing fails, the first message indicates why it failed.
+If the parsing fails, the message that explains the failure is separated from the rest..
 
-The Position type is what it says it it. No more explanation is needed.
-
-The `ParseMessage` is a discriminated union that documents every possible error (the "impossibles" (like stream errors) throw exceptions 😛).
+The `ParseMessage` is made a discriminated union that documents every possible error (the "impossibles" (like stream errors) throw exceptions 😛), and the position it happened.
 
 - But these errors are not so descriptive for the end user. Isn't there a way to make them more simpler?
 
-- Yes it is. Meet `GOLDParser.FormatErrors`. But let's just see it in action:
+- Yes it is. ParseResult has some utility functions which make our life easier! 😃
+
+We can do this for example:
 *)
 
-let simpleResult, messages = GOLDParser.FormatErrors result
-
-(**
-`messages` is a simple `IEnumerable<string>` with friendly, textual log messages.
-`simpleResult` is an equally simple F# `Choice` which contains either the final `Reduction`, or the fatal error as a string.
-
-> __Note:__ If parsing fails, `messages` will _not_ contain the error message; only the messages that describe what the parser was doing before he died.
-
-Now our life became easier! 😃 We can do this for example:
-*)
-
-messages |> Seq.iter (printfn "%s")
-match simpleResult with
+result.MessagesAsString |> Seq.iter (printfn "%s")
+match result.Simple with
 | Choice1Of2 x ->
     printfn "Success!"
     x |> Reduction.drawReductionTree |> printfn "%s" // drawReductionTree makes a fancy ASCII parse tree from a reduction.
@@ -190,6 +178,5 @@ I didn't tell you how to navigate through a `Reduction` yet. The Reduction type 
 [drive]: https://drive.google.com/open?id=0BxWFaQD-qcKlOFEweUZWdUtadnM
 [writingGrammars]: http://goldparser.org/doc/grammars/index.htm
 [paket]: https://fsprojects.github.io/Paket/
-[chessie]: https://fsprojects.github.io/Chessie/
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

@@ -18,9 +18,7 @@ It is available for NET Framework 4.6.2 or higher, and .NET Standard 1.6 or high
 
 While some initial components are written, the real deal is still under early development.
 
-This is a metapackage which depends on all the packages of the project. It contains no code.
-
-10: BTW, Farkle means: "FARkle Recognizes Known Languages Easily".
+10: By the way, Farkle means: "FARkle Recognizes Known Languages Easily".
 
 20: And "FARkle" means: (GOTO 10) 😁
 

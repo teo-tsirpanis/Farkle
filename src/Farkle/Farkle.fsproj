@@ -57,6 +57,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/ParserInternal.fs" />
     <Compile Include="Parser/GOLDParser.fs" />
+    <Compile Include="Parser/AST.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

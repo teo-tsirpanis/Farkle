@@ -150,7 +150,7 @@ module internal Internal =
             let nextAction = currentState.States.TryFind (token ^. Token.Symbol_)
             match nextAction with
             | Some (Accept) ->
-                let! topReduction = lalrStackTop <!> (snd >>snd >> mustBeSome) // I am sorry. 😭
+                let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
                 return LALRResult.Accept topReduction
             | Some (Shift x) ->
                 do! setCurrentLALR x
@@ -173,7 +173,7 @@ module internal Internal =
                         }
                         let! tokens =
                             popStack ParserState.LALRStack_ count
-                            <!> (Seq.map (fun (x, (_, y)) -> x, y) >> Seq.rev >> List.ofSeq)
+                            <!> (Seq.map (function | (x, (_, None)) -> Choice1Of2 x | (_, (_, Some x)) -> Choice2Of2 x) >> Seq.rev >> List.ofSeq)
                         let reduction = {Tokens = tokens; Parent = x}
                         let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
                         let head = token, (currentState, Some reduction)

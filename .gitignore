@@ -188,3 +188,4 @@ docs.zip
 docs/
 **/BenchmarkDotNet.Artifacts/
 Directory.Build.props
+temp/gh-pages

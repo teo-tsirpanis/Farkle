@@ -1,10 +1,10 @@
 // Copyright (c) 2017 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 [<AutoOpen>]
-/// Some useful functions and types that could be used from many points from the library. 
+/// Some useful functions and types that could be used from many points from the library.
 module Farkle.Common
 
 open Chessie.ErrorHandling
@@ -111,7 +111,7 @@ module Position =
             None
         else
             (line, col) |> Position |> Some
-    
+
     /// Increases the column index of a `Position` by one.
     let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
 
@@ -125,7 +125,7 @@ module List =
     let ofString (x: string) =
         x.ToCharArray()
         |> List.ofArray
-    
+
     /// Creates a string from the given character list.
     let toString = Array.ofList >> System.String
 
@@ -154,3 +154,20 @@ module Trial =
         function
         | Ok (x, msgs) -> Ok (x, List.map f msgs)
         | Bad msgs -> msgs |> List.map f |> Bad
+
+/// Functions to work with the F# `Choice` type.
+module internal Choice =
+
+    /// Maps the content of a `Choice` with a different function depending on its case.
+    let tee2 f1 f2 =
+        function
+        | Choice1Of2 x -> f1 x
+        | Choice2Of2 x -> f2 x
+
+    let private none _ = None
+
+    /// Returns the first case of a `Choice` and `None` if it is on the second.
+    let tryChoice1Of2 x = tee2 Some none x
+
+    /// Returns the second case of a `Choice` and `None` if it is on the first.
+    let tryChoice2Of2 x = tee2 none Some x

@@ -45,13 +45,14 @@ module internal Token =
 /// the parser engine creates a "parse tree" which contains a break down of the source text along the grammar's rules
 type Reduction =
     {
-        /// The `Token`s of the reduction.
-        /// Some of them also have another reduction assosicated.
-        Tokens: (Token * Reduction option) list
         /// The `Production` which the reduction's tokens correspond to.
         Parent: Production
+        /// The content of the reduction.
+        /// It might be either a `Token` or another reduction.
+        Tokens: (Choice<Token, Reduction>) list
     }
-    override x.ToString() = x.Tokens |> List.map (fst >> Optic.get Token.Data_) |> String.concat ""
+    member x.Data = x.Tokens |> Seq.map (Choice.tee2 (Optic.get Token.Data_) (fun x -> x.Data)) |> String.concat ""
+    override x.ToString() = x.Data
 
 /// Functions to work with `Reduction`s.
 module Reduction =
@@ -68,10 +69,7 @@ module Reduction =
             let indentText = kIndentText |> Seq.replicate indent |> Seq.concat |> Array.ofSeq |> String
             sprintf "%s+--%O" indentText parent |> append |> ignore
             tokens
-            |> List.iter (
-                function
-                | (_, Some x) -> impl (indent + 1) x
-                | (x, None) -> sprintf "%s%s+--%O" indentText kIndentText x.Data |> append |> ignore)
+            |> List.iter (Choice.tee2 (fun x -> sprintf "%s%s+--%O" indentText kIndentText x.Data |> append |> ignore) (impl (indent + 1)))
         impl 0 x
         sb.ToString()
 

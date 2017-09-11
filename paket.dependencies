@@ -30,3 +30,4 @@ group Test
   
   nuget BenchmarkDotNet
   nuget Expecto
+  nuget Expecto.FsCheck

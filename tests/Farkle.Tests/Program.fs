@@ -2,6 +2,9 @@
 
 open System
 open Expecto
+open FsCheck
 
 [<EntryPoint>]
-let main argv = runTestsInAssembly defaultConfig argv
+let main argv = 
+    Arb.register<Farkle.Tests.Generators.Generators>() |> ignore
+    runTestsInAssembly defaultConfig argv

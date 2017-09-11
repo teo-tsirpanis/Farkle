@@ -35,6 +35,18 @@ let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am 
 /// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
 let mustBeSome x = x |> Option.defaultWith impossible
 
+/// Converts a function to curried form.
+let curry f x y = f(x, y)
+
+/// Converts a function to uncurried form.
+let uncurry f (x, y) = f x y
+
+/// Flips the arguments of a two-parameter curried function.
+let flip f x y = f y x
+
+/// Swaps the elements of a pair.
+let swap (x, y) = (y, x)
+
 /// Anything that can be indexed.
 type Indexable =
     /// The object's index.

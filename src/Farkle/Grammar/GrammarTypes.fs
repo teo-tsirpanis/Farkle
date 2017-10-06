@@ -151,23 +151,20 @@ type Symbol =
     with
         interface Indexable with
             member x.Index = x.Index
-        member x.ToString delimitTerminals =
-            let literalFormat forceDelimiter x =
+        override x.ToString() =
+            let literalFormat x =
                 let forceDelimiter =
-                    forceDelimiter
-                    || x = ""
+                    x = ""
                     || x.[0] |> Char.IsLetter
-                    || x |> String.exists (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') |> not
+                    || x |> String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_')
                 if forceDelimiter then
                     sprintf "'%s'" x
                 else
                     x
             match x.SymbolType with
             | Nonterminal -> sprintf "<%s>" x.Name
-            | Terminal -> literalFormat delimitTerminals x.Name
+            | Terminal -> literalFormat x.Name
             | _ -> sprintf "(%s)" x.Name
-
-        override x.ToString() = x.ToString false
 
 /// Functions to work with `Symbol`s.
 module Symbol =

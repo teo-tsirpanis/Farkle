@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/Farkle.Tests.dll",
+            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/Farkle.Tests.dll",
             "args": [],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -16,9 +16,9 @@
             "name": ".NET Core Launch (console, no build)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/Farkle.Tests.dll",
+            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/Farkle.Tests.dll",
             "args": [],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp1.1/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },

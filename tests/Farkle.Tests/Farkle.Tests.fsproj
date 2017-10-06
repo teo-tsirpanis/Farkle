@@ -9,6 +9,7 @@
     <Compile Include="Generators.fs" />
     <Compile Include="GrammarTests.fs" />
     <Compile Include="ParserTests.fs" />
+    <Compile Include="ASTTests.fs" />
     <Compile Include="Program.fs" />
     <Content Include="..\resources\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

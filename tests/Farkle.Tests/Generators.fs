@@ -6,6 +6,7 @@
 module Farkle.Tests.Generators
 
 open Chessie.ErrorHandling
+open Expecto
 open FsCheck
 open Farkle
 open Farkle.Grammar
@@ -65,3 +66,9 @@ type Generators =
     static member Position() = Arb.fromGen positionGen
     static member Reduction() = Arb.fromGen reductionGen
     static member AST() = Arb.fromGen (ASTGen())
+
+let testProperty x = 
+    testPropertyWithConfig
+        {FsCheckConfig.defaultConfig with
+            arbitrary = [typeof<Generators>]
+            replay = None} x

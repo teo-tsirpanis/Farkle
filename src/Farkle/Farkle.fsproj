@@ -49,6 +49,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Utilities\Common.fs" />
     <Compile Include="Utilities\Monads.fs" />
     <Compile Include="Utilities\List.fs" />
+    <Compile Include="Utilities\Set.fs" />
     <Compile Include="Grammar\GrammarTypes.fs" />
     <Compile Include="Grammar\EgtReader\LowLevel.fs" />
     <Compile Include="Grammar\EgtReader\MidLevel.fs" />

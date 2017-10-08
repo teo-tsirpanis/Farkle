@@ -3,6 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+[<AutoOpen>]
 module Farkle.Tests.Generators
 
 open Chessie.ErrorHandling
@@ -66,6 +67,7 @@ type Generators =
     static member Position() = Arb.fromGen positionGen
     static member Reduction() = Arb.fromGen reductionGen
     static member AST() = Arb.fromGen (ASTGen())
+    static member SetEx() = Arb.generate |> Gen.map Set |> Arb.fromGen
 
 let testProperty x = 
     testPropertyWithConfig

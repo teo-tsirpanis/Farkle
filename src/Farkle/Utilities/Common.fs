@@ -77,23 +77,6 @@ module Indexed =
         let f i = RandomAccessList.tryNth (int i) list
         get f i
 
-/// A simple and efficient set of items based on ranges.
-/// Instead of storing _all_ the elements of a set, only the first and last are.
-/// This closely follows the paradigm of GOLD Parser 5 sets.
-type RangeSet<'a> when 'a: comparison = RangeSet of Set<('a * 'a)>
-
-/// Functions to work with the `RangeSet` type.
-module RangeSet =
-    /// Creates a `RangeSet` that spans a single set from `x to `y`, _inclusive_.
-    let create x y = (if x < y then (x, y) else (y, x)) |> Set.singleton |> RangeSet
-    /// Combines two `RangeSet`s into a new one.
-    let (++) (RangeSet x) (RangeSet y) = (x, y) ||> Set.union |> RangeSet
-    /// Combines many `RangeSet`s into one.
-    /// More efficient than `(++)`, if you work with more than two `RangeSet`s.
-    let concat x = x |> Seq.map (fun (RangeSet x) -> x) |> Set.unionMany |> RangeSet
-    /// Checks if a `RangeSet` contains an item.
-    let contains (RangeSet s) x = s |> Set.exists (fun (a, b) -> x >= a && x <= b)
-
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position =
     private Position of (uint32 * uint32)

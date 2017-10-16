@@ -55,10 +55,11 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Grammar\EgtReader\MidLevel.fs" />
     <Compile Include="Grammar\EgtReader\HighLevel.fs" />
     <Compile Include="Grammar\EGT.fs" />
-    <Compile Include="Parser/ParserTypes.fs" />
-    <Compile Include="Parser/ParserInternal.fs" />
-    <Compile Include="Parser/GOLDParser.fs" />
-    <Compile Include="Parser/AST.fs" />
+    <Compile Include="Builder\SetUtils.fs" />
+    <Compile Include="Parser\ParserTypes.fs" />
+    <Compile Include="Parser\ParserInternal.fs" />
+    <Compile Include="Parser\GOLDParser.fs" />
+    <Compile Include="Parser\AST.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />

@@ -17,10 +17,10 @@ module PredefinedSets =
     let (-) = SetEx.(-)
 
     /// Constructs a `SetEx` that spans between two characters with the given indices.
-    let inline (%..) (x1: uint16) (x2: uint16) = RangeSet.create (char x1) (char x2) |> Range
+    let inline (%..) (x1: uint16) (x2: uint16) = create (char x1) (char x2) |> Range
 
     /// Constructs a `SetEx` that spans between the two given items.
-    let inline (@..) x1 x2 = RangeSet.create x1 x2 |> Range
+    let inline (@..) x1 x2 = create x1 x2 |> Range
 
     let private (+++) x1 x2 =
         match x1, x2 with
@@ -31,7 +31,7 @@ module PredefinedSets =
     let inline chars (x: string) = x |> set |> Set
 
     /// Constructs a `SetEx` that contains one character.
-    let inline single (x: char) = RangeSet.create x x |> Range
+    let inline single (x: char) = create x x |> Range
 
     let HT = single '\t'
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
     <DebugType>portable</DebugType>
@@ -33,7 +33,7 @@ While some initial components are written, the real deal is still under early de
     <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\paket-files\fsprojects\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
+    <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
       <Paket>True</Paket>
       <Link>paket-files/RandomAccessList.fsi</Link>
     </Compile>
@@ -60,9 +60,6 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Parser\ParserInternal.fs" />
     <Compile Include="Parser\GOLDParser.fs" />
     <Compile Include="Parser\AST.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

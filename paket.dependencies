@@ -1,4 +1,4 @@
-framework: net462, netstandard1.6
+framework: netstandard2.0
 
 storage: none
 
@@ -11,6 +11,7 @@ nuget FSharp.Compiler.Service
 github xyncro/aether /src/Aether/Aether.fs
 github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/RandomAccessList.fsi
 github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/RandomAccessList.fs
+gist teo-tsirpanis/5876f041e3e127b067e56a5b62ec2edf AstRcd.fs
 
 group Build
   framework: net462

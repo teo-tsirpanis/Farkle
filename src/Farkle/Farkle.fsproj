@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net462;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <DebugType>portable</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Title>The Farkle Parser</Title>
@@ -33,6 +33,10 @@ While some initial components are written, the real deal is still under early de
     <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\paket-files\teo-tsirpanis\5876f041e3e127b067e56a5b62ec2edf\AstRcd.fs">
+      <Paket>True</Paket>
+      <Link>paket-files/AstRcd.fs</Link>
+    </Compile>
     <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
       <Paket>True</Paket>
       <Link>paket-files/RandomAccessList.fsi</Link>

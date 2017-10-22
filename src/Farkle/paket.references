@@ -4,3 +4,4 @@ FSharp.Compiler.Service
 File: Aether.fs
 File: RandomAccessList.fsi
 File: RandomAccessList.fs
+File: AstRcd.fs

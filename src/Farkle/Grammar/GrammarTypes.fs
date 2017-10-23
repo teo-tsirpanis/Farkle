@@ -93,7 +93,7 @@ type EGTReadError =
             | InvalidAdvanceMode x -> sprintf "Invalid advance code (should be either 0 or 1): %d." x
             | InvalidEndingMode x -> sprintf "Invalid ending mode value (should be either 0 or 1): %d." x
             | InvalidLALRActionType x -> sprintf "Invalid LALR action index (should be 1, 2, 3 or 4): %d." x
-            | InvalidTableCounts (expected, actual) -> "The grammar does not contain the same count of tables as it should. If you see this error, please file an issue on GitHub."
+            | InvalidTableCounts _ -> "The grammar does not contain the same count of tables as it should. If you see this error, please file an issue on GitHub."
             | IndexNotFound x -> sprintf "The index %d was not found in a list." x
             | NoErrorSymbol -> "The grammar has no symbol that signifies an error."
             | NoEOFSymbol -> "The grammar has no symbol that signifies the end of input."
@@ -286,24 +286,29 @@ type Production =
         let symbols = x.Handle |> List.map (string) |> String.concat " "
         sprintf "%O ::= %s" x.Head symbols
 
-/// A DFA state. Many of them define the logic that produces `Tokens` out of strings.
+/// A DFA state. All the states of the DFA state table define the logic that produces `Tokens` out of strings.
+/// It consists of edges that the tokenizer follows, depending on the character it encounters.
 type DFAState =
-    {
-        /// The index of the state.
-        Index: uint32
-        /// Each DFA state can accept one of the grammar's terminal symbols. If the state accepts a terminal symbol, the value will be set to Some and will contain the symbol.
-        AcceptSymbol: Symbol option
-        /// Each edge contains a series of characters that are used to determine whether the Deterministic Finite Automata will follow it. It is linked to state in the DFA Table.
-        Edges: (CharSet * Indexed<DFAState>) list
-    }
+    /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
+    | DFAAccept of index: uint32 * (Symbol * (CharSet * Indexed<DFAState>) list)
+    /// This state does not accept a symbol. If the state graph cannot be further walked and an accepting state has not been found, tokenizing fails.
+    | DFAContinue of index: uint32 * edges: (CharSet * Indexed<DFAState>) list
     interface Indexable with
-        member x.Index = x.Index
-    override x.ToString() = string x.Index
+        member x.Index =
+            match x with
+            | DFAAccept (x, _) -> x
+            | DFAContinue (x, _) -> x
+    override x.ToString() = x :> Indexable |> Indexable.index |> string
 
 /// [omit]
 module DFAState =
-    let acceptSymbol {AcceptSymbol = x} = x
-    let edges {Edges = x} = x
+
+    let tee fDFAAccept fDFAContinue =
+        function
+        | DFAAccept (x1, x2) -> fDFAAccept (x1, x2)
+        | DFAContinue (x1, x2) -> fDFAContinue (x1, x2)
+    let acceptSymbol = tee (snd >> fst >> Some) none
+    let edges = tee (snd >> snd) snd
 
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
 type LALRState =

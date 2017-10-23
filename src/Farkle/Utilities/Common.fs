@@ -35,6 +35,9 @@ let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am 
 /// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
 let mustBeSome x = x |> Option.defaultWith impossible
 
+/// Ignores the parameter and returns `None`.
+let none _ = None
+
 /// Converts a function to curried form.
 let curry f x y = f(x, y)
 

@@ -61,10 +61,8 @@ module internal Internal =
                     |> List.tryFind (fun (cs, _) -> RangeSet.contains cs x)
                     |> Option.bind (snd >> Indexed.getfromList dfaStates >> Trial.makeOption)
                 match newDFA with
-                | Some dfa ->
-                    match dfa.AcceptSymbol with
-                    | Some x -> impl newPos dfa (Some x) currPos xs
-                    | None -> impl newPos dfa lastAccept lastAccPos xs
+                | Some (DFAAccept (_, (accSymbol, _)) as dfa) -> impl newPos dfa (Some accSymbol) currPos xs
+                | Some dfa -> impl newPos dfa lastAccept lastAccPos xs
                 | None ->
                     match lastAccept with
                     | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x

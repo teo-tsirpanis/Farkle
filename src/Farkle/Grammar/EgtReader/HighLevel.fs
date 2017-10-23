@@ -134,10 +134,6 @@ module internal HighLevel =
         let! index = wantUInt32
         let! isAccept = wantBoolean
         let! acceptIndex = wantUInt32 <!> Indexed
-        let! acceptState =
-            match isAccept with
-            | true -> acceptIndex |> fSymbols <!> Some
-            | false -> returnM None
         do! wantEmpty // Reserved field.
         let readEdges = sresult {
             let! charSet = wantUInt32 <!> Indexed >>= fCharSets
@@ -146,12 +142,9 @@ module internal HighLevel =
             return charSet, target
         }
         let! edges = whileFull readEdges <!> List.ofSeq
-        return
-            {
-                Index = index
-                AcceptSymbol = acceptState
-                Edges = edges
-            }
+        match isAccept with
+           | true -> return! acceptIndex |> fSymbols <!> (fun x -> DFAAccept (index, (x, edges)))
+           | false -> return DFAContinue (index, edges)
     }
 
     let readLALRState (fSymbols: IndexedGetter<_>) fProds = sresult {

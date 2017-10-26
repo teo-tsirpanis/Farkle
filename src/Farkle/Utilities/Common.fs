@@ -80,6 +80,30 @@ module Indexed =
         let f i = RandomAccessList.tryNth (int i) list
         get f i
 
+/// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
+type IndexableWrapper<'a> =
+    {
+        /// The item.
+        Item: 'a
+        /// And the index.
+        Index: uint32
+    }
+    interface Indexable with
+        member x.Index = x.Index
+
+/// Functions to work with `IndexableWrapper`s.       
+module IndexableWrapper =
+
+    /// Creates an indexable wrapper
+    let create index item = {Index = index; Item = item}
+
+    /// Removes the indexable wrapper of an item.
+    let item {Item = x} = x
+    
+    /// Sorts `Indexable` items based on their index and removes their wrapper.
+    /// Duplicate indices do not raise an error.
+    let collect x = x |> Seq.sortBy Indexable.index |> Seq.map item |> RandomAccessList.ofSeq
+
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position =
     private Position of (uint32 * uint32)

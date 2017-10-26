@@ -105,52 +105,34 @@ type Properties = Properties of Map<string, string>
 /// A set of characters. See `RangeSet` too.
 type CharSet = RangeSet<char>
 
-/// The type of a symbol
-type SymbolType =
+/// A symbol of a grammar
+type Symbol =
     /// The symbol is a nonterminal.
-    | Nonterminal
+    | Nonterminal of string
     /// The symbol is a terminal.
-    | Terminal
+    | Terminal of string
     /// The symbol is noise (comments for example) and is discarded by the parser.
-    | Noise
+    | Noise of string
     /// The symbol signifies the end of input.
     | EndOfFile
     /// The symbol signifies the start of a group.
-    | GroupStart
+    | GroupStart of string
     /// The symbol signifies the end of a group.
-    | GroupEnd
+    | GroupEnd of string
     /// The symbol signifies an error.
     | Error
-
-/// Functions to work with the `SymbolType` type.
-module internal SymbolType =
-
-    /// Creates a `SymbolType`.
-    let ofUInt16 =
-        function
-        | 0us -> ok Nonterminal
-        | 1us -> ok Terminal
-        | 2us -> ok Noise
-        | 3us -> ok EndOfFile
-        | 4us -> ok GroupStart
-        | 5us -> ok GroupEnd
-        // 6 is deprecated
-        | 7us -> ok Error
-        | x -> x |> InvalidSymbolType |> fail
-
-/// A symbol of a grammar.
-type Symbol =
-    {
-        /// The symbol's name.
-        Name: string
-        /// The symbol's index as it appears in the grammar file.
-        Index: uint32
-        /// The symbol's type.
-        SymbolType: SymbolType
-    }
     with
-        interface Indexable with
-            member x.Index = x.Index
+        
+        /// The name of a symbol
+        member x.Name =
+            match x with
+            | Nonterminal x -> x
+            | Terminal x -> x
+            | Noise x -> x
+            | EndOfFile -> "EOF"
+            | GroupStart x -> x
+            | GroupEnd x -> x
+            | Error -> "Error"
         override x.ToString() =
             let literalFormat x =
                 let forceDelimiter =
@@ -161,19 +143,29 @@ type Symbol =
                     sprintf "'%s'" x
                 else
                     x
-            match x.SymbolType with
-            | Nonterminal -> sprintf "<%s>" x.Name
-            | Terminal -> literalFormat x.Name
+            match x with
+            | Nonterminal _ -> sprintf "<%s>" x.Name
+            | Terminal _ -> literalFormat x.Name
             | _ -> sprintf "(%s)" x.Name
 
 /// Functions to work with `Symbol`s.
 module Symbol =
 
-    /// Gets the name of a `Symbol`.
-    let name {Name = x} = x
+    /// Creates a `Symbol`.
+    let create name =
+        function
+        | 0us -> ok <| Nonterminal name
+        | 1us -> ok <| Terminal name
+        | 2us -> ok <| Noise name
+        | 3us -> ok EndOfFile
+        | 4us -> ok <| GroupStart name
+        | 5us -> ok <| GroupEnd name
+        // 6 is deprecated
+        | 7us -> ok Error
+        | x -> x |> InvalidSymbolType |> fail
 
-    /// Gets the type of a `Symbol`.
-    let symbolType {SymbolType = x} = x
+    /// Gets the name of a `Symbol`.
+    let name (x: Symbol) = x.Name
 
 /// A type indicating how a group advances.
 type AdvanceMode =
@@ -280,7 +272,7 @@ type Production =
     /// Returns true if the production's handle consists of only one `NonTerminal`, and false otherwise.
     member x.HasOneNonTerminal =
         match x.Handle with
-        | [x] -> x.SymbolType = Nonterminal
+        | [Nonterminal _] -> true
         | _ -> false
     override x.ToString() =
         let symbols = x.Handle |> List.map (string) |> String.concat " "
@@ -368,8 +360,6 @@ type Grammar =
             _Properties: Properties
             _CharSets: CharSet RandomAccessList
             _Symbols: Symbol RandomAccessList
-            _ErrorSymbol: Symbol
-            _EOFSymbol: Symbol
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
             _InitialStates: InitialStates
@@ -385,10 +375,6 @@ type Grammar =
         member x.CharSets = x._CharSets
         /// The `Symbol`s of the grammar.
         member x.Symbols = x._Symbols
-        /// The first symbol of type `Error`.
-        member x.ErrorSymbol = x._ErrorSymbol
-        /// THe first symbol of type `EndOfInput`.
-        member x.EOFSymbol = x._EOFSymbol
         /// The `Group`s of the grammar
         member x.Groups = x._Groups
         /// The `Production`s of the grammar.
@@ -423,15 +409,10 @@ module Grammar =
     let dfa {_DFAStates = x} = x
 
     let create properties symbols charSets prods initialStates dfas lalrs groups _counts = trial {
-        let firstOfType err x = symbols |> Seq.tryFind (Symbol.symbolType >> ((=) x)) |> failIfNone err
-        let! errorSymbol = firstOfType NoErrorSymbol Error
-        let! eofSymbol = firstOfType NoEOFSymbol EndOfFile
         let g =
             {
                 _Properties = properties
                 _Symbols = symbols
-                _ErrorSymbol = errorSymbol
-                _EOFSymbol = eofSymbol
                 _CharSets = charSets
                 _Productions = prods
                 _InitialStates = initialStates

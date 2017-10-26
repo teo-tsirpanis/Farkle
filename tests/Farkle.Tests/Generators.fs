@@ -15,12 +15,9 @@ open Farkle.Parser
 
 let symbolGen = gen {
     let! name = Arb.generate
-    let! index = Arb.generate
-    let! symbolType = Arb.generate
-    return {Name = name; Index = index; SymbolType = symbolType}
+    let! symbolType = Gen.elements [Symbol.Nonterminal; Terminal]
+    return symbolType name
 }
-
-let symbolTypeGen = [SymbolType.Nonterminal; Terminal] |> Gen.elements
 
 let productionGen = gen {
     let! index = Arb.generate
@@ -63,7 +60,6 @@ let ASTGen() =
 
 type Generators =
     static member Symbol() = Arb.fromGen symbolGen
-    static member SymbolType() = Arb.fromGen symbolTypeGen
     static member Position() = Arb.fromGen positionGen
     static member Reduction() = Arb.fromGen reductionGen
     static member AST() = Arb.fromGen (ASTGen())

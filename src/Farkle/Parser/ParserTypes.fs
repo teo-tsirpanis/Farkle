@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
-open FSharpx.Collections
 open System
 open System.Text
 
@@ -180,7 +179,7 @@ module internal ParserState =
             InputStream = input
             CurrentLALRState = grammar.InitialStates.LALR
             InputStack = []
-            LALRStack = [Token.dummy grammar.ErrorSymbol, (grammar.InitialStates.LALR, None)]
+            LALRStack = [Token.dummy Error, (grammar.InitialStates.LALR, None)]
             TrimReductions = trimReductions
             CurrentPosition = Position.initial
             GroupStack = []

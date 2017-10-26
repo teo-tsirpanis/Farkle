@@ -68,16 +68,11 @@ module internal HighLevel =
     let readSymbol = sresult {
         let! index = wantUInt32
         let! name = wantString
-        let! stype =
+        let! result =
             wantUInt16
-            <!> SymbolType.ofUInt16
+            <!> Symbol.create name
             |> liftFlatten
-        return
-            {
-                Name = name
-                Index = index
-                SymbolType = stype
-            }
+        return IndexableWrapper.create index result
     }
 
     let readGroup fSymbols = sresult {
@@ -176,7 +171,7 @@ module internal HighLevel =
         let! tableCounts = readTableCounts |> mapMatching 't'B |> lift Seq.head
         let! charSets = readCharSet |> mapMatching 'c'B |> lift (Seq.sortBy snd >> Seq.map fst >> RandomAccessList.ofSeq)
         let fCharSets = getIndexedfromList charSets
-        let! symbols = readSymbol |> mapMatching 'S'B |> lift Indexable.collect
+        let! symbols = readSymbol |> mapMatching 'S'B |> lift IndexableWrapper.collect
         let fSymbols = getIndexedfromList symbols
         let! groups = readGroup fSymbols |> mapMatching 'g'B |> lift Indexable.collect
         let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect

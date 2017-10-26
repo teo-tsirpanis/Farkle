@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Aether
 open Aether.Operators
 open Chessie.ErrorHandling
-open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -45,7 +44,7 @@ module internal Internal =
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let tokenizeDFA errorSymbol eofSymbol dfaStates initialState pos input =
+    let tokenizeDFA dfaStates initialState pos input =
         let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
@@ -53,7 +52,7 @@ module internal Internal =
             | [] ->
                 match lastAccept with
                 | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                | None -> newToken eofSymbol ""
+                | None -> newToken EndOfFile ""
             | x :: xs ->
                 let newDFA =
                     currState
@@ -66,20 +65,20 @@ module internal Internal =
                 | None ->
                     match lastAccept with
                     | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                    | None -> input |> getLookAheadBuffer 1u |> newToken errorSymbol
+                    | None -> input |> getLookAheadBuffer 1u |> newToken Error
         impl 1u initialState None 0u input
 
     let inline tokenizeDFAForDummies state =
         let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.ErrorSymbol grammar.EOFSymbol grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
+        tokenizeDFA grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
         let! groups = get <!> (ParserState.grammar >> Grammar.groups)
         let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
         let nestGroup =
-            match x ^. Token.Symbol_ |> Symbol.symbolType with
-            | GroupStart | GroupEnd ->
+            match x ^. Token.Symbol_ with
+            | GroupStart _ | GroupEnd _ ->
                 Maybe.maybe {
                     let! groupStackTop = groupStackTop
                     let! gsTopGroup = groupStackTop ^. Token.Symbol_ |> Group.getSymbolGroup groups
@@ -117,7 +116,7 @@ module internal Internal =
                             do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
                             return! produceToken()
                         | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
-                elif x.Symbol.SymbolType = EndOfFile then
+                elif x.Symbol = EndOfFile then
                     return x
                 else
                     match groupStackTopGroup.AdvanceMode with
@@ -160,7 +159,7 @@ module internal Internal =
                     if shouldTrim then
                         let! head = lalrStackTop
                         do! mapOptic ParserState.LALRStack_ List.tail
-                        let head = Optic.set (Optics.fst_ >-> Token.Symbol_) x.Head head
+                        let head = Optic.set (fst_ >-> Token.Symbol_) x.Head head
                         return head, ReduceEliminated
                     else
                         let count = x.Handle.Length
@@ -192,7 +191,7 @@ module internal Internal =
                     |> Map.toList
                     |> List.map fst
                     |> List.filter
-                        (Symbol.symbolType >> (function | Terminal | EndOfFile | GroupStart | GroupEnd -> true | _ -> false))
+                        (function | Terminal _ | EndOfFile | GroupStart _ | GroupEnd _ -> true | _ -> false)
                 return LALRResult.SyntaxError (expectedSymbols, token.Symbol)
         }
         let! x = impl
@@ -211,13 +210,13 @@ module internal Internal =
             | [] ->
                 let! newToken = produceToken()
                 do! mapOptic ParserState.InputStack_ (List.cons newToken)
-                if newToken.Symbol.SymbolType = EndOfFile && not isGroupStackEmpty then
+                if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
                     return GroupError
                 else
                     return TokenRead newToken
             | newToken :: xs ->
-                match newToken.Symbol.SymbolType with
-                | Noise ->
+                match newToken.Symbol with
+                | Noise _ ->
                     do! setOptic ParserState.InputStack_ xs
                     return! impl()
                 | Error -> return LexicalError newToken.Data.[0]
@@ -229,10 +228,10 @@ module internal Internal =
                     | LALRResult.Shift x ->
                         do! mapOptic ParserState.InputStack_ List.skipLast
                         return ParseMessageType.Shift x
-                    | ReduceNormal x -> return ParseMessageType.Reduction x
+                    | ReduceNormal x -> return Reduction x
                     | ReduceEliminated -> return! impl()
-                    | LALRResult.SyntaxError (x, y) -> return ParseMessageType.SyntaxError (x, y)
-                    | LALRResult.InternalError x -> return ParseMessageType.InternalError x
+                    | LALRResult.SyntaxError (x, y) -> return SyntaxError (x, y)
+                    | LALRResult.InternalError x -> return InternalError x
         }
         let (result, nextState) = run (impl()) p
         let makeMessage = nextState.CurrentPosition |> ParseMessage.Create

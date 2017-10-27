@@ -22,7 +22,7 @@ module internal HighLevel =
 
     let liftFlatten x = x >>= liftResult
 
-    let getIndexedfromList x = Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
+    let getIndexedfromList x = flip Indexed.getfromList x >> liftResult >> mapFailure IndexNotFound
 
     let readProperty = sresult {
         do! wantUInt16 |> ignore /// We do not store based on index
@@ -115,14 +115,10 @@ module internal HighLevel =
             }
     }
 
-    let readInitialStates (fDFA: IndexedGetter<_>) (fLALR: IndexedGetter<_>) = sresult {
-        let! dfa = wantUInt32 <!> Indexed >>= fDFA
-        let! lalr = wantUInt32 <!> Indexed >>= fLALR
-        return
-            {
-                DFA = dfa
-                LALR = lalr
-            }
+    let readInitialStates = sresult {
+        let! dfa = wantUInt32 <!> Indexed
+        let! lalr = wantUInt32 <!> Indexed
+        return dfa, lalr
     }
 
     let readDFAState (fSymbols: IndexedGetter<_>) (fCharSets: IndexedGetter<_>) = sresult {
@@ -176,12 +172,10 @@ module internal HighLevel =
         let! groups = readGroup fSymbols |> mapMatching 'g'B |> lift Indexable.collect
         let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
-        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift Indexable.collect
-        let fDFA = getIndexedfromList dfas
-        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift Indexable.collect
-        let fLALR = getIndexedfromList lalrs
-        let! initialStates = readInitialStates fDFA fLALR |> mapMatching 'I'B |> lift Seq.head
-        return! Grammar.create properties symbols charSets prods initialStates dfas lalrs groups tableCounts
+        let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
+        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> Trial.bind (Indexable.collect >> StateTable.create initialDFA >> Trial.mapFailure IndexNotFound)
+        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> Trial.bind (Indexable.collect >> StateTable.create initialLALR >> Trial.mapFailure IndexNotFound)
+        return! Grammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }
     // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
     // This Number should not be changed, unless it was absolutely neccessary.

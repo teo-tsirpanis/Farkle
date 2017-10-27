@@ -69,16 +69,16 @@ type [<Struct>] Indexed<'a> = Indexed of uint32
 module Indexed =
     /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
     /// In case the index is not found, the function fails.
-    let get (f: _ -> 'a option) (i: Indexed<'a>) =
+    let get (i: Indexed<'a>) (f: _ -> 'a option) =
         let (Indexed i) = i
         match f i with
         | Some x -> ok x
         | None -> fail i
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
-    let getfromList list i =
+    let getfromList i list =
         let f i = RandomAccessList.tryNth (int i) list
-        get f i
+        get i f
 
 /// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
 type IndexableWrapper<'a> =
@@ -193,3 +193,23 @@ module internal Choice =
 
     /// Returns the second case of a `Choice` and `None` if it is on the first.
     let tryChoice2Of2 x = tee2 none Some x
+
+/// A table of states.
+type StateTable<'a> =
+    {
+        /// The initial state.
+        InitialState: 'a
+        /// All the states.
+        States: 'a RandomAccessList
+    }
+    member x.Length = x.States.Length
+
+module StateTable =
+
+    let initialState {InitialState = x} = x
+
+    let states {States = x} = x
+
+    let create initialIndex states = Indexed.getfromList initialIndex states |> lift (fun x -> {InitialState = x; States = states})
+
+    let get i = states >> Indexed.getfromList i

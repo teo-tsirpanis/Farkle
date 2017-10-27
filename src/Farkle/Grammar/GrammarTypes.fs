@@ -253,7 +253,7 @@ module Group =
     let getSymbolGroup groups x =
         (groups, x)
         ||> getSymbolGroupIndexed
-        |> Option.bind (Indexed.getfromList groups >> Trial.makeOption)
+        |> Option.bind (flip Indexed.getfromList groups >> Trial.makeOption)
 
 /// The basic building block of a grammar's syntax.
 /// It consists of a single nonterminal called the "head".
@@ -362,9 +362,8 @@ type Grammar =
             _Symbols: Symbol RandomAccessList
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
-            _InitialStates: InitialStates
-            _LALRStates: LALRState RandomAccessList
-            _DFAStates: DFAState RandomAccessList
+            _LALRStates: LALRState StateTable
+            _DFAStates: DFAState StateTable
         }
     with
         /// The `Properties` of the grammar.
@@ -379,8 +378,6 @@ type Grammar =
         member x.Groups = x._Groups
         /// The `Production`s of the grammar.
         member x.Productions = x._Productions
-        /// The initial LALR and DFA states of a grammar.
-        member x.InitialStates = x._InitialStates
         /// The grammar's LALR state table.
         member x.LALRStates = x._LALRStates
         /// The grammar's DFA state table.
@@ -404,18 +401,16 @@ module Grammar =
     let symbols {_Symbols = x} = x
     let groups {_Groups = x} = x
     let productions {_Productions = x} = x
-    let initialStates {_InitialStates = x} = x
     let lalr {_LALRStates = x} = x
     let dfa {_DFAStates = x} = x
 
-    let create properties symbols charSets prods initialStates dfas lalrs groups _counts = trial {
+    let create properties symbols charSets prods dfas lalrs groups _counts = trial {
         let g =
             {
                 _Properties = properties
                 _Symbols = symbols
                 _CharSets = charSets
                 _Productions = prods
-                _InitialStates = initialStates
                 _DFAStates = dfas
                 _LALRStates = lalrs
                 _Groups = groups

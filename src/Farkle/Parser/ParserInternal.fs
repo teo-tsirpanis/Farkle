@@ -44,7 +44,7 @@ module internal Internal =
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let tokenizeDFA dfaStates initialState pos input =
+    let tokenizeDFA {InitialState = initialState; States = dfaStates} pos input =
         let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
@@ -58,7 +58,7 @@ module internal Internal =
                     currState
                     |> DFAState.edges
                     |> List.tryFind (fun (cs, _) -> RangeSet.contains cs x)
-                    |> Option.bind (snd >> Indexed.getfromList dfaStates >> Trial.makeOption)
+                    |> Option.bind (snd >> flip Indexed.getfromList dfaStates >> Trial.makeOption)
                 match newDFA with
                 | Some (DFAAccept (_, (accSymbol, _)) as dfa) -> impl newPos dfa (Some accSymbol) currPos xs
                 | Some dfa -> impl newPos dfa lastAccept lastAccPos xs
@@ -70,7 +70,7 @@ module internal Internal =
 
     let inline tokenizeDFAForDummies state =
         let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.DFAStates grammar.InitialStates.DFA state.CurrentPosition state.InputStream
+        tokenizeDFA grammar.DFAStates state.CurrentPosition state.InputStream
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
@@ -139,7 +139,7 @@ module internal Internal =
                 >>= (failIfNone LALRStackEmpty >> liftResult)
             let getCurrentLALR = getOptic ParserState.CurrentLALRState_
             let setCurrentLALR x =
-                Indexed.getfromList states x
+                StateTable.get x states
                 |> liftResult
                 |> mapFailure ParseInternalError.IndexNotFound
                 >>= setOptic ParserState.CurrentLALRState_

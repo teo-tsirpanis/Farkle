@@ -177,9 +177,9 @@ module internal ParserState =
         {
             Grammar = grammar
             InputStream = input
-            CurrentLALRState = grammar.InitialStates.LALR
+            CurrentLALRState = grammar.LALRStates.InitialState
             InputStack = []
-            LALRStack = [Token.dummy Error, (grammar.InitialStates.LALR, None)]
+            LALRStack = [Token.dummy Error, (grammar.LALRStates.InitialState, None)]
             TrimReductions = trimReductions
             CurrentPosition = Position.initial
             GroupStack = []

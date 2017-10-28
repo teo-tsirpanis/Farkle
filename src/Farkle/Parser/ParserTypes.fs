@@ -88,7 +88,6 @@ type internal LALRResult =
     | Accept of Reduction
     | Shift of Indexed<LALRState>
     | ReduceNormal of Reduction
-    | ReduceEliminated
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
 
@@ -156,7 +155,6 @@ type internal ParserState =
         CurrentLALRState: LALRState
         InputStack: Token list
         LALRStack: (Token * (LALRState * Reduction option)) list
-        TrimReductions: bool
         CurrentPosition: Position
         GroupStack: Token list
     }
@@ -166,21 +164,19 @@ type internal ParserState =
         static member CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
         static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
         static member LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
-        static member trimReductions x = x.TrimReductions
         static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
         static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
 
 module internal ParserState =
 
     /// Creates a parser state.
-    let create trimReductions grammar input =
+    let create grammar input =
         {
             Grammar = grammar
             InputStream = input
             CurrentLALRState = grammar.LALRStates.InitialState
             InputStack = []
             LALRStack = [Token.dummy Error, (grammar.LALRStates.InitialState, None)]
-            TrimReductions = trimReductions
             CurrentPosition = Position.initial
             GroupStack = []
         }

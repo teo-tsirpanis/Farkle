@@ -23,8 +23,6 @@ with
             | TrimReductions -> "simplify reductions that have only one nonterminal"
             | ShowOutput -> "show output to console. Setting it may hurt performance"
 
-
-
 [<EntryPoint>]
 let main argv =
     let parser = ArgumentParser.Create<Arguments>(programName = "farklei")
@@ -33,13 +31,13 @@ let main argv =
     let inputFile = args.GetResult <@ InputFile @>
     let trimReductions = args.Contains <@ TrimReductions @>
     let showOutput = args.Contains <@ ShowOutput @>
-    let parser = GOLDParser (egtFile, trimReductions)
+    let parser = GOLDParser (egtFile)
     let result = inputFile |> parser.ParseFile
     let print = if showOutput then printfn "%s" else ignore
     result.MessagesAsString |> Seq.iter print
     match result.Simple with
     | Choice1Of2 x ->
-        x |> Reduction.drawReductionTree |> print
+        x |> AST.ofReduction |> (if trimReductions then AST.simplify else id) |> AST.drawASCIITree |> print
         0
     | Choice2Of2 x ->
         print x

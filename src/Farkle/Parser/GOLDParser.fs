@@ -6,14 +6,11 @@
 namespace Farkle.Parser
 
 open Chessie.ErrorHandling
-open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
 open Farkle.Parser
 open Farkle.Parser.Internal
-open System
 open System.IO
-open System.Text
 
 /// A dedicated type to signify the result of a parser.
 type ParseResult =
@@ -34,10 +31,7 @@ type ParseResult =
         | Success (x, _) -> Choice1Of2 x
         | Failure (x, _) -> x |> string |> Choice2Of2
     /// Returns the final `Reduction` or throws an exception.
-    member x.ReductionOrFail() =
-        match x.Simple with
-        | Choice1Of2 x -> x
-        | Choice2Of2 x -> failwith x
+    member x.ReductionOrFail() = x.Simple |> Choice.tee2 id failwith
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources
@@ -45,21 +39,15 @@ type ParseResult =
 /// If parsing succeeds, its return value is the top reduction of the grammar.
 /// If it fails, the first message explains the reason it failed.
 /// The rest of the messages are a kind of a log of the parser.
-/// The term "trivial reductions" means a reduction that has only one nonterminal.
-/// They can optionally be trimmed, so that the resulting parse tree is simplified.
-type GOLDParser(grammar, trimReductions) =
+type GOLDParser(grammar) =
 
-    let newParser = GOLDParser.CreateParser trimReductions grammar
+    let newParser = GOLDParser.CreateParser grammar
 
     let makeParseResult =
         function
         | Ok (x, messages) -> Success (x, messages)
         | Bad (x :: xs) -> Failure (x, xs)
         | Bad [] -> impossible()
-
-    /// Creates a parser from a given `Grammar`.
-    /// Trivial reductions are not trimmed.
-    new (grammar: Grammar) = GOLDParser(grammar = grammar, trimReductions = false)
 
     /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
     /// Trivial reductions are not trimmed.
@@ -68,14 +56,8 @@ type GOLDParser(grammar, trimReductions) =
         let grammar = egtFile |> EGT.ofFile |> returnOrFail
         GOLDParser grammar
 
-    /// Creates a parser from a `Grammar` stored in an EGT file in the given path, with an option to trim trivial reductions.
-    /// If there is a problem with the file, the constructor will throw an exception.
-    new (egtFile, trimReductions) =
-        let grammar = egtFile |> EGT.ofFile |> returnOrFail
-        GOLDParser(grammar, trimReductions)
-
     /// Creates a parser that parses `input` based on the given `Grammar`, with the option to trim trivial reductions.
-    static member CreateParser trimReductions grammar input = createParser trimReductions grammar input
+    static member CreateParser grammar input = createParser grammar input
 
     /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
     /// What it returns is described in the `GOLDParser` class documentation.

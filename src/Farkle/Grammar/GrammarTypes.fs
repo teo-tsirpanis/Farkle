@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar
 
-open Aether
 open Chessie.ErrorHandling
 open FSharpx.Collections
 open Farkle
@@ -269,11 +268,6 @@ type Production =
     }
     interface Indexable with
         member x.Index = x.Index
-    /// Returns true if the production's handle consists of only one `NonTerminal`, and false otherwise.
-    member x.HasOneNonTerminal =
-        match x.Handle with
-        | [Nonterminal _] -> true
-        | _ -> false
     override x.ToString() =
         let symbols = x.Handle |> List.map (string) |> String.concat " "
         sprintf "%O ::= %s" x.Head symbols

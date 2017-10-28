@@ -155,26 +155,19 @@ module internal Internal =
                 return LALRResult.Shift x
             | Some (Reduce x) ->
                 let! head, result = sresult {
-                    let! shouldTrim = get <!> (ParserState.trimReductions >> ((&&) x.HasOneNonTerminal))
-                    if shouldTrim then
-                        let! head = lalrStackTop
-                        do! mapOptic ParserState.LALRStack_ List.tail
-                        let head = Optic.set (fst_ >-> Token.Symbol_) x.Head head
-                        return head, ReduceEliminated
-                    else
-                        let count = x.Handle.Length
-                        let popStack optic count = sresult {
-                            let! (first, rest) = getOptic optic <!> List.splitAt count
-                            do! setOptic optic rest
-                            return first
-                        }
-                        let! tokens =
-                            popStack ParserState.LALRStack_ count
-                            <!> (Seq.map (function | (x, (_, None)) -> Choice1Of2 x | (_, (_, Some x)) -> Choice2Of2 x) >> Seq.rev >> List.ofSeq)
-                        let reduction = {Tokens = tokens; Parent = x}
-                        let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
-                        let head = token, (currentState, Some reduction)
-                        return head, ReduceNormal reduction
+                    let count = x.Handle.Length
+                    let popStack optic count = sresult {
+                        let! (first, rest) = getOptic optic <!> List.splitAt count
+                        do! setOptic optic rest
+                        return first
+                    }
+                    let! tokens =
+                        popStack ParserState.LALRStack_ count
+                        <!> (Seq.map (function | (x, (_, None)) -> Choice1Of2 x | (_, (_, Some x)) -> Choice2Of2 x) >> Seq.rev >> List.ofSeq)
+                    let reduction = {Tokens = tokens; Parent = x}
+                    let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
+                    let head = token, (currentState, Some reduction)
+                    return head, ReduceNormal reduction
                 }
                 let! newState = lalrStackTop <!> (snd >> fst)
                 let nextAction = newState.States.TryFind x.Head
@@ -229,7 +222,6 @@ module internal Internal =
                         do! mapOptic ParserState.InputStack_ List.skipLast
                         return ParseMessageType.Shift x
                     | ReduceNormal x -> return Reduction x
-                    | ReduceEliminated -> return! impl()
                     | LALRResult.SyntaxError (x, y) -> return SyntaxError (x, y)
                     | LALRResult.InternalError x -> return InternalError x
         }
@@ -240,6 +232,6 @@ module internal Internal =
         | x when x.IsError -> x |> makeMessage |> Failed
         | x -> Continuing (makeMessage x, lazy (stepParser nextState))
 
-    let createParser trimReductions grammar input =
-        let state = ParserState.create trimReductions grammar input
+    let createParser grammar input =
+        let state = ParserState.create grammar input
         stepParser state

@@ -33,10 +33,6 @@ While some initial components are written, the real deal is still under early de
     <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\paket-files\teo-tsirpanis\5876f041e3e127b067e56a5b62ec2edf\AstRcd.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/AstRcd.fs</Link>
-    </Compile>
     <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
       <Paket>True</Paket>
       <Link>paket-files/RandomAccessList.fsi</Link>

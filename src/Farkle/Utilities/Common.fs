@@ -160,6 +160,25 @@ module String =
     /// See `List.ofString`.
     let toList = List.ofString
 
+    /// Returns a string that contains the specific string a specified number of times.
+    /// The function memoizes the results, so it is better to first give the string argument to the function, and reuse the curried function, if you plan to use it many times.
+    let repeat input =
+        let dict = System.Collections.Generic.Dictionary()
+        let rec impl times =
+            match dict.TryGetValue times with
+            | true, x -> x
+            | false, _ ->
+                let x =
+                    match times with
+                    | 0u -> ""
+                    | x when x % 2u = 0u ->
+                        let x = impl (x / 2u)
+                        x + x
+                    | x -> input + impl (x - 1u)
+                dict.Add (times, x)
+                x
+        impl
+
 /// Functions to work with the `Chessie.ErrorHandling.Result` type.
 /// I will propably make a PR to add them in the future.
 module Trial =

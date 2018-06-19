@@ -5,11 +5,9 @@
 
 namespace Farkle.Parser
 
-open Aether
 open Farkle
 open Farkle.Grammar
 open System
-open System.Text
 
 /// An Abstract Syntax Tree that describes the output of a parser.
 /// It carries arbitrary metadata.
@@ -23,11 +21,11 @@ module AST =
     /// Creates an `AST` from a `Reduction`.
     /// The parent of the reduction is the tree's metadata.
     [<CompiledName("CreateFromReduction")>]
-    let ofReduction {Tokens = tokens; Parent = parent}: AST<Indexed<Production>> =
-        let rec impl {Production.Index = prod} tokens =
-            tokens
-            |> List.map (Choice.tee2 (fun {Data = x} ->  Content (Indexed prod, x)) (fun {Parent = parent; Tokens = x} -> Nonterminal (Indexed prod, impl parent x)))
-        Nonterminal (Indexed parent.Index, impl parent tokens)
+    let rec ofReduction {Tokens = tokens; Parent = parent} =
+        let tokenToAST {Data = x} = Content (parent, x)
+        match tokens with
+        | [Choice1Of2 x] -> tokenToAST x
+        | tokens -> tokens |> List.map (Choice.tee2 tokenToAST ofReduction) |> (fun x -> Nonterminal (parent, x))
 
     /// Maps an `AST` with either fContent or fNonterminal depending on what it is.
     [<CompiledName("Tee")>]
@@ -54,13 +52,12 @@ module AST =
     /// Visualizes an `AST` in the form of a textual "parse tree".
     [<CompiledName("DrawASCIITree")>]
     let drawASCIITree x =
-        let kIndentText = "|  "
+        let addIndentText = String.repeat "|  "
         let rec impl indent x = seq {
-            let indentText = kIndentText |> Seq.replicate indent |> String.concat ""
-            yield x |> metadata |> sprintf "%s+--%O" indentText
+            yield x |> metadata |> sprintf "+--%O", indent
             match x with
-            | Content (_, x) -> yield sprintf "%s%s+--%s" indentText kIndentText x
+            | Content (_, x) -> yield sprintf "+--%s" x, indent
             | Nonterminal (_, x) ->
                 for x in x do
-                    yield! impl (indent + 1) x}
-        impl 0 x |> String.concat Environment.NewLine
+                    yield! impl (indent + 1u) x}
+        impl 0u x |> Seq.map (fun (x, y) -> addIndentText y + x) |> String.concat Environment.NewLine

@@ -13,7 +13,7 @@ type Arguments =
     | [<ExactlyOnce>] EGTFile of string
     | [<ExactlyOnce>] InputFile of string
     | [<Unique>] TrimReductions
-    | [<Unique; AltCommandLine("-o")>] ShowOutput
+    | [<Unique; AltCommandLine("-s")>] Silent
 with
     interface IArgParserTemplate with
         member s.Usage =
@@ -21,7 +21,7 @@ with
             | EGTFile _ -> "the file containing the grammar to be parsed"
             | InputFile _ -> "the file to be parsed"
             | TrimReductions -> "simplify reductions that have only one nonterminal"
-            | ShowOutput -> "show output to console. Setting it may hurt performance"
+            | Silent -> "do not show any output at all"
 
 [<EntryPoint>]
 let main argv =
@@ -30,14 +30,19 @@ let main argv =
     let egtFile = args.GetResult <@ EGTFile @>
     let inputFile = args.GetResult <@ InputFile @>
     let trimReductions = args.Contains <@ TrimReductions @>
-    let showOutput = args.Contains <@ ShowOutput @>
-    let parser = GOLDParser (egtFile)
+    let showOutput = args.Contains <@ Silent @> |> not
+    let parser = GOLDParser egtFile
     let result = inputFile |> parser.ParseFile
     let print = if showOutput then printfn "%s" else ignore
     result.MessagesAsString |> Seq.iter print
     match result.Simple with
     | Choice1Of2 x ->
-        x |> AST.ofReduction |> (if trimReductions then AST.simplify else id) |> AST.drawASCIITree |> print
+        print "Reduction"
+        x |> Reduction.drawReductionTree |> print
+        print "AST"
+        x |> AST.ofReduction |> AST.drawASCIITree |> print
+        print "Simplified AST"
+        x |> AST.ofReduction |> AST.simplify |> AST.drawASCIITree |> print
         0
     | Choice2Of2 x ->
         print x

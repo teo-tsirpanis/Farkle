@@ -1,7 +1,7 @@
 STORAGE: NONE
 RESTRICTION: == netstandard2.0
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     Chessie (0.6)
       FSharp.Core (>= 4.0.1.7-alpha)
       NETStandard.Library (>= 1.6)
@@ -18,7 +18,7 @@ GITHUB
 GROUP Build
 RESTRICTION: == net462
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     FAKE (4.64.13)
     FSharp.Compiler.Service (2.0.0.6)
     FSharp.Formatting (2.14.4)
@@ -30,22 +30,24 @@ NUGET
       SourceLink.Create.GitHub (>= 2.8)
     SourceLink.Create.GitHub (2.8.2)
 GITHUB
-  remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (320bdd6c69725de15a7734cb40d0f6330b37ec64)
+  remote: teo-tsirpanis/FAKE
+    modules/Octokit/Octokit.fsx (91ca20259ff324e610bfb66e29bcf9453ff7d647)
       Octokit (>= 0.20)
 GROUP Test
 STORAGE: NONE
-RESTRICTION: == netcoreapp2.0
+RESTRICTION: == netcoreapp2.1
 NUGET
-  remote: https://www.nuget.org/api/v2
+  remote: https://api.nuget.org/v3/index.json
     Argu (5.1)
       FSharp.Core (>= 4.3.2)
       System.Configuration.ConfigurationManager (>= 4.4)
     BenchmarkDotNet (0.10.14)
       BenchmarkDotNet.Core (>= 0.10.14)
+      Microsoft.NETCore.App (>= 1.1.2)
     BenchmarkDotNet.Core (0.10.14)
       Microsoft.DotNet.InternalAbstractions (>= 1.0)
       Microsoft.DotNet.PlatformAbstractions (>= 1.1.1)
+      Microsoft.NETCore.App (>= 1.1.2)
       Microsoft.Win32.Registry (>= 4.3)
       System.Diagnostics.FileVersionInfo (>= 4.3)
       System.Reflection.Emit.Lightweight (>= 4.3)
@@ -83,10 +85,19 @@ NUGET
       System.Runtime.Extensions (>= 4.1)
       System.Runtime.InteropServices (>= 4.1)
       System.Runtime.InteropServices.RuntimeInformation (>= 4.0)
+    Microsoft.NETCore.App (2.1.1)
+      Microsoft.NETCore.DotNetHostPolicy (>= 2.1.1)
+      Microsoft.NETCore.Platforms (>= 2.1)
+      Microsoft.NETCore.Targets (>= 2.0)
+      NETStandard.Library (>= 2.0.3)
+    Microsoft.NETCore.DotNetAppHost (2.1.1)
+    Microsoft.NETCore.DotNetHostPolicy (2.1.1)
+      Microsoft.NETCore.DotNetHostResolver (>= 2.1.1)
+    Microsoft.NETCore.DotNetHostResolver (2.1.1)
+      Microsoft.NETCore.DotNetAppHost (>= 2.1.1)
     Microsoft.NETCore.Platforms (2.1)
     Microsoft.NETCore.Targets (2.1)
     Microsoft.Win32.Registry (4.5)
-      System.Memory (>= 4.5)
       System.Security.AccessControl (>= 4.5)
       System.Security.Principal.Windows (>= 4.5)
     Mono.Cecil (0.10)
@@ -144,7 +155,6 @@ NUGET
       System.Runtime.Extensions (>= 4.3)
       System.Threading (>= 4.3)
       System.Threading.Tasks (>= 4.3)
-    System.Collections.Immutable (1.5)
     System.Configuration.ConfigurationManager (4.5)
       System.Security.Cryptography.ProtectedData (>= 4.5)
       System.Security.Permissions (>= 4.5)
@@ -193,8 +203,6 @@ NUGET
       System.Resources.ResourceManager (>= 4.3)
       System.Runtime (>= 4.3)
       System.Runtime.Extensions (>= 4.3)
-    System.Memory (4.5.1)
-      System.Runtime.CompilerServices.Unsafe (>= 4.5)
     System.Reflection (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -222,7 +230,6 @@ NUGET
       System.Reflection (>= 4.3)
       System.Runtime (>= 4.3)
     System.Reflection.Metadata (1.6)
-      System.Collections.Immutable (>= 1.5)
     System.Reflection.Primitives (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -237,7 +244,6 @@ NUGET
     System.Runtime (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
-    System.Runtime.CompilerServices.Unsafe (4.5.1)
     System.Runtime.Extensions (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -270,7 +276,6 @@ NUGET
       System.Resources.ResourceManager (>= 4.3)
       System.Runtime (>= 4.3)
     System.Security.AccessControl (4.5)
-      Microsoft.NETCore.Platforms (>= 2.0)
       System.Security.Principal.Windows (>= 4.5)
     System.Security.Cryptography.Algorithms (4.3.1)
       Microsoft.NETCore.Platforms (>= 1.1)
@@ -323,11 +328,9 @@ NUGET
       System.Threading (>= 4.3)
       System.Threading.Tasks (>= 4.3)
     System.Security.Cryptography.ProtectedData (4.5)
-      System.Memory (>= 4.5)
     System.Security.Permissions (4.5)
       System.Security.AccessControl (>= 4.5)
     System.Security.Principal.Windows (4.5)
-      Microsoft.NETCore.Platforms (>= 2.0)
     System.Text.Encoding (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -347,7 +350,6 @@ NUGET
       Microsoft.NETCore.Targets (>= 1.1)
       System.Runtime (>= 4.3)
     System.Threading.Tasks.Extensions (4.5.1)
-      System.Runtime.CompilerServices.Unsafe (>= 4.5)
     System.ValueTuple (4.5)
     System.Xml.ReaderWriter (4.3.1)
       System.Collections (>= 4.3)

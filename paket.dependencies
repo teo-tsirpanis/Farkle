@@ -2,7 +2,7 @@ framework: netstandard2.0
 
 storage: none
 
-source https://nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 nuget Chessie
 nuget FSharp.Core
@@ -13,20 +13,20 @@ github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/Random
 
 group Build
   framework: net462
-  source https://nuget.org/api/v2
+  source https://api.nuget.org/v3/index.json
   
   nuget FAKE ~> 4
   nuget FSharp.Formatting
 
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  github teo-tsirpanis/FAKE modules/Octokit/Octokit.fsx
 
 group Test
 
-  framework: netcoreapp2.0
+  framework: netcoreapp2.1
 
   storage: none
 
-  source https://nuget.org/api/v2
+  source https://api.nuget.org/v3/index.json
   
   nuget BenchmarkDotNet
   nuget Expecto

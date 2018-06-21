@@ -71,7 +71,7 @@ module internal Internal =
 
     let inline tokenizeDFAForDummies state =
         let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.DFAGraph state.CurrentPosition state.InputStream
+        tokenizeDFA grammar.DFA state.CurrentPosition state.InputStream
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies
@@ -133,19 +133,20 @@ module internal Internal =
     open StateResult
 
     let parseLALR token = state {
+        let! lalrStates = State.get |> State.map (ParserState.grammar >> Grammar.lalr)
         let (StateResult impl) = sresult {
-            let! states = get <!> (ParserState.grammar >> Grammar.lalr)
             let lalrStackTop =
                 getOptic (ParserState.LALRStack_ >-> List.head_)
                 >>= (failIfNone LALRStackEmpty >> liftResult)
+            let getNextActions currIndex = lalrStates.States.TryFind currIndex |> failIfNone (LALRStateIndexNotFound currIndex) |> liftResult
+            let getNextAction currIndex symbol =
+                getNextActions currIndex
+                <!> (Map.tryFind symbol)
             let getCurrentLALR = getOptic ParserState.CurrentLALRState_
-            let setCurrentLALR x =
-                StateTable.get x states
-                |> liftResult
-                |> mapFailure ParseInternalError.IndexNotFound
-                >>= setOptic ParserState.CurrentLALRState_
+            let setCurrentLALR = setOptic ParserState.CurrentLALRState_
             let! currentState = getCurrentLALR
-            let nextAction = currentState.States.TryFind (token ^. Token.Symbol_)
+            let! nextActions = getNextActions currentState
+            let nextAction = nextActions.TryFind(token ^. Token.Symbol_)
             match nextAction with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
@@ -171,21 +172,21 @@ module internal Internal =
                     return head, ReduceNormal reduction
                 }
                 let! newState = lalrStackTop <!> (snd >> fst)
-                let nextAction = newState.States.TryFind x.Head
+                let! nextAction = getNextAction newState x.Head
                 match nextAction with
                 | Some (Goto x) ->
                     do! setCurrentLALR x
                     let! head = getCurrentLALR <!> (fun currentLALR -> fst head, (currentLALR, head |> snd |> snd))
                     do! mapOptic (ParserState.LALRStack_) (List.cons head)
-                | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState.Index |> Indexed)
+                | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState)
                 return result
             | Some (Goto _) | None ->
                 let expectedSymbols =
-                    currentState.States
-                    |> Map.toList
-                    |> List.map fst
-                    |> List.filter
-                        (function | Terminal _ | EndOfFile | GroupStart _ | GroupEnd _ -> true | _ -> false)
+                    nextActions
+                    |> Map.toSeq
+                    |> Seq.map fst
+                    |> Seq.filter (function | Terminal _ | EndOfFile | GroupStart _ | GroupEnd _ -> true | _ -> false)
+                    |> List.ofSeq
                 return LALRResult.SyntaxError (expectedSymbols, token.Symbol)
         }
         let! x = impl

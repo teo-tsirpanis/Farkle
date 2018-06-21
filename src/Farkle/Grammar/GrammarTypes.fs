@@ -294,10 +294,9 @@ type internal DFAState =
             | DFAContinue (x, _) -> x
     override x.ToString() = x :> Indexable |> Indexable.index |> string
 
-module internal DFAState =
-    let toDFA {InitialState = init: DFAState; States = states} =
+module internal DFA =
+    let create initial states =
         let extractStates = function | DFAAccept (index, (_, nextStates)) -> index, nextStates | DFAContinue (index, nextStates) -> index, nextStates
-        let initialState = init :> Indexable |> Indexable.index
         let acceptStates = states |> Seq.choose (function | DFAAccept (index, (symbol, _)) -> Some (index, symbol) | DFAContinue _ -> None) |> Map.ofSeq
         let transition =
             states
@@ -305,41 +304,53 @@ module internal DFAState =
             |> Map.ofSeq
         {
             Transition = transition
-            InitialState = initialState
+            InitialState = initial
             AcceptStates = acceptStates
         }
 
+/// An action to be taken by the parser.
+type LALRAction =
+    /// This action indicates the parser to shift to the specified `LALRState`..
+    | Shift of uint32
+    /// This action indicates the parser to reduce a `Production`.
+    | Reduce of Production
+    /// This action is used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
+    | Goto of uint32
+    /// When the parser encounters this action for a given symbol, the input text is accepted as correct and complete.
+    | Accept
+
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
-type LALRState =
+type internal LALRState =
     {
         /// The index of the state.
         Index: uint32
         /// The available `LALRAction`s of the state.
         /// Depending on the symbol, the next action to be taken is determined.
-        States:Map<Symbol, LALRAction>
+        Actions:Map<Symbol, LALRAction>
     }
     interface Indexable with
         member x.Index = x.Index
     override x.ToString() = string x.Index
 
-/// An action to be taken by the parser.
-and LALRAction =
-    /// This action indicates the parser to shift to the specified `LALRState`..
-    | Shift of Indexed<LALRState>
-    /// This action indicates the parser to reduce a `Production`.
-    | Reduce of Production
-    /// This action is used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    | Goto of Indexed<LALRState>
-    /// When the parser encounters this action for a given symbol, the input text is accepted as correct and complete.
-    | Accept
+type LALR =
+    {
+        InitialState: uint32
+        States: Map<uint32, Map<Symbol, LALRAction>>
+    }
+    member x.Length = x.States.Count
+    static member internal Create initial states =
+        {
+            InitialState = initial
+            States = states |> Seq.map (fun {Index = i; Actions = actions} -> i, actions) |> Map.ofSeq
+        }
 
 module internal LALRAction =
 
-    let create (fProds: Indexed<Production> -> Result<Production, EGTReadError>) index =
+    let create fProds index =
         function
-        | 1us -> index |> Indexed |> Shift |> ok
+        | 1us -> index |> Shift |> ok
         | 2us -> index |> Indexed |> fProds |> lift Reduce
-        | 3us -> index |> Indexed |> Goto |> ok
+        | 3us -> index |> Goto |> ok
         | 4us -> Accept |> ok
         | x -> x |> InvalidLALRActionType |> fail
 
@@ -369,8 +380,8 @@ type Grammar =
             _Symbols: Symbol RandomAccessList
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
-            _LALRStates: LALRState StateTable
-            _DFAGraph: DFA
+            _LALRStates: LALR
+            _DFA: DFA
         }
     with
         /// The `Properties` of the grammar.
@@ -388,7 +399,7 @@ type Grammar =
         /// The grammar's LALR state table.
         member x.LALRStates = x._LALRStates
         /// The grammar's DFA state table.
-        member x.DFAGraph = x._DFAGraph
+        member x.DFA = x._DFA
 
 /// [omit]
 module Grammar =
@@ -398,7 +409,7 @@ module Grammar =
             SymbolTables = x.Symbols.Length |> uint16
             CharSetTables = x.CharSets.Length |> uint16
             ProductionTables = x.Productions.Length |> uint16
-            DFATables = x.DFAGraph.Length |> uint16
+            DFATables = x.DFA.Length |> uint16
             LALRTables = x.LALRStates.Length |> uint16
             GroupTables = x.Groups.Length |> uint16
         }
@@ -409,7 +420,7 @@ module Grammar =
     let groups {_Groups = x} = x
     let productions {_Productions = x} = x
     let lalr {_LALRStates = x} = x
-    let dfa {_DFAGraph = x} = x
+    let dfa {_DFA = x} = x
 
     let create properties symbols charSets prods dfas lalrs groups _counts = trial {
         let g =
@@ -418,7 +429,7 @@ module Grammar =
                 _Symbols = symbols
                 _CharSets = charSets
                 _Productions = prods
-                _DFAGraph = dfas
+                _DFA = dfas
                 _LALRStates = lalrs
                 _Groups = groups
             }

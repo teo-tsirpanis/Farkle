@@ -116,8 +116,8 @@ module internal HighLevel =
     }
 
     let readInitialStates = sresult {
-        let! dfa = wantUInt32 <!> Indexed
-        let! lalr = wantUInt32 <!> Indexed
+        let! dfa = wantUInt32
+        let! lalr = wantUInt32
         return dfa, lalr
     }
 
@@ -150,7 +150,7 @@ module internal HighLevel =
             return (symbolIndex, action)
         }
         let! states = whileFull readActions <!> Map.ofSeq
-        return {States = states; Index = index}
+        return {Actions = states; Index = index}
     }
 
     let mapMatching magicChar f = sresult {
@@ -173,8 +173,8 @@ module internal HighLevel =
         let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
         let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
-        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> Trial.bind (Indexable.collect >> StateTable.create initialDFA >> Trial.mapFailure IndexNotFound) |> lift DFAState.toDFA
-        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> Trial.bind (Indexable.collect >> StateTable.create initialLALR >> Trial.mapFailure IndexNotFound)
+        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFA.create initialDFA)
+        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALR.Create initialLALR)
         return! Grammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }
     // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.

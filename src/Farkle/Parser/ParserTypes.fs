@@ -78,15 +78,15 @@ module Reduction =
 type ParseInternalError =
     /// After a reduction, the next LALR action should be a `Goto` one.
     /// But it's not.
-    | GotoNotFoundAfterReduction of Production * Indexed<LALRState>
-    /// The item at a given index of a list was not found.
-    | IndexNotFound of uint32
+    | GotoNotFoundAfterReduction of Production * uint32
+    /// The LALR state at a given index was not found.
+    | LALRStateIndexNotFound of uint32
     /// The LALR stack is empty; it should never be.
     | LALRStackEmpty
 
 type internal LALRResult =
     | Accept of Reduction
-    | Shift of Indexed<LALRState>
+    | Shift of uint32
     | ReduceNormal of Reduction
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
@@ -99,7 +99,7 @@ type ParseMessageType =
     /// A rule was reduced.
     | Reduction of Reduction
     /// The parser shifted to a different LALR state.
-    | Shift of Indexed<LALRState>
+    | Shift of uint32
     /// The parser finished parsing and returned a reduction.
     | Accept of Reduction
     /// Something is wrong with the reading of the EGT file.
@@ -125,7 +125,7 @@ type ParseMessageType =
         | InputFileNotExist x -> sprintf "File \"%s\" does not exist" x
         | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O (%O)" x.Parent x
-        | Shift (Indexed x) -> sprintf "The parser shifted to state %d" x
+        | Shift x -> sprintf "The parser shifted to state %d" x
         | Accept x -> sprintf "Reduction accepted: %O (%O)" x.Parent x
         | LexicalError x -> sprintf "Cannot recognize token: %c" x
         | SyntaxError (expected, actual) ->
@@ -152,9 +152,9 @@ type internal ParserState =
     {
         Grammar: Grammar
         InputStream: char list
-        CurrentLALRState: LALRState
+        CurrentLALRState: uint32
         InputStack: Token list
-        LALRStack: (Token * (LALRState * Reduction option)) list
+        LALRStack: (Token * (uint32 * Reduction option)) list
         CurrentPosition: Position
         GroupStack: Token list
     }

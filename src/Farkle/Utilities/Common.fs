@@ -197,7 +197,7 @@ module Trial =
         | Bad msgs -> msgs |> List.map f |> Bad
 
 /// Functions to work with the F# `Choice` type.
-module internal Choice =
+module Choice =
 
     /// Maps the content of a `Choice` with a different function depending on its case.
     let tee2 f1 f2 =
@@ -212,23 +212,3 @@ module internal Choice =
 
     /// Returns the second case of a `Choice` and `None` if it is on the first.
     let tryChoice2Of2 x = tee2 none Some x
-
-/// A table of states.
-type StateTable<'a> =
-    {
-        /// The initial state.
-        InitialState: 'a
-        /// All the states.
-        States: 'a RandomAccessList
-    }
-    member x.Length = x.States.Length
-
-module StateTable =
-
-    let initialState {InitialState = x} = x
-
-    let states {States = x} = x
-
-    let create initialIndex states = Indexed.getfromList initialIndex states |> lift (fun x -> {InitialState = x; States = states})
-
-    let get i = states >> Indexed.getfromList i

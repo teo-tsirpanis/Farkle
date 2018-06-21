@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar.EgtReader
 
-open Chessie.ErrorHandling
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -18,7 +17,6 @@ module internal MidLevel =
 
     open LowLevel
     open StateResult
-    open System.IO
     open System.Text
 
     let readRecord = sresult {
@@ -61,7 +59,7 @@ module internal MidLevel =
     }
 
     let wantEmpty, wantByte, wantBoolean, wantUInt16, wantString =
-        let fail x = fun entry -> x |> InvalidEntryType |> StateResult.fail
+        let fail x = fun _ -> x |> InvalidEntryType |> StateResult.fail
         let failEmpty x = fail "Empty" x
         let failByte x = fail "Byte" x
         let failBoolean x = fail "Boolean" x

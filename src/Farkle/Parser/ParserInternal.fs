@@ -145,8 +145,8 @@ module internal Internal =
             let getCurrentLALR = getOptic ParserState.CurrentLALRState_
             let setCurrentLALR = setOptic ParserState.CurrentLALRState_
             let! currentState = getCurrentLALR
-            let! nextActions = getNextActions currentState
-            let nextAction = nextActions.TryFind(token ^. Token.Symbol_)
+            let! nextAvailableActions = getNextActions currentState
+            let nextAction = nextAvailableActions.TryFind(token ^. Token.Symbol_)
             match nextAction with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
@@ -182,7 +182,7 @@ module internal Internal =
                 return result
             | Some (Goto _) | None ->
                 let expectedSymbols =
-                    nextActions
+                    nextAvailableActions
                     |> Map.toSeq
                     |> Seq.map fst
                     |> Seq.filter (function | Terminal _ | EndOfFile | GroupStart _ | GroupEnd _ -> true | _ -> false)

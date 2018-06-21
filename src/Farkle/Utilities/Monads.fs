@@ -156,7 +156,7 @@ module StateResult =
 
     let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠
 
-    let inline put x = StateResult(State(fun s0 -> Ok((), []), x)) // Thank you F#'s type restrictions. 😠
+    let inline put x = StateResult(State(fun _ -> Ok((), []), x)) // Thank you F#'s type restrictions. 😠
     
     type StateResultBuilder() =
         member __.Zero() = returnM ()

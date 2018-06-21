@@ -6,8 +6,6 @@
 namespace Farkle
 
 open Chessie.ErrorHandling
-open FSharpx.Collections
-open Farkle.Monads
 open Farkle.Monads.StateResult
 open System.IO
 open System.Text

@@ -173,7 +173,7 @@ module internal HighLevel =
         let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
         let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
-        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> Trial.bind (Indexable.collect >> StateTable.create initialDFA >> Trial.mapFailure IndexNotFound)
+        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> Trial.bind (Indexable.collect >> StateTable.create initialDFA >> Trial.mapFailure IndexNotFound) |> lift DFAState.toDFA
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> Trial.bind (Indexable.collect >> StateTable.create initialLALR >> Trial.mapFailure IndexNotFound)
         return! Grammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }

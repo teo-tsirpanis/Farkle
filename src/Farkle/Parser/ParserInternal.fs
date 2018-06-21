@@ -44,7 +44,7 @@ module internal Internal =
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let tokenizeDFA {InitialState = initialState; States = dfaStates} pos input =
+    let tokenizeDFA {Transition = trans; InitialState = initialState; AcceptStates = accStates} pos input =
         let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
@@ -55,13 +55,14 @@ module internal Internal =
                 | None -> newToken EndOfFile ""
             | x :: xs ->
                 let newDFA =
-                    currState
-                    |> DFAState.edges
-                    |> List.tryFind (fun (cs, _) -> RangeSet.contains cs x)
-                    |> Option.bind (snd >> flip Indexed.getfromList dfaStates >> Trial.makeOption)
+                    trans.TryFind(currState)
+                    |> Option.bind (fun m -> m |> Map.toSeq |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x))
+                    |> Option.map snd
                 match newDFA with
-                | Some (DFAAccept (_, (accSymbol, _)) as dfa) -> impl newPos dfa (Some accSymbol) currPos xs
-                | Some dfa -> impl newPos dfa lastAccept lastAccPos xs
+                | Some dfa ->
+                    match accStates.TryFind(dfa) with
+                    | Some sym -> impl newPos dfa (Some sym) currPos xs
+                    | None -> impl newPos dfa lastAccept lastAccPos xs
                 | None ->
                     match lastAccept with
                     | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
@@ -70,7 +71,7 @@ module internal Internal =
 
     let inline tokenizeDFAForDummies state =
         let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.DFAStates state.CurrentPosition state.InputStream
+        tokenizeDFA grammar.DFAGraph state.CurrentPosition state.InputStream
 
     let rec produceToken() = state {
         let! x = get <!> tokenizeDFAForDummies

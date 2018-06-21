@@ -77,7 +77,7 @@ module Seq =
     let pairs x =
         x
         |> Seq.chunkBySize 2
-        |> Seq.map (fun x -> Seq.head x, x |> Seq.tail |> Seq.exactlyOne)
+        |> Seq.map (fun x -> x.[0], x.[1])
 
     /// Creates a lazily evaluated sequence of bytes from a stream with the option to dispose the stream when it ends.
     let ofByteStream disposeOnFinish (s: Stream) =

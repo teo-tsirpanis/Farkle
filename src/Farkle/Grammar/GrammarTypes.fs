@@ -272,9 +272,17 @@ type Production =
         let symbols = x.Handle |> List.map (string) |> String.concat " "
         sprintf "%O ::= %s" x.Head symbols
 
-/// A DFA state. All the states of the DFA state table define the logic that produces `Tokens` out of strings.
+/// A DFA state. It defines the logic that produces `Tokens` out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
-type DFAState =
+type DFA =
+    {
+        Transition: Map<uint32,Map<CharSet, uint32>>
+        InitialState: uint32
+        AcceptStates: Map<uint32, Symbol>
+    }
+    member x.Length = x.Transition.Count
+
+type internal DFAState =
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
     | DFAAccept of index: uint32 * (Symbol * (CharSet * Indexed<DFAState>) list)
     /// This state does not accept a symbol. If the state graph cannot be further walked and an accepting state has not been found, tokenizing fails.
@@ -286,15 +294,20 @@ type DFAState =
             | DFAContinue (x, _) -> x
     override x.ToString() = x :> Indexable |> Indexable.index |> string
 
-/// [omit]
-module DFAState =
-
-    let tee fDFAAccept fDFAContinue =
-        function
-        | DFAAccept (x1, x2) -> fDFAAccept (x1, x2)
-        | DFAContinue (x1, x2) -> fDFAContinue (x1, x2)
-    let acceptSymbol = tee (snd >> fst >> Some) none
-    let edges = tee (snd >> snd) snd
+module internal DFAState =
+    let toDFA {InitialState = init: DFAState; States = states} =
+        let extractStates = function | DFAAccept (index, (_, nextStates)) -> index, nextStates | DFAContinue (index, nextStates) -> index, nextStates
+        let initialState = init :> Indexable |> Indexable.index
+        let acceptStates = states |> Seq.choose (function | DFAAccept (index, (symbol, _)) -> Some (index, symbol) | DFAContinue _ -> None) |> Map.ofSeq
+        let transition =
+            states
+            |> Seq.map (extractStates >> (fun (index, nextStates) -> index, nextStates |> Seq.map (fun (cs, Indexed(next)) -> cs, next) |> Map.ofSeq))
+            |> Map.ofSeq
+        {
+            Transition = transition
+            InitialState = initialState
+            AcceptStates = acceptStates
+        }
 
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
 type LALRState =
@@ -331,7 +344,7 @@ module internal LALRAction =
         | x -> x |> InvalidLALRActionType |> fail
 
 /// A structure that specifies the initial DFA and LALR states.
-type InitialStates =
+type internal InitialStates =
     {
         /// The initial DFA state.
         /// Instead of the LALR state, it is reset when a `Token` is produced.
@@ -342,7 +355,7 @@ type InitialStates =
     }
 
 /// [omit]
-module InitialStates =
+module internal InitialStates =
     let dfa {DFA = x} = x
     let lalr {LALR = x} = x
 
@@ -357,7 +370,7 @@ type Grammar =
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
             _LALRStates: LALRState StateTable
-            _DFAStates: DFAState StateTable
+            _DFAGraph: DFA
         }
     with
         /// The `Properties` of the grammar.
@@ -375,7 +388,7 @@ type Grammar =
         /// The grammar's LALR state table.
         member x.LALRStates = x._LALRStates
         /// The grammar's DFA state table.
-        member x.DFAStates = x._DFAStates
+        member x.DFAGraph = x._DFAGraph
 
 /// [omit]
 module Grammar =
@@ -385,7 +398,7 @@ module Grammar =
             SymbolTables = x.Symbols.Length |> uint16
             CharSetTables = x.CharSets.Length |> uint16
             ProductionTables = x.Productions.Length |> uint16
-            DFATables = x.DFAStates.Length |> uint16
+            DFATables = x.DFAGraph.Length |> uint16
             LALRTables = x.LALRStates.Length |> uint16
             GroupTables = x.Groups.Length |> uint16
         }
@@ -396,7 +409,7 @@ module Grammar =
     let groups {_Groups = x} = x
     let productions {_Productions = x} = x
     let lalr {_LALRStates = x} = x
-    let dfa {_DFAStates = x} = x
+    let dfa {_DFAGraph = x} = x
 
     let create properties symbols charSets prods dfas lalrs groups _counts = trial {
         let g =
@@ -405,7 +418,7 @@ module Grammar =
                 _Symbols = symbols
                 _CharSets = charSets
                 _Productions = prods
-                _DFAStates = dfas
+                _DFAGraph = dfas
                 _LALRStates = lalrs
                 _Groups = groups
             }

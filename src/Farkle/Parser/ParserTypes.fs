@@ -150,7 +150,6 @@ type ParseMessage =
 
 type internal ParserState =
     {
-        Grammar: Grammar
         InputStream: char list
         CurrentLALRState: uint32
         InputStack: Token list
@@ -159,7 +158,6 @@ type internal ParserState =
         GroupStack: Token list
     }
     with
-        static member grammar x = x.Grammar
         static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
         static member CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
         static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
@@ -170,13 +168,12 @@ type internal ParserState =
 module internal ParserState =
 
     /// Creates a parser state.
-    let create grammar input =
+    let create (grammar: Grammar) input =
         {
-            Grammar = grammar
             InputStream = input
-            CurrentLALRState = grammar.LALRStates.InitialState
+            CurrentLALRState = grammar.LALR.InitialState
             InputStack = []
-            LALRStack = [Token.dummy Error, (grammar.LALRStates.InitialState, None)]
+            LALRStack = [Token.dummy Error, (grammar.LALR.InitialState, None)]
             CurrentPosition = Position.initial
             GroupStack = []
         }

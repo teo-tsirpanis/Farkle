@@ -69,13 +69,11 @@ module internal Internal =
                     | None -> input |> getLookAheadBuffer 1u |> newToken Error
         impl 1u initialState None 0u input
 
-    let inline tokenizeDFAForDummies state =
-        let grammar = state |> ParserState.grammar
-        tokenizeDFA grammar.DFA state.CurrentPosition state.InputStream
+    let inline tokenizeDFAForDummies dfa state =
+        tokenizeDFA dfa state.CurrentPosition state.InputStream
 
-    let rec produceToken() = state {
-        let! x = get <!> tokenizeDFAForDummies
-        let! groups = get <!> (ParserState.grammar >> Grammar.groups)
+    let rec produceToken dfa groups = state {
+        let! x = get <!> (tokenizeDFAForDummies dfa)
         let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
         let nestGroup =
             match x ^. Token.Symbol_ with
@@ -91,7 +89,7 @@ module internal Internal =
             do! x ^. Token.Data_ |> String.length |> consumeBuffer
             let newToken = Optic.set Token.Data_ "" x
             do! mapOptic ParserState.GroupStack_ (List.cons newToken)
-            return! produceToken()
+            return! produceToken dfa groups
         else
             match groupStackTop with
             | None ->
@@ -115,7 +113,7 @@ module internal Internal =
                     match groupStackTop with
                         | Some _ ->
                             do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
-                            return! produceToken()
+                            return! produceToken dfa groups
                         | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
                 elif x.Symbol = EndOfFile then
                     return x
@@ -127,13 +125,12 @@ module internal Internal =
                     | Character ->
                         do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
                         do! consumeBuffer 1
-                    return! produceToken()
+                    return! produceToken dfa groups
     }
 
     open StateResult
 
-    let parseLALR token = state {
-        let! lalrStates = State.get |> State.map (ParserState.grammar >> Grammar.lalr)
+    let parseLALR lalrStates token = state {
         let (StateResult impl) = sresult {
             let lalrStackTop =
                 getOptic (ParserState.LALRStack_ >-> List.head_)
@@ -146,8 +143,7 @@ module internal Internal =
             let setCurrentLALR = setOptic ParserState.CurrentLALRState_
             let! currentState = getCurrentLALR
             let! nextAvailableActions = getNextActions currentState
-            let nextAction = nextAvailableActions.TryFind(token ^. Token.Symbol_)
-            match nextAction with
+            match nextAvailableActions.TryFind(token ^. Token.Symbol_) with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
                 return LALRResult.Accept topReduction
@@ -195,16 +191,14 @@ module internal Internal =
         | Bad x -> return x |> List.exactlyOne |> LALRResult.InternalError
     }
 
-    open State
-
-    let rec stepParser p =
+    let rec stepParser (grammar: Grammar) p =
         let rec impl() = state {
-            let! tokens = getOptic ParserState.InputStack_
-            let! isGroupStackEmpty = getOptic ParserState.GroupStack_ <!> List.isEmpty
+            let! tokens = State.getOptic ParserState.InputStack_
+            let! isGroupStackEmpty = State.getOptic ParserState.GroupStack_ |> State.map List.isEmpty
             match tokens with
             | [] ->
-                let! newToken = produceToken()
-                do! mapOptic ParserState.InputStack_ (List.cons newToken)
+                let! newToken = produceToken grammar.DFA grammar.Groups
+                do! State.mapOptic ParserState.InputStack_ (List.cons newToken)
                 if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
                     return GroupError
                 else
@@ -212,28 +206,28 @@ module internal Internal =
             | newToken :: xs ->
                 match newToken.Symbol with
                 | Noise _ ->
-                    do! setOptic ParserState.InputStack_ xs
+                    do! State.setOptic ParserState.InputStack_ xs
                     return! impl()
                 | Error -> return LexicalError newToken.Data.[0]
                 | EndOfFile when not isGroupStackEmpty -> return GroupError
                 | _ ->
-                    let! lalrResult = parseLALR newToken
+                    let! lalrResult = parseLALR grammar.LALR newToken
                     match lalrResult with
                     | LALRResult.Accept x -> return ParseMessageType.Accept x
                     | LALRResult.Shift x ->
-                        do! mapOptic ParserState.InputStack_ List.skipLast
+                        do! State.mapOptic ParserState.InputStack_ List.skipLast
                         return ParseMessageType.Shift x
                     | ReduceNormal x -> return Reduction x
                     | LALRResult.SyntaxError (x, y) -> return SyntaxError (x, y)
                     | LALRResult.InternalError x -> return InternalError x
         }
-        let (result, nextState) = run (impl()) p
+        let (result, nextState) = State.run (impl()) p
         let makeMessage = nextState.CurrentPosition |> ParseMessage.Create
         match result with
         | ParseMessageType.Accept x -> Finished (x |> ParseMessageType.Accept |> makeMessage, x)
         | x when x.IsError -> x |> makeMessage |> Failed
-        | x -> Continuing (makeMessage x, lazy (stepParser nextState))
+        | x -> Continuing (makeMessage x, lazy (stepParser grammar nextState))
 
     let createParser grammar input =
         let state = ParserState.create grammar input
-        stepParser state
+        stepParser grammar state

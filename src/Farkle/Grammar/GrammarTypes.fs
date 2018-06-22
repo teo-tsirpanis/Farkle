@@ -380,7 +380,7 @@ type Grammar =
             _Symbols: Symbol RandomAccessList
             _Groups: Group RandomAccessList
             _Productions: Production RandomAccessList
-            _LALRStates: LALR
+            _LALR: LALR
             _DFA: DFA
         }
     with
@@ -397,7 +397,7 @@ type Grammar =
         /// The `Production`s of the grammar.
         member x.Productions = x._Productions
         /// The grammar's LALR state table.
-        member x.LALRStates = x._LALRStates
+        member x.LALR = x._LALR
         /// The grammar's DFA state table.
         member x.DFA = x._DFA
 
@@ -410,7 +410,7 @@ module Grammar =
             CharSetTables = x.CharSets.Length |> uint16
             ProductionTables = x.Productions.Length |> uint16
             DFATables = x.DFA.Length |> uint16
-            LALRTables = x.LALRStates.Length |> uint16
+            LALRTables = x.LALR.Length |> uint16
             GroupTables = x.Groups.Length |> uint16
         }
 
@@ -419,7 +419,7 @@ module Grammar =
     let symbols {_Symbols = x} = x
     let groups {_Groups = x} = x
     let productions {_Productions = x} = x
-    let lalr {_LALRStates = x} = x
+    let lalr {_LALR = x} = x
     let dfa {_DFA = x} = x
 
     let create properties symbols charSets prods dfas lalrs groups _counts = trial {
@@ -430,7 +430,7 @@ module Grammar =
                 _CharSets = charSets
                 _Productions = prods
                 _DFA = dfas
-                _LALRStates = lalrs
+                _LALR = lalrs
                 _Groups = groups
             }
         let counts = counts g

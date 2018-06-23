@@ -87,7 +87,7 @@ module Seq =
                 yield! impl()
         }
         impl()
-    
+
     /// Creates a lazily evaluated sequence of characters from a stream with the option to dispose the stream when it ends.
     /// The character encoding is automatically detected.
     let ofCharStream disposeOnFinish stream =

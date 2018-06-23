@@ -224,9 +224,9 @@ module internal Internal =
         let (result, nextState) = State.run (impl()) p
         let makeMessage = nextState.CurrentPosition |> ParseMessage.Create
         match result with
-        | ParseMessageType.Accept x -> Finished (x |> ParseMessageType.Accept |> makeMessage, x)
-        | x when x.IsError -> x |> makeMessage |> Failed
-        | x -> Continuing (makeMessage x, lazy (stepParser grammar nextState))
+        | ParseMessageType.Accept x -> Parser.Finished (x |> ParseMessageType.Accept |> makeMessage, x)
+        | x when x.IsError -> x |> makeMessage |> Parser.Failed
+        | x -> Parser.Continuing (makeMessage x, lazy (stepParser grammar nextState))
 
     let createParser grammar input =
         let state = ParserState.create grammar input

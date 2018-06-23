@@ -14,7 +14,7 @@ github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/Random
 group Build
   framework: net462
   source https://api.nuget.org/v3/index.json
-  
+
   nuget FAKE ~> 4
   nuget FSharp.Formatting
 
@@ -27,7 +27,7 @@ group Test
   storage: none
 
   source https://api.nuget.org/v3/index.json
-  
+
   nuget BenchmarkDotNet
   nuget Expecto
   nuget Expecto.FsCheck

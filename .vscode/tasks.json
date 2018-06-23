@@ -4,7 +4,8 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "build",
+            "label": "Build",
+            "identifier": "build",
             "command": "dotnet",
             "type": "shell",
             "group": "build",

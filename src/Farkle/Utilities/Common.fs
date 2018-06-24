@@ -9,6 +9,7 @@ module Farkle.Common
 
 open Chessie.ErrorHandling
 open FSharpx.Collections
+open System.Xml.Linq
 
 [<Literal>]
 /// The line feed character.
@@ -195,6 +196,16 @@ module Trial =
         function
         | Ok (x, msgs) -> Ok (x, List.map f msgs)
         | Bad msgs -> msgs |> List.map f |> Bad
+
+    let ofCoreResult =
+        function
+        | Core.Ok x -> ok x
+        | Error x -> fail x
+
+    let toCoreResult =
+        function
+        | Ok (x, _) -> Core.Ok x
+        | Bad x -> Error x.Head
 
 /// Functions to work with the F# `Choice` type.
 module Choice =

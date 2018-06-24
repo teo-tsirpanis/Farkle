@@ -51,8 +51,8 @@ module internal Internal =
             match x with
             | [] ->
                 match lastAccept with
-                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                | None -> newToken EndOfFile ""
+                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> ok
+                | None -> newToken EndOfFile "" |> ok
             | x :: xs ->
                 let newDFA =
                     trans.TryFind(currState)
@@ -65,15 +65,18 @@ module internal Internal =
                     | None -> impl newPos dfa lastAccept lastAccPos xs
                 | None ->
                     match lastAccept with
-                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                    | None -> input |> getLookAheadBuffer 1u |> newToken Error
+                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> ok
+                    | None -> input |> getLookAheadBuffer 1u |> fail
         impl 1u initialState None 0u input
 
     let inline tokenizeDFAForDummies dfa state =
         tokenizeDFA dfa state.CurrentPosition state.InputStream
 
-    let rec produceToken dfa groups = state {
-        let! x = get <!> (tokenizeDFAForDummies dfa)
+    open StateResult
+
+    let rec produceToken dfa groups = sresult {
+        let consumeBuffer = consumeBuffer >> liftState
+        let! x = get <!> (tokenizeDFAForDummies dfa >> liftResult) >>= id
         let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
         let nestGroup =
             match x ^. Token.Symbol_ with
@@ -101,7 +104,7 @@ module internal Internal =
                     |> Group.getSymbolGroup groups
                     |> mustBeSome // I am sorry. 😭
                 if groupStackTopGroup.EndSymbol = x.Symbol then
-                    let! pop = state {
+                    let! pop = sresult {
                         do! mapOptic ParserState.GroupStack_ List.tail
                         if groupStackTopGroup.EndingMode = Closed then
                             do! x ^. Token.Data_ |> String.length |> consumeBuffer
@@ -127,8 +130,6 @@ module internal Internal =
                         do! consumeBuffer 1
                     return! produceToken dfa groups
     }
-
-    open StateResult
 
     let parseLALR lalrStates token = state {
         let (StateResult impl) = sresult {
@@ -197,12 +198,15 @@ module internal Internal =
             let! isGroupStackEmpty = State.getOptic ParserState.GroupStack_ |> State.map List.isEmpty
             match tokens with
             | [] ->
-                let! newToken = produceToken grammar.DFA grammar.Groups
-                do! State.mapOptic ParserState.InputStack_ (List.cons newToken)
-                if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
-                    return GroupError
-                else
-                    return TokenRead newToken
+                let! newToken = produceToken grammar.DFA grammar.Groups |> (fun (StateResult x) -> x) |> State.map Trial.toCoreResult
+                match newToken with
+                | Core.Ok newToken ->
+                    do! State.mapOptic ParserState.InputStack_ (List.cons newToken)
+                    if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
+                        return GroupError
+                    else
+                        return TokenRead newToken
+                | Core.Error x -> return LexicalError x.[0]
             | newToken :: xs ->
                 match newToken.Symbol with
                 | Noise _ ->

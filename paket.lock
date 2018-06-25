@@ -1,7 +1,15 @@
 RESTRICTION: || (== net472) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
+    Aether (8.2)
+      FSharp.Core (>= 4.1)
+      NETStandard.Library (>= 1.6.1) - restriction: || (&& (== net472) (< net45)) (== netstandard2.0)
     FSharp.Core (4.5)
+    FSharpx.Collections (1.17)
+      FSharp.Core
+    Microsoft.NETCore.Platforms (2.1) - restriction: || (&& (== net472) (< net45)) (&& (== net472) (>= netcoreapp2.0)) (&& (== net472) (< netstandard1.0)) (&& (== net472) (< netstandard1.3) (>= wpa81)) (&& (== net472) (< portable-net45+win8+wpa81)) (&& (== net472) (>= uap10.0)) (&& (== net472) (>= wp8)) (== netstandard2.0)
+    NETStandard.Library (2.0.3) - restriction: || (&& (== net472) (< net45)) (== netstandard2.0)
+      Microsoft.NETCore.Platforms (>= 1.1)
 GITHUB
   remote: xyncro/aether
     src/Aether/Aether.fs (dd5f93879216c4cea114f63473fa949bbe2144c4)

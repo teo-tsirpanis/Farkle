@@ -33,18 +33,6 @@ While some initial components are written, the real deal is still under early de
     <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\paket-files\xyncro\aether\src\Aether\Aether.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/Aether.fs</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fsi">
-      <Paket>True</Paket>
-      <Link>paket-files/RandomAccessList.fsi</Link>
-    </Compile>
-    <Compile Include="..\..\paket-files\teo-tsirpanis\FSharpx.Collections\src\FSharpx.Collections\RandomAccessList.fs">
-      <Paket>True</Paket>
-      <Link>paket-files/RandomAccessList.fs</Link>
-    </Compile>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities/Common.fs" />
     <Compile Include="Utilities/Monads.fs" />

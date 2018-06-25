@@ -5,7 +5,6 @@
 
 namespace Farkle.Monads
 
-open Chessie.ErrorHandling
 open System
 open System.Diagnostics
 open Farkle
@@ -125,38 +124,36 @@ type [<Struct>] StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<
 module StateResult =
 
     let inline run (StateResult m) = State.run m
-    let inline map f (StateResult m) = State.map (lift f) m |> StateResult
+    let inline map f (StateResult m) = State.map (Result.map f) m |> StateResult
     let inline (<!>) f x = map x f
-    let inline apply f (StateResult m) = State.apply (State.returnM(Trial.apply f)) m |> StateResult
-    let inline (<*>) f x = apply f x
     let inline bind f (StateResult (State m)) =
         fun s0 ->
             match m s0 with
-            | (Ok (x, messages), s) ->
+            | (Ok x, s1) ->
                let (StateResult (State q)) = f x
-               let newResult, newState = q s
-               newResult |> mergeMessages messages, newState
-            | (Bad x, s) -> Bad x, s
+               let newResult, newState = q s1
+               newResult, newState
+            | (Error x, s) -> Error x, s
         |> State |> StateResult
     let inline (>>=) result f = bind f result
-    let inline returnM x = x |> ok |> State.returnM |> StateResult
+    let inline apply f m = f >>= (fun f -> m >>= f)
+    let inline (<*>) f x = apply f x
+    let inline returnM x = x |> Ok |> State.returnM |> StateResult
     let ignore x = map (ignore) x
 
     let inline eval (StateResult sa) s = State.eval sa s
     let inline exec (StateResult sa) s = State.exec sa s
 
-    let inline liftState x = x |> State.map ok |> StateResult
+    let inline liftState x = x |> State.map Ok |> StateResult
     let inline liftResult x = x |> State.returnM |> StateResult
 
-    let inline fail message = message |> fail |> liftResult
+    let inline fail message = message |> Error |> liftResult
 
-    let inline warn message = warn message () |> liftResult
+    let inline mapFailure f (StateResult m) = m |> State.map (Result.mapError f) |> StateResult
 
-    let inline mapFailure f (StateResult m) = m |> State.map (Trial.mapFailure f) |> StateResult
+    let get = StateResult(State(fun s0 -> Ok s0, s0)) // Thank you F#'s type restrictions. 😠
 
-    let get = StateResult(State(fun s0 -> Ok(s0, []), s0)) // Thank you F#'s type restrictions. 😠
-
-    let inline put x = StateResult(State(fun _ -> Ok((), []), x)) // Thank you F#'s type restrictions. 😠
+    let inline put x = StateResult(State(fun _ -> Ok(), x)) // Thank you F#'s type restrictions. 😠
     
     type StateResultBuilder() =
         member __.Zero() = returnM ()
@@ -249,7 +246,7 @@ module Maybe =
         member __.Bind(m, f) = Option.bind f m
         member __.Return a = Some a
         member __.ReturnFrom(x) = x
-        member __.Combine (a, b) = bind b a
+        member __.Combine (a, b) = Option.bind b a
         member __.Delay f = f
         member __.Run f = f ()
         member __.TryWith (body, handler) =

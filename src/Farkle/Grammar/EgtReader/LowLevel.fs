@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar.EgtReader
 
-open Chessie.ErrorHandling
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads

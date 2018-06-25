@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar
 
-open Chessie.ErrorHandling
 open Farkle
 open Farkle.Grammar.EgtReader
 open Farkle.Monads
@@ -68,10 +67,10 @@ module EGT =
     // j1rTNOKPYFpKvARh40GtUX7Oic8JAfgDnKwhEQQDAAA=
     // -----END RSA PRIVATE KEY-----
     [<CompiledName("CreateFromFile")>]
-    let ofFile path = trial {
+    let ofFile path = either {
         let path = Path.GetFullPath path
         if path |> File.Exists |> not then
-            do! path |> FileNotExist |> Trial.fail
+            do! path |> FileNotExist |> Result.Error
         use stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
         return! stream |> ofStream false // We dispose the steram ourselves
     }

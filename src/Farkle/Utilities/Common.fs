@@ -7,9 +7,9 @@
 /// Some useful functions and types that could be used from many points from the library.
 module Farkle.Common
 
-open Chessie.ErrorHandling
 open FSharpx.Collections
 open System.Xml.Linq
+open System
 
 [<Literal>]
 /// The line feed character.
@@ -73,8 +73,8 @@ module Indexed =
     let get (i: Indexed<'a>) (f: _ -> 'a option) =
         let (Indexed i) = i
         match f i with
-        | Some x -> ok x
-        | None -> fail i
+        | Some x -> Ok x
+        | None -> Error i
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
     let getfromList i list =
@@ -92,7 +92,7 @@ type IndexableWrapper<'a> =
     interface Indexable with
         member x.Index = x.Index
 
-/// Functions to work with `IndexableWrapper`s.       
+/// Functions to work with `IndexableWrapper`s.
 module IndexableWrapper =
 
     /// Creates an indexable wrapper
@@ -100,7 +100,7 @@ module IndexableWrapper =
 
     /// Removes the indexable wrapper of an item.
     let item {Item = x} = x
-    
+
     /// Sorts `Indexable` items based on their index and removes their wrapper.
     /// Duplicate indices do not raise an error.
     let collect x = x |> Seq.sortBy Indexable.index |> Seq.map item |> RandomAccessList.ofSeq
@@ -180,32 +180,84 @@ module String =
                 x
         impl
 
-/// Functions to work with the `Chessie.ErrorHandling.Result` type.
+/// Functions to work with the `FSharp.Core.Result` type.
 /// I will propably make a PR to add them in the future.
+[<AutoOpen>]
 module Trial =
 
-    /// Converts a `Result` to an `option` discarding the messages.
-    let makeOption =
+    let inline tee fOk fError =
         function
-        | Ok (x, _) -> Some x
-        | Bad _ -> None
+        | Ok x -> fOk x
+        | Error x -> fError x
 
-    /// Changes the failure type of a `Result`.
-    /// A much better alternative of the poorly designed mapFailure function that Chessie provides.
-    let mapFailure f =
+    let apply =
         function
-        | Ok (x, msgs) -> Ok (x, List.map f msgs)
-        | Bad msgs -> msgs |> List.map f |> Bad
+        | Ok f, x -> x |> Result.map f
+        | Error x, _ -> Error x
 
-    let ofCoreResult =
+    /// Converts an `option` into a `Result`.
+    let failIfNone message =
         function
-        | Core.Ok x -> ok x
-        | Error x -> fail x
+        | Some x -> Ok x
+        | None -> Error message
 
-    let toCoreResult =
-        function
-        | Ok (x, _) -> Core.Ok x
-        | Bad x -> Error x.Head
+    /// Flattens a nested `Result`
+    let flatten x = Result.bind id x
+
+    /// Converts a `Result` to an `option`.
+    let makeOption x = tee Some none x
+
+    /// Returns the value of a `Result` or raises an exception.
+    let inline returnOrFail result = tee id (failwithf "%O") result
+
+    let (>>=) m f = Result.bind f m
+
+    /// Collects a sequence of Results and accumulates their values.
+    /// If the sequence contains an error the first reported error will be returned.
+    let collect xs =
+        Seq.fold (fun result next ->
+            match result, next with
+            | Ok rs, Ok r -> Ok(r :: rs)
+            | Error m, _ -> Error m
+            | _ , Error m -> Error m) (Ok []) xs
+        |> Result.map List.rev
+
+    type EitherBuilder() =
+        member __.Zero() = Ok ()
+        member __.Bind(m, f) = Result.bind f m
+        member __.Return(x) = Ok x
+        member __.ReturnFrom(x) = x
+        member __.Combine (a, b) = Result.bind b a
+        member __.Delay f = f
+        member __.Run f = f ()
+        member __.TryWith (body, handler) =
+            try
+                body()
+            with
+            | e -> handler e
+        member __.TryFinally (body, compensation) =
+            try
+                body()
+            finally
+                compensation()
+        member x.Using(d:#IDisposable, body) =
+            let result = fun () -> body d
+            x.TryFinally (result, fun () ->
+                match d with
+                | null -> ()
+                | d -> d.Dispose())
+        member x.While (guard, body) =
+            if not <| guard () then
+                x.Zero()
+            else
+                Result.bind (fun () -> x.While(guard, body)) (body())
+        member x.For(s:seq<_>, body) =
+            x.Using(s.GetEnumerator(), fun enum ->
+                x.While(enum.MoveNext,
+                    x.Delay(fun () -> body enum.Current)))
+
+    /// Wraps computations in an error handling computation expression.
+    let either = EitherBuilder()
 
 /// Functions to work with the F# `Choice` type.
 module Choice =

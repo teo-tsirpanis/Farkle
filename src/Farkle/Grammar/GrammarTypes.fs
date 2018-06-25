@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar
 
-open Chessie.ErrorHandling
 open FSharpx.Collections
 open Farkle
 open System
@@ -153,15 +152,15 @@ module Symbol =
     /// Creates a `Symbol`.
     let create name =
         function
-        | 0us -> ok <| Nonterminal name
-        | 1us -> ok <| Terminal name
-        | 2us -> ok <| Noise name
-        | 3us -> ok EndOfFile
-        | 4us -> ok <| GroupStart name
-        | 5us -> ok <| GroupEnd name
+        | 0us -> Ok <| Nonterminal name
+        | 1us -> Ok <| Terminal name
+        | 2us -> Ok <| Noise name
+        | 3us -> Ok EndOfFile
+        | 4us -> Ok <| GroupStart name
+        | 5us -> Ok <| GroupEnd name
         // 6 is deprecated
-        | 7us -> ok Error
-        | x -> x |> InvalidSymbolType |> fail
+        | 7us -> Ok Error
+        | x -> x |> InvalidSymbolType |> Result.Error
 
     /// Gets the name of a `Symbol`.
     let name (x: Symbol) = x.Name
@@ -177,9 +176,9 @@ module internal AdvanceMode =
 
     let create =
         function
-        | 0us -> ok Token
-        | 1us -> ok Character
-        | x -> x |> InvalidAdvanceMode |> fail
+        | 0us -> Ok Token
+        | 1us -> Ok Character
+        | x -> x |> InvalidAdvanceMode |> Result.Error
 
 /// A type indicating how the ending symbol of a group is handled.
 type EndingMode =
@@ -192,9 +191,9 @@ module internal EndingMode =
 
     let create =
         function
-        | 0us -> ok Open
-        | 1us -> ok Closed
-        | x -> x |> InvalidEndingMode |> fail
+        | 0us -> Ok Open
+        | 1us -> Ok Closed
+        | x -> x |> InvalidEndingMode |> Result.Error
 
 /// A structure that describes a lexical group.
 /// In GOLD, lexical groups are used for situations where a number of recognized tokens should be organized into a single "group".
@@ -348,11 +347,11 @@ module internal LALRAction =
 
     let create fProds index =
         function
-        | 1us -> index |> Shift |> ok
-        | 2us -> index |> Indexed |> fProds |> lift Reduce
-        | 3us -> index |> Goto |> ok
-        | 4us -> Accept |> ok
-        | x -> x |> InvalidLALRActionType |> fail
+        | 1us -> index |> Shift |> Ok
+        | 2us -> index |> Indexed |> fProds |> Result.map Reduce
+        | 3us -> index |> Goto |> Ok
+        | 4us -> Accept |> Ok
+        | x -> x |> InvalidLALRActionType |> Result.Error
 
 /// A structure that specifies the initial DFA and LALR states.
 type internal InitialStates =
@@ -422,7 +421,7 @@ module Grammar =
     let lalr {_LALR = x} = x
     let dfa {_DFA = x} = x
 
-    let create properties symbols charSets prods dfas lalrs groups _counts = trial {
+    let create properties symbols charSets prods dfas lalrs groups _counts = either {
         let g =
             {
                 _Properties = properties
@@ -437,4 +436,4 @@ module Grammar =
         if counts = _counts then
             return g
         else
-            return! (_counts, counts) |> InvalidTableCounts |> fail}
+            return! (_counts, counts) |> InvalidTableCounts |> Result.Error}

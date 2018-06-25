@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar.EgtReader
 
-open Chessie.ErrorHandling
 open FSharpx.Collections
 open Farkle
 open Farkle.Grammar
@@ -161,7 +160,8 @@ module internal HighLevel =
             return None
     }
 
-    let makeGrammar (EGTFile records) = trial {
+    let makeGrammar (EGTFile records) = either {
+        let lift = Result.map
         let mapMatching mc f = records |> Seq.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (Seq.choose id)
         let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofSeq >> Properties)
         let! tableCounts = readTableCounts |> mapMatching 't'B |> lift Seq.head

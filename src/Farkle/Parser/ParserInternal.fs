@@ -7,7 +7,6 @@ namespace Farkle.Parser
 
 open Aether
 open Aether.Operators
-open Chessie.ErrorHandling
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
@@ -51,8 +50,8 @@ module internal Internal =
             match x with
             | [] ->
                 match lastAccept with
-                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> ok
-                | None -> newToken EndOfFile "" |> ok
+                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> Ok
+                | None -> newToken EndOfFile "" |> Ok
             | x :: xs ->
                 let newDFA =
                     trans.TryFind(currState)
@@ -65,8 +64,8 @@ module internal Internal =
                     | None -> impl newPos dfa lastAccept lastAccPos xs
                 | None ->
                     match lastAccept with
-                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> ok
-                    | None -> input |> getLookAheadBuffer 1u |> fail
+                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x |> Ok
+                    | None -> input |> getLookAheadBuffer 1u |> Core.Error
         impl 1u initialState None 0u input
 
     let inline tokenizeDFAForDummies dfa state =
@@ -188,8 +187,8 @@ module internal Internal =
         }
         let! x = impl
         match x with
-        | Ok (x, _) -> return x
-        | Bad x -> return x |> List.exactlyOne |> LALRResult.InternalError
+        | Ok x -> return x
+        | Result.Error x -> return LALRResult.InternalError x
     }
 
     let rec stepParser (grammar: Grammar) p =
@@ -198,15 +197,15 @@ module internal Internal =
             let! isGroupStackEmpty = State.getOptic ParserState.GroupStack_ |> State.map List.isEmpty
             match tokens with
             | [] ->
-                let! newToken = produceToken grammar.DFA grammar.Groups |> (fun (StateResult x) -> x) |> State.map Trial.toCoreResult
+                let! newToken = produceToken grammar.DFA grammar.Groups |> (fun (StateResult x) -> x)
                 match newToken with
-                | Core.Ok newToken ->
+                | Ok newToken ->
                     do! State.mapOptic ParserState.InputStack_ (List.cons newToken)
                     if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
                         return GroupError
                     else
                         return TokenRead newToken
-                | Core.Error x -> return LexicalError x.[0]
+                | Result.Error x -> return LexicalError x.[0]
             | newToken :: xs ->
                 match newToken.Symbol with
                 | Noise _ ->

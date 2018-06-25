@@ -3,7 +3,6 @@
 open System
 open System.IO
 open System.Text
-open Chessie.ErrorHandling
 open Argu
 open Farkle
 open Farkle.Grammar

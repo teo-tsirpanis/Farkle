@@ -5,7 +5,6 @@
 
 namespace Farkle
 
-open Chessie.ErrorHandling
 open Farkle.Monads.StateResult
 open System.IO
 open System.Text
@@ -108,5 +107,5 @@ module RandomAccessList =
     /// Otherwise, `ExpectedSingle` is returned.
     let exactlyOne =
         function
-        | RALCons(x, RALNil) -> ok x
-        | _ -> Trial.fail ExpectedSingle
+        | RALCons(x, RALNil) -> Ok x
+        | _ -> Error ExpectedSingle

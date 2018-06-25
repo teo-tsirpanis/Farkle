@@ -2,13 +2,7 @@ STORAGE: NONE
 RESTRICTION: == netstandard2.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    Chessie (0.6)
-      FSharp.Core (>= 4.0.1.7-alpha)
-      NETStandard.Library (>= 1.6)
     FSharp.Core (4.5)
-    Microsoft.NETCore.Platforms (2.1)
-    NETStandard.Library (2.0.3)
-      Microsoft.NETCore.Platforms (>= 1.1)
 GITHUB
   remote: xyncro/aether
     src/Aether/Aether.fs (dd5f93879216c4cea114f63473fa949bbe2144c4)

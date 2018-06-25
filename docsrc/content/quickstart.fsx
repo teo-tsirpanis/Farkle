@@ -85,7 +85,6 @@ Pay attention to the file type. Only EGT files work.
 After you install the NuGet package with [your favorite NuGet client][paket] (or another one), write these lines to your source file:
 *)
 
-#r "Chessie.dll" // You only need it on FSI.
 #r "Farkle.dll" // You only need it on FSI.
 
 open Farkle

@@ -5,7 +5,6 @@
 
 module Farkle.Benchmarks
 
-open Chessie.ErrorHandling
 open BenchmarkDotNet.Attributes
 open BenchmarkDotNet.Attributes.Jobs
 open Farkle

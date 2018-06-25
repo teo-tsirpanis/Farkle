@@ -8,7 +8,6 @@
 module Farkle.Common
 
 open FSharpx.Collections
-open System.Xml.Linq
 open System
 
 [<Literal>]

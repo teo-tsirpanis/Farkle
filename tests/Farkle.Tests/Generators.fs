@@ -6,7 +6,6 @@
 [<AutoOpen>]
 module Farkle.Tests.Generators
 
-open Chessie.ErrorHandling
 open Expecto
 open FsCheck
 open Farkle

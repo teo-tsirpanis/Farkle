@@ -5,8 +5,8 @@
 
 namespace Farkle.Parser
 
-open Chessie.ErrorHandling
 open Farkle
+open Farkle.Monads.StateResult
 open Farkle.Grammar
 open Farkle.Parser
 open Farkle.Parser.Internal
@@ -15,9 +15,9 @@ open System.IO
 /// A dedicated type to signify the result of a parser.
 type ParseResult =
     /// Parsing succeeded. The final `Reduction` and the parsing log are returned.
-    | Success of reduction: Reduction * messages: ParseMessage seq
+    | Success of reduction: Reduction * messages: ParseMessage list
     /// Parsing failed, The fatal `ParseMessage` is separately returned.
-    | Failure of fatalMessage: ParseMessage * messages: ParseMessage seq
+    | Failure of fatalMessage: ParseMessage * messages: ParseMessage list
     /// The parsing log. In case of failure, the fatal `ParseMessage` is _not_ included.
     member x.Messages =
         match x with
@@ -43,11 +43,10 @@ type GOLDParser(grammar) =
 
     let newParser = GOLDParser.CreateParser grammar
 
-    let makeParseResult =
-        function
-        | Ok (x, messages) -> Success (x, messages)
-        | Bad (x :: xs) -> Failure (x, xs)
-        | Bad [] -> impossible()
+    let makeParseResult res =
+        match run res [] with
+        | Ok red, msgs -> Success(red, List.rev msgs)
+        | Result.Error x, msgs -> Failure (x, List.rev msgs)
 
     /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
     /// Trivial reductions are not trimmed.
@@ -61,9 +60,12 @@ type GOLDParser(grammar) =
 
     /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
     /// What it returns is described in the `GOLDParser` class documentation.
-    member x.ParseChars input =
-        let warn x = warn x ()
-        let rec impl p = trial {
+    member __.ParseChars input =
+        let warn x = sresult {
+            let! xs = get
+            do! put <| x :: xs
+        }
+        let rec impl p = sresult {
             match p with
             | Continuing (msg, x) ->
                 do! warn msg

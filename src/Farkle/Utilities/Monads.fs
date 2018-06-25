@@ -7,7 +7,6 @@ namespace Farkle.Monads
 
 open System
 open System.Diagnostics
-open Farkle
 
 /// The well-known State monad.
 type [<Struct>] State<'s, 't> = State of ('s -> ('t * 's))

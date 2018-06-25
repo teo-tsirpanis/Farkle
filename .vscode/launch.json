@@ -1,6 +1,21 @@
 {
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [{
+            "name": "Farklei",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "Farklei.dll",
+            "args": [
+                "--egtfile",
+                "inception.egt",
+                "--inputfile",
+                "inception.grm"
+            ],
+            "cwd": "${workspaceRoot}/sample/farklei/bin/Debug/netcoreapp2.1/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
         {
             "name": ".NET Core Launch (console)",
             "type": "coreclr",

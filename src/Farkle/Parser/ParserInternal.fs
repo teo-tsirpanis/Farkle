@@ -78,35 +78,35 @@ module internal Internal =
         let! x = get <!> (tokenizeDFAForDummies dfa >> liftResult) >>= id
         let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
         let nestGroup =
-            match x ^. Token.Symbol_ with
+            match x.Symbol with
             | GroupStart _ | GroupEnd _ ->
                 Maybe.maybe {
                     let! groupStackTop = groupStackTop
-                    let! gsTopGroup = groupStackTop ^. Token.Symbol_ |> Group.getSymbolGroup groups
-                    let! myIndex = x ^. Token.Symbol_ |> Group.getSymbolGroupIndexed groups
+                    let! gsTopGroup = groupStackTop.Symbol |> Group.getSymbolGroup groups
+                    let! myIndex = x.Symbol |> Group.getSymbolGroupIndexed groups
                     return gsTopGroup.Nesting.Contains myIndex
                 } |> Option.defaultValue true
             | _ -> false
         if nestGroup then
-            do! x ^. Token.Data_ |> String.length |> consumeBuffer
+            do! x.Data |> String.length |> consumeBuffer
             let newToken = Optic.set Token.Data_ "" x
             do! mapOptic ParserState.GroupStack_ (List.cons newToken)
             return! produceToken dfa groups
         else
             match groupStackTop with
             | None ->
-                do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                do! x.Data |> String.length |> consumeBuffer
                 return x
             | Some groupStackTop ->
                 let groupStackTopGroup =
-                    groupStackTop ^. Token.Symbol_
+                    groupStackTop.Symbol
                     |> Group.getSymbolGroup groups
                     |> mustBeSome // I am sorry. 😭
                 if groupStackTopGroup.EndSymbol = x.Symbol then
                     let! pop = sresult {
                         do! mapOptic ParserState.GroupStack_ List.tail
                         if groupStackTopGroup.EndingMode = Closed then
-                            do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                            do! x.Data |> String.length |> consumeBuffer
                             return groupStackTop |> Token.AppendData x.Data
                         else
                             return groupStackTop
@@ -123,7 +123,7 @@ module internal Internal =
                     match groupStackTopGroup.AdvanceMode with
                     | Token ->
                         do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
-                        do! x ^. Token.Data_ |> String.length |> consumeBuffer
+                        do! x.Data |> String.length |> consumeBuffer
                     | Character ->
                         do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
                         do! consumeBuffer 1
@@ -143,7 +143,7 @@ module internal Internal =
             let setCurrentLALR = setOptic ParserState.CurrentLALRState_
             let! currentState = getCurrentLALR
             let! nextAvailableActions = getNextActions currentState
-            match nextAvailableActions.TryFind(token ^. Token.Symbol_) with
+            match nextAvailableActions.TryFind(token.Symbol) with
             | Some (Accept) ->
                 let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
                 return LALRResult.Accept topReduction

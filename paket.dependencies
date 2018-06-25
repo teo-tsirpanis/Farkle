@@ -1,6 +1,4 @@
-framework: netstandard2.0
-
-storage: none
+framework: net472, netstandard2.0
 
 source https://api.nuget.org/v3/index.json
 
@@ -11,7 +9,7 @@ github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/Random
 github teo-tsirpanis/FSharpx.Collections:patch-1 /src/FSharpx.Collections/RandomAccessList.fs
 
 group Build
-  framework: net462
+  framework: net472
   source https://api.nuget.org/v3/index.json
 
   nuget FAKE ~> 4

@@ -54,10 +54,10 @@ let formatting = __SOURCE_DIRECTORY__ @@ "../../packages/build/FSharp.Formatting
 let docTemplate = "docpage.cshtml"
 
 [<Literal>]
-let AppFramework = "netstandard1.6"
+let AppFramework = "netstandard2.0"
 
 [<Literal>]
-let ActualFramework = "net462"
+let ActualFramework = "net472"
 
 // Where to look for *.csproj templates (in this order)
 let layoutRootsAll = new System.Collections.Generic.Dictionary<string, string list>()

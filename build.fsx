@@ -50,7 +50,7 @@ let nuspecs = !! "src/*.nuspec"
 // Default target configuration
 let configuration = "Release"
 
-let exeFramework = "netcoreapp2.0"
+let exeFramework = "netcoreapp2.1"
 
 let sourceProjects = !! "src/**/*.??proj"
 
@@ -395,7 +395,6 @@ Target "All" DoNothing
   ==> "NuGet"
   ==> "BuildPackage"
   ==> "All"
-  ==> "Benchmark"
   ==> "CI"
 
 "CleanDocs"
@@ -411,6 +410,7 @@ Target "All" DoNothing
 
 "CopyBinaries"
   ==> "Benchmark"
+  ==> "CI"
 
 "ReleaseDocs"
   ==> "Release"

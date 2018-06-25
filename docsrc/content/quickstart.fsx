@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use
 // it to define helpers that you do not want to show in the documentation.
-#I "../../bin/Farkle/net462/"
+#I "../../bin/Farkle/net472/"
 #load "../../packages/build/FSharp.Formatting/FSharp.formatting.fsx"
 
 (**
@@ -97,8 +97,6 @@ Now, we must create a `GOLDParser` object. This object is the easiest way to par
 *)
 
 let parser = GOLDParser("simple.egt") // We pass the grammar's file name. Note that if there is a problem with the file, an exception will be raised.
-
-let parser2 = GOLDParser("simple.egt", true) // The second parameter indicates whether the resulting parse tree is simplified. It's false by default.
 
 (**
 We want to parse a simple mathematical expression like one of these:

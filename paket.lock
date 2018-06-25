@@ -1,5 +1,4 @@
-STORAGE: NONE
-RESTRICTION: == netstandard2.0
+RESTRICTION: || (== net472) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
     FSharp.Core (4.5)
@@ -10,7 +9,7 @@ GITHUB
     src/FSharpx.Collections/RandomAccessList.fs (ff2c3271cffd74ee5a6ad1cb49bde19a274c15db)
     src/FSharpx.Collections/RandomAccessList.fsi (ff2c3271cffd74ee5a6ad1cb49bde19a274c15db)
 GROUP Build
-RESTRICTION: == net462
+RESTRICTION: == net472
 NUGET
   remote: https://api.nuget.org/v3/index.json
     FAKE (4.64.13)

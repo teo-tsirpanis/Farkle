@@ -18,7 +18,7 @@ group Build
   nuget FAKE ~> 4
   nuget FSharp.Formatting
 
-  github teo-tsirpanis/FAKE modules/Octokit/Octokit.fsx
+  github teo-tsirpanis/FAKE:patch-2 modules/Octokit/Octokit.fsx
 
 group Test
 

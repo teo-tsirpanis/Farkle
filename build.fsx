@@ -342,7 +342,7 @@ Target "AddLangDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
-#load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
+#load "paket-files/build/teo-tsirpanis/FAKE/modules/Octokit/Octokit.fsx"
 open Octokit
 
 Target "Release" (fun _ ->

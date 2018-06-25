@@ -28,10 +28,10 @@ NUGET
       FSharp.Compiler.Service (>= 2.0.0.3)
     Octokit (0.30)
       SourceLink.Create.GitHub (>= 2.8)
-    SourceLink.Create.GitHub (2.8.2)
+    SourceLink.Create.GitHub (2.8.3)
 GITHUB
   remote: teo-tsirpanis/FAKE
-    modules/Octokit/Octokit.fsx (91ca20259ff324e610bfb66e29bcf9453ff7d647)
+    modules/Octokit/Octokit.fsx (70b14552e6f56dee49b1f15bd2623cffb4412bf4)
       Octokit (>= 0.20)
 GROUP Test
 STORAGE: NONE

@@ -10,28 +10,41 @@ open Aether.Operators
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
+open FSharpx.Collections
 
-module internal Internal =
+module internal TokenizerImpl =
 
     open State
 
-    let getLookAheadBuffer n x =
+    type private TokenizerState =
+        {
+            InputStream: char list
+            CurrentPosition: Position
+            GroupStack: Token list
+        }
+        with
+            static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
+            static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
+            static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
+            static member Create input = {InputStream = input; CurrentPosition = Position.initial; GroupStack = []}
+
+    let private getLookAheadBuffer n x =
         let n = System.Math.Min(int n, List.length x)
         x |> List.takeSafe n |> String.ofList
 
-    let consumeBuffer n = state {
+    let private consumeBuffer n = state {
         let consumeSingle = state {
-            let! x = getOptic ParserState.InputStream_
+            let! x = getOptic TokenizerState.InputStream_
             match x with
             | x :: xs ->
-                do! setOptic ParserState.InputStream_ xs
+                do! setOptic TokenizerState.InputStream_ xs
                 match x with
                 | LF ->
-                    let! c = getOptic ParserState.CurrentPosition_ <!> Position.column
+                    let! c = getOptic TokenizerState.CurrentPosition_ <!> Position.column
                     if c > 1u then
-                        do! mapOptic ParserState.CurrentPosition_ Position.incLine
-                | CR -> do! mapOptic ParserState.CurrentPosition_ Position.incLine
-                | _ -> do! mapOptic ParserState.CurrentPosition_ Position.incCol
+                        do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
+                | CR -> do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
+                | _ -> do! mapOptic TokenizerState.CurrentPosition_ Position.incCol
             | [] -> do ()
         }
         match n with
@@ -43,7 +56,7 @@ module internal Internal =
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
     // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
     // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let tokenizeDFA {Transition = trans; InitialState = initialState; AcceptStates = accStates} pos input =
+    let private tokenizeDFA {Transition = trans; InitialState = initialState; AcceptStates = accStates} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
@@ -68,70 +81,75 @@ module internal Internal =
                     | None -> input |> getLookAheadBuffer 1u |> newToken Error
         impl 1u initialState None 0u input
 
-    let inline tokenizeDFAForDummies dfa state =
-        tokenizeDFA dfa state.CurrentPosition state.InputStream
-
-    open State
-
-    let rec produceToken dfa groups = state {
-        let! x = get <!> (tokenizeDFAForDummies dfa)
-        let! groupStackTop = getOptic ParserState.GroupStack_ <!> List.tryHead
-        let nestGroup =
-            match x.Symbol with
-            | GroupStart _ | GroupEnd _ ->
-                Maybe.maybe {
-                    let! groupStackTop = groupStackTop
-                    let! gsTopGroup = groupStackTop.Symbol |> Group.getSymbolGroup groups
-                    let! myIndex = x.Symbol |> Group.getSymbolGroupIndexed groups
-                    return gsTopGroup.Nesting.Contains myIndex
-                } |> Option.defaultValue true
-            | _ -> false
-        if nestGroup then
-            do! x.Data |> String.length |> consumeBuffer
-            let newToken = Optic.set Token.Data_ "" x
-            do! mapOptic ParserState.GroupStack_ (List.cons newToken)
-            return! produceToken dfa groups
-        else
-            match groupStackTop with
-            | None ->
+    let private produceToken dfa groups = state {
+        let rec impl() = state {
+            let! x = get <!> (tokenizeDFA dfa)
+            let! groupStackTop = getOptic TokenizerState.GroupStack_ <!> List.tryHead
+            let nestGroup =
+                match x.Symbol with
+                | GroupStart _ | GroupEnd _ ->
+                    Maybe.maybe {
+                        let! groupStackTop = groupStackTop
+                        let! gsTopGroup = groupStackTop.Symbol |> Group.getSymbolGroup groups
+                        let! myIndex = x.Symbol |> Group.getSymbolGroupIndexed groups
+                        return gsTopGroup.Nesting.Contains myIndex
+                    } |> Option.defaultValue true
+                | _ -> false
+            if nestGroup then
                 do! x.Data |> String.length |> consumeBuffer
-                return x
-            | Some groupStackTop ->
-                let groupStackTopGroup =
-                    groupStackTop.Symbol
-                    |> Group.getSymbolGroup groups
-                    |> mustBeSome // I am sorry. 😭
-                if groupStackTopGroup.EndSymbol = x.Symbol then
-                    let! pop = state {
-                        do! mapOptic ParserState.GroupStack_ List.tail
-                        if groupStackTopGroup.EndingMode = Closed then
-                            do! x.Data |> String.length |> consumeBuffer
-                            return groupStackTop |> Token.AppendData x.Data
-                        else
-                            return groupStackTop
-                    }
-                    let! groupStackTop = getOptic (ParserState.GroupStack_ >-> List.head_)
-                    match groupStackTop with
-                        | Some _ ->
-                            do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
-                            return! produceToken dfa groups
-                        | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
-                elif x.Symbol = EndOfFile then
+                let newToken = Optic.set Token.Data_ "" x
+                do! mapOptic TokenizerState.GroupStack_ (List.cons newToken)
+                return! impl()
+            else
+                match groupStackTop with
+                | None ->
+                    do! x.Data |> String.length |> consumeBuffer
                     return x
-                else
-                    match groupStackTopGroup.AdvanceMode with
-                    | Token ->
-                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
-                        do! x.Data |> String.length |> consumeBuffer
-                    | Character ->
-                        do! mapOptic (ParserState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
-                        do! consumeBuffer 1
-                    return! produceToken dfa groups
+                | Some groupStackTop ->
+                    let groupStackTopGroup =
+                        groupStackTop.Symbol
+                        |> Group.getSymbolGroup groups
+                        |> mustBeSome // I am sorry. 😭
+                    if groupStackTopGroup.EndSymbol = x.Symbol then
+                        let! pop = state {
+                            do! mapOptic TokenizerState.GroupStack_ List.tail
+                            if groupStackTopGroup.EndingMode = Closed then
+                                do! x.Data |> String.length |> consumeBuffer
+                                return groupStackTop |> Token.AppendData x.Data
+                            else
+                                return groupStackTop
+                        }
+                        let! groupStackTop = getOptic (TokenizerState.GroupStack_ >-> List.head_)
+                        match groupStackTop with
+                            | Some _ ->
+                                do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
+                                return! impl()
+                            | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
+                    elif x.Symbol = EndOfFile then
+                        return x
+                    else
+                        match groupStackTopGroup.AdvanceMode with
+                        | Token ->
+                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
+                            do! x.Data |> String.length |> consumeBuffer
+                        | Character ->
+                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
+                            do! consumeBuffer 1
+                        return! impl()
+        }
+        let! token = impl()
+        let! isGroupStackEmpty = getOptic TokenizerState.GroupStack_ <!> List.isEmpty
+        let! currentPosition = getOptic TokenizerState.CurrentPosition_
+        return {NewToken = token; IsGroupStackEmpty = isGroupStackEmpty; CurrentPosition = currentPosition}
     }
+
+    let create dfa groups input: Tokenizer = lazy (EndlessProcess.ofState (produceToken dfa groups) (TokenizerState.Create input))
+
+module internal Internal =
 
     open StateResult
 
-    let parseLALR lalrStates token = state {
+    let parseLALR lalrStates token = State.state {
         let (StateResult impl) = sresult {
             let lalrStackTop =
                 getOptic (ParserState.LALRStack_ >-> List.head_)
@@ -192,14 +210,24 @@ module internal Internal =
         | Result.Error x -> return LALRResult.InternalError x
     }
 
+    let tokenize = State.state {
+        let! tokenizer = State.getOptic ParserState.TheTokenizer_
+        match tokenizer.Value with
+        | EndlessProcess (x, xs) ->
+            do! State.setOptic ParserState.TheTokenizer_ xs
+            do! State.setOptic ParserState.CurrentPosition_ x.CurrentPosition
+            do! State.setOptic ParserState.IsGroupStackEmpty_ x.IsGroupStackEmpty
+            return x.NewToken
+    }
+
     let rec stepParser (grammar: Grammar) p =
-        let rec impl() = state {
+        let rec impl() = State.state {
             let! tokens = State.getOptic ParserState.InputStack_
-            let! isGroupStackEmpty = State.getOptic ParserState.GroupStack_ |> State.map List.isEmpty
+            let! isGroupStackEmpty = State.getOptic ParserState.IsGroupStackEmpty_
             match tokens with
             | [] ->
-                let! newToken = produceToken grammar.DFA grammar.Groups
-                do! State.mapOptic ParserState.InputStack_ (List.cons newToken)
+                let! newToken = tokenize
+                do! State.setOptic ParserState.InputStack_ [newToken]
                 if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
                     return GroupError
                 else
@@ -230,5 +258,5 @@ module internal Internal =
         | x -> Parser.Continuing (makeMessage x, lazy (stepParser grammar nextState))
 
     let createParser grammar input =
-        let state = ParserState.create grammar input
+        let state = ParserState.create grammar (TokenizerImpl.create grammar.DFA grammar.Groups input)
         stepParser grammar state

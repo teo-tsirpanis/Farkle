@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
+open FSharpx.Collections
 open System
 open System.Text
 
@@ -148,34 +149,58 @@ type ParseMessage =
     /// Creates a parse message at the default position.
     static member CreateSimple = ParseMessage.Create Position.initial
 
+/// The feedback from the tokenizer after a token is read.
+/// Because the tokenizer is completely isolated, it needs to provide
+/// some more information to the rest of the code than just the token.
+/// That's the reason of this type.
+type TokenizerFeedback =
+    {
+        /// The `Token` the tokenizer returns.
+        /// Its `SymbolType` gives more information, like whether
+        /// the tokenizer encountered an error, or reached the end.
+        NewToken: Token
+        /// The position the tokenizer is.
+        /// It is needed for the parser to generate accurate error reports.
+        CurrentPosition: Position
+        /// Whether the tokenizer is inside a lexical group.
+        /// It is needed for the parser to determine whether a `GroupError` occured.
+        IsGroupStackEmpty: bool
+    }
+
+/// A tokenizer. What is it actually? An infinite stream of tokens (and some other information).
+/// It is infinite because the architecture currently requires it.
+/// But after one point, the tokenizer returns just EOFs forever.
+type Tokenizer = Lazy<EndlessProcess<TokenizerFeedback>>
+
 type internal ParserState =
     {
-        InputStream: char list
+        TheTokenizer: Tokenizer
         CurrentLALRState: uint32
         InputStack: Token list
         LALRStack: (Token * (uint32 * Reduction option)) list
+        IsGroupStackEmpty: bool
         CurrentPosition: Position
-        GroupStack: Token list
     }
     with
-        static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
+        static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
+
         static member CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
         static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
         static member LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
+        static member IsGroupStackEmpty_ :Lens<_, _> = (fun x -> x.IsGroupStackEmpty), (fun v x -> {x with IsGroupStackEmpty = v})
         static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
-        static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
 
 module internal ParserState =
 
     /// Creates a parser state.
-    let create (grammar: Grammar) input =
+    let create (grammar: Grammar) tokenizer =
         {
-            InputStream = input
+            TheTokenizer = tokenizer
             CurrentLALRState = grammar.LALR.InitialState
             InputStack = []
             LALRStack = [Token.dummy Error, (grammar.LALR.InitialState, None)]
+            IsGroupStackEmpty = true
             CurrentPosition = Position.initial
-            GroupStack = []
         }
 
 /// A type signifying the state of a parser.

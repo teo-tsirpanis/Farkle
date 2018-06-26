@@ -19,3 +19,18 @@ type LazyFeedbackProcess<'Result,'Feedback,'Error> =
     | Failed of 'Error
     /// The operation succeeded. It cannot be continued.
     | Finished of 'Feedback * 'Result
+
+/// Like `LazyFeedbackProcess`, except that this one never ends.
+type EndlessProcess<'T> = EndlessProcess of 'T * EndlessProcess<'T> Lazy
+
+/// Functions for working with `EndlessProcess<'T>`.
+module EndlessProcess =
+
+    open Farkle.Monads
+
+    /// Creates an `EndlessProcess<'T>` by continuously running the given `State` with the given initial state.
+    let ofState stateM initialState =
+        let rec impl currState =
+            let result, nextState = State.run stateM currState
+            EndlessProcess (result, lazy(impl nextState))
+        impl initialState

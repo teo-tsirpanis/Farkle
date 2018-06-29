@@ -46,6 +46,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/SetUtils.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
+    <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/ParserInternal.fs" />
     <Compile Include="Parser/GOLDParser.fs" />
     <Compile Include="Parser/AST.fs" />

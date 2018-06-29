@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
+open Farkle.Monads
 open FSharpx.Collections
 open System
 open System.Text
@@ -85,7 +86,7 @@ type ParseInternalError =
     /// The LALR stack is empty; it should never be.
     | LALRStackEmpty
 
-type internal LALRResult =
+type LALRResult =
     | Accept of Reduction
     | Shift of uint32
     | ReduceNormal of Reduction
@@ -172,33 +173,33 @@ type TokenizerFeedback =
 /// But after one point, the tokenizer returns just EOFs forever.
 type Tokenizer = Lazy<EndlessProcess<TokenizerFeedback>>
 
+/// A LALR parser. It takes a `Token`, and gives an `LALRResult`.
+/// It is a stateful operation; the type of this state
+/// is abstracted from the rest of the parser.
+type LALRParser = LALRParser of (Token -> (LALRResult * LALRParser))
+
 type internal ParserState =
     {
         TheTokenizer: Tokenizer
-        CurrentLALRState: uint32
+        TheLALRParser: LALRParser
         InputStack: Token list
-        LALRStack: (Token * (uint32 * Reduction option)) list
         IsGroupStackEmpty: bool
         CurrentPosition: Position
     }
-    with
-        static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
-
-        static member CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
-        static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
-        static member LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
-        static member IsGroupStackEmpty_ :Lens<_, _> = (fun x -> x.IsGroupStackEmpty), (fun v x -> {x with IsGroupStackEmpty = v})
-        static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
+    static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
+    static member TheLALRParser_ :Lens<_, _> = (fun x -> x.TheLALRParser), (fun v x -> {x with TheLALRParser = v})
+    static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
+    static member IsGroupStackEmpty_ :Lens<_, _> = (fun x -> x.IsGroupStackEmpty), (fun v x -> {x with IsGroupStackEmpty = v})
+    static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
 
 module internal ParserState =
 
     /// Creates a parser state.
-    let create (grammar: Grammar) tokenizer =
+    let create tokenizer lalrParser =
         {
             TheTokenizer = tokenizer
-            CurrentLALRState = grammar.LALR.InitialState
+            TheLALRParser = lalrParser
             InputStack = []
-            LALRStack = [Token.dummy Error, (grammar.LALR.InitialState, None)]
             IsGroupStackEmpty = true
             CurrentPosition = Position.initial
         }

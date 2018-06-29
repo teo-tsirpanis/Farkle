@@ -1,5 +1,5 @@
 // Copyright (c) 2018 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -12,21 +12,23 @@ open Farkle.Grammar
 open Farkle.Monads
 
 
-type private TokenizerState =
-    {
-        InputStream: char list
-        CurrentPosition: Position
-        GroupStack: Token list
-    }
-    with
-        static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
-        static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
-        static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
-        static member Create input = {InputStream = input; CurrentPosition = Position.initial; GroupStack = []}
 
 module internal TokenizerImpl =
 
+    type private TokenizerState =
+        {
+            InputStream: char list
+            CurrentPosition: Position
+            GroupStack: Token list
+        }
+        with
+            static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
+            static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
+            static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
+            static member Create input = {InputStream = input; CurrentPosition = Position.initial; GroupStack = []}
+
     open State
+
     let private getLookAheadBuffer n x =
         let n = System.Math.Min(int n, List.length x)
         x |> List.takeSafe n |> String.ofList

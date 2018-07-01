@@ -10,12 +10,7 @@ NUGET
     Microsoft.NETCore.Platforms (2.1) - restriction: || (&& (== net472) (< net45)) (&& (== net472) (>= netcoreapp2.0)) (&& (== net472) (< netstandard1.0)) (&& (== net472) (< netstandard1.3) (>= wpa81)) (&& (== net472) (< portable-net45+win8+wpa81)) (&& (== net472) (>= uap10.0)) (&& (== net472) (>= wp8)) (== netstandard2.0)
     NETStandard.Library (2.0.3) - restriction: || (&& (== net472) (< net45)) (== netstandard2.0)
       Microsoft.NETCore.Platforms (>= 1.1)
-GITHUB
-  remote: xyncro/aether
-    src/Aether/Aether.fs (dd5f93879216c4cea114f63473fa949bbe2144c4)
-  remote: teo-tsirpanis/FSharpx.Collections
-    src/FSharpx.Collections/RandomAccessList.fs (ff2c3271cffd74ee5a6ad1cb49bde19a274c15db)
-    src/FSharpx.Collections/RandomAccessList.fsi (ff2c3271cffd74ee5a6ad1cb49bde19a274c15db)
+
 GROUP Build
 RESTRICTION: == net472
 NUGET
@@ -31,8 +26,8 @@ NUGET
       SourceLink.Create.GitHub (>= 2.8)
     SourceLink.Create.GitHub (2.8.3)
 GITHUB
-  remote: teo-tsirpanis/FAKE
-    modules/Octokit/Octokit.fsx (70b14552e6f56dee49b1f15bd2623cffb4412bf4)
+  remote: fsharp/FAKE
+    modules/Octokit/Octokit.fsx (320bdd6c69725de15a7734cb40d0f6330b37ec64)
       Octokit (>= 0.20)
 GROUP Test
 STORAGE: NONE

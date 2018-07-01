@@ -14,7 +14,7 @@ module internal Internal =
 
     open State
 
-    let tokenize = state {
+    let private tokenize = state {
         let! tokenizer = getOptic ParserState.TheTokenizer_
         match tokenizer.Value with
         | EndlessProcess (x, xs) ->
@@ -24,14 +24,14 @@ module internal Internal =
             return x.NewToken
     }
 
-    let parseLALR token = state {
+    let private parseLALR token = state {
         let! lalrParser = getOptic ParserState.TheLALRParser_ <!> (fun (LALRParser x) -> x)
         let result, newParser = lalrParser token
         do! setOptic ParserState.TheLALRParser_ newParser
         return result
     }
 
-    let rec stepParser p =
+    let rec private stepParser p =
         let rec impl() = state {
             let! tokens = getOptic ParserState.InputStack_
             let! isGroupStackEmpty = getOptic ParserState.IsGroupStackEmpty_
@@ -69,5 +69,5 @@ module internal Internal =
         | x -> Parser.Continuing (makeMessage x, lazy (stepParser nextState))
 
     let createParser (grammar: Grammar) input =
-        let state = ParserState.create (TokenizerImpl.create grammar.DFA grammar.Groups input) (LALRParser.create grammar.LALR)
+        let state = ParserState.create (Tokenizer.create grammar.DFA grammar.Groups input) (LALRParser.create grammar.LALR)
         stepParser state

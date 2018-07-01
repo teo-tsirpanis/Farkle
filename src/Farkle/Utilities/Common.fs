@@ -179,6 +179,8 @@ module String =
                 x
         impl
 
+    let inline length x = x |> String.length |> uint32
+
 /// Functions to work with the `FSharp.Core.Result` type.
 /// I will propably make a PR to add them in the future.
 [<AutoOpen>]

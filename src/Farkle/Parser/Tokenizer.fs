@@ -11,9 +11,8 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
-
-
-module internal TokenizerImpl =
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal Tokenizer =
 
     type private TokenizerState =
         {
@@ -33,7 +32,7 @@ module internal TokenizerImpl =
         let n = System.Math.Min(int n, List.length x)
         x |> List.takeSafe n |> String.ofList
 
-    let private consumeBuffer n = state {
+    let rec private consumeBuffer n = state {
         let consumeSingle = state {
             let! x = getOptic TokenizerState.InputStream_
             match x with
@@ -49,9 +48,10 @@ module internal TokenizerImpl =
             | [] -> do ()
         }
         match n with
-        | n when n > 0 ->
-            return! repeatM consumeSingle n |> ignore
-        | _ -> do ()
+        | 0u -> do ()
+        | n ->
+            do! consumeSingle
+            do! consumeBuffer (n - 1u)
     }
 
     // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
@@ -135,7 +135,7 @@ module internal TokenizerImpl =
                             do! x.Data |> String.length |> consumeBuffer
                         | Character ->
                             do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
-                            do! consumeBuffer 1
+                            do! consumeBuffer 1u
                         return! impl()
         }
         let! token = impl()

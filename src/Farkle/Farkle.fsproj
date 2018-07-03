@@ -37,6 +37,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Utilities/Common.fs" />
     <Compile Include="Utilities/Monads.fs" />
     <Compile Include="Utilities/Collections.fs" />
+    <Compile Include="Utilities/HybridStream.fs" />
     <Compile Include="Utilities/Lazy.fs" />
     <Compile Include="Utilities/Set.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />

@@ -149,7 +149,7 @@ module List =
         |> List.ofArray
 
     /// Creates a string from the given character list.
-    let toString = Array.ofList >> System.String
+    let toString x: string = x |> Array.ofList |> System.String
 
 /// Some utilities to work with strings
 module String =

@@ -9,6 +9,7 @@ open Aether
 open Aether.Operators
 open Farkle
 open Farkle.Grammar
+open Farkle.HybridStream
 open Farkle.Monads
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -16,7 +17,7 @@ module internal Tokenizer =
 
     type private TokenizerState =
         {
-            InputStream: char list
+            InputStream: char HybridStream
             CurrentPosition: Position
             GroupStack: Token list
         }
@@ -28,15 +29,13 @@ module internal Tokenizer =
 
     open State
 
-    let private getLookAheadBuffer n x =
-        let n = System.Math.Min(int n, List.length x)
-        x |> List.takeSafe n |> String.ofList
+    let private getLookAheadBuffer n = HybridStream.takeSafe n >> String.ofList
 
     let rec private consumeBuffer n = state {
         let consumeSingle = state {
             let! x = getOptic TokenizerState.InputStream_
             match x with
-            | x :: xs ->
+            | HSCons(x, xs) ->
                 do! setOptic TokenizerState.InputStream_ xs
                 match x with
                 | LF ->
@@ -45,7 +44,7 @@ module internal Tokenizer =
                         do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
                 | CR -> do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
                 | _ -> do! mapOptic TokenizerState.CurrentPosition_ Position.incCol
-            | [] -> do ()
+            | HSNil -> do ()
         }
         match n with
         | 0u -> do ()
@@ -62,11 +61,11 @@ module internal Tokenizer =
         let rec impl currPos currState lastAccept lastAccPos x =
             let newPos = currPos + 1u
             match x with
-            | [] ->
+            | HSNil ->
                 match lastAccept with
                 | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
                 | None -> newToken EndOfFile ""
-            | x :: xs ->
+            | HSCons(x, xs) ->
                 let newDFA =
                     trans.TryFind(currState)
                     |> Option.bind (fun m -> m |> Map.toSeq |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x))

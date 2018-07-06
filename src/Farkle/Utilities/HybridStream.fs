@@ -10,7 +10,9 @@ open FSharpx.Collections
 open System.Collections
 open System.Collections.Generic
 
+/// A stream that is either lazily or eagerly evaluated.
 type HybridStream<'T> =
+    /// The stream is lazily evaluated.
     | Lazy of 'T LazyList
     | Eager of 'T list
     member private x.GetEnumeratorImpl() =

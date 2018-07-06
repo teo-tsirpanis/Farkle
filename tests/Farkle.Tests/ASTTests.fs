@@ -7,7 +7,6 @@ module Farkle.Tests.ASTTests
 
 open Expecto
 open Expecto.Logging
-open Farkle
 open Farkle.Parser
 open Generators
 

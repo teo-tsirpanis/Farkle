@@ -7,7 +7,6 @@ namespace Farkle
 
 open Farkle.Monads.StateResult
 open System.IO
-open System.Text
 
 /// What can go wrong with a list operation
 type ListError =
@@ -89,8 +88,8 @@ module Seq =
 
     /// Creates a lazily evaluated sequence of characters from a stream with the option to dispose the stream when it ends.
     /// The character encoding is automatically detected.
-    let ofCharStream disposeOnFinish stream =
-        let r = new StreamReader(stream, Encoding.UTF8, true, 1024, disposeOnFinish)
+    let ofCharStream disposeOnFinish encoding stream =
+        let r = new StreamReader(stream, encoding, true, 1024, disposeOnFinish)
         let rec impl() = seq {
             match r.Read() with
             | -1 -> r.Dispose()

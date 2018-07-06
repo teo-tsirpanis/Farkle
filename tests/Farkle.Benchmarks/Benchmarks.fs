@@ -6,20 +6,14 @@
 module Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
-open BenchmarkDotNet.Attributes.Jobs
-open Farkle
-open Farkle.Grammar
 open Farkle.Parser
-open System
 open System.Diagnostics
-open System.IO
-open System.Text
 
 type InceptionBenchmark() =
 
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
-    member x.InceptionBenchmarkFarkle() = GOLDParser("inception.egt").ParseFile("inception.grm").ReductionOrFail()
+    member x.InceptionBenchmarkFarkle() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default).ReductionOrFail()
 
     [<Benchmark(Baseline = true)>]
     member x.InceptionBenchmarkLazarus() =

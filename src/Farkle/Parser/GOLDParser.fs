@@ -10,7 +10,9 @@ open Farkle.Monads.StateResult
 open Farkle.Grammar
 open Farkle.Parser
 open Farkle.Parser.Internal
+open FSharpx.Collections
 open System.IO
+open System.Text
 
 /// A dedicated type to signify the result of a parser.
 type ParseResult =
@@ -32,6 +34,17 @@ type ParseResult =
         | Failure (x, _) -> x |> string |> Choice2Of2
     /// Returns the final `Reduction` or throws an exception.
     member x.ReductionOrFail() = x.Simple |> Choice.tee2 id failwith
+
+/// A set of settings to customize a parser.
+type GOLDParserConfig = {
+    /// The text encoding that will be used.
+    Encoding: Encoding
+    /// Whether the input stream will be lazily loaded.
+    LazyLoad: bool
+}
+with
+    /// The default configuration.
+    static member Default = {Encoding = Encoding.UTF8; LazyLoad = true}
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources
@@ -79,19 +92,19 @@ type GOLDParser(grammar) =
         input |> newParser |> impl |> makeParseResult
 
     /// Parses a string.
-    member x.ParseString input = input |> List.ofString |> x.ParseChars
+    member x.ParseString input = input |> List.ofString |> Eager |> x.ParseChars
 
-    /// Parses a `Stream`. Its character encoding is automatically detected.
-    member x.ParseStream inputStream =
+    /// Parses a `Stream`.
+    member x.ParseStream (inputStream, settings) =
         inputStream
-        |> Seq.ofCharStream false
-        |> List.ofSeq
+        |> Seq.ofCharStream false settings.Encoding
+        |> (if settings.LazyLoad then LazyList.ofSeq >> Lazy else List.ofSeq >> Eager)
         |> x.ParseChars
 
     /// Parses the contents of a file in the given path.
-    member x.ParseFile path =
+    member x.ParseFile (path, settings) =
         if path |> File.Exists |> not then
             Failure (path |> InputFileNotExist |> ParseMessage.CreateSimple, [])
         else
             use stream = File.OpenRead path
-            x.ParseStream stream
+            x.ParseStream(stream, settings)

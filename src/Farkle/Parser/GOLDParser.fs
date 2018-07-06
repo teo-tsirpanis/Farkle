@@ -45,6 +45,8 @@ type GOLDParserConfig = {
 with
     /// The default configuration.
     static member Default = {Encoding = Encoding.UTF8; LazyLoad = true}
+    member x.WithLazyLoad v = {x with LazyLoad = v}
+    member x.WithEncoding v = {x with Encoding = v}
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources

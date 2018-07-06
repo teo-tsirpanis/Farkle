@@ -13,7 +13,7 @@ group Build
   nuget FAKE ~> 4
   nuget FSharp.Formatting
 
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  github fsharp/FAKE:release/next modules/Octokit/Octokit.fsx
 
 group Test
 

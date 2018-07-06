@@ -13,7 +13,10 @@ type InceptionBenchmark() =
 
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
-    member x.InceptionBenchmarkFarkle() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default).ReductionOrFail()
+    member x.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ReductionOrFail()
+
+    [<Benchmark>]
+    member x.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ReductionOrFail()
 
     [<Benchmark(Baseline = true)>]
     member x.InceptionBenchmarkLazarus() =

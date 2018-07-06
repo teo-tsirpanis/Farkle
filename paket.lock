@@ -27,7 +27,7 @@ NUGET
     SourceLink.Create.GitHub (2.8.3)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (320bdd6c69725de15a7734cb40d0f6330b37ec64)
+    modules/Octokit/Octokit.fsx (1f2583e78bf6cff577b5f8e8820a0b081bcf0bfe)
       Octokit (>= 0.20)
 GROUP Test
 STORAGE: NONE

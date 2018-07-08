@@ -68,6 +68,6 @@ module internal Internal =
         | x when x.IsError -> x |> makeMessage |> Parser.Failed
         | x -> Parser.Continuing (makeMessage x, lazy (stepParser nextState))
 
-    let createParser (grammar: Grammar) input =
-        let state = ParserState.create (Tokenizer.create grammar.DFA grammar.Groups input) (LALRParser.create grammar.LALR)
+    let createParser grammar input =
+        let state = ParserState.create (Tokenizer.create grammar.DFAStates grammar.Groups input) (LALRParser.create grammar.LALRStates)
         stepParser state

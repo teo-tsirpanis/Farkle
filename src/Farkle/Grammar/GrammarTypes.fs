@@ -371,7 +371,7 @@ module internal InitialStates =
 
 /// A structure that describes a grammar - the logic under which a string is parsed.
 /// Its constructor is private; use functions like these from the `EGT` module to create one.
-type Grammar =
+type GOLDGrammar =
     private
         {
             _Properties: Properties
@@ -401,9 +401,9 @@ type Grammar =
         member x.DFA = x._DFA
 
 /// [omit]
-module Grammar =
+module internal GOLDGrammar =
 
-    let internal counts (x: Grammar) =
+    let counts (x: GOLDGrammar) =
         {
             SymbolTables = x.Symbols.Length |> uint16
             CharSetTables = x.CharSets.Length |> uint16

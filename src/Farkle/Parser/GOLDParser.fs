@@ -67,7 +67,7 @@ type GOLDParser(grammar) =
     /// Trivial reductions are not trimmed.
     /// If there is a problem with the file, the constructor will throw an exception.
     new (egtFile) =
-        let grammar = egtFile |> EGT.ofFile |> returnOrFail
+        let grammar = egtFile |> EGT.ofFile |> returnOrFail |> RuntimeGrammar.ofGOLDGrammar
         GOLDParser grammar
 
     /// Creates a parser that parses `input` based on the given `Grammar`, with the option to trim trivial reductions.

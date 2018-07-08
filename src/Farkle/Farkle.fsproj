@@ -41,6 +41,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="Utilities/Lazy.fs" />
     <Compile Include="Utilities/Set.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
+    <Compile Include="Grammar/RuntimeGrammar.fs" />
     <Compile Include="Grammar/EgtReader/LowLevel.fs" />
     <Compile Include="Grammar/EgtReader/MidLevel.fs" />
     <Compile Include="Grammar/EgtReader/HighLevel.fs" />

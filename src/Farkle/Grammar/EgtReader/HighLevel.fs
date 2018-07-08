@@ -175,7 +175,7 @@ module internal HighLevel =
         let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
         let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFA.create initialDFA)
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALR.Create initialLALR)
-        return! Grammar.create properties symbols charSets prods dfas lalrs groups tableCounts
+        return! GOLDGrammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }
     // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
     // This Number should not be changed, unless it was absolutely neccessary.

@@ -69,7 +69,7 @@ module internal HighLevel =
         let! name = wantString
         let! result =
             wantUInt16
-            <!> Symbol.create name
+            <!> (Symbol.create name index)
             |> liftFlatten
         return IndexableWrapper.create index result
     }

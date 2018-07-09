@@ -106,9 +106,9 @@ type CharSet = RangeSet<char>
 /// A symbol of a grammar
 type Symbol =
     /// The symbol is a nonterminal.
-    | Nonterminal of string
+    | Nonterminal of uint32 * string
     /// The symbol is a terminal.
-    | Terminal of string
+    | Terminal of uint32 * string
     /// The symbol is noise (comments for example) and is discarded by the parser.
     | Noise of string
     /// The symbol signifies the end of input.
@@ -124,8 +124,8 @@ type Symbol =
         /// The name of a symbol
         member x.Name =
             match x with
-            | Nonterminal x -> x
-            | Terminal x -> x
+            | Nonterminal (_, x) -> x
+            | Terminal (_, x) -> x
             | Noise x -> x
             | EndOfFile -> "EOF"
             | GroupStart x -> x
@@ -150,10 +150,10 @@ type Symbol =
 module Symbol =
 
     /// Creates a `Symbol`.
-    let create name =
+    let create name index =
         function
-        | 0us -> Ok <| Nonterminal name
-        | 1us -> Ok <| Terminal name
+        | 0us -> Ok <| Nonterminal (index, name)
+        | 1us -> Ok <| Terminal (index, name)
         | 2us -> Ok <| Noise name
         | 3us -> Ok EndOfFile
         | 4us -> Ok <| GroupStart name

@@ -44,7 +44,7 @@ let reductionGen =
     }
     Gen.sized impl
 
-let ASTGen() =
+let ASTGen =
     let rec impl size =
         match size with
         | size when size > 0 ->
@@ -61,7 +61,7 @@ type Generators =
     static member Symbol() = Arb.fromGen symbolGen
     static member Position() = Arb.fromGen positionGen
     static member Reduction() = Arb.fromGen reductionGen
-    static member AST() = Arb.fromGen (ASTGen())
+    static member AST() = Arb.fromGen ASTGen
     static member SetEx() = Arb.generate |> Gen.map Set |> Arb.fromGen
 
 let testProperty x = 

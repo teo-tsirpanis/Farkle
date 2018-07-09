@@ -14,12 +14,6 @@ type AST =
     | Content of Symbol * string
     | Nonterminal of Production * AST list
 
-/// An error in the post-processor.
-type PostProcessError =
-    | UnexpectedSymbolTypeAsTerminal of Symbol
-    | UnexpectedASTStructure
-    | UnexpectedTerminal of Symbol * string
-
 /// Functions to work with `AST`s.
 module AST =
 
@@ -64,11 +58,11 @@ module AST =
     /// The other "collapses" the many parts of a nonterminal symbol into _one_ arbitrary object.
     /// It is with the author's great sadness that this function is totally type-unsafe.
     /// This happens because these two functions handle all the possible types of symbols and productions respectively.
-    [<CompiledName("PostProcess")>]
-    let postProcess (fSymbol: _ -> _ -> obj option) fProduction x =
-        let rec impl x =
-            match x with
-            | Content ((Terminal(index, _) as sym), x) -> fSymbol index x |> failIfNone (UnexpectedTerminal (sym, x))
-            | Content (sym, _) -> sym |> UnexpectedSymbolTypeAsTerminal |> Result.Error
-            | Nonterminal (prod, xs) -> xs |> List.map impl |> collect >>= (fProduction prod.Index >> failIfNone UnexpectedASTStructure)
-        impl x
+    // [<CompiledName("PostProcess")>]
+    // let postProcess (fSymbol: _ -> _ -> obj option) fProduction x =
+    //     let rec impl x =
+    //         match x with
+    //         | Content ((Terminal(index, _) as sym), x) -> fSymbol index x |> failIfNone (UnexpectedTerminal (sym, x))
+    //         | Content (sym, _) -> sym |> UnexpectedSymbolTypeAsTerminal |> Result.Error
+    //         | Nonterminal (prod, xs) -> xs |> List.map impl |> collect >>= (fProduction prod.Index >> failIfNone UnexpectedASTStructure)
+    //     impl x

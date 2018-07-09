@@ -211,6 +211,10 @@ module Trial =
     /// Returns the value of a `Result` or raises an exception.
     let inline returnOrFail result = tee id (failwithf "%O") result
 
+    /// Returns a failed `Result`.
+    let fail = Result.Error
+
+    /// A shorthand operator for `Result.bind`.
     let (>>=) m f = Result.bind f m
 
     /// Collects a sequence of Results and accumulates their values.

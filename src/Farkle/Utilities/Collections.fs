@@ -64,6 +64,8 @@ module List =
         | [] -> []
         | x :: xs -> x :: takeSafe (n - 1) xs
 
+    let hasOneItem = function | [_] -> true | _ -> false
+
 /// Functions to work with sequences.
 module Seq =
 

@@ -10,21 +10,27 @@ open Farkle.Grammar
 open System
 
 /// An Abstract Syntax Tree that describes the output of a parser.
-type AST =
-    | Content of Symbol * string
-    | Nonterminal of Production * AST list
+/// The types describing terminals and productions are arbitrary.
+type AST<'TSymbol, 'TProduction> =
+    | Content of 'TSymbol * string
+    | Nonterminal of 'TProduction * AST<'TSymbol, 'TProduction> list
 
 /// Functions to work with `AST`s.
 module AST =
 
     /// Creates an `AST` from a `Reduction`.
-    /// The parent of the reduction is the tree's metadata.
+    /// The reduction's corresponding `Symbol` or `Production` are converted to an arbotrary type.
+    let ofReductionEx fSymbol fProduction x: AST<'TSymbol,'TProduction> =
+        let rec impl {Tokens = tokens; Parent = parent} =
+            let tokenToAST {Data = x} = Content (fSymbol parent.Head, x)
+            match tokens with
+            | [Choice1Of2 x] -> tokenToAST x
+            | tokens -> tokens |> List.map (Choice.tee2 tokenToAST impl) |> (fun x -> Nonterminal (fProduction parent, x))
+        impl x
+
+    /// Creates an `AST` from a `Reduction`.
     [<CompiledName("CreateFromReduction")>]
-    let rec ofReduction {Tokens = tokens; Parent = parent} =
-        let tokenToAST {Data = x} = Content (parent.Head, x)
-        match tokens with
-        | [Choice1Of2 x] -> tokenToAST x
-        | tokens -> tokens |> List.map (Choice.tee2 tokenToAST ofReduction) |> (fun x -> Nonterminal (parent, x))
+    let ofReduction x = ofReductionEx id id x
 
     /// Maps an `AST` with either fContent or fNonterminal depending on what it is.
     [<CompiledName("Tee")>]
@@ -33,7 +39,10 @@ module AST =
         | Content (x, y) -> fContent (x, y)
         | Nonterminal (x, y) -> fNonterminal (x, y)
 
-    let internal heads x = tee (fst >> string) (fst >> string) x
+    let internal heads (x: AST<'a,'b>) =
+        match x with
+        | Content (x, _) -> x.ToString()
+        | Nonterminal (x, _) -> x.ToString()
 
     /// Simplifies an `AST` in the same fashion with the "trim reductions" option.
     [<CompiledName("Simplify")>]

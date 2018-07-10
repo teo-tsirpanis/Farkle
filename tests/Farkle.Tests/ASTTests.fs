@@ -16,7 +16,7 @@ let logger = Log.create "AST Tests"
 let tests =
     testList "AST tests" [
         testProperty "Overkilling AST.simplify does not change it" (fun x ->
-            let x = x |> AST.simplify
+            let x:AST<int,int> = x |> AST.simplify
             x = AST.simplify x)
         ptestProperty "The ASCII tree of an AST and a reduction is the same" (fun x ->
             let redTree = Reduction.drawReductionTree x

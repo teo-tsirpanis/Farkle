@@ -1,74 +1,12 @@
 // Copyright (c) 2018 Theodore Tsirpanis
-//
+// 
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 namespace Farkle.PostProcessor
 
 open Farkle
-open Farkle.Grammar
 open System
-
-/// An error in the post-processor.
-type PostProcessError =
-    /// The production post-processor is not consistent; this means that
-    /// the `Fuser`s for the same production are producing objects of different types.
-    | InconsistentProductionPostProcessor
-    /// The `Fuser` required more, less, or objects of different type than what it needs.
-    | UnexpectedASTStructure
-    /// The production post-processor encountered an unknown tyoe of production.
-    /// Contrary to the terminal post-processor, the production post-processor _must_
-    /// recognize _all_ productions, as all carry significant information.
-    | UnknownProduction of string
-
-/// This special type signifies that a terminal symbol was not recognized by the terminal post-processor.
-/// The terminal post-processor _is_ allowed to fail. Some symbols like
-/// the semicolons in programming languages carry no significant information up to the higher levels of the parser.
-type UnknownTerminal = UnknownTerminal of string
-
-/// This type contains the logic to transform _one_ terminal symbol to an arbitrary object.
-type Transformer<'TSymbol> = internal {
-    AcceptingSymbol: 'TSymbol
-    OutputType: Type
-    TheTransformer: string -> obj
-}
-with
-    /// Transforms a string to an arbotrary object.
-    static member Transform x {TheTransformer = trans} = trans x
-
-/// This type contains the logic to transform _all_ terminal symbols of a grammar to arbitrary objects.
-// I can't use a map, because the compiler starts a "not-so-generic-code" rant.
-type TerminalPostProcessor<'TSymbol> = internal TerminalPostProcessor of ('TSymbol -> Transformer<'TSymbol>)
-with
-    /// Transforms a string of the specified symbol to an arbitrary object.
-    /// In case it cannot transform it, it will transform it to an object of type `UnknownTerminal`.
-    member x.PostProcess sym data =
-        x
-        |> (fun (TerminalPostProcessor x) -> x sym)
-        |> (Transformer<'TSymbol>.Transform data)
-
-/// Functions to create `Transformer`s.
-module Transformer =
-
-    /// Creates a `Transformer` that transforms the symbol of the given type.
-    let create (fTransform: _ -> 'TOutput) (sym: 'TSymbol) =
-        {
-            AcceptingSymbol = sym
-            OutputType = typeof<'TOutput>
-            TheTransformer = fTransform >> box
-        }
-
-    let internal unknownTerminal x = create UnknownTerminal x
-
-/// Functions to create `TerminalPostProcessor`s.
-module TerminalPostProcessor =
-
-    /// Creates a `TerminalPostProcessor` that transforms all
-    /// the symbols that are recognized by the given `Transformer`s.
-    /// In case many transformers recognize one symbol, the last one in order will be considered.
-    let create transformers =
-        let map = transformers |> Seq.map (fun x -> x.AcceptingSymbol, x) |> Map.ofSeq
-        (fun x -> map.TryFind x |> Option.defaultValue (Transformer.unknownTerminal x)) |> TerminalPostProcessor
 
 /// This type contains the logic to combine multiple symbols of one production into one arbitrary object.
 /// These symbols are either transformed by a `Transformer` if they are terminals,

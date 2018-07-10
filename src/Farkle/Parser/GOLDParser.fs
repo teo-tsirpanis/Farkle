@@ -50,7 +50,7 @@ with
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources
-/// This is the highest-level API. THe parsing function's return values merit some explanation.
+/// This is the highest-level API. The parsing function's return values merit some explanation.
 /// If parsing succeeds, its return value is the top reduction of the grammar.
 /// If it fails, the first message explains the reason it failed.
 /// The rest of the messages are a kind of a log of the parser.

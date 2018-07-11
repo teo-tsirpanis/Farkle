@@ -5,7 +5,9 @@
 #load "../../packages/build/FSharp.Formatting/FSharp.formatting.fsx"
 
 (**
-# Quick Start
+# Quick Start (legacy)
+
+__Note: This guide was written before new APIs were introduced. While it is still correct, there is a better way to do what is described here.__
 
 This guide will help you to start using Farkle.
 
@@ -13,7 +15,7 @@ This guide will help you to start using Farkle.
 
 First, you need to install the GOLD Parser Builder. You can grab it from [here][goldBuilder].
 
-__Note:__ You might run into some issues with GOLD's site. A way to mitigate them is to explicitly write `http://` at the beginning of the site. If you still cannot download them for any reason, I have made a mirror in [Google Drive][drive].
+__Note:__ You might run into some issues with GOLD's site. A way to mitigate them is to explicitly write `http://` at the beginning of the site. If you still cannot download them for any reason, I have made a mirror in [MEGA][mega].
 
 GOLD Parser Builder is a .NET Framework application. If you don't run Windows, you can run it on Mono.
 
@@ -74,7 +76,7 @@ Identifier = {Number}+
 
 ![The GOLD Parser Builder](img/goldBuilder.png)
 
-See the button writing "Next" at the bottom-right? ~Mash~ Keep pressing it until you see this dialog.
+See the button writing "Next" at the bottom-right? <s>Mash</s> Keep pressing it until you see this dialog.
 
 ![The save dialog](img/saveasegt.png)
 
@@ -172,7 +174,7 @@ I hope you understand. If you have any question, found a 🐛, or want a feature
 I didn't tell you how to navigate through a `Reduction` yet. The Reduction type is a little hard to use, but a dedicated `AST` type will enter the stage in the future.
 
 [goldBuilder]: http://goldparser.org/builder/index.htm
-[drive]: https://drive.google.com/open?id=0BxWFaQD-qcKlOFEweUZWdUtadnM
+[mega]: https://mega.nz/#F!opp3yToY!FMRD5CxS-q_-SN8f5TAbrA
 [writingGrammars]: http://goldparser.org/doc/grammars/index.htm
 [paket]: https://fsprojects.github.io/Paket/
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues

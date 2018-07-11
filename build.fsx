@@ -178,7 +178,7 @@ Target "NuGet" (fun _ ->
                 Project = x
                 Configuration = configuration
                 OutputPath = __SOURCE_DIRECTORY__ @@ "bin"
-                AdditionalArgs = 
+                AdditionalArgs =
                 [
                     "--no-build"
                     release.NugetVersion |> sprintf "/p:PackageVersion=%s"
@@ -196,55 +196,23 @@ Target "PublishNuget" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-
-let fakePath = "packages" </> "build" </> "FAKE" </> "tools" </> "FAKE.exe"
-let fakeStartInfo script workingDirectory args fsiargs environmentVars =
-    (fun (info: ProcessStartInfo) ->
-        info.FileName <- System.IO.Path.GetFullPath fakePath
-        info.Arguments <- sprintf "%s --fsiargs -d:FAKE %s \"%s\"" args fsiargs script
-        info.WorkingDirectory <- workingDirectory
-        let setVar k v =
-            info.EnvironmentVariables.[k] <- v
-        for (k, v) in environmentVars do
-            setVar k v
-        setVar "MSBuild" msBuildExe
-        setVar "GIT" Git.CommandHelper.gitPath
-        setVar "FSI" fsiPath)
-
-/// Run the given buildscript with FAKE.exe
-let executeFAKEWithOutput workingDirectory script fsiargs envArgs =
-    let exitCode =
-        ExecProcessWithLambdas
-            (fakeStartInfo script workingDirectory "" fsiargs envArgs)
-            TimeSpan.MaxValue false ignore ignore
-    System.Threading.Thread.Sleep 1000
-    exitCode
+#load "docsrc/tools/generate.fsx"
 
 // Documentation
-let buildDocumentationTarget fsiargs target =
-    trace (sprintf "Building documentation (%s), this could take some time, please wait..." target)
-    let exit = executeFAKEWithOutput "docsrc/tools" "generate.fsx" fsiargs ["target", target]
-    if exit <> 0 then
-        failwith "generating reference documentation failed"
-    ()
-
 Target "GenerateReferenceDocs" (fun _ ->
-    buildDocumentationTarget "-d:RELEASE -d:REFERENCE" "Default"
+    FAKE.Generate.buildReference true
 )
 
 Target "GenerateReferenceDocsDebug" (fun _ ->
-    buildDocumentationTarget "-d:REFERENCE" "Default"
+    FAKE.Generate.buildReference false
 )
 
 let generateHelp' fail debug =
-    let args =
-        if debug then "--define:HELP"
-        else "--define:RELEASE --define:HELP"
     try
-        buildDocumentationTarget args "Default"
+        FAKE.Generate.buildDocumentation (not debug)
         traceImportant "Help generated"
     with
-    | e when not fail ->
+    | _ when not fail ->
         traceImportant "generating help documentation failed"
 
 let generateHelp fail =
@@ -276,7 +244,7 @@ Target "GenerateHelpDebug" (fun _ ->
 
 Target "KeepRunning" (fun _ ->
     use watcher = !! "docsrc/content/**/*.*" |> WatchChanges (fun changes ->
-         generateHelp' true true
+        generateHelp' true true
     )
 
     traceImportant "Waiting for help edits. Press any key to stop."
@@ -385,38 +353,38 @@ Target "CI" DoNothing
 Target "All" DoNothing
 
 "CleanDocs"
-  ==> "Clean"
-  ==> "AssemblyInfo"
-  ==> "Build"
-  ==> "CopyBinaries"
-  ==> "RunTests"
-  ==> "GenerateReferenceDocs"
-  ==> "GenerateDocs"
-  ==> "NuGet"
-  ==> "BuildPackage"
-  ==> "All"
-  ==> "CI"
+    ==> "Clean"
+    ==> "AssemblyInfo"
+    ==> "Build"
+    ==> "CopyBinaries"
+    ==> "RunTests"
+    ==> "GenerateReferenceDocs"
+    ==> "GenerateDocs"
+    ==> "NuGet"
+    ==> "BuildPackage"
+    ==> "All"
+    ==> "CI"
 
 "CleanDocs"
-  ==> "GenerateHelp"
-  ==> "GenerateReferenceDocs"
-  ==> "GenerateDocs"
-  ==> "ReleaseDocs"
+    ==> "GenerateHelp"
+    ==> "GenerateReferenceDocs"
+    ==> "GenerateDocs"
+    ==> "ReleaseDocs"
 
 "CleanDocs"
-  ==> "GenerateHelpDebug"
-  ==> "GenerateReferenceDocsDebug"
-  ==> "KeepRunning"
+    ==> "GenerateHelpDebug"
+    ==> "GenerateReferenceDocsDebug"
+    ==> "KeepRunning"
 
 "CopyBinaries"
-  ==> "Benchmark"
-  ==> "CI"
+    ==> "Benchmark"
+    ==> "CI"
 
 "ReleaseDocs"
-  ==> "Release"
+    ==> "Release"
 
 "BuildPackage"
-  ==> "PublishNuget"
-  ==> "Release"
+    ==> "PublishNuget"
+    ==> "Release"
 
 RunTargetOrDefault "RunTests"

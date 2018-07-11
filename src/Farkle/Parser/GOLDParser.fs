@@ -87,17 +87,24 @@ type GOLDParser(grammar) =
     /// Parses a string.
     member x.ParseString input = input |> List.ofString |> Eager |> x.ParseChars
 
-    /// Parses a `Stream`.
+    /// Parses a .NET `Stream`.
+    /// A `GOLDParserConfig` is required.
     member x.ParseStream (inputStream, settings) =
         inputStream
         |> Seq.ofCharStream false settings.Encoding
         |> (if settings.LazyLoad then LazyList.ofSeq >> Lazy else List.ofSeq >> Eager)
         |> x.ParseChars
 
+    /// Parses a .NET `Stream`.
+    member x.ParseStream inputStream = x.ParseStream(inputStream, GOLDParserConfig.Default)
+
     /// Parses the contents of a file in the given path.
+    /// A `GOLDParserConfig` is required.
     member x.ParseFile (path, settings) =
         if path |> File.Exists |> not then
             ParseResult (path |> InputFileNotExist |> ParseMessage.CreateSimple |> Result.Error, [])
         else
             use stream = File.OpenRead path
             x.ParseStream(stream, settings)
+
+    member x.ParseFile path = x.ParseFile(path, GOLDParserConfig.Default)

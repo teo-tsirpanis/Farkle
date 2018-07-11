@@ -62,7 +62,7 @@ type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
     member x.ParseChars input = parser |> tee (fun p -> p.ParseChars input |> x.PostProcess) (fun err -> fail err, [])
     /// Parses and post-processes a string.
     member x.ParseString inputString = parser >>= (fun p -> p.ParseString inputString |> x.PostProcess |> fst)
-    /// Parses and post-processes a .NET stream.
+    /// Parses and post-processes a .NET `Stream`.
     /// This method also takes a configuration object.
     member x.ParseStream (inputStream, settings) = parser >>= (fun p -> p.ParseStream (inputStream, settings) |> x.PostProcess |> fst)
     /// Parses and post-processes a file at the given path.

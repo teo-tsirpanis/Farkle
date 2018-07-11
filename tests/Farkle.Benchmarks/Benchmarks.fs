@@ -13,13 +13,13 @@ type InceptionBenchmark() =
 
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
-    member x.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ReductionOrFail()
+    member __.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ResultOrFail()
 
     [<Benchmark>]
-    member x.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ReductionOrFail()
+    member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ResultOrFail()
 
     [<Benchmark(Baseline = true)>]
-    member x.InceptionBenchmarkLazarus() =
+    member __.InceptionBenchmarkLazarus() =
         let args = ProcessStartInfo()
         args.CreateNoWindow <- false
         args.FileName <- "goldtrcc.exe"

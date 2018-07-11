@@ -15,25 +15,21 @@ open System.IO
 open System.Text
 
 /// A dedicated type to signify the result of a parser.
-type ParseResult =
-    /// Parsing succeeded. The final `Reduction` and the parsing log are returned.
-    | Success of reduction: Reduction * messages: ParseMessage list
-    /// Parsing failed, The fatal `ParseMessage` is separately returned.
-    | Failure of fatalMessage: ParseMessage * messages: ParseMessage list
-    /// The parsing log. In case of failure, the fatal `ParseMessage` is _not_ included.
-    member x.Messages =
-        match x with
-        | Success (_, x) -> x
-        | Failure (_, x) -> x
-    /// The parsing log in human-friendly format.
-    member x.MessagesAsString = x.Messages |> Seq.map string
+/// It contains the result and a list of log messages describing the parsing process in detail.
+/// The result is either the final `Reduction`, or the fatal `ParseMessage`
+/// In this case, it is not included in the previously mentioned log message list.
+type ParseResult = ParseResult of Result<Reduction, ParseMessage> * ParseMessage list
+with
+    /// The content of this type, unwrapped.
+    static member Value x = match x with | ParseResult (x, y) -> x, y
+    /// The parsing log. In case of a failure, the fatal message is _not_ included.
+    member x.Messages = x |> ParseResult.Value |> snd
+    /// The parsing log in human-friendly format. In case of a failure, the fatal message is _not_ included.
+    member x.MessagesAsString = x.Messages |> List.map string
     /// A simple `Choice` with either the final `Reduction` or the fatal `ParseMessage` as a string.
-    member x.Simple =
-        match x with
-        | Success (x, _) -> Choice1Of2 x
-        | Failure (x, _) -> x |> string |> Choice2Of2
+    member x.Simple = x |> ParseResult.Value |> fst |> Trial.tee Choice1Of2 (string >> Choice2Of2)
     /// Returns the final `Reduction` or throws an exception.
-    member x.ReductionOrFail() = x.Simple |> Choice.tee2 id failwith
+    member x.ResultOrFail() = x.Simple |> Choice.tee2 id failwith
 
 /// A set of settings to customize a parser.
 type GOLDParserConfig = {
@@ -43,25 +39,20 @@ type GOLDParserConfig = {
     LazyLoad: bool
 }
 with
-    /// The default configuration.
+    /// The default configuration. UTF-8 encoding and lazy loading.
     static member Default = {Encoding = Encoding.UTF8; LazyLoad = true}
     member x.WithLazyLoad v = {x with LazyLoad = v}
     member x.WithEncoding v = {x with Encoding = v}
 
 
-/// A reusable parser created for a specific grammar that can parse input from multiple sources
-/// This is the highest-level API. The parsing function's return values merit some explanation.
-/// If parsing succeeds, its return value is the top reduction of the grammar.
-/// If it fails, the first message explains the reason it failed.
-/// The rest of the messages are a kind of a log of the parser.
+/// A reusable parser created for a specific grammar that can parse input from multiple sources.
 type GOLDParser(grammar) =
 
     let newParser = GOLDParser.CreateParser grammar
 
     let makeParseResult res =
         match run res [] with
-        | Ok red, msgs -> Success(red, List.rev msgs)
-        | Result.Error x, msgs -> Failure (x, List.rev msgs)
+        | res, msgs -> ParseResult(res, List.rev msgs)
 
     /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
     /// Trivial reductions are not trimmed.
@@ -106,7 +97,7 @@ type GOLDParser(grammar) =
     /// Parses the contents of a file in the given path.
     member x.ParseFile (path, settings) =
         if path |> File.Exists |> not then
-            Failure (path |> InputFileNotExist |> ParseMessage.CreateSimple, [])
+            ParseResult (path |> InputFileNotExist |> ParseMessage.CreateSimple |> Result.Error, [])
         else
             use stream = File.OpenRead path
             x.ParseStream(stream, settings)

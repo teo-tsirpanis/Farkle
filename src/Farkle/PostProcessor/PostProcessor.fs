@@ -24,6 +24,7 @@ with
                 >>= x.ProductionPostProcessor.PostProcess prod
         impl ast
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module PostProcessor =
 
     let create transformers fusers = either {

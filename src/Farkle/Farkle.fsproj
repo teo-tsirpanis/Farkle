@@ -57,6 +57,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="PostProcessor/Transformer.fs" />
     <Compile Include="PostProcessor/Fuser.fs" />
     <Compile Include="PostProcessor/PostProcessor.fs" />
+    <Compile Include="RuntimeFarkle.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

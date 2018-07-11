@@ -14,6 +14,8 @@ type FarkleError =
     | ParseError of ParseMessage
     /// There was a post-processing error.
     | PostProcessError of PostProcessError
+    /// There was an error while reading the grammar.
+    | EGTReadError of Grammar.EGTReadError
 
 /// A reusable parser __and post-processor__, created for a specific grammar, and returning
 /// a specific object that describes an expression of the language of this grammar.
@@ -21,19 +23,32 @@ type FarkleError =
 /// 10: BTW, Farkle means: "FARkle Recognizes Known Languages Easily".
 /// 20: And "FARkle" means: (GOTO 10) 😁
 /// 30: I guess you can't read this line. 😛
-type RuntimeFarkle<'TResult> private (grammar: RuntimeGrammar, fPostProcess) =
-    let parser = GOLDParser(grammar)
+// `fPostProcess` is hiding away the post-processor's two generic types.
+type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
 
     /// Creates a `RuntimeFarkle`.
-    /// The function takes two functions that convert a symbol and a production to another type.
+    /// The function takes a `RuntimeGrammar`, two functions that convert a symbol and a production to another type, and a `PostProcessor`.
     /// This happens to make the post-processor more convenient to use by converting all the different symbol and production types to type-safe enums.
-    static member Create<'TSymbol,'TProduction,'TResult> grammar (fSymbol: _ -> 'TSymbol) (fProduction: _ -> 'TProduction) (postProcessor: PostProcessor<_,_>) =
+    static member Create<'TSymbol,'TProduction,'TResult>
+        (grammar: RuntimeGrammar) (fSymbol: _ -> 'TSymbol) (fProduction: _ -> 'TProduction) (postProcessor: PostProcessor<_,_>) =
         let fPostProcess =
             (fSymbol, fProduction)
             ||> AST.ofReductionEx 
             >> postProcessor.PostProcessAST
             >> Result.mapError PostProcessError
-        RuntimeFarkle<'TResult>(grammar, fPostProcess)
+        RuntimeFarkle<'TResult>(grammar |> GOLDParser |> Ok, fPostProcess)
+
+    /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
+    /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
+    /// Also, in case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
+    static member CreateFromFile<'TSymbol,'TProduction,'TResult> fileName fSymbol fProduction postProcessor =
+        fileName
+        |> Grammar.EGT.ofFile
+        |> Result.map RuntimeGrammar.ofGOLDGrammar
+        |> Result.mapError (EGTReadError)
+        |> tee
+            (fun g -> RuntimeFarkle.Create<'TSymbol,'TProduction,'TResult> g fSymbol fProduction postProcessor)
+            (fun err -> RuntimeFarkle(fail err, fun _ -> fail err))
 
     member private __.PostProcess (ParseResult (res, msgs)) =
         let result = 
@@ -44,12 +59,12 @@ type RuntimeFarkle<'TResult> private (grammar: RuntimeGrammar, fPostProcess) =
         result, msgs
     /// Parses and post-processes a `HybridStream` of characters.
     /// Use this method if you want to get a parsing log.
-    member x.ParseChars = parser.ParseChars >> x.PostProcess
+    member x.ParseChars input = parser |> tee (fun p -> p.ParseChars input |> x.PostProcess) (fun err -> fail err, [])
     /// Parses and post-processes a string.
-    member x.ParseString = parser.ParseString >> x.PostProcess >> fst
+    member x.ParseString inputString = parser >>= (fun p -> p.ParseString inputString |> x.PostProcess |> fst)
     /// Parses and post-processes a .NET stream.
     /// This method also takes a configuration object.
-    member x.ParseStream = parser.ParseStream >> x.PostProcess >> fst
+    member x.ParseStream (inputStream, settings) = parser >>= (fun p -> p.ParseStream (inputStream, settings) |> x.PostProcess |> fst)
     /// Parses and post-processes a file at the given path.
     /// This method also takes a configuration object.
-    member x.ParseFile = parser.ParseFile >> x.PostProcess >> fst
+    member x.ParseFile (inputFile, settings) = parser >>= (fun p -> p.ParseFile (inputFile, settings) |> x.PostProcess |> fst)

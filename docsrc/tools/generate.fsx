@@ -97,7 +97,7 @@ let copyFiles() =
         true
     |> Log "Copying styles and scripts: "
 
-let binaries =
+let binaries() =
     let manuallyAdded =
         referenceBinaries
         |> List.map (fun b -> bin @@ b)
@@ -127,7 +127,7 @@ let buildReference isRelease =
     CleanDir (output @@ "reference")
     MetadataFormat.Generate
         (
-            binaries, output @@ "reference", layoutRootsAll.["en"],
+            binaries(), output @@ "reference", layoutRootsAll.["en"],
             parameters = ("root", root isRelease)::info,
             sourceRepo = githubLink @@ "tree/master",
             sourceFolder = __SOURCE_DIRECTORY__ @@ ".." @@ "..",

@@ -56,6 +56,7 @@ While some initial components are written, the real deal is still under early de
     <Compile Include="PostProcessor/PostProcessorTypes.fs" />
     <Compile Include="PostProcessor/Transformer.fs" />
     <Compile Include="PostProcessor/Fuser.fs" />
+    <Compile Include="PostProcessor/PostProcessor.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -22,7 +22,7 @@ module AST =
     /// The reduction's corresponding `Symbol` or `Production` are converted to an arbotrary type.
     let ofReductionEx fSymbol fProduction x: AST<'TSymbol,'TProduction> =
         let rec impl {Tokens = tokens; Parent = parent} =
-            let tokenToAST {Data = x} = Content (fSymbol parent.Head, x)
+            let tokenToAST {Data = x; Symbol = sym} = Content (fSymbol sym, x)
             match tokens with
             | [Choice1Of2 x] -> tokenToAST x
             | tokens -> tokens |> List.map (Choice.tee2 tokenToAST impl) |> (fun x -> Nonterminal (fProduction parent, x))
@@ -60,4 +60,3 @@ module AST =
                 for x in x do
                     yield! impl (indent + 1u) x}
         impl 0u x |> Seq.map (fun (x, y) -> addIndentText y + x) |> String.concat Environment.NewLine
-

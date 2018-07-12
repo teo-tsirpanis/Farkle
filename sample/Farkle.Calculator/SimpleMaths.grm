@@ -1,7 +1,7 @@
-"Name"     = 'Enter the name of the grammar'
-"Author"   = 'Enter your name'
-"Version"  = 'The version of the grammar and/or language'
-"About"    = 'A short description of the grammar'
+"Name"     = 'SimpleMaths'
+"Author"   = 'Theodore Tsirpanis'
+"Version"  = '1.0.0'
+"About"    = 'A very simple grammar for parsing mathematical expressions.'
 
 "Start Symbol" = <Program>
 

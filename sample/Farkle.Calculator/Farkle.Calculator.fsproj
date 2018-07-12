@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Parser.fs" />
+    <Compile Include="SimpleMaths.fs" />
     <Compile Include="Program.fs" />
     <Content Include="mygrammar.egt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

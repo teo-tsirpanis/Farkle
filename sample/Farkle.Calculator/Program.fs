@@ -3,8 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-open Farkle
-open Farkle.Calculator.Parser
+open SimpleMaths
 open System
 
 let prettyPrintResult =

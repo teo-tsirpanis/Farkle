@@ -1,0 +1,64 @@
+##LANGUAGE 'F#'
+##TEMPLATE-NAME 'RuntimeFarkle with pre-processor template'
+##ENGINE-NAME 'Farkle'
+##SYSTEM-VERSION '5.0'
+##AUTHOR 'Theodore Tsirpanis'
+##FILE-EXTENSION 'fs'
+##NOTES
+This template creates the constants for symbols
+and productions and a RuntimeFarkle object
+that acts as a template for parsing any source.
+The symbols and productions are automatically documented.
+A template for a post-processor is also supplied.
+##END-NOTES
+##ID-CASE PROPERACSE
+##PARAMETERS
+module ``%Name%``
+##END-PARAMETERS
+
+open Farkle
+open Farkle.Grammar
+open Farkle.PostProcessor
+
+type Symbol =
+##SYMBOLS
+/// %Description%
+| %ID.Padded% = %Value.Padded%%Delimiter%
+##END-SYMBOLS
+
+type Production =
+##RULES
+/// %Description%
+| %ID.Padded% = %Value.Padded%%Delimiter%
+##END-RULES
+
+open Fuser
+
+##PARAMETERS
+/// %About%
+##END-PARAMETERS
+let TheRuntimeFarkle =
+    // The transformers convert terminals to anything you want.
+    // If you don't care about a terminal (like single characters),
+    // you can remove it from below. It will be automatically ignored.
+    // And symbols other than terminals are automatically ignored,
+    // even if they are listed below.
+    let transformers =
+        [
+##SYMBOLS
+            Symbol.%ID.Padded%, Transformer.ignore
+##END-SYMBOLS
+        ]
+    // The fusers merge the parts of a production into one object of your desire.
+    // Do not delete anything here, or the post-processor will fail.
+    let fusers =
+        [
+##RULES
+            Production.%ID.Padded%,
+##END-RULES
+        ]
+    RuntimeFarkle<TODO>.CreateFromFile
+        "mygrammar.egt"
+        (function | Terminal (x, _) -> x |> int |> enum<Symbol> | _ -> enum -1)
+        (Indexable.index >> int >> enum<Production>)
+        (PostProcessor.ofSeq transformers fusers)

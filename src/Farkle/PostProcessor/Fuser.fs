@@ -38,6 +38,9 @@ module Fuser =
             TheFuser = (fun x -> x.[0] :?> 'd |> fFuser |> box)
         }
 
+    /// Creates a `Fuser` that takes a production with one item and returns it unmodified.
+    let identity = create1 id
+
     /// Creates a `Fuser` that fuses a production with two symbols.
     let create2 (fFuser: 'd1 -> 'd2 -> 'r) =
         {

@@ -58,7 +58,9 @@ let TheRuntimeFarkle =
 ##END-RULES
         ]
     RuntimeFarkle<TODO>.CreateFromFile
-        "mygrammar.egt"
+        ##PARAMETERS
+        "%Name%.egt"
+        ##END-PARAMETERS
         (function | Terminal (x, _) -> x |> int |> enum<Symbol> | _ -> enum -1)
         (Indexable.index >> int >> enum<Production>)
         (PostProcessor.ofSeq transformers fusers)

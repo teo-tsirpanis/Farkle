@@ -7,7 +7,7 @@
   <ItemGroup>
     <Compile Include="SimpleMaths.fs" />
     <Compile Include="Program.fs" />
-    <Content Include="mygrammar.egt">
+    <Content Include="SimpleMaths.egt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

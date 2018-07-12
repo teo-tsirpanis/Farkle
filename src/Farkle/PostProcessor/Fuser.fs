@@ -121,7 +121,7 @@ with
     member x.PostProcess prod data =
         x
         |> (fun (ProductionPostProcessor x) -> x prod)
-        |> failIfNone UnexpectedASTStructure
+        |> failIfNone (prod.ToString() |> UnknownProduction)
         >>= (Fuser.Fuse data)
 
 /// Functions to create a `ProductionPostProcessor`.

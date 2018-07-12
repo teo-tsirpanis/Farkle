@@ -105,7 +105,7 @@ let TheRuntimeFarkle =
             Production.ValueLParenRParen, take1Of 1 3 id
         ]
     RuntimeFarkle<int>.CreateFromFile
-        "mygrammar.egt"
+        "SimpleMaths.egt"
         (function | Terminal (x, _) -> x |> int |> enum<Symbol> | _ -> enum -1)
         (Indexable.index >> int >> enum<Production>)
         (PostProcessor.ofSeq transformers fusers)

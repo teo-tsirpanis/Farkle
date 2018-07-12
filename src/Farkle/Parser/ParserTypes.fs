@@ -103,8 +103,6 @@ type ParseMessageType =
     | Shift of uint32
     /// The parser finished parsing and returned a reduction.
     | Accept of Reduction
-    /// Something is wrong with the reading of the EGT file.
-    | EGTReadError of EGTReadError
     /// The file containing the input does not exist.
     | InputFileNotExist of string
     /// A character was not recognized.
@@ -119,10 +117,9 @@ type ParseMessageType =
     member x.IsError =
         match x with
         | TokenRead _ | Reduction _ | Accept _ | Shift _ -> false
-        | EGTReadError _ | InputFileNotExist _ | LexicalError _ | SyntaxError _ | GroupError | InternalError _ -> true
+        | InputFileNotExist _ | LexicalError _ | SyntaxError _ | GroupError | InternalError _ -> true
     override x.ToString() =
         match x with
-        | EGTReadError x -> sprintf "Error while reading the EGT file: %O" x
         | InputFileNotExist x -> sprintf "File \"%s\" does not exist" x
         | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O (%O)" x.Parent x
@@ -130,7 +127,7 @@ type ParseMessageType =
         | Accept x -> sprintf "Reduction accepted: %O (%O)" x.Parent x
         | LexicalError x -> sprintf "Cannot recognize token: %c" x
         | SyntaxError (expected, actual) ->
-            let expected = expected |> List.map (sprintf "\"%O\"") |> String.concat ", "
+            let expected = expected |> List.map string |> String.concat ", "
             sprintf "Found %O, while expecting one of the following tokens: %O" actual expected
         | GroupError -> "Unexpected end of input"
         | InternalError x -> sprintf "Internal error: %O. This is most probably a bug. If you see this error, please file an issue on GitHub." x
@@ -143,6 +140,7 @@ type ParseMessage =
         /// The position the message was encountered.
         Position: Position
     }
+    member x.IsError = x.MessageType.IsError
     override x.ToString() = sprintf "%O %O" x.Position x.MessageType
     /// Creates a parse message of the given type at the given position.
     static member Create position messageType = {MessageType = messageType; Position = position}

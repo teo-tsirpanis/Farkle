@@ -47,7 +47,7 @@ module internal LALRParser =
             let! nextAvailableActions = getNextActions currentState
             match nextAvailableActions.TryFind(token.Symbol) with
             | Some (Accept) ->
-                let! topReduction = lalrStackTop <!> (snd >> snd >> mustBeSome) // I am sorry. 😭
+                let! topReduction = lalrStackTop >>= (snd >> snd >> failIfNone ReductionNotFoundOnAccept >> liftResult)
                 return LALRResult.Accept topReduction
             | Some (Shift x) ->
                 do! setCurrentLALR x

@@ -84,6 +84,8 @@ type ParseInternalError =
     | LALRStateIndexNotFound of uint32
     /// The LALR stack is empty; it should never be.
     | LALRStackEmpty
+    /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
+    | ReductionNotFoundOnAccept
 
 type LALRResult =
     | Accept of Reduction

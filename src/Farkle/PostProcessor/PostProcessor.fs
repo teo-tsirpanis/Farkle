@@ -3,12 +3,12 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle
+namespace Farkle.PostProcessor
 
+open Farkle
 open Farkle.Parser
-open Farkle.PostProcessor
 
-type PostProcessor<'TSymbol, 'TProduction> = internal {
+type PostProcessor<'TSymbol, 'TProduction> = {
     TerminalPostProcessor: TerminalPostProcessor<'TSymbol>
     ProductionPostProcessor: ProductionPostProcessor<'TProduction>
 }
@@ -24,7 +24,6 @@ with
                 >>= x.ProductionPostProcessor.PostProcess prod
         impl ast
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module PostProcessor =
 
     let create transformers fusers = either {

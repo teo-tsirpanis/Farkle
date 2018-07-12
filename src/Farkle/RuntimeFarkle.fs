@@ -27,15 +27,19 @@ type FarkleError =
 type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
 
     /// Creates a `RuntimeFarkle`.
-    /// The function takes a `RuntimeGrammar`, two functions that convert a symbol and a production to another type, and a `PostProcessor`.
+    /// The function takes a `RuntimeGrammar`, two functions that convert a symbol and a production to another type, and a `PostProcessor` that might have failed.
+    /// If the post-processing has failed, the `RuntimeFarkle` will fail every time it is used.
     /// This happens to make the post-processor more convenient to use by converting all the different symbol and production types to type-safe enums.
     static member Create<'TSymbol,'TProduction,'TResult>
-        (grammar: RuntimeGrammar) (fSymbol: _ -> 'TSymbol) (fProduction: _ -> 'TProduction) (postProcessor: PostProcessor<_,_>) =
-        let fPostProcess =
-            (fSymbol, fProduction)
-            ||> AST.ofReductionEx 
-            >> postProcessor.PostProcessAST
-            >> Result.mapError PostProcessError
+        (grammar: RuntimeGrammar) (fSymbol: _ -> 'TSymbol) (fProduction: _ -> 'TProduction) (postProcessor: Result<PostProcessor<_,_>,_>) =
+        let fPostProcess x = either {
+            let! pp = postProcessor |> Result.mapError PostProcessError
+            return!
+                (fSymbol, fProduction, x)
+                |||> AST.ofReductionEx 
+                |> pp.PostProcessAST
+                |> Result.mapError PostProcessError
+        }
         RuntimeFarkle<'TResult>(grammar |> GOLDParser |> Ok, fPostProcess)
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.

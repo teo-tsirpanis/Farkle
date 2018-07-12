@@ -118,7 +118,7 @@ module Fuser =
 
 /// This type contains the logic to combine multiple symbols of _all_ productions of a grammar into one.
 // I can't use a map, because the compiler starts a "not-so-generic-code" rant.
-type internal ProductionPostProcessor<'TProduction> = ProductionPostProcessor of ('TProduction -> Fuser<'TProduction> option)
+type ProductionPostProcessor<'TProduction> = internal ProductionPostProcessor of ('TProduction -> Fuser<'TProduction> option)
 with
     /// Fuses a list of objects that belong to the given production into one.
     /// Because productions always carry significant information up to the higher levels of parsing,

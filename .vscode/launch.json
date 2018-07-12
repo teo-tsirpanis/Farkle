@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
-    "configurations": [{
+    "configurations": [
+        {
             "name": "Farklei",
             "type": "coreclr",
             "request": "launch",
@@ -13,6 +14,19 @@
                 "inception.grm"
             ],
             "cwd": "${workspaceRoot}/sample/farklei/bin/Debug/netcoreapp2.1/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Farkle.Calculator",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "Farkle.Calculator.dll",
+            "args": [
+                "5"
+            ],
+            "cwd": "${workspaceRoot}/sample/Farkle.Calculator/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },

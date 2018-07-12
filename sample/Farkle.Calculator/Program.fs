@@ -30,6 +30,8 @@ let interactive () =
     impl()
 
 [<EntryPoint>]
-let main _ =
-    interactive()
+let main args =
+    match args with
+    | [||] -> interactive()
+    | x -> x |> Array.iter (TheRuntimeFarkle.ParseString >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

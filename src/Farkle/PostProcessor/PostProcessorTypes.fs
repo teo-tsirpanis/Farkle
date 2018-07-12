@@ -7,9 +7,6 @@ namespace Farkle.PostProcessor
 
 /// An error in the post-processor.
 type PostProcessError =
-    /// The production post-processor is not consistent; this means that
-    /// the `Fuser`s for the same production are producing objects of different types.
-    | InconsistentProductionPostProcessor
     /// The `Fuser` required more, less, or objects of different type than what it needs.
     | UnexpectedASTStructure
     /// The production post-processor encountered an unknown tyoe of production.

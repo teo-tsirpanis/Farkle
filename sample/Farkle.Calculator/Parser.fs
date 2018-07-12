@@ -45,26 +45,26 @@ type Rule =
 let TheRuntimeFarkle =
     let transformers =
         [
-            Transformer.create Symbol.SYMBOL_IDENTIFIER (Convert.ToInt32)
+            Symbol.SYMBOL_IDENTIFIER, Transformer.create Convert.ToInt32
         ]
 
     let fusers =
         [
-            Fuser.create1 Rule.RULE_PROGRAM id
-            Fuser.create1 Rule.RULE_EXPRESSION id
-            Fuser.take2Of Rule.RULE_ADDEXP_PLUS (0, 2) 3 (+)
-            Fuser.take2Of Rule.RULE_ADDEXP_MINUS (0, 2) 3 (-)
-            Fuser.create1 Rule.RULE_ADDEXP id
-            Fuser.take2Of Rule.RULE_MULTEXP_TIMES (0, 2) 3 (*)
-            Fuser.take2Of Rule.RULE_MULTEXP_DIV (0, 2) 3 (/)
-            Fuser.create1 Rule.RULE_MULTEXP id
-            Fuser.take1Of Rule.RULE_NEGATEEXP_MINUS 1 2 (~-)
-            Fuser.create1 Rule.RULE_NEGATEEXP id
-            Fuser.create1 Rule.RULE_VALUE_IDENTIFIER id
-            Fuser.take1Of Rule.RULE_VALUE_LPAREN_RPAREN 1 3 id
+            Rule.RULE_PROGRAM, Fuser.create1 id
+            Rule.RULE_EXPRESSION, Fuser.create1 id
+            Rule.RULE_ADDEXP_PLUS, Fuser.take2Of (0, 2) 3 (+)
+            Rule.RULE_ADDEXP_MINUS, Fuser.take2Of (0, 2) 3 (-)
+            Rule.RULE_ADDEXP, Fuser.create1 id
+            Rule.RULE_MULTEXP_TIMES, Fuser.take2Of (0, 2) 3 (*)
+            Rule.RULE_MULTEXP_DIV, Fuser.take2Of (0, 2) 3 (/)
+            Rule.RULE_MULTEXP, Fuser.create1 id
+            Rule.RULE_NEGATEEXP_MINUS, Fuser.take1Of 1 2 (~-)
+            Rule.RULE_NEGATEEXP, Fuser.create1 id
+            Rule.RULE_VALUE_IDENTIFIER, Fuser.create1 id
+            Rule.RULE_VALUE_LPAREN_RPAREN, Fuser.take1Of 1 3 id
         ]
     RuntimeFarkle<int>.CreateFromFile
         "mygrammar.egt"
         (function | Terminal (x, _) -> x |> int |> enum<Symbol> | _ -> enum -1)
         (Indexable.index >> int32 >> enum<Rule>)
-        (PostProcessor.create transformers fusers)
+        (PostProcessor.ofSeq transformers fusers)

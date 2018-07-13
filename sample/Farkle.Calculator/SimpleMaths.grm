@@ -3,26 +3,19 @@
 "Version"  = '1.0.0'
 "About"    = 'A very simple grammar for parsing mathematical expressions.'
 
-"Start Symbol" = <Program>
-
-! -------------------------------------------------
-! Character Sets
-! -------------------------------------------------
-
+"Start Symbol" = <Expression>
 
 ! -------------------------------------------------
 ! Terminals
 ! -------------------------------------------------
 
-Identifier = {Number}+
+Number = {Number}+
 
 ! -------------------------------------------------
 ! Rules
 ! -------------------------------------------------
 
 ! The grammar starts below
-<Program> ::= <Expression>
-
 <Expression>  ::= <Add Exp> 
 
 <Add Exp>     ::= <Add Exp> '+' <Mult Exp>
@@ -38,5 +31,5 @@ Identifier = {Number}+
 
 !Add more values to the rule below - as needed
 
-<Value>       ::= Identifier
+<Value>       ::= Number
                |  '(' <Expression> ')'

@@ -31,8 +31,8 @@ type Symbol =
 | Div        =  7
 /// '+'
 | Plus       =  8
-/// Identifier
-| Identifier =  9
+/// Number
+| Number     =  9
 /// <Add Exp>
 | AddExp     = 10
 /// <Expression>
@@ -41,36 +41,32 @@ type Symbol =
 | MultExp    = 12
 /// <Negate Exp>
 | NegateExp  = 13
-/// <Program>
-| Program    = 14
 /// <Value>
-| Value      = 15
+| Value      = 14
 
 type Production =
-/// <Program> ::= <Expression>
-| Program           =  0
 /// <Expression> ::= <Add Exp>
-| Expression        =  1
+| Expression        =  0
 /// <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-| AddExpPlus        =  2
+| AddExpPlus        =  1
 /// <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-| AddExpMinus       =  3
+| AddExpMinus       =  2
 /// <Add Exp> ::= <Mult Exp>
-| AddExp            =  4
+| AddExp            =  3
 /// <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-| MultExpTimes      =  5
+| MultExpTimes      =  4
 /// <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-| MultExpDiv        =  6
+| MultExpDiv        =  5
 /// <Mult Exp> ::= <Negate Exp>
-| MultExp           =  7
+| MultExp           =  6
 /// <Negate Exp> ::= '-' <Value>
-| NegateExpMinus    =  8
+| NegateExpMinus    =  7
 /// <Negate Exp> ::= <Value>
-| NegateExp         =  9
-/// <Value> ::= Identifier
-| ValueIdentifier   = 10
+| NegateExp         =  8
+/// <Value> ::= Number
+| ValueNumber       =  9
 /// <Value> ::= '(' <Expression> ')'
-| ValueLParenRParen = 11
+| ValueLParenRParen = 10
 
 //#endregion
 
@@ -85,13 +81,12 @@ let TheRuntimeFarkle =
     // even if they are listed below.
     let transformers =
         [
-            Symbol.Identifier, Transformer.create Convert.ToInt32
+            Symbol.Number, Transformer.create Convert.ToInt32
         ]
     // The fusers merge the parts of a production into one object of your desire.
     // Do not delete anything here, or the post-processor will fail.
     let fusers =
         [
-            Production.Program          , identity
             Production.Expression       , identity
             Production.AddExpPlus       , take2Of (0, 2) 3 (+)
             Production.AddExpMinus      , take2Of (0, 2) 3 (-)
@@ -101,7 +96,7 @@ let TheRuntimeFarkle =
             Production.MultExp          , identity
             Production.NegateExpMinus   , take1Of 1 2 (~-)
             Production.NegateExp        , identity
-            Production.ValueIdentifier  , identity
+            Production.ValueNumber      , identity
             Production.ValueLParenRParen, take1Of 1 3 id
         ]
     RuntimeFarkle<int>.CreateFromFile

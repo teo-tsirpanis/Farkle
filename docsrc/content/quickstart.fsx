@@ -183,7 +183,7 @@ let ThePostProcessor = PostProcessor.ofSeq transformers fusers
 (**
 > __Note__: The post-processor is not _yet_ perfectly type-safe. I could use a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception. The post-processor will be made type-safe at a later release.
 
-## Making a `RuntimeFarkle`
+## Making a runtime Farkle
 
 We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a [`HybridStream<char>`](/reference/farkle-hybridstream.html), which is a custom type made for Farkle.
 
@@ -219,7 +219,7 @@ Now it's time for the big 🧀
 let TheRuntimeFarkle = RuntimeFarkle<int>.CreateFromFile "SimpleMaths.egt" fSymbol fProduction ThePostProcessor
 
 (**
-### Using the `RuntimeFarkle`
+### Using the runtime Farkle
 
 Now that we got it, it's time to use it. Let's see some examples:
 *)
@@ -245,6 +245,8 @@ log |> List.iter (printfn "%O")
 printIt parseResult
 
 (**
+> __Note__: It has been observed that the first time a runtime Farkle parses something takes significantly more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.
+
 So that's it. I hope you understand. If you have any question, found a 🐛, or want a feature, feel free to [open a GitHub issue][githubIssues].
 *)
 

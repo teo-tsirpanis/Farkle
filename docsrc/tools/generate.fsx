@@ -97,7 +97,7 @@ let copyFiles() =
         true
     |> Log "Copying styles and scripts: "
 
-let binaries() =
+let binaries = lazy (
     let manuallyAdded =
         referenceBinaries
         |> List.map (fun b -> bin @@ b)
@@ -110,16 +110,16 @@ let binaries() =
         |> Array.filter fileExists
         |> List.ofArray
 
-    conventionBased @ manuallyAdded
+    conventionBased @ manuallyAdded)
 
-let libDirs =
+let libDirs = lazy (
     bin
     |> directoryInfo
     |> subDirectories
     |> Seq.map (fun x -> x.FullName @@ ActualFramework)
     |> Seq.filter directoryExists
     |> List.ofSeq
-    |> List.append [bin]
+    |> List.append [bin])
 
 // Build API reference from XML comments
 let buildReference isRelease =
@@ -127,11 +127,11 @@ let buildReference isRelease =
     CleanDir (output @@ "reference")
     MetadataFormat.Generate
         (
-            binaries(), output @@ "reference", layoutRootsAll.["en"],
+            binaries.Value, output @@ "reference", layoutRootsAll.["en"],
             parameters = ("root", root isRelease)::info,
             sourceRepo = githubLink @@ "tree/master",
             sourceFolder = __SOURCE_DIRECTORY__ @@ ".." @@ "..",
-            publicOnly = true,libDirs = libDirs
+            publicOnly = true,libDirs = libDirs.Value
         )
 
 // Build documentation from `fsx` and `md` files in `docs/content`

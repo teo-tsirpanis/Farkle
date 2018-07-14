@@ -14,7 +14,7 @@ This guide will help you to start using Farkle. It is assumed that you are using
 
 First, you need to install the GOLD Parser Builder. You can grab it from [here][goldBuilder].
 
-__Note:__ You might run into some issues with GOLD's site. A way to mitigate them is to explicitly write `http://` at the beginning of the site. If you still cannot download them for any reason, I have made [a mirror in MEGA][mega].
+> __Note:__ You might run into some issues with GOLD's site. A way to mitigate them is to explicitly write `http://` at the beginning of the site. If you still cannot download them for any reason, I have made [a mirror in MEGA][mega].
 
 GOLD Parser Builder is a .NET Framework application. If you don't run Windows, I think it will work fine on Mono.
 

@@ -339,6 +339,7 @@ Target "Release" (fun _ ->
     createClient user pw
     |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
     |> uploadFiles nugetPackages
+    |> uploadFile ("./src/Farkle/FSharp - Farkle.pgt")
     |> releaseDraft
     |> Async.RunSynchronously
 )

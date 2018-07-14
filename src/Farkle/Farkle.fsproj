@@ -6,17 +6,11 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Title>The Farkle Parser</Title>
     <PackageId>Farkle</PackageId>
-    <Authors>Theodore Tsirpanis</Authors>
+    <Authors>teo-tsirpanis</Authors>
     <Company>Theodore Tsirpanis</Company>
     <Product>Farkle</Product>
-    <Summary>A modern parsing system. Made for F#, but can be used from other .NET languages.</Summary>
-    <Description>Farkle is a parsing system based on the GOLD Parser.
-
-It is written in 100% clean and functional F# code but it is compatible with all .NET languages, although more advanced features will be only for F#.
-
-It is available for NET Framework 4.6.2 or higher, and .NET Standard 1.6 or higher.
-
-While some initial components are written, the real deal is still under early development.
+    <Summary>A modern and easy-to-use parsing library.</Summary>
+    <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.
 
 10: By the way, Farkle means: "FARkle Recognizes Known Languages Easily".
 

@@ -1,4 +1,4 @@
-#### 3.0.0
+#### 3.0.0 - 15-07-2018
 * Introduced the RuntimeFarkle API. This allows the user to both parse a string and convert its Abstract Syntax Tree into any type easily.
 * Farkle does no more depend on Chessie, using the core library's Result type.
 * The internal architecture was greatly refactored.

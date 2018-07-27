@@ -34,6 +34,7 @@
     <Compile Include="Utilities/HybridStream.fs" />
     <Compile Include="Utilities/Lazy.fs" />
     <Compile Include="Utilities/Set.fs" />
+    <Compile Include="RuntimeHelpers/Serializer.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/RuntimeGrammar.fs" />
     <Compile Include="Grammar/EgtReader/LowLevel.fs" />

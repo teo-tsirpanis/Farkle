@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Generators.fs" />
     <Compile Include="SetTests.fs" />
+    <Compile Include="SerializationTests.fs" />
     <Compile Include="GrammarTests.fs" />
     <Compile Include="ParserTests.fs" />
     <Compile Include="ASTTests.fs" />

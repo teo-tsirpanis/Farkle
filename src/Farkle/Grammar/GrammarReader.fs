@@ -3,17 +3,17 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.EgtReader
+namespace Farkle.Grammar
 
 open FSharpx.Collections
 open Farkle
-open Farkle.Grammar
+open Farkle.EGTFile
 open Farkle.Monads
 
-module internal HighLevel =
+module internal GrammarReader =
 
     open StateResult
-    open MidLevel
+    open EGTReader
 
     type IndexedGetter<'a> = Indexed<'a> -> StateResult<'a, Entry list, EGTReadError>
 
@@ -133,8 +133,8 @@ module internal HighLevel =
         }
         let! edges = whileFull readEdges <!> List.ofSeq
         match isAccept with
-           | true -> return! acceptIndex |> fSymbols <!> (fun x -> DFAAccept (index, (x, edges)))
-           | false -> return DFAContinue (index, edges)
+        | true -> return! acceptIndex |> fSymbols <!> (fun x -> DFAAccept (index, (x, edges)))
+        | false -> return DFAContinue (index, edges)
     }
 
     let readLALRState (fSymbols: IndexedGetter<_>) fProds = sresult {

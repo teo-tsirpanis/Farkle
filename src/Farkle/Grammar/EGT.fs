@@ -6,7 +6,7 @@
 namespace Farkle.Grammar
 
 open Farkle
-open Farkle.Grammar.EgtReader
+open Farkle.EGTFile
 open Farkle.Monads
 open System.IO
 
@@ -28,8 +28,8 @@ module EGT =
     let ofBytes x =
         x
         |> List.ofSeq
-        |> StateResult.eval MidLevel.readEGT
-        >>= HighLevel.makeGrammar
+        |> StateResult.eval EGTReader.readEGT
+        >>= GrammarReader.makeGrammar
 
     /// Reads a stream that represents an EGT file and returns a `Grammar`.
     /// The stream can be disposed when it ends.

@@ -15,7 +15,7 @@ type FarkleError =
     /// There was a post-processing error.
     | PostProcessError of PostProcessError
     /// There was an error while reading the grammar.
-    | EGTReadError of Grammar.EGTReadError
+    | EGTReadError of EGTFile.EGTReadError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x

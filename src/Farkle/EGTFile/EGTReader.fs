@@ -72,11 +72,13 @@ module internal EGTReader =
 
     open Implementation
 
-    let readEGT = sresult {
-        let! header = takeString
-        let! records = whileFull readRecord <!> List.ofSeq
-        return {Header = header; Records = records}
-    }
+    let readEGT x =
+        let impl = sresult {
+            let! header = takeString
+            let! records = whileFull readRecord <!> List.ofSeq
+            return {Header = header; Records = records}
+        }
+        x |> List.ofSeq |> eval impl
 
     let eitherEntry fEmpty fByte fBoolean fUInt16 fString = sresult {
         let! entry = List.takeOne() |> mapFailure ListError

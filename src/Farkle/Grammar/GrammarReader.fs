@@ -194,8 +194,8 @@ module internal GrammarReader =
         let fProds x = eval (getIndexedfromList prods x) ()
 
         let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
-        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFA.create initialDFA)
-        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALR.Create initialLALR)
+        let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFAState.toDFA initialDFA)
+        let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALRState.toLALR initialLALR)
 
         return! GOLDGrammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }

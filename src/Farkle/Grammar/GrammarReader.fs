@@ -152,32 +152,50 @@ module internal GrammarReader =
         return {Actions = states; Index = index}
     }
 
-    let mapMatching magicChar f = sresult {
-        let! x = wantByte
-        if x = magicChar then
-            return! f <!> Some
-        else
-            return None
-    }
+    let mapMatching records magicChar f =
+        let impl = sresult {
+            let! x = wantByte
+            if x = magicChar then
+                return! f <!> Some
+            else
+                return None
+        }
+        records
+        |> Seq.map (fun (Record x) -> eval impl x)
+        |> collect
+        |> Result.map (Seq.choose id)
 
-    let makeGrammar (EGTFile records) = either {
+    [<Literal>]
+    let private CGTHeader = "GOLD Parser Tables/v1.0"
+    [<Literal>]
+    let private EGTHeader = "GOLD Parser Tables/v5.0"
+
+    let makeGrammar {Header = header; Records = records} = either {
+        match header with
+        | CGTHeader -> do! Result.Error ReadACGTFile
+        | EGTHeader -> do ()
+        | _ -> do! Result.Error UnknownEGTFile
+
         let lift = Result.map
-        let mapMatching mc f = records |> Seq.map (fun (Record x) -> eval (mapMatching mc f) x) |> collect |> lift (Seq.choose id)
+        let mapMatching x = mapMatching records x
+
         let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofSeq >> Properties)
         let! tableCounts = readTableCounts |> mapMatching 't'B |> lift Seq.head
+
         let! charSets = readCharSet |> mapMatching 'c'B |> lift (Seq.sortBy snd >> Seq.map fst >> RandomAccessList.ofSeq)
         let fCharSets = getIndexedfromList charSets
+
         let! symbols = readSymbol |> mapMatching 'S'B |> lift IndexableWrapper.collect
         let fSymbols = getIndexedfromList symbols
+
         let! groups = readGroup fSymbols |> mapMatching 'g'B |> lift Indexable.collect
+
         let! prods = readProduction fSymbols |> mapMatching 'R'B |> lift Indexable.collect
         let fProds x = eval (getIndexedfromList prods x) ()
+
         let! (initialDFA, initialLALR) = readInitialStates |> mapMatching 'I'B |> lift Seq.head
         let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFA.create initialDFA)
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALR.Create initialLALR)
+
         return! GOLDGrammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }
-    // From 20/7/2017 until 24/7/2017, this file had _exactly_ 198 lines of code.
-    // This Number should not be changed, unless it was absolutely neccessary.
-    // Was that a coincidence? Highly unlikely.
-    // Just look! Not even the dates were a coincidence! 🔺👁

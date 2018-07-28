@@ -54,13 +54,26 @@ type EGTReadError =
             | FileNotExist x -> sprintf "The given file (%s) does not exist." x
             | IndexNotFound x -> sprintf "The index %d was not found in a list." x
 
+/// An entry of an EGT file.
 type Entry =
+    /// [omit]
     | Empty
+    /// [omit]
     | Byte of byte
+    /// [omit]
     | Boolean of bool
+    /// [omit]
     | UInt16 of uint16
+    /// [omit]
     | String of string
 
+/// An EGT record is a list of grouped entries.
 type Record = Record of Entry list
 
-type EGTFile = EGTFile of Record list
+/// An EGT file is made of a header string and a list of `Record`s.
+type EGTFile = {
+    /// [omit]
+    Header: string
+    /// [omit]
+    Records: Record list
+}

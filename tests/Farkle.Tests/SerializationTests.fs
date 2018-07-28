@@ -23,7 +23,7 @@ let tests =
         testIt<int> "32-bit integer"
         // testIt<RuntimeGrammar> "runtime grammar"
 
-        test "The inception grammar gets serialized" {
+        ptest "The inception grammar gets serialized" {
             let rtg = "inception.egt" |> EGT.ofFile |> Result.map RuntimeGrammar.ofGOLDGrammar |> returnOrFail
             let mashedRTG = serialize rtg
             let rtgAgain = deserialize mashedRTG |> returnOrFail

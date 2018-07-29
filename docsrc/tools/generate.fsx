@@ -35,11 +35,15 @@ let info =
 #load "../../packages/build/FSharp.Formatting/FSharp.Formatting.fsx"
 #I "../../packages/build/FAKE/tools/"
 #r "FakeLib.dll"
+
 open Fake
-open System.IO
-open Fake.FileHelper
+open Fake.Core
+open Fake.IO
+open Fake.IO.FileSystemOperators
 open FSharp.Literate
 open FSharp.MetadataFormat
+
+open System.IO
 
 // When called from 'build.fsx', use the public project URL as <root>
 // otherwise, use the current 'output' directory.
@@ -72,7 +76,9 @@ layoutRootsAll.Add(
         formatting @@ "templates"
         formatting @@ "templates/reference"
     ])
-subDirectories (directoryInfo templates)
+templates
+|> DirectoryInfo.ofPath
+|> DirectoryInfo.getSubDirectories
 |> Seq.iter (
     fun d ->
         let name = d.Name
@@ -89,13 +95,13 @@ subDirectories (directoryInfo templates)
 
 // Copy static files and CSS + JS from F# Formatting
 let copyFiles() =
-    CopyRecursive files output true |> Log "Copying file: "
-    ensureDirectory (output @@ "content")
-    CopyRecursive
+    Shell.copyRecursive files output true |> Trace.logItems "Copying file: "
+    Directory.ensure (output @@ "content")
+    Shell.copyRecursive
         (formatting @@ "styles")
         (output @@ "content")
         true
-    |> Log "Copying styles and scripts: "
+    |> Trace.logItems "Copying styles and scripts: "
 
 let binaries = lazy (
     let manuallyAdded =
@@ -103,28 +109,29 @@ let binaries = lazy (
         |> List.map (fun b -> bin @@ b)
 
     let conventionBased =
-        directoryInfo bin
-        |> subDirectories
-        |> Array.filter (fun x -> x.FullName @@ AppFramework |> directoryExists)
+        bin
+        |> DirectoryInfo.ofPath
+        |> DirectoryInfo.getSubDirectories
+        |> Array.filter (fun x -> x.FullName @@ AppFramework |> Directory.Exists)
         |> Array.map ((fun x -> x.FullName @@ ActualFramework @@ (sprintf "%s.dll" x.Name)))
-        |> Array.filter fileExists
+        |> Array.filter File.exists
         |> List.ofArray
 
     conventionBased @ manuallyAdded)
 
 let libDirs = lazy (
     bin
-    |> directoryInfo
-    |> subDirectories
+    |> DirectoryInfo.ofPath
+    |> DirectoryInfo.getSubDirectories
     |> Seq.map (fun x -> x.FullName @@ ActualFramework)
-    |> Seq.filter directoryExists
+    |> Seq.filter Directory.Exists
     |> List.ofSeq
     |> List.append [bin])
 
 // Build API reference from XML comments
 let buildReference isRelease =
     copyFiles()
-    CleanDir (output @@ "reference")
+    Shell.cleanDir (output @@ "reference")
     MetadataFormat.Generate
         (
             binaries.Value, output @@ "reference", layoutRootsAll.["en"],

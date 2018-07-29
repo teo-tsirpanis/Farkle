@@ -10,7 +10,7 @@ group Build
   framework: net472
   source https://api.nuget.org/v3/index.json
 
-  nuget FAKE ~> 4
+  nuget FAKE
   nuget FSharp.Formatting
 
   github fsharp/FAKE:release/next modules/Octokit/Octokit.fsx

@@ -57,6 +57,12 @@ let nuspecs = !! "src/*.nuspec"
 let configuration = DotNet.BuildConfiguration.Release
 let configurationAsString = "Release"
 
+[<Literal>]
+let LibraryFramework = "netstandard2.0"
+
+[<Literal>]
+let DocumentationAssemblyFramework = "net472"
+
 let exeFramework = "netcoreapp2.1"
 
 let sourceProjects = !! "src/**/*.??proj"
@@ -221,10 +227,10 @@ let docTemplate = "docpage.cshtml"
 let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner
 let githubLink = sprintf "https://github.com/%s/%s" github_release_user gitName
 
-let root =
-    function
+let root isRelease =
+    match isRelease with
     | true -> "/Farkle"
-    | false -> "file://" + (__SOURCE_DIRECTORY__ @@ "../../docs")
+    | false -> "file://" + (__SOURCE_DIRECTORY__ @@ "docs")
 
 // Specify more information about your project
 let info =
@@ -253,18 +259,11 @@ let referenceDocs isRelease =
 
         let conventionBased =
             bin
-            |> DirectoryInfo
+            |> DirectoryInfo.ofPath
             |> DirectoryInfo.getSubDirectories
-            |> Array.map (fun d ->
-                let net472Bin = DirectoryInfo.getSubDirectories d |> Array.filter(fun x -> x.FullName.ToLower().Contains("net47"))
-                d.Name, net472Bin.[0])
-            |> Array.map (fun (name, d) ->
-                d.GetFiles()
-                |> Array.filter (fun x ->
-                    x.Name.ToLower() = (sprintf "%s.dll" name).ToLower())
-                |> Array.map (fun x -> x.FullName)
-                )
-            |> Array.concat
+            |> Array.filter (fun x -> x.FullName @@ LibraryFramework |> Directory.Exists)
+            |> Array.map ((fun x -> x.FullName @@ DocumentationAssemblyFramework @@ (sprintf "%s.dll" x.Name)))
+            |> Array.filter File.exists
             |> List.ofArray
 
         conventionBased @ manuallyAdded
@@ -298,13 +297,19 @@ let docs isRelease =
 
 
     DirectoryInfo.getSubDirectories (DirectoryInfo.ofPath templates)
-    |> Seq.iter (fun d ->
-                    let name = d.Name
-                    if name.Length = 2 || name.Length = 3 then
-                        layoutRootsAll.Add(
-                                name, [templates @@ name
-                                       formatting @@ "templates"
-                                       formatting @@ "templates/reference" ]))
+    |> Seq.iter
+        (fun d ->
+            let name = d.Name
+            if name.Length = 2 || name.Length = 3 then
+                layoutRootsAll.Add(
+                    name,
+                    [
+                        templates @@ name
+                        formatting @@ "templates"
+                        formatting @@ "templates/reference"
+                    ]
+                )
+        )
     copyFiles ()
 
     for dir in  [ content; ] do
@@ -327,7 +332,7 @@ let docs isRelease =
                 ToolPath = toolpath})
 
 Target.create "KeepRunning" (fun _ ->
-    use watcher = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun changes ->
+    use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->
         docs false
     )
 
@@ -415,6 +420,10 @@ open Fake.Core.TargetOperators
     ==> "BuildPackage"
     ==> "All"
     ==> "CI"
+
+[""; "Debug"]
+|> Seq.map (sprintf "GenerateReferenceDocs%s")
+|> Seq.iter ((==>) "CopyBinaries" >> ignore)
 
 "CleanDocs"
     ==> "GenerateHelp"

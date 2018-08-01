@@ -1,5 +1,5 @@
 // Copyright (c) 2018 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -8,6 +8,7 @@
 // --------------------------------------------------------------------------------------
 
 #r @"packages/build/FAKE/tools/FakeLib.dll"
+open Fake.IO
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
@@ -204,29 +205,87 @@ Target.create "PublishNuget" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-#load "docsrc/tools/generate.fsx"
+// --------------------------------------------------------------------------------------
+// Generate the documentation
 
-// Documentation
-Target.create "GenerateReferenceDocs" (fun _ ->
-    FAKE.Generate.buildReference true
-)
+// Paths with template/source/output locations
+let bin        = __SOURCE_DIRECTORY__ @@ "bin"
+let content    = __SOURCE_DIRECTORY__ @@ "docsrc/content"
+let output     = __SOURCE_DIRECTORY__ @@ "docs"
+let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
+let templates  = __SOURCE_DIRECTORY__ @@ "docsrc/tools/templates"
+let formatting = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting"
+let docTemplate = "docpage.cshtml"
 
-Target.create "GenerateReferenceDocsDebug" (fun _ ->
-    FAKE.Generate.buildReference false
-)
+let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner
+let githubLink = sprintf "https://github.com/%s/%s" github_release_user gitName
 
-let generateHelp' fail debug =
-    try
-        FAKE.Generate.buildDocumentation (not debug)
-        Trace.traceImportant "Help generated"
-    with
-    | _ when not fail ->
-        Trace.traceImportant "generating help documentation failed"
+let root =
+    function
+    | true -> "/Farkle"
+    | false -> "file://" + (__SOURCE_DIRECTORY__ @@ "../../docs")
 
-let generateHelp fail =
-    generateHelp' fail false
+// Specify more information about your project
+let info =
+    [
+        "project-name", project
+        "project-author", String.concat ", " authors
+        "project-summary", summary
+        "project-github", githubLink
+        "project-nuget", "http://nuget.org/packages/Farkle"
+    ]
 
-Target.create "GenerateHelp" (fun _ ->
+let referenceBinaries = []
+
+let layoutRootsAll = new System.Collections.Generic.Dictionary<string, string list>()
+layoutRootsAll.Add("en",[   templates;
+                            formatting @@ "templates"
+                            formatting @@ "templates/reference" ])
+
+let referenceDocs isRelease =
+    Directory.ensure (output @@ "reference")
+
+    let binaries () =
+        let manuallyAdded =
+            referenceBinaries
+            |> List.map (fun b -> bin @@ b)
+
+        let conventionBased =
+            bin
+            |> DirectoryInfo
+            |> DirectoryInfo.getSubDirectories
+            |> Array.map (fun d ->
+                let net472Bin = DirectoryInfo.getSubDirectories d |> Array.filter(fun x -> x.FullName.ToLower().Contains("net47"))
+                d.Name, net472Bin.[0])
+            |> Array.map (fun (name, d) ->
+                d.GetFiles()
+                |> Array.filter (fun x ->
+                    x.Name.ToLower() = (sprintf "%s.dll" name).ToLower())
+                |> Array.map (fun x -> x.FullName)
+                )
+            |> Array.concat
+            |> List.ofArray
+
+        conventionBased @ manuallyAdded
+
+    binaries()
+    |> FSFormatting.createDocsForDlls (fun args ->
+        { args with
+            OutputDirectory = output @@ "reference"
+            LayoutRoots =  layoutRootsAll.["en"]
+            ProjectParameters =  ("root", root isRelease)::info
+            SourceRepository = githubLink @@ "tree/master" }
+    )
+
+
+let copyFiles () =
+    Shell.copyRecursive files output true
+    |> Trace.logItems "Copying file: "
+    Directory.ensure (output @@ "content")
+    Shell.copyRecursive (formatting @@ "styles") (output @@ "content") true
+    |> Trace.logItems "Copying styles and scripts: "
+
+let docs isRelease =
     File.delete "docsrc/content/release-notes.md"
     Shell.copyFile "docsrc/content/" "RELEASE_NOTES.md"
     Shell.rename "docsrc/content/release-notes.md" "docsrc/content/RELEASE_NOTES.md"
@@ -235,24 +294,38 @@ Target.create "GenerateHelp" (fun _ ->
     Shell.copyFile "docsrc/content/" "LICENSE.txt"
     Shell.rename "docsrc/content/license.md" "docsrc/content/LICENSE.txt"
 
-    generateHelp true
-)
 
-Target.create "GenerateHelpDebug" (fun _ ->
-    File.delete "docsrc/content/release-notes.md"
-    Shell.copyFile "docsrc/content/" "RELEASE_NOTES.md"
-    Shell.rename "docsrc/content/release-notes.md" "docsrc/content/RELEASE_NOTES.md"
+    DirectoryInfo.getSubDirectories (DirectoryInfo.ofPath templates)
+    |> Seq.iter (fun d ->
+                    let name = d.Name
+                    if name.Length = 2 || name.Length = 3 then
+                        layoutRootsAll.Add(
+                                name, [templates @@ name
+                                       formatting @@ "templates"
+                                       formatting @@ "templates/reference" ]))
+    copyFiles ()
 
-    File.delete "docsrc/content/license.md"
-    Shell.copyFile "docsrc/content/" "LICENSE.txt"
-    Shell.rename "docsrc/content/license.md" "docsrc/content/LICENSE.txt"
+    for dir in  [ content; ] do
+        let langSpecificPath(lang, path:string) =
+            path.Split([|'/'; '\\'|], System.StringSplitOptions.RemoveEmptyEntries)
+            |> Array.exists(fun i -> i = lang)
+        let layoutRoots =
+            let key = layoutRootsAll.Keys |> Seq.tryFind (fun i -> langSpecificPath(i, dir))
+            match key with
+            | Some lang -> layoutRootsAll.[lang]
+            | None -> layoutRootsAll.["en"] // "en" is the default language
 
-    generateHelp' true true
-)
+        FSFormatting.createDocs (fun args ->
+            { args with
+                Source = content
+                OutputDirectory = output
+                LayoutRoots = layoutRoots
+                ProjectParameters  = ("root", root isRelease)::info
+                Template = docTemplate } )
 
 Target.create "KeepRunning" (fun _ ->
     use watcher = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun changes ->
-        generateHelp' true true
+        docs false
     )
 
     Trace.traceImportant "Waiting for help edits. Press any key to stop."
@@ -261,6 +334,11 @@ Target.create "KeepRunning" (fun _ ->
 )
 
 Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip")
+Target.create "GenerateHelp" (fun _ -> docs true)
+Target.create "GenerateHelpDebug" (fun _ -> docs false)
+
+Target.create "GenerateReferenceDocs" (fun _ -> referenceDocs true)
+Target.create "GenerateReferenceDocsDebug" (fun _ -> referenceDocs false)
 
 Target.create "ReleaseDocs" (fun _ ->
     let tempDocsDir = "temp/gh-pages"
@@ -273,45 +351,6 @@ Target.create "ReleaseDocs" (fun _ ->
     Branches.push tempDocsDir
 )
 
-let createIndexFsx lang =
-    let content = """(*** hide ***)
-// This block of code is omitted in the generated HTML documentation. Use
-// it to define helpers that you do not want to show in the documentation.
-#I "../../../bin"
-
-(**
-F# Project Scaffold ({0})
-=========================
-*)
-"""
-    let targetDir = "docsrc/content" </> lang
-    let targetFile = targetDir </> "index.fsx"
-    Directory.ensure targetDir
-    File.WriteAllText(targetFile, String.Format(content, lang))
-
-Target.create "AddLangDocs" (fun _ ->
-    let args = System.Environment.GetCommandLineArgs()
-    if args.Length < 4 then
-        failwith "Language not specified."
-
-    args.[3..]
-    |> Seq.iter (fun lang ->
-        if lang.Length <> 2 && lang.Length <> 3 then
-            failwithf "Language must be 2 or 3 characters (ex. 'de', 'fr', 'ja', 'gsw', etc.): %s" lang
-
-        let templateFileName = "template.cshtml"
-        let templateDir = "docsrc/tools/templates"
-        let langTemplateDir = templateDir </> lang
-        let langTemplateFileName = langTemplateDir </> templateFileName
-
-        if File.exists langTemplateFileName then
-            failwithf "Documents for specified language '%s' have already been added." lang
-
-        Directory.ensure langTemplateDir
-        Shell.copy langTemplateDir [ templateDir </> templateFileName ]
-
-        createIndexFsx lang)
-)
 
 // --------------------------------------------------------------------------------------
 // Release Scripts

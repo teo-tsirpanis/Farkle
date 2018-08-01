@@ -9,9 +9,11 @@ nuget FSharpx.Collections
 group Build
   framework: net472
   source https://api.nuget.org/v3/index.json
+  source https://ci.appveyor.com/nuget/fsharp-formatting
 
   nuget FAKE
-  nuget FSharp.Formatting
+  nuget FSharp.Formatting prerelease
+  nuget FSharp.Formatting.CommandTool prerelease
 
   github fsharp/FAKE:release/next modules/Octokit/Octokit.fsx
 

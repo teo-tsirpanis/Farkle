@@ -7,8 +7,19 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r @"packages/build/FAKE/tools/FakeLib.dll"
-open Fake.IO
+#r "paket:
+nuget Fake.Core.ReleaseNotes
+nuget Fake.Core.Target
+nuget Fake.Core.UserInput
+nuget Fake.IO.FileSystem
+nuget Fake.IO.Zip
+nuget Fake.DotNet.AssemblyInfoFile
+nuget Fake.DotNet.Cli
+nuget Fake.DotNet.FsFormatting
+nuget Fake.DotNet.Paket
+nuget Fake.Tools.Git //"
+
+#load "./.fake/build.fsx/intellisense.fsx"
 open Fake.Core
 open Fake.DotNet
 open Fake.IO

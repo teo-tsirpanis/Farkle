@@ -2,12 +2,15 @@ framework: net472, netstandard2.0
 
 source https://api.nuget.org/v3/index.json
 
+storage: none
+
 nuget FSharp.Core
 nuget Aether
 nuget FSharpx.Collections
 
 group Build
   framework: net472
+
   source https://api.nuget.org/v3/index.json
   source https://ci.appveyor.com/nuget/fsharp-formatting
 
@@ -21,9 +24,9 @@ group Test
 
   framework: netcoreapp2.1
 
-  storage: none
-
   source https://api.nuget.org/v3/index.json
+
+  storage: none
 
   nuget BenchmarkDotNet
   nuget Microsoft.NetCore.App = 2.1

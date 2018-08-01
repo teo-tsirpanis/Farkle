@@ -1,12 +1,5 @@
 @echo off
 
-.paket\paket.exe restore
-if errorlevel 1 (
-  exit /b %errorlevel%
-)
+REM The script assumes that FAKE is in PATH.
 
-IF NOT EXIST build.fsx (
-  .paket\paket.exe update
-  packages\build\FAKE\tools\FAKE.exe init.fsx
-)
-packages\build\FAKE\tools\FAKE.exe build.fsx %*
+fake build %*

@@ -2,4 +2,4 @@
 
 REM The script assumes that FAKE is in PATH.
 
-fake build %*
+fake run .\build.fsx %*

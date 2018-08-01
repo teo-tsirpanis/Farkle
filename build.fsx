@@ -7,19 +7,10 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "paket:
-nuget Fake.Core.ReleaseNotes
-nuget Fake.Core.Target
-nuget Fake.Core.UserInput
-nuget Fake.IO.FileSystem
-nuget Fake.IO.Zip
-nuget Fake.DotNet.AssemblyInfoFile
-nuget Fake.DotNet.Cli
-nuget Fake.DotNet.FsFormatting
-nuget Fake.DotNet.Paket
-nuget Fake.Tools.Git //"
+#r "paket: groupref FakeBuild //"
 
 #load "./.fake/build.fsx/intellisense.fsx"
+open Fake.Api
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
@@ -137,7 +128,7 @@ Target.create "AssemblyInfo" (fun _ ->
 
     sourceProjects
     |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
+    |> Seq.iter (fun (projFileName, _, folderName, attributes) ->
         match projFileName with
         | Fsproj -> AssemblyInfoFile.createFSharp (folderName </> "AssemblyInfo.fs") attributes
         | Csproj -> AssemblyInfoFile.createCSharp ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
@@ -231,8 +222,8 @@ let content    = __SOURCE_DIRECTORY__ @@ "docsrc/content"
 let output     = __SOURCE_DIRECTORY__ @@ "docs"
 let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
 let templates  = __SOURCE_DIRECTORY__ @@ "docsrc/tools/templates"
-let formatting = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Formatting"
-let toolpath = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Formatting.CommandTool/tools/fsformatting.exe"
+let formatting = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting"
+let toolpath = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting.CommandTool/tools/fsformatting.exe"
 let docTemplate = "docpage.cshtml"
 
 let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner
@@ -374,9 +365,6 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
-#load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
-open Octokit
-
 Target.create "Release" (fun _ ->
     let user =
         match Environment.environVarOrDefault "github-user" String.Empty with
@@ -400,11 +388,17 @@ Target.create "Release" (fun _ ->
     Branches.pushTag "" remote release.NugetVersion
 
     // release on github
-    createClient user pw
-    |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes
-    |> uploadFiles nugetPackages
-    |> uploadFile ("./src/Farkle/FSharp - Farkle.pgt")
-    |> releaseDraft
+    GitHub.createClient user pw
+    |> GitHub.createRelease gitOwner gitName release.NugetVersion
+        (fun x ->
+            {x with
+                Draft = true
+                Name = sprintf "Version %s" release.NugetVersion
+                Prerelease = release.SemVer.PreRelease.IsSome
+                Body = String.concat Environment.NewLine release.Notes})
+    |> GitHub.uploadFiles nugetPackages
+    |> GitHub.uploadFile ("./src/Farkle/FSharp - Farkle.pgt")
+    |> GitHub.publishDraft
     |> Async.RunSynchronously
 )
 

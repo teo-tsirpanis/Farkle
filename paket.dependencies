@@ -8,17 +8,31 @@ nuget FSharp.Core
 nuget Aether
 nuget FSharpx.Collections
 
-group Build
-  framework: net472
+group Formatting
 
   source https://api.nuget.org/v3/index.json
   source https://ci.appveyor.com/nuget/fsharp-formatting
 
-  nuget FAKE
   nuget FSharp.Formatting prerelease
   nuget FSharp.Formatting.CommandTool prerelease
 
-  github fsharp/FAKE:release/next modules/Octokit/Octokit.fsx
+group FakeBuild
+
+  source https://api.nuget.org/v3/index.json
+
+  storage: none
+
+  nuget Fake.Api.GitHub
+  nuget Fake.Core.ReleaseNotes
+  nuget Fake.Core.Target
+  nuget Fake.Core.UserInput
+  nuget Fake.IO.FileSystem
+  nuget Fake.IO.Zip
+  nuget Fake.DotNet.AssemblyInfoFile
+  nuget Fake.DotNet.Cli
+  nuget Fake.DotNet.FsFormatting
+  nuget Fake.DotNet.Paket
+  nuget Fake.Tools.Git
 
 group Test
 

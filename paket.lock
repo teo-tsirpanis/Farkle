@@ -20,12 +20,13 @@ NUGET
     FSharp.Formatting (2.14.4)
       FSharp.Compiler.Service (2.0.0.6)
       FSharpVSPowerTools.Core (>= 2.3 < 2.4)
+    FSharp.Formatting.CommandTool (2.14.4)
     FSharpVSPowerTools.Core (2.3)
       FSharp.Compiler.Service (>= 2.0.0.3)
     Octokit (0.31)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (f4f6ef3c50ff2b202d559fe39ffd7434629a3f06)
+    modules/Octokit/Octokit.fsx (3f3d9a0a4a9b0335e04d29190ee46dbe6c3b587f)
       Octokit (>= 0.20)
 GROUP Test
 STORAGE: NONE

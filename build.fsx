@@ -214,7 +214,8 @@ let content    = __SOURCE_DIRECTORY__ @@ "docsrc/content"
 let output     = __SOURCE_DIRECTORY__ @@ "docs"
 let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
 let templates  = __SOURCE_DIRECTORY__ @@ "docsrc/tools/templates"
-let formatting = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting"
+let formatting = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Formatting"
+let toolpath = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Formatting.CommandTool/tools/fsformatting.exe"
 let docTemplate = "docpage.cshtml"
 
 let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner
@@ -274,7 +275,8 @@ let referenceDocs isRelease =
             OutputDirectory = output @@ "reference"
             LayoutRoots =  layoutRootsAll.["en"]
             ProjectParameters =  ("root", root isRelease)::info
-            SourceRepository = githubLink @@ "tree/master" }
+            SourceRepository = githubLink @@ "tree/master"
+            ToolPath = toolpath}
     )
 
 
@@ -321,7 +323,8 @@ let docs isRelease =
                 OutputDirectory = output
                 LayoutRoots = layoutRoots
                 ProjectParameters  = ("root", root isRelease)::info
-                Template = docTemplate } )
+                Template = docTemplate
+                ToolPath = toolpath})
 
 Target.create "KeepRunning" (fun _ ->
     use watcher = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun changes ->

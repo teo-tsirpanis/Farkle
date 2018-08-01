@@ -2,7 +2,7 @@ image: Visual Studio 2017
 init:
   - git config --global core.autocrlf input
 build_script:
-  - cmd: build.cmd CI
+  - cmd: build.cmd target CI
 test: off
 artifacts:
 - path: docs.zip

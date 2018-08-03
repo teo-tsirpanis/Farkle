@@ -6,14 +6,18 @@
         {
             "label": "Build",
             "identifier": "build",
-            "command": "dotnet",
-            "type": "shell",
+            "type": "process",
             "group": "build",
             "presentation": {
                 "reveal": "silent"
             },
+            "command": "./build.sh",
+            "windows": {
+                "command": "./build.cmd"
+            },
             "args": [
-                "build"
+                "target",
+                "CopyBinaries"
             ],
             "problemMatcher": "$msCompile"
         }

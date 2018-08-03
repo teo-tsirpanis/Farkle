@@ -8,9 +8,11 @@
 // --------------------------------------------------------------------------------------
 
 #r "paket: groupref FakeBuild //"
+open Fake.Core
 
 #load "./.fake/build.fsx/intellisense.fsx"
 open Fake.Api
+open Fake.BuildServer
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
@@ -29,7 +31,6 @@ open System.IO
 //  - for version and project name in generated AssemblyInfo file
 //  - by the generated NuGet package
 //  - to run tests and to publish documentation on GitHub gh-pages
-//  - for documentation, you also need to edit info in "docsrc/tools/generate.fsx"
 
 // The name of the project
 // (used by attributes in AssemblyInfo, name of a NuGet package and directory in 'src')
@@ -101,6 +102,16 @@ let gitRaw = Environment.environVarOrDefault "gitRaw" "https://raw.githubusercon
 // Read additional information from the release notes document
 let release = ReleaseNotes.load "RELEASE_NOTES.md"
 
+let nugetVersion =
+    match BuildServer.buildServer with
+    BuildServer.AppVeyor -> AppVeyor.Environment.BuildVersion
+    | _ -> release.NugetVersion
+
+BuildServer.install
+    [
+        AppVeyor.Installer
+    ]
+
 // Helper active pattern for project types
 let (|Fsproj|Csproj|Vbproj|Shproj|) (projFileName:string) =
     match projFileName with
@@ -143,16 +154,19 @@ Target.create "AssemblyInfo" (fun _ ->
 Target.create "CopyBinaries" (fun _ ->
     Shell.cleanDir "bin"
     projects
-    |>  Seq.map (fun f -> ((Path.GetDirectoryName f) </> "bin" </> configurationAsString, "bin" </> (Path.GetFileNameWithoutExtension f)))
-    |>  Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
+    |> Seq.map (fun f -> ((Path.GetDirectoryName f) </> "bin" </> configurationAsString, "bin" </> (Path.GetFileNameWithoutExtension f)))
+    |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
-
-// --------------------------------------------------------------------------------------
-// Clean build results
 
 let vsProjFunc x =
     {x with
         DotNet.BuildOptions.Configuration = configuration}
+
+let inline fCommonOptions x =
+    [
+        sprintf "/p:Version=%s" nugetVersion
+        release.Notes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
+    ] |> DotNet.Options.withAdditionalArgs <| x
 
 Target.create "Clean" (fun _ ->
     DotNet.exec id "clean" "" |> ignore
@@ -165,9 +179,7 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // Build library & test project
 
 Target.create "Build" (fun _ ->
-    Shell.copyFile "Directory.Build.props" "Directory.Build.xml"
-    File.applyReplace (release.Notes |> String.concat Environment.NewLine |> String.replace "@ReleaseNotes") "Directory.Build.props"
-    DotNet.build vsProjFunc solutionFile
+    DotNet.build (vsProjFunc >> fCommonOptions) solutionFile
 )
 
 // --------------------------------------------------------------------------------------
@@ -193,11 +205,9 @@ Target.create "NuGet" (fun _ ->
             {p with
                 Configuration = configuration
                 OutputPath = __SOURCE_DIRECTORY__ @@ "bin" |> Some
-                // AdditionalArgs =
-                // [
-                //     release.NugetVersion |> sprintf "/p:PackageVersion=%s"
-                // ]
-            } |> DotNet.Options.withCustomParams (Some <| sprintf "/p:PackageVersion=%s"release.NugetVersion)
+                NoBuild = true
+            }
+            |> fCommonOptions
         )
     )
 )
@@ -208,10 +218,6 @@ Target.create "PublishNuget" (fun _ ->
             PublishUrl = "https://www.nuget.org"
             WorkingDir = "bin" })
 )
-
-
-// --------------------------------------------------------------------------------------
-// Generate the documentation
 
 // --------------------------------------------------------------------------------------
 // Generate the documentation
@@ -407,23 +413,17 @@ Target.create "BuildPackage" ignore
 Target.create "CI" ignore
 
 // --------------------------------------------------------------------------------------
-// Run all targets by default. Invoke 'build <Target>' to override
-
-Target.create "All" ignore
+// Run all targets by default. Invoke 'build target <Target>' to override
 
 open Fake.Core.TargetOperators
 
-"CleanDocs"
-    ==> "Clean"
+"Clean"
     ==> "AssemblyInfo"
     ==> "Build"
     ==> "CopyBinaries"
     ==> "RunTests"
-    ==> "GenerateReferenceDocs"
-    ==> "GenerateDocs"
     ==> "NuGet"
     ==> "BuildPackage"
-    ==> "All"
     ==> "CI"
 
 [""; "Debug"]
@@ -435,6 +435,9 @@ open Fake.Core.TargetOperators
     ==> "GenerateReferenceDocs"
     ==> "GenerateDocs"
     ==> "ReleaseDocs"
+
+"GenerateDocs"
+    ==> "CI"
 
 "CleanDocs"
     ==> "GenerateHelpDebug"
@@ -452,4 +455,4 @@ open Fake.Core.TargetOperators
     ==> "PublishNuget"
     ==> "Release"
 
-Target.runOrDefault "RunTests"
+Target.runOrDefault "BuildPackage"

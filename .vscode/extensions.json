@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "Ionide.ionide-fsharp",
-        "Ionide.ionide-fake",
         "Ionide.ionide-paket",
         "ms-vscode.csharp",
         "ymotongpoo.licenser"

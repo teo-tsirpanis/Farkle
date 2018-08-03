@@ -7,4 +7,4 @@ test: off
 artifacts:
 - path: docs.zip
 - path: bin/*.nupkg
-version: 1.0.0.{build}
+version: 3.1.0.{build}

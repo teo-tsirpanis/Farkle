@@ -23,6 +23,7 @@ group FakeBuild
   storage: none
 
   nuget Fake.Api.GitHub
+  nuget Fake.BuildServer.AppVeyor
   nuget Fake.Core.ReleaseNotes
   nuget Fake.Core.Target
   nuget Fake.Core.UserInput

@@ -3,13 +3,15 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Benchmarks
+namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
 open Farkle.Parser
 open System.Diagnostics
+open System.Runtime.InteropServices
 
 type InceptionBenchmark() =
+    let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
     // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
@@ -18,12 +20,13 @@ type InceptionBenchmark() =
     [<Benchmark>]
     member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ResultOrFail()
 
-    [<Benchmark(Baseline = true)>]
+    [<Benchmark>]
     member __.InceptionBenchmarkLazarus() =
         let args = ProcessStartInfo()
         args.CreateNoWindow <- false
         args.FileName <- "goldtrcc.exe"
         args.Arguments <- "inception.egt inception.grm out.txt"
         args.RedirectStandardOutput <- false
-        let proc = Process.Start args
-        proc.WaitForExit()
+        if isWindows64 then
+            let proc = Process.Start args
+            proc.WaitForExit()

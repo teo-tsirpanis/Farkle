@@ -25,8 +25,8 @@ type FarkleError =
 /// A reusable parser __and post-processor__, created for a specific grammar, and returning
 /// a specific object that describes an expression of the language of this grammar.
 /// This is the highest-level API, and the easiest-to-use one.
-/// 10: BTW, Farkle means: "FARkle Recognizes Known Languages Easily".
-/// 20: And "FARkle" means: (GOTO 10) 😁
+/// 10: BTW, Farkle means: "FArkle Recognizes Known Languages Easily".
+/// 20: And "FArkle" means: (GOTO 10) 😁
 /// 30: I guess you can't read this line. 😛
 // `fPostProcess` is hiding away the post-processor's two generic types.
 type RuntimeFarkle<'TResult> private (parser, fPostProcess) =

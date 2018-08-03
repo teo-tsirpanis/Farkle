@@ -187,8 +187,8 @@ let ThePostProcessor = PostProcessor.ofSeq transformers fusers
 
 We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a [`HybridStream<char>`](/reference/farkle-hybridstream.html), which is a custom type made for Farkle.
 
-10: By the way, Farkle means: "FARkle Recognizes Known Languages Easily".
-20: And "FARkle" means: (GOTO 10) 😁
+10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
+20: And "FArkle" means: (GOTO 10) 😁
 30: I guess you can't read this line. 😛
 
 A runtime Farkle is made of a grammar, a post-processor, and two functions to convert terminals and productions to our custom enum types.

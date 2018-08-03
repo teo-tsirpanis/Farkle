@@ -10,6 +10,7 @@ open Farkle.Parser
 open System.Diagnostics
 open System.Runtime.InteropServices
 
+[<MemoryDiagnoser>]
 type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 

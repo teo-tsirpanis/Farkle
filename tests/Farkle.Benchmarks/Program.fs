@@ -5,6 +5,7 @@
 
 open BenchmarkDotNet.Running
 open Farkle.Benchmarks
+open System.Reflection
 
 let benchmarks = [|
     yield typeof<InceptionBenchmark>
@@ -13,5 +14,5 @@ let benchmarks = [|
 
 [<EntryPoint>]
 let main argv =
-    benchmarks |> Array.iter (BenchmarkRunner.Run >> ignore)
+    BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()).Run(argv) |> ignore
     0

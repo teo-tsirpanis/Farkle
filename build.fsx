@@ -80,7 +80,7 @@ let testArguments = ""
 // Pattern specifying assemblies to be benchmarked
 let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = ""
+let benchmarkArguments = "-f *"
 
 let nugetPackages = !! "bin/*.nupkg"
 

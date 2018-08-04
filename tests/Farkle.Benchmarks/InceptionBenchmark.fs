@@ -11,10 +11,12 @@ open System.Diagnostics
 open System.Runtime.InteropServices
 
 [<MemoryDiagnoser>]
+/// This benchmark measures the performance of Farkle (in both lazy and eager mode),
+/// and a native Pascal GOLD Parser engine I had written in the past.
+/// Their task is to both read an EGT file describing the GOLD Meta Language, and then parse its source file.
 type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
-    // This benchmark parses the official GOLD Meta-Language grammar with itself.
     [<Benchmark>]
     member __.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ResultOrFail()
 

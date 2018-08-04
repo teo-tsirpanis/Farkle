@@ -8,12 +8,13 @@
 // --------------------------------------------------------------------------------------
 
 #r "paket: groupref FakeBuild //"
+open System.Text.RegularExpressions
 open Fake.Core
 
 #load "./.fake/build.fsx/intellisense.fsx"
 open Fake.Api
 open Fake.BuildServer
-open Fake.Core
+open Fake.Core.TargetOperators
 open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
@@ -80,7 +81,18 @@ let testArguments = ""
 // Pattern specifying assemblies to be benchmarked
 let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = "-f *"
+let benchmarkArguments runAll =
+    if runAll then
+        "-f *"
+    else
+        "-f Farkle.* --join"
+    |> sprintf "%s --memory true -e csv"
+
+let benchmarkReports =
+    benchmarkAssemblies
+    |> Seq.collect (fun x -> !!(Path.getDirectory x </> "BenchmarkDotNet.Artifacts/results/*-report.csv"))
+
+let benchmarkReportsDirectory = "performance/"
 
 let nugetPackages = !! "bin/*.nupkg"
 
@@ -190,9 +202,29 @@ Target.create "RunTests" (fun _ ->
     |> Seq.iter (fun x -> DotNet.exec (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x}) x testArguments |> ignore)
 )
 
-Target.create "Benchmark" (fun _ ->
-    benchmarkAssemblies
-    |> Seq.iter (fun x -> DotNet.exec (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x}) x benchmarkArguments |> ignore)
+[""; "All"]
+|> List.iter (fun x ->
+    let targetName = sprintf "Benchmark%s" x
+    let runAll = x <> ""
+    Target.create targetName (fun _ ->
+        benchmarkAssemblies
+        |> Seq.iter (fun x ->
+            DotNet.exec
+                (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x})
+                x (benchmarkArguments runAll) |> ignore))
+    
+    "CopyBinaries" ==> targetName |> ignore)
+
+Target.create "AddBenchmarkReport" (fun _ ->
+    let reportFileName x = benchmarkReportsDirectory </> (sprintf "%s.%s.csv" x nugetVersion)
+    Directory.ensure benchmarkReportsDirectory
+    Trace.logItems "Benchmark reports: " benchmarkReports
+    benchmarkReports
+    |> Seq.iter (fun x ->
+        let newFn = Regex.Replace(Path.GetFileName x, @"Farkle\.Benchmarks\.(\w+)-report\.csv", "$1") |> reportFileName
+        Shell.copyFile newFn x
+        File.applyReplace (String.replace ";" ",") newFn
+    )
 )
 
 // --------------------------------------------------------------------------------------
@@ -367,7 +399,6 @@ Target.create "ReleaseDocs" (fun _ ->
     Branches.push tempDocsDir
 )
 
-
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
@@ -415,8 +446,6 @@ Target.create "CI" ignore
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override
 
-open Fake.Core.TargetOperators
-
 "Clean"
     ==> "AssemblyInfo"
     ==> "Build"
@@ -444,8 +473,11 @@ open Fake.Core.TargetOperators
     ==> "GenerateReferenceDocsDebug"
     ==> "KeepRunning"
 
-"CopyBinaries"
-    ==> "Benchmark"
+"Benchmark"
+    ==> "AddBenchmarkReport"
+    ==> "Release"
+
+"Benchmark"
     ==> "CI"
 
 "ReleaseDocs"

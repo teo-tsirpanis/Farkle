@@ -3,13 +3,12 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Benchmarks
+namespace Benchmarks
 
 open BenchmarkDotNet.Attributes
 open FSharpx.Collections
-open BenchmarkDotNet.Attributes
-open BenchmarkDotNet.Attributes
 
+/// This benchmark measures which data structure is faster for indexed access.
 type RandomAccessBenchmark() =
 
     let mutable idx = 0

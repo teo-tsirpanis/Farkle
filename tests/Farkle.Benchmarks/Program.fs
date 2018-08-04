@@ -4,13 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 open BenchmarkDotNet.Running
-open Farkle.Benchmarks
 open System.Reflection
-
-let benchmarks = [|
-    yield typeof<InceptionBenchmark>
-    yield typeof<RandomAccessBenchmark>
-    |]
 
 [<EntryPoint>]
 let main argv =

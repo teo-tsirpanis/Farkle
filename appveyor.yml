@@ -5,7 +5,7 @@ build_script:
   - cmd: build.cmd target CI
 test: off
 artifacts:
-- path: docs.zip
-- path: bin/*.nupkg
-- path: bin/**/BenchmarkDotNet.Artifacts/results/*.csv
+  - path: docs.zip
+  - path: bin/*.nupkg
+  - path: bin/**/BenchmarkDotNet.Artifacts/results/*.md
 version: 3.1.0.{build}

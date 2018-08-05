@@ -23,7 +23,7 @@ type InceptionBenchmark() =
     [<Benchmark>]
     member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ResultOrFail()
 
-    [<Benchmark>]
+    [<Benchmark(Baseline=true)>]
     member __.InceptionBenchmarkLazarus() =
         let args = ProcessStartInfo()
         args.CreateNoWindow <- false

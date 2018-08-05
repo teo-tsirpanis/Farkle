@@ -133,7 +133,7 @@ let (|Fsproj|Csproj|Vbproj|Shproj|) (projFileName:string) =
     | f when f.EndsWith("shproj") -> Shproj
     | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
 
-// Generate assembly info files with the right version & up-to-date information
+Target.description "Generates assembly info files with the right version & up-to-date information"
 Target.create "AssemblyInfo" (fun _ ->
     let getAssemblyInfoAttributes projectName =
         [
@@ -160,9 +160,7 @@ Target.create "AssemblyInfo" (fun _ ->
         )
 )
 
-// Copies binaries from default VS location to expected bin folder
-// But keeps a subdirectory structure for each project in the
-// src folder to support multiple project outputs
+Target.description """Copies binaries from default VS location to expected bin folder, but keeps a subdirectory structure for each project in the src folder to support multiple project outputs"""
 Target.create "CopyBinaries" (fun _ ->
     Shell.cleanDir "bin"
     projects
@@ -180,23 +178,24 @@ let inline fCommonOptions x =
         release.Notes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
     ] |> DotNet.Options.withAdditionalArgs <| x
 
+Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
-    DotNet.exec id "clean" "" |> ignore
     Shell.cleanDirs ["bin"; "temp"]
 )
 
+Target.description "Cleans the output documentation directory"
 Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
+Target.description "Builds everything in Release mode"
 Target.create "Build" (fun _ ->
     DotNet.build (vsProjFunc >> fCommonOptions) solutionFile
 )
 
-// --------------------------------------------------------------------------------------
-// Run the unit tests using test runner
 
+Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
     testAssemblies
     |> Seq.iter (fun x -> DotNet.exec (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x}) x testArguments |> ignore)
@@ -206,6 +205,11 @@ Target.create "RunTests" (fun _ ->
 |> List.iter (fun x ->
     let targetName = sprintf "Benchmark%s" x
     let runAll = x <> ""
+
+    match runAll with
+    | true -> "Runs all benchmarks, even those that do not measure Farkle's performance"
+    | false -> "Runs all benchmarks"
+    |> Target.description
     Target.create targetName (fun _ ->
         benchmarkAssemblies
         |> Seq.iter (fun x ->
@@ -215,6 +219,7 @@ Target.create "RunTests" (fun _ ->
     
     "CopyBinaries" ==> targetName |> ignore)
 
+Target.description "Adds the benchmark results to the appropriate folder"
 Target.create "AddBenchmarkReport" (fun _ ->
     let reportFileName x = benchmarkReportsDirectory </> (sprintf "%s.%s.md" x nugetVersion)
     Directory.ensure benchmarkReportsDirectory
@@ -227,9 +232,7 @@ Target.create "AddBenchmarkReport" (fun _ ->
     )
 )
 
-// --------------------------------------------------------------------------------------
-// Build a NuGet package
-
+Target.description "Builds the NuGet packages"
 Target.create "NuGet" (fun _ ->
     sourceProjects
     |> Seq.iter (
@@ -244,7 +247,8 @@ Target.create "NuGet" (fun _ ->
     )
 )
 
-Target.create "PublishNuget" (fun _ ->
+Target.description "Publishes the NuGet packages"
+Target.create "PublishNuGet" (fun _ ->
     Paket.push(fun p ->
         {p with
             PublishUrl = "https://www.nuget.org"
@@ -371,6 +375,7 @@ let docs isRelease =
                 Template = docTemplate
                 ToolPath = toolpath})
 
+Target.description "Watches the documentation source folder and regenerates it on every file change"
 Target.create "KeepRunning" (fun _ ->
     use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->
         docs false
@@ -382,12 +387,17 @@ Target.create "KeepRunning" (fun _ ->
 )
 
 Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip")
+Target.description "Generates the website for the project, except for the API documentation - for release"
 Target.create "GenerateHelp" (fun _ -> docs true)
+Target.description "Generates the website for the project, except for the API documentation - for local use"
 Target.create "GenerateHelpDebug" (fun _ -> docs false)
 
+Target.description "Generates the API documentation for the project - for release"
 Target.create "GenerateReferenceDocs" (fun _ -> referenceDocs true)
+Target.description "Generates the API documentation for the project - for local use"
 Target.create "GenerateReferenceDocsDebug" (fun _ -> referenceDocs false)
 
+Target.description "Releases the documentation to GitHub Pages."
 Target.create "ReleaseDocs" (fun _ ->
     let tempDocsDir = "temp/gh-pages"
     Shell.cleanDir tempDocsDir
@@ -402,6 +412,7 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
+Target.description "Makes a draft GitHub release ready for final review. Before that, it publishes the documentation, the GitHub packages, and the benchmark report."
 Target.create "Release" (fun _ ->
     let user =
         match Environment.environVarOrDefault "github-user" String.Empty with
@@ -439,8 +450,7 @@ Target.create "Release" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target.create "BuildPackage" ignore
-
+Target.description "The CI generates the documentation, the NuGet packages, and uploads them as artifacts, along with the benchmark report."
 Target.create "CI" ignore
 
 // --------------------------------------------------------------------------------------
@@ -452,7 +462,6 @@ Target.create "CI" ignore
     ==> "CopyBinaries"
     ==> "RunTests"
     ==> "NuGet"
-    ==> "BuildPackage"
     ==> "CI"
 
 [""; "Debug"]
@@ -483,8 +492,8 @@ Target.create "CI" ignore
 "ReleaseDocs"
     ==> "Release"
 
-"BuildPackage"
-    ==> "PublishNuget"
+"NuGet"
+    ==> "PublishNuGet"
     ==> "Release"
 
-Target.runOrDefault "BuildPackage"
+Target.runOrDefault "NuGet"

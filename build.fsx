@@ -8,12 +8,11 @@
 // --------------------------------------------------------------------------------------
 
 #r "paket: groupref FakeBuild //"
-open System.Text.RegularExpressions
-open Fake.Core
 
 #load "./.fake/build.fsx/intellisense.fsx"
 open Fake.Api
 open Fake.BuildServer
+open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
 open Fake.IO
@@ -23,6 +22,7 @@ open Fake.Tools.Git
 
 open System
 open System.IO
+open System.Text.RegularExpressions
 
 // --------------------------------------------------------------------------------------
 // START TODO: Provide project-specific details below
@@ -86,11 +86,11 @@ let benchmarkArguments runAll =
         "-f *"
     else
         "-f Farkle.* --join"
-    |> sprintf "%s --memory true -e csv"
+    |> sprintf "%s --memory true -e github"
 
 let benchmarkReports =
     benchmarkAssemblies
-    |> Seq.collect (fun x -> !!(Path.getDirectory x </> "BenchmarkDotNet.Artifacts/results/*-report.csv"))
+    |> Seq.collect (fun x -> !!(Path.getDirectory x </> "BenchmarkDotNet.Artifacts/results/*-report-github.md"))
 
 let benchmarkReportsDirectory = "performance/"
 
@@ -216,12 +216,12 @@ Target.create "RunTests" (fun _ ->
     "CopyBinaries" ==> targetName |> ignore)
 
 Target.create "AddBenchmarkReport" (fun _ ->
-    let reportFileName x = benchmarkReportsDirectory </> (sprintf "%s.%s.csv" x nugetVersion)
+    let reportFileName x = benchmarkReportsDirectory </> (sprintf "%s.%s.md" x nugetVersion)
     Directory.ensure benchmarkReportsDirectory
     Trace.logItems "Benchmark reports: " benchmarkReports
     benchmarkReports
     |> Seq.iter (fun x ->
-        let newFn = Regex.Replace(Path.GetFileName x, @"Farkle\.Benchmarks\.(\w+)-report\.csv", "$1") |> reportFileName
+        let newFn = Regex.Replace(Path.GetFileName x, @"Farkle\.Benchmarks\.(\w+)-report-github\.md", "$1") |> reportFileName
         Shell.copyFile newFn x
         File.applyReplace (String.replace ";" ",") newFn
     )

@@ -46,7 +46,7 @@ with
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources.
-type GOLDParser(grammar) =
+type GOLDParser (grammar) =
 
     let newParser = GOLDParser.CreateParser grammar
 
@@ -58,7 +58,7 @@ type GOLDParser(grammar) =
     /// Trivial reductions are not trimmed.
     /// If there is a problem with the file, the constructor will throw an exception.
     new (egtFile) =
-        let grammar = egtFile |> EGT.ofFile |> returnOrFail |> RuntimeGrammar.ofGOLDGrammar
+        let grammar = egtFile |> EGT.ofFile |> returnOrFail :> RuntimeGrammar
         GOLDParser grammar
 
     /// Creates a parser that parses `input` based on the given `Grammar`, with the option to trim trivial reductions.

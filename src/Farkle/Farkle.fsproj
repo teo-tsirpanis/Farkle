@@ -39,6 +39,7 @@
     <Compile Include="EGTFile/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/RuntimeGrammar.fs" />
+    <Compile Include="Grammar/GOLDGrammar.fs" />
     <Compile Include="Grammar/GrammarReaderTypes.fs" />
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />

@@ -197,5 +197,5 @@ module internal GrammarReader =
         let! dfas = readDFAState fSymbols fCharSets |> mapMatching 'D'B |> lift (DFAState.toDFA initialDFA)
         let! lalrs = readLALRState fSymbols fProds |> mapMatching 'L'B |> lift (LALRState.toLALR initialLALR)
 
-        return! GOLDGrammar.create properties symbols charSets prods dfas lalrs groups tableCounts
+        return! GOLDParser.GOLDGrammar.create properties symbols charSets prods dfas lalrs groups tableCounts
     }

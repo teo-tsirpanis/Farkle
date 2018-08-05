@@ -69,5 +69,8 @@ module internal Internal =
         | x -> Parser.Continuing (makeMessage x, lazy (stepParser nextState))
 
     let createParser grammar input =
-        let state = ParserState.create (Tokenizer.create grammar.DFAStates grammar.Groups input) (LALRParser.create grammar.LALRStates)
+        let dfa = RuntimeGrammar.dfaStates grammar
+        let groups = RuntimeGrammar.groups grammar
+        let lalr = RuntimeGrammar.lalrStates grammar
+        let state = ParserState.create (Tokenizer.create dfa groups input) (LALRParser.create lalr)
         stepParser state

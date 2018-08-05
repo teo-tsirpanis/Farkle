@@ -24,7 +24,7 @@ let tests =
         // testIt<RuntimeGrammar> "runtime grammar"
 
         ptest "The inception grammar gets serialized" {
-            let rtg = "inception.egt" |> EGT.ofFile |> Result.map RuntimeGrammar.ofGOLDGrammar |> returnOrFail
+            let rtg = "inception.egt" |> EGT.ofFile |> returnOrFail
             let mashedRTG = serialize rtg
             let rtgAgain = deserialize mashedRTG |> returnOrFail
             Expect.equal rtgAgain rtg "The serialization of the inception grammar did not round-trip."

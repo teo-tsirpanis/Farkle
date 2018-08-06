@@ -6,6 +6,7 @@
 namespace Farkle.Grammar
 
 open Farkle
+open Farkle.Collections
 open Farkle.EGTFile
 open System
 
@@ -162,7 +163,7 @@ module Group =
     let getSymbolGroup groups x =
         (groups, x)
         ||> getSymbolGroupIndexed
-        |> Option.bind (flip Indexed.getfromList groups >> Trial.makeOption)
+        |> Option.bind (flip Indexed.getfromList groups >> makeOption)
 
 /// The basic building block of a grammar's syntax.
 /// It consists of a single nonterminal called the "head".

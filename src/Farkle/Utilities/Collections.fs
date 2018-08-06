@@ -12,9 +12,6 @@ open System.IO
 type ListError =
     /// The list reached its end.
     | EOF
-    /// How could you❗
-    /// I expected that the list would be single. 😭
-    | ExpectedSingle
     /// You tried to take a negative number of items from the list.
     | TookNegativeItems
 

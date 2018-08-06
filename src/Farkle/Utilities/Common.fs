@@ -8,8 +8,6 @@
 module Farkle.Common
 
 open System
-open System.Collections.Immutable
-open System.Collections.Generic
 
 [<Literal>]
 /// The line feed character.
@@ -47,58 +45,6 @@ let flip f x y = f y x
 
 /// Swaps the elements of a pair.
 let swap (x, y) = (y, x)
-
-/// Anything that can be indexed.
-type Indexable =
-    /// The object's index.
-    abstract Index: uint32
-
-module Indexable =
-    /// Gets the index of an `Indexable` object.
-    let index (x: #Indexable) = x.Index
-    /// Sorts `Indexable` items based on their index.
-    /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy index |> ImmutableArray.CreateRange
-
-/// A type-safe reference to a value based on its index.
-type [<Struct>] Indexed<'a> = Indexed of uint32
-
-/// Functions for working with `Indexed<'a>`.
-module Indexed =
-
-    open Operators.Checked
-
-    /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
-    let getfromList (i: Indexed<'a>) (list: #IReadOnlyList<'a>) =
-        let i = i |> (fun (Indexed i) -> i) |> int
-        if list.Count > i then
-            Ok list.[i]
-        else
-            Error <| uint32 i
-
-/// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
-type IndexableWrapper<'a> =
-    {
-        /// The item.
-        Item: 'a
-        /// And the index.
-        Index: uint32
-    }
-    interface Indexable with
-        member x.Index = x.Index
-
-/// Functions to work with `IndexableWrapper`s.
-module IndexableWrapper =
-
-    /// Creates an indexable wrapper
-    let create index item = {Index = index; Item = item}
-
-    /// Removes the indexable wrapper of an item.
-    let item {Item = x} = x
-
-    /// Sorts `Indexable` items based on their index and removes their wrapper.
-    /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy Indexable.index |> Seq.map item |> ImmutableArray.CreateRange
 
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position =
@@ -178,9 +124,8 @@ module String =
     let inline length x = x |> String.length |> uint32
 
 /// Functions to work with the `FSharp.Core.Result` type.
-/// I will propably make a PR to add them in the future.
 [<AutoOpen>]
-module Trial =
+module Result =
 
     let inline tee fOk fError =
         function

@@ -27,7 +27,7 @@ with
     /// The parsing log in human-friendly format. In case of a failure, the fatal message is _not_ included.
     member x.MessagesAsString = x.Messages |> List.map string
     /// A simple `Choice` with either the final `Reduction` or the fatal `ParseMessage` as a string.
-    member x.Simple = x |> ParseResult.Value |> fst |> Trial.tee Choice1Of2 (string >> Choice2Of2)
+    member x.Simple = x |> ParseResult.Value |> fst |> tee Choice1Of2 (string >> Choice2Of2)
     /// Returns the final `Reduction` or throws an exception.
     member x.ResultOrFail() = x.Simple |> Choice.tee2 id failwith
 

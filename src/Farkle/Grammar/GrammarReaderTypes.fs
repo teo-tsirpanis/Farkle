@@ -6,6 +6,7 @@
 namespace Farkle.Grammar
 
 open Farkle
+open Farkle.Collections
 
 type internal DFAState =
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.

@@ -6,6 +6,7 @@
 module ``SimpleMaths``
 
 open Farkle
+open Farkle.Collections
 open Farkle.Grammar
 open Farkle.PostProcessor
 open System

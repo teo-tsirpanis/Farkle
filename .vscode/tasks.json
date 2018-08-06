@@ -18,8 +18,7 @@
             "args": [
                 "target",
                 "CopyBinaries"
-            ],
-            "problemMatcher": "$msCompile"
+            ]
         }
     ]
 }

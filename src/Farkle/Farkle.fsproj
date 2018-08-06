@@ -30,7 +30,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities/Common.fs" />
     <Compile Include="Utilities/Monads.fs" />
-    <Compile Include="Utilities/Collections.fs" />
+    <Compile Include="Utilities/CollectionUtilities.fs" />
     <Compile Include="Utilities/IndexedCollections.fs" />
     <Compile Include="Utilities/HybridStream.fs" />
     <Compile Include="Utilities/Lazy.fs" />

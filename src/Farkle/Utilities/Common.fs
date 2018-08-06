@@ -7,8 +7,9 @@
 /// Some useful functions and types that could be used from many points from the library.
 module Farkle.Common
 
-open FSharpx.Collections
 open System
+open System.Collections.Immutable
+open System.Collections.Generic
 
 [<Literal>]
 /// The line feed character.
@@ -17,9 +18,6 @@ let LF = '\010'
 [<Literal>]
 /// The carriage return character.
 let CR = '\013'
-
-/// An active pattern recognizer for the `RandomAccessList`.
-let (|RALCons|RALNil|) = RandomAccessList.``|Cons|Nil|``
 
 /// Raises an exception.
 /// This function should be used when handling an impossible edge case is very tedious.
@@ -60,25 +58,23 @@ module Indexable =
     let index (x: #Indexable) = x.Index
     /// Sorts `Indexable` items based on their index.
     /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy index |> RandomAccessList.ofSeq
+    let collect x = x |> Seq.sortBy index |> ImmutableArray.CreateRange
 
 /// A type-safe reference to a value based on its index.
 type [<Struct>] Indexed<'a> = Indexed of uint32
 
 /// Functions for working with `Indexed<'a>`.
 module Indexed =
-    /// Converts an `Indexed` value to an actual object based on an index-retrieving function.
-    /// In case the index is not found, the function fails.
-    let get (i: Indexed<'a>) (f: _ -> 'a option) =
-        let (Indexed i) = i
-        match f i with
-        | Some x -> Ok x
-        | None -> Error i
+
+    open Operators.Checked
 
     /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
-    let getfromList i list =
-        let f i = RandomAccessList.tryNth (int i) list
-        get i f
+    let getfromList (i: Indexed<'a>) (list: #IReadOnlyList<'a>) =
+        let i = i |> (fun (Indexed i) -> i) |> int
+        if list.Count > i then
+            Ok list.[i]
+        else
+            Error <| uint32 i
 
 /// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
 type IndexableWrapper<'a> =
@@ -102,7 +98,7 @@ module IndexableWrapper =
 
     /// Sorts `Indexable` items based on their index and removes their wrapper.
     /// Duplicate indices do not raise an error.
-    let collect x = x |> Seq.sortBy Indexable.index |> Seq.map item |> RandomAccessList.ofSeq
+    let collect x = x |> Seq.sortBy Indexable.index |> Seq.map item |> ImmutableArray.CreateRange
 
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position =

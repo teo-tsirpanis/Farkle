@@ -7,7 +7,6 @@ namespace Farkle.Grammar
 
 open Farkle
 open Farkle.EGTFile
-open FSharpx.Collections
 open System
 
 /// A record that stores how many of each tables exist in an EGT file.

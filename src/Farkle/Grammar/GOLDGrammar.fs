@@ -8,7 +8,7 @@ namespace Farkle.Grammar.GOLDParser
 open Farkle
 open Farkle.EGTFile
 open Farkle.Grammar
-open FSharpx.Collections
+open System.Collections.Immutable
 
 /// A structure that describes a grammar - the logic under which a string is parsed.
 /// Its constructor is private; use functions like these from the `EGT` module to create one.
@@ -16,17 +16,17 @@ type GOLDGrammar =
     internal
         {
             _Properties: Properties
-            _CharSets: CharSet RandomAccessList
-            _Symbols: Symbol RandomAccessList
-            _Groups: Group RandomAccessList
-            _Productions: Production RandomAccessList
+            _CharSets: CharSet ImmutableArray
+            _Symbols: Symbol ImmutableArray
+            _Groups: Group ImmutableArray
+            _Productions: Production ImmutableArray
             _LALR: LALR
             _DFA: DFA
         }
     interface RuntimeGrammar with
-        member x.DFAStates = x._DFA
+        member x.DFA = x._DFA
         member x.Groups = x._Groups
-        member x.LALRStates = x._LALR
+        member x.LALR = x._LALR
 
 [<RequireQualifiedAccess>]
 module GOLDGrammar =
@@ -54,9 +54,9 @@ module GOLDGrammar =
     /// The `Production`s of the grammar.
     let productions {_Productions = x} = x
     /// The grammar's LALR state table.
-    let lalr {GOLDGrammar._LALR = x} = x
+    let lalr {_LALR = x} = x
     /// The grammar's DFA state table.
-    let dfa {GOLDGrammar._DFA = x} = x
+    let dfa {_DFA = x} = x
 
     let internal create properties symbols charSets productions dfaStates lalrStates groups tableCounts =
         let g =

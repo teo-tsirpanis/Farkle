@@ -5,10 +5,10 @@
 
 namespace Farkle.Grammar
 
-open FSharpx.Collections
 open Farkle
 open Farkle.EGTFile
 open Farkle.Monads
+open System.Collections.Immutable
 
 module internal GrammarReader =
 
@@ -182,7 +182,7 @@ module internal GrammarReader =
         let! properties = readProperty |> mapMatching 'p'B |> lift (Map.ofSeq >> Properties)
         let! tableCounts = readTableCounts |> mapMatching 't'B |> lift Seq.head
 
-        let! charSets = readCharSet |> mapMatching 'c'B |> lift (Seq.sortBy snd >> Seq.map fst >> RandomAccessList.ofSeq)
+        let! charSets = readCharSet |> mapMatching 'c'B |> lift (Seq.sortBy snd >> Seq.map fst >> ImmutableArray.CreateRange)
         let fCharSets = getIndexedfromList charSets
 
         let! symbols = readSymbol |> mapMatching 'S'B |> lift IndexableWrapper.collect

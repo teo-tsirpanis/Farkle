@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
-open FSharpx.Collections
 open System
 open System.Text
 

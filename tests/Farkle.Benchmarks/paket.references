@@ -1,3 +1,4 @@
 group Test
 FSharp.Core
 BenchmarkDotNet
+FSharpx.Collections

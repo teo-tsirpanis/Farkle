@@ -15,22 +15,22 @@ module internal EGTReader =
 
     module private Implementation =
     
-        let internal takeByte: StateResult<byte, _, _> = List.takeOne() |> mapFailure ListError
+        let takeByte: StateResult<byte, _, _> = List.takeOne() |> mapFailure ListError
 
-        let internal takeBytes count: StateResult<byte list, _, _> = count |> List.takeM |> mapFailure ListError
+        let takeBytes count: StateResult<byte list, _, _> = count |> List.takeM |> mapFailure ListError
 
-        let internal ensureLittleEndian x =
+        let ensureLittleEndian x =
             if System.BitConverter.IsLittleEndian then
                 x
             else
                 ((x &&& 0xffus) <<< 8) ||| ((x >>> 8) &&& 0xffus)
 
-        let internal takeUInt16 = sresult {
+        let takeUInt16 = sresult {
             let! bytes = takeBytes 2 <!> Array.ofList
             return System.BitConverter.ToUInt16(bytes, 0) |> ensureLittleEndian
         }
 
-        let internal takeString = sresult {
+        let takeString = sresult {
             let! len =
                 get
                 <!> Seq.pairs

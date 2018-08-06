@@ -100,13 +100,3 @@ module Seq =
                 yield! impl()
         }
         impl()
-
-/// Functions to work with `RandomAccessList`s.
-module RandomAccessList =
-
-    /// If the list in the state has only one element, it is returned.
-    /// Otherwise, `ExpectedSingle` is returned.
-    let exactlyOne =
-        function
-        | RALCons(x, RALNil) -> Ok x
-        | _ -> Error ExpectedSingle

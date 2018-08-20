@@ -2,3 +2,4 @@ group Test
 FSharp.Core
 BenchmarkDotNet
 FSharpx.Collections
+System.Collections.Immutable

@@ -48,3 +48,4 @@ group Test
   nuget Expecto
   nuget Expecto.FsCheck
   nuget FSharpx.Collections
+  nuget System.Collections.Immutable

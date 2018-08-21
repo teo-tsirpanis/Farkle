@@ -163,7 +163,7 @@ module Group =
     let getSymbolGroup groups x =
         (groups, x)
         ||> getSymbolGroupIndexed
-        |> Option.bind (flip Indexed.getfromList groups >> makeOption)
+        |> Option.map (SafeArray.retrieve groups)
 
 /// The basic building block of a grammar's syntax.
 /// It consists of a single nonterminal called the "head".
@@ -185,13 +185,17 @@ type Production =
 
 /// A DFA state. It defines the logic that produces `Tokens` out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
-type DFA =
-    {
-        Transition: Map<uint32,Map<CharSet, uint32>>
-        InitialState: uint32
-        AcceptStates: Map<uint32, Symbol>
-    }
-    member x.Length = x.Transition.Count
+type DFAState =
+    /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
+    | DFAAccept of index: uint32 * (Symbol * (CharSet * Indexed<DFAState>) list)
+    /// This state does not accept a symbol. If the state graph cannot be further walked and an accepting state has not been found, tokenizing fails.
+    | DFAContinue of index: uint32 * edges: (CharSet * Indexed<DFAState>) list
+    interface Indexable with
+        member x.Index =
+            match x with
+            | DFAAccept (x, _) -> x
+            | DFAContinue (x, _) -> x
+    override x.ToString() = x |> Indexable.index |> string
 
 /// An action to be taken by the parser.
 type LALRAction =
@@ -204,19 +208,25 @@ type LALRAction =
     /// When the parser encounters this action for a given symbol, the input text is accepted as correct and complete.
     | Accept
 
-type LALR =
+/// A LALR state. Many of them define the parsing logic of a `Grammar`.
+type LALRState =
     {
-        InitialState: uint32
-        States: Map<uint32, Map<Symbol, LALRAction>>
+        /// The index of the state.
+        Index: uint32
+        /// The available `LALRAction`s of the state.
+        /// Depending on the symbol, the next action to be taken is determined.
+        Actions:Map<Symbol, LALRAction>
     }
-    member x.Length = x.States.Count
+    interface Indexable with
+        member x.Index = x.Index
+    override x.ToString() = string x.Index
 
 module internal LALRAction =
 
     let create fProds index =
         function
         | 1us -> index |> Shift |> Ok
-        | 2us -> index |> Indexed |> fProds |> Result.map Reduce
+        | 2us -> index |> fProds |> Result.map Reduce
         | 3us -> index |> Goto |> Ok
         | 4us -> Accept |> Ok
         | _ -> fail UnknownEGTFile

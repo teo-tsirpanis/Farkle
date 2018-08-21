@@ -6,9 +6,10 @@
 namespace Farkle.Grammar.GOLDParser
 
 open Farkle
+open Farkle.Collections
 open Farkle.EGTFile
 open Farkle.Grammar
-open System.Collections.Immutable
+open System.Collections.Generic
 
 /// A structure that describes a grammar - the logic under which a string is parsed.
 /// Its constructor is private; use functions like these from the `EGT` module to create one.
@@ -16,12 +17,12 @@ type GOLDGrammar =
     internal
         {
             _Properties: Properties
-            _CharSets: CharSet ImmutableArray
-            _Symbols: Symbol ImmutableArray
-            _Groups: Group ImmutableArray
-            _Productions: Production ImmutableArray
-            _LALR: LALR
-            _DFA: DFA
+            _CharSets: SafeArray<CharSet>
+            _Symbols: SafeArray<Symbol>
+            _Groups: SafeArray<Group>
+            _Productions: SafeArray<Production>
+            _LALR: StateTable<LALRState>
+            _DFA: StateTable<DFAState>
         }
     interface RuntimeGrammar with
         member x.DFA = x._DFA
@@ -33,12 +34,12 @@ module GOLDGrammar =
 
     let private counts (x: GOLDGrammar) =
         {
-            SymbolTables = x._Symbols.Length |> uint16
-            CharSetTables = x._CharSets.Length |> uint16
-            ProductionTables = x._Productions.Length |> uint16
-            DFATables = x._DFA.Length |> uint16
-            LALRTables = x._LALR.Length |> uint16
-            GroupTables = x._Groups.Length |> uint16
+            SymbolTables = x._Symbols.Count |> uint16
+            CharSetTables = x._CharSets.Count |> uint16
+            ProductionTables = x._Productions.Count |> uint16
+            DFATables = (x._DFA :> IReadOnlyCollection<_>).Count |> uint16
+            LALRTables = (x._LALR :> IReadOnlyCollection<_>).Count |> uint16
+            GroupTables = x._Groups.Count |> uint16
         }
 
     /// The `Properties` of the grammar.

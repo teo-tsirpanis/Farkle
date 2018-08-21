@@ -29,15 +29,6 @@ module Indexed =
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
 
-    /// Converts an `Indexed` value to an actual object lased on the index in a specified list.
-    [<System.Obsolete("Use SafeArray.getUnsafe")>]
-    let getfromList (i: Indexed<'a>) (list: #IReadOnlyList<'a>) =
-        let i = i |> (fun (Indexed i) -> i) |> int
-        if list.Count > i then
-            Ok list.[i]
-        else
-            Error <| uint32 i
-
 /// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
 type IndexableWrapper<'a> =
     {
@@ -81,11 +72,12 @@ type SafeArray<'a> = private SafeArray of 'a[]
         member x.Indexed
             with get (i: uint32) =
                 match i with
-                | i when i < uint32 x.Count -> i |> Indexed.create<'a> |> Ok
-                | i -> Error i
+                | i when i < uint32 x.Count -> i |> Indexed.create<'a> |> Some
+                | _ -> None
+        /// Returns an item from an integer index, or fails if it is out of bounds.
         member x.ItemUnsafe
             with get i =
-                x.Indexed i |> Result.map (fun i -> x.Item i)
+                x.Indexed i |> Option.map (fun i -> x.Item i)
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.Value :> IEnumerable).GetEnumerator()
@@ -106,6 +98,26 @@ module SafeArray =
     /// Creates a `SafeArray` from `IndexableWrapper`s that are sorted and unwrapped.
     /// No special care is done for discontinuous or duplicate indices.
     let ofIndexableWrapper x = x |> Seq.sortBy Indexable.index |> Seq.map IndexableWrapper.item |> ofSeq
-    let getIndex (x: SafeArray<_>) i = x.Indexed i
+    /// Gets the item at the given position the `Indexed` object points to.
+    /// Because it does not accept an arbitrary integer, it is less likely to accidentially fail.
     let retrieve (x: SafeArray<_>) i = x.Item i
+    /// Returns an `Indexed` object that points to the position at the given index, or fails if it is out of bounds.
+    let getIndex (x: SafeArray<_>) i = x.Indexed i
+    /// Returns an item from an integer index, or fails if it is out of bounds.
     let getUnsafe (x: SafeArray<_>) i = x.ItemUnsafe i
+
+type StateTable<'a> =
+    {
+        InitialState: 'a
+        States: SafeArray<'a>
+    }
+    with
+        interface IEnumerable with
+            /// [omit]
+            member x.GetEnumerator() = (x.States :> IEnumerable).GetEnumerator()
+        interface IEnumerable<'a> with
+            /// [omit]
+            member x.GetEnumerator() = (x.States :> seq<_>).GetEnumerator()
+        interface IReadOnlyCollection<'a> with
+            /// [omit]
+            member x.Count = x.States.Count

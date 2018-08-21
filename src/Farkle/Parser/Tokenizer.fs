@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Aether
 open Aether.Operators
 open Farkle
+open Farkle.Collections
 open Farkle.Grammar
 open Farkle.HybridStream
 open Farkle.Monads
@@ -53,33 +54,27 @@ module internal Tokenizer =
             do! consumeBuffer (n - 1u)
     }
 
-    // Pascal code (ported from Java 💩): 72 lines of begin/ends, mutable hell and unreasonable garbage.
-    // F# code: 22 lines of clear, reasonable and type-safe code. I am so confident and would not even test it!
-    // This is a 30.5% decrease of code and a 30.5% increase of productivity. Why do __You__ still code in C# (☹)? Or Java (😠)?
-    let private tokenizeDFA {Transition = trans; InitialState = initialState; AcceptStates = accStates} {CurrentPosition = pos; InputStream = input} =
+    let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos
-        let rec impl currPos currState lastAccept lastAccPos x =
-            let newPos = currPos + 1u
+        let lookupEdges edges x = edges |> List.tryFind (fst >> flip RangeSet.contains x) |> Option.map (snd >> SafeArray.retrieve states)
+        let rec impl currPos x (currState: DFAState) lastAccept =
             match x with
             | HSNil ->
                 match lastAccept with
-                | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
+                | Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym
                 | None -> newToken EndOfFile ""
             | HSCons(x, xs) ->
                 let newDFA =
-                    trans.TryFind(currState)
-                    |> Option.bind (fun m -> m |> Map.toSeq |> Seq.tryFind (fun (cs, _) -> RangeSet.contains cs x))
-                    |> Option.map snd
-                match newDFA with
-                | Some dfa ->
-                    match accStates.TryFind(dfa) with
-                    | Some sym -> impl newPos dfa (Some sym) currPos xs
-                    | None -> impl newPos dfa lastAccept lastAccPos xs
-                | None ->
-                    match lastAccept with
-                    | Some x -> input |> getLookAheadBuffer lastAccPos |> newToken x
-                    | None -> input |> getLookAheadBuffer 1u |> newToken Error
-        impl 1u initialState None 0u input
+                    currState.Edges
+                    |> List.tryFind (fst >> flip RangeSet.contains x)
+                    |> Option.map (snd >> SafeArray.retrieve states)
+                let impl = impl (currPos + 1u) xs
+                match currState, newDFA, lastAccept with
+                | DFAAccept (_, (acceptSymbol, _)), Some newDFA, _ -> impl newDFA (Some (acceptSymbol, currPos))
+                | DFAContinue _, Some newDFA, lastAccept -> impl newDFA lastAccept
+                | _, None, Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym
+                | _, None, None -> input |> getLookAheadBuffer 1u |> newToken Error
+        impl 1u input initialState None
 
     let private produceToken dfa groups = state {
         let rec impl() = state {

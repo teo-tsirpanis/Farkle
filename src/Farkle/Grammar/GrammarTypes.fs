@@ -194,6 +194,11 @@ type DFAState =
             match x with
             | DFAAccept (x, _) -> x
             | DFAContinue (x, _) -> x
+    /// Returns the edges of the DFA state.
+    member x.Edges =
+        match x with
+        | DFAAccept (_, (_, e)) -> e
+        | DFAContinue (_, e) -> e
     override x.ToString() = x |> Indexable.index |> string
 
 /// An action to be taken by the parser.

@@ -5,9 +5,8 @@
 
 namespace Farkle.Collections
 
-open System.Collections.Generic
-open System.Collections.Immutable
 open System.Collections
+open System.Collections.Generic
 
 /// Anything that can be indexed.
 type Indexable =
@@ -19,12 +18,12 @@ module Indexable =
     let index (x: #Indexable) = x.Index
 
 /// A type-safe reference to a value based on its index.
-type [<Struct>] Indexed<'a> = Indexed of uint32
+type [<Struct>] Indexed<'a> = private Indexed of int
     with
         member x.Value = x |> (fun (Indexed x) -> x)
 
 /// Functions for working with `Indexed<'a>`.
-module Indexed =
+module private Indexed =
 
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
@@ -70,14 +69,17 @@ type SafeArray<'a> = private SafeArray of 'a[]
 
         /// Returns an `Indexed` object that points to the position at the given index, or fails if it is out of bounds.
         member x.Indexed
-            with get (i: uint32) =
+            with get i =
                 match i with
-                | i when i < uint32 x.Count -> i |> Indexed.create<'a> |> Some
+                | i when i < x.Count -> i |> Indexed.create<'a> |> Some
                 | _ -> None
         /// Returns an item from an integer index, or fails if it is out of bounds.
         member x.ItemUnsafe
             with get i =
                 x.Indexed i |> Option.map (fun i -> x.Item i)
+        /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
+        member x.TryFindIndex f =
+            x.Value |> Array.tryFindIndex f |> Option.map Indexed.create<'a>
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.Value :> IEnumerable).GetEnumerator()
@@ -105,6 +107,8 @@ module SafeArray =
     let getIndex (x: SafeArray<_>) i = x.Indexed i
     /// Returns an item from an integer index, or fails if it is out of bounds.
     let getUnsafe (x: SafeArray<_>) i = x.ItemUnsafe i
+    /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
+    let tryFindIndex (x: SafeArray<_>) f = x.TryFindIndex f
 
 type StateTable<'a> =
     {

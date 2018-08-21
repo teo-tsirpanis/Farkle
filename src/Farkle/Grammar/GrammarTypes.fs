@@ -153,10 +153,9 @@ module Group =
 
     /// Gets the index of the group in a list tha has the specified symbol either its start, or end, or container symbol.
     /// Such index might not exist; in this case, `None` is returned.
-    let getSymbolGroupIndexed groups x: Indexed<Group> option =
-        groups
-        |> Seq.tryFindIndex (fun {ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
-        |> Option.map (uint32 >> Indexed)
+    let getSymbolGroupIndexed groups x =
+        SafeArray.tryFindIndex groups
+            (fun {Group.ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
 
     /// Like `getSymbolGroupIndexed`, but returns a `Group`, instead of an index.
     /// Such group might not exist; in this case, `None` is returned.

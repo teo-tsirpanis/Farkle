@@ -1,5 +1,6 @@
 #### 3.1.0
 * The grammars can be serialized and embedded inside code. No more EGT files are necessary at runtime!
+* The reader for GOLD Parser Enhanced Grammar Tables is now based on a Binary Reader, and is faster and more lightweight. __To be confirmed__
 
 #### 3.0.0 - 15-07-2018
 * Introduced the RuntimeFarkle API. This allows the user to both parse a string and convert its Abstract Syntax Tree into any type easily.

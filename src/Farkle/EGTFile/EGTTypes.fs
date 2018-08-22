@@ -11,10 +11,6 @@ open Farkle
 type EGTReadError =
     /// A [sequence error](Farkle.SeqError) did happen.
     | ListError of ListError
-    /// Boolean values should only be `0` or `1`.
-    /// If they are not, thet it's undefined by the documentation.
-    /// But we will call it an error.
-    | InvalidBoolValue of byte
     /// An invalid entry code was encountered.
     /// Valid entry codes are these letters: `EbBIS`.
     | InvalidEntryCode of byte
@@ -36,11 +32,12 @@ type EGTReadError =
     | FileNotExist of string
     /// The item at the given index of a list was not found.
     | IndexNotFound of uint32
+    /// Unexpected end of file.
+    | UnexpectedEOF
     with
         override x.ToString() =
             match x with
             | ListError x -> sprintf "List error: %O" x
-            | InvalidBoolValue x -> sprintf "Invalid boolean value (neither 0 nor 1): %d." x
             | InvalidEntryCode x -> x |> char |> sprintf "Invalid entry code: '%c'."
             | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
             | UnterminatedString -> "String terminator was not found."
@@ -53,6 +50,7 @@ type EGTReadError =
                 + " and save the tables as \"Enhanced Grammar tables (Version 5.0)\"."
             | FileNotExist x -> sprintf "The given file (%s) does not exist." x
             | IndexNotFound x -> sprintf "The index %d was not found in a list." x
+            | UnexpectedEOF -> "Unexpected end of file."
 
 /// An entry of an EGT file.
 type Entry =

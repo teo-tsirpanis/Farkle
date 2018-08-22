@@ -28,6 +28,13 @@ module private Indexed =
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
 
+    /// Creates an `Indexed object that represents a `SafeArray` that will be created in the future, but has a known length.
+    let internal createWithKnownLength16<'a> length i =
+        if i * 1us <= length then
+            i |> uint32 |> create<'a> |> Some
+        else
+            None
+
 /// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
 type IndexableWrapper<'a> =
     {
@@ -42,8 +49,11 @@ type IndexableWrapper<'a> =
 /// Functions to work with `IndexableWrapper`s.
 module IndexableWrapper =
 
-    /// Creates an indexable wrapper
+    /// Creates an indexable wrapper.
     let create index item = {Index = index; Item = item}
+
+    /// Creates an indexable wrapper with an unsigned 16-bit index.
+    let create16 (index: uint16) item = {Index = uint32 index; Item = item}
 
     /// Removes the indexable wrapper of an item.
     let item {Item = x} = x

@@ -18,7 +18,8 @@
             "args": [
                 "target",
                 "CopyBinaries"
-            ]
+            ],
+            "problemMatcher": []
         }
     ]
 }

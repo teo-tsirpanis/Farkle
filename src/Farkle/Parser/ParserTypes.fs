@@ -169,7 +169,7 @@ type TokenizerFeedback =
 /// A tokenizer. What is it actually? An infinite stream of tokens (and some other information).
 /// It is infinite because the architecture currently requires it.
 /// But after one point, the tokenizer returns just EOFs forever.
-type Tokenizer = Lazy<EndlessProcess<TokenizerFeedback>>
+type Tokenizer = EndlessProcess<TokenizerFeedback>
 
 /// A LALR parser. It takes a `Token`, and gives an `LALRResult`.
 /// It is a stateful operation; the type of this state

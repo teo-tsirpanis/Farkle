@@ -16,12 +16,14 @@ module internal Internal =
 
     let private tokenize = state {
         let! tokenizer = getOptic ParserState.TheTokenizer_
-        match tokenizer.Value with
-        | EndlessProcess (x, xs) ->
-            do! setOptic ParserState.TheTokenizer_ xs
-            do! setOptic ParserState.CurrentPosition_ x.CurrentPosition
-            do! setOptic ParserState.IsGroupStackEmpty_ x.IsGroupStackEmpty
-            return x.NewToken
+        match tokenizer with
+        | EndlessProcess x ->
+            match x with
+            | ExtraTopLevelOperators.Lazy (x, xs) ->
+                do! setOptic ParserState.TheTokenizer_ xs
+                do! setOptic ParserState.CurrentPosition_ x.CurrentPosition
+                do! setOptic ParserState.IsGroupStackEmpty_ x.IsGroupStackEmpty
+                return x.NewToken
     }
 
     let private parseLALR token = state {

@@ -138,4 +138,4 @@ module internal Tokenizer =
         return {NewToken = token; IsGroupStackEmpty = isGroupStackEmpty; CurrentPosition = currentPosition}
     }
 
-    let create dfa groups input: Tokenizer = lazy (EndlessProcess.ofState (produceToken dfa groups) (TokenizerState.Create input))
+    let create dfa groups input: Tokenizer = EndlessProcess.ofState (produceToken dfa groups) (TokenizerState.Create input)

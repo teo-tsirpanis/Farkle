@@ -6,7 +6,7 @@
 namespace Farkle
 
 /// Like `LazyFeedbackProcess`, except that this one never ends.
-type EndlessProcess<'T> = EndlessProcess of 'T * EndlessProcess<'T> Lazy
+type EndlessProcess<'T> = EndlessProcess of ('T * EndlessProcess<'T>) Lazy
 
 /// Functions for working with `EndlessProcess<'T>`.
 module EndlessProcess =
@@ -17,5 +17,5 @@ module EndlessProcess =
     let ofState stateM initialState =
         let rec impl currState =
             let result, nextState = State.run stateM currState
-            EndlessProcess (result, lazy(impl nextState))
+            EndlessProcess (lazy(result, impl nextState))
         impl initialState

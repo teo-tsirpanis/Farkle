@@ -18,7 +18,7 @@ module Indexable =
     let index (x: #Indexable) = x.Index
 
 /// A type-safe reference to a value based on its index.
-type [<Struct>] Indexed<'a> = private Indexed of int
+type [<Struct>] Indexed<'a> = private Indexed of uint32
     with
         member x.Value = x |> (fun (Indexed x) -> x)
 
@@ -71,7 +71,7 @@ type SafeArray<'a> = private SafeArray of 'a[]
         member x.Indexed
             with get i =
                 match i with
-                | i when i < x.Count -> i |> Indexed.create<'a> |> Some
+                | i when i < uint32 x.Count -> i |> Indexed.create<'a> |> Some
                 | _ -> None
         /// Returns an item from an integer index, or fails if it is out of bounds.
         member x.ItemUnsafe
@@ -79,7 +79,7 @@ type SafeArray<'a> = private SafeArray of 'a[]
                 x.Indexed i |> Option.map (fun i -> x.Item i)
         /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
         member x.TryFindIndex f =
-            x.Value |> Array.tryFindIndex f |> Option.map Indexed.create<'a>
+            x.Value |> Array.tryFindIndex f |> Option.map (uint32 >> Indexed.create<'a>)
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.Value :> IEnumerable).GetEnumerator()

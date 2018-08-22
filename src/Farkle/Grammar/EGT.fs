@@ -25,5 +25,6 @@ module EGT =
         let path = Path.GetFullPath path
         if path |> File.Exists |> not then
             do! path |> FileNotExist |> Result.Error
-        return! path |> File.OpenRead |> ofStream
+        use stream = File.OpenRead path
+        return! ofStream stream
     }

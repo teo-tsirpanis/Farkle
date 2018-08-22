@@ -7,8 +7,8 @@ module Farkle.Tests.GrammarTests
 
 open Expecto
 open Expecto.Logging
-open Farkle.EGTFile
 open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 
 let logger = Log.create "Farkle tests"
 

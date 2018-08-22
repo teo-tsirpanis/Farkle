@@ -7,8 +7,8 @@ namespace Farkle.Grammar.GOLDParser
 
 open Farkle
 open Farkle.Collections
-open Farkle.EGTFile
 open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 open System.Collections.Generic
 
 /// A structure that describes a grammar - the logic under which a string is parsed.

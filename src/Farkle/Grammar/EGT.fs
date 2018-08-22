@@ -6,7 +6,7 @@
 namespace Farkle.Grammar
 
 open Farkle
-open Farkle.EGTFile
+open Farkle.Grammar.GOLDParser
 open System.IO
 
 /// Functions to convert EGT files to make a grammar.

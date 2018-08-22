@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.EGTFile
+namespace Farkle.Grammar.GOLDParser
 
 open Farkle
 open System.IO

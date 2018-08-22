@@ -7,7 +7,8 @@ namespace Farkle.Grammar
 
 open Farkle
 open Farkle.Collections
-open Farkle.EGTFile
+open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 open Farkle.Monads
 open System.Collections.Immutable
 

@@ -36,8 +36,8 @@
     <Compile Include="Utilities/Lazy.fs" />
     <Compile Include="Utilities/Set.fs" />
     <Compile Include="RuntimeHelpers/Serializer.fs" />
-    <Compile Include="EGTFile/EGTTypes.fs" />
-    <Compile Include="EGTFile/EGTReader.fs" />
+    <Compile Include="Grammar/EGTTypes.fs" />
+    <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/RuntimeGrammar.fs" />
     <Compile Include="Grammar/GOLDGrammar.fs" />

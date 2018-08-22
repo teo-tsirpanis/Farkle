@@ -204,16 +204,16 @@ type DFAState =
 /// An action to be taken by the parser.
 type LALRAction =
     /// This action indicates the parser to shift to the specified `LALRState`..
-    | Shift of uint32
+    | Shift of Indexed<LALRState>
     /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production
     /// This action is used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    | Goto of uint32
+    | Goto of Indexed<LALRState>
     /// When the parser encounters this action for a given symbol, the input text is accepted as correct and complete.
     | Accept
 
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
-type LALRState =
+and LALRState =
     {
         /// The index of the state.
         Index: uint32
@@ -234,3 +234,8 @@ module internal LALRAction =
         | 3us -> index |> Goto |> Ok
         | 4us -> Accept |> Ok
         | _ -> fail UnknownEGTFile
+
+/// Functions to work with `LALRState`s.
+module LALRState =
+    /// Returns all LALR actions to take when the corresponding symbol is encountered.
+    let actions {Actions = actions} = actions

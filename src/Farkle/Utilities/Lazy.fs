@@ -15,7 +15,7 @@ module EndlessProcess =
 
     /// Creates an `EndlessProcess<'T>` by continuously running the given `State` with the given initial state.
     let ofState stateM initialState =
-        let rec impl currState =
+        let rec impl currState = lazy (
             let result, nextState = State.run stateM currState
-            EndlessProcess (lazy(result, impl nextState))
+            result, impl nextState) |> EndlessProcess
         impl initialState

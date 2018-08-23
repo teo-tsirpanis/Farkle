@@ -38,7 +38,7 @@
             "program": "Farkle.Tests.dll",
             "args": [
                 "--filter",
-                "Grammar tests/A new"
+                "Parser tests/A simple"
             ],
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,

@@ -27,9 +27,9 @@ module internal GrammarReader =
             | [] when allowEmpty -> Some []
             | x -> impl x
 
-        let readProperty index =
+        let readProperty =
             function
-            | [String name; String value] -> (name, value) |> IndexableWrapper.create index |> Some
+            | [String name; String value] -> (name, value) |> Some
             | _ -> None
 
         let readTableCounts =
@@ -46,7 +46,7 @@ module internal GrammarReader =
                     }
             | _ -> None
 
-        let readCharSet index =
+        let readCharSet _ =
             let readRanges =
                 function
                 | UInt16 start :: UInt16 theEnd :: xs ->
@@ -60,7 +60,6 @@ module internal GrammarReader =
                 :: Empty :: ranges ->
                 ranges
                 |> readRanges
-                |> Option.map (IndexableWrapper.create index)
             | _ -> None
 
         let readSymbol index =
@@ -73,7 +72,6 @@ module internal GrammarReader =
             | [String name; UInt16 5us] -> GroupEnd name |> Some
             | [String _; UInt16 7us] -> Error |> Some
             | _ -> None
-            >> Option.map (IndexableWrapper.create index)
 
         let readGroup fSymbol fGroup index =
             let readNestedGroups =
@@ -170,29 +168,67 @@ module internal GrammarReader =
             >> Option.bind (function | [x] -> Some x | _ -> None)
             >> Option.bind f
 
-        let assignIndexedElement magicCode f array =
-            let impl opt (Record entries) =
+        let assignIndexedElements magicCode f length =
+            let impl opt entries =
                 match opt, entries with
-                | Some (), UInt16 index :: xs -> maybe {
+                | Some array, UInt16 index :: xs -> maybe {
                     let! x = f (uint32 index) xs
                     let index = int index
                     if index < Array.length array then
                         do Array.set array index x
+                        return array
                     else
                         return! None
                     }
                 | _ -> None
+            let array = length * 1us |> int |> Array.zeroCreate
             Map.tryFind magicCode
             >> Option.defaultValue []
-            >> List.fold (impl) (Some ())
+            >> List.fold (impl) (Some array)
+            >> Option.map SafeArray.ofSeq
 
-        let collectEntries =
-            List.map (fun (Record x) -> match x with | Byte magicCode :: xs -> Some (magicCode, Record xs) | _ -> None)
+        let collectRecords =
+            List.map (function | Byte magicCode :: xs -> Some (magicCode, xs) | _ -> None)
             >> List.allSome
             >> Option.map (List.groupBy fst >> List.map (fun (mc, x) -> mc , List.map snd x) >> Map.ofList)
 
         [<Literal>]
         let EGTHeader = "GOLD Parser Tables/5.0"
 
+    open Implementation
 
-    let makeGrammar {Header = header; Records = records} = failwith "To be rewritten"
+    let makeGrammar {Header = header; Records = records} =
+        match header with
+        | EGTHeader -> maybe {
+            let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
+
+            let! properties =
+                records
+                |> Map.tryFind 'p'B
+                |> Option.defaultValue [] // We don't care if there are no properties.
+                |> List.map readProperty
+                |> List.allSome
+                |> Option.map (Map.ofList >> Properties)
+
+            let! tableCounts = getSingleElement 't'B readTableCounts records
+
+            let! charSets = assignIndexedElements 'c'B readCharSet tableCounts.CharSetTables records
+            let fCharSet = uint32 >> SafeArray.getUnsafe charSets
+
+            let! symbols = assignIndexedElements 'S'B readSymbol tableCounts.SymbolTables records
+            let fSymbol = uint32 >> SafeArray.getUnsafe symbols
+
+            let fGroup = Indexed.createWithKnownLength16 tableCounts.GroupTables
+            let! groups = assignIndexedElements 'g'B (readGroup fSymbol fGroup) tableCounts.GroupTables records
+
+            let! productions = assignIndexedElements 'R'B (readProduction fSymbol) tableCounts.ProductionTables records
+            let fProduction = uint32 >> SafeArray.getUnsafe productions
+
+            let fDFA = Indexed.createWithKnownLength16 tableCounts.DFATables
+            let! dfaStates = assignIndexedElements 'D'B (readDFAState fCharSet fSymbol fDFA) tableCounts.DFATables records
+
+            let fLALR = Indexed.createWithKnownLength16 tableCounts.LALRTables
+            let! lalrStates = assignIndexedElements 'L'B (readLALRState fSymbol fProduction fLALR) tableCounts.LALRTables records
+
+            return! None
+        }

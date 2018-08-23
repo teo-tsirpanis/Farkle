@@ -23,7 +23,7 @@ type [<Struct>] Indexed<'a> = private Indexed of uint32
         member x.Value = x |> (fun (Indexed x) -> x)
 
 /// Functions for working with `Indexed<'a>`.
-module private Indexed =
+module Indexed =
 
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
@@ -79,17 +79,17 @@ type SafeArray<'a> = private SafeArray of 'a[]
 
         /// Returns an `Indexed` object that points to the position at the given index, or fails if it is out of bounds.
         member x.Indexed
-            with get i =
+            with get i: Indexed<'a> option =
                 match i with
-                | i when i < uint32 x.Count -> i |> Indexed.create<'a> |> Some
+                | i when i < uint32 x.Count -> i |> Indexed |> Some
                 | _ -> None
         /// Returns an item from an integer index, or fails if it is out of bounds.
         member x.ItemUnsafe
             with get i =
                 x.Indexed i |> Option.map (fun i -> x.Item i)
         /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
-        member x.TryFindIndex f =
-            x.Value |> Array.tryFindIndex f |> Option.map (uint32 >> Indexed.create<'a>)
+        member x.TryFindIndex f: Indexed<'a> option =
+            x.Value |> Array.tryFindIndex f |> Option.map (uint32 >> Indexed)
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.Value :> IEnumerable).GetEnumerator()

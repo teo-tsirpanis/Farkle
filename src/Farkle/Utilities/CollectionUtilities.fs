@@ -63,6 +63,14 @@ module List =
 
     let hasOneItem = function | [_] -> true | _ -> false
 
+    /// Returns a list with all its elements existing.
+    let allSome x =
+        let f x xs =
+            match x, xs with
+            | Some x, Some xs -> Some (x :: xs)
+            | _ -> None
+        List.foldBack f x (Some [])
+
 /// Functions to work with sequences.
 module Seq =
 

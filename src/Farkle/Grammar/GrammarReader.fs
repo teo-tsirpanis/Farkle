@@ -165,5 +165,34 @@ module internal GrammarReader =
             | Empty :: xs -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
             | _ -> None
 
+        let getSingleElement magicCode f =
+            Map.tryFind magicCode
+            >> Option.bind (function | [x] -> Some x | _ -> None)
+            >> Option.bind f
+
+        let assignIndexedElement magicCode f array =
+            let impl opt (Record entries) =
+                match opt, entries with
+                | Some (), UInt16 index :: xs -> maybe {
+                    let! x = f (uint32 index) xs
+                    let index = int index
+                    if index < Array.length array then
+                        do Array.set array index x
+                    else
+                        return! None
+                    }
+                | _ -> None
+            Map.tryFind magicCode
+            >> Option.defaultValue []
+            >> List.fold (impl) (Some ())
+
+        let collectEntries =
+            List.map (fun (Record x) -> match x with | Byte magicCode :: xs -> Some (magicCode, Record xs) | _ -> None)
+            >> List.allSome
+            >> Option.map (List.groupBy fst >> List.map (fun (mc, x) -> mc , List.map snd x) >> Map.ofList)
+
+        [<Literal>]
+        let EGTHeader = "GOLD Parser Tables/5.0"
+
 
     let makeGrammar {Header = header; Records = records} = failwith "To be rewritten"

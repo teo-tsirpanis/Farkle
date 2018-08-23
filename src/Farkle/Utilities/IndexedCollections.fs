@@ -28,7 +28,7 @@ module Indexed =
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
 
-    /// Creates an `Indexed object that represents a `SafeArray` that will be created in the future, but has a known length.
+    /// Creates an `Indexed` object that represents a `SafeArray` that will be created in the future, but has a known length.
     let internal createWithKnownLength16<'a> length i =
         if i * 1us <= length then
             i |> uint32 |> create<'a> |> Some

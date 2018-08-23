@@ -111,9 +111,13 @@ module internal GrammarReader =
                 }
             | _ -> None
 
-        let readInitialStates =
+        let readInitialStates fDFA fLALR =
             function
-            | [UInt16 dfa; UInt16 lalr] -> (dfa, lalr) |> Some
+            | [UInt16 dfa; UInt16 lalr] -> maybe {
+                let! dfa = fDFA dfa
+                let! lalr = fLALR lalr
+                return dfa, lalr
+                }
             | _ -> None
 
         let readDFAState fCharSet fSymbol fDFA index =
@@ -195,40 +199,45 @@ module internal GrammarReader =
         [<Literal>]
         let EGTHeader = "GOLD Parser Tables/5.0"
 
-    open Implementation
+        let makeGrammar {Header = header; Records = records} =
+            match header with
+            | EGTHeader -> maybe {
+                let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
 
-    let makeGrammar {Header = header; Records = records} =
-        match header with
-        | EGTHeader -> maybe {
-            let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
+                let! properties =
+                    records
+                    |> Map.tryFind 'p'B
+                    |> Option.defaultValue [] // We don't care if there are no properties.
+                    |> List.map readProperty
+                    |> List.allSome
+                    |> Option.map (Map.ofList >> Properties)
 
-            let! properties =
-                records
-                |> Map.tryFind 'p'B
-                |> Option.defaultValue [] // We don't care if there are no properties.
-                |> List.map readProperty
-                |> List.allSome
-                |> Option.map (Map.ofList >> Properties)
+                let! tableCounts = getSingleElement 't'B readTableCounts records
 
-            let! tableCounts = getSingleElement 't'B readTableCounts records
+                let! charSets = assignIndexedElements 'c'B readCharSet tableCounts.CharSetTables records
+                let fCharSet = uint32 >> SafeArray.getUnsafe charSets
 
-            let! charSets = assignIndexedElements 'c'B readCharSet tableCounts.CharSetTables records
-            let fCharSet = uint32 >> SafeArray.getUnsafe charSets
+                let! symbols = assignIndexedElements 'S'B readSymbol tableCounts.SymbolTables records
+                let fSymbol = uint32 >> SafeArray.getUnsafe symbols
 
-            let! symbols = assignIndexedElements 'S'B readSymbol tableCounts.SymbolTables records
-            let fSymbol = uint32 >> SafeArray.getUnsafe symbols
+                let fGroup = Indexed.createWithKnownLength16 tableCounts.GroupTables
+                let! groups = assignIndexedElements 'g'B (readGroup fSymbol fGroup) tableCounts.GroupTables records
 
-            let fGroup = Indexed.createWithKnownLength16 tableCounts.GroupTables
-            let! groups = assignIndexedElements 'g'B (readGroup fSymbol fGroup) tableCounts.GroupTables records
+                let! productions = assignIndexedElements 'R'B (readProduction fSymbol) tableCounts.ProductionTables records
+                let fProduction = uint32 >> SafeArray.getUnsafe productions
 
-            let! productions = assignIndexedElements 'R'B (readProduction fSymbol) tableCounts.ProductionTables records
-            let fProduction = uint32 >> SafeArray.getUnsafe productions
+                let fDFA = Indexed.createWithKnownLength16 tableCounts.DFATables
+                let fLALR = Indexed.createWithKnownLength16 tableCounts.LALRTables
+                let! initialDFA, initialLALR = getSingleElement 'I'B (readInitialStates fDFA fLALR) records
 
-            let fDFA = Indexed.createWithKnownLength16 tableCounts.DFATables
-            let! dfaStates = assignIndexedElements 'D'B (readDFAState fCharSet fSymbol fDFA) tableCounts.DFATables records
+                let! dfaStates = assignIndexedElements 'D'B (readDFAState fCharSet fSymbol fDFA) tableCounts.DFATables records
+                let dfaStateTable = {InitialState = dfaStates.Item initialDFA; States = dfaStates}
 
-            let fLALR = Indexed.createWithKnownLength16 tableCounts.LALRTables
-            let! lalrStates = assignIndexedElements 'L'B (readLALRState fSymbol fProduction fLALR) tableCounts.LALRTables records
+                let! lalrStates = assignIndexedElements 'L'B (readLALRState fSymbol fProduction fLALR) tableCounts.LALRTables records
+                let lalrStateTable = {InitialState = lalrStates.Item initialLALR; States = lalrStates}
 
-            return! None
-        }
+                return GOLDGrammar.create properties symbols charSets productions dfaStateTable lalrStateTable groups
+                }
+            | _ -> None
+
+    let read = Implementation.makeGrammar >> failIfNone UnknownEGTFile

@@ -14,7 +14,7 @@ open System.Collections.Generic
 /// A structure that describes a grammar - the logic under which a string is parsed.
 /// Its constructor is private; use functions like these from the `EGT` module to create one.
 type GOLDGrammar =
-    internal
+    private
         {
             _Properties: Properties
             _CharSets: SafeArray<CharSet>
@@ -59,8 +59,7 @@ module GOLDGrammar =
     /// The grammar's DFA state table.
     let dfa {_DFA = x} = x
 
-    let internal create properties symbols charSets productions dfaStates lalrStates groups tableCounts =
-        let g =
+    let internal create properties symbols charSets productions dfaStates lalrStates groups =
             {
                 _Properties = properties
                 _Symbols = symbols
@@ -70,8 +69,3 @@ module GOLDGrammar =
                 _LALR = lalrStates
                 _Groups = groups
             }
-        let counts = counts g
-        if counts = tableCounts then
-            Ok g
-        else
-            fail UnknownEGTFile

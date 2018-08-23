@@ -27,9 +27,9 @@ module internal GrammarReader =
             | [] when allowEmpty -> Some []
             | x -> impl x
 
-        let readProperty fIndex =
+        let readProperty index =
             function
-            | [UInt16 index; String name; String value] -> (name, value) |> IndexableWrapper.create16 index |> Some
+            | [String name; String value] -> (name, value) |> IndexableWrapper.create index |> Some
             | _ -> None
 
         let readTableCounts =
@@ -46,7 +46,7 @@ module internal GrammarReader =
                     }
             | _ -> None
 
-        let readCharSet =
+        let readCharSet index =
             let readRanges =
                 function
                 | UInt16 start :: UInt16 theEnd :: xs ->
@@ -56,35 +56,32 @@ module internal GrammarReader =
                 |> readToEnd false
                 >> Option.map RangeSet.concat
             function
-            | UInt16 index :: UInt16 _unicodePlane :: UInt16 _rangeCount
+            | UInt16 _unicodePlane :: UInt16 _rangeCount
                 :: Empty :: ranges ->
                 ranges
                 |> readRanges
-                |> Option.map (IndexableWrapper.create16 index)
+                |> Option.map (IndexableWrapper.create index)
             | _ -> None
 
-        let readSymbol =
+        let readSymbol index =
             function
-            | UInt16 index :: xs ->
-                match xs with
-                | [String name; UInt16 0us] -> Nonterminal (uint32 index, name) |> Some
-                | [String name; UInt16 1us] -> Terminal (uint32 index, name) |> Some
-                | [String name; UInt16 2us] -> Noise name |> Some
-                | [String _ ; UInt16 3us] -> EndOfFile |> Some
-                | [String name; UInt16 4us] -> GroupStart name |> Some
-                | [String name; UInt16 5us] -> GroupEnd name |> Some
-                | [String _; UInt16 7us] -> Error |> Some
-                | _ -> None
-                |> Option.map (IndexableWrapper.create16 index)
+            | [String name; UInt16 0us] -> Nonterminal (uint32 index, name) |> Some
+            | [String name; UInt16 1us] -> Terminal (uint32 index, name) |> Some
+            | [String name; UInt16 2us] -> Noise name |> Some
+            | [String _ ; UInt16 3us] -> EndOfFile |> Some
+            | [String name; UInt16 4us] -> GroupStart name |> Some
+            | [String name; UInt16 5us] -> GroupEnd name |> Some
+            | [String _; UInt16 7us] -> Error |> Some
             | _ -> None
+            >> Option.map (IndexableWrapper.create index)
 
-        let readGroup fSymbol fGroup =
+        let readGroup fSymbol fGroup index =
             let readNestedGroups =
                 (function | UInt16 x :: xs -> x |> fGroup |> Option.map (fun x -> x, xs) | _ -> None)
                 |> readToEnd true
                 >> Option.map set
             function
-            | UInt16 index :: String name :: UInt16 containerIndex :: UInt16 startIndex :: UInt16 endIndex :: UInt16 advanceMode :: UInt16 endingMode :: Empty :: UInt16 _nestingCount :: xs -> maybe {
+            | String name :: UInt16 containerIndex :: UInt16 startIndex :: UInt16 endIndex :: UInt16 advanceMode :: UInt16 endingMode :: Empty :: UInt16 _nestingCount :: xs -> maybe {
                 let! containerSymbol = fSymbol containerIndex
                 let! startSymbol = fSymbol startIndex
                 let! endSymbol = fSymbol endIndex
@@ -93,7 +90,7 @@ module internal GrammarReader =
                 let! nesting = readNestedGroups xs
                 return {
                     Name = name
-                    Index = uint32 index
+                    Index = index
                     ContainerSymbol = containerSymbol
                     StartSymbol = startSymbol
                     EndSymbol = endSymbol
@@ -104,15 +101,15 @@ module internal GrammarReader =
                 }
             | _ -> None
 
-        let readProduction fSymbol =
+        let readProduction fSymbol index =
             let readChildrenSymbols =
                 (function | UInt16 x :: xs -> x |> fSymbol |> Option.map (fun x -> x, xs) | _ -> None)
                 |> readToEnd true
             function
-            | UInt16 index :: UInt16 headIndex :: Empty :: xs -> maybe {
+            | UInt16 headIndex :: Empty :: xs -> maybe {
                 let! headSymbol = fSymbol headIndex
                 let! symbols = readChildrenSymbols xs
-                return {Index = uint32 index; Head = headSymbol; Handle = symbols}
+                return {Index = index; Head = headSymbol; Handle = symbols}
                 }
             | _ -> None
 
@@ -121,7 +118,7 @@ module internal GrammarReader =
             | [UInt16 dfa; UInt16 lalr] -> (dfa, lalr) |> Some
             | _ -> None
 
-        let readDFAState fCharSet fSymbol fDFA =
+        let readDFAState fCharSet fSymbol fDFA index =
             let readDFAEdges =
                 function
                 | UInt16 charSetIndex :: UInt16 targetIndex :: Empty :: xs -> maybe {
@@ -132,19 +129,18 @@ module internal GrammarReader =
                 | _ -> None
                 |> readToEnd false
             function
-            | UInt16 index :: Boolean false :: UInt16 _ :: Empty :: xs ->
+            | Boolean false :: UInt16 _ :: Empty :: xs ->
                 xs
                 |> readDFAEdges
-                |> Option.map (fun edges -> (uint32 index, edges) |> DFAContinue)
-            | UInt16 index :: Boolean true :: UInt16 acceptIndex :: Empty :: xs -> maybe {
+                |> Option.map (fun edges -> (index, edges) |> DFAContinue)
+            | Boolean true :: UInt16 acceptIndex :: Empty :: xs -> maybe {
                 let! edges = readDFAEdges xs
                 let! acceptSymbol = fSymbol acceptIndex
-                let index = uint32 index
                 return DFAAccept (index, (acceptSymbol, edges))
                 }
             | _ -> None
 
-        let readLALRState fSymbol fProduction fLALR =
+        let readLALRState fSymbol fProduction fLALR index =
             let readLALRAction =
                 function
                 | UInt16 symbolIndex :: xs -> maybe {
@@ -166,7 +162,7 @@ module internal GrammarReader =
                 |> readToEnd false
                 >> Option.map Map.ofSeq
             function
-            | UInt16 index :: Empty :: xs -> readLALRAction xs |> Option.map (fun actions -> {Index = uint32 index; Actions = actions})
+            | Empty :: xs -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
             | _ -> None
 
 

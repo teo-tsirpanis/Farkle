@@ -15,11 +15,11 @@ open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
+open Fake.DotNet.Testing
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
-
 open System
 open System.IO
 open System.Text.RegularExpressions
@@ -198,7 +198,7 @@ Target.create "Build" (fun _ ->
 Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
     testAssemblies
-    |> Seq.iter (fun x -> DotNet.exec (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x}) x testArguments |> ignore)
+    |> Expecto.run id
 )
 
 [""; "All"]

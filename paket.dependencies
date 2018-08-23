@@ -34,6 +34,7 @@ group FakeBuild
   nuget Fake.DotNet.Cli
   nuget Fake.DotNet.FsFormatting
   nuget Fake.DotNet.Paket
+  nuget Fake.DotNet.Testing.Expecto
   nuget Fake.Tools.Git
 
 group Test

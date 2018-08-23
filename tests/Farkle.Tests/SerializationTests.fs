@@ -9,7 +9,7 @@ open Expecto
 open Farkle
 open Farkle.RuntimeHelpers.Serialization
 open Generators
-open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 
 let testIt<'a when 'a: equality> typeName = testProperty (sprintf "Serializing %ss works and the other way around" typeName) (fun (x: 'a) ->
     let mashedX = serialize x
@@ -21,9 +21,9 @@ let tests =
     testList "Serializer tests" [
         testIt<string> "string"
         testIt<int> "32-bit integer"
-        // testIt<RuntimeGrammar> "runtime grammar"
+        testIt<GOLDGrammar> "GOLD parser grammar"
 
-        ptest "The inception grammar gets serialized" {
+        test "The inception grammar gets serialized" {
             let rtg = "inception.egt" |> EGT.ofFile |> returnOrFail
             let mashedRTG = serialize rtg
             let rtgAgain = deserialize mashedRTG |> returnOrFail

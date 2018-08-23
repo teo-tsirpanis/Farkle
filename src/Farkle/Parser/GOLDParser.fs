@@ -7,7 +7,7 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Monads.StateResult
-open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 open Farkle.Parser.Internal
 open FSharpx.Collections

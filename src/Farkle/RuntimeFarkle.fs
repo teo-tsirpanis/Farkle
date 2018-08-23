@@ -50,7 +50,7 @@ type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
     /// Also, in case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     static member CreateFromFile<'TSymbol,'TProduction,'TResult> fileName fSymbol fProduction postProcessor =
         fileName
-        |> Grammar.EGT.ofFile
+        |> EGT.ofFile
         |> Result.mapError (EGTReadError)
         |> tee
             (fun g -> RuntimeFarkle.Create<'TSymbol,'TProduction,'TResult> g fSymbol fProduction postProcessor)

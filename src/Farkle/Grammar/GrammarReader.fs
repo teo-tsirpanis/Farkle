@@ -29,7 +29,7 @@ module internal GrammarReader =
 
         let readProperty =
             function
-            | [String name; String value] -> (name, value) |> Some
+            | [UInt16 _index; String name; String value] -> (name, value) |> Some
             | _ -> None
 
         let readTableCounts =

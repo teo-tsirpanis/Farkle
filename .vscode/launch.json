@@ -38,7 +38,7 @@
             "program": "Farkle.Tests.dll",
             "args": [
                 "--filter",
-                "Grammar tests/A legacy"
+                "Grammar tests/A new"
             ],
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
@@ -49,10 +49,7 @@
             "type": "coreclr",
             "request": "launch",
             "program": "Farkle.Tests.dll",
-            "args": [
-                "--filter",
-                "Grammar tests/A legacy"
-            ],
+            "args": [],
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"

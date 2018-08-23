@@ -4,10 +4,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build",
-            "identifier": "build",
+            "label": "Build, test and make NuGet packages",
+            "identifier": "build-full",
             "type": "process",
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "presentation": {
                 "reveal": "silent"
             },
@@ -15,10 +18,17 @@
             "windows": {
                 "command": "./build.cmd"
             },
-            "args": [
-                "target",
-                "CopyBinaries"
-            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build the tests for .NET Core 2.1 in a debug configuration",
+            "identifier": "dotnet-build",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "command": "dotnet build ./tests/Farkle.Tests/Farkle.tests.fsproj",
             "problemMatcher": []
         }
     ]

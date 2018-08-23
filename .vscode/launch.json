@@ -5,7 +5,7 @@
             "name": "Farklei",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "dotnet-build",
             "program": "Farklei.dll",
             "args": [
                 "--egtfile",
@@ -21,7 +21,7 @@
             "name": "Farkle.Calculator",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "dotnet-build",
             "program": "Farkle.Calculator.dll",
             "args": [
                 "5"
@@ -34,10 +34,13 @@
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/Farkle.Tests.dll",
-            "args": [],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/",
+            "preLaunchTask": "dotnet-build",
+            "program": "Farkle.Tests.dll",
+            "args": [
+                "--filter",
+                "Grammar tests/A legacy"
+            ],
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -45,9 +48,12 @@
             "name": ".NET Core Launch (console, no build)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/Farkle.Tests.dll",
-            "args": [],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.0/",
+            "program": "Farkle.Tests.dll",
+            "args": [
+                "--filter",
+                "Grammar tests/A legacy"
+            ],
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },

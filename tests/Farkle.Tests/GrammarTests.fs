@@ -16,11 +16,8 @@ let logger = Log.create "Farkle tests"
 let tests =
     testList "Grammar tests" [
         test "A legacy CGT grammar fails to be read." {
-            let x =
-                match EGT.ofFile "legacy.cgt" with
-                | Result.Ok _ -> []
-                | Result.Error x -> [x]
-            Expect.equal [ReadACGTFile] x "Reading the grammar did not fail"
+            let x = EGT.ofFile "legacy.cgt"
+            Expect.equal x (Result.Error ReadACGTFile) "Reading the grammar did not fail"
         }
 
         test "A new grammar is successfuly read" {

@@ -197,11 +197,14 @@ module internal GrammarReader =
             >> Option.map (List.groupBy fst >> List.map (fun (mc, x) -> mc , List.map snd x) >> Map.ofList)
 
         [<Literal>]
+        let CGTHeader = "GOLD Parser Tables/1.0"
+        [<Literal>]
         let EGTHeader = "GOLD Parser Tables/5.0"
 
         let makeGrammar {Header = header; Records = records} =
             match header with
-            | EGTHeader -> maybe {
+            | CGTHeader -> Result.Error ReadACGTFile
+            | EGTHeader -> failIfNone UnknownEGTFile <| maybe {
                 let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
 
                 let! properties =
@@ -238,6 +241,6 @@ module internal GrammarReader =
 
                 return GOLDGrammar.create properties symbols charSets productions dfaStateTable lalrStateTable groups
                 }
-            | _ -> None
+            | _ -> Result.Error UnknownEGTFile
 
-    let read = Implementation.makeGrammar >> failIfNone UnknownEGTFile
+    let read = Implementation.makeGrammar

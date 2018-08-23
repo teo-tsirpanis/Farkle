@@ -78,20 +78,6 @@ type Symbol =
             | Terminal _ -> literalFormat x.Name
             | _ -> sprintf "(%s)" x.Name
 
-module internal Symbol =
-
-    let create name index =
-        function
-        | 0us -> Ok <| Nonterminal (index, name)
-        | 1us -> Ok <| Terminal (index, name)
-        | 2us -> Ok <| Noise name
-        | 3us -> Ok EndOfFile
-        | 4us -> Ok <| GroupStart name
-        | 5us -> Ok <| GroupEnd name
-        // 6 is deprecated
-        | 7us -> Ok Error
-        | _ -> fail UnknownEGTFile
-
 /// A type indicating how a group advances.
 type AdvanceMode =
     /// The group advances by one token at a time.
@@ -99,28 +85,12 @@ type AdvanceMode =
     /// The group advances by one character at a time.
     | Character
 
-module internal AdvanceMode =
-
-    let create =
-        function
-        | 0us -> Ok Token
-        | 1us -> Ok Character
-        | _ -> fail UnknownEGTFile
-
 /// A type indicating how the ending symbol of a group is handled.
 type EndingMode =
     /// The ending symbol is preserved on the input queue.
     | Open
     /// The ending symbol is consumed.
     | Closed
-
-module internal EndingMode =
-
-    let create =
-        function
-        | 0us -> Ok Open
-        | 1us -> Ok Closed
-        | _ -> fail UnknownEGTFile
 
 /// A structure that describes a lexical group.
 /// In GOLD, lexical groups are used for situations where a number of recognized tokens should be organized into a single "group".
@@ -224,16 +194,6 @@ and LALRState =
     interface Indexable with
         member x.Index = x.Index
     override x.ToString() = string x.Index
-
-module internal LALRAction =
-
-    let create fProds index =
-        function
-        | 1us -> index |> Shift |> Ok
-        | 2us -> index |> fProds |> Result.map Reduce
-        | 3us -> index |> Goto |> Ok
-        | 4us -> Accept |> Ok
-        | _ -> fail UnknownEGTFile
 
 /// Functions to work with `LALRState`s.
 module LALRState =

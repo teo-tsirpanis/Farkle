@@ -35,29 +35,6 @@ module Indexed =
         else
             None
 
-/// An item and its index. A thin layer that makes items `Indexable` without cluttering their type definitions.
-type IndexableWrapper<'a> =
-    {
-        /// The item.
-        Item: 'a
-        /// And the index.
-        Index: uint32
-    }
-    interface Indexable with
-        member x.Index = x.Index
-
-/// Functions to work with `IndexableWrapper`s.
-module IndexableWrapper =
-
-    /// Creates an indexable wrapper.
-    let create index item = {Index = index; Item = item}
-
-    /// Creates an indexable wrapper with an unsigned 16-bit index.
-    let create16 (index: uint16) item = {Index = uint32 index; Item = item}
-
-    /// Removes the indexable wrapper of an item.
-    let item {Item = x} = x
-
 /// An immutable array that exhibits good random access performance and safe index access.
 /// It intentionally lacks methods such as `map` and `filter`. This type should be at the final stage of data manipulation.
 /// It is advised to work with sequences before, just until the end.
@@ -107,9 +84,6 @@ module SafeArray =
     /// Creates a `SafeArray` from the given sequence of indexable objects that are sorted by their index.
     /// No special care is done for discontinuous or duplicate indices.
     let ofIndexables x = x |> Seq.sortBy Indexable.index |> ofSeq
-    /// Creates a `SafeArray` from `IndexableWrapper`s that are sorted and unwrapped.
-    /// No special care is done for discontinuous or duplicate indices.
-    let ofIndexableWrapper x = x |> Seq.sortBy Indexable.index |> Seq.map IndexableWrapper.item |> ofSeq
     /// Gets the item at the given position the `Indexed` object points to.
     /// Because it does not accept an arbitrary integer, it is less likely to accidentially fail.
     let retrieve (x: SafeArray<_>) i = x.Item i

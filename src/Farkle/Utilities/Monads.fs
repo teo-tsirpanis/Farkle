@@ -69,33 +69,6 @@ module State =
 
     let state = StateBuilder()
 
-    // "I will not use imperative code in F# again 😭"
-    // |> Seq.replicate 100
-    // |> Seq.iter (printfn"%s")
-    let repeatM f times = state {
-        let buf = new ResizeArray<_>(times + 0)
-        for i = 0 to times - 1 do
-            let! x = f
-            buf.Add x
-        return buf :> seq<_>
-    }
-
-    // "I will not use imperative code in F# again 😭"
-    // |> Seq.replicate 100
-    // |> Seq.iter (printfn"%s")
-    let whileM f action =
-        let buf = ResizeArray<_>()
-        let rec impl() = state {
-            let! x = f
-            if x then
-                let! y = action
-                buf.Add y
-                return! impl()
-            else
-                return buf :> seq<_>
-        }
-        impl()
-
     open Aether
 
     let inline getOptic optic = state {
@@ -129,9 +102,9 @@ module StateResult =
         fun s0 ->
             match m s0 with
             | (Ok x, s1) ->
-               let (StateResult (State q)) = f x
-               let newResult, newState = q s1
-               newResult, newState
+                let (StateResult (State q)) = f x
+                let newResult, newState = q s1
+                newResult, newState
             | (Error x, s) -> Error x, s
         |> State |> StateResult
     let inline (>>=) result f = bind f result
@@ -189,35 +162,6 @@ module StateResult =
                     x.Delay(fun () -> body enum.Current)))
 
     let sresult = StateResultBuilder()
-
-    // "I will not use imperative code in F# again 😭"
-    // |> Seq.replicate 100
-    // |> Seq.iter (printfn"%s")
-    let repeatM f times = sresult {
-        let buf = new ResizeArray<_>(times + 0)
-        for i = 0 to times - 1 do
-            let! x = f
-            buf.Add x
-        return buf :> seq<_>
-    }
-
-    // "I will not use imperative code in F# again 😭"
-    // |> Seq.replicate 100
-    // |> Seq.iter (printfn"%s")
-    let whileM f action =
-        let buf = ResizeArray<_>()
-        let rec impl() = sresult {
-            let! x = f
-            if x then
-                let! y = action
-                buf.Add y
-                return! impl()
-            else
-                return buf :> seq<_>
-        }
-        impl()
-
-    let whileFull f = whileM (get <!> (List.isEmpty >> not)) f
 
     open Aether
 

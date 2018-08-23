@@ -9,8 +9,6 @@ open Farkle
 
 /// What can go wrong with reading an EGT file.
 type EGTReadError =
-    /// A [sequence error](Farkle.SeqError) did happen.
-    | ListError of ListError
     /// An invalid entry code was encountered.
     /// Valid entry codes are these letters: `EbBIS`.
     | InvalidEntryCode of byte
@@ -37,7 +35,6 @@ type EGTReadError =
     with
         override x.ToString() =
             match x with
-            | ListError x -> sprintf "List error: %O" x
             | InvalidEntryCode x -> x |> char |> sprintf "Invalid entry code: '%c'."
             | InvalidEntryType x -> sprintf "Unexpected entry type. Expected a %s." x
             | UnterminatedString -> "String terminator was not found."

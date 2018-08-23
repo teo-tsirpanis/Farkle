@@ -50,25 +50,6 @@ module HybridStream =
 
     let splitAt count = either (fun x -> LL.split x count |> (fun (res, rest) -> res, Lazy rest)) (L.splitAt count >> (fun (res, rest) -> res, Eager rest))
 
-    let takeOne() = sresult {
-        let! s = get
-        match s with
-        | HSNil -> return! fail EOF
-        | HSCons (x, rest) ->
-            do! put rest
-            return x
-    }
-
-    let takeM count = sresult {
-        match count with
-        | x when x < 0 -> return! fail TookNegativeItems
-        | 0 -> return []
-        | count ->
-            let! x, rest = get <!> splitAt count
-            do! put rest
-            return x
-    }
-
     let rec takeSafe n =
         function
         | _ when n = 0u -> []

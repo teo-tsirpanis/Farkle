@@ -197,9 +197,9 @@ module internal GrammarReader =
             >> Option.map (List.groupBy fst >> List.map (fun (mc, x) -> mc , List.map snd x) >> Map.ofList)
 
         [<Literal>]
-        let CGTHeader = "GOLD Parser Tables/1.0"
+        let CGTHeader = "GOLD Parser Tables/v1.0"
         [<Literal>]
-        let EGTHeader = "GOLD Parser Tables/5.0"
+        let EGTHeader = "GOLD Parser Tables/v5.0"
 
         let makeGrammar {Header = header; Records = records} =
             match header with

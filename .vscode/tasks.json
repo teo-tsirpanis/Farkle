@@ -21,14 +21,14 @@
             "problemMatcher": []
         },
         {
-            "label": "Build the tests for .NET Core 2.1 in a debug configuration",
+            "label": "Build the tests in a debug configuration",
             "identifier": "dotnet-build",
             "type": "shell",
             "group": "build",
             "presentation": {
                 "reveal": "silent"
             },
-            "command": "dotnet build ./tests/Farkle.Tests/Farkle.tests.fsproj",
+            "command": "dotnet build",
             "problemMatcher": []
         }
     ]

@@ -69,21 +69,18 @@ module internal Tokenizer =
                     |> List.tryFind (fst >> flip RangeSet.contains x)
                     |> Option.map (snd >> SafeArray.retrieve states)
                 let impl = impl (currPos + 1u) xs
-                match currState, newDFA, lastAccept with
+                match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | DFAContinue _, Some newDFA, lastAccept ->
+                | Some (DFAContinue _ as newDFA), lastAccept ->
                     impl newDFA lastAccept
-                // We can go further. The DFA has just accepted a new symbol; we take not of it.
-                | DFAAccept (_, (acceptSymbol, _)), Some newDFA, _ ->
+                // We can go further. The DFA has just accepted a new symbol; we take note of it.
+                | Some (DFAAccept (_, (acceptSymbol, _)) as newDFA), _ ->
                     impl newDFA (Some (acceptSymbol, currPos))
-                // We can't go further, but we don't care because the DFA has just accepted a new symbol; we finished!
-                | DFAAccept (_, (acceptSymbol, _)), None, None ->
-                    input |> getLookAheadBuffer (currPos - 1u) |> newToken acceptSymbol
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | _, None, Some (sym, pos) ->
+                | None, Some (sym, pos) ->
                     input |> getLookAheadBuffer pos |> newToken sym
                 // We can't go firther, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | _, None, None ->
+                | None, None ->
                     input |> getLookAheadBuffer 1u |> newToken Error
         impl 1u input initialState None
 

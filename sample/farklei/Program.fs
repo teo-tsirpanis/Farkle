@@ -28,7 +28,7 @@ let main argv =
     let print = if showOutput then printfn "%s" else ignore
     result.MessagesAsString |> Seq.iter print
     match result.Simple with
-    | Choice1Of2 x ->
+    | Ok x ->
         print "Reduction"
         x |> Reduction.drawReductionTree |> print
         print "AST"
@@ -36,6 +36,6 @@ let main argv =
         print "Simplified AST"
         x |> AST.ofReduction |> AST.simplify |> AST.drawASCIITree |> print
         0
-    | Choice2Of2 x ->
+    | Result.Error x ->
         print x
         1

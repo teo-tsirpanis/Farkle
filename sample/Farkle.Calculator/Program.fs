@@ -4,12 +4,13 @@
 // https://opensource.org/licenses/MIT
 
 open Farkle
+open Farkle.Parser
 open SimpleMaths
 open System
 
 let prettyPrintResult =
     function
-    | Ok x -> sprintf "%d" x
+    | Ok x -> sprintf "%O" x
     | Error x -> sprintf "%O" x
 
 let interactive () =
@@ -33,5 +34,11 @@ let interactive () =
 let main args =
     match args with
     | [| |] -> interactive()
+    | [|"--ast"; x|] ->
+        RuntimeFarkle.asGOLDParser TheRuntimeFarkle
+        |> Result.bind (fun gp -> gp.ParseString(x).Value |> fst |> Result.mapError ParseError)
+        |> Result.map (AST.ofReduction >> AST.drawASCIITree)
+        |> prettyPrintResult
+        |> Console.WriteLine
     | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

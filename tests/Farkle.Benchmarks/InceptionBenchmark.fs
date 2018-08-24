@@ -18,10 +18,10 @@ type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
     [<Benchmark>]
-    member __.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ResultOrFail()
+    member __.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ReductionOrFail()
 
     [<Benchmark>]
-    member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ResultOrFail()
+    member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ReductionOrFail()
 
     [<Benchmark(Baseline=true)>]
     member __.InceptionBenchmarkLazarus() =

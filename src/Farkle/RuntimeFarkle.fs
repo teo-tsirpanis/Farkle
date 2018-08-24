@@ -30,6 +30,7 @@ type FarkleError =
 /// 20: And "FArkle" means: (GOTO 10) 😁
 /// 30: I guess you can't read this line. 😛
 // `fPostProcess` is hiding away the post-processor's two generic types.
+[<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
     Parser: Result<GOLDParser,FarkleError>
     PostProcessor: PostProcessor
@@ -41,10 +42,12 @@ module RuntimeFarkle =
 
     let internal postProcessor {PostProcessor = x} = x
 
+    /// Returns the `GOLDParser` within the `RuntimeFarkle`.
+    /// This function is useful to access the lower-level APIs, for more advanced cases of parsing.
+    let asGOLDParser = parser
+
     /// Creates a `RuntimeFarkle`.
-    /// The function takes a `RuntimeGrammar`, two functions that convert a symbol and a production to another type, and a `PostProcessor` that might have failed.
-    /// If the post-processing has failed, the `RuntimeFarkle` will fail every time it is used.
-    /// This happens to make the post-processor more convenient to use by converting all the different symbol and production types to type-safe enums.
+    /// The function takes a `RuntimeGrammar` and a `PostProcessor` that might have failed.
     let create<'TResult> (grammar: RuntimeGrammar) postProcessor: RuntimeFarkle<'TResult> =
         {
             Parser = grammar |> GOLDParser |> Ok
@@ -53,7 +56,7 @@ module RuntimeFarkle =
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
-    /// Also, in case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
+    /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     let ofEGTFile<'TResult> fileName postProcessor: RuntimeFarkle<'TResult> =
         fileName
         |> EGT.ofFile

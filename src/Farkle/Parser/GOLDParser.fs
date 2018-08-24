@@ -21,15 +21,15 @@ open System.Text
 type ParseResult = ParseResult of Result<Reduction, ParseMessage> * ParseMessage list
 with
     /// The content of this type, unwrapped.
-    static member Value x = match x with | ParseResult (x, y) -> x, y
+    member x.Value = match x with | ParseResult (x, y) -> x, y
     /// The parsing log. In case of a failure, the fatal message is _not_ included.
-    member x.Messages = x |> ParseResult.Value |> snd
+    member x.Messages = x.Value |> snd
     /// The parsing log in human-friendly format. In case of a failure, the fatal message is _not_ included.
     member x.MessagesAsString = x.Messages |> List.map string
     /// A simple `Choice` with either the final `Reduction` or the fatal `ParseMessage` as a string.
-    member x.Simple = x |> ParseResult.Value |> fst |> tee Choice1Of2 (string >> Choice2Of2)
+    member x.Simple = x.Value |> fst |> Result.mapError string
     /// Returns the final `Reduction` or throws an exception.
-    member x.ResultOrFail() = x.Simple |> Choice.tee2 id failwith
+    member x.ReductionOrFail() = x.Simple |> returnOrFail
 
 /// A set of settings to customize a parser.
 type GOLDParserConfig = {

@@ -110,36 +110,3 @@ module Fuser =
             OutputType = typeof<'r>
             TheFuser = (fun x -> fFuser (x.[index1] :?> _) (x.[index2] :?> _) (x.[index3] :?> _) |> box)
         }
-
-/// This type contains the logic to combine multiple symbols of _all_ productions of a grammar into one.
-// I can't use a map, because the compiler starts a "not-so-generic-code" rant.
-type ProductionPostProcessor<'TProduction> = internal ProductionPostProcessor of ('TProduction -> Fuser option)
-with
-    /// Fuses a list of objects that belong to the given production into one.
-    /// Because productions always carry significant information up to the higher levels of parsing,
-    /// the post-processing will fail accordingly if a proper `Fuser` is not found for the given production.
-    member x.PostProcess prod data =
-        x
-        |> (fun (ProductionPostProcessor x) -> x prod)
-        |> failIfNone (prod.ToString() |> UnknownProduction)
-        >>= (Fuser.Fuse data)
-
-/// Functions to create a `ProductionPostProcessor`.
-module internal ProductionPostProcessor =
-
-    /// Creates a `ProductionPostProcessor` that fuses all
-    /// the productions that are recognized by the given `Fuser`s.
-    /// In case many fusers recognize one production, the last one in order will be considered.
-    let ofSeq fusers =
-        let map = fusers |> Map.ofSeq
-        map.TryFind |> ProductionPostProcessor
-
-    
-    /// Creates a `ProductionPostProcessor` that fuses all
-    /// the productions of an enumeration type, based on the given function.
-    let ofEnumFunc<'TProduction when 'TProduction: enum<int> and 'TProduction: comparison> (fFusers: 'TProduction -> _) =
-        typeof<'TProduction>
-        |> Enum.GetValues
-        |> Seq.cast
-        |> Seq.map (fun x -> x, fFusers x)
-        |> ofSeq

@@ -15,59 +15,59 @@ open System
 
 type Symbol =
 /// (EOF)
-| EOF        =  0
+| EOF        =  0u
 /// (Error)
-| Error      =  1
+| Error      =  1u
 /// Whitespace
-| Whitespace =  2
+| Whitespace =  2u
 /// '-'
-| Minus      =  3
+| Minus      =  3u
 /// '('
-| LParen     =  4
+| LParen     =  4u
 /// ')'
-| RParen     =  5
+| RParen     =  5u
 /// '*'
-| Times      =  6
+| Times      =  6u
 /// '/'
-| Div        =  7
+| Div        =  7u
 /// '+'
-| Plus       =  8
+| Plus       =  8u
 /// Number
-| Number     =  9
+| Number     =  9u
 /// <Add Exp>
-| AddExp     = 10
+| AddExp     = 10u
 /// <Expression>
-| Expression = 11
+| Expression = 11u
 /// <Mult Exp>
-| MultExp    = 12
+| MultExp    = 12u
 /// <Negate Exp>
-| NegateExp  = 13
+| NegateExp  = 13u
 /// <Value>
-| Value      = 14
+| Value      = 14u
 
 type Production =
 /// <Expression> ::= <Add Exp>
-| Expression        =  0
+| Expression        =  0u
 /// <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-| AddExpPlus        =  1
+| AddExpPlus        =  1u
 /// <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-| AddExpMinus       =  2
+| AddExpMinus       =  2u
 /// <Add Exp> ::= <Mult Exp>
-| AddExp            =  3
+| AddExp            =  3u
 /// <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-| MultExpTimes      =  4
+| MultExpTimes      =  4u
 /// <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-| MultExpDiv        =  5
+| MultExpDiv        =  5u
 /// <Mult Exp> ::= <Negate Exp>
-| MultExp           =  6
+| MultExp           =  6u
 /// <Negate Exp> ::= '-' <Value>
-| NegateExpMinus    =  7
+| NegateExpMinus    =  7u
 /// <Negate Exp> ::= <Value>
-| NegateExp         =  8
+| NegateExp         =  8u
 /// <Value> ::= Number
-| ValueNumber       =  9
+| ValueNumber       =  9u
 /// <Value> ::= '(' <Expression> ')'
-| ValueLParenRParen = 10
+| ValueLParenRParen = 10u
 
 //#endregion
 
@@ -102,6 +102,4 @@ let TheRuntimeFarkle =
         ]
     RuntimeFarkle<int>.CreateFromFile
         "SimpleMaths.egt"
-        (function | Terminal (x, _) -> x |> int |> enum<Symbol> | _ -> enum -1)
-        (Indexable.index >> int >> enum<Production>)
-        (PostProcessor.ofSeq transformers fusers)
+        (PostProcessor.ofSeqEnum transformers fusers)

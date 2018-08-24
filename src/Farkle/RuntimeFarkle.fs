@@ -37,10 +37,10 @@ type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
     /// If the post-processing has failed, the `RuntimeFarkle` will fail every time it is used.
     /// This happens to make the post-processor more convenient to use by converting all the different symbol and production types to type-safe enums.
     static member Create<'TResult>
-        (grammar: RuntimeGrammar) fSymbol fProduction (postProcessor: PostProcessor<_,_>) =
+        (grammar: RuntimeGrammar) (postProcessor: PostProcessor) =
         let fPostProcess x =
-            (fSymbol, fProduction, x)
-            |||> AST.ofReductionEx 
+            x
+            |> AST.ofReduction
             |> postProcessor.PostProcessAST
             |> Result.mapError PostProcessError
         RuntimeFarkle<'TResult>(grammar |> GOLDParser |> Ok, fPostProcess)
@@ -48,12 +48,12 @@ type RuntimeFarkle<'TResult> private (parser, fPostProcess) =
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// Also, in case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
-    static member CreateFromFile<'TResult> fileName fSymbol fProduction postProcessor =
+    static member CreateFromFile<'TResult> fileName postProcessor =
         fileName
         |> EGT.ofFile
         |> Result.mapError (EGTReadError)
         |> tee
-            (fun g -> RuntimeFarkle.Create<'TResult> g fSymbol fProduction postProcessor)
+            (fun g -> RuntimeFarkle.Create<'TResult> g postProcessor)
             (fun err -> RuntimeFarkle(fail err, fun _ -> fail err))
 
     member private __.PostProcess (ParseResult (res, msgs)) =

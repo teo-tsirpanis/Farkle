@@ -78,6 +78,12 @@ type Symbol =
             | Terminal _ -> literalFormat x.Name
             | _ -> sprintf "(%s)" x.Name
 
+/// Functions to work with `Symbol`s.
+module internal Symbol =
+
+    /// Returns the index of a terminal symbol, or nothing.
+    let tryGetTerminalIndex = function Terminal (index, _) -> Some index | _ -> None
+
 /// A type indicating how a group advances.
 type AdvanceMode =
     /// The group advances by one token at a time.

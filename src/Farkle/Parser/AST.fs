@@ -11,26 +11,22 @@ open System
 
 /// An Abstract Syntax Tree that describes the output of a parser.
 /// The types describing terminals and productions are arbitrary.
-type AST<'TSymbol, 'TProduction> =
-    | Content of 'TSymbol * string
-    | Nonterminal of 'TProduction * AST<'TSymbol, 'TProduction> list
+type AST =
+    | Content of Symbol * string
+    | Nonterminal of Production * AST list
 
 /// Functions to work with `AST`s.
 module AST =
 
     /// Creates an `AST` from a `Reduction`.
-    /// The reduction's corresponding `Symbol` or `Production` are converted to an arbotrary type.
-    let ofReductionEx fSymbol fProduction x: AST<'TSymbol,'TProduction> =
+    [<CompiledName("CreateFromReduction")>]
+    let ofReduction x =
         let rec impl {Tokens = tokens; Parent = parent} =
-            let tokenToAST {Data = x; Symbol = sym} = Content (fSymbol sym, x)
+            let tokenToAST {Data = x; Symbol = sym} = Content (sym, x)
             match tokens with
             | [Choice1Of2 x] -> tokenToAST x
-            | tokens -> tokens |> List.map (Choice.tee2 tokenToAST impl) |> (fun x -> Nonterminal (fProduction parent, x))
+            | tokens -> tokens |> List.map (Choice.tee2 tokenToAST impl) |> (fun x -> Nonterminal (parent, x))
         impl x
-
-    /// Creates an `AST` from a `Reduction`.
-    [<CompiledName("CreateFromReduction")>]
-    let ofReduction x = ofReductionEx id id x
 
     /// Maps an `AST` with either fContent or fNonterminal depending on what it is.
     [<CompiledName("Tee")>]
@@ -39,7 +35,7 @@ module AST =
         | Content (x, y) -> fContent (x, y)
         | Nonterminal (x, y) -> fNonterminal (x, y)
 
-    let internal heads (x: AST<'a,'b>) =
+    let internal heads x =
         match x with
         | Content (x, _) -> x.ToString()
         | Nonterminal (x, _) -> x.ToString()

@@ -6,11 +6,12 @@
 namespace Farkle.PostProcessor
 
 open Farkle
+open Farkle.Grammar
 open Farkle.Parser
 
 /// A post-processor.
 /// Post-processors convert `AST`s into some more meaningful types for the library that uses the parser.
-type PostProcessor<'TSymbol, 'TProduction> = internal {
+type PostProcessor = internal {
     TerminalPostProcessor: Map<uint32, Transformer>
     ProductionPostProcessor: Map<uint32, Fuser>
 }
@@ -20,7 +21,9 @@ with
         let rec impl ast =
             match ast with
             | Content (sym, data) ->
-                this.TerminalPostProcessor.TryFind sym
+                sym
+                |> Symbol.tryGetTerminalIndex
+                |> Option.bind this.TerminalPostProcessor.TryFind
                 |> Option.defaultValue Transformer.ignore
                 |> Transformer.Transform data
                 |> Ok
@@ -28,7 +31,7 @@ with
                 data
                 |> List.map impl
                 |> collect
-                >>= (fun x -> this.ProductionPostProcessor.TryFind prod |> failIfNone (UnknownProduction <| prod.ToString()) >>= (fun f -> Fuser.Fuse x f))
+                >>= (fun x -> this.ProductionPostProcessor.TryFind prod.Index |> failIfNone (UnknownProduction <| prod.ToString()) >>= (fun f -> Fuser.Fuse x f))
                 // >>= x.ProductionPostProcessor.PostProcess prod
         impl ast
 
@@ -36,10 +39,16 @@ with
 module PostProcessor =
 
     /// Creates a `PostProcessor` from the given `TerminalPostProcessor` and `ProductionPostProcessor`.
-    let create tpp ppp = {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp}
+    let internal create tpp ppp = {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp}
 
     /// Creates a `PostProcessor` from the given sequences of symbols and `Transformer`s, and productions and `Fuser`s.
     let ofSeq transformers fusers =
         let tpp = Map.ofSeq transformers
         let ppp = Map.ofSeq fusers
         create tpp ppp
+
+    /// Creates a `PostProcessor` from the given sequences whose first tuple members can be converted to unsigned 32-bit integers.
+    let inline ofSeqEnum transformers fusers =
+        let tpp = transformers |> Seq.map (fun (sym, trans) -> uint32 sym, trans)
+        let ppp = fusers |> Seq.map (fun (prod, fus) -> uint32 prod, fus)
+        ofSeq tpp ppp

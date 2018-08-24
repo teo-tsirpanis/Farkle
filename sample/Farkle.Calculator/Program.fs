@@ -3,6 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+open Farkle
 open SimpleMaths
 open System
 
@@ -17,7 +18,7 @@ let interactive () =
         match input with
             | Some x -> 
                 x
-                |> TheRuntimeFarkle.ParseString
+                |> RuntimeFarkle.parseString TheRuntimeFarkle
                 |> prettyPrintResult
                 |> Console.WriteLine
                 impl()
@@ -31,6 +32,6 @@ let interactive () =
 [<EntryPoint>]
 let main args =
     match args with
-    | [||] -> interactive()
-    | x -> x |> Array.iter (TheRuntimeFarkle.ParseString >> prettyPrintResult >> Console.WriteLine)
+    | [| |] -> interactive()
+    | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

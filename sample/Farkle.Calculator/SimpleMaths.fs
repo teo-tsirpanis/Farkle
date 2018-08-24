@@ -100,6 +100,6 @@ let TheRuntimeFarkle =
             Production.ValueNumber      , identity
             Production.ValueLParenRParen, take1Of 1 3 id
         ]
-    RuntimeFarkle<int>.CreateFromFile
+    RuntimeFarkle.ofEGTFile<int>
         "SimpleMaths.egt"
         (PostProcessor.ofSeqEnum transformers fusers)

@@ -10,7 +10,9 @@ open Farkle
 open Farkle.Grammar
 open Farkle.Monads
 
-module internal Internal =
+/// Functions to create low-level `Parser`s.
+[<RequireQualifiedAccess; CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Parser =
 
     open State
 
@@ -70,7 +72,8 @@ module internal Internal =
         | x when x.IsError -> x |> makeMessage |> Parser.Failed
         | x -> Parser.Continuing (makeMessage x, lazy (stepParser nextState))
 
-    let createParser grammar input =
+    /// Creates a parser that parses `input` based on the given `RuntimeGrammar`.
+    let create grammar input =
         let dfa = RuntimeGrammar.dfaStates grammar
         let groups = RuntimeGrammar.groups grammar
         let lalr = RuntimeGrammar.lalrStates grammar

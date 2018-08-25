@@ -7,6 +7,7 @@ module Farkle.Tests.ParserTests
 
 open Expecto
 open Expecto.Logging
+open Farkle
 open Farkle.Parser
 open System
 

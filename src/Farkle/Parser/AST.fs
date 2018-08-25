@@ -3,10 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Parser
+namespace Farkle
 
 open Aether
-open Farkle
 open Farkle.Grammar
 open System
 
@@ -39,6 +38,7 @@ module internal Token =
     let dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
 
 /// An Abstract Syntax Tree that describes the output of a parser.
+[<RequireQualifiedAccess>]
 type AST =
     | Content of Token
     | Nonterminal of Production * AST list
@@ -55,17 +55,14 @@ module AST =
     [<CompiledName("Tee")>]
     let tee fContent fNonterminal =
         function
-        | Content x -> fContent x
-        | Nonterminal (x, y) -> fNonterminal (x, y)
+        | AST.Content x -> fContent x
+        | AST.Nonterminal (x, y) -> fNonterminal (x, y)
 
-    let internal headSymbols x =
-        match x with
-        | Content x -> x.Symbol.ToString()
-        | Nonterminal (x, _) -> x.ToString()
+    let internal headSymbols = tee (fun x -> x.Symbol.ToString()) (fst >> string)
 
     /// Simplifies an `AST` in the same fashion with GOLD Parser's "trim reductions" option.
     [<CompiledName("Simplify")>]
-    let rec simplify x = tee Content (function | (_, [x]) -> simplify x | (prod, x) -> Nonterminal (prod, List.map simplify x)) x
+    let rec simplify x = tee AST.Content (function | (_, [x]) -> simplify x | (prod, x) -> AST.Nonterminal (prod, List.map simplify x)) x
 
     /// Visualizes an `AST` in the form of a textual "parse tree".
     [<CompiledName("ToASCIITree")>]
@@ -74,7 +71,7 @@ module AST =
         let rec impl indent x = seq {
             yield x |> headSymbols |> sprintf "+--%s", indent
             match x with
-            | Content x -> yield sprintf "+--%s" x.Data, indent
-            | Nonterminal (_, x) -> yield! x |> Seq.collect (impl <| indent + 1u)
+            | AST.Content x -> yield sprintf "+--%s" x.Data, indent
+            | AST.Nonterminal (_, x) -> yield! x |> Seq.collect (impl <| indent + 1u)
         }
         impl 0u x |> Seq.map (fun (x, y) -> addIndentText y + x) |> String.concat Environment.NewLine

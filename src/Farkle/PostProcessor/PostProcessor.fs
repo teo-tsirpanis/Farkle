@@ -7,7 +7,6 @@ namespace Farkle.PostProcessor
 
 open Farkle
 open Farkle.Grammar
-open Farkle.Parser
 
 /// A post-processor.
 /// Post-processors convert `AST`s into some more meaningful types for the library that uses the parser.
@@ -38,14 +37,14 @@ module PostProcessor =
     let postProcessAST {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp} ast =
         let rec impl ast =
             match ast with
-            | Content tok ->
+            | AST.Content tok ->
                 tok.Symbol
                 |> Symbol.tryGetTerminalIndex
                 |> Option.bind tpp.TryFind
                 |> Option.defaultValue Transformer.ignore
                 |> Transformer.Transform tok.Data
                 |> Ok
-            | Nonterminal (prod, data) ->
+            | AST.Nonterminal (prod, data) ->
                 data
                 |> List.map impl
                 |> collect

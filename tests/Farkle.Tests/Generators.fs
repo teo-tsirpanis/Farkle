@@ -33,11 +33,11 @@ let ASTGen() =
         | size when size > 0 ->
             let tree = impl (size / 2)
             [
-                Gen.map Content Arb.generate
-                Gen.map2 (curry Nonterminal) Arb.generate (Gen.nonEmptyListOf tree)
+                Gen.map AST.Content Arb.generate
+                Gen.map2 (curry AST.Nonterminal) Arb.generate (Gen.nonEmptyListOf tree)
             ]
             |> Gen.oneof
-        | _ -> Gen.map Content Arb.generate
+        | _ -> Gen.map AST.Content Arb.generate
     Gen.sized impl
 
 type Generators =

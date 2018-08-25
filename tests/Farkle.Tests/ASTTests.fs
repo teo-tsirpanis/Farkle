@@ -7,7 +7,7 @@ module Farkle.Tests.ASTTests
 
 open Expecto
 open Expecto.Logging
-open Farkle.Parser
+open Farkle
 open Generators
 
 let logger = Log.create "AST Tests"
@@ -16,6 +16,6 @@ let logger = Log.create "AST Tests"
 let tests =
     testList "AST tests" [
         testProperty "Overkilling AST.simplify does not change it" (fun x ->
-            let x:AST = x |> AST.simplify
+            let x = x |> AST.simplify
             x = AST.simplify x)
     ]

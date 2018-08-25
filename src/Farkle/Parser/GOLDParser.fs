@@ -8,8 +8,6 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Monads.StateResult
 open Farkle.Grammar.GOLDParser
-open Farkle.Parser
-open Farkle.Parser.Internal
 open FSharpx.Collections
 open System.IO
 open System.Text
@@ -48,21 +46,15 @@ with
 /// A reusable parser created for a specific grammar that can parse input from multiple sources.
 type GOLDParser (grammar) =
 
-    let newParser = GOLDParser.CreateParser grammar
-
     let makeParseResult res =
         match run res [] with
         | res, msgs -> ParseResult(res, List.rev msgs)
 
     /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
-    /// Trivial reductions are not trimmed.
     /// If there is a problem with the file, the constructor will throw an exception.
     new (egtFile) =
         let grammar = egtFile |> EGT.ofFile |> returnOrFail :> RuntimeGrammar
         GOLDParser grammar
-
-    /// Creates a parser that parses `input` based on the given `Grammar`, with the option to trim trivial reductions.
-    static member CreateParser grammar input = createParser grammar input
 
     /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
     /// What it returns is described in the `GOLDParser` class documentation.
@@ -82,7 +74,7 @@ type GOLDParser (grammar) =
                 do! warn msg
                 return x
         }
-        input |> newParser |> impl |> makeParseResult
+        input |> Parser.create grammar |> impl |> makeParseResult
 
     /// Parses a string.
     member x.ParseString input = input |> List.ofString |> Eager |> x.ParseChars
@@ -107,4 +99,5 @@ type GOLDParser (grammar) =
             use stream = File.OpenRead path
             x.ParseStream(stream, settings)
 
+    /// Parses the contents of a file in the given path.
     member x.ParseFile path = x.ParseFile(path, GOLDParserConfig.Default)

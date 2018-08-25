@@ -20,7 +20,7 @@ let tests =
             let result = parser.ParseString "111*555"
             result.MessagesAsString |> String.concat Environment.NewLine |> Message.eventX |> logger.info
             match result.Simple with
-            | Ok x -> x |> Reduction.drawReductionTree |> sprintf "Result: %s" |> Message.eventX |> logger.info
+            | Ok x -> x |> AST.toASCIITree |> sprintf "Result: %s" |> Message.eventX |> logger.info
             | Result.Error messages -> messages |> failtestf "Error: %s"
         }
     ]

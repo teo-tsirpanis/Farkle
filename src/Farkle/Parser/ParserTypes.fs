@@ -11,40 +11,6 @@ open Farkle.Grammar
 open System
 open System.Text
 
-/// A reduction  will contain the tokens which correspond to the symbols of a `Production`.
-/// Since a reduction contains the terminals of a rule as well as the nonterminals (reductions made earlier),
-/// the parser engine creates a "parse tree" which contains a break down of the source text along the grammar's rules
-[<Obsolete("Go away!")>]
-type Reduction =
-    {
-        /// The `Production` which the reduction's tokens correspond to.
-        Parent: Production
-        /// The content of the reduction.
-        /// It might be either a `Token` or another reduction.
-        Tokens: (Choice<Token, Reduction>) list
-    }
-    member x.Data = x.Tokens |> Seq.map (Choice.tee2 (Optic.get Token.Data_) (fun x -> x.Data)) |> String.concat ""
-    override x.ToString() = x.Data
-
-/// Functions to work with `Reduction`s.
-module Reduction =
-
-    /// Visualizes a `Reduction` in the form of a textual "parse tree".
-    [<CompiledName("DrawReductionTree")>]
-    let drawReductionTree x =
-        let sb = StringBuilder()
-        let append (x: string) =
-            sb.Append x |> ignore
-            sb.AppendLine() |> ignore
-        let kIndentText = "|  "
-        let rec impl indent {Parent = parent; Tokens = tokens} =
-            let indentText = kIndentText |> Seq.replicate indent |> Seq.concat |> Array.ofSeq |> String
-            sprintf "%s+--%O" indentText parent |> append |> ignore
-            tokens
-            |> List.iter (Choice.tee2 (fun x -> sprintf "%s%s+--%O" indentText kIndentText x.Data |> append |> ignore) (impl (indent + 1)))
-        impl 0 x
-        sb.ToString().Trim()
-
 /// An internal error. These errors are known errors a program might experience.
 /// They could occur by manipulating the parser internal state, which is _impossible_ from the public API.
 /// Another possible way of manifestation is creating deliberately faulty `Grammar`s.

@@ -51,10 +51,6 @@ type AST =
 [<RequireQualifiedAccess>]
 module AST =
 
-    /// Creates an `AST` from a `Reduction`.
-    [<CompiledName("CreateFromReduction"); Obsolete("Reductions are gonna be shown the door.")>]
-    let ofReduction x = failwith "It's gonna die..."
-
     /// Maps an `AST` with either fContent or fNonterminal depending on what it is.
     [<CompiledName("Tee")>]
     let tee fContent fNonterminal =
@@ -72,8 +68,8 @@ module AST =
     let rec simplify x = tee Content (function | (_, [x]) -> simplify x | (prod, x) -> Nonterminal (prod, List.map simplify x)) x
 
     /// Visualizes an `AST` in the form of a textual "parse tree".
-    [<CompiledName("DrawASCIITree")>]
-    let drawASCIITree x =
+    [<CompiledName("ToASCIITree")>]
+    let toASCIITree x =
         let addIndentText = String.repeat "|  "
         let rec impl indent x = seq {
             yield x |> headSymbols |> sprintf "+--%s", indent

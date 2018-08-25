@@ -69,7 +69,7 @@ module RuntimeFarkle =
         let result =
             res
             |> Result.mapError ParseError
-            >>= (AST.ofReduction >> PostProcessor.postProcessAST (postProcessor rf) >> Result.mapError PostProcessError)
+            >>= (PostProcessor.postProcessAST (postProcessor rf) >> Result.mapError PostProcessError)
             |> Result.map (fun x -> x :?> 'TResult)
         result, msgs
 

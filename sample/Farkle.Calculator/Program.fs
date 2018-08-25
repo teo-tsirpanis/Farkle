@@ -37,7 +37,7 @@ let main args =
     | [|"--ast"; x|] ->
         RuntimeFarkle.asGOLDParser TheRuntimeFarkle
         |> Result.bind (fun gp -> gp.ParseString(x).Value |> fst |> Result.mapError ParseError)
-        |> Result.map (AST.ofReduction >> AST.drawASCIITree)
+        |> Result.map AST.toASCIITree
         |> prettyPrintResult
         |> Console.WriteLine
     | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle >> prettyPrintResult >> Console.WriteLine)

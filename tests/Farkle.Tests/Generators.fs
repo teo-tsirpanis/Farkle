@@ -27,23 +27,6 @@ let productionGen = gen {
 
 let positionGen = Arb.generate |> Gen.filter ((<>) 0u) |> Gen.two |> Gen.map (uncurry Position.create >> mustBeSome)
 
-let reductionGen =
-    let rec impl size = gen {
-        let! parent = Arb.generate
-        let! tokens =
-            let leafGen = Arb.generate |> Gen.map Choice1Of2 |> Gen.nonEmptyListOf
-            match size with
-            | size when size > 0 ->
-                [
-                    leafGen
-                    impl (size / 2) |> Gen.map Choice2Of2 |> Gen.nonEmptyListOf
-                ]
-                |> Gen.oneof
-            | _ -> leafGen
-        return {Parent = parent; Tokens = tokens}
-    }
-    Gen.sized impl
-
 let ASTGen() =
     let rec impl size =
         match size with
@@ -61,7 +44,6 @@ type Generators =
     static member Symbol() = Arb.fromGen symbolGen
     static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
-    static member Reduction() = Arb.fromGen reductionGen
     static member AST() = Arb.fromGen (ASTGen())
     static member SetEx() = Arb.generate |> Gen.map Set |> Arb.fromGen
 

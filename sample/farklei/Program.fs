@@ -29,12 +29,10 @@ let main argv =
     result.MessagesAsString |> Seq.iter print
     match result.Simple with
     | Ok x ->
-        print "Reduction"
-        x |> Reduction.drawReductionTree |> print
         print "AST"
-        x |> AST.ofReduction |> AST.drawASCIITree |> print
+        x |> AST.toASCIITree |> print
         print "Simplified AST"
-        x |> AST.ofReduction |> AST.simplify |> AST.drawASCIITree |> print
+        x |> AST.simplify |> AST.toASCIITree |> print
         0
     | Result.Error x ->
         print x

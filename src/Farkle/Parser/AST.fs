@@ -69,9 +69,10 @@ module AST =
     let toASCIITree x =
         let addIndentText = String.repeat "|  "
         let rec impl indent x = seq {
-            yield x |> headSymbols |> sprintf "+--%s", indent
             match x with
             | AST.Content x -> yield sprintf "+--%s" x.Data, indent
-            | AST.Nonterminal (_, x) -> yield! x |> Seq.collect (impl <| indent + 1u)
+            | AST.Nonterminal (prod, x) ->
+                yield sprintf "+--%O" prod, indent
+                yield! x |> Seq.collect (impl <| indent + 1u)
         }
         impl 0u x |> Seq.map (fun (x, y) -> addIndentText y + x) |> String.concat Environment.NewLine

@@ -38,12 +38,12 @@ module PostProcessor =
     let postProcessAST {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp} ast =
         let rec impl ast =
             match ast with
-            | Content (sym, data) ->
-                sym
+            | Content tok ->
+                tok.Symbol
                 |> Symbol.tryGetTerminalIndex
                 |> Option.bind tpp.TryFind
                 |> Option.defaultValue Transformer.ignore
-                |> Transformer.Transform data
+                |> Transformer.Transform tok.Data
                 |> Ok
             | Nonterminal (prod, data) ->
                 data

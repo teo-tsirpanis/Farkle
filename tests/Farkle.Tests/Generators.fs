@@ -50,15 +50,16 @@ let ASTGen() =
         | size when size > 0 ->
             let tree = impl (size / 2)
             [
-                Gen.map2 (curry Content) Arb.generate Arb.generate
+                Gen.map Content Arb.generate
                 Gen.map2 (curry Nonterminal) Arb.generate (Gen.nonEmptyListOf tree)
             ]
             |> Gen.oneof
-        | _ -> Gen.map2 (curry Content) Arb.generate Arb.generate
+        | _ -> Gen.map Content Arb.generate
     Gen.sized impl
 
 type Generators =
     static member Symbol() = Arb.fromGen symbolGen
+    static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
     static member Reduction() = Arb.fromGen reductionGen
     static member AST() = Arb.fromGen (ASTGen())

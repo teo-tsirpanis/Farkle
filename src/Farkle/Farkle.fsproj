@@ -44,8 +44,8 @@
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/SetUtils.fs" />
-    <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/AST.fs" />
+    <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="Parser/ParserInternal.fs" />

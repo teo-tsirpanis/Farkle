@@ -20,13 +20,13 @@ module internal LALRParser =
     type LALRParserState =
         private {
             CurrentLALRState: LALRState
-            LALRStack: (Token * (LALRState * Reduction option)) list
+            LALRStack: (LALRState * AST) list
         }
         with
             static member Create state =
                 {
                     CurrentLALRState = state
-                    LALRStack = [Token.dummy Error, (state, None)]
+                    LALRStack = [state, Error |> Token.dummy |> AST.Content]
                 }
 
     // These lenses must be hidden from the rest of the code
@@ -48,12 +48,12 @@ module internal LALRParser =
             let nextAvailableActions = LALRState.actions currentState
             match nextAvailableActions.TryFind(token.Symbol) with
             | Some (Accept) ->
-                let! topReduction = getLALRStackTop >>= (snd >> snd >> failIfNone ReductionNotFoundOnAccept >> liftResult)
-                return LALRResult.Accept topReduction
+                let! topAST = getLALRStackTop <!> snd
+                return LALRResult.Accept topAST
             | Some (Shift nextState) ->
                 let nextState = getStateFromIndex nextState
                 do! setCurrentLALR nextState
-                do! mapOptic LALRStack_ (List.cons (token, (nextState, None)))
+                do! mapOptic LALRStack_ (List.cons (nextState, AST.Content token))
                 return LALRResult.Shift nextState.Index
             | Some (Reduce x) ->
                 let! head, result = sresult {
@@ -65,19 +65,17 @@ module internal LALRParser =
                     }
                     let! tokens =
                         popStack LALRStack_ count
-                        <!> (Seq.map (function | (x, (_, None)) -> Choice1Of2 x | (_, (_, Some x)) -> Choice2Of2 x) >> Seq.rev >> List.ofSeq)
-                    let reduction = {Tokens = tokens; Parent = x}
-                    let token = {Symbol = x.Head; Position = Position.initial; Data = reduction.ToString()}
-                    let head = token, (currentState, Some reduction)
-                    return head, ReduceNormal reduction
+                        <!> (Seq.map snd >> Seq.rev >> List.ofSeq)
+                    let ast = AST.Nonterminal (x, tokens)
+                    return (currentState, ast), ReduceNormal ast
                 }
-                let! newState = getLALRStackTop <!> (snd >> fst)
+                let! newState = getLALRStackTop <!> fst
                 let nextAction = getNextAction newState x.Head
                 match nextAction with
                 | Some (Goto nextState) ->
                     let nextState = getStateFromIndex nextState
                     do! setCurrentLALR nextState
-                    let! head = getCurrentLALR <!> (fun currentLALR -> fst head, (currentLALR, head |> snd |> snd))
+                    let head = nextState, snd head
                     do! mapOptic (LALRStack_) (List.cons head)
                 | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState.Index)
                 return result

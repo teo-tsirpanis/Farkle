@@ -11,34 +11,6 @@ open Farkle.Grammar
 open System
 open System.Text
 
-/// A token is an instance of a `Symbol`.
-/// Tokens carry parsed data, as well as their position within the text file.
-type Token =
-    {
-        /// The `Symbol` whose instance is this token.
-        Symbol: Symbol
-        /// The `Position` of the token in the input string.
-        Position: Position
-        /// The actual content of the token.
-        Data: string
-    }
-    with
-        /// [omit]
-        static member Symbol_ :Lens<_, _> = (fun x -> x.Symbol), (fun v x -> {x with Symbol = v})
-        /// [omit]
-        static member Position_ :Lens<_, _> = (fun x -> x.Position), (fun v x -> {x with Position = v})
-        /// [omit]
-        static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
-        /// A shortcut for creating a token.
-        static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
-        /// Returns a new token which has a string appended to its data.
-        static member AppendData data x = Optic.map Token.Data_ (fun x -> x + data) x
-        override x.ToString() = x.Data
-
-module internal Token =
-
-    let dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
-
 /// A reduction  will contain the tokens which correspond to the symbols of a `Production`.
 /// Since a reduction contains the terminals of a rule as well as the nonterminals (reductions made earlier),
 /// the parser engine creates a "parse tree" which contains a break down of the source text along the grammar's rules
@@ -88,9 +60,9 @@ type ParseInternalError =
     | ReductionNotFoundOnAccept
 
 type LALRResult =
-    | Accept of Reduction
+    | Accept of AST
     | Shift of uint32
-    | ReduceNormal of Reduction
+    | ReduceNormal of AST
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
 
@@ -100,11 +72,11 @@ type ParseMessageType =
     /// A token was read.
     | TokenRead of Token
     /// A rule was reduced.
-    | Reduction of Reduction
+    | Reduction of AST
     /// The parser shifted to a different LALR state.
     | Shift of uint32
     /// The parser finished parsing and returned a reduction.
-    | Accept of Reduction
+    | Accept of AST
     /// The file containing the input does not exist.
     | InputFileNotExist of string
     /// A character was not recognized.
@@ -124,9 +96,9 @@ type ParseMessageType =
         match x with
         | InputFileNotExist x -> sprintf "File \"%s\" does not exist" x
         | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
-        | Reduction x -> sprintf "Rule reduced: %O (%O)" x.Parent x
+        | Reduction x -> sprintf "Rule reduced: %O" x
         | Shift x -> sprintf "The parser shifted to state %d" x
-        | Accept x -> sprintf "Reduction accepted: %O (%O)" x.Parent x
+        | Accept x -> sprintf "Reduction accepted: %O" x
         | LexicalError x -> sprintf "Cannot recognize token: %c" x
         | SyntaxError (expected, actual) ->
             let expected = expected |> List.map string |> String.concat ", "
@@ -216,4 +188,4 @@ type Parser =
     | Failed of ParseMessage
     /// The parser has finished parsing.
     /// No lazy parser is returned, as the parsing process is complete.
-    | Finished of ParseMessage * Reduction
+    | Finished of ParseMessage * AST

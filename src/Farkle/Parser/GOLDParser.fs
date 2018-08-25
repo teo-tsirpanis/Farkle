@@ -18,7 +18,7 @@ open System.Text
 /// It contains the result and a list of log messages describing the parsing process in detail.
 /// The result is either the final `Reduction`, or the fatal `ParseMessage`
 /// In this case, it is not included in the previously mentioned log message list.
-type ParseResult = ParseResult of Result<Reduction, ParseMessage> * ParseMessage list
+type ParseResult = ParseResult of Result<AST, ParseMessage> * ParseMessage list
 with
     /// The content of this type, unwrapped.
     member x.Value = match x with | ParseResult (x, y) -> x, y

@@ -51,9 +51,7 @@ module Reduction =
 type ParseInternalError =
     /// After a reduction, the next LALR action should be a `Goto` one.
     /// But it's not.
-    | GotoNotFoundAfterReduction of Production * uint32
-    /// The LALR state at a given index was not found.
-    | LALRStateIndexNotFound of uint32
+    | GotoNotFoundAfterReduction of Production * LALRState
     /// The LALR stack is empty; it should never be.
     | LALRStackEmpty
     /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.

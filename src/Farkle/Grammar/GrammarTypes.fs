@@ -202,6 +202,6 @@ and LALRState =
     override x.ToString() = string x.Index
 
 /// Functions to work with `LALRState`s.
-module LALRState =
+module internal LALRState =
     /// Returns all LALR actions to take when the corresponding symbol is encountered.
     let actions {Actions = actions} = actions

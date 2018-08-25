@@ -25,6 +25,11 @@ module List =
             | Some x, Some xs -> Some (x :: xs)
             | _ -> None
         List.foldBack f x (Some [])
+    let popStack optic count = sresult {
+        let! (first, rest) = getOptic optic <!> List.splitAt count
+        do! setOptic optic rest
+        return first
+    }
 
 /// Functions to work with sequences.
 module Seq =

@@ -37,6 +37,7 @@ module internal LALRParser =
             >>= (failIfNone LALRStackEmpty >> liftResult)
     let getCurrentLALR = getOptic CurrentLALRState_
     let setCurrentLALR = setOptic CurrentLALRState_
+    let pushLALRStack x = mapOptic LALRStack_ (List.cons x)
     let getNextAction currentState symbol =
         LALRState.actions currentState
         |> Map.tryFind symbol
@@ -45,7 +46,7 @@ module internal LALRParser =
         let (StateResult impl) = sresult {
             let getStateFromIndex = SafeArray.retrieve lalrStates
             let! currentState = getCurrentLALR
-            let nextAvailableActions = LALRState.actions currentState
+            let nextAvailableActions = currentState.Actions
             match nextAvailableActions.TryFind(token.Symbol) with
             | Some (Accept) ->
                 let! topAST = getLALRStackTop <!> snd
@@ -53,32 +54,22 @@ module internal LALRParser =
             | Some (Shift nextState) ->
                 let nextState = getStateFromIndex nextState
                 do! setCurrentLALR nextState
-                do! mapOptic LALRStack_ (List.cons (nextState, AST.Content token))
+                do! pushLALRStack (nextState, AST.Content token)
                 return LALRResult.Shift nextState.Index
-            | Some (Reduce x) ->
-                let! head, result = sresult {
-                    let count = x.Handle.Length
-                    let popStack optic count = sresult {
-                        let! (first, rest) = getOptic optic <!> List.splitAt count
-                        do! setOptic optic rest
-                        return first
-                    }
-                    let! tokens =
-                        popStack LALRStack_ count
-                        <!> (Seq.map snd >> Seq.rev >> List.ofSeq)
-                    let ast = AST.Nonterminal (x, tokens)
-                    return (currentState, ast), ReduceNormal ast
-                }
+            | Some (Reduce productionToReduce) ->
+                let! tokens =
+                    List.popStack LALRStack_ productionToReduce.Handle.Length
+                    <!> (Seq.map snd >> Seq.rev >> List.ofSeq)
                 let! newState = getLALRStackTop <!> fst
-                let nextAction = getNextAction newState x.Head
+                let nextAction = getNextAction newState productionToReduce.Head
                 match nextAction with
                 | Some (Goto nextState) ->
                     let nextState = getStateFromIndex nextState
                     do! setCurrentLALR nextState
-                    let head = nextState, snd head
-                    do! mapOptic (LALRStack_) (List.cons head)
-                | _ -> do! fail <| GotoNotFoundAfterReduction (x, newState.Index)
-                return result
+                    let ast = AST.Nonterminal (productionToReduce, tokens)
+                    do! pushLALRStack (nextState, ast)
+                    return ReduceNormal ast
+                | _ -> return! fail <| GotoNotFoundAfterReduction (productionToReduce, newState)
             | Some (Goto _) | None ->
                 let expectedSymbols =
                     nextAvailableActions

@@ -17,8 +17,9 @@ module ``%Name%``
 ##END-PARAMETERS
 
 open Farkle
-open Farkle.Grammar
 open Farkle.PostProcessor
+
+//#region Grammar types
 
 type Symbol =
 ##SYMBOLS
@@ -31,6 +32,8 @@ type Production =
 /// %Description%
 | %ID.Padded% = %Value.Padded%%Delimiter%u
 ##END-RULES
+
+//#endregion
 
 open Fuser
 
@@ -57,7 +60,7 @@ let TheRuntimeFarkle =
             Production.%ID.Padded%,
 ##END-RULES
         ]
-    RuntimeFarkle<TODO>.CreateFromFile
+    RuntimeFarkle.ofEGTFile<TODO>
 ##PARAMETERS
         "%Name%.egt"
 ##END-PARAMETERS

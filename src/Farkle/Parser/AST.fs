@@ -15,6 +15,7 @@ type AST =
     | Nonterminal of Production * AST list
 
 /// Functions to work with `AST`s.
+[<RequireQualifiedAccess>]
 module AST =
 
     /// Creates an `AST` from a `Reduction`.

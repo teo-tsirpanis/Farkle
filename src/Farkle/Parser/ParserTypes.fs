@@ -42,6 +42,7 @@ module internal Token =
 /// A reduction  will contain the tokens which correspond to the symbols of a `Production`.
 /// Since a reduction contains the terminals of a rule as well as the nonterminals (reductions made earlier),
 /// the parser engine creates a "parse tree" which contains a break down of the source text along the grammar's rules
+[<Obsolete("Go away!")>]
 type Reduction =
     {
         /// The `Production` which the reduction's tokens correspond to.

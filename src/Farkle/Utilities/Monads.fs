@@ -9,38 +9,38 @@ open System
 open System.Diagnostics
 
 /// The well-known State monad.
-type [<Struct>] State<'s, 't> = State of ('s -> ('t * 's))
+type State<'s, 't> = 's -> ('t * 's)
 
 /// [omit]
 /// It doesn't need documentation. 😜
 module State =
 
-    let inline run (State x) = x
-    let inline map f (State m) = State (fun s -> let (a, s') = m s in (f a, s'))
+    let inline run (x: State<_,_>) = x
+    let inline map f (m: State<_,_>): State<_,_> = fun s -> let (a, s') = m s in (f a, s')
     let inline (<!>) f x = map x f
-    let inline apply (State f) (State x) = State (fun s -> let (f', s1) = f s in let (x', s2) = x s1 in (f' x', s2))
+    let inline apply (f: State<_,_>) (x: State<_,_>): State<_,_> = fun s -> let (f', s1) = f s in let (x', s2) = x s1 in (f' x', s2)
     let inline (<*>) f x = apply f x
-    let inline bind f (State m) = State (fun s -> let (a, s') = m s in run (f a) s')
+    let inline bind f (m: State<_,_>): State<_,_> = fun s -> let (a, s') = m s in run (f a) s'
     let inline (>>=) result f = bind f result
-    let inline returnM x = (fun s0 -> x, s0) |> State
+    let inline returnM x = fun s0 -> x, s0
     let ignore x = map ignore x
 
-    let inline eval (State sa) s = fst (sa s)
-    let inline exec (State sa) s = snd (sa s)
+    let inline eval (sa: State<_,_>) s = fst (sa s)
+    let inline exec (sa: State<_,_>) s = snd (sa s)
 
-    let get = State (fun s -> (s, s))
+    let get: State<_,_> = fun s -> (s, s)
 
     /// Replace the state inside the monad.
-    let inline put x = State (fun _ -> ((), x))
+    let inline put x: State<_,_> = fun _ -> ((), x)
 
     type StateBuilder() =
-        member __.Zero() = returnM ()
-        member __.Bind(m, f) = bind f m
-        member __.Return a = returnM a
-        member __.ReturnFrom(x) = x
-        member __.Combine (a, b) = bind b a
-        member __.Delay f = f
-        member __.Run f = f ()
+        member inline __.Zero() = returnM ()
+        member inline __.Bind(m, f) = bind f m
+        member inline __.Return a = returnM a
+        member inline __.ReturnFrom(x) = x
+        member inline __.Combine (a, b) = bind b a
+        member inline __.Delay f = f
+        member inline __.Run f = f ()
         member __.TryWith (body, handler) =
             try
                 body()
@@ -89,43 +89,42 @@ module State =
 
 /// A combination of the `Result` and `State` monads.
 /// F# has no monad transformers, so it was manually done.
-type [<Struct>] StateResult<'TSuccess, 'TState, 'TError> = StateResult of State<'TState, Result<'TSuccess, 'TError>>
+type  StateResult<'TSuccess, 'TState, 'TError> = State<'TState, Result<'TSuccess, 'TError>>
 
 /// [omit]
 /// It doesn't need documentation. 😜
 module StateResult =
 
-    let inline run (StateResult m) = State.run m
-    let inline map f (StateResult m) = State.map (Result.map f) m |> StateResult
+    let inline run (m: StateResult<_,_,_>) = State.run m
+    let inline map f (m: StateResult<_,_,_>): StateResult<_,_,_> = State.map (Result.map f) m
     let inline (<!>) f x = map x f
-    let inline bind f (StateResult (State m)) =
+    let inline bind f (m:StateResult<_,_,_>): StateResult<_,_,_> =
         fun s0 ->
             match m s0 with
             | (Ok x, s1) ->
-                let (StateResult (State q)) = f x
+                let q = f x
                 let newResult, newState = q s1
                 newResult, newState
             | (Error x, s) -> Error x, s
-        |> State |> StateResult
     let inline (>>=) result f = bind f result
     let inline apply f m = f >>= (fun f -> m >>= f)
     let inline (<*>) f x = apply f x
-    let inline returnM x = x |> Ok |> State.returnM |> StateResult
+    let inline returnM x: StateResult<_,_,_> = x |> Ok |> State.returnM
     let ignore x = map (ignore) x
 
-    let inline eval (StateResult sa) s = State.eval sa s
-    let inline exec (StateResult sa) s = State.exec sa s
+    let inline eval (sa: StateResult<_,_,_>) s = State.eval sa s
+    let inline exec (sa: StateResult<_,_,_>) s = State.exec sa s
 
-    let inline liftState x = x |> State.map Ok |> StateResult
-    let inline liftResult x = x |> State.returnM |> StateResult
+    let inline liftState x: StateResult<_,_,_> = x |> State.map Ok
+    let inline liftResult x: StateResult<_,_,_> = x |> State.returnM
 
     let inline fail message = message |> Error |> liftResult
 
-    let inline mapFailure f (StateResult m) = m |> State.map (Result.mapError f) |> StateResult
+    let inline mapFailure f (m: StateResult<_,_,_>): StateResult<_,_,_> = m |> State.map (Result.mapError f)
 
-    let get = StateResult(State(fun s0 -> Ok s0, s0)) // Thank you F#'s type restrictions. 😠
+    let get: StateResult<_,_,_> = fun s0 -> Ok s0, s0
 
-    let inline put x = StateResult(State(fun _ -> Ok(), x)) // Thank you F#'s type restrictions. 😠
+    let inline put x: StateResult<_,_,_> = fun _ -> Ok(), x
 
     type StateResultBuilder() =
         member __.Zero() = returnM ()

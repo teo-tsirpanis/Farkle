@@ -161,12 +161,11 @@ module Result =
     /// Collects a sequence of Results and accumulates their values.
     /// If the sequence contains an error the first reported error will be returned.
     let collect xs =
-        Seq.fold (fun result next ->
-            match result, next with
-            | Ok rs, Ok r -> Ok(r :: rs)
-            | Error m, _ -> Error m
-            | _ , Error m -> Error m) (Ok []) xs
-        |> Result.map List.rev
+        Seq.foldBack (fun next result ->
+            match next, result with
+            | Ok r, Ok rs -> Ok(r :: rs)
+            | _, Error m -> Error m
+            | Error m, _ -> Error m) xs (Ok []) 
 
     type EitherBuilder() =
         member __.Zero() = Ok ()

@@ -48,9 +48,9 @@ module RuntimeFarkle =
 
     /// Creates a `RuntimeFarkle`.
     /// The function takes a `RuntimeGrammar` and a `PostProcessor` that might have failed.
-    let create<'TResult> (grammar: RuntimeGrammar) postProcessor: RuntimeFarkle<'TResult> =
+    let create<'TResult> grammar postProcessor: RuntimeFarkle<'TResult> =
         {
-            Parser = grammar |> GOLDParser |> Ok
+            Parser = grammar |> GOLDParser.ofRuntimeGrammar |> Ok
             PostProcessor = postProcessor
         }
 
@@ -65,24 +65,22 @@ module RuntimeFarkle =
             (flip create postProcessor)
             (fun err -> {Parser = fail err; PostProcessor = postProcessor})
 
-    let private postProcess (rf: RuntimeFarkle<'TResult>) (ParseResult (res, msgs)) =
-        let result =
-            res
-            |> Result.mapError ParseError
-            >>= (PostProcessor.postProcessAST (postProcessor rf) >> Result.mapError PostProcessError)
-            |> Result.map (fun x -> x :?> 'TResult)
-        result, msgs
+    let private postProcess (rf: RuntimeFarkle<'TResult>) res =
+        res
+        |> Result.mapError ParseError
+        >>= (PostProcessor.postProcessAST (postProcessor rf) >> Result.mapError PostProcessError)
+        |> Result.map (fun x -> x :?> 'TResult)
 
     /// Parses and post-processes a `HybridStream` of characters.
-    /// Use this method if you want to get a parsing log.
-    let parseChars x input =
-        x |> parser |> tee (fun gp -> gp.ParseChars input |> postProcess x) (fun err -> fail err, [])
+    /// This function also accepts a custom parse message handler.
+    let parseChars fMessage x input =
+        x |> parser >>= (fun gp -> GOLDParser.parseChars gp fMessage input |> postProcess x)
 
     /// Parses and post-processes a string.
-    let parseString x inputString = x |> parser >>= (fun p -> p.ParseString inputString |> postProcess x |> fst)
+    let parseString x inputString = x |> parser >>= (fun gp -> GOLDParser.parseString gp ignore inputString |> postProcess x)
 
     /// Parses and post-processes a file at the given path with the given settings.
-    let parseFile x settings inputFile = x |> parser >>= (fun p -> p.ParseFile (inputFile, settings) |> postProcess x |> fst)
+    let parseFile x settings inputFile = x |> parser >>= (fun gp -> GOLDParser.parseFile gp ignore settings inputFile |> postProcess x)
 
     /// Parses and post-processes a .NET `Stream` with the given settings.
-    let parseStream x settings inputStream = x |> parser >>= (fun p -> p.ParseStream (inputStream, settings) |> postProcess x |> fst)
+    let parseStream x settings inputStream = x |> parser >>= (fun gp -> GOLDParser.parseStream gp ignore settings inputStream |> postProcess x)

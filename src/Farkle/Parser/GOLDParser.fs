@@ -6,28 +6,10 @@
 namespace Farkle.Parser
 
 open Farkle
-open Farkle.Monads.StateResult
 open Farkle.Grammar.GOLDParser
 open FSharpx.Collections
 open System.IO
 open System.Text
-
-/// A dedicated type to signify the result of a parser.
-/// It contains the result and a list of log messages describing the parsing process in detail.
-/// The result is either the final `Reduction`, or the fatal `ParseMessage`
-/// In this case, it is not included in the previously mentioned log message list.
-type ParseResult = ParseResult of Result<AST, ParseMessage> * ParseMessage list
-with
-    /// The content of this type, unwrapped.
-    member x.Value = match x with | ParseResult (x, y) -> x, y
-    /// The parsing log. In case of a failure, the fatal message is _not_ included.
-    member x.Messages = x.Value |> snd
-    /// The parsing log in human-friendly format. In case of a failure, the fatal message is _not_ included.
-    member x.MessagesAsString = x.Messages |> List.map string
-    /// A simple `Choice` with either the final `Reduction` or the fatal `ParseMessage` as a string.
-    member x.Simple = x.Value |> fst |> Result.mapError string
-    /// Returns the final `Reduction` or throws an exception.
-    member x.ReductionOrFail() = x.Simple |> returnOrFail
 
 /// A set of settings to customize a parser.
 type GOLDParserConfig = {
@@ -44,60 +26,56 @@ with
 
 
 /// A reusable parser created for a specific grammar that can parse input from multiple sources.
-type GOLDParser (grammar) =
+type GOLDParser = private {
+    Grammar: RuntimeGrammar
+}
 
-    let makeParseResult res =
-        match run res [] with
-        | res, msgs -> ParseResult(res, List.rev msgs)
+module GOLDParser =
+
+    let asGrammar {Grammar = grammar} = grammar
+
+    let ofRuntimeGrammar grammar = {Grammar = grammar}
 
     /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
     /// If there is a problem with the file, the constructor will throw an exception.
-    new (egtFile) =
-        let grammar = egtFile |> EGT.ofFile |> returnOrFail :> RuntimeGrammar
-        GOLDParser grammar
+    let ofEGTFile egtFile = egtFile |> EGT.ofFile |> returnOrFail |> ofRuntimeGrammar
 
     /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
+    /// A custom function that accepts the parse messages is required.
     /// What it returns is described in the `GOLDParser` class documentation.
-    member __.ParseChars input =
-        let warn x = sresult {
-            let! xs = get
-            do! put <| x :: xs
-        }
-        let rec impl p = sresult {
+    let parseChars {Grammar = grammar} fMessage input =
+        let rec impl p = either {
             match p with
             | Continuing (msg, x) ->
-                do! warn msg
+                do fMessage msg
                 return! impl x.Value
             | Failed msg ->
                 return! fail msg
             | Finished (msg, x) ->
-                do! warn msg
+                do fMessage msg
                 return x
         }
-        input |> Parser.create grammar |> impl |> makeParseResult
+        input |> Parser.create grammar |> impl
 
     /// Parses a string.
-    member x.ParseString input = input |> HybridStream.ofSeq false |> x.ParseChars
+    /// A custom function that accepts the parse messages is required.
+    let parseString gp fMessage input = input |> HybridStream.ofSeq false |> parseChars gp fMessage
 
     /// Parses a .NET `Stream`.
-    /// A `GOLDParserConfig` is required.
-    member x.ParseStream (inputStream, settings) =
+    /// A custom function that accepts the parse messages is required.
+    /// A `GOLDParserConfig` is required as well.
+    let parseStream gp fMessage settings inputStream =
         inputStream
         |> Seq.ofCharStream false settings.Encoding
         |> HybridStream.ofSeq settings.LazyLoad
-        |> x.ParseChars
-
-    /// Parses a .NET `Stream`.
-    member x.ParseStream inputStream = x.ParseStream(inputStream, GOLDParserConfig.Default)
+        |> parseChars gp fMessage
 
     /// Parses the contents of a file in the given path.
-    /// A `GOLDParserConfig` is required.
-    member x.ParseFile (path, settings) =
+    /// A custom function that accepts the parse messages is required.
+    /// A `GOLDParserConfig` is required as well.
+    let parseFile gp fMessage settings path =
         if path |> File.Exists |> not then
-            ParseResult (path |> InputFileNotExist |> ParseMessage.CreateSimple |> Result.Error, [])
+            path |> InputFileNotExist |> ParseMessage.CreateSimple |> Result.Error
         else
             use stream = File.OpenRead path
-            x.ParseStream(stream, settings)
-
-    /// Parses the contents of a file in the given path.
-    member x.ParseFile path = x.ParseFile(path, GOLDParserConfig.Default)
+            parseStream gp fMessage settings stream

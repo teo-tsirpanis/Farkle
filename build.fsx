@@ -65,7 +65,7 @@ let configurationAsString = "Release"
 let LibraryFramework = "netstandard2.0"
 
 [<Literal>]
-let DocumentationAssemblyFramework = "net472"
+let DocumentationAssemblyFramework = "net45"
 
 let exeFramework = "netcoreapp2.1"
 

@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use
 // it to define helpers that you do not want to show in the documentation.
-#I "../../bin/Farkle/net472/"
+#I "../../bin/Farkle/net45/"
 #load "../../packages/build/FSharp.Formatting/FSharp.formatting.fsx"
 #r "Farkle.dll"
 
@@ -56,7 +56,6 @@ The skeleton program starts with some very useful types. Copy the following snip
 *)
 
 open Farkle
-open Farkle.Grammar
 open Farkle.PostProcessor
 
 type Symbol =
@@ -178,7 +177,7 @@ As you see, the fuser turns the production `<Value> ::= Number` into an integer,
 And here comes the post-processor...
 *)
 
-let ThePostProcessor = PostProcessor.ofSeq transformers fusers
+let ThePostProcessor = PostProcessor.ofSeqEnum transformers fusers
 
 (**
 > __Note__: The post-processor is not _yet_ perfectly type-safe. I could use a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception. The post-processor will be made type-safe at a later release.
@@ -193,30 +192,10 @@ We need to make a `RuntimeFarkle`. This object is responsible for parsing __and 
 
 A runtime Farkle is made of a grammar, a post-processor, and two functions to convert terminals and productions to our custom enum types.
 
-We have the first two already, so let's make the last two:
+We have the first two already, so it's time for the big 🧀:
 *)
 
-let fSymbol =
-    function
-    /// Terminal symbols have indices that correspond to those at the grammar, and to the values of the symbol enum.
-    | Terminal (index, _) -> index |> int |> enum<Symbol>
-    /// For type-safety, symbols other than terminals are converted to an impossible enum.
-    /// Even if the transformer stumbles upon something other than a terminal, he will be forced to ignore them.
-    /// Wait! Nonterminals have symbols as well!
-    /// Yeah, but it's very unlikely that the transformer will ever encounter one of them.
-    | _ -> enum -1
-
-let fProduction x  =
-    x
-    |> Indexable.index // Farkle's productions implement the `Indexable` interface. They always have always indices, unlike symbols.
-    |> int
-    |> enum<Production>
-
-(**
-Now it's time for the big 🧀
-*)
-
-let TheRuntimeFarkle = RuntimeFarkle<int>.CreateFromFile "SimpleMaths.egt" fSymbol fProduction ThePostProcessor
+let TheRuntimeFarkle = RuntimeFarkle.ofEGTFile<int> "SimpleMaths.egt" ThePostProcessor
 
 (**
 ### Using the runtime Farkle
@@ -232,15 +211,15 @@ let printIt (x: Result<_,FarkleError>) =
     |> tee (sprintf "%d") string // Tee is a Farkle library function.
     |> printfn "%s"
 
-TheRuntimeFarkle.ParseString "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string
+RuntimeFarkle.parseString TheRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string
 
-TheRuntimeFarkle.ParseFile "goblins_from.mars" |> printIt // A file
+RuntimeFarkle.parseFile TheRuntimeFarkle GOLDParserConfig.Default "gf.m" |> printIt // A file
 
-System.IO.File.OpenRead "fishe.s" |> TheRuntimeFarkle.ParseStream |> printIt // A stream
+System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream TheRuntimeFarkle GOLDParserConfig.Default |> printIt // A stream
 
-TheRuntimeFarkle.ParseFile("itsjustgettingwetttonig.ht",GOLDParserConfig.Default.WithEncoding(System.Text.Encoding.UTF7).WithLazyLoad(false)) |> printIt // Another file, but with UTF-7 encoding and eagerly loaded.
+RuntimeFarkle.parseFile TheRuntimeFarkle (GOLDParserConfig.Default.WithEncoding(System.Text.Encoding.Unicode).WithLazyLoad(false)) "itsjustgettingwetttonig.ht" |> printIt // Another file, but with UTF-7 encoding and eagerly loaded.
 
-let parseResult, log = "111*555" |> HybridStream.ofSeq false |> TheRuntimeFarkle.ParseChars // ParseChars also returns a log of the parser.
+let parseResult, log = "111*555" |> HybridStream.ofSeq false |> RuntimeFarkle.parseChars TheRuntimeFarkle // ParseChars also returns a log of the parser.
 log |> List.iter (printfn "%O")
 printIt parseResult
 

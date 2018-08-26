@@ -36,7 +36,7 @@ let main args =
     | [| |] -> interactive()
     | [|"--ast"; x|] ->
         RuntimeFarkle.asGOLDParser TheRuntimeFarkle
-        |> Result.bind (fun gp -> gp.ParseString(x).Value |> fst |> Result.mapError ParseError)
+        |> Result.bind (fun gp -> GOLDParser.parseString gp (eprintfn "%O") x |> Result.mapError ParseError)
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
         |> Console.WriteLine

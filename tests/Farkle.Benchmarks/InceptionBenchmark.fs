@@ -17,11 +17,17 @@ open System.Runtime.InteropServices
 type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
-    [<Benchmark>]
-    member __.InceptionBenchmarkFarkleEager() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(false)).ReductionOrFail()
+    member inline __.doIt lazyLoad =
+        "inception.egt"
+        |> GOLDParser.ofEGTFile
+        |> (fun gp -> GOLDParser.parseFile gp ignore (GOLDParserConfig.Default.WithLazyLoad(lazyLoad)) "inception.grm")
+        |> Farkle.Common.Result.returnOrFail
 
     [<Benchmark>]
-    member __.InceptionBenchmarkFarkleLazy() = GOLDParser("inception.egt").ParseFile("inception.grm", GOLDParserConfig.Default.WithLazyLoad(true)).ReductionOrFail()
+    member __.InceptionBenchmarkFarkleEager() = __.doIt false
+
+    [<Benchmark>]
+    member __.InceptionBenchmarkFarkleLazy() = __.doIt true
 
     [<Benchmark(Baseline=true)>]
     member __.InceptionBenchmarkLazarus() =

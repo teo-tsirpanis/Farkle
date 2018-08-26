@@ -23,11 +23,10 @@ let main argv =
     let egtFile = args.GetResult <@ EGTFile @>
     let inputFile = args.GetResult <@ InputFile @>
     let showOutput = args.Contains <@ Silent @> |> not
-    let parser = GOLDParser egtFile
-    let result = parser.ParseFile(inputFile, GOLDParserConfig.Default)
-    let print = if showOutput then printfn "%s" else ignore
-    result.MessagesAsString |> Seq.iter print
-    match result.Simple with
+    let gp = GOLDParser.ofEGTFile egtFile
+    let print x = if showOutput then printfn "%O" x else ignore x
+    let result = GOLDParser.parseFile gp (print) GOLDParserConfig.Default inputFile
+    match result with
     | Ok x ->
         print "AST"
         x |> AST.toASCIITree |> print

@@ -14,6 +14,7 @@ open System.Collections.Generic
 type HybridStream<'T> =
     /// The stream is lazily evaluated.
     | Lazy of 'T LazyList
+    /// The stream is already loaded in its entirety.
     | Eager of 'T list
     member private x.GetEnumeratorImpl() =
         match x with

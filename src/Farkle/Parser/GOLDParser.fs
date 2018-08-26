@@ -77,14 +77,14 @@ type GOLDParser (grammar) =
         input |> Parser.create grammar |> impl |> makeParseResult
 
     /// Parses a string.
-    member x.ParseString input = input |> List.ofString |> Eager |> x.ParseChars
+    member x.ParseString input = input |> HybridStream.ofSeq false |> x.ParseChars
 
     /// Parses a .NET `Stream`.
     /// A `GOLDParserConfig` is required.
     member x.ParseStream (inputStream, settings) =
         inputStream
         |> Seq.ofCharStream false settings.Encoding
-        |> (if settings.LazyLoad then LazyList.ofSeq >> Lazy else List.ofSeq >> Eager)
+        |> HybridStream.ofSeq settings.LazyLoad
         |> x.ParseChars
 
     /// Parses a .NET `Stream`.

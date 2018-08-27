@@ -9,10 +9,10 @@ namespace Farkle.PostProcessor
 type PostProcessError =
     /// The `Fuser` required more, less, or objects of different type than what it needs.
     | UnexpectedASTStructure
-    /// The production post-processor encountered an unknown tyoe of production.
+    /// The production post-processor encountered an unknown type of production.
     /// Contrary to the terminal post-processor, the production post-processor _must_
     /// recognize _all_ productions, as all carry significant information.
-    | UnknownProduction of string
+    | UnknownProduction of Farkle.Grammar.Production
     override x.ToString() =
         match x with
         | UnexpectedASTStructure -> "Unexpected AST structure; perhaps a node of it had either more or less leaves"

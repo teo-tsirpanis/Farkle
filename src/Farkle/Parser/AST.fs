@@ -8,6 +8,7 @@ namespace Farkle
 open Aether
 open Farkle.Grammar
 open System
+open System.Text
 
 /// A token is an instance of a `Symbol`.
 /// Tokens carry parsed data, as well as their position within the text file.
@@ -67,12 +68,14 @@ module AST =
     /// Visualizes an `AST` in the form of a textual "parse tree".
     [<CompiledName("ToASCIITree")>]
     let toASCIITree x =
-        let addIndentText = String.repeat "|  "
-        let rec impl indent x = seq {
+        let addIndentText (x, indent) = String.replicate indent "|  " + x
+        let sb = StringBuilder()
+        let print = addIndentText >> sb.AppendLine >> ignore
+        let rec impl indent x =
             match x with
-            | AST.Content x -> yield sprintf "+--%s" x.Data, indent
+            | AST.Content x -> print <| (sprintf "+--%s" x.Data, indent)
             | AST.Nonterminal (prod, x) ->
-                yield sprintf "+--%O" prod, indent
-                yield! x |> Seq.collect (impl <| indent + 1u)
-        }
-        impl 0u x |> Seq.map (fun (x, y) -> addIndentText y + x) |> String.concat Environment.NewLine
+                print <| (sprintf "+--%O" prod, indent)
+                x |> Seq.iter (impl <| indent + 1)
+        impl 0 x
+        sb.ToString()

@@ -8,10 +8,7 @@ open Farkle.Parser
 open SimpleMaths
 open System
 
-let prettyPrintResult =
-    function
-    | Ok x -> sprintf "%O" x
-    | Error x -> sprintf "%O" x
+let inline prettyPrintResult x = tee string string x
 
 let interactive () =
     let rec impl() = 

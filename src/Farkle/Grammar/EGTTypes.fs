@@ -26,8 +26,6 @@ type EGTReadError =
     /// You have tried to read a CGT file instead of an EGT file.
     /// The former is _not_ supported.
     | ReadACGTFile
-    /// The file you specified does not exist.
-    | FileNotExist of string
     /// The item at the given index of a list was not found.
     | IndexNotFound of uint32
     /// Unexpected end of file.
@@ -45,7 +43,6 @@ type EGTReadError =
                 "The given file is a CGT file, not an EGT one."
                 + " You should update to the latest version of GOLD Parser Builder (at least over Version 5.0.0)"
                 + " and save the tables as \"Enhanced Grammar tables (Version 5.0)\"."
-            | FileNotExist x -> sprintf "The given file (%s) does not exist." x
             | IndexNotFound x -> sprintf "The index %d was not found in a list." x
             | UnexpectedEOF -> "Unexpected end of file."
 

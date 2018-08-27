@@ -56,7 +56,7 @@ module internal EGTReader =
                 let count = readUInt16 r
                 Seq.init (int count) (fun _ -> readEntry r) |> collect |> Result.map Record
             | b -> b |> InvalidRecordTag |> Error
-        
+
         let readRecords r =
             readToEnd readRecord r
 

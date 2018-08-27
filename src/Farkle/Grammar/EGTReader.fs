@@ -13,9 +13,12 @@ module internal EGTReader =
 
     module private Implementation =
 
-        let eofGuard fRead r =
+        let inline eofGuard fRead (r: BinaryReader) =
             try
-                fRead r |> Some
+                if r.BaseStream.Position <> r.BaseStream.Length then
+                    fRead r |> Some
+                else
+                    None
             with
             | :? EndOfStreamException -> None
 
@@ -32,7 +35,7 @@ module internal EGTReader =
             let sr = StringBuilder()
             let mutable c = readUInt16 r
             while c <> 0us do
-                c |> char |> sr.Append |> Operators.ignore
+                c |> char |> sr.Append |> ignore
                 c <- readUInt16 r
             sr.ToString()
 

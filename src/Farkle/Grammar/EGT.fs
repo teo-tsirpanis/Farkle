@@ -20,10 +20,10 @@ module EGT =
 
     /// Reads an EGT file and returns a `Grammar`.
     [<CompiledName("CreateFromFile")>]
-    let ofFile path = either {
+    let ofFile path =
         let path = Path.GetFullPath path
         if path |> File.Exists |> not then
-            do! path |> FileNotExist |> Result.Error
-        use stream = File.OpenRead path
-        return! ofStream stream
-    }
+            path |> FileNotExist |> Result.Error
+        else
+            use stream = File.OpenRead path
+            ofStream stream

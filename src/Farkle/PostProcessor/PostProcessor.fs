@@ -49,5 +49,4 @@ module PostProcessor =
                 |> List.map impl
                 |> collect
                 >>= (fun x -> ppp.TryFind prod.Index |> failIfNone (UnknownProduction <| prod.ToString()) >>= (fun f -> Fuser.Fuse x f))
-                // >>= x.ProductionPostProcessor.PostProcess prod
         impl ast

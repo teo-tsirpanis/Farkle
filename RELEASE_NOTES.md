@@ -3,6 +3,7 @@
 * The reader for GOLD Parser Enhanced Grammar Tables is now based on a Binary Reader, and is faster and more lightweight. __To be confirmed__
 * The parser directly generates Abstract Syntax trees, eliminating the need to convert them from reductions, a very hard-to-use type.
 * The code was yet again simplified and reorganized into different namespaces.
+* The library became much faster after performance profiling.
 
 #### 3.0.0 - 15-07-2018
 * Introduced the RuntimeFarkle API. This allows the user to both parse a string and convert its Abstract Syntax Tree into any type easily.

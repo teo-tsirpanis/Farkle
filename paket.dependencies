@@ -4,10 +4,20 @@ source https://api.nuget.org/v3/index.json
 
 storage: none
 
-nuget FSharp.Core
 nuget Aether
 nuget FSharpx.Collections
 nuget System.Collections.Immutable
+
+group Samples
+
+framework: net45, netcoreapp2.1
+
+source https://api.nuget.org/v3/index.json
+
+storage: none
+
+nuget FSharp.Core
+nuget Argu
 
 group Formatting
 

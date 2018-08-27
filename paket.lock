@@ -1578,6 +1578,29 @@ NUGET
       System.ValueTuple (>= 4.4 < 5.0)
     FSharp.Formatting.CommandTool (3.0.0-beta12)
 
+GROUP Samples
+STORAGE: NONE
+RESTRICTION: || (== net45) (== netcoreapp2.1)
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    Argu (5.1)
+      FSharp.Core (>= 4.0.0.1) - restriction: || (== net45) (&& (== netcoreapp2.1) (>= net45))
+      FSharp.Core (>= 4.3.2) - restriction: == netcoreapp2.1
+      System.Configuration.ConfigurationManager (>= 4.4) - restriction: == netcoreapp2.1
+    FSharp.Core (4.5.2)
+    Microsoft.NETCore.Platforms (2.1.1) - restriction: == netcoreapp2.1
+    System.Configuration.ConfigurationManager (4.5) - restriction: == netcoreapp2.1
+      System.Security.Cryptography.ProtectedData (>= 4.5) - restriction: || (&& (== net45) (>= netstandard2.0)) (== netcoreapp2.1)
+      System.Security.Permissions (>= 4.5) - restriction: || (&& (== net45) (>= monoandroid)) (&& (== net45) (>= monotouch)) (&& (== net45) (>= net461)) (&& (== net45) (>= netstandard2.0)) (&& (== net45) (>= xamarinios)) (&& (== net45) (>= xamarinmac)) (&& (== net45) (>= xamarintvos)) (&& (== net45) (>= xamarinwatchos)) (== netcoreapp2.1)
+    System.Security.AccessControl (4.5) - restriction: == netcoreapp2.1
+      Microsoft.NETCore.Platforms (>= 2.0) - restriction: || (&& (== net45) (>= netcoreapp2.0)) (== netcoreapp2.1)
+      System.Security.Principal.Windows (>= 4.5) - restriction: || (&& (== net45) (>= net461)) (&& (== net45) (>= netcoreapp2.0)) (&& (== net45) (>= netstandard2.0)) (== netcoreapp2.1)
+    System.Security.Cryptography.ProtectedData (4.5) - restriction: == netcoreapp2.1
+    System.Security.Permissions (4.5) - restriction: == netcoreapp2.1
+      System.Security.AccessControl (>= 4.5) - restriction: || (&& (== net45) (>= net461)) (&& (== net45) (>= netstandard2.0)) (== netcoreapp2.1)
+    System.Security.Principal.Windows (4.5) - restriction: == netcoreapp2.1
+      Microsoft.NETCore.Platforms (>= 2.0) - restriction: || (&& (== net45) (>= netcoreapp2.0)) (== netcoreapp2.1)
+
 GROUP Test
 STORAGE: NONE
 RESTRICTION: == netcoreapp2.1
@@ -1586,7 +1609,7 @@ NUGET
     Argu (5.1)
       FSharp.Core (>= 4.3.2)
       System.Configuration.ConfigurationManager (>= 4.4)
-    BenchmarkDotNet (0.11)
+    BenchmarkDotNet (0.11.1)
       CommandLineParser (>= 2.2.1)
       Microsoft.CodeAnalysis.CSharp (>= 2.8.2)
       Microsoft.DotNet.InternalAbstractions (>= 1.0)
@@ -1616,12 +1639,12 @@ NUGET
       System.Resources.ResourceManager (>= 4.0.1-rc2-24027)
       System.Runtime (>= 4.1.0-rc2-24027)
       System.Runtime.Extensions (>= 4.1.0-rc2-24027)
-    Expecto (8.1.1)
+    Expecto (8.2.2)
       Argu (>= 5.1)
       Mono.Cecil (>= 0.10)
       System.Diagnostics.FileVersionInfo (>= 4.3)
-    Expecto.FsCheck (8.1.1)
-      Expecto (>= 8.1.1)
+    Expecto.FsCheck (8.2.2)
+      Expecto (>= 8.2.2)
       FsCheck (>= 2.10.4)
     FsCheck (2.11)
       FSharp.Core (>= 4.3.4)
@@ -1694,6 +1717,7 @@ NUGET
     Microsoft.NETCore.Platforms (2.1)
     Microsoft.NETCore.Targets (2.1)
     Microsoft.Win32.Registry (4.5)
+      System.Memory (>= 4.5)
       System.Security.AccessControl (>= 4.5)
       System.Security.Principal.Windows (>= 4.5)
     Mono.Cecil (0.10)
@@ -1888,7 +1912,11 @@ NUGET
       System.Runtime.Extensions (>= 4.3)
       System.Threading (>= 4.3)
     System.Management (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
+      Microsoft.Win32.Registry (>= 4.5)
       System.CodeDom (>= 4.5)
+    System.Memory (4.5.1)
+      System.Runtime.CompilerServices.Unsafe (>= 4.5)
     System.ObjectModel (4.3)
       System.Collections (>= 4.3)
       System.Diagnostics.Debug (>= 4.3)
@@ -1969,6 +1997,7 @@ NUGET
       System.Resources.ResourceManager (>= 4.3)
       System.Runtime (>= 4.3)
     System.Security.AccessControl (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
       System.Security.Principal.Windows (>= 4.5)
     System.Security.Cryptography.Algorithms (4.3.1)
       Microsoft.NETCore.Platforms (>= 1.1)
@@ -1986,6 +2015,7 @@ NUGET
       System.Security.Cryptography.Primitives (>= 4.3)
       System.Text.Encoding (>= 4.3)
     System.Security.Cryptography.Cng (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
     System.Security.Cryptography.Csp (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       System.IO (>= 4.3)
@@ -2014,6 +2044,7 @@ NUGET
       System.Security.Cryptography.Primitives (>= 4.3)
       System.Text.Encoding (>= 4.3)
     System.Security.Cryptography.OpenSsl (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
     System.Security.Cryptography.Primitives (4.3)
       System.Diagnostics.Debug (>= 4.3)
       System.Globalization (>= 4.3)
@@ -2052,11 +2083,13 @@ NUGET
     System.Security.Permissions (4.5)
       System.Security.AccessControl (>= 4.5)
     System.Security.Principal.Windows (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
     System.Text.Encoding (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
       System.Runtime (>= 4.3)
     System.Text.Encoding.CodePages (4.5)
+      Microsoft.NETCore.Platforms (>= 2.0)
       System.Runtime.CompilerServices.Unsafe (>= 4.5)
     System.Text.Encoding.Extensions (4.3)
       Microsoft.NETCore.Platforms (>= 1.1)

@@ -16,7 +16,7 @@ type PostProcessError =
     override x.ToString() =
         match x with
         | UnexpectedASTStructure -> "Unexpected AST structure; perhaps a node of it had either more or less leaves"
-        | UnknownProduction x -> sprintf "A production of type %s is not recognized" x
+        | UnknownProduction x -> sprintf "A production of type %O is not recognized" x
 
 /// This special type signifies that a terminal symbol was not recognized by the terminal post-processor.
 /// The terminal post-processor _is_ allowed to fail. Some symbols like

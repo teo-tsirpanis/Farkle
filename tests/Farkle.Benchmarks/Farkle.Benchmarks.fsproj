@@ -4,8 +4,9 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="InceptionBenchmark.fs" />
     <Compile Include="RandomAccessBenchmark.fs" />
+    <Compile Include="SerializationBenchmark.fs" />
+    <Compile Include="InceptionBenchmark.fs" />
     <Compile Include="Program.fs" />
     <Content Include="..\resources\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -85,7 +85,7 @@ let benchmarkArguments runAll =
     if runAll then
         "-f *"
     else
-        "-f Farkle.* --join"
+        "-f Farkle.*"
     |> sprintf "%s --memory true -e github"
 
 let benchmarkReports =

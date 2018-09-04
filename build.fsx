@@ -124,7 +124,13 @@ let releaseNotes =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | BuildServer.AppVeyor -> AppVeyor.Environment.RepoCommitMessage :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
+    | BuildServer.AppVeyor -> 
+        sprintf "This is a build from the commit with id: %s from branch %s/%s"
+            AppVeyor.Environment.RepoCommit
+            AppVeyor.Environment.RepoName
+            AppVeyor.Environment.RepoBranch
+        :: AppVeyor.Environment.RepoCommitMessage
+        :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
     | _ -> releaseInfo.Notes
 
 let nugetVersion =
@@ -183,7 +189,8 @@ Target.create "CopyBinaries" (fun _ ->
 
 let vsProjFunc x =
     {x with
-        DotNet.BuildOptions.Configuration = configuration}
+        DotNet.BuildOptions.Configuration = configuration
+    }
 
 let inline fCommonOptions x =
     [

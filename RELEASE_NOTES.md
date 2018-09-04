@@ -1,5 +1,5 @@
-#### 4.0.0
-* The grammars can be serialized and embedded inside code. No more EGT files are necessary at runtime!
+#### 3.1.0-beta001
+* The versioning scheme changed. Even (and zero) minor and patch versions signify stable releases, while odd ones signify unstable releases.
 * The reader for GOLD Parser Enhanced Grammar Tables is now based on a Binary Reader, and is faster and more lightweight. __To be confirmed__
 * The parser directly generates Abstract Syntax trees, eliminating the need to convert them from reductions, a very hard-to-use type.
 * The code was yet again simplified and reorganized into different namespaces.

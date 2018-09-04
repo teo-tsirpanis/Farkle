@@ -112,12 +112,25 @@ let gitRaw = Environment.environVarOrDefault "gitRaw" "https://raw.githubusercon
 // --------------------------------------------------------------------------------------
 
 // Read additional information from the release notes document
-let release = ReleaseNotes.load "RELEASE_NOTES.md"
+let releaseInfo = ReleaseNotes.load "RELEASE_NOTES.md"
+
+let releaseNotes =
+    let lines s = seq {
+        use sr = new StringReader(s)
+        let mutable s = ""
+        s <- sr.ReadLine()
+        while not <| isNull s do
+            yield s
+            s <- sr.ReadLine()
+    }
+    match BuildServer.buildServer with
+    | BuildServer.AppVeyor -> AppVeyor.Environment.RepoCommitMessage :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
+    | _ -> releaseInfo.Notes
 
 let nugetVersion =
     match BuildServer.buildServer with
     BuildServer.AppVeyor -> AppVeyor.Environment.BuildVersion
-    | _ -> release.NugetVersion
+    | _ -> releaseInfo.NugetVersion
 
 BuildServer.install
     [
@@ -140,8 +153,8 @@ Target.create "AssemblyInfo" (fun _ ->
             AssemblyInfo.Title projectName
             AssemblyInfo.Product project
             AssemblyInfo.Description summary
-            AssemblyInfo.Version release.AssemblyVersion
-            AssemblyInfo.FileVersion release.AssemblyVersion
+            AssemblyInfo.Version releaseInfo.AssemblyVersion
+            AssemblyInfo.FileVersion releaseInfo.AssemblyVersion
             AssemblyInfo.Configuration (sprintf "%A" configuration)
         ]
 
@@ -175,7 +188,7 @@ let vsProjFunc x =
 let inline fCommonOptions x =
     [
         sprintf "/p:Version=%s" nugetVersion
-        release.Notes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
+        releaseNotes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
     ] |> DotNet.Options.withAdditionalArgs <| x
 
 Target.description "Cleans the output directories"
@@ -405,7 +418,7 @@ Target.create "ReleaseDocs" (fun _ ->
 
     Shell.copyRecursive "docs" tempDocsDir true |> Trace.tracefn "Copied %A"
     Staging.stageAll tempDocsDir
-    Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" release.NugetVersion)
+    Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
     Branches.push tempDocsDir
 )
 
@@ -429,21 +442,21 @@ Target.create "Release" (fun _ ->
         |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
 
     Staging.stageAll ""
-    Commit.exec "" (sprintf "Bump version to %s" release.NugetVersion)
+    Commit.exec "" (sprintf "Bump version to %s" nugetVersion)
     Branches.pushBranch "" remote (Information.getBranchName "")
 
-    Branches.tag "" release.NugetVersion
-    Branches.pushTag "" remote release.NugetVersion
+    Branches.tag "" nugetVersion
+    Branches.pushTag "" remote nugetVersion
 
     // release on github
     GitHub.createClient user pw
-    |> GitHub.createRelease gitOwner gitName release.NugetVersion
+    |> GitHub.createRelease gitOwner gitName nugetVersion
         (fun x ->
             {x with
                 Draft = true
-                Name = sprintf "Version %s" release.NugetVersion
-                Prerelease = release.SemVer.PreRelease.IsSome
-                Body = String.concat Environment.NewLine release.Notes})
+                Name = sprintf "Version %s" nugetVersion
+                Prerelease = releaseInfo.SemVer.PreRelease.IsSome
+                Body = String.concat Environment.NewLine releaseNotes})
     |> GitHub.uploadFiles nugetPackages
     |> GitHub.uploadFile ("./src/Farkle/FSharp - Farkle.pgt")
     |> GitHub.publishDraft

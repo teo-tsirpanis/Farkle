@@ -43,7 +43,7 @@ module internal LALRParser =
         |> Map.tryFind symbol
 
     let private parseLALR lalrStates token = State.state {
-        let impl = sresult {
+        let (StateResult impl) = sresult {
             let getStateFromIndex = SafeArray.retrieve lalrStates
             let! currentState = getCurrentLALR
             let nextAvailableActions = currentState.Actions

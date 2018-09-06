@@ -30,8 +30,7 @@ type LALRResult =
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
 
-/// A message describing what a `Parser` did, or what error it encountered.
-/// Some of these will only appear while using the `GOLDParser` API.
+/// An action of the parser.
 type ParseMessageType =
     /// A token was read.
     | TokenRead of Token
@@ -39,8 +38,24 @@ type ParseMessageType =
     | Reduction of AST
     /// The parser shifted to a different LALR state.
     | Shift of uint32
-    /// The parser finished parsing and returned a reduction.
+    /// The parser finished parsing and returned an AST.
     | Accept of AST
+    override x.ToString() =
+        match x with
+        | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
+        | Reduction x -> sprintf "Rule reduced: %O" x
+        | Shift x -> sprintf "The parser shifted to state %d" x
+        | Accept x -> sprintf "Abstract Syntax Tree accepted: %O" x
+
+/// A log message from a `Parser`, and the position it was encountered.
+type ParseMessage = ParseMessage of Position * ParseMessageType
+    with
+        override x.ToString() = match x with | ParseMessage (pos, mt) ->  sprintf "%O %O" pos mt
+        /// Creates a parse message at the default position.
+        static member CreateSimple mt = ParseMessage (Position.initial, mt)
+
+/// An error
+type ParseErrorType =
     /// The file containing the input does not exist.
     | InputFileNotExist of string
     /// A character was not recognized.
@@ -51,18 +66,9 @@ type ParseMessageType =
     | GroupError
     /// Internal error. This is a bug.
     | InternalError of ParseInternalError
-    /// Whether the message signifies an error or not.
-    member x.IsError =
-        match x with
-        | TokenRead _ | Reduction _ | Accept _ | Shift _ -> false
-        | InputFileNotExist _ | LexicalError _ | SyntaxError _ | GroupError | InternalError _ -> true
     override x.ToString() =
         match x with
         | InputFileNotExist x -> sprintf "File \"%s\" does not exist" x
-        | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
-        | Reduction x -> sprintf "Rule reduced: %O" x
-        | Shift x -> sprintf "The parser shifted to state %d" x
-        | Accept x -> sprintf "Reduction accepted: %O" x
         | LexicalError x -> sprintf "Cannot recognize token: %c" x
         | SyntaxError (expected, actual) ->
             let expected = expected |> List.map string |> String.concat ", "
@@ -70,20 +76,10 @@ type ParseMessageType =
         | GroupError -> "Unexpected end of input"
         | InternalError x -> sprintf "Internal error: %O. This is most probably a bug. If you see this error, please file an issue on GitHub." x
 
-/// A message from a `Parser`, and the position it was encountered.
-type ParseMessage =
-    {
-        /// The type of the message.
-        MessageType: ParseMessageType
-        /// The position the message was encountered.
-        Position: Position
-    }
-    member x.IsError = x.MessageType.IsError
-    override x.ToString() = sprintf "%O %O" x.Position x.MessageType
-    /// Creates a parse message of the given type at the given position.
-    static member Create position messageType = {MessageType = messageType; Position = position}
-    /// Creates a parse message at the default position.
-    static member CreateSimple = ParseMessage.Create Position.initial
+/// A log message from a `Parser`, and the position it was encountered.
+type ParseError = ParseError of Position * ParseErrorType
+    with
+        override x.ToString() = match x with | ParseError (pos, mt) ->  sprintf "%O %O" pos mt
 
 /// The feedback from the tokenizer after a token is read.
 /// Because the tokenizer is completely isolated, it needs to provide

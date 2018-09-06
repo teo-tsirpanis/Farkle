@@ -37,6 +37,9 @@ let none _ = None
 /// Converts a function to curried form.
 let curry f x y = f(x, y)
 
+/// Curries and flips the arguments of a function.
+let yrruc f y x = f(x, y)
+
 /// Converts a function to uncurried form.
 let uncurry f (x, y) = f x y
 

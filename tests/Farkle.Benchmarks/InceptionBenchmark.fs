@@ -6,8 +6,11 @@
 namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
+open Farkle
+open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 open System.Diagnostics
+open System.Text
 open System.Runtime.InteropServices
 
 [<MemoryDiagnoser>]
@@ -19,9 +22,9 @@ type InceptionBenchmark() =
 
     member inline __.doIt lazyLoad =
         "inception.egt"
-        |> GOLDParser.ofEGTFile
-        |> (fun g -> GOLDParser.parseFile g ignore (GOLDParserConfig.Default.WithLazyLoad(lazyLoad)) "inception.grm")
-        |> Farkle.Common.Result.returnOrFail
+        |> EGT.ofFile
+        |> Result.map (fun g -> GOLDParser.parseFile g ignore lazyLoad Encoding.UTF8 "inception.grm")
+        |> returnOrFail
 
     [<Benchmark>]
     member __.InceptionBenchmarkFarkleEager() = __.doIt false

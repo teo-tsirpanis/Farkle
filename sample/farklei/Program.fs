@@ -2,12 +2,14 @@
 
 open Argu
 open Farkle
+open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 
 type Arguments =
     | [<ExactlyOnce>] EGTFile of string
     | [<ExactlyOnce>] InputFile of string
     | [<Unique; AltCommandLine("-s")>] Silent
+    | [<Unique>] LazyLoad of bool
 with
     interface IArgParserTemplate with
         member s.Usage =
@@ -15,6 +17,7 @@ with
             | EGTFile _ -> "the file containing the grammar to be parsed"
             | InputFile _ -> "the file to be parsed"
             | Silent -> "do not show any output at all"
+            | LazyLoad _ -> "lazily load input"
 
 [<EntryPoint>]
 let main argv =
@@ -23,9 +26,10 @@ let main argv =
     let egtFile = args.GetResult <@ EGTFile @>
     let inputFile = args.GetResult <@ InputFile @>
     let showOutput = args.Contains <@ Silent @> |> not
-    let g = GOLDParser.ofEGTFile egtFile
+    let lazyLoad = args.TryGetResult <@ LazyLoad @> |> Option.defaultValue true
+    let g = EGT.ofFile egtFile |> returnOrFail
     let print x = if showOutput then printfn "%O" x else ignore x
-    let result = GOLDParser.parseFile g (print) GOLDParserConfig.Default inputFile
+    let result = GOLDParser.parseFile g (print) lazyLoad System.Text.Encoding.UTF8 inputFile
     match result with
     | Ok x ->
         print "AST"

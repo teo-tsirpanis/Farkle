@@ -73,7 +73,7 @@ module GOLDParser =
         let lalr = RuntimeGrammar.lalrStates grammar
         let state = ParserState.create (Tokenizer.create dfa groups input) (LALRParser.create lalr)
         let (result, nextState) = run (impl()) state
-        result |> Result.mapError (curry ParseError nextState.CurrentPosition)
+        result |> Result.mapError (curry ParseError.ParseError nextState.CurrentPosition)
 
     /// Parses a string.
     let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage

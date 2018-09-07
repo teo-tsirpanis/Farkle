@@ -77,6 +77,7 @@ type ParseErrorType =
         | InternalError x -> sprintf "Internal error: %O. This is most probably a bug. If you see this error, please file an issue on GitHub." x
 
 /// A log message from a `Parser`, and the position it was encountered.
+[<RequireQualifiedAccess>]
 type ParseError = ParseError of Position * ParseErrorType
     with
         override x.ToString() = match x with | ParseError (pos, mt) ->  sprintf "%O %O" pos mt

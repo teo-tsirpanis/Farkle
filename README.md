@@ -1,9 +1,9 @@
-[![Issue Stats](https://img.shields.io/issuestats/i/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpanis/farkle)
-[![Issue Stats](https://img.shields.io/issuestats/p/github/teo-tsirpanis/farkle.svg)](http://issuestats.com/github/teo-tsirpanis/farkle)
+![GitHub](https://img.shields.io/github/license/teo-tsirpanis/farkle.svg)
+[![NuGet](https://img.shields.io/nuget/v/Nuget.Core.svg)](https://nuget.org/packages/Farkle)
 
 # Farkle
 
-Farkle is a [LALR] parser for .NET languages (mainly F#). It can read grammars created by GOLD Parser, and provides an easy to use API to post-process them into arbitrary types.
+Farkle is a modern and easy-to-use parser library for F#. It can read grammars created by [GOLD Parser][gold], and provides an easy to use API to post-process them into arbitrary types.
 
 ## Documentation
 
@@ -17,5 +17,4 @@ Farkle is a [LALR] parser for .NET languages (mainly F#). It can read grammars c
 
 - [@teo-tsirpanis](https://github.com/teo-tsirpanis)
 
-[lalr]:https://en.wikipedia.org/wiki/LALR_parser
 [gold]:http://goldparser.org/

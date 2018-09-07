@@ -9,7 +9,7 @@
     <Authors>teo-tsirpanis</Authors>
     <Company>Theodore Tsirpanis</Company>
     <Product>Farkle</Product>
-    <Summary>A modern and easy-to-use parsing library.</Summary>
+    <Summary>A parser library for F# based on GOLD Parser</Summary>
     <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.
 
 10: By the way, Farkle means: "FAkle Recognizes Known Languages Easily".

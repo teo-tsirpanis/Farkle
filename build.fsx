@@ -39,11 +39,7 @@ let project = "Farkle"
 
 // Short summary of the project
 // (used as description in AssemblyInfo and as a short summary for NuGet package)
-let summary = "A LALR parsing toolkit for F#."
-
-// Longer description of the project
-// (used as a description for NuGet package; line breaks are automatically cleaned up)
-let description = "Farkle is a port of GOLD Parser 5.0 for F#, but aims to be buch more than that. It's still under early development."
+let summary = "A modern and easy-to-use parser library for F#"
 
 // List of author names (for NuGet package)
 let authors = [ "Theodore Tsirpanis" ]
@@ -95,6 +91,8 @@ let benchmarkReports =
 let benchmarkReportsDirectory = "performance/"
 
 let nugetPackages = !! "bin/*.nupkg"
+
+let releaseArtifacts = nugetPackages ++ "./src/Farkle/FSharp - Farkle.pgt"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
@@ -464,8 +462,7 @@ Target.create "Release" (fun _ ->
                 Name = sprintf "Version %s" nugetVersion
                 Prerelease = releaseInfo.SemVer.PreRelease.IsSome
                 Body = String.concat Environment.NewLine releaseNotes})
-    |> GitHub.uploadFiles nugetPackages
-    |> GitHub.uploadFile ("./src/Farkle/FSharp - Farkle.pgt")
+    |> GitHub.uploadFiles releaseArtifacts
     |> GitHub.publishDraft
     |> Async.RunSynchronously
 )

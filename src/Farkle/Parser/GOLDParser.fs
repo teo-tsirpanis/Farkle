@@ -5,77 +5,89 @@
 
 namespace Farkle.Parser
 
+open Aether
 open Farkle
-open Farkle.Grammar.GOLDParser
-open FSharpx.Collections
-open System.IO
-open System.Text
+open Farkle.Grammar
+open Farkle.Monads
 
-/// A set of settings to customize a parser.
-type GOLDParserConfig = {
-    /// The text encoding that will be used.
-    Encoding: Encoding
-    /// Whether the input stream will be lazily loaded.
-    LazyLoad: bool
-}
-with
-    /// The default configuration. UTF-8 encoding and lazy loading.
-    static member Default = {Encoding = Encoding.UTF8; LazyLoad = true}
-    member x.WithLazyLoad v = {x with LazyLoad = v}
-    member x.WithEncoding v = {x with Encoding = v}
-
-
-/// A reusable parser created for a specific grammar that can parse input from multiple sources.
-type GOLDParser = private {
-    Grammar: RuntimeGrammar
-}
-
+/// Functions to create `AST`s by parsing input, based on `RuntimeGrammar`s.
+/// They accept a callback for each log message the parser encounters.
+[<RequireQualifiedAccess>]
 module GOLDParser =
 
-    let asGrammar {Grammar = grammar} = grammar
+    open StateResult
 
-    let ofRuntimeGrammar grammar = {Grammar = grammar}
+    let private tokenize = sresult {
+        let! tokenizer = getOptic ParserState.TheTokenizer_
+        match tokenizer with
+        | EndlessProcess (ExtraTopLevelOperators.Lazy (x, xs)) ->
+            do! get >>= (fun s -> put {s with TheTokenizer = xs; CurrentPosition = x.CurrentPosition; IsGroupStackEmpty = x.IsGroupStackEmpty})
+            return x.NewToken
+    }
 
-    /// Creates a parser from a `Grammar` stored in an EGT file in the given path.
-    /// If there is a problem with the file, the constructor will throw an exception.
-    let ofEGTFile egtFile = egtFile |> EGT.ofFile |> returnOrFail |> ofRuntimeGrammar
+    let private parseLALR token = sresult {
+        let! lalrParser = getOptic ParserState.TheLALRParser_ <!> (fun (LALRParser x) -> x)
+        let result, newParser = lalrParser token
+        do! setOptic ParserState.TheLALRParser_ newParser
+        return result
+    }
 
-    /// Evaluates a `Parser` that parses the given list of characters, unitl it either succeeds or fails.
-    /// A custom function that accepts the parse messages is required.
-    /// What it returns is described in the `GOLDParser` class documentation.
-    let parseChars {Grammar = grammar} fMessage input =
-        let rec impl p = either {
-            match p with
-            | Continuing (msg, x) ->
-                do fMessage msg
-                return! impl x.Value
-            | Failed msg ->
-                return! fail msg
-            | Finished (msg, x) ->
-                do fMessage msg
-                return x
+    /// Parses a `HybridStream` of characters. 
+    let parseChars grammar fMessage input =
+        let fMessage messageType = getOptic ParserState.CurrentPosition_ <!> (yrruc ParseMessage messageType >> fMessage)
+        let rec impl() = sresult {
+            let! tokens = getOptic ParserState.InputStack_
+            let! isGroupStackEmpty = getOptic ParserState.IsGroupStackEmpty_
+            match tokens with
+            | [] ->
+                let! newToken = tokenize
+                do! setOptic ParserState.InputStack_ [newToken]
+                if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
+                    return! fail GroupError
+                else
+                    do! fMessage <| TokenRead newToken
+                    return! impl()
+            | newToken :: xs ->
+                match newToken.Symbol with
+                | Noise _ ->
+                    do! setOptic ParserState.InputStack_ xs
+                    return! impl()
+                | Error -> return! fail <| LexicalError newToken.Data.[0]
+                | EndOfFile when not isGroupStackEmpty -> return! fail GroupError
+                | _ ->
+                    let! lalrResult = parseLALR newToken
+                    match lalrResult with
+                    | LALRResult.Accept x -> return x
+                    | LALRResult.Shift x ->
+                        do! mapOptic ParserState.InputStack_ List.skipLast
+                        do! fMessage <| ParseMessageType.Shift x
+                        return! impl()
+                    | ReduceNormal x ->
+                        do! fMessage <| Reduction x
+                        return! impl()
+                    | LALRResult.SyntaxError (x, y) -> return! fail <| SyntaxError (x, y)
+                    | LALRResult.InternalError x -> return! fail <| InternalError x
         }
-        input |> Parser.create grammar |> impl
+        let dfa = RuntimeGrammar.dfaStates grammar
+        let groups = RuntimeGrammar.groups grammar
+        let lalr = RuntimeGrammar.lalrStates grammar
+        let state = ParserState.create (Tokenizer.create dfa groups input) (LALRParser.create lalr)
+        let (result, nextState) = run (impl()) state
+        result |> Result.mapError (curry ParseError nextState.CurrentPosition)
 
     /// Parses a string.
-    /// A custom function that accepts the parse messages is required.
-    let parseString gp fMessage input = input |> HybridStream.ofSeq false |> parseChars gp fMessage
+    let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage
 
-    /// Parses a .NET `Stream`.
-    /// A custom function that accepts the parse messages is required.
-    /// A `GOLDParserConfig` is required as well.
-    let parseStream gp fMessage settings inputStream =
+    /// Parses a .NET `Stream` whose bytes are encoded with the given `Encoding`.
+    /// There is an option to load the entire stream at once, instead of gradually loading it the moment it is required.
+    /// It slightly improves performance, but it should not be used on files whose size might be big.
+    let parseStream g fMessage doLazyLoad encoding inputStream =
         inputStream
-        |> Seq.ofCharStream false settings.Encoding
-        |> HybridStream.ofSeq settings.LazyLoad
-        |> parseChars gp fMessage
+        |> Seq.ofCharStream false encoding
+        |> HybridStream.ofSeq doLazyLoad
+        |> parseChars g fMessage
 
-    /// Parses the contents of a file in the given path.
-    /// A custom function that accepts the parse messages is required.
-    /// A `GOLDParserConfig` is required as well.
-    let parseFile gp fMessage settings path =
-        if path |> File.Exists |> not then
-            path |> InputFileNotExist |> ParseMessage.CreateSimple |> Result.Error
-        else
-            use stream = File.OpenRead path
-            parseStream gp fMessage settings stream
+    /// Parses the contents of a file in the given path whose bytes are encoded with the given `Encoding`.
+    let parseFile g fMessage doLazyLoad encoding path =
+        use stream = System.IO.File.OpenRead path
+        parseStream g fMessage doLazyLoad encoding stream

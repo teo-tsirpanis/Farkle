@@ -23,9 +23,9 @@ let main argv =
     let egtFile = args.GetResult <@ EGTFile @>
     let inputFile = args.GetResult <@ InputFile @>
     let showOutput = args.Contains <@ Silent @> |> not
-    let gp = GOLDParser.ofEGTFile egtFile
+    let g = GOLDParser.ofEGTFile egtFile
     let print x = if showOutput then printfn "%O" x else ignore x
-    let result = GOLDParser.parseFile gp (print) GOLDParserConfig.Default inputFile
+    let result = GOLDParser.parseFile g (print) GOLDParserConfig.Default inputFile
     match result with
     | Ok x ->
         print "AST"

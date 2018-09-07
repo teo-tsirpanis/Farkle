@@ -20,7 +20,7 @@ type InceptionBenchmark() =
     member inline __.doIt lazyLoad =
         "inception.egt"
         |> GOLDParser.ofEGTFile
-        |> (fun gp -> GOLDParser.parseFile gp ignore (GOLDParserConfig.Default.WithLazyLoad(lazyLoad)) "inception.grm")
+        |> (fun g -> GOLDParser.parseFile g ignore (GOLDParserConfig.Default.WithLazyLoad(lazyLoad)) "inception.grm")
         |> Farkle.Common.Result.returnOrFail
 
     [<Benchmark>]

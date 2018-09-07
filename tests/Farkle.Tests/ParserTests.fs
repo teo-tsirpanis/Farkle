@@ -17,8 +17,8 @@ let logger = Log.create "Parser tests"
 let tests =
     testList "Parser tests" [
         test "A simple mathematical expression can be parsed" {
-            let gp = GOLDParser.ofEGTFile "simple.egt"
-            let result = GOLDParser.parseString gp (string >> Message.eventX >> logger.info) "111*555"
+            let g = GOLDParser.ofEGTFile "simple.egt"
+            let result = GOLDParser.parseString g (string >> Message.eventX >> logger.info) "111*555"
             match result with
             | Ok x -> x |> AST.toASCIITree |> sprintf "Result: %s" |> Message.eventX |> logger.info
             | Result.Error x -> x |> failtestf "Error: %O"

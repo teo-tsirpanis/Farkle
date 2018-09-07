@@ -12,7 +12,7 @@ open Farkle.PostProcessor
 /// A type signifying an error during the parsing process.
 type FarkleError =
     /// There was a parsing error.
-    | ParseError of ParseMessage
+    | ParseError of ParseError
     /// There was a post-processing error.
     | PostProcessError of PostProcessError
     /// There was an error while reading the grammar.
@@ -32,7 +32,7 @@ type FarkleError =
 // `fPostProcess` is hiding away the post-processor's two generic types.
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
-    Parser: Result<GOLDParser,FarkleError>
+    Parser: Result<RuntimeGrammar,FarkleError>
     PostProcessor: PostProcessor
 }
 
@@ -50,7 +50,7 @@ module RuntimeFarkle =
     /// The function takes a `RuntimeGrammar` and a `PostProcessor` that might have failed.
     let create<'TResult> grammar postProcessor: RuntimeFarkle<'TResult> =
         {
-            Parser = grammar |> GOLDParser.ofRuntimeGrammar |> Ok
+            Parser = Ok grammar
             PostProcessor = postProcessor
         }
 
@@ -74,13 +74,15 @@ module RuntimeFarkle =
     /// Parses and post-processes a `HybridStream` of characters.
     /// This function also accepts a custom parse message handler.
     let parseChars fMessage x input =
-        x |> parser >>= (fun gp -> GOLDParser.parseChars gp fMessage input |> postProcess x)
+        x |> parser >>= (fun g -> GOLDParser.parseChars g fMessage input |> postProcess x)
 
     /// Parses and post-processes a string.
-    let parseString x inputString = x |> parser >>= (fun gp -> GOLDParser.parseString gp ignore inputString |> postProcess x)
+    let parseString x inputString = x |> parser >>= (fun g -> GOLDParser.parseString g ignore inputString |> postProcess x)
 
-    /// Parses and post-processes a file at the given path with the given settings.
-    let parseFile x settings inputFile = x |> parser >>= (fun gp -> GOLDParser.parseFile gp ignore settings inputFile |> postProcess x)
+    /// Parses and post-processes a file at the given path with the given settings that are explained in the `ParserImplementation` module.
+    let parseFile x doLazyLoad encoding inputFile =
+        x |> parser >>= (fun g -> GOLDParser.parseFile g ignore doLazyLoad encoding inputFile |> postProcess x)
 
-    /// Parses and post-processes a .NET `Stream` with the given settings.
-    let parseStream x settings inputStream = x |> parser >>= (fun gp -> GOLDParser.parseStream gp ignore settings inputStream |> postProcess x)
+    /// Parses and post-processes a .NET `Stream` with the given settings that are explained in the `ParserImplementation` module.
+    let parseStream x doLazyLoad encoding inputStream =
+        x |> parser >>= (fun g -> GOLDParser.parseStream g ignore doLazyLoad encoding inputStream |> postProcess x)

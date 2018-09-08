@@ -48,7 +48,6 @@
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
-    <Compile Include="Parser/ParserInternal.fs" />
     <Compile Include="Parser/GOLDParser.fs" />
     <Compile Include="PostProcessor/PostProcessorTypes.fs" />
     <Compile Include="PostProcessor/Transformer.fs" />

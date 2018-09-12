@@ -60,7 +60,7 @@ type Entry =
     | String of string
 
 /// An EGT record is a list of grouped entries.
-type Record = Record of Entry list
+type Record = Entry list
 
 /// An EGT file is made of a header string and a list of `Record`s.
 type EGTFile = {

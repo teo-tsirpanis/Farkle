@@ -18,9 +18,9 @@ module internal GrammarReader =
         // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
         // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
         // FFFFFFfFFFFFFF
-        let wantUInt16 = function | UInt16 x -> Some x | _ -> None
+        let inline wantUInt16 x = match x with | UInt16 x -> Some x | _ -> None
 
-        let readToEnd allowEmpty count fReadIt =
+        let inline readToEnd allowEmpty count fReadIt =
             function
             | [] when allowEmpty -> Some []
             | x -> x |> List.chunkBySize count |> List.map fReadIt |> List.allSome
@@ -165,80 +165,92 @@ module internal GrammarReader =
             | Empty :: xs -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
             | _ -> None
 
-        let getSingleElement magicCode f =
-            Map.tryFind magicCode
-            >> Option.bind (function | [x] -> Some x | _ -> None)
-            >> Option.bind f
-
-        let getIndexedElements magicCode f length =
-            let impl opt entries =
-                match opt, entries with
-                | Some array, UInt16 index :: xs -> maybe {
-                    let! x = f (uint32 index) xs
-                    let index = int index
-                    if index < Array.length array then
-                        do Array.set array index x
-                        return array
-                    else
-                        return! None
-                    }
-                | _ -> None
-            let array = length * 1us |> int |> Array.zeroCreate
-            Map.tryFind magicCode
-            >> Option.defaultValue []
-            >> List.fold (impl) (Some array)
-            >> Option.map SafeArray.ofSeq
-
-        let collectRecords =
-            List.map (function | Byte magicCode :: xs -> Some (magicCode, xs) | _ -> None)
-            >> List.allSome
-            >> Option.map (List.groupBy fst >> List.map (fun (mc, x) -> mc , List.map snd x) >> Map.ofList)
-
         [<Literal>]
         let CGTHeader = "GOLD Parser Tables/v1.0"
         [<Literal>]
         let EGTHeader = "GOLD Parser Tables/v5.0"
 
-        let makeGrammar {Header = header; Records = records} =
-            match header with
-            | CGTHeader -> Result.Error ReadACGTFile
-            | EGTHeader -> failIfNone UnknownEGTFile <| maybe {
-                let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
+        let inline zc x = x |> int |> Array.zeroCreate
 
-                let! properties =
-                    records
-                    |> Map.tryFind 'p'B
-                    |> Option.defaultValue [] // We don't care if there are no properties.
-                    |> List.map readProperty
-                    |> List.allSome
-                    |> Option.map (Map.ofList >> Properties)
+        let inline itemTry arr idx = idx |> int |> flip Array.tryItem arr
 
-                let! tableCounts = getSingleElement 't'B readTableCounts records
-
-                let! charSets = getIndexedElements 'c'B readCharSet tableCounts.CharSetTables records
-                let fCharSet = uint32 >> SafeArray.getUnsafe charSets
-
-                let! symbols = getIndexedElements 'S'B readSymbol tableCounts.SymbolTables records
-                let fSymbol = uint32 >> SafeArray.getUnsafe symbols
-
-                let fGroup = Indexed.createWithKnownLength16 tableCounts.GroupTables
-                let! groups = getIndexedElements 'g'B (readGroup fSymbol fGroup) tableCounts.GroupTables records
-
-                let! productions = getIndexedElements 'R'B (readProduction fSymbol) tableCounts.ProductionTables records
-                let fProduction = uint32 >> SafeArray.getUnsafe productions
-
-                let fDFA = Indexed.createWithKnownLength16 tableCounts.DFATables
-                let fLALR = Indexed.createWithKnownLength16 tableCounts.LALRTables
-                let! initialDFA, initialLALR = getSingleElement 'I'B (readInitialStates fDFA fLALR) records
-
-                let! dfaStates = getIndexedElements 'D'B (readDFAState fCharSet fSymbol fDFA) tableCounts.DFATables records
-                let dfaStateTable = {InitialState = dfaStates.Item initialDFA; States = dfaStates}
-
-                let! lalrStates = getIndexedElements 'L'B (readLALRState fSymbol fProduction fLALR) tableCounts.LALRTables records
-                let lalrStateTable = {InitialState = lalrStates.Item initialLALR; States = lalrStates}
-
-                return GOLDGrammar.create properties symbols charSets productions dfaStateTable lalrStateTable groups
+        let readAndAssignIndexed fRead arr entries =
+            match entries with
+            | UInt16 index :: xs -> maybe {
+                let! x = fRead (uint32 index) xs
+                let index = int index
+                if index < Array.length arr then
+                    do Array.set arr index x
+                else
+                    return! None
                 }
-            | _ -> Result.Error UnknownEGTFile
+            | _ -> None
 
-    let read = Implementation.makeGrammar
+        let inline changeOnce x newValue =
+            match !x with
+            | None ->
+                x := Some newValue
+                Some ()
+            | Some _ -> None
+
+    open Implementation
+
+    let read r =
+        let properties = System.Collections.Generic.Dictionary()
+        let mutable isTableCountsInitialized = false
+        let mutable charSets = [| |]
+        let mutable symbols = [| |]
+        let mutable groups = [| |]
+        let mutable productions = [| |]
+        let mutable dfaStates = [| |]
+        let mutable lalrStates = [| |]
+        let initialStates = ref None
+        let fHeaderCheck =
+            function
+            | CGTHeader -> fail ReadACGTFile
+            | EGTHeader -> Ok ()
+            | _ -> fail UnknownEGTFile
+        let initTables (x: TableCounts) =
+            charSets <- zc x.CharSetTables
+            symbols <- zc x.SymbolTables
+            groups <- zc x.GroupTables
+            productions <- zc x.ProductionTables
+            dfaStates <- zc x.DFATables
+            lalrStates <- zc x.LALRTables
+        let fRecord =
+            function
+            | Byte 'p'B :: xs -> readProperty xs |> Option.map (properties.Add)
+            // The table counts record must exist only once, and before the other records.
+            | Byte 't'B :: xs when not isTableCountsInitialized ->
+                isTableCountsInitialized <- true
+                readTableCounts xs |> Option.map initTables
+            | Byte 'c'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed readCharSet charSets xs
+            | Byte 'S'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed readSymbol symbols xs
+            | Byte 'g'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
+            | Byte 'R'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
+            | Byte 'I'B :: xs when isTableCountsInitialized ->
+                readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
+            | Byte 'D'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
+            | Byte 'L'B :: xs when isTableCountsInitialized ->
+                readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
+            | _ -> None
+            >> failIfNone UnknownEGTFile
+        either {
+            do! EGTReader.readEGT2 fHeaderCheck fRecord r
+            let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
+            let dfaStates = SafeArray.ofSeq dfaStates
+            let lalrStates = SafeArray.ofSeq lalrStates
+            return GOLDGrammar.create
+                (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq |> Properties)
+                (SafeArray.ofSeq symbols)
+                (SafeArray.ofSeq charSets)
+                (SafeArray.ofSeq productions)
+                {InitialState = dfaStates.Item initialDFA; States = dfaStates}
+                {InitialState = lalrStates.Item initialLALR; States = lalrStates}
+                (SafeArray.ofSeq groups)
+        }

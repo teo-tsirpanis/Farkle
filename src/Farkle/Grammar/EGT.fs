@@ -16,7 +16,7 @@ module EGT =
     [<CompiledName("CreateFromStream")>]
     let ofStream stream =
         use r = new BinaryReader(stream)
-        EGTReader.readEGT r >>= GrammarReader.read
+        GrammarReader.read r
 
     /// Reads an EGT file and returns a `Grammar`.
     [<CompiledName("CreateFromFile")>]

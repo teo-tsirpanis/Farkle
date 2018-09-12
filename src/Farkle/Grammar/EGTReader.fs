@@ -22,9 +22,9 @@ module internal EGTReader =
             with
             | :? EndOfStreamException -> None
 
-        let readByte (r: BinaryReader) = r.ReadByte()
+        let inline readByte (r: BinaryReader) = r.ReadByte()
 
-        let readUInt16 (r: BinaryReader) =
+        let inline readUInt16 (r: BinaryReader) =
             let x = r.ReadUInt16()
             if System.BitConverter.IsLittleEndian then
                 x
@@ -39,7 +39,7 @@ module internal EGTReader =
                 c <- readUInt16 r
             sr.ToString()
 
-        let readToEnd fRead r = Seq.unfold (fun r -> eofGuard fRead r |> Option.map (fun x -> x, r)) r |> collect
+        let readToEnd fRead r = Seq.unfold (fun r -> eofGuard fRead r |> Option.map (fun x -> x, r)) r
 
         let readEntry r =
             match readByte r with
@@ -50,11 +50,11 @@ module internal EGTReader =
             | 'S'B -> r |> readNullTerminatedString |> String |> Ok
             | b -> b |> InvalidEntryCode |> Error
 
-        let readRecord r =
+        let readRecord r: Result<Record,_> =
             match readByte r with
             | 'M'B ->
                 let count = readUInt16 r
-                Seq.init (int count) (fun _ -> readEntry r) |> collect |> Result.map Record
+                Seq.init (int count) (fun _ -> readEntry r) |> collect
             | b -> b |> InvalidRecordTag |> Error
 
         let readRecords r =
@@ -66,4 +66,10 @@ module internal EGTReader =
     let readEGT r =
         let header = readNullTerminatedString r
         let records = readRecords r
-        records |> Result.map (fun records -> {Header = header; Records = records})
+        records |> collect |> Result.map (fun records -> {Header = header; Records = records})
+
+    let readEGT2 fHeaderCheck fRecord r = either {
+        do! readNullTerminatedString r |> fHeaderCheck
+        for x in readRecords r do
+            do! x >>= fRecord
+    }

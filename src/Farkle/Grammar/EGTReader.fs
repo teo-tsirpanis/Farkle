@@ -68,11 +68,8 @@ module internal EGTReader =
         let records = readRecords r
         records |> collect |> Result.map (fun records -> {Header = header; Records = records})
 
-    let readEGT2 fHeaderCheck fFirst fRest r = either {
-        let header = readNullTerminatedString r
-        do! fHeaderCheck header
-        let! first = readRecord r
-        do! first |> fFirst
+    let readEGT2 fHeaderCheck fRecord r = either {
+        do! readNullTerminatedString r |> fHeaderCheck
         for x in readRecords r do
-            do! x >>= fRest
+            do! x >>= fRecord
     }

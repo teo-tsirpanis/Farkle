@@ -266,46 +266,51 @@ module internal GrammarReader =
 
         let makeGrammar2 r =
             let properties = System.Collections.Generic.Dictionary()
+            let mutable isTableCountsInitialized = false
             let mutable charSets = [| |]
             let mutable symbols = [| |]
             let mutable groups = [| |]
             let mutable productions = [| |]
             let mutable dfaStates = [| |]
             let mutable lalrStates = [| |]
-            let mutable initialStates = ref None
+            let initialStates = ref None
             let fHeaderCheck =
                 function
                 | CGTHeader -> fail ReadACGTFile
                 | EGTHeader -> Ok ()
                 | _ -> fail UnknownEGTFile
-            let fFirst =
-                let impl (x: TableCounts) =
-                    charSets <- zc x.CharSetTables
-                    symbols <- zc x.SymbolTables
-                    groups <- zc x.GroupTables
-                    productions <- zc x.ProductionTables
-                    dfaStates <- zc x.DFATables
-                    lalrStates <- zc x.LALRTables
-                function
-                | Byte 't'B :: xs ->
-                    readTableCounts xs
-                    |> Option.map impl
-                | _ -> None
-                >> failIfNone UnknownEGTFile
-            let fRest =
+            let initTables (x: TableCounts) =
+                charSets <- zc x.CharSetTables
+                symbols <- zc x.SymbolTables
+                groups <- zc x.GroupTables
+                productions <- zc x.ProductionTables
+                dfaStates <- zc x.DFATables
+                lalrStates <- zc x.LALRTables
+            let fRecord =
                 function
                 | Byte 'p'B :: xs -> readProperty xs |> Option.map (properties.Add)
-                | Byte 'c'B :: xs -> readAndAssignIndexed readCharSet charSets xs
-                | Byte 'S'B :: xs -> readAndAssignIndexed readSymbol symbols xs
-                | Byte 'g'B :: xs -> readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
-                | Byte 'R'B :: xs -> readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
-                | Byte 'I'B :: xs -> readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
-                | Byte 'D'B :: xs -> readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
-                | Byte 'L'B :: xs -> readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
+                // The table counts record must exist only once, and before the other records.
+                | Byte 't'B :: xs when not isTableCountsInitialized ->
+                    isTableCountsInitialized <- true
+                    readTableCounts xs |> Option.map initTables
+                | Byte 'c'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed readCharSet charSets xs
+                | Byte 'S'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed readSymbol symbols xs
+                | Byte 'g'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
+                | Byte 'R'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
+                | Byte 'I'B :: xs when isTableCountsInitialized ->
+                    readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
+                | Byte 'D'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
+                | Byte 'L'B :: xs when isTableCountsInitialized ->
+                    readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
                 | _ -> None
                 >> failIfNone UnknownEGTFile
             either {
-                do! EGTReader.readEGT2 fHeaderCheck fFirst fRest r
+                do! EGTReader.readEGT2 fHeaderCheck fRecord r
                 let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
                 let dfaStates = SafeArray.ofSeq dfaStates
                 let lalrStates = SafeArray.ofSeq lalrStates

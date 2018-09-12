@@ -48,7 +48,7 @@ let authors = [ "Theodore Tsirpanis" ]
 let tags = "parser lalr gold-parser"
 
 // File system information
-let solutionFile  = "Farkle.sln"
+let solutionFile  = "./Farkle.sln"
 
 // nuspec files. These describe the metapackages.
 let nuspecs = !! "src/*.nuspec"
@@ -65,17 +65,17 @@ let DocumentationAssemblyFramework = "net45"
 
 let exeFramework = "netcoreapp2.1"
 
-let sourceProjects = !! "src/**/*.??proj"
+let sourceProjects = !! "./src/**/*.??proj"
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
 // Pattern specifying assemblies to be tested
-let testAssemblies = !! ("bin/*Tests*/" </> exeFramework </> "*Tests*.dll")
+let testAssemblies = !! ("./bin/*Tests*/" </> exeFramework </> "*Tests*.dll")
 // Additional command line arguments passed to Expecto.
 let testArguments = ""
 
 // Pattern specifying assemblies to be benchmarked
-let benchmarkAssemblies = !! ("bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
+let benchmarkAssemblies = !! ("./bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
 // Additional command line arguments passed to BenchmarkDotNet.
 let benchmarkArguments runAll =
     if runAll then
@@ -88,9 +88,9 @@ let benchmarkReports =
     benchmarkAssemblies
     |> Seq.collect (fun x -> !!(Path.getDirectory x </> "BenchmarkDotNet.Artifacts/results/*-report-github.md"))
 
-let benchmarkReportsDirectory = "performance/"
+let benchmarkReportsDirectory = "./performance/"
 
-let nugetPackages = !! "bin/*.nupkg"
+let nugetPackages = !! "./bin/*.nupkg"
 
 let releaseArtifacts = nugetPackages ++ "./src/Farkle/FSharp - Farkle.pgt"
 
@@ -110,7 +110,7 @@ let gitRaw = Environment.environVarOrDefault "gitRaw" "https://raw.githubusercon
 // --------------------------------------------------------------------------------------
 
 // Read additional information from the release notes document
-let releaseInfo = ReleaseNotes.load "RELEASE_NOTES.md"
+let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"
 
 let releaseNotes =
     let lines s = seq {

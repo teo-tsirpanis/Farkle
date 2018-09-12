@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: microsoft/dotnet:2.1-sdk
+    steps:
+      - checkout
+      - run:
+          name: Installing FAKE
+          command: dotnet tool install fake-cli --tool-path ./DotNetTools
+      - run:
+          name: Executing the FAKE build script
+          command: ./DotNetTools/fake run ./build.fsx

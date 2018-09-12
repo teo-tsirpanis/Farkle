@@ -44,11 +44,6 @@ type SerializationBenchmark() =
         stream |> EGT.ofStream |> returnOrFail
 
     [<Benchmark>]
-    member __.Base64EGT2() =
-        use stream = new MemoryStream(Convert.FromBase64String base64EGT)
-        stream |> EGT.ofStream2 |> returnOrFail
-
-    [<Benchmark>]
     /// Another option, directly serializing the GOLDGrammar object using the binary serializer, with a crude version validator.
     /// ## Pros:
     /// * Uses less memory and causes less GC collections

@@ -27,10 +27,4 @@ let tests =
             | Ok x -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.debug
             | Result.Error x -> failtestf "Test failed: %A" x
         }
-
-        test "Both EGT reader engines read the same grammar" {
-            let x = EGT.ofFile "simple.egt" |> tee id (failtestf "Reading grammar the current way failed: %O")
-            let x2 = EGT.ofFile2 "simple.egt" |> tee id (failtestf "Reading grammar the new way failed: %O")
-            Expect.equal x2 x "Grammar files are not equal"
-        }
     ]

@@ -1,4 +1,7 @@
-#### 3.1.0-alpha001
+#### 3.1.0-alpha002
+* The EGT file reader was replaced with a new one.
+
+#### 3.1.0-alpha001 - 06-09-2018
 * The versioning scheme changed. Even (and zero) minor and patch versions signify stable releases, while odd ones signify unstable releases.
 * The reader for GOLD Parser Enhanced Grammar Tables is now based on a Binary Reader, and is faster and more lightweight. __To be confirmed__
 * The parser directly generates Abstract Syntax trees, eliminating the need to convert them from reductions, a very hard-to-use type.

@@ -43,6 +43,7 @@ type SerializationBenchmark() =
         use stream = new MemoryStream(Convert.FromBase64String base64EGT)
         stream |> EGT.ofStream |> returnOrFail
 
+    [<Benchmark>]
     member __.Base64EGT2() =
         use stream = new MemoryStream(Convert.FromBase64String base64EGT)
         stream |> EGT.ofStream2 |> returnOrFail

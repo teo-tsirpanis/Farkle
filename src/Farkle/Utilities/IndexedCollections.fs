@@ -29,8 +29,14 @@ module Indexed =
     let create<'a> i: Indexed<'a> = Indexed i
 
     /// Creates an `Indexed` object that represents a `SafeArray` that will be created in the future, but has a known length.
-    let internal createWithKnownLength16<'a> length i =
-        if i * 1us <= length then
+    let internal createWithKnownLength16<'a> length (i: uint16) =
+        if i <= length then
+            i |> uint32 |> create<'a> |> Some
+        else
+            None
+
+    let inline internal createWithKnownLength<'a> (arr: IReadOnlyCollection<'a>) (i: uint16) =
+        if int i <= arr.Count then
             i |> uint32 |> create<'a> |> Some
         else
             None

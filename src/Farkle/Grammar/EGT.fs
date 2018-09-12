@@ -23,3 +23,15 @@ module EGT =
     let ofFile path =
         use stream = File.OpenRead path
         ofStream stream
+
+    /// Reads a stream that represents an EGT file and returns a `Grammmar`.
+    /// The stream is read with a new engine and can be disposed when it ends.
+    let ofStream2 stream =
+        use r = new BinaryReader(stream)
+        GrammarReader.read2 r
+
+    /// Reads an EGT file and returns a `Grammar`.
+    /// The file is read with a new engine.
+    let ofFile2 path =
+        use stream = File.OpenRead path
+        ofStream2 stream

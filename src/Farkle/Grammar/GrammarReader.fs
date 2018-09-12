@@ -18,9 +18,9 @@ module internal GrammarReader =
         // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
         // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
         // FFFFFFfFFFFFFF
-        let wantUInt16 = function | UInt16 x -> Some x | _ -> None
+        let inline wantUInt16 x = match x with | UInt16 x -> Some x | _ -> None
 
-        let readToEnd allowEmpty count fReadIt =
+        let inline readToEnd allowEmpty count fReadIt =
             function
             | [] when allowEmpty -> Some []
             | x -> x |> List.chunkBySize count |> List.map fReadIt |> List.allSome
@@ -203,7 +203,7 @@ module internal GrammarReader =
             match header with
             | CGTHeader -> Result.Error ReadACGTFile
             | EGTHeader -> failIfNone UnknownEGTFile <| maybe {
-                let! records = records |> List.map (fun (Record x) -> x) |> collectRecords
+                let! records = records |> collectRecords
 
                 let! properties =
                     records
@@ -240,5 +240,85 @@ module internal GrammarReader =
                 return GOLDGrammar.create properties symbols charSets productions dfaStateTable lalrStateTable groups
                 }
             | _ -> Result.Error UnknownEGTFile
+        
+        let inline zc x = x |> int |> Array.zeroCreate
+
+        let inline itemTry arr idx = idx |> int |> flip Array.tryItem arr
+
+        let readAndAssignIndexed fRead arr entries =
+            match entries with
+            | UInt16 index :: xs -> maybe {
+                let! x = fRead (uint32 index) xs
+                let index = int index
+                if index < Array.length arr then
+                    do Array.set arr index x
+                else
+                    return! None
+                }
+            | _ -> None
+
+        let inline changeOnce x newValue =
+            match !x with
+            | None ->
+                x := Some newValue
+                Some ()
+            | Some _ -> None
+
+        let makeGrammar2 r =
+            let properties = System.Collections.Generic.Dictionary()
+            let mutable charSets = [| |]
+            let mutable symbols = [| |]
+            let mutable groups = [| |]
+            let mutable productions = [| |]
+            let mutable dfaStates = [| |]
+            let mutable lalrStates = [| |]
+            let mutable initialStates = ref None
+            let fHeaderCheck =
+                function
+                | CGTHeader -> fail ReadACGTFile
+                | EGTHeader -> Ok ()
+                | _ -> fail UnknownEGTFile
+            let fFirst =
+                let impl (x: TableCounts) =
+                    charSets <- zc x.CharSetTables
+                    symbols <- zc x.SymbolTables
+                    groups <- zc x.GroupTables
+                    productions <- zc x.ProductionTables
+                    dfaStates <- zc x.DFATables
+                    lalrStates <- zc x.LALRTables
+                function
+                | Byte 't'B :: xs ->
+                    readTableCounts xs
+                    |> Option.map impl
+                | _ -> None
+                >> failIfNone UnknownEGTFile
+            let fRest =
+                function
+                | Byte 'p'B :: xs -> readProperty xs |> Option.map (properties.Add)
+                | Byte 'c'B :: xs -> readAndAssignIndexed readCharSet charSets xs
+                | Byte 'S'B :: xs -> readAndAssignIndexed readSymbol symbols xs
+                | Byte 'g'B :: xs -> readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
+                | Byte 'R'B :: xs -> readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
+                | Byte 'I'B :: xs -> readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
+                | Byte 'D'B :: xs -> readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
+                | Byte 'L'B :: xs -> readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
+                | _ -> None
+                >> failIfNone UnknownEGTFile
+            either {
+                do! EGTReader.readEGT2 fHeaderCheck fFirst fRest r
+                let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
+                let dfaStates = SafeArray.ofSeq dfaStates
+                let lalrStates = SafeArray.ofSeq lalrStates
+                return GOLDGrammar.create
+                    (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq |> Properties)
+                    (SafeArray.ofSeq symbols)
+                    (SafeArray.ofSeq charSets)
+                    (SafeArray.ofSeq productions)
+                    {InitialState = dfaStates.Item initialDFA; States = dfaStates}
+                    {InitialState = lalrStates.Item initialLALR; States = lalrStates}
+                    (SafeArray.ofSeq groups)
+            }
 
     let read = Implementation.makeGrammar
+
+    let read2 = Implementation.makeGrammar2

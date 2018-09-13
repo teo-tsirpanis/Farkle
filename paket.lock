@@ -8,10 +8,17 @@ NUGET
     FSharp.Core (4.5.2)
     FSharpx.Collections (1.17)
       FSharp.Core
-    Microsoft.NETCore.Platforms (2.1) - restriction: == netstandard2.0
+    Microsoft.NETCore.Platforms (2.1.1) - restriction: == netstandard2.0
     NETStandard.Library (2.0.3) - restriction: == netstandard2.0
       Microsoft.NETCore.Platforms (>= 1.1)
+    System.Buffers (4.5)
     System.Collections.Immutable (1.5)
+    System.Memory (4.5.1)
+      System.Buffers (>= 4.4)
+      System.Numerics.Vectors (>= 4.4) - restriction: || (&& (== net45) (>= net461)) (== netstandard2.0)
+      System.Runtime.CompilerServices.Unsafe (>= 4.5)
+    System.Numerics.Vectors (4.5) - restriction: || (&& (== net45) (>= net461)) (== netstandard2.0)
+    System.Runtime.CompilerServices.Unsafe (4.5.1)
 
 GROUP FakeBuild
 STORAGE: NONE

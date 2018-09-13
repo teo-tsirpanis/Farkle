@@ -7,6 +7,7 @@ storage: none
 nuget Aether
 nuget FSharpx.Collections
 nuget System.Collections.Immutable
+nuget System.Memory
 
 group Samples
 

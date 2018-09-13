@@ -176,14 +176,8 @@ module internal GrammarReader =
 
         let readAndAssignIndexed fRead arr entries =
             match entries with
-            | UInt16 index :: xs -> maybe {
-                let! x = fRead (uint32 index) xs
-                let index = int index
-                if index < Array.length arr then
-                    do Array.set arr index x
-                else
-                    return! None
-                }
+            | UInt16 index :: xs when int index < Array.length arr ->
+                xs |> fRead (uint32 index) |> Option.map (Array.set arr (int index))
             | _ -> None
 
         let inline changeOnce x newValue =
@@ -241,7 +235,7 @@ module internal GrammarReader =
             | _ -> None
             >> failIfNone UnknownEGTFile
         either {
-            do! EGTReader.readEGT2 fHeaderCheck fRecord r
+            do! EGTReader.readEGT fHeaderCheck fRecord r
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
             let dfaStates = SafeArray.ofSeq dfaStates
             let lalrStates = SafeArray.ofSeq lalrStates

@@ -13,15 +13,6 @@ module internal EGTReader =
 
     module private Implementation =
 
-        let inline eofGuard fRead (r: BinaryReader) =
-            try
-                if r.BaseStream.Position <> r.BaseStream.Length then
-                    fRead r |> Some
-                else
-                    None
-            with
-            | :? EndOfStreamException -> None
-
         let inline readByte (r: BinaryReader) = r.ReadByte()
 
         let inline readUInt16 (r: BinaryReader) =
@@ -39,7 +30,17 @@ module internal EGTReader =
                 c <- readUInt16 r
             sr.ToString()
 
-        let readToEnd fRead r = Seq.unfold (fun r -> eofGuard fRead r |> Option.map (fun x -> x, r)) r
+        let readToEnd fRead (r: BinaryReader) =
+            try
+                let mutable x = fRead r
+                while r.BaseStream.Position < r.BaseStream.Length && not <| isError x do
+                    x <- fRead r
+                if r.BaseStream.Position >= r.BaseStream.Length then
+                    Ok ()
+                else
+                    x
+            with
+            | :? EndOfStreamException -> Error UnexpectedEOF
 
         let readEntry r =
             match readByte r with
@@ -57,19 +58,14 @@ module internal EGTReader =
                 Seq.init (int count) (fun _ -> readEntry r) |> collect
             | b -> b |> InvalidRecordTag |> Error
 
-        let readRecords r =
-            readToEnd readRecord r
+        let readRecords fRead r =
+            let fRead x = x |> readRecord |> Result.bind fRead
+            readToEnd fRead r
 
 
     open Implementation
 
-    let readEGT r =
-        let header = readNullTerminatedString r
-        let records = readRecords r
-        records |> collect |> Result.map (fun records -> {Header = header; Records = records})
-
-    let readEGT2 fHeaderCheck fRecord r = either {
+    let readEGT fHeaderCheck fRecord r = either {
         do! readNullTerminatedString r |> fHeaderCheck
-        for x in readRecords r do
-            do! x >>= fRecord
+        do! readRecords fRecord r
     }

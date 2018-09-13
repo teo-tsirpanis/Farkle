@@ -158,6 +158,8 @@ module Result =
     /// Returns a failed `Result`.
     let fail = Result.Error
 
+    let inline isError x = match x with | Ok _ -> false | Error _ -> true
+
     /// A shorthand operator for `Result.bind`.
     let (>>=) m f = Result.bind f m
 

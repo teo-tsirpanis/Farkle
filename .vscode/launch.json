@@ -34,7 +34,9 @@
             "request": "launch",
             "preLaunchTask": "dotnet-build",
             "program": "Farkle.Tests.dll",
-            "args": [],
+            "args": [
+                "--sequenced"
+            ],
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"
@@ -44,7 +46,9 @@
             "type": "coreclr",
             "request": "launch",
             "program": "Farkle.Tests.dll",
-            "args": [],
+            "args": [
+                "--sequenced"
+            ],
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"

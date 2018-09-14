@@ -20,19 +20,20 @@ module internal GrammarReader =
         // FFFFFFfFFFFFFF
         let inline wantUInt16 x = match x with | UInt16 x -> Some x | _ -> None
 
-        let inline readToEnd allowEmpty count fReadIt =
+        let inline readInChunks allowEmpty count fReadIt =
             function
-            | [] when allowEmpty -> Some []
-            | x -> x |> List.chunkBySize count |> List.map fReadIt |> List.allSome
+            | RMNil when allowEmpty -> Some []
+            | x when x.Length % count <> 0 -> None
+            | x -> List.init (x.Length / count) (fun i -> x.Slice(i * count, count) |> fReadIt) |> List.allSome
 
         let readProperty =
             function
-            | [UInt16 _index; String name; String value] -> (name, value) |> Some
+            | RMCons(UInt16 _index, RMCons(String name, RMCons(String value, RMNil))) -> (name, value) |> Some
             | _ -> None
 
         let readTableCounts =
             function
-            | [UInt16 symbols; UInt16 sets; UInt16 rules; UInt16 dfas; UInt16 lalrs; UInt16 groups] ->
+            | RMCons(UInt16 symbols, RMCons(UInt16 sets, RMCons(UInt16 rules, RMCons(UInt16 dfas, RMCons(UInt16 lalrs, RMCons(UInt16 groups, RMNil)))))) ->
                 Some
                     {
                         SymbolTables = symbols
@@ -47,37 +48,36 @@ module internal GrammarReader =
         let readCharSet _ =
             let readRanges =
                 function
-                | [UInt16 start; UInt16 theEnd] ->
+                | RMCons(UInt16 start, RMCons(UInt16 theEnd, RMNil)) ->
                     RangeSet.create (char start) (char theEnd)
                     |> Some
                 | _ -> None
-                |> readToEnd false 2
+                |> readInChunks false 2
                 >> Option.map RangeSet.concat
             function
-            | UInt16 _unicodePlane :: UInt16 _rangeCount
-                :: Empty :: ranges ->
+            | RMCons(UInt16 _unicodePlane, RMCons(UInt16 _rangeCount, RMCons(Empty, ranges))) ->
                 ranges
                 |> readRanges
             | _ -> None
 
         let readSymbol index =
             function
-            | [String name; UInt16 0us] -> Nonterminal (uint32 index, name) |> Some
-            | [String name; UInt16 1us] -> Terminal (uint32 index, name) |> Some
-            | [String name; UInt16 2us] -> Noise name |> Some
-            | [String _ ; UInt16 3us] -> EndOfFile |> Some
-            | [String name; UInt16 4us] -> GroupStart name |> Some
-            | [String name; UInt16 5us] -> GroupEnd name |> Some
-            | [String _; UInt16 7us] -> Error |> Some
+            | RMCons(String name, RMCons(UInt16 0us, RMNil)) -> Nonterminal (uint32 index, name) |> Some
+            | RMCons(String name, RMCons(UInt16 1us, RMNil)) -> Terminal (uint32 index, name) |> Some
+            | RMCons(String name, RMCons(UInt16 2us, RMNil)) -> Noise name |> Some
+            | RMCons(String _ , RMCons(UInt16 3us, RMNil)) -> EndOfFile |> Some
+            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart name |> Some
+            | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd name |> Some
+            | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> Error |> Some
             | _ -> None
 
         let readGroup fSymbol fGroup index =
             let readNestedGroups =
-                (List.exactlyOne >> wantUInt16 >> Option.bind fGroup)
-                |> readToEnd true 1
+                (function | RMCons (UInt16 x, RMNil) -> fGroup x | _ -> None)
+                |> readInChunks true 1
                 >> Option.map set
             function
-            | String name :: UInt16 containerIndex :: UInt16 startIndex :: UInt16 endIndex :: UInt16 advanceMode :: UInt16 endingMode :: Empty :: UInt16 _nestingCount :: xs -> maybe {
+            | RMCons(String name, RMCons(UInt16 containerIndex, RMCons(UInt16 startIndex, RMCons(UInt16 endIndex, RMCons(UInt16 advanceMode, RMCons(UInt16 endingMode, RMCons(Empty, RMCons(UInt16 _nestingCount, xs)))))))) -> maybe {
                 let! containerSymbol = fSymbol containerIndex
                 let! startSymbol = fSymbol startIndex
                 let! endSymbol = fSymbol endIndex
@@ -99,10 +99,10 @@ module internal GrammarReader =
 
         let readProduction fSymbol index =
             let readChildrenSymbols =
-                (List.exactlyOne >> wantUInt16 >> Option.bind fSymbol)
-                |> readToEnd true 1
+                (function | RMCons (UInt16 x, RMNil) -> fSymbol x | _ -> None)
+                |> readInChunks true 1
             function
-            | UInt16 headIndex :: Empty :: xs -> maybe {
+            | RMCons(UInt16 headIndex, RMCons(Empty, xs)) -> maybe {
                 let! headSymbol = fSymbol headIndex
                 let! symbols = readChildrenSymbols xs
                 return {Index = index; Head = headSymbol; Handle = symbols}
@@ -111,7 +111,7 @@ module internal GrammarReader =
 
         let readInitialStates fDFA fLALR =
             function
-            | [UInt16 dfa; UInt16 lalr] -> maybe {
+            | RMCons(UInt16 dfa, RMCons(UInt16 lalr, RMNil)) -> maybe {
                 let! dfa = fDFA dfa
                 let! lalr = fLALR lalr
                 return dfa, lalr
@@ -121,19 +121,19 @@ module internal GrammarReader =
         let readDFAState fCharSet fSymbol fDFA index =
             let readDFAEdges =
                 function
-                | [UInt16 charSetIndex; UInt16 targetIndex; Empty] -> maybe {
+                | RMCons(UInt16 charSetIndex, RMCons(UInt16 targetIndex, RMCons(Empty, RMNil))) -> maybe {
                     let! charSet = fCharSet charSetIndex
                     let! target = fDFA targetIndex
                     return (charSet, target)
                     }
                 | _ -> None
-                |> readToEnd false 3
+                |> readInChunks false 3
             function
-            | Boolean false :: UInt16 _ :: Empty :: xs ->
+            | RMCons(Boolean false, RMCons(UInt16 _, RMCons(Empty, xs))) ->
                 xs
                 |> readDFAEdges
                 |> Option.map (fun edges -> (index, edges) |> DFAContinue)
-            | Boolean true :: UInt16 acceptIndex :: Empty :: xs -> maybe {
+            | RMCons(Boolean true, RMCons(UInt16 acceptIndex, RMCons(Empty, xs))) -> maybe {
                 let! edges = readDFAEdges xs
                 let! acceptSymbol = fSymbol acceptIndex
                 return DFAAccept (index, (acceptSymbol, edges))
@@ -143,26 +143,26 @@ module internal GrammarReader =
         let readLALRState fSymbol fProduction fLALR index =
             let readLALRAction =
                 function
-                | UInt16 symbolIndex :: xs -> maybe {
+                | RMCons(UInt16 symbolIndex, xs) -> maybe {
                     let! symbol = fSymbol symbolIndex
                     match xs with
-                    | [UInt16 1us; UInt16 targetStateIndex; Empty] ->
+                    | RMCons(UInt16 1us, RMCons(UInt16 targetStateIndex, RMCons(Empty, RMNil))) ->
                         let! targetState = fLALR targetStateIndex
                         return symbol, Shift targetState
-                    | [UInt16 2us; UInt16 targetProductionIndex; Empty] ->
+                    | RMCons(UInt16 2us, RMCons(UInt16 targetProductionIndex, RMCons(Empty, RMNil))) ->
                         let! targetProduction = fProduction targetProductionIndex
                         return symbol, Reduce targetProduction
-                    | [UInt16 3us; UInt16 targetStateIndex; Empty] ->
+                    | RMCons(UInt16 3us, RMCons(UInt16 targetStateIndex, RMCons(Empty, RMNil))) ->
                         let! targetState = fLALR targetStateIndex
                         return symbol, Goto targetState
-                    | [UInt16 4us; UInt16 _; Empty] -> return symbol, Accept
+                    | RMCons(UInt16 4us, RMCons(UInt16 _, RMCons(Empty, RMNil))) -> return symbol, Accept
                     | _ -> return! None
                     }
                 | _ -> None
-                |> readToEnd false 4
+                |> readInChunks false 4
                 >> Option.map Map.ofSeq
             function
-            | Empty :: xs -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
+            | RMCons(Empty, xs) -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
             | _ -> None
 
         [<Literal>]
@@ -176,7 +176,7 @@ module internal GrammarReader =
 
         let readAndAssignIndexed fRead arr entries =
             match entries with
-            | UInt16 index :: xs when int index < Array.length arr ->
+            | RMCons(UInt16 index, xs) when int index < Array.length arr ->
                 xs |> fRead (uint32 index) |> Option.map (Array.set arr (int index))
             | _ -> None
 
@@ -213,24 +213,24 @@ module internal GrammarReader =
             lalrStates <- zc x.LALRTables
         let fRecord =
             function
-            | Byte 'p'B :: xs -> readProperty xs |> Option.map (properties.Add)
+            | RMCons(Byte 'p'B, xs) -> readProperty xs |> Option.map (properties.Add)
             // The table counts record must exist only once, and before the other records.
-            | Byte 't'B :: xs when not isTableCountsInitialized ->
+            | RMCons(Byte 't'B, xs) when not isTableCountsInitialized ->
                 isTableCountsInitialized <- true
                 readTableCounts xs |> Option.map initTables
-            | Byte 'c'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'c'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed readCharSet charSets xs
-            | Byte 'S'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'S'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed readSymbol symbols xs
-            | Byte 'g'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'g'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
-            | Byte 'R'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'R'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
-            | Byte 'I'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'I'B, xs) when isTableCountsInitialized ->
                 readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
-            | Byte 'D'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'D'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
-            | Byte 'L'B :: xs when isTableCountsInitialized ->
+            | RMCons(Byte 'L'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
             | _ -> None
             >> failIfNone UnknownEGTFile

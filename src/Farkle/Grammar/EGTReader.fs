@@ -33,7 +33,7 @@ module internal EGTReader =
         let readToEnd fRead (r: BinaryReader) =
             try
                 let mutable x = fRead r
-                while r.BaseStream.Position < r.BaseStream.Length && not <| isError x do
+                while r.BaseStream.Position < r.BaseStream.Length && isOk x do
                     x <- fRead r
                 if r.BaseStream.Position >= r.BaseStream.Length then
                     Ok ()
@@ -51,16 +51,25 @@ module internal EGTReader =
             | 'S'B -> r |> readNullTerminatedString |> String |> Ok
             | b -> b |> InvalidEntryCode |> Error
 
-        let readRecord r: Result<Record,_> =
+        let readRecord fRecord r =
             match readByte r with
             | 'M'B ->
-                let count = readUInt16 r
-                Seq.init (int count) (fun _ -> readEntry r) |> collect
+                let count = readUInt16 r |> int
+                let arr = Array.zeroCreate count
+                let mutable i = 0
+                let mutable x = Ok Unchecked.defaultof<_>
+                while i < count && isOk x do
+                    x <- readEntry r
+                    tee (Array.set arr i) ignore x
+                    i <- i + 1
+                match x with
+                | Ok _ -> arr |> System.ReadOnlyMemory |> fRecord
+                | Error x -> Error x
+                // Seq.init count (fun _ -> readEntry r) |> collect
             | b -> b |> InvalidRecordTag |> Error
 
         let readRecords fRead r =
-            let fRead x = x |> readRecord |> Result.bind fRead
-            readToEnd fRead r
+            readToEnd (readRecord fRead) r
 
 
     open Implementation

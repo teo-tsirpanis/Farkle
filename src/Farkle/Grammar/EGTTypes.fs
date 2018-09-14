@@ -47,7 +47,7 @@ type EGTReadError =
             | UnexpectedEOF -> "Unexpected end of file."
 
 /// An entry of an EGT file.
-type Entry =
+type internal Entry =
     /// [omit]
     | Empty
     /// [omit]
@@ -58,14 +58,3 @@ type Entry =
     | UInt16 of uint16
     /// [omit]
     | String of string
-
-/// An EGT record is a list of grouped entries.
-type Record = Entry list
-
-/// An EGT file is made of a header string and a list of `Record`s.
-type EGTFile = {
-    /// [omit]
-    Header: string
-    /// [omit]
-    Records: Record list
-}

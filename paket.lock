@@ -8,7 +8,7 @@ NUGET
     FSharp.Core (4.5.2)
     FSharpx.Collections (1.17)
       FSharp.Core
-    Microsoft.NETCore.Platforms (2.1.1) - restriction: == netstandard2.0
+    Microsoft.NETCore.Platforms (2.1)
     NETStandard.Library (2.0.3) - restriction: == netstandard2.0
       Microsoft.NETCore.Platforms (>= 1.1)
     System.Buffers (4.5)

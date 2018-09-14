@@ -31,6 +31,12 @@ let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am 
 /// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
 let mustBeSome x = x |> Option.defaultWith impossible
 
+let (|RMCons|RMNil|) (x: ReadOnlyMemory<_>) =
+    if not x.IsEmpty then
+        RMCons (x.Span.Item 0, x.Slice 1)
+    else
+        RMNil
+
 /// Ignores the parameter and returns `None`.
 let none _ = None
 
@@ -158,6 +164,10 @@ module Result =
     /// Returns a failed `Result`.
     let fail = Result.Error
 
+    /// Returns if the given `Result` succeeded.
+    let inline isOk x = match x with | Ok _ -> true | Error _ -> false
+
+    /// Returns if the given `Result` failed.
     let inline isError x = match x with | Ok _ -> false | Error _ -> true
 
     /// A shorthand operator for `Result.bind`.

@@ -1,5 +1,6 @@
 FSharp.Core
 Aether
 FSharpx.Collections
+System.Buffers
 System.Collections.Immutable
 System.Memory

@@ -6,6 +6,7 @@
 namespace Farkle.Grammar.GOLDParser
 
 open Farkle
+open System.Buffers
 open System.IO
 open System.Text
 
@@ -35,10 +36,7 @@ module internal EGTReader =
                 let mutable x = fRead r
                 while r.BaseStream.Position < r.BaseStream.Length && isOk x do
                     x <- fRead r
-                if r.BaseStream.Position >= r.BaseStream.Length then
-                    Ok ()
-                else
-                    x
+                x
             with
             | :? EndOfStreamException -> Error UnexpectedEOF
 
@@ -55,7 +53,8 @@ module internal EGTReader =
             match readByte r with
             | 'M'B ->
                 let count = readUInt16 r |> int
-                let arr = Array.zeroCreate count
+                let arr = ArrayPool.Shared.Rent count
+                use _release = {new System.IDisposable with member __.Dispose() = ArrayPool.Shared.Return arr}
                 let mutable i = 0
                 let mutable x = Ok Unchecked.defaultof<_>
                 while i < count && isOk x do
@@ -63,7 +62,7 @@ module internal EGTReader =
                     tee (Array.set arr i) ignore x
                     i <- i + 1
                 match x with
-                | Ok _ -> arr |> System.ReadOnlyMemory |> fRecord
+                | Ok _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord
                 | Error x -> Error x
                 // Seq.init count (fun _ -> readEntry r) |> collect
             | b -> b |> InvalidRecordTag |> Error

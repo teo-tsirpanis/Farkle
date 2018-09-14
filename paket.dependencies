@@ -7,6 +7,7 @@ storage: none
 nuget Aether
 nuget FSharpx.Collections
 nuget Microsoft.NETCore.Platforms = 2.1
+nuget System.Buffers
 nuget System.Collections.Immutable
 nuget System.Memory
 

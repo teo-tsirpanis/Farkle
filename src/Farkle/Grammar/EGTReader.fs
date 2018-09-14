@@ -64,7 +64,6 @@ module internal EGTReader =
                 match x with
                 | Ok _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord
                 | Error x -> Error x
-                // Seq.init count (fun _ -> readEntry r) |> collect
             | b -> b |> InvalidRecordTag |> Error
 
         let readRecords fRead r =

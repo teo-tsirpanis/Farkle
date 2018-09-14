@@ -92,7 +92,7 @@ let benchmarkReportsDirectory = "./performance/"
 
 let nugetPackages = !! "./bin/*.nupkg"
 
-let releaseArtifacts = nugetPackages ++ "./src/Farkle/FSharp - Farkle.pgt"
+let releaseArtifacts = nugetPackages ++ "./src/Farkle/F-Sharp - Farkle.pgt"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted

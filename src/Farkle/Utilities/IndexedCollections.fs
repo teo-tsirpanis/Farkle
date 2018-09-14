@@ -15,7 +15,7 @@ type Indexable =
 
 module Indexable =
     /// Gets the index of an `Indexable` object.
-    let index (x: #Indexable) = x.Index
+    let inline index (x: #Indexable) = x.Index
 
 /// A type-safe reference to a value based on its index.
 type [<Struct>] Indexed<'a> = private Indexed of uint32
@@ -45,6 +45,7 @@ module Indexed =
 /// It intentionally lacks methods such as `map` and `filter`. This type should be at the final stage of data manipulation.
 /// It is advised to work with sequences before, just until the end.
 /// Safe random access is faciliated through `Indexed` objects.
+[<Struct>]
 type SafeArray<'a> = private SafeArray of 'a[]
     with
         /// O(n) Creates a random-access list. Data will be copied to this new list.
@@ -69,7 +70,9 @@ type SafeArray<'a> = private SafeArray of 'a[]
         /// Returns an item from an integer index, or fails if it is out of bounds.
         member x.ItemUnsafe
             with get i =
-                x.Indexed i |> Option.map (fun i -> x.Item i)
+                match x.Indexed i with
+                | Some idx -> x.Item idx |> Some
+                | None -> None
         /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
         member x.TryFindIndex f: Indexed<'a> option =
             x.Value |> Array.tryFindIndex f |> Option.map (uint32 >> Indexed)
@@ -85,21 +88,22 @@ type SafeArray<'a> = private SafeArray of 'a[]
 
 /// Functions to work with `SafeArray`s.
 module SafeArray =
+    /// Creates a `SafeArray` directly from an array without copying its data.
+    /// However, to maintain immutability, the user has to make sure that this array is nowhere else referenced.
+    let internal ofArrayUnsafe x = SafeArray x
     /// Creates a `SafeArray` from the given sequence.
-    let ofSeq x = SafeArray.Create x
-    /// Creates a `SafeArray` from the given sequence of indexable objects that are sorted by their index.
-    /// No special care is done for discontinuous or duplicate indices.
-    let ofIndexables x = x |> Seq.sortBy Indexable.index |> ofSeq
+    let inline ofSeq x = SafeArray.Create x
     /// Gets the item at the given position the `Indexed` object points to.
     /// Because it does not accept an arbitrary integer, it is less likely to accidentially fail.
-    let retrieve (x: SafeArray<_>) i = x.Item i
+    let inline retrieve (x: SafeArray<_>) i = x.Item i
     /// Returns an `Indexed` object that points to the position at the given index, or fails if it is out of bounds.
-    let getIndex (x: SafeArray<_>) i = x.Indexed i
+    let inline getIndex (x: SafeArray<_>) i = x.Indexed i
     /// Returns an item from an integer index, or fails if it is out of bounds.
-    let getUnsafe (x: SafeArray<_>) i = x.ItemUnsafe i
+    let inline getUnsafe (x: SafeArray<_>) i = x.ItemUnsafe i
     /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
-    let tryFindIndex (x: SafeArray<_>) f = x.TryFindIndex f
+    let inline tryFindIndex (x: SafeArray<_>) f = x.TryFindIndex f
 
+[<Struct>]
 type StateTable<'a> =
     {
         InitialState: 'a

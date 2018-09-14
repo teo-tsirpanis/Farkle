@@ -26,7 +26,7 @@ with
         if typeCheck then
             fus.TheFuser x |> Ok
         else
-            UnexpectedASTStructure |> fail
+            UnexpectedASTStructure |> Error
 
 /// Functions to create `Fuser`s.
 module Fuser =

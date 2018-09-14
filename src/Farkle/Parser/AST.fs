@@ -36,7 +36,7 @@ type Token =
 
 module internal Token =
 
-    let dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
+    let inline dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
 
 /// An Abstract Syntax Tree that describes the output of a parser.
 [<RequireQualifiedAccess>]
@@ -54,7 +54,7 @@ module AST =
 
     /// Maps an `AST` with either fContent or fNonterminal depending on what it is.
     [<CompiledName("Tee")>]
-    let tee fContent fNonterminal =
+    let inline tee fContent fNonterminal =
         function
         | AST.Content x -> fContent x
         | AST.Nonterminal (x, y) -> fNonterminal (x, y)

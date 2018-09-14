@@ -12,7 +12,7 @@ open System.IO
 module List =
 
     /// The simple list cons operator.
-    let cons x xs = x :: xs
+    let inline cons x xs = x :: xs
 
     /// Returns a list with its last element removed.
     /// It should be called `init`, but there's already a function with that name.

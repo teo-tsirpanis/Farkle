@@ -201,9 +201,9 @@ module internal GrammarReader =
         let initialStates = ref None
         let fHeaderCheck =
             function
-            | CGTHeader -> fail ReadACGTFile
+            | CGTHeader -> Result.Error ReadACGTFile
             | EGTHeader -> Ok ()
-            | _ -> fail UnknownEGTFile
+            | _ -> Result.Error UnknownEGTFile
         let initTables (x: TableCounts) =
             charSets <- zc x.CharSetTables
             symbols <- zc x.SymbolTables
@@ -237,14 +237,14 @@ module internal GrammarReader =
         either {
             do! EGTReader.readEGT fHeaderCheck fRecord r
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
-            let dfaStates = SafeArray.ofSeq dfaStates
-            let lalrStates = SafeArray.ofSeq lalrStates
+            let dfaStates = SafeArray.ofArrayUnsafe dfaStates
+            let lalrStates = SafeArray.ofArrayUnsafe lalrStates
             return GOLDGrammar.create
-                (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq |> Properties)
-                (SafeArray.ofSeq symbols)
-                (SafeArray.ofSeq charSets)
-                (SafeArray.ofSeq productions)
+                (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq)
+                (SafeArray.ofArrayUnsafe symbols)
+                (SafeArray.ofArrayUnsafe charSets)
+                (SafeArray.ofArrayUnsafe productions)
                 {InitialState = dfaStates.Item initialDFA; States = dfaStates}
                 {InitialState = lalrStates.Item initialLALR; States = lalrStates}
-                (SafeArray.ofSeq groups)
+                (SafeArray.ofArrayUnsafe groups)
         }

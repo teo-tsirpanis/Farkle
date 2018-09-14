@@ -32,7 +32,7 @@ let main args =
     match args with
     | [| |] -> interactive()
     | [|"--ast"; x|] ->
-        RuntimeFarkle.asGOLDParser TheRuntimeFarkle
+        RuntimeFarkle.parser TheRuntimeFarkle
         |> Result.bind (fun g -> GOLDParser.parseString g (eprintfn "%O") x |> Result.mapError ParseError)
         |> Result.map AST.toASCIITree
         |> prettyPrintResult

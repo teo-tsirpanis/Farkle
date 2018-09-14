@@ -21,13 +21,13 @@ type RuntimeGrammar =
 module RuntimeGrammar =
 
     /// The grammar's DFA states.
-    let dfaStates (x: #RuntimeGrammar) = x.DFA
+    let inline dfaStates (x: #RuntimeGrammar) = x.DFA
 
     /// The grammar's lexical groups.
-    let groups (x: #RuntimeGrammar) = x.Groups
+    let inline groups (x: #RuntimeGrammar) = x.Groups
 
     /// The grammar's LALR states.
     // I was going to make a separate type for this and the DFA, based on functions.
     // This would support auto-generated chained ifs, but I changed my mind after reading this:
     // https://softwareengineering.stackexchange.com/questions/193786/
-    let lalrStates (x: #RuntimeGrammar) = x.LALR
+    let inline lalrStates (x: #RuntimeGrammar) = x.LALR

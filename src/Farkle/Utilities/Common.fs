@@ -38,24 +38,25 @@ let (|RMCons|RMNil|) (x: ReadOnlyMemory<_>) =
         RMNil
 
 /// Ignores the parameter and returns `None`.
-let none _ = None
+let inline none _ = None
 
 /// Converts a function to curried form.
-let curry f x y = f(x, y)
+let inline curry f x y = f(x, y)
 
 /// Curries and flips the arguments of a function.
-let yrruc f y x = f(x, y)
+let inline yrruc f y x = f(x, y)
 
 /// Converts a function to uncurried form.
-let uncurry f (x, y) = f x y
+let inline uncurry f (x, y) = f x y
 
 /// Flips the arguments of a two-parameter curried function.
-let flip f x y = f y x
+let inline flip f x y = f y x
 
 /// Swaps the elements of a pair.
-let swap (x, y) = (y, x)
+let inline swap (x, y) = (y, x)
 
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
+[<Struct>]
 type Position =
     private Position of (uint32 * uint32)
     with
@@ -95,12 +96,12 @@ module Position =
 module List =
 
     /// Builds a character list from the given string.
-    let ofString (x: string) =
+    let inline ofString (x: string) =
         x.ToCharArray()
         |> List.ofArray
 
     /// Creates a string from the given character list.
-    let toString x: string = x |> Array.ofList |> System.String
+    let inline toString x: string = x |> Array.ofList |> System.String
 
 /// Some utilities to work with strings
 module String =
@@ -152,17 +153,8 @@ module Result =
         | Some x -> Ok x
         | None -> Error message
 
-    /// Flattens a nested `Result`
-    let flatten x = Result.bind id x
-
-    /// Converts a `Result` to an `option`.
-    let makeOption x = tee Some none x
-
     /// Returns the value of a `Result` or raises an exception.
     let inline returnOrFail result = tee id (failwithf "%O") result
-
-    /// Returns a failed `Result`.
-    let fail = Result.Error
 
     /// Returns if the given `Result` succeeded.
     let inline isOk x = match x with | Ok _ -> true | Error _ -> false
@@ -171,7 +163,7 @@ module Result =
     let inline isError x = match x with | Ok _ -> false | Error _ -> true
 
     /// A shorthand operator for `Result.bind`.
-    let (>>=) m f = Result.bind f m
+    let inline (>>=) m f = Result.bind f m
 
     /// Collects a sequence of Results and accumulates their values.
     /// If the sequence contains an error the first reported error will be returned.
@@ -218,20 +210,3 @@ module Result =
 
     /// Wraps computations in an error handling computation expression.
     let either = EitherBuilder()
-
-/// Functions to work with the F# `Choice` type.
-module Choice =
-
-    /// Maps the content of a `Choice` with a different function depending on its case.
-    let tee2 f1 f2 =
-        function
-        | Choice1Of2 x -> f1 x
-        | Choice2Of2 x -> f2 x
-
-    let private none _ = None
-
-    /// Returns the first case of a `Choice` and `None` if it is on the second.
-    let tryChoice1Of2 x = tee2 Some none x
-
-    /// Returns the second case of a `Choice` and `None` if it is on the first.
-    let tryChoice2Of2 x = tee2 none Some x

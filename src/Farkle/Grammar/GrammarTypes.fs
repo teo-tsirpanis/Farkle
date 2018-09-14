@@ -30,7 +30,7 @@ type internal TableCounts =
 
 /// Arbitrary metadata a grammar has.
 /// A simple key-value collection.
-type Properties = Properties of Map<string, string>
+type Properties = Map<string, string>
 
 /// A set of characters. See `RangeSet` too.
 type CharSet = RangeSet<char>

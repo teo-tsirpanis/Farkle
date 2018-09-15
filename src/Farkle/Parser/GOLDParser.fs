@@ -34,8 +34,8 @@ module GOLDParser =
 
     /// Parses a `HybridStream` of characters. 
     let parseChars grammar fMessage input =
-        let fMessage (state: ParserState) messageType = (state.CurrentPosition, messageType) |> ParseMessage |> fMessage
-        let fail (state: ParserState) x = Result.Error <| ParseError.ParseError (state.CurrentPosition, x)
+        let fMessage (state: ParserState) x = (state.CurrentPosition, x) |> ParseMessage |> fMessage
+        let fail (state: ParserState) x = (state.CurrentPosition, x) |> ParseError.ParseError |> Result.Error
         let rec impl (state: ParserState) =
             let tokens = state.InputStack
             let isGroupStackEmpty = state.IsGroupStackEmpty

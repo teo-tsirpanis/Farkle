@@ -20,6 +20,9 @@ open System.Runtime.InteropServices
 type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
+    [<DllImport("goldparser_win64.dll", CallingConvention = CallingConvention.StdCall)>]
+    static extern int ParseFile([<MarshalAs(UnmanagedType.LPStr)>] string EGTFile, [<MarshalAs(UnmanagedType.LPStr)>] string InputFile)
+
     member inline __.doIt lazyLoad =
         "inception.egt"
         |> EGT.ofFile
@@ -34,11 +37,6 @@ type InceptionBenchmark() =
 
     [<Benchmark(Baseline=true)>]
     member __.InceptionBenchmarkLazarus() =
-        let args = ProcessStartInfo()
-        args.CreateNoWindow <- false
-        args.FileName <- "goldtrcc.exe"
-        args.Arguments <- "inception.egt inception.grm out.txt"
-        args.RedirectStandardOutput <- false
         if isWindows64 then
-            let proc = Process.Start args
-            proc.WaitForExit()
+            if ParseFile("inception.egt", "inception.grm") <> 0 then
+                failwith "Native GOLD Parser failed"

@@ -9,7 +9,6 @@ open BenchmarkDotNet.Attributes
 open Farkle
 open Farkle.Grammar.GOLDParser
 open Farkle.Parser
-open System.Diagnostics
 open System.Text
 open System.Runtime.InteropServices
 

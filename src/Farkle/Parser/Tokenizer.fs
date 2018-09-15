@@ -32,27 +32,16 @@ module internal Tokenizer =
 
     let private getLookAheadBuffer n = HybridStream.takeSafe n >> String.ofList
 
-    let rec private consumeBuffer n = state {
-        let consumeSingle = state {
-            let! x = getOptic TokenizerState.InputStream_
-            match x with
-            | HSCons(x, xs) ->
-                do! setOptic TokenizerState.InputStream_ xs
-                match x with
-                | LF ->
-                    let! c = getOptic TokenizerState.CurrentPosition_ <!> Position.column
-                    if c > 1u then
-                        do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
-                | CR -> do! mapOptic TokenizerState.CurrentPosition_ Position.incLine
-                | _ -> do! mapOptic TokenizerState.CurrentPosition_ Position.incCol
-            | HSNil -> do ()
-        }
-        match n with
-        | 0u -> do ()
-        | n ->
-            do! consumeSingle
-            do! consumeBuffer (n - 1u)
-    }
+    let rec private consumeBuffer n (state: TokenizerState) =
+        let rec impl n inputStream pos =
+            let impl = impl (n - 1u)
+            match n, inputStream with
+            | 0u, _ | _, HSNil -> inputStream, pos
+            | _, HSCons(LF, xs) when Position.column pos > 1u -> impl xs (Position.incLine pos)
+            | _, HSCons(CR, xs) -> impl xs (Position.incLine pos)
+            | _, HSCons(_, xs) -> impl xs (Position.incCol pos)
+        let (inputStream, pos) = impl n state.InputStream state.CurrentPosition
+        (), {state with InputStream = inputStream; CurrentPosition = pos}
 
     let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos

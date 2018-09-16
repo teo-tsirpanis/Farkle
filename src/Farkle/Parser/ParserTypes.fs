@@ -23,10 +23,11 @@ type ParseInternalError =
     /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
     | ReductionNotFoundOnAccept
 
+[<RequireQualifiedAccess>]
 type LALRResult =
     | Accept of AST
     | Shift of uint32
-    | ReduceNormal of AST
+    | Reduce of AST
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
 
@@ -114,13 +115,13 @@ type internal ParserState =
     {
         TheTokenizer: Tokenizer
         TheLALRParser: LALRParser
-        InputStack: Token list
+        NextToken: Token option
         IsGroupStackEmpty: bool
         CurrentPosition: Position
     }
     static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
     static member TheLALRParser_ :Lens<_, _> = (fun x -> x.TheLALRParser), (fun v x -> {x with TheLALRParser = v})
-    static member InputStack_ :Lens<_, _> = (fun x -> x.InputStack), (fun v x -> {x with InputStack = v})
+    static member InputStack_ :Lens<_, _> = (fun x -> x.NextToken), (fun v x -> {x with NextToken = v})
     static member IsGroupStackEmpty_ :Lens<_, _> = (fun x -> x.IsGroupStackEmpty), (fun v x -> {x with IsGroupStackEmpty = v})
     static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
 
@@ -131,7 +132,7 @@ module internal ParserState =
         {
             TheTokenizer = tokenizer
             TheLALRParser = lalrParser
-            InputStack = []
+            NextToken = None
             IsGroupStackEmpty = true
             CurrentPosition = Position.initial
         }

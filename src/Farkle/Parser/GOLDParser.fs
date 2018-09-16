@@ -37,30 +37,31 @@ module GOLDParser =
         let fMessage (state: ParserState) x = (state.CurrentPosition, x) |> ParseMessage |> fMessage
         let fail (state: ParserState) x = (state.CurrentPosition, x) |> ParseError.ParseError |> Result.Error
         let rec impl (state: ParserState) =
-            let tokens = state.InputStack
+            // The following line must be there.
+            // We want to know whether the group stack was empty before the tokenizing.
             let isGroupStackEmpty = state.IsGroupStackEmpty
-            match tokens with
-            | [] ->
+            match state.NextToken with
+            | None ->
                 let newToken, state = tokenize state
                 if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
                     fail state GroupError
                 else
                     fMessage state <| TokenRead newToken
-                    impl {state with InputStack = [newToken]}
-            | newToken :: xs ->
-                match newToken.Symbol with
+                    impl {state with NextToken = Some newToken}
+            | Some nextToken ->
+                match nextToken.Symbol with
                 | Noise _ ->
-                    impl {state with InputStack = xs}
-                | Error -> fail state <| LexicalError newToken.Data.[0]
+                    impl {state with NextToken = None}
+                | Error -> fail state <| LexicalError nextToken.Data.[0]
                 | EndOfFile when not isGroupStackEmpty -> fail state GroupError
                 | _ ->
-                    let lalrResult, state = run (parseLALR newToken) state
+                    let lalrResult, state = run (parseLALR nextToken) state
                     match lalrResult with
                     | LALRResult.Accept x -> Ok x
                     | LALRResult.Shift x ->
                         fMessage state <| ParseMessageType.Shift x
-                        impl {state with InputStack = List.skipLast state.InputStack}
-                    | ReduceNormal x ->
+                        impl {state with NextToken = None}
+                    | LALRResult.Reduce x ->
                         fMessage state <| Reduction x
                         impl state
                     | LALRResult.SyntaxError (x, y) -> fail state <| SyntaxError (x, y)

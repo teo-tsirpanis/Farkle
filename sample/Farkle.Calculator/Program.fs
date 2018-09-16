@@ -16,7 +16,9 @@ let interactive () =
         match input with
             | Some x -> 
                 x
-                |> RuntimeFarkle.parseString TheRuntimeFarkle
+                |> List.ofString
+                |> Eager
+                |> RuntimeFarkle.parseChars (string >> Console.Error.WriteLine) TheRuntimeFarkle
                 |> prettyPrintResult
                 |> Console.WriteLine
                 impl()

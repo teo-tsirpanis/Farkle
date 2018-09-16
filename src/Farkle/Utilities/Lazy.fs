@@ -9,6 +9,7 @@ namespace Farkle
 type EndlessProcess<'T> = EndlessProcess of ('T * EndlessProcess<'T>) Lazy
 
 /// Functions for working with `EndlessProcess<'T>`.
+[<RequireQualifiedAccess>]
 module EndlessProcess =
 
     open Farkle.Monads
@@ -19,3 +20,11 @@ module EndlessProcess =
             let result, nextState = State.run stateM currState
             result, impl nextState) |> EndlessProcess
         impl initialState
+
+    let runOver m xs: State<_,_> = fun s ->
+        let rec impl (EndlessProcess xs) s =
+            let x, xs = xs.Value
+            match State.run (m x) s with
+            | Some x, s -> x, s
+            | None, s -> impl xs s
+        impl xs s

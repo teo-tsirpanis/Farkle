@@ -111,25 +111,4 @@ type Tokenizer = EndlessProcess<TokenizerFeedback>
 /// is abstracted from the rest of the parser.
 type LALRParser = LALRParser of (Token -> (LALRResult * LALRParser))
 
-type internal ParserState =
-    {
-        TheTokenizer: Tokenizer
-        TheLALRParser: LALRParser
-        NextToken: Token option
-        IsGroupStackEmpty: bool
-        CurrentPosition: Position
-    }
-    static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
-    static member TheLALRParser_ :Lens<_, _> = (fun x -> x.TheLALRParser), (fun v x -> {x with TheLALRParser = v})
-
-module internal ParserState =
-
-    /// Creates a parser state.
-    let create tokenizer lalrParser =
-        {
-            TheTokenizer = tokenizer
-            TheLALRParser = lalrParser
-            NextToken = None
-            IsGroupStackEmpty = true
-            CurrentPosition = Position.initial
-        }
+type internal ParserState = LALRParser

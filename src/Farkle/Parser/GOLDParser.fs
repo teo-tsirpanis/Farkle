@@ -17,60 +17,43 @@ module GOLDParser =
 
     open State
 
-    let private tokenize = state {
-        let! tokenizer = getOptic ParserState.TheTokenizer_
-        match tokenizer with
-        | EndlessProcess (ExtraTopLevelOperators.Lazy (x, xs)) ->
-            do! get >>= (fun s -> put {s with TheTokenizer = xs; CurrentPosition = x.CurrentPosition; IsGroupStackEmpty = x.IsGroupStackEmpty})
-            return x.NewToken
-    }
-
     let private parseLALR token = state {
-        let! lalrParser = getOptic ParserState.TheLALRParser_ <!> (fun (LALRParser x) -> x)
+        let! lalrParser = get <!> (fun (LALRParser x) -> x)
         let result, newParser = lalrParser token
-        do! setOptic ParserState.TheLALRParser_ newParser
+        do! put newParser
         return result
     }
 
     /// Parses a `HybridStream` of characters. 
     let parseChars grammar fMessage input =
-        let fMessage (state: ParserState) x = (state.CurrentPosition, x) |> ParseMessage |> fMessage
-        let fail (state: ParserState) x = (state.CurrentPosition, x) |> ParseError.ParseError |> Result.Error
-        let rec impl (state: ParserState) =
-            // The following line must be there.
-            // We want to know whether the group stack was empty before the tokenizing.
-            let isGroupStackEmpty = state.IsGroupStackEmpty
-            match state.NextToken with
-            | None ->
-                let newToken, state = tokenize state
-                if newToken.Symbol = EndOfFile && not isGroupStackEmpty then
-                    fail state GroupError
-                else
-                    fMessage state <| TokenRead newToken
-                    impl {state with NextToken = Some newToken}
-            | Some nextToken ->
-                match nextToken.Symbol with
-                | Noise _ ->
-                    impl {state with NextToken = None}
-                | Error -> fail state <| LexicalError nextToken.Data.[0]
-                | EndOfFile when not isGroupStackEmpty -> fail state GroupError
-                | _ ->
-                    let lalrResult, state = run (parseLALR nextToken) state
+        let fMessage = curry (ParseMessage >> fMessage)
+        let fail = curry (ParseError.ParseError >> Result.Error >> Some)
+        let impl {NewToken = newToken; CurrentPosition = pos; IsGroupStackEmpty = isGroupStackEmpty}: State<_,_> = fun (state: ParserState) ->
+            fMessage pos <| TokenRead newToken
+            match newToken.Symbol with
+            | Noise _ -> None, state
+            | Error -> fail pos <| LexicalError newToken.Data.[0], state
+            | EndOfFile when not isGroupStackEmpty -> fail pos GroupError, state
+            | _ ->
+                let rec lalrLoop state =
+                    let lalrResult, state = run (parseLALR newToken) state
                     match lalrResult with
-                    | LALRResult.Accept x -> Ok x
+                    | LALRResult.Accept x -> Some <| Ok x, state
                     | LALRResult.Shift x ->
-                        fMessage state <| ParseMessageType.Shift x
-                        impl {state with NextToken = None}
+                        fMessage pos <| ParseMessageType.Shift x
+                        None, state
                     | LALRResult.Reduce x ->
-                        fMessage state <| Reduction x
-                        impl state
-                    | LALRResult.SyntaxError (x, y) -> fail state <| SyntaxError (x, y)
-                    | LALRResult.InternalError x -> fail state <| InternalError x
+                        fMessage pos <| Reduction x
+                        lalrLoop state
+                    | LALRResult.SyntaxError (x, y) -> fail pos <| SyntaxError (x, y), state
+                    | LALRResult.InternalError x -> fail pos <| InternalError x, state
+                lalrLoop state
         let dfa = RuntimeGrammar.dfaStates grammar
         let groups = RuntimeGrammar.groups grammar
         let lalr = RuntimeGrammar.lalrStates grammar
-        let state = ParserState.create (Tokenizer.create dfa groups input) (LALRParser.create lalr)
-        impl state
+        let tokens = Tokenizer.create dfa groups input
+        let state = LALRParser.create lalr
+        State.eval (EndlessProcess.runOver impl tokens) state
 
     /// Parses a string.
     let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage

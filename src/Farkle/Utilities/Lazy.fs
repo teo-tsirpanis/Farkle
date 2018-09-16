@@ -5,7 +5,7 @@
 
 namespace Farkle
 
-/// Like `LazyFeedbackProcess`, except that this one never ends.
+/// An endless, lazily evaluated sequence.
 type EndlessProcess<'T> = EndlessProcess of ('T * EndlessProcess<'T>) Lazy
 
 /// Functions for working with `EndlessProcess<'T>`.

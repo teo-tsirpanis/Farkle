@@ -121,9 +121,6 @@ type internal ParserState =
     }
     static member TheTokenizer_ :Lens<_, _> = (fun x -> x.TheTokenizer), (fun v x -> {x with TheTokenizer = v})
     static member TheLALRParser_ :Lens<_, _> = (fun x -> x.TheLALRParser), (fun v x -> {x with TheLALRParser = v})
-    static member InputStack_ :Lens<_, _> = (fun x -> x.NextToken), (fun v x -> {x with NextToken = v})
-    static member IsGroupStackEmpty_ :Lens<_, _> = (fun x -> x.IsGroupStackEmpty), (fun v x -> {x with IsGroupStackEmpty = v})
-    static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
 
 module internal ParserState =
 
@@ -136,18 +133,3 @@ module internal ParserState =
             IsGroupStackEmpty = true
             CurrentPosition = Position.initial
         }
-
-/// A type signifying the state of a parser.
-/// The parsing process can be continued by evaluating the lazy `Parser` values.
-/// This type is the lowest-level public API.
-/// It is modeled after the [Designing with Capabilities](https://fsharpforfunandprofit.com/cap/) presentation.
-type Parser =
-    /// The parser has completed one step of the parsing process.
-    /// The log message of it is returned as well as a thunk of the next parser.
-    | Continuing of ParseMessage * Parser Lazy
-    /// The parser has failed.
-    /// No lazy parser is returned, so the parsing process cannot continue.
-    | Failed of ParseMessage
-    /// The parser has finished parsing.
-    /// No lazy parser is returned, as the parsing process is complete.
-    | Finished of ParseMessage * AST

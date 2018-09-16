@@ -17,8 +17,8 @@ module internal LALRParser =
 
     open StateResult
 
-    type LALRParserState =
-        private {
+    type private LALRParserState =
+        {
             CurrentLALRState: LALRState
             LALRStack: (LALRState * AST) list
         }
@@ -32,13 +32,13 @@ module internal LALRParser =
     // These lenses must be hidden from the rest of the code
     let private CurrentLALRState_ :Lens<_, _> = (fun x -> x.CurrentLALRState), (fun v x -> {x with CurrentLALRState = v})
     let private LALRStack_ :Lens<_, _> = (fun x -> x.LALRStack), (fun v x -> {x with LALRStack = v})
-    let getLALRStackTop =
+    let private getLALRStackTop =
             getOptic (LALRStack_ >-> List.head_)
             >>= (failIfNone LALRStackEmpty >> liftResult)
-    let getCurrentLALR = getOptic CurrentLALRState_
-    let setCurrentLALR = setOptic CurrentLALRState_
-    let pushLALRStack x = mapOptic LALRStack_ (List.cons x)
-    let getNextAction currentState symbol =
+    let private getCurrentLALR = getOptic CurrentLALRState_
+    let private setCurrentLALR = setOptic CurrentLALRState_
+    let private pushLALRStack x = mapOptic LALRStack_ (List.cons x)
+    let private getNextAction currentState symbol =
         LALRState.actions currentState
         |> Map.tryFind symbol
 
@@ -68,7 +68,7 @@ module internal LALRParser =
                     do! setCurrentLALR nextState
                     let ast = AST.Nonterminal (productionToReduce, tokens)
                     do! pushLALRStack (nextState, ast)
-                    return ReduceNormal ast
+                    return LALRResult.Reduce ast
                 | _ -> return! fail <| GotoNotFoundAfterReduction (productionToReduce, newState)
             | Some (Goto _) | None ->
                 let expectedSymbols =

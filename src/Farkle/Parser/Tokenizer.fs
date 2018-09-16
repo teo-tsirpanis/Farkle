@@ -45,7 +45,7 @@ module internal Tokenizer =
 
     let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos
-        let lookupEdges edges x = edges |> List.tryFind (fst >> flip RangeSet.contains x) |> Option.map (snd >> SafeArray.retrieve states)
+        let lookupEdges x = List.tryFind (fst >> flip RangeSet.contains x) >> Option.map (snd >> SafeArray.retrieve states)
         let rec impl currPos x (currState: DFAState) lastAccept =
             match x with
             | HSNil ->
@@ -53,10 +53,7 @@ module internal Tokenizer =
                 | Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym
                 | None -> newToken EndOfFile ""
             | HSCons(x, xs) ->
-                let newDFA =
-                    currState.Edges
-                    |> List.tryFind (fst >> flip RangeSet.contains x)
-                    |> Option.map (snd >> SafeArray.retrieve states)
+                let newDFA = lookupEdges x currState.Edges
                 let impl = impl (currPos + 1u) xs
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.

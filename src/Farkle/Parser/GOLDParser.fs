@@ -17,18 +17,16 @@ module GOLDParser =
 
     open State
 
-    let private parseLALR token = state {
-        let! lalrParser = get <!> (fun (LALRParser x) -> x)
-        let result, newParser = lalrParser token
-        do! put newParser
-        return result
-    }
+    let private parseLALR token: State<ParserState,_> = fun state ->
+        let result, newParser = state.TheLALRParser |> (fun (LALRParser x) -> x) <| token
+        result, {state with TheLALRParser = newParser}
 
     /// Parses a `HybridStream` of characters. 
     let parseChars grammar fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
         let fail = curry (ParseError.ParseError >> Result.Error >> Some)
-        let impl {NewToken = newToken; CurrentPosition = pos; IsGroupStackEmpty = isGroupStackEmpty}: State<_,_> = fun (state: ParserState) ->
+        let impl {NewToken = newToken; CurrentPosition = pos; IsGroupStackEmpty = isGroupStackEmpty}: State<ParserState,_> = fun state ->
+            let state = {state with CurrentPosition = pos}
             fMessage pos <| TokenRead newToken
             match newToken.Symbol with
             | Noise _ -> None, state
@@ -48,12 +46,10 @@ module GOLDParser =
                     | LALRResult.SyntaxError (x, y) -> fail pos <| SyntaxError (x, y), state
                     | LALRResult.InternalError x -> fail pos <| InternalError x, state
                 lalrLoop state
-        let dfa = RuntimeGrammar.dfaStates grammar
-        let groups = RuntimeGrammar.groups grammar
-        let lalr = RuntimeGrammar.lalrStates grammar
-        let tokens = Tokenizer.create dfa groups input
-        let state = LALRParser.create lalr
-        State.eval (EndlessProcess.runOver impl tokens) state
+        let tokenizer = Tokenizer.create (RuntimeGrammar.dfaStates grammar) (RuntimeGrammar.groups grammar) input
+        let state = RuntimeGrammar.lalrStates grammar |> LALRParser.create |> ParserState.create
+        let result, {ParserState.CurrentPosition = pos} = State.run (Extra.State.runOverSeq impl tokenizer) state
+        result |> Option.defaultValue (UnexpectedTokenizerShortage |> InternalError |> curry ParseError.ParseError pos |> Result.Error)
 
     /// Parses a string.
     let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage

@@ -57,17 +57,13 @@ module internal Tokenizer =
                 let impl = impl (currPos + 1u) xs
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | Some (DFAContinue _ as newDFA), lastAccept ->
-                    impl newDFA lastAccept
+                | Some (DFAContinue _ as newDFA), lastAccept -> impl newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some (DFAAccept (_, (acceptSymbol, _)) as newDFA), _ ->
-                    impl newDFA (Some (acceptSymbol, currPos))
+                | Some (DFAAccept (_, (acceptSymbol, _)) as newDFA), _ -> impl newDFA (Some (acceptSymbol, currPos))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | None, Some (sym, pos) ->
-                    input |> getLookAheadBuffer pos |> newToken sym
-                // We can't go firther, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None ->
-                    input |> getLookAheadBuffer 1u |> newToken Error
+                | None, Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym
+                // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
+                | None, None -> input |> getLookAheadBuffer 1u |> newToken Error
         impl 1u input initialState None
 
     let private produceToken dfa groups = state {
@@ -132,4 +128,9 @@ module internal Tokenizer =
         return {NewToken = token; IsGroupStackEmpty = isGroupStackEmpty; CurrentPosition = currentPosition}
     }
 
-    let create dfa groups input: Tokenizer = EndlessProcess.ofState (produceToken dfa groups) (TokenizerState.Create input)
+    let inline private shouldEndAfterThat {NewToken = {Symbol = x}} =
+        match x with
+        | EndOfFile | Error -> true
+        | Nonterminal _ | Terminal _ | Noise _ | GroupStart _ | GroupEnd _ -> false
+
+    let create dfa groups input: Tokenizer = Extra.State.toSeq shouldEndAfterThat (produceToken dfa groups) (TokenizerState.Create input)

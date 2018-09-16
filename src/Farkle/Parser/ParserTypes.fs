@@ -22,6 +22,9 @@ type ParseInternalError =
     | LALRStackEmpty
     /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
     | ReductionNotFoundOnAccept
+    /// The tokenizer stopped yielding tokens before parsing had finished.
+    /// This is different from an unexpected end of file: in this case, the tokenizer's last token would indicate that.
+    | UnexpectedTokenizerShortage
 
 [<RequireQualifiedAccess>]
 type LALRResult =
@@ -101,14 +104,20 @@ type TokenizerFeedback =
         IsGroupStackEmpty: bool
     }
 
-/// A tokenizer. What is it actually? An infinite stream of tokens (and some other information).
-/// It is infinite because the architecture currently requires it.
-/// But after one point, the tokenizer returns just EOFs forever.
-type Tokenizer = EndlessProcess<TokenizerFeedback>
+/// A tokenizer. What is it actually? A sequence of tokens (and some other information).
+type Tokenizer = TokenizerFeedback seq
 
 /// A LALR parser. It takes a `Token`, and gives an `LALRResult`.
 /// It is a stateful operation; the type of this state
 /// is abstracted from the rest of the parser.
 type LALRParser = LALRParser of (Token -> (LALRResult * LALRParser))
 
-type internal ParserState = LALRParser
+type internal ParserState = {
+    // This is just needed for the very edge case of a prematurely ended tokenizer. Unbelievable! It must be fixed.
+    CurrentPosition: Position
+    TheLALRParser: LALRParser
+}
+
+module internal ParserState =
+
+    let create lalrParser: ParserState = {CurrentPosition = Position.initial; TheLALRParser = lalrParser}

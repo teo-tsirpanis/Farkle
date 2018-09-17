@@ -41,7 +41,7 @@ let main argv =
             print "Simplified AST"
             x |> AST.simplify |> AST.toASCIITree |> print
             0
-        | Result.Error x ->
+        | Error x ->
             print x
             1
     else

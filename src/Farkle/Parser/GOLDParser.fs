@@ -24,13 +24,13 @@ module GOLDParser =
     /// Parses a `HybridStream` of characters. 
     let parseChars grammar fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
-        let fail = curry (ParseError.ParseError >> Result.Error >> Some)
+        let fail = curry (ParseError.ParseError >> Error >> Some)
         let impl {NewToken = newToken; CurrentPosition = pos; IsGroupStackEmpty = isGroupStackEmpty}: State<ParserState,_> = fun state ->
             let state = {state with CurrentPosition = pos}
             fMessage pos <| TokenRead newToken
             match newToken.Symbol with
             | Noise _ -> None, state
-            | Error -> fail pos <| LexicalError newToken.Data.[0], state
+            | Unrecognized -> fail pos <| LexicalError newToken.Data.[0], state
             | EndOfFile when not isGroupStackEmpty -> fail pos GroupError, state
             | _ ->
                 let rec lalrLoop state =
@@ -49,7 +49,7 @@ module GOLDParser =
         let tokenizer = Tokenizer.create (RuntimeGrammar.dfaStates grammar) (RuntimeGrammar.groups grammar) input
         let state = RuntimeGrammar.lalrStates grammar |> LALRParser.create |> ParserState.create
         let result, {ParserState.CurrentPosition = pos} = State.run (Extra.State.runOverSeq impl tokenizer) state
-        result |> Option.defaultValue (UnexpectedTokenizerShortage |> InternalError |> curry ParseError.ParseError pos |> Result.Error)
+        result |> Option.defaultValue (UnexpectedTokenizerShortage |> InternalError |> curry ParseError.ParseError pos |> Error)
 
     /// Parses a string.
     let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage

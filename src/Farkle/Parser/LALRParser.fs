@@ -26,7 +26,7 @@ module internal LALRParser =
             static member Create state =
                 {
                     CurrentLALRState = state
-                    LALRStack = [state, Error |> Token.dummy |> AST.Content]
+                    LALRStack = [state, Unrecognized |> Token.dummy |> AST.Content]
                 }
 
     // These lenses must be hidden from the rest of the code
@@ -82,7 +82,7 @@ module internal LALRParser =
         let! x = impl
         match x with
         | Ok x -> return x
-        | Result.Error x -> return LALRResult.InternalError x
+        | Error x -> return LALRResult.InternalError x
     }
 
     let create {InitialState = initialState; States = states} =

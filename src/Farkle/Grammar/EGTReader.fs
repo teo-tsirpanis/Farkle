@@ -61,9 +61,7 @@ module internal EGTReader =
                     x <- readEntry r
                     tee (Array.set arr i) ignore x
                     i <- i + 1
-                match x with
-                | Ok _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord
-                | Error x -> Error x
+                x |> Result.bind (fun _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord)
             | b -> b |> InvalidRecordTag |> Error
 
         let readRecords fRead r =

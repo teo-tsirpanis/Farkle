@@ -63,7 +63,7 @@ module internal Tokenizer =
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
                 | None, Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None -> input |> getLookAheadBuffer 1u |> newToken Error
+                | None, None -> input |> getLookAheadBuffer 1u |> newToken Unrecognized
         impl 1u input initialState None
 
     let private produceToken dfa groups = state {
@@ -129,7 +129,7 @@ module internal Tokenizer =
 
     let inline private shouldEndAfterThat {NewToken = {Symbol = x}} =
         match x with
-        | EndOfFile | Error -> true
+        | EndOfFile | Unrecognized -> true
         | Nonterminal _ | Terminal _ | Noise _ | GroupStart _ | GroupEnd _ -> false
 
     let create dfa groups input: Tokenizer = Extra.State.toSeq shouldEndAfterThat (produceToken dfa groups) (TokenizerState.Create input)

@@ -35,7 +35,7 @@ type Properties = Map<string, string>
 /// A set of characters. See `RangeSet` too.
 type CharSet = RangeSet<char>
 
-/// A symbol of a grammar
+/// A symbol of a grammar.
 type Symbol =
     /// The symbol is a nonterminal.
     | Nonterminal of uint32 * string
@@ -49,8 +49,8 @@ type Symbol =
     | GroupStart of string
     /// The symbol signifies the end of a group.
     | GroupEnd of string
-    /// The symbol signifies an error.
-    | Error
+    /// The symbol was not recognized by the tokenizer.
+    | Unrecognized
     with
 
         /// The name of a symbol
@@ -62,7 +62,7 @@ type Symbol =
             | EndOfFile -> "EOF"
             | GroupStart x -> x
             | GroupEnd x -> x
-            | Error -> "Error"
+            | Unrecognized -> "Unrecognized"
         override x.ToString() =
             let literalFormat x =
                 let forceDelimiter =

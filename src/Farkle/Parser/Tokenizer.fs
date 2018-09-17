@@ -68,39 +68,38 @@ module internal Tokenizer =
 
     let private produceToken dfa groups = state {
         let rec impl() = state {
-            let! x = get <!> (tokenizeDFA dfa)
+            let! newToken = get <!> (tokenizeDFA dfa)
             let! groupStackTop = getOptic TokenizerState.GroupStack_ <!> List.tryHead
             let nestGroup =
-                match x.Symbol with
+                match newToken.Symbol with
                 | GroupStart _ | GroupEnd _ ->
                     Maybe.maybe {
                         let! groupStackTop = groupStackTop
                         let! gsTopGroup = groupStackTop.Symbol |> Group.getSymbolGroup groups
-                        let! myIndex = x.Symbol |> Group.getSymbolGroupIndexed groups
+                        let! myIndex = newToken.Symbol |> Group.getSymbolGroupIndexed groups
                         return gsTopGroup.Nesting.Contains myIndex
                     } |> Option.defaultValue true
                 | _ -> false
             if nestGroup then
-                do! x.Data |> String.length |> consumeBuffer
-                let newToken = Optic.set Token.Data_ "" x
-                do! mapOptic TokenizerState.GroupStack_ (List.cons newToken)
+                do! newToken.Data |> String.length |> consumeBuffer
+                do! mapOptic TokenizerState.GroupStack_ (List.cons {newToken with Data = ""})
                 return! impl()
             else
                 match groupStackTop with
                 | None ->
-                    do! x.Data |> String.length |> consumeBuffer
-                    return x
+                    do! newToken.Data |> String.length |> consumeBuffer
+                    return newToken
                 | Some groupStackTop ->
                     let groupStackTopGroup =
                         groupStackTop.Symbol
                         |> Group.getSymbolGroup groups
                         |> mustBeSome // I am sorry. 😭
-                    if groupStackTopGroup.EndSymbol = x.Symbol then
+                    if groupStackTopGroup.EndSymbol = newToken.Symbol then
                         let! pop = state {
                             do! mapOptic TokenizerState.GroupStack_ List.tail
                             if groupStackTopGroup.EndingMode = Closed then
-                                do! x.Data |> String.length |> consumeBuffer
-                                return groupStackTop |> Token.AppendData x.Data
+                                do! newToken.Data |> String.length |> consumeBuffer
+                                return groupStackTop |> Token.AppendData newToken.Data
                             else
                                 return groupStackTop
                         }
@@ -110,15 +109,15 @@ module internal Tokenizer =
                                 do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (Token.AppendData pop.Data)
                                 return! impl()
                             | None -> return Optic.set Token.Symbol_ groupStackTopGroup.ContainerSymbol pop
-                    elif x.Symbol = EndOfFile then
-                        return x
+                    elif newToken.Symbol = EndOfFile then
+                        return newToken
                     else
                         match groupStackTopGroup.AdvanceMode with
                         | Token ->
-                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (Token.AppendData x.Data)
-                            do! x.Data |> String.length |> consumeBuffer
+                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (Token.AppendData newToken.Data)
+                            do! newToken.Data |> String.length |> consumeBuffer
                         | Character ->
-                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (x.Data.[0] |> string |> Token.AppendData)
+                            do! mapOptic (TokenizerState.GroupStack_ >-> List.head_) (newToken.Data.[0] |> string |> Token.AppendData)
                             do! consumeBuffer 1u
                         return! impl()
         }

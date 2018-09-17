@@ -25,13 +25,14 @@ module GOLDParser =
     let parseChars grammar fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
         let fail = curry (ParseError.ParseError >> Error >> Some)
-        let impl {NewToken = newToken; CurrentPosition = pos; IsGroupStackEmpty = isGroupStackEmpty}: State<ParserState,_> = fun state ->
+        let impl {NewToken = newToken; IsInsideGroup = isInsideGroup}: State<ParserState,_> = fun state ->
+            let pos = newToken.Position
             let state = {state with CurrentPosition = pos}
             fMessage pos <| TokenRead newToken
             match newToken.Symbol with
             | Noise _ -> None, state
             | Unrecognized -> fail pos <| LexicalError newToken.Data.[0], state
-            | EndOfFile when not isGroupStackEmpty -> fail pos GroupError, state
+            | EndOfFile when isInsideGroup -> fail pos GroupError, state
             | _ ->
                 let rec lalrLoop state =
                     let lalrResult, state = run (parseLALR newToken) state

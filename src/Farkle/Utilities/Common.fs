@@ -76,7 +76,7 @@ module Position =
     let column (Position(_, x)) = x
 
     /// Returns a `Position` that points at `(1, 0)`.
-    let initial = (GenericOne, GenericZero) |> Position
+    let initial = (GenericOne, GenericOne) |> Position
 
     /// Creates a `Position` at the specified coordinates.
     /// Returns `None` if a coordinate was zero.
@@ -90,7 +90,7 @@ module Position =
     let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
 
     /// Increases the line index of a `Position` by one and resets the collumn to zero.
-    let incLine (Position(x, _)) = (x + GenericOne, GenericZero) |> Position
+    let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
 
 /// Some more utilities to work with lists.
 module List =

@@ -96,12 +96,9 @@ type TokenizerFeedback =
         /// Its `SymbolType` gives more information, like whether
         /// the tokenizer encountered an error, or reached the end.
         NewToken: Token
-        /// The position the tokenizer is.
-        /// It is needed for the parser to generate accurate error reports.
-        CurrentPosition: Position
         /// Whether the tokenizer is inside a lexical group.
         /// It is needed for the parser to determine whether a `GroupError` occured.
-        IsGroupStackEmpty: bool
+        IsInsideGroup: bool
     }
 
 /// A tokenizer. What is it actually? A sequence of tokens (and some other information).

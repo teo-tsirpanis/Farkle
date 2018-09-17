@@ -122,9 +122,8 @@ module internal Tokenizer =
                         return! impl()
         }
         let! token = impl()
-        let! isGroupStackEmpty = getOptic TokenizerState.GroupStack_ <!> List.isEmpty
-        let! currentPosition = getOptic TokenizerState.CurrentPosition_
-        return {NewToken = token; IsGroupStackEmpty = isGroupStackEmpty; CurrentPosition = currentPosition}
+        let! isInsideGroup = getOptic TokenizerState.GroupStack_ <!> (List.isEmpty >> not)
+        return {NewToken = token; IsInsideGroup = isInsideGroup}
     }
 
     let inline private shouldEndAfterThat {NewToken = {Symbol = x}} =

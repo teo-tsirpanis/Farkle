@@ -75,13 +75,13 @@ module Position =
     /// Returns the column of a `Position`.
     let column (Position(_, x)) = x
 
-    /// Returns a `Position` that points at `(1, 1)`.
-    let initial = (GenericOne, GenericOne) |> Position
+    /// Returns a `Position` that points at `(1, 0)`.
+    let initial = (GenericOne, GenericZero) |> Position
 
     /// Creates a `Position` at the specified coordinates.
     /// Returns `None` if a coordinate was zero.
     let create line col =
-        if line <= GenericZero || col <= GenericZero then
+        if line <= GenericZero || col < GenericZero then
             None
         else
             (line, col) |> Position |> Some
@@ -89,8 +89,8 @@ module Position =
     /// Increases the column index of a `Position` by one.
     let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
 
-    /// Increases the line index of a `Position` by one and resets the collumn to one.
-    let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
+    /// Increases the line index of a `Position` by one and resets the collumn to zero.
+    let incLine (Position(x, _)) = (x + GenericOne, GenericZero) |> Position
 
 /// Some more utilities to work with lists.
 module List =

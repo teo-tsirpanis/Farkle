@@ -33,9 +33,9 @@ module HybridStream =
 
     let empty = Eager []
 
-    let inline either fLazy fEager = function | Lazy x -> fLazy x | Eager x -> fEager x
+    let inline private either fLazy fEager = function | Lazy x -> fLazy x | Eager x -> fEager x
 
-    let inline tee fLazy fEager = either (fLazy >> Lazy) (fEager >> Eager)
+    let inline private tee fLazy fEager = either (fLazy >> Lazy) (fEager >> Eager)
 
     let (|HSCons|HSNil|) x =
         either

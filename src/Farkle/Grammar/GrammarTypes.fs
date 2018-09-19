@@ -114,9 +114,9 @@ type Group =
         StartSymbol: Symbol
         /// The symbol that represents the group's end.
         EndSymbol: Symbol
-        /// The way the group advances. Also see [AdvanceMode].
+        /// The way the group advances.
         AdvanceMode: AdvanceMode
-        /// The way the group ends. Also see [EndingMode].
+        /// The way the group ends.
         EndingMode: EndingMode
         /// A set of indexes whose corresponding groups can be nested inside this group.
         Nesting: Set<Indexed<Group>>
@@ -125,7 +125,11 @@ type Group =
         member x.Index = x.Index
 
 /// Functions to work with `Group`s.
-module Group =
+[<RequireQualifiedAccess>]
+module internal Group =
+
+    /// [omit]
+    let inline nesting {Nesting = x} = x
 
     /// Gets the index of the group in a list tha has the specified symbol either its start, or end, or container symbol.
     /// Such index might not exist; in this case, `None` is returned.

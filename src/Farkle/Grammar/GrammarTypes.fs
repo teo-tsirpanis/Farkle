@@ -35,55 +35,6 @@ type Properties = Map<string, string>
 /// A set of characters. See `RangeSet` too.
 type CharSet = RangeSet<char>
 
-/// A symbol of a grammar.
-type Symbol =
-    /// The symbol is a nonterminal.
-    | Nonterminal of uint32 * string
-    /// The symbol is a terminal.
-    | Terminal of uint32 * string
-    /// The symbol is noise (comments for example) and is discarded by the parser.
-    | Noise of string
-    /// The symbol signifies the end of input.
-    | EndOfFile
-    /// The symbol signifies the start of a group.
-    | GroupStart of string
-    /// The symbol signifies the end of a group.
-    | GroupEnd of string
-    /// The symbol was not recognized by the tokenizer.
-    | Unrecognized
-    with
-
-        /// The name of a symbol
-        member x.Name =
-            match x with
-            | Nonterminal (_, x) -> x
-            | Terminal (_, x) -> x
-            | Noise x -> x
-            | EndOfFile -> "EOF"
-            | GroupStart x -> x
-            | GroupEnd x -> x
-            | Unrecognized -> "Unrecognized"
-        override x.ToString() =
-            let literalFormat x =
-                let forceDelimiter =
-                    x = ""
-                    || x.[0] |> Char.IsLetter
-                    || x |> String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_')
-                if forceDelimiter then
-                    sprintf "'%s'" x
-                else
-                    x
-            match x with
-            | Nonterminal _ -> sprintf "<%s>" x.Name
-            | Terminal _ -> literalFormat x.Name
-            | _ -> sprintf "(%s)" x.Name
-
-/// Functions to work with `Symbol`s.
-module internal Symbol =
-
-    /// Returns the index of a terminal symbol, or nothing.
-    let tryGetTerminalIndex = function Terminal (index, _) -> Some index | _ -> None
-
 /// A type indicating how a group advances.
 type AdvanceMode =
     /// The group advances by one token at a time.
@@ -124,25 +75,62 @@ type Group =
     interface Indexable with
         member x.Index = x.Index
 
+
+/// A symbol of a grammar.
+and Symbol =
+    /// The symbol is a nonterminal.
+    | Nonterminal of uint32 * string
+    /// The symbol is a terminal.
+    | Terminal of uint32 * string
+    /// The symbol is noise (comments for example) and is discarded by the parser.
+    | Noise of string
+    /// The symbol signifies the end of input.
+    | EndOfFile
+    /// The symbol signifies the start of a group.
+    | GroupStart of Indexed<Group> * string
+    /// The symbol signifies the end of a group.
+    | GroupEnd of string
+    /// The symbol was not recognized by the tokenizer.
+    | Unrecognized
+    with
+
+        /// The name of a symbol
+        member x.Name =
+            match x with
+            | Nonterminal (_, x) -> x
+            | Terminal (_, x) -> x
+            | Noise x -> x
+            | EndOfFile -> "EOF"
+            | GroupStart (_, x) -> x
+            | GroupEnd x -> x
+            | Unrecognized -> "Unrecognized"
+        override x.ToString() =
+            let literalFormat x =
+                let forceDelimiter =
+                    x = ""
+                    || x.[0] |> Char.IsLetter
+                    || x |> String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_')
+                if forceDelimiter then
+                    sprintf "'%s'" x
+                else
+                    x
+            match x with
+            | Nonterminal _ -> sprintf "<%s>" x.Name
+            | Terminal _ -> literalFormat x.Name
+            | _ -> sprintf "(%s)" x.Name
+
+/// Functions to work with `Symbol`s.
+module internal Symbol =
+
+    /// Returns the index of a terminal symbol, or nothing.
+    let tryGetTerminalIndex = function Terminal (index, _) -> Some index | _ -> None
+
 /// Functions to work with `Group`s.
 [<RequireQualifiedAccess>]
 module internal Group =
 
     /// [omit]
     let inline nesting {Nesting = x} = x
-
-    /// Gets the index of the group in a list tha has the specified symbol either its start, or end, or container symbol.
-    /// Such index might not exist; in this case, `None` is returned.
-    let getSymbolGroupIndexed groups x =
-        SafeArray.tryFindIndex groups
-            (fun {Group.ContainerSymbol = x1; StartSymbol = x2; EndSymbol = x3} -> x = x1 || x = x2 || x = x3)
-
-    /// Like `getSymbolGroupIndexed`, but returns a `Group`, instead of an index.
-    /// Such group might not exist; in this case, `None` is returned.
-    let getSymbolGroup groups x =
-        (groups, x)
-        ||> getSymbolGroupIndexed
-        |> Option.map (SafeArray.retrieve groups)
 
 /// The basic building block of a grammar's syntax.
 /// It consists of a single nonterminal called the "head".

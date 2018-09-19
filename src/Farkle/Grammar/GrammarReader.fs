@@ -60,13 +60,15 @@ module internal GrammarReader =
                 |> readRanges
             | _ -> None
 
+        let defaultGroupIndex = Indexed.create System.UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
+
         let readSymbol index =
             function
             | RMCons(String name, RMCons(UInt16 0us, RMNil)) -> Nonterminal (uint32 index, name) |> Some
             | RMCons(String name, RMCons(UInt16 1us, RMNil)) -> Terminal (uint32 index, name) |> Some
             | RMCons(String name, RMCons(UInt16 2us, RMNil)) -> Noise name |> Some
             | RMCons(String _ , RMCons(UInt16 3us, RMNil)) -> EndOfFile |> Some
-            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart name |> Some
+            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart (defaultGroupIndex, name) |> Some
             | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd name |> Some
             | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> Unrecognized |> Some
             | _ -> None
@@ -187,6 +189,23 @@ module internal GrammarReader =
                 Some ()
             | Some _ -> None
 
+        let fixGroupStartSymbols symbols groups =
+            let mutable i = 0
+            let mutable doContinue = true
+            while i < Array.length symbols && doContinue do
+                let sym = &symbols.[i]
+                match sym with
+                | GroupStart (_, name) as s ->
+                    match Array.tryFindIndex (fun {StartSymbol = ss} -> ss = s) groups with
+                    | Some idx -> sym <- GroupStart (Indexed.create <| uint32 idx, name)
+                    | None -> doContinue <- false
+                | _ -> do()
+                i <- i + 1
+            if doContinue then
+                Ok ()
+            else
+                Error UnknownEGTFile
+
     open Implementation
 
     let read r =
@@ -236,6 +255,7 @@ module internal GrammarReader =
             >> failIfNone UnknownEGTFile
         either {
             do! EGTReader.readEGT fHeaderCheck fRecord r
+            do! fixGroupStartSymbols symbols groups
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
             let dfaStates = SafeArray.ofArrayUnsafe dfaStates
             let lalrStates = SafeArray.ofArrayUnsafe lalrStates

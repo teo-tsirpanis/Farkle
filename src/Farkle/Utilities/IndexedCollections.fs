@@ -23,12 +23,12 @@ type [<Struct>] Indexed<'a> = private Indexed of uint32
         member x.Value = x |> (fun (Indexed x) -> x)
 
 /// Functions for working with `Indexed<'a>`.
-module Indexed =
+module internal Indexed =
 
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
 
-    let inline internal createWithKnownLength<'a> (arr: IReadOnlyCollection<'a>) (i: uint16) =
+    let inline createWithKnownLength<'a> (arr: IReadOnlyCollection<'a>) (i: uint16) =
         if int i <= arr.Count then
             i |> uint32 |> create<'a> |> Some
         else

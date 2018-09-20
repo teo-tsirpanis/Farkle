@@ -33,7 +33,7 @@ type internal TableCounts =
 type Properties = Map<string, string>
 
 /// A set of characters. See `RangeSet` too.
-type CharSet = RangeSet<char>
+type CharSet = SetEx<char>
 
 /// A type indicating how a group advances.
 type AdvanceMode =
@@ -171,7 +171,7 @@ type DFAState =
 
 /// An action to be taken by the parser.
 type LALRAction =
-    /// This action indicates the parser to shift to the specified `LALRState`..
+    /// This action indicates the parser to shift to the specified `LALRState`.
     | Shift of Indexed<LALRState>
     /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production

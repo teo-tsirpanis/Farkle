@@ -48,12 +48,10 @@ module internal GrammarReader =
         let readCharSet _ =
             let readRanges =
                 function
-                | RMCons(UInt16 start, RMCons(UInt16 theEnd, RMNil)) ->
-                    RangeSet.create (char start) (char theEnd)
-                    |> Some
+                | RMCons(UInt16 start, RMCons(UInt16 theEnd, RMNil)) -> ((char start), (char theEnd)) |> Some
                 | _ -> None
                 |> readInChunks false 2
-                >> Option.map RangeSet.concat
+                >> Option.map SetEx.ofRanges
             function
             | RMCons(UInt16 _unicodePlane, RMCons(UInt16 _rangeCount, RMCons(Empty, ranges))) ->
                 ranges

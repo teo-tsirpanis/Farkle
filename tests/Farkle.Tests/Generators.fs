@@ -45,7 +45,13 @@ type Generators =
     static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen (ASTGen())
-    static member SetEx() = Arb.generate |> Gen.map Set |> Arb.fromGen
+    static member SetEx() =
+        [
+            Arb.generate |> Gen.map (Set.ofList >> SetEx.Set)
+            Arb.generate |> Gen.map (fun (x1, x2) -> if x1 <= x2 then x1, x2 else x2, x1) |> Gen.listOf |> Gen.map SetEx.Range
+        ]
+        |> Gen.oneof
+        |> Arb.fromGen
 
 let testProperty x = 
     testPropertyWithConfig

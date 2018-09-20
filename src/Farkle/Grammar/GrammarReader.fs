@@ -73,7 +73,7 @@ module internal GrammarReader =
             | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> Unrecognized |> Some
             | _ -> None
 
-        let readGroup fSymbol fGroup index =
+        let readGroup symbols fSymbol fGroup index =
             let readNestedGroups =
                 (function | RMCons (UInt16 x, RMNil) -> fGroup x | _ -> None)
                 |> readInChunks true 1
@@ -81,7 +81,8 @@ module internal GrammarReader =
             function
             | RMCons(String name, RMCons(UInt16 containerIndex, RMCons(UInt16 startIndex, RMCons(UInt16 endIndex, RMCons(UInt16 advanceMode, RMCons(UInt16 endingMode, RMCons(Empty, RMCons(UInt16 _nestingCount, xs)))))))) -> maybe {
                 let! containerSymbol = fSymbol containerIndex
-                let! startSymbol = fSymbol startIndex
+                let! startSymbol = fSymbol startIndex |> Option.map (function | GroupStart (_, name) -> GroupStart (Indexed.create index, name) | x -> x)
+                startIndex |> int |> Array.set symbols <| startSymbol
                 let! endSymbol = fSymbol endIndex
                 let! advanceMode = match advanceMode with | 0us -> Some Token | 1us -> Some Character | _ -> None
                 let! endingMode = match endingMode with | 0us -> Some Open | 1us -> Some Closed | _ -> None
@@ -189,28 +190,12 @@ module internal GrammarReader =
                 Some ()
             | Some _ -> None
 
-        let fixGroupStartSymbols symbols groups =
-            let mutable i = 0
-            let mutable doContinue = true
-            while i < Array.length symbols && doContinue do
-                let sym = &symbols.[i]
-                match sym with
-                | GroupStart (_, name) as s ->
-                    match Array.tryFindIndex (fun {StartSymbol = ss} -> ss = s) groups with
-                    | Some idx -> sym <- GroupStart (Indexed.create <| uint32 idx, name)
-                    | None -> doContinue <- false
-                | _ -> do()
-                i <- i + 1
-            if doContinue then
-                Ok ()
-            else
-                Error UnknownEGTFile
-
     open Implementation
 
     let read r =
         let properties = System.Collections.Generic.Dictionary()
         let mutable isTableCountsInitialized = false
+        let mutable hasReadAnyGroup = false
         let mutable charSets = [| |]
         let mutable symbols = [| |]
         let mutable groups = [| |]
@@ -239,10 +224,11 @@ module internal GrammarReader =
                 readTableCounts xs |> Option.map initTables
             | RMCons(Byte 'c'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed readCharSet charSets xs
-            | RMCons(Byte 'S'B, xs) when isTableCountsInitialized ->
+            | RMCons(Byte 'S'B, xs) when isTableCountsInitialized && not hasReadAnyGroup ->
                 readAndAssignIndexed readSymbol symbols xs
             | RMCons(Byte 'g'B, xs) when isTableCountsInitialized ->
-                readAndAssignIndexed (readGroup (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
+                hasReadAnyGroup <- true
+                readAndAssignIndexed (readGroup symbols (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
             | RMCons(Byte 'R'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
             | RMCons(Byte 'I'B, xs) when isTableCountsInitialized ->
@@ -255,7 +241,6 @@ module internal GrammarReader =
             >> failIfNone UnknownEGTFile
         either {
             do! EGTReader.readEGT fHeaderCheck fRecord r
-            do! fixGroupStartSymbols symbols groups
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
             let dfaStates = SafeArray.ofArrayUnsafe dfaStates
             let lalrStates = SafeArray.ofArrayUnsafe lalrStates

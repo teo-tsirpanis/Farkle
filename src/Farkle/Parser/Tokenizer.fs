@@ -66,9 +66,9 @@ module internal Tokenizer =
         impl 1u input initialState None
 
     let private produceToken dfa groups = state {
-        let rec impl() = state {
-            let! tok = get <!> (tokenizeDFA dfa)
-            let! gs = getOptic TokenizerState.GroupStack_
+        let rec impl (state: TokenizerState) =
+            let tok = tokenizeDFA dfa state
+            let gs = state.GroupStack
             match tok.Symbol, gs with
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
@@ -76,35 +76,28 @@ module internal Tokenizer =
             // in the group stack, consume the token, and continue.
             | GroupStart (tokGroupIdx, _), _ when gs |> List.tryHead |> Option.map (snd >> Group.nesting >> Set.contains tokGroupIdx) |> Option.defaultValue true ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
-                do! tok.Data |> String.length |> consumeBuffer
-                do! setOptic TokenizerState.GroupStack_ ((tok, tokGroup) :: gs)
-                return! impl()
+                let state = tok.Data |> String.length |> consumeBuffer <| state |> snd
+                impl {state with GroupStack = (tok, tokGroup) :: gs}
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We consume the token, and return it.
             | _, [] ->
-                do! tok.Data |> String.length |> consumeBuffer
-                return tok
+                tok, tok.Data |> String.length |> consumeBuffer <| state |> snd
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, the end symbol might be kept.
             | sym, (popped, poppedGroup) :: xs when poppedGroup.EndSymbol = sym ->
-                let! popped = state {
+                let popped, state =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        do! tok.Data |> String.length |> consumeBuffer
-                        return Token.AppendData tok.Data popped
-                    | EndingMode.Open -> return popped
-                }
+                        Token.AppendData tok.Data popped, tok.Data |> String.length |> consumeBuffer <| state |> snd
+                    | EndingMode.Open -> popped, state
                 match xs with
                 // We have now left the group. We empty the group stack and and fix the symbol of our token.
                 | [] ->
-                    do! setOptic TokenizerState.GroupStack_ []
-                    return {popped with Symbol = poppedGroup.ContainerSymbol}
+                    {popped with Symbol = poppedGroup.ContainerSymbol}, {state with GroupStack = []}
                 // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs ->
-                    do! setOptic TokenizerState.GroupStack_ ((Token.AppendData popped.Data tok2, g2) :: xs)
-                    return! impl()
+                | (tok2, g2) :: xs -> impl {state with GroupStack = (Token.AppendData popped.Data tok2, g2) :: xs}
             // If input ends inside the group, we stop here. The upper-level parser will report the error.
-            | EndOfFile, _ -> return tok
+            | EndOfFile, _ -> tok, state
             // We are still inside a group. 
             | _, (tok2, g2) :: xs ->
                 // The input can advance either by just one character, or the entire token.
@@ -112,11 +105,9 @@ module internal Tokenizer =
                     match g2.AdvanceMode with
                     | AdvanceMode.Token -> tok.Data
                     | AdvanceMode.Character -> string tok.Data.[0]
-                do! dataToAdvance |> String.length |> consumeBuffer
-                do! setOptic TokenizerState.GroupStack_ ((Token.AppendData dataToAdvance tok2, g2) :: xs)
-                return! impl()
-        }
-        let! tok = impl()
+                let state =  dataToAdvance |> String.length |> consumeBuffer <| state |> snd
+                impl {state with GroupStack = (Token.AppendData dataToAdvance tok2, g2) :: xs}
+        let! tok = impl
         let! isInsideGroup = getOptic TokenizerState.GroupStack_ <!> (List.isEmpty >> not)
         return {NewToken = tok; IsInsideGroup = isInsideGroup}
     }

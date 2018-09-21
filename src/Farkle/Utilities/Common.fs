@@ -55,6 +55,20 @@ let inline flip f x y = f y x
 /// Swaps the elements of a pair.
 let inline swap (x, y) = (y, x)
 
+/// Faster functions to compare two objects.
+module FastCompare =
+
+    /// Compares the first object with another object of the same type.
+    /// The types must implement the `IComparable<T>` generic interface.
+    /// This function is faster than the F#'s compare methods because it is much less lightweight.
+    let inline compare (x1: 'a) (x2: 'a) = (x1 :> IComparable<'a>).CompareTo(x2)
+
+    let inline greater x1 x2 = compare x1 x2 > 0
+    let inline greaterOrEqual x1 x2 = compare x1 x2 >= 0
+
+    let inline smaller x1 x2 = compare x1 x2 < 0
+    let inline smallerOrEqual x1 x2 = compare x1 x2 <= 0
+
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 [<Struct>]
 type Position =

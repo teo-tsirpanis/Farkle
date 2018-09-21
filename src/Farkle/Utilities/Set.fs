@@ -17,9 +17,11 @@ type SetEx<'a> when 'a: comparison =
 [<RequireQualifiedAccess>]
 module RangeSet =
 
+    open FastCompare
+
     /// Returns whether the fiven item exists in the range defined by the given list, inclusive.
     /// In the list, the smallest member of the tuple must be first.
-    let inline contains x xs = List.exists (fun (x1, x2) -> x >= x1 && x <= x2) xs
+    let inline contains x xs = List.exists (fun (x1, x2) -> greaterOrEqual x x1 && smallerOrEqual x x2) xs
 
 /// Functions to work between sets of different types.
 [<RequireQualifiedAccess>]

@@ -68,4 +68,4 @@ module SetEx =
     let inline toRanges x = tee id SetUtils.setToRanges x
 
     /// Checks if a `SetEx` contains an element.
-    let inline contains x = tee (RangeSet.contains x) (Set.contains x)
+    let contains x = tee (RangeSet.contains x) (Set.contains x)

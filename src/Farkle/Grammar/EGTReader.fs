@@ -33,8 +33,11 @@ module internal EGTReader =
 
         let readToEnd fRead (r: BinaryReader) =
             try
+                // No need to get the length each time; it stays the same, and it's quite expensive, as it does some Win32 calls.
+                // The stream's position on the other hand is very fast. It is just a private variable read.
+                let len = r.BaseStream.Length
                 let mutable x = fRead r
-                while r.BaseStream.Position < r.BaseStream.Length && isOk x do
+                while r.BaseStream.Position < len && isOk x do
                     x <- fRead r
                 x
             with

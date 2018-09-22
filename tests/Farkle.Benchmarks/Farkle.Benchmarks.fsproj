@@ -4,16 +4,16 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="RandomAccessBenchmark.fs" />
-    <Compile Include="SerializationBenchmark.fs" />
-    <Compile Include="InceptionBenchmark.fs" />
-    <Compile Include="Program.fs" />
-    <Content Include="..\resources\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <Compile Include="RandomAccessBenchmark.fs" />
+    <Compile Include="InceptionBenchmark.fs" />
+    <Compile Include="SerializationBenchmark.fs" />
+    <Compile Include="Program.fs" />
+    <Content Include="../resources/**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

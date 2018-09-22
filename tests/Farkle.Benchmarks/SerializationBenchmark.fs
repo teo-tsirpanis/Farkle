@@ -9,9 +9,9 @@ open BenchmarkDotNet.Attributes
 open BenchmarkDotNet.Loggers
 open Farkle
 open Farkle.Grammar.GOLDParser
-open Farkle.RuntimeHelpers
 open System
 open System.IO
+open System.Runtime.Serialization.Formatters.Binary
 
 type SerializationBenchmark() =
 
@@ -21,13 +21,24 @@ type SerializationBenchmark() =
 
     let mutable serialized = ""
 
+    let serializeIt (x: GOLDGrammar) =
+        let f = BinaryFormatter()
+        use memStream = new MemoryStream()
+        f.Serialize(memStream, x)
+        memStream.ToArray() |> Convert.ToBase64String
+
+    let deserializeIt x =
+        let memStream = new MemoryStream(Convert.FromBase64String x)
+        let f = BinaryFormatter()
+        f.Deserialize memStream :?> GOLDGrammar
+
     [<GlobalSetup>]
     member __.Setup() =
         let bytes = File.ReadAllBytes "inception.egt"
         base64EGT <- Convert.ToBase64String bytes
         logger.WriteLineInfo <| sprintf "EGT as Base-64: %d characters" base64EGT.Length
         use stream = new MemoryStream(bytes)
-        serialized <- stream |> EGT.ofStream |> returnOrFail |> Serialization.serialize
+        serialized <- stream |> EGT.ofStream |> returnOrFail |> serializeIt
         logger.WriteLineInfo <| sprintf "Serialized grammar as Base64: %d characters" serialized.Length
 
     [<Benchmark>]
@@ -53,5 +64,5 @@ type SerializationBenchmark() =
     /// * Slower
     /// * Cannot be optimized because it is a .NET internal process
     /// * Less space-efficient
-    member __.Serialized() = serialized |> Serialization.deserialize<GOLDGrammar> |> returnOrFail
+    member __.Serialized() = serialized |> deserializeIt
     

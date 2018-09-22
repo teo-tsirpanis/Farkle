@@ -22,8 +22,15 @@ module List =
             | _ -> None
         List.foldBack f x (Some [])
 
-    let popStack optic count = sresult {
-        let! (first, rest) = getOptic optic <!> List.splitAt count
+    let popStack n x =
+        let rec impl acc n x =
+            match x with
+            | x :: xs when n >= 1 -> impl (x :: acc) (n - 1) xs
+            | x -> acc, x
+        impl [] n x
+
+    let popStackM optic count = sresult {
+        let! (first, rest) = getOptic optic <!> popStack count
         do! setOptic optic rest
         return first
     }

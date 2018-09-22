@@ -57,9 +57,7 @@ module internal LALRParser =
                 do! pushLALRStack (nextState, AST.Content token)
                 return LALRResult.Shift nextState.Index
             | Some (Reduce productionToReduce) ->
-                let! tokens =
-                    List.popStack LALRStack_ productionToReduce.Handle.Length
-                    <!> (Seq.map snd >> Seq.rev >> List.ofSeq)
+                let! tokens = List.popStackM LALRStack_ productionToReduce.Handle.Length <!> (List.map snd)
                 let! newState = getLALRStackTop <!> fst
                 let nextAction = getNextAction newState productionToReduce.Head
                 match nextAction with

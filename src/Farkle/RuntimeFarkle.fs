@@ -29,7 +29,6 @@ type FarkleError =
 /// 10: BTW, Farkle means: "FArkle Recognizes Known Languages Easily".
 /// 20: And "FArkle" means: (GOTO 10) 😁
 /// 30: I guess you can't read this line. 😛
-// `fPostProcess` is hiding away the post-processor's two generic types.
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
     Parser: Result<RuntimeGrammar,FarkleError>

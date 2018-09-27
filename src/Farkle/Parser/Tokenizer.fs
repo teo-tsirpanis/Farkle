@@ -112,9 +112,4 @@ module internal Tokenizer =
                 impl {state with GroupStack = (Token.AppendData dataToAdvance tok2, g2) :: xs}
         impl
 
-    let inline private shouldEndAfterThat x =
-        match x with
-        | TokenizerResult.TokenRead _ -> false
-        | _ -> true
-
-    let create dfa groups input: Tokenizer = Extra.State.toSeq shouldEndAfterThat (produceToken dfa groups) (TokenizerState.Create input)
+    let create dfa groups input: Tokenizer = Extra.State.toSeq (produceToken dfa groups) (TokenizerState.Create input)

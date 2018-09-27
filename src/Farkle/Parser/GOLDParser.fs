@@ -17,19 +17,16 @@ module GOLDParser =
 
     open State
 
-    let private parseLALR token: State<ParserState,_> = fun state ->
-        let result, newParser = state.TheLALRParser |> (fun (LALRParser x) -> x) <| token
-        result, {state with TheLALRParser = newParser}
+    let private parseLALR token: State<_,_> = fun state -> state |> (fun (LALRParser x) -> x) <| token
 
     /// Parses a `HybridStream` of characters. 
-    let parseChars grammar fMessage input =
+    let parseChars (grammar: #RuntimeGrammar) fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
         let fail = curry (ParseError.ParseError >> Error >> Some)
-        let impl (x: TokenizerResult): State<ParserState,_> = fun state ->
+        let impl (x: TokenizerResult): State<_,_> = fun state ->
             let pos = x.Position
             let fail = fail pos
             let fMessage = fMessage pos
-            let state = {state with CurrentPosition = pos}
             match x with
             | TokenizerResult.GroupError _ -> fail GroupError, state
             | TokenizerResult.LexicalError (x, _) -> fail <| LexicalError x, state
@@ -49,10 +46,9 @@ module GOLDParser =
                     | LALRResult.SyntaxError (x, y) -> fail <| SyntaxError (x, y), state
                     | LALRResult.InternalError x -> fail <| InternalError x, state
                 lalrLoop state
-        let tokenizer = Tokenizer.create (RuntimeGrammar.dfaStates grammar) (RuntimeGrammar.groups grammar) input
-        let state = RuntimeGrammar.lalrStates grammar |> LALRParser.create |> ParserState.create
-        let result, {ParserState.CurrentPosition = pos} = State.run (Extra.State.runOverSeq impl tokenizer) state
-        result |> Option.defaultValue (UnexpectedTokenizerShortage |> InternalError |> curry ParseError.ParseError pos |> Error)
+        let tokenizer = Tokenizer.create grammar.DFA grammar.Groups input
+        let state = LALRParser.create grammar.LALR
+        State.run (Extra.State.runOverSeq tokenizer impl) state |> fst
 
     /// Parses a string.
     let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage

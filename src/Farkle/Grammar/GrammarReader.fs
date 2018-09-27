@@ -66,8 +66,8 @@ module internal GrammarReader =
             | RMCons(String name, RMCons(UInt16 1us, RMNil)) -> Terminal (uint32 index, name) |> Some
             | RMCons(String name, RMCons(UInt16 2us, RMNil)) -> Noise name |> Some
             | RMCons(String _ , RMCons(UInt16 3us, RMNil)) -> EndOfFile |> Some
-            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart (defaultGroupIndex, name) |> Some
-            | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd name |> Some
+            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart (defaultGroupIndex, (index, name)) |> Some
+            | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd (index, name) |> Some
             | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> Unrecognized |> Some
             | _ -> None
 

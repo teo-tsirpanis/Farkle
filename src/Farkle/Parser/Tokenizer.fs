@@ -74,7 +74,7 @@ module internal Tokenizer =
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, consume the token, and continue.
-            | GroupStart (tokGroupIdx, _), _ when gs |> List.tryHead |> Option.map (snd >> Group.nesting >> Set.contains tokGroupIdx) |> Option.defaultValue true ->
+            | GroupStart (tokGroupIdx, _), _ when gs |> List.tryHead |> Option.map (fun (_, g) -> g.Nesting.Contains(tokGroupIdx)) |> Option.defaultValue true ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
                 let state = tok.Data |> String.length |> consumeBuffer <| state |> snd
                 impl {state with GroupStack = (tok, tokGroup) :: gs}

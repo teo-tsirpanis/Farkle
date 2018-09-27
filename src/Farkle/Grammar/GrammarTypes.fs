@@ -7,7 +7,6 @@ namespace Farkle.Grammar
 
 open Farkle
 open Farkle.Collections
-open Farkle.Grammar.GOLDParser
 open System
 
 /// A record that stores how many of each tables exist in an EGT file.
@@ -87,9 +86,9 @@ and Symbol =
     /// The symbol signifies the end of input.
     | EndOfFile
     /// The symbol signifies the start of a group.
-    | GroupStart of Indexed<Group> * string
+    | GroupStart of Indexed<Group> * (uint32 * string)
     /// The symbol signifies the end of a group.
-    | GroupEnd of string
+    | GroupEnd of uint32 * string
     /// The symbol was not recognized by the tokenizer.
     | Unrecognized
     with
@@ -101,8 +100,8 @@ and Symbol =
             | Terminal (_, x) -> x
             | Noise x -> x
             | EndOfFile -> "EOF"
-            | GroupStart (_, x) -> x
-            | GroupEnd x -> x
+            | GroupStart (_, (_, x)) -> x
+            | GroupEnd (_, x) -> x
             | Unrecognized -> "Unrecognized"
         override x.ToString() =
             let literalFormat x =
@@ -124,13 +123,6 @@ module internal Symbol =
 
     /// Returns the index of a terminal symbol, or nothing.
     let tryGetTerminalIndex = function Terminal (index, _) -> Some index | _ -> None
-
-/// Functions to work with `Group`s.
-[<RequireQualifiedAccess>]
-module internal Group =
-
-    /// [omit]
-    let inline nesting {Nesting = x} = x
 
 /// The basic building block of a grammar's syntax.
 /// It consists of a single nonterminal called the "head".
@@ -160,13 +152,11 @@ type DFAState =
     interface Indexable with
         member x.Index =
             match x with
-            | DFAAccept (x, _) -> x
-            | DFAContinue (x, _) -> x
+            | DFAAccept (x, _) | DFAContinue (x, _) -> x
     /// Returns the edges of the DFA state.
     member x.Edges =
         match x with
-        | DFAAccept (_, (_, e)) -> e
-        | DFAContinue (_, e) -> e
+        | DFAAccept (_, (_, e)) | DFAContinue (_, e) -> e
     override x.ToString() = x |> Indexable.index |> string
 
 /// An action to be taken by the parser.

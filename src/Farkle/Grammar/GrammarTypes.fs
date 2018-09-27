@@ -89,8 +89,9 @@ and Symbol =
     | GroupStart of Indexed<Group> * (uint32 * string)
     /// The symbol signifies the end of a group.
     | GroupEnd of uint32 * string
-    /// The symbol was not recognized by the tokenizer.
-    | Unrecognized
+    /// This symbol type is deprecated and should not be used anymore.
+    // It used to represent an unrecognized symbol
+    | SymbolTypeUnused
     with
 
         /// The name of a symbol
@@ -102,7 +103,7 @@ and Symbol =
             | EndOfFile -> "EOF"
             | GroupStart (_, (_, x)) -> x
             | GroupEnd (_, x) -> x
-            | Unrecognized -> "Unrecognized"
+            | SymbolTypeUnused -> "Unrecognized"
         override x.ToString() =
             let literalFormat x =
                 let forceDelimiter =

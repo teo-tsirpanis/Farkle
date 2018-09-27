@@ -25,27 +25,29 @@ module GOLDParser =
     let parseChars grammar fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
         let fail = curry (ParseError.ParseError >> Error >> Some)
-        let impl {NewToken = newToken; IsInsideGroup = isInsideGroup}: State<ParserState,_> = fun state ->
-            let pos = newToken.Position
+        let impl (x: TokenizerResult): State<ParserState,_> = fun state ->
+            let pos = x.Position
+            let fail = fail pos
+            let fMessage = fMessage pos
             let state = {state with CurrentPosition = pos}
-            fMessage pos <| TokenRead newToken
-            match newToken.Symbol with
-            | Noise _ -> None, state
-            | Unrecognized -> fail pos <| LexicalError newToken.Data.[0], state
-            | EndOfFile when isInsideGroup -> fail pos GroupError, state
-            | _ ->
+            match x with
+            | TokenizerResult.GroupError _ -> fail GroupError, state
+            | TokenizerResult.LexicalError (x, _) -> fail <| LexicalError x, state
+            | TokenizerResult.TokenRead {Symbol = Noise _} -> None, state
+            | TokenizerResult.TokenRead newToken ->
+                fMessage <| TokenRead newToken
                 let rec lalrLoop state =
                     let lalrResult, state = run (parseLALR newToken) state
                     match lalrResult with
                     | LALRResult.Accept x -> Some <| Ok x, state
                     | LALRResult.Shift x ->
-                        fMessage pos <| ParseMessageType.Shift x
+                        fMessage <| ParseMessageType.Shift x
                         None, state
                     | LALRResult.Reduce x ->
-                        fMessage pos <| Reduction x
+                        fMessage <| Reduction x
                         lalrLoop state
-                    | LALRResult.SyntaxError (x, y) -> fail pos <| SyntaxError (x, y), state
-                    | LALRResult.InternalError x -> fail pos <| InternalError x, state
+                    | LALRResult.SyntaxError (x, y) -> fail <| SyntaxError (x, y), state
+                    | LALRResult.InternalError x -> fail <| InternalError x, state
                 lalrLoop state
         let tokenizer = Tokenizer.create (RuntimeGrammar.dfaStates grammar) (RuntimeGrammar.groups grammar) input
         let state = RuntimeGrammar.lalrStates grammar |> LALRParser.create |> ParserState.create

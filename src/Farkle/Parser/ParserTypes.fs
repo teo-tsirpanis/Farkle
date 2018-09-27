@@ -8,8 +8,6 @@ namespace Farkle.Parser
 open Aether
 open Farkle
 open Farkle.Grammar
-open System
-open System.Text
 
 /// An internal error. These errors are known errors a program might experience.
 /// They could occur by manipulating the parser internal state, which is _impossible_ from the public API.
@@ -86,23 +84,22 @@ type ParseError = ParseError of Position * ParseErrorType
     with
         override x.ToString() = match x with | ParseError (pos, mt) ->  sprintf "%O %O" pos mt
 
-/// The feedback from the tokenizer after a token is read.
-/// Because the tokenizer is completely isolated, it needs to provide
-/// some more information to the rest of the code than just the token.
-/// That's the reason of this type.
-type TokenizerFeedback =
-    {
-        /// The `Token` the tokenizer returns.
-        /// Its `SymbolType` gives more information, like whether
-        /// the tokenizer encountered an error, or reached the end.
-        NewToken: Token
-        /// Whether the tokenizer is inside a lexical group.
-        /// It is needed for the parser to determine whether a `GroupError` occured.
-        IsInsideGroup: bool
-    }
 
-/// A tokenizer. What is it actually? A sequence of tokens (and some other information).
-type Tokenizer = TokenizerFeedback seq
+[<RequireQualifiedAccess>]
+/// The result of a tokenizer step.
+type TokenizerResult =
+    /// A token was read.
+    | TokenRead of Token
+    /// An unknown character was encountered at the given position.
+    | LexicalError of char * Position
+    /// The input ended while inside a lexical group.
+    | GroupError of Position
+    member x.Position =
+        match x with
+        | TokenRead {Position = pos} | LexicalError (_, pos) | GroupError pos-> pos
+
+/// A tokenizer. What is it actually? A sequence of tokens (or some other information).
+type Tokenizer = TokenizerResult seq
 
 /// A LALR parser. It takes a `Token`, and gives an `LALRResult`.
 /// It is a stateful operation; the type of this state

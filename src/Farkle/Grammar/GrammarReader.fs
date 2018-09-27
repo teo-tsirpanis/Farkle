@@ -68,7 +68,7 @@ module internal GrammarReader =
             | RMCons(String _ , RMCons(UInt16 3us, RMNil)) -> EndOfFile |> Some
             | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart (defaultGroupIndex, (index, name)) |> Some
             | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd (index, name) |> Some
-            | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> Unrecognized |> Some
+            | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> SymbolTypeUnused |> Some
             | _ -> None
 
         let readGroup symbols fSymbol fGroup index =

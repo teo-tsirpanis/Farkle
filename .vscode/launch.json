@@ -23,7 +23,9 @@
             "request": "launch",
             "preLaunchTask": "dotnet-build",
             "program": "Farkle.Calculator.dll",
-            "args": [],
+            "args": [
+                "111*555"
+            ],
             "cwd": "${workspaceRoot}/sample/Farkle.Calculator/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"

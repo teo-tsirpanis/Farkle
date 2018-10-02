@@ -56,10 +56,10 @@ module RangeMap =
             | x when ~~~x = arr.Length -> arr.Length - 1
             // If it is negative, its bitwise complement signifies the next nearest element to be found.
             | x -> ~~~ x
-        match arr.[idx] with
-        | RangeInclusive (k1, k2, x) when k1 <= k && k <= k2 -> Some x
-        | Singleton(k1, x) when k1 = k -> Some x
-        | _ -> None
+        match Array.tryItem idx arr with
+        | Some(RangeInclusive (k1, k2, x)) when k1 <= k && k <= k2 -> Some x
+        | Some(Singleton(k1, x)) when k1 = k -> Some x
+        | None | Some _ -> None
 
     [<CompiledName("ContainsKey")>]
     /// Checks if the given `RangeMap` contains the given element.

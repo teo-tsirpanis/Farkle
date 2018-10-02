@@ -6,6 +6,7 @@
 module Farkle.Tests.RangeMapTests
 
 open Expecto
+open Farkle
 open Farkle.Collections
 
 [<Tests>]
@@ -14,6 +15,9 @@ let tests =
         test "The empty RangeMap is empty" {
             Expect.isTrue (RangeMap.isEmpty RangeMap.empty) "The empty RangeMap is not empty"
         }
+
+        testProperty "The empty RangeMap does not contain anything"
+            ((*) 1 >> flip RangeMap.tryFind RangeMap.empty >> Option.isNone)
 
         test "Overlapping ranges are not accepted" {
             Expect.isNone (RangeMap.ofRanges [|[|4, 8|], (); [|5, 30|], ()|]) "A RangeMap with overlapping ranges was created"

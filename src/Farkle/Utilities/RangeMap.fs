@@ -78,7 +78,9 @@ module RangeMap =
             | _ -> None
         Array.sortInPlace arr
         match ReadOnlyMemory arr with
-        | RMCons(x: RangePoint<_,_>, _) as mem -> impl x.Key mem
+        | RMCons(RangeInclusive(k1, k2, _), xs) when k1 < k2 -> impl k2 xs
+        | RMCons(RangeInclusive(_), _) -> None
+        | RMCons(Singleton(k, _), xs) -> impl k xs
         | RMNil -> Some <| RangeMap arr
 
     /// Creates a `RangeMap` from an array of a range of keys and their corresponding value.

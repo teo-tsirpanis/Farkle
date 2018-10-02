@@ -43,7 +43,7 @@ let ASTGen() =
 
 let rangeMapGen() = gen {
     // Generate and sort an array of elements.
-    let! arr = Arb.generate |> Gen.arrayOf
+    let! arr = Arb.generate |> Gen.arrayOf |> Gen.map Array.distinct
     Array.sortInPlace arr
     let mutable i = 0
     let l = List(arr.Length)

@@ -6,7 +6,6 @@
 module Farkle.Tests.SetTests
 
 open Expecto
-open FsCheck
 open Farkle
 open Generators
 

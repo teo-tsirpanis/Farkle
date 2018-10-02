@@ -32,6 +32,7 @@
     <Compile Include="Utilities/Monads.fs" />
     <Compile Include="Utilities/MonadsExtra.fs" />
     <Compile Include="Utilities/CollectionUtilities.fs" />
+    <Compile Include="Utilities/RangeMap.fs" />
     <Compile Include="Utilities/IndexedCollections.fs" />
     <Compile Include="Utilities/HybridStream.fs" />
     <Compile Include="Utilities/Set.fs" />

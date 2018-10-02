@@ -147,9 +147,9 @@ type Production =
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
 type DFAState =
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
-    | DFAAccept of index: uint32 * (Symbol * (CharSet * Indexed<DFAState>) list)
+    | DFAAccept of index: uint32 * (Symbol * RangeMap<char,Indexed<DFAState>>)
     /// This state does not accept a symbol. If the state graph cannot be further walked and an accepting state has not been found, tokenizing fails.
-    | DFAContinue of index: uint32 * edges: (CharSet * Indexed<DFAState>) list
+    | DFAContinue of index: uint32 * edges: RangeMap<char,Indexed<DFAState>>
     interface Indexable with
         member x.Index =
             match x with

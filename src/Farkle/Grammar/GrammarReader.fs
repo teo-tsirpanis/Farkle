@@ -10,6 +10,7 @@ open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.Monads.Maybe
+open System
 
 module internal GrammarReader =
 
@@ -19,6 +20,8 @@ module internal GrammarReader =
         // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
         // FFFFFFfFFFFFFF
         let inline wantUInt16 x = match x with | UInt16 x -> Some x | _ -> None
+
+        let inline zc x = x |> int |> Array.zeroCreate
 
         let inline readInChunks allowEmpty count fReadIt =
             function
@@ -46,16 +49,20 @@ module internal GrammarReader =
             | _ -> None
 
         let readCharSet _ =
-            let readRanges =
-                function
-                | RMCons(UInt16 start, RMCons(UInt16 theEnd, RMNil)) -> ((char start), (char theEnd)) |> Some
-                | _ -> None
-                |> readInChunks false 2
-                >> Option.map SetEx.ofRanges
             function
-            | RMCons(UInt16 _unicodePlane, RMCons(UInt16 _rangeCount, RMCons(Empty, ranges))) ->
-                ranges
-                |> readRanges
+            | RMCons(UInt16 _unicodePlane, RMCons(UInt16 count, RMCons(Empty, ranges))) when ranges.Length = int count * 2 ->
+                let rangeSet = zc count
+                let ranges = ranges.Span
+                let mutable doContinue = true
+                let mutable i = 0
+                while i < int count && doContinue do
+                    match ranges.[2 * i], ranges.[2 * i + 1] with
+                    | UInt16 k1, UInt16 k2 -> rangeSet.[i] <- char k1, char k2
+                    | _ -> doContinue <- false
+                    i <- i + 1
+                match doContinue with
+                | true -> Some rangeSet
+                | false -> None
             | _ -> None
 
         let defaultGroupIndex = Indexed.create System.UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
@@ -120,21 +127,33 @@ module internal GrammarReader =
             | _ -> None
 
         let readDFAState fCharSet fSymbol fDFA index =
-            let readDFAEdges =
-                function
-                | RMCons(UInt16 charSetIndex, RMCons(UInt16 targetIndex, RMCons(Empty, RMNil))) -> maybe {
-                    let! charSet = fCharSet charSetIndex
-                    let! target = fDFA targetIndex
-                    return (charSet, target)
-                    }
-                | _ -> None
-                |> readInChunks false 3
+            let readDFAEdges (xs: ReadOnlyMemory<_>) =
+                let xs = xs.Span
+                let arr = zc <| xs.Length / 3
+                let mutable doContinue = true
+                let mutable i = 0
+                while i < arr.Length && doContinue do
+                    match xs.[3 * i], xs.[3 * i + 1], xs.[3 * i + 2] with
+                    | UInt16 charSetIndex, UInt16 targetIndex, Empty ->
+                        let x = maybe {
+                            let! charSet = fCharSet charSetIndex
+                            let! target = fDFA targetIndex
+                            return charSet, target
+                        }
+                        match x with
+                        | Some x -> arr.[i] <- x
+                        | None -> doContinue <- false
+                    | _ -> doContinue <- false
+                    i <- i + 1
+                match doContinue with
+                | true -> arr |> RangeMap.ofRanges
+                | false -> None
             function
-            | RMCons(Boolean false, RMCons(UInt16 _, RMCons(Empty, xs))) ->
+            | RMCons(Boolean false, RMCons(UInt16 _, RMCons(Empty, xs))) when xs.Length % 3 = 0 ->
                 xs
                 |> readDFAEdges
                 |> Option.map (fun edges -> (index, edges) |> DFAContinue)
-            | RMCons(Boolean true, RMCons(UInt16 acceptIndex, RMCons(Empty, xs))) -> maybe {
+            | RMCons(Boolean true, RMCons(UInt16 acceptIndex, RMCons(Empty, xs))) when xs.Length % 3 = 0 -> maybe {
                 let! edges = readDFAEdges xs
                 let! acceptSymbol = fSymbol acceptIndex
                 return DFAAccept (index, (acceptSymbol, edges))
@@ -170,8 +189,6 @@ module internal GrammarReader =
         let CGTHeader = "GOLD Parser Tables/v1.0"
         [<Literal>]
         let EGTHeader = "GOLD Parser Tables/v5.0"
-
-        let inline zc x = x |> int |> Array.zeroCreate
 
         let inline itemTry arr idx = idx |> int |> flip Array.tryItem arr
 

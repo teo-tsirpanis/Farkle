@@ -8,7 +8,6 @@ namespace Farkle.Grammar.GOLDParser
 open Farkle
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Grammar.GOLDParser
 open System.Collections.Generic
 
 /// A structure that describes a grammar - the logic under which a string is parsed.
@@ -17,7 +16,7 @@ type GOLDGrammar =
     private
         {
             _Properties: Properties
-            _CharSets: SafeArray<CharSet>
+            _CharSets: SafeArray<(char * char) []>
             _Symbols: SafeArray<Symbol>
             _Groups: SafeArray<Group>
             _Productions: SafeArray<Production>

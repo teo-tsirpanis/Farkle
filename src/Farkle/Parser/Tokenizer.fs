@@ -44,7 +44,7 @@ module internal Tokenizer =
 
     let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos
-        let lookupEdges x = List.tryFind (fst >> SetEx.contains x) >> Option.map (snd >> SafeArray.retrieve states)
+        let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
         let rec impl currPos x (currState: DFAState) lastAccept =
             match x with
             | HSNil ->

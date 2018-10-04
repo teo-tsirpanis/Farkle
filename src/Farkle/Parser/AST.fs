@@ -11,6 +11,7 @@ open System.Text
 
 /// A token is an instance of a `Symbol`.
 /// Tokens carry parsed data, as well as their position within the text file.
+[<Struct>]
 type Token =
     {
         /// The `Symbol` whose instance is this token.

@@ -52,6 +52,7 @@ type EndingMode =
 /// In GOLD, lexical groups are used for situations where a number of recognized tokens should be organized into a single "group".
 /// This mechanism is most commonly used to handle line and block comments.
 /// However, it is not limited to "noise", but can be used for any content.
+[<Struct>]
 type Group =
     {
         /// The name of the group.

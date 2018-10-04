@@ -7,37 +7,21 @@ namespace Farkle.Collections
 
 open Farkle
 open System
-
-[<Struct; CustomEquality; CustomComparison>]
-type internal RangePoint<'key,'a when 'key: comparison and 'key: equality> =
-    | RangeInclusive of from:'key * _to:'key * value:'a
-    | Singleton of key2:'key * value2:'a
-    member x.Key =
-        match x with
-        | RangeInclusive (_, x, _)
-        | Singleton (x, _) -> x
-    interface IEquatable<RangePoint<'key,'a>> with
-        member x.Equals(y) = x.Key = y.Key
-    interface IComparable<RangePoint<'key,'a>> with
-        member x.CompareTo(y) = compare x.Key y.Key
-    interface IComparable with
-        member x.CompareTo(y) =
-            match y with
-            | null -> 1
-            | :? RangePoint<'key,'a> as y -> compare x.Key y.Key
-            | _ -> invalidArg "y" "Argument must be a RangePoint"
-    override x.GetHashCode() = hash x.Key
-    override x.Equals(y) =
-        match y with
-        | :? RangePoint<'key,'a> as y -> x.Key = y.Key
-        | _ -> false
+open System.Collections.Generic
 
 [<Struct>]
 /// A map data structure that works best when a continuous range of keys is assigned the same value.
 /// It can also double as a set, when the value type is a unit.
-type RangeMap<'key,'a when 'key: comparison and 'key: equality> = private RangeMap of RangePoint<'key,'a> []
+type RangeMap<'key,'a when 'key: comparison> = private RangeMap of ('key * 'key * 'a) []
 
 module RangeMap =
+
+    open FastCompare
+
+    let internal secondComparer = {
+        new IComparer<_> with
+            member __.Compare((_, x, _), (_, y, _)) = compare x y
+    }
 
     /// An empty `RangeMap`.
     [<CompiledName("Empty")>]
@@ -48,7 +32,7 @@ module RangeMap =
     let tryFind k (RangeMap arr) =
         let idx =
             // .NET's binary search function returns special integer values depending on the outcome.
-            match Array.BinarySearch(arr, Singleton (k, Unchecked.defaultof<_>)) with
+            match Array.BinarySearch(arr, (k, k, Unchecked.defaultof<_>), secondComparer) with
             // If it is positive, then an exact element was found in the array.
             | x when x >= 0 -> x
             // If it is the bitwise complement of the array's length, the requested element
@@ -57,8 +41,7 @@ module RangeMap =
             // If it is negative, its bitwise complement signifies the next nearest element to be found.
             | x -> ~~~ x
         match Array.tryItem idx arr with
-        | Some(RangeInclusive (k1, k2, x)) when k1 <= k && k <= k2 -> Some x
-        | Some(Singleton(k1, x)) when k1 = k -> Some x
+        | Some((k1, k2, x)) when smallerOrEqual k1 k && smallerOrEqual k k2 -> Some x
         | None | Some _ -> None
 
     [<CompiledName("ContainsKey")>]
@@ -72,15 +55,13 @@ module RangeMap =
     let internal consistencyCheck arr =
         let rec impl k0 =
             function
-            | RMCons(RangeInclusive(k1, k2, _), xs) when k0 < k1 && k1 < k2 -> impl k2 xs
-            | RMCons(Singleton(k, _), xs) when k0 < k -> impl k xs
+            | RMCons((k1, k2, _), xs) when smaller k0 k1 && smallerOrEqual k1 k2 -> impl k2 xs
             | RMNil -> Some <| RangeMap arr
             | _ -> None
         Array.sortInPlace arr
         match ReadOnlyMemory arr with
-        | RMCons(RangeInclusive(k1, k2, _), xs) when k1 < k2 -> impl k2 xs
-        | RMCons(RangeInclusive(_), _) -> None
-        | RMCons(Singleton(k, _), xs) -> impl k xs
+        | RMCons((k1, k2, _), xs) when smallerOrEqual k1 k2 -> impl k2 xs
+        | RMCons(_, _) -> None
         | RMNil -> Some <| RangeMap arr
 
     /// Creates a `RangeMap` from an array of a range of keys and their corresponding value.
@@ -91,11 +72,9 @@ module RangeMap =
         let mapKeys (keys, value) =
             keys
             |> Array.map (fun (x1, x2) ->
-                if x1 < x2 then
-                    RangeInclusive (x1, x2, value)
-                elif x1 = x2 then
-                    Singleton (x1, value)
+                if smallerOrEqual x1 x2 then
+                    (x1, x2, value)
                 else
-                    RangeInclusive (x2, x1, value)
+                    (x2, x1, value)
             )
         Array.collect mapKeys pairs |> consistencyCheck

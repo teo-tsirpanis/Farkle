@@ -28,4 +28,4 @@ type UnknownTerminal = UnknownTerminal of string
 
 type IPostProcessor<'a> =
     abstract Transform: Token -> obj
-    abstract Fuse: Production -> obj[] -> obj
+    abstract Fuse: Production * obj[] * outref<obj> -> bool

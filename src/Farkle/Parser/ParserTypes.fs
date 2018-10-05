@@ -20,6 +20,8 @@ type ParseInternalError =
     | LALRStackEmpty
     /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
     | ReductionNotFoundOnAccept
+    /// The post-processor had a problem fusing the tokems of a production.
+    | FuseError of Production
 
 [<RequireQualifiedAccess>]
 type LALRResult =

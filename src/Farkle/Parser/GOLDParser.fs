@@ -13,7 +13,7 @@ open Farkle.PostProcessor
 /// Functions to create `AST`s by parsing input, based on `RuntimeGrammar`s.
 /// They accept a callback for each log message the parser encounters.
 [<RequireQualifiedAccess>]
-module GOLDParser =
+module internal GOLDParser =
 
     open State
 
@@ -49,20 +49,3 @@ module GOLDParser =
         let tokenizer = Tokenizer.create grammar.DFA grammar.Groups input
         let state = LALRParser.create grammar.LALR pp
         State.run (Extra.State.runOverSeq tokenizer impl) state |> fst
-
-    /// Parses a string.
-    let parseString g fMessage (input: string) = input |> HybridStream.ofSeq false |> parseChars g fMessage
-
-    /// Parses a .NET `Stream` whose bytes are encoded with the given `Encoding`.
-    /// There is an option to load the entire stream at once, instead of gradually loading it the moment it is required.
-    /// It slightly improves performance, but it should not be used on files whose size might be big.
-    let parseStream g fMessage doLazyLoad encoding inputStream =
-        inputStream
-        |> Seq.ofCharStream false encoding
-        |> HybridStream.ofSeq doLazyLoad
-        |> parseChars g fMessage
-
-    /// Parses the contents of a file in the given path whose bytes are encoded with the given `Encoding`.
-    let parseFile g fMessage doLazyLoad encoding path =
-        use stream = System.IO.File.OpenRead path
-        parseStream g fMessage doLazyLoad encoding stream

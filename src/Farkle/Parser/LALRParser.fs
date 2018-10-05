@@ -33,8 +33,10 @@ module internal LALRParser =
                 let nextAction = getNextAction nextState productionToReduce.Head
                 match nextAction with
                 | Some (Goto (LALRState nextState)) ->
-                    let ast = pp.Fuse productionToReduce tokens
-                    Ok <| LALRResult.Reduce productionToReduce, (nextState, ast) :: state
+                    let mutable resultObj = null
+                    match pp.Fuse(productionToReduce, tokens, &resultObj) with
+                    | true -> Ok <| LALRResult.Reduce productionToReduce, (nextState, resultObj) :: state
+                    | false -> Error <| FuseError productionToReduce, state
                 | _ -> Error <| GotoNotFoundAfterReduction (productionToReduce, nextState), state
             | Some (Goto _), _ | None, _ ->
                 let expectedSymbols =

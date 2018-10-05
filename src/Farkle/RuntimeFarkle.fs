@@ -8,6 +8,7 @@ namespace Farkle
 open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 open Farkle.PostProcessor
+open System.IO
 
 /// A type signifying an error during the parsing process.
 type FarkleError =
@@ -24,69 +25,73 @@ type FarkleError =
         | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
 
 /// A reusable parser __and post-processor__, created for a specific grammar, and returning
-/// a specific object that describes an expression of the language of this grammar.
+/// a specific object that best describes an expression of the language of this grammar.
 /// This is the highest-level API, and the easiest-to-use one.
 /// 10: BTW, Farkle means: "FArkle Recognizes Known Languages Easily".
 /// 20: And "FArkle" means: (GOTO 10) 😁
 /// 30: I guess you can't read this line. 😛
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
-    Parser: Result<RuntimeGrammar,FarkleError>
-    PostProcessor: PostProcessor
+    Grammar: Result<RuntimeGrammar,FarkleError>
+    PostProcessor: IPostProcessor<'TResult>
 }
 
 module RuntimeFarkle =
 
     /// Returns the `GOLDParser` within the `RuntimeFarkle`.
     /// This function is useful to access the lower-level APIs, for more advanced cases of parsing.
-    let parser {Parser = x} = x
+    let internal grammar {Grammar = x} = x
 
     /// Returns the `PostProcessor` within the `RuntimeFarkle`.
-    let postProcessor {PostProcessor = x} = x
+    let internal postProcessor {PostProcessor = x} = x
 
-    /// Creates a `RuntimeFarkle`.
-    /// The function takes a `RuntimeGrammar` and a `PostProcessor` that might have failed.
-    [<CompiledName("Create")>]
-    let create<'TResult> grammar postProcessor: RuntimeFarkle<'TResult> =
+    let private createMaybe postProcessor grammar =
         {
-            Parser = Ok grammar
+            Grammar = grammar |> Result.map (fun x -> x :> RuntimeGrammar)
             PostProcessor = postProcessor
         }
+
+    /// Creates a `RuntimeFarkle`.
+    [<CompiledName("Create")>]
+    let create grammar postProcessor = createMaybe postProcessor (Ok grammar)
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromEGTFile")>]
-    let ofEGTFile<'TResult> fileName postProcessor: RuntimeFarkle<'TResult> =
+    let ofEGTFile fileName postProcessor =
         fileName
         |> EGT.ofFile
         |> Result.mapError (EGTReadError)
-        |> tee
-            (flip create postProcessor)
-            (fun err -> {Parser = Error err; PostProcessor = postProcessor})
+        |> createMaybe postProcessor
 
-    let private postProcess (rf: RuntimeFarkle<'TResult>) res =
-        res
-        |> Result.mapError ParseError
-        >>= (PostProcessor.postProcessAST (postProcessor rf) >> Result.mapError PostProcessError)
-        |> Result.map (fun x -> x :?> 'TResult)
+    /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
+    /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
+    /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
+    [<CompiledName("CreateFromBase64String")>]
+    let ofBase64String x postProcessor =
+        x
+        |> EGT.ofBase64String
+        |> Result.mapError (EGTReadError)
+        |> createMaybe postProcessor
 
     /// Parses and post-processes a `HybridStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
-    let parseChars fMessage x input =
-        x |> parser >>= (fun g -> GOLDParser.parseChars g fMessage input |> postProcess x)
+    let parseChars {Grammar = g; PostProcessor = pp} fMessage input =
+        g >>= (fun g -> GOLDParser.parseChars g pp fMessage input |> Result.mapError ParseError)
 
     /// Parses and post-processes a string.
     [<CompiledName("ParseString")>]
-    let parseString x inputString = x |> parser >>= (fun g -> GOLDParser.parseString g ignore inputString |> postProcess x)
-
-    /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
-    [<CompiledName("ParseFile")>]
-    let parseFile x doLazyLoad encoding inputFile =
-        x |> parser >>= (fun g -> GOLDParser.parseFile g ignore doLazyLoad encoding inputFile |> postProcess x)
+    let parseString rf (inputString: string) = inputString |> HybridStream.ofSeq false |> parseChars rf ignore
 
     /// Parses and post-processes a .NET `Stream` with the given settings that are explained in the `GOLDParser` module.
     [<CompiledName("ParseStream")>]
-    let parseStream x doLazyLoad encoding inputStream =
-        x |> parser >>= (fun g -> GOLDParser.parseStream g ignore doLazyLoad encoding inputStream |> postProcess x)
+    let parseStream rf doLazyLoad encoding inputStream =
+        inputStream |> Seq.ofCharStream false encoding |> HybridStream.ofSeq doLazyLoad |> parseChars rf ignore
+
+    /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
+    [<CompiledName("ParseFile")>]
+    let parseFile rf doLazyLoad encoding inputFile =
+        use s = File.OpenRead inputFile
+        parseStream rf doLazyLoad encoding s

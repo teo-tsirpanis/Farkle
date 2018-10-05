@@ -6,10 +6,19 @@
 namespace Farkle.PostProcessor
 
 open Farkle
-open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 
 /// A post-processor.
 /// Post-processors convert `AST`s into some more meaningful types for the library that uses the parser.
+type PostProcessor<'a> =
+    /// Converts a generic token into an arbitrary object.
+    /// In case of an insignificant token, implementations can return a boxed `()`, or `null`.
+    abstract Transform: Token -> obj
+    /// Fuses the many members of a production into one object.
+    /// Fusing production rules must always succeed. In very case of an error like
+    /// an unrecognized production, the function must return `false`.
+    abstract Fuse: uint32 * obj[] * outref<obj> -> bool
+
 type PostProcessor = internal {
     TerminalPostProcessor: Map<uint32, Transformer>
     ProductionPostProcessor: Map<uint32, Fuser>
@@ -33,20 +42,8 @@ module PostProcessor =
         let ppp = fusers |> Seq.map (fun (prod, fus) -> uint32 prod, fus)
         ofSeq tpp ppp
 
-    /// Converts an `AST` to an arbitrary object, based on the post-processor in question.
-    let postProcessAST {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp} ast =
-        let rec impl ast =
-            match ast with
-            | AST.Content tok ->
-                tok.Symbol
-                |> Symbol.tryGetTerminalIndex
-                |> Option.bind tpp.TryFind
-                |> Option.defaultValue Transformer.ignore
-                |> Transformer.Transform tok.Data
-                |> Ok
-            | AST.Nonterminal (prod, data) ->
-                data
-                |> List.map impl
-                |> collect
-                >>= (fun x -> ppp.TryFind prod.Index |> failIfNone (UnknownProduction prod) >>= (fun f -> Fuser.Fuse x f))
-        impl ast
+    // let typeCheck (grammar: GOLDGrammar) transformers fusers =
+    //     let terminals = 
+
+    // let ofSeq2<'result> transformers fusers =
+    //     0

@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
-open Farkle.PostProcessor
 
 /// Functions to create `AST`s by parsing input, based on `RuntimeGrammar`s.
 /// They accept a callback for each log message the parser encounters.
@@ -20,7 +19,7 @@ module internal GOLDParser =
     let private parseLALR token: State<_,_> = fun state -> state |> (fun (LALRParser x) -> x) <| token
 
     /// Parses a `HybridStream` of characters. 
-    let parseChars (grammar: #RuntimeGrammar) (pp: IPostProcessor<'result>) fMessage input =
+    let parseChars (grammar: #RuntimeGrammar) (pp: PostProcessor<'result>) fMessage input =
         let fMessage = curry (ParseMessage >> fMessage)
         let fail = curry (ParseError.ParseError >> Error >> Some)
         let impl (x: TokenizerResult): State<_,_> = fun state ->

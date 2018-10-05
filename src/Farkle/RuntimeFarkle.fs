@@ -14,14 +14,11 @@ open System.IO
 type FarkleError =
     /// There was a parsing error.
     | ParseError of ParseError
-    /// There was a post-processing error.
-    | PostProcessError of PostProcessError
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x
-        | PostProcessError x -> sprintf "Post-processing error: %O" x
         | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
 
 /// A reusable parser __and post-processor__, created for a specific grammar, and returning
@@ -33,7 +30,7 @@ type FarkleError =
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
     Grammar: Result<RuntimeGrammar,FarkleError>
-    PostProcessor: IPostProcessor<'TResult>
+    PostProcessor: PostProcessor<'TResult>
 }
 
 module RuntimeFarkle =

@@ -18,7 +18,7 @@ module internal LALRParser =
 
     let private getNextAction currentState symbol = LALRState.actions currentState |> Map.tryFind symbol
 
-    let private parseLALR {InitialState = initialState; States = lalrStates} (pp: IPostProcessor<_>) token =
+    let private parseLALR {InitialState = initialState; States = lalrStates} (pp: PostProcessor<_>) token =
         let getCurrentState = List.tryHead >> Option.map fst >> Option.defaultValue initialState
         let (|LALRState|) x = SafeArray.retrieve lalrStates x
         let impl state =
@@ -34,7 +34,7 @@ module internal LALRParser =
                 match nextAction with
                 | Some (Goto (LALRState nextState)) ->
                     let mutable resultObj = null
-                    match pp.Fuse(productionToReduce, tokens, &resultObj) with
+                    match pp.Fuse(productionToReduce.Index, tokens, &resultObj) with
                     | true -> Ok <| LALRResult.Reduce productionToReduce, (nextState, resultObj) :: state
                     | false -> Error <| FuseError productionToReduce, state
                 | _ -> Error <| GotoNotFoundAfterReduction (productionToReduce, nextState), state

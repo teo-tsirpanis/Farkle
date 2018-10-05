@@ -9,6 +9,7 @@ open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Monads
+open Farkle.PostProcessor
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal LALRParser =
@@ -17,7 +18,7 @@ module internal LALRParser =
 
     let private getNextAction currentState symbol = LALRState.actions currentState |> Map.tryFind symbol
 
-    let private parseLALR {InitialState = initialState; States = lalrStates} token =
+    let private parseLALR {InitialState = initialState; States = lalrStates} (pp: IPostProcessor<_>) token =
         let getCurrentState = List.tryHead >> Option.map fst >> Option.defaultValue initialState
         let (|LALRState|) x = SafeArray.retrieve lalrStates x
         let impl state =
@@ -25,15 +26,15 @@ module internal LALRParser =
             match nextAvailableActions.TryFind(token.Symbol), state with
             | Some Accept, (_, ast) :: _ -> Ok <| LALRResult.Accept ast, state
             | Some Accept, [] -> Error LALRStackEmpty, state
-            | Some (Shift (LALRState nextState)), state -> Ok <| LALRResult.Shift nextState.Index, (nextState, AST.Content token) :: state
+            | Some (Shift (LALRState nextState)), state -> Ok <| LALRResult.Shift nextState.Index, (nextState, pp.Transform token) :: state
             | Some (Reduce productionToReduce), state ->
-                let tokens, state = List.popStack productionToReduce.Handle.Length <!> List.map snd <| state
+                let tokens, state = List.popStack productionToReduce.Handle.Length <!> (Seq.map snd >> Array.ofSeq) <| state
                 let nextState = getCurrentState state
                 let nextAction = getNextAction nextState productionToReduce.Head
                 match nextAction with
                 | Some (Goto (LALRState nextState)) ->
-                    let ast = AST.Nonterminal (productionToReduce, tokens)
-                    Ok <| LALRResult.Reduce ast, (nextState, ast) :: state
+                    let ast = pp.Fuse productionToReduce tokens
+                    Ok <| LALRResult.Reduce productionToReduce, (nextState, ast) :: state
                 | _ -> Error <| GotoNotFoundAfterReduction (productionToReduce, nextState), state
             | Some (Goto _), _ | None, _ ->
                 let expectedSymbols =
@@ -45,8 +46,8 @@ module internal LALRParser =
                 Ok <| LALRResult.SyntaxError (expectedSymbols, token.Symbol), state
         impl <!> tee id LALRResult.InternalError
 
-    let create lalr =
+    let create lalr pp =
         let rec impl currState token =
-            let result, newState = State.run (parseLALR lalr token) currState
+            let result, newState = State.run (parseLALR lalr pp token) currState
             result, (impl newState |> LALRParser)
         impl [] |> LALRParser

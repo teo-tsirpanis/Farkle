@@ -5,6 +5,9 @@
 
 namespace Farkle.PostProcessor
 
+open Farkle
+open Farkle.Grammar
+
 /// An error in the post-processor.
 type PostProcessError =
     /// The `Fuser` required more, less, or objects of different type than what it needs.
@@ -22,3 +25,7 @@ type PostProcessError =
 /// The terminal post-processor _is_ allowed to fail. Some symbols like
 /// the semicolons in programming languages carry no significant information up to the higher levels of the parser.
 type UnknownTerminal = UnknownTerminal of string
+
+type IPostProcessor<'a> =
+    abstract Transform: Token -> obj
+    abstract Fuse: Production -> obj[] -> obj

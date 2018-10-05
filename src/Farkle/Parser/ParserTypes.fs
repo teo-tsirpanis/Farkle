@@ -23,9 +23,9 @@ type ParseInternalError =
 
 [<RequireQualifiedAccess>]
 type LALRResult =
-    | Accept of AST
+    | Accept of obj
     | Shift of uint32
-    | Reduce of AST
+    | Reduce of Production
     | SyntaxError of expected: Symbol list * actual: Symbol
     | InternalError of ParseInternalError
 
@@ -34,17 +34,14 @@ type ParseMessageType =
     /// A token was read.
     | TokenRead of Token
     /// A rule was reduced.
-    | Reduction of AST
+    | Reduction of Production
     /// The parser shifted to a different LALR state.
     | Shift of uint32
-    /// The parser finished parsing and returned an AST.
-    | Accept of AST
     override x.ToString() =
         match x with
         | TokenRead x -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O" x
         | Shift x -> sprintf "The parser shifted to state %d" x
-        | Accept x -> sprintf "Abstract Syntax Tree accepted: %O" x
 
 /// A log message from a `Parser`, and the position it was encountered.
 type ParseMessage = ParseMessage of Position * ParseMessageType

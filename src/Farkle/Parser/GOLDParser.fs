@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads
+open Farkle.PostProcessor
 
 /// Functions to create `AST`s by parsing input, based on `RuntimeGrammar`s.
 /// They accept a callback for each log message the parser encounters.

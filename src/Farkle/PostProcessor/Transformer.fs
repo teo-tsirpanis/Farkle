@@ -9,6 +9,7 @@ open System
 
 /// This type contains the logic to transform _one_ terminal symbol to an arbitrary object.
 type Transformer = internal {
+    SymbolIndex: uint32
     OutputType: Type
     TheTransformer: string -> obj
 }
@@ -20,11 +21,9 @@ with
 module Transformer =
 
     /// Creates a `Transformer` that applies the given function to the symbol's data.
-    let create (fTransform: _ -> 'TOutput) =
+    let inline create sym (fTransform: _ -> 'TOutput) =
         {
+            SymbolIndex = uint32 sym
             OutputType = typeof<'TOutput>
             TheTransformer = fTransform >> box
         }
-
-    /// A `Transformer` that ignores the symbol's data.
-    let ignore = create UnknownTerminal

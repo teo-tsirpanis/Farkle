@@ -1,30 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <DebugType>portable</DebugType>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Title>The Farkle Parser</Title>
-    <PackageId>Farkle</PackageId>
-    <Authors>teo-tsirpanis</Authors>
-    <Company>Theodore Tsirpanis</Company>
-    <Product>Farkle</Product>
-    <Summary>A parser library for F# based on GOLD Parser</Summary>
-    <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.
-
-10: By the way, Farkle means: "FAkle Recognizes Known Languages Easily".
-
-20: And "FArkle" means: (GOTO 10) 😁
-
-30: I guess you can't read this line. 😛
-</Description>
-    <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
-    <PackageLicenseUrl>https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/teo-tsirpanis/Farkle/</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
-    <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
@@ -46,12 +22,12 @@
     <Compile Include="Builder/SetUtils.fs" />
     <Compile Include="Parser/AST.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
-    <Compile Include="PostProcessor/Transformer.fs" />
-    <Compile Include="PostProcessor/Fuser.fs" />
-    <Compile Include="PostProcessor/PostProcessor.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="Parser/GOLDParser.fs" />
+    <Compile Include="PostProcessor/Transformer.fs" />
+    <Compile Include="PostProcessor/Fuser.fs" />
+    <Compile Include="PostProcessor/PostProcessor.fs" />
     <Compile Include="RuntimeFarkle.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

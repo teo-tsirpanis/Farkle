@@ -7,10 +7,10 @@ namespace Farkle.PostProcessor
 
 open Farkle
 open Farkle.Grammar
-open System.Collections.Generic
 
-/// A post-processor.
-/// Post-processors convert `AST`s into some more meaningful types for the library that uses the parser.
+/// Post-processors convert strings of a grammar into more meaningful
+/// types for the library that uses the parser.
+/// The type in question is the argument of this post-processor type.
 type PostProcessor<'a> =
     /// Converts a generic token into an arbitrary object.
     /// In case of an insignificant token, implementations can return a boxed `()`, or `null`.
@@ -18,88 +18,48 @@ type PostProcessor<'a> =
     /// Fuses the many members of a production into one object.
     /// Fusing production rules must always succeed. In very case of an error like
     /// an unrecognized production, the function must return `false`.
-    abstract Fuse: uint32 * obj[] * outref<obj> -> bool
+    abstract Fuse: Production * obj[] * outref<obj> -> bool
 
-type PostProcessor = internal {
-    TerminalPostProcessor: Map<uint32, Transformer>
-    ProductionPostProcessor: Map<uint32, Fuser>
-}
-
-/// Functions to create `PostProcessor`s.
+/// Functions to create `PostProcessor`s, as well as some ready to use.
 module PostProcessor =
 
-    /// Creates a `PostProcessor` from the given `TerminalPostProcessor` and `ProductionPostProcessor`.
-    let internal create tpp ppp = {TerminalPostProcessor = tpp; ProductionPostProcessor = ppp}
+    /// This post-processor does not return anything meaningful to its consumer.
+    /// It is useful for checking the syntax of a string with respect to a grammar.
+    let syntaxCheck =
+        {new PostProcessor<unit> with
+            member __.Transform _ = box ()
+            member __.Fuse(_,_,output) =
+                output <- ()
+                true}
 
-    /// Creates a `PostProcessor` from the given sequences of symbols and `Transformer`s, and productions and `Fuser`s.
-    let ofSeq transformers fusers =
-        let tpp = Map.ofSeq transformers
-        let ppp = Map.ofSeq fusers
-        create tpp ppp
+    /// This post-processor creates a domain-ignorant `AST` that contains the information
+    let ast =
+        {new PostProcessor<AST> with
+            member __.Transform x = x |> AST.Content |> box
+            member __.Fuse (prod, items, output) =
+                output <- items |> Seq.cast |> List.ofSeq |> curry AST.Nonterminal prod
+                true}
 
-    /// Creates a `PostProcessor` from the given sequences whose first tuple members can be converted to unsigned 32-bit integers.
-    let inline ofSeqEnum transformers fusers =
-        let tpp = transformers |> Seq.map (fun (sym, trans) -> uint32 sym, trans)
-        let ppp = fusers |> Seq.map (fun (prod, fus) -> uint32 prod, fus)
-        ofSeq tpp ppp
-
-    let typeCheck<'result> transformers fusers =
-        let terminalToType =
-            transformers
-            |> Seq.map (fun {SymbolIndex = sym; OutputType = t} -> sym, t)
-            |> Map.ofSeq
-        let allProductions =
-            fusers
-            |> Seq.groupBy (fun {Production = {Head = head}} -> head)
-            |> Map.ofSeq
-        let productionToType = Dictionary()
-        let tryGet k =
-            let mutable x = null
-            if productionToType.TryGetValue(k, &x) then
-                Some x
-            else
-                None
-        let rec impl ({Head = head} as prod) typ =
-            let matchSymbols {Production = {Handle = handle}; InputTypes = types} =
-                let matchSymbol typ =
-                    function
-                    | Terminal (idx, _) when terminalToType.[idx] = typ -> Ok ()
-                    | Terminal (idx, _) as sym -> Error <| sprintf "Type mismatch: Expected %O, but got %O for symbol %O" typ terminalToType.[idx] sym
-                    | Nonterminal (idx, _) as sym -> Ok()
-                if handle.Length = types.Length then
-                    let mutable i = 0
-                    let mutable x = Ok ()
-                    while i < handle.Length && isOk x do
-                        x <- matchSymbol types.[i] handle.[i]
-                    x
-                else
-                    Error <| sprintf "The fuser of production %O accepts a different number of types" prod
-            match tryGet prod with
-            | Some t when t = typ -> Ok ()
-            | Some t -> Error <| sprintf "Type mismatch. Expected %O, but got %O" typ t
-            | None -> either {
-                let! allProds =
-                    Map.tryFind head allProductions
-                    |> failIfNone (sprintf "No matching fusers for production %O" prod)
-                let! firstNonRecursive =
-                    allProds
-                    |> Seq.tryPick (fun p -> if p.Production.Handle.Contains(head) |> not then Some Production else None)
-                    |> failIfNone (sprintf "Production %O is always defined in terms of itself" prod)
-                do! impl firstNonRecursive typ
-                do productionToType.Add(prod, typ)
-                return! Error ""
-            }
-        0
-
-    let ofSeq2<'result> transformers fusers =
-        0
-
-    let typeCheck3<'result> transformers fusers =
-        let productionsWithDifferentPossibleTypes =
-            fusers
-            |> Seq.groupBy (fun {Production = {Head = head}} -> head)
-            |> Seq.filter (snd >> Seq.distinctBy (fun {OutputType = typ} -> typ) >> List.ofSeq >> (function | [x] -> Ok x | _ ->))
-            |> Seq.map (fst >> sprintf "Nonterminal %O might get fused into objects of different types" >> Error)
-            |> collect
-            |> Result.map ignore
-        0
+    /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
+    // TODO: Add type checking.
+    // This is an extremely dangerous API, where any notion of
+    // static typing is swept under the mat of the `Object` type.
+    // My proposal is to make this function fallible, by checking
+    // whether types match each other before the post-processor gets created.
+    let ofSeq<'result> transformers fusers =
+        let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
+        let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
+        {new PostProcessor<'result> with
+            member __.Transform token =
+                token.Symbol
+                |> Symbol.tryGetTerminalIndex
+                |> Option.bind transformers.TryFind
+                |> Option.map ((|>) token.Data)
+                |> Option.defaultValue null
+            member __.Fuse(prod,arguments,output) =
+                match fusers.TryFind prod.Index with
+                | Some f ->
+                    output <- f arguments
+                    not <| isNull output
+                | None -> false
+        }

@@ -34,7 +34,7 @@ module internal LALRParser =
                 match nextAction with
                 | Some (Goto (LALRState nextState)) ->
                     let mutable resultObj = null
-                    match pp.Fuse(productionToReduce.Index, tokens, &resultObj) with
+                    match pp.Fuse(productionToReduce, tokens, &resultObj) with
                     | true -> Ok <| LALRResult.Reduce productionToReduce, (nextState, resultObj) :: state
                     | false -> Error <| FuseError productionToReduce, state
                 | _ -> Error <| GotoNotFoundAfterReduction (productionToReduce, nextState), state

@@ -14,16 +14,14 @@ type Transformer = internal {
     TheTransformer: string -> obj
 }
 with
-    /// Transforms a string to an arbotrary object.
-    static member Transform x {TheTransformer = trans} = trans x
+    static member Create idx output fTransformer = {SymbolIndex = idx; OutputType = output; TheTransformer = fTransformer}
 
 /// Functions to create `Transformer`s.
 module Transformer =
 
     /// Creates a `Transformer` that applies the given function to the symbol's data.
     let inline create sym (fTransform: _ -> 'TOutput) =
-        {
-            SymbolIndex = uint32 sym
-            OutputType = typeof<'TOutput>
-            TheTransformer = fTransform >> box
-        }
+        Transformer.Create
+            (uint32 sym)
+            typeof<'TOutput>
+            (fTransform >> box)

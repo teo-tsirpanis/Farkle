@@ -1,24 +1,21 @@
 ﻿// Copyright (c) 2018 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 open Farkle
-open Farkle.Parser
 open SimpleMaths
 open System
+open Farkle.PostProcessor
 
 let inline prettyPrintResult x = tee string string x
 
 let interactive () =
-    let rec impl() = 
+    let rec impl() =
         let input = Console.ReadLine() |> Option.ofObj
         match input with
-            | Some x -> 
-                x
-                |> List.ofString
-                |> Eager
-                |> RuntimeFarkle.parseChars (string >> Console.Error.WriteLine) TheRuntimeFarkle
+            | Some x ->
+                RuntimeFarkle.parseString TheRuntimeFarkle (string >> Console.Error.WriteLine) x
                 |> prettyPrintResult
                 |> Console.WriteLine
                 impl()
@@ -34,10 +31,9 @@ let main args =
     match args with
     | [| |] -> interactive()
     | [|"--ast"; x|] ->
-        RuntimeFarkle.parser TheRuntimeFarkle
-        |> Result.bind (fun g -> GOLDParser.parseString g (eprintfn "%O") x |> Result.mapError ParseError)
+        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessor.ast TheRuntimeFarkle) Console.WriteLine x
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
         |> Console.WriteLine
-    | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle >> prettyPrintResult >> Console.WriteLine)
+    | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle Console.WriteLine >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

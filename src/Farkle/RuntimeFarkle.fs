@@ -33,6 +33,7 @@ type RuntimeFarkle<'TResult> = private {
     PostProcessor: PostProcessor<'TResult>
 }
 
+/// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 
     /// Returns the `GOLDParser` within the `RuntimeFarkle`.
@@ -48,15 +49,19 @@ module RuntimeFarkle =
             PostProcessor = postProcessor
         }
 
+    /// Changes the post-processor of a `RuntimeFarkle`.
+    [<CompiledName("ChangePostProcessor")>]
+    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = pp}
+
     /// Creates a `RuntimeFarkle`.
     [<CompiledName("Create")>]
-    let create grammar postProcessor = createMaybe postProcessor (Ok grammar)
+    let create postProcessor grammar = createMaybe postProcessor (Ok grammar)
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromEGTFile")>]
-    let ofEGTFile fileName postProcessor =
+    let ofEGTFile postProcessor fileName  =
         fileName
         |> EGT.ofFile
         |> Result.mapError (EGTReadError)
@@ -66,7 +71,7 @@ module RuntimeFarkle =
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String x postProcessor =
+    let ofBase64String postProcessor x =
         x
         |> EGT.ofBase64String
         |> Result.mapError (EGTReadError)
@@ -75,20 +80,29 @@ module RuntimeFarkle =
     /// Parses and post-processes a `HybridStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
-    let parseChars {Grammar = g; PostProcessor = pp} fMessage input =
+    let private parseChars {Grammar = g; PostProcessor = pp} fMessage input =
         g >>= (fun g -> GOLDParser.parseChars g pp fMessage input |> Result.mapError ParseError)
 
     /// Parses and post-processes a string.
+    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf (inputString: string) = inputString |> HybridStream.ofSeq false |> parseChars rf ignore
+    let parseString rf fMessage (inputString: string) = inputString |> HybridStream.ofSeq false |> parseChars rf fMessage
 
-    /// Parses and post-processes a .NET `Stream` with the given settings that are explained in the `GOLDParser` module.
+    /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily loaded.
+    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseStream")>]
-    let parseStream rf doLazyLoad encoding inputStream =
-        inputStream |> Seq.ofCharStream false encoding |> HybridStream.ofSeq doLazyLoad |> parseChars rf ignore
+    let parseStream rf fMessage doLazyLoad encoding inputStream =
+        inputStream |> Seq.ofCharStream false encoding |> HybridStream.ofSeq doLazyLoad |> parseChars rf fMessage
 
     /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
+    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
-    let parseFile rf doLazyLoad encoding inputFile =
+    let parseFile rf fMessage doLazyLoad encoding inputFile =
         use s = File.OpenRead inputFile
-        parseStream rf doLazyLoad encoding s
+        parseStream rf fMessage doLazyLoad encoding s
+
+    /// Parses and post-processes a string.
+    // This function was inspired by FParsec, which has some "runParserOn***" functions,
+    // and the simple and easy-to-use function named "run", that just parses a string.
+    [<CompiledName("Parse")>]
+    let parse rf x = parseString rf ignore x

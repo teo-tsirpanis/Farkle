@@ -12,6 +12,7 @@ open Farkle
 open Farkle.Grammar
 open System.Collections.Generic
 open Farkle.Collections
+open System.Collections.Immutable
 
 let symbolGen = gen {
     let! name = Arb.generate
@@ -23,7 +24,7 @@ let productionGen = gen {
     let! index = Arb.generate
     let! head = Arb.generate
     let! handle = Arb.generate |> Gen.listOf
-    return {Index = index; Head = head; Handle = handle}
+    return {Index = index; Head = head; Handle = ImmutableArray.CreateRange handle}
 }
 
 let positionGen = Arb.generate |> Gen.filter ((<>) 0u) |> Gen.two |> Gen.map (uncurry Position.create >> mustBeSome)
@@ -69,6 +70,7 @@ let rangeMapGen() = gen {
 
 type Generators =
     static member Symbol() = Arb.fromGen symbolGen
+    static member Production() = Arb.fromGen productionGen
     static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()

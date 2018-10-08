@@ -8,8 +8,7 @@ module Farkle.Tests.ParserTests
 open Expecto
 open Expecto.Logging
 open Farkle
-open Farkle.Grammar.GOLDParser
-open Farkle.Parser
+open Farkle.PostProcessor
 
 let logger = Log.create "Parser tests"
 
@@ -17,10 +16,10 @@ let logger = Log.create "Parser tests"
 let tests =
     testList "Parser tests" [
         test "A simple mathematical expression can be parsed" {
-            let g = EGT.ofFile "simple.egt" |> returnOrFail
-            let result = GOLDParser.parseString g (string >> Message.eventX >> logger.info) "111*555"
+            let rf = RuntimeFarkle.ofEGTFile PostProcessor.syntaxCheck "simple.egt" 
+            let result = RuntimeFarkle.parseString rf (string >> Message.eventX >> logger.info) "111*555"
             match result with
-            | Ok x -> x |> AST.toASCIITree |> sprintf "Result: %s" |> Message.eventX |> logger.info
-            | Result.Error x -> x |> failtestf "Error: %O"
+            | Ok () -> ()
+            | Result.Error x -> failtestf "Error: %O" x
         }
     ]

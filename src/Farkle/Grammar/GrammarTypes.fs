@@ -8,6 +8,7 @@ namespace Farkle.Grammar
 open Farkle
 open Farkle.Collections
 open System
+open System.Collections.Immutable
 
 /// A record that stores how many of each tables exist in an EGT file.
 /// It's needed only for verifying that the grammar was successfuly read.
@@ -136,12 +137,12 @@ type Production =
         /// The head of the production.
         Head: Symbol
         /// The handle of the production.
-        Handle: Symbol list
+        Handle: Symbol ImmutableArray
     }
     interface Indexable with
         member x.Index = x.Index
     override x.ToString() =
-        let symbols = x.Handle |> List.map (string) |> String.concat " "
+        let symbols = x.Handle |> Seq.map string |> String.concat " "
         sprintf "%O ::= %s" x.Head symbols
 
 /// A DFA state. It defines the logic that produces `Tokens` out of strings.

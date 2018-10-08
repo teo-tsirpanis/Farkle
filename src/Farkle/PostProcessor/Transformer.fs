@@ -9,22 +9,19 @@ open System
 
 /// This type contains the logic to transform _one_ terminal symbol to an arbitrary object.
 type Transformer = internal {
+    SymbolIndex: uint32
     OutputType: Type
     TheTransformer: string -> obj
 }
 with
-    /// Transforms a string to an arbotrary object.
-    static member Transform x {TheTransformer = trans} = trans x
+    static member Create idx output fTransformer = {SymbolIndex = idx; OutputType = output; TheTransformer = fTransformer}
 
 /// Functions to create `Transformer`s.
 module Transformer =
 
     /// Creates a `Transformer` that applies the given function to the symbol's data.
-    let create (fTransform: _ -> 'TOutput) =
-        {
-            OutputType = typeof<'TOutput>
-            TheTransformer = fTransform >> box
-        }
-
-    /// A `Transformer` that ignores the symbol's data.
-    let ignore = create UnknownTerminal
+    let inline create sym (fTransform: _ -> 'TOutput) =
+        Transformer.Create
+            (uint32 sym)
+            typeof<'TOutput>
+            (fTransform >> box)

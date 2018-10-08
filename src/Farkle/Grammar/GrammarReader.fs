@@ -11,6 +11,7 @@ open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.Monads.Maybe
 open System
+open System.Collections.Immutable
 
 module internal GrammarReader =
 
@@ -113,7 +114,7 @@ module internal GrammarReader =
             | RMCons(UInt16 headIndex, RMCons(Empty, xs)) -> maybe {
                 let! headSymbol = fSymbol headIndex
                 let! symbols = readChildrenSymbols xs
-                return {Index = index; Head = headSymbol; Handle = symbols}
+                return {Index = index; Head = headSymbol; Handle = symbols.ToImmutableArray()}
                 }
             | _ -> None
 

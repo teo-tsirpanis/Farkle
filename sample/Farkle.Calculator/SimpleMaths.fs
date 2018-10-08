@@ -80,24 +80,24 @@ let TheRuntimeFarkle =
     // even if they are listed below.
     let transformers =
         [
-            Symbol.Number, Transformer.create Convert.ToInt32
+            Transformer.create Symbol.Number Convert.ToInt32
         ]
     // The fusers merge the parts of a production into one object of your desire.
     // Do not delete anything here, or the post-processor will fail.
     let fusers =
         [
-            Production.Expression       , identity
-            Production.AddExpPlus       , take2Of (0, 2) 3 (+)
-            Production.AddExpMinus      , take2Of (0, 2) 3 (-)
-            Production.AddExp           , identity
-            Production.MultExpTimes     , take2Of (0, 2) 3 (*)
-            Production.MultExpDiv       , take2Of (0, 2) 3 (/)
-            Production.MultExp          , identity
-            Production.NegateExpMinus   , take1Of 1 2 (~-)
-            Production.NegateExp        , identity
-            Production.ValueNumber      , identity
-            Production.ValueLParenRParen, take1Of 1 3 id
+            identity Production.Expression
+            take2Of Production.AddExpPlus (0, 2) 3 (+)
+            take2Of Production.AddExpMinus (0, 2) 3 (-)
+            identity Production.AddExp
+            take2Of Production.MultExpTimes (0, 2) 3 (*)
+            take2Of Production.MultExpDiv (0, 2) 3 (/)
+            identity Production.MultExp
+            take1Of Production.NegateExpMinus 1 2 (~-)
+            identity Production.NegateExp
+            identity Production.ValueNumber
+            take1Of Production.ValueLParenRParen 1 3 id
         ]
-    RuntimeFarkle.ofEGTFile<int>
+    RuntimeFarkle.ofEGTFile
+        (PostProcessor.ofSeq<int> transformers fusers)
         "SimpleMaths.egt"
-        (PostProcessor.ofSeqEnum transformers fusers)

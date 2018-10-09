@@ -1,3 +1,8 @@
+#### 3.1.0-aplha003 - 10-10-2018
+* The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-procssing operations are unified.
+* The code became cleaner and faster yet again, with a notable optimization in the tokenizer.
+* This release coincided with the author's birthday. 🎂
+
 #### 3.1.0-alpha002 - 14-09-2018
 * The EGT file reader was replaced with a newer one which is significantly more performant.
 * The `GOLDParser` class was removed in favor of the new module with the same name.

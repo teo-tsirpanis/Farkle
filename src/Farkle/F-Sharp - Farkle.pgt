@@ -49,7 +49,7 @@ let TheRuntimeFarkle =
     let transformers =
         [
 ##SYMBOLS
-            Symbol.%ID.Padded%, Transformer.ignore
+            Transformer.ignore Symbol.%ID.Padded%
 ##END-SYMBOLS
         ]
     // The fusers merge the parts of a production into one object of your desire.
@@ -57,11 +57,11 @@ let TheRuntimeFarkle =
     let fusers =
         [
 ##RULES
-            Production.%ID.Padded%,
+            FUSER_FUNCTION_HERE Production.%ID.Padded%
 ##END-RULES
         ]
-    RuntimeFarkle.ofEGTFile<TODO>
+    RuntimeFarkle.ofEGTFile
+        (PostProcessor.ofSeq<TODO> transformers fusers)
 ##PARAMETERS
         "%Name%.egt"
 ##END-PARAMETERS
-        (PostProcessor.ofSeqEnum transformers fusers)

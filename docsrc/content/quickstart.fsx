@@ -135,7 +135,7 @@ So, the transformers of our grammar will be the following:
 *)
 
 let transformers = [
-    Symbol.Number, Transformer.create System.Convert.ToInt32
+    Transformer.create Symbol.Number System.Convert.ToInt32
 ]
 
 (**
@@ -148,7 +148,7 @@ Now, let's see what a fuser is. A fuser is another special object that combines 
 For example, we have the following rule: `<Add Exp> ::= <Add Exp> '+' <Mult Exp>` (also known as `Rules.AddExpPlus`). This rule is made of three parts: an expression, the "plus" character and another expression. We want to take the first and the last parts and add them together. So we have the following fuser:
 *)
 
-let myFuser = Production.AddExpPlus, Fuser.take2Of (0, 2) 3 (+) // We actually take the zeroth and the second parts, but as we all know, arrays start at zero.
+let myFuser = Fuser.take2Of Production.AddExpPlus (0, 2) 3 (+) // We actually take the zeroth and the second parts, but as we all know, arrays start at zero.
 
 (**
 You might wonder: how can we "add" expressions as if they were integers? It will turn out to be that the post-processor will make them _actual_ integers! But you will understand it better when we complete the fusers:
@@ -158,17 +158,17 @@ open Fuser // Open this module so that we don't have to prepend the Fuser module
 
 let fusers =
     [
-        Production.Expression       , identity // identity means that the production is made of one part and we just take it as it is.
+        identity Production.Expression // identity means that the production is made of one part and we just take it as it is.
         myFuser // We have already written this fuser before.
-        Production.AddExpMinus      , take2Of (0, 2) 3 (-)
-        Production.AddExp           , identity
-        Production.MultExpTimes     , take2Of (0, 2) 3 (*)
-        Production.MultExpDiv       , take2Of (0, 2) 3 (/)
-        Production.MultExp          , identity
-        Production.NegateExpMinus   , take1Of 1 2 (~-) // (~-) is different than (-). The tilde denotes an unary operator.
-        Production.NegateExp        , identity
-        Production.ValueNumber      , identity
-        Production.ValueLParenRParen, take1Of 1 3 id
+        take2Of Production.AddExpMinus (0, 2) 3 (-)
+        identity Production.AddExp
+        take2Of Production.MultExpTimes (0, 2) 3 (*)
+        take2Of Production.MultExpDiv (0, 2) 3 (/)
+        identity Production.MultExp
+        take1Of Production.NegateExpMinus 1 2 (~-) // (~-) is different than (-). The tilde denotes an unary operator.
+        identity Production.NegateExp
+        identity Production.ValueNumber
+        take1Of Production.ValueLParenRParen 1 3 id
     ]
 
 (**
@@ -177,7 +177,7 @@ As you see, the fuser turns the production `<Value> ::= Number` into an integer,
 And here comes the post-processor...
 *)
 
-let ThePostProcessor = PostProcessor.ofSeqEnum transformers fusers
+let ThePostProcessor = PostProcessor.ofSeq<int> transformers fusers
 
 (**
 > __Note__: The post-processor is not _yet_ perfectly type-safe. I could use a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception. The post-processor will be made type-safe at a later release.
@@ -195,36 +195,37 @@ A runtime Farkle is made of a grammar, a post-processor, and two functions to co
 We have the first two already, so it's time for the big 🧀:
 *)
 
-let TheRuntimeFarkle = RuntimeFarkle.ofEGTFile<int> "SimpleMaths.egt" ThePostProcessor
+let TheRuntimeFarkle = RuntimeFarkle.ofEGTFile ThePostProcessor "SimpleMaths.egt"
 
 (**
 ### Using the runtime Farkle
 
 Now that we got it, it's time to use it. Let's see some examples:
+
+> These functions also take a function as a parameter, that gets called for every log message.
 *)
 
-open Farkle.Parser
+open System
+open System.Text
 
 /// A utility to print a parse result.
 let printIt (x: Result<_,FarkleError>) =
     x
-    |> tee (sprintf "%d") string // Tee is a Farkle library function.
+    |> tee (sprintf "%d") string // tee is a Farkle library function.
     |> printfn "%s"
 
-RuntimeFarkle.parseString TheRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string
+RuntimeFarkle.parse TheRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string.
 
-RuntimeFarkle.parseFile TheRuntimeFarkle GOLDParserConfig.Default "gf.m" |> printIt // A file
+RuntimeFarkle.parseFile TheRuntimeFarkle ignore true Encoding.ASCII "gf.m" |> printIt // A file
 
-System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream TheRuntimeFarkle GOLDParserConfig.Default |> printIt // A stream
+System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream TheRuntimeFarkle ignore false Encoding.UTF8 |> printIt // A stream
 
-RuntimeFarkle.parseFile TheRuntimeFarkle (GOLDParserConfig.Default.WithEncoding(System.Text.Encoding.Unicode).WithLazyLoad(false)) "itsjustgettingwetttonig.ht" |> printIt // Another file, but with UTF-7 encoding and eagerly loaded.
+RuntimeFarkle.parseFile TheRuntimeFarkle Console.WriteLine false Encoding.Unicode "itsjustgettingwetttonig.ht" |> printIt // Another file, but with UTF-16 encoding and eagerly loaded.
 
-let parseResult, log = "111*555" |> HybridStream.ofSeq false |> RuntimeFarkle.parseChars TheRuntimeFarkle // ParseChars also returns a log of the parser.
-log |> List.iter (printfn "%O")
-printIt parseResult
+RuntimeFarkle.parseString TheRuntimeFarkle Console.WriteLine "111*555" |> printIt // Like the first example, but also accepts a logging function.
 
 (**
-> __Note__: It has been observed that the first time a runtime Farkle parses something takes significantly more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.
+> __Note__: It has been observed that the first time a runtime Farkle parses something takes more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.
 
 So that's it. I hope you understand. If you have any question, found a 🐛, or want a feature, feel free to [open a GitHub issue][githubIssues].
 *)

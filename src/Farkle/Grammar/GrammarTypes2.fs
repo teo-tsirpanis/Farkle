@@ -115,15 +115,26 @@ and LALRState = {
 }
 
 /// A context-free grammar under which, Farkle can parse text.
-type Grammar = {
-    Properties: Map<string,string>
+type Grammar = internal {
+    _Properties: Map<string,string>
 
-    StartSymbol: NonTerminal
-    NonTerminals: NonTerminal SafeArray
-    Terminals: Terminal SafeArray
-    MiscellaneousSymbols: Choice<GroupStart, GroupEnd, Noise> ImmutableArray
+    _StartSymbol: NonTerminal
+    _NonTerminals: NonTerminal SafeArray
 
-    Groups: Group SafeArray
-    LALRStates: LALRState StateTable
-    DFAStates: DFAState StateTable
+    _Groups: Group SafeArray
+    _LALRStates: LALRState StateTable
+    _DFAStates: DFAState StateTable
 }
+with
+    /// Mmetadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
+    member x.Properties = x._Properties
+    /// The grammar's start `NonTerminal`.
+    member x.StartSymbol = x._StartSymbol
+    /// The grammar's `NonTerminal`s.
+    member x.NonTerminals = x._NonTerminals
+    /// The grammar's `Group`s.
+    member x.Groups = x._Groups
+    /// The grammar's LALR state table.
+    member x.LALRStates = x._LALRStates
+    /// The grammar's DFA state table.
+    member x.DFAStates = x._DFAStates

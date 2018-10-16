@@ -45,10 +45,10 @@ with
             name
 
 /// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
-type NonTerminal = internal NonTerminal of name: string
+type Nonterminal = internal Nonterminal of name: string
 with
     /// The nonterminal's name.
-    member x.Name = match x with | NonTerminal (name) -> name
+    member x.Name = match x with | Nonterminal (name) -> name
     override x.ToString() = sprintf "<%s>" x.Name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
@@ -114,16 +114,16 @@ and [<RequireQualifiedAccess>] DFAState =
     member x.Index = match x with DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
     override x.ToString() = string x.Index
 
-/// An array of `LALRSymbol`s that can produce a specific `NonTerminal`.
+/// An array of `LALRSymbol`s that can produce a specific `Nonterminal`.
 type Production = {
     /// The index of the production.
     Index: uint32
     /// The `Nonterminal` the production is referring to.
     // Storing the map's key (the nonterminal) inside its value (this production)
     // is acceptable, because the production's head is an integral part of its definition.
-    Head: NonTerminal
-    /// The `Terminals`s and `NonTerminal`s, the production is made of.
-    Handle: Choice<Terminal, NonTerminal> ImmutableArray
+    Head: Nonterminal
+    /// The `Terminals`s and `Nonterminal`s, the production is made of.
+    Handle: Choice<Terminal, Nonterminal> ImmutableArray
 }
 with
     override x.ToString() =
@@ -156,7 +156,7 @@ and LALRState = {
     Actions: Map<Terminal option, LALRAction>
     /// The available GOTO actions of the state.
     /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    GotoActions: Map<NonTerminal, Indexed<LALRState>>
+    GotoActions: Map<Nonterminal, Indexed<LALRState>>
 }
 with
     override x.ToString() = string x.Index
@@ -165,8 +165,8 @@ with
 type Grammar = internal {
     _Properties: Map<string,string>
 
-    _StartSymbol: NonTerminal
-    _NonTerminalInfoMap: Map<NonTerminal, Production ImmutableArray>
+    _StartSymbol: Nonterminal
+    _NonterminalInfoMap: Map<Nonterminal, Production ImmutableArray>
 
     _Groups: Group SafeArray
     _LALRStates: LALRState StateTable
@@ -175,11 +175,11 @@ type Grammar = internal {
 with
     /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
-    /// The grammar's start `NonTerminal`.
+    /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol
-    /// Gets the possible productions that can derive a `NonTerminal`.
+    /// Gets the possible productions that can derive a `Nonterminal`.
     /// If it is not found, the array is empty.
-    member x.GetNonTerminalInfo nt = x._NonTerminalInfoMap.TryFind nt |> Option.defaultValue ImmutableArray.Empty
+    member x.GetNonterminalInfo nt = x._NonterminalInfoMap.TryFind nt |> Option.defaultValue ImmutableArray.Empty
     /// The grammar's `Group`s.
     member x.Groups = x._Groups
     /// The grammar's LALR state table.

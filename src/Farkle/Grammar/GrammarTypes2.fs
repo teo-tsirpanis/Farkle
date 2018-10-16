@@ -32,10 +32,10 @@ type Terminal = Terminal of index: uint32 * name: string
 type Noise = Noise of name: string
 
 /// A symbol signifying the end of a group.
-type GroupEnd = GroupEnd of index: uint32 * name: string
+type GroupEnd = GroupEnd of name: string
 
 /// A symbol signifying the start of a group.
-type GroupStart = GroupStart of index: uint32 * name: string * groupIndex: Indexed<Group>
+type GroupStart = GroupStart of name: string * groupIndex: Indexed<Group>
 
 /// A lexical group.
 /// In GOLD, lexical groups are used for situations where a number
@@ -45,8 +45,6 @@ type GroupStart = GroupStart of index: uint32 * name: string * groupIndex: Index
 and Group = {
     /// The name of the group.
     Name: string
-    /// The index of the group as it appears on the grammar file.
-    Index: uint32
     /// The symbol that represents the group's content.
     ContainerSymbol: Choice<Terminal, Noise>
     /// The symbol that represents the group's start.
@@ -77,14 +75,16 @@ and [<RequireQualifiedAccess>] DFAState =
     | Accept of index: uint32 * Choice<Terminal,Noise> * DFAEdge
 
 /// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
-type NonTerminal = NonTerminal of index: uint32 * name: string * productions: Production ImmutableArray
+type NonTerminal = internal NonTerminal of name: string
 
 /// An array of `LALRSymbol`s that can produce a specific `NonTerminal`.
-and Production = {
+type Production = {
     /// The index of the production.
     Index: uint32
     /// The `Nonterminal` the production is referring to.
-    HeadSymbol: Indexed<NonTerminal>
+    // Storing the map's key (the nonterminal) inside its value (this production)
+    // is acceptable, because the production's head is an integral part of its definition.
+    HeadSymbol: NonTerminal
     /// The `LALRSymbol`s the production is made of.
     Children: LALRSymbol ImmutableArray
 }
@@ -114,12 +114,12 @@ and LALRState = {
     Actions: Map<LALRSymbol option, LALRAction>
 }
 
-/// A context-free grammar under which, Farkle can parse text.
+/// A context-free grammar according to which, Farkle can parse text.
 type Grammar = internal {
     _Properties: Map<string,string>
 
     _StartSymbol: NonTerminal
-    _NonTerminals: NonTerminal SafeArray
+    _NonTerminalInfoMap: Map<NonTerminal, Production ImmutableArray>
 
     _Groups: Group SafeArray
     _LALRStates: LALRState StateTable
@@ -130,8 +130,9 @@ with
     member x.Properties = x._Properties
     /// The grammar's start `NonTerminal`.
     member x.StartSymbol = x._StartSymbol
-    /// The grammar's `NonTerminal`s.
-    member x.NonTerminals = x._NonTerminals
+    /// Gets the possible productions that can derive a `NonTerminal`.
+    /// If it is not found, the array is empty.
+    member x.GetNonTerminalInfo nt = x._NonTerminalInfoMap.TryFind nt |> Option.defaultValue ImmutableArray.Empty
     /// The grammar's `Group`s.
     member x.Groups = x._Groups
     /// The grammar's LALR state table.

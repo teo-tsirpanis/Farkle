@@ -7,9 +7,10 @@ namespace Farkle.Grammar2
 
 open Farkle.Collections
 open System.Collections.Immutable
+open System
 
 /// A type indicating how a group advances.
-[<Struct>]
+[<Struct; RequireQualifiedAccess>]
 type AdvanceMode =
     /// The group advances by one token at a time.
     | Token
@@ -17,7 +18,7 @@ type AdvanceMode =
     | Character
 
 /// A type indicating how the ending symbol of a group is handled.
-[<Struct>]
+[<Struct; RequireQualifiedAccess>]
 type EndingMode =
     /// The ending symbol is preserved on the input queue.
     | Open
@@ -25,17 +26,52 @@ type EndingMode =
     | Closed
 
 /// A symbol which is produced through a DFA, and is significant for the grammar.
-type Terminal = Terminal of index: uint32 * name: string
+type Terminal = internal Terminal of index: uint32 * name: string
+with
+    /// The terminal's index.
+    /// It is mainly used for the post-processor.
+    member x.Index = match x with | Terminal (idx, _) -> idx
+    /// The symbol's name.
+    member x.Name = match x with | Terminal (_, name) -> name
+    override x.ToString() =
+        let name = x.Name
+        if
+            String.IsNullOrEmpty name
+            || Char.IsLetter name.[0]
+            || String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') name
+        then
+            "'" + name + "'"
+        else
+            name
+
+/// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
+type NonTerminal = internal NonTerminal of name: string
+with
+    /// The nonterminal's name.
+    member x.Name = match x with | NonTerminal (name) -> name
+    override x.ToString() = "<" + x.Name + ">"
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
 /// An example of a noise symbol would be a source code comment.
-type Noise = Noise of name: string
+type Noise = internal Noise of name: string
+with
+    /// The symbol's name.
+    member x.Name = match x with | Noise (name) -> name
+    override x.ToString() = "(" + x.Name + ")"
 
 /// A symbol signifying the end of a group.
-type GroupEnd = GroupEnd of name: string
+type GroupEnd = internal GroupEnd of name: string
+with
+    /// The symbol's name.
+    member x.Name = match x with | GroupEnd (name) -> name
+    override x.ToString() = "(" + x.Name + ")"
 
 /// A symbol signifying the start of a group.
-type GroupStart = GroupStart of name: string * groupIndex: Indexed<Group>
+type GroupStart = internal GroupStart of name: string * groupIndex: Indexed<Group>
+with
+    /// The symbol's name.
+    member x.Name = match x with | GroupStart (name, _) -> name
+    override x.ToString() = "(" + x.Name + ")"
 
 /// A lexical group.
 /// In GOLD, lexical groups are used for situations where a number
@@ -74,8 +110,8 @@ and [<RequireQualifiedAccess>] DFAState =
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
     | Accept of index: uint32 * Choice<Terminal,Noise> * DFAEdge
 
-/// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
-type NonTerminal = internal NonTerminal of name: string
+/// A symbol that is part of `NonTerminal`s, and can be produced by the LALR parser.
+type LALRSymbol = Choice<Terminal, NonTerminal>
 
 /// An array of `LALRSymbol`s that can produce a specific `NonTerminal`.
 type Production = {
@@ -89,18 +125,13 @@ type Production = {
     Children: LALRSymbol ImmutableArray
 }
 
-/// A symbol that is part of `NonTerminal`s, and can be produced by the LALR parser.
-and LALRSymbol = Choice<Terminal, NonTerminal>
-
-/// An action to be taken by the LALR parser.
+/// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]
 type LALRAction =
     /// This action indicates the parser to shift to the specified `LALRState`.
     | Shift of Indexed<LALRState>
     /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production
-    /// This action is used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    | Goto of Indexed<LALRState>
     /// When the parser encounters this action for a given symbol, the input text is accepted as correct and parsing ends.
     | Accept
 
@@ -108,10 +139,12 @@ type LALRAction =
 and LALRState = {
     /// The index of the state.
     Index: uint32
-    /// The available `LALRAction`s of the state.
-    /// Depending on the symbol, the next action to be taken is determined.
+    /// The available next `LALRAction`s of the state.
     /// In case of an end-of-input, the corresponding action - if it exists - will have a key of `None`.
-    Actions: Map<LALRSymbol option, LALRAction>
+    Actions: Map<Terminal option, LALRAction>
+    /// The available GOTO actions of the state.
+    /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
+    GotoActions: Map<NonTerminal, Indexed<LALRState>>
 }
 
 /// A context-free grammar according to which, Farkle can parse text.
@@ -126,7 +159,7 @@ type Grammar = internal {
     _DFAStates: DFAState StateTable
 }
 with
-    /// Mmetadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
+    /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
     /// The grammar's start `NonTerminal`.
     member x.StartSymbol = x._StartSymbol

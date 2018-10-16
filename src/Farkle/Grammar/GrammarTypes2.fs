@@ -40,7 +40,7 @@ with
             || Char.IsLetter name.[0]
             || String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') name
         then
-            "'" + name + "'"
+            sprintf "'%s'" name
         else
             name
 
@@ -49,7 +49,7 @@ type NonTerminal = internal NonTerminal of name: string
 with
     /// The nonterminal's name.
     member x.Name = match x with | NonTerminal (name) -> name
-    override x.ToString() = "<" + x.Name + ">"
+    override x.ToString() = sprintf "<%s>" x.Name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
 /// An example of a noise symbol would be a source code comment.
@@ -57,21 +57,21 @@ type Noise = internal Noise of name: string
 with
     /// The symbol's name.
     member x.Name = match x with | Noise (name) -> name
-    override x.ToString() = "(" + x.Name + ")"
+    override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the end of a group.
 type GroupEnd = internal GroupEnd of name: string
 with
     /// The symbol's name.
     member x.Name = match x with | GroupEnd (name) -> name
-    override x.ToString() = "(" + x.Name + ")"
+    override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the start of a group.
 type GroupStart = internal GroupStart of name: string * groupIndex: Indexed<Group>
 with
     /// The symbol's name.
     member x.Name = match x with | GroupStart (name, _) -> name
-    override x.ToString() = "(" + x.Name + ")"
+    override x.ToString() = sprintf "(%s)" x.Name
 
 /// A lexical group.
 /// In GOLD, lexical groups are used for situations where a number
@@ -94,9 +94,11 @@ and Group = {
     /// A set of indexes whose corresponding groups can be nested inside this group.
     Nesting: Set<Indexed<Group>>
 }
+with
+    override x.ToString() = x.Name
 
 /// A symbol that can be yielded by the DFA.
-type TokenSymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
+type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
 /// An edge of a DFA graph, that matches a character to the next DFA state using a custom data structure.
 type DFAEdge = RangeMap<char, Indexed<DFAState>>
@@ -108,10 +110,9 @@ and [<RequireQualifiedAccess>] DFAState =
     /// an accepting state has not been found, tokenizing fails.
     | Continue of index: uint32 * DFAEdge
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
-    | Accept of index: uint32 * Choice<Terminal,Noise> * DFAEdge
-
-/// A symbol that is part of `NonTerminal`s, and can be produced by the LALR parser.
-type LALRSymbol = Choice<Terminal, NonTerminal>
+    | Accept of index: uint32 * DFASymbol * DFAEdge
+    member x.Index = match x with DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
+    override x.ToString() = string x.Index
 
 /// An array of `LALRSymbol`s that can produce a specific `NonTerminal`.
 type Production = {
@@ -120,10 +121,16 @@ type Production = {
     /// The `Nonterminal` the production is referring to.
     // Storing the map's key (the nonterminal) inside its value (this production)
     // is acceptable, because the production's head is an integral part of its definition.
-    HeadSymbol: NonTerminal
-    /// The `LALRSymbol`s the production is made of.
-    Children: LALRSymbol ImmutableArray
+    Head: NonTerminal
+    /// The `Terminals`s and `NonTerminal`s, the production is made of.
+    Handle: Choice<Terminal, NonTerminal> ImmutableArray
 }
+with
+    override x.ToString() =
+        x.Handle
+        |> Seq.map (function | Choice1Of2 x -> string x | Choice2Of2 x -> string x)
+        |> String.concat " "
+        |> sprintf "%O ::= %s" x.Head
 
 /// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]
@@ -134,6 +141,11 @@ type LALRAction =
     | Reduce of Production
     /// When the parser encounters this action for a given symbol, the input text is accepted as correct and parsing ends.
     | Accept
+    override x.ToString() =
+        match x with
+        | Shift x -> sprintf "Shift to state %d" x.Value
+        | Reduce x -> sprintf "Reduce production %O" x
+        | Accept -> "Accept"
 
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
 and LALRState = {
@@ -146,6 +158,8 @@ and LALRState = {
     /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
     GotoActions: Map<NonTerminal, Indexed<LALRState>>
 }
+with
+    override x.ToString() = string x.Index
 
 /// A context-free grammar according to which, Farkle can parse text.
 type Grammar = internal {

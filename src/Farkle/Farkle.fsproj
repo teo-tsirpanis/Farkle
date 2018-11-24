@@ -36,6 +36,7 @@
     <Compile Include="Utilities/RangeMap.fs" />
     <Compile Include="Utilities/IndexedCollections.fs" />
     <Compile Include="Utilities/HybridStream.fs" />
+    <Compile Include="Utilities/CharStream.fs" />
     <Compile Include="Utilities/Set.fs" />
     <Compile Include="Grammar/EGTTypes.fs" />
     <Compile Include="Grammar/EGTReader.fs" />

@@ -9,14 +9,6 @@ module Farkle.Common
 
 open System
 
-[<Literal>]
-/// The line feed character.
-let LF = '\010'
-
-[<Literal>]
-/// The carriage return character.
-let CR = '\013'
-
 /// Raises an exception.
 /// This function should be used when handling an impossible edge case is very tedious.
 /// It should be used __very__ sparingly.
@@ -68,43 +60,6 @@ module FastCompare =
 
     let inline smaller x1 x2 = compare x1 x2 < 0
     let inline smallerOrEqual x1 x2 = compare x1 x2 <= 0
-
-/// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
-[<Struct>]
-type Position =
-    private Position of (uint32 * uint32)
-    with
-    override x.ToString() =
-        let (Position (x, y)) = x
-        sprintf "(%d, %d)" x y
-
-/// Functions to work with the `Position` type.
-module Position =
-
-    open LanguagePrimitives
-
-    /// Returns the line of a `Position.
-    let line (Position(x, _)) = x
-
-    /// Returns the column of a `Position`.
-    let column (Position(_, x)) = x
-
-    /// Returns a `Position` that points at `(1, 0)`.
-    let initial = (GenericOne, GenericOne) |> Position
-
-    /// Creates a `Position` at the specified coordinates.
-    /// Returns `None` if a coordinate was zero.
-    let create line col =
-        if line <= GenericZero || col < GenericZero then
-            None
-        else
-            (line, col) |> Position |> Some
-
-    /// Increases the column index of a `Position` by one.
-    let incCol (Position (x, y)) = (x, y + GenericOne) |> Position
-
-    /// Increases the line index of a `Position` by one and resets the collumn to zero.
-    let incLine (Position(x, _)) = (x + GenericOne, GenericOne) |> Position
 
 /// Some more utilities to work with lists.
 module List =

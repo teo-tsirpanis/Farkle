@@ -27,20 +27,15 @@ module internal Tokenizer =
             static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
             static member Create input = {InputStream = input; CurrentPosition = Position.initial; GroupStack = []}
 
-    open State
-
     let private getLookAheadBuffer n = HybridStream.takeSafe n >> String.ofList
 
     let rec private consumeBuffer n (state: TokenizerState) =
         let rec impl n inputStream pos =
-            let impl = impl (n - 1u)
             match n, inputStream with
             | 0u, _ | _, HSNil -> inputStream, pos
-            | _, HSCons(LF, xs) when Position.column pos > 1u -> impl xs (Position.incLine pos)
-            | _, HSCons(CR, xs) -> impl xs (Position.incLine pos)
-            | _, HSCons(_, xs) -> impl xs (Position.incCol pos)
+            | _, HSCons(x, xs) -> impl (n - 1u) xs (Position.advance x pos)
         let (inputStream, pos) = impl n state.InputStream state.CurrentPosition
-        (), {state with InputStream = inputStream; CurrentPosition = pos}
+        {state with InputStream = inputStream; CurrentPosition = pos}
 
     let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
         let newToken = Token.Create pos
@@ -76,12 +71,12 @@ module internal Tokenizer =
             // in the group stack, consume the token, and continue.
             | Ok({Symbol = GroupStart (tokGroupIdx, _)} as tok), _ when gs |> List.tryHead |> Option.map (fun (_, g) -> g.Nesting.Contains(tokGroupIdx)) |> Option.defaultValue true ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
-                let state = tok.Data |> String.length |> consumeBuffer <| state |> snd
+                let state = tok.Data |> String.length |> consumeBuffer <| state
                 impl {state with GroupStack = (tok, tokGroup) :: gs}
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We consume the token, and return it.
             | Ok tok, [] ->
-                TokenizerResult.TokenRead tok, tok.Data |> String.length |> consumeBuffer <| state |> snd
+                TokenizerResult.TokenRead tok, tok.Data |> String.length |> consumeBuffer <| state
             // We found an unrecognized symbol while outside a group. This is an error.
             | Error x, [] -> TokenizerResult.LexicalError (x, state.CurrentPosition), state
             // We are inside a group, and this new token is going to end it.
@@ -90,7 +85,7 @@ module internal Tokenizer =
                 let popped, state =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        Token.AppendData tok.Data popped, tok.Data |> String.length |> consumeBuffer <| state |> snd
+                        Token.AppendData tok.Data popped, tok.Data |> String.length |> consumeBuffer <| state
                     | EndingMode.Open -> popped, state
                 match xs with
                 // We have now left the group. We empty the group stack and and fix the symbol of our token.
@@ -108,7 +103,7 @@ module internal Tokenizer =
                     match g2.AdvanceMode with
                     | AdvanceMode.Token -> data
                     | AdvanceMode.Character -> string data.[0]
-                let state =  dataToAdvance |> String.length |> consumeBuffer <| state |> snd
+                let state =  dataToAdvance |> String.length |> consumeBuffer <| state
                 impl {state with GroupStack = (Token.AppendData dataToAdvance tok2, g2) :: xs}
         impl
 

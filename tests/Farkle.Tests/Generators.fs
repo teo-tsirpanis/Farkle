@@ -7,11 +7,11 @@
 module Farkle.Tests.Generators
 
 open Expecto
-open FsCheck
 open Farkle
-open Farkle.Grammar
-open System.Collections.Generic
 open Farkle.Collections
+open Farkle.Grammar
+open FsCheck
+open System.Collections.Generic
 open System.Collections.Immutable
 
 let symbolGen = gen {
@@ -27,7 +27,7 @@ let productionGen = gen {
     return {Index = index; Head = head; Handle = ImmutableArray.CreateRange handle}
 }
 
-let positionGen = Arb.generate |> Gen.filter ((<>) 0u) |> Gen.two |> Gen.map (uncurry Position.create >> mustBeSome)
+let positionGen = Arb.generate<char> |> Gen.listOf |> Gen.map (Seq.fold (flip Position.advance) Position.initial)
 
 let ASTGen() =
     let rec impl size =

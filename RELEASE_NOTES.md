@@ -1,4 +1,7 @@
-#### 3.1.0-aplha003 - 10-10-2018
+#### 3.1.0-alpha004
+* Optimized the way Farkle handles the input stream characters by reducing copies.
+
+#### 3.1.0-alpha003 - 10-10-2018
 * The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-procssing operations are unified.
 * The code became cleaner and faster yet again, with a notable optimization in the tokenizer.
 * This release coincided with the author's birthday. 🎂

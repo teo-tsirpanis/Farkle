@@ -17,10 +17,11 @@ type CharSpan = private CharSpan of start: uint64 * length: int
 /// It is not recommended for large files.
 type private StaticBlock = {
     Stream: ReadOnlyMemory<char>
-    Position: Position
+    mutable Position: Position
 }
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
+/// It is not thread-safe.
 type CharStream = private StaticBlock of StaticBlock
 with
     /// The stream's current position.
@@ -28,8 +29,14 @@ with
     /// The stream's character at its current position.
     member x.FirstCharacter = match x with StaticBlock sb -> sb.Stream.Span.[int sb.Position.Index]
 
+/// A type-checked character index of a `CharStream`.
+type CharStreamIndex = private CharStreamIndex of uint64
+with
+    /// The index's actual, numeric index.
+    member x.Index = match x with | CharStreamIndex x -> x
+
 /// A type that gives a `CharStream` an F# `list`-like interface.
-type CharStreamView = internal CharStreamView of stream: CharStream * idx: uint64
+type CharStreamView = private CharStreamView of stream: CharStream * idx: CharStreamIndex
 with
     /// The character index the view is in, starting from the beginning of the stream.
     member x.Index = match x with | CharStreamView (_, idx) -> idx
@@ -41,6 +48,7 @@ with
 type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan<char> -> obj
 
 /// Functions to create and work with `CharStream`s.
+/// They are not thread-safe.
 module CharStream =
 
     open LanguagePrimitives
@@ -49,25 +57,20 @@ module CharStream =
     /// Creates a `CharStreamView` from a `CharStream`.
     let view cs =
         match cs with
-        | StaticBlock sb -> CharStreamView (cs, sb.Position.Index)
+        | StaticBlock sb -> CharStreamView (cs, CharStreamIndex sb.Position.Index)
 
     /// An active pattern to access a `CharStreamView` as if it was an F# `list`.
-    let (|CSCons|CSNil|) (CharStreamView (cs, idx)) =
+    let (|CSCons|CSNil|) (CharStreamView (cs, CharStreamIndex idx)) =
         match cs with
         | StaticBlock sb when idx < uint64 sb.Stream.Length ->
-            CSCons(sb.Stream.Span.[int idx], CharStreamView(cs, idx + GenericOne))
+            CSCons(sb.Stream.Span.[int idx], CharStreamView(cs, CharStreamIndex <| idx + GenericOne))
         | StaticBlock _ -> CSNil
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
-    /// Returns `None` if it is out of range, or the characters are not available.
-    let tryPinSpan cs idxTo =
+    let pinSpan cs (CharStreamIndex idxTo) =
         match cs with
-        | StaticBlock {Stream = b; Position = {Index = idxFrom}}
-            when idxFrom < idxTo && idxTo < uint64 b.Length && idxTo - idxFrom < uint64 Int32.MaxValue ->
-            Some <| CharSpan (idxFrom, int <| idxTo - idxFrom)
-        | StaticBlock _ -> None
-        |> fun csp -> csp, cs
+        | StaticBlock {Stream = b; Position = {Index = idxFrom}} -> CharSpan (idxFrom, int <| idxTo - idxFrom)
 
     /// Creates a new `CharSpan` from two continuous spans, i.e. the first one ends when the second one starts.
     /// Returns `None` if they were not continuous.
@@ -83,12 +86,10 @@ module CharStream =
     let consume cs (CharSpan (start, length)) =
         match cs with
         | StaticBlock sb when sb.Position.Index = start ->
-            let mutable pos = sb.Position
             let span = sb.Stream.Span.Slice(int start, length)
             for i = 0 to span.Length - 1
-                do pos <- Position.advance span.[i] pos
-            {sb with Position = pos} |> StaticBlock
-        | StaticBlock _ -> cs
+                do sb.Position <- Position.advance span.[i] sb.Position
+        | StaticBlock _ -> ()
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, these characters might be freed from memory, so this function should not be used twice.
@@ -96,5 +97,5 @@ module CharStream =
         match cs with
         | StaticBlock sb when uint64 sb.Stream.Length > start + uint64 length ->
             let span = sb.Stream.Span.Slice(int start, length)
-            fPostProcess.Invoke(symbol, sb.Position, span) |> Some, cs
-        | StaticBlock _ -> None, cs
+            fPostProcess.Invoke(symbol, sb.Position, span) |> Some
+        | StaticBlock _ -> None

@@ -15,61 +15,46 @@ open Farkle.Monads
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal Tokenizer =
 
-    type private TokenizerState =
-        {
-            InputStream: char HybridStream
-            CurrentPosition: Position
-            GroupStack: (Token * Group) list
-        }
-        with
-            static member InputStream_ :Lens<_, _> = (fun x -> x.InputStream), (fun v x -> {x with InputStream = v})
-            static member CurrentPosition_ :Lens<_, _> = (fun x -> x.CurrentPosition), (fun v x -> {x with CurrentPosition = v})
-            static member GroupStack_ :Lens<_, _> = (fun x -> x.GroupStack), (fun v x -> {x with GroupStack = v})
-            static member Create input = {InputStream = input; CurrentPosition = Position.initial; GroupStack = []}
+    open Farkle.Collections.CharStream
+    
+    type TokenDraft = {Symbol: Symbol; Position: Position; Data: CharSpan}
 
-    let private getLookAheadBuffer n = HybridStream.takeSafe n >> String.ofList
+    type private TokenizerState = (TokenDraft * Group) list
 
-    let rec private consumeBuffer n (state: TokenizerState) =
-        let rec impl n inputStream pos =
-            match n, inputStream with
-            | 0u, _ | _, HSNil -> inputStream, pos
-            | _, HSCons(x, xs) -> impl (n - 1u) xs (Position.advance x pos)
-        let (inputStream, pos) = impl n state.InputStream state.CurrentPosition
-        {state with InputStream = inputStream; CurrentPosition = pos}
-
-    let private tokenizeDFA {InitialState = initialState; States = states} {CurrentPosition = pos; InputStream = input} =
-        let newToken = Token.Create pos
+    let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
+        let newToken sym data = Choice1Of2 {Symbol = sym; Position = input.Position; Data = pinSpan data}
+        let eof = Choice2Of2 input.Position
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
-        let rec impl currPos x (currState: DFAState) lastAccept =
-            match x with
-            | HSNil ->
+        let rec impl v (currState: DFAState) lastAccept =
+            match v with
+            | CSNil ->
                 match lastAccept with
-                | Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym |> Ok
-                | None -> newToken EndOfFile "" |> Ok
-            | HSCons(x, xs) ->
+                | Some (sym, v) -> newToken sym v |> Ok
+                | None -> input.Position |> Choice2Of2 |> Ok
+            | CSCons(x, xs) ->
                 let newDFA = lookupEdges x currState.Edges
-                let impl = impl (currPos + 1u) xs
+                let impl = impl xs
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
                 | Some (DFAContinue _ as newDFA), lastAccept -> impl newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some (DFAAccept (_, (acceptSymbol, _)) as newDFA), _ -> impl newDFA (Some (acceptSymbol, currPos))
+                | Some (DFAAccept (_, (acceptSymbol, _)) as newDFA), _ -> impl newDFA (Some (acceptSymbol, v))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | None, Some (sym, pos) -> input |> getLookAheadBuffer pos |> newToken sym |> Ok
+                | None, Some (sym, v) -> newToken sym v |> Ok
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None -> input |> getLookAheadBuffer 1u |> (fun x -> Error x.[0])
-        impl 1u input initialState None
+                | None, None -> Error input.FirstCharacter
+        impl (view input) initialState None
 
-    let private produceToken dfa groups =
-        let rec impl (state: TokenizerState) =
-            let tok = tokenizeDFA dfa state
-            let gs = state.GroupStack
+    let private produceToken dfa groups input =
+        let rec impl gs =
+            let tok = tokenizeDFA dfa input
             match tok, gs with
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, consume the token, and continue.
-            | Ok({Symbol = GroupStart (tokGroupIdx, _)} as tok), _ when gs |> List.tryHead |> Option.map (fun (_, g) -> g.Nesting.Contains(tokGroupIdx)) |> Option.defaultValue true ->
+            | Ok({Symbol = GroupStart (tokGroupIdx, _)} as tok), _ when
+                gs |> List.tryHead |> Option.map (fun (_, g) -> g.Nesting.Contains(tokGroupIdx)) |> Option.defaultValue true ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
                 let state = tok.Data |> String.length |> consumeBuffer <| state
                 impl {state with GroupStack = (tok, tokGroup) :: gs}
@@ -107,4 +92,4 @@ module internal Tokenizer =
                 impl {state with GroupStack = (Token.AppendData dataToAdvance tok2, g2) :: xs}
         impl
 
-    let create dfa groups input: Tokenizer = Extra.State.toSeq (produceToken dfa groups) (TokenizerState.Create input)
+    let create dfa groups input: Tokenizer = Extra.State.toSeq (produceToken dfa groups input) []

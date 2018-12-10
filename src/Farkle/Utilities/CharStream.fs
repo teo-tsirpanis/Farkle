@@ -7,16 +7,24 @@ namespace Farkle.Collections
 
 open Farkle
 open System
+open System.IO
 
 /// An continuous range of characters that is
 /// stored by its starting index and length.
-type CharSpan = private CharSpan of start: uint64 * length: int
+type CharSpan = private CharSpan of idxFrom: uint64 * idxTo: uint64
+with
+    /// The span's zero-based index of the first character.
+    member x.StartingIndex = match x with | CharSpan (x, _) -> x
+    /// The span's zero-based index of the last character.
+    member x.EndingIndex = match x with | CharSpan (_, x) -> x
+    override x.ToString() = sprintf "[%d,%d]" x.StartingIndex x.EndingIndex
 
 /// A representation of a `CharStream` that stores
 /// the characters in one continuous area of memory.
 /// It is not recommended for large files.
 type private StaticBlock = {
     Stream: ReadOnlyMemory<char>
+    mutable StartingIndex: uint64
     mutable Position: Position
 }
 
@@ -29,16 +37,10 @@ with
     /// The stream's character at its current position.
     member x.FirstCharacter = match x with StaticBlock sb -> sb.Stream.Span.[int sb.Position.Index]
 
-/// A type-checked character index of a `CharStream`.
-type CharStreamIndex = private CharStreamIndex of uint64
-with
-    /// The index's actual, numeric index.
-    member x.Index = match x with | CharStreamIndex x -> x
-
 /// A type that gives a `CharStream` an F# `list`-like interface.
-type CharStreamView = private CharStreamView of stream: CharStream * idx: CharStreamIndex
+type CharStreamView = private CharStreamView of stream: CharStream * idx: uint64
 with
-    /// The character index the view is in, starting from the beginning of the stream.
+    /// The zero-based index the view is in, starting from the beginning of the stream.
     member x.Index = match x with | CharStreamView (_, idx) -> idx
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
@@ -57,45 +59,49 @@ module CharStream =
     /// Creates a `CharStreamView` from a `CharStream`.
     let view cs =
         match cs with
-        | StaticBlock sb -> CharStreamView (cs, CharStreamIndex sb.Position.Index)
+        | StaticBlock sb -> CharStreamView (cs, sb.Position.Index)
 
     /// An active pattern to access a `CharStreamView` as if it was an F# `list`.
-    let (|CSCons|CSNil|) (CharStreamView (cs, CharStreamIndex idx)) =
+    let (|CSCons|CSNil|) (CharStreamView (cs, idx)) =
         match cs with
+        | StaticBlock sb when idx < sb.StartingIndex ->
+            failwithf "Trying to view the %dth character of a stream, while the first %d have already been read." idx sb.StartingIndex
         | StaticBlock sb when idx < uint64 sb.Stream.Length ->
-            CSCons(sb.Stream.Span.[int idx], CharStreamView(cs, CharStreamIndex <| idx + GenericOne))
+            CSCons(sb.Stream.Span.[int idx], CharStreamView(cs, idx + GenericOne))
         | StaticBlock _ -> CSNil
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
-    let pinSpan cs (CharStreamIndex idxTo) =
+    let pinSpan (CharStreamView(cs, idxTo)) =
         match cs with
-        | StaticBlock {Stream = b; Position = {Index = idxFrom}} -> CharSpan (idxFrom, int <| idxTo - idxFrom)
+        | StaticBlock {Stream = _; Position = {Index = idxFrom}} -> CharSpan (idxFrom, idxTo)
 
-    /// Creates a new `CharSpan` from two continuous spans, i.e. the first one ends when the second one starts.
+    /// Creates a new `CharSpan` from two continuous spans, i.e. that starts at the first's start, and ends at the second's end.
     /// Returns `None` if they were not continuous.
-    let tryAppendSpans (CharSpan (start1, length1)) (CharSpan (start2, length2)) =
-        if start1 + uint64 length1 = start2 then
-            Some <| CharSpan (start1, length1 + length2)
+    let extendSpans (CharSpan (start1, end1)) (CharSpan (start2, end2)) =
+        if end1 = start2 then
+            CharSpan (start1, end2)
         else
-            None
+            failwithf "Trying to extend a character span that ends at %d, with one that starts at %d." end1 start2
 
     /// Advances the `CharStream`'s position by as many characters the given `CharSpan` indicates.
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
-    let consume cs (CharSpan (start, length)) =
+    let consume cs (CharSpan (idxStart, idxEnd)) =
         match cs with
-        | StaticBlock sb when sb.Position.Index = start ->
-            let span = sb.Stream.Span.Slice(int start, length)
-            for i = 0 to span.Length - 1
-                do sb.Position <- Position.advance span.[i] sb.Position
-        | StaticBlock _ -> ()
+        | StaticBlock sb when sb.Position.Index = idxStart ->
+            for i = int idxStart to int idxEnd do
+                sb.Position <- Position.advance sb.Stream.Span.[i] sb.Position
+        | StaticBlock {Position = {Index = idxCurr}} ->
+            failwithf "Trying to consume a character span [%d, %d], from a stream that was left at %d." idxStart idxEnd idxCurr
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
-    /// After that call, these characters might be freed from memory, so this function should not be used twice.
-    let tryUnpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (start, length)) =
+    /// After that call, these characters might be freed from memory, so this function must not be used twice.
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd)) =
         match cs with
-        | StaticBlock sb when uint64 sb.Stream.Length > start + uint64 length ->
-            let span = sb.Stream.Span.Slice(int start, length)
-            fPostProcess.Invoke(symbol, sb.Position, span) |> Some
-        | StaticBlock _ -> None
+        | StaticBlock sb when sb.StartingIndex = idxStart && uint64 sb.Stream.Length > idxEnd ->
+            sb.StartingIndex <- idxEnd
+            let length = idxEnd - idxStart + 1UL |> int
+            let span = sb.Stream.Span.Slice(int idxStart, length)
+            fPostProcess.Invoke(symbol, sb.Position, span)
+        | StaticBlock _ -> failwithf "Error while unpinning the character span: Tried to"

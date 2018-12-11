@@ -6,7 +6,7 @@
 namespace Farkle
 
 open Aether
-open Farkle.Grammar
+open Farkle.Grammar2
 open System.Text
 
 /// A token is an instance of a `Symbol`.
@@ -15,11 +15,11 @@ open System.Text
 type Token =
     {
         /// The `Symbol` whose instance is this token.
-        Symbol: Symbol
+        Symbol: Terminal
         /// The `Position` of the token in the input string.
         Position: Position
         /// The actual content of the token.
-        Data: string
+        Data: obj
     }
     with
         /// [omit]
@@ -30,9 +30,7 @@ type Token =
         static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
         /// A shortcut for creating a token.
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
-        /// Returns a new token which has a string appended to its data.
-        static member AppendData data x = Optic.map Token.Data_ (fun x -> x + data) x
-        override x.ToString() = x.Data
+        override x.ToString() = x.Data.ToString()
 
 module internal Token =
 
@@ -73,7 +71,7 @@ module AST =
         let print = addIndentText >> sb.AppendLine >> ignore
         let rec impl indent x =
             match x with
-            | AST.Content x -> print <| (sprintf "+--%s" x.Data, indent)
+            | AST.Content x -> print <| (sprintf "+--%O" x.Data, indent)
             | AST.Nonterminal (prod, x) ->
                 print <| (sprintf "+--%O" prod, indent)
                 x |> Seq.iter (impl <| indent + 1)

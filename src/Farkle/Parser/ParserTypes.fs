@@ -7,7 +7,7 @@ namespace Farkle.Parser
 
 open Aether
 open Farkle
-open Farkle.Grammar
+open Farkle.Grammar2
 
 /// An internal error. These errors are known errors a program might experience.
 /// They could occur by manipulating the parser internal state, which is _impossible_ from the public API.
@@ -28,7 +28,7 @@ type LALRResult =
     | Accept of obj
     | Shift of uint32
     | Reduce of Production
-    | SyntaxError of expected: Symbol list * actual: Symbol
+    | SyntaxError of expected: LALRSymbol list * actual: LALRSymbol
     | InternalError of ParseInternalError
 
 /// An action of the parser.
@@ -59,7 +59,7 @@ type ParseErrorType =
     /// A character was not recognized.
     | LexicalError of char
     /// A symbol was read, while some others were expected.
-    | SyntaxError of expected: Symbol list * actual: Symbol
+    | SyntaxError of expected: LALRSymbol list * actual: LALRSymbol
     /// Unexpected end of input.
     | GroupError
     /// Internal error. This is a bug.

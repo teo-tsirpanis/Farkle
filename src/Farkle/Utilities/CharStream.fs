@@ -1,5 +1,5 @@
 // Copyright (c) 2018 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -76,6 +76,13 @@ module CharStream =
         match cs with
         | StaticBlock {Stream = _; Position = {Index = idxFrom}} -> CharSpan (idxFrom, idxTo)
 
+    /// Creates a new `CharSpan` that spans one character more than the given one.
+    /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
+    let extendSpanByOne cs (CharSpan (idxStart, idxEnd)) =
+        match cs with
+        | StaticBlock sb when idxEnd < uint64 sb.Stream.Length -> CharSpan (idxStart, idxEnd + GenericOne)
+        | StaticBlock _ -> failwith "Trying to extend a character span by one character past its end."
+
     /// Creates a new `CharSpan` from two continuous spans, i.e. that starts at the first's start, and ends at the second's end.
     /// Returns `None` if they were not continuous.
     let extendSpans (CharSpan (start1, end1)) (CharSpan (start2, end2)) =
@@ -84,14 +91,21 @@ module CharStream =
         else
             failwithf "Trying to extend a character span that ends at %d, with one that starts at %d." end1 start2
 
-    /// Advances the `CharStream`'s position by as many characters the given `CharSpan` indicates.
+    /// Advances a `CharStream`'s position by one character.
+    let consumeOne cs =
+        match cs with
+        | StaticBlock sb when sb.Position.Index < uint64 sb.Stream.Length ->
+            sb.Position <- Position.advance sb.Stream.Span.[int sb.Position.Index] sb.Position
+        | StaticBlock _ -> failwith "Cannot consume a character stream past its end."
+
+    /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
     let consume cs (CharSpan (idxStart, idxEnd)) =
         match cs with
         | StaticBlock sb when sb.Position.Index = idxStart ->
             for i = int idxStart to int idxEnd do
-                sb.Position <- Position.advance sb.Stream.Span.[i] sb.Position
+                consumeOne cs
         | StaticBlock {Position = {Index = idxCurr}} ->
             failwithf "Trying to consume a character span [%d, %d], from a stream that was left at %d." idxStart idxEnd idxCurr
 

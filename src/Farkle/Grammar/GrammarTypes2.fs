@@ -100,18 +100,19 @@ with
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
-/// An edge of a DFA graph, that matches a character to the next DFA state using a custom data structure.
-type DFAEdge = RangeMap<char, Indexed<DFAState>>
+/// The edges of a DFA state, that matche a character to the next state, using a custom data structure.
+type DFAEdges = RangeMap<char, Indexed<DFAState>>
 
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
 and [<RequireQualifiedAccess>] DFAState =
     /// This state does not accept a symbol. If the state graph cannot be further walked and
     /// an accepting state has not been found, tokenizing fails.
-    | Continue of index: uint32 * DFAEdge
+    | Continue of index: uint32 * DFAEdges
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
-    | Accept of index: uint32 * DFASymbol * DFAEdge
-    member x.Index = match x with DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
+    | Accept of index: uint32 * DFASymbol * DFAEdges
+    member x.Edges = match x with | DFAState.Continue (_, edges) | DFAState.Accept (_, _, edges) -> edges
+    member x.Index = match x with | DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
     override x.ToString() = string x.Index
 
 /// An array of `LALRSymbol`s that can produce a specific `Nonterminal`.
@@ -131,6 +132,8 @@ with
         |> Seq.map (function | Choice1Of2 x -> string x | Choice2Of2 x -> string x)
         |> String.concat " "
         |> sprintf "%O ::= %s" x.Head
+
+type LALRSymbol = Choice<Terminal, Nonterminal>
 
 /// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]

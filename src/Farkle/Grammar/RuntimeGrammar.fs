@@ -5,7 +5,7 @@
 
 namespace Farkle
 
-open Farkle.Grammar
+open Farkle.Grammar2
 open Farkle.Collections
 
 /// A grammar, as needed by the parser.

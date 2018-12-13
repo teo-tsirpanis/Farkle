@@ -49,7 +49,7 @@ module internal Tokenizer =
             ((CharStreamCallback pp.Transform), input, data)
             |||> unpinSpanAndGenerate sym
             |> Token.Create pos sym
-            |> Some
+            |> TokenizerResult.TokenRead
             |> Ok
         let (@<) src {DraftData = dataToAdvance} = {src with DraftData = extendSpans src.DraftData dataToAdvance}
         let rec impl (gs: TokenizerState) =
@@ -92,7 +92,7 @@ module internal Tokenizer =
                 // There is still another outer group. We append the outgoing group's data to the next top group.
                 | (tok2, g2) :: xs, _ -> impl ((popped @< tok2, g2) :: xs)
             // If input ends outside of a group, it's OK.
-            | None, [] -> Ok None
+            | None, [] -> Ok <| TokenizerResult.EndOfInput input.Position
             // If a group starts inside a group that cannot be nested at,
             | Some (Ok (Choice3Of4 _, _)), _
             // or a group end symbol is encountered but does not actually end the group,
@@ -116,4 +116,4 @@ module internal Tokenizer =
                 impl (({tok2 with DraftData = data}, g2) :: xs)
         impl
 
-    let create dfa groups input: Tokenizer = Extra.State.toSeq (produceToken dfa groups input) []
+    let create dfa groups pp input: Tokenizer = Extra.State.toSeq (produceToken dfa groups pp input) []

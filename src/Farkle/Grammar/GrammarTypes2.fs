@@ -133,8 +133,6 @@ with
         |> String.concat " "
         |> sprintf "%O ::= %s" x.Head
 
-type LALRSymbol = Choice<Terminal, Nonterminal>
-
 /// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]
 type LALRAction =

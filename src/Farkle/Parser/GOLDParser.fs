@@ -6,7 +6,6 @@
 namespace Farkle.Parser
 
 open Farkle
-open Farkle.Grammar
 open Farkle.Monads
 open Farkle.PostProcessor
 
@@ -21,8 +20,8 @@ module internal GOLDParser =
 
     /// Parses a `HybridStream` of characters. 
     let parseChars (grammar: #RuntimeGrammar) (pp: PostProcessor<'result>) fMessage input =
-        let fMessage = curry (ParseMessage >> fMessage)
-        let fail = curry (ParseError.ParseError >> Error >> Some)
+        let fMessage = curry (Message >> fMessage)
+        let fail = curry (Error >> Some)
         let impl (x: TokenizerResult): State<_,_> = fun state ->
             let pos = x.Position
             let fail = fail pos
@@ -30,7 +29,6 @@ module internal GOLDParser =
             match x with
             | TokenizerResult.GroupError _ -> fail GroupError, state
             | TokenizerResult.LexicalError (x, _) -> fail <| LexicalError x, state
-            | TokenizerResult.TokenRead {Symbol = Noise _} -> None, state
             | TokenizerResult.TokenRead newToken ->
                 fMessage <| TokenRead newToken
                 let rec lalrLoop state =

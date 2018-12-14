@@ -54,7 +54,6 @@
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
-    <Compile Include="Parser/GOLDParser.fs" />
     <Compile Include="RuntimeFarkle.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

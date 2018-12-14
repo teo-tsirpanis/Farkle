@@ -7,7 +7,7 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Collections
-open Farkle.Grammar2
+open Farkle.Grammar
 open Farkle.PostProcessor
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

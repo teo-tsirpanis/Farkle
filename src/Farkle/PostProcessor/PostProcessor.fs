@@ -6,7 +6,7 @@
 namespace Farkle.PostProcessor
 
 open Farkle
-open Farkle.Grammar2
+open Farkle.Grammar
 open System
 
 /// Post-processors convert strings of a grammar into more meaningful

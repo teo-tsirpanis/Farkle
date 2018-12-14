@@ -7,7 +7,7 @@ namespace Farkle.Parser
 
 open Aether
 open Farkle
-open Farkle.Grammar2
+open Farkle.Grammar
 
 /// An internal error. These errors are known errors a program might experience.
 /// They could occur by manipulating the parser internal state, which is _impossible_ from the public API.

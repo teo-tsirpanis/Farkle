@@ -5,6 +5,7 @@
 
 namespace Farkle
 
+open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 open Farkle.PostProcessor
@@ -13,7 +14,7 @@ open System.IO
 /// A type signifying an error during the parsing process.
 type FarkleError =
     /// There was a parsing error.
-    | ParseError of ParseError
+    | ParseError of Message<ParseErrorType>
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
     override x.ToString() =
@@ -29,7 +30,7 @@ type FarkleError =
 /// 30: I guess you can't read this line. 😛
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
-    Grammar: Result<RuntimeGrammar,FarkleError>
+    Grammar: Result<Grammar,FarkleError>
     PostProcessor: PostProcessor<'TResult>
 }
 
@@ -45,7 +46,7 @@ module RuntimeFarkle =
 
     let private createMaybe postProcessor grammar =
         {
-            Grammar = grammar |> Result.map (fun x -> x :> RuntimeGrammar)
+            Grammar = grammar
             PostProcessor = postProcessor
         }
 
@@ -64,7 +65,7 @@ module RuntimeFarkle =
     let ofEGTFile postProcessor fileName  =
         fileName
         |> EGT.ofFile
-        |> Result.mapError (EGTReadError)
+        |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
@@ -74,14 +75,20 @@ module RuntimeFarkle =
     let ofBase64String postProcessor x =
         x
         |> EGT.ofBase64String
-        |> Result.mapError (EGTReadError)
+        |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
     /// Parses and post-processes a `HybridStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let private parseChars {Grammar = g; PostProcessor = pp} fMessage input =
-        g >>= (fun g -> GOLDParser.parseChars g pp fMessage input |> Result.mapError ParseError)
+        let fParse grammar pp fMessage input =
+            let fLALR = LALRParser.LALRStep fMessage grammar pp
+            let fToken pos token =
+                fMessage <| Message(pos, ParseMessageType.TokenRead token)
+                fLALR pos token
+            Tokenizer.tokenize Error fToken [] grammar pp input
+        g >>= (fun g -> fParse g pp fMessage input |> Result.mapError ParseError)
 
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.

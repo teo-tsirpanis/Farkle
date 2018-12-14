@@ -6,7 +6,7 @@
 namespace Farkle
 
 open Aether
-open Farkle.Grammar2
+open Farkle.Grammar
 open System.Text
 
 /// A token is an instance of a `Symbol`.

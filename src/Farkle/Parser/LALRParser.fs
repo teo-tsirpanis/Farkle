@@ -12,33 +12,52 @@ open Farkle.Monads
 open Farkle.PostProcessor
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal LALRParser =
+/// Functions to syntactically parse a series of tokens using the LALR algorithm.
+module LALRParser =
 
     open State
 
-    let private parseLALR {InitialState = initialState; States = lalrStates} (pp: PostProcessor<_>) fNextToken =
+    /// Parses and post-processes tokens based on a `Grammar`.
+    /// This function accepts:
+    /// 1. a function to report any significant _parsing-related_ messages (`TokenRead` events will not be fired from here).
+    /// 2. the `Grammar` to use.
+    /// 3. the `PostProcessor` to use on the newly-fused productions.
+    /// 4. the current position (redundant if the input did not end).
+    /// 5. the token that was found (or `None` if input ended).
+    /// 6. the LALR parser's stack state. Pass an empty list on the first try.
+    /// This function returns:
+    /// 1. if parsing finished, the final fused production, or an error type, or `None` if parsing did not finish.
+    /// 2. the new stack.
+    let LALRStep fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) pos token stack =
+        let fMessage msg = Message(pos, msg) |> fMessage
+        let fail msg = Message(pos, msg) |> Error |> Some
+        let internalError = ParseErrorType.InternalError >> fail
         let getCurrentState = List.tryHead >> Option.map fst >> Option.defaultValue initialState
         let (|LALRState|) x = SafeArray.retrieve lalrStates x
-        let rec impl state = either {
-            let currentState = (getCurrentState state)
-            let! token = fNextToken()
-            match currentState.Actions.TryFind(Option.map (fun {Symbol = x} -> x) token), state with
-            | Some LALRAction.Accept, (_, ast) :: _ -> return ast
-            | Some LALRAction.Accept, [] -> return! Error <| LALRResult.InternalError LALRStackEmpty
-            | Some (LALRAction.Shift (LALRState nextState)), state ->
+        let rec impl stack =
+            let currentState = getCurrentState stack
+            match currentState.Actions.TryFind(Option.map (fun {Symbol = x} -> x) token), stack with
+            | Some LALRAction.Accept, (_, ast) :: _ -> Some <| Ok ast, stack
+            | Some LALRAction.Accept, [] -> LALRStackEmpty |> internalError, stack
+            | Some (LALRAction.Shift (LALRState nextState)), stack ->
                 match token with
-                | Some {Data = data} -> return! impl <| (nextState, data) :: state
-                | None -> return! Error <| LALRResult.InternalError ShiftOnEOF
-            | Some (LALRAction.Reduce productionToReduce), state ->
-                let tokens, state = List.popStack productionToReduce.Handle.Length <!> (Seq.map snd >> Array.ofSeq) <| state
-                let nextState = getCurrentState state
+                | Some {Data = data} ->
+                    fMessage <| ParseMessageType.Shift nextState.Index
+                    None, (nextState, data) :: stack
+                | None -> ShiftOnEOF |> internalError, stack
+            | Some (LALRAction.Reduce productionToReduce), stack ->
+                let tokens, stack = List.popStack productionToReduce.Handle.Length <!> (Seq.map snd >> Array.ofSeq) <| stack
+                let nextState = getCurrentState stack
                 let nextAction = nextState.GotoActions.TryFind productionToReduce.Head
                 match nextAction with
                 | Some (LALRState nextState) ->
-                    match pp.Fuse productionToReduce tokens () with
-                    | true, resultObj -> return! impl <| (nextState, resultObj) :: state
-                    | false, _ -> return! productionToReduce |> FuseError |> LALRResult.InternalError |> Error
-                | _ -> return! (productionToReduce, nextState) |> GotoNotFoundAfterReduction |> LALRResult.InternalError |> Error
+                    let mutable resultObj = null
+                    match pp.Fuse (productionToReduce, tokens, &resultObj) with
+                    | true ->
+                        fMessage <| ParseMessageType.Reduction productionToReduce
+                        impl <| (nextState, resultObj) :: stack
+                    | false -> FuseError productionToReduce |> internalError, stack
+                | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError, stack
             | None, _ ->
                 let fixTerminal = Option.map ExpectedSymbol.Terminal >> Option.defaultValue ExpectedSymbol.EndOfInput
                 let expectedSymbols =
@@ -53,12 +72,5 @@ module internal LALRParser =
                     ]
                     |> Seq.concat
                     |> set
-                return! Error <| LALRResult.SyntaxError (expectedSymbols, token |> Option.map (fun {Symbol = x} -> x) |> fixTerminal)
-        }
-        impl []
-
-    let create lalr pp =
-        let rec impl currState token =
-            let result, newState = State.run (parseLALR lalr pp token) currState
-            result, (impl newState |> LALRParser)
-        impl [] |> LALRParser
+                (expectedSymbols, token |> Option.map (fun {Symbol = x} -> x) |> fixTerminal) |> ParseErrorType.SyntaxError |> fail, stack
+        impl stack

@@ -45,10 +45,11 @@ with
             name
 
 /// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
-type Nonterminal = internal Nonterminal of name: string
+type Nonterminal = internal Nonterminal of index: uint32 * name: string
 with
+    member x.Index = match x with | Nonterminal (idx, _) -> idx
     /// The nonterminal's name.
-    member x.Name = match x with | Nonterminal (name) -> name
+    member x.Name = match x with | Nonterminal (_, name) -> name
     override x.ToString() = sprintf "<%s>" x.Name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.

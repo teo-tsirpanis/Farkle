@@ -4,9 +4,9 @@ source https://api.nuget.org/v3/index.json
 
 storage: none
 
-nuget Aether
-nuget FSharpx.Collections
-nuget Microsoft.NETCore.Platforms = 2.1
+nuget FSharp.Core
+// Why was that even used for?
+// nuget Microsoft.NETCore.Platforms = 2.1
 nuget System.Buffers
 nuget System.Collections.Immutable
 nuget System.Memory

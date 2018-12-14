@@ -5,7 +5,6 @@
 
 namespace Farkle
 
-open Farkle.Monads.StateResult
 open System.IO
 
 /// Functions to work with the standard F# `list`.
@@ -28,12 +27,6 @@ module List =
             | x :: xs when n >= 1 -> impl (x :: acc) (n - 1) xs
             | x -> acc, x
         impl [] n x
-
-    let popStackM optic count = sresult {
-        let! (first, rest) = getOptic optic <!> popStack count
-        do! setOptic optic rest
-        return first
-    }
 
 /// Functions to work with sequences.
 module Seq =

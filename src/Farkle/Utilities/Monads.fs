@@ -69,24 +69,6 @@ module State =
 
     let state = StateBuilder()
 
-    open Aether
-
-    let inline getOptic optic = state {
-        let! x = get
-        return Optic.get optic x
-    }
-
-    let inline setOptic optic value = state {
-        let! x = get
-        return! Optic.set optic value x |> put
-    }
-
-    let inline mapOptic optic f = state {
-        let! x = get
-        let s: 'c -> 'c = Optic.map optic f
-        return! s x |> put
-    }
-
 /// A combination of the `Result` and `State` monads.
 /// F# has no monad transformers, so it was manually done.
 type  StateResult<'TSuccess, 'TState, 'TError> = State<'TState, Result<'TSuccess, 'TError>>
@@ -161,24 +143,6 @@ module StateResult =
                     x.Delay(fun () -> body enum.Current)))
 
     let sresult = StateResultBuilder()
-
-    open Aether
-
-    let inline getOptic optic = sresult {
-        let! x = get
-        return Optic.get optic x
-    }
-
-    let inline setOptic optic value = sresult {
-        let! x = get
-        return! Optic.set optic value x |> put
-    }
-
-    let inline mapOptic optic f = sresult {
-        let! x = get
-        let s: 'c -> 'c = Optic.map optic f
-        return! s x |> put
-    }
 
 /// [omit]
 module Maybe =

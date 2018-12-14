@@ -5,8 +5,6 @@
 
 namespace Farkle.Grammar.GOLDParser
 
-open Farkle
-
 /// What can go wrong with reading an EGT file.
 type EGTReadError =
     /// An invalid entry code was encountered.

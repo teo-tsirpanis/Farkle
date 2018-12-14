@@ -8,15 +8,6 @@ namespace Farkle.Collections
 open System.Collections
 open System.Collections.Generic
 
-/// Anything that can be indexed.
-type Indexable =
-    /// The object's index.
-    abstract Index: uint32
-
-module Indexable =
-    /// Gets the index of an `Indexable` object.
-    let inline index (x: #Indexable) = x.Index
-
 /// A type-safe reference to a value based on its index.
 type [<Struct>] Indexed<'a> = private Indexed of uint32
     with
@@ -96,7 +87,6 @@ module SafeArray =
     /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
     let inline tryFindIndex (x: SafeArray<_>) f = x.TryFindIndex f
 
-[<Struct>]
 type StateTable<'a> =
     {
         InitialState: 'a

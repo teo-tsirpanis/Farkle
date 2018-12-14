@@ -5,13 +5,11 @@
 
 namespace Farkle
 
-open Aether
 open Farkle.Grammar
 open System.Text
 
 /// A token is an instance of a `Symbol`.
 /// Tokens carry parsed data, as well as their position within the text file.
-[<Struct>]
 type Token =
     {
         /// The `Symbol` whose instance is this token.
@@ -22,19 +20,9 @@ type Token =
         Data: obj
     }
     with
-        /// [omit]
-        static member Symbol_ :Lens<_, _> = (fun x -> x.Symbol), (fun v x -> {x with Symbol = v})
-        /// [omit]
-        static member Position_ :Lens<_, _> = (fun x -> x.Position), (fun v x -> {x with Position = v})
-        /// [omit]
-        static member Data_ :Lens<_, _> = (fun x -> x.Data), (fun v x -> {x with Data = v})
         /// A shortcut for creating a token.
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
         override x.ToString() = x.Data.ToString()
-
-module internal Token =
-
-    let inline dummy sym = {Symbol = sym; Position = Position.initial; Data = ""}
 
 /// An Abstract Syntax Tree that describes the output of a parser.
 [<RequireQualifiedAccess>]

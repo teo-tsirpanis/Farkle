@@ -5,7 +5,6 @@
 
 namespace Farkle.Parser
 
-open Aether
 open Farkle
 open Farkle.Grammar
 

@@ -9,20 +9,6 @@ module Farkle.Common
 
 open System
 
-/// Raises an exception.
-/// This function should be used when handling an impossible edge case is very tedious.
-/// It should be used __very__ sparingly.
-let impossible() = failwith "Hello there! I am a bug. Nice to meet You! If I am here, then something that was thought to be impossible did happen. And if You are (un)lucky enough to see me, can You please open a Github issue? Thank You very much and I am sorry for any inconvenience!"
-
-/// Returns the value of an `Option`.
-/// Raises an exception if the option was `None`.
-/// Are you inside a `State` monad and don't want to spill your code with `StateResult`?
-/// Are you definitely sure that your `Option` does _really_ contain a value, but the type system disagrees?
-/// In this case, you should use me!
-/// But use me carefully and __very__ sparingly.
-/// That thing is like `unsafePerformIO`, but fortunately, not-so-destructive.
-let mustBeSome x = x |> Option.defaultWith impossible
-
 let (|RMCons|RMNil|) (x: ReadOnlyMemory<_>) =
     if not x.IsEmpty then
         RMCons (x.Span.Item 0, x.Slice 1)

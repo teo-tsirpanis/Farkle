@@ -16,12 +16,10 @@ module Tokenizer =
 
     open Farkle.Collections.CharStream
 
-    type private TokenDraft = {Position: Position; DraftData: CharSpan}
-
-    type private TokenizerState = (TokenDraft * Group) list
+    type private TokenizerState = (CharSpan * Group) list
 
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
-        let newToken sym v = (sym, {Position = input.Position; DraftData = pinSpan v}) |> Ok |> Some
+        let newToken sym v = (sym, pinSpan v) |> Ok |> Some
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
         let rec impl v (currState: DFAState) lastAccept =
             match v with
@@ -60,29 +58,26 @@ module Tokenizer =
     /// 6. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
     let tokenize fError fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} (pp: PostProcessor<_>) (input: CharStream) =
         let fError msg = Message (input.Position, msg) |> fError
-        let (@<) src {DraftData = dataToAdvance} = {src with DraftData = extendSpans src.DraftData dataToAdvance}
+        // let (@<) src dataToAdvance = {src with DraftData = extendSpans src.DraftData dataToAdvance}
         let rec impl (gs: TokenizerState) fTokenS =
             let fToken pos t =
                 match fToken pos t fTokenS with
                 | Some x, _ -> x
                 | None, s -> impl [] s
-            let newToken sym {Position = pos; DraftData = data} =
-                ((CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data)), input, data))
-                |||> unpinSpanAndGenerate sym
-                |> Token.Create pos sym
-                |> Some
-                |> fToken pos
+            let newToken sym data =
+                let (data, pos) = unpinSpanAndGenerate sym (CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data))) input data
+                Token.Create pos sym data |> Some |> fToken pos
             let tok = tokenizeDFA dfa input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We consume the token, and return it.
             | Some (Ok (Choice1Of4 term, tok)), [] ->
-                consume input tok.DraftData
+                consume input tok
                 newToken term tok
             // We found noise outside of any group.
             // We consume it, and proceed.
             | Some (Ok (Choice2Of4 _noise, tok)), [] ->
-                consume input tok.DraftData
+                consume input tok
                 impl [] fTokenS
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
@@ -91,7 +86,7 @@ module Tokenizer =
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
-                consume input tok.DraftData
+                consume input tok
                 impl ((tok, tokGroup) :: gs) fTokenS
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, the end symbol might be kept.
@@ -100,8 +95,8 @@ module Tokenizer =
                 let popped =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        consume input tok.DraftData
-                        popped @< tok
+                        consume input tok
+                        extendSpans popped tok
                     | EndingMode.Open -> popped
                 match xs, poppedGroup.ContainerSymbol with
                 // We have now left the group, but the whole group was noise.
@@ -109,7 +104,7 @@ module Tokenizer =
                 // We have left the group and it was a terminal.
                 | [], Choice1Of2 sym -> newToken sym popped
                 // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((popped @< tok2, g2) :: xs) fTokenS
+                | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs) fTokenS
             // If input ends outside of a group, it's OK.
             | None, [] -> fToken input.Position None
             // If a group starts inside a group that cannot be nested at,
@@ -125,12 +120,12 @@ module Tokenizer =
                 let data =
                     match g2.AdvanceMode, tokenMaybe with
                     // We advance the input by the entire token.
-                    | AdvanceMode.Token, Ok (_, {DraftData = data}) ->
+                    | AdvanceMode.Token, Ok (_, data) ->
                         consume input data
-                        extendSpans tok2.DraftData data
+                        extendSpans tok2 data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, Error _ ->
                         consumeOne input
-                        extendSpanByOne input tok2.DraftData
-                impl (({tok2 with DraftData = data}, g2) :: xs) fTokenS
+                        extendSpanByOne input tok2
+                impl ((data, g2) :: xs) fTokenS
         impl [] fTokenS0

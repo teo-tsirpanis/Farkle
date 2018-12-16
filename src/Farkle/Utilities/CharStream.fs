@@ -108,7 +108,7 @@ module CharStream =
         | StaticBlock {Position = {Index = idxCurr}} ->
             failwithf "Trying to consume a character span [%d, %d], from a stream that was left at %d." idxStart idxEnd idxCurr
 
-    /// Creates an arbitrary object out of the characters at the given `CharSpan`.
+    /// Creates an arbitrary object out of the characters at the given `CharSpan`at the returned `Position`.
     /// After that call, these characters might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd)) =
         match cs with
@@ -116,7 +116,7 @@ module CharStream =
             sb.StartingIndex <- idxEnd
             let length = idxEnd - idxStart + 1UL |> int
             let span = sb.Stream.Span.Slice(int idxStart, length)
-            fPostProcess.Invoke(symbol, sb.Position, span)
+            fPostProcess.Invoke(symbol, sb.Position, span), sb.Position
         | StaticBlock _ -> failwithf "Error while unpinning the character span: Tried to"
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.

@@ -7,7 +7,7 @@ namespace Farkle.Grammar.GOLDParser
 
 open Farkle
 open Farkle.Collections
-open Farkle.Grammar
+open Farkle.Grammar.Legacy
 open Farkle.Grammar.GOLDParser
 open Farkle.Monads.Maybe
 open System
@@ -260,12 +260,14 @@ module internal GrammarReader =
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
             let dfaStates = SafeArray.ofArrayUnsafe dfaStates
             let lalrStates = SafeArray.ofArrayUnsafe lalrStates
-            return GOLDGrammar.create
-                (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq)
-                (SafeArray.ofArrayUnsafe symbols)
-                (SafeArray.ofArrayUnsafe charSets)
-                (SafeArray.ofArrayUnsafe productions)
-                {InitialState = dfaStates.Item initialDFA; States = dfaStates}
-                {InitialState = lalrStates.Item initialLALR; States = lalrStates}
-                (SafeArray.ofArrayUnsafe groups)
+            return!
+                GOLDGrammar.create
+                    (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq)
+                    (SafeArray.ofArrayUnsafe symbols)
+                    (SafeArray.ofArrayUnsafe charSets)
+                    (SafeArray.ofArrayUnsafe productions)
+                    {InitialState = dfaStates.Item initialDFA; States = dfaStates}
+                    {InitialState = lalrStates.Item initialLALR; States = lalrStates}
+                    (SafeArray.ofArrayUnsafe groups)
+                |> Migration.migrate |> failIfNone UnknownEGTFile
         }

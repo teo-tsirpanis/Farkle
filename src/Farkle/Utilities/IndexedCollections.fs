@@ -11,7 +11,11 @@ open System.Collections.Generic
 /// A type-safe reference to a value based on its index.
 type [<Struct>] Indexed<'a> = private Indexed of uint32
     with
+        /// The index's numerical value.
         member x.Value = x |> (fun (Indexed x) -> x)
+        /// Changes the type of the indexed object.
+        [<CompilerMessage("This function must be used only for the grammar domain model migrator.", 0x06400000)>]
+        member internal x.ReInterpret<'b>(): Indexed<'b> = Indexed x.Value
 
 /// Functions for working with `Indexed<'a>`.
 module internal Indexed =
@@ -25,6 +29,8 @@ module internal Indexed =
         else
             None
 
+#nowarn "0x06370000"
+
 /// An immutable array that exhibits good random access performance and safe index access.
 /// It intentionally lacks methods such as `map` and `filter`. This type should be at the final stage of data manipulation.
 /// It is advised to work with sequences before, just until the end.
@@ -37,6 +43,7 @@ type SafeArray<'a> = private SafeArray of 'a[]
             x
             |> Array.ofSeq
             |> SafeArray
+        [<CompilerMessage("This method must be used only by the grammar domain model migrator, outside of this file.", 0x06370000)>]
         member private x.Value = x |> (fun (SafeArray x) -> x)
         /// O(1) Gets the length of the list.
         member x.Count = x.Value.Length

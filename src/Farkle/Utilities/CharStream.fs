@@ -7,7 +7,6 @@ namespace Farkle.Collections
 
 open Farkle
 open System
-open System.IO
 
 /// An continuous range of characters that is
 /// stored by its starting index and length.
@@ -119,3 +118,6 @@ module CharStream =
             let span = sb.Stream.Span.Slice(int idxStart, length)
             fPostProcess.Invoke(symbol, sb.Position, span)
         | StaticBlock _ -> failwithf "Error while unpinning the character span: Tried to"
+
+    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
+    let ofReadOnlyMemory mem = StaticBlock {Stream = mem; StartingIndex = 0UL; Position = Position.initial}

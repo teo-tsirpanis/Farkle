@@ -5,11 +5,14 @@
 
 namespace Farkle
 
+open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.Parser
 open Farkle.PostProcessor
+open System
 open System.IO
+open System.Text
 
 /// A type signifying an error during the parsing process.
 type FarkleError =
@@ -78,7 +81,7 @@ module RuntimeFarkle =
         |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
-    /// Parses and post-processes a `HybridStream` of characters.
+    /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let private parseChars {Grammar = g; PostProcessor = pp} fMessage input =
@@ -93,20 +96,20 @@ module RuntimeFarkle =
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage (inputString: string) = inputString |> HybridStream.ofSeq false |> parseChars rf fMessage
+    let parseString rf fMessage (inputString: string) = inputString.AsMemory() |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
 
     /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily loaded.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseStream")>]
-    let parseStream rf fMessage doLazyLoad encoding inputStream =
-        inputStream |> Seq.ofCharStream false encoding |> HybridStream.ofSeq doLazyLoad |> parseChars rf fMessage
+    let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
+        use sr = new StreamReader(inputStream, encoding)
+        sr.ReadToEnd() |> parseString rf fMessage
 
     /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
     let parseFile rf fMessage doLazyLoad encoding inputFile =
-        use s = File.OpenRead inputFile
-        parseStream rf fMessage doLazyLoad encoding s
+        File.ReadAllText(inputFile, encoding) |> parseString rf fMessage
 
     /// Parses and post-processes a string.
     // This function was inspired by FParsec, which has some "runParserOn***" functions,

@@ -44,6 +44,10 @@ module RangeMap =
         | Some((k1, k2, x)) when smallerOrEqual k1 k && smallerOrEqual k k2 -> Some x
         | None | Some _ -> None
 
+    [<CompiledName("Map")>]
+    /// Applies a function to each of the items of a `RangeMap`.
+    let map f (RangeMap arr) = arr |> Array.map (fun (r1, r2, x) -> r1, r2, f x) |> RangeMap
+
     [<CompiledName("ContainsKey")>]
     /// Checks if the given `RangeMap` contains the given element.
     let containsKey k = tryFind k >> Option.isSome

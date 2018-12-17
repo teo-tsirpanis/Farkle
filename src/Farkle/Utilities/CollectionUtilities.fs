@@ -3,15 +3,10 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle
-
-open System.IO
+namespace Farkle.Collections
 
 /// Functions to work with the standard F# `list`.
 module List =
-
-    /// The simple list cons operator.
-    let inline cons x xs = x :: xs
 
     /// Returns a list with all its elements existing.
     let allSome x =
@@ -27,18 +22,3 @@ module List =
             | x :: xs when n >= 1 -> impl (x :: acc) (n - 1) xs
             | x -> acc, x
         impl [] n x
-
-/// Functions to work with sequences.
-module Seq =
-
-    /// Creates a lazily evaluated sequence of characters from a stream with the option to dispose the stream when it ends.
-    let ofCharStream disposeOnFinish encoding stream =
-        let r = new StreamReader(stream, encoding, true, 1024, disposeOnFinish)
-        let rec impl() = seq {
-            match r.Read() with
-            | -1 -> r.Dispose()
-            | x ->
-                yield char x
-                yield! impl()
-        }
-        impl()

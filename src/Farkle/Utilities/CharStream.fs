@@ -100,24 +100,25 @@ module CharStream =
     /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
-    let consume cs (CharSpan (idxStart, idxEnd)) =
+    let consume cs (CharSpan (idxStart, idxEnd) as csp) =
         match cs with
         | StaticBlock sb when sb.Position.Index = idxStart ->
             for i = int idxStart to int idxEnd do
                 consumeOne cs
         | StaticBlock {Position = {Index = idxCurr}} ->
-            failwithf "Trying to consume a character span [%d, %d], from a stream that was left at %d." idxStart idxEnd idxCurr
+            failwithf "Trying to consume the character span %O, from a stream that was left at %d." csp idxCurr
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`at the returned `Position`.
     /// After that call, these characters might be freed from memory, so this function must not be used twice.
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd)) =
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
         match cs with
         | StaticBlock sb when sb.StartingIndex = idxStart && uint64 sb.Stream.Length > idxEnd ->
             sb.StartingIndex <- idxEnd
             let length = idxEnd - idxStart + 1UL |> int
             let span = sb.Stream.Span.Slice(int idxStart, length)
             fPostProcess.Invoke(symbol, sb.Position, span), sb.Position
-        | StaticBlock _ -> failwithf "Error while unpinning the character span: Tried to"
+        | StaticBlock sb ->
+            failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp sb.StartingIndex
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     let ofReadOnlyMemory mem = StaticBlock {Stream = mem; StartingIndex = 0UL; Position = Position.initial}

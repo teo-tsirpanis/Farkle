@@ -10,7 +10,6 @@ module internal Farkle.Grammar.Migration
 
 #nowarn "0x06400000"
 
-open Farkle
 open Farkle.Collections
 open Farkle.Monads.Maybe
 open Farkle.Grammar.Legacy
@@ -119,13 +118,7 @@ let portDFAState (x: Legacy.DFAState) =
     | DFAContinue (idx, edges) -> Some <| DFAState.Continue(idx, fixEdges edges)
 
 let migrate (x: Legacy.GOLDGrammar) = maybe {
-    let! startSymbol =
-        x._LALR
-        |> Seq.tryPick (fun x ->
-            x.Actions
-            |> Map.toSeq
-            |> Seq.tryPick (function | sym, Accept -> Some sym | _ -> None))
-        |> Option.bind wantNonterminal
+    let! startSymbol = x._Productions.ItemUnsafe 0u |> Option.bind (fun x -> wantNonterminal x.Head)
     let! nonTerminalInfoMap =
         portSafeArray portProduction x._Productions
         |> Option.map (Seq.groupBy (fun {Head = x} -> x)

@@ -51,12 +51,10 @@ module PostProcessor =
         let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
         let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
         {new PostProcessor<'result> with
-            member __.Transform token =
-                token.Symbol
-                |> Symbol.tryGetTerminalIndex
-                |> Option.bind transformers.TryFind
-                |> Option.map ((|>) token.Data)
-                |> Option.defaultValue null
+            member __.Transform (sym, pos, data) =
+                match transformers.TryFind(sym.Index) with
+                | Some f -> f.Invoke(pos, data)
+                | None -> null
             member __.Fuse(prod,arguments,output) =
                 match fusers.TryFind prod.Index with
                 | Some f ->

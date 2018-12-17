@@ -6,13 +6,14 @@
 [<RequireQualifiedAccess>]
 /// When the new domain model came out, the EGT reader turned out to be too big to be rewritten.
 /// Therefore, it was decided to use a layer that converts the old grammars to the new format.
-module internal Farkle.Grammar.Legacy.Migration
+module internal Farkle.Grammar.Migration
 
 #nowarn "0x06400000"
 
 open Farkle
 open Farkle.Collections
 open Farkle.Monads.Maybe
+open Farkle.Grammar.Legacy
 open Farkle.Grammar
 open System.Collections.Immutable
 

@@ -84,14 +84,16 @@ module RuntimeFarkle =
     /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
-    let private parseChars {Grammar = g; PostProcessor = pp} fMessage input =
-        let fParse grammar pp fMessage input =
-            let fLALR = LALRParser.LALRStep fMessage grammar pp
+    let private parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
+        let fParse grammar =
+            let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
             let fToken pos token =
                 fMessage <| Message(pos, ParseMessageType.TokenRead token)
                 fLALR pos token
-            Tokenizer.tokenize Error fToken [] grammar pp input
-        g >>= (fun g -> fParse g pp fMessage input |> Result.mapError ParseError)
+            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input
+        rf.Grammar
+        >>= (fParse >> Result.mapError ParseError)
+        |> Result.map (fun x -> x :?> 'TResult)
 
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.

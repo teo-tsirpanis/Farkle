@@ -14,12 +14,6 @@ open FsCheck
 open System.Collections.Generic
 open System.Collections.Immutable
 
-let symbolGen = gen {
-    let! name = Arb.generate
-    let! symbolType = Gen.elements [Symbol.Nonterminal; Terminal]
-    return symbolType name
-}
-
 let productionGen = gen {
     let! index = Arb.generate
     let! head = Arb.generate
@@ -69,7 +63,6 @@ let rangeMapGen() = gen {
 }
 
 type Generators =
-    static member Symbol() = Arb.fromGen symbolGen
     static member Production() = Arb.fromGen productionGen
     static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen

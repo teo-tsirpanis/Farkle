@@ -80,7 +80,7 @@ let TheRuntimeFarkle =
     // even if they are listed below.
     let transformers =
         [
-            Transformer.create Symbol.Number Convert.ToInt32
+            Transformer.create Symbol.Number <| C Int32.Parse
         ]
     // The fusers merge the parts of a production into one object of your desire.
     // Do not delete anything here, or the post-processor will fail.

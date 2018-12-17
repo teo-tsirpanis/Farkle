@@ -39,7 +39,7 @@
     <Compile Include="Grammar/EGTTypes.fs" />
     <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypesLegacy.fs" />
-    <Compile Include="Grammar/GrammarTypes2.fs" />
+    <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/GrammarDomainMigration.fs" />
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />

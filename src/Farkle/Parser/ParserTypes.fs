@@ -61,17 +61,23 @@ type ParseErrorType =
     | LexicalError of char
     /// A symbol was read, while some others were expected.
     | SyntaxError of expected: ExpectedSymbol Set * actual: ExpectedSymbol
-    /// Unexpected end of input.
-    | GroupError
+    /// A group was read, but cannot be nested on top of the previous one.
+    | CannotNestGroups of Group * Group
+    /// A group did end, but outside of any group.
+    | UnexpectedGroupEnd of GroupEnd
+    /// Unexpected end of input while being inside a group.
+    | UnexpectedEndOfInput of Group
     /// Internal error. This is a bug.
     | InternalError of InternalError
     override x.ToString() =
         match x with
-        | LexicalError x -> sprintf "Cannot recognize token: %c" x
+        | LexicalError x -> sprintf "Cannot recognize character: %c" x
         | SyntaxError (expected, actual) ->
             let expected = expected |> Seq.map string |> String.concat ", "
             sprintf "Found %O, while expecting one of the following tokens: %O" actual expected
-        | GroupError -> "Unexpected end of input"
+        | CannotNestGroups(g1, g2) -> sprintf "Group %O cannot be nested inside %O" g1 g2
+        | UnexpectedGroupEnd ge -> sprintf "%O was encountered outside of any group." ge
+        | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside a %s." g.Name
         | InternalError x -> sprintf "Internal error: %A. This is most probably a bug. If you see this error, please file an issue on GitHub." x
 
 /// A log message that contains a position it was encountered.

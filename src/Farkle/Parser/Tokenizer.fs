@@ -90,13 +90,18 @@ module Tokenizer =
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, consume the token, and continue.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
-                when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs ->
                 let tokGroup = SafeArray.retrieve groups tokGroupIdx
-                consume input tok
-                impl ((tok, tokGroup) :: gs) fTokenS
+                if gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx then
+                    consume input tok
+                    impl ((tok, tokGroup) :: gs) fTokenS
+                // But if a group starts inside a group that cannot be nested at,
+                else
+                    // it is an error.
+                    // I can call gs.Head, because the group stack cannot be empty here.
+                    fError <| ParseErrorType.CannotNestGroups(tokGroup, snd gs.Head)
             // We are inside a group, and this new token is going to end it.
-            // Depending on the group's definition, the end symbol might be kept.
+            // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
                 when poppedGroup.End = gSym ->
                 let popped =
@@ -114,13 +119,11 @@ module Tokenizer =
                 | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs) fTokenS
             // If input ends outside of a group, it's OK.
             | None, [] -> fToken input.Position None
-            // If a group starts inside a group that cannot be nested at,
-            | Some (Ok (Choice3Of4 _, _)), _
-            // or a group end symbol is encountered but does not actually end the group,
-            | Some (Ok (Choice4Of4 _, _)), _
+            // If a group end symbol is encountered but outside of any group,
+            | Some (Ok (Choice4Of4 ge, _)), [] -> fError <| ParseErrorType.UnexpectedGroupEnd ge
             // or input ends while we are inside a group,
-            | None, _ :: _ -> fError ParseErrorType.GroupError // then it's an error.
-            // We found an unrecognized symbol while outside a group. This is an error.
+            | None, (_, g) :: _ -> fError <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
+            // We found an unrecognized symbol while being outside a group. This is an error.
             | Some (Error x), [] -> fError <| ParseErrorType.LexicalError x
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->

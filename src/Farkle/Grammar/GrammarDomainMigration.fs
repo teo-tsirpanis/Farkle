@@ -20,7 +20,11 @@ let wantTerminal = function | Legacy.Terminal(idx, name) -> Some <| Terminal(idx
 let wantNonterminal = function | Legacy.Nonterminal(idx, name) -> Some <| Nonterminal(idx, name) | _ -> None
 let wantNoise = function | Legacy.Noise name -> Some <| Noise name | _ -> None
 let wantGroupStart = function | Legacy.GroupStart(groupIdx, (_, name)) -> Some <| GroupStart(name, groupIdx.ReInterpret()) | _ -> None
-let wantGroupEnd = function | Legacy.GroupEnd(_, name) -> Some <| GroupEnd name | _ -> None
+let wantGroupEnd =
+    function
+    | Legacy.GroupEnd(_, name) -> name |> GroupEnd |> Choice1Of2 |> Some
+    | Legacy.Terminal(idx, name) -> Terminal(idx, name) |> Choice2Of2 |> Some
+    | _ -> None
 
 let wantProductionHandle =
     function

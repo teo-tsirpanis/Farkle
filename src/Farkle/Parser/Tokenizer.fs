@@ -18,6 +18,13 @@ module Tokenizer =
 
     type private TokenizerState = (CharSpan * Group) list
 
+    let private (|CanEndGroup|_|) x =
+        match x with
+        | Choice1Of4 term -> Some <| Choice2Of2 term
+        | Choice2Of4 _
+        | Choice3Of4 _ -> None
+        | Choice4Of4 groupEnd -> Some <| Choice1Of2 groupEnd
+
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
         let newToken sym v = (sym, pinSpan v) |> Ok |> Some
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
@@ -90,7 +97,7 @@ module Tokenizer =
                 impl ((tok, tokGroup) :: gs) fTokenS
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, the end symbol might be kept.
-            | Some (Ok (Choice4Of4 gSym, tok)), (popped, poppedGroup) :: xs
+            | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
                 when poppedGroup.End = gSym ->
                 let popped =
                     match poppedGroup.EndingMode with

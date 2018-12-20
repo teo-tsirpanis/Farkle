@@ -65,7 +65,6 @@ module Tokenizer =
     /// 6. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
     let tokenize fError fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} (pp: PostProcessor<_>) (input: CharStream) =
         let fError msg = Message (input.Position, msg) |> fError
-        // let (@<) src dataToAdvance = {src with DraftData = extendSpans src.DraftData dataToAdvance}
         let rec impl (gs: TokenizerState) fTokenS =
             let fToken pos t =
                 match fToken pos t fTokenS with
@@ -90,16 +89,10 @@ module Tokenizer =
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, consume the token, and continue.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs ->
-                let tokGroup = SafeArray.retrieve groups tokGroupIdx
-                if gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx then
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
+                when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     consume input tok
-                    impl ((tok, tokGroup) :: gs) fTokenS
-                // But if a group starts inside a group that cannot be nested at,
-                else
-                    // it is an error.
-                    // I can call gs.Head, because the group stack cannot be empty here.
-                    fError <| ParseErrorType.CannotNestGroups(tokGroup, snd gs.Head)
+                    impl ((tok, groups.[tokGroupIdx]) :: gs) fTokenS
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
@@ -119,12 +112,6 @@ module Tokenizer =
                 | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs) fTokenS
             // If input ends outside of a group, it's OK.
             | None, [] -> fToken input.Position None
-            // If a group end symbol is encountered but outside of any group,
-            | Some (Ok (Choice4Of4 ge, _)), [] -> fError <| ParseErrorType.UnexpectedGroupEnd ge
-            // or input ends while we are inside a group,
-            | None, (_, g) :: _ -> fError <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
-            // We found an unrecognized symbol while being outside a group. This is an error.
-            | Some (Error x), [] -> fError <| ParseErrorType.LexicalError x
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
                 let data =
@@ -138,4 +125,17 @@ module Tokenizer =
                         consumeOne input
                         extendSpanByOne input tok2
                 impl ((data, g2) :: xs) fTokenS
+            // If a group end symbol is encountered but outside of any group,
+            | Some (Ok (Choice4Of4 ge, _)), [] -> fError <| ParseErrorType.UnexpectedGroupEnd ge
+            // or input ends while we are inside a group,
+            | None, (_, g) :: _ -> fError <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
+            // But if a group starts inside a group that cannot be nested at, it is an error.
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), _)), ((_, g) :: _) ->
+                fError <| ParseErrorType.CannotNestGroups(groups.[tokGroupIdx], g)
+            /// If a group starts while being outside of any group...
+            /// Wait a minute! Haven't we already checked this case?
+            /// Ssh, don't tell the compiler. She doesn't know about it. 😊
+            | Some (Ok (Choice3Of4 _, _)), [] -> failwith "Impossible case: The group stack was already checked to be empty."
+            // We found an unrecognized symbol while being outside a group. This is an error.
+            | Some (Error x), [] -> fError <| ParseErrorType.LexicalError x
         impl [] fTokenS0

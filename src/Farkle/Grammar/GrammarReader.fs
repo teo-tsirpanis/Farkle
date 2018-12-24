@@ -10,6 +10,7 @@ open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.Legacy
 open Farkle.Monads.Maybe
+open Farkle.Monads.Either
 open System
 open System.Collections.Immutable
 

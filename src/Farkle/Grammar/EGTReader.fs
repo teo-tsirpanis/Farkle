@@ -6,6 +6,7 @@
 namespace Farkle.Grammar.GOLDParser
 
 open Farkle
+open Farkle.Monads.Either
 open System.Buffers
 open System.IO
 open System.Text

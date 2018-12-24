@@ -8,14 +8,15 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Monads
 open Farkle.PostProcessor
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 
-    open State
+    let private mapState f m (s: 'c) =
+        let (x, s: 'c) = m s
+        (f x, s)
 
     /// Parses and post-processes tokens based on a `Grammar`.
     /// This function accepts:
@@ -46,7 +47,7 @@ module LALRParser =
                     None, (nextState, data) :: stack
                 | None -> ShiftOnEOF |> internalError, stack
             | Some (LALRAction.Reduce productionToReduce), stack ->
-                let tokens, stack = List.popStack productionToReduce.Handle.Length <!> (Seq.map snd >> Array.ofSeq) <| stack
+                let tokens, stack = List.popStack productionToReduce.Handle.Length |> mapState (Seq.map snd >> Array.ofSeq) <| stack
                 let nextState = getCurrentState stack
                 let nextAction = nextState.GotoActions.TryFind productionToReduce.Head
                 match nextAction with

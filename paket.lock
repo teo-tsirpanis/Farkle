@@ -1621,8 +1621,6 @@ NUGET
     FsCheck (2.13)
       FSharp.Core (>= 4.2.3)
     FSharp.Core (4.5.4)
-    FSharpx.Collections (1.17)
-      FSharp.Core
     Microsoft.CodeAnalysis.Analyzers (2.6.2)
     Microsoft.CodeAnalysis.Common (2.10)
       Microsoft.CodeAnalysis.Analyzers (>= 2.6.1)

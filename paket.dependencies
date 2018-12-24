@@ -61,5 +61,4 @@ group Test
   nuget BenchmarkDotNet
   nuget Expecto
   nuget Expecto.FsCheck
-  nuget FSharpx.Collections
   nuget System.Collections.Immutable

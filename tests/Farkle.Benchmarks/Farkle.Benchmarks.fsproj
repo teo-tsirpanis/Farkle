@@ -7,7 +7,6 @@
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RandomAccessBenchmark.fs" />
     <Compile Include="InceptionBenchmark.fs" />
     <Compile Include="SerializationBenchmark.fs" />
     <Compile Include="Program.fs" />

@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Generators.fs" />
     <Compile Include="RangeMapTests.fs" />
+    <Compile Include="CharStreamTests.fs" />
     <Compile Include="GrammarTests.fs" />
     <Compile Include="ParserTests.fs" />
     <Compile Include="ASTTests.fs" />

@@ -11,6 +11,7 @@ open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open FsCheck
+open System
 open System.Collections.Generic
 open System.Collections.Immutable
 
@@ -62,12 +63,19 @@ let rangeMapGen() = gen {
     return x.Value
 }
 
+type CS = CS of CharStream * length: uint32
+
 type Generators =
     static member Production() = Arb.fromGen productionGen
     static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
+    static member CS() =
+        Arb.generate<string>
+        |> Gen.filter (String.length >> ((<>) 0))
+        |> Gen.map (fun x -> CS (CharStream.ofReadOnlyMemory <| x.AsMemory(), uint32 x.Length))
+        |> Arb.fromGen
 
 let testProperty x = 
     testPropertyWithConfig

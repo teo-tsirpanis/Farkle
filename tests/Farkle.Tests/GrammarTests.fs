@@ -10,7 +10,7 @@ open Expecto.Logging
 open Farkle
 open Farkle.Grammar.GOLDParser
 
-let logger = Log.create "Farkle tests"
+let logger = Log.create "Grammar tests"
 
 [<Tests>]
 let tests =

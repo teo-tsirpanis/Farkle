@@ -95,10 +95,15 @@ module RuntimeFarkle =
         >>= (fParse >> Result.mapError ParseError)
         |> Result.map (fun x -> x :?> 'TResult)
 
+    [<CompiledName("ParseMemory")>]
+    /// Parses and post-processes a `ReadOnlyMemory` of characters.
+    /// This function also accepts a custom parse message handler.
+    let parseMemory rf fMessage input = input |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
+
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage (inputString: string) = inputString.AsMemory() |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
+    let parseString rf fMessage (inputString: string) = inputString.AsMemory() |> parseMemory rf fMessage
 
     /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily loaded.
     /// This function also accepts a custom parse message handler.

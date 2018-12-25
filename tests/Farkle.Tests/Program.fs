@@ -1,10 +1,9 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿// Copyright (c) 2018 Theodore Tsirpanis
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
 
-open System
 open Expecto
-open FsCheck
 
 [<EntryPoint>]
-let main argv = 
-    Arb.register<Farkle.Tests.Generators.Generators>() |> ignore
-    runTestsInAssembly defaultConfig argv
+let main argv = runTestsInAssembly defaultConfig argv

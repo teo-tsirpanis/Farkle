@@ -107,7 +107,7 @@ module CharStream =
         else
             failwithf "Trying to consume the character span %O, from a stream that was left at %d." csp cs.StartingIndex
 
-    /// Creates an arbitrary object out of the characters at the given `CharSpan`at the returned `Position`.
+    /// Creates an arbitrary object out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
         match cs.Source with
@@ -116,8 +116,22 @@ module CharStream =
             let length = idxEnd - idxStart + 1UL |> int
             let span = sb.Span.Slice(int idxStart, length)
             fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
-        | StaticBlock sb ->
+        | StaticBlock _ ->
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
+
+    /// Creates a string out of the characters at the given `CharSpan` at the returned `Position`.
+    /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
+    /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
+    let generateString cs c_span =
+        let (s, pos) =
+            unpinSpanAndGenerate
+                null
+                (CharStreamCallback(fun _ _ data -> box <| data.ToString()))
+                cs
+                c_span // Created by cable
+        s :?> string, pos
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     let ofReadOnlyMemory mem = {Source = StaticBlock mem; StartingIndex = 0UL; _Position = Position.initial}
+
+    let ofString (x: string) = x.AsMemory() |> ofReadOnlyMemory

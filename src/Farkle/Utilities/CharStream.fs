@@ -91,28 +91,37 @@ module CharStream =
             failwithf "Trying to extend a character span that ends at %d, with one that starts at %d." end1 start2
 
     /// Advances a `CharStream`'s position by one character.
-    let consumeOne cs =
+    /// These characters will not be shown again on new `CharStreamView`s.
+    /// Calling this function does not affect the pinned `CharSpan`s.
+    /// Optionally, this character can be marked to be released from memory.
+    let consumeOne doUnpin cs =
         match cs.Source with
         | StaticBlock sb when cs.Position.Index < uint64 sb.Length ->
+            if doUnpin then
+                if cs.StartingIndex = cs.Position.Index then
+                    cs.StartingIndex <- cs.StartingIndex + 1UL
+                else
+                    failwithf "Cannot unpin a character from a stream with current and starting index being %d and %d (not equal)." cs.Position.Index cs.StartingIndex
             cs._Position <- Position.advance sb.Span.[int cs.Position.Index] cs._Position
         | StaticBlock _ -> failwith "Cannot consume a character stream past its end."
 
     /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
-    let consume (cs: CharStream) (CharSpan (idxStart, idxEnd) as csp) =
+    /// Optionally, these characters can be marked to be released from memory.
+    let consume doUnpin (cs: CharStream) (CharSpan (idxStart, idxEnd) as csp) =
         if cs.Position.Index = idxStart then
             for i = int idxStart to int idxEnd do
-                consumeOne cs
+                consumeOne doUnpin cs
         else
-            failwithf "Trying to consume the character span %O, from a stream that was left at %d." csp cs.StartingIndex
+            failwithf "Trying to consume the character span %O, from a stream that was left at %d." csp cs.Position.Index
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
         match cs.Source with
-        | StaticBlock sb when uint64 sb.Length > idxEnd ->
-            cs.StartingIndex <- idxEnd
+        | StaticBlock sb when cs.StartingIndex = idxStart && uint64 sb.Length > idxEnd ->
+            cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
             let span = sb.Span.Slice(int idxStart, length)
             fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
@@ -122,7 +131,7 @@ module CharStream =
     /// Creates a string out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
-    let generateString cs c_span =
+    let unpinSpanAndGenerateString cs c_span =
         let (s, pos) =
             unpinSpanAndGenerate
                 null

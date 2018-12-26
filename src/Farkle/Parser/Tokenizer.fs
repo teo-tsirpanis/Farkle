@@ -25,6 +25,18 @@ module Tokenizer =
         | Choice3Of4 _ -> None
         | Choice4Of4 groupEnd -> Some <| Choice1Of2 groupEnd
 
+    /// Returns whether to unpin the character(s) encountered by the tokenizer while being inside a group.
+    /// If the group stack's bottom-most container symbol is a noisy one, then it is unpinned the soonest it is consumed.
+    let private shouldUnpinCharactersInsideGroup {ContainerSymbol = g} groupStack =
+        let g0 = match g with | Choice1Of2 _terminal -> false | Choice2Of2 _noise -> true
+        let rec impl =
+            function
+            | [] -> g0
+            | [(_, {ContainerSymbol = Choice1Of2 _terminal})] -> false
+            | [(_, {ContainerSymbol = Choice2Of2 _noise})] -> true
+            | (_, _) :: gs -> impl gs
+        impl groupStack
+
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
         let newToken sym v = (sym, pinSpan v) |> Ok |> Some
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
@@ -36,12 +48,11 @@ module Tokenizer =
                 | None -> None
             | CSCons(x, xs) ->
                 let newDFA = lookupEdges x currState.Edges
-                let impl = impl xs
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | Some (DFAState.Continue _ as newDFA), lastAccept -> impl newDFA lastAccept
+                | Some (DFAState.Continue _ as newDFA), lastAccept -> impl xs newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl newDFA (Some (acceptSymbol, v))
+                | Some (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl xs newDFA (Some (acceptSymbol, v))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
                 | None, Some (sym, v) -> newToken sym v
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
@@ -78,12 +89,12 @@ module Tokenizer =
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We consume the token, and return it.
             | Some (Ok (Choice1Of4 term, tok)), [] ->
-                consume input tok
+                consume false input tok
                 newToken term tok
             // We found noise outside of any group.
-            // We consume it, and proceed.
+            // We consume it, unpin its characters, and proceed.
             | Some (Ok (Choice2Of4 _noise, tok)), [] ->
-                consume input tok
+                consume true input tok
                 impl [] fTokenS
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
@@ -91,8 +102,9 @@ module Tokenizer =
             // in the group stack, consume the token, and continue.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
-                    consume input tok
-                    impl ((tok, groups.[tokGroupIdx]) :: gs) fTokenS
+                    let g = groups.[tokGroupIdx]
+                    consume (shouldUnpinCharactersInsideGroup g gs) input tok
+                    impl ((tok, g) :: gs) fTokenS
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
@@ -100,7 +112,7 @@ module Tokenizer =
                 let popped =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        consume input tok
+                        consume (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
                         extendSpans popped tok
                     | EndingMode.Open -> popped
                 match xs, poppedGroup.ContainerSymbol with
@@ -115,14 +127,15 @@ module Tokenizer =
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
                 let data =
+                    let doUnpin = shouldUnpinCharactersInsideGroup g2 xs
                     match g2.AdvanceMode, tokenMaybe with
                     // We advance the input by the entire token.
                     | AdvanceMode.Token, Ok (_, data) ->
-                        consume input data
+                        consume doUnpin input data
                         extendSpans tok2 data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, Error _ ->
-                        consumeOne input
+                        consumeOne doUnpin input
                         extendSpanByOne input tok2
                 impl ((data, g2) :: xs) fTokenS
             // If a group end symbol is encountered but outside of any group,

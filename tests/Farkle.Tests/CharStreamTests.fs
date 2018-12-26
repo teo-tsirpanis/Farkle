@@ -29,7 +29,7 @@ let tests =
             match v with
             | CSCons('H', CSCons('e', CSCons('l', CSCons('l', (CSCons('o', _) as vs))))) ->
                 let span = pinSpan vs
-                let s = generateString cs span |> fst
+                let s = unpinSpanAndGenerateString cs span |> fst
                 Expect.equal "Hello" s "First five characters of \"Hello World\" are not the expected ones"
             | _ -> failtest "The character stream does not begin with \"Hello\""
         }
@@ -43,9 +43,9 @@ let tests =
                     | CSCons (_, vs) -> v <- vs
                     | CSNil -> failtestf "Unexpected end of file after %d iterations" n)
                 let span = pinSpan v
-                consume cs span
+                consume false cs span
                 Expect.equal steps (int cs.Position.Index) "An unexpected number of characters was consumed"
-                let s = generateString cs span |> fst
+                let s = unpinSpanAndGenerateString cs span |> fst
                 Expect.equal steps s.Length "The generated string had an unexpected end"
-                Expect.throws (fun () -> generateString cs span |> ignore) "Generating a character span can be done more than once"))
+                Expect.throws (fun () -> unpinSpanAndGenerateString cs span |> ignore) "Generating a character span can be done more than once"))
     ]

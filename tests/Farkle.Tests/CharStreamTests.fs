@@ -6,43 +6,27 @@
 module Farkle.Tests.CharStreamTests
 
 open Expecto
-open Expecto.Logging
-open Farkle.Collections
 open Farkle.Collections.CharStream
 open Farkle.Tests
 open FsCheck
-open System
 
 [<Tests>]
 let tests =
     testList "Character stream tests" [
         testProperty "The first character of a character stream works as expected" (fun (CS(cs, _)) ->
             let c = cs.FirstCharacter
-            let v = CharStream.view cs
-            match v with
-            | CSCons(c2, _) -> c = c2
-            | CSNil -> false)
-
-        test "Taking the first five characters of \"Hello World\" works as expected" {
-            let cs = CharStream.ofReadOnlyMemory <| "Hello World".AsMemory()
-            let v = CharStream.view cs
-            match v with
-            | CSCons('H', CSCons('e', CSCons('l', CSCons('l', (CSCons('o', _) as vs))))) ->
-                let span = pinSpan vs
-                let s = unpinSpanAndGenerateString cs span |> fst
-                Expect.equal "Hello" s "First five characters of \"Hello World\" are not the expected ones"
-            | _ -> failtest "The character stream does not begin with \"Hello\""
-        }
+            let mutable c2 = '\u0640'
+            let mutable idx = getCurrentIndex cs
+            readChar cs &c2 &idx && c = c2)
 
         testProperty "Consuming the a character stream by a specified number of characters works as expected"
             (fun (CS(cs, length)) steps -> (uint32 steps < length && steps <> 0) ==> (fun () ->
-                let mutable v = CharStream.view cs
-                [1 .. steps - 1]
-                |> List.iter (fun n ->
-                    match v with
-                    | CSCons (_, vs) -> v <- vs
-                    | CSNil -> failtestf "Unexpected end of file after %d iterations" n)
-                let span = pinSpan v
+                let mutable idx = getCurrentIndex cs
+                let mutable c = '\u0549'
+                for n = 1 to steps - 1 do
+                    if not <| readChar cs &c &idx then
+                        failtestf "Unexpected end of file after %d iterations" n
+                let span = pinSpan cs idx
                 consume false cs span
                 Expect.equal steps (int cs.Position.Index) "An unexpected number of characters was consumed"
                 let s = unpinSpanAndGenerateString cs span |> fst

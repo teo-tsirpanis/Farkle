@@ -38,26 +38,28 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
-        let newToken sym v = (sym, pinSpan v) |> Ok |> Some
+        let newToken sym idx = (sym, pinSpan input idx) |> Ok |> Some
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
-        let rec impl v (currState: DFAState) lastAccept =
-            match v with
-            | CSNil ->
+        let rec impl idx (currState: DFAState) lastAccept =
+            let mutable x = '\u0103'
+            let mutable idxNext = idx
+            match readChar input &x &idxNext with
+            | false ->
                 match lastAccept with
-                | Some (sym, v) -> newToken sym v
+                | Some (sym, idx) -> newToken sym idx
                 | None -> None
-            | CSCons(x, xs) ->
+            | true ->
                 let newDFA = lookupEdges x currState.Edges
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | Some (DFAState.Continue _ as newDFA), lastAccept -> impl xs newDFA lastAccept
+                | Some (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl xs newDFA (Some (acceptSymbol, v))
+                | Some (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl idxNext newDFA (Some (acceptSymbol, idx))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | None, Some (sym, v) -> newToken sym v
+                | None, Some (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
                 | None, None -> input.FirstCharacter |> Error |> Some
-        impl (view input) initialState None
+        impl (getCurrentIndex input) initialState None
 
     /// Breaks a `CharStream` into a series of post-processed tokens, according to the given `Grammar`.
     /// This function is pretty complicated, so let's enumerate the parameters' purpose.

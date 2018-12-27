@@ -38,11 +38,11 @@ with
     /// The stream's character at its current position.
     member x.FirstCharacter = match x.Source with StaticBlock sb -> sb.Span.[int x.Position.Index]
 
-/// A type that gives a `CharStream` an F# `list`-like interface.
-type CharStreamView = private CharStreamView of stream: CharStream * idx: uint64
+/// A type pointing to a character in a character stream.
+type [<Struct>] CharStreamIndex = private CharStreamIndex of uint64
 with
-    /// The zero-based index the view is in, starting from the beginning of the stream.
-    member x.Index = match x with | CharStreamView (_, idx) -> idx
+    /// The zero-based index the index is in, starting from the beginning of the stream.
+    member x.Index = match x with | CharStreamIndex idx -> idx
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
 /// It accepts a generic type (a `Symbol` usually), the `Position` of the symbol, and a
@@ -57,23 +57,24 @@ module CharStream =
     open LanguagePrimitives
     open Operators.Checked
 
-    /// Creates a `CharStreamView` from a `CharStream`.
-    let view cs = CharStreamView (cs, cs.Position.Index)
+    /// Creates a `CharStreamIndex` from a `CharStream` that points to its current position.
+    let getCurrentIndex (cs: CharStream) = CharStreamIndex cs.Position.Index
 
-    /// An active pattern to access a `CharStreamView` as if it was an F# `list`.
-    let (|CSCons|CSNil|) (CharStreamView (cs, idx)) =
+    /// Reads the `idx`th character of `cs`, places it in `c` and returns `true`, if there are more characters left to be read.
+    /// Otherwise, returns `false`.
+    let readChar cs (c: outref<_>) (idx: byref<CharStreamIndex>) =
         match cs.Source with
-        | StaticBlock sb when idx < cs.StartingIndex ->
-            failwithf "Trying to view the %dth character of a stream, while the first %d have already been read." idx cs.StartingIndex
-        | StaticBlock sb when idx < uint64 sb.Length ->
-            CSCons(sb.Span.[int idx], CharStreamView(cs, idx + GenericOne))
-        | StaticBlock _ -> CSNil
+        | _ when idx.Index < cs.StartingIndex ->
+            failwithf "Trying to view the %dth character of a stream, while the first %d have already been read." idx.Index cs.StartingIndex
+        | StaticBlock sb when idx.Index < uint64 sb.Length ->
+            c <- sb.Span.[int idx.Index]
+            idx <- idx.Index + GenericOne |> CharStreamIndex
+            true
+        | StaticBlock _ -> false
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
-    let pinSpan (CharStreamView(cs, idxTo)) =
-        match cs.Source with
-        | StaticBlock _ -> CharSpan (cs.Position.Index, idxTo)
+    let pinSpan {_Position = {Index = idxFrom}} (CharStreamIndex idxTo) = CharSpan (idxFrom, idxTo)
 
     /// Creates a new `CharSpan` that spans one character more than the given one.
     /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.

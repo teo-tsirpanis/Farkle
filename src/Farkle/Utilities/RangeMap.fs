@@ -30,19 +30,22 @@ module RangeMap =
     /// Looks up an element in a `RangeMap`, returning its corresponding value if it exists.
     [<CompiledName("TryFind")>]
     let tryFind k (RangeMap arr) =
-        let idx =
-            // .NET's binary search function returns special integer values depending on the outcome.
-            match Array.BinarySearch(arr, (k, k, Unchecked.defaultof<_>), secondComparer) with
-            // If it is positive, then an exact element was found in the array.
-            | x when x >= 0 -> x
-            // If it is the bitwise complement of the array's length, the requested element
-            // is larger than the largest element in the array. In this case, we return the array's last element.
-            | x when ~~~x = arr.Length -> arr.Length - 1
-            // If it is negative, its bitwise complement signifies the next nearest element to be found.
-            | x -> ~~~ x
-        match Array.tryItem idx arr with
-        | Some((k1, k2, x)) when smallerOrEqual k1 k && smallerOrEqual k k2 -> Some x
-        | None | Some _ -> None
+        if Array.isEmpty arr then
+            None
+        else
+            let idx =
+                // .NET's binary search function returns special integer values depending on the outcome.
+                match Array.BinarySearch(arr, (k, k, Unchecked.defaultof<_>), secondComparer) with
+                // If it is positive, then an exact element was found in the array.
+                | x when x >= 0 -> x
+                // If it is the bitwise complement of the array's length, the requested element
+                // is larger than the largest element in the array. In this case, we return the array's last element.
+                | x when ~~~x = arr.Length -> arr.Length - 1
+                // If it is negative, its bitwise complement signifies the next nearest element to be found.
+                | x -> ~~~ x
+            match arr.[idx] with
+            | (k1, k2, x) when smallerOrEqual k1 k && smallerOrEqual k k2 -> Some x
+            | _ -> None
 
     [<CompiledName("Map")>]
     /// Applies a function to each of the items of a `RangeMap`.

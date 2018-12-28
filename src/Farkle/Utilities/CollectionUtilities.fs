@@ -6,6 +6,7 @@
 namespace Farkle.Collections
 
 /// Functions to work with the standard F# `list`.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module List =
 
     /// Returns a list with all its elements existing.

@@ -8,6 +8,7 @@ namespace Farkle.PostProcessor
 open Farkle
 open Farkle.Grammar
 open System
+open System.Collections.Generic
 
 /// Post-processors convert strings of a grammar into more meaningful
 /// types for the library that uses the parser.
@@ -41,24 +42,72 @@ module PostProcessor =
                 output <- items |> Seq.cast |> List.ofSeq |> curry AST.Nonterminal prod
                 true}
 
+    let private typeCheck<'result> (grammar: Grammar) transformers fusers =
+        let checkTerminal (Terminal (idx, _)) (typ: Type) =
+            let fCheck =
+                let map =
+                    transformers
+                    |> Seq.map (fun {SymbolIndex = sym; OutputType = typ} -> sym, typ)
+                    |> Map.ofSeq
+                map.TryFind >> Option.defaultValue typeof<obj>
+            typ.IsAssignableFrom(fCheck idx)
+        let ntDict = Dictionary()
+        let rec checkNonterminal (Nonterminal (idx, _) as nont) (typ: Type) =
+            match ntDict.ContainsKey idx with
+            | true -> typ.IsAssignableFrom(ntDict.[idx])
+            | false ->
+                let productions =
+                    grammar.GetNonterminalInfo nont
+                    |> Seq.sortBy (fun x -> x.Index)
+                    // |> Seq.cache
+                let fusers =
+                    fusers
+                    |> Seq.filter (fun {ProductionIndex = idx2} -> idx = idx2)
+                    |> Seq.sortBy (fun x -> x.ProductionIndex)
+                    // |> Seq.cache
+                let indicesMatch =
+                    Seq.length productions = Seq.length fusers
+                    && (productions, fusers) ||> Seq.forall2 (fun prod f -> prod.Index = f.ProductionIndex)
+                let outputType =
+                    fusers
+                    |> Seq.map (fun {OutputType = x} -> x)
+                    |> Seq.distinct
+                    |> Array.ofSeq
+                match outputType with
+                | [|outputType|] when indicesMatch ->
+                    ntDict.Add(idx, outputType)
+                    let fCheckPair {Handle = prod} {InputTypes = types} =
+                        let fCheckSymbol sym typ =
+                            match sym with
+                            | Choice1Of2 term -> checkTerminal term typ
+                            | Choice2Of2 nont -> checkNonterminal nont typ
+                        Seq.forall2 fCheckSymbol prod types
+                    Seq.forall2 fCheckPair productions fusers
+                | _ -> false
+        checkNonterminal grammar.StartSymbol typeof<'result>
+
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
     // TODO: Add type checking.
     // This is an extremely dangerous API, where any notion of
     // static typing is swept under the mat of the `Object` type.
     // My proposal is to make this function fallible, by checking
     // whether types match each other before the post-processor gets created.
-    let ofSeq<'result> transformers fusers =
-        let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
-        let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
-        {new PostProcessor<'result> with
-            member __.Transform (sym, pos, data) =
-                match transformers.TryFind(sym.Index) with
-                | Some f -> f.Invoke(pos, data)
-                | None -> null
-            member __.Fuse(prod,arguments,output) =
-                match fusers.TryFind prod.Index with
-                | Some f ->
-                    output <- f arguments
-                    not <| isNull output
-                | None -> false
-        }
+    let ofSeq<'result> transformers fusers grammar =
+        if typeCheck grammar transformers fusers then
+            let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
+            let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
+            Some {
+                new PostProcessor<'result> with
+                member __.Transform (sym, pos, data) =
+                    match transformers.TryFind(sym.Index) with
+                    | Some f -> f.Invoke(pos, data)
+                    | None -> null
+                member __.Fuse(prod,arguments,output) =
+                    match fusers.TryFind prod.Index with
+                    | Some f ->
+                        output <- f arguments
+                        not <| isNull output
+                    | None -> false
+            }
+        else
+            None

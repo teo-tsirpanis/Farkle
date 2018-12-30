@@ -77,4 +77,6 @@ module Result =
     let isError x = match x with | Ok _ -> false | Error _ -> true
 
     /// A shorthand operator for `Result.bind`.
-    let inline (>>=) m f = Result.bind f m
+    let inline ( >>= ) m f = Result.bind f m
+
+    let inline ( <*> ) f m = apply f m

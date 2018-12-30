@@ -20,22 +20,27 @@ type FarkleError =
     | ParseError of Message<ParseErrorType>
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
+    /// There was an error while the post-processor _was being constructed_.
+    | PostProcessorError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x
         | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
+        | PostProcessorError -> """Error while creating the post-processor.
+Some fusers might be missing, or there were type mismatches in the functions of the fusers or the transformers.
+Check the post-processor's configuration."""
 
-/// A reusable parser __and post-processor__, created for a specific grammar, and returning
-/// a specific object that best describes an expression of the language of this grammar.
+/// A reusable parser and post-processor, created for a specific grammar, and returning
+/// a specific type of object that best describes an expression of the language of this grammar.
 /// This is the highest-level API, and the easiest-to-use one.
-/// 10: BTW, Farkle means: "FArkle Recognizes Known Languages Easily".
-/// 20: And "FArkle" means: (GOTO 10) 😁
-/// 30: I guess you can't read this line. 😛
 [<NoComparison; NoEquality>]
-type RuntimeFarkle<'TResult> = private {
+type RuntimeFarkle<'TResult> = {
     Grammar: Result<Grammar,FarkleError>
-    PostProcessor: PostProcessor<'TResult>
+    PostProcessor: PostProcessor<'TResult> option
 }
+with
+    /// Returns both the grammar and the post-processor the RuntimeFarkle, if they were created without errors.
+    member x.GrammarAndPostProcessor = (Ok <| fun x1 x2 -> x1, x2) <*> x.Grammar <*> failIfNone PostProcessorError x.PostProcessor
 
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
@@ -47,52 +52,48 @@ module RuntimeFarkle =
     /// Returns the `PostProcessor` within the `RuntimeFarkle`.
     let internal postProcessor {PostProcessor = x} = x
 
-    let private createMaybe postProcessor grammar =
+    let private createMaybe transformers fusers grammar =
         {
             Grammar = grammar
-            PostProcessor = postProcessor
+            PostProcessor = tee (PostProcessor.ofSeq transformers fusers) none grammar
         }
 
     /// Changes the post-processor of a `RuntimeFarkle`.
     [<CompiledName("ChangePostProcessor")>]
-    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = pp}
-
-    /// Creates a `RuntimeFarkle`.
-    [<CompiledName("Create")>]
-    let create postProcessor grammar = createMaybe postProcessor (Ok grammar)
+    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = Some pp}
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromEGTFile")>]
-    let ofEGTFile postProcessor fileName  =
+    let ofEGTFile transformers fusers fileName  =
         fileName
         |> EGT.ofFile
         |> Result.mapError EGTReadError
-        |> createMaybe postProcessor
+        |> createMaybe transformers fusers
 
     /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
     /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String postProcessor x =
+    let ofBase64String transformers fusers x =
         x
         |> EGT.ofBase64String
         |> Result.mapError EGTReadError
-        |> createMaybe postProcessor
+        |> createMaybe transformers fusers
 
     /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let private parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
-        let fParse grammar =
-            let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
+        let fParse grammar pp =
+            let fLALR = LALRParser.LALRStep fMessage grammar pp
             let fToken pos token =
                 fMessage <| Message(pos, ParseMessageType.TokenRead token)
                 fLALR pos token
-            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input
-        rf.Grammar
-        >>= (fParse >> Result.mapError ParseError)
+            Tokenizer.tokenize Error fToken [] grammar pp input
+        rf.GrammarAndPostProcessor
+        >>= (uncurry fParse >> Result.mapError ParseError)
         |> Result.map (fun x -> x :?> 'TResult)
 
     [<CompiledName("ParseMemory")>]

@@ -12,6 +12,7 @@ open Farkle.Parser
 open System.Text
 open System.Runtime.InteropServices
 open Farkle.PostProcessor
+open System.Security
 
 [<MemoryDiagnoser>]
 /// This benchmark measures the performance of Farkle (in both lazy and eager mode),
@@ -20,11 +21,11 @@ open Farkle.PostProcessor
 type InceptionBenchmark() =
     let isWindows64 = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && RuntimeInformation.OSArchitecture = Architecture.X64
 
-    [<DllImport("goldparser_win64.dll", CallingConvention = CallingConvention.StdCall)>]
+    [<DllImport("goldparser_win64.dll", CallingConvention = CallingConvention.StdCall); SuppressUnmanagedCodeSecurity>]
     static extern int ParseFile([<MarshalAs(UnmanagedType.LPStr)>] string _EGTFile, [<MarshalAs(UnmanagedType.LPStr)>] string _InputFile)
 
     member inline __.doIt lazyLoad =
-        RuntimeFarkle.ofEGTFile PostProcessor.ast "inception.egt"
+        RuntimeFarkle.ofEGTFile [] [] "inception.egt"
         |> (fun g -> RuntimeFarkle.parseFile g ignore lazyLoad Encoding.UTF8 "inception.grm")
         |> returnOrFail
 

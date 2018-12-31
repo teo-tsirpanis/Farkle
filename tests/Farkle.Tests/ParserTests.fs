@@ -16,7 +16,7 @@ let logger = Log.create "Parser tests"
 let tests =
     testList "Parser tests" [
         test "A simple mathematical expression can be parsed" {
-            let rf = RuntimeFarkle.ofEGTFile PostProcessor.syntaxCheck "simple.egt" 
+            let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.syntaxCheck "simple.egt"
             let result = RuntimeFarkle.parseString rf (string >> Message.eventX >> logger.info) "111*555"
             match result with
             | Ok () -> ()

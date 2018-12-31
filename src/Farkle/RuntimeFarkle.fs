@@ -34,7 +34,7 @@ Check the post-processor's configuration."""
 /// a specific type of object that best describes an expression of the language of this grammar.
 /// This is the highest-level API, and the easiest-to-use one.
 [<NoComparison; NoEquality>]
-type RuntimeFarkle<'TResult> = {
+type RuntimeFarkle<'TResult> = private {
     Grammar: Result<Grammar,FarkleError>
     PostProcessor: PostProcessor<'TResult> option
 }
@@ -45,42 +45,41 @@ with
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 
-    /// Returns the `GOLDParser` within the `RuntimeFarkle`.
-    /// This function is useful to access the lower-level APIs, for more advanced cases of parsing.
-    let internal grammar {Grammar = x} = x
-
-    /// Returns the `PostProcessor` within the `RuntimeFarkle`.
-    let internal postProcessor {PostProcessor = x} = x
-
-    let private createMaybe transformers fusers grammar =
+    let private createMaybe<'TResult> transformers fusers grammar =
         {
             Grammar = grammar
-            PostProcessor = tee (PostProcessor.ofSeq transformers fusers) none grammar
+            PostProcessor = tee (PostProcessor.ofSeq<'TResult> transformers fusers) none grammar
         }
 
     /// Changes the post-processor of a `RuntimeFarkle`.
     [<CompiledName("ChangePostProcessor")>]
     let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = Some pp}
 
-    /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
-    /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
+    /// Creates a `RuntimeFarkle` from the given post-processor, from the .egt file at the given path.
+    [<CompiledName("CreateFromPostProcessor")>]
+    let createFromPostProcessor pp filename =
+        {
+            Grammar = filename |> EGT.ofFile |> Result.mapError EGTReadError
+            PostProcessor = Some pp
+        }
+
+    /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the .egt file at the given path.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromEGTFile")>]
-    let ofEGTFile transformers fusers fileName  =
+    let ofEGTFile<'TResult> transformers fusers fileName =
         fileName
         |> EGT.ofFile
         |> Result.mapError EGTReadError
-        |> createMaybe transformers fusers
+        |> createMaybe<'TResult> transformers fusers
 
-    /// Creates a `RuntimeFarkle` from the GOLD Parser grammar file that is located at the given path.
-    /// Other than that, this function works just like its `RuntimeGrammar` counterpart.
+    /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the given Base-64 representation of an .egt file.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String transformers fusers x =
+    let ofBase64String<'TResult> transformers fusers x =
         x
         |> EGT.ofBase64String
         |> Result.mapError EGTReadError
-        |> createMaybe transformers fusers
+        |> createMaybe<'TResult> transformers fusers
 
     /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
@@ -116,7 +115,7 @@ module RuntimeFarkle =
     /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
-    let parseFile rf fMessage doLazyLoad encoding inputFile =
+    let parseFile rf fMessage (_doLazyLoad: bool) encoding inputFile =
         File.ReadAllText(inputFile, encoding) |> parseString rf fMessage
 
     /// Parses and post-processes a string.

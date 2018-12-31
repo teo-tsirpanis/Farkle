@@ -30,7 +30,7 @@ let main argv =
     let showOutput = args.Contains <@ Silent @> |> not
     let lazyLoad = args.TryGetResult <@ LazyLoad @> |> Option.defaultValue true
     let justLoadEGT = args.Contains <@ JustLoadEGT @>
-    let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast egtFile
+    let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast egtFile
     let print x = if showOutput then printfn "%O" x
     if not justLoadEGT then
         let result = RuntimeFarkle.parseFile rf print lazyLoad System.Text.Encoding.UTF8 inputFile

@@ -6,7 +6,10 @@
 namespace Farkle.Collections
 
 open Farkle
+open LanguagePrimitives
+open Operators.Checked
 open System
+open System.IO
 
 /// An continuous range of characters that is
 /// stored by its starting index and length.
@@ -18,31 +21,75 @@ with
     member x.EndingIndex = match x with | CharSpan (_, x) -> x
     override x.ToString() = sprintf "[%d,%d]" x.StartingIndex x.EndingIndex
 
+/// The internal structure to support `CharStreamSource.DynamicBlock`.
+type private DynamicBlock =
+    {
+        /// The `TextReader` that powers the stream.
+        Reader: TextReader
+        /// A temporary buffer of characters that are read from the reader
+        /// and are going to be read to be generated.
+        mutable Buffer: char[]
+        /// The index of the first element in the buffer.
+        mutable BufferStartingIndex: uint64
+        /// The index of the last element in the buffer.
+        /// This field is stored because the buffer is
+        /// not always full in cases like an end of input.
+        mutable BufferEndingIndex: uint64
+    }
+
 /// A representation of a `CharStream`.
 type private CharStreamSource =
     /// A representation of a `CharStream` that stores
     /// the characters in one continuous area of memory.
     /// It is not recommended for large files.
     | StaticBlock of ReadOnlyMemory<char>
+    /// A representation of a `CharStream` that lazily
+    /// loads input from a `TextReader` when it is needed
+    /// and unloads it when it is not.
+    | DynamicBlock of DynamicBlock
+    /// Gets a specified character by index; if it exists in memory, or raises an exception.
+    member x.Item
+        with get idx =
+            match x with
+            | StaticBlock sb -> sb.Span.[int idx]
+            | DynamicBlock db ->
+                let position = int <| idx - db.BufferStartingIndex
+                if position > 0 && position < db.Buffer.Length then
+                    db.Buffer.[position]
+                else
+                    failwithf "Trying to get character #%d, while only characters from #%d to #%d have been loaded"
+                        idx db.BufferStartingIndex <| db.BufferStartingIndex + uint64 db.Buffer.Length
+    /// [omit]
+    member x.LengthSoFar =
+        match x with
+        | StaticBlock x -> uint64 x.Length
+        | DynamicBlock db -> db.BufferEndingIndex + GenericOne
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
 /// It is not thread-safe.
 type CharStream = private {
+    /// The stream's source.
     Source: CharStreamSource
+    /// The index of the first element that _must_ be retained in memory
+    /// because it is going to be used to generate a token.
     mutable StartingIndex: uint64
+    /// [omit]
     mutable _Position: Position
 }
 with
     /// The stream's current position.
     member x.Position = x._Position
     /// The stream's character at its current position.
-    member x.FirstCharacter = match x.Source with StaticBlock sb -> sb.Span.[int x.Position.Index]
+    member x.FirstCharacter = x.Source.[x.Position.Index]
+    /// Returns the length of the input; or at least the
+    /// length of the input that has ever crossed the memory.
+    member x.LengthSoFar = x.Source.LengthSoFar
 
 /// A type pointing to a character in a character stream.
 type [<Struct>] CharStreamIndex = private CharStreamIndex of uint64
 with
-    /// The zero-based index the index is in, starting from the beginning of the stream.
-    member x.Index = match x with | CharStreamIndex idx -> idx
+    /// The zero-based index this object points to, starting from the beginning of the stream.
+    member x.Index = match x with CharStreamIndex idx -> idx
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
 /// It accepts a generic type (a `Symbol` usually), the `Position` of the symbol, and a
@@ -53,9 +100,6 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 /// Functions to create and work with `CharStream`s.
 /// They are not thread-safe.
 module CharStream =
-
-    open LanguagePrimitives
-    open Operators.Checked
 
     /// Creates a `CharStreamIndex` from a `CharStream` that points to its current position.
     let getCurrentIndex (cs: CharStream) = CharStreamIndex cs.Position.Index
@@ -78,10 +122,11 @@ module CharStream =
 
     /// Creates a new `CharSpan` that spans one character more than the given one.
     /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
-    let extendSpanByOne cs (CharSpan (idxStart, idxEnd)) =
-        match cs.Source with
-        | StaticBlock sb when idxEnd < uint64 sb.Length -> CharSpan (idxStart, idxEnd + GenericOne)
-        | StaticBlock _ -> failwith "Trying to extend a character span by one character past its end."
+    let extendSpanByOne (cs: CharStream) (CharSpan (idxStart, idxEnd)) =
+        if idxEnd < cs.LengthSoFar then
+            CharSpan (idxStart, idxEnd + GenericOne)
+        else
+            failwith "Trying to extend a character span by one character past these that were already read."
 
     /// Creates a new `CharSpan` from two continuous spans, i.e. that starts at the first's start, and ends at the second's end.
     /// Returns `None` if they were not continuous.
@@ -95,13 +140,13 @@ module CharStream =
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
-    let consumeOne doUnpin cs =
-        match cs.Source with
-        | StaticBlock sb when cs.Position.Index < uint64 sb.Length ->
-            cs._Position <- Position.advance sb.Span.[int cs.Position.Index] cs._Position
+    let consumeOne doUnpin (cs: CharStream) =
+        if cs.Position.Index < uint64 cs.LengthSoFar then
+            cs._Position <- Position.advance cs.FirstCharacter cs._Position
             if doUnpin then
                 cs.StartingIndex <- cs._Position.Index
-        | StaticBlock _ -> failwith "Cannot consume a character stream past its end."
+        else
+            failwith "Cannot consume a character stream past its end."
 
     /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
     /// These characters will not be shown again on new `CharStreamView`s.

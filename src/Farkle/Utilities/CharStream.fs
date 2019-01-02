@@ -36,6 +36,8 @@ type private DynamicBlock =
         /// not always full in cases like an end of input.
         mutable BufferEndingIndex: uint64
     }
+    /// The real length of the buffer, excluding the unpinned characters at the end.
+    member x.BufferContentLength = x.BufferEndingIndex - x.BufferStartingIndex + GenericOne |> int
 
 /// A representation of a `CharStream`.
 type private CharStreamSource =
@@ -57,7 +59,7 @@ type private CharStreamSource =
                 if position > 0 && position < db.Buffer.Length then
                     db.Buffer.[position]
                 else
-                    failwithf "Trying to get character #%d, while only characters from #%d to #%d have been loaded"
+                    failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
                         idx db.BufferStartingIndex <| db.BufferStartingIndex + uint64 db.Buffer.Length
     /// [omit]
     member x.LengthSoFar =
@@ -108,13 +110,38 @@ module CharStream =
     /// Otherwise, returns `false`.
     let readChar cs (c: outref<_>) (idx: byref<CharStreamIndex>) =
         match cs.Source with
-        | _ when idx.Index < cs.StartingIndex ->
-            failwithf "Trying to view the %dth character of a stream, while the first %d have already been read." idx.Index cs.StartingIndex
+        | _ when idx.Index < cs.Position.Index ->
+            failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx.Index cs.Position.Index
         | StaticBlock sb when idx.Index < uint64 sb.Length ->
             c <- sb.Span.[int idx.Index]
             idx <- idx.Index + GenericOne |> CharStreamIndex
             true
         | StaticBlock _ -> false
+        | DynamicBlock db ->
+            if idx.Index <= db.BufferEndingIndex then
+                c <- cs.Source.[idx.Index]
+                idx <- CharStreamIndex <| idx.Index + GenericOne
+                true
+            else
+            match idx.Index - db.BufferEndingIndex with
+            | 1UL ->
+                let bufferContentLength = int db.BufferContentLength
+                if bufferContentLength = db.Buffer.Length then
+                    if db.BufferStartingIndex <> cs.StartingIndex then
+                        Array.blit db.Buffer (int <| cs.StartingIndex - db.BufferStartingIndex) db.Buffer 0 bufferContentLength
+                        db.BufferStartingIndex <- cs.StartingIndex
+                    else
+                        Array.Resize(&db.Buffer, db.Buffer.Length * 2)
+                let cRead = db.Reader.Read()
+                if cRead <> -1 then
+                    db.BufferEndingIndex <- db.BufferEndingIndex + GenericOne
+                    db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
+                    c <- cs.Source.[idx.Index]
+                    idx <- CharStreamIndex db.BufferEndingIndex
+                    true
+                else
+                    false
+            | _ -> failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index db.BufferEndingIndex
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
@@ -162,13 +189,14 @@ module CharStream =
     /// Creates an arbitrary object out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
-        match cs.Source with
-        | StaticBlock sb when cs.StartingIndex <= idxStart && uint64 sb.Length > idxEnd ->
-            cs.StartingIndex <- idxEnd + 1UL
-            let length = idxEnd - idxStart + 1UL |> int
-            let span = sb.Span.Slice(int idxStart, length)
-            fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
-        | StaticBlock _ ->
+        if cs.StartingIndex <= idxStart && cs.LengthSoFar > idxEnd then
+            match cs.Source with
+            | StaticBlock sb ->
+                cs.StartingIndex <- idxEnd + 1UL
+                let length = idxEnd - idxStart + 1UL |> int
+                let span = sb.Span.Slice(int idxStart, length)
+                fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
+        else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
 
     /// Creates a string out of the characters at the given `CharSpan` at the returned `Position`.

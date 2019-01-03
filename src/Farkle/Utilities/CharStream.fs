@@ -31,13 +31,11 @@ type private DynamicBlock =
         mutable Buffer: char[]
         /// The index of the first element in the buffer.
         mutable BufferStartingIndex: uint64
-        /// The index of the last element in the buffer.
-        /// This field is stored because the buffer is
-        /// not always full in cases like an end of input.
-        mutable BufferEndingIndex: uint64
+        /// The index of the next character to be read.
+        mutable NextReadIndex: uint64
     }
     /// The real length of the buffer, excluding the unpinned characters at the end.
-    member x.BufferContentLength = x.BufferEndingIndex - x.BufferStartingIndex + GenericOne |> int
+    member x.BufferContentLength = x.NextReadIndex - x.BufferStartingIndex |> int
 
 /// A representation of a `CharStream`.
 type private CharStreamSource =
@@ -64,8 +62,8 @@ type private CharStreamSource =
     /// [omit]
     member x.LengthSoFar =
         match x with
-        | StaticBlock x -> uint64 x.Length
-        | DynamicBlock db -> db.BufferEndingIndex + GenericOne
+        | StaticBlock sb -> uint64 sb.Length
+        | DynamicBlock db -> db.NextReadIndex
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
 /// It is not thread-safe.
@@ -118,13 +116,11 @@ module CharStream =
             true
         | StaticBlock _ -> false
         | DynamicBlock db ->
-            if idx.Index <= db.BufferEndingIndex then
+            if idx.Index < db.NextReadIndex then
                 c <- cs.Source.[idx.Index]
                 idx <- CharStreamIndex <| idx.Index + GenericOne
                 true
-            else
-            match idx.Index - db.BufferEndingIndex with
-            | 1UL ->
+            elif idx.Index = db.NextReadIndex then
                 let bufferContentLength = int db.BufferContentLength
                 if bufferContentLength = db.Buffer.Length then
                     if db.BufferStartingIndex <> cs.StartingIndex then
@@ -134,14 +130,15 @@ module CharStream =
                         Array.Resize(&db.Buffer, db.Buffer.Length * 2)
                 let cRead = db.Reader.Read()
                 if cRead <> -1 then
-                    db.BufferEndingIndex <- db.BufferEndingIndex + GenericOne
+                    db.NextReadIndex <- db.NextReadIndex + GenericOne
                     db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
                     c <- cs.Source.[idx.Index]
-                    idx <- CharStreamIndex db.BufferEndingIndex
+                    idx <- CharStreamIndex db.NextReadIndex
                     true
                 else
                     false
-            | _ -> failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index db.BufferEndingIndex
+            else
+                failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index db.NextReadIndex
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
@@ -190,12 +187,13 @@ module CharStream =
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
         if cs.StartingIndex <= idxStart && cs.LengthSoFar > idxEnd then
-            match cs.Source with
-            | StaticBlock sb ->
-                cs.StartingIndex <- idxEnd + 1UL
-                let length = idxEnd - idxStart + 1UL |> int
-                let span = sb.Span.Slice(int idxStart, length)
-                fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
+            cs.StartingIndex <- idxEnd + 1UL
+            let length = idxEnd - idxStart + 1UL |> int
+            let span =
+                match cs.Source with
+                | StaticBlock sb -> sb.Span.Slice(int idxStart, length)
+                | DynamicBlock db -> ReadOnlySpan(db.Buffer).Slice(int <| idxStart - db.BufferStartingIndex, length)
+            fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
 
@@ -211,7 +209,34 @@ module CharStream =
                 c_span // Created by cable
         s :?> string, pos
 
-    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
-    let ofReadOnlyMemory mem = {Source = StaticBlock mem; StartingIndex = 0UL; _Position = Position.initial}
+    let private create src = {Source = src; StartingIndex = 0UL; _Position = Position.initial}
 
+    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
+    let ofReadOnlyMemory mem = mem |> StaticBlock |> create
+
+    /// Creates a `CharStream` from a string.
     let ofString (x: string) = x.AsMemory() |> ofReadOnlyMemory
+
+    [<Literal>]
+    let private defaultBufferSize = 256
+
+    /// Creates a `CharStream` that lazily reads from a `TextReader`.
+    /// The size of the stream's internal character buffer is specified.
+    /// This buffer holds the characters that are the data for a terminal under discovery.
+    /// If a terminal is longer than the buffer's size, the buffer becomes twice as long each time.
+    /// The default buffer size is 256 characters. If the specifoed
+    let ofTextReaderEx bufferSize textReader =
+        {
+            Reader = textReader
+            Buffer =
+                if bufferSize > 0 then
+                    bufferSize
+                else
+                    defaultBufferSize
+                |> Array.zeroCreate
+            BufferStartingIndex = 0UL
+            NextReadIndex = 0UL
+        } |> DynamicBlock |> create
+
+    /// Creates a `CharStream` from a `TextReader`.
+    let ofTextReader textReader = ofTextReaderEx defaultBufferSize textReader

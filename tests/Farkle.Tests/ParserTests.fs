@@ -16,7 +16,7 @@ let logger = Log.create "Parser tests"
 
 let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
-        let description = sprintf "Grammar \"%s\" parses \"%s\" successfully in \"%s\" block mode." grammarFile displayName streamMode
+        let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode." grammarFile displayName streamMode
         test description {
             let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast grammarFile
             let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.debug) <| fCharStream text
@@ -32,7 +32,7 @@ let testParser grammarFile displayName text =
 [<Tests>]
 let tests =
     [
-        "simple.egt", "111*555", "111 * 555"
+        "simple.egt", "\"111*555\"", "111 * 555"
         "inception.egt", "its own definition file", File.ReadAllText "inception.grm"
     ]
     |> List.collect ((<|||) testParser)

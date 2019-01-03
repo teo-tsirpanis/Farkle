@@ -11,7 +11,6 @@ open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open FsCheck
-open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
@@ -72,7 +71,7 @@ type Generators =
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
-    static member CS() = gen {
+    static member CS() = Arb.fromGen <| gen {
         let! str = Arb.generate |> Gen.filter (String.length >> ((<>) 0))
         let! fCharStream = [CharStream.ofString; (fun x -> new StringReader(x) |> CharStream.ofTextReader)] |> Gen.elements
         return CS(fCharStream str, str)

@@ -7,8 +7,7 @@ namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
 open Farkle
-open Farkle.Grammar.GOLDParser
-open Farkle.Parser
+open System.IO
 open System.Text
 open System.Runtime.InteropServices
 open Farkle.PostProcessor
@@ -25,8 +24,9 @@ type InceptionBenchmark() =
     static extern int ParseFile([<MarshalAs(UnmanagedType.LPStr)>] string _EGTFile, [<MarshalAs(UnmanagedType.LPStr)>] string _InputFile)
 
     member inline __.doIt lazyLoad =
-        RuntimeFarkle.ofEGTFile [] [] "inception.egt"
-        |> (fun g -> RuntimeFarkle.parseFile g ignore lazyLoad Encoding.UTF8 "inception.grm")
+        let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast "inception.egt"
+        use f = File.OpenRead "inception.grm"
+        RuntimeFarkle.parseStream rf ignore lazyLoad Encoding.UTF8 f
         |> returnOrFail
 
     [<Benchmark>]

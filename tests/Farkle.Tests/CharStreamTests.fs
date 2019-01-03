@@ -20,7 +20,7 @@ let tests =
             readChar cs &c2 &idx && c = c2)
 
         testProperty "Consuming the a character stream by a specified number of characters works as expected"
-            (fun (CS(cs, length)) steps -> (uint32 steps < length && steps <> 0) ==> (fun () ->
+            (fun (CS(cs, str)) steps -> (steps < str.Length && steps <> 0) ==> (fun () ->
                 let mutable idx = getCurrentIndex cs
                 let mutable c = '\u0549'
                 for n = 1 to steps - 1 do

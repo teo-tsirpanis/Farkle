@@ -14,6 +14,7 @@ open FsCheck
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.IO
 
 let productionGen = gen {
     let! index = Arb.generate
@@ -63,7 +64,7 @@ let rangeMapGen() = gen {
     return x.Value
 }
 
-type CS = CS of CharStream * length: uint32
+type CS = CS of CharStream * string
 
 type Generators =
     static member Production() = Arb.fromGen productionGen
@@ -71,11 +72,11 @@ type Generators =
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
-    static member CS() =
-        Arb.generate<string>
-        |> Gen.filter (String.length >> ((<>) 0))
-        |> Gen.map (fun x -> CS (CharStream.ofReadOnlyMemory <| x.AsMemory(), uint32 x.Length))
-        |> Arb.fromGen
+    static member CS() = gen {
+        let! str = Arb.generate |> Gen.filter (String.length >> ((<>) 0))
+        let! fCharStream = [CharStream.ofString; (fun x -> new StringReader(x) |> CharStream.ofTextReader)] |> Gen.elements
+        return CS(fCharStream str, str)
+    }
 
 let testProperty x = 
     testPropertyWithConfig

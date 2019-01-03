@@ -33,7 +33,8 @@ let main argv =
     let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast egtFile
     let print x = if showOutput then printfn "%O" x
     if not justLoadEGT then
-        let result = RuntimeFarkle.parseFile rf print lazyLoad System.Text.Encoding.UTF8 inputFile
+        use s = File.OpenRead inputFile
+        let result = RuntimeFarkle.parseStream rf print lazyLoad System.Text.Encoding.UTF8 s
         match result with
         | Ok x ->
             print "AST"

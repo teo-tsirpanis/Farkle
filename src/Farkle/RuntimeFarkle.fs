@@ -84,7 +84,7 @@ module RuntimeFarkle =
     /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
-    let private parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
+    let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         let fParse grammar pp =
             let fLALR = LALRParser.LALRStep fMessage grammar pp
             let fToken pos token =
@@ -110,13 +110,17 @@ module RuntimeFarkle =
     [<CompiledName("ParseStream")>]
     let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         use sr = new StreamReader(inputStream, encoding)
-        sr.ReadToEnd() |> parseString rf fMessage
+        match doLazyLoad with
+        | true -> CharStream.ofTextReader sr
+        | false -> sr.ReadToEnd() |> CharStream.ofString
+        |> parseChars rf fMessage
 
-    /// Parses and post-processes a file at the given path with the given settings that are explained in the `GOLDParser` module.
+    /// Parses and post-processes a file at the given path with the given character encoding.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
-    let parseFile rf fMessage (_doLazyLoad: bool) encoding inputFile =
-        File.ReadAllText(inputFile, encoding) |> parseString rf fMessage
+    let parseFile rf fMessage encoding inputFile =
+        use s = File.OpenRead(inputFile)
+        parseStream rf fMessage true encoding s
 
     /// Parses and post-processes a string.
     // This function was inspired by FParsec, which has some "runParserOn***" functions,

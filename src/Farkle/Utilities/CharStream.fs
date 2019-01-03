@@ -27,7 +27,7 @@ type private DynamicBlock =
         /// The `TextReader` that powers the stream.
         Reader: TextReader
         /// A temporary buffer of characters that are read from the reader
-        /// and are going to be read to be generated.
+        /// and are going to be parts of the next token to be generated.
         mutable Buffer: char[]
         /// The index of the first element in the buffer.
         mutable BufferStartingIndex: uint64
@@ -53,12 +53,12 @@ type private CharStreamSource =
             match x with
             | StaticBlock sb -> sb.Span.[int idx]
             | DynamicBlock db ->
-                let position = int <| idx - db.BufferStartingIndex
-                if position > 0 && position < db.Buffer.Length then
+                if idx >= db.BufferStartingIndex && idx < db.NextReadIndex then
+                    let position = int <| idx - db.BufferStartingIndex
                     db.Buffer.[position]
                 else
                     failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
-                        idx db.BufferStartingIndex <| db.BufferStartingIndex + uint64 db.Buffer.Length
+                        idx db.BufferStartingIndex <| db.NextReadIndex - 1UL
     /// [omit]
     member x.LengthSoFar =
         match x with
@@ -80,6 +80,7 @@ with
     /// The stream's current position.
     member x.Position = x._Position
     /// The stream's character at its current position.
+    /// Calling this function assumes that this character is actually `read`.
     member x.FirstCharacter = x.Source.[x.Position.Index]
     /// Returns the length of the input; or at least the
     /// length of the input that has ever crossed the memory.
@@ -121,10 +122,14 @@ module CharStream =
                 idx <- CharStreamIndex <| idx.Index + GenericOne
                 true
             elif idx.Index = db.NextReadIndex then
-                let bufferContentLength = int db.BufferContentLength
-                if bufferContentLength = db.Buffer.Length then
+                if db.BufferContentLength = db.Buffer.Length then
                     if db.BufferStartingIndex <> cs.StartingIndex then
-                        Array.blit db.Buffer (int <| cs.StartingIndex - db.BufferStartingIndex) db.Buffer 0 bufferContentLength
+                        Array.blit
+                            db.Buffer
+                            (int <| cs.StartingIndex - db.BufferStartingIndex)
+                            db.Buffer
+                            0
+                            (int <| db.NextReadIndex - cs.StartingIndex)
                         db.BufferStartingIndex <- cs.StartingIndex
                     else
                         Array.Resize(&db.Buffer, db.Buffer.Length * 2)

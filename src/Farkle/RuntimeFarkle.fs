@@ -113,7 +113,7 @@ module RuntimeFarkle =
         match doLazyLoad with
         | true -> CharStream.ofTextReader sr
         | false -> sr.ReadToEnd() |> CharStream.ofString
-        |> parseChars rf fMessage
+        |> flip using (parseChars rf fMessage)
 
     /// Parses and post-processes a file at the given path with the given character encoding.
     /// This function also accepts a custom parse message handler.

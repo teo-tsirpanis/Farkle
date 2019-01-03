@@ -9,6 +9,7 @@ open Farkle
 open LanguagePrimitives
 open Operators.Checked
 open System
+open System.Buffers
 open System.IO
 
 /// An continuous range of characters that is
@@ -26,16 +27,29 @@ type private DynamicBlock =
     {
         /// The `TextReader` that powers the stream.
         Reader: TextReader
-        /// A temporary buffer of characters that are read from the reader
-        /// and are going to be parts of the next token to be generated.
-        mutable Buffer: char[]
+        /// [omit]
+        mutable _Buffer: char[]
         /// The index of the first element in the buffer.
         mutable BufferStartingIndex: uint64
         /// The index of the next character to be read.
         mutable NextReadIndex: uint64
     }
+    /// A temporary buffer of characters that are read from the reader
+    /// and are going to be parts of the next token to be generated.
+    member x.Buffer =
+        if isNull x._Buffer then
+            failwith "Cannot use a dynamic block character stream after it is disposed."
+        else
+            x._Buffer
     /// The real length of the buffer, excluding the unpinned characters at the end.
     member x.BufferContentLength = x.NextReadIndex - x.BufferStartingIndex |> int
+    interface IDisposable with
+        member x.Dispose() =
+            if not <| isNull x._Buffer then
+                ArrayPool.Shared.Return(x._Buffer)
+                x._Buffer <- null
+                GC.SuppressFinalize(x)
+    override x.Finalize() = (x :> IDisposable).Dispose()
 
 /// A representation of a `CharStream`.
 type private CharStreamSource =
@@ -64,9 +78,15 @@ type private CharStreamSource =
         match x with
         | StaticBlock sb -> uint64 sb.Length
         | DynamicBlock db -> db.NextReadIndex
+    interface IDisposable with
+        member x.Dispose() =
+            match x with
+            | StaticBlock _ -> ()
+            | DynamicBlock db -> (db :> IDisposable).Dispose()
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
 /// It is not thread-safe.
+/// Also, if you create a character stream from a `TextReader`, you must dispose it afterwards.
 type CharStream = private {
     /// The stream's source.
     Source: CharStreamSource
@@ -85,6 +105,8 @@ with
     /// Returns the length of the input; or at least the
     /// length of the input that has ever crossed the memory.
     member x.LengthSoFar = x.Source.LengthSoFar
+    interface IDisposable with
+        member x.Dispose() = (x.Source :> IDisposable).Dispose()
 
 /// A type pointing to a character in a character stream.
 type [<Struct>] CharStreamIndex = private CharStreamIndex of uint64
@@ -132,7 +154,10 @@ module CharStream =
                             (int <| db.NextReadIndex - cs.StartingIndex)
                         db.BufferStartingIndex <- cs.StartingIndex
                     else
-                        Array.Resize(&db.Buffer, db.Buffer.Length * 2)
+                        let buffer2 = ArrayPool.Shared.Rent(db.Buffer.Length * 2)
+                        Array.blit db.Buffer 0 buffer2 0 db.Buffer.Length
+                        ArrayPool.Shared.Return(db.Buffer)
+                        db._Buffer <- buffer2
                 let cRead = db.Reader.Read()
                 if cRead <> -1 then
                     db.NextReadIndex <- db.NextReadIndex + GenericOne
@@ -229,19 +254,21 @@ module CharStream =
     /// The size of the stream's internal character buffer is specified.
     /// This buffer holds the characters that are the data for a terminal under discovery.
     /// If a terminal is longer than the buffer's size, the buffer becomes twice as long each time.
-    /// The default buffer size is 256 characters. If the specifoed
+    /// The default buffer size is 256 characters. If the specified size is not positive, the default is used.
+    /// Also, the character stream must be disposed afterwards.
     let ofTextReaderEx bufferSize textReader =
         {
             Reader = textReader
-            Buffer =
+            _Buffer =
                 if bufferSize > 0 then
                     bufferSize
                 else
                     defaultBufferSize
-                |> Array.zeroCreate
+                |> ArrayPool.Shared.Rent
             BufferStartingIndex = 0UL
             NextReadIndex = 0UL
         } |> DynamicBlock |> create
 
     /// Creates a `CharStream` from a `TextReader`.
+    /// It must be disposed afterwards.
     let ofTextReader textReader = ofTextReaderEx defaultBufferSize textReader

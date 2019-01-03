@@ -21,6 +21,7 @@ let tests =
 
         testProperty "Consuming a character stream by a specified number of characters works as expected"
             (fun (CS(cs, str)) steps -> (steps < str.Length && steps > 0) ==> (fun () ->
+                use cs = cs
                 let idx =
                     let rec impl idx n =
                         let mutable idxNext = idx

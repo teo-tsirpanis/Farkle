@@ -10,12 +10,12 @@ open Farkle.PostProcessor
 
 let inline prettyPrintResult x = tee string string x
 
-let interactive () =
+let interactive rf =
     let rec impl() =
         let input = Console.ReadLine() |> Option.ofObj
         match input with
             | Some x ->
-                RuntimeFarkle.parseString TheRuntimeFarkle (string >> Console.Error.WriteLine) x
+                RuntimeFarkle.parseString rf (string >> Console.Error.WriteLine) x
                 |> prettyPrintResult
                 |> Console.WriteLine
                 impl()
@@ -28,12 +28,13 @@ let interactive () =
 
 [<EntryPoint>]
 let main args =
+    let rf = TheRuntimeFarkle.Value
     match args with
-    | [| |] -> interactive()
+    | [| |] -> interactive rf
     | [|"--ast"; x|] ->
-        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessor.ast TheRuntimeFarkle) Console.WriteLine x
+        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessor.ast rf) Console.WriteLine x
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
         |> Console.WriteLine
-    | x -> x |> Array.iter (RuntimeFarkle.parseString TheRuntimeFarkle Console.WriteLine >> prettyPrintResult >> Console.WriteLine)
+    | x -> x |> Array.iter (RuntimeFarkle.parseString rf Console.WriteLine >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

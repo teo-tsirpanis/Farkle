@@ -33,7 +33,7 @@ let testParser grammarFile displayName text =
 let tests =
     [
         "simple.egt", "\"111*555\"", "111 * 555"
-        "inception.egt", "its own definition file", File.ReadAllText "inception.grm"
+        "gml.egt", "its own definition file", File.ReadAllText "gml.grm"
     ]
     |> List.collect ((<|||) testParser)
     |> testList "Parser tests"

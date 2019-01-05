@@ -9,9 +9,9 @@
             "program": "Farklei.dll",
             "args": [
                 "--egtfile",
-                "inception.egt",
+                "gml.egt",
                 "--inputfile",
-                "inception.grm"
+                "gml.grm"
             ],
             "cwd": "${workspaceRoot}/sample/farklei/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,

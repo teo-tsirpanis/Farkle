@@ -11,9 +11,8 @@ open Farkle
 open Farkle.Grammar.GOLDParser
 open System
 open System.IO
-open System.Runtime.Serialization.Formatters.Binary
 
-type SerializationBenchmark() =
+type GrammarReaderBenchmark() =
 
     let logger = BenchmarkDotNet.Loggers.ConsoleLogger() :> ILogger
 
@@ -21,7 +20,7 @@ type SerializationBenchmark() =
 
     [<GlobalSetup>]
     member __.Setup() =
-        let bytes = File.ReadAllBytes "inception.egt"
+        let bytes = File.ReadAllBytes "gml.egt"
         base64EGT <- Convert.ToBase64String bytes
         logger.WriteLineInfo <| sprintf "EGT as Base-64: %d characters" base64EGT.Length
 

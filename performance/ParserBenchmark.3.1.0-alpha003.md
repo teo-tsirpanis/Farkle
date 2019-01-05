@@ -11,6 +11,6 @@ Frequency=2742188 Hz, Resolution=364.6723 ns, Timer=TSC
 ```
 |                        Method |     Mean |     Error |    StdDev | Scaled | ScaledSD |     Gen 0 |    Gen 1 |    Gen 2 |  Allocated |
 |------------------------------ |---------:|----------:|----------:|-------:|---------:|----------:|---------:|---------:|-----------:|
-| InceptionBenchmarkFarkleEager | 29.07 ms | 0.4268 ms | 0.3992 ms |   1.29 |     0.03 | 4466.6667 | 266.6667 |  66.6667 | 16431496 B |
-|  InceptionBenchmarkFarkleLazy | 33.62 ms | 0.7186 ms | 0.8554 ms |   1.49 |     0.05 | 5571.4286 | 357.1429 | 142.8571 | 20365232 B |
-|     InceptionBenchmarkLazarus | 22.62 ms | 0.4498 ms | 0.4813 ms |   1.00 |     0.00 |         - |        - |        - |        0 B |
+|   GOLDMetaLanguageFarkleEager | 29.07 ms | 0.4268 ms | 0.3992 ms |   1.29 |     0.03 | 4466.6667 | 266.6667 |  66.6667 | 16431496 B |
+|    GOLDMetaLanguageFarkleLazy | 33.62 ms | 0.7186 ms | 0.8554 ms |   1.49 |     0.05 | 5571.4286 | 357.1429 | 142.8571 | 20365232 B |
+|       GOLDMetaLanguageLazarus | 22.62 ms | 0.4498 ms | 0.4813 ms |   1.00 |     0.00 |         - |        - |        - |        0 B |

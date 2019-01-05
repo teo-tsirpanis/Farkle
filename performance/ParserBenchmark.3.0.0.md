@@ -10,6 +10,6 @@ AMD Ryzen 5 1600 Six-Core Processor (Max: 3.20GHz), 1 CPU, 12 logical and 6 phys
 ```
 |                        Method |      Mean |    Error |   StdDev | Scaled | ScaledSD |      Gen 0 |     Gen 1 |   Allocated |
 |------------------------------ |----------:|---------:|---------:|-------:|---------:|-----------:|----------:|------------:|
-| InceptionBenchmarkFarkleEager | 197.72 ms | 2.526 ms | 2.239 ms |   2.22 |     0.05 | 70000.0000 | 2000.0000 | 80080.37 KB |
-|  InceptionBenchmarkFarkleLazy | 204.15 ms | 4.073 ms | 3.810 ms |   2.29 |     0.06 | 73000.0000 | 2000.0000 | 83619.43 KB |
-|     InceptionBenchmarkLazarus |  89.25 ms | 1.747 ms | 1.634 ms |   1.00 |     0.00 |          - |         - |      1.3 KB |
+|   GOLDMetaLanguageFarkleEager | 197.72 ms | 2.526 ms | 2.239 ms |   2.22 |     0.05 | 70000.0000 | 2000.0000 | 80080.37 KB |
+|    GOLDMetaLanguageFarkleLazy | 204.15 ms | 4.073 ms | 3.810 ms |   2.29 |     0.06 | 73000.0000 | 2000.0000 | 83619.43 KB |
+|       GOLDMetaLanguageLazarus |  89.25 ms | 1.747 ms | 1.634 ms |   1.00 |     0.00 |          - |         - |      1.3 KB |

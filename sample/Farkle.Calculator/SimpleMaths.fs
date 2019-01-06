@@ -102,4 +102,4 @@ let TheRuntimeFarkle =
             identity Production.ValueNumber
             take1Of Production.ValueLParenRParen 1 3 id
         ]
-    lazy RuntimeFarkle.ofEGTFile<int> transformers fusers "SimpleMaths.egt"
+    lazy RuntimeFarkle.ofEGTFile (PostProcessor.ofSeq<int> transformers fusers) "SimpleMaths.egt"

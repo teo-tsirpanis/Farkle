@@ -18,7 +18,7 @@ open Farkle.PostProcessor
 /// The task is to parse the GOLD Meta Language file describing the GOLD Meta Language.
 type ParserBenchmark() =
 
-    let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast "gml.egt"
+    let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast "gml.egt"
 
     let gmlContents = File.ReadAllText "gml.grm"
 

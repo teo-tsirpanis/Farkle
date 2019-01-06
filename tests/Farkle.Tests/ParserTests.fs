@@ -18,7 +18,7 @@ let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
         let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode." grammarFile displayName streamMode
         test description {
-            let rf = RuntimeFarkle.createFromPostProcessor PostProcessor.ast grammarFile
+            let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast grammarFile
             let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.debug) |> using (fCharStream text)
             match result with
             | Ok _ -> ()

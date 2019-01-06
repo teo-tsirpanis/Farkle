@@ -36,63 +36,56 @@ Check the post-processor's configuration."""
 [<NoComparison; NoEquality>]
 type RuntimeFarkle<'TResult> = private {
     Grammar: Result<Grammar,FarkleError>
-    PostProcessor: PostProcessor<'TResult> option
+    PostProcessor: PostProcessor<'TResult>
 }
-with
-    /// Returns both the grammar and the post-processor the RuntimeFarkle, if they were created without errors.
-    member x.GrammarAndPostProcessor = (Ok <| fun x1 x2 -> x1, x2) <*> x.Grammar <*> failIfNone PostProcessorError x.PostProcessor
 
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 
-    let private createMaybe<'TResult> transformers fusers grammar =
+    let private createMaybe postProcessor grammar =
         {
             Grammar = grammar
-            PostProcessor = tee (PostProcessor.ofSeq<'TResult> transformers fusers) none grammar
+            PostProcessor = postProcessor
         }
 
     /// Changes the post-processor of a `RuntimeFarkle`.
     [<CompiledName("ChangePostProcessor")>]
-    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = Some pp}
+    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = pp}
 
-    /// Creates a `RuntimeFarkle` from the given post-processor, from the .egt file at the given path.
-    [<CompiledName("CreateFromPostProcessor")>]
-    let createFromPostProcessor pp filename =
-        {
-            Grammar = filename |> EGT.ofFile |> Result.mapError EGTReadError
-            PostProcessor = Some pp
-        }
+    /// Creates a `RuntimeFarkle`.
+    [<CompiledName("Create")>]
+    let create postProcessor grammar = createMaybe postProcessor (Ok grammar)
 
     /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the .egt file at the given path.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromEGTFile")>]
-    let ofEGTFile<'TResult> transformers fusers fileName =
+    let ofEGTFile postProcessor fileName =
         fileName
         |> EGT.ofFile
         |> Result.mapError EGTReadError
-        |> createMaybe<'TResult> transformers fusers
+        |> createMaybe postProcessor
 
     /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the given Base-64 representation of an .egt file.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String<'TResult> transformers fusers x =
+    let ofBase64String postProcessor x =
         x
         |> EGT.ofBase64String
         |> Result.mapError EGTReadError
-        |> createMaybe<'TResult> transformers fusers
+        |> createMaybe postProcessor
 
     /// Parses and post-processes a `CharStream` of characters.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
-        let fParse grammar pp =
-            let fLALR = LALRParser.LALRStep fMessage grammar pp
+        let fParse grammar =
+            let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
             let fToken pos token =
                 fMessage <| Message(pos, ParseMessageType.TokenRead token)
                 fLALR pos token
-            Tokenizer.tokenize Error fToken [] grammar pp input
-        rf.GrammarAndPostProcessor
-        >>= (uncurry fParse >> Result.mapError ParseError)
+            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input
+        rf.Grammar
+        >>= (fParse >> Result.mapError ParseError)
         |> Result.map (fun x -> x :?> 'TResult)
 
     [<CompiledName("ParseMemory")>]

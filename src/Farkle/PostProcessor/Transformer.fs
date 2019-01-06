@@ -7,7 +7,6 @@ namespace Farkle.PostProcessor
 
 open System
 open Farkle
-open Farkle.Collections
 
 /// A delegate that accepts a `ReadOnlySpan` of characters and transforms it into an arbitrary object.
 /// The word `C` means "Callback" and was shortened to avoid clutter in user code.
@@ -38,7 +37,7 @@ module Transformer =
     let inline create sym (fTransform: C<'TOutput>) =
         Transformer.Create
             (uint32 sym)
-            (C2(fun _ data -> fTransform.Invoke(data) |> box))
+            (C2(fun _ data -> fTransform.Invoke(data)))
 
     /// Creates a `Transformer` that applies the given delegate to the symbol's data and position.
     let inline createPositionSensitive sym (fTransform: C2<'TOutput>) =

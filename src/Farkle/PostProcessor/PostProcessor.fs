@@ -43,14 +43,14 @@ module PostProcessor =
                 true}
 
     let private typeCheck<'result> (grammar: Grammar) transformers fusers =
-        let checkTerminal (Terminal (idx, _)) (typ: Type) =
+        let checkTerminal =
             let fCheck =
                 let map =
                     transformers
                     |> Seq.map (fun {SymbolIndex = sym; OutputType = typ} -> sym, typ)
                     |> Map.ofSeq
                 map.TryFind >> Option.defaultValue typeof<obj>
-            typ.IsAssignableFrom(fCheck idx)
+            fun (Terminal (idx, _)) (typ: Type) -> typ.IsAssignableFrom(fCheck idx)
         let ntDict = Dictionary()
         let rec checkNonterminal (Nonterminal (idx, _) as nont) (typ: Type) =
             match ntDict.ContainsKey idx with
@@ -62,12 +62,12 @@ module PostProcessor =
                     // |> Seq.cache
                 let fusers =
                     fusers
-                    |> Seq.filter (fun {ProductionIndex = idx2} -> idx = idx2)
+                    |> Seq.filter (fun {ProductionIndex = idx} -> productions |> Seq.exists (fun x -> x.Index = idx))
                     |> Seq.sortBy (fun x -> x.ProductionIndex)
                     // |> Seq.cache
                 let indicesMatch =
                     Seq.length productions = Seq.length fusers
-                    && (productions, fusers) ||> Seq.forall2 (fun prod f -> prod.Index = f.ProductionIndex)
+                    // && (productions, fusers) ||> Seq.forall2 (fun prod f -> prod.Index = f.ProductionIndex)
                 let outputType =
                     fusers
                     |> Seq.map (fun {OutputType = x} -> x)
@@ -78,22 +78,20 @@ module PostProcessor =
                     ntDict.Add(idx, outputType)
                     let fCheckPair {Handle = prod} {InputTypes = types} =
                         let fCheckSymbol sym typ =
-                            match sym with
-                            | Choice1Of2 term -> checkTerminal term typ
-                            | Choice2Of2 nont -> checkNonterminal nont typ
+                            match sym, typ with
+                            | Choice1Of2 term, Some typ -> checkTerminal term typ
+                            | Choice2Of2 nont, Some typ -> checkNonterminal nont typ
+                            | _, None -> true
                         Seq.forall2 fCheckSymbol prod types
                     Seq.forall2 fCheckPair productions fusers
+                    && checkNonterminal nont typ // A second call will check the output type.
                 | _ -> false
         checkNonterminal grammar.StartSymbol typeof<'result>
 
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
-    // TODO: Add type checking.
-    // This is an extremely dangerous API, where any notion of
-    // static typing is swept under the mat of the `Object` type.
-    // My proposal is to make this function fallible, by checking
-    // whether types match each other before the post-processor gets created.
+    /// The types of their functions are checked for correctness, in case of a failure, `None` will be returned.
     let ofSeq<'result> transformers fusers grammar =
-        if typeCheck grammar transformers fusers then
+        if typeCheck<'result> grammar transformers fusers then
             let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
             let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
             Some {

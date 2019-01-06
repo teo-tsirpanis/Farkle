@@ -52,12 +52,12 @@ module LALRParser =
                 let nextAction = nextState.GotoActions.TryFind productionToReduce.Head
                 match nextAction with
                 | Some (LALRState nextState) ->
-                    let mutable resultObj = null
-                    match pp.Fuse (productionToReduce, tokens, &resultObj) with
-                    | true ->
+                    try
+                        let mutable resultObj = pp.Fuse(productionToReduce, tokens)
                         fMessage <| ParseMessageType.Reduction productionToReduce
                         impl <| (nextState, resultObj) :: stack
-                    | false -> FuseError productionToReduce |> internalError, stack
+                    with
+                    | ex -> FuseError(productionToReduce, ex) |> internalError, stack
                 | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError, stack
             | None, _ ->
                 let fixTerminal = Option.map ExpectedSymbol.Terminal >> Option.defaultValue ExpectedSymbol.EndOfInput

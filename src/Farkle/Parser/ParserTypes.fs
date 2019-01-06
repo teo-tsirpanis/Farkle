@@ -22,7 +22,7 @@ type InternalError =
     /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
     | ReductionNotFoundOnAccept
     /// The post-processor had a problem fusing the tokems of a production.
-    | FuseError of Production
+    | FuseError of Production * exn
 
 [<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.

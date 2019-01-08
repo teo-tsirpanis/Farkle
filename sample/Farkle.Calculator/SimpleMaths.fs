@@ -80,11 +80,7 @@ let TheRuntimeFarkle =
     // even if they are listed below.
     let transformers =
         [
-            #if NETCOREAPP2_1
-            Transformer.create Symbol.Number <| C Int32.Parse
-            #else
-            Transformer.create Symbol.Number (C(fun data -> Int32.Parse(data.ToString())))
-            #endif
+            Transformer.int Symbol.Number
         ]
     // The fusers merge the parts of a production into one object of your desire.
     // Do not delete anything here, or the post-processor will fail.

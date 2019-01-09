@@ -2,7 +2,7 @@
 // This block of code is omitted in the generated HTML documentation. Use
 // it to define helpers that you do not want to show in the documentation.
 #I "../../bin/Farkle/net45/"
-#load "../../packages/build/FSharp.Formatting/FSharp.formatting.fsx"
+#load "../../packages/formatting/FSharp.Formatting/FSharp.formatting.fsx"
 #r "Farkle.dll"
 
 (**
@@ -57,6 +57,7 @@ The skeleton program starts with some very useful types. Copy the following snip
 
 open Farkle
 open Farkle.PostProcessor
+open System
 
 type Symbol =
 /// (EOF)
@@ -135,10 +136,14 @@ So, the transformers of our grammar will be the following:
 *)
 
 let transformers = [
-    Transformer.create Symbol.Number System.Convert.ToInt32
+    // Transformer.createS Symbol.Number Int32.Parse
+    // You could have done it this way, but there is a built-in.
+    Transformer.int Symbol.Number
 ]
 
 (**
+To learn more about creating transformers, you can check out [the corresponding document](creating-transformers.html).
+
 Don't wory about the terminals that are missing from the list. They are automatically ignored.
 
 ### Making the fusers
@@ -151,7 +156,7 @@ For example, we have the following rule: `<Add Exp> ::= <Add Exp> '+' <Mult Exp>
 let myFuser = Fuser.take2Of Production.AddExpPlus (0, 2) 3 (+) // We actually take the zeroth and the second parts, but as we all know, arrays start at zero.
 
 (**
-You might wonder: how can we "add" expressions as if they were integers? It will turn out to be that the post-processor will make them _actual_ integers! But you will understand it better when we complete the fusers:
+You might wonder: how can we "add" expressions as if they were integers? It will turn out to be that the post-processor will make them _actual_ integers. But you will understand it better when we complete the fusers:
 *)
 
 open Fuser // Open this module so that we don't have to prepend the Fuser module every time.
@@ -174,10 +179,10 @@ let fusers =
 (**
 As you see, the fuser turns the production `<Value> ::= Number` into an integer, by taking the `Number`, which is an integer, because the transformer made it so. The `<Negate Exp>` becomes an integer as well, because in both its definitions, it takes a `<Value>` which either negates it, or takes it as it is. By following this logic, we fill find out that every production becomes an integer.
 
-And here comes the post-processor...
+With the transformers and fusers ready, we now create the post-processor like this.
 *)
 
-let ThePostProcessor = PostProcessor.ofSeq<int> transformers fusers
+let pp = PostProcessor.ofSeq<int> transformers fusers
 
 (**
 > __Note__: The post-processor is not _yet_ perfectly type-safe. I could use a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception. The post-processor will be made type-safe at a later release.
@@ -187,15 +192,15 @@ let ThePostProcessor = PostProcessor.ofSeq<int> transformers fusers
 We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a [`HybridStream<char>`](/reference/farkle-hybridstream.html), which is a custom type made for Farkle.
 
 10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
-20: And "FArkle" means: (GOTO 10) 😁
-30: I guess you can't read this line. 😛
+20: And "FArkle" means: (GOTO 10).
+30: I guess you can't read this line.
 
 A runtime Farkle is made of a grammar, a post-processor, and two functions to convert terminals and productions to our custom enum types.
 
 We have the first two already, so it's time for the big 🧀:
 *)
 
-let TheRuntimeFarkle = RuntimeFarkle.ofEGTFile ThePostProcessor "SimpleMaths.egt"
+let rf = RuntimeFarkle.ofEGTFile pp "SimpleMaths.egt"
 
 (**
 ### Using the runtime Farkle
@@ -205,27 +210,28 @@ Now that we got it, it's time to use it. Let's see some examples:
 > These functions also take a function as a parameter, that gets called for every log message.
 *)
 
-open System
 open System.Text
 
 /// A utility to print a parse result.
 let printIt (x: Result<_,FarkleError>) =
-    x
-    |> tee (sprintf "%d") string // tee is a Farkle library function.
-    |> printfn "%s"
+    match x with
+    | Ok x -> printfn "%d" x
+    | Error x -> printfn "%O" x
 
-RuntimeFarkle.parse TheRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string.
+RuntimeFarkle.parse rf "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string.
 
-RuntimeFarkle.parseFile TheRuntimeFarkle ignore true Encoding.ASCII "gf.m" |> printIt // A file
+RuntimeFarkle.parseFile rf ignore Encoding.ASCII "gf.m" |> printIt // A file
 
-System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream TheRuntimeFarkle ignore false Encoding.UTF8 |> printIt // A stream
+System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream rf ignore false Encoding.UTF8 |> printIt // A stream, whose content is loaded entirely in memory.
 
-RuntimeFarkle.parseFile TheRuntimeFarkle Console.WriteLine false Encoding.Unicode "itsjustgettingwetttonig.ht" |> printIt // Another file, but with UTF-16 encoding and eagerly loaded.
+RuntimeFarkle.parseFile rf Console.WriteLine Encoding.Unicode "math.txt" |> printIt // Another file, but with UTF-16 encoding and eagerly loaded.
 
-RuntimeFarkle.parseString TheRuntimeFarkle Console.WriteLine "111*555" |> printIt // Like the first example, but also accepts a logging function.
+RuntimeFarkle.parseString rf Console.WriteLine "111*555" |> printIt // Like the first example, but also accepts a logging function.
 
 (**
-> __Note__: It has been observed that the first time a runtime Farkle parses something takes more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.
+> <s>__Note__: It has been observed that the first time a runtime Farkle parses something takes more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.</s>
+
+Farkle's performance has been improved many times, and now loading grammars is much faster than previously.
 
 So that's it. I hope you understand. If you have any question, found a 🐛, or want a feature, feel free to [open a GitHub issue][githubIssues].
 *)

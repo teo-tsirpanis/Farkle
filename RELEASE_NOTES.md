@@ -1,5 +1,6 @@
 #### 3.1.0-alpha004
 * Optimized the way Farkle handles the input stream characters by reducing copies.
+* Removed all 3rd-party non-Microsoft dependencies.
 
 #### 3.1.0-alpha003 - 10-10-2018
 * The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-procssing operations are unified.

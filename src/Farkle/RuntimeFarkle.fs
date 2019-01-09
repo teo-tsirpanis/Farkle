@@ -81,12 +81,10 @@ module RuntimeFarkle =
         let fParse grammar =
             let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
             let fToken pos token =
-                token |> Option.map (fun tok -> pos, tok) |> ParseMessage.TokenRead |> fMessage
+                token |> Option.map (ParseMessage.TokenRead) |> Option.defaultValue ParseMessage.EndOfInput |> fMessage
                 fLALR pos token
-            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input
-        rf.Grammar
-        >>= (fParse >> Result.mapError ParseError)
-        |> Result.map (fun x -> x :?> 'TResult)
+            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input |> Result.mapError ParseError
+        rf.Grammar >>= fParse |> Result.map (fun x -> x :?> 'TResult)
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.

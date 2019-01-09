@@ -42,16 +42,18 @@ type ExpectedSymbol =
 /// An action of the parser.
 [<RequireQualifiedAccess>]
 type ParseMessage =
+    /// Input ended.
+    | EndOfInput
     /// A token was read.
-    | TokenRead of (Position * Token) option
+    | TokenRead of Token
     /// A rule was reduced.
     | Reduction of Production
     /// The parser shifted to a different LALR state.
     | Shift of uint32
     override x.ToString() =
         match x with
-        | TokenRead None -> "Input ended"
-        | TokenRead (Some (pos, x)) -> sprintf "%O Token read: %O (%s)" pos x x.Symbol.Name
+        | EndOfInput -> "Input ended"
+        | TokenRead x -> sprintf "%O Token read: %O (%s)" x.Position x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O" x
         | Shift x -> sprintf "The parser shifted to state %d" x
 

@@ -22,7 +22,7 @@ type Token =
     with
         /// A shortcut for creating a token.
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
-        override x.ToString() = if x.Data = null then "" else x.Data.ToString()
+        override x.ToString() = if x.Data = null then "" else sprintf "\"%O\"" x.Data
 
 /// An Abstract Syntax Tree that describes the output of a parser.
 [<RequireQualifiedAccess>]

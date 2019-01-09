@@ -40,9 +40,10 @@ type ExpectedSymbol =
         | EndOfInput -> "(EOF)"
 
 /// An action of the parser.
-type ParseMessageType =
+[<RequireQualifiedAccess>]
+type ParseMessage =
     /// A token was read.
-    | TokenRead of Token option
+    | TokenRead of (Position * Token) option
     /// A rule was reduced.
     | Reduction of Production
     /// The parser shifted to a different LALR state.
@@ -50,7 +51,7 @@ type ParseMessageType =
     override x.ToString() =
         match x with
         | TokenRead None -> "Input ended"
-        | TokenRead (Some x) -> sprintf "Token read: \"%O\" (%s)" x x.Symbol.Name
+        | TokenRead (Some (pos, x)) -> sprintf "%O Token read: %O (%s)" pos x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O" x
         | Shift x -> sprintf "The parser shifted to state %d" x
 

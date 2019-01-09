@@ -81,7 +81,7 @@ module RuntimeFarkle =
         let fParse grammar =
             let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
             let fToken pos token =
-                fMessage <| Message(pos, ParseMessageType.TokenRead token)
+                token |> Option.map (fun tok -> pos, tok) |> ParseMessage.TokenRead |> fMessage
                 fLALR pos token
             Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input
         rf.Grammar

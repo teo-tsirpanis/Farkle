@@ -30,7 +30,6 @@ module LALRParser =
     /// 1. if parsing finished, the final fused production, or an error type, or `None` if parsing did not finish.
     /// 2. the new stack.
     let LALRStep fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) pos token stack =
-        let fMessage msg = Message(pos, msg) |> fMessage
         let fail msg = Message(pos, msg) |> Error |> Some
         let internalError = ParseErrorType.InternalError >> fail
         let getCurrentState = List.tryHead >> Option.map fst >> Option.defaultValue initialState
@@ -43,7 +42,7 @@ module LALRParser =
             | Some (LALRAction.Shift (LALRState nextState)), stack ->
                 match token with
                 | Some {Data = data} ->
-                    fMessage <| ParseMessageType.Shift nextState.Index
+                    fMessage <| ParseMessage.Shift nextState.Index
                     None, (nextState, data) :: stack
                 | None -> ShiftOnEOF |> internalError, stack
             | Some (LALRAction.Reduce productionToReduce), stack ->
@@ -53,8 +52,8 @@ module LALRParser =
                 match nextAction with
                 | Some (LALRState nextState) ->
                     try
-                        let mutable resultObj = pp.Fuse(productionToReduce, tokens)
-                        fMessage <| ParseMessageType.Reduction productionToReduce
+                        let resultObj = pp.Fuse(productionToReduce, tokens)
+                        fMessage <| ParseMessage.Reduction productionToReduce
                         impl <| (nextState, resultObj) :: stack
                     with
                     | ex -> FuseError(productionToReduce, ex) |> internalError, stack

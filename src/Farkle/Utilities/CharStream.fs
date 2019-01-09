@@ -13,11 +13,11 @@ open System.Buffers
 open System.IO
 
 /// An continuous range of characters that is
-/// stored by its starting index and length.
-type CharSpan = private CharSpan of idxFrom: uint64 * idxTo: uint64
+/// stored by its starting position and ending index.
+type CharSpan = private CharSpan of posFrom: Position * idxTo: uint64
 with
     /// The span's zero-based index of the first character.
-    member x.StartingIndex = match x with | CharSpan (x, _) -> x
+    member x.StartingIndex = match x with | CharSpan ({Index = x}, _) -> x
     /// The span's zero-based index of the last character.
     member x.EndingIndex = match x with | CharSpan (_, x) -> x
     override x.ToString() = sprintf "[%d,%d]" x.StartingIndex x.EndingIndex
@@ -98,6 +98,7 @@ type CharStream = private {
 }
 with
     /// The stream's current position.
+    /// Reading the stream will start from here.
     member x.Position = x._Position
     /// The stream's character at its current position.
     /// Calling this function assumes that this character is actually `read`.
@@ -172,7 +173,7 @@ module CharStream =
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
-    let pinSpan {_Position = {Index = idxFrom}} (CharStreamIndex idxTo) = CharSpan (idxFrom, idxTo)
+    let pinSpan {_Position = posFrom} (CharStreamIndex idxTo) = CharSpan (posFrom, idxTo)
 
     /// Creates a new `CharSpan` that spans one character more than the given one.
     /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
@@ -184,7 +185,7 @@ module CharStream =
 
     /// Creates a new `CharSpan` from two continuous spans, i.e. that starts at the first's start, and ends at the second's end.
     /// Returns `None` if they were not continuous.
-    let extendSpans (CharSpan (start1, end1)) (CharSpan (start2, end2)) =
+    let extendSpans (CharSpan (start1, end1)) (CharSpan ({Index = start2}, end2)) =
         if end1 = start2 then
             CharSpan (start1, end2)
         else
@@ -206,7 +207,7 @@ module CharStream =
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, the characters before the span can be marked to be released from memory.
-    let consume doUnpin (cs: CharStream) (CharSpan (idxStart, idxEnd) as csp) =
+    let consume doUnpin (cs: CharStream) (CharSpan ({Index = idxStart}, idxEnd) as csp) =
         if cs.Position.Index = idxStart then
             for _i = int idxStart to int idxEnd do
                 consumeOne doUnpin cs
@@ -215,7 +216,7 @@ module CharStream =
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan (idxStart, idxEnd) as csp) =
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan ({Index = idxStart} as posStart, idxEnd) as csp) =
         if cs.StartingIndex <= idxStart && cs.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
@@ -223,7 +224,7 @@ module CharStream =
                 match cs.Source with
                 | StaticBlock sb -> sb.Span.Slice(int idxStart, length)
                 | DynamicBlock db -> ReadOnlySpan(db.Buffer).Slice(int <| idxStart - db.BufferStartingIndex, length)
-            fPostProcess.Invoke(symbol, cs.Position, span), cs.Position
+            fPostProcess.Invoke(symbol, cs.Position, span), posStart
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
 

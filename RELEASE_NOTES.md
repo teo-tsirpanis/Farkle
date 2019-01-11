@@ -1,5 +1,5 @@
 #### 3.1.0-alpha004
-* Optimized the way Farkle handles the input stream characters by reducing copies.
+* Optimized the way Farkle handles the input stream characters by reducing copies & improving performance.
 * Removed all 3rd-party non-Microsoft dependencies.
 
 #### 3.1.0-alpha003 - 10-10-2018

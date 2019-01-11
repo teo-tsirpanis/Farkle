@@ -36,9 +36,9 @@ It's also time to install Farkle's NuGet package with [your favorite NuGet clien
 
 ![The GOLD Parser Builder](img/goldBuilder.png)
 
-See the button writing "Next" at the bottom-right? <s>Mash</s> Keep pressing it until you see this dialog.
+See the button writing "Next" at the bottom-right? Keep pressing it until you see this dialog.
 
-![The save dialog](img/saveasegt.png)
+![The save dialog](img/saveAsEGT.png)
 
 Pay attention to the file type. Only EGT files work.
 
@@ -142,8 +142,6 @@ let transformers = [
 ]
 
 (**
-To learn more about creating transformers, you can check out [the corresponding document](creating-transformers.html).
-
 Don't wory about the terminals that are missing from the list. They are automatically ignored.
 
 ### Making the fusers
@@ -189,7 +187,7 @@ let pp = PostProcessor.ofSeq<int> transformers fusers
 
 ## Making a runtime Farkle
 
-We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a [`HybridStream<char>`](/reference/farkle-hybridstream.html), which is a custom type made for Farkle.
+We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a `CharStream`, a custom type made for Farkle.
 
 10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
 20: And "FArkle" means: (GOTO 10).
@@ -197,7 +195,7 @@ We need to make a `RuntimeFarkle`. This object is responsible for parsing __and 
 
 A runtime Farkle is made of a grammar, a post-processor, and two functions to convert terminals and productions to our custom enum types.
 
-We have the first two already, so it's time for the big 🧀:
+We have already created the post-processor, the grammar is in our `*.egt` file so we can create it this way:
 *)
 
 let rf = RuntimeFarkle.ofEGTFile pp "SimpleMaths.egt"

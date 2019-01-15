@@ -10,6 +10,10 @@
 #r "paket: groupref FakeBuild //"
 
 #load "./.fake/build.fsx/intellisense.fsx"
+#if !FAKE
+#r "netstandard"
+#endif
+
 open Fake.Api
 open Fake.BuildServer
 open Fake.Core
@@ -114,7 +118,7 @@ let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"
 
 let releaseNotes =
     let lines s = seq {
-        use sr = new StringReader(s)
+        use sr = new StringReader(if isNull s them "" else s)
         let mutable s = ""
         s <- sr.ReadLine()
         while not <| isNull s do

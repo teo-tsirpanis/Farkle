@@ -12,7 +12,7 @@
     <Summary>A parser library for F# based on GOLD Parser</Summary>
     <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.</Description>
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseUrl>https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/teo-tsirpanis/Farkle/</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>

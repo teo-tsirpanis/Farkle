@@ -118,7 +118,7 @@ let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"
 
 let releaseNotes =
     let lines s = seq {
-        use sr = new StringReader(if isNull s them "" else s)
+        use sr = new StringReader(if isNull s then "" else s)
         let mutable s = ""
         s <- sr.ReadLine()
         while not <| isNull s do

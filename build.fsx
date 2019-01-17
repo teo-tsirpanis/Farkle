@@ -28,10 +28,6 @@ open System
 open System.IO
 open System.Text.RegularExpressions
 
-// --------------------------------------------------------------------------------------
-// START TODO: Provide project-specific details below
-// --------------------------------------------------------------------------------------
-
 // Information about the project are used
 //  - for version and project name in generated AssemblyInfo file
 //  - by the generated NuGet package
@@ -108,10 +104,6 @@ let gitName = "Farkle"
 
 // The url for the raw files hosted
 let gitRaw = Environment.environVarOrDefault "gitRaw" "https://raw.githubusercontent.com/teo-tsirpanis"
-
-// --------------------------------------------------------------------------------------
-// END TODO: The rest of the file includes standard build steps
-// --------------------------------------------------------------------------------------
 
 // Read additional information from the release notes document
 let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"

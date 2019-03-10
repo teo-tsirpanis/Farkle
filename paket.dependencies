@@ -1,16 +1,15 @@
-framework: net45, netstandard2.0, netcoreapp2.2
+framework: net45, netstandard2.0
 
 source https://api.nuget.org/v3/index.json
 
 storage: none
 
 nuget FSharp.Core
-nuget Scriban
 nuget System.Buffers
 nuget System.Collections.Immutable
 nuget System.Memory
 
-group Samples
+group Executables
 
   framework: net45, netcoreapp2.1
 
@@ -19,6 +18,7 @@ group Samples
   storage: none
 
   nuget FSharp.Core
+  nuget Scriban
   nuget Argu
 
 group Formatting
@@ -60,4 +60,5 @@ group Test
   nuget BenchmarkDotNet
   nuget Expecto
   nuget Expecto.FsCheck
+  nuget FSharp.Core
   nuget System.Collections.Immutable

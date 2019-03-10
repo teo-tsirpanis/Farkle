@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>farkle</ToolCommandName>
-    <Title>Farkle Command-Line Tools</Title>
+    <Title>The Farkle Command-Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>
     <Description>This package contains a command-line tool that makes development with Farkle easier and more automatic.
 

@@ -1,2 +1,3 @@
+group Executables
 FSharp.Core
 Scriban

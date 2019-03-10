@@ -78,13 +78,14 @@ module Tokenizer =
     /// 6. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
     let tokenize fError fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} (pp: PostProcessor<_>) (input: CharStream) =
         let fError msg = Message (input.Position, msg) |> fError
+        let csCallback = CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data))
         let rec impl (gs: TokenizerState) fTokenS =
             let fToken pos t =
                 match fToken pos t fTokenS with
                 | Some x, _ -> x
                 | None, s -> impl [] s
             let newToken sym data =
-                let (data, pos) = unpinSpanAndGenerate sym (CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data))) input data
+                let (data, pos) = unpinSpanAndGenerate sym csCallback input data
                 Token.Create pos sym data |> Some |> fToken pos
             let tok = tokenizeDFA dfa input
             match tok, gs with

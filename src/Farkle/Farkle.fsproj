@@ -2,22 +2,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
-    <DebugType>portable</DebugType>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Title>The Farkle Parser</Title>
     <PackageId>Farkle</PackageId>
-    <Authors>teo-tsirpanis</Authors>
-    <Company>Theodore Tsirpanis</Company>
     <Product>Farkle</Product>
-    <Summary>A parser library for F# based on GOLD Parser</Summary>
     <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.</Description>
-    <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
-    <PackageLicenseUrl>https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/teo-tsirpanis/Farkle/</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
-    <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>parser lalr gold-parser</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />

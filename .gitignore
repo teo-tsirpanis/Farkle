@@ -186,7 +186,6 @@ docs.zip
 **/*.nupkg
 docs/
 **/BenchmarkDotNet.Artifacts/
-Directory.Build.props
 temp/gh-pages
 DotNetTools/
 .idea/

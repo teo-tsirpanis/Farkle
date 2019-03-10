@@ -10,9 +10,6 @@
 #r "paket: groupref FakeBuild //"
 
 #load "./.fake/build.fsx/intellisense.fsx"
-#if !FAKE
-#r "netstandard"
-#endif
 
 open Fake.Api
 open Fake.BuildServer

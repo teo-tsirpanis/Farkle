@@ -1,26 +1,25 @@
-framework: net45, netstandard2.0
+framework: net45, netstandard2.0, netcoreapp2.2
 
 source https://api.nuget.org/v3/index.json
 
 storage: none
 
 nuget FSharp.Core
-// Why was that even used for?
-// nuget Microsoft.NETCore.Platforms = 2.1
+nuget Scriban
 nuget System.Buffers
 nuget System.Collections.Immutable
 nuget System.Memory
 
 group Samples
 
-framework: net45, netcoreapp2.1
+  framework: net45, netcoreapp2.1
 
-source https://api.nuget.org/v3/index.json
+  source https://api.nuget.org/v3/index.json
 
-storage: none
+  storage: none
 
-nuget FSharp.Core
-nuget Argu
+  nuget FSharp.Core
+  nuget Argu
 
 group Formatting
 

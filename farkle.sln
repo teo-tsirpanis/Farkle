@@ -18,6 +18,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "farklei", "sample\farklei\f
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Calculator", "sample\Farkle.Calculator\Farkle.Calculator.fsproj", "{D4448E3A-434C-4322-8A50-F9954040D80B}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools", "src\Farkle.Tools\Farkle.Tools.fsproj", "{E282044A-E72A-4BA7-B875-B9F991B6CEC7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,18 @@ Global
 		{D4448E3A-434C-4322-8A50-F9954040D80B}.Release|x64.Build.0 = Release|Any CPU
 		{D4448E3A-434C-4322-8A50-F9954040D80B}.Release|x86.ActiveCfg = Release|Any CPU
 		{D4448E3A-434C-4322-8A50-F9954040D80B}.Release|x86.Build.0 = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|x64.Build.0 = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Debug|x86.Build.0 = Debug|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|x64.ActiveCfg = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|x64.Build.0 = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|x86.ActiveCfg = Release|Any CPU
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -98,6 +112,7 @@ Global
 		{696AC44B-AD20-4906-A397-1A1A0A3B1F18} = {67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}
 		{8756BE36-4FC7-457F-8487-55F3061E8894} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
 		{D4448E3A-434C-4322-8A50-F9954040D80B} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
+		{E282044A-E72A-4BA7-B875-B9F991B6CEC7} = {EC37407F-B092-4C11-B701-462471EF42A8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94BF4A95-7FC5-4237-8119-C83972D4E1E9}

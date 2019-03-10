@@ -1,5 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <PackageReleaseNotes>@ReleaseNotes</PackageReleaseNotes>
-  </PropertyGroup>
-</Project>

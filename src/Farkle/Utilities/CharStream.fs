@@ -213,14 +213,16 @@ module CharStream =
     /// Creates a string out of the characters at the given `CharSpan` at the returned `Position`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
-    let unpinSpanAndGenerateString cs c_span =
-        let (s, pos) =
-            unpinSpanAndGenerate
-                null
-                (CharStreamCallback(fun _ _ data -> box <| data.ToString()))
-                cs
-                c_span // Created by cable
-        s :?> string, pos
+    let unpinSpanAndGenerateString =
+        let csCallback = CharStreamCallback (fun _ _ data -> box <| data.ToString())
+        fun cs c_span ->
+            let (s, pos) =
+                unpinSpanAndGenerate
+                    null
+                    csCallback
+                    cs
+                    c_span // Created by cable
+            s :?> string, pos
 
     let private create src = {Source = src; StartingIndex = 0UL; _Position = Position.initial}
 

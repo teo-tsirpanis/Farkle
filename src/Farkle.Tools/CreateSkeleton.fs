@@ -7,7 +7,6 @@ module Farkle.Tools.CreateSkeleton
 
 open Argu
 open Farkle
-open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Scriban
 open Scriban.Runtime
@@ -28,17 +27,6 @@ with
             | OutputFile _ -> "specify where the generated output will be stored. Defaults to the template's name."
             | ListTemplates -> "list the built-in templates."
 
-type FarkleSkeletonScriptObject(grammarBase64: string, grammar: Grammar) =
-    inherit ScriptObject()
-    let mutable fileExt = "out"
-
-    member __.GrammarBase64 = grammarBase64
-    member __.productions = grammar.Groups
-
-    member __.file_extension(ext) = fileExt <- ext
-    [<ScriptMemberIgnore>]
-    member __.FileExtension = "." + fileExt
-
 let doSkeleton (args: ParseResults<_>) =
     if args.Contains <@ ListTemplates @> then
         BuiltinTemplates.getAllBuiltins() |> Array.iter (printfn "%s")
@@ -58,9 +46,16 @@ let doSkeleton (args: ParseResults<_>) =
 
         let template = Template.Parse(templateText, templateFile)
         let tc = TemplateContext()
-        let so = FarkleSkeletonScriptObject(grammarBase64, grammar)
+        let so = ScriptObject()
+        do
+            let farkleObject = ScriptObject()
+            farkleObject.Add("version", AssemblyVersionInformation.AssemblyVersion)
+            so.Add("farkle", farkleObject)
+        so.Add("grammar_base64", grammarBase64)
+        let mutable fileExt = "out"
+        so.Import("file_extension", Action<_>(fun x -> fileExt <- x))
         tc.PushGlobal so
         let output = template.Render(tc)
 
-        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, so.FileExtension))
+        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + fileExt))
         File.WriteAllText(outputFile, output)

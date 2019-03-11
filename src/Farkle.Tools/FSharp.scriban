@@ -2,6 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT}}
+{{ file_extension "fs" }}
 // This file was created by Farkle.Sdk {{ farkle.version }} at {{ date.tostring date.now "%g %Y-%m-%d"}}
 // It is disposable, and should NOT be commited to source control.
 module {{ outputBase | fsharp }}
@@ -12,11 +13,9 @@ open Farkle.PostProcessor
 //#region Grammar types
 
 type Terminal =
-    {{ for s in symbols }}
-        {{- if s.IsTerminal -}}
-            /// {{ s.ToString }}
-            | {{ s.Name | pascalcase }} = {{ s.Index }}u
-        {{- end -}}
+    {{ for s in terminals }}
+        /// {{ s.ToString }}
+        | {{ s.Name | pascalcase }} = {{ s.Index }}u
     {{ end }}
 
 type Production =

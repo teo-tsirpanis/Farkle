@@ -14,6 +14,8 @@
       After you install it as a CLI tool, pass the "--help" argument to learn how it works.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="CreateSkeleton.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -9,7 +9,6 @@ open Farkle
 open LanguagePrimitives
 open Operators.Checked
 open System
-open System.Buffers
 open System.IO
 
 /// An continuous range of characters that is
@@ -28,27 +27,18 @@ type private DynamicBlock =
         /// The `TextReader` that powers the stream.
         Reader: TextReader
         /// [omit]
-        mutable _Buffer: char[]
+        mutable Buffer: char[]
         /// The index of the first element in the buffer.
         mutable BufferStartingIndex: uint64
         /// The index of the next character to be read.
         mutable NextReadIndex: uint64
     }
-    /// A temporary buffer of characters that are read from the reader
-    /// and are going to be parts of the next token to be generated.
-    member x.Buffer =
-        if isNull x._Buffer then
-            failwith "Cannot use a dynamic block character stream after it is disposed."
-        else
-            x._Buffer
     /// The real length of the buffer, excluding the unpinned characters at the end.
     member x.BufferContentLength = x.NextReadIndex - x.BufferStartingIndex |> int
     interface IDisposable with
         member x.Dispose() =
-            if not <| isNull x._Buffer then
-                ArrayPool.Shared.Return(x._Buffer)
-                x._Buffer <- null
-                GC.SuppressFinalize(x)
+            x.Reader.Dispose()
+            GC.SuppressFinalize(x)
     override x.Finalize() = (x :> IDisposable).Dispose()
 
 /// A representation of a `CharStream`.
@@ -145,26 +135,18 @@ module CharStream =
                 idx <- CharStreamIndex <| idx.Index + GenericOne
                 true
             elif idx.Index = db.NextReadIndex then
-                if db.BufferContentLength = db.Buffer.Length then
-                    if db.BufferStartingIndex <> cs.StartingIndex then
-                        Array.blit
-                            db.Buffer
-                            (int <| cs.StartingIndex - db.BufferStartingIndex)
-                            db.Buffer
-                            0
-                            (int <| db.NextReadIndex - cs.StartingIndex)
-                        db.BufferStartingIndex <- cs.StartingIndex
-                    else
-                        let buffer2 = ArrayPool.Shared.Rent(db.Buffer.Length * 2)
-                        Array.blit db.Buffer 0 buffer2 0 db.Buffer.Length
-                        ArrayPool.Shared.Return(db.Buffer)
-                        db._Buffer <- buffer2
-                let cRead = db.Reader.Read()
-                if cRead <> -1 then
-                    db.NextReadIndex <- db.NextReadIndex + GenericOne
-                    db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
+                let importantCharStart = int <| cs.StartingIndex - db.BufferStartingIndex
+                let importantCharLength = int <| db.NextReadIndex - cs.StartingIndex
+                if db.BufferStartingIndex <> cs.StartingIndex then
+                    Array.blit db.Buffer importantCharStart db.Buffer 0 importantCharLength
+                    db.BufferStartingIndex <- cs.StartingIndex
+                else
+                    Array.Resize(&db.Buffer, db.Buffer.Length * 2)
+                let nRead = db.Reader.ReadBlock(db.Buffer, importantCharLength, db.Buffer.Length - db.BufferContentLength)
+                if nRead <> 0 then
+                    db.NextReadIndex <- db.NextReadIndex + uint64 nRead
                     c <- cs.Source.[idx.Index]
-                    idx <- CharStreamIndex db.NextReadIndex
+                    idx <- CharStreamIndex <| idx.Index + GenericOne
                     true
                 else
                     false
@@ -258,16 +240,17 @@ module CharStream =
     /// The default buffer size is 256 characters. If the specified size is not positive, the default is used.
     /// Also, the character stream must be disposed afterwards.
     let ofTextReaderEx bufferSize textReader =
+        let buffer = 
+            if bufferSize > 0 then
+                bufferSize
+            else
+                defaultBufferSize
+            |> Array.zeroCreate
         {
             Reader = textReader
-            _Buffer =
-                if bufferSize > 0 then
-                    bufferSize
-                else
-                    defaultBufferSize
-                |> ArrayPool.Shared.Rent
+            Buffer = buffer
             BufferStartingIndex = 0UL
-            NextReadIndex = 0UL
+            NextReadIndex = uint64 <| textReader.ReadBlock(buffer, 0, buffer.Length)
         } |> DynamicBlock |> create
 
     /// Creates a `CharStream` from a `TextReader`.

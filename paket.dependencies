@@ -17,9 +17,9 @@ group Executables
 
   storage: none
 
+  nuget Argu
   nuget FSharp.Core
   nuget Scriban
-  nuget Argu
 
 group Formatting
 

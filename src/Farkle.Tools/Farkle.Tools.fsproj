@@ -14,7 +14,9 @@
       After you install it as a CLI tool, pass the "--help" argument to learn how it works.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="builtin-scripts\*.scriban" />
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="BuiltinTemplates.fs" />
     <Compile Include="CreateSkeleton.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

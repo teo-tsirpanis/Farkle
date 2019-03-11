@@ -2,6 +2,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Farkle.Tools",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet-build",
+            "program": "${workspaceFolder}/src/Farkle.Tools/bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
+            "args": [
+                "skeleton",
+                "-g",
+                "../../sample/Farkle.Calculator/SimpleMaths.egt",
+                "-t",
+                ":Grammar.FSharp"
+            ],
+            "cwd": "${workspaceFolder}/src/Farkle.Tools",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
             "name": "Farklei",
             "type": "coreclr",
             "request": "launch",
@@ -31,7 +48,7 @@
             "console": "internalConsole"
         },
         {
-            "name": ".NET Core Launch (console)",
+            "name": "Farkle.Tests",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
@@ -44,7 +61,7 @@
             "console": "internalConsole"
         },
         {
-            "name": ".NET Core Launch (console, no build)",
+            "name": "Farkle.Tests (no build)",
             "type": "coreclr",
             "request": "launch",
             "program": "Farkle.Tests.dll",
@@ -54,12 +71,6 @@
             "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
             "stopAtEntry": false,
             "console": "internalConsole"
-        },
-        {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
         }
     ]
 }

@@ -100,6 +100,7 @@ type StateTable<'a> =
         States: SafeArray<'a>
     }
     with
+        member x.Length = x.States.Count
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.States :> IEnumerable).GetEnumerator()
@@ -108,4 +109,4 @@ type StateTable<'a> =
             member x.GetEnumerator() = (x.States :> seq<_>).GetEnumerator()
         interface IReadOnlyCollection<'a> with
             /// [omit]
-            member x.Count = x.States.Count
+            member x.Count = x.Length

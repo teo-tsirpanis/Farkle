@@ -188,10 +188,10 @@ module internal LALRState =
 type GOLDGrammar =
         {
             _Properties: Properties
-            _CharSets: SafeArray<(char * char) []>
-            _Symbols: SafeArray<Symbol>
-            _Groups: SafeArray<Group>
-            _Productions: SafeArray<Production>
+            _CharSets: (char * char) [] []
+            _Symbols: Symbol []
+            _Groups: Group []
+            _Productions: Production []
             _LALR: StateTable<LALRState>
             _DFA: StateTable<DFAState>
         }
@@ -201,12 +201,12 @@ module GOLDGrammar =
 
     let counts (x: GOLDGrammar) =
         {
-            SymbolTables = x._Symbols.Count |> uint16
-            CharSetTables = x._CharSets.Count |> uint16
-            ProductionTables = x._Productions.Count |> uint16
-            DFATables = (x._DFA :> IReadOnlyCollection<_>).Count |> uint16
-            LALRTables = (x._LALR :> IReadOnlyCollection<_>).Count |> uint16
-            GroupTables = x._Groups.Count |> uint16
+            SymbolTables = x._Symbols.Length |> uint16
+            CharSetTables = x._CharSets.Length |> uint16
+            ProductionTables = x._Productions.Length |> uint16
+            DFATables = x._DFA.Length |> uint16
+            LALRTables = x._LALR.Length |> uint16
+            GroupTables = x._Groups.Length |> uint16
         }
 
     /// The `Properties` of the grammar.

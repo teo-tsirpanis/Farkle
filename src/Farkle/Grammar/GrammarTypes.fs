@@ -166,11 +166,15 @@ with
 
 /// A context-free grammar according to which, Farkle can parse text.
 type Grammar = internal {
+    // This field is totally informative; it serves only the template maker.
     _Properties: Map<string,string>
 
+    // These fields serve the template maker again, but the information
+    // they carry is redundantly stored here for his convenience.
     _StartSymbol: Nonterminal
-    _NonterminalInfoMap: Map<Nonterminal, Production ImmutableArray>
+    _Productions: Production ImmutableArray
 
+    // These are the only fields that serve the parser.
     _Groups: Group SafeArray
     _LALRStates: LALRState StateTable
     _DFAStates: DFAState StateTable
@@ -180,9 +184,8 @@ with
     member x.Properties = x._Properties
     /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol
-    /// Gets the possible productions that can derive a `Nonterminal`.
-    /// If it is not found, the array is empty.
-    member x.GetNonterminalInfo nt = x._NonterminalInfoMap.TryFind nt |> Option.defaultValue ImmutableArray.Empty
+    /// The grammar's `Production`s.
+    member x.Productions = x._Productions
     /// The grammar's `Group`s.
     member x.Groups = x._Groups
     /// The grammar's LALR state table.

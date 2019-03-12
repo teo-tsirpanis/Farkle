@@ -264,11 +264,11 @@ module internal GrammarReader =
             return!
                 GOLDGrammar.create
                     (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq)
-                    (SafeArray.ofArrayUnsafe symbols)
-                    (SafeArray.ofArrayUnsafe charSets)
-                    (SafeArray.ofArrayUnsafe productions)
+                    symbols
+                    charSets
+                    productions
                     {InitialState = dfaStates.Item initialDFA; States = dfaStates}
                     {InitialState = lalrStates.Item initialLALR; States = lalrStates}
-                    (SafeArray.ofArrayUnsafe groups)
+                    groups
                 |> Migration.migrate |> failIfNone UnknownEGTFile
         }

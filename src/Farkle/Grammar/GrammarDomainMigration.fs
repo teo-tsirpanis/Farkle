@@ -122,19 +122,15 @@ let portDFAState (x: Legacy.DFAState) =
     | DFAContinue (idx, edges) -> Some <| DFAState.Continue(idx, fixEdges edges)
 
 let migrate (x: Legacy.GOLDGrammar) = maybe {
-    let! startSymbol = x._Productions.ItemUnsafe 0u |> Option.bind (fun x -> wantNonterminal x.Head)
-    let! nonTerminalInfoMap =
-        portSafeArray portProduction x._Productions
-        |> Option.map (Seq.groupBy (fun {Head = x} -> x)
-            >> Seq.map (fun (nt, prods) -> nt, prods.ToImmutableArray())
-            >> Map.ofSeq)
+    let! startSymbol = x._Productions.[0].Head |> wantNonterminal
+    let! productions = portSafeArray portProduction x._Productions |> Option.map (fun x -> x.ToImmutableArray())
     let! groups = portSafeArray portGroup x._Groups
     let! lalrStates = portStateTable portLALRState x._LALR
     let! dfaStates = portStateTable portDFAState x._DFA
     return {
         _Properties = x._Properties
         _StartSymbol = startSymbol
-        _NonterminalInfoMap = nonTerminalInfoMap
+        _Productions = productions
         _Groups = groups
         _LALRStates = lalrStates
         _DFAStates = dfaStates

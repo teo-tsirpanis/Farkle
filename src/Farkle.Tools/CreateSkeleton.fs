@@ -7,6 +7,7 @@ module Farkle.Tools.CreateSkeleton
 
 open Argu
 open Farkle
+open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Scriban
 open Scriban.Runtime
@@ -27,6 +28,32 @@ with
             | OutputFile _ -> "specify where the generated output will be stored. Defaults to the template's name."
             | ListTemplates -> "list the built-in templates."
 
+type FarkleTemplateContext = {
+    Grammar: Grammar
+    GrammarBytes: byte[]
+    mutable FileExtension: string
+    mutable Base64Options: Base64FormattingOptions
+}
+
+let createTemplateContext grammar grammarBytes =
+    let tc = TemplateContext()
+    let so = ScriptObject()
+    let ftc = {
+        Grammar = grammar
+        GrammarBytes = grammarBytes
+        FileExtension = "out"
+        Base64Options = Base64FormattingOptions.None
+    }
+    do
+        let farkleObject = ScriptObject()
+        farkleObject.SetValue("version", AssemblyVersionInformation.AssemblyVersion, true)
+        so.SetValue("farkle", farkleObject, true)
+    so.Import("grammar_base64", Func<_>(fun () -> Convert.ToBase64String(ftc.GrammarBytes, ftc.Base64Options)))
+    so.Import("pad_base64", Action<_>(fun x -> ftc.Base64Options <- if x then Base64FormattingOptions.InsertLineBreaks else Base64FormattingOptions.None))
+    so.Import("file_extension", Action<_>(fun x -> ftc.FileExtension <- x))
+    tc.PushGlobal so
+    tc, ftc
+
 let doSkeleton (args: ParseResults<_>) =
     if args.Contains <@ ListTemplates @> then
         BuiltinTemplates.getAllBuiltins() |> Array.iter (printfn "%s")
@@ -37,25 +64,14 @@ let doSkeleton (args: ParseResults<_>) =
         eprintfn "Creating a skeleton program from %A, based on template %A, to %A..." grammarFile templateFile outputFile
 
         let templateText = BuiltinTemplates.resolveInput(templateFile).ReadToEnd()
-        let grammarBase64, grammar =
+        let tc, ftc =
             let bytes = File.ReadAllBytes grammarFile
             use mem = new MemoryStream(bytes)
             let grammar = EGT.ofStream mem |> returnOrFail
-            let grammarBase64 = Convert.ToBase64String bytes
-            grammarBase64, grammar
+            createTemplateContext grammar bytes
 
         let template = Template.Parse(templateText, templateFile)
-        let tc = TemplateContext()
-        let so = ScriptObject()
-        do
-            let farkleObject = ScriptObject()
-            farkleObject.Add("version", AssemblyVersionInformation.AssemblyVersion)
-            so.Add("farkle", farkleObject)
-        so.Add("grammar_base64", grammarBase64)
-        let mutable fileExt = "out"
-        so.Import("file_extension", Action<_>(fun x -> fileExt <- x))
-        tc.PushGlobal so
         let output = template.Render(tc)
 
-        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + fileExt))
+        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + ftc.FileExtension))
         File.WriteAllText(outputFile, output)

@@ -255,9 +255,8 @@ module internal GrammarReader =
             | RMCons(Byte 'L'B, xs) when isTableCountsInitialized ->
                 readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
             | _ -> None
-            >> failIfNone UnknownEGTFile
         either {
-            do! EGTReader.readEGT fHeaderCheck fRecord r
+            do! EGTReader.readEGT UnknownEGTFile fHeaderCheck fRecord r
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
             let dfaStates = SafeArray.ofArrayUnsafe dfaStates
             let lalrStates = SafeArray.ofArrayUnsafe lalrStates

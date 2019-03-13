@@ -38,20 +38,20 @@ module internal EGTReader =
                 // The stream's position on the other hand is very fast. It is just a private variable read.
                 let len = r.BaseStream.Length
                 let mutable x = fRead r
-                while r.BaseStream.Position < len && isOk x do
+                while r.BaseStream.Position < len && Option.isSome x do
                     x <- fRead r
                 x
             with
-            | :? EndOfStreamException -> Error UnexpectedEOF
+            | _ -> None
 
         let readEntry r =
             match readByte r with
-            | 'E'B -> Empty |> Ok
-            | 'b'B -> r |> readByte |> Byte |> Ok
-            | 'B'B -> r |> readByte |> ((<>) 0uy) |> Boolean |> Ok
-            | 'I'B -> r |> readUInt16 |> UInt16 |> Ok
-            | 'S'B -> r |> readNullTerminatedString |> String |> Ok
-            | b -> b |> InvalidEntryCode |> Error
+            | 'E'B -> Empty |> Some
+            | 'b'B -> r |> readByte |> Byte |> Some
+            | 'B'B -> r |> readByte |> ((<>) 0uy) |> Boolean |> Some
+            | 'I'B -> r |> readUInt16 |> UInt16 |> Some
+            | 'S'B -> r |> readNullTerminatedString |> String |> Some
+            | _ -> None
 
         let readRecord fRecord r =
             match readByte r with
@@ -60,21 +60,20 @@ module internal EGTReader =
                 let arr = ArrayPool.Shared.Rent count
                 use _release = {new System.IDisposable with member __.Dispose() = ArrayPool.Shared.Return arr}
                 let mutable i = 0
-                let mutable x = Ok Unchecked.defaultof<_>
-                while i < count && isOk x do
+                let mutable x = Some Unchecked.defaultof<_>
+                while i < count && x.IsSome do
                     x <- readEntry r
-                    tee (Array.set arr i) ignore x
+                    Option.iter (Array.set arr i) x
                     i <- i + 1
-                x |> Result.bind (fun _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord)
-            | b -> b |> InvalidRecordTag |> Error
+                x |> Option.bind (fun _ -> System.ReadOnlyMemory(arr, 0, count) |> fRecord)
+            | _ -> None
 
         let readRecords fRead r =
             readToEnd (readRecord fRead) r
 
-
     open Implementation
 
-    let readEGT fHeaderCheck fRecord r = either {
+    let readEGT defaultRecordError fHeaderCheck fRecord r = either {
         do! readNullTerminatedString r |> fHeaderCheck
-        do! readRecords fRecord r
+        do! readRecords fRecord r |> failIfNone defaultRecordError
     }

@@ -99,6 +99,39 @@ and Group = {
 with
     override x.ToString() = x.Name
 
+[<RequireQualifiedAccess>]
+/// A symbol in a grammar's symbol table that can be of any type.
+type Symbol =
+    | Terminal of Terminal
+    | Nonterminal of Nonterminal
+    | Noise of Noise * index: uint32
+    | GroupStart of GroupStart * index: uint32
+    | GroupEnd of GroupEnd * index: uint32
+with
+    /// The symbol's index in the table.
+    member x.Index =
+        match x with
+        | Terminal x -> x.Index
+        | Nonterminal x -> x.Index
+        | Noise (_, x) -> x
+        | GroupStart (_, x) -> x
+        | GroupEnd (_, x) -> x
+    /// The symbol's name.
+    member x.Name =
+        match x with
+        | Terminal x -> x.Name
+        | Nonterminal x -> x.Name
+        | Noise (x, _) -> x.Name
+        | GroupStart (x, _) -> x.Name
+        | GroupEnd (x, _) -> x.Name
+    override x.ToString() =
+        match x with
+        | Terminal x -> x.ToString()
+        | Nonterminal x -> x.ToString()
+        | Noise (x, _) -> x.ToString()
+        | GroupStart (x, _) -> x.ToString()
+        | GroupEnd (x, _) -> x.ToString()
+
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
@@ -172,6 +205,7 @@ type Grammar = internal {
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.
     _StartSymbol: Nonterminal
+    _AllSymbols: Symbol ImmutableArray
     _Productions: Production ImmutableArray
 
     // These are the only fields that serve the parser.

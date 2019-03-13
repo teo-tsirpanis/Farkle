@@ -48,7 +48,12 @@ let createTemplateContext grammar grammarBytes =
         let farkleObject = ScriptObject()
         farkleObject.SetValue("version", AssemblyVersionInformation.AssemblyVersion, true)
         so.SetValue("farkle", farkleObject, true)
-    so.Import("grammar_base64", Func<_>(fun () -> Convert.ToBase64String(ftc.GrammarBytes, ftc.Base64Options)))
+    do
+        let go = ScriptObject()
+        go.Import("base64", Func<_>(fun () -> Convert.ToBase64String(ftc.GrammarBytes, ftc.Base64Options)))
+        go.Import("properties", Func<_,_>(fun x -> match grammar.Properties.TryGetValue(x) with | (true, x) -> x | (false, _) -> ""))
+        go.SetValue("productions", grammar.Productions, true)
+        so.SetValue("grammar", go, true)
     so.Import("pad_base64", Action<_>(fun x -> ftc.Base64Options <- if x then Base64FormattingOptions.InsertLineBreaks else Base64FormattingOptions.None))
     so.Import("file_extension", Action<_>(fun x -> ftc.FileExtension <- x))
     tc.PushGlobal so

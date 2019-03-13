@@ -2,11 +2,11 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT}}
-{{ file_extension "fs" }}
+{{ file_extension "g.fs" }}
 {{ pad_base64 true }}
-// This file was created by Farkle.Sdk {{ farkle.version }} at {{ date.tostring date.now "%g %Y-%m-%d"}}
+// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.tostring date.now "%g %Y-%m-%d"}}.
 // It is disposable, and should NOT be commited to source control.
-module {{ outputBase | fsharp }}
+module ``{{ grammar.properties "Name" }}``
 
 open Farkle
 open Farkle.PostProcessor

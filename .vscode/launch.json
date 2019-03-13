@@ -12,7 +12,9 @@
                 "-g",
                 "../../sample/Farkle.Calculator/SimpleMaths.egt",
                 "-t",
-                ":Grammar.FSharp"
+                ":Grammar.FSharp",
+                "-o",
+                "./SimpleMaths.g.fs"
             ],
             "cwd": "${workspaceFolder}/src/Farkle.Tools",
             "stopAtEntry": false,

@@ -9,14 +9,14 @@ namespace Farkle.Grammar.GOLDParser
 [<Struct>]
 type EGTReadError =
     /// The grammar file is not recognized.
-    | UnknownEGTFile
+    | InvalidEGTFile
     /// You have tried to read a CGT file instead of an EGT file.
     /// The former is _not_ supported.
     | ReadACGTFile
     with
         override x.ToString() =
             match x with
-            | UnknownEGTFile -> "The given grammar file is not recognized."
+            | InvalidEGTFile -> "The given grammar file is not recognized."
             | ReadACGTFile ->
                 "The given file is a CGT file, not an EGT one."
                 + " You should update to the latest version of GOLD Parser Builder (at least over Version 5.0.0)"

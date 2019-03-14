@@ -6,8 +6,8 @@
 namespace Farkle.Grammar
 
 open Farkle.Collections
-open System.Collections.Immutable
 open System
+open System.Collections.Immutable
 
 /// A type indicating how a group advances.
 [<Struct; RequireQualifiedAccess>]
@@ -44,7 +44,7 @@ with
         else
             name
 
-/// A symbol which is produced by a concatenation of other `LALRSymbol`s, as the LALR parser dictates.
+/// A symbol which is produced by a concatenation of other `Terminal`s and `Nonterminal`s, as the LALR parser dictates.
 type Nonterminal = internal Nonterminal of index: uint32 * name: string
 with
     member x.Index = match x with | Nonterminal (idx, _) -> idx
@@ -99,39 +99,6 @@ and Group = {
 with
     override x.ToString() = x.Name
 
-[<RequireQualifiedAccess>]
-/// A symbol in a grammar's symbol table that can be of any type.
-type Symbol =
-    | Terminal of Terminal
-    | Nonterminal of Nonterminal
-    | Noise of Noise * index: uint32
-    | GroupStart of GroupStart * index: uint32
-    | GroupEnd of GroupEnd * index: uint32
-with
-    /// The symbol's index in the table.
-    member x.Index =
-        match x with
-        | Terminal x -> x.Index
-        | Nonterminal x -> x.Index
-        | Noise (_, x) -> x
-        | GroupStart (_, x) -> x
-        | GroupEnd (_, x) -> x
-    /// The symbol's name.
-    member x.Name =
-        match x with
-        | Terminal x -> x.Name
-        | Nonterminal x -> x.Name
-        | Noise (x, _) -> x.Name
-        | GroupStart (x, _) -> x.Name
-        | GroupEnd (x, _) -> x.Name
-    override x.ToString() =
-        match x with
-        | Terminal x -> x.ToString()
-        | Nonterminal x -> x.ToString()
-        | Noise (x, _) -> x.ToString()
-        | GroupStart (x, _) -> x.ToString()
-        | GroupEnd (x, _) -> x.ToString()
-
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
@@ -150,7 +117,7 @@ and [<RequireQualifiedAccess>] DFAState =
     member x.Index = match x with | DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
     override x.ToString() = string x.Index
 
-/// An array of `LALRSymbol`s that can produce a specific `Nonterminal`.
+/// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
 type Production = {
     /// The index of the production.
     Index: uint32
@@ -197,6 +164,17 @@ and LALRState = {
 with
     override x.ToString() = string x.Index
 
+/// A type containing all symbols of a grammar, grouped by kind.
+/// Group start and end symbols can be found at the group table.
+type Symbols = {
+    /// The grammar's terminals.
+    Terminals: Terminal ImmutableArray
+    /// The grammar's nonterminals.
+    Nonterminals: Nonterminal ImmutableArray
+    /// The grammar's noise symbols.
+    NoiseSymbols: Noise ImmutableArray
+}
+
 /// A context-free grammar according to which, Farkle can parse text.
 type Grammar = internal {
     // This field is totally informative; it serves only the template maker.
@@ -205,7 +183,7 @@ type Grammar = internal {
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.
     _StartSymbol: Nonterminal
-    _AllSymbols: Symbol ImmutableArray
+    _Symbols: Symbols
     _Productions: Production ImmutableArray
 
     // These are the only fields that serve the parser.
@@ -218,6 +196,8 @@ with
     member x.Properties = x._Properties
     /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol
+    /// The grammar's terminals =, nonterminals, and noise symbols.
+    member x.Symbols = x._Symbols
     /// The grammar's `Production`s.
     member x.Productions = x._Productions
     /// The grammar's `Group`s.

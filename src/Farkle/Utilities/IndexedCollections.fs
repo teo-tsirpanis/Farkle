@@ -7,27 +7,19 @@ namespace Farkle.Collections
 
 open System.Collections
 open System.Collections.Generic
+open System.Collections.Immutable
 
 /// A type-safe reference to a value based on its index.
 type [<Struct>] Indexed<'a> = private Indexed of uint32
     with
         /// The index's numerical value.
         member x.Value = x |> (fun (Indexed x) -> x)
-        /// Changes the type of the indexed object.
-        [<CompilerMessage("This function must be used only for the grammar domain model migrator.", 0x06400000)>]
-        member internal x.ReInterpret<'b>(): Indexed<'b> = Indexed x.Value
 
 /// Functions for working with `Indexed<'a>`.
 module internal Indexed =
 
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
-
-    let inline createWithKnownLength<'a> (arr: IReadOnlyCollection<'a>) (i: uint16) =
-        if int i <= arr.Count then
-            i |> uint32 |> create<'a> |> Some
-        else
-            None
 
 #nowarn "0x06370000"
 
@@ -36,16 +28,13 @@ module internal Indexed =
 /// It is advised to work with sequences before, just until the end.
 /// Safe random access is faciliated through `Indexed` objects.
 [<Struct>]
-type SafeArray<'a> = private SafeArray of 'a[]
+type SafeArray<'a> = private SafeArray of 'a ImmutableArray
     with
-        /// O(n) Creates a random-access list. Data will be copied to this new list.
-        static member Create<'a> (x: 'a seq) =
-            x
-            |> Array.ofSeq
-            |> SafeArray
+        /// Creates a random-access list. Data will be copied to this new list.
+        static member Create<'a> (x: 'a seq) = x.ToImmutableArray() |> SafeArray
         [<CompilerMessage("This method must be used only by the grammar domain model migrator, outside of this file.", 0x06370000)>]
         member private x.Value = x |> (fun (SafeArray x) -> x)
-        /// O(1) Gets the length of the list.
+        /// Gets the length of the list.
         member x.Count = x.Value.Length
         /// Gets the item at the given position the `Indexed` object points to.
         /// Because it does not accept an arbitrary integer, it is less likely to accidentially fail.
@@ -66,7 +55,7 @@ type SafeArray<'a> = private SafeArray of 'a[]
                 | None -> None
         /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
         member x.TryFindIndex f: Indexed<'a> option =
-            x.Value |> Array.tryFindIndex f |> Option.map (uint32 >> Indexed)
+            x.Value |> Seq.tryFindIndex f |> Option.map (uint32 >> Indexed)
         interface IEnumerable with
             /// [omit]
             member x.GetEnumerator() = (x.Value :> IEnumerable).GetEnumerator()
@@ -79,9 +68,8 @@ type SafeArray<'a> = private SafeArray of 'a[]
 
 /// Functions to work with `SafeArray`s.
 module SafeArray =
-    /// Creates a `SafeArray` directly from an array without copying its data.
-    /// However, to maintain immutability, the user has to make sure that this array is nowhere else referenced.
-    let internal ofArrayUnsafe x = SafeArray x
+    /// Creates a `SafeArray` from an immutable array.
+    let ofImmutableArray x = SafeArray x
     /// Creates a `SafeArray` from the given sequence.
     let inline ofSeq x = SafeArray.Create x
     /// Gets the item at the given position the `Indexed` object points to.
@@ -94,12 +82,16 @@ module SafeArray =
     /// Returns the index of the first element in the array that satisfies the given predicate, if there is any.
     let inline tryFindIndex (x: SafeArray<_>) f = x.TryFindIndex f
 
+/// A `SafeArray` of some "states", along with an initial one.
 type StateTable<'a> =
     {
+        /// The initial state. It should also be kept in the states as well.
         InitialState: 'a
+        /// All the state table's states.
         States: SafeArray<'a>
     }
     with
+        /// Gets the length of the state table.
         member x.Length = x.States.Count
         interface IEnumerable with
             /// [omit]

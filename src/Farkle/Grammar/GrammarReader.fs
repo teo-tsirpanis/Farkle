@@ -8,8 +8,7 @@ namespace Farkle.Grammar.GOLDParser
 open Farkle
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Grammar.Legacy
-open Farkle.Monads.Maybe
+open Farkle.Grammar.GOLDParser.EGTReader
 open Farkle.Monads.Either
 open System
 open System.Collections.Immutable
@@ -18,256 +17,286 @@ module internal GrammarReader =
 
     module private Implementation =
 
+        type AnySymbol =
+            | AnyTerminal of Terminal
+            | AnyNonterminal of Nonterminal
+            | AnyEndOfFile
+            | AnyNoise of Noise
+            | AnyGroupStart of GroupStart
+            | AnyGroupEnd of GroupEnd
+            | AnyError
+
+        let inline lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
+            if m.Length <> expectedLength then
+                invalidEGT()
+
+        let inline lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
+            if m.Length < expectedLength then
+                invalidEGT()
+
+        let createSafeIndexed<'a> (arr: ImmutableArray.Builder<'a>) idx =
+            if int idx <= arr.Capacity then
+                idx |> uint32 |> Indexed.create<'a>
+            else
+                invalidEGT()
+
         // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
         // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
         // FFFFFFfFFFFFFF
-        let inline wantUInt16 x = match x with | UInt16 x -> Some x | _ -> None
+        let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Empty -> () | _ -> invalidEGT()
+        let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Byte x -> x | _ -> invalidEGT()
+        let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Boolean x -> x | _ -> invalidEGT()
+        let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | UInt16 x -> x | _ -> invalidEGT()
+        let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | String x -> x | _ -> invalidEGT()
 
-        let inline zc x = x |> int |> Array.zeroCreate
+        let wantTerminal x = match x with | AnyTerminal x -> x | _ -> invalidEGT()
+        let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
+        let wantProductionHandle x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNonterminal x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
+        let wantContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
+        let wantGroupEnd x = match x with | AnyGroupEnd x -> Choice1Of2 x | AnyTerminal x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantSRActionSymbol x = match x with | AnyTerminal x -> Some x | AnyEndOfFile -> None | _ -> invalidEGT()
+        let wantDFASymbol x = match x with | AnyTerminal x -> Choice1Of4 x | AnyNoise x -> Choice2Of4 x | AnyGroupStart x -> Choice3Of4 x | AnyGroupEnd x -> Choice4Of4 x | _ -> invalidEGT()
 
-        let inline readInChunks allowEmpty count fReadIt =
-            function
-            | RMNil when allowEmpty -> Some []
-            | x when x.Length % count <> 0 -> None
-            | x -> List.init (x.Length / count) (fun i -> x.Slice(i * count, count) |> fReadIt) |> List.allSome
+        let wantAdvanceMode x idx = match wantUInt16 x idx with | 0us -> AdvanceMode.Token | 1us -> AdvanceMode.Character | _ -> invalidEGT()
+        let wantEndingMode x idx = match wantUInt16 x idx with | 0us -> EndingMode.Open | 1us -> EndingMode.Closed | _ -> invalidEGT()
 
-        let readProperty =
-            function
-            | RMCons(UInt16 _index, RMCons(String name, RMCons(String value, RMNil))) -> (name, value) |> Some
-            | _ -> None
+        let readProperty mem =
+            lengthMustBe mem 3
+            wantString mem 1, wantString mem 2
 
-        let readTableCounts =
-            function
-            | RMCons(UInt16 symbols, RMCons(UInt16 sets, RMCons(UInt16 rules, RMCons(UInt16 dfas, RMCons(UInt16 lalrs, RMCons(UInt16 groups, RMNil)))))) ->
-                Some
-                    {
-                        SymbolTables = symbols
-                        CharSetTables = sets
-                        ProductionTables = rules
-                        DFATables = dfas
-                        LALRTables = lalrs
-                        GroupTables = groups
-                    }
-            | _ -> None
-
-        let readCharSet _ =
-            function
-            | RMCons(UInt16 _unicodePlane, RMCons(UInt16 count, RMCons(Empty, ranges))) when ranges.Length = int count * 2 ->
-                let rangeSet = zc count
-                let ranges = ranges.Span
-                let mutable doContinue = true
-                let mutable i = 0
-                while i < int count && doContinue do
-                    match ranges.[2 * i], ranges.[2 * i + 1] with
-                    | UInt16 k1, UInt16 k2 -> rangeSet.[i] <- char k1, char k2
-                    | _ -> doContinue <- false
-                    i <- i + 1
-                match doContinue with
-                | true -> Some rangeSet
-                | false -> None
-            | _ -> None
+        let readCharSet _index mem =
+            lengthMustBeAtLeast mem 3
+            let _unicodePlane = wantUInt16 mem 0
+            let count = wantUInt16 mem 1 |> int
+            wantEmpty mem 2
+            lengthMustBe mem (3 + 2 * count)
+            let rangesSpan = mem.Slice(3)
+            let wantChar idx = wantUInt16 rangesSpan idx |> char
+            Array.init count (fun idx -> wantChar <| 2 * idx, wantChar <| 2 * idx + 1)
 
         let defaultGroupIndex = Indexed.create System.UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
 
-        let readSymbol index =
-            function
-            | RMCons(String name, RMCons(UInt16 0us, RMNil)) -> Nonterminal (uint32 index, name) |> Some
-            | RMCons(String name, RMCons(UInt16 1us, RMNil)) -> Terminal (uint32 index, name) |> Some
-            | RMCons(String name, RMCons(UInt16 2us, RMNil)) -> Noise name |> Some
-            | RMCons(String _ , RMCons(UInt16 3us, RMNil)) -> EndOfFile |> Some
-            | RMCons(String name, RMCons(UInt16 4us, RMNil)) -> GroupStart (defaultGroupIndex, (index, name)) |> Some
-            | RMCons(String name, RMCons(UInt16 5us, RMNil)) -> GroupEnd (index, name) |> Some
-            | RMCons(String _, RMCons(UInt16 7us, RMNil)) -> SymbolTypeUnused |> Some
-            | _ -> None
+        let readSymbol index mem =
+            lengthMustBe mem 2
+            let name = wantString mem 0
+            let kind = wantUInt16 mem 1
+            match kind with
+            | 0us -> Nonterminal(index, name) |> AnyNonterminal
+            | 1us -> Terminal(index, name) |> AnyTerminal
+            | 2us -> Noise name |> AnyNoise
+            | 3us -> AnyEndOfFile
+            | 4us -> GroupStart(name, defaultGroupIndex) |> AnyGroupStart
+            | 5us -> GroupEnd name |> AnyGroupEnd
+            | 7us -> AnyError
+            | _ -> invalidEGT()
 
-        let readGroup symbols fSymbol fGroup index =
-            let readNestedGroups =
-                (function | RMCons (UInt16 x, RMNil) -> fGroup x | _ -> None)
-                |> readInChunks true 1
-                >> Option.map set
-            function
-            | RMCons(String name, RMCons(UInt16 containerIndex, RMCons(UInt16 startIndex, RMCons(UInt16 endIndex, RMCons(UInt16 advanceMode, RMCons(UInt16 endingMode, RMCons(Empty, RMCons(UInt16 _nestingCount, xs)))))))) -> maybe {
-                let! containerSymbol = fSymbol containerIndex
-                let! startSymbol = fSymbol startIndex |> Option.map (function | GroupStart (_, name) -> GroupStart (Indexed.create index, name) | x -> x)
-                startIndex |> int |> Array.set symbols <| startSymbol
-                let! endSymbol = fSymbol endIndex
-                let! advanceMode = match advanceMode with | 0us -> Some Token | 1us -> Some Character | _ -> None
-                let! endingMode = match endingMode with | 0us -> Some Open | 1us -> Some Closed | _ -> None
-                let! nesting = readNestedGroups xs
-                return {
+        let readGroup (symbols: ImmutableArray.Builder<_>) fSymbol fGroup index mem =
+            lengthMustBeAtLeast mem 7
+            let name = wantString mem 0
+            let container = wantUInt16 mem 1 |> fSymbol |> wantContainer
+            let startSymbol =
+                let startIdx = wantUInt16 mem 2
+                let (GroupStart(name, _)) = startIdx |> fSymbol |> wantGroupStart
+                let newSymbol = GroupStart(name, Indexed.create index)
+                symbols.[int startIdx] <- AnyGroupStart newSymbol
+                newSymbol
+            let endSymbol = wantUInt16 mem 3 |> fSymbol |> wantGroupEnd
+            let advanceMode = wantAdvanceMode mem 4
+            let endingMode = wantEndingMode mem 5
+            wantEmpty mem 6
+            let nesting =
+                let count = wantUInt16 mem 7 |> int
+                lengthMustBe mem (8 + count)
+                let span = mem.Slice(8)
+                if not span.IsEmpty then
+                    Seq.init mem.Length (wantUInt16 span >> fGroup) |> set
+                else
+                    Set.empty
+            {
                     Name = name
-                    Index = index
-                    ContainerSymbol = containerSymbol
-                    StartSymbol = startSymbol
-                    EndSymbol = endSymbol
+                    ContainerSymbol = container
+                    Start = startSymbol
+                    End = endSymbol
                     AdvanceMode = advanceMode
                     EndingMode = endingMode
                     Nesting = nesting
-                }
-                }
-            | _ -> None
+            }
 
-        let readProduction fSymbol index =
-            let readChildrenSymbols =
-                (function | RMCons (UInt16 x, RMNil) -> fSymbol x | _ -> None)
-                |> readInChunks true 1
-            function
-            | RMCons(UInt16 headIndex, RMCons(Empty, xs)) -> maybe {
-                let! headSymbol = fSymbol headIndex
-                let! symbols = readChildrenSymbols xs
-                return {Index = index; Head = headSymbol; Handle = symbols.ToImmutableArray()}
-                }
-            | _ -> None
+        let readProduction fSymbol index mem =
+            lengthMustBeAtLeast mem 2
+            let headSymbol = wantUInt16 mem 0 |> fSymbol |> wantNonterminal
+            wantEmpty mem 1
+            let symbols =
+                let mem = mem.Slice(2)
+                Seq.init mem.Length (wantUInt16 mem >> fSymbol >> wantProductionHandle) |> ImmutableArray.CreateRange
+            {Index = index; Head = headSymbol; Handle = symbols}
 
-        let readInitialStates fDFA fLALR =
-            function
-            | RMCons(UInt16 dfa, RMCons(UInt16 lalr, RMNil)) -> maybe {
-                let! dfa = fDFA dfa
-                let! lalr = fLALR lalr
-                return dfa, lalr
-                }
-            | _ -> None
+        let readInitialStates fDFA fLALR mem =
+            lengthMustBe mem 2
+            let dfa = wantUInt16 mem 0 |> fDFA
+            let lalr = wantUInt16 mem 1 |> fLALR
+            dfa, lalr
 
-        let readDFAState fCharSet fSymbol fDFA index =
-            let readDFAEdges (xs: ReadOnlyMemory<_>) =
-                let xs = xs.Span
-                let arr = zc <| xs.Length / 3
-                let mutable doContinue = true
-                let mutable i = 0
-                while i < arr.Length && doContinue do
-                    match xs.[3 * i], xs.[3 * i + 1], xs.[3 * i + 2] with
-                    | UInt16 charSetIndex, UInt16 targetIndex, Empty ->
-                        let x = maybe {
-                            let! charSet = fCharSet charSetIndex
-                            let! target = fDFA targetIndex
-                            return charSet, target
-                        }
-                        match x with
-                        | Some x -> arr.[i] <- x
-                        | None -> doContinue <- false
-                    | _ -> doContinue <- false
-                    i <- i + 1
-                match doContinue with
-                | true -> arr |> RangeMap.ofRanges
-                | false -> None
-            function
-            | RMCons(Boolean false, RMCons(UInt16 _, RMCons(Empty, xs))) when xs.Length % 3 = 0 ->
-                xs
-                |> readDFAEdges
-                |> Option.map (fun edges -> (index, edges) |> DFAContinue)
-            | RMCons(Boolean true, RMCons(UInt16 acceptIndex, RMCons(Empty, xs))) when xs.Length % 3 = 0 -> maybe {
-                let! edges = readDFAEdges xs
-                let! acceptSymbol = fSymbol acceptIndex
-                return DFAAccept (index, (acceptSymbol, edges))
-                }
-            | _ -> None
+        let readDFAState fCharSet fSymbol fDFA index mem =
+            lengthMustBeAtLeast mem 3
+            let isAcceptState = wantBoolean mem 0
+            let acceptIndex = wantUInt16 mem 1
+            wantEmpty mem 2
+            let edges =
+                let states = mem.Slice(3)
+                if states.Length % 3 <> 0 then invalidEGT()
+                let edgesLength = states.Length / 3
+                let fEdge idx =
+                    let charSet = wantUInt16 states <| 3 * idx |> fCharSet
+                    let target = wantUInt16 states <| 3 * idx + 1 |> fDFA
+                    wantEmpty states <| 3 * idx + 2
+                    charSet, target
+                Array.init edgesLength fEdge |> RangeMap.ofRanges |> Option.defaultWith invalidEGT
+            if isAcceptState then
+                let acceptSymbol = fSymbol acceptIndex |> wantDFASymbol
+                DFAState.Accept(index, acceptSymbol, edges)
+            else
+                DFAState.Continue(index, edges)
 
-        let readLALRState fSymbol fProduction fLALR index =
-            let readLALRAction =
-                function
-                | RMCons(UInt16 symbolIndex, xs) -> maybe {
-                    let! symbol = fSymbol symbolIndex
-                    match xs with
-                    | RMCons(UInt16 1us, RMCons(UInt16 targetStateIndex, RMCons(Empty, RMNil))) ->
-                        let! targetState = fLALR targetStateIndex
-                        return symbol, Shift targetState
-                    | RMCons(UInt16 2us, RMCons(UInt16 targetProductionIndex, RMCons(Empty, RMNil))) ->
-                        let! targetProduction = fProduction targetProductionIndex
-                        return symbol, Reduce targetProduction
-                    | RMCons(UInt16 3us, RMCons(UInt16 targetStateIndex, RMCons(Empty, RMNil))) ->
-                        let! targetState = fLALR targetStateIndex
-                        return symbol, Goto targetState
-                    | RMCons(UInt16 4us, RMCons(UInt16 _, RMCons(Empty, RMNil))) -> return symbol, Accept
-                    | _ -> return! None
-                    }
-                | _ -> None
-                |> readInChunks false 4
-                >> Option.map Map.ofSeq
-            function
-            | RMCons(Empty, xs) -> readLALRAction xs |> Option.map (fun actions -> {Index = index; Actions = actions})
-            | _ -> None
+        let readLALRState fSymbol fProduction fLALR index mem =
+            lengthMustBeAtLeast mem 5 // There must be at least one action per state.
+            wantEmpty mem 0
+            let mutable SRActions = []
+            let mutable GotoActions = []
+            let mem = mem.Slice(1)
+            if mem.Length % 4 <> 0 then invalidEGT()
+            let fAction idx =
+                let symbolIndex = wantUInt16 mem <| 4 * idx
+                let symbol = fSymbol symbolIndex
+                let action = wantUInt16 mem <| 4 * idx + 1
+                let targetIndex = wantUInt16 mem <| 4 * idx + 2
+                wantEmpty mem <| 4 * idx + 3
+                match action with
+                | 1us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Shift <| fLALR targetIndex) :: SRActions
+                | 2us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Reduce <| fProduction targetIndex) :: SRActions
+                | 3us -> GotoActions <- (wantNonterminal symbol, fLALR targetIndex) :: GotoActions
+                | 4us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Accept) :: SRActions
+                | _ -> invalidEGT()
+            for i = 0 to mem.Length / 4 - 1 do fAction i
+            {Index = index; Actions = Map.ofList SRActions; GotoActions = Map.ofList GotoActions}
+
+        let itemTry (arr: ImmutableArray.Builder<_>) idx =
+            let idx = int idx
+            if idx < arr.Count then
+                arr.[idx]
+            else
+                invalidEGT()
+
+        let readAndAssignIndexed fRead (arr: ImmutableArray.Builder<_>) mem =
+            lengthMustBeAtLeast mem 1
+            let index = wantUInt16 mem 0
+            let content = mem.Slice(1)
+            content |> fRead (uint32 index) |> arr.Add
+
+        let inline changeOnce x newValue =
+            match !x with
+            | None -> x := Some newValue
+            | Some _ -> invalidEGT()
 
         [<Literal>]
         let CGTHeader = "GOLD Parser Tables/v1.0"
         [<Literal>]
         let EGTHeader = "GOLD Parser Tables/v5.0"
 
-        let inline itemTry arr idx = idx |> int |> flip Array.tryItem arr
-
-        let readAndAssignIndexed fRead arr entries =
-            match entries with
-            | RMCons(UInt16 index, xs) when int index < Array.length arr ->
-                xs |> fRead (uint32 index) |> Option.map (Array.set arr (int index))
-            | _ -> None
-
-        let inline changeOnce x newValue =
-            match !x with
-            | None ->
-                x := Some newValue
-                Some ()
-            | Some _ -> None
+        let headerCheck =
+            function
+            | CGTHeader -> Error ReadACGTFile
+            | EGTHeader -> Ok ()
+            | _ -> Error InvalidEGTFile
 
     open Implementation
 
     let read r =
-        let properties = System.Collections.Generic.Dictionary()
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
-        let mutable charSets = [| |]
-        let mutable symbols = [| |]
-        let mutable groups = [| |]
-        let mutable productions = [| |]
-        let mutable dfaStates = [| |]
-        let mutable lalrStates = [| |]
         let initialStates = ref None
-        let fHeaderCheck =
-            function
-            | CGTHeader -> Error ReadACGTFile
-            | EGTHeader -> Ok ()
-            | _ -> Error UnknownEGTFile
-        let initTables (x: TableCounts) =
-            charSets <- zc x.CharSetTables
-            symbols <- zc x.SymbolTables
-            groups <- zc x.GroupTables
-            productions <- zc x.ProductionTables
-            dfaStates <- zc x.DFATables
-            lalrStates <- zc x.LALRTables
-        let fRecord =
-            function
-            | RMCons(Byte 'p'B, xs) -> readProperty xs |> Option.map (properties.Add)
+        let mutable properties = []
+        let mutable charSets = Unchecked.defaultof<_>
+        let mutable fCharSet = Unchecked.defaultof<_>
+        let mutable symbols = Unchecked.defaultof<_>
+        let mutable fSymbol = Unchecked.defaultof<_>
+        let mutable groups = Unchecked.defaultof<_>
+        let mutable fGroupIndex = Unchecked.defaultof<_>
+        let mutable productions = Unchecked.defaultof<_>
+        let mutable fProduction = Unchecked.defaultof<_>
+        let mutable dfaStates = Unchecked.defaultof<_>
+        let mutable fDFAIndex = Unchecked.defaultof<_>
+        let mutable lalrStates = Unchecked.defaultof<_>
+        let mutable fLALRIndex = Unchecked.defaultof<_>
+        let terminals = ImmutableArray.CreateBuilder()
+        let nonterminals = ImmutableArray.CreateBuilder()
+        let noiseSymbols = ImmutableArray.CreateBuilder()
+        let fRecord mem =
+            lengthMustBeAtLeast mem 1
+            let magicCode = wantByte mem 0
+            let mem = mem.Slice(1)
+            match magicCode with
+            | 'p'B -> properties <- readProperty mem :: properties
             // The table counts record must exist only once, and before the other records.
-            | RMCons(Byte 't'B, xs) when not isTableCountsInitialized ->
+            | 't'B when not isTableCountsInitialized ->
                 isTableCountsInitialized <- true
-                readTableCounts xs |> Option.map initTables
-            | RMCons(Byte 'c'B, xs) when isTableCountsInitialized ->
-                readAndAssignIndexed readCharSet charSets xs
-            | RMCons(Byte 'S'B, xs) when isTableCountsInitialized && not hasReadAnyGroup ->
-                readAndAssignIndexed readSymbol symbols xs
-            | RMCons(Byte 'g'B, xs) when isTableCountsInitialized ->
+                lengthMustBe mem 6
+                let createB idx = wantUInt16 mem idx |> int |> ImmutableArray.CreateBuilder
+                symbols <- createB 0
+                fSymbol <- itemTry symbols
+                charSets <- createB 1
+                fCharSet <- itemTry charSets
+                productions <- createB 2
+                fProduction <- itemTry productions
+                dfaStates <- createB 3
+                fDFAIndex <- createSafeIndexed dfaStates
+                lalrStates <- createB 4
+                fLALRIndex <- createSafeIndexed lalrStates
+                groups <- createB 5
+                fGroupIndex <- createSafeIndexed groups
+            | 'c'B when isTableCountsInitialized ->
+                readAndAssignIndexed readCharSet charSets mem
+            | 'S'B when isTableCountsInitialized && not hasReadAnyGroup ->
+                let index = wantUInt16 mem 0
+                let symbol = mem.Slice(1) |> readSymbol (uint32 index)
+                symbols.Add symbol
+                match symbol with
+                | AnyTerminal x -> terminals.Add x
+                | AnyNonterminal x -> nonterminals.Add x
+                | AnyNoise x -> noiseSymbols.Add x
+                | _ -> ()
+            | 'g'B when isTableCountsInitialized ->
                 hasReadAnyGroup <- true
-                readAndAssignIndexed (readGroup symbols (itemTry symbols) (Indexed.createWithKnownLength groups)) groups xs
-            | RMCons(Byte 'R'B, xs) when isTableCountsInitialized ->
-                readAndAssignIndexed (readProduction (itemTry symbols)) productions xs
-            | RMCons(Byte 'I'B, xs) when isTableCountsInitialized ->
-                readInitialStates (Indexed.createWithKnownLength dfaStates) (Indexed.createWithKnownLength lalrStates) xs |> Option.bind (changeOnce initialStates)
-            | RMCons(Byte 'D'B, xs) when isTableCountsInitialized ->
-                readAndAssignIndexed (readDFAState (itemTry charSets) (itemTry symbols) (Indexed.createWithKnownLength dfaStates)) dfaStates xs
-            | RMCons(Byte 'L'B, xs) when isTableCountsInitialized ->
-                readAndAssignIndexed (readLALRState (itemTry symbols) (itemTry productions) (Indexed.createWithKnownLength lalrStates)) lalrStates xs
-            | _ -> None
+                readAndAssignIndexed (readGroup symbols fSymbol fGroupIndex) groups mem
+            | 'R'B when isTableCountsInitialized ->
+                readAndAssignIndexed (readProduction fSymbol) productions mem
+            | 'I'B when isTableCountsInitialized ->
+                readInitialStates fDFAIndex fLALRIndex mem
+                |> changeOnce initialStates
+            | 'D'B when isTableCountsInitialized ->
+                readAndAssignIndexed (readDFAState fCharSet fSymbol fDFAIndex) dfaStates mem
+            | 'L'B when isTableCountsInitialized ->
+                readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
+            | _ -> invalidEGT()
         either {
-            do! EGTReader.readEGT UnknownEGTFile fHeaderCheck fRecord r
-            let! (initialDFA, initialLALR) = !initialStates |> failIfNone UnknownEGTFile
-            let dfaStates = SafeArray.ofArrayUnsafe dfaStates
-            let lalrStates = SafeArray.ofArrayUnsafe lalrStates
-            return!
-                GOLDGrammar.create
-                    (properties |> Seq.map (fun p -> p.Key, p.Value) |> Map.ofSeq)
-                    symbols
-                    charSets
-                    productions
-                    {InitialState = dfaStates.Item initialDFA; States = dfaStates}
-                    {InitialState = lalrStates.Item initialLALR; States = lalrStates}
-                    groups
-                |> Migration.migrate |> failIfNone UnknownEGTFile
+            do! EGTReader.readEGT headerCheck fRecord r
+            let! (initialDFA, initialLALR) = !initialStates |> failIfNone InvalidEGTFile
+            let symbols = {
+                Terminals = terminals.ToImmutable()
+                Nonterminals = nonterminals.ToImmutable()
+                NoiseSymbols = noiseSymbols.ToImmutable()
+            }
+            let dfaStates = SafeArray.ofImmutableArray <| dfaStates.ToImmutable()
+            let lalrStates = SafeArray.ofImmutableArray <| lalrStates.ToImmutable()
+            return {
+                _Properties = Map.ofList properties
+                _StartSymbol = productions.[0].Head
+                _Symbols = symbols
+                _Productions = productions.ToImmutable()
+                _Groups = SafeArray.ofImmutableArray <| groups.ToImmutable()
+                _LALRStates = {InitialState = lalrStates.[initialLALR]; States = lalrStates}
+                _DFAStates = {InitialState = dfaStates.[initialDFA]; States = dfaStates}
+            }
         }

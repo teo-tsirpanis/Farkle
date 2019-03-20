@@ -23,14 +23,15 @@ type EGTReadError =
                 + " and save the tables as \"Enhanced Grammar tables (Version 5.0)\"."
 
 /// An entry of an EGT file.
+[<Struct>]
 type internal Entry =
     /// [omit]
     | Empty
     /// [omit]
-    | Byte of byte
+    | Byte of byteValue: byte
     /// [omit]
-    | Boolean of bool
+    | Boolean of boolValue: bool
     /// [omit]
-    | UInt16 of uint16
+    | UInt16 of intValue: uint16
     /// [omit]
-    | String of string
+    | String of stringValue: string

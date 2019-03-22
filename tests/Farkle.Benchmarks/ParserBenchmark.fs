@@ -22,17 +22,17 @@ type ParserBenchmark() =
 
     let gmlContents = File.ReadAllText "gml.grm"
 
-    [<Params (0, 256, 512, 1144, 2048)>]
-    member val public BufferSize = 0 with get, set
+    [<Params (true, false)>]
+    member val public DynamicallyReadInput = true with get, set
 
     member x.doIt pp =
         use f = File.OpenRead "gml.grm"
         use sr = new StreamReader(f, Encoding.UTF8)
         use cs =
-            if x.BufferSize = 0 then
-                CharStream.ofString gmlContents
+            if x.DynamicallyReadInput then
+                CharStream.ofTextReader sr
             else
-                CharStream.ofTextReaderEx x.BufferSize sr
+                CharStream.ofString gmlContents
         let rf = RuntimeFarkle.changePostProcessor pp rf
         RuntimeFarkle.parseChars rf ignore cs
         |> returnOrFail

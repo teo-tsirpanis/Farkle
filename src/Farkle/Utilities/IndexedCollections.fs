@@ -27,7 +27,6 @@ module internal Indexed =
 /// It intentionally lacks methods such as `map` and `filter`. This type should be at the final stage of data manipulation.
 /// It is advised to work with sequences before, just until the end.
 /// Safe random access is faciliated through `Indexed` objects.
-[<Struct>]
 type SafeArray<'a> = private SafeArray of 'a ImmutableArray
     with
         /// Creates a random-access list. Data will be copied to this new list.

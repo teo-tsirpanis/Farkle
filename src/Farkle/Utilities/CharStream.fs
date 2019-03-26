@@ -15,11 +15,11 @@ open System.IO
 /// stored by its starting position and ending index.
 type CharSpan = private CharSpan of posFrom: Position * idxTo: uint64
 with
-    /// The span's zero-based index of the first character.
-    member x.StartingIndex = match x with | CharSpan ({Index = x}, _) -> x
-    /// The span's zero-based index of the last character.
-    member x.EndingIndex = match x with | CharSpan (_, x) -> x
-    override x.ToString() = sprintf "[%d,%d]" x.StartingIndex x.EndingIndex
+    /// The position of the span's first character.
+    member x.StartingPosition = let (CharSpan(x, _)) = x in x
+    /// The zero-based index of the span's last character.
+    member x.EndingIndex = let (CharSpan (_, x)) = x in x
+    override x.ToString() = sprintf "[%d,%d]" x.StartingPosition.Index x.EndingIndex
 
 /// The internal structure to support `CharStreamSource.DynamicBlock`.
 type private DynamicBlock =
@@ -196,9 +196,9 @@ module CharStream =
         else
             failwithf "Trying to consume the character span %O, from a stream that was left at %d." csp cs.Position.Index
 
-    /// Creates an arbitrary object out of the characters at the given `CharSpan` at the returned `Position`.
+    /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan ({Index = idxStart} as posStart, idxEnd) as csp) =
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs (CharSpan ({Index = idxStart}, idxEnd) as csp) =
         if cs.StartingIndex <= idxStart && cs.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
@@ -206,23 +206,23 @@ module CharStream =
                 match cs.Source with
                 | StaticBlock sb -> sb.Span.Slice(int idxStart, length)
                 | DynamicBlock db -> ReadOnlySpan(db.Buffer).Slice(int <| idxStart - db.BufferStartingIndex, length)
-            fPostProcess.Invoke(symbol, cs.Position, span), posStart
+            fPostProcess.Invoke(symbol, cs.Position, span)
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
 
-    /// Creates a string out of the characters at the given `CharSpan` at the returned `Position`.
+    /// Creates a string out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
     let unpinSpanAndGenerateString =
         let csCallback = CharStreamCallback (fun _ _ data -> box <| data.ToString())
         fun cs c_span ->
-            let (s, pos) =
+            let s =
                 unpinSpanAndGenerate
                     null
                     csCallback
                     cs
                     c_span // Created by cable
-            s :?> string, pos
+            s :?> string
 
     let private create src = {Source = src; StartingIndex = 0UL; _Position = Position.initial}
 

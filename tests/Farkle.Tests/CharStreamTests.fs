@@ -34,7 +34,7 @@ let tests =
                 let span = pinSpan cs idx
                 consume false cs span
                 Expect.equal steps (int cs.Position.Index) "An unexpected number of characters was consumed"
-                let s = unpinSpanAndGenerateString cs span |> fst
+                let s = unpinSpanAndGenerateString cs span
                 Expect.equal (str.Substring(0, steps)) s "The generated string is different from the original"
                 Expect.throws (fun () -> unpinSpanAndGenerateString cs span |> ignore) "Generating a character span can be done more than once"))
     ]

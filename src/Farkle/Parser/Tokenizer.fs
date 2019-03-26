@@ -77,16 +77,20 @@ module Tokenizer =
     /// 5. the `PostProcessor` to use on the newly-transformd tokens.
     /// 6. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
     let tokenize fError fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} (pp: PostProcessor<_>) (input: CharStream) =
-        let fError msg = Message (input.Position, msg) |> fError
+        let fail msg = Message (input.Position, msg) |> fError
         let csCallback = CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data))
         let rec impl (gs: TokenizerState) fTokenS =
             let fToken pos t =
                 match fToken pos t fTokenS with
                 | Some x, _ -> x
                 | None, s -> impl [] s
-            let newToken sym data =
-                let (data, pos) = unpinSpanAndGenerate sym csCallback input data
-                Token.Create pos sym data |> Some |> fToken pos
+            let newToken sym (cs: CharSpan) =
+                let pos = cs.StartingPosition
+                try
+                    let data = unpinSpanAndGenerate sym csCallback input cs
+                    Token.Create pos sym data |> Some |> fToken pos
+                with
+                | ex -> fError <| Message(pos, ParseErrorType.TransformError(sym, ex))
             let tok = tokenizeDFA dfa input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
@@ -142,16 +146,16 @@ module Tokenizer =
                         extendSpanByOne input tok2
                 impl ((data, g2) :: xs) fTokenS
             // If a group end symbol is encountered but outside of any group,
-            | Some (Ok (Choice4Of4 ge, _)), [] -> fError <| ParseErrorType.UnexpectedGroupEnd ge
+            | Some (Ok (Choice4Of4 ge, _)), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // or input ends while we are inside a group,
-            | None, (_, g) :: _ -> fError <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
+            | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
             // But if a group starts inside a group that cannot be nested at, it is an error.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), _)), ((_, g) :: _) ->
-                fError <| ParseErrorType.CannotNestGroups(groups.[tokGroupIdx], g)
+                fail <| ParseErrorType.CannotNestGroups(groups.[tokGroupIdx], g)
             /// If a group starts while being outside of any group...
             /// Wait a minute! Haven't we already checked this case?
             /// Ssh, don't tell the compiler. She doesn't know about it. 😊
             | Some (Ok (Choice3Of4 _, _)), [] -> failwith "Impossible case: The group stack was already checked to be empty."
             // We found an unrecognized symbol while being outside a group. This is an error.
-            | Some (Error x), [] -> fError <| ParseErrorType.LexicalError x
+            | Some (Error x), [] -> fail <| ParseErrorType.LexicalError x
         impl [] fTokenS0

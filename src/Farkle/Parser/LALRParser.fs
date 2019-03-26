@@ -56,7 +56,7 @@ module LALRParser =
                         fMessage <| ParseMessage.Reduction productionToReduce
                         impl <| (nextState, resultObj) :: stack
                     with
-                    | ex -> FuseError(productionToReduce, ex) |> internalError, stack
+                    | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail, stack
                 | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError, stack
             | None, _ ->
                 let fixTerminal = Option.map ExpectedSymbol.Terminal >> Option.defaultValue ExpectedSymbol.EndOfInput

@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.PostProcessor
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to tokenize `CharStreams`.
@@ -64,21 +63,19 @@ module Tokenizer =
     /// Breaks a `CharStream` into a series of post-processed tokens, according to the given `Grammar`.
     /// This function is pretty complicated, so let's enumerate the parameters' purpose.
     /// The function accepts:
-    /// 1. a function that determines the result of _this_ function, in case an error occurs.
-    /// 2. a function that accepts:
+    /// 1. a function that accepts:
     ///     * the current position (it is redundant if a token is specified, but not when input ends)
     ///     * a token that was just generated (or `None` in case of an end of input).
     ///     * the function's state.
     ///     and returns
     ///     * the result of _this_ function, or `None`, if it should be given another token.
     ///     * the function's new state.
-    /// 3. the initial state of the previous function.
-    /// 4. the `Grammar` to use.
-    /// 5. the `PostProcessor` to use on the newly-transformd tokens.
-    /// 6. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
-    let tokenize fError fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} (pp: PostProcessor<_>) (input: CharStream) =
-        let fail msg = Message (input.Position, msg) |> fError
-        let csCallback = CharStreamCallback (fun sym pos data -> pp.Transform(sym, pos, data))
+    /// 2. the initial state of the previous function.
+    /// 3. the `Grammar` to use.
+    /// 4. the `CharStreamCallback` to call to transform the newly madetokens.
+    /// 5. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
+    let tokenize fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} fTransform (input: CharStream) =
+        let fail msg = Message (input.Position, msg) |> Error
         let rec impl (gs: TokenizerState) fTokenS =
             let fToken pos t =
                 match fToken pos t fTokenS with
@@ -87,10 +84,10 @@ module Tokenizer =
             let newToken sym (cs: CharSpan) =
                 let pos = cs.StartingPosition
                 try
-                    let data = unpinSpanAndGenerate sym csCallback input cs
+                    let data = unpinSpanAndGenerate sym fTransform input cs
                     Token.Create pos sym data |> Some |> fToken pos
                 with
-                | ex -> fError <| Message(pos, ParseErrorType.TransformError(sym, ex))
+                | ex -> Error <| Message(pos, ParseErrorType.TransformError(sym, ex))
             let tok = tokenizeDFA dfa input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.

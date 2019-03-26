@@ -5,6 +5,7 @@
 
 namespace Farkle
 
+open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
@@ -33,7 +34,7 @@ Check the post-processor's configuration."""
 /// A reusable parser and post-processor, created for a specific grammar, and returning
 /// a specific type of object that best describes an expression of the language of this grammar.
 /// This is the highest-level API, and the easiest-to-use one.
-[<NoComparison; NoEquality>]
+[<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = private {
     Grammar: Result<Grammar,FarkleError>
     PostProcessor: PostProcessor<'TResult>
@@ -50,7 +51,7 @@ module RuntimeFarkle =
 
     /// Changes the post-processor of a `RuntimeFarkle`.
     [<CompiledName("ChangePostProcessor")>]
-    let changePostProcessor pp rf = {Grammar = rf.Grammar; PostProcessor = pp}
+    let changePostProcessor pp rf = createMaybe pp rf.Grammar
 
     /// Creates a `RuntimeFarkle`.
     [<CompiledName("Create")>]
@@ -79,11 +80,12 @@ module RuntimeFarkle =
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         let fParse grammar =
+            let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
             let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
             let fToken pos token =
                 token |> Option.map (ParseMessage.TokenRead) |> Option.defaultValue ParseMessage.EndOfInput |> fMessage
                 fLALR pos token
-            Tokenizer.tokenize Error fToken [] grammar rf.PostProcessor input |> Result.mapError ParseError
+            Tokenizer.tokenize fToken [] grammar fTransform input |> Result.mapError ParseError
         rf.Grammar >>= fParse |> Result.map (fun x -> x :?> 'TResult)
 
     [<CompiledName("ParseMemory")>]

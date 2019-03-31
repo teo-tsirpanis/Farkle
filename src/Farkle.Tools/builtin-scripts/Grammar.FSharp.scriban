@@ -2,11 +2,10 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT}}
-{{ file_extension "g.fs" }}
-{{ pad_base64 true }}
-// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.tostring date.now "%g %Y-%m-%d"}}.
+{{ file_extension = "g.fs" }}
+// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g %Y-%m-%d"}}.
 // It is disposable, and should NOT be commited to source control.
-module ``{{ grammar.properties "Name" }}``
+module ``{{ grammar.properties["Name"] }}``
 
 open Farkle
 open Farkle.PostProcessor
@@ -14,14 +13,14 @@ open Farkle.PostProcessor
 //#region Grammar types
 
 type Terminal =
-    {{ for s in terminals }}
-        /// {{ s.ToString }}
+    {{ for s in grammar.symbols.terminals }}
+        /// {{ s }}
         | {{ s.Name | pascalcase }} = {{ s.Index }}u
     {{ end }}
 
 type Production =
-    {{ for p in productions }}
-        /// {{ p.ToString }}
+    {{ for p in grammar.productions }}
+        /// {{ p }}
         | {{ p.Name | pascalcase }} = {{ p.Index }}u
     {{ end }}
 

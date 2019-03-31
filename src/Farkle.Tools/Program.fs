@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 open Argu
-open Farkle.Tools.CreateSkeleton
+open Farkle.Tools.Templating.CreateSkeleton
 open System
 
 type FarkleCLIExiter() =

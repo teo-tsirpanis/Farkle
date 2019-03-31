@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.CreateSkeleton
+module Farkle.Tools.Templating.CreateSkeleton
 
 open Argu
 open Farkle
@@ -28,37 +28,6 @@ with
             | OutputFile _ -> "specify where the generated output will be stored. Defaults to the template's name."
             | ListTemplates -> "list the built-in templates."
 
-type FarkleTemplateContext = {
-    Grammar: Grammar
-    GrammarBytes: byte[]
-    mutable FileExtension: string
-    mutable Base64Options: Base64FormattingOptions
-}
-
-let createTemplateContext grammar grammarBytes =
-    let tc = TemplateContext()
-    let so = ScriptObject()
-    let ftc = {
-        Grammar = grammar
-        GrammarBytes = grammarBytes
-        FileExtension = "out"
-        Base64Options = Base64FormattingOptions.None
-    }
-    do
-        let farkleObject = ScriptObject()
-        farkleObject.SetValue("version", AssemblyVersionInformation.AssemblyVersion, true)
-        so.SetValue("farkle", farkleObject, true)
-    do
-        let go = ScriptObject()
-        go.Import("base64", Func<_>(fun () -> Convert.ToBase64String(ftc.GrammarBytes, ftc.Base64Options)))
-        go.Import("properties", Func<_,_>(fun x -> match grammar.Properties.TryGetValue(x) with | (true, x) -> x | (false, _) -> ""))
-        go.SetValue("productions", grammar.Productions, true)
-        so.SetValue("grammar", go, true)
-    so.Import("pad_base64", Action<_>(fun x -> ftc.Base64Options <- if x then Base64FormattingOptions.InsertLineBreaks else Base64FormattingOptions.None))
-    so.Import("file_extension", Action<_>(fun x -> ftc.FileExtension <- x))
-    tc.PushGlobal so
-    tc, ftc
-
 let doSkeleton (args: ParseResults<_>) =
     if args.Contains <@ ListTemplates @> then
         BuiltinTemplates.getAllBuiltins() |> Array.iter (printfn "%s")
@@ -69,14 +38,10 @@ let doSkeleton (args: ParseResults<_>) =
         eprintfn "Creating a skeleton program from %A, based on template %A, to %A..." grammarFile templateFile outputFile
 
         let templateText = BuiltinTemplates.resolveInput(templateFile).ReadToEnd()
-        let tc, ftc =
-            let bytes = File.ReadAllBytes grammarFile
-            use mem = new MemoryStream(bytes)
-            let grammar = EGT.ofStream mem |> returnOrFail
-            createTemplateContext grammar bytes
+        let tc, fr = TemplateEngine.createTemplateContext grammarFile |> returnOrFail
 
         let template = Template.Parse(templateText, templateFile)
         let output = template.Render(tc)
 
-        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + ftc.FileExtension))
+        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + fr.FileExtension))
         File.WriteAllText(outputFile, output)

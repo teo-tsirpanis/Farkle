@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.BuiltinTemplates
+module Farkle.Tools.Templating.BuiltinTemplates
 
 open System
 open System.IO

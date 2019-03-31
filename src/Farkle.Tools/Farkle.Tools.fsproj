@@ -16,8 +16,9 @@
   <ItemGroup>
     <EmbeddedResource Include="builtin-scripts\*.scriban" />
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="BuiltinTemplates.fs" />
-    <Compile Include="CreateSkeleton.fs" />
+    <Compile Include="Templating/BuiltinTemplates.fs" />
+    <Compile Include="Templating/TemplateEngine.fs" />
+    <Compile Include="Templating/CreateSkeleton.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -189,3 +189,4 @@ docs/
 temp/gh-pages
 DotNetTools/
 .idea/
+**/*.g.fs

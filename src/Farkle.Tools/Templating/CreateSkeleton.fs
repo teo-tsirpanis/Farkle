@@ -34,14 +34,13 @@ let doSkeleton (args: ParseResults<_>) =
     else
         let grammarFile = args.GetResult <@ GrammarFile @>
         let templateFile = args.GetResult <@ TemplateFile @>
-        let outputFile = args.TryGetResult <@ OutputFile @>
-        eprintfn "Creating a skeleton program from %A, based on template %A, to %A..." grammarFile templateFile outputFile
+        eprintfn "Creating a skeleton program from %A, based on template %A..." grammarFile templateFile
 
         let templateText = BuiltinTemplates.resolveInput(templateFile).ReadToEnd()
-        let tc, fr = TemplateEngine.createTemplateContext grammarFile |> returnOrFail
+        let tc, fGetFileExtension = TemplateEngine.createTemplateContext grammarFile |> returnOrFail
 
         let template = Template.Parse(templateText, templateFile)
         let output = template.Render(tc)
 
-        let outputFile = outputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, "." + fr.FileExtension))
+        let outputFile = args.TryGetResult <@ OutputFile @> |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, fGetFileExtension()))
         File.WriteAllText(outputFile, output)

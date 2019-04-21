@@ -53,9 +53,6 @@ type FarkleRoot = {
     Farkle: FarkleObject
     [<ScriptMemberIgnore>]
     GrammarBytes: byte[]
-    [<ScriptMemberIgnore>]
-    mutable Base64Options: Base64FormattingOptions
-    mutable FileExtension: string
     Grammar: Grammar
 }
 with
@@ -63,8 +60,6 @@ with
     static member Create grammar bytes = {
         Farkle = FarkleObject.Create
         GrammarBytes = bytes
-        Base64Options = Base64FormattingOptions.None
-        FileExtension = ".out"
         Grammar = grammar
     }
     member x.ToBase64 doPad =
@@ -76,11 +71,19 @@ with
 module TemplateEngine =
     let createTemplateContext grammarFile = either {
         let tc = TemplateContext()
+        tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
         let! grammar = GOLDParser.EGT.ofFile grammarFile |> Result.map Grammar.Create
         let fr = FarkleRoot.Create grammar bytes
+
         let so = ScriptObject()
         so.Import fr
+        Utilities.load so
+
         tc.PushGlobal so
-        return tc, fr
+        let fFileExtension() =
+            match so.TryGetValue("file_extension") with
+            | (true, fExt) -> fExt.ToString()
+            | (false, _) -> "out"
+        return tc, fFileExtension
     }

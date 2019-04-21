@@ -1,9 +1,9 @@
-{{ ## Copyright (c) 2018 Theodore Tsirpanis
+{{~ ## Copyright (c) 2018 Theodore Tsirpanis
 
 This software is released under the MIT License.
-https://opensource.org/licenses/MIT}}
-{{ file_extension = "g.fs" }}
-// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g %Y-%m-%d"}}.
+https://opensource.org/licenses/MIT ~}}
+{{~ file_extension = "g.fs" ~}}
+// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It is disposable, and should NOT be commited to source control.
 module ``{{ grammar.properties["Name"] }}``
 
@@ -13,15 +13,15 @@ open Farkle.PostProcessor
 //#region Grammar types
 
 type Terminal =
-    {{ for s in grammar.symbols.terminals }}
-        /// {{ s }}
-        | {{ s.Name | pascalcase }} = {{ s.Index }}u
-    {{ end }}
+{{~ for s in grammar.symbols.terminals ~}}
+    /// {{ s }}
+    | {{ s.name | fmt pascal_case "" }} = {{ s.index }}u
+{{~ end ~}}
 
 type Production =
-    {{ for p in grammar.productions }}
-        /// {{ p }}
-        | {{ p.Name | pascalcase }} = {{ p.Index }}u
-    {{ end }}
+{{~ for p in grammar.productions ~}}
+    /// {{ p }}
+    | {{ p | fmt_production pascal_case "" }} = {{ p.index }}u
+{{~ end ~}}
 
 //#endregion

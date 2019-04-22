@@ -1,5 +1,5 @@
 // Copyright (c) 2018 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -26,7 +26,7 @@ type EndingMode =
     | Closed
 
 /// A symbol which is produced through a DFA, and is significant for the grammar.
-type Terminal = internal Terminal of index: uint32 * name: string
+type Terminal = Terminal of index: uint32 * name: string
 with
     /// The terminal's index.
     /// It is mainly used for the post-processor.
@@ -35,17 +35,24 @@ with
     member x.Name = match x with | Terminal (_, name) -> name
     override x.ToString() =
         let name = x.Name
-        if
+        // The symbol's name should be quoted if...
+        let shouldAddQuotes =
+            // (this line ensures the next will not die; terminals with an empty name do not make sense)
             String.IsNullOrEmpty name
-            || Char.IsLetter name.[0]
-            || String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') name
-        then
+            // its first character is not a letter...
+            || not <| Char.IsLetter name.[0]
+            // or has a character that is not a letter, a dot, a dash, or an underscore.
+            // (De Morgan's laws apply here)
+            || not <| String.forall (fun x -> Char.IsLetter x || x = '.' || x = '-' || x = '_') name
+        if name = "'" then
+            "''"
+        elif shouldAddQuotes then
             sprintf "'%s'" name
         else
             name
 
 /// A symbol which is produced by a concatenation of other `Terminal`s and `Nonterminal`s, as the LALR parser dictates.
-type Nonterminal = internal Nonterminal of index: uint32 * name: string
+type Nonterminal = Nonterminal of index: uint32 * name: string
 with
     member x.Index = match x with | Nonterminal (idx, _) -> idx
     /// The nonterminal's name.
@@ -54,21 +61,21 @@ with
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
 /// An example of a noise symbol would be a source code comment.
-type Noise = internal Noise of name: string
+type Noise = Noise of name: string
 with
     /// The symbol's name.
     member x.Name = match x with | Noise (name) -> name
     override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the end of a group.
-type GroupEnd = internal GroupEnd of name: string
+type GroupEnd = GroupEnd of name: string
 with
     /// The symbol's name.
     member x.Name = match x with | GroupEnd (name) -> name
     override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the start of a group.
-type GroupStart = internal GroupStart of name: string * groupIndex: Indexed<Group>
+type GroupStart = GroupStart of name: string * groupIndex: Indexed<Group>
 with
     /// The symbol's name.
     member x.Name = match x with | GroupStart (name, _) -> name

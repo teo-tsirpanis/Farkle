@@ -1,34 +1,38 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 module Farkle.Tools.Templating.BuiltinTemplates
 
-open System
 open System.IO
 open System.Reflection
-open System.Text.RegularExpressions
+
+[<RequireQualifiedAccess>]
+type Language =
+    | ``F#``
+
+[<RequireQualifiedAccess>]
+type TemplateType =
+    | Grammar
+
+[<RequireQualifiedAccess>]
+type private TemplateInternalLanguage =
+    | FSharp
 
 // The folder had a dash, not an underscore!
 let private builtinsFolder = "builtin_scripts"
 
-let resolveInput x =
-    match x with
-    | ":" -> Console.In
-    | x when x.StartsWith(":") ->
-        let stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(sprintf "Farkle.Tools.%s.%s.scriban" builtinsFolder <| x.Substring(1))
-        new StreamReader(stream) :> TextReader
-    | x -> File.OpenText x :> TextReader
-
-let getAllBuiltins() =
+let private fetchResource (typ: TemplateType) (lang: TemplateInternalLanguage) =
+    let resourceName = sprintf "Farkle.Tools.%s.%A.%A.scriban" builtinsFolder typ lang
     let assembly = Assembly.GetExecutingAssembly()
-    let names = assembly.GetManifestResourceNames()
-    let builtInRegex = Regex(@"Farkle\.Tools\." + builtinsFolder + "\.([\w\.]+)\.scriban", RegexOptions.Compiled)
-    names
-    |> Array.choose (fun x ->
-        let res = builtInRegex.Match x
-        if res.Success then
-            Some res.Groups.[1].Value
-        else
-            None)
+    let resourceStream = assembly.GetManifestResourceStream(resourceName) |> Option.ofObj
+    match resourceStream with
+    | Some resourceStream ->
+        use sr = new StreamReader(resourceStream)
+        sr.ReadToEnd()
+    | None -> failwithf "Cannot find resource name '%s' inside the assembly." resourceName
+
+let getLanguageTemplate typ lang =
+    match lang with
+    | Language.``F#`` -> fetchResource typ TemplateInternalLanguage.FSharp, "F# internal template"

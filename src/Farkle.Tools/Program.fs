@@ -1,10 +1,10 @@
 ﻿// Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 open Argu
-open Farkle.Tools.Templating.CreateSkeleton
+open Farkle.Tools.Templating.CreateTemplate
 open System
 
 type FarkleCLIExiter() =
@@ -16,13 +16,13 @@ type FarkleCLIExiter() =
 
 type Arguments =
     | [<Inherit>] Version
-    | [<CliPrefix(CliPrefix.None)>] Skeleton of ParseResults<SkeletonArguments>
+    | [<CliPrefix(CliPrefix.None)>] Template of ParseResults<TemplateArguments>
 with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
             | Version -> "display the program's version info."
-            | Skeleton _ -> "generate a skeleton program from a grammar file and a Scriban template."
+            | Template _ -> "generate a skeleton program from a grammar file and a Scriban template."
 
 [<EntryPoint>]
 let main _ =
@@ -32,6 +32,6 @@ let main _ =
         Console.WriteLine System.AssemblyVersionInformation.AssemblyVersion
     else
         match results.GetSubCommand() with
-        | Skeleton args -> doSkeleton args
+        | Template args -> doTemplate args
         | _ -> ()
     0

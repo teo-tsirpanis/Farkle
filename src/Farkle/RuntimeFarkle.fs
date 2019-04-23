@@ -57,16 +57,16 @@ module RuntimeFarkle =
     [<CompiledName("Create")>]
     let create postProcessor grammar = createMaybe postProcessor (Ok grammar)
 
-    /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the .egt file at the given path.
+    /// Creates a `RuntimeFarkle` from the given post-processor, and the .egt file at the given path.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
-    [<CompiledName("CreateFromEGTFile")>]
+    [<CompiledName("CreateFromFile")>]
     let ofEGTFile postProcessor fileName =
         fileName
         |> EGT.ofFile
         |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
-    /// Creates a `RuntimeFarkle` from the given transformers and fusers, and the given Base-64 representation of an .egt file.
+    /// Creates a `RuntimeFarkle` from the given post-processor, and the given Base-64 representation of an .egt file.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
     let ofBase64String postProcessor x =
@@ -75,7 +75,7 @@ module RuntimeFarkle =
         |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
-    /// Parses and post-processes a `CharStream` of characters.
+    /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =

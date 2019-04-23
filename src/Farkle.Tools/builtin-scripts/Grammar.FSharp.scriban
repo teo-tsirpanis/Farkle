@@ -2,26 +2,27 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension = "g.fs" ~}}
+{{~ file_extension = "g.fs"; grammar_name = grammar.properties["Name"] ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It is disposable, and should NOT be commited to source control.
-module ``{{ grammar.properties["Name"] }}``
 
-open Farkle
-open Farkle.PostProcessor
+namespace ``{{ grammar_name }}``.Definitions
 
-//#region Grammar types
-
+/// A terminal of the {{ grammar_name }} language.
 type Terminal =
 {{~ for s in grammar.symbols.terminals ~}}
     /// {{ s }}
     | {{ s.name | fmt pascal_case "" }} = {{ s.index }}u
 {{~ end ~}}
 
+/// A production of the {{ grammar_name }} language.
 type Production =
 {{~ for p in grammar.productions ~}}
     /// {{ p }}
     | {{ p | fmt_production pascal_case "" }} = {{ p.index }}u
 {{~ end ~}}
 
-//#endregion
+type Grammar = class end
+with
+    static member AsBase64 = """
+{{ to_base_64 true}}"""

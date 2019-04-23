@@ -27,11 +27,17 @@ with
             | TemplateFile _ -> "Specifies the template file to use, in case you want a custom one."
             | OutputFile _ -> "Specifies where the generated output will be stored. Defaults to the template's name, with the extension as set by the template, which defaults to 'out'."
 
+let assertFileExists fileName =
+    if File.Exists fileName then
+        fileName
+    else
+        failwithf "File '%s' does not exist." fileName
+
 let getFileContentsAndName fileName =
     File.ReadAllText fileName, fileName
 
 let doTemplate (args: ParseResults<_>) =
-    let grammarFile = args.PostProcessResult(<@ GrammarFile @>, getFileContentsAndName >> fst)
+    let grammarFile = args.PostProcessResult(<@ GrammarFile @>, assertFileExists)
     let typ = args.GetResult(<@ Type @>, defaultValue = TemplateType.Grammar)
     let language = args.GetResult(<@ Language @>, defaultValue = Language.``F#``)
     let templateText, templateFileName =

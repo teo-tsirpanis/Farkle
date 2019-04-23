@@ -21,6 +21,7 @@ type Language =
 [<RequireQualifiedAccess>]
 type TemplateType =
     | Grammar
+    | PostProcessor
 
 // The folder had a dash, not an underscore!
 let private builtinsFolder = "builtin_scripts"

@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -51,22 +51,19 @@ with
 
 type FarkleRoot = {
     Farkle: FarkleObject
+    Grammar: Grammar
     [<ScriptMemberIgnore>]
     GrammarBytes: byte[]
-    Grammar: Grammar
+    GrammarFile: string
 }
 with
     [<ScriptMemberIgnore>]
-    static member Create grammar bytes = {
+    static member Create grammar grammarFile bytes = {
         Farkle = FarkleObject.Create
-        GrammarBytes = bytes
         Grammar = grammar
+        GrammarBytes = bytes
+        GrammarFile = grammarFile
     }
-    member x.ToBase64 doPad =
-        let options =
-            if doPad then Base64FormattingOptions.InsertLineBreaks
-            else Base64FormattingOptions.None
-        Convert.ToBase64String(x.GrammarBytes, options)
 
 module TemplateEngine =
     let createTemplateContext grammarFile = either {
@@ -74,10 +71,11 @@ module TemplateEngine =
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
         let! grammar = GOLDParser.EGT.ofFile grammarFile |> Result.map Grammar.Create
-        let fr = FarkleRoot.Create grammar bytes
+        let fr = FarkleRoot.Create grammar grammarFile bytes
 
         let so = ScriptObject()
         so.Import fr
+        so.Import("to_base_64", Func<_,_>(Utilities.toBase64 fr.GrammarBytes))
         Utilities.load so
 
         tc.PushGlobal so

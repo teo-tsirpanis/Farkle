@@ -73,6 +73,12 @@ module Utilities =
             |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
+    let toBase64 (grammarBytes: _ []) doPad =
+        let options =
+            if doPad then Base64FormattingOptions.InsertLineBreaks
+            else Base64FormattingOptions.None
+        Convert.ToBase64String(grammarBytes, options)
+
     let load (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)
         so.SetValue("lower_case", LowerCase, true)

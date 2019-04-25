@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 open Argu
-open Farkle.Tools.Templating.CreateTemplate
+open Farkle.Tools.Commands
 open System
 
 type FarkleCLIExiter() =
@@ -16,13 +16,13 @@ type FarkleCLIExiter() =
 
 type Arguments =
     | [<Inherit>] Version
-    | [<CliPrefix(CliPrefix.None)>] Template of ParseResults<TemplateArguments>
+    | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
 with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
             | Version -> "display the program's version info."
-            | Template _ -> "generate a skeleton program from a grammar file and a Scriban template."
+            | New _ -> "generate a skeleton program from a grammar file and a Scriban template."
 
 [<EntryPoint>]
 let main _ =
@@ -32,6 +32,6 @@ let main _ =
         Console.WriteLine System.AssemblyVersionInformation.AssemblyVersion
     else
         match results.GetSubCommand() with
-        | Template args -> doTemplate args
+        | New args -> New.run args
         | _ -> ()
     0

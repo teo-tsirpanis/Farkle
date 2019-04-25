@@ -3,15 +3,16 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.Templating.CreateTemplate
+module Farkle.Tools.Commands.New
 
 open Argu
 open Farkle
+open Farkle.Tools.Templating
 open Farkle.Tools.Templating.BuiltinTemplates
 open Scriban
 open System.IO
 
-type TemplateArguments =
+type Arguments =
     | [<MainCommand; ExactlyOnce; Last>] GrammarFile of string
     | [<Unique; AltCommandLine("-lang")>] Language of Language
     | [<Unique>] Type of TemplateType
@@ -36,12 +37,12 @@ let assertFileExists fileName =
 let getFileContentsAndName fileName =
     File.ReadAllText fileName, fileName
 
-let doTemplate (args: ParseResults<_>) =
-    let grammarFile = args.PostProcessResult(<@ GrammarFile @>, assertFileExists)
-    let typ = args.GetResult(<@ Type @>, defaultValue = TemplateType.Grammar)
-    let language = args.GetResult(<@ Language @>, defaultValue = Language.``F#``)
+let run (args: ParseResults<_>) =
+    let grammarFile = args.PostProcessResult(GrammarFile, assertFileExists)
+    let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
+    let language = args.GetResult(Language, defaultValue = Language.``F#``)
     let templateText, templateFileName =
-        args.TryPostProcessResult(<@ TemplateFile @>, getFileContentsAndName)
+        args.TryPostProcessResult(TemplateFile, getFileContentsAndName)
         |> Option.defaultWith (fun () -> getLanguageTemplate typ language)
 
     let tc, fGetFileExtension = TemplateEngine.createTemplateContext grammarFile |> returnOrFail
@@ -49,7 +50,7 @@ let doTemplate (args: ParseResults<_>) =
     let template = Template.Parse(templateText, templateFileName)
     let output = template.Render(tc)
 
-    let outputFile = args.TryGetResult <@ OutputFile @> |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, fGetFileExtension()))
+    let outputFile = args.TryGetResult OutputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, fGetFileExtension()))
 
     // TODO: Add proper logging support
     File.WriteAllText(outputFile, output)

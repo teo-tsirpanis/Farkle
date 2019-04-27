@@ -1,5 +1,5 @@
 ![GitHub](https://img.shields.io/github/license/teo-tsirpanis/farkle.svg)
-[![NuGet](https://img.shields.io/nuget/v/Nuget.Core.svg)](https://nuget.org/packages/Farkle)
+[![NuGet](https://img.shields.io/nuget/v/Farkle.svg)](https://nuget.org/packages/Farkle)
 
 # Farkle
 

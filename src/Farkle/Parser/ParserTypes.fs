@@ -7,11 +7,12 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Grammar
+open Farkle.PostProcessor
 
-/// An internal error. These errors are known errors a program might experience.
-/// They could occur by manipulating the parser internal state, which is _impossible_ from the public API.
-/// Another possible way of manifestation is creating deliberately faulty `Grammar`s.
-/// The `ToString()` method is not overriden, because users don;t need to know about them.
+/// An internal error. These errors are known errors a parser might experience.
+/// An encounter of it is most certainly a library bug (or deliberately corrupted grammars).
+/// The user is encouraged to report it to GitHub.
+/// The `ToString()` method is not overriden here, because users don't need to know that many details about them.
 type InternalError =
     /// After a reduction, a corresponding GOTO action should have been found but wasn't.
     | GotoNotFoundAfterReduction of Production * LALRState
@@ -19,8 +20,6 @@ type InternalError =
     | LALRStackEmpty
     /// The LALR table says to shift when input ends.
     | ShiftOnEOF
-    /// The LALR stack did not have a `Reduction` on its top when the parser accepted the input.
-    | ReductionNotFoundOnAccept
 
 [<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.
@@ -72,6 +71,8 @@ type ParseErrorType =
     | TransformError of Terminal * exn
     /// The post-processor had a problem fusing the tokems of a production.
     | FuseError of Production * exn
+    /// The post-processor did not find an appropriate fuser for a production.
+    | FuserNotFound of Production
     /// Internal error. This is a bug.
     | InternalError of InternalError
     override x.ToString() =
@@ -83,8 +84,9 @@ type ParseErrorType =
         | CannotNestGroups(g1, g2) -> sprintf "Group `%O` cannot be nested inside `%O`" g1 g2
         | UnexpectedGroupEnd ge -> sprintf "`%O` was encountered outside of any group." ge
         | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside a %s." g.Name
-        | TransformError (term, ex) -> sprintf "Post-processing terminal `%O` raised an exception.\nMost probably, you did not configure the post-processor well.\nException:\n%O" term ex
-        | FuseError (prod, ex) -> sprintf "Post-processing production `%O` raised an exception.\nMost probably, you did not configure the post-processor well.\nException:\n%O" prod ex
+        | TransformError (term, ex) -> sprintf "Exception in user code while post-processing terminal `%O`.\nException:\n%O" term ex
+        | FuseError (prod, ex) -> sprintf "Exception in user code while post-processing production `%O`.\nException:\n%O" prod ex
+        | FuserNotFound prod -> sprintf "Configuration error: No fuser specified for production `%O`.\nYou have to write one, and recompile your program." prod
         | InternalError x -> sprintf "Internal error. This is most probably a bug in the parser. If you see this error, please file an issue on GitHub.\nDetails:\n%A" x
 
 /// A log message that contains a position it was encountered.

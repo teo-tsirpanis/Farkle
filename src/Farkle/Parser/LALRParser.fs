@@ -56,15 +56,19 @@ module LALRParser =
                         fMessage <| ParseMessage.Reduction productionToReduce
                         impl <| (nextState, resultObj) :: stack
                     with
+                    | FuserNotFound prod -> ParseErrorType.FuserNotFound prod |> fail, stack
                     | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail, stack
                 | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError, stack
             | None, _ ->
-                let fixTerminal = Option.map ExpectedSymbol.Terminal >> Option.defaultValue ExpectedSymbol.EndOfInput
+                let fixTerminal =
+                    function
+                    | Some term, _ -> ExpectedSymbol.Terminal term
+                    | None, _ -> ExpectedSymbol.EndOfInput
                 let expectedSymbols =
                     [
                         currentState.Actions
                         |> Map.toSeq
-                        |> Seq.map (fst >> fixTerminal)
+                        |> Seq.map fixTerminal
 
                         currentState.GotoActions
                         |> Map.toSeq
@@ -72,5 +76,9 @@ module LALRParser =
                     ]
                     |> Seq.concat
                     |> set
-                (expectedSymbols, token |> Option.map (fun {Symbol = x} -> x) |> fixTerminal) |> ParseErrorType.SyntaxError |> fail, stack
+                let foundToken =
+                    match token with
+                    | Some {Symbol = term} -> ExpectedSymbol.Terminal term
+                    | None -> ExpectedSymbol.EndOfInput
+                (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail, stack
         impl stack

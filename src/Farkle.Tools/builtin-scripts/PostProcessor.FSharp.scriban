@@ -14,7 +14,7 @@ open Farkle.PostProcessor
 open ``{{ grammar_name }}``.Definitions
 
 // The transformers convert terminals to anything you want.
-// If you don''t care about a terminal (like single characters),
+// If you do not care about a terminal (like single characters),
 // you can remove it from below. It will be automatically ignored.
 let private transformers =
     [
@@ -29,13 +29,9 @@ open Fuser
 // Do not delete anything here, or the post-processor will fail.
 let private fusers =
     [
-        // Do not change the following line.
-        // BEGIN_FUSERS
     {{~ for p in grammar.productions ~}}
         FUSER_FUNCTION_HERE Production.{{ p | fmt_production pascal_case "" }}
     {{~ end ~}}
-        // Do not change the following line.
-        // END_FUSERS
     ]
 
 let private createRuntimeFarkle() =

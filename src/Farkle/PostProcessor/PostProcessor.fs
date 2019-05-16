@@ -44,8 +44,8 @@ module PostProcessor =
 
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
     let ofSeq<'result> transformers fusers =
-        let transformers = transformers |> Seq.map (fun {SymbolIndex = sym; TheTransformer = f} -> sym, f) |> Map.ofSeq
-        let fusers = fusers |> Seq.map (fun {ProductionIndex = prod; TheFuser = f} -> prod, f) |> Map.ofSeq
+        let transformers = transformers |> Seq.map (fun (Transformer(sym, f)) -> sym, f) |> Map.ofSeq
+        let fusers = fusers |> Seq.map (fun (Fuser(prod, f)) -> prod, f) |> Map.ofSeq
         {new PostProcessor<'result> with
             member __.Transform (sym, pos, data) =
                 /// It is very likely that a transformer will not be found.

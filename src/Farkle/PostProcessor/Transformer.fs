@@ -10,26 +10,20 @@ open Farkle
 
 /// A delegate that accepts a `ReadOnlySpan` of characters and transforms it into an arbitrary object.
 /// The word `C` means "Callback" and was shortened to avoid clutter in user code.
+[<CompiledName("TransformerCallback`1")>]
 type C<'a> = delegate of ReadOnlySpan<char> -> 'a
 
 /// A position-sensitive version of `C`.
+[<CompiledName("PositionedTransformerCallback`1")>]
 type C2<'a> = delegate of Position * ReadOnlySpan<char> -> 'a
 
 /// This type contains the logic to transform _one_ terminal symbol to an arbitrary object.
-type Transformer = internal {
-    SymbolIndex: uint32
-    OutputType: Type
-    TheTransformer: C2<obj>
-}
+type Transformer = internal Transformer of (uint32 * C2<obj>)
 with
     /// Creates a `Transformer` that transforms the `Terminal`s with the
     /// given integer index in the grammar according to the given delegate.
     static member Create idx (fTransformer: C2<'TOutput>) =
-        {
-            SymbolIndex = idx
-            OutputType = typeof<'TOutput>
-            TheTransformer = C2(fun pos data -> fTransformer.Invoke(pos, data) |> box)
-        }
+        Transformer (idx, C2(fun pos data -> fTransformer.Invoke(pos, data) |> box))
 
 /// Functions to create `Transformer`s.
 module Transformer =

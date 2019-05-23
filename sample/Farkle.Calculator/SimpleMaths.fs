@@ -87,15 +87,15 @@ let TheRuntimeFarkle =
     let fusers =
         [
             identity Production.Expression
-            take2Of Production.AddExpPlus (0, 2) 3 (+)
-            take2Of Production.AddExpMinus (0, 2) 3 (-)
+            take2Of Production.AddExpPlus (0, 2) (+)
+            take2Of Production.AddExpMinus (0, 2) (-)
             identity Production.AddExp
-            take2Of Production.MultExpTimes (0, 2) 3 (*)
-            take2Of Production.MultExpDiv (0, 2) 3 (/)
+            take2Of Production.MultExpTimes (0, 2) (*)
+            take2Of Production.MultExpDiv (0, 2) (/)
             identity Production.MultExp
-            take1Of Production.NegateExpMinus 1 2 (~-)
+            take1Of Production.NegateExpMinus 1 (~-)
             identity Production.NegateExp
             identity Production.ValueNumber
-            take1Of Production.ValueLParenRParen 1 3 id
+            take1Of Production.ValueLParenRParen 1 id
         ]
     lazy RuntimeFarkle.ofEGTFile (PostProcessor.ofSeq<int> transformers fusers) "SimpleMaths.egt"

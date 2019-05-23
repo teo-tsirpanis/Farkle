@@ -1,4 +1,12 @@
-#### 4.0.0
+#### 5.0.0
+* 
+    Farkle now has better C# support. Just write `using Farkle.CSharp;`, and you are good to go!
+    > _Note:_ Some functions are not ported, like `Fuser.create#`, or the string-providing `Transformer.create?S`, because they have either no broad use case, or they are discouraged for performance reasons.
+* Farkle now has a CLI tool helper. It can generate a grammar definition file that contains the terminal and production types for your grammar, as well as the .EGT file in base-64 encoding. It can also create a skeleton source file to help you write a post-processor. What is more, it supports _both_ C# and F#!
+* As always, performance was improved, especially in the .EGT file reader. The first parsing should be as fast as the rest of them.
+* __Breaking change:__ In your post-processor, if you have functions like `take2Of production (index1, index2) count func`, remove the `count` parameter.
+
+#### 4.0.0 - 17-01-2019
 * Optimized the way Farkle handles the input stream characters by reducing copies & improving performance.
 * Removed all 3rd-party non-Microsoft dependencies.
 

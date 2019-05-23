@@ -8,4 +8,4 @@ artifacts:
   - path: docs.zip
   - path: bin/*.nupkg
   - path: bin/**/BenchmarkDotNet.Artifacts/results/*.md
-version: 4.0.0.{build}
+version: 5.0.0.{build}

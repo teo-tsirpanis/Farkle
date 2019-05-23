@@ -8,20 +8,27 @@ namespace Farkle.PostProcessor
 open System
 open Farkle
 
-/// A delegate that accepts a `ReadOnlySpan` of characters and transforms it into an arbitrary object.
-/// The word `C` means "Callback" and was shortened to avoid clutter in user code.
+/// <summary>A delegate that accepts a <see cref="ReadOnlySpan{Char}"/> and transforms it into an arbitrary object.</summary>
+/// <remarks>
+///     <para>In F#, this type is named <c>C</c> - from "Callback" and was shortened to avoid clutter in user code.</para>
+///     <para>A .NET delegate was used because <c>ReadOnlySpan</c>s are incompatible with F# functions</para>
+/// </remarks>
 [<CompiledName("TransformerCallback`1")>]
 type C<'a> = delegate of ReadOnlySpan<char> -> 'a
 
-/// A position-sensitive version of `C`.
+/// <summary>A position-sensitive version of <see cref="TransformerCallback{C}"/>.</summary>
+/// <remarks>
+///     <para>In F#, this type is named <c>C</c> - from "Callback" and was shortened to avoid clutter in user code.</para>
+///     <para>A .NET delegate was used because <c>ReadOnlySpan</c>s are incompatible with F# functions</para>
+/// </remarks>
 [<CompiledName("PositionedTransformerCallback`1")>]
 type C2<'a> = delegate of Position * ReadOnlySpan<char> -> 'a
 
-/// This type contains the logic to transform _one_ terminal symbol to an arbitrary object.
+/// This type contains the logic to transform one terminal symbol to an arbitrary object.
 type Transformer = internal Transformer of (uint32 * C2<obj>)
 with
-    /// Creates a `Transformer` that transforms the `Terminal`s with the
-    /// given integer index in the grammar according to the given delegate.
+    /// <summary>Creates a <see cref="Transformer"/> that transforms the <see cref="Terminal"/> with the
+    /// given integer index in the grammar, according to the given delegate.</summary>
     static member Create idx (fTransformer: C2<'TOutput>) =
         Transformer (idx, C2(fun pos data -> fTransformer.Invoke(pos, data) |> box))
 

@@ -40,13 +40,16 @@ module Fuser =
         create prod (fun x -> fFuser (x.[0] :?> _) (x.[1] :?> _) (x.[2] :?> _) |> box)
 
     /// Creates a `Fuser` which fuses a production from one of its symbols.
+    /// __Note:__ The indices are zero-based.
     let inline take1Of prod index (fFuser: 'd -> 'r) =
         create prod (fun x -> fFuser (x.[index] :?> _) |> box)
 
     /// Creates a `Fuser` which fuses a production from two of its symbols.
+    /// __Note:__ The indices are zero-based.
     let inline take2Of prod (index1, index2) (fFuser: 'd1 -> 'd2 -> 'r) =
         create prod (fun x -> fFuser (x.[index1] :?> _) (x.[index2] :?> _) |> box)
 
     /// Creates a `Fuser` which fuses a production from three of its symbols.
+    /// __Note:__ The indices are zero-based.
     let inline take3Of prod (index1, index2, index3) (fFuser: 'd1 -> 'd2 -> 'd3 -> 'r) =
         create prod (fun x -> fFuser (x.[index1] :?> _) (x.[index2] :?> _) (x.[index3] :?> _) |> box)

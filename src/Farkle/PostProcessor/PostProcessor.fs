@@ -8,22 +8,23 @@ namespace Farkle.PostProcessor
 open Farkle
 open Farkle.Grammar
 open System
-open System.Collections.Generic
 
 /// An exception that gets thrown when a post-processor does not find the appropriate `Fuser` for a production.
 /// This means that the post-processor is not properly configured.
 exception FuserNotFound of Production
 
-/// Post-processors convert strings of a grammar into more meaningful
-/// types for the library that uses the parser.
-/// The type in question is the argument of this post-processor type.
+/// <symmary>Post-processors convert strings of a grammar into more
+/// meaningful types for the library that uses the parser.</summary>
+/// <typeparam name="a">The type of the final object this post-processor will return from a gramamr.</typeparam>
 type PostProcessor<'a> =
-    /// Converts a generic token into an arbitrary object.
-    /// In case of an insignificant token, implementations can return a boxed `()`, or `null`.
+    /// <summary>Converts a <see cref="Terminal"/> into an arbitrary object.</summary>
+    /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
     abstract Transform: Terminal * Position * ReadOnlySpan<char> -> obj
-    /// Fuses the many members of a production into one object.
-    /// Fusing production rules must always succeed. In very case of an error like
-    /// an unrecognized production, the function must return `false`.
+    /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
+    /// <summary>Fusing must always succeed. In very case of an error like
+    /// an unrecognized production, the function has to throw an exception.</summary>
+    /// <exception cref="FuserNotFound">This kind of exception must be thrown if a production is not
+    /// recognized by the post-processor, so that Farkle properly notifies the consumer of this problem.</exception>
     abstract Fuse: Production * obj[] -> obj
 
 /// Functions to create `PostProcessor`s, as well as some ready to use.

@@ -13,7 +13,7 @@ open System
 /// This means that the post-processor is not properly configured.
 exception FuserNotFound of Production
 
-/// <symmary>Post-processors convert strings of a grammar into more
+/// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
 /// <typeparam name="a">The type of the final object this post-processor will return from a gramamr.</typeparam>
 type PostProcessor<'a> =

@@ -15,8 +15,8 @@ exception FuserNotFound of Production
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
-/// <typeparam name="a">The type of the final object this post-processor will return from a gramamr.</typeparam>
-type PostProcessor<'a> =
+/// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>
+type PostProcessor<'T> =
     /// <summary>Converts a <see cref="Terminal"/> into an arbitrary object.</summary>
     /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
     abstract Transform: Terminal * Position * ReadOnlySpan<char> -> obj
@@ -28,6 +28,7 @@ type PostProcessor<'a> =
     abstract Fuse: Production * obj[] -> obj
 
 /// Functions to create `PostProcessor`s, as well as some ready to use.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module PostProcessor =
 
     /// This post-processor does not return anything meaningful to its consumer.

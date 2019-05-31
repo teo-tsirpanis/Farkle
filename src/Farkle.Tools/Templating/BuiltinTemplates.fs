@@ -11,12 +11,12 @@ open System.Reflection
 [<RequireQualifiedAccess>]
 type Language =
     | ``F#``
-    member x.FullName =
-        match x with
-        | ``F#`` -> "FSharp"
-    member x.FileName =
-        match x with
-        | ``F#`` -> "F# internal template"
+    | ``C#``
+
+let private (|LanguageNames|) lang =
+    match lang with
+    | Language.``F#`` -> "FSharp", "F# internal template"
+    | Language.``C#`` -> "CSharp", "C# internal template"
 
 [<RequireQualifiedAccess>]
 type TemplateType =
@@ -36,4 +36,4 @@ let private fetchResource (typ: TemplateType) lang =
         sr.ReadToEnd()
     | None -> failwithf "Cannot find resource name '%s' inside the assembly." resourceName
 
-let getLanguageTemplate typ (lang: Language) = fetchResource typ lang.FullName, lang.FileName
+let getLanguageTemplate typ (LanguageNames(fullName, templateFileName)) = fetchResource typ fullName, templateFileName

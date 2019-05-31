@@ -1,0 +1,30 @@
+{{~ ## Copyright (c) 2019 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT ~}}
+{{~ file_extension="g.cs"; grammar_name = grammar.properties["Name"] ~}}
+// This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
+// It should NOT be commited to source control.
+
+namespace {{ grammar_name }}.Definitions {
+    /// <summary> A terminal of the {{ grammar_name }} language.</summary>
+    /// 
+    public enum Terminal : uint {
+    {{~ for s in grammar.symbols.terminals ~}}
+        /// <summary>{{ s }}</summary>
+        {{ s.name | fmt pascal_case "" }} = {{ s.index }},
+    {{~ end ~}}
+    }
+
+    public enum Production : uint {
+    {{~ for p in grammar.productions ~}}
+        /// <summary>{{ s }}</summary>
+        {{ p | fmt_production pascal_case "" }} = {{ p.index }},
+    {{~ end ~}}
+    }
+
+    public static class Grammar {
+        public static readonly string AsBase64 = @"
+{{ to_base_64 true }}"
+    }
+}

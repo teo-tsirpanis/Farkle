@@ -4,7 +4,7 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 {{~ file_extension = "g.fs"; grammar_name = grammar.properties["Name"] ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
-// It is disposable, and should NOT be commited to source control.
+// It should NOT be commited to source control.
 
 namespace ``{{ grammar_name }}``.Definitions
 
@@ -25,4 +25,4 @@ type Production =
 type Grammar = class end
 with
     static member AsBase64 = """
-{{ to_base_64 true}}"""
+{{ to_base_64 true }}"""

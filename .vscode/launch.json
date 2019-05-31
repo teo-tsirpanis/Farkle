@@ -8,13 +8,10 @@
             "preLaunchTask": "dotnet-build",
             "program": "${workspaceFolder}/src/Farkle.Tools/bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
             "args": [
-                "skeleton",
-                "-g",
+                "new",
+                "-lang",
+                "C#",
                 "../../sample/Farkle.Calculator/SimpleMaths.egt",
-                "-t",
-                ":Grammar.FSharp",
-                "-o",
-                "./SimpleMaths.g.fs"
             ],
             "cwd": "${workspaceFolder}/src/Farkle.Tools",
             "stopAtEntry": false,

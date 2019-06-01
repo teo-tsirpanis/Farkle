@@ -19,7 +19,7 @@ open ``{{ grammar_name }}``.Definitions
 let private transformers =
     [
     {{~ for s in grammar.symbols.terminals ~}}
-        Transformer.create Terminal.{{ s.name | fmt pascal_case "" }} <| C (fun x -> x)
+        Transformer.create Terminal.{{ s | fmt pascal_case "" }} <| C (fun x -> x)
     {{~ end ~}}
     ]
 
@@ -30,7 +30,7 @@ open Fuser
 let private fusers =
     [
     {{~ for p in grammar.productions ~}}
-        FUSER_FUNCTION_HERE Production.{{ p | fmt_production pascal_case "" }}
+        FUSER_FUNCTION_HERE Production.{{ p | fmt pascal_case "" }}
     {{~ end ~}}
     ]
 

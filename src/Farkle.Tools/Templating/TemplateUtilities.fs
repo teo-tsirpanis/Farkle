@@ -79,10 +79,15 @@ module Utilities =
             else Base64FormattingOptions.None
         Convert.ToBase64String(grammarBytes, options)
 
+    let doFmt (x: obj) case separator =
+        match x with
+        | :? Terminal as x -> toIdentifier x.Name case separator
+        | :? Production as x -> formatProduction x case separator
+        | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
+
     let load (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)
         so.SetValue("lower_case", LowerCase, true)
         so.SetValue("pascal_case", PascalCase, true)
         so.SetValue("camel_case", CamelCase, true)
-        so.Import("fmt", Func<_,_,_,_>(toIdentifier))
-        so.Import("fmt_production", Func<_,_,_,_>(formatProduction))
+        so.Import("fmt", Func<_,_,_,_> doFmt)

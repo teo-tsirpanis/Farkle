@@ -2,29 +2,38 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension="g.cs"; grammar_name = grammar.properties["Name"] ~}}
+{{~ file_extension="g.cs"; grammar_name = grammar.properties["Name"]
+    func comma
+        if for.last
+            ""
+        else
+            ","
+        end
+    end ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It should NOT be commited to source control.
 
 namespace {{ grammar_name }}.Definitions {
     /// <summary> A terminal of the {{ grammar_name }} language.</summary>
-    /// 
+    /// <seealso cref="Procuction"/>
     public enum Terminal : uint {
     {{~ for s in grammar.symbols.terminals ~}}
-        /// <summary>{{ s }}</summary>
-        {{ s.name | fmt pascal_case "" }} = {{ s.index }},
+        /// <summary><c>{{ s | html.escape }}</c></summary>
+        {{ fmt s pascal_case "" }} = {{ s.index }}{{ comma }}
     {{~ end ~}}
     }
 
+    /// <summary> A production of the {{ grammar_name }} language.</summary>
+    /// <seealso cref="Terminal"/>
     public enum Production : uint {
     {{~ for p in grammar.productions ~}}
-        /// <summary>{{ s }}</summary>
-        {{ p | fmt_production pascal_case "" }} = {{ p.index }},
+        /// <summary><c>{{ p | html.escape }}</c></summary>
+        {{ fmt p pascal_case "" }} = {{ p.index }}{{ comma }}
     {{~ end ~}}
     }
 
     public static class Grammar {
         public static readonly string AsBase64 = @"
-{{ to_base_64 true }}"
+{{ to_base_64 true }}";
     }
 }

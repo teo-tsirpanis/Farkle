@@ -12,14 +12,14 @@ namespace ``{{ grammar_name }}``.Definitions
 type Terminal =
 {{~ for s in grammar.symbols.terminals ~}}
     /// {{ s }}
-    | {{ s.name | fmt pascal_case "" }} = {{ s.index }}u
+    | {{ s | fmt pascal_case "" }} = {{ s.index }}u
 {{~ end ~}}
 
 /// A production of the {{ grammar_name }} language.
 type Production =
 {{~ for p in grammar.productions ~}}
     /// {{ p }}
-    | {{ p | fmt_production pascal_case "" }} = {{ p.index }}u
+    | {{ p | fmt pascal_case "" }} = {{ p.index }}u
 {{~ end ~}}
 
 type Grammar = class end

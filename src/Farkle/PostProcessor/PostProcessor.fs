@@ -8,6 +8,7 @@ namespace Farkle.PostProcessor
 open Farkle
 open Farkle.Grammar
 open System
+open System.Collections.Immutable
 
 /// An exception that gets thrown when a post-processor does not find the appropriate `Fuser` for a production.
 /// This means that the post-processor is not properly configured.
@@ -46,8 +47,14 @@ module PostProcessor =
 
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
     let ofSeq<'result> transformers fusers =
-        let transformers = transformers |> Seq.map (fun (Transformer(sym, f)) -> sym, f) |> Map.ofSeq
-        let fusers = fusers |> Seq.map (fun (Fuser(prod, f)) -> prod, f) |> Map.ofSeq
+        let transformers =
+            let b = ImmutableDictionary.CreateBuilder()
+            transformers |> Seq.iter (fun (Transformer(term, f)) -> b.Add(term, f))
+            b.ToImmutable()
+        let fusers =
+            let b = ImmutableDictionary.CreateBuilder()
+            fusers |> Seq.iter (fun (Fuser(prod, f)) -> b.Add(prod, f))
+            b.ToImmutable()
         {new PostProcessor<'result> with
             member __.Transform (sym, pos, data) =
                 /// It is very likely that a transformer will not be found.

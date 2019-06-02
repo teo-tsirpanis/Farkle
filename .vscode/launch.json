@@ -9,6 +9,8 @@
             "program": "${workspaceFolder}/src/Farkle.Tools/bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
             "args": [
                 "new",
+                "--type",
+                "postprocessor",
                 "-lang",
                 "C#",
                 "../../sample/Farkle.Calculator/SimpleMaths.egt",

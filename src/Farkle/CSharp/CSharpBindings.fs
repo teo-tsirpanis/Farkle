@@ -6,15 +6,16 @@
 namespace Farkle.CSharp
 
 open Farkle
-open Farkle.PostProcessor
+open System
 open System.Text
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
+open Farkle.Collections
 
 module RF = RuntimeFarkle
 
 [<Extension; AbstractClass; Sealed>]
-/// <summary>Extension methods to easilycreate and work
+/// <summary>Extension methods to easily create and work
 /// with <see cref="RuntimeFarkle{TResult}"/>.</summary>
 type RuntimeFarkleExtensions =
     static member private defaultEncoding enc = if isNull enc then Encoding.UTF8 else enc
@@ -59,66 +60,41 @@ type RuntimeFarkleExtensions =
 
     [<Extension>]
     /// <summary>Returns a new <see cref="RuntimeFarkle{TResult}"/> with a changed <see cref="PostProcessor"/>.</summary>
-    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: PostProcessor<'TNewResult>) =
+    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: Farkle.PostProcessor.PostProcessor<'TNewResult>) =
         RF.changePostProcessor pp rf
 
-[<AbstractClass; Sealed>]
-/// <summary>A helper class with methods to create a <see cref="PostProcessor{T}"/>.</summary>
-type PostProcessor =
-
-    /// <summary>Creates a <see cref="PostProcessor{T}"/> from the given transformers and fusers.</summary>
-    /// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>
-    static member Create<'T>(transformers, fusers) = PostProcessor.ofSeq<'T> transformers fusers
-
-    /// Returns a post-processor that just checks if the given string is valid.
-    static member SyntaxCheck = PostProcessor.syntaxCheck
-
-[<AbstractClass; Sealed>]
-/// <summary>A helper class with methods to create a <see cref="Transformer"/>.</summary>
-type Transformer =
-
-    /// <summary>Creates a <see cref="Transformer"/> from a <see cref="TransformerCallback{T}"/>.</summary>
-    /// <param name="sym">The index of the terminal to transform.</param>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
-    /// <param name="f">The delegate that converts the terminal's data into the desired object.</param>
-    static member Create(sym: uint32, f: C<'T>) = Transformer.create sym f
-
-    /// <summary>Creates a <see cref="Transformer"/> from a <see cref="PositionedTransformerCallback{T}"/>.</summary>
-    /// <param name="sym">The index of the terminal to transform.</param>
-    /// <param name="f">The delegate that converts the terminal's position and data into the desired object.</param>
-    static member Create(sym: uint32, f: C2<'T>) = Transformer.createP sym f
-
-[<AbstractClass; Sealed>]
+[<Sealed>]
 /// <summary>A helper class with methods to create a <see cref="Fuser"/>.</summary>
-type Fuser =
+type Fuser private(f: Func<obj[], obj>) =
+    member internal __.Invoke(x) = f.Invoke(x)
     /// <summary>Creates a <see cref="Fuser"/> from a delegate that accepts an array of objects.</summary> 
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="f">The delegate that converts the production's children into the desired object.</param>
-    static member CreateRaw(prod: uint32, f) = Fuser.create prod <| FuncConvert.FromFunc<_,_> f
+    static member CreateRaw(f) = Fuser(f)
 
     /// <summary>Creates a <see cref="Fuser"/> that always returns a constant value.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="x">The object this fuser is always going to return.</param>
-    static member Constant<'T>(prod: uint32, x: 'T) = Fuser.constant prod x
+    static member Constant<'T>(x: 'T) = Fuser(fun _ -> x |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that returns the first symbol of the production unmodified.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
-    static member Identity(prod: uint32) = Fuser.identity prod
+    static member Identity = Fuser(fun x -> x.[0])
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from one of its symbols.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="idx">The zero-based index of the symbol of interest.</param>
     /// <param name="f">The delegate that converts the symbols into the desired object.</param>
-    static member Create<'T,'TResult>(prod: uint32, idx, f) =
-        Fuser.take1Of prod idx <| FuncConvert.FromFunc<'T,'TResult> f
+    static member Create<'T,'TResult>(idx, f: Func<'T, 'TResult>) =
+        Fuser(fun x -> f.Invoke(x.[idx] :?> _) |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from two of its symbols.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="idx1">The zero-based index of the first symbol of interest.</param>
     /// <param name="idx2">The zero-based index of the second symbol of interest.</param>
     /// <param name="f">The delegate that converts the symbols into the desired object.</param>
-    static member Create<'T1,'T2,'TOutput>(prod: uint32, idx1, idx2, f) =
-        Fuser.take2Of prod (idx1, idx2) <| FuncConvert.FromFunc<'T1,'T2,'TOutput> f
+    static member Create<'T1,'T2,'TResult>(idx1, idx2, f: Func<'T1,'T2,'TResult>) =
+        Fuser(fun x -> f.Invoke(x.[idx1] :?> _, x.[idx2] :?> _) |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from three of its symbols.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
@@ -126,5 +102,19 @@ type Fuser =
     /// <param name="idx2">The zero-based index of the second symbol of interest.</param>
     /// <param name="idx3">The zero-based index of the third symbol of interest.</param>
     /// <param name="f">The delegate that converts the symbols into the desired object.</param>
-    static member Create<'T1,'T2,'T3,'TOutput>(prod: uint32, idx1, idx2, idx3, f) =
-        Fuser.take3Of prod (idx1, idx2, idx3) <| FuncConvert.FromFunc<'T1,'T2,'T3,'TOutput> f
+    static member Create<'T1,'T2,'T3,'TOutput>(idx1, idx2, idx3, f: Func<'T1,'T2,'T3,'TOutput>) =
+        Fuser(fun x -> f.Invoke(x.[idx1] :?> _,x.[idx2] :?> _,x.[idx3] :?> _) |> box)
+
+[<AbstractClass; Sealed>]
+/// <summary>A helper class with methods to create a <see cref="PostProcessor{T}"/>.</summary>
+type PostProcessor =
+
+    /// <summary>Creates a <see cref="PostProcessor{T}"/> from the given transformers and fusers.</summary>
+    /// <typeparam name="TResult">The type of the final object this post-processor will return from a gramamr.</typeparam>
+    static member Create<'TResult> (fTransform: CharStreamCallback<uint32>, fGetFuser: Func<uint32,Fuser>) =
+        {new Farkle.PostProcessor.PostProcessor<'TResult> with
+            member __.Transform(term, pos, data) = fTransform.Invoke(term.Index, pos, data)
+            member __.Fuse(prod, arguments) = fGetFuser.Invoke(prod.Index).Invoke(arguments)}
+
+    /// Returns a post-processor that just checks if the given string is valid.
+    static member SyntaxCheck = PostProcessor.PostProcessor.syntaxCheck

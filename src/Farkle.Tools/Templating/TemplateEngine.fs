@@ -8,6 +8,7 @@ namespace Farkle.Tools.Templating
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
+open Farkle.Tools
 open System.Collections.Generic
 open Scriban
 open Scriban.Runtime
@@ -47,7 +48,7 @@ type FarkleObject = {
     Version: string
 }
 with
-    static member Create = {Version = AssemblyVersionInformation.AssemblyVersion}
+    static member Create = {Version = toolsVersion}
 
 type FarkleRoot = {
     Farkle: FarkleObject

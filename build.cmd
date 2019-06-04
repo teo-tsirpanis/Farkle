@@ -1,6 +1,6 @@
 @echo off
 
-set toolpath=".\DotNetTools"
+set toolpath=".\.fake"
 
 where /Q fake
 

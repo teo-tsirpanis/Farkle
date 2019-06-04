@@ -10,7 +10,6 @@
   <ItemGroup>
     <None Include="../NuGet.props" />
     <Compile Include="AssemblyAttributes.fs" />
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities/Common.fs" />
     <Compile Include="Utilities/Position.fs" />
     <Compile Include="Utilities/Monads.fs" />

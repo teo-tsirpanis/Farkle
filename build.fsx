@@ -41,14 +41,8 @@ let summary = "A modern and easy-to-use parser library for F#"
 // List of author names (for NuGet package)
 let authors = [ "Theodore Tsirpanis" ]
 
-// Tags for your project (for NuGet package)
-let tags = "parser lalr gold-parser"
-
 // File system information
 let solutionFile  = "./Farkle.sln"
-
-// nuspec files. These describe the metapackages.
-let nuspecs = !! "src/*.nuspec"
 
 // Default target configuration
 let configuration = DotNet.BuildConfiguration.Release
@@ -64,22 +58,19 @@ let exeFramework = "netcoreapp2.1"
 
 let sourceProjects = !! "./src/**/*.??proj"
 
-let projects = !! "**/*.??proj" -- "**/*.shproj"
-
-// Pattern specifying assemblies to be tested
-let testAssemblies = !! ("./bin/*Tests*/" </> exeFramework </> "*Tests*.dll")
+// The project to be tested
+let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 // Additional command line arguments passed to Expecto.
 let testArguments = ""
+let testFrameworks = ["netcoreapp2.1"]
+
+let projects = !! "**/*.??proj" -- "**/*.shproj"
 
 // Pattern specifying assemblies to be benchmarked
 let benchmarkAssemblies = !! ("./bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
+
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments runAll =
-    if runAll then
-        "-f *"
-    else
-        "-f Farkle.*"
-    |> sprintf "%s --memory true -e github"
+let benchmarkArguments = "--memory true -e github"
 
 let benchmarkReports =
     benchmarkAssemblies
@@ -89,7 +80,7 @@ let benchmarkReportsDirectory = "./performance/"
 
 let nugetPackages = !! "./bin/*.nupkg"
 
-let releaseArtifacts = nugetPackages ++ "./src/Farkle/*.pgt"
+let releaseArtifacts = nugetPackages
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
@@ -115,7 +106,7 @@ let releaseNotes =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | BuildServer.AppVeyor -> 
+    | BuildServer.AppVeyor ->
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
             AppVeyor.Environment.RepoCommit
             AppVeyor.Environment.RepoName
@@ -126,49 +117,10 @@ let releaseNotes =
 
 let nugetVersion =
     match BuildServer.buildServer with
-    BuildServer.AppVeyor -> AppVeyor.Environment.BuildVersion
+    BuildServer.AppVeyor -> sprintf "%s-ci%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
     | _ -> releaseInfo.NugetVersion
 
-BuildServer.install
-    [
-        AppVeyor.Installer
-    ]
-
-// Helper active pattern for project types
-let (|Fsproj|Csproj|Vbproj|Shproj|) (projFileName:string) =
-    match projFileName with
-    | f when f.EndsWith("fsproj") -> Fsproj
-    | f when f.EndsWith("csproj") -> Csproj
-    | f when f.EndsWith("vbproj") -> Vbproj
-    | f when f.EndsWith("shproj") -> Shproj
-    | _                           -> failwith (sprintf "Project file %s not supported. Unknown project type." projFileName)
-
-Target.description "Generates assembly info files with the right version & up-to-date information"
-Target.create "AssemblyInfo" (fun _ ->
-    let getAssemblyInfoAttributes projectName =
-        [
-            AssemblyInfo.Title projectName
-            AssemblyInfo.Product project
-            AssemblyInfo.Description summary
-            AssemblyInfo.Version releaseInfo.AssemblyVersion
-            AssemblyInfo.FileVersion releaseInfo.AssemblyVersion
-            AssemblyInfo.Configuration (sprintf "%A" configuration)
-        ]
-
-    let getProjectDetails projectPath =
-        let projectName = Path.GetFileNameWithoutExtension(projectPath)
-        (projectPath, projectName, Path.GetDirectoryName projectPath, getAssemblyInfoAttributes projectName)
-
-    sourceProjects
-    |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, _, folderName, attributes) ->
-        match projFileName with
-        | Fsproj -> AssemblyInfoFile.createFSharp (folderName </> "AssemblyInfo.fs") attributes
-        | Csproj -> AssemblyInfoFile.createCSharp ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
-        | Vbproj -> AssemblyInfoFile.createVisualBasic ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
-        | Shproj -> ()
-        )
-)
+BuildServer.install [AppVeyor.Installer]
 
 Target.description """Copies binaries from default VS location to expected bin folder, but keeps a subdirectory structure for each project in the src folder to support multiple project outputs"""
 Target.create "CopyBinaries" (fun _ ->
@@ -178,16 +130,19 @@ Target.create "CopyBinaries" (fun _ ->
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
 
-let vsProjFunc x =
-    {x with
-        DotNet.BuildOptions.Configuration = configuration
-    }
+let vsProjFunc x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
     [
         sprintf "/p:Version=%s" nugetVersion
         releaseNotes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
     ] |> DotNet.Options.withAdditionalArgs <| x
+
+let handleFailedTest (p: ProcessResult) =
+    if p.ExitCode <> 0 then
+        sprintf "Unit test failed with error code %d" p.ExitCode
+        |> Fake.Testing.Common.FailedTestsException
+        |> raise
 
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
@@ -201,34 +156,25 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // Build library & test project
 
 Target.description "Builds everything in Release mode"
-Target.create "Build" (fun _ ->
-    DotNet.build (vsProjFunc >> fCommonOptions) solutionFile
-)
-
+Target.create "Build" (fun _ -> DotNet.build (vsProjFunc >> fCommonOptions) solutionFile)
 
 Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
-    testAssemblies
-    |> Expecto.run id
-)
+    testFrameworks
+    |> Seq.iter (fun fx ->
+        DotNet.exec
+            (fun p -> {p with WorkingDirectory = Path.getDirectory testProject})
+            "run"
+            (sprintf "--framework %s --configuration %A -- %s" fx DotNet.BuildConfiguration.Debug testArguments)
+        |> handleFailedTest))
 
-[""; "All"]
-|> List.iter (fun x ->
-    let targetName = sprintf "Benchmark%s" x
-    let runAll = x <> ""
-
-    match runAll with
-    | true -> "Runs all benchmarks, even those that do not measure Farkle's performance"
-    | false -> "Runs all benchmarks"
-    |> Target.description
-    Target.create targetName (fun _ ->
-        benchmarkAssemblies
-        |> Seq.iter (fun x ->
-            DotNet.exec
-                (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x})
-                x (benchmarkArguments runAll) |> ignore))
-    
-    "CopyBinaries" ==> targetName |> ignore)
+Target.description "Runs all benchmarks"
+Target.create "Benchmark" (fun _ ->
+    benchmarkAssemblies
+    |> Seq.iter (fun x ->
+        DotNet.exec
+            (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x})
+            x benchmarkArguments |> ignore))
 
 Target.description "Adds the benchmark results to the appropriate folder"
 Target.create "AddBenchmarkReport" (fun _ ->
@@ -251,7 +197,6 @@ Target.create "NuGet" (fun _ ->
             {p with
                 Configuration = configuration
                 OutputPath = __SOURCE_DIRECTORY__ @@ "bin" |> Some
-                NoBuild = true
             }
             |> fCommonOptions
         )
@@ -467,12 +412,13 @@ Target.create "CI" ignore
 // Run all targets by default. Invoke 'build target <Target>' to override
 
 "Clean"
-    ==> "AssemblyInfo"
     ==> "Build"
     ==> "CopyBinaries"
     ==> "RunTests"
     ==> "NuGet"
     ==> "CI"
+
+"CopyBinaries" ==> "Benchmark"
 
 [""; "Debug"]
 |> Seq.map (sprintf "GenerateReferenceDocs%s")

@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 open Argu
+open Farkle.Tools
 open Farkle.Tools.Commands
 open System
 
@@ -29,7 +30,7 @@ let main _ =
     let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
     if results.Contains <@ Version @> then
-        Console.WriteLine System.AssemblyVersionInformation.AssemblyVersion
+        Console.WriteLine toolsVersion
     else
         match results.GetSubCommand() with
         | New args -> New.run args

@@ -180,13 +180,11 @@ docsrc/content/license.md
 docsrc/content/release-notes.md
 .fake
 docsrc/tools/FSharp.Formatting.svclog
-AssemblyInfo.fs
 
 docs.zip
 **/*.nupkg
 docs/
 **/BenchmarkDotNet.Artifacts/
 temp/gh-pages
-DotNetTools/
 .idea/
 **/*.g.fs

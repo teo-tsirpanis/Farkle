@@ -46,6 +46,6 @@ namespace {{ grammar_name }}.Runtime {
         };
 
         public static readonly Lazy<RuntimeFarkle<TODO>> {{ grammar_name }} =
-            new Lazy(() => RuntimeFarkle.CreateFromBase64String(Grammar.AsBase64, PostProcessor.Create<TODO>(Transform, GetFuser)));
+            new Lazy(() => RuntimeFarkle.CreateFromBase64String(Grammar.AsBase64, PostProcessor.Create(Transform, GetFuser)));
     }
 }

@@ -79,7 +79,7 @@ type Fuser private(f: Func<obj[], obj>) =
 
     /// <summary>Creates a <see cref="Fuser"/> that returns the first symbol of the production unmodified.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
-    static member Identity = Fuser(fun x -> x.[0])
+    static member First = Fuser(fun x -> x.[0])
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from one of its symbols.</summary>
     /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>

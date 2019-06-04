@@ -25,6 +25,7 @@ type C<'a> = delegate of ReadOnlySpan<char> -> 'a
 type C2<'a> = delegate of Position * ReadOnlySpan<char> -> 'a
 
 /// This type contains the logic to transform one terminal symbol to an arbitrary object.
+[<CompiledName("FSharpTransformer")>]
 type Transformer = internal Transformer of (uint32 * C2<obj>)
 with
     /// <summary>Creates a <see cref="Transformer"/> that transforms the <see cref="Terminal"/> with the

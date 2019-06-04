@@ -8,6 +8,7 @@ namespace Farkle.PostProcessor
 /// This type contains the logic to "fuse" the multiple symbols of a production into an arbitrary object.
 /// These symbols are either transformed by a `Transformer` if they are terminals,
 /// or, if they are productions, are the products of previous fusers.
+[<CompiledName("FSharpFuser")>]
 type Fuser = internal Fuser of uint32 * (obj[] -> obj)
 with
     static member Create prod f = Fuser(prod, f)

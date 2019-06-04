@@ -52,7 +52,7 @@ let nuspecs = !! "src/*.nuspec"
 
 // Default target configuration
 let configuration = DotNet.BuildConfiguration.Release
-let configurationAsString = "Release"
+let configurationAsString = sprintf "%A" configuration
 
 [<Literal>]
 let LibraryFramework = "netstandard2.0"

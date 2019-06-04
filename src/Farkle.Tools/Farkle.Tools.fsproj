@@ -15,6 +15,7 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="builtin-scripts\*.scriban" />
+    <None Include="../NuGet.props" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Templating/TemplateUtilities.fs" />
     <Compile Include="Templating/BuiltinTemplates.fs" />

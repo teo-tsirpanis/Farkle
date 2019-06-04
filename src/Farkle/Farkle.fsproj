@@ -8,6 +8,7 @@
     <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="../NuGet.props" />
     <Compile Include="AssemblyAttributes.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilities/Common.fs" />

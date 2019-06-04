@@ -1,6 +1,7 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}"
 EndProject
@@ -16,9 +17,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{B59FC0
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "farklei", "sample\farklei\farklei.fsproj", "{8756BE36-4FC7-457F-8487-55F3061E8894}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Calculator", "sample\Farkle.Calculator\Farkle.Calculator.fsproj", "{D4448E3A-434C-4322-8A50-F9954040D80B}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Calculator", "sample\Farkle.Calculator\Farkle.Calculator.fsproj", "{D4448E3A-434C-4322-8A50-F9954040D80B}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools", "src\Farkle.Tools\Farkle.Tools.fsproj", "{E282044A-E72A-4BA7-B875-B9F991B6CEC7}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Tools", "src\Farkle.Tools\Farkle.Tools.fsproj", "{E282044A-E72A-4BA7-B875-B9F991B6CEC7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{99555D79-E44E-463E-98AA-BAD6A6569B2C}"
+	ProjectSection(SolutionItems) = preProject
+		build.fsx = build.fsx
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

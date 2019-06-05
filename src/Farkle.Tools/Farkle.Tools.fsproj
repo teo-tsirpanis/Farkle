@@ -15,7 +15,6 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="builtin-scripts\*.scriban" />
-    <None Include="../NuGet.props" />
     <Compile Include="Common.fs" />
     <Compile Include="Templating/TemplateUtilities.fs" />
     <Compile Include="Templating/BuiltinTemplates.fs" />
@@ -26,5 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
+  <Import Project="../NuGet.props" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

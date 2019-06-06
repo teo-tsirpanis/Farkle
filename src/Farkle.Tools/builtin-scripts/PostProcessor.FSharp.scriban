@@ -7,7 +7,7 @@ https://opensource.org/licenses/MIT ~}}
 // to help you write a post-processor for {{ grammar_name }}.
 // You should complete it yourself, and keep it to source control.
 
-module ``{{ grammar_name }}``.Runtime
+module ``{{ grammar_name }}``.Language
 
 open Farkle
 open Farkle.PostProcessor
@@ -39,4 +39,4 @@ let private createRuntimeFarkle() =
         (PostProcessor.ofSeq<TODO> transformers fusers)
         Grammar.AsBase64
 
-let ``{{ grammar_name }}`` = createRuntimeFarkle()
+let runtime = createRuntimeFarkle()

@@ -6,11 +6,12 @@
 namespace Farkle.CSharp
 
 open Farkle
+open Farkle.Collections
+open Farkle.PostProcessor
 open System
 open System.Text
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
-open Farkle.Collections
 
 module RF = RuntimeFarkle
 
@@ -114,7 +115,12 @@ type PostProcessor =
     static member Create<'TResult> (fTransform: CharStreamCallback<uint32>, fGetFuser: Func<uint32,Fuser>) =
         {new PP<'TResult> with
             member __.Transform(term, pos, data) = fTransform.Invoke(term.Index, pos, data)
-            member __.Fuse(prod, arguments) = fGetFuser.Invoke(prod.Index).Invoke(arguments)}
+            member __.Fuse(prod, arguments) = 
+                let theFuser = fGetFuser.Invoke(prod.Index)
+                if theFuser = Unchecked.defaultof<_> then
+                    raise <| FuserNotFound prod
+                else
+                    theFuser.Invoke(arguments)}
 
     [<Extension>]
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from a

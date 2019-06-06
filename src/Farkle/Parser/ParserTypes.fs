@@ -7,7 +7,6 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Grammar
-open Farkle.PostProcessor
 
 /// An internal error. These errors are known errors a parser might experience.
 /// An encounter of it is most certainly a library bug (or deliberately corrupted grammars).
@@ -92,4 +91,4 @@ type ParseErrorType =
 /// A log message that contains a position it was encountered.
 type Message<'a> = Message of Position * 'a
     with
-        override x.ToString() = match x with | Message (pos, m) ->  sprintf "%O %O" pos m
+        override x.ToString() = let (Message(pos, m)) = x in sprintf "%O %O" pos m

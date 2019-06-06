@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension="g.cs"; grammar_name = grammar.properties["Name"]
+{{~ file_extension="Definitions.g.cs"; grammar_name = grammar.properties["Name"]
     func comma
         if for.last
             ""
@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT ~}}
 
 namespace {{ grammar_name }}.Definitions {
     /// <summary> A terminal of the {{ grammar_name }} language.</summary>
-    /// <seealso cref="{{ grammar_name }}.Definitions.Procuction"/>
+    /// <seealso cref="Definitions.Production"/>
     public enum Terminal : uint {
     {{~ for s in grammar.symbols.terminals ~}}
         /// <summary><c>{{ s | html.escape }}</c></summary>
@@ -33,7 +33,10 @@ namespace {{ grammar_name }}.Definitions {
     }
 
     public static class Grammar {
+        /// <summary>The grammar of {{ grammar_name }}, encoded in Base64.</summary>
+        #region Grammar as Base64
         public static readonly string AsBase64 = @"
 {{ to_base_64 true }}";
+        #endregion
     }
 }

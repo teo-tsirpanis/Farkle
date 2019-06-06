@@ -14,26 +14,17 @@ open Farkle.Collections
 
 module RF = RuntimeFarkle
 
+type PP<'a> = Farkle.PostProcessor.PostProcessor<'a>
+
 [<Extension; AbstractClass; Sealed>]
 /// <summary>Extension methods to easily create and work
 /// with <see cref="RuntimeFarkle{TResult}"/>.</summary>
 type RuntimeFarkleExtensions =
+    static member syntaxChecker = 
+        {new PP<obj> with
+            member __.Transform(_, _, _) = null
+            member __.Fuse(_, _) = null}
     static member private defaultEncoding enc = if isNull enc then Encoding.UTF8 else enc
-
-    [<Extension>]
-    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// <see cref="Grammar"/> and <see cref="PostProcessor"/>.</summary>
-    static member Create(grammar, postProcessor) = RF.create postProcessor grammar
-
-    [<Extension>]
-    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// EGT file and <see cref="PostProcessor"/>.</summary>
-    static member Create(fileName, postProcessor) = RF.ofEGTFile postProcessor fileName
-
-    [<Extension>]
-    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// EGT file encoded in Base-64 and <see cref="PostProcessor"/>.</summary>
-    static member CreateFromBase64String(str, postProcessor) = RF.ofBase64String postProcessor str
 
     [<Extension>]
     /// <summary>Parses and post-processes a string.</summary>
@@ -44,8 +35,8 @@ type RuntimeFarkleExtensions =
     static member Parse(rf, mem) = RF.parseMemory rf ignore mem
 
     [<Extension>]
-    /// <summary>Parses and post-processes a <see cref="Stream"/>,
-    /// encoded with the given <see cref="Encoding"/>.</summary>
+    /// <summary>Parses and post-processes a <see cref="System.IO.Stream"/>,
+    /// encoded with the given <see cref="System.Text.Encoding"/>.</summary>
     /// <remarks>If not specified, the encoding defaults to UTF-8.</remarks>
     static member Parse(rf, stream, [<Optional; DefaultParameterValue(null: Encoding)>] encoding) =
         let encoding = RuntimeFarkleExtensions.defaultEncoding encoding
@@ -63,8 +54,13 @@ type RuntimeFarkleExtensions =
     static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: Farkle.PostProcessor.PostProcessor<'TNewResult>) =
         RF.changePostProcessor pp rf
 
+    [<Extension>]
+    /// <summary>Returns a <see cref="RuntimeFarkle{Object}" /> that just checks if the given string is valid.</summary>
+    /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
+    static member SyntaxCheck(rf) = RF.changePostProcessor RuntimeFarkleExtensions.syntaxChecker rf
+
 [<Sealed>]
-/// <summary>A helper class with methods to create a <see cref="Fuser"/>.</summary>
+/// <summary>An object that contains a function to convert a <see cref="Production"/> to an arbitrary object.</summary>
 type Fuser private(f: Func<obj[], obj>) =
     member internal __.Invoke(x) = f.Invoke(x)
     /// <summary>Creates a <see cref="Fuser"/> from a delegate that accepts an array of objects.</summary> 
@@ -105,16 +101,22 @@ type Fuser private(f: Func<obj[], obj>) =
     static member Create<'T1,'T2,'T3,'TOutput>(idx1, idx2, idx3, f: Func<'T1,'T2,'T3,'TOutput>) =
         Fuser(fun x -> f.Invoke(x.[idx1] :?> _,x.[idx2] :?> _,x.[idx3] :?> _) |> box)
 
-[<AbstractClass; Sealed>]
+[<AbstractClass; Sealed; Extension>]
 /// <summary>A helper class with methods to create a <see cref="PostProcessor{T}"/>.</summary>
 type PostProcessor =
 
-    /// <summary>Creates a <see cref="PostProcessor{T}"/> from the given transformers and fusers.</summary>
+    /// <summary>Creates a <see cref="PostProcessor{TResult}"/> from the given transformers and fusers.</summary>
     /// <typeparam name="TResult">The type of the final object this post-processor will return from a gramamr.</typeparam>
+    /// <param name="fTransform">A delegate that accepts the table index of a terminal, its position, and its data,
+    /// and returns an arbitrary object</param>
+    /// <param name="fGetFuser">A delegate that accepts the table index of a <see cref="Farkle.Grammar.Production"/>
+    /// and returns its appropriate <see cref="Fuser"/></param>
     static member Create<'TResult> (fTransform: CharStreamCallback<uint32>, fGetFuser: Func<uint32,Fuser>) =
-        {new Farkle.PostProcessor.PostProcessor<'TResult> with
+        {new PP<'TResult> with
             member __.Transform(term, pos, data) = fTransform.Invoke(term.Index, pos, data)
             member __.Fuse(prod, arguments) = fGetFuser.Invoke(prod.Index).Invoke(arguments)}
 
-    /// Returns a post-processor that just checks if the given string is valid.
-    static member SyntaxCheck = PostProcessor.PostProcessor.syntaxCheck
+    [<Extension>]
+    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from a
+    /// <see cref="PostProcessor{TResult}"/> and a grammar file in Base-64 format</summary>
+    static member CombineWithBase64Grammar<'TResult> (pp: PP<'TResult>, grammar) = RF.ofBase64String pp grammar

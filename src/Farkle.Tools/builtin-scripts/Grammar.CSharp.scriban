@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT ~}}
 
 namespace {{ grammar_name }}.Definitions {
     /// <summary> A terminal of the {{ grammar_name }} language.</summary>
-    /// <seealso cref="Procuction"/>
+    /// <seealso cref="{{ grammar_name }}.Definitions.Procuction"/>
     public enum Terminal : uint {
     {{~ for s in grammar.symbols.terminals ~}}
         /// <summary><c>{{ s | html.escape }}</c></summary>

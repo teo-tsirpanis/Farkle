@@ -18,34 +18,29 @@ namespace {{ grammar_name }}.Runtime {
         // This function converts terminals to anything you want.
         // If you do not care about a terminal (like single characters),
         // you can let the default case return null.
-        private object Transform(uint terminal, Position position, ReadOnlySpan<char> data) {
+        private static object Transform(uint terminal, Position position, ReadOnlySpan<char> data) {
             switch ((Terminal) terminal) {
             {{~ for s in grammar.symbols.terminals ~}}
                 case Terminal.{{ s | fmt pascal_case "" }} :
                     return data;
             {{~ end ~}}
-                case default: return null;
+                default: return null;
             };
-        };
+        }
 
         // The fusers merge the parts of a production into one object of your desire.
+        // This function maps each production to a fuser.
         // Do not delete anything here, or the post-processor will fail.
-        private Fuser GetFuser(uint prod) {
+        private static Fuser GetFuser(uint prod) {
             switch ((Production) prod) {
-            {{~ for p in grammar.produnctions ~}}
+            {{~ for p in grammar.productions ~}}
                 case Production.{{ p | fmt pascal_case "" }}:
                     return FUSER_FUNCTION_HERE;
             {{~ end ~}}
             };
-        };
+        }
 
-        private static Fuser[] fusers = new [] {
-        {{~ for p in grammar.productions ~}}
-            Fuser.FUSER_FUNCTION_HERE(Production.{{ p | fmt pascal_case "" }}),
-        {{~ end ~}}
-        };
-
-        public static readonly Lazy<RuntimeFarkle<TODO>> {{ grammar_name }} =
-            new Lazy(() => RuntimeFarkle.CreateFromBase64String(Grammar.AsBase64, PostProcessor.Create(Transform, GetFuser)));
+        public static readonly RuntimeFarkle<TODO> {{ grammar_name }} =
+            PostProcessor.Create(Transform, GetFuser).CombineWithBase64Grammar(Grammar.AsBase64);
     }
 }

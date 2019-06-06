@@ -18,7 +18,7 @@ let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
         let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode." grammarFile displayName streamMode
         test description {
-            let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast grammarFile
+            let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast (sprintf "../resources/%s" grammarFile)
             let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.debug) |> using (fCharStream text)
             match result with
             | Ok _ -> ()
@@ -33,7 +33,7 @@ let testParser grammarFile displayName text =
 let tests =
     [
         "simple.egt", "\"111*555\"", "111 * 555"
-        "gml.egt", "its own definition file", File.ReadAllText "gml.grm"
+        "gml.egt", "its own definition file", File.ReadAllText "../resources/gml.grm"
     ]
     |> List.collect ((<|||) testParser)
     |> testList "Parser tests"

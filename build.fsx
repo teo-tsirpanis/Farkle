@@ -16,7 +16,6 @@ open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
-open Fake.DotNet.Testing
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
@@ -54,27 +53,25 @@ let LibraryFramework = "netstandard2.0"
 [<Literal>]
 let DocumentationAssemblyFramework = "net45"
 
-let exeFramework = "netcoreapp2.1"
-
 let sourceProjects = !! "./src/**/*.??proj"
 
 // The project to be tested
 let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
+
 // Additional command line arguments passed to Expecto.
 let testArguments = ""
+
 let testFrameworks = ["netcoreapp2.1"]
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
-// Pattern specifying assemblies to be benchmarked
-let benchmarkAssemblies = !! ("./bin/*Benchmarks*/" </> exeFramework </> "*Benchmarks*.dll")
+// The project to be benchmarked
+let benchmarkProject = "./tests/Farkle.Benchmarks/Farkle.Benchmarks.fsproj"
 
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = "--memory true -e github"
+let benchmarkArguments = "-f * --memory true -e github"
 
-let benchmarkReports =
-    benchmarkAssemblies
-    |> Seq.collect (fun x -> !!(Path.getDirectory x </> "BenchmarkDotNet.Artifacts/results/*-report-github.md"))
+let benchmarkReports = !! (Path.getDirectory benchmarkProject </> "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 
 let benchmarkReportsDirectory = "./performance/"
 
@@ -138,11 +135,18 @@ let inline fCommonOptions x =
         releaseNotes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
     ] |> DotNet.Options.withAdditionalArgs <| x
 
-let handleFailedTest (p: ProcessResult) =
-    if p.ExitCode <> 0 then
-        sprintf "Unit test failed with error code %d" p.ExitCode
-        |> Fake.Testing.Common.FailedTestsException
-        |> raise
+let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
+    let handleFailure (p: ProcessResult) =
+        if p.ExitCode <> 0 then
+            sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
+            |> Fake.Testing.Common.FailedTestsException
+            |> raise
+    let fx = fx |> Option.map (sprintf " --framework %s") |> Option.defaultValue ""
+    DotNet.exec
+        (fun p -> {p with WorkingDirectory = Path.getDirectory proj})
+        "run"
+        (sprintf "--project %s%s -c %A -- %s" (Path.GetFileName proj) fx c args)
+    |> handleFailure
 
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
@@ -162,19 +166,10 @@ Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
     testFrameworks
     |> Seq.iter (fun fx ->
-        DotNet.exec
-            (fun p -> {p with WorkingDirectory = Path.getDirectory testProject})
-            "run"
-            (sprintf "--framework %s --configuration %A -- %s" fx DotNet.BuildConfiguration.Debug testArguments)
-        |> handleFailedTest))
+        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments))
 
 Target.description "Runs all benchmarks"
-Target.create "Benchmark" (fun _ ->
-    benchmarkAssemblies
-    |> Seq.iter (fun x ->
-        DotNet.exec
-            (fun p -> {p with WorkingDirectory = Path.GetDirectoryName x})
-            x benchmarkArguments |> ignore))
+Target.create "Benchmark" (fun _ -> dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release benchmarkArguments)
 
 Target.description "Adds the benchmark results to the appropriate folder"
 Target.create "AddBenchmarkReport" (fun _ ->

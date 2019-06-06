@@ -185,6 +185,6 @@ docs.zip
 **/*.nupkg
 docs/
 **/BenchmarkDotNet.Artifacts/
-temp/gh-pages
+temp/
 .idea/
 **/*.g.fs

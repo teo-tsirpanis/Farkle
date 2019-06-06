@@ -13,9 +13,6 @@
     <Compile Include="ParserTests.fs" />
     <Compile Include="ASTTests.fs" />
     <Compile Include="Program.fs" />
-    <Content Include="..\resources\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />

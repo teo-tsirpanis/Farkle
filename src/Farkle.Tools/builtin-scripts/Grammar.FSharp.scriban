@@ -22,7 +22,9 @@ type Production =
     | {{ p | fmt pascal_case "" }} = {{ p.index }}u
 {{~ end ~}}
 
+[<AbstractClass; Sealed>]
 type Grammar = class end
 with
+    /// The grammar of {{ grammar_name }}, encoded in Base64.
     static member AsBase64 = """
 {{ to_base_64 true }}"""

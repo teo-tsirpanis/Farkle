@@ -118,5 +118,5 @@ type PostProcessor =
 
     [<Extension>]
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from a
-    /// <see cref="PostProcessor{TResult}"/> and a grammar file in Base-64 format</summary>
+    /// <see cref="PostProcessor{TResult}"/> and a grammar file in Base64 format</summary>
     static member CombineWithBase64Grammar<'TResult> (pp: PP<'TResult>, grammar) = RF.ofBase64String pp grammar

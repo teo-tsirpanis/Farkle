@@ -67,7 +67,7 @@ module RuntimeFarkle =
         |> Result.mapError EGTReadError
         |> createMaybe postProcessor
 
-    /// Creates a `RuntimeFarkle` from the given post-processor, and the given Base-64 representation of an .egt file.
+    /// Creates a `RuntimeFarkle` from the given post-processor, and the given Base64 representation of an .egt file.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
     let ofBase64String postProcessor x =

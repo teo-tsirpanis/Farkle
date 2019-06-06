@@ -39,4 +39,4 @@ let private createRuntimeFarkle() =
         (PostProcessor.ofSeq<TODO> transformers fusers)
         Grammar.AsBase64
 
-let ``{{ grammar_name }}`` = Lazy<_>.Create createRuntimeFarkle
+let ``{{ grammar_name }}`` = createRuntimeFarkle()

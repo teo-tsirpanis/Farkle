@@ -22,7 +22,7 @@ type GrammarReaderBenchmark() =
     member __.Setup() =
         let bytes = File.ReadAllBytes "gml.egt"
         base64EGT <- Convert.ToBase64String bytes
-        logger.WriteLineInfo <| sprintf "EGT as Base-64: %d characters" base64EGT.Length
+        logger.WriteLineInfo <| sprintf "EGT as Base64: %d characters" base64EGT.Length
 
     [<Benchmark>]
     member __.Base64EGT() =

@@ -31,7 +31,7 @@ with
     static member Create (g: Grammar.Grammar) =
         let conv = Array.ofSeq
         let properties =
-            let dict = Dictionary(g.Properties.Count)
+            let dict = Dictionary(g.Properties.Count, StringComparer.OrdinalIgnoreCase)
             g.Properties |> Map.iter (curry dict.Add)
             dict
         {
@@ -67,11 +67,12 @@ with
     }
 
 module TemplateEngine =
-    let createTemplateContext grammarFile = either {
+    let createTemplateContext additionalProperties grammarFile = either {
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
         let! grammar = GOLDParser.EGT.ofFile grammarFile |> Result.map Grammar.Create
+        additionalProperties |> List.iter (fun (key, value) -> grammar.Properties.[key] <- value)
         let fr = FarkleRoot.Create grammar grammarFile bytes
 
         let so = ScriptObject()

@@ -29,7 +29,7 @@ with
 let main _ =
     let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
-    if results.Contains <@ Version @> then
+    if results.Contains Version then
         Console.WriteLine toolsVersion
     else
         match results.GetSubCommand() with

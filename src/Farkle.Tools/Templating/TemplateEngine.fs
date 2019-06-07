@@ -37,11 +37,11 @@ with
         {
             Properties = properties
             Symbols = {
-                Terminals = Array.ofSeq g.Symbols.Terminals
-                Nonterminals = Array.ofSeq g.Symbols.Nonterminals
-                NoiseSymbols = Array.ofSeq g.Symbols.NoiseSymbols
+                Terminals = conv g.Symbols.Terminals
+                Nonterminals = conv g.Symbols.Nonterminals
+                NoiseSymbols = conv g.Symbols.NoiseSymbols
             }
-            Productions = Array.ofSeq g.Productions
+            Productions = conv g.Productions
         }
 
 type FarkleObject = {

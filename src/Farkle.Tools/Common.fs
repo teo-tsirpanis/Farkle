@@ -8,4 +8,9 @@ module Farkle.Tools.Common
 
 open System.Reflection
 
-let toolsVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString()
+let toolsVersion =
+    let asm = Assembly.GetExecutingAssembly()
+    asm.GetCustomAttributes<AssemblyInformationalVersionAttribute>()
+    |> Seq.map(fun x -> x.InformationalVersion)
+    |> Seq.tryExactlyOne
+    |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())

@@ -25,14 +25,14 @@ with
             match x with
             | GrammarFile _ -> "The *.egt grammar file to parse. Required."
             | Language _ -> "Specifies the language of the template to create. Defaults to F#."
-            | Type _ -> """Specifies the type of the template to create, i.e. either a file containing
-the grammar and its symbol types, or a skeleton for a post-processor. Defaults to the former."""
+            | Type _ -> "Specifies the type of the template to create, i.e. either a file containing \
+the grammar and its symbol types, or a skeleton for a post-processor. Defaults to the former."
             | TemplateFile _ -> "Specifies the template file to use, in case you want a custom one."
-            | OutputFile _ -> """Specifies where the generated output will be stored.
-Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to 'out'."""
-            | Property _ -> """Specifies an additional property of the grammar. Keys are case-insensitive.
-These can be retrieved in the templates by grammar.properties["Key"].
-For example the property "Name" determines the namespace of the grnerated source files."""
+            | OutputFile _ -> "Specifies where the generated output will be stored. \
+Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to 'out'."
+            | Property _ -> "Specifies an additional property of the grammar. Keys are case-insensitive. \
+These can be retrieved in the templates by grammar.properties[\"Key\"]. \
+For example, the property \"Name\" determines the namespace of the grnerated source files."
 
 let assertFileExists fileName =
     if File.Exists fileName then

@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension = "Definitions.g.fs"; grammar_name = grammar.properties["Name"] ~}}
+{{~ file_extension = "g.fs"; grammar_name = grammar.properties["Name"] ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It should NOT be commited to source control.
 
@@ -22,9 +22,8 @@ type Production =
     | {{ p | fmt pascal_case "" }} = {{ p.index }}u
 {{~ end ~}}
 
-[<AbstractClass; Sealed>]
-type Grammar = class end
-with
+[<RequireQualifiedAccess>]
+module Grammar =
     /// The grammar of {{ grammar_name }}, encoded in Base64.
-    static member AsBase64 = """
+    let asBase64 = """
 {{ to_base_64 true }}"""

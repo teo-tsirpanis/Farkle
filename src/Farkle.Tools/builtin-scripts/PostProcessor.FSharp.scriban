@@ -37,6 +37,6 @@ let private fusers =
 let private createRuntimeFarkle() =
     RuntimeFarkle.ofBase64String
         (PostProcessor.ofSeq<TODO> transformers fusers)
-        Grammar.AsBase64
+        Grammar.asBase64
 
 let runtime = createRuntimeFarkle()

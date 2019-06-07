@@ -29,7 +29,7 @@ with
 the grammar and its symbol types, or a skeleton for a post-processor. Defaults to the former."""
             | TemplateFile _ -> "Specifies the template file to use, in case you want a custom one."
             | OutputFile _ -> """Specifies where the generated output will be stored.
-Defaults to the template's name, with the extension as set by the template, which defaults to 'out'."""
+Defaults to the grammar's name and extension, with a postfix set by the template, which defaults to 'out'."""
             | Property _ -> """Specifies an additional property of the grammar. Keys are case-insensitive.
 These can be retrieved in the templates by grammar.properties["Key"].
 For example the property "Name" determines the namespace of the grnerated source files."""
@@ -57,7 +57,7 @@ let run (args: ParseResults<_>) =
     let template = Template.Parse(templateText, templateFileName)
     let output = template.Render(tc)
 
-    let outputFile = args.TryGetResult OutputFile |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, fGetFileExtension()))
+    let outputFile = args.TryGetResult OutputFile |> Option.defaultWith (fun () -> grammarFile + fGetFileExtension())
 
     // TODO: Add proper logging support
     File.WriteAllText(outputFile, output)

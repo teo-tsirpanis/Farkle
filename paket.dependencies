@@ -42,11 +42,9 @@ group FakeBuild
   nuget Fake.Core.UserInput
   nuget Fake.IO.FileSystem
   nuget Fake.IO.Zip
-  nuget Fake.DotNet.AssemblyInfoFile
   nuget Fake.DotNet.Cli
   nuget Fake.DotNet.FsFormatting
   nuget Fake.DotNet.Paket
-  nuget Fake.DotNet.Testing.Expecto
   nuget Fake.Tools.Git
 
 group Test

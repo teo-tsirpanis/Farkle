@@ -71,7 +71,7 @@ let benchmarkProject = "./tests/Farkle.Benchmarks/Farkle.Benchmarks.fsproj"
 // Additional command line arguments passed to BenchmarkDotNet.
 let benchmarkArguments = "-f * --memory true -e github"
 
-let benchmarkReports = !! (Path.getDirectory benchmarkProject </> "BenchmarkDotNet.Artifacts/results/*-report-github.md")
+let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 
 let benchmarkReportsDirectory = "./performance/"
 
@@ -123,7 +123,7 @@ Target.description """Copies binaries from default VS location to expected bin f
 Target.create "CopyBinaries" (fun _ ->
     Shell.cleanDir "bin"
     projects
-    |> Seq.map (fun f -> ((Path.GetDirectoryName f) </> "bin" </> configurationAsString, "bin" </> (Path.GetFileNameWithoutExtension f)))
+    |> Seq.map (fun f -> ((Path.GetDirectoryName f) @@ "bin" @@ configurationAsString, "bin" @@ (Path.GetFileNameWithoutExtension f)))
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
 
@@ -139,7 +139,7 @@ let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
     let handleFailure (p: ProcessResult) =
         if p.ExitCode <> 0 then
             sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
-            |> Fake.Testing.Common.FailedTestsException
+            |> exn
             |> raise
     let fx = fx |> Option.map (sprintf " --framework %s") |> Option.defaultValue ""
     DotNet.exec
@@ -151,6 +151,7 @@ let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
     Shell.cleanDirs ["bin"; "temp"]
+    DotNet.exec id "clean" "" |> ignore
 )
 
 Target.description "Cleans the output documentation directory"
@@ -160,7 +161,7 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // Build library & test project
 
 Target.description "Builds everything in Release mode"
-Target.create "Build" (fun _ -> DotNet.build (vsProjFunc >> fCommonOptions) solutionFile)
+Target.create "BuildAllRelease" (fun _ -> DotNet.build (vsProjFunc >> fCommonOptions) solutionFile)
 
 Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
@@ -173,7 +174,7 @@ Target.create "Benchmark" (fun _ -> dotNetRun benchmarkProject None DotNet.Build
 
 Target.description "Adds the benchmark results to the appropriate folder"
 Target.create "AddBenchmarkReport" (fun _ ->
-    let reportFileName x = benchmarkReportsDirectory </> (sprintf "%s.%s.md" x nugetVersion)
+    let reportFileName x = benchmarkReportsDirectory @@ (sprintf "%s.%s.md" x nugetVersion)
     Directory.ensure benchmarkReportsDirectory
     Trace.logItems "Benchmark reports: " benchmarkReports
     benchmarkReports
@@ -185,7 +186,7 @@ Target.create "AddBenchmarkReport" (fun _ ->
 )
 
 Target.description "Builds the NuGet packages"
-Target.create "NuGet" (fun _ ->
+Target.create "NuGetPack" (fun _ ->
     sourceProjects
     |> Seq.iter (
         DotNet.pack (fun p ->
@@ -199,7 +200,7 @@ Target.create "NuGet" (fun _ ->
 )
 
 Target.description "Publishes the NuGet packages"
-Target.create "PublishNuGet" (fun _ ->
+Target.create "NuGetPublish" (fun _ ->
     Paket.push(fun p ->
         {p with
             PublishUrl = "https://www.nuget.org"
@@ -407,13 +408,12 @@ Target.create "CI" ignore
 // Run all targets by default. Invoke 'build target <Target>' to override
 
 "Clean"
-    ==> "Build"
+    ==> "BuildAllRelease"
     ==> "CopyBinaries"
-    ==> "RunTests"
-    ==> "NuGet"
-    ==> "CI"
 
-"CopyBinaries" ==> "Benchmark"
+"RunTests"
+    ==> "NuGetPack"
+    ==> "CI"
 
 [""; "Debug"]
 |> Seq.map (sprintf "GenerateReferenceDocs%s")
@@ -443,8 +443,8 @@ Target.create "CI" ignore
 "ReleaseDocs"
     ==> "Release"
 
-"NuGet"
-    ==> "PublishNuGet"
+"NuGetPack"
+    ==> "NuGetPublish"
     ==> "Release"
 
-Target.runOrDefault "NuGet"
+Target.runOrDefault "NuGetPack"

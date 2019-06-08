@@ -4,32 +4,62 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build, test and make NuGet packages",
-            "identifier": "build-full",
+            "label": "🔬TEST🔬",
             "type": "process",
             "group": {
-                "kind": "build",
+                "kind": "test",
                 "isDefault": true
             },
             "presentation": {
                 "reveal": "silent"
             },
-            "command": "./build.sh",
-            "windows": {
-                "command": "./build.cmd"
-            },
-            "problemMatcher": []
+            "command": "fake",
+            "args": [
+                "run",
+                "build.fsx",
+                "target",
+                "RunTests"
+            ]
         },
         {
-            "label": "Build the tests in a debug configuration",
+            "label": "⚙COMPILE⚙",
             "identifier": "dotnet-build",
-            "type": "shell",
+            "type": "process",
             "group": "build",
             "presentation": {
                 "reveal": "silent"
             },
-            "command": "dotnet build",
+            "command": "dotnet",
+            "args": [
+                "build"
+            ],
             "problemMatcher": []
+        },
+        {
+            "label": "📦PACK📦",
+            "type": "process",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "command": "fake",
+            "args": [
+                "run",
+                "build.fsx",
+                "target",
+                "NuGetPack"
+            ]
+        },
+        {
+            "label": "🛳RELEASE🛳",
+            "type": "process",
+            "presentation": {
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "command": "fake",
         }
     ]
 }

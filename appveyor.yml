@@ -3,9 +3,4 @@ init:
   - git config --global core.autocrlf input
 build_script:
   - cmd: build.cmd target CI
-test: off
-artifacts:
-  - path: docs.zip
-  - path: bin/*.nupkg
-  - path: ./**/BenchmarkDotNet.Artifacts/results/*.md
 version: 5.0.0.{build}

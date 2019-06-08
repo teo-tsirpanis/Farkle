@@ -148,6 +148,8 @@ let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
         (sprintf "--project %s%s -c %A -- %s" (Path.GetFileName proj) fx c args)
     |> handleFailure
 
+let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
+
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
     Shell.cleanDirs ["bin"; "temp"]
@@ -169,8 +171,12 @@ Target.create "RunTests" (fun _ ->
     |> Seq.iter (fun fx ->
         dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments))
 
+let shouldCIBenchmark = BuildServer.isLocalBuild || releaseNotes |> List.contains "!BENCH!"
+
 Target.description "Runs all benchmarks"
-Target.create "Benchmark" (fun _ -> dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release benchmarkArguments)
+Target.create "Benchmark" (fun _ ->
+    dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release benchmarkArguments
+    Seq.iter pushArtifact benchmarkReports)
 
 Target.description "Adds the benchmark results to the appropriate folder"
 Target.create "AddBenchmarkReport" (fun _ ->
@@ -197,6 +203,7 @@ Target.create "NuGetPack" (fun _ ->
             |> fCommonOptions
         )
     )
+    Seq.iter pushArtifact nugetPackages
 )
 
 Target.description "Publishes the NuGet packages"
@@ -338,7 +345,7 @@ Target.create "KeepRunning" (fun _ ->
     System.Console.ReadKey() |> ignore
 )
 
-Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip")
+Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip"; Trace.publish ImportData.BuildArtifact "docs.zip")
 Target.description "Generates the website for the project, except for the API documentation - for release"
 Target.create "GenerateHelp" (fun _ -> docs true)
 Target.description "Generates the website for the project, except for the API documentation - for local use"
@@ -438,7 +445,7 @@ Target.create "CI" ignore
     ==> "Release"
 
 "Benchmark"
-    ==> "CI"
+    =?> ("CI", shouldCIBenchmark)
 
 "ReleaseDocs"
     ==> "Release"

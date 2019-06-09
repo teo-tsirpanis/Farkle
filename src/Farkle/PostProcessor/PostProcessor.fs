@@ -48,24 +48,30 @@ module PostProcessor =
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
     let ofSeq<'result> transformers fusers =
         let transformers =
-            let b = ImmutableDictionary.CreateBuilder()
-            transformers |> Seq.iter (fun (Transformer(term, f)) -> b.Add(term, f))
+            let maxElement = transformers |> Seq.map (fun (Transformer(term, _)) -> term) |> Seq.max |> int
+            let b = ImmutableArray.CreateBuilder(maxElement + 1)
+            for __ = 0 to maxElement do
+                b.Add(null)
+            transformers |> Seq.iter (fun (Transformer(prod, f)) -> b.[int prod] <- f)
             b.ToImmutable()
         let fusers =
-            let b = ImmutableDictionary.CreateBuilder()
-            fusers |> Seq.iter (fun (Fuser(prod, f)) -> b.Add(prod, f))
+            let maxElement = fusers |> Seq.map (fun (Fuser(prod, _)) -> prod) |> Seq.max |> int
+            let b = ImmutableArray.CreateBuilder(maxElement + 1)
+            for __ = 0 to maxElement do
+                b.Add(null)
+            fusers |> Seq.iter (fun (Fuser(prod, f)) -> b.[int prod] <- Func<_,_> f)
             b.ToImmutable()
         {new PostProcessor<'result> with
-            member __.Transform (sym, pos, data) =
+            member __.Transform (term, pos, data) =
                 /// It is very likely that a transformer will not be found.
                 /// Throwing an exception would destroy performance, but it will
                 /// be caught nevertheless, in case of an error inside the transformer.
-                match transformers.TryGetValue(sym.Index) with
-                | true, f -> f.Invoke(pos, data)
-                | false, _ -> null
+                match term.Index with
+                | idx when idx < uint32 transformers.Length && fusers.[int idx] <> null -> transformers.[int idx].Invoke(pos, data)
+                | _ -> null
             member __.Fuse(prod, arguments) =
                 /// But if a fuser is not found, it is always an error stemming from incorrect configuration; not input,
                 /// so an exception will not hurt, and will be caught by the LALR parser.
-                match fusers.TryGetValue(prod.Index) with
-                | true, f -> f arguments
-                | false, _ -> raise <| FuserNotFound prod}
+                match prod.Index with
+                | idx when idx < uint32 fusers.Length && fusers.[int idx] <> null -> fusers.[int idx].Invoke(arguments)
+                | _ -> raise <| FuserNotFound prod}

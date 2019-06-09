@@ -10,9 +10,6 @@
                 "kind": "test",
                 "isDefault": true
             },
-            "presentation": {
-                "reveal": "silent"
-            },
             "command": "fake",
             "args": [
                 "run",
@@ -38,16 +35,26 @@
         {
             "label": "📦PACK📦",
             "type": "process",
-            "presentation": {
-                "reveal": "silent"
-            },
             "command": "fake",
             "args": [
                 "run",
                 "build.fsx",
                 "target",
                 "NuGetPack"
-            ]
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "⏱BENCHMARK⏱",
+            "type": "process",
+            "command": "fake",
+            "args": [
+                "run",
+                "build.fsx",
+                "target",
+                "Benchmark"
+            ],
+            "problemMatcher": []
         },
         {
             "label": "🛳RELEASE🛳",
@@ -60,6 +67,13 @@
                 "clear": true
             },
             "command": "fake",
+            "args": [
+                "run",
+                "build.fsx",
+                "target",
+                "Release"
+            ],
+            "problemMatcher": []
         }
     ]
 }

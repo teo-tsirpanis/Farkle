@@ -8,6 +8,7 @@ nuget FSharp.Core
 nuget System.Buffers
 nuget System.Collections.Immutable
 nuget System.Memory
+nuget System.ValueTuple framework: net45
 
 group Executables
 

@@ -2,3 +2,4 @@ FSharp.Core
 System.Buffers
 System.Collections.Immutable
 System.Memory
+System.ValueTuple framework: net45

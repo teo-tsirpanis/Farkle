@@ -11,6 +11,7 @@ NUGET
       System.Runtime.CompilerServices.Unsafe (>= 4.5.2)
     System.Numerics.Vectors (4.5) - restriction: || (&& (== net45) (>= net461)) (== netstandard2.0)
     System.Runtime.CompilerServices.Unsafe (4.5.2)
+    System.ValueTuple (4.5) - restriction: == net45
 
 GROUP Executables
 STORAGE: NONE

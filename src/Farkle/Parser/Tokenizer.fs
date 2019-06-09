@@ -37,8 +37,7 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
-        let newToken sym idx = (sym, pinSpan input idx) |> Ok |> Some
-        let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
+        let inline newToken sym idx = (sym, pinSpan input idx) |> Ok |> Some
         let rec impl idx (currState: DFAState) lastAccept =
             let mutable x = '\u0103'
             let mutable idxNext = idx
@@ -48,7 +47,9 @@ module Tokenizer =
                 | Some (sym, idx) -> newToken sym idx
                 | None -> None
             | true ->
-                let newDFA = lookupEdges x currState.Edges
+                let newDFA =
+                    RangeMap.tryFind x currState.Edges
+                    |> Option.map (SafeArray.retrieve states)
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
                 | Some (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept

@@ -13,11 +13,11 @@ open Farkle.Collections
 let tests =
     testList "RangeMap tests" [
         test "The empty RangeMap is empty" {
-            Expect.isTrue (RangeMap.isEmpty RangeMap.empty) "The empty RangeMap is not empty"
+            Expect.isTrue (RangeMap.isEmpty <| (RangeMap.empty(): RangeMap<int, _>)) "The empty RangeMap is not empty"
         }
 
         testProperty "The empty RangeMap does not contain anything"
-            ((*) 1 >> flip RangeMap.tryFind RangeMap.empty >> Option.isNone)
+            (flip RangeMap.tryFind (RangeMap.empty (): RangeMap<int, _>) >> Option.isNone)
 
         test "Overlapping ranges are not accepted" {
             Expect.isNone (RangeMap.ofRanges [|[|4, 8|], (); [|5, 30|], ()|]) "A RangeMap with overlapping ranges was created"

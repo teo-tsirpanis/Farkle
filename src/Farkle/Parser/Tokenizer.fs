@@ -37,29 +37,30 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
-        let inline newToken sym idx = (sym, pinSpan input idx) |> Ok |> Some
+        let inline newToken sym idx = struct (sym, pinSpan input idx) |> Ok |> Some
+        let retrieve state = SafeArray.retrieve states state
         let rec impl idx (currState: DFAState) lastAccept =
             let mutable x = '\u0103'
             let mutable idxNext = idx
             match readChar input &x &idxNext with
             | false ->
                 match lastAccept with
-                | Some (sym, idx) -> newToken sym idx
-                | None -> None
+                | ValueSome struct (sym, idx) -> newToken sym idx
+                | ValueNone -> None
             | true ->
                 let newDFA =
                     RangeMap.tryFind x currState.Edges
-                    |> Option.map (SafeArray.retrieve states)
+                    |> ValueOption.map retrieve
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | Some (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept
+                | ValueSome (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl idxNext newDFA (Some (acceptSymbol, idx))
+                | ValueSome (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl idxNext newDFA (ValueSome struct (acceptSymbol, idx))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | None, Some (sym, idx) -> newToken sym idx
+                | ValueNone, ValueSome (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None -> input.FirstCharacter |> Error |> Some
-        impl (getCurrentIndex input) initialState None
+                | ValueNone, ValueNone -> input.FirstCharacter |> Error |> Some
+        impl (getCurrentIndex input) initialState ValueNone
 
     /// Breaks a `CharStream` into a series of post-processed tokens, according to the given `Grammar`.
     /// This function is pretty complicated, so let's enumerate the parameters' purpose.

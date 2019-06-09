@@ -17,7 +17,7 @@ let tests =
         }
 
         testProperty "The empty RangeMap does not contain anything"
-            (flip RangeMap.tryFind (RangeMap.empty (): RangeMap<int, _>) >> Option.isNone)
+            (flip RangeMap.tryFind (RangeMap.empty (): RangeMap<int, _>) >> ValueOption.isNone)
 
         test "Overlapping ranges are not accepted" {
             Expect.isNone (RangeMap.ofRanges [|[|4, 8|], (); [|5, 30|], ()|]) "A RangeMap with overlapping ranges was created"

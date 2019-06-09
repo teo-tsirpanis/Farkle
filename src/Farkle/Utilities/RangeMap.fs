@@ -32,7 +32,7 @@ module RangeMap =
     [<CompiledName("TryFind")>]
     let tryFind k (RangeMap arr) =
         if arr.IsEmpty then
-            None
+            ValueNone
         else
             let idx =
                 // .NET's binary search function returns special integer values depending on the outcome.
@@ -45,9 +45,9 @@ module RangeMap =
                 // If it is negative, its bitwise complement signifies the next nearest element to be found.
                 | x -> ~~~ x
             if arr.[idx].KeyFrom.CompareTo k <= 0 && k.CompareTo arr.[idx].KeyTo <= 0 then
-                Some <| arr.[idx].Value
+                ValueSome <| arr.[idx].Value
             else
-                None
+                ValueNone
 
     [<CompiledName("Map")>]
     /// Applies a function to each of the items of a `RangeMap`.

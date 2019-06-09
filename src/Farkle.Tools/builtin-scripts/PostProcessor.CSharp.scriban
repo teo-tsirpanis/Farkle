@@ -42,6 +42,6 @@ namespace {{ grammar_name }} {
         }
 
         public static readonly RuntimeFarkle<TODO> Runtime =
-            PostProcessor.Create<TODO>(Transform, GetFuser).CombineWithBase64Grammar(Grammar.AsBase64);
+            RuntimeFarkle<TODO>.CreateFromBase64(Grammar.AsBase64,PostProcessor.Create<TODO>(Transform, GetFuser));
     }
 }

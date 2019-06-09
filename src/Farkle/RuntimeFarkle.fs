@@ -33,12 +33,29 @@ Check the post-processor's configuration."""
 
 /// A reusable parser and post-processor, created for a specific grammar, and returning
 /// a specific type of object that best describes an expression of the language of this grammar.
-/// This is the highest-level API, and the easiest-to-use one.
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = private {
     Grammar: Result<Grammar,FarkleError>
     PostProcessor: PostProcessor<'TResult>
 }
+with
+    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
+    /// <see cref="Grammar"/> and <see cref="PostProcessor{TResult}"/>.</summary>
+    static member Create(grammar, postProcessor) = {Grammar = Ok grammar; PostProcessor = postProcessor}
+
+    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
+    /// EGT file and <see cref="PostProcessor{TResult}"/>.</summary>
+    static member Create(fileName, postProcessor) = {
+        Grammar = EGT.ofFile fileName |> Result.mapError EGTReadError
+        PostProcessor = postProcessor
+    }
+
+    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
+    /// EGT file encoded in Base-64 and <see cref="PostProcessor{TResult}"/>.</summary>
+    static member CreateFromBase64String(str, postProcessor) = {
+        Grammar = EGT.ofBase64String str |> Result.mapError EGTReadError
+        PostProcessor = postProcessor
+    }
 
 /// Functions to create and use `RuntimeFarkle`s.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -56,25 +73,17 @@ module RuntimeFarkle =
 
     /// Creates a `RuntimeFarkle`.
     [<CompiledName("Create")>]
-    let create postProcessor grammar = createMaybe postProcessor (Ok grammar)
+    let create postProcessor (grammar: Grammar) = RuntimeFarkle<_>.Create(grammar, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given post-processor, and the .egt file at the given path.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromFile")>]
-    let ofEGTFile postProcessor fileName =
-        fileName
-        |> EGT.ofFile
-        |> Result.mapError EGTReadError
-        |> createMaybe postProcessor
+    let ofEGTFile postProcessor (fileName: string) = RuntimeFarkle<_>.Create(fileName, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given post-processor, and the given Base64 representation of an .egt file.
     /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String postProcessor x =
-        x
-        |> EGT.ofBase64String
-        |> Result.mapError EGTReadError
-        |> createMaybe postProcessor
+    let ofBase64String postProcessor x = RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
 
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.
@@ -104,10 +113,11 @@ module RuntimeFarkle =
     [<CompiledName("ParseStream")>]
     let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         use sr = new StreamReader(inputStream, encoding)
-        match doLazyLoad with
-        | true -> CharStream.ofTextReader sr
-        | false -> sr.ReadToEnd() |> CharStream.ofString
-        |> flip using (parseChars rf fMessage)
+        use cs =
+            match doLazyLoad with
+            | true -> CharStream.ofTextReader sr
+            | false -> sr.ReadToEnd() |> CharStream.ofString
+        parseChars rf fMessage cs
 
     /// Parses and post-processes a file at the given path with the given character encoding.
     /// This function also accepts a custom parse message handler.

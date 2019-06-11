@@ -53,11 +53,11 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "Farkle.Tests.dll",
+            "program": "bin/Debug/netcoreapp2.1/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -69,7 +69,7 @@
             "args": [
                 "--sequenced"
             ],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/bin/Debug/netcoreapp2.1/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         }

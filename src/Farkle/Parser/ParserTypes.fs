@@ -39,7 +39,7 @@ type ExpectedSymbol =
 [<RequireQualifiedAccess>]
 type ParseMessage =
     /// Input ended.
-    | EndOfInput
+    | EndOfInput of Position
     /// A token was read.
     | TokenRead of Token
     /// A rule was reduced.
@@ -48,7 +48,7 @@ type ParseMessage =
     | Shift of uint32
     override x.ToString() =
         match x with
-        | EndOfInput -> "Input ended"
+        | EndOfInput pos -> sprintf "%O Input ended" pos
         | TokenRead x -> sprintf "%O Token read: %O (%s)" x.Position x x.Symbol.Name
         | Reduction x -> sprintf "Rule reduced: %O" x
         | Shift x -> sprintf "The parser shifted to state %d" x
@@ -92,3 +92,7 @@ type ParseErrorType =
 type Message<'a> = Message of Position * 'a
     with
         override x.ToString() = let (Message(pos, m)) = x in sprintf "%O %O" pos m
+
+/// An exception to be thrown when parsing goes wrong.
+/// It is thrown by the `Parser` and `Tokenizer` APIs, and caught by the `RuntimeFarkle`.
+exception ParseError of ParseErrorType Message

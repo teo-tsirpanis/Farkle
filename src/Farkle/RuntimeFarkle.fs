@@ -16,6 +16,7 @@ open System.IO
 open System.Text
 
 /// A type signifying an error during the parsing process.
+[<RequireQualifiedAccess>]
 type FarkleError =
     /// There was a parsing error.
     | ParseError of Message<ParseErrorType>
@@ -46,14 +47,14 @@ with
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// EGT file and <see cref="PostProcessor{TResult}"/>.</summary>
     static member Create(fileName, postProcessor) = {
-        Grammar = EGT.ofFile fileName |> Result.mapError EGTReadError
+        Grammar = EGT.ofFile fileName |> Result.mapError FarkleError.EGTReadError
         PostProcessor = postProcessor
     }
 
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// EGT file encoded in Base-64 and <see cref="PostProcessor{TResult}"/>.</summary>
     static member CreateFromBase64String(str, postProcessor) = {
-        Grammar = EGT.ofBase64String str |> Result.mapError EGTReadError
+        Grammar = EGT.ofBase64String str |> Result.mapError FarkleError.EGTReadError
         PostProcessor = postProcessor
     }
 
@@ -91,12 +92,18 @@ module RuntimeFarkle =
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         let fParse grammar =
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
-            let fLALR = LALRParser.LALRStep fMessage grammar rf.PostProcessor
-            let fToken pos token =
-                token |> Option.map (ParseMessage.TokenRead) |> Option.defaultValue ParseMessage.EndOfInput |> fMessage
-                fLALR pos token
-            Tokenizer.tokenize fToken [] grammar fTransform input |> Result.mapError ParseError
-        rf.Grammar >>= fParse |> Result.map (fun x -> x :?> 'TResult)
+            let fTokenize input =
+                let token = Tokenizer.tokenize grammar fTransform input
+                token |> snd
+                |> Option.map (ParseMessage.TokenRead)
+                |> Option.defaultValue (ParseMessage.EndOfInput <| fst token)
+                |> fMessage
+                token
+            try
+                LALRParser.parseLALR fMessage grammar rf.PostProcessor fTokenize input :?> 'TResult |> Ok
+            with
+            | ParseError msg -> msg |> FarkleError.ParseError |> Error
+        rf.Grammar >>= fParse
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.

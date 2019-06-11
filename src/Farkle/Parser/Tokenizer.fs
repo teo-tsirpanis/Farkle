@@ -62,34 +62,20 @@ module Tokenizer =
                 | ValueNone, ValueNone -> input.FirstCharacter |> Error |> Some
         impl (getCurrentIndex input) initialState ValueNone
 
-    /// Breaks a `CharStream` into a series of post-processed tokens, according to the given `Grammar`.
-    /// This function is pretty complicated, so let's enumerate the parameters' purpose.
-    /// The function accepts:
-    /// 1. a function that accepts:
-    ///     * the current position (it is redundant if a token is specified, but not when input ends)
-    ///     * a token that was just generated (or `None` in case of an end of input).
-    ///     * the function's state.
-    ///     and returns
-    ///     * the result of _this_ function, or `None`, if it should be given another token.
-    ///     * the function's new state.
-    /// 2. the initial state of the previous function.
-    /// 3. the `Grammar` to use.
-    /// 4. the `CharStreamCallback` to call to transform the newly madetokens.
-    /// 5. the `CharStream` to act as an input. __Remember that `CharStream`s are _not_ thread-safe.__
-    let tokenize fToken fTokenS0 {_DFAStates = dfa; _Groups = groups} fTransform (input: CharStream) =
-        let fail msg = Message (input.Position, msg) |> Error
-        let rec impl (gs: TokenizerState) fTokenS =
-            let fToken pos t =
-                match fToken pos t fTokenS with
-                | Some x, _ -> x
-                | None, s -> impl [] s
+
+    /// Returns the next token from the current position of a `CharStream`.
+    /// A delegate to transform the resulting terminal is also given.
+    let tokenize {_DFAStates = dfa; _Groups = groups} fTransform (input: CharStream) =
+        let fail msg = Message (input.Position, msg) |> ParseError |> raise
+        let rec impl (gs: TokenizerState) =
             let newToken sym (cs: CharSpan) =
                 let pos = cs.StartingPosition
-                try
-                    let data = unpinSpanAndGenerate sym fTransform input cs
-                    Token.Create pos sym data |> Some |> fToken pos
-                with
-                | ex -> Error <| Message(pos, ParseErrorType.TransformError(sym, ex))
+                let data =
+                    try
+                        unpinSpanAndGenerate sym fTransform input cs
+                    with
+                    | ex -> Message(pos, ParseErrorType.TransformError(sym, ex)) |> ParseError |> raise
+                pos, Token.Create pos sym data |> Some
             let tok = tokenizeDFA dfa input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
@@ -101,7 +87,7 @@ module Tokenizer =
             // We consume it, unpin its characters, and proceed.
             | Some (Ok (Choice2Of4 _noise, tok)), [] ->
                 consume true input tok
-                impl [] fTokenS
+                impl []
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
@@ -110,7 +96,7 @@ module Tokenizer =
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[tokGroupIdx]
                     consume (shouldUnpinCharactersInsideGroup g gs) input tok
-                    impl ((tok, g) :: gs) fTokenS
+                    impl ((tok, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
@@ -123,13 +109,13 @@ module Tokenizer =
                     | EndingMode.Open -> popped
                 match xs, poppedGroup.ContainerSymbol with
                 // We have now left the group, but the whole group was noise.
-                | [], Choice2Of2 _ -> impl [] fTokenS
+                | [], Choice2Of2 _ -> impl []
                 // We have left the group and it was a terminal.
                 | [], Choice1Of2 sym -> newToken sym popped
                 // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs) fTokenS
+                | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs)
             // If input ends outside of a group, it's OK.
-            | None, [] -> fToken input.Position None
+            | None, [] -> input.Position, None
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
                 let data =
@@ -143,7 +129,7 @@ module Tokenizer =
                     | AdvanceMode.Character, _ | _, Error _ ->
                         consumeOne doUnpin input
                         extendSpanByOne input tok2
-                impl ((data, g2) :: xs) fTokenS
+                impl ((data, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
             | Some (Ok (Choice4Of4 ge, _)), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // or input ends while we are inside a group,
@@ -157,4 +143,4 @@ module Tokenizer =
             | Some (Ok (Choice3Of4 _, _)), [] -> failwith "Impossible case: The group stack was already checked to be empty."
             // We found an unrecognized symbol while being outside a group. This is an error.
             | Some (Error x), [] -> fail <| ParseErrorType.LexicalError x
-        impl [] fTokenS0
+        impl []

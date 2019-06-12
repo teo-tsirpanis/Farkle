@@ -56,7 +56,6 @@ module internal GrammarReader =
         let wantContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
         let wantGroupEnd x = match x with | AnyGroupEnd x -> Choice1Of2 x | AnyTerminal x -> Choice2Of2 x | _ -> invalidEGT()
-        let wantSRActionSymbol x = match x with | AnyTerminal x -> Some x | AnyEndOfFile -> None | _ -> invalidEGT()
         let wantDFASymbol x = match x with | AnyTerminal x -> Choice1Of4 x | AnyNoise x -> Choice2Of4 x | AnyGroupStart x -> Choice3Of4 x | AnyGroupEnd x -> Choice4Of4 x | _ -> invalidEGT()
 
         let wantAdvanceMode x idx = match wantUInt16 x idx with | 0us -> AdvanceMode.Token | 1us -> AdvanceMode.Character | _ -> invalidEGT()
@@ -163,8 +162,9 @@ module internal GrammarReader =
         let readLALRState fSymbol fProduction fLALR index mem =
             lengthMustBeAtLeast mem 5 // There must be at least one action per state.
             wantEmpty mem 0
-            let mutable SRActions = ImmutableDictionary.CreateBuilder()
-            let mutable GotoActions = ImmutableDictionary.CreateBuilder()
+            let SRActions = ImmutableDictionary.CreateBuilder()
+            let GotoActions = ImmutableDictionary.CreateBuilder()
+            let mutable EOFAction = None
             let mem = mem.Slice(1)
             if mem.Length % 4 <> 0 then invalidEGT()
             let fAction idx =
@@ -173,14 +173,21 @@ module internal GrammarReader =
                 let action = wantUInt16 mem <| 4 * idx + 1
                 let targetIndex = wantUInt16 mem <| 4 * idx + 2
                 wantEmpty mem <| 4 * idx + 3
-                match action with
-                | 1us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Shift <| fLALR targetIndex)
-                | 2us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Reduce <| fProduction targetIndex)
-                | 3us -> GotoActions.Add(wantNonterminal symbol, fLALR targetIndex)
-                | 4us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Accept)
-                | _ -> invalidEGT()
+                if action = 3us then
+                    GotoActions.Add(wantNonterminal symbol, fLALR targetIndex)
+                else
+                    let srAction =
+                        match action with
+                        | 1us -> LALRAction.Shift <| fLALR targetIndex
+                        | 2us -> LALRAction.Reduce <| fProduction targetIndex
+                        | 4us -> LALRAction.Accept
+                        | _ -> invalidEGT()
+                    match symbol with
+                    | AnyTerminal term -> SRActions.Add(term, srAction)
+                    | AnyEndOfFile when EOFAction.IsNone -> EOFAction <- Some srAction
+                    | _ -> invalidEGT()
             for i = 0 to mem.Length / 4 - 1 do fAction i
-            {Index = index; Actions = SRActions.ToImmutable(); GotoActions = GotoActions.ToImmutable()}
+            {Index = index; Actions = SRActions.ToImmutable(); EOFAction = EOFAction; GotoActions = GotoActions.ToImmutable()}
 
         let itemTry (arr: ImmutableArray.Builder<_>) idx =
             let idx = int idx

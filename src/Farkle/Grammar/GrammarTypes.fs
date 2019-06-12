@@ -161,9 +161,10 @@ type LALRAction =
 and LALRState = {
     /// The index of the state.
     Index: uint32
-    /// The available next `LALRAction`s of the state.
-    /// In case of an end-of-input, the corresponding action - if it exists - will have a key of `None`.
-    Actions: ImmutableDictionary<Terminal option, LALRAction>
+    /// The available next `LALRAction`s of the state, depending on the next `Terminal` encountered.
+    Actions: ImmutableDictionary<Terminal, LALRAction>
+    /// The available `LALRAction` to be taken if input ends.
+    EOFAction: LALRAction option
     /// The available GOTO actions of the state.
     /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
     GotoActions: ImmutableDictionary<Nonterminal, Indexed<LALRState>>

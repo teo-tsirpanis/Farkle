@@ -31,7 +31,14 @@ module LALRParser =
             let fail msg: obj = Message(pos, msg) |> ParseError |> raise
             let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
             let currentState = getCurrentState stack
-            match currentState.Actions.TryGetValue(Option.map (fun {Symbol = x} -> x) token) with
+            let nextAction =
+                match token with
+                | Some({Symbol = x}) -> currentState.Actions.TryGetValue(x)
+                | None ->
+                    match currentState.EOFAction with
+                    | Some x -> true, x
+                    | None -> false, Unchecked.defaultof<_>
+            match nextAction with
             | true, LALRAction.Accept ->
                 match stack with
                 | (_, ast) :: _ -> ast
@@ -61,10 +68,7 @@ module LALRParser =
                     impl t ((nextState, resultObj) :: stack)
                 | false, _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
             | false, _ ->
-                let fixTerminal =
-                    function
-                    | KeyValue(Some term, _) -> ExpectedSymbol.Terminal term
-                    | KeyValue(None, _) -> ExpectedSymbol.EndOfInput
+                let fixTerminal (KeyValue(term, _)) = ExpectedSymbol.Terminal term
                 let expectedSymbols =
                     [
                         Seq.map fixTerminal currentState.Actions
@@ -74,6 +78,7 @@ module LALRParser =
                     ]
                     |> Seq.concat
                     |> set
+                    |> (fun s -> if currentState.EOFAction.IsSome then Set.add ExpectedSymbol.EndOfInput s else s)
                 let foundToken =
                     match token with
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term

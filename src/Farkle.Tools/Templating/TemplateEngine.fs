@@ -30,10 +30,7 @@ with
     [<ScriptMemberIgnore>]
     static member Create (g: Grammar.Grammar) =
         let conv = Array.ofSeq
-        let properties =
-            let dict = Dictionary(g.Properties.Count, StringComparer.OrdinalIgnoreCase)
-            g.Properties |> Map.iter (curry dict.Add)
-            dict
+        let properties = Dictionary(g.Properties, StringComparer.OrdinalIgnoreCase)
         {
             Properties = properties
             Symbols = {

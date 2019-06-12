@@ -101,7 +101,7 @@ and Group = {
     /// The way the group ends.
     EndingMode: EndingMode
     /// A set of indexes whose corresponding groups can be nested inside this group.
-    Nesting: Set<Indexed<Group>>
+    Nesting: ImmutableHashSet<Indexed<Group>>
 }
 with
     override x.ToString() = x.Name
@@ -163,10 +163,10 @@ and LALRState = {
     Index: uint32
     /// The available next `LALRAction`s of the state.
     /// In case of an end-of-input, the corresponding action - if it exists - will have a key of `None`.
-    Actions: Map<Terminal option, LALRAction>
+    Actions: ImmutableDictionary<Terminal option, LALRAction>
     /// The available GOTO actions of the state.
     /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    GotoActions: Map<Nonterminal, Indexed<LALRState>>
+    GotoActions: ImmutableDictionary<Nonterminal, Indexed<LALRState>>
 }
 with
     override x.ToString() = string x.Index
@@ -185,7 +185,7 @@ type Symbols = {
 /// A context-free grammar according to which, Farkle can parse text.
 type Grammar = internal {
     // This field is totally informative; it serves only the template maker.
-    _Properties: Map<string,string>
+    _Properties: ImmutableDictionary<string,string>
 
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.

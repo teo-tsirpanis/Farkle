@@ -111,9 +111,9 @@ module internal GrammarReader =
                 lengthMustBe mem (8 + count)
                 let span = mem.Slice(8)
                 if not span.IsEmpty then
-                    Seq.init mem.Length (wantUInt16 span >> fGroup) |> set
+                    Seq.init mem.Length (wantUInt16 span >> fGroup) |> ImmutableHashSet.CreateRange
                 else
-                    Set.empty
+                    ImmutableHashSet.Empty
             {
                     Name = name
                     ContainerSymbol = container
@@ -163,8 +163,8 @@ module internal GrammarReader =
         let readLALRState fSymbol fProduction fLALR index mem =
             lengthMustBeAtLeast mem 5 // There must be at least one action per state.
             wantEmpty mem 0
-            let mutable SRActions = []
-            let mutable GotoActions = []
+            let mutable SRActions = ImmutableDictionary.CreateBuilder()
+            let mutable GotoActions = ImmutableDictionary.CreateBuilder()
             let mem = mem.Slice(1)
             if mem.Length % 4 <> 0 then invalidEGT()
             let fAction idx =
@@ -174,13 +174,13 @@ module internal GrammarReader =
                 let targetIndex = wantUInt16 mem <| 4 * idx + 2
                 wantEmpty mem <| 4 * idx + 3
                 match action with
-                | 1us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Shift <| fLALR targetIndex) :: SRActions
-                | 2us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Reduce <| fProduction targetIndex) :: SRActions
-                | 3us -> GotoActions <- (wantNonterminal symbol, fLALR targetIndex) :: GotoActions
-                | 4us -> SRActions <- (wantSRActionSymbol symbol, LALRAction.Accept) :: SRActions
+                | 1us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Shift <| fLALR targetIndex)
+                | 2us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Reduce <| fProduction targetIndex)
+                | 3us -> GotoActions.Add(wantNonterminal symbol, fLALR targetIndex)
+                | 4us -> SRActions.Add(wantSRActionSymbol symbol, LALRAction.Accept)
                 | _ -> invalidEGT()
             for i = 0 to mem.Length / 4 - 1 do fAction i
-            {Index = index; Actions = Map.ofList SRActions; GotoActions = Map.ofList GotoActions}
+            {Index = index; Actions = SRActions.ToImmutable(); GotoActions = GotoActions.ToImmutable()}
 
         let itemTry (arr: ImmutableArray.Builder<_>) idx =
             let idx = int idx
@@ -217,7 +217,7 @@ module internal GrammarReader =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
         let initialStates = ref None
-        let mutable properties = []
+        let properties = ImmutableDictionary.CreateBuilder()
         let mutable charSets = Unchecked.defaultof<_>
         let mutable fCharSet = Unchecked.defaultof<_>
         let mutable symbols = Unchecked.defaultof<_>
@@ -238,7 +238,9 @@ module internal GrammarReader =
             let magicCode = wantByte mem 0
             let mem = mem.Slice(1)
             match magicCode with
-            | 'p'B -> properties <- readProperty mem :: properties
+            | 'p'B ->
+                let name, value = readProperty mem
+                properties.Add(name, value)
             // The table counts record must exist only once, and before the other records.
             | 't'B when not isTableCountsInitialized ->
                 isTableCountsInitialized <- true
@@ -291,7 +293,7 @@ module internal GrammarReader =
             let dfaStates = SafeArray.ofImmutableArray <| dfaStates.ToImmutable()
             let lalrStates = SafeArray.ofImmutableArray <| lalrStates.ToImmutable()
             return {
-                _Properties = Map.ofList properties
+                _Properties = properties.ToImmutable()
                 _StartSymbol = productions.[0].Head
                 _Symbols = symbols
                 _Productions = productions.ToImmutable()

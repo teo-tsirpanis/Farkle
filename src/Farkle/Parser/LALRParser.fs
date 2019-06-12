@@ -31,10 +31,12 @@ module LALRParser =
             let fail msg: obj = Message(pos, msg) |> ParseError |> raise
             let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
             let currentState = getCurrentState stack
-            match currentState.Actions.TryFind(Option.map (fun {Symbol = x} -> x) token), stack with
-            | Some LALRAction.Accept, (_, ast) :: _ -> ast
-            | Some LALRAction.Accept, [] -> LALRStackEmpty |> internalError
-            | Some (LALRAction.Shift (LALRState nextState)), stack ->
+            match currentState.Actions.TryGetValue(Option.map (fun {Symbol = x} -> x) token) with
+            | true, LALRAction.Accept ->
+                match stack with
+                | (_, ast) :: _ -> ast
+                | [] -> internalError LALRStackEmpty
+            | true, LALRAction.Shift (LALRState nextState) ->
                 match token with
                 | Some {Data = data} ->
                     fMessage <| ParseMessage.Shift nextState.Index
@@ -42,14 +44,13 @@ module LALRParser =
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
                     impl (fToken()) ((nextState, data) :: stack)
                 | None -> ShiftOnEOF |> internalError
-            | Some (LALRAction.Reduce productionToReduce), stack ->
+            | true, LALRAction.Reduce productionToReduce ->
                 let tokens, stack =
                     let (poppedStack, remainingStack) = List.popStack productionToReduce.Handle.Length stack
                     poppedStack |> Seq.map snd |> Array.ofSeq, remainingStack
                 let nextState = getCurrentState stack
-                let nextAction = nextState.GotoActions.TryFind productionToReduce.Head
-                match nextAction with
-                | Some (LALRState nextState) ->
+                match nextState.GotoActions.TryGetValue productionToReduce.Head with
+                | true, LALRState nextState ->
                     let resultObj = 
                         try
                             pp.Fuse(productionToReduce, tokens)
@@ -58,21 +59,18 @@ module LALRParser =
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl t ((nextState, resultObj) :: stack)
-                | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
-            | None, _ ->
+                | false, _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
+            | false, _ ->
                 let fixTerminal =
                     function
-                    | Some term, _ -> ExpectedSymbol.Terminal term
-                    | None, _ -> ExpectedSymbol.EndOfInput
+                    | KeyValue(Some term, _) -> ExpectedSymbol.Terminal term
+                    | KeyValue(None, _) -> ExpectedSymbol.EndOfInput
                 let expectedSymbols =
                     [
-                        currentState.Actions
-                        |> Map.toSeq
-                        |> Seq.map fixTerminal
+                        Seq.map fixTerminal currentState.Actions
 
                         currentState.GotoActions
-                        |> Map.toSeq
-                        |> Seq.map (fst >> ExpectedSymbol.Nonterminal)
+                        |> Seq.map (fun (KeyValue(x,_)) -> ExpectedSymbol.Nonterminal x)
                     ]
                     |> Seq.concat
                     |> set

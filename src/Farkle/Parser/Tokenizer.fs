@@ -75,7 +75,7 @@ module Tokenizer =
                         unpinSpanAndGenerate sym fTransform input cs
                     with
                     | ex -> Message(pos, ParseErrorType.TransformError(sym, ex)) |> ParseError |> raise
-                pos, Token.Create pos sym data |> Some
+                pos, Token.Create pos sym data |> ValueSome
             let tok = tokenizeDFA dfa input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
@@ -115,7 +115,7 @@ module Tokenizer =
                 // There is still another outer group. We append the outgoing group's data to the next top group.
                 | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs)
             // If input ends outside of a group, it's OK.
-            | None, [] -> input.Position, None
+            | None, [] -> input.Position, ValueNone
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
                 let data =

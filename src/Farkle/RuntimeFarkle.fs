@@ -93,12 +93,11 @@ module RuntimeFarkle =
         let fParse grammar =
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
             let fTokenize () =
-                let token = Tokenizer.tokenize grammar fTransform input
-                token |> snd
-                |> Option.map (ParseMessage.TokenRead)
-                |> Option.defaultValue (ParseMessage.EndOfInput <| fst token)
-                |> fMessage
-                token
+                let (pos, token as t) = Tokenizer.tokenize grammar fTransform input
+                match token with
+                | ValueSome token -> token |> ParseMessage.TokenRead |> fMessage
+                | ValueNone -> pos |> ParseMessage.EndOfInput |> fMessage
+                t
             try
                 LALRParser.parseLALR fMessage grammar rf.PostProcessor fTokenize :?> 'TResult |> Ok
             with

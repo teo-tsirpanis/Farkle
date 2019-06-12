@@ -31,17 +31,17 @@ module LALRParser =
             let fail msg: obj = Message(pos, msg) |> ParseError |> raise
             let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
             let currentState = getCurrentState stack
-            match currentState.Actions.TryFind(Option.map (fun {Symbol = x} -> x) token), stack with
+            match currentState.Actions.TryFind(ValueOption.map (fun {Symbol = x} -> x) token), stack with
             | Some LALRAction.Accept, (_, ast) :: _ -> ast
             | Some LALRAction.Accept, [] -> LALRStackEmpty |> internalError
             | Some (LALRAction.Shift (LALRState nextState)), stack ->
                 match token with
-                | Some {Data = data} ->
+                | ValueSome {Data = data} ->
                     fMessage <| ParseMessage.Shift nextState.Index
                     // We can't use <| because it prevents optimization into a loop.
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
                     impl (fToken()) ((nextState, data) :: stack)
-                | None -> ShiftOnEOF |> internalError
+                | ValueNone -> ShiftOnEOF |> internalError
             | Some (LALRAction.Reduce productionToReduce), stack ->
                 let tokens, stack =
                     let (poppedStack, remainingStack) = List.popStack productionToReduce.Handle.Length stack
@@ -62,8 +62,8 @@ module LALRParser =
             | None, _ ->
                 let fixTerminal =
                     function
-                    | Some term, _ -> ExpectedSymbol.Terminal term
-                    | None, _ -> ExpectedSymbol.EndOfInput
+                    | ValueSome term, _ -> ExpectedSymbol.Terminal term
+                    | ValueNone, _ -> ExpectedSymbol.EndOfInput
                 let expectedSymbols =
                     [
                         currentState.Actions
@@ -78,7 +78,7 @@ module LALRParser =
                     |> set
                 let foundToken =
                     match token with
-                    | Some {Symbol = term} -> ExpectedSymbol.Terminal term
-                    | None -> ExpectedSymbol.EndOfInput
+                    | ValueSome {Symbol = term} -> ExpectedSymbol.Terminal term
+                    | ValueNone -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
         impl (fToken()) []

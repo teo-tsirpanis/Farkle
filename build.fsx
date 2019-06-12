@@ -177,7 +177,7 @@ let shouldCIBenchmark =
     | LocalBuild -> true
     | AppVeyor ->
         let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        AppVeyor.Environment.IsReBuild || releaseNotesAsString.Contains("!BENCH!")
+        AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!")
     | _ -> true
 
 Target.description "Runs all benchmarks"

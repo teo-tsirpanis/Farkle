@@ -1,3 +1,4 @@
+open System
 // Copyright (c) 2018 Theodore Tsirpanis
 //
 // This software is released under the MIT License.
@@ -171,7 +172,13 @@ Target.create "RunTests" (fun _ ->
     |> Seq.iter (fun fx ->
         dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments))
 
-let shouldCIBenchmark = BuildServer.isLocalBuild || releaseNotes |> List.contains "!BENCH!"
+let shouldCIBenchmark =
+    match BuildServer.buildServer with
+    | LocalBuild -> true
+    | AppVeyor ->
+        let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
+        AppVeyor.Environment.IsReBuild || releaseNotesAsString.Contains("!BENCH!")
+    | _ -> true
 
 Target.description "Runs all benchmarks"
 Target.create "Benchmark" (fun _ ->

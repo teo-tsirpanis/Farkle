@@ -21,12 +21,15 @@ module LALRParser =
     /// 3. the `PostProcessor` to use on the newly-fused productions.
     /// 4. The a function that takes an input and returns a token (if input did not end) and its position.
     /// 5. An arbitrary argument to the above function.
-    let parseLALR fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) fToken input =
-        let getCurrentState = List.tryHead >> Option.map fst >> Option.defaultValue initialState
+    let parseLALR fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) fToken =
+        let getCurrentState stack =
+            match stack with
+            | (x, _) :: _ -> x
+            | [] -> initialState
         let (|LALRState|) x = SafeArray.retrieve lalrStates x
-        let rec impl ((pos, token) as t) stack =
-            let inline fail msg = Message(pos, msg) |> ParseError |> raise
-            let inline internalError msg = msg |> ParseErrorType.InternalError |> fail
+        let rec impl (pos, token as t) stack =
+            let fail msg: obj = Message(pos, msg) |> ParseError |> raise
+            let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
             let currentState = getCurrentState stack
             match currentState.Actions.TryFind(Option.map (fun {Symbol = x} -> x) token), stack with
             | Some LALRAction.Accept, (_, ast) :: _ -> ast
@@ -35,7 +38,9 @@ module LALRParser =
                 match token with
                 | Some {Data = data} ->
                     fMessage <| ParseMessage.Shift nextState.Index
-                    impl (fToken input) <| (nextState, data) :: stack
+                    // We can't use <| because it prevents optimization into a loop.
+                    // See https://github.com/dotnet/fsharp/issues/6984 for details.
+                    impl (fToken()) ((nextState, data) :: stack)
                 | None -> ShiftOnEOF |> internalError
             | Some (LALRAction.Reduce productionToReduce), stack ->
                 let tokens, stack =
@@ -52,7 +57,7 @@ module LALRParser =
                         | FuserNotFound prod -> ParseErrorType.FuserNotFound prod |> fail
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
-                    impl t <| (nextState, resultObj) :: stack
+                    impl t ((nextState, resultObj) :: stack)
                 | _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
             | None, _ ->
                 let fixTerminal =
@@ -76,4 +81,4 @@ module LALRParser =
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term
                     | None -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
-        impl (fToken input) []
+        impl (fToken()) []

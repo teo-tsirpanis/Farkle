@@ -21,7 +21,6 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
-open System
 open System.IO
 open System.Text.RegularExpressions
 

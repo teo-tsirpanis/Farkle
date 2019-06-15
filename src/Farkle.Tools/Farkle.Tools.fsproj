@@ -11,7 +11,8 @@
 
       Specifically, it is a modern replacement for the GOLD Parser's "Create Skeleton Program", powered by the Scriban templating engine.
 
-      After you install it as a CLI tool, pass the "--help" argument to learn how it works.</Description>
+      After you install it as a CLI tool, pass the "--help" argument to learn how it works.
+    </Description>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="builtin-scripts\*.scriban" />

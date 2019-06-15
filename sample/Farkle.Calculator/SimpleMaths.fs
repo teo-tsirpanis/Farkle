@@ -7,7 +7,6 @@ module ``SimpleMaths``
 
 open Farkle
 open Farkle.PostProcessor
-open System
 
 //#region Grammar types
 

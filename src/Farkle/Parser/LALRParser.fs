@@ -62,7 +62,7 @@ module LALRParser =
                         try
                             pp.Fuse(productionToReduce, tokens)
                         with
-                        | FuserNotFound prod -> ParseErrorType.FuserNotFound prod |> fail
+                        | FuserNotFound -> ParseErrorType.FuserNotFound productionToReduce |> fail
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl t ((nextState, resultObj) :: stack)

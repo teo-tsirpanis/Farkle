@@ -124,6 +124,6 @@ type PostProcessor =
             member __.Fuse(prod, arguments) = 
                 let theFuser = fGetFuser.Invoke(prod.Index)
                 if theFuser = Unchecked.defaultof<_> then
-                    raise <| FuserNotFound prod
+                    raise FuserNotFound
                 else
                     theFuser.Invoke(arguments)}

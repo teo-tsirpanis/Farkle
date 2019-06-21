@@ -85,11 +85,15 @@ type CharStream = private {
     mutable StartingIndex: uint64
     /// [omit]
     mutable _Position: Position
+    /// [omit]
+    mutable _LastUnpinnedSpanPosition: Position
 }
 with
     /// The stream's current position.
     /// Reading the stream will start from here.
     member x.Position = x._Position
+    /// The starting position of the last character span that was unpinned.
+    member x.LastUnpinnedSpanPosition = x._LastUnpinnedSpanPosition
     /// The stream's character at its current position.
     /// Calling this function assumes that this character is actually `read`.
     member x.FirstCharacter = x.Source.[x.Position.Index]
@@ -206,7 +210,8 @@ module CharStream =
                 match cs.Source with
                 | StaticBlock sb -> sb.Span.Slice(int idxStart, length)
                 | DynamicBlock db -> ReadOnlySpan(db.Buffer).Slice(int <| idxStart - db.BufferStartingIndex, length)
-            fPostProcess.Invoke(symbol, cs.Position, span)
+            cs._LastUnpinnedSpanPosition <- cs.Position
+            fPostProcess.Invoke(symbol, cs.LastUnpinnedSpanPosition, span)
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." csp cs.StartingIndex
 
@@ -224,7 +229,13 @@ module CharStream =
                     c_span // Created by cable
             s :?> string
 
-    let private create src = {Source = src; StartingIndex = 0UL; _Position = Position.initial}
+    let private create src =
+        {
+            Source = src
+            StartingIndex = 0UL
+            _Position = Position.initial
+            _LastUnpinnedSpanPosition = Position.initial
+        }
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     let ofReadOnlyMemory mem = mem |> StaticBlock |> create

@@ -21,6 +21,11 @@ type PP<'a> = Farkle.PostProcessor.PostProcessor<'a>
 /// <summary>Extension methods to easily create and work
 /// with <see cref="RuntimeFarkle{TResult}"/>.</summary>
 type RuntimeFarkleExtensions =
+
+    static member private fLogIgnore = fun (_: Parser.ParseMessage) -> ()
+
+    static member private defaultLogFunc f = if isNull f then RuntimeFarkleExtensions.fLogIgnore else FuncConvert.FromAction<_> f
+
     static member private defaultEncoding enc = if isNull enc then Encoding.UTF8 else enc
 
     /// <summary>A <see cref="PostProcessor{Object}"/> that just checks if the given string is valid.</summary>
@@ -32,29 +37,41 @@ type RuntimeFarkleExtensions =
 
     [<Extension>]
     /// <summary>Parses and post-processes a string.</summary>
-    static member Parse(rf, str) = RF.parseString rf ignore str
+    /// <param name="str">The string to parse.</param>
+    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    static member Parse(rf, str, [<Optional>] fLog) =
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseString rf fLog str
 
     [<Extension>]
     /// <summary>Parses and post-processes a <see cref="ReadOnlyMemory{Char}"/>.</summary>
-    static member Parse(rf, mem) = RF.parseMemory rf ignore mem
+    /// <param name="mem">The memory object to parse.</param>
+    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>s
+    static member Parse(rf, mem, [<Optional>] fLog) =
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseMemory rf fLog mem
 
     [<Extension>]
-    /// <summary>Parses and post-processes a <see cref="System.IO.Stream"/>,
-    /// encoded with the given <see cref="System.Text.Encoding"/>.</summary>
-    /// <remarks>
-    /// <p>If not specified, the encoding defaults to UTF-8.</p>
-    /// <p>The file can be read all at once in memory, if specified.</p>
-    /// </remarks>
-    static member Parse(rf, stream, [<Optional; DefaultParameterValue(null: Encoding)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
+    /// <summary>Parses and post-processes a <see cref="System.IO.Stream"/>.</summary>
+    /// <param name="stream">The stream to parse.</param>
+    /// <param name="encoding">The character encoding of the stream's data. Defaults to UTF-8.</param>
+    /// <param name="doLazyLoad">Whether to gradually read the input instead of reading its entirety in memory.
+    /// Defaults to <c>true</c>.</param>
+    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    static member Parse(rf, stream, [<Optional>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
         let encoding = RuntimeFarkleExtensions.defaultEncoding encoding
-        RF.parseStream rf ignore doLazyLoad encoding stream
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseStream rf fLog doLazyLoad encoding stream
 
     [<Extension>]
-    /// <summary>Parses and post-processes the file at the given path, encoded with the given <see cref="Encoding"/>.</summary>
-    /// <remarks>If not specified, the encoding defaults to UTF-8.</remarks>
-    static member ParseFile(rf, fileName, [<Optional; DefaultParameterValue(null: Encoding)>] encoding) =
+    /// <summary>Parses and post-processes the file at the given path.</summary>
+    /// <param name="fileName">The path of the file to parse.</param>
+    /// <param name="encoding">The character encoding of the file's data. Defaults to UTF-8.</param>
+    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    static member ParseFile(rf, fileName, [<Optional>] encoding, [<Optional>] fLog) =
         let encoding = RuntimeFarkleExtensions.defaultEncoding encoding
-        RF.parseFile rf ignore encoding fileName
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseFile rf fLog encoding fileName
 
     [<Extension>]
     /// <summary>Returns a new <see cref="RuntimeFarkle{TResult}"/> with a changed <see cref="PostProcessor"/>.</summary>
@@ -62,7 +79,7 @@ type RuntimeFarkleExtensions =
         RF.changePostProcessor pp rf
 
     [<Extension>]
-    /// <summary>Returns a <see cref="RuntimeFarkle{Object}"/> that just checks if the given input is valid.</summary>
+    /// <summary>Returns a <see cref="RuntimeFarkle{Object}"/> that just checks if its given input is valid.</summary>
     /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
     static member SyntaxCheck(rf) = RF.changePostProcessor RuntimeFarkleExtensions.SyntaxChecker rf
 

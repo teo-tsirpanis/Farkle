@@ -90,14 +90,15 @@ module RuntimeFarkle =
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
-        let fParse grammar =
+        match rf.Grammar with
+        | Ok grammar ->
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
             let fTokenize input = Tokenizer.tokenize grammar fTransform fMessage input
             try
                 LALRParser.parseLALR fMessage grammar rf.PostProcessor fTokenize input :?> 'TResult |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
-        rf.Grammar >>= fParse
+        | Error x -> Error x
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.

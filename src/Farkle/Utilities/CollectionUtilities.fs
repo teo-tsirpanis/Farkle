@@ -7,15 +7,7 @@ namespace Farkle.Collections
 
 /// Functions to work with the standard F# `list`.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module List =
-
-    /// Returns a list with all its elements existing.
-    let allSome x =
-        let f x xs =
-            match x, xs with
-            | Some x, Some xs -> Some (x :: xs)
-            | _ -> None
-        List.foldBack f x (Some [])
+module internal List =
 
     let popStack n x =
         let rec impl acc n x =

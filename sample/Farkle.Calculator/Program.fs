@@ -8,7 +8,11 @@ open SimpleMaths
 open System
 open Farkle.PostProcessor
 
-let inline prettyPrintResult x = tee string string x
+let inline prettyPrintResult x =
+    match x with
+    | Ok x -> string x
+    | Error x -> string x
+    |> Console.WriteLine
 
 let interactive rf =
     let rec impl() =
@@ -17,7 +21,6 @@ let interactive rf =
             | Some x ->
                 RuntimeFarkle.parseString rf (string >> Console.Error.WriteLine) x
                 |> prettyPrintResult
-                |> Console.WriteLine
                 impl()
             | None -> ()
     eprintfn "This is a simple mathematical expression parser powered by Farkle,"
@@ -35,6 +38,5 @@ let main args =
         RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessor.ast rf) Console.WriteLine x
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
-        |> Console.WriteLine
     | x -> x |> Array.iter (RuntimeFarkle.parseString rf Console.WriteLine >> prettyPrintResult >> Console.WriteLine)
     0 // return an integer exit code

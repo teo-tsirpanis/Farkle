@@ -5,5 +5,8 @@
 
 namespace global
 
-[<assembly:System.Runtime.CompilerServices.Extension>]
+open System.Runtime.CompilerServices
+
+[<assembly:Extension>]
+[<assembly:InternalsVisibleTo("Farkle.Tests")>]
 do()

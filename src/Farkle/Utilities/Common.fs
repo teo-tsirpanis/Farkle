@@ -9,36 +9,19 @@ module Farkle.Common
 
 open System
 
-let (|RMCons|RMNil|) (x: ReadOnlyMemory<_>) =
-    if not x.IsEmpty then
-        RMCons (x.Span.Item 0, x.Slice 1)
-    else
-        RMNil
-
-/// Ignores the parameter and returns `None`.
-let inline none _ = None
-
 /// Converts a function to curried form.
 let inline curry f x y = f(x, y)
 
-/// Curries and flips the arguments of a function.
-let inline yrruc f y x = f(x, y)
-
-/// Converts a function to uncurried form.
-let inline uncurry f (x, y) = f x y
-
 /// Flips the arguments of a two-parameter curried function.
 let inline flip f x y = f y x
-
-/// Swaps the elements of a pair.
-let inline swap (x, y) = (y, x)
 
 /// Faster functions to compare two objects.
 module FastCompare =
 
     /// Compares the first object with another object of the same type.
     /// The types must implement the `IComparable<T>` generic interface.
-    /// This function is faster than the F#'s compare methods because it is much less lightweight.
+    /// This function is faster than the F#'s compare methods because it
+    /// avoids the overhead of structural comparisons.
     let inline compare (x1: 'a) (x2: 'a) = (x1 :> IComparable<'a>).CompareTo(x2)
 
     let inline greater x1 x2 = compare x1 x2 > 0

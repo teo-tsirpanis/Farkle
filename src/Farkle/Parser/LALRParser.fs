@@ -14,13 +14,16 @@ open Farkle.PostProcessor
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 
-    /// Parses and post-processes tokens based on a `Grammar` and a `PostProcessor`, until parsing completes.
-    /// This function accepts:
-    /// 1. a function to report any significant _parsing-related_ messages (`TokenRead` events will not be fired from here).
-    /// 2. the `Grammar` to use.
-    /// 3. the `PostProcessor` to use on the newly-fused productions.
-    /// 4. The a function that takes an input stream and returns a token (if input did not end) and its position.
-    /// 5. The input stream.
+    /// <summary>Parses and post-processes tokens based on a <see cref="Grammar"/> and a
+    /// <see cref="PostProcessor"/>, until parsing completes.</summary>
+    /// <param name="fMessage">A function that gets called for every event that happens.
+    /// Useful for logging</param>
+    /// <param name="_arg1">The <see cref="Grammar"/> to use.</param>
+    /// <param name="pp">The <see cref="PostProcessor"/> to use on the newly-fused productions.</param>
+    /// <param name="fToken">The a function that takes an <see cref="InputStream"/> and
+    /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
+    /// <param name="input">The <see cref="InputStream"/>.</param>
+    /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
     let parseLALR fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
         let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail

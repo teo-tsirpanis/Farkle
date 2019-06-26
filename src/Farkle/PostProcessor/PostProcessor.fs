@@ -43,7 +43,7 @@ module PostProcessor =
     let ast =
         {new PostProcessor<AST> with
             member __.Transform (sym, pos, x) = AST.Content {Symbol = sym; Position = pos; Data = x.ToString()} |> box
-            member __.Fuse (prod, items) = items |> Seq.cast |> List.ofSeq |> curry AST.Nonterminal prod |> box}
+            member __.Fuse (prod, items) = AST.Nonterminal(prod, items |> Seq.cast |> List.ofSeq) |> box}
 
     /// Creates a `PostProcessor` from the given sequences of `Transformer`s, and `Fuser`s.
     let ofSeq<'result> transformers fusers =

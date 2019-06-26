@@ -3,20 +3,12 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-[<AutoOpen>]
-/// Some useful functions and types that could be used from many points from the library.
-module Farkle.Common
-
-open System
-
-/// Converts a function to curried form.
-let inline curry f x y = f(x, y)
-
-/// Flips the arguments of a two-parameter curried function.
-let inline flip f x y = f y x
+namespace Farkle.Common
 
 /// Faster functions to compare two objects.
 module FastCompare =
+
+    open System
 
     /// Compares the first object with another object of the same type.
     /// The types must implement the `IComparable<T>` generic interface.

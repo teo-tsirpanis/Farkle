@@ -5,7 +5,7 @@
 
 namespace Farkle.Grammar.GOLDParser
 
-open Farkle
+open Farkle.Common
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser.EGTReader

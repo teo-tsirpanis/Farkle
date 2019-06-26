@@ -22,7 +22,7 @@ let productionGen = gen {
     return {Index = index; Head = head; Handle = ImmutableArray.CreateRange handle}
 }
 
-let positionGen = Arb.generate<char> |> Gen.listOf |> Gen.map (Seq.fold (flip Position.advance) Position.initial)
+let positionGen = Arb.generate<char> |> Gen.listOf |> Gen.map (Seq.fold (fun pos c -> Position.advance c pos) Position.initial)
 
 let ASTGen() =
     let rec impl size =
@@ -31,7 +31,7 @@ let ASTGen() =
             let tree = impl (size / 2)
             [
                 Gen.map AST.Content Arb.generate
-                Gen.map2 (curry AST.Nonterminal) Arb.generate (Gen.nonEmptyListOf tree)
+                Gen.map2 (fun prod tree -> AST.Nonterminal(prod, tree)) Arb.generate (Gen.nonEmptyListOf tree)
             ]
             |> Gen.oneof
         | _ -> Gen.map AST.Content Arb.generate

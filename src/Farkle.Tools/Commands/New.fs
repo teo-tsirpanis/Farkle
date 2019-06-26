@@ -6,7 +6,7 @@
 module Farkle.Tools.Commands.New
 
 open Argu
-open Farkle
+open Farkle.Common
 open Farkle.Tools.Templating
 open Farkle.Tools.Templating.BuiltinTemplates
 open Scriban

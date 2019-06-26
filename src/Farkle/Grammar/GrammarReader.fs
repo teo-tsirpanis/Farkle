@@ -293,9 +293,9 @@ module internal GrammarReader =
             do! readEGT headerCheck fRecord r
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone InvalidEGTFile
             let symbols = {
-                Terminals = terminals.MoveToImmutable()
-                Nonterminals = nonterminals.MoveToImmutable()
-                NoiseSymbols = noiseSymbols.MoveToImmutable()
+                Terminals = terminals.ToImmutable()
+                Nonterminals = nonterminals.ToImmutable()
+                NoiseSymbols = noiseSymbols.ToImmutable()
             }
             let dfaStates = SafeArray.ofImmutableArray <| dfaStates.MoveToImmutable()
             let lalrStates = SafeArray.ofImmutableArray <| lalrStates.MoveToImmutable()

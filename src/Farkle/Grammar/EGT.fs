@@ -19,10 +19,19 @@ module EGT =
 
     /// Reads a Base64-encoded string of the EGT file and returns a grammar.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String x =
-        let x = Convert.FromBase64String x
-        use s = new MemoryStream(x)
-        ofStream s
+    let ofBase64String str =
+        let mutable x = null
+        let decodingSucceeded =
+            try
+                x <- Convert.FromBase64String str
+                true
+            with
+            | :? FormatException -> false
+        if decodingSucceeded then
+            use s = new MemoryStream(x)
+            ofStream s
+        else
+            Error InvalidBase64Format
 
     /// Reads an EGT file from the file system and returns a `Grammar`.
     [<CompiledName("CreateFromFile")>]

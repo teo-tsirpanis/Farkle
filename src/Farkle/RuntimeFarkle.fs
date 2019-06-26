@@ -47,7 +47,7 @@ with
     }
 
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// EGT file encoded in Base-64 and <see cref="PostProcessor{TResult}"/>.</summary>
+    /// EGT file encoded in Base64 and <see cref="PostProcessor{TResult}"/>.</summary>
     static member CreateFromBase64String(str, postProcessor) = {
         Grammar = EGT.ofBase64String str |> Result.mapError FarkleError.EGTReadError
         PostProcessor = postProcessor

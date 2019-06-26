@@ -18,14 +18,20 @@ let tests =
     testList "Grammar tests" [
         test "A legacy CGT grammar fails to be read." {
             let x = EGT.ofFile "../resources/legacy.cgt"
-            Expect.equal x (Result.Error ReadACGTFile) "Reading the grammar did not fail"
+            Expect.equal x (Result.Error ReadACGTFile) "Reading the legacy grammar did not fail"
         }
 
-        test "A new grammar is successfuly read" {
+        test "An EGT file is successfuly read" {
             let x = EGT.ofFile "../resources/simple.egt"
+            Expect.isOk x "Reading the grammar failed"
             match x with
             | Ok x -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.debug
             | Result.Error x -> failtestf "Test failed: %A" x
+        }
+
+        test "An invalid Base64-encoded grammar string does not throw an exception" {
+            let x = EGT.ofBase64String "👏🏻👏🏻👏🏻👏🏻👏🏻"
+            Expect.equal x (Result.Error InvalidBase64Format) "Reading the invalid Base64 string did not fail"
         }
 
         test "Terminal naming works properly" {

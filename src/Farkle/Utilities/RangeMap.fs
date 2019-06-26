@@ -93,5 +93,5 @@ module RangeMap =
                 else
                     arr.Add({KeyFrom = x2; KeyTo = x1; Value = value})
         match arr with
-        | arr when consistencyCheck arr -> arr.ToImmutable() |> RangeMap |> Some
+        | arr when consistencyCheck arr -> arr.MoveToImmutable() |> RangeMap |> Some
         | _ -> None

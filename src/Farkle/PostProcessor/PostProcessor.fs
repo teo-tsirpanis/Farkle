@@ -53,14 +53,14 @@ module PostProcessor =
             for __ = 0 to maxElement do
                 b.Add(null)
             transformers |> Seq.iter (fun (Transformer(prod, f)) -> b.[int prod] <- f)
-            b.ToImmutable()
+            b.MoveToImmutable()
         let fusers =
             let maxElement = fusers |> Seq.map (fun (Fuser(prod, _)) -> prod) |> Seq.max |> int
             let b = ImmutableArray.CreateBuilder(maxElement + 1)
             for __ = 0 to maxElement do
                 b.Add(null)
             fusers |> Seq.iter (fun (Fuser(prod, f)) -> b.[int prod] <- Func<_,_> f)
-            b.ToImmutable()
+            b.MoveToImmutable()
         {new PostProcessor<'result> with
             member __.Transform (term, pos, data) =
                 /// It is very likely that a transformer will not be found.

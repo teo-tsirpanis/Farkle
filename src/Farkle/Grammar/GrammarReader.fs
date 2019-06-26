@@ -290,21 +290,21 @@ module internal GrammarReader =
                 readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
             | _ -> invalidEGT()
         either {
-            do! EGTReader.readEGT headerCheck fRecord r
+            do! readEGT headerCheck fRecord r
             let! (initialDFA, initialLALR) = !initialStates |> failIfNone InvalidEGTFile
             let symbols = {
-                Terminals = terminals.ToImmutable()
-                Nonterminals = nonterminals.ToImmutable()
-                NoiseSymbols = noiseSymbols.ToImmutable()
+                Terminals = terminals.MoveToImmutable()
+                Nonterminals = nonterminals.MoveToImmutable()
+                NoiseSymbols = noiseSymbols.MoveToImmutable()
             }
-            let dfaStates = SafeArray.ofImmutableArray <| dfaStates.ToImmutable()
-            let lalrStates = SafeArray.ofImmutableArray <| lalrStates.ToImmutable()
+            let dfaStates = SafeArray.ofImmutableArray <| dfaStates.MoveToImmutable()
+            let lalrStates = SafeArray.ofImmutableArray <| lalrStates.MoveToImmutable()
             return {
                 _Properties = properties.ToImmutable()
                 _StartSymbol = productions.[0].Head
                 _Symbols = symbols
-                _Productions = productions.ToImmutable()
-                _Groups = SafeArray.ofImmutableArray <| groups.ToImmutable()
+                _Productions = productions.MoveToImmutable()
+                _Groups = SafeArray.ofImmutableArray <| groups.MoveToImmutable()
                 _LALRStates = {InitialState = lalrStates.[initialLALR]; States = lalrStates}
                 _DFAStates = {InitialState = dfaStates.[initialDFA]; States = dfaStates}
             }

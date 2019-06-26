@@ -24,7 +24,7 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of Rang
 
 module RangeMap =
 
-    /// An empty `RangeMap`.
+    /// Returns an empty `RangeMap`.
     [<CompiledName("Empty")>]
     let empty() = RangeMap ImmutableArray.Empty
 

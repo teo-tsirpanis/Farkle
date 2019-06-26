@@ -188,3 +188,4 @@ docs/
 temp/
 .idea/
 **/*.g.fs
+.ionide/

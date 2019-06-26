@@ -22,15 +22,10 @@ type FarkleError =
     | ParseError of Message<ParseErrorType>
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
-    /// There was an error while the post-processor _was being constructed_.
-    | PostProcessorError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x
         | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
-        | PostProcessorError -> """Error while creating the post-processor.
-Some fusers might be missing, or there were type mismatches in the functions of the fusers or the transformers.
-Check the post-processor's configuration."""
 
 /// A reusable parser and post-processor, created for a specific grammar, and returning
 /// a specific type of object that best describes an expression of the language of this grammar.

@@ -6,6 +6,7 @@
 open Argu
 open Farkle.Tools
 open Farkle.Tools.Commands
+open Serilog
 open System
 
 type FarkleCLIExiter() =
@@ -16,23 +17,31 @@ type FarkleCLIExiter() =
             exit <| int code
 
 type Arguments =
-    | [<Inherit>] Version
+    | Version
+    | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of Events.LogEventLevel
     | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
 with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
             | Version -> "display the program's version info."
+            | Verbosity _ -> "set the verbosity of the tool's logs."
             | New _ -> "generate a skeleton program from a grammar file and a Scriban template."
 
 [<EntryPoint>]
 let main _ =
     let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
+    let verbosity = results.GetResult(Verbosity, Events.LogEventLevel.Information)
+    Log.Logger <- LoggerConfiguration()
+        .MinimumLevel.Is(verbosity)
+        .WriteTo.Console()
+        .CreateLogger()
     if results.Contains Version then
-        Console.WriteLine toolsVersion
+        Log.Information("Version: {toolsVersion}", toolsVersion)
+        0
     else
         match results.GetSubCommand() with
         | New args -> New.run args
-        | _ -> ()
-    0
+        | _ -> Ok ()
+        |> function | Ok _ -> 0 | Error _ -> 1

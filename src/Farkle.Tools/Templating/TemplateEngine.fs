@@ -12,6 +12,7 @@ open Farkle.Tools
 open System.Collections.Generic
 open Scriban
 open Scriban.Runtime
+open Serilog
 open System
 open System.IO
 
@@ -63,12 +64,23 @@ with
         GrammarFile = grammarFile
     }
 
+type TemplateEngine =
+    abstract Context: TemplateContext
+    abstract GetOutputExtension: unit -> string
+
 module TemplateEngine =
     let createTemplateContext additionalProperties grammarFile = either {
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
-        let! grammar = GOLDParser.EGT.ofFile grammarFile |> Result.map Grammar.Create
+        let! grammar =
+            match GOLDParser.EGT.ofFile grammarFile with
+            | Ok grammar ->
+                Log.Verbose("{grammarFile} was read successfuly", grammarFile)
+                grammar |> Grammar.Create |> Ok
+            | Error message ->
+                Log.Error("Error while reading {grammarFile}: {message}", grammarFile, message)
+                Error ()
         additionalProperties |> List.iter (fun (key, value) -> grammar.Properties.[key] <- value)
         let fr = FarkleRoot.Create grammar grammarFile bytes
 
@@ -78,9 +90,10 @@ module TemplateEngine =
         Utilities.load so
 
         tc.PushGlobal so
-        let fFileExtension() =
-            match so.TryGetValue("file_extension") with
-            | (true, fExt) -> fExt.ToString()
-            | (false, _) -> "out"
-        return tc, fFileExtension
+        return {new TemplateEngine with
+            member __.Context = tc
+            member __.GetOutputExtension() =
+                match so.TryGetValue("file_extension") with
+                | true, fExt -> fExt.ToString()
+                | false, _ -> "out"}
     }

@@ -2,3 +2,5 @@ group Executables
 Argu
 FSharp.Core
 Scriban
+Serilog
+Serilog.Sinks.Console

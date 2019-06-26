@@ -6,10 +6,11 @@
 module Farkle.Tools.Commands.New
 
 open Argu
-open Farkle.Common
+open Farkle.Monads.Either
 open Farkle.Tools.Templating
 open Farkle.Tools.Templating.BuiltinTemplates
 open Scriban
+open Serilog
 open System.IO
 
 type Arguments =
@@ -43,7 +44,7 @@ let assertFileExists fileName =
 let getFileContentsAndName fileName =
     File.ReadAllText fileName, fileName
 
-let run (args: ParseResults<_>) =
+let run (args: ParseResults<_>) = either {
     let grammarFile = args.PostProcessResult(GrammarFile, assertFileExists)
     let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
     let language = args.GetResult(Language, defaultValue = Language.``F#``)
@@ -52,14 +53,24 @@ let run (args: ParseResults<_>) =
         args.TryPostProcessResult(TemplateFile, getFileContentsAndName)
         |> Option.defaultWith (fun () -> getLanguageTemplate typ language)
 
-    let tc, fGetFileExtension = TemplateEngine.createTemplateContext properties grammarFile |> returnOrFail
+    let! te = TemplateEngine.createTemplateContext properties grammarFile
 
     let template = Template.Parse(templateText, templateFileName)
-    let output = template.Render(tc)
+    if template.HasErrors then
+        template.Messages.ForEach (fun x -> Log.Error("{error}", x))
+        Log.Error("Parsing template {templateFileName} failed.", templateFileName)
+        return! Error ()
+
+    Log.Verbose("Rendering template")
+    let output = template.Render(te.Context)
 
     let outputFile =
         args.TryGetResult OutputFile
-        |> Option.defaultWith (fun () -> sprintf "%s.%s" grammarFile <| fGetFileExtension())
+        |> Option.defaultWith (fun () -> sprintf "%s.%s" grammarFile <| te.GetOutputExtension())
+        |> Path.GetFullPath
 
-    // TODO: Add proper logging support
+    Log.Verbose("Creating file at {outputFile}", outputFile)
     File.WriteAllText(outputFile, output)
+
+    Log.Information("Template was created at {outputFile}", outputFile)
+}

@@ -21,6 +21,8 @@ group Executables
   nuget Argu
   nuget FSharp.Core
   nuget Scriban
+  nuget Serilog
+  nuget Serilog.Sinks.Console
 
 group Formatting
 

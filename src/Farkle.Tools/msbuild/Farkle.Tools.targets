@@ -1,0 +1,37 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target
+          Name="CallFarkle"
+          BeforeTargets="CoreCompile"
+          Inputs="@(Farkle)"
+          Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
+          Condition="'@(Farkle)' != ''">
+    
+    <Warning
+            Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'"
+            Text="Visual Basic is a language with poor performance characteristics, and not officially supported by Farkle.
+Use <WarnFarkleVB>false</WarnFarkleVB> to not show this warning again." />
+    <Error
+            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" 
+            Text="The language $(Language) is not natively supported by Farkle. Please specify your own template." />
+    
+    <PropertyGroup>
+      <_Template>$(FarkleTemplateOverride)</_Template>
+      <_Template Condition="'$(_Template)' == ''">%(Template)</_Template>
+      <_Output>%(RootDir)%(Directory)%(FileName)%(OutputExtension)</_Output>
+      <_CommandLineOptions>--type grammar --outputfile $(_Output)</_CommandLineOptions>
+      <_CommandLineOptions Condition="'$(_Template)' == ''">$(_CommandLineOptions) --language $(Language)</_CommandLineOptions>
+      <_CommandLineOptions Condition="'$(_Template)' != ''">$(_CommandLineOptions) --template $(_Template)</_CommandLineOptions>
+      <_CommandLineOptions Condition="'%(Namespace)' != ''">$(_CommandLineOptions) --property Name=%(Namespace)</_CommandLineOptions>
+      <_CommandLineOptions>$(_CommandLineOptions) %(FullPath)</_CommandLineOptions>
+    </PropertyGroup>
+    
+    <Exec Command="$(FarkleToolPath) $(_CommandLineOptions)"/>
+    
+    <ItemGroup Condition="'%(CompileIt)' != 'false' AND '$(FarkleCompileTemplates)' != 'false'">
+      <Compile Include="$(_Output)"/>
+    </ItemGroup>
+    <ItemGroup>
+      <FileWrites Include = "$(_Output)"/>
+    </ItemGroup>
+  </Target>
+</Project>

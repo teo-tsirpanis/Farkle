@@ -24,9 +24,9 @@ with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
-            | Version -> "display the program's version info."
-            | Verbosity _ -> "set the verbosity of the tool's logs."
-            | New _ -> "generate a skeleton program from a grammar file and a Scriban template."
+            | Version -> "Display the program's version info."
+            | Verbosity _ -> "Set the verbosity of the tool's logs."
+            | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
 
 [<EntryPoint>]
 let main _ =
@@ -44,4 +44,4 @@ let main _ =
         match results.GetSubCommand() with
         | New args -> New.run args
         | _ -> Ok ()
-        |> function | Ok _ -> 0 | Error _ -> 1
+        |> function | Ok () -> 0 | Error () -> 1

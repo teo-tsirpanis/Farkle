@@ -64,22 +64,24 @@ with
         GrammarFile = grammarFile
     }
 
-type TemplateEngine =
-    abstract Context: TemplateContext
-    abstract GetOutputExtension: unit -> string
+type GeneratedTemplate = {
+    FileExtension: string
+    Content: string
+}
 
 module TemplateEngine =
-    let createTemplateContext additionalProperties grammarFile = either {
+    let renderTemplate (log: ILogger) additionalProperties grammarFile templateSource = either {
+        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate templateSource
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
         let! grammar =
             match GOLDParser.EGT.ofFile grammarFile with
             | Ok grammar ->
-                Log.Verbose("{grammarFile} was read successfuly", grammarFile)
+                log.Verbose("{grammarFile} was read successfuly", grammarFile)
                 grammar |> Grammar.Create |> Ok
             | Error message ->
-                Log.Error("Error while reading {grammarFile}: {message}", grammarFile, message)
+                log.Error("Error while reading {grammarFile}: {message}", grammarFile, message)
                 Error ()
         additionalProperties |> List.iter (fun (key, value) -> grammar.Properties.[key] <- value)
         let fr = FarkleRoot.Create grammar grammarFile bytes
@@ -90,10 +92,20 @@ module TemplateEngine =
         Utilities.load so
 
         tc.PushGlobal so
-        return {new TemplateEngine with
-            member __.Context = tc
-            member __.GetOutputExtension() =
+        
+        let template = Template.Parse(templateText, templateFileName)
+        if template.HasErrors then
+            template.Messages.ForEach (fun x -> Log.Error("{error}", x))
+            log.Error("Parsing template {templateFileName} failed.", templateFileName)
+            return! Error ()
+            
+        log.Verbose("Rendering template")
+        let output = template.Render(tc)
+
+        return {
+            FileExtension =
                 match so.TryGetValue("file_extension") with
-                | true, fExt -> fExt.ToString()
-                | false, _ -> "out"}
+                    | true, fExt -> fExt.ToString()
+                    | false, _ -> "out"
+            Content = output}
     }

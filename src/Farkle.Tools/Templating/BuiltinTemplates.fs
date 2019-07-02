@@ -23,6 +23,11 @@ type TemplateType =
     | Grammar
     | PostProcessor
 
+type TemplateSource =
+    | CustomFile of string
+    | BuiltinTemplate of Language * TemplateType
+
+
 // The folder had a dash, not an underscore!
 let private builtinsFolder = "builtin_scripts"
 
@@ -36,4 +41,7 @@ let private fetchResource (typ: TemplateType) lang =
         sr.ReadToEnd()
     | None -> failwithf "Cannot find resource name '%s' inside the assembly." resourceName
 
-let getLanguageTemplate typ (LanguageNames(fullName, templateFileName)) = fetchResource typ fullName, templateFileName
+let getLanguageTemplate x =
+    match x with
+    | CustomFile path -> File.ReadAllText path, path
+    | BuiltinTemplate(LanguageNames(fullName, templateFileName), typ) -> fetchResource typ fullName, templateFileName

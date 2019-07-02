@@ -37,40 +37,34 @@ For example, the property \"Name\" determines the namespace of the grnerated sou
 
 let assertFileExists fileName =
     if File.Exists fileName then
-        fileName
+        Ok fileName
     else
-        failwithf "File '%s' does not exist." fileName
+        Log.Error("File {fileName} does not exist.", fileName)
+        Error()
 
-let getFileContentsAndName fileName =
-    File.ReadAllText fileName, fileName
+let toCustomFile fileName =
+    fileName
+    |> assertFileExists
+    |> Result.map CustomFile
 
 let run (args: ParseResults<_>) = either {
-    let grammarFile = args.PostProcessResult(GrammarFile, assertFileExists)
+    let! grammarFile = args.GetResult GrammarFile |> assertFileExists
     let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
     let language = args.GetResult(Language, defaultValue = Language.``F#``)
     let properties = args.GetResults Property
-    let templateText, templateFileName =
-        args.TryPostProcessResult(TemplateFile, getFileContentsAndName)
-        |> Option.defaultWith (fun () -> getLanguageTemplate typ language)
+    let! templateSource =
+        args.TryPostProcessResult(TemplateFile, toCustomFile)
+        |> Option.defaultValue (Ok <| BuiltinTemplate(language, typ))
 
-    let! te = TemplateEngine.createTemplateContext properties grammarFile
-
-    let template = Template.Parse(templateText, templateFileName)
-    if template.HasErrors then
-        template.Messages.ForEach (fun x -> Log.Error("{error}", x))
-        Log.Error("Parsing template {templateFileName} failed.", templateFileName)
-        return! Error ()
-
-    Log.Verbose("Rendering template")
-    let output = template.Render(te.Context)
+    let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger properties grammarFile templateSource
 
     let outputFile =
         args.TryGetResult OutputFile
-        |> Option.defaultWith (fun () -> sprintf "%s.%s" grammarFile <| te.GetOutputExtension())
+        |> Option.defaultWith (fun () -> sprintf "%s.%s" grammarFile generatedTemplate.FileExtension)
         |> Path.GetFullPath
 
     Log.Verbose("Creating file at {outputFile}", outputFile)
-    File.WriteAllText(outputFile, output)
+    File.WriteAllText(outputFile, generatedTemplate.Content)
 
     Log.Information("Template was created at {outputFile}", outputFile)
 }

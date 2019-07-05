@@ -37,11 +37,17 @@ let main _ =
         .MinimumLevel.Is(verbosity)
         .WriteTo.Console()
         .CreateLogger()
-    if results.Contains Version then
-        Log.Information("Version: {toolsVersion}", toolsVersion)
-        0
-    else
-        match results.GetSubCommand() with
-        | New args -> New.run args
-        | _ -> Ok ()
-        |> function | Ok () -> 0 | Error () -> 1
+    use __ = {new IDisposable with member __.Dispose() = Log.CloseAndFlush()}
+    try
+        if results.Contains Version then
+            Log.Information("Version: {toolsVersion}", toolsVersion)
+            0
+        else
+            match results.GetSubCommand() with
+            | New args -> New.run args
+            | _ -> Ok ()
+            |> function | Ok () -> 0 | Error () -> 1
+    with
+    | ex ->
+        Log.Fatal(ex, "Exception occured")
+        1

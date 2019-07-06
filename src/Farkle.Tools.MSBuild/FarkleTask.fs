@@ -21,11 +21,11 @@ type FarkleTask() =
 
     let hasValue x = String.IsNullOrWhiteSpace x |> not
 
-    let assertFileExists fileName =
+    let assertFileExists (log: ILogger) fileName =
         if File.Exists fileName then
             Ok fileName
         else
-            Log.Error("File {fileName} does not exist.", fileName)
+            log.Error("File {fileName} does not exist.", fileName)
             Error()
 
     let (|EqualTo|_|) x1 x2 =
@@ -67,13 +67,13 @@ type FarkleTask() =
     /// <summary>The file path where the output was generated to.</summary>
     member val GeneratedTo = null with get, set
 
-    member this.DoIt(log: ILogger) = either {
-        let! grammarPath = assertFileExists this.Grammar
+    member private this.DoIt log = either {
+        let! grammarPath = assertFileExists log this.Grammar
         let! templateSource =
             match hasValue this.CustomTemplate, hasValue this.Language with
             | true, _ ->
                 this.CustomTemplate
-                |> assertFileExists
+                |> assertFileExists log
                 |> Result.map (fun x ->
                     log.Debug("Using user-provided template at {CustomTemplatePath}", x)
                     CustomFile x)

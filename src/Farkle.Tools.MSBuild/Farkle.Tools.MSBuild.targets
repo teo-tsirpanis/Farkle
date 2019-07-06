@@ -9,7 +9,7 @@
 
     <PropertyGroup>
       <_Template>$(FarkleTemplateOverride)</_Template>
-      <_Template Condition="'$(_Template)' == ''">%(Template)</_Template>
+      <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
       <_Output>%(RootDir)%(Directory)%(FileName)%(OutputExtension)</_Output>
     </PropertyGroup>
 

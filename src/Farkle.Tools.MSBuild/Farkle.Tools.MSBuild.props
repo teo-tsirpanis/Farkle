@@ -1,16 +1,17 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <CompileDependsOn>CallFarkle;$(CompileDependsOn)</CompileDependsOn>
-    <FarkleUseMono Condition="'$(MSBuildRuntimeType)' != 'Core' AND '$(OS)' == 'Unix'">true</FarkleUseMono>
   </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Language)' == 'C#'">
     <Farkle>
+      <CompileIt>true</CompileIt>
       <OutputExtension>.g.cs</OutputExtension>
     </Farkle>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Language)' == 'F#'">
     <Farkle>
+      <CompileIt>true</CompileIt>
       <OutputExtension>.g.fs</OutputExtension>
     </Farkle>
   </ItemDefinitionGroup>
@@ -21,20 +22,15 @@
   </ItemDefinitionGroup>
 
   <Choose>
-    <When Condition="'$(FarkleToolPath) != '' AND '$(FarkleUseMono)' == 'true'">
+    <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
       <PropertyGroup>
-        <FarkleToolPath>mono tools/net45/Farkle.Tools.exe</FarkleToolPath>
+        <FarkleTargetAssembly>tools/netcoreapp2.1/any/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
       </PropertyGroup>
     </When>
-    <When Condition="'$(FarkleToolPath) != '' AND '$(MSBuildRuntimeType)' == 'Core'">
+    <Otherwise>
       <PropertyGroup>
-        <FarkleToolPath>dotnet tools/netcoreapp2.1/any/Farkle.Tools.dll</FarkleToolPath>
+        <FarkleTargetAssembly>tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
       </PropertyGroup>
-    </When>
-    <When Condition="'$(FarkleToolPath) != ''">
-      <PropertyGroup>
-        <FarkleToolPath>tools/net45/Farkle.Tools.exe</FarkleToolPath>
-      </PropertyGroup>
-    </When>
+    </Otherwise>
   </Choose>
 </Project>

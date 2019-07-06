@@ -16,10 +16,6 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="builtin-scripts\*.scriban" />
-    <None Include="msbuild/**">
-      <Pack>true</Pack>
-      <PackagePath>build/</PackagePath>
-    </None>
     <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

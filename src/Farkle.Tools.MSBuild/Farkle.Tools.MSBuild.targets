@@ -1,0 +1,33 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="Farkle.Tools.MSBuild.FarkleTask" AssemblyFile="$(FarkleTargetAssembly)"/>
+  <Target
+          Name="CallFarkle"
+          BeforeTargets="CoreCompile"
+          Inputs="@(Farkle)"
+          Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
+          Condition="'@(Farkle)' != ''">
+
+    <PropertyGroup>
+      <_Template>$(FarkleTemplateOverride)</_Template>
+      <_Template Condition="'$(_Template)' == ''">%(Template)</_Template>
+      <_Output>%(RootDir)%(Directory)%(FileName)%(OutputExtension)</_Output>
+    </PropertyGroup>
+
+    <Warning
+            Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'" File="%(FullPath)"
+            Text="Visual Basic is a language with poor performance characteristics, and not officially supported by Farkle.
+Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning again."/>
+    <Error
+            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" File="%(FullPath)"
+            Text="The language $(Language) is not natively supported by Farkle. Please specify your own template."/>
+
+    <FarkleTask Grammar="%(FullPath)" Language="$(Language)" CustomTemplate="$(_Template)" CustomName="%(GrammarName)" OutputFile="$(Output)"/>
+    
+    <ItemGroup Condition="'%(CompileIt)' != 'false' AND '$(FarkleCompileTemplates)' != 'false'">
+      <Compile Include="$(_Output)"/>
+    </ItemGroup>
+    <ItemGroup>
+      <FileWrites Include="$(_Output)"/>
+    </ItemGroup>
+  </Target>
+</Project>

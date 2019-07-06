@@ -1,0 +1,4 @@
+group Executables
+FSharp.Core
+Scriban
+Serilog

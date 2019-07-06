@@ -9,7 +9,7 @@
     <Warning
             Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'"
             Text="Visual Basic is a language with poor performance characteristics, and not officially supported by Farkle.
-Use <WarnFarkleVB>false</WarnFarkleVB> to not show this warning again." />
+Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning again." />
     <Error
             Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" 
             Text="The language $(Language) is not natively supported by Farkle. Please specify your own template." />

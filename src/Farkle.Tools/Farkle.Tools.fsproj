@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../Farkle.Tools.Shared/Farkle.Tools.Shared.proj" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>

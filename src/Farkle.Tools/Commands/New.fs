@@ -9,7 +9,6 @@ open Argu
 open Farkle.Monads.Either
 open Farkle.Tools.Templating
 open Farkle.Tools.Templating.BuiltinTemplates
-open Scriban
 open Serilog
 open System.IO
 

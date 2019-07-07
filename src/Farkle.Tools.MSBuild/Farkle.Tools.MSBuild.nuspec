@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Farkle.Tools.MSBuild</id>
+    <version>$version$</version>
+    <description>This package makes creating templates from Farkle grammars possible in MSBuild.
+This provides a smoother development experience while using Farkle.</description>
+    <authors>teo-tsirpanis</authors>
+    <developmentDependency>true</developmentDependency>
+    <releaseNotes>$releaseNotes$</releaseNotes>
+    <projectUrl>https://github.com/teo-tsirpanis/Farkle/</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</iconUrl>
+    <license type="expression">MIT</license>
+    <tags>farkle msbuild</tags>
+  </metadata>
+  <files>
+    <file src="./tools/**" target="tools" />
+    <file src="Farkle.Tools.MSBuild.props" target="build" />
+    <file src="Farkle.Tools.MSBuild.targets" target="build" />
+  </files>
+</package>

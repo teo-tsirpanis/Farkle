@@ -1,4 +1,3 @@
-open System
 // Copyright (c) 2018 Theodore Tsirpanis
 //
 // This software is released under the MIT License.
@@ -21,6 +20,7 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
+open System
 open System.IO
 open System.Text.RegularExpressions
 
@@ -114,7 +114,7 @@ let releaseNotes =
 
 let nugetVersion =
     match BuildServer.buildServer with
-    BuildServer.AppVeyor -> sprintf "%s-ci%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
+    AppVeyor -> sprintf "%s-ci%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
     | _ -> releaseInfo.NugetVersion
 
 BuildServer.install [AppVeyor.Installer]
@@ -456,7 +456,8 @@ Target.create "CI" ignore
 "ReleaseDocs"
     ==> "Release"
 
-"NuGetPack"
+"Clean"
+    ==> "NuGetPack"
     ==> "NuGetPublish"
     ==> "Release"
 

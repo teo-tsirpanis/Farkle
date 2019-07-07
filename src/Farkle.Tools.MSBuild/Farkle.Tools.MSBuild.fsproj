@@ -2,30 +2,33 @@
   <Import Project="../Farkle.Tools.Shared/Farkle.Tools.Shared.proj" />
   <PropertyGroup>
     <TargetFrameworks>net45;netcoreapp2.1</TargetFrameworks>
-    <DevelopmentDependency>true</DevelopmentDependency>
-    <Title>Farkle MSBuild Integration</Title>
-    <PackageId>Farkle.Tools.MSBuild</PackageId>
-    <Description>This package makes creating templates from Farkle grammars possible in MSBuild.
-This provides a smoother development experience while using Farkle.</Description>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NuspecFile>$(MSBuildThisFileName).nuspec</NuspecFile>
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <NuspecProperties>version=$(Version);releaseNotes=$(ReleaseNotes)</NuspecProperties>
+    <PackDependsOn>$(PackDependsOn);PreparePack</PackDependsOn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="../Farkle.Tools/builtin-scripts/Grammar.*.scriban" />
-    <None Include="Farkle.Tools.MSBuild.props">
-      <Pack>true</Pack>
-      <PackagePath>build/</PackagePath>
-    </None>
-    <None Include="Farkle.Tools.MSBuild.targets">
-      <Pack>true</Pack>
-      <PackagePath>build/</PackagePath>
-    </None>
     <Compile Include="FarkleTask.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Scriban" Version="2.*" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.1.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
-  <Import Project="../NuGet.props" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+
+  <Target Name="PreparePack" BeforeTargets="Pack">
+    <ItemGroup>
+      <_FrameworksToBuild Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <Exec Command="dotnet publish -c $(Configuration) --framework %(_FrameworksToBuild.Identity) -o tools/%(_FrameworksToBuild.Identity)/ $(_MainProject)" />
+    <ItemGroup>
+      <FileWrites Include="tools/**/" />
+    </ItemGroup>
+    <Warning Text="FileWrites: %(FileWrites.Identity)" />
+  </Target>
+  <Target Name="BeforeClean" AfterTargets="Pack" DependsOnTargets="Pack">
+    <RemoveDir Directories="tools/" />
+  </Target>
 </Project>

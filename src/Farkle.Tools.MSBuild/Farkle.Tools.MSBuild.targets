@@ -10,20 +10,20 @@
     <PropertyGroup>
       <_Template>$(FarkleTemplateOverride)</_Template>
       <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
-      <_Output>%(RootDir)%(Directory)%(FileName)%(OutputExtension)</_Output>
+      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
     </PropertyGroup>
 
     <Warning
-            Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'" File="%(FullPath)"
+            Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'" File="%(Farkle.FullPath)"
             Text="Visual Basic is a language with poor performance characteristics, and not officially supported by Farkle.
 Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning again."/>
     <Error
-            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" File="%(FullPath)"
+            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" File="%(Farkle.FullPath)"
             Text="The language $(Language) is not natively supported by Farkle. Please specify your own template."/>
 
-    <FarkleTask Grammar="%(FullPath)" Language="$(Language)" CustomTemplate="$(_Template)" CustomName="%(GrammarName)" OutputFile="$(Output)"/>
-    
-    <ItemGroup Condition="'%(CompileIt)' != 'false' AND '$(FarkleCompileTemplates)' != 'false'">
+    <FarkleTask Grammar="%(Farkle.FullPath)" Language="$(Language)" CustomTemplate="$(_Template)" CustomName="%(Farkle.GrammarName)" OutputFile="$(Output)"/>
+
+    <ItemGroup Condition="'%(Farkle.CompileIt)' != 'false' AND '$(FarkleCompileTemplates)' != 'false'">
       <Compile Include="$(_Output)"/>
     </ItemGroup>
     <ItemGroup>

@@ -24,12 +24,12 @@
   <Choose>
     <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
       <PropertyGroup>
-        <FarkleTargetAssembly>tools/netcoreapp2.1/any/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
+        <FarkleTargetAssembly>../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
       </PropertyGroup>
     </When>
     <Otherwise>
       <PropertyGroup>
-        <FarkleTargetAssembly>tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
+        <FarkleTargetAssembly>../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
       </PropertyGroup>
     </Otherwise>
   </Choose>

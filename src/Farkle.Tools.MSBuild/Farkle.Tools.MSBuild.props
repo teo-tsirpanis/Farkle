@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <CompileDependsOn>CallFarkle;$(CompileDependsOn)</CompileDependsOn>
+    <BuildDependsOn>CallFarkle;$(BuildDependsOn)</BuildDependsOn>
   </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Language)' == 'C#'">

@@ -4,6 +4,7 @@
     <TargetFrameworks>net45;netcoreapp2.1</TargetFrameworks>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NuspecFile>Farkle.Tools.MSBuild.nuspec</NuspecFile>
+    <!--Isn't that supposed to be automatiaclly included??-->
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
     <NuspecProperties>version=$(Version)</NuspecProperties>
     <NuspecProperties Condition="'$(ReleaseNotes)' != ''">$(NuspecProperties);releaseNotes=$(ReleaseNotes)</NuspecProperties>
@@ -23,12 +24,13 @@
     <ItemGroup>
       <_FrameworksToBuild Include="$(TargetFrameworks)" />
     </ItemGroup>
+    <RemoveDir Directories="tools/" />
     <Exec Command="dotnet publish -c $(Configuration) --framework %(_FrameworksToBuild.Identity) -o tools/%(_FrameworksToBuild.Identity)/ $(_MainProject)" />
     <ItemGroup>
       <FileWrites Include="tools/**/*" />
     </ItemGroup>
   </Target>
-  <Target Name="BeforeClean">
+  <Target Name="AfterPack" AfterTargets="Pack">
     <RemoveDir Directories="tools/" />
   </Target>
 </Project>

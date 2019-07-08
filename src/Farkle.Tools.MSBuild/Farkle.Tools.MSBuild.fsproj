@@ -3,10 +3,11 @@
   <PropertyGroup>
     <TargetFrameworks>net45;netcoreapp2.1</TargetFrameworks>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <NuspecFile>$(MSBuildThisFileName).nuspec</NuspecFile>
+    <NuspecFile>Farkle.Tools.MSBuild.nuspec</NuspecFile>
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
-    <NuspecProperties>version=$(Version);releaseNotes=$(ReleaseNotes)</NuspecProperties>
-    <PackDependsOn>$(PackDependsOn);PreparePack</PackDependsOn>
+    <NuspecProperties>version=$(Version)</NuspecProperties>
+    <NuspecProperties Condition="'$(ReleaseNotes)' != ''">$(NuspecProperties);releaseNotes=$(ReleaseNotes)</NuspecProperties>
+    <GenerateNuspecDependsOn>$(GenerateNuspecDependsOn);PreparePack</GenerateNuspecDependsOn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="../Farkle.Tools/builtin-scripts/Grammar.*.scriban" />
@@ -18,17 +19,16 @@
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
 
-  <Target Name="PreparePack" BeforeTargets="Pack">
+  <Target Name="PreparePack" BeforeTargets="GenerateNuspec">
     <ItemGroup>
       <_FrameworksToBuild Include="$(TargetFrameworks)" />
     </ItemGroup>
     <Exec Command="dotnet publish -c $(Configuration) --framework %(_FrameworksToBuild.Identity) -o tools/%(_FrameworksToBuild.Identity)/ $(_MainProject)" />
     <ItemGroup>
-      <FileWrites Include="tools/**/" />
+      <FileWrites Include="tools/**/*" />
     </ItemGroup>
-    <Warning Text="FileWrites: %(FileWrites.Identity)" />
   </Target>
-  <Target Name="BeforeClean" AfterTargets="Pack" DependsOnTargets="Pack">
+  <Target Name="BeforeClean">
     <RemoveDir Directories="tools/" />
   </Target>
 </Project>

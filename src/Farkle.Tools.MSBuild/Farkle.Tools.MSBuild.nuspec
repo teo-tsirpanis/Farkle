@@ -14,7 +14,7 @@ This provides a smoother development experience while using Farkle.</description
     <tags>farkle msbuild</tags>
   </metadata>
   <files>
-    <file src="./tools/**" target="tools" />
+    <file src="tools\**\*.*" target="tools" />
     <file src="Farkle.Tools.MSBuild.props" target="build" />
     <file src="Farkle.Tools.MSBuild.targets" target="build" />
   </files>

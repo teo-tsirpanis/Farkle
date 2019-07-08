@@ -70,8 +70,8 @@ type GeneratedTemplate = {
 }
 
 module TemplateEngine =
-    let renderTemplate (log: ILogger) additionalProperties grammarFile templateSource = either {
-        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate templateSource
+    let renderTemplate (log: ILogger) builtinTemplatesNamespace additionalProperties grammarFile templateSource = either {
+        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate builtinTemplatesNamespace templateSource
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile

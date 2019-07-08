@@ -95,7 +95,7 @@ type FarkleCreateTemplateTask() =
                 yield "Name", this.CustomName
         ]
 
-        let! generatedTemplate = TemplateEngine.renderTemplate log properties grammarPath templateSource
+        let! generatedTemplate = TemplateEngine.renderTemplate log "Farkle.Tools.MSBuild" properties grammarPath templateSource
 
         this.GeneratedTo <-
             if hasValue this.OutputFile then

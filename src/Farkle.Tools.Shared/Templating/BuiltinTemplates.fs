@@ -27,13 +27,11 @@ type TemplateSource =
     | CustomFile of string
     | BuiltinTemplate of Language * TemplateType
 
-
-// The folder had a dash, not an underscore!
-let private builtinsFolder = "builtin_scripts"
-
-let private fetchResource (typ: TemplateType) lang =
+let private fetchResource nameSpace (typ: TemplateType) lang =
     let assembly = Assembly.GetExecutingAssembly()
-    let resourceName = sprintf "%s.%s.%A.%s.scriban" (assembly.GetName().Name) builtinsFolder typ lang
+    let resourceName = sprintf "%s.%A.%s.scriban" nameSpace typ lang
+    // TODO: Find a better way to handle resources.
+    // I guess I am doing something the wrong way.
     let resourceStream = assembly.GetManifestResourceStream(resourceName) |> Option.ofObj
     match resourceStream with
     | Some resourceStream ->
@@ -41,7 +39,8 @@ let private fetchResource (typ: TemplateType) lang =
         sr.ReadToEnd()
     | None -> failwithf "Cannot find resource name '%s' inside the assembly." resourceName
 
-let getLanguageTemplate x =
+let getLanguageTemplate nameSpace x =
     match x with
     | CustomFile path -> File.ReadAllText path, path
-    | BuiltinTemplate(LanguageNames(fullName, templateFileName), typ) -> fetchResource typ fullName, templateFileName
+    | BuiltinTemplate(LanguageNames(fullName, templateFileName), typ) ->
+        fetchResource nameSpace typ fullName, templateFileName

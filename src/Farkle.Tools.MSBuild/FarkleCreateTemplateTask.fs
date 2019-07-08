@@ -16,7 +16,7 @@ open System
 open System.IO
 
 /// An MSBuild task that generates a skeleton program from a Farkle grammar and a Scriban template.
-type FarkleTask() =
+type FarkleCreateTemplateTask() =
     inherit Task()
 
     let hasValue x = String.IsNullOrWhiteSpace x |> not

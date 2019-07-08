@@ -32,8 +32,8 @@ type TemplateSource =
 let private builtinsFolder = "builtin_scripts"
 
 let private fetchResource (typ: TemplateType) lang =
-    let resourceName = sprintf "Farkle.Tools.%s.%A.%s.scriban" builtinsFolder typ lang
     let assembly = Assembly.GetExecutingAssembly()
+    let resourceName = sprintf "%s.%s.%A.%s.scriban" (assembly.GetName().Name) builtinsFolder typ lang
     let resourceStream = assembly.GetManifestResourceStream(resourceName) |> Option.ofObj
     match resourceStream with
     | Some resourceStream ->

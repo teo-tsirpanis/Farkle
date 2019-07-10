@@ -15,7 +15,7 @@
     </Description>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="builtin-scripts\*.scriban" />
+    <EmbeddedResource Include="builtin-templates\*.scriban" />
     <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

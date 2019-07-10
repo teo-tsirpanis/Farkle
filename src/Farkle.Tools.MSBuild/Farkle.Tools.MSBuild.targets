@@ -1,11 +1,11 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTargetAssembly)"/>
   <PropertyGroup>
-    <BuildDependsOn>CallFarkle;$(BuildDependsOn)</BuildDependsOn>
-    <CleanDependsOn>$(CleanDependsOn);CleanUpFarkleGeneratedTemplates</CleanDependsOn>
+    <BuildDependsOn>GenerateFarkleTemplates;$(BuildDependsOn)</BuildDependsOn>
+    <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
   </PropertyGroup>
   <Target
-          Name="CallFarkle"
+          Name="GenerateFarkleTemplates"
           Inputs="@(Farkle->'%(FullPath)')"
           Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
           Condition="'@(Farkle)' != ''">
@@ -31,7 +31,7 @@ Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning agai
             CustomName="%(Farkle.GrammarName)"
             OutputFile="$(_Output)"/>
   </Target>
-  <Target Name="CleanUpFarkleGeneratedTemplates" BeforeTargets="Clean">
+  <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">
     <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"/>
   </Target> 
 </Project>

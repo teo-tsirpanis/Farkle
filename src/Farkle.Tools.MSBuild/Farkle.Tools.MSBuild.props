@@ -15,16 +15,10 @@
     </Farkle>
   </ItemDefinitionGroup>
 
-  <Choose>
-    <When Condition="'$(MSBuildRuntimeType)' == 'Core'">
-      <PropertyGroup>
-        <FarkleTargetAssembly>../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
-      </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <FarkleTargetAssembly>../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
+  <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+    <FarkleTargetAssembly>../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildRuntimeType)' != 'Core'">
+    <FarkleTargetAssembly>../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
+  </PropertyGroup>
 </Project>

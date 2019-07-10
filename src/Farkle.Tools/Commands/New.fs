@@ -62,7 +62,7 @@ let run (args: ParseResults<_>) = either {
             // And the hell the namespace here must have the name
             // of the folder, while it doesn't on Farkle.Tools.MSBuild??
             // TODO: Find out why.
-            "Farkle.Tools.builtin_scripts"
+            "Farkle.Tools.builtin_templates"
             properties
             grammarFile
             templateSource

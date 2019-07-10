@@ -4,7 +4,6 @@
 // https://opensource.org/licenses/MIT
 
 open Farkle
-open SimpleMaths
 open System
 open Farkle.PostProcessor
 
@@ -31,7 +30,7 @@ let interactive rf =
 
 [<EntryPoint>]
 let main args =
-    let rf = TheRuntimeFarkle.Value
+    let rf = SimpleMaths.int
     match args with
     | [| |] -> interactive rf
     | [|"--ast"; x|] ->

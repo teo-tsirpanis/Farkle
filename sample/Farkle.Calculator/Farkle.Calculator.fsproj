@@ -7,9 +7,6 @@
   <ItemGroup>
     <Compile Include="SimpleMaths.fs" />
     <Compile Include="Program.fs" />
-    <Content Include="SimpleMaths.egt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />

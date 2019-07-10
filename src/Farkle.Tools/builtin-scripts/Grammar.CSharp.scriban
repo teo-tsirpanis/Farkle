@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension="g.cs"; grammar_name = grammar.properties["Name"]
+{{~ file_extension=".g.cs"; grammar_name = grammar.properties["Name"]
     func comma
         if for.last
             ""

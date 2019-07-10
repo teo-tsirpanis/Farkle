@@ -101,7 +101,7 @@ type FarkleCreateTemplateTask() =
             if hasValue this.OutputFile then
                 this.OutputFile
             else
-                sprintf "%s.%s" grammarPath generatedTemplate.FileExtension
+                Path.ChangeExtension(grammarPath, generatedTemplate.FileExtension)
 
         log.Information("Writing template to {Output}", this.GeneratedTo)
         File.WriteAllText(this.GeneratedTo, generatedTemplate.Content)

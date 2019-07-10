@@ -69,7 +69,7 @@ let run (args: ParseResults<_>) = either {
 
     let outputFile =
         args.TryGetResult OutputFile
-        |> Option.defaultWith (fun () -> sprintf "%s.%s" grammarFile generatedTemplate.FileExtension)
+        |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, generatedTemplate.FileExtension))
         |> Path.GetFullPath
 
     Log.Verbose("Creating file at {outputFile}", outputFile)

@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension = "cs"; grammar_name = grammar.properties["Name"] ~}}
+{{~ file_extension = ".cs"; grammar_name = grammar.properties["Name"] ~}}
 // This file was created by Farkle.Tools and is a skeleton
 // to help you write a post-processor for {{ grammar_name }}.
 // You should complete it yourself, and keep it to source control.

@@ -1,17 +1,11 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <BuildDependsOn>CallFarkle;$(BuildDependsOn)</BuildDependsOn>
-  </PropertyGroup>
-
   <ItemDefinitionGroup Condition="'$(Language)' == 'C#'">
     <Farkle>
-      <CompileIt>true</CompileIt>
       <OutputExtension>.g.cs</OutputExtension>
     </Farkle>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Language)' == 'F#'">
     <Farkle>
-      <CompileIt>true</CompileIt>
       <OutputExtension>.g.fs</OutputExtension>
     </Farkle>
   </ItemDefinitionGroup>

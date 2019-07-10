@@ -1,8 +1,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTargetAssembly)"/>
+  <PropertyGroup>
+    <BuildDependsOn>CallFarkle;$(BuildDependsOn)</BuildDependsOn>
+    <CleanDependsOn>$(CleanDependsOn);CleanUpFarkleGeneratedTemplates</CleanDependsOn>
+  </PropertyGroup>
   <Target
           Name="CallFarkle"
-          Inputs="@(Farkle)"
+          Inputs="@(Farkle->'%(FullPath)')"
           Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
           Condition="'@(Farkle)' != ''">
 
@@ -10,8 +14,6 @@
       <_Template>$(FarkleTemplateOverride)</_Template>
       <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
       <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
-      <_CompileIt>$(FarkleCompileTemplates)</_CompileIt>
-      <_CompileIt Condition="'$(_CompileIt)' == ''">%(Farkle.CompileIt)</_CompileIt>
     </PropertyGroup>
 
     <Warning
@@ -28,12 +30,8 @@ Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning agai
             CustomTemplate="$(_Template)"
             CustomName="%(Farkle.GrammarName)"
             OutputFile="$(_Output)"/>
-
-    <ItemGroup Condition="'$(_CompileIt)' != 'false'">
-      <Compile Include="$(_Output)"/>
-    </ItemGroup>
-    <ItemGroup>
-      <FileWrites Include="$(_Output)"/>
-    </ItemGroup>
   </Target>
+  <Target Name="CleanUpFarkleGeneratedTemplates" BeforeTargets="Clean">
+    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"/>
+  </Target> 
 </Project>

@@ -7,7 +7,8 @@
     <!--Isn't that supposed to be automatiaclly included??-->
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
     <NuspecProperties>version=$(Version)</NuspecProperties>
-    <NuspecProperties Condition="'$(ReleaseNotes)' != ''">$(NuspecProperties);releaseNotes=$(ReleaseNotes)</NuspecProperties>
+    <!-- For some reason, release notes do not support newlines. -->
+    <!-- <NuspecProperties Condition="'$(PackageReleaseNotes)' != ''">$(NuspecProperties);releaseNotes=$(PackageReleaseNotes)</NuspecProperties> -->
     <GenerateNuspecDependsOn>PreparePack;$(GenerateNuspecDependsOn)</GenerateNuspecDependsOn>
   </PropertyGroup>
   <ItemGroup>
@@ -22,7 +23,7 @@
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
 
-  <Target Name="PreparePack" BeforeTargets="GenerateNuspec">
+  <Target Name="PreparePack" BeforeTargets="GenerateNuspec" DependsOnTargets="Build">
     <ItemGroup>
       <_FrameworksToBuild Include="$(TargetFrameworks)" />
       <_ProjectsToPublish

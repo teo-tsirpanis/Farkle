@@ -24,6 +24,8 @@ open System
 open System.IO
 open System.Text.RegularExpressions
 
+Target.initEnvironment()
+
 // Information about the project are used
 //  - for version and project name in generated AssemblyInfo file
 //  - by the generated NuGet package
@@ -114,12 +116,13 @@ let releaseNotes =
 
 let nugetVersion =
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
+    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
     | _ -> releaseInfo.NugetVersion
 
 BuildServer.install [AppVeyor.Installer]
 
-Target.description """Copies binaries from default VS location to expected bin folder, but keeps a subdirectory structure for each project in the src folder to support multiple project outputs"""
+Target.description "Copies binaries from default VS location to expected bin folder, but keeps a \
+subdirectory structure for each project in the src folder to support multiple project outputs"
 Target.create "CopyBinaries" (fun _ ->
     Shell.cleanDir "bin"
     projects
@@ -127,7 +130,7 @@ Target.create "CopyBinaries" (fun _ ->
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
 
-let vsProjFunc x = {x with DotNet.BuildOptions.Configuration = configuration}
+let fConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
     [
@@ -163,7 +166,7 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // Build library & test project
 
 Target.description "Builds everything in Release mode"
-Target.create "BuildAllRelease" (fun _ -> DotNet.build (vsProjFunc >> fCommonOptions) solutionFile)
+Target.create "BuildAllRelease" (fun _ -> DotNet.build (fConfiguration >> fCommonOptions) solutionFile)
 
 Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
@@ -253,10 +256,8 @@ let info =
 
 let referenceBinaries = []
 
-let layoutRootsAll = new System.Collections.Generic.Dictionary<string, string list>()
-layoutRootsAll.Add("en",[   templates;
-                            formatting @@ "templates"
-                            formatting @@ "templates/reference" ])
+let layoutRootsAll = System.Collections.Generic.Dictionary()
+layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
 
 let referenceDocs isRelease =
     Directory.ensure (output @@ "reference")
@@ -279,7 +280,7 @@ let referenceDocs isRelease =
 
     binaries()
     |> FSFormatting.createDocsForDlls (fun args ->
-        { args with
+        {args with
             OutputDirectory = output @@ "reference"
             LayoutRoots =  layoutRootsAll.["en"]
             ProjectParameters =  ("root", root isRelease)::info
@@ -332,7 +333,7 @@ let docs isRelease =
             | None -> layoutRootsAll.["en"] // "en" is the default language
 
         FSFormatting.createDocs (fun args ->
-            { args with
+            {args with
                 Source = content
                 OutputDirectory = output
                 LayoutRoots = layoutRoots
@@ -377,7 +378,8 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
-Target.description "Makes a draft GitHub release ready for final review. Before that, it publishes the documentation, the GitHub packages, and the benchmark report."
+Target.description "Makes a draft GitHub release ready for final review. Before that, it publishes the documentation, \
+the GitHub packages, and the benchmark report."
 Target.create "Release" (fun _ ->
     let user =
         match Environment.environVarOrDefault "github-user" String.Empty with
@@ -414,7 +416,8 @@ Target.create "Release" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target.description "The CI generates the documentation, the NuGet packages, and uploads them as artifacts, along with the benchmark report."
+Target.description "The CI generates the documentation, the NuGet packages, and uploads them as artifacts, along with \
+the benchmark report."
 Target.create "CI" ignore
 
 // --------------------------------------------------------------------------------------

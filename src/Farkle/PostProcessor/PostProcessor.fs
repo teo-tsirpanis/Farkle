@@ -29,7 +29,6 @@ type PostProcessor<'T> =
     abstract Fuse: Production * obj[] -> obj
 
 /// Functions to create `PostProcessor`s, as well as some ready to use.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module PostProcessor =
 
     /// This post-processor does not return anything meaningful to its consumer.

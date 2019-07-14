@@ -3,7 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.CSharp
+namespace rec Farkle.CSharp
+// I am pretty sure that Scott Wlaschin hates me right now...
+// https://fsharpforfunandprofit.com/posts/cyclic-dependencies/
 
 open Farkle
 open Farkle.Collections
@@ -27,13 +29,6 @@ type RuntimeFarkleExtensions =
     static member private defaultLogFunc f = if isNull f then RuntimeFarkleExtensions.fLogIgnore else FuncConvert.FromAction<_> f
 
     static member private defaultEncoding enc = if isNull enc then Encoding.UTF8 else enc
-
-    /// <summary>A <see cref="PostProcessor{Object}"/> that just checks if the given string is valid.</summary>
-    /// <remarks>It always returns <c>null</c>.</remarks>
-    static member SyntaxChecker = 
-        {new PP<obj> with
-            member __.Transform(_, _, _) = null
-            member __.Fuse(_, _) = null}
 
     [<Extension>]
     /// <summary>Parses and post-processes a string.</summary>
@@ -81,13 +76,13 @@ type RuntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Returns a <see cref="RuntimeFarkle{Object}"/> that just checks if its given input is valid.</summary>
     /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
-    static member SyntaxCheck(rf) = RF.changePostProcessor RuntimeFarkleExtensions.SyntaxChecker rf
+    static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
 
 [<Sealed>]
 /// <summary>An object that contains a function to convert a <see cref="Production"/> to an arbitrary object.</summary>
 type Fuser private(f: Func<obj[], obj>) =
     member internal __.Invoke(x) = f.Invoke(x)
-    /// <summary>Creates a <see cref="Fuser"/> from a delegate that accepts an array of objects.</summary> 
+    /// <summary>Creates a <see cref="Fuser"/> from a delegate that accepts an array of objects.</summary>
     /// <param name="f">The delegate that converts the production's children into the desired object.</param>
     static member CreateRaw(f) = Fuser(f)
 
@@ -132,9 +127,16 @@ type PostProcessor =
     static member Create<'TResult> (fTransform: CharStreamCallback<uint32>, fGetFuser: Func<uint32,Fuser>) =
         {new PP<'TResult> with
             member __.Transform(term, pos, data) = fTransform.Invoke(term.Index, pos, data)
-            member __.Fuse(prod, arguments) = 
+            member __.Fuse(prod, arguments) =
                 let theFuser = fGetFuser.Invoke(prod.Index)
                 if theFuser = Unchecked.defaultof<_> then
                     raise FuserNotFound
                 else
                     theFuser.Invoke(arguments)}
+
+    /// <summary>A <see cref="PostProcessor{Object}"/> that just checks if the given string is valid.</summary>
+    /// <remarks>It always returns <c>null</c>.</remarks>
+    static member SyntaxChecker =
+        {new PP<obj> with
+            member __.Transform(_, _, _) = null
+            member __.Fuse(_, _) = null}

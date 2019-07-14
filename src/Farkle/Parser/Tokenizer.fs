@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Farkle.Collections
 open Farkle.Grammar
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to tokenize `CharStreams`.
 module Tokenizer =
 

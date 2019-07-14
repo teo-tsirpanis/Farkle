@@ -5,12 +5,10 @@
 
 namespace Farkle.Parser
 
-open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.PostProcessor
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 

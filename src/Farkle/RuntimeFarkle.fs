@@ -53,7 +53,6 @@ with
     }
 
 /// Functions to create and use `RuntimeFarkle`s.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module RuntimeFarkle =
 
     let private createMaybe postProcessor grammar =

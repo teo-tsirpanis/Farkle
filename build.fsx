@@ -442,7 +442,8 @@ Target.create "CI" ignore
         ==> (sprintf "GenerateHelp%s" x)
         ==> (sprintf "GenerateReferenceDocs%s" x) |> ignore)
 
-"GenerateDocs"
+"GenerateReferenceDocs"
+    ==> "GenerateDocs"
     ==> "ReleaseDocs"
 
 "GenerateDocs"

@@ -18,10 +18,6 @@ First, you need to install the GOLD Parser Builder. You can grab it from [here][
 
 GOLD Parser Builder is a .NET Framework application. If you don't run Windows, I think it will work fine on Mono.
 
-GOLD Parser Builder also has a feature to create skeleton programs; templates that help you write code to use the grammar you have written. I have preapred [a template for use with F# and Farkle][template], but we will not use it in the tutorial in order to better understand the code behind the parser. If you want, download it to the installation folder of GOLD Parser Builder, in the `Templates` subfolder (on Windows it is `C:\Program Files (x86)\GOLD Parser Builder\Templates`).
-
-> I know it might sound like a lot of work, but at a future release, Farkle will work independently of GOLD Parser Builder.
-
 ## Writing a grammar for the calculator
 
 Now it's a good time to learn [how to write GOLD grammars][writingGrammars].
@@ -32,7 +28,11 @@ So, let's write our own simple grammar for this tutorial. Open GOLD Parser Build
 
 It's also time to install Farkle's NuGet package with [your favorite NuGet client][paket] (or another one).
 
+You also need to add the package named [Farkle.Tools.MSBuild][farkleToolsMSBuildNuGet]. This gives us some additional design-time support that we will need later.
+
 ## Compiling the grammar
+
+Let's get back to GOLD Parser:
 
 ![The GOLD Parser Builder](img/goldBuilder.png)
 
@@ -42,81 +42,77 @@ See the button writing "Next" at the bottom-right? Keep pressing it until you se
 
 Pay attention to the file type. Only EGT files work.
 
-Now, click on the menu bar: `Project - Create Skeleton Program`.
+Save this file next to the other source files of your project, open the project file and modify it by adding the following lines before your source files as shown:
 
-You will be presented with the following dialog.
+``` xml
+<ItemGroup>
+  <Farkle Include="SimpleMaths.egt" GrammarName="MyBeautifulCalculator" />
+  <Compile Include="SimpleMaths.g.fs" />
+  <!--The rest of your source code files.-->
+</ItemGroup>
+```
 
-![Create a Skeleton Program... dialog](img/createSkeletonProgram.png)
+Let's look at the second line. It tells MSBuild - the build system our projects are powered up by - that we are going to use this grammar file from Farkle. We even gave it a custom name of our own, probably to match the name of our app.
 
-Save it somewhere where the rest of your code files will be.
-
-## Writing the parser
-
-The skeleton program starts with some very useful types. Copy the following snippet to a file.
+Now, on to the second line. We are adding a new source file with a funny extension to our project. But, where is it actually? Wouldn't the compiler refuse to compile our little project and raise a nasty compiler error? It's actually surprisingly simple. Thanks to previous line, MSBuild generated a new source file which contains our beloved grammar, with some types to make using Farkle really easy. Let's take a look at this file:
 *)
 
-open Farkle
-open Farkle.PostProcessor
-open System
+// This file was created by Farkle.Tools version 5.0.0 at 2019-05-12.
+// It should NOT be commited to source control.
+// namespace ``MyBeautifulCalculator``.Definitions
+// EDIT: We can't declare a namespace in a documentation file.
 
-type Symbol =
-/// (EOF)
-| EOF        =  0
-/// (Error)
-| Error      =  1
-/// Whitespace
-| Whitespace =  2
-/// '-'
-| Minus      =  3
-/// '('
-| LParen     =  4
-/// ')'
-| RParen     =  5
-/// '*'
-| Times      =  6
-/// '/'
-| Div        =  7
-/// '+'
-| Plus       =  8
-/// Number
-| Number     =  9
-/// <Add Exp>
-| AddExp     = 10
-/// <Expression>
-| Expression = 11
-/// <Mult Exp>
-| MultExp    = 12
-/// <Negate Exp>
-| NegateExp  = 13
-/// <Value>
-| Value      = 14
+/// A terminal of the MyBeautifulCalculator language.
+type Terminal =
+    /// '-'
+    | Minus = 3u
+    /// '('
+    | LParen = 4u
+    /// ')'
+    | RParen = 5u
+    /// '*'
+    | Times = 6u
+    /// '/'
+    | Div = 7u
+    /// '+'
+    | Plus = 8u
+    /// Number
+    | Number = 9u
 
+/// A production of the MyBeautifulCalculator language.
 type Production =
-/// <Expression> ::= <Add Exp>
-| Expression        =  0
-/// <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-| AddExpPlus        =  1
-/// <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-| AddExpMinus       =  2
-/// <Add Exp> ::= <Mult Exp>
-| AddExp            =  3
-/// <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-| MultExpTimes      =  4
-/// <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-| MultExpDiv        =  5
-/// <Mult Exp> ::= <Negate Exp>
-| MultExp           =  6
-/// <Negate Exp> ::= '-' <Value>
-| NegateExpMinus    =  7
-/// <Negate Exp> ::= <Value>
-| NegateExp         =  8
-/// <Value> ::= Number
-| ValueNumber       =  9
-/// <Value> ::= '(' <Expression> ')'
-| ValueLParenRParen = 10
+    /// <Expression> ::= <Add Exp>
+    | Expression = 0u
+    /// <Add Exp> ::= <Add Exp> '+' <Mult Exp>
+    | AddExpPlus = 1u
+    /// <Add Exp> ::= <Add Exp> '-' <Mult Exp>
+    | AddExpMinus = 2u
+    /// <Add Exp> ::= <Mult Exp>
+    | AddExp = 3u
+    /// <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
+    | MultExpTimes = 4u
+    /// <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
+    | MultExpDiv = 5u
+    /// <Mult Exp> ::= <Negate Exp>
+    | MultExp = 6u
+    /// <Negate Exp> ::= '-' <Value>
+    | NegateExpMinus = 7u
+    /// <Negate Exp> ::= <Value>
+    | NegateExp = 8u
+    /// <Value> ::= Number
+    | ValueNumber = 9u
+    /// <Value> ::= '(' <Expression> ')'
+    | ValueLParenRParen = 10u
+
+[<RequireQualifiedAccess>]
+module Grammar =
+    /// The grammar of MyBeautifulCalculator, encoded in Base64.
+    let asBase64 = "[Too big to fit here :-p]"
 
 (**
-As you see, the skeleton program has generated an enumeration type for each symbol and production of the grammar. They are also automatically commented.
+This file contains enumeration types to represent each possible terminal and production that may appear in our grammar, but also, our EGT encoded in Base-64. This way, we don't have to carry it around in a separate file. Hooray!
+
+> __Note:__ As you have seen at the beginning of this generated source file, this file our hard-working build system generated does not need to be tracked by source control. It can just be generated when it's time to build. Moreover, if we change the EGT file, it gets generated again, and if we run `dotnet clean`, it gets deleted. We should however keep the EGT file, and the GOLD parser grammar in text form (to make it easier to change), because Farkle does not make its own EGT files. Yet.
 
 ## Making a post-processor
 
@@ -126,120 +122,152 @@ A post-processor converts the syntax tree of an expression of a language into an
 
 ### Making the transformers
 
-First, we have to see what a transformer is. A transformer is a special object that converts a terminal symbol of a type to any object you want.
+First, we have to say what a transformer is. A transformer is a special object that converts a terminal symbol of a type to any object you want.
 
-For example, let's say that in our grammar we have a terminal of type `Number` with value `"478"`. We want to convert this string of digits to an integer. Therefore a transformer for `Number`s will just call `Convert.ToInt32` to this string.
+For example, let's say that in our grammar we have a terminal of type `Number` with value `"478"`. We want to convert this string of digits to an integer. Therefore a transformer for `Number`s will just convert this string to an integer.
 
-For this grammar actually, `Number` is the only terminal we care about. There are others like `+`, `-` and so on, but we don't care about them because they offer no useful information for us _yet_. Other symbols like `EOF`, `Unrecognized` and `Expression` might exist in the enum type just because the source file is generated by a tool. Even if there is a transformer for them, it will not actually transform anything. You can even delete them from the type definition if you want.
+For this grammar actually, `Number` is the only terminal we care about. There are others like `+`, `-` and so on, but we don't care about them because they can only take one value.
 
-So, the transformers of our grammar will be the following:
+Having said that, it's time to create a file that will house our heroic post-processor, whose only transformer will be the following:
 *)
 
+open Farkle
+open Farkle.PostProcessor
+open System
+
 let transformers = [
-    // Transformer.createS Symbol.Number Int32.Parse
-    // You could have done it this way, but there is a built-in.
-    Transformer.int Symbol.Number
+    Transformer.createS Terminal.Number Int32.Parse
 ]
 
 (**
-Don't wory about the terminals that are missing from the list. They are automatically ignored.
+Let's take a look at the definition of our transformer. `Transformer.createS Terminal.Number Int32.Parse` creates a transformer that transforms the characters of the terminals of type `Number` into a string, and immediately, converts this string into an integer.
+
+> __Note:__ As you might have noticed, each time a `Number` gets transformed, Farkle creates a string which is immediately discarded, after its conversion to an integer. If you are parsing larger grammars and want to really minimize allocations like this, there are more advanced methods to create a transformer, [which you can see in the dicumentation][transformerDocumentation].
+
+Don't wory about the terminals that are missing from the list. They are automatically transformed into `null`.
 
 ### Making the fusers
 
 Now, let's see what a fuser is. A fuser is another special object that combines the parts of a production into one object.
 
-For example, we have the following rule: `<Add Exp> ::= <Add Exp> '+' <Mult Exp>` (also known as `Rules.AddExpPlus`). This rule is made of three parts: an expression, the "plus" character and another expression. We want to take the first and the last parts and add them together. So we have the following fuser:
+For example, we have the following production: `<Add Exp> ::= <Add Exp> '+' <Mult Exp>` (also known as `Productions.AddExpPlus`). This production is made of three parts: an expression, the "plus" character and another expression. The plus character's value is always `null`, because we did not declare a transformer for this terminal. We want to take the first and the last parts and add them together. So we have the following fuser:
 *)
 
-let myFuser = Fuser.take2Of Production.AddExpPlus (0, 2) 3 (+) // We actually take the zeroth and the second parts, but as we all know, arrays start at zero.
+let myFuser = Fuser.take2Of Production.AddExpPlus (0, 2) (+)
 
 (**
-You might wonder: how can we "add" expressions as if they were integers? It will turn out to be that the post-processor will make them _actual_ integers. But you will understand it better when we complete the fusers:
+Here we take the zeroth and the second parts - because as we all know, arrays start at zero -, and add them together.
+
+You might wonder: how can we "add" expressions as if they were integers? It's actually surprisingly simple. Our magical post-processor will make them _actual_ integers. But you will understand it better when we complete the fusers:
 *)
 
-open Fuser // Open this module so that we don't have to prepend the Fuser module every time.
+open Fuser // This will make our declarations shorter.
 
 let fusers =
     [
-        identity Production.Expression // identity means that the production is made of one part and we just take it as it is.
+        identity Production.Expression // identity means that we just take the first item of a production, as it is.
         myFuser // We have already written this fuser before.
-        take2Of Production.AddExpMinus (0, 2) 3 (-)
+        take2Of Production.AddExpMinus (0, 2) (-)
         identity Production.AddExp
-        take2Of Production.MultExpTimes (0, 2) 3 (*)
-        take2Of Production.MultExpDiv (0, 2) 3 (/)
+        take2Of Production.MultExpTimes (0, 2) (*)
+        take2Of Production.MultExpDiv (0, 2) (/)
         identity Production.MultExp
-        take1Of Production.NegateExpMinus 1 2 (~-) // (~-) is different than (-). The tilde denotes an unary operator.
+        take1Of Production.NegateExpMinus 1 (~-) // (~-) is different than (-). The tilde denotes an unary operator.
         identity Production.NegateExp
         identity Production.ValueNumber
-        take1Of Production.ValueLParenRParen 1 3 id
+        take1Of Production.ValueLParenRParen 1 id
     ]
 
 (**
-As you see, the fuser turns the production `<Value> ::= Number` into an integer, by taking the `Number`, which is an integer, because the transformer made it so. The `<Negate Exp>` becomes an integer as well, because in both its definitions, it takes a `<Value>` which either negates it, or takes it as it is. By following this logic, we fill find out that every production becomes an integer.
+As you see, the fuser turns the production `<Value> ::= Number` into an integer, by taking the `Number`, which is an integer, because the transformer made it so. The `<Negate Exp>` becomes an integer as well, because in both its definitions, it takes a `<Value>` which either negates it, or takes it as it is. By following this logic, we fill find out that every production becomes an integer. Hooray!
 
-With the transformers and fusers ready, we now create the post-processor like this.
+As a sidenote, if we forget to add a fuser that is needed by the post-processor, it will raise an error that specifically tells us which fuser we forgot.
+
+With the transformers and fusers ready, we now create the post-processor like this. See that we specified the type of final objects it produces.
 *)
 
 let pp = PostProcessor.ofSeq<int> transformers fusers
 
 (**
-> __Note__: The post-processor is not _yet_ perfectly type-safe. I could use a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception. The post-processor will be made type-safe at a later release.
+> __Note__: The post-processor is not perfectly type-safe. I could have used a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception into your code.
 
 ## Making a runtime Farkle
 
-We need to make a `RuntimeFarkle`. This object is responsible for parsing __and post-processing__ a string, a file, a .NET stream, or a `CharStream`, a custom type made for Farkle.
+With our post-processor ready, we need to make a `RuntimeFarkle`. This object is responsible for parsing our beautiful mathematical expressions and post-process them into an integer
 
 10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
+
 20: And "FArkle" means: (GOTO 10).
+
 30: I guess you can't read this line.
 
-A runtime Farkle is made of a grammar, a post-processor, and two functions to convert terminals and productions to our custom enum types.
-
-We have already created the post-processor, the grammar is in our `*.egt` file so we can create it this way:
+A runtime Farkle is made of a grammar, and a post-processor. We have already created the post-processor, and the grammar is in a Base64-encoded string, so we can create it this way:
 *)
 
-let rf = RuntimeFarkle.ofEGTFile pp "SimpleMaths.egt"
+let myMarvelousRuntimeFarkle = RuntimeFarkle.ofBase64String pp Grammar.asBase64
 
 (**
 ### Using the runtime Farkle
 
-Now that we got it, it's time to use it. Let's see some examples:
+Now that we got it, it's time to use it. The `RuntimeFarkle` module has many functions to parse text from different sources. There is a simple function called `parse` which just parses a string. If you want to log what the parser actually does, you can use the function `parseString`. 
 
-> These functions also take a function as a parameter, that gets called for every log message.
+Actually, all functions except `parse` take a function as a parameter, that gets called for every parser event. You can see what these events look like [here][parseMessageDocumentation].
+
+Furthermore, all functions return an F# `Result` type whose error value (if it unfortunately exists), can show exactly what did go wrong.
+
+Let's look at some some examples:
 *)
 
+open System.IO
 open System.Text
 
 /// A utility to print a parse result.
 let printIt (x: Result<_,FarkleError>) =
     match x with
     | Ok x -> printfn "%d" x
+    // The following line pretty-prints the error message in English.
     | Error x -> printfn "%O" x
 
-RuntimeFarkle.parse rf "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248" |> printIt // A string.
+RuntimeFarkle.parse myMarvelousRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248"
+|> printIt
 
-RuntimeFarkle.parseFile rf ignore Encoding.ASCII "gf.m" |> printIt // A file
+RuntimeFarkle.parseString myMarvelousRuntimeFarkle Console.WriteLine "111*555"
+|> printIt
 
-System.IO.File.OpenRead "fish.es" |> RuntimeFarkle.parseStream rf ignore false Encoding.UTF8 |> printIt // A stream, whose content is loaded entirely in memory.
+RuntimeFarkle.parseFile myMarvelousRuntimeFarkle ignore Encoding.ASCII "gf.m"
+|> printIt
 
-RuntimeFarkle.parseFile rf Console.WriteLine Encoding.Unicode "math.txt" |> printIt // Another file, but with UTF-16 encoding and eagerly loaded.
+File.OpenRead "fish.es"
+|> RuntimeFarkle.parseStream myMarvelousRuntimeFarkle ignore false Encoding.UTF8
+|> printIt // The third parameter, shows whether to lazily load the file into memory.
+// Here, false means to read it all at once.
 
-RuntimeFarkle.parseString rf Console.WriteLine "111*555" |> printIt // Like the first example, but also accepts a logging function.
+RuntimeFarkle.parseFile myMarvelousRuntimeFarkle Console.WriteLine Encoding.Unicode "math.txt"
+|> printIt
 
 (**
-> <s>__Note__: It has been observed that the first time a runtime Farkle parses something takes more time than the rest. This happens because it reads the EGT file the first time. There is no workaround for it available. But it's only the first time.</s>
+## Bonus: Creating skeleton code
 
-Farkle's performance has been improved many times, and now loading grammars is much faster than previously.
+What if I told you, that there is a way to make this entire process much simpler? Since Version 5.0, Farkle has a set of command-line tools to help you build beautiful parsers. They are [distributed over NuGet][farkleToolsNuGet], and you can install them by running this little command:
 
-So that's it. I hope you understand. If you have any question, found a 🐛, or want a feature, feel free to [open a GitHub issue][githubIssues].
-*)
+`dotnet tool install -g Farkle.Tools`
 
-(**
+Let's go back now, right after we added the EGT file into our project. Now, open your favorite command line shell, and type the following lines:
+
+`farkle new -type postprocessor simplemaths.egt`
+
+You will see a file named `SimpleMaths.fs` that contains most of the post-processor code we have already written. What you have to do, is to fix the compiler errors by completing your own transformers and fusers, and you are ready to go!
+
+So that's it. I hope you understand. If you have any question, found a bug, or want a feature, feel free to [open a GitHub issue][githubIssues].
+
 [goldBuilder]: http://goldparser.org/builder/index.htm
 [mega]: https://mega.nz/#F!opp3yToY!FMRD5CxS-q_-SN8f5TAbrA
+[farkleToolsMSBuildNuGet]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
 [writingGrammars]: http://goldparser.org/doc/grammars/index.htm
 [sampleGrammar]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Calculator/SimpleMaths.grm
-[template]: https://github.com/teo-tsirpanis/Farkle/blob/master/src/Farkle/F-Sharp%20-%20Farkle.pgt
 [paket]: https://fsprojects.github.io/Paket/
+[transformerDocumentation]: reference/farkle-postprocessor-transformermodule.html
+[parseMessageDocumentation]: reference/farkle-parser-parsemessage.html
+[farkleToolsNuGet]: https://www.nuget.org/packages/Farkle.Tools
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

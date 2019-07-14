@@ -110,7 +110,7 @@ with
     member x.Index = match x with CharStreamIndex idx -> idx
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
-/// It accepts a generic type (a `Symbol` usually), the `Position` of the symbol, and a
+/// It accepts a generic type (a `Terminal` usually), the `Position` of the symbol, and a
 /// `ReadOnlySpan` of characters that are going to be converted into an object.
 /// This type is not an F# native function type, because of limitations while handling `ReadOnlySpan`s.
 type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan<char> -> obj

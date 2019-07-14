@@ -3,6 +3,7 @@
 * Farkle now has a CLI tool helper. It can generate a grammar definition file that contains the terminal and production types for your grammar, as well as the .EGT file in base-64 encoding. It can also create a skeleton source file to help you write a post-processor. What is more, it supports _both_ C# and F#!
 * As always, performance was improved, especially in the .EGT file reader. The first parsing should be as fast as the rest of them.
 * __Breaking change:__ In your post-processor, if you have functions like `take2Of production (index1, index2) count func`, remove the `count` parameter.
+* __Breaking change:__ The `Token` type was moved to `Farkle.Parser` and is not needed by the `AST` type.
 
 #### 4.0.0 - 17-01-2019
 * Optimized the way Farkle handles the input stream characters by reducing copies & improving performance.

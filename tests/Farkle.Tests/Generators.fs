@@ -66,8 +66,8 @@ let rangeMapGen() = gen {
 type CS = CS of CharStream * string
 
 type Generators =
+    static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
     static member Production() = Arb.fromGen productionGen
-    static member Token() = Gen.map3 Token.Create Arb.generate Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()

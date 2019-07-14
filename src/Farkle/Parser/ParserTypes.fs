@@ -8,6 +8,22 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Grammar
 
+/// A token is an instance of a `Terminal`.
+/// Tokens carry post-processed terminals, as well as their position within the text file.
+type Token =
+    {
+        /// The `Terminal` whose instance is this token.
+        Symbol: Terminal
+        /// The `Position` of the token in the input string.
+        Position: Position
+        /// The actual content of the token.
+        Data: obj
+    }
+    with
+        /// A shortcut for creating a token.
+        static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
+        override x.ToString() = if x.Data = null then "" else sprintf "\"%O\"" x.Data
+
 /// An internal error. These errors are known errors a parser might experience.
 /// An encounter of it is most certainly a library bug (or deliberately corrupted grammars).
 /// The user is encouraged to report it to GitHub.

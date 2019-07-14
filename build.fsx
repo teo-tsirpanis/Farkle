@@ -259,10 +259,10 @@ let referenceBinaries = []
 let layoutRootsAll = System.Collections.Generic.Dictionary()
 layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
 
-let referenceDocs isRelease =
+let generateReferenceDocs isRelease =
     Directory.ensure (output @@ "reference")
 
-    let binaries () =
+    let binaries =
         let manuallyAdded =
             referenceBinaries
             |> List.map (fun b -> bin @@ b)
@@ -278,7 +278,7 @@ let referenceDocs isRelease =
 
         conventionBased @ manuallyAdded
 
-    binaries()
+    binaries
     |> FSFormatting.createDocsForDlls (fun args ->
         {args with
             OutputDirectory = output @@ "reference"
@@ -296,7 +296,7 @@ let copyFiles () =
     Shell.copyRecursive (formatting @@ "styles") (output @@ "content") true
     |> Trace.logItems "Copying styles and scripts: "
 
-let docs isRelease =
+let generateDocs isRelease =
     File.delete "docsrc/content/release-notes.md"
     Shell.copyFile "docsrc/content/" "RELEASE_NOTES.md"
     Shell.rename "docsrc/content/release-notes.md" "docsrc/content/RELEASE_NOTES.md"
@@ -344,7 +344,7 @@ let docs isRelease =
 Target.description "Watches the documentation source folder and regenerates it on every file change"
 Target.create "KeepRunning" (fun _ ->
     use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->
-        docs false
+        generateDocs false
     )
 
     Trace.traceImportant "Waiting for help edits. Press any key to stop."
@@ -354,14 +354,14 @@ Target.create "KeepRunning" (fun _ ->
 
 Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip"; Trace.publish ImportData.BuildArtifact "docs.zip")
 Target.description "Generates the website for the project, except for the API documentation - for release"
-Target.create "GenerateHelp" (fun _ -> docs true)
+Target.create "GenerateHelp" (fun _ -> generateDocs true)
 Target.description "Generates the website for the project, except for the API documentation - for local use"
-Target.create "GenerateHelpDebug" (fun _ -> docs false)
+Target.create "GenerateHelpDebug" (fun _ -> generateDocs false)
 
 Target.description "Generates the API documentation for the project - for release"
-Target.create "GenerateReferenceDocs" (fun _ -> referenceDocs true)
+Target.create "GenerateReferenceDocs" (fun _ -> generateReferenceDocs true)
 Target.description "Generates the API documentation for the project - for local use"
-Target.create "GenerateReferenceDocsDebug" (fun _ -> referenceDocs false)
+Target.create "GenerateReferenceDocsDebug" (fun _ -> generateReferenceDocs false)
 
 Target.description "Releases the documentation to GitHub Pages."
 Target.create "ReleaseDocs" (fun _ ->
@@ -435,18 +435,20 @@ Target.create "CI" ignore
 |> Seq.map (sprintf "GenerateReferenceDocs%s")
 |> Seq.iter ((==>) "CopyBinaries" >> ignore)
 
-"CleanDocs"
-    ==> "GenerateHelp"
-    ==> "GenerateReferenceDocs"
-    ==> "GenerateDocs"
+[""; "Debug"]
+|> Seq.iter (fun x ->
+    "CopyBinaries"
+        ==> "CleanDocs"
+        ==> (sprintf "GenerateHelp%s" x)
+        ==> (sprintf "GenerateReferenceDocs%s" x) |> ignore)
+
+"GenerateDocs"
     ==> "ReleaseDocs"
 
 "GenerateDocs"
     ==> "CI"
 
-"CleanDocs"
-    ==> "GenerateHelpDebug"
-    ==> "GenerateReferenceDocsDebug"
+"GenerateReferenceDocsDebug"
     ==> "KeepRunning"
 
 "Benchmark"

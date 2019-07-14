@@ -5,7 +5,6 @@
 
 namespace Farkle
 
-open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser

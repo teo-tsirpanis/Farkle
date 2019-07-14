@@ -3,6 +3,8 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+/// [omit]
+// I cannot make it internal, because it is used by Farkle.Tools and Farkle.Tools.MSBuild.
 module Farkle.Monads
 
 open System

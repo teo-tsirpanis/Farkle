@@ -18,7 +18,7 @@ type C<'a> = delegate of ReadOnlySpan<char> -> 'a
 
 /// <summary>A position-sensitive version of <see cref="TransformerCallback{C}"/>.</summary>
 /// <remarks>
-///     <para>In F#, this type is named <c>C</c> - from "Callback" and was shortened to avoid clutter in user code.</para>
+///     <para>In F#, this type is named <c>C2</c> - from "Callback" and was shortened to avoid clutter in user code.</para>
 ///     <para>A .NET delegate was used because <c>ReadOnlySpan</c>s are incompatible with F# functions</para>
 /// </remarks>
 [<CompiledName("PositionedTransformerCallback`1")>]

@@ -7,7 +7,6 @@ module Farkle.Tests.GrammarTests
 
 open Expecto
 open Expecto.Logging
-open Farkle
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 

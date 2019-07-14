@@ -15,7 +15,7 @@ open System.Runtime.InteropServices
 
 module RF = RuntimeFarkle
 
-type PP<'a> = Farkle.PostProcessor.PostProcessor<'a>
+type PP<'a> = PostProcessor<'a>
 
 [<Extension; AbstractClass; Sealed>]
 /// <summary>Extension methods to easily create and work
@@ -88,28 +88,23 @@ type RuntimeFarkleExtensions =
 type Fuser private(f: Func<obj[], obj>) =
     member internal __.Invoke(x) = f.Invoke(x)
     /// <summary>Creates a <see cref="Fuser"/> from a delegate that accepts an array of objects.</summary> 
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="f">The delegate that converts the production's children into the desired object.</param>
     static member CreateRaw(f) = Fuser(f)
 
     /// <summary>Creates a <see cref="Fuser"/> that always returns a constant value.</summary>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="x">The object this fuser is always going to return.</param>
     static member Constant<'T>(x: 'T) = Fuser(fun _ -> x |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that returns the first symbol of the production unmodified.</summary>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     static member First = Fuser(fun x -> x.[0])
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from one of its symbols.</summary>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="idx">The zero-based index of the symbol of interest.</param>
     /// <param name="f">The delegate that converts the symbols into the desired object.</param>
     static member Create<'T,'TResult>(idx, f: Func<'T, 'TResult>) =
         Fuser(fun x -> f.Invoke(x.[idx] :?> _) |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from two of its symbols.</summary>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="idx1">The zero-based index of the first symbol of interest.</param>
     /// <param name="idx2">The zero-based index of the second symbol of interest.</param>
     /// <param name="f">The delegate that converts the symbols into the desired object.</param>
@@ -117,7 +112,6 @@ type Fuser private(f: Func<obj[], obj>) =
         Fuser(fun x -> f.Invoke(x.[idx1] :?> _, x.[idx2] :?> _) |> box)
 
     /// <summary>Creates a <see cref="Fuser"/> that fuses a <see cref="Production"/> from three of its symbols.</summary>
-    /// <param name="prod">The index of the <see cref="Production"/> to transform.</param>
     /// <param name="idx1">The zero-based index of the first symbol of interest.</param>
     /// <param name="idx2">The zero-based index of the second symbol of interest.</param>
     /// <param name="idx3">The zero-based index of the third symbol of interest.</param>
@@ -125,7 +119,7 @@ type Fuser private(f: Func<obj[], obj>) =
     static member Create<'T1,'T2,'T3,'TOutput>(idx1, idx2, idx3, f: Func<'T1,'T2,'T3,'TOutput>) =
         Fuser(fun x -> f.Invoke(x.[idx1] :?> _,x.[idx2] :?> _,x.[idx3] :?> _) |> box)
 
-[<AbstractClass; Sealed; Extension>]
+[<AbstractClass; Sealed>]
 /// <summary>A helper class with methods to create a <see cref="PostProcessor{T}"/>.</summary>
 type PostProcessor =
 

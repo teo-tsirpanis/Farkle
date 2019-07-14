@@ -22,6 +22,7 @@ with
 /// It can also double as a set, when the value type is a unit.
 type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
 
+/// Functions to create and use `RangeMap`s.
 module RangeMap =
 
     /// Returns an empty `RangeMap`.

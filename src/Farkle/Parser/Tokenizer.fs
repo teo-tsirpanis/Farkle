@@ -5,7 +5,6 @@
 
 namespace Farkle.Parser
 
-open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 

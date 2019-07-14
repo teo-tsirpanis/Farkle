@@ -21,8 +21,6 @@ module internal Indexed =
     /// Creates an `Indexed` object, with the ability to explicitly specify its type.
     let create<'a> i: Indexed<'a> = Indexed i
 
-#nowarn "0x06370000"
-
 /// An immutable array that exhibits good random access performance and safe index access.
 /// It intentionally lacks methods such as `map` and `filter`. This type should be at the final stage of data manipulation.
 /// It is advised to work with sequences before, just until the end.
@@ -31,7 +29,6 @@ type SafeArray<'a> = private SafeArray of 'a ImmutableArray
     with
         /// Creates a random-access list. Data will be copied to this new list.
         static member Create<'a> (x: 'a seq) = x.ToImmutableArray() |> SafeArray
-        [<CompilerMessage("This method must be used only by the grammar domain model migrator, outside of this file.", 0x06370000)>]
         member private x.Value = x |> (fun (SafeArray x) -> x)
         /// Gets the length of the list.
         member x.Count = x.Value.Length

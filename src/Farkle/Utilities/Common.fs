@@ -6,7 +6,7 @@
 namespace Farkle.Common
 
 /// Faster functions to compare two objects.
-module FastCompare =
+module internal FastCompare =
 
     open System
 

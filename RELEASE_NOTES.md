@@ -1,7 +1,8 @@
-#### 5.0.0-rc.1
+#### 5.0.0-rc.1 - 15-07-2019
 * Farkle now has better C# support. Just write `using Farkle.CSharp;`, and you are good to go!
 * Farkle now has a CLI tool helper. It can generate a grammar definition file that contains the terminal and production types for your grammar, as well as the .EGT file in base-64 encoding. It can also create a skeleton source file to help you write a post-processor. What is more, it supports _both_ C# and F#!
-* As always, performance was improved, especially in the .EGT file reader. The first parsing should be as fast as the rest of them.
+* Farkle now has MSBuild integration. You can auto-generate a source file describing your grammar, and not have to carry EGT files around.
+* As always, performance was improved, especially in the .EGT file reader.
 * __Breaking change:__ In your post-processor, if you have functions like `take2Of production (index1, index2) count func`, remove the `count` parameter.
 * __Breaking change:__ The `Token` type was moved to `Farkle.Parser` and is not needed by the `AST` type.
 

@@ -7,7 +7,7 @@ Farkle is a parser generator for F# and C#. It is made of an engine for the [GOL
   <div class="span6">
     <div class="well well-small" id="nuget">
       The Farkle library can be <a href="https://nuget.org/packages/Farkle">installed from NuGet</a>:
-      <pre>PM> Install-Package Farkle</pre>
+      <pre>dotnet add package Farkle</pre>
     </div>
   </div>
   <div class="span1"></div>
@@ -17,7 +17,9 @@ Farkle is a parser generator for F# and C#. It is made of an engine for the [GOL
 
 The library comes with comprehensible documentation. 
 
- * [Quick Start: Creating a calculator](quickstart.html) to get started with a simple example.
+ * [Quick Start: Creating a calculator](quickstart.html) to get started with writing a simple calculator in F#.
+
+ * [Quick Start with C#: Creating a calculator](quickstart-csharp.html) to learn how to create the previous example with C#.
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules and functions in the library.
 

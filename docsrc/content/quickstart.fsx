@@ -246,17 +246,19 @@ RuntimeFarkle.parseFile myMarvelousRuntimeFarkle Console.WriteLine Encoding.Unic
 |> printIt
 
 (**
-## Bonus: Creating skeleton code
+## Bonus: Using Farkle.Tools
 
-What if I told you, that there is a way to make this entire process much simpler? Since Version 5.0, Farkle has a set of command-line tools to help you build beautiful parsers. They are [distributed over NuGet][farkleToolsNuGet], and you can install them by running this little command:
+What if I told you, that there is a way to make this entire process much simpler? Since Version 5.0, Farkle has a set of command-line tools to help you make beautiful parsers. They are [distributed over NuGet][farkleToolsNuGet], and you can install them by running this little command:
 
 `dotnet tool install -g Farkle.Tools`
 
 Let's go back now, right after we added the EGT file into our project. Now, open your favorite command line shell, and type the following lines:
 
-`farkle new -type postprocessor simplemaths.egt`
+`farkle new -t postprocessor SimpleMaths.egt`
 
 You will see a file named `SimpleMaths.fs` that contains most of the post-processor code we have already written. What you have to do, is to fix the compiler errors by completing your own transformers and fusers, and you are ready to go!
+
+---
 
 So that's it. I hope you understand. If you have any question, found a bug, or want a feature, feel free to [open a GitHub issue][githubIssues].
 

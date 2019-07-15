@@ -121,7 +121,6 @@ BuildServer.install [AppVeyor.Installer]
 Target.description "Copies binaries from default VS location to expected bin folder, but keeps a \
 subdirectory structure for each project in the src folder to support multiple project outputs"
 Target.create "CopyBinaries" (fun _ ->
-    Shell.cleanDir "bin"
     projects
     |> Seq.map (fun f -> ((Path.GetDirectoryName f) @@ "bin" @@ configurationAsString, "bin" @@ (Path.GetFileNameWithoutExtension f)))
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
@@ -375,7 +374,7 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
-Target.description "Makes a draft GitHub release ready for final review. Before that, it publishes the documentation, \
+Target.description "Makes a GitHub release. Before that, it publishes the documentation, \
 the GitHub packages, and the benchmark report."
 Target.create "Release" (fun _ ->
     let user =
@@ -455,6 +454,10 @@ Target.create "CI" ignore
 
 "Benchmark"
     =?> ("CI", shouldCIBenchmark)
+
+// I want a clean repo when the packages are going t obe built.
+"NuGetPublish"
+    ?=> "AddBenchmarkReport"
 
 "ReleaseDocs"
     ==> "Release"

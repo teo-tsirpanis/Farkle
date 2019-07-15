@@ -54,11 +54,11 @@ Save this file next to the other source files of your project, open the project 
 
 Let's look at the second line. It tells MSBuild - the build system our projects are powered up by - that we are going to use this grammar file from Farkle. We even gave it a custom name of our own, probably to match the name of our app.
 
-Now, on to the second line. We are adding a new source file with a funny extension to our project. But, where is it actually? Wouldn't the compiler refuse to compile our little project and raise a nasty compiler error? It's actually surprisingly simple. Thanks to previous line, MSBuild generated a new source file which contains our beloved grammar, with some types to make using Farkle really easy. Let's take a look at this file:
+Now, on to the second line. We are adding a new source file with an unusual extension to our project. But, where is it actually? Wouldn't the compiler refuse to compile our little project and raise a nasty compiler error? It's actually surprisingly simple. Thanks to previous line, MSBuild generated a new source file which contains our beloved grammar, with some types to make using Farkle really easy. Let's take a look at this file:
 *)
 
 // This file was created by Farkle.Tools version 5.0.0 at 2019-05-12.
-// It should NOT be commited to source control.
+// It should NOT be committed to source control.
 // namespace ``MyBeautifulCalculator``.Definitions
 // EDIT: We can't declare a namespace in a documentation file.
 
@@ -142,9 +142,9 @@ let transformers = [
 (**
 Let's take a look at the definition of our transformer. `Transformer.createS Terminal.Number Int32.Parse` creates a transformer that transforms the characters of the terminals of type `Number` into a string, and immediately, converts this string into an integer.
 
-> __Note:__ As you might have noticed, each time a `Number` gets transformed, Farkle creates a string which is immediately discarded, after its conversion to an integer. If you are parsing larger grammars and want to really minimize allocations like this, there are more advanced methods to create a transformer, [which you can see in the dicumentation][transformerDocumentation].
+> __Note:__ As you might have noticed, each time a `Number` gets transformed, Farkle creates a string which is immediately discarded, after its conversion to an integer. If you are parsing larger grammars and want to really minimize allocations like this, there are more advanced methods to create a transformer, [which you can see in the documentation][transformerDocumentation].
 
-Don't wory about the terminals that are missing from the list. They are automatically transformed into `null`.
+Don't worry about the terminals that are missing from the list. They are automatically transformed into `null`.
 
 ### Making the fusers
 

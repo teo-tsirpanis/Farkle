@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Scriban" Version="2.*" />
-    <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.1.0" />
+    <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.*" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
 

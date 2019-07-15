@@ -1,16 +1,14 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-    <DebugType>portable</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>teo-tsirpanis</Authors>
-    <Company>Theodore Tsirpanis</Company>
+    <Authors>Theodore Tsirpanis</Authors>
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/LICENSE.txt</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/teo-tsirpanis/Farkle/</PackageProjectUrl>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageProjectUrl>https://teo-tsirpanis.github.io/Farkle/</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>parser lalr gold-parser</PackageTags>
+    <PackageTags>parser;lalr;gold-parser</PackageTags>
   </PropertyGroup>
 </Project>

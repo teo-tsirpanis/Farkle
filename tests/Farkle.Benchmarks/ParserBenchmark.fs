@@ -10,7 +10,6 @@ open Farkle
 open Farkle.Common
 open Farkle.Collections
 open System.IO
-open System.Text
 open Farkle.PostProcessor
 
 [<MemoryDiagnoser>]
@@ -27,10 +26,9 @@ type ParserBenchmark() =
     member val public DynamicallyReadInput = true with get, set
 
     member x.doIt pp =
-        use f = File.OpenRead "gml.grm"
-        use sr = new StreamReader(f, Encoding.UTF8)
         use cs =
             if x.DynamicallyReadInput then
+                let sr = new StreamReader("gml.grm")
                 CharStream.ofTextReader sr
             else
                 CharStream.ofString gmlContents

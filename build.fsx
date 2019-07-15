@@ -89,9 +89,6 @@ let gitHome = sprintf "%s/%s" "https://github.com" gitOwner
 // The name of the project on GitHub
 let gitName = "Farkle"
 
-// The url for the raw files hosted
-let gitRaw = Environment.environVarOrDefault "gitRaw" "https://raw.githubusercontent.com/teo-tsirpanis"
-
 // Read additional information from the release notes document
 let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"
 
@@ -284,7 +281,7 @@ let generateReferenceDocs isRelease =
             OutputDirectory = output @@ "reference"
             LayoutRoots =  layoutRootsAll.["en"]
             ProjectParameters =  ("root", root isRelease)::info
-            SourceRepository = githubLink @@ "tree/master"
+            SourceRepository = githubLink @@ "tree" @@ (Information.getCurrentHash())
             ToolPath = toolpath}
     )
 
@@ -342,7 +339,7 @@ let generateDocs isRelease =
                 ToolPath = toolpath})
 
 Target.description "Watches the documentation source folder and regenerates it on every file change"
-Target.create "KeepRunning" (fun _ ->
+Target.create "KeepGeneratingDocs" (fun _ ->
     use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->
         generateDocs false
     )
@@ -450,7 +447,7 @@ Target.create "CI" ignore
     ==> "CI"
 
 "GenerateReferenceDocsDebug"
-    ==> "KeepRunning"
+    ==> "KeepGeneratingDocs"
 
 "Benchmark"
     ==> "AddBenchmarkReport"

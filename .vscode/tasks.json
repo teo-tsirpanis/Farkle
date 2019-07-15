@@ -74,6 +74,25 @@
                 "Release"
             ],
             "problemMatcher": []
+        },
+        {
+            "label": "📜DOCS📜",
+            "type": "process",
+            "presentation": {
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "command": "fake",
+            "args": [
+                "run",
+                "build.fsx",
+                "target",
+                "KeepGeneratingDocs"
+            ],
+            "problemMatcher": []
         }
     ]
 }

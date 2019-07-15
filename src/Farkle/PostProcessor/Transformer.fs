@@ -34,6 +34,7 @@ with
         Transformer (idx, C2(fun pos data -> fTransformer.Invoke(pos, data) |> box))
 
 /// Functions to create `Transformer`s.
+[<CompiledName("FSharpTransformerModule")>]
 module Transformer =
 
     /// Creates a `Transformer` that applies the given delegate to the terminal's data and position.

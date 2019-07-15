@@ -14,6 +14,7 @@ with
     static member Create prod f = Fuser(prod, f)
 
 /// Functions to create `Fuser`s.
+[<CompiledName("FSharpFuserModule")>]
 module Fuser =
 
     /// Creates a `Fuser` that fuses a production with an arbitrary number and type of symbols.

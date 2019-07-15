@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>Theodore Tsirpanis</Authors>
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
-    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://teo-tsirpanis.github.io/Farkle/</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>

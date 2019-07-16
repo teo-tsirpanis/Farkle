@@ -123,6 +123,8 @@ subdirectory structure for each project in the src folder to support multiple pr
 Target.create "CopyBinaries" (fun _ ->
     projects
     |> Seq.map (fun f -> ((Path.GetDirectoryName f) @@ "bin" @@ configurationAsString, "bin" @@ (Path.GetFileNameWithoutExtension f)))
+    |> Seq.distinct
+    |> Seq.filter (fst >> Directory.Exists)
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
 

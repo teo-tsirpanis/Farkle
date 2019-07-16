@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Farkle.Tools.Shared/Common.fs" />
+    <Compile Include="../Farkle.Tools.Shared/Templating/TemplateTypes.fs" />
     <Compile Include="../Farkle.Tools.Shared/Templating/TemplateUtilities.fs" />
     <Compile Include="../Farkle.Tools.Shared/Templating/BuiltinTemplates.fs" />
     <Compile Include="../Farkle.Tools.Shared/Templating/TemplateEngine.fs" />

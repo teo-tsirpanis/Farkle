@@ -1,3 +1,8 @@
+#### 5.0.0-rc.2
+* The CLI tool generate post-processor skeletons by default.
+* The CLI tool can automatically find the EGT file to process (if there is only one in the current directory), and the language (if there are C# or F# projects in the current directory).
+* Fixed a bug where generated source files would sometimes have duplicate production names in their enumerated type.
+
 #### 5.0.0-rc.1 - 15-07-2019
 * Farkle now has better C# support. Just write `using Farkle.CSharp;`, and you are good to go!
 * Farkle now has a CLI tool helper. It can generate a grammar definition file that contains the terminal and production types for your grammar, as well as the EGT file in base-64 encoding. It can also create a skeleton source file to help you write a post-processor. What is more, it supports _both_ C# and F#!

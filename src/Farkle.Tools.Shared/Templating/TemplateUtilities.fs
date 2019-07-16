@@ -8,6 +8,8 @@ namespace Farkle.Tools.Templating
 open Farkle.Grammar
 open Scriban.Runtime
 open System
+open System.Collections.Generic
+open System.Collections.Immutable
 open System.Text
 
 type IdentifierTypeCase =
@@ -65,12 +67,21 @@ module Utilities =
             | CamelCase -> sb.[0] <- Char.ToLowerInvariant sb.[0]
         sb.ToString()
 
-    let formatProduction {Head = head; Handle = handle} case separator =
+    let formatProduction printFull {Head = head; Handle = handle} case separator =
         let headFormatted = toIdentifier head.Name case separator
         let handleFormatted =
-            handle
-            |> Seq.choose (function Choice1Of2 term -> Some <| toIdentifier term.Name case separator | Choice2Of2 _ -> None)
-            |> List.ofSeq
+            if handle.IsEmpty then
+                // GOLD Parser doesn't do that, but specifying "Empty" increases readability.
+                ["Empty"]
+            else
+                handle
+                |> Seq.choose (function
+                    | Choice1Of2 term -> Some <| toIdentifier term.Name case separator
+                    // We might want to include even the nonterminals in
+                    // the name, when names collide, but only then.
+                    | Choice2Of2 nont when printFull -> Some <| toIdentifier nont.Name case separator
+                    | Choice2Of2 _ -> None)
+                |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
     let toBase64 (grammarBytes: _ []) doPad =
@@ -79,15 +90,39 @@ module Utilities =
             else Base64FormattingOptions.None
         Convert.ToBase64String(grammarBytes, options)
 
-    let doFmt (x: obj) case separator =
+    let doFmt fShouldPrintFullProduction (x: obj) case separator =
         match x with
         | :? Terminal as x -> toIdentifier x.Name case separator
-        | :? Production as x -> formatProduction x case separator
+        | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 
-    let load (so: ScriptObject) =
+    let shouldPrintFullProduction productions =
+        let getFormattingElements prod =
+            let handle =
+                prod.Handle
+                |> Seq.choose (function | Choice1Of2 term -> Some term | Choice2Of2 _ -> None)
+                |> Array.ofSeq
+            prod.Head, handle
+        let dict =
+            productions
+            |> Array.groupBy getFormattingElements
+            |> Seq.collect (function
+                // This case is actually impossible, but never mind.
+                | _, [| |] -> Seq.empty
+                // If a production has a unique combination of head and
+                // terminal handles, it will also have a unique name.
+                | _, [|prod|] -> KeyValuePair(prod, false) |> Seq.singleton
+                // But if many productions share the same one, we will have
+                // a name collision. In this case, we want their name to include
+                // nonterminals as well. It is impossible for a collision to happen
+                // again, as that would imply that there are two identical productions.
+                | _, prods -> prods |> Seq.map (fun prod -> KeyValuePair(prod, true)))
+            |> ImmutableDictionary.CreateRange
+        fun prod -> dict.[prod]
+
+    let load grammar (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)
         so.SetValue("lower_case", LowerCase, true)
         so.SetValue("pascal_case", PascalCase, true)
         so.SetValue("camel_case", CamelCase, true)
-        so.Import("fmt", Func<_,_,_,_> doFmt)
+        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction grammar.Productions))

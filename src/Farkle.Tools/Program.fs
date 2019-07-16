@@ -1,5 +1,5 @@
 ﻿// Copyright (c) 2019 Theodore Tsirpanis
-//
+// 
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -7,13 +7,14 @@ open Argu
 open Farkle.Tools
 open Farkle.Tools.Commands
 open Serilog
+open Serilog.Core
 open System
 
 type FarkleCLIExiter() =
     interface IExiter with
         member __.Name = "Farkle CLI exiter"
         member __.Exit(msg, code) =
-            Console.Error.WriteLine(msg)
+            Log.Error(msg)
             exit <| int code
 
 type Arguments =
@@ -30,13 +31,15 @@ with
 
 [<EntryPoint>]
 let main _ =
-    let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
-    let results = parser.Parse()
-    let verbosity = results.GetResult(Verbosity, Events.LogEventLevel.Information)
+    let levelSwitch = LoggingLevelSwitch(Events.LogEventLevel.Information)
     Log.Logger <- LoggerConfiguration()
-        .MinimumLevel.Is(verbosity)
+        .MinimumLevel.ControlledBy(levelSwitch)
         .WriteTo.Console()
         .CreateLogger()
+    let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
+    let results = parser.Parse()
+    results.TryGetResult(Verbosity) |> Option.iter (fun x -> levelSwitch.MinimumLevel <- x)
+
     use __ = {new IDisposable with member __.Dispose() = Log.CloseAndFlush()}
     try
         if results.Contains Version then

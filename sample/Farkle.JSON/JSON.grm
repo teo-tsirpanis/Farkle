@@ -1,0 +1,35 @@
+"Name" = 'JSON'
+"Author" = 'Theodore Tsirpanis'
+"Version" = '1.0.0'
+"About" = 'A language describing the JavaScript Object Notation'
+
+"Start Symbol" = <Object>
+
+{Number19} = [123456789]
+{Hex Digit} = [1234567890ABCDEF]
+
+{String Characters} = {All Valid} - ["\]
+
+Whitespace = ({Space}|{LF}|{CR}|{HT})+
+
+Number = '-'? ('0'|{Number19}{Number}*) ('.'{Number}+)? ('E'[+-]?{Number}+)?
+
+String = '"' ({String Characters} | ('\' (["\/bfnrt] | 'u'{Hex Digit}{Hex Digit}{Hex Digit}{Hex Digit})))* '"'
+
+<Value> ::= String
+         |  Number
+         |  <Object>
+         |  <Array>
+         |  'true'
+         |  'false'
+         |  'null'
+
+<Array> ::= '[' <Array Element> ']'
+
+<Array Element> ::= <Value> ',' <Array Element>
+                 |  <>
+
+<Object> ::= '{' <Object Element> '}'
+
+<Object Element> ::= String ':' <Value> ',' <Object Element>
+                  |  <>

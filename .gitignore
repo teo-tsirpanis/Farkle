@@ -187,5 +187,5 @@ docs/
 **/BenchmarkDotNet.Artifacts/
 temp/
 .idea/
-**/*.g.fs
+**/*.g.[fc]s
 .ionide/

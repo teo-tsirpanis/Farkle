@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Farkle Include="JSON.egt" />
+    <Compile Include="JSON.g.fs" />
+    <Compile Include="JSON.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Farkle.Tools.MSBuild" Version="5.0.0-rc.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+  </ItemGroup>
+
+</Project>

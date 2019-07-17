@@ -1,4 +1,4 @@
-#### 5.0.0-rc.2
+#### 5.0.0-rc.2 - 17-07-2019
 * The CLI tool generate post-processor skeletons by default.
 * The CLI tool can automatically find the EGT file to process (if there is only one in the current directory), and the language (if there are C# or F# projects in the current directory).
 * Fixed a bug where generated source files would sometimes have duplicate production names in their enumerated type.

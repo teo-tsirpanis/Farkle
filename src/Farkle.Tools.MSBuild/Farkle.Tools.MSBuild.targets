@@ -22,7 +22,7 @@
             Condition="'$(Language)' == 'VB' AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
             Text="Visual Basic is a language with poor performance characteristics, and is not natively supported by Farkle. Please specify your own template."/>
     <Error
-            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
+            Condition="'$(Language)' != 'C#' AND '$(Language)' != 'F#' AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
             Text="The language $(Language) is not natively supported by Farkle. Please specify your own template."/>
 
     <FarkleCreateTemplateTask

@@ -1,3 +1,6 @@
+#### 5.0.0-rc.4 - 17-07-2019
+* Fixed a bug which made Farkle.Tools.MSBuild unusable.
+
 #### 5.0.0-rc.3 - 17-07-2019
 * The CLI tool got a new property `--namespace` (shortened to `-ns`) which is simpler to use and replaces `--property`.
 * Fixed errors in the generated F# code.

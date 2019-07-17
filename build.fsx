@@ -133,7 +133,6 @@ let fConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration
 let inline fCommonOptions x =
     [
         sprintf "/p:Version=%s" nugetVersion
-        releaseNotes |> String.concat "%0A" |> sprintf "/p:PackageReleaseNotes=\"%s\""
     ] |> DotNet.Options.withAdditionalArgs <| x
 
 let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
@@ -408,7 +407,7 @@ Target.create "Release" (fun _ ->
                 Draft = true
                 Name = sprintf "Version %s" nugetVersion
                 Prerelease = releaseInfo.SemVer.PreRelease.IsSome
-                Body = String.concat Environment.NewLine releaseNotes})
+                Body = releaseNotes |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
     |> GitHub.uploadFiles releaseArtifacts
     |> GitHub.publishDraft
     |> Async.RunSynchronously

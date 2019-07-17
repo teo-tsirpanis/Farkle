@@ -5,13 +5,15 @@
     <version>$version$</version>
     <description>This package makes creating templates from Farkle grammars possible in MSBuild.
 This provides a smoother development experience while using Farkle.</description>
-    <authors>teo-tsirpanis</authors>
+    <authors>Theodore Tsirpanis</authors>
+    <copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</copyright>
     <developmentDependency>true</developmentDependency>
-    <releaseNotes>$releaseNotes$</releaseNotes>
-    <projectUrl>https://github.com/teo-tsirpanis/Farkle/</projectUrl>
+    <releaseNotes>You can see information about the latest releases on https://github.com/teo-tsirpanis/Farkle/releases</releaseNotes>
+    <projectUrl>https://teo-tsirpanis.github.io/Farkle/</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</iconUrl>
     <license type="expression">MIT</license>
-    <tags>farkle msbuild</tags>
+    <tags>farkle parser lalr gold-parser msbuild</tags>
+    <repository type="git" url="https://github.com/teo-tsirpanis/Farkle/" />
   </metadata>
   <files>
     <file src="tools\**\*.*" target="tools" />

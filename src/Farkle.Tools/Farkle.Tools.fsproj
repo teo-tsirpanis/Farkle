@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../NuGet.props" />
   <Import Project="../Farkle.Tools.Shared/Farkle.Tools.Shared.proj" />
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
@@ -13,6 +14,7 @@
 
       After you install it as a CLI tool, pass the "--help" argument to learn how it works.
     </Description>
+    <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="builtin-templates\*.scriban" />
@@ -22,6 +24,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>
-  <Import Project="../NuGet.props" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

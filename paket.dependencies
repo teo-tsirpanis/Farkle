@@ -12,13 +12,14 @@ nuget System.ValueTuple framework: net45
 
 group Executables
 
-  framework: net45, netcoreapp2.1
+  framework: net472, netcoreapp2.1
 
   source https://api.nuget.org/v3/index.json
 
   storage: none
 
   nuget Argu
+  nuget Chiron
   nuget FSharp.Core
   nuget Scriban
   nuget Serilog

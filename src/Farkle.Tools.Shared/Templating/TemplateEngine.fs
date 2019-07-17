@@ -8,8 +8,6 @@ namespace Farkle.Tools.Templating
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
-open Farkle.Tools
-open System.Collections.Generic
 open Scriban
 open Scriban.Runtime
 open Serilog

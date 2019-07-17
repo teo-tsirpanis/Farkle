@@ -375,9 +375,26 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
+let remoteToPush =
+    CommandHelper.getGitResult "" "remote -v"
+    |> Seq.filter (String.endsWith "(push)")
+    |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
+    |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+
+Target.description "Publishes the benchmark report."
+Target.create "PublishBenchmarkReport" (fun _ ->
+    !! "performance/**"
+    |> Seq.iter (fun x ->
+        match Staging.stageFile "" x with
+        | false, _, errors -> failwithf "Error while staging %s: %s" x errors
+        | true, _, _ -> ())
+    Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
+    Branches.pushBranch "" remoteToPush (Information.getBranchName "")
+)
+
 Target.description "Makes a GitHub release. Before that, it publishes the documentation, \
 the GitHub packages, and the benchmark report."
-Target.create "Release" (fun _ ->
+Target.create "GitHubRelease" (fun _ ->
     let user =
         match Environment.environVarOrDefault "github-user" String.Empty with
         | s when not (String.IsNullOrWhiteSpace s) -> s
@@ -386,18 +403,9 @@ Target.create "Release" (fun _ ->
         match Environment.environVarOrDefault "github-pw" String.Empty with
         | s when not (String.IsNullOrWhiteSpace s) -> s
         | _ -> UserInput.getUserPassword "Password: "
-    let remote =
-        CommandHelper.getGitResult "" "remote -v"
-        |> Seq.filter (String.endsWith "(push)")
-        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-        |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
-
-    Staging.stageAll ""
-    Commit.exec "" (sprintf "Bump version to %s" nugetVersion)
-    Branches.pushBranch "" remote (Information.getBranchName "")
 
     Branches.tag "" nugetVersion
-    Branches.pushTag "" remote nugetVersion
+    Branches.pushTag "" remoteToPush nugetVersion
 
     // release on github
     GitHub.createClient user pw
@@ -451,21 +459,19 @@ Target.create "CI" ignore
 
 "Benchmark"
     ==> "AddBenchmarkReport"
-    ==> "Release"
+    ==> "PublishBenchmarkReport"
 
-"Benchmark"
-    =?> ("CI", shouldCIBenchmark)
-
-// I want a clean repo when the packages are going t obe built.
+// I want a clean repo when the packages are going to be built.
 "NuGetPublish"
     ?=> "AddBenchmarkReport"
-
-"ReleaseDocs"
-    ==> "Release"
 
 "Clean"
     ==> "NuGetPack"
     ==> "NuGetPublish"
-    ==> "Release"
+    ==> "GitHubRelease"
+
+"CI" <== ["NuGetPack"; "GenerateDocs"]
+"Benchmark" =?> ("CI", shouldCIBenchmark)
+"Release" <== ["ReleaseDocs"; "GitHubRelease"]
 
 Target.runOrDefault "NuGetPack"

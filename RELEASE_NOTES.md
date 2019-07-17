@@ -1,4 +1,4 @@
-#### 5.0.0-rc.4 - 17-07-2019
+#### 5.0.0-rc.4 - 18-07-2019
 * Fixed a bug which made Farkle.Tools.MSBuild unusable.
 
 #### 5.0.0-rc.3 - 17-07-2019

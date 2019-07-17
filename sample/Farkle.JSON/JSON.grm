@@ -3,7 +3,7 @@
 "Version" = '1.0.0'
 "About" = 'A language describing the JavaScript Object Notation'
 
-"Start Symbol" = <Object>
+"Start Symbol" = <Value>
 
 {Number19} = [123456789]
 {Hex Digit} = [1234567890ABCDEF]

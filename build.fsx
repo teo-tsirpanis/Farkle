@@ -392,8 +392,7 @@ Target.create "PublishBenchmarkReport" (fun _ ->
     Branches.pushBranch "" remoteToPush (Information.getBranchName "")
 )
 
-Target.description "Makes a GitHub release. Before that, it publishes the documentation, \
-the GitHub packages, and the benchmark report."
+Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
 Target.create "GitHubRelease" (fun _ ->
     let user =
         match Environment.environVarOrDefault "github-user" String.Empty with
@@ -424,6 +423,9 @@ Target.create "GitHubRelease" (fun _ ->
 Target.description "The CI generates the documentation, the NuGet packages, and uploads them as artifacts, along with \
 the benchmark report."
 Target.create "CI" ignore
+
+Target.description "Publishes the documentation and makes a GitHub release"
+Target.create "Release" ignore
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override

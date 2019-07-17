@@ -10,9 +10,9 @@ https://opensource.org/licenses/MIT ~}}
 using System;
 using Farkle;
 using Farkle.CSharp;
-using {{ grammar_name }}.Definitions;
+using {{ namespace }}.Definitions;
 
-namespace {{ grammar_name }} {
+namespace {{ namespace }} {
     public static class Language {
 
         // This function converts terminals to anything you want.

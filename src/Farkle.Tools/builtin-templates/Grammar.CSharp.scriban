@@ -13,7 +13,7 @@ https://opensource.org/licenses/MIT ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It should NOT be committed to source control.
 
-namespace {{ grammar_name }}.Definitions {
+namespace {{ namespace }}.Definitions {
     /// <summary> A terminal of the {{ grammar_name }} language.</summary>
     /// <seealso cref="Definitions.Production"/>
     public enum Terminal : uint {
@@ -24,7 +24,7 @@ namespace {{ grammar_name }}.Definitions {
     }
 
     /// <summary> A production of the {{ grammar_name }} language.</summary>
-    /// <seealso cref="Terminal"/>
+    /// <seealso cref="Definitions.Terminal"/>
     public enum Production : uint {
     {{~ for p in grammar.productions ~}}
         /// <summary><c>{{ p | html.escape }}</c></summary>

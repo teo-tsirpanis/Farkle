@@ -7,11 +7,11 @@ https://opensource.org/licenses/MIT ~}}
 // to help you write a post-processor for {{ grammar_name }}.
 // You should complete it yourself, and keep it to source control.
 
-module {{ grammar_name }}.Language
+module {{ namespace }}.Language
 
 open Farkle
 open Farkle.PostProcessor
-open {{ grammar_name }}.Definitions
+open {{ namespace }}.Definitions
 
 // The transformers convert terminals to anything you want.
 // If you do not care about a terminal (like single characters),

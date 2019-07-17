@@ -3,7 +3,7 @@
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Farkle Include="JSON.egt" GrammarName="Farkle.JSON.CSharp" />
+    <Farkle Include="JSON.egt" Namespace="Farkle.JSON.CSharp" />
     <PackageReference Include="Farkle.Tools.MSBuild" Version="5.0.0-rc.2" />
   </ItemGroup>
   <ItemGroup>

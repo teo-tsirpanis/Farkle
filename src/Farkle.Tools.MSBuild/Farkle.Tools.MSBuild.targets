@@ -6,7 +6,7 @@
   </PropertyGroup>
   <Target
           Name="GenerateFarkleTemplates"
-          Inputs="@(Farkle->'%(FullPath)')"
+          Inputs="@(Farkle)"
           Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
           Condition="'@(Farkle)' != ''">
 
@@ -14,21 +14,22 @@
       <_Template>$(FarkleTemplateOverride)</_Template>
       <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
       <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
+      <_Namespace>%(Farkle.Namespace)</_Namespace>
+      <_Namespace Condition="'$(_Namespace)' == ''">$(RootNamespace)</_Namespace>
     </PropertyGroup>
 
-    <Warning
-            Condition="'$(Language)' == 'VB' AND '$(WarnFarkleVB)' != 'false'" File="%(Farkle.FullPath)"
-            Text="Visual Basic is a language with poor performance characteristics, and not officially supported by Farkle.
-Use &lt;WarnFarkleVB&gt;false&lt;/WarnFarkleVB&gt; to not show this warning again."/>
     <Error
-            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' != ''" File="%(Farkle.FullPath)"
+            Condition="'$(Language)' == 'VB' AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
+            Text="Visual Basic is a language with poor performance characteristics, and is not natively supported by Farkle. Please specify your own template."/>
+    <Error
+            Condition="('$(Language)' != 'C#' OR '$(Language)' != 'F#') AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
             Text="The language $(Language) is not natively supported by Farkle. Please specify your own template."/>
 
     <FarkleCreateTemplateTask
             Grammar="%(Farkle.FullPath)"
             Language="$(Language)"
             CustomTemplate="$(_Template)"
-            CustomName="%(Farkle.GrammarName)"
+            CustomName="$(_Namespace)"
             OutputFile="$(_Output)"/>
   </Target>
   <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">

@@ -3,7 +3,7 @@
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Farkle Include="JSON.egt" GrammarName="Farkle.JSON.FSharp" />
+    <Farkle Include="JSON.egt" Namespace="Farkle.JSON.FSharp" />
     <Compile Include="JSON.g.fs" />
     <Compile Include="JSON.fs" />
   </ItemGroup>

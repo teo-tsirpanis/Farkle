@@ -20,6 +20,12 @@ type IdentifierTypeCase =
 
 module Utilities =
 
+    let toBase64 (grammarBytes: _ []) doPad =
+        let options =
+            if doPad then Base64FormattingOptions.InsertLineBreaks
+            else Base64FormattingOptions.None
+        Convert.ToBase64String(grammarBytes, options)
+
     let toIdentifier name case (separator: string) =
         let sb = StringBuilder()
         let processChar c =
@@ -84,18 +90,6 @@ module Utilities =
                 |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
-    let toBase64 (grammarBytes: _ []) doPad =
-        let options =
-            if doPad then Base64FormattingOptions.InsertLineBreaks
-            else Base64FormattingOptions.None
-        Convert.ToBase64String(grammarBytes, options)
-
-    let doFmt fShouldPrintFullProduction (x: obj) case separator =
-        match x with
-        | :? Terminal as x -> toIdentifier x.Name case separator
-        | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
-        | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
-
     let shouldPrintFullProduction productions =
         let getFormattingElements prod =
             let handle =
@@ -119,6 +113,12 @@ module Utilities =
                 | _, prods -> prods |> Seq.map (fun prod -> KeyValuePair(prod, true)))
             |> ImmutableDictionary.CreateRange
         fun prod -> dict.[prod]
+
+    let doFmt fShouldPrintFullProduction (x: obj) case separator =
+        match x with
+        | :? Terminal as x -> toIdentifier x.Name case separator
+        | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
+        | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 
     let load grammar (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)

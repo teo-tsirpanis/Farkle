@@ -15,8 +15,8 @@ open System
 open System.IO
 
 module TemplateEngine =
-    let renderTemplate (log: ILogger) builtinTemplatesNamespace additionalProperties grammarFile templateSource = either {
-        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate builtinTemplatesNamespace templateSource
+    let renderTemplate (log: ILogger) resourceNamespace generatedFileNamespace grammarFile templateSource = either {
+        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate resourceNamespace templateSource
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
@@ -28,8 +28,8 @@ module TemplateEngine =
             | Error message ->
                 log.Error("Error while reading {grammarFile}: {message}", grammarFile, message)
                 Error ()
-        additionalProperties |> List.iter (fun (key, value) -> grammar.Properties.[key] <- value)
-        let fr = FarkleRoot.Create grammar grammarFile bytes
+        let ns = generatedFileNamespace |> Option.defaultValue (Path.GetFileNameWithoutExtension(grammarFile))
+        let fr = FarkleRoot.Create grammar grammarFile ns bytes
 
         let so = ScriptObject()
         so.Import fr

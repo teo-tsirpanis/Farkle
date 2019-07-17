@@ -16,9 +16,9 @@
   </ItemDefinitionGroup>
 
   <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
-    <FarkleTargetAssembly>../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTargetAssembly>
+    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="'$(MSBuildRuntimeType)' != 'Core'">
-    <FarkleTargetAssembly>../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTargetAssembly>
+    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
 </Project>

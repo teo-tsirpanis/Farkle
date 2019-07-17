@@ -1,7 +1,11 @@
+#### 5.0.0-rc.3
+* The CLI tool got a new property `--namespace` (shortened to `-ns`) which is simpler to use and replaces `--property`.
+* Fixed errors in the generated F# code.
+
 #### 5.0.0-rc.2 - 17-07-2019
 * The CLI tool generate post-processor skeletons by default.
 * The CLI tool can automatically find the EGT file to process (if there is only one in the current directory), and the language (if there are C# or F# projects in the current directory).
-* Fixed a bug where generated source files would sometimes have duplicate production names in their enumerated type.
+* Fixed a bug where generated source files would sometimes have duplicate production names in their enumerated type. - [#7](https://github.com/teo-tsirpanis/Farkle/issues/7)
 
 #### 5.0.0-rc.1 - 15-07-2019
 * Farkle now has better C# support. Just write `using Farkle.CSharp;`, and you are good to go!

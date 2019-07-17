@@ -19,7 +19,7 @@ type Arguments =
     | [<Unique>] Type of TemplateType
     | [<Unique; AltCommandLine("-t")>] TemplateFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
-    | [<EqualsAssignment; AltCommandLine("-prop")>] Property of key: string * value: string
+    | [<Unique; AltCommandLine("-ns")>] Namespace of string
 with
     interface IArgParserTemplate with
         member x.Usage =
@@ -34,9 +34,8 @@ the grammar and its symbol types, or a skeleton for a post-processor. Defaults t
 In this case, the language is completely ignored."
             | OutputFile _ -> "Specifies where the generated output will be stored. \
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to 'out'."
-            | Property _ -> "Specifies an additional property of the grammar. Keys are case-insensitive. \
-These can be retrieved in the templates by grammar.properties[\"Key\"]. \
-For example, the property \"Name\" determines the namespace of the grnerated source files."
+            | Namespace _ -> "Specifies the namespace of the generated source file. \
+It can be retrieved from the template with the 'namespace' variable."
 
 let assertFileExists fileName =
     if File.Exists fileName then
@@ -89,7 +88,7 @@ let run (args: ParseResults<_>) = either {
         args.TryPostProcessResult(GrammarFile, assertFileExists)
         |> Option.defaultWith tryInferGrammarFile
     let typ = args.GetResult(Type, defaultValue = TemplateType.PostProcessor)
-    let properties = args.GetResults(Property)
+    let ns = args.TryGetResult(Namespace)
     let! templateSource =
         // First, see if a custom template is specified.
         args.TryPostProcessResult(TemplateFile, toCustomFile)
@@ -110,7 +109,7 @@ let run (args: ParseResults<_>) = either {
             // of the folder, while it doesn't on Farkle.Tools.MSBuild??
             // TODO: Find out why.
             "Farkle.Tools.builtin_templates"
-            properties
+            ns
             grammarFile
             templateSource
 

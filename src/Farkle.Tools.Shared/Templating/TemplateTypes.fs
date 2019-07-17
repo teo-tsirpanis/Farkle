@@ -49,14 +49,16 @@ type FarkleRoot = {
     [<ScriptMemberIgnore>]
     GrammarBytes: byte[]
     GrammarPath: string
+    Namespace: string
 }
 with
     [<ScriptMemberIgnore>]
-    static member Create grammar grammarPath bytes = {
+    static member Create grammar grammarPath ns bytes = {
         Farkle = FarkleObject.Create
         Grammar = grammar
         GrammarBytes = bytes
         GrammarPath = grammarPath
+        Namespace = ns
     }
 
 type GeneratedTemplate = {

@@ -52,11 +52,8 @@ type FarkleCreateTemplateTask() =
     /// <seealso cref="Language"/>
     member val CustomTemplate = null with get, set
 
-    /// <summary>An optional custom name for the grammar.</summary>
-    /// <remarks>It is supported by the built-in templates, where it changes the
-    /// prefix of the namespace, which defaults to the "Name" property as set in
-    /// GOLD Parser.</remarks>
-    member val CustomName = null with get, set
+    /// <summary>An optional custom namespace for the generated file.</summary>
+    member val Namespace = null with get, set
 
     /// <summary>The file path to write the output to.</summary>
     /// <remarks>If not specified, it defaults to the name of the grammar file,
@@ -89,13 +86,9 @@ type FarkleCreateTemplateTask() =
                     BuiltinTemplate(lang, TemplateType.Grammar))
             | false, false ->
                 log.Error("Need to specify either a language, or a custom template"); Error()
-        let properties = [
-            if hasValue this.CustomName then
-                log.Debug("Grammar name overriden to {GrammarName}", this.CustomName)
-                yield "Name", this.CustomName
-        ]
+        let ns = if hasValue this.Namespace then Some this.Namespace else None
 
-        let! generatedTemplate = TemplateEngine.renderTemplate log "Farkle.Tools.MSBuild" properties grammarPath templateSource
+        let! generatedTemplate = TemplateEngine.renderTemplate log "Farkle.Tools.MSBuild" ns grammarPath templateSource
 
         this.GeneratedTo <-
             if hasValue this.OutputFile then

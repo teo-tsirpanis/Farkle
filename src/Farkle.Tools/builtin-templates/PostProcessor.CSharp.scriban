@@ -35,13 +35,13 @@ namespace {{ grammar_name }} {
             switch ((Production) prod) {
             {{~ for p in grammar.productions ~}}
                 case Production.{{ p | fmt pascal_case "" }}:
-                    return Fuser.Create();
+                    return Fuser.
             {{~ end ~}}
                 default: return null; // This line should never be reached.
             }
         }
 
         public static readonly RuntimeFarkle<TODO> Runtime =
-            RuntimeFarkle<TODO>.CreateFromBase64(Grammar.AsBase64,PostProcessor.Create<TODO>(Transform, GetFuser));
+            RuntimeFarkle<TODO>.CreateFromBase64String(Grammar.AsBase64,PostProcessor.Create<TODO>(Transform, GetFuser));
     }
 }

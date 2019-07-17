@@ -6,7 +6,7 @@ https://opensource.org/licenses/MIT ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%Y-%m-%d" }}.
 // It should NOT be committed to source control.
 
-namespace ``{{ grammar_name }}``.Definitions
+namespace {{ grammar_name }}.Definitions
 
 /// A terminal of the {{ grammar_name }} language.
 type Terminal =

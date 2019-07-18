@@ -12,7 +12,6 @@ open Farkle.Collections
 open System.IO
 open Farkle.PostProcessor
 
-[<MemoryDiagnoser>]
 /// This benchmark measures the performance of Farkle
 /// (in both static and dynamic block mode, the latter with varying buffer sizes)
 /// The task is to parse the GOLD Meta Language file describing the GOLD Meta Language.

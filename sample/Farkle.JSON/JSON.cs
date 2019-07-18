@@ -14,7 +14,7 @@ namespace Farkle.JSON.CSharp
 {
     public static class Language
     {
-        private static string UnescapeJsontring(ReadOnlySpan<char> data)
+        private static string UnescapeJsonString(ReadOnlySpan<char> data)
         {
             // Trim the initial and final double quotes
             data = data.Slice(1, data.Length - 2);
@@ -54,7 +54,7 @@ namespace Farkle.JSON.CSharp
 #else
                             ushort.Parse(data.Slice(i, 4).ToString(), NumberStyles.HexNumber);
 #endif
-                        sb.Append((char)hexCode);
+                        sb.Append((char) hexCode);
                         i += 4;
                     }
                 }
@@ -68,7 +68,7 @@ namespace Farkle.JSON.CSharp
         // you can let the default case return null.
         private static object Transform(uint terminal, Position position, ReadOnlySpan<char> data)
         {
-            switch ((Terminal)terminal)
+            switch ((Terminal) terminal)
             {
                 case Terminal.Number:
                     var num =
@@ -80,7 +80,7 @@ namespace Farkle.JSON.CSharp
                     // Avoid boxing by wrapping directly to the Json type.
                     return Json.NewNumber(num);
                 case Terminal.String:
-                    return Json.NewString(UnescapeJsontring(data));
+                    return Json.NewString(UnescapeJsonString(data));
                 default: return null;
             }
         }
@@ -90,7 +90,7 @@ namespace Farkle.JSON.CSharp
         // Do not delete anything here, or the post-processor will fail.
         private static Fuser GetFuser(uint prod)
         {
-            switch ((Production)prod)
+            switch ((Production) prod)
             {
                 case Production.ValueString:
                     return Fuser.First;
@@ -107,14 +107,13 @@ namespace Farkle.JSON.CSharp
                 case Production.ValueNull:
                     return Fuser.Constant(Json.NewNull(null));
                 case Production.ArrayLBracketRBracket:
-                    return Fuser.Create<FSharpList<Json>, Json>(1, list => Json.NewArray(list));
+                    return Fuser.Create<FSharpList<Json>, Json>(1, Json.NewArray);
                 case Production.ArrayElementComma:
-                    return Fuser.Create<Json, FSharpList<Json>, FSharpList<Json>>(0, 2,
-                        (x, xs) => FSharpList<Json>.Cons(x, xs));
+                    return Fuser.Create<Json, FSharpList<Json>, FSharpList<Json>>(0, 2, FSharpList<Json>.Cons);
                 case Production.ArrayElementEmpty:
                     return Fuser.Constant(FSharpList<Json>.Empty);
                 case Production.ObjectLBraceRBrace:
-                    return Fuser.Create<FSharpMap<string, Json>, Json>(1, obj => Json.NewObject(obj));
+                    return Fuser.Create<FSharpMap<string, Json>, Json>(1, Json.NewObject);
                 case Production.ObjectElementStringColonComma:
                     return Fuser.Create<string, Json, FSharpMap<string, Json>, FSharpMap<string, Json>>(0, 2, 4,
                         (key, value, map) => map.Add(key, value));

@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Farkle Include="JSON.egt" Namespace="Farkle.JSON.CSharp" />
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="5.0.0-rc.2" />
+    <PackageReference Include="Farkle.Tools.MSBuild" Version="5.0.0-rc.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />

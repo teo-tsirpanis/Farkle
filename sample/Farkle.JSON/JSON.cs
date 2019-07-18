@@ -80,10 +80,12 @@ namespace Farkle.JSON.CSharp
                     // Avoid boxing by wrapping directly to the Json type.
                     return Json.NewNumber(num);
                 case Terminal.String:
-                    return Json.NewString(UnescapeJsonString(data));
+                    return UnescapeJsonString(data);
                 default: return null;
             }
         }
+
+        private static readonly FSharpMap<string, Json> _emptyMap = MapModule.Empty<string, Json>();
 
         // The fusers merge the parts of a production into one object of your desire.
         // This function maps each production to a fuser.
@@ -93,7 +95,7 @@ namespace Farkle.JSON.CSharp
             switch ((Production) prod)
             {
                 case Production.ValueString:
-                    return Fuser.First;
+                    return Fuser.Create<string, Json>(0, Json.NewString);
                 case Production.ValueNumber:
                     return Fuser.First;
                 case Production.ValueObject:
@@ -108,17 +110,25 @@ namespace Farkle.JSON.CSharp
                     return Fuser.Constant(Json.NewNull(null));
                 case Production.ArrayLBracketRBracket:
                     return Fuser.Create<FSharpList<Json>, Json>(1, Json.NewArray);
-                case Production.ArrayElementComma:
-                    return Fuser.Create<Json, FSharpList<Json>, FSharpList<Json>>(0, 2, FSharpList<Json>.Cons);
-                case Production.ArrayElementEmpty:
+                case Production.ArrayOptionalArrayReversed:
+                    return Fuser.Create<FSharpList<Json>, FSharpList<Json>>(0, ListModule.Reverse);
+                case Production.ArrayOptionalEmpty:
                     return Fuser.Constant(FSharpList<Json>.Empty);
+                case Production.ArrayReversedComma:
+                    return Fuser.Create<Json, FSharpList<Json>, FSharpList<Json>>(2, 0, FSharpList<Json>.Cons);
+                case Production.ArrayReversed:
+                    return Fuser.Create<Json, FSharpList<Json>>(0, ListModule.Singleton);
                 case Production.ObjectLBraceRBrace:
                     return Fuser.Create<FSharpMap<string, Json>, Json>(1, Json.NewObject);
-                case Production.ObjectElementStringColonComma:
-                    return Fuser.Create<string, Json, FSharpMap<string, Json>, FSharpMap<string, Json>>(0, 2, 4,
+                case Production.ObjectOptionalObjectElement:
+                    return Fuser.First;
+                case Production.ObjectOptionalEmpty:
+                    return Fuser.Constant(_emptyMap);
+                case Production.ObjectElementCommaStringColon:
+                    return Fuser.Create<string, Json, FSharpMap<string, Json>, FSharpMap<string, Json>>(2, 4, 0,
                         (key, value, map) => map.Add(key, value));
-                case Production.ObjectElementEmpty:
-                    return Fuser.Constant(MapModule.Empty<string, Json>());
+                case Production.ObjectElementStringColon:
+                    return Fuser.Create<string, Json, FSharpMap<string, Json>>(0, 2, _emptyMap.Add);
                 default: return null; // This line should never be reached.
             }
         }

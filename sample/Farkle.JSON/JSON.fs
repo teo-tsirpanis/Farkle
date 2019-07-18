@@ -58,11 +58,13 @@ let private transformers =
 
 open Fuser
 
+let emptyMap: Map<string, Json> = Map.empty
+
 // The fusers merge the parts of a production into one object of your desire.
 // Do not delete anything here, or the post-processor will fail.
 let private fusers =
     [
-        identity Production.ValueString
+        take1Of Production.ValueString 0 Json.String
         identity Production.ValueNumber
         identity Production.ValueObject
         identity Production.ValueArray
@@ -70,11 +72,15 @@ let private fusers =
         constant Production.ValueFalse <| Json.Bool false
         constant Production.ValueNull <| Json.Null ()
         take1Of Production.ArrayLBracketRBracket 1 Json.Array
-        take2Of Production.ArrayElementComma (0, 2) (fun (x: Json) xs -> x :: xs)
-        constant Production.ArrayElementEmpty ([] : Json list)
+        take1Of Production.ArrayOptionalArrayReversed 0 (List.rev: Json list -> _)
+        constant Production.ArrayOptionalEmpty ([] : Json list)
+        take2Of Production.ArrayReversedComma (2, 0) (fun (x: Json) xs -> x :: xs)
+        take1Of Production.ArrayReversed 0 (List.singleton: Json -> _)
         take1Of Production.ObjectLBraceRBrace 1 Json.Object
-        take3Of Production.ObjectElementStringColonComma (0, 2, 4) (fun (k: string) (v: Json) xs -> Map.add k v xs)
-        constant Production.ObjectElementEmpty (Map.empty: Map<string,Json>)
+        identity Production.ObjectOptionalObjectElement
+        constant Production.ObjectOptionalEmpty emptyMap
+        take3Of Production.ObjectElementCommaStringColon (2, 4, 0) (fun (k: string) (v: Json) xs -> Map.add k v xs)
+        take2Of Production.ObjectElementStringColon (0, 2) (fun k v -> emptyMap.Add(k, v))
     ]
 
 let private createRuntimeFarkle() =

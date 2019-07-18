@@ -10,6 +10,8 @@ open Chiron
 open Farkle
 open Farkle.Common
 open Farkle.Collections
+open Farkle.JSON
+open Farkle.PostProcessor
 open FParsec
 open System.IO
 open System.Text
@@ -19,7 +21,10 @@ type JsonBenchmark() =
     let jsonFile = "generated.json"
 
     let jsonString = File.ReadAllText(jsonFile)
+    
+    let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime
 
+    [<Params(true, false)>]
     member val DynamicallyReadInput = true with get, set
 
     member x.GetCharStream() =
@@ -39,6 +44,12 @@ type JsonBenchmark() =
     member x.FarkleFSharp() =
         use cs = x.GetCharStream()
         RuntimeFarkle.parseChars JSON.FSharp.Language.runtime ignore cs
+        |> returnOrFail
+
+    [<Benchmark>]  
+    member x.FarkleSyntaxCheck() =
+        use cs = x.GetCharStream()
+        RuntimeFarkle.parseChars syntaxChecker ignore cs
         |> returnOrFail
 
     [<Benchmark>]

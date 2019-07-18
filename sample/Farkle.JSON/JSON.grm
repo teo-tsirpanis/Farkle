@@ -24,12 +24,18 @@ String = '"' ({String Characters} | ('\' (["\/bfnrt] | 'u'{Hex Digit}{Hex Digit}
          |  'false'
          |  'null'
 
-<Array> ::= '[' <Array Element> ']'
+<Array> ::= '[' <Array Optional> ']'
 
-<Array Element> ::= <Value> ',' <Array Element>
-                 |  <>
-
-<Object> ::= '{' <Object Element> '}'
-
-<Object Element> ::= String ':' <Value> ',' <Object Element>
+<Array Optional> ::= <Array Reversed>
                   |  <>
+
+<Array Reversed> ::= <Array Reversed> ',' <Value>
+                 |  <Value>
+
+<Object> ::= '{' <Object Optional> '}'
+
+<Object Optional> ::= <Object Element>
+                   |  <>
+
+<Object Element> ::= <Object Element> ',' String ':' <Value>
+                  |  String ':' <Value>

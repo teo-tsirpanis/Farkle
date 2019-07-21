@@ -1,6 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  <PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Language)' == 'C#'">
     <Farkle>
+      <CompileIt>true</CompileIt>
       <OutputExtension>.g.cs</OutputExtension>
     </Farkle>
   </ItemDefinitionGroup>

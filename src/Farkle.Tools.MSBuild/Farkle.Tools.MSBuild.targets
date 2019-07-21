@@ -1,6 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTaskAssembly)"/>
   <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <BuildDependsOn>GenerateFarkleTemplates;$(BuildDependsOn)</BuildDependsOn>
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
   </PropertyGroup>
@@ -31,6 +32,18 @@
             CustomTemplate="$(_Template)"
             Namespace="$(_Namespace)"
             OutputFile="$(_Output)"/>
+
+    <ItemGroup Condition="'%(Farkle.CompileIt)' == 'true'">
+      <!-- We have to ensure that the generated file is being included in the Compile item
+      only once. It might have been already included in cases like a rebuild (the file existed,
+      had been caught by the wildcard, deleted by the target below, generated again, but had
+      never been removed from Compile). Removing it from Compile at the cleaning target did not
+      work either. We also use the absolute path below, which is fine, because MSBuild removes the
+      item even if it had been imported as a relative path. And it has been tested that removing
+      a non-existent item does not cause a problem. -->
+      <Compile Remove="$(_Output)" />
+      <Compile Include="$(_Output)" />
+    </ItemGroup>
   </Target>
   <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">
     <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"/>

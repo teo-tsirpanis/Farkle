@@ -13,7 +13,7 @@ open System.Threading
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 
-    module private ObjectBuffer =
+    module internal ObjectBuffer =
 
         let private arrayStorage = new ThreadLocal<obj[]>(fun () -> Array.zeroCreate 1)
 

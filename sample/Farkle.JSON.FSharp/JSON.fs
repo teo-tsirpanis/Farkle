@@ -1,6 +1,7 @@
-// This file was created by Farkle.Tools and is a skeleton
-// to help you write a post-processor for JSON.
-// You should complete it yourself, and keep it to source control.
+// Copyright (c) 2019 Theodore Tsirpanis
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
 
 module Farkle.JSON.FSharp.Language
 
@@ -76,11 +77,11 @@ let private fusers =
         constant Production.ArrayOptionalEmpty ([] : Json list)
         take2Of Production.ArrayReversedComma (2, 0) (fun (x: Json) xs -> x :: xs)
         take1Of Production.ArrayReversed 0 (List.singleton: Json -> _)
-        take1Of Production.ObjectLBraceRBrace 1 Json.Object
+        take1Of Production.ObjectLBraceRBrace 1 (Map.ofList >> Json.Object)
         identity Production.ObjectOptionalObjectElement
-        constant Production.ObjectOptionalEmpty emptyMap
-        take3Of Production.ObjectElementCommaStringColon (2, 4, 0) (fun (k: string) (v: Json) xs -> Map.add k v xs)
-        take2Of Production.ObjectElementStringColon (0, 2) (fun k v -> emptyMap.Add(k, v))
+        constant Production.ObjectOptionalEmpty ([] : (string * Json) list)
+        take3Of Production.ObjectElementCommaStringColon (2, 4, 0) (fun (k: string) (v: Json) xs -> (k, v) :: xs)
+        take2Of Production.ObjectElementStringColon (0, 2) (fun (k: string) (v: Json) -> [k, v])
     ]
 
 let private createRuntimeFarkle() =

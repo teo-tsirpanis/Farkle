@@ -1,6 +1,7 @@
-// This file was created by Farkle.Tools and is a skeleton
-// to help you write a post-processor for JSON.
-// You should complete it yourself, and keep it to source control.
+// Copyright (c) 2019 Theodore Tsirpanis
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
 
 using static Chiron;
 using Microsoft.FSharp.Collections;
@@ -85,8 +86,6 @@ namespace Farkle.JSON.CSharp
             }
         }
 
-        private static readonly FSharpMap<string, Json> _emptyMap = MapModule.Empty<string, Json>();
-
         // The fusers merge the parts of a production into one object of your desire.
         // This function maps each production to a fuser.
         // Do not delete anything here, or the post-processor will fail.
@@ -119,16 +118,20 @@ namespace Farkle.JSON.CSharp
                 case Production.ArrayReversed:
                     return Fuser.Create<Json, FSharpList<Json>>(0, ListModule.Singleton);
                 case Production.ObjectLBraceRBrace:
-                    return Fuser.Create<FSharpMap<string, Json>, Json>(1, Json.NewObject);
+                    return Fuser.Create<FSharpList<Tuple<string, Json>>, Json>(1,
+                        list => Json.NewObject(MapModule.OfList(list)));
                 case Production.ObjectOptionalObjectElement:
                     return Fuser.First;
                 case Production.ObjectOptionalEmpty:
-                    return Fuser.Constant(_emptyMap);
+                    return Fuser.Constant(FSharpList<Tuple<string, Json>>.Empty);
                 case Production.ObjectElementCommaStringColon:
-                    return Fuser.Create<string, Json, FSharpMap<string, Json>, FSharpMap<string, Json>>(2, 4, 0,
-                        (key, value, map) => map.Add(key, value));
+                    return Fuser.Create<string, Json, FSharpList<Tuple<string, Json>>, FSharpList<Tuple<string, Json>>>(
+                        2, 4, 0,
+                        (key, value, map) =>
+                            FSharpList<Tuple<string, Json>>.Cons(new Tuple<string, Json>(key, value), map));
                 case Production.ObjectElementStringColon:
-                    return Fuser.Create<string, Json, FSharpMap<string, Json>>(0, 2, _emptyMap.Add);
+                    return Fuser.Create<string, Json, FSharpList<Tuple<string, Json>>>(0, 2,
+                        (key, value) => ListModule.Singleton(new Tuple<string, Json>(key, value)));
                 default: return null; // This line should never be reached.
             }
         }

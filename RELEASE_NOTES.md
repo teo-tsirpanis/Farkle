@@ -1,4 +1,8 @@
-#### 5.0.0-rc.5
+#### 5.0.0-rc.6 - 22-07-2019
+* Fix a breaking error in Farkle.Tools.MSBuild.
+* Reduce allocations in the parser.
+
+#### 5.0.0-rc.5 - 22-07-2019
 * Fixed a bug which sometimes made Farkle.Tools.MSBuild unusable for C# users.
 * Added a new MSBuild item metadata called `OutputDirectorySuffix` which is useful for generating templates in a different directory than the EGT file.
 * Add a new benchmark which compares a Farkle-made JSON parser to [Chiron](https://xyncro.tech/chiron/), which is powered by [FParsec](https://www.quanttec.com/fparsec/). You can see the results of the benchmarks [over here](https://github.com/teo-tsirpanis/Farkle/tree/master/performance).

@@ -8,9 +8,27 @@ namespace Farkle.Parser
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.PostProcessor
+open System.Threading
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
+
+    module private ObjectBuffer =
+
+        let private arrayStorage = new ThreadLocal<obj[]>(fun () -> Array.zeroCreate 1)
+
+        let private checkLength length = if Array.length arrayStorage.Value < length then arrayStorage.Value <- Array.zeroCreate length
+
+        let unloadStackIntoBuffer length stack =
+            checkLength length
+            let arr = arrayStorage.Value
+            let rec impl stack i =
+                match stack with
+                | (_, x) :: xs when i >= 0 ->
+                    Array.set arr i x
+                    impl xs (i - 1)
+                | _ -> arr, stack
+            impl stack (length - 1)
 
     /// <summary>Parses and post-processes tokens based on a <see cref="Grammar"/> and a
     /// <see cref="PostProcessor"/>, until parsing completes.</summary>
@@ -53,13 +71,11 @@ module LALRParser =
                     impl (fToken input) ((nextState, data) :: stack)
                 | None -> ShiftOnEOF |> internalError
             | true, LALRAction.Reduce productionToReduce ->
-                let tokens, stack =
-                    let (poppedStack, remainingStack) = List.popStack productionToReduce.Handle.Length stack
-                    poppedStack |> Seq.map snd |> Array.ofSeq, remainingStack
+                let tokens, stack = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
                 let nextState = getCurrentState stack
                 match nextState.GotoActions.TryGetValue productionToReduce.Head with
                 | true, LALRState nextState ->
-                    let resultObj = 
+                    let resultObj =
                         try
                             pp.Fuse(productionToReduce, tokens)
                         with

@@ -12,7 +12,6 @@
     <Compile Include="Utilities/Common.fs" />
     <Compile Include="Utilities/Position.fs" />
     <Compile Include="Utilities/Monads.fs" />
-    <Compile Include="Utilities/CollectionUtilities.fs" />
     <Compile Include="Utilities/RangeMap.fs" />
     <Compile Include="Utilities/IndexedCollections.fs" />
     <Compile Include="Utilities/CharStream.fs" />

@@ -8,13 +8,13 @@
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"
-          Outputs="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"
+          Outputs="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)%(OutputExtension)')"
           Condition="'@(Farkle)' != ''">
 
     <PropertyGroup>
       <_Template>$(FarkleTemplateOverride)</_Template>
       <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
-      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
+      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
       <_Namespace>%(Farkle.Namespace)</_Namespace>
       <_Namespace Condition="'$(_Namespace)' == ''">$(RootNamespace)</_Namespace>
     </PropertyGroup>
@@ -46,6 +46,6 @@
     </ItemGroup>
   </Target>
   <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">
-    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(FileName)%(OutputExtension)')"/>
+    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)%(OutputExtension)')"/>
   </Target> 
 </Project>

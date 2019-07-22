@@ -28,9 +28,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{99555D79
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.MSBuild", "src\Farkle.Tools.MSBuild\Farkle.Tools.MSBuild.fsproj", "{BE66563B-D4EA-40FD-98E1-E4669AA0F9A1}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.JSON.FSharp", "sample\Farkle.JSON\Farkle.JSON.FSharp.fsproj", "{EA56475F-D782-487C-8582-98FE6A0FFB5D}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.JSON.FSharp", "sample\Farkle.JSON.FSharp\Farkle.JSON.FSharp.fsproj", "{EA56475F-D782-487C-8582-98FE6A0FFB5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.JSON.CSharp", "sample\Farkle.JSON\Farkle.JSON.CSharp.csproj", "{4BB17BD7-34F0-4AAC-82BE-9105B1A0AB89}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.JSON.CSharp", "sample\Farkle.JSON.CSharp\Farkle.JSON.CSharp.csproj", "{4BB17BD7-34F0-4AAC-82BE-9105B1A0AB89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

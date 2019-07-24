@@ -34,8 +34,9 @@ module Tokenizer =
             | (_, _) :: gs -> impl gs
         impl groupStack
 
-    let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
+    let private tokenizeDFA (grammar: Grammar) (input: CharStream) =
         let inline newToken sym idx = struct (sym, pinSpan input idx) |> Ok |> Some
+        let {InitialState = initialState; States = states} = grammar.DFAStates
         let retrieve state = SafeArray.retrieve states state
         let rec impl idx (currState: DFAState) lastAccept =
             let mutable x = '\u0103'
@@ -47,7 +48,7 @@ module Tokenizer =
                 | ValueNone -> None
             | true ->
                 let newDFA =
-                    RangeMap.tryFind x currState.Edges
+                    grammar.OptimizedOperations.GetNextDFAState x currState
                     |> ValueOption.map retrieve
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
@@ -64,7 +65,7 @@ module Tokenizer =
     /// Returns the next token from the current position of a `CharStream`.
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
-    let tokenize {_DFAStates = dfa; _Groups = groups} fTransform fMessage (input: CharStream) =
+    let tokenize ({_Groups = groups} as grammar) fTransform fMessage (input: CharStream) =
         let fail msg = Message (input.Position, msg) |> ParseError |> raise
         let rec impl (gs: TokenizerState) =
             let newToken sym (cs: CharSpan) =
@@ -77,7 +78,7 @@ module Tokenizer =
                 let theHolyToken = Token.Create pos sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
-            let tok = tokenizeDFA dfa input
+            let tok = tokenizeDFA grammar input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We consume the token, and return it.

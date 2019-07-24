@@ -299,12 +299,11 @@ module internal GrammarReader =
             }
             let dfaStates = SafeArray.ofImmutableArray <| dfaStates.MoveToImmutable()
             let lalrStates = SafeArray.ofImmutableArray <| lalrStates.MoveToImmutable()
-            return {
-                _Properties = properties.ToImmutable()
-                _Symbols = symbols
-                _Productions = productions.MoveToImmutable()
-                _Groups = SafeArray.ofImmutableArray <| groups.MoveToImmutable()
-                _LALRStates = {InitialState = lalrStates.[initialLALR]; States = lalrStates}
-                _DFAStates = {InitialState = dfaStates.[initialDFA]; States = dfaStates}
-            }
+            return OptimizedOperations.createOptimizedGramamr
+                (properties.ToImmutable())
+                symbols
+                (productions.MoveToImmutable())
+                (SafeArray.ofImmutableArray <| groups.MoveToImmutable())
+                {InitialState = lalrStates.[initialLALR]; States = lalrStates}
+                {InitialState = dfaStates.[initialDFA]; States = dfaStates}
         }

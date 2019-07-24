@@ -9,9 +9,13 @@ open System
 open System.Collections.Immutable
 
 [<Struct; CustomComparison; StructuralEquality>]
-type private RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
+/// Αn closed intereval whose elements are assigned a value .
+type RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
+    /// The start of the intereval.
     KeyFrom: 'key
+    /// The end of the intereval.
     KeyTo: 'key
+    /// The corresponding value that gets assigned to the elements of the intereval.
     Value: 'a
 }
 with
@@ -21,6 +25,9 @@ with
 /// A map data structure that works best when a continuous range of keys is assigned the same value.
 /// It can also double as a set, when the value type is a unit.
 type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
+with
+    // An immutable array of the elements of a `RangeMap`.
+    member x.Elements = let (RangeMap x) = x in x
 
 /// Functions to create and use `RangeMap`s.
 module RangeMap =

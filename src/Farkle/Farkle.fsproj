@@ -18,6 +18,7 @@
     <Compile Include="Grammar/EGTTypes.fs" />
     <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
+    <Compile Include="Grammar/OptimizedOperations.fs" />
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/SetUtils.fs" />

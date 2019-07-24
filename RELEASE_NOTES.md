@@ -1,3 +1,7 @@
+#### 5.0.0-rc.7
+* Speed-up the tokenizer by using an array that handles ASCII characters.
+* Remove `Grammar.StartSymbol`, as it was unreliable, and useless to Farkle.
+
 #### 5.0.0-rc.6 - 22-07-2019
 * Fix a breaking error in Farkle.Tools.MSBuild.
 * Reduce allocations in the parser.

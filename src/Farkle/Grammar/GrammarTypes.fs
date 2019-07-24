@@ -120,8 +120,8 @@ and [<RequireQualifiedAccess>] DFAState =
     | Continue of index: uint32 * DFAEdges
     /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
     | Accept of index: uint32 * DFASymbol * DFAEdges
-    member x.Edges = match x with | DFAState.Continue (_, edges) | DFAState.Accept (_, _, edges) -> edges
-    member x.Index = match x with | DFAState.Continue (idx, _) | DFAState.Accept (idx, _, _) -> idx
+    member x.Edges = match x with | Continue (_, edges) | Accept (_, _, edges) -> edges
+    member x.Index = match x with | Continue (idx, _) | Accept (idx, _, _) -> idx
     override x.ToString() = string x.Index
 
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
@@ -190,7 +190,6 @@ type Grammar = internal {
 
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.
-    _StartSymbol: Nonterminal
     _Symbols: Symbols
     _Productions: Production ImmutableArray
 
@@ -202,8 +201,6 @@ type Grammar = internal {
 with
     /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
-    /// The grammar's start `Nonterminal`.
-    member x.StartSymbol = x._StartSymbol
     /// The grammar's terminals =, nonterminals, and noise symbols.
     member x.Symbols = x._Symbols
     /// The grammar's `Production`s.

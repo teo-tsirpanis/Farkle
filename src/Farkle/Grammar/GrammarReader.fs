@@ -301,7 +301,6 @@ module internal GrammarReader =
             let lalrStates = SafeArray.ofImmutableArray <| lalrStates.MoveToImmutable()
             return {
                 _Properties = properties.ToImmutable()
-                _StartSymbol = productions.[0].Head
                 _Symbols = symbols
                 _Productions = productions.MoveToImmutable()
                 _Groups = SafeArray.ofImmutableArray <| groups.MoveToImmutable()

@@ -183,7 +183,7 @@ module CharStream =
     /// Optionally, this character and all before it can be marked to be released from memory.
     let consumeOne doUnpin (cs: CharStream) =
         if cs.Position.Index < uint64 cs.LengthSoFar then
-            cs._Position <- Position.advance cs.FirstCharacter cs._Position
+            cs._Position <- cs._Position.Advance cs.FirstCharacter
             if doUnpin then
                 cs.StartingIndex <- cs._Position.Index
         else
@@ -233,8 +233,8 @@ module CharStream =
         {
             Source = src
             StartingIndex = 0UL
-            _Position = Position.initial
-            _LastUnpinnedSpanPosition = Position.initial
+            _Position = Position.Initial
+            _LastUnpinnedSpanPosition = Position.Initial
         }
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.

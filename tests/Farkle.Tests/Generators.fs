@@ -22,7 +22,11 @@ let productionGen = gen {
     return {Index = index; Head = head; Handle = ImmutableArray.CreateRange handle}
 }
 
-let positionGen = Arb.generate<char> |> Gen.listOf |> Gen.map (Seq.fold (fun pos c -> Position.advance c pos) Position.initial)
+let positionGen =
+    Arb.generate
+    |> Gen.three
+    |> Gen.filter (fun (line, col, idx) -> line <> 0UL && col <> 0UL && line - 1UL + col - 1UL <= idx)
+    |> Gen.map (fun (line, col, idx) -> {Line = line; Column = col; Index = idx})
 
 let ASTGen() =
     let rec impl size =

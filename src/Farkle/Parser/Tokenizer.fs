@@ -35,10 +35,11 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA (grammar: Grammar) (input: CharStream) =
-        let inline newToken sym idx = struct (sym, pinSpan input idx) |> Ok |> Some
         let {InitialState = initialState; States = states} = grammar.DFAStates
-        let retrieve state = SafeArray.retrieve states state
         let rec impl idx (currState: DFAState) lastAccept =
+            // Apparently, if you bring the function to the
+            // innermost scope, it gets optimized away.
+            let newToken sym idx = struct (sym, pinSpan input idx) |> Ok |> Some
             let mutable x = '\u0103'
             let mutable idxNext = idx
             match readChar input &x &idxNext with
@@ -48,8 +49,9 @@ module Tokenizer =
                 | ValueNone -> None
             | true ->
                 let newDFA =
-                    grammar.OptimizedOperations.GetNextDFAState x currState
-                    |> ValueOption.map retrieve
+                    match grammar.OptimizedOperations.GetNextDFAState x currState with
+                    | ValueSome x -> ValueSome <| SafeArray.retrieve states x
+                    | ValueNone -> ValueNone
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
                 | ValueSome (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept
@@ -66,8 +68,10 @@ module Tokenizer =
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
     let tokenize ({_Groups = groups} as grammar) fTransform fMessage (input: CharStream) =
-        let fail msg = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
         let rec impl (gs: TokenizerState) =
+            let fail msg = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
+            // newToken does not get optimized,
+            // maybe because of the try-with.
             let newToken sym (cs: CharSpan) =
                 let data =
                     try

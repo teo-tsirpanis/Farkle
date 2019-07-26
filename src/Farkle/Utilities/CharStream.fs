@@ -6,7 +6,6 @@
 namespace Farkle.Collections
 
 open Farkle
-open LanguagePrimitives
 open Operators.Checked
 open System
 open System.IO
@@ -39,6 +38,14 @@ type private DynamicBlock =
         /// The index of the next character to be read.
         mutable NextReadIndex: uint64
     }
+    member x.Item
+        with get idx =
+            if idx >= x.BufferStartingIndex && idx < x.NextReadIndex then
+                let position = int <| idx - x.BufferStartingIndex
+                x.Buffer.[position]
+            else
+                failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
+                    idx x.BufferStartingIndex <| x.NextReadIndex - 1UL
     /// The real length of the buffer, excluding the unpinned characters at the end.
     member x.BufferContentLength = x.NextReadIndex - x.BufferStartingIndex |> int
     interface IDisposable with
@@ -62,13 +69,7 @@ type private CharStreamSource =
         with get idx =
             match x with
             | StaticBlock sb -> sb.Span.[int idx]
-            | DynamicBlock db ->
-                if idx >= db.BufferStartingIndex && idx < db.NextReadIndex then
-                    let position = int <| idx - db.BufferStartingIndex
-                    db.Buffer.[position]
-                else
-                    failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
-                        idx db.BufferStartingIndex <| db.NextReadIndex - 1UL
+            | DynamicBlock db -> db.[idx]
     /// Returns how many characters have been read so far.
     /// In dynamic block streams, it doesn't mean that all these characters are still on memory.
     member x.LengthSoFar =
@@ -115,10 +116,7 @@ with
         member x.Dispose() = (x.Source :> IDisposable).Dispose()
 
 /// A type pointing to a character in a character stream.
-type [<Struct>] CharStreamIndex = private CharStreamIndex of uint64
-with
-    /// The zero-based index this object points to, starting from the beginning of the stream.
-    member x.Index = match x with CharStreamIndex idx -> idx
+type [<Struct>] CharStreamIndex = private {Index: uint64}
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
 /// It accepts a generic type (a `Terminal` usually), the `Position` of the symbol, and a
@@ -131,7 +129,7 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 module CharStream =
 
     /// Creates a `CharStreamIndex` from a `CharStream` that points to its current position.
-    let getCurrentIndex (cs: CharStream) = CharStreamIndex cs.CurrentIndex
+    let getCurrentIndex (cs: CharStream) = {Index = cs.CurrentIndex}
 
     /// Reads the `idx`th character of `cs`, places it in `c` and returns `true`, if there are more characters left to be read.
     /// Otherwise, returns `false`.
@@ -141,14 +139,14 @@ module CharStream =
             failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx.Index cs.CurrentIndex
         | StaticBlock sb when idx.Index < uint64 sb.Length ->
             c <- sb.Span.[int idx.Index]
-            idx <- idx.Index + GenericOne |> CharStreamIndex
+            idx <- {Index = idx.Index + 1UL}
             true
         | StaticBlock _ -> false
         | DynamicBlock db ->
             // The character we want to read is already in memory. Easy stuff.
             if idx.Index < db.NextReadIndex then
-                c <- cs.Source.[idx.Index]
-                idx <- CharStreamIndex <| idx.Index + GenericOne
+                c <- db.[idx.Index]
+                idx <- {Index = idx.Index + 1UL}
                 true
             // The character we want to read is the next one to be read.
             elif idx.Index = db.NextReadIndex then
@@ -175,7 +173,7 @@ module CharStream =
                     db.NextReadIndex <- db.NextReadIndex + 1UL
                     db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
                     c <- char cRead
-                    idx <- CharStreamIndex <| db.NextReadIndex
+                    idx <- {Index = db.NextReadIndex}
                     true
                 // We have reached the end.
                 else
@@ -187,7 +185,7 @@ module CharStream =
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
-    let pinSpan (cs: CharStream) (CharStreamIndex idxTo) = {
+    let pinSpan cs ({CharStreamIndex.Index = idxTo}) = {
         LineFrom = cs.CurrentLine
         ColumnFrom = cs.CurrentColumn
         IndexFrom = cs.CurrentIndex

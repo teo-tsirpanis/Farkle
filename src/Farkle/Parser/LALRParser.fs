@@ -47,8 +47,8 @@ module LALRParser =
             match stack with
             | (x, _) :: _ -> x
             | [] -> initialState
-        let (|LALRState|) x = SafeArray.retrieve lalrStates x
         let rec impl token stack =
+            let (|LALRState|) x = SafeArray.retrieve lalrStates x
             let currentState = getCurrentState stack
             let nextAction =
                 match token with
@@ -85,13 +85,10 @@ module LALRParser =
                     impl token ((nextState, resultObj) :: stack)
                 | false, _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
             | false, _ ->
-                let fixTerminal (KeyValue(term, _)) = ExpectedSymbol.Terminal term
                 let expectedSymbols =
                     [
-                        Seq.map fixTerminal currentState.Actions
-
-                        currentState.GotoActions
-                        |> Seq.map (fun (KeyValue(x,_)) -> ExpectedSymbol.Nonterminal x)
+                        Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term) currentState.Actions
+                        Seq.map (fun (KeyValue(x,_)) -> ExpectedSymbol.Nonterminal x) currentState.GotoActions
                     ]
                     |> Seq.concat
                     |> set

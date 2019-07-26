@@ -10,10 +10,10 @@ open System.Collections.Generic
 open System.Collections.Immutable
 
 /// A type-safe reference to a value based on its index.
-type [<Struct>] Indexed<'a> = private Indexed of uint32
+type [<Struct>] Indexed<'a> = internal Indexed of uint32
     with
         /// The index's numerical value.
-        member x.Value = x |> (fun (Indexed x) -> x)
+        member x.Value = match x with | Indexed x -> x
 
 /// Functions for working with `Indexed<'a>`.
 module internal Indexed =
@@ -35,7 +35,7 @@ type SafeArray<'a> = private SafeArray of 'a ImmutableArray
         /// Gets the item at the given position the `Indexed` object points to.
         /// Because it does not accept an arbitrary integer, it is less likely to accidentially fail.
         member x.Item
-            with get (i: Indexed<'a>) = x.Value.[int i.Value]
+            with get ((Indexed i): Indexed<'a>) = x.Value.[int i]
 
         /// Returns an `Indexed` object that points to the position at the given index, or fails if it is out of bounds.
         member x.Indexed

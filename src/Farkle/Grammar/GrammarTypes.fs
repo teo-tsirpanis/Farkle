@@ -153,7 +153,7 @@ type LALRAction =
     | Accept
     override x.ToString() =
         match x with
-        | Shift x -> sprintf "Shift to state %d" x.Value
+        | Shift (Indexed x) -> sprintf "Shift to state %d" x
         | Reduce x -> sprintf "Reduce production %O" x
         | Accept -> "Accept"
 

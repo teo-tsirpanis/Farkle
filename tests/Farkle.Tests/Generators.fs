@@ -76,13 +76,16 @@ type Generators =
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
     static member CS() = Arb.fromGen <| gen {
-        let! str = Arb.generate |> Gen.filter (String.length >> ((<>) 0))
-        let! fCharStream = [CharStream.ofString; (fun x -> new StringReader(x) |> CharStream.ofTextReader)] |> Gen.elements
-        return CS(fCharStream str, str)
+        let! str = Arb.generate |> Gen.filter (String.length >> (<>) 0)
+        let! generateStaticBlock = Arb.generate
+        let charStream =
+            if generateStaticBlock then
+                CharStream.ofString str
+            else
+                new StringReader(str) |> CharStream.ofTextReader
+        return CS(charStream, str)
     }
 
-let testProperty x = 
-    testPropertyWithConfig
-        {FsCheckConfig.defaultConfig with
-            arbitrary = [typeof<Generators>]
-            replay = None} x
+let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
+
+let testProperty x = testPropertyWithConfig fsCheckConfig x

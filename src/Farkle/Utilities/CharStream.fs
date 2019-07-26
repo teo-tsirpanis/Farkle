@@ -26,7 +26,7 @@ type private DynamicBlock =
     {
         /// The `TextReader` that powers the stream.
         Reader: TextReader
-        /// [omit]
+        /// A character array where the characters that get read, but are still needed are stored.
         mutable Buffer: char[]
         /// The index of the first element in the buffer.
         mutable BufferStartingIndex: uint64
@@ -63,7 +63,8 @@ type private CharStreamSource =
                 else
                     failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
                         idx db.BufferStartingIndex <| db.NextReadIndex - 1UL
-    /// [omit]
+    /// Returns how many characters have been read so far.
+    /// In dynamic block streams, it doesn't mean that all these characters are still on memory.
     member x.LengthSoFar =
         match x with
         | StaticBlock sb -> uint64 sb.Length
@@ -134,26 +135,43 @@ module CharStream =
             true
         | StaticBlock _ -> false
         | DynamicBlock db ->
+            // The character we want to read is already in memory. Easy stuff.
             if idx.Index < db.NextReadIndex then
                 c <- cs.Source.[idx.Index]
                 idx <- CharStreamIndex <| idx.Index + GenericOne
                 true
+            // The character we want to read is the next one to be read.
             elif idx.Index = db.NextReadIndex then
-                let importantCharStart = int <| cs.StartingIndex - db.BufferStartingIndex
-                let importantCharLength = int <| db.NextReadIndex - cs.StartingIndex
-                if db.BufferStartingIndex <> cs.StartingIndex then
-                    Array.blit db.Buffer importantCharStart db.Buffer 0 importantCharLength
-                    db.BufferStartingIndex <- cs.StartingIndex
-                else
-                    Array.Resize(&db.Buffer, db.Buffer.Length * 2)
-                let nRead = db.Reader.ReadBlock(db.Buffer, importantCharLength, db.Buffer.Length - db.BufferContentLength)
-                if nRead <> 0 then
-                    db.NextReadIndex <- db.NextReadIndex + uint64 nRead
-                    c <- cs.Source.[idx.Index]
-                    idx <- CharStreamIndex <| idx.Index + GenericOne
+                // The buffer might be full however.
+                if db.BufferContentLength = db.Buffer.Length then
+                    // If not all characters in the buffer are needed, we move those we need to the start.
+                    if db.BufferStartingIndex <> cs.StartingIndex then
+                        let importantCharStart = int <| cs.StartingIndex - db.BufferStartingIndex
+                        let importantCharLength = int <| db.NextReadIndex - cs.StartingIndex
+                        Array.blit db.Buffer importantCharStart db.Buffer 0 importantCharLength
+                        db.BufferStartingIndex <- cs.StartingIndex
+                    // Otherwise, we double the buffer's size. It is doubled to achieve amortized constant complexity.
+                    // But to reach the point of growing it, many times, we must have huge terminals. The default
+                    // buffer size is some hundreds of characters.
+                    else
+                        Array.Resize(&db.Buffer, db.Buffer.Length * 2)
+                // It's now time to read the next character.
+                // We read each character at a time from the reader. It does not adversely
+                // affect performance because the reader has its own buffer as well!
+                let cRead = db.Reader.Read()
+                // There are still characters to read. We store this little
+                // character in the buffer, and return it as well.
+                if cRead <> -1 then
+                    db.NextReadIndex <- db.NextReadIndex + 1UL
+                    db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
+                    c <- char cRead
+                    idx <- CharStreamIndex <| db.NextReadIndex
                     true
+                // We have reached the end.
                 else
                     false
+            // We cannot read past the first character that has not been read.
+            // This is how the CharStream works; you have to read one character at a time.
             else
                 failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index db.NextReadIndex
 
@@ -263,7 +281,7 @@ module CharStream =
             Reader = textReader
             Buffer = buffer
             BufferStartingIndex = 0UL
-            NextReadIndex = uint64 <| textReader.ReadBlock(buffer, 0, buffer.Length)
+            NextReadIndex = 0UL
         } |> DynamicBlock |> create
 
     /// Creates a `CharStream` from a `TextReader`.

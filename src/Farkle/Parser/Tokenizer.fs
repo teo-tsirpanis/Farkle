@@ -66,16 +66,15 @@ module Tokenizer =
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
     let tokenize ({_Groups = groups} as grammar) fTransform fMessage (input: CharStream) =
-        let fail msg = Message (input.Position, msg) |> ParseError |> raise
+        let fail msg = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
         let rec impl (gs: TokenizerState) =
             let newToken sym (cs: CharSpan) =
-                let pos = cs.StartingPosition
                 let data =
                     try
                         unpinSpanAndGenerate sym fTransform input cs
                     with
-                    | ex -> Message(pos, ParseErrorType.TransformError(sym, ex)) |> ParseError |> raise
-                let theHolyToken = Token.Create pos sym data
+                    | ex -> Message(input.LastUnpinnedSpanPosition, ParseErrorType.TransformError(sym, ex)) |> ParseError |> raise
+                let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
             let tok = tokenizeDFA grammar input
@@ -107,7 +106,7 @@ module Tokenizer =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
                         consume (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
-                        extendSpans popped tok
+                        concatSpans popped tok
                     | EndingMode.Open -> popped
                 match xs, poppedGroup.ContainerSymbol with
                 // We have now left the group, but the whole group was noise.
@@ -115,10 +114,10 @@ module Tokenizer =
                 // We have left the group and it was a terminal.
                 | [], Choice1Of2 sym -> newToken sym popped
                 // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((extendSpans popped tok2, g2) :: xs)
+                | (tok2, g2) :: xs, _ -> impl ((concatSpans popped tok2, g2) :: xs)
             // If input ends outside of a group, it's OK.
             | None, [] ->
-                input.Position |> ParseMessage.EndOfInput |> fMessage
+                input.GetCurrentPosition() |> ParseMessage.EndOfInput |> fMessage
                 None
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
@@ -128,7 +127,7 @@ module Tokenizer =
                     // We advance the input by the entire token.
                     | AdvanceMode.Token, Ok (_, data) ->
                         consume doUnpin input data
-                        extendSpans tok2 data
+                        concatSpans tok2 data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, Error _ ->
                         consumeOne doUnpin input

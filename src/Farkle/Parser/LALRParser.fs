@@ -40,15 +40,15 @@ module LALRParser =
     /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage {_LALRStates = {InitialState = initialState; States = lalrStates}} (pp: PostProcessor<_>) fToken (input: CharStream) =
+    let parseLALR fMessage {_LALRStates = lalrStates} (pp: PostProcessor<_>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
         let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
         let getCurrentState stack =
             match stack with
             | (x, _) :: _ -> x
-            | [] -> initialState
+            | [] -> lalrStates.InitialState
         let rec impl token stack =
-            let (|LALRState|) x = SafeArray.retrieve lalrStates x
+            let (|LALRState|) x = lalrStates.[x]
             let currentState = getCurrentState stack
             let nextAction =
                 match token with

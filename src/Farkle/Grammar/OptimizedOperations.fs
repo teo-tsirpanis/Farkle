@@ -7,6 +7,7 @@ namespace Farkle.Grammar
 
 open Farkle.Collections
 open Farkle.Grammar
+open System.Collections.Immutable
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal OptimizedOperations =
@@ -22,8 +23,8 @@ module internal OptimizedOperations =
     /// Creates a two-dimensional array of DFA state indices, whose first dimension
     /// represents the index of the current DFA state, and the second represents the
     /// ASCII character that was encountered.
-    let buildDFAArray (dfa: SafeArray<DFAState>) =
-        let arr = Array2D.zeroCreate dfa.Count (ASCIIUpperBound + 1)
+    let buildDFAArray (dfa: ImmutableArray<DFAState>) =
+        let arr = Array2D.zeroCreate dfa.Length (ASCIIUpperBound + 1)
         dfa
         |> Seq.iteri (fun i state ->
             state.Edges.Elements

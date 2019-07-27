@@ -75,7 +75,7 @@ with
     override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the start of a group.
-type GroupStart = GroupStart of name: string * groupIndex: Indexed<Group>
+type GroupStart = GroupStart of name: string * groupIndex: uint32
 with
     /// The symbol's name.
     member x.Name = match x with | GroupStart (name, _) -> name
@@ -101,7 +101,7 @@ and Group = {
     /// The way the group ends.
     EndingMode: EndingMode
     /// A set of indexes whose corresponding groups can be nested inside this group.
-    Nesting: ImmutableHashSet<Indexed<Group>>
+    Nesting: ImmutableHashSet<uint32>
 }
 with
     override x.ToString() = x.Name
@@ -110,7 +110,7 @@ with
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
 /// The edges of a DFA state, that matche a character to the next state, using a custom data structure.
-type DFAEdges = RangeMap<char, Indexed<DFAState>>
+type DFAEdges = RangeMap<char, uint32>
 
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
@@ -146,14 +146,14 @@ with
 [<RequireQualifiedAccess>]
 type LALRAction =
     /// This action indicates the parser to shift to the specified `LALRState`.
-    | Shift of Indexed<LALRState>
+    | Shift of uint32
     /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production
     /// When the parser encounters this action for a given symbol, the input text is accepted as correct and parsing ends.
     | Accept
     override x.ToString() =
         match x with
-        | Shift (Indexed x) -> sprintf "Shift to state %d" x
+        | Shift x -> sprintf "Shift to state %d" x
         | Reduce x -> sprintf "Reduce production %O" x
         | Accept -> "Accept"
 
@@ -167,7 +167,7 @@ and LALRState = {
     EOFAction: LALRAction option
     /// The available GOTO actions of the state.
     /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
-    GotoActions: ImmutableDictionary<Nonterminal, Indexed<LALRState>>
+    GotoActions: ImmutableDictionary<Nonterminal, uint32>
 }
 with
     override x.ToString() = string x.Index
@@ -187,7 +187,7 @@ type Symbols = {
 /// These functions require some computationally expensive pre-processing, which is
 /// performed only once, at the creation of this object.
 type internal OptimizedOperations = {
-    _GetNextDFAState: char -> DFAState -> Indexed<DFAState> voption
+    _GetNextDFAState: char -> DFAState -> uint32 voption
 }
 with
     /// Gets the next DFA state from the given current one, when the given character is encountered.
@@ -205,7 +205,7 @@ type Grammar = internal {
     _Productions: Production ImmutableArray
 
     // These are the only fields that serve the parser.
-    _Groups: Group SafeArray
+    _Groups: Group ImmutableArray
     _LALRStates: LALRState StateTable
     _DFAStates: DFAState StateTable
 

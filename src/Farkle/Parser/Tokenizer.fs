@@ -35,7 +35,7 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA (grammar: Grammar) (input: CharStream) =
-        let {InitialState = initialState; States = states} = grammar.DFAStates
+        let states = grammar.DFAStates
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
@@ -50,7 +50,7 @@ module Tokenizer =
             | true ->
                 let newDFA =
                     match grammar.OptimizedOperations.GetNextDFAState x currState with
-                    | ValueSome x -> ValueSome <| SafeArray.retrieve states x
+                    | ValueSome idx -> ValueSome <| states.[idx]
                     | ValueNone -> ValueNone
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
@@ -61,7 +61,7 @@ module Tokenizer =
                 | ValueNone, ValueSome (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
                 | ValueNone, ValueNone -> input.FirstCharacter |> Error |> Some
-        impl (getCurrentIndex input) initialState ValueNone
+        impl (getCurrentIndex input) states.InitialState ValueNone
 
 
     /// Returns the next token from the current position of a `CharStream`.
@@ -99,7 +99,7 @@ module Tokenizer =
             // in the group stack, consume the token, and continue.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
-                    let g = groups.[tokGroupIdx]
+                    let g = groups.[int tokGroupIdx]
                     consume (shouldUnpinCharactersInsideGroup g gs) input tok
                     impl ((tok, g) :: gs)
             // We are inside a group, and this new token is going to end it.
@@ -143,7 +143,7 @@ module Tokenizer =
             | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
             // But if a group starts inside a group that cannot be nested at, it is an error.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), _)), ((_, g) :: _) ->
-                fail <| ParseErrorType.CannotNestGroups(groups.[tokGroupIdx], g)
+                fail <| ParseErrorType.CannotNestGroups(groups.[int tokGroupIdx], g)
             /// If a group starts while being outside of any group...
             /// Wait a minute! Haven't we already checked this case?
             /// Ssh, don't tell the compiler. She doesn't know about it. 😊

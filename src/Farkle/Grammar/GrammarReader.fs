@@ -36,7 +36,7 @@ module internal GrammarReader =
 
         let createSafeIndexed<'a> (arr: ImmutableArray.Builder<'a>) idx =
             if int idx <= arr.Capacity then
-                idx |> uint32 |> Indexed.create<'a>
+                idx |> uint32
             else
                 invalidEGT()
 
@@ -75,7 +75,7 @@ module internal GrammarReader =
             let wantChar idx = wantUInt16 rangesSpan idx |> char
             Array.init count (fun idx -> wantChar <| 2 * idx, wantChar <| 2 * idx + 1)
 
-        let defaultGroupIndex = Indexed.create System.UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
+        let defaultGroupIndex = UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
 
         let readSymbol index mem =
             lengthMustBe mem 2
@@ -98,7 +98,7 @@ module internal GrammarReader =
             let startSymbol =
                 let startIdx = wantUInt16 mem 2
                 let (GroupStart(name, _)) = startIdx |> fSymbol |> wantGroupStart
-                let newSymbol = GroupStart(name, Indexed.create index)
+                let newSymbol = GroupStart(name, index)
                 symbols.[int startIdx] <- AnyGroupStart newSymbol
                 newSymbol
             let endSymbol = wantUInt16 mem 3 |> fSymbol |> wantGroupEnd
@@ -134,8 +134,8 @@ module internal GrammarReader =
 
         let readInitialStates fDFA fLALR mem =
             lengthMustBe mem 2
-            let dfa = wantUInt16 mem 0 |> fDFA
-            let lalr = wantUInt16 mem 1 |> fLALR
+            let dfa = wantUInt16 mem 0 |> fDFA |> int
+            let lalr = wantUInt16 mem 1 |> fLALR |> int
             dfa, lalr
 
         let readDFAState fCharSet fSymbol fDFA index mem =
@@ -297,13 +297,13 @@ module internal GrammarReader =
                 Nonterminals = nonterminals.ToImmutable()
                 NoiseSymbols = noiseSymbols.ToImmutable()
             }
-            let dfaStates = SafeArray.ofImmutableArray <| dfaStates.MoveToImmutable()
-            let lalrStates = SafeArray.ofImmutableArray <| lalrStates.MoveToImmutable()
+            let dfaStates = dfaStates.MoveToImmutable()
+            let lalrStates = lalrStates.MoveToImmutable()
             return OptimizedOperations.createOptimizedGramamr
                 (properties.ToImmutable())
                 symbols
                 (productions.MoveToImmutable())
-                (SafeArray.ofImmutableArray <| groups.MoveToImmutable())
+                (groups.MoveToImmutable())
                 {InitialState = lalrStates.[initialLALR]; States = lalrStates}
                 {InitialState = dfaStates.[initialDFA]; States = dfaStates}
         }

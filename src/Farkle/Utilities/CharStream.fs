@@ -6,7 +6,9 @@
 namespace Farkle.Collections
 
 open Farkle
+#if DEBUG
 open Operators.Checked
+#endif
 open System
 open System.IO
 
@@ -254,7 +256,8 @@ module CharStream =
     /// Optionally, the characters before the span can be marked to be released from memory.
     let consume doUnpin (cs: CharStream) span =
         if cs.CurrentIndex = span.IndexFrom then
-            for _i = int span.IndexFrom to int span.IndexTo do
+            let characterCount = span.IndexTo - span.IndexFrom |> int
+            for _i = 0 to characterCount do
                 consumeOne doUnpin cs
         else
             failwithf "Trying to consume the character span %O, from a stream that was left at %d." span cs.CurrentIndex

@@ -26,61 +26,139 @@ with
     member x.Length = x.IndexTo - x.IndexFrom + 1UL |> int
     override x.ToString() = sprintf "[%d,%d]" x.IndexFrom x.IndexTo
 
-/// The internal structure to support `CharStreamSource.DynamicBlock`.
-type private DynamicBlock =
-    {
-        /// The `TextReader` that powers the stream.
-        Reader: TextReader
-        /// A character array where the characters that get read, but are still needed are stored.
-        mutable Buffer: char[]
-        /// The index of the first element in the buffer.
-        mutable BufferStartingIndex: uint64
-        /// The index of the next character to be read.
-        mutable NextReadIndex: uint64
-    }
-    member x.Item
-        with get idx =
-            if idx >= x.BufferStartingIndex && idx < x.NextReadIndex then
-                let position = int <| idx - x.BufferStartingIndex
-                x.Buffer.[position]
-            else
-                failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
-                    idx x.BufferStartingIndex <| x.NextReadIndex - 1UL
-    /// The real length of the buffer, excluding the unpinned characters at the end.
-    member x.BufferContentLength = x.NextReadIndex - x.BufferStartingIndex |> int
-    interface IDisposable with
-        member x.Dispose() =
-            x.Reader.Dispose()
-            GC.SuppressFinalize(x)
-    override x.Finalize() = (x :> IDisposable).Dispose()
+/// A type pointing to a character in a character stream.
+type [<Struct>] CharStreamIndex = private {Index: uint64}
 
 /// A representation of a `CharStream`.
-type private CharStreamSource =
-    /// A representation of a `CharStream` that stores
-    /// the characters in one continuous area of memory.
-    /// It is not recommended for large files.
-    | StaticBlock of ReadOnlyMemory<char>
-    /// A representation of a `CharStream` that lazily
-    /// loads input from a `TextReader` when it is needed
-    /// and unloads it when it is not.
-    | DynamicBlock of DynamicBlock
+// Previously, this type was a discriminated union. I changed it to an abstract because
+// pattern matches on it, which involve two type checks+casts seemed to be inferior to virtual calls.
+// Besides, the CLR is more inclined to handle inheritance and polymorphism. 
+// And regardless, this layout clearly separates source-specific code from the rest of it.
+[<AbstractClass>]
+type private CharStreamSource() =
     /// Gets a specified character by index; if it exists in memory, or raises an exception.
-    member x.Item
-        with get idx =
-            match x with
-            | StaticBlock sb -> sb.Span.[int idx]
-            | DynamicBlock db -> db.[idx]
-    /// Returns how many characters have been read so far.
-    /// In dynamic block streams, it doesn't mean that all these characters are still on memory.
-    member x.LengthSoFar =
-        match x with
-        | StaticBlock sb -> uint64 sb.Length
-        | DynamicBlock db -> db.NextReadIndex
+    abstract Item: uint64 -> char
+    /// Returns the length of the input; or at least the
+    /// length of the input that has ever crossed the memory.
+    /// In dynamic block streams, it doesn't mean that all these characters are still in memory.
+    abstract LengthSoFar: uint64
+    /// Reads the character at the specified index, places it into the outref, and moves the
+    /// index one position forward. Returns `false` when input ended. The first parameter
+    /// is used for the dynamic block source.
+    abstract ReadNextCharacter: uint64 * byref<CharStreamIndex> * outref<char> -> bool
+    /// Returns a `ReadOnlySpan` containing the characters from the given index with the given length.
+    /// The characters in the span are not bound to be released from memory after that call;
+    /// this is the responsibility of the unpinning functions.
+    abstract GetSpanForCharacters: uint64 * int -> ReadOnlySpan<char>
+    /// Disposes unmanaged resources using a well-known pattern.
+    /// To be overriden on sources that require it.
+    abstract Dispose: bool -> unit
+    default __.Dispose _ = ()
     interface IDisposable with
         member x.Dispose() =
-            match x with
-            | StaticBlock _ -> ()
-            | DynamicBlock db -> (db :> IDisposable).Dispose()
+            x.Dispose(true)
+            GC.SuppressFinalize(x)
+
+[<Sealed>]
+/// A representation of a `CharStream` that stores
+/// the characters in one continuous area of memory.
+/// It is not recommended for large files.
+type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
+    inherit CharStreamSource()
+    override __.Item idx = mem.Span.[int idx]
+    override __.LengthSoFar = uint64 mem.Length
+    override __.ReadNextCharacter(_, idx, c) =
+        if idx.Index < uint64 mem.Length then
+            c <- mem.Span.[int idx.Index]
+            idx <- {Index = idx.Index + 1UL}
+            true
+        else
+            false
+    override __.GetSpanForCharacters(startIndex, length) = mem.Span.Slice(int startIndex, length)
+
+[<Sealed>]
+/// A representation of a `CharStream` that lazily
+/// loads input from a `TextReader` when it is needed
+/// and unloads it when it is not.
+type private DynamicBlockSource(reader: TextReader, bufferSize) =
+    inherit CharStreamSource()
+    /// Whether the `Dispose` method has been called.
+    /// Using this class is prohibited afterwards.
+    let mutable disposed = false
+    /// A character array where the characters that get read, but are still needed are stored.
+    let mutable buffer = Array.zeroCreate bufferSize
+    /// The index of the first element in the buffer.
+    let mutable bufferFirstCharacterIndex = 0UL
+    /// The index of the next character to be read.
+    let mutable nextReadIndex = 0UL
+    member __.CheckDisposed() =
+        if disposed then
+            raise <| ObjectDisposedException("Cannot use a dynamic block character stream after being disposed.")
+    member private __.IsBufferFull = uint64 buffer.Length = nextReadIndex - bufferFirstCharacterIndex
+    override db.Item idx =
+        db.CheckDisposed()
+        if idx >= bufferFirstCharacterIndex && idx < nextReadIndex then
+            let position = int <| idx - bufferFirstCharacterIndex
+            buffer.[position]
+        elif nextReadIndex = 0UL then
+            failwithf "Trying to get character at %d, while nothing has been read yet" idx
+        else
+            failwithf "Trying to get character at %d, while only characters from %d to %d have been loaded"
+                idx bufferFirstCharacterIndex <| nextReadIndex - 1UL
+    override db.LengthSoFar =
+        db.CheckDisposed()
+        nextReadIndex
+    override db.ReadNextCharacter(startingIndex, idx, c) =
+        db.CheckDisposed()
+        // The character we want to read is already in memory. Easy stuff.
+        if idx.Index < nextReadIndex then
+            c <- db.[idx.Index]
+            idx <- {Index = idx.Index + 1UL}
+            true
+        // The character we want to read is the next one to be read.
+        elif idx.Index = nextReadIndex then
+            // The buffer might be full however.
+            if db.IsBufferFull then
+                // If not all characters in the buffer are needed, we move those we need to the start.
+                if bufferFirstCharacterIndex <> startingIndex then
+                    let importantCharStart = int <| startingIndex - bufferFirstCharacterIndex
+                    let importantCharLength = int <| nextReadIndex - startingIndex
+                    Array.blit buffer importantCharStart buffer 0 importantCharLength
+                    bufferFirstCharacterIndex <- startingIndex
+                // Otherwise, we double the buffer's size. It is doubled to achieve amortized constant complexity.
+                // But to reach the point of growing it, many times, we must have huge terminals. The default
+                // buffer size is some hundreds of characters.
+                else
+                    Array.Resize(&buffer, buffer.Length * 2)
+            // It's now time to read the next character.
+            // We read each character at a time from the reader. It does not adversely
+            // affect performance because the reader has its own buffer as well!
+            let cRead = reader.Read()
+            // There are still characters to read. We store this little
+            // character in the buffer, and return it as well.
+            if cRead <> -1 then
+                nextReadIndex <- nextReadIndex + 1UL
+                buffer.[int <| idx.Index - bufferFirstCharacterIndex] <- char cRead
+                c <- char cRead
+                idx <- {Index = nextReadIndex}
+                true
+            // We have reached the end.
+            else
+                false
+        // We cannot read past the first character that has not been read.
+        // This is how the CharStream works; you have to read one character at a time.
+        else
+            failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index nextReadIndex
+    override db.GetSpanForCharacters(startIndex, length) =
+        db.CheckDisposed()
+        let startIndex = startIndex - bufferFirstCharacterIndex |> int
+        ReadOnlySpan(buffer).Slice(startIndex, length)
+    override __.Dispose(disposing) =
+        disposed <- true
+        if disposing then
+            buffer <- null
+        reader.Dispose()
+    override db.Finalize() = db.Dispose(false)
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
 /// It is not thread-safe.
@@ -109,14 +187,8 @@ with
     /// The stream's character at its current position.
     /// Calling this function assumes that this character is actually `read`.
     member x.FirstCharacter = x.Source.[x.CurrentIndex]
-    /// Returns the length of the input; or at least the
-    /// length of the input that has ever crossed the memory.
-    member x.LengthSoFar = x.Source.LengthSoFar
     interface IDisposable with
         member x.Dispose() = (x.Source :> IDisposable).Dispose()
-
-/// A type pointing to a character in a character stream.
-type [<Struct>] CharStreamIndex = private {Index: uint64}
 
 /// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
 /// It accepts a generic type (a `Terminal` usually), the `Position` of the symbol, and a
@@ -133,55 +205,11 @@ module CharStream =
 
     /// Reads the `idx`th character of `cs`, places it in `c` and returns `true`, if there are more characters left to be read.
     /// Otherwise, returns `false`.
-    let readChar cs (c: outref<_>) (idx: byref<CharStreamIndex>) =
-        match cs.Source with
-        | _ when idx.Index < cs.CurrentIndex ->
+    let readChar cs (c: outref<_>) (idx: byref<_>) =
+        if idx.Index >= cs.CurrentIndex then
+            cs.Source.ReadNextCharacter(cs.StartingIndex, &idx, &c)
+        else
             failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx.Index cs.CurrentIndex
-        | StaticBlock sb when idx.Index < uint64 sb.Length ->
-            c <- sb.Span.[int idx.Index]
-            idx <- {Index = idx.Index + 1UL}
-            true
-        | StaticBlock _ -> false
-        | DynamicBlock db ->
-            // The character we want to read is already in memory. Easy stuff.
-            if idx.Index < db.NextReadIndex then
-                c <- db.[idx.Index]
-                idx <- {Index = idx.Index + 1UL}
-                true
-            // The character we want to read is the next one to be read.
-            elif idx.Index = db.NextReadIndex then
-                // The buffer might be full however.
-                if db.BufferContentLength = db.Buffer.Length then
-                    // If not all characters in the buffer are needed, we move those we need to the start.
-                    if db.BufferStartingIndex <> cs.StartingIndex then
-                        let importantCharStart = int <| cs.StartingIndex - db.BufferStartingIndex
-                        let importantCharLength = int <| db.NextReadIndex - cs.StartingIndex
-                        Array.blit db.Buffer importantCharStart db.Buffer 0 importantCharLength
-                        db.BufferStartingIndex <- cs.StartingIndex
-                    // Otherwise, we double the buffer's size. It is doubled to achieve amortized constant complexity.
-                    // But to reach the point of growing it, many times, we must have huge terminals. The default
-                    // buffer size is some hundreds of characters.
-                    else
-                        Array.Resize(&db.Buffer, db.Buffer.Length * 2)
-                // It's now time to read the next character.
-                // We read each character at a time from the reader. It does not adversely
-                // affect performance because the reader has its own buffer as well!
-                let cRead = db.Reader.Read()
-                // There are still characters to read. We store this little
-                // character in the buffer, and return it as well.
-                if cRead <> -1 then
-                    db.NextReadIndex <- db.NextReadIndex + 1UL
-                    db.Buffer.[int <| idx.Index - db.BufferStartingIndex] <- char cRead
-                    c <- char cRead
-                    idx <- {Index = db.NextReadIndex}
-                    true
-                // We have reached the end.
-                else
-                    false
-            // We cannot read past the first character that has not been read.
-            // This is how the CharStream works; you have to read one character at a time.
-            else
-                failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index db.NextReadIndex
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
@@ -195,7 +223,7 @@ module CharStream =
     /// Creates a new `CharSpan` that spans one character more than the given one.
     /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
     let extendSpanByOne (cs: CharStream) span =
-        if span.IndexTo < cs.LengthSoFar then
+        if span.IndexTo < cs.Source.LengthSoFar then
             {span with IndexTo = span.IndexTo + 1UL}
         else
             failwith "Trying to extend a character span by one character past these that were already read."
@@ -213,7 +241,7 @@ module CharStream =
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
     let consumeOne doUnpin (cs: CharStream) =
-        if cs.CurrentIndex < uint64 cs.LengthSoFar then
+        if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
             Position.AdvanceImpl(cs.FirstCharacter, &cs.CurrentLine, &cs.CurrentColumn, &cs.CurrentIndex)
             if doUnpin then
                 cs.StartingIndex <- cs.CurrentIndex
@@ -234,13 +262,10 @@ module CharStream =
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs ({IndexFrom = idxStart; IndexTo = idxEnd} as span) =
-        if cs.StartingIndex <= idxStart && cs.LengthSoFar > idxEnd then
+        if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
-            let span =
-                match cs.Source with
-                | StaticBlock sb -> sb.Span.Slice(int idxStart, length)
-                | DynamicBlock db -> ReadOnlySpan(db.Buffer).Slice(int <| idxStart - db.BufferStartingIndex, length)
+            let span = cs.Source.GetSpanForCharacters(idxStart, length)
             cs._LastUnpinnedSpanPosition <- cs.GetCurrentPosition()
             fPostProcess.Invoke(symbol, cs.LastUnpinnedSpanPosition, span)
         else
@@ -271,7 +296,9 @@ module CharStream =
         }
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
-    let ofReadOnlyMemory mem = mem |> StaticBlock |> create
+    let ofReadOnlyMemory mem =
+        let source = new StaticBlockSource(mem)
+        create source
 
     /// Creates a `CharStream` from a string.
     let ofString (x: string) = x.AsMemory() |> ofReadOnlyMemory
@@ -286,18 +313,13 @@ module CharStream =
     /// The default buffer size is 256 characters. If the specified size is not positive, the default is used.
     /// Also, the character stream must be disposed afterwards.
     let ofTextReaderEx bufferSize textReader =
-        let buffer =
+        let bufferSize =
             if bufferSize > 0 then
                 bufferSize
             else
                 defaultBufferSize
-            |> Array.zeroCreate
-        {
-            Reader = textReader
-            Buffer = buffer
-            BufferStartingIndex = 0UL
-            NextReadIndex = 0UL
-        } |> DynamicBlock |> create
+        let source = new DynamicBlockSource(textReader, bufferSize)
+        create source
 
     /// Creates a `CharStream` from a `TextReader`.
     /// It must be disposed afterwards.

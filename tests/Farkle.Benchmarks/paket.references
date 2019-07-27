@@ -1,4 +1,3 @@
-group Test
+group Executables
 FSharp.Core
 BenchmarkDotNet
-System.Collections.Immutable

@@ -20,6 +20,7 @@ group Executables
 
   nuget Argu
   nuget Chiron
+  nuget BenchmarkDotNet
   nuget FSharp.Core
   nuget Scriban
   nuget Serilog
@@ -59,7 +60,6 @@ group Test
 
   storage: none
 
-  nuget BenchmarkDotNet
   nuget Expecto
   nuget Expecto.FsCheck
   nuget FSharp.Core

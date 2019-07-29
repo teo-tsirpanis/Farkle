@@ -6,11 +6,8 @@
 module Farkle.Tests.GrammarTests
 
 open Expecto
-open Expecto.Logging
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
-
-let logger = Log.create "Grammar tests"
 
 [<Tests>]
 let tests =
@@ -24,7 +21,7 @@ let tests =
             let x = EGT.ofFile "../resources/simple.egt"
             Expect.isOk x "Reading the grammar failed"
             match x with
-            | Ok x -> x |> sprintf "Generated grammar: %A" |> Message.eventX |> logger.debug
+            | Ok _ -> ()
             | Result.Error x -> failtestf "Test failed: %A" x
         }
 

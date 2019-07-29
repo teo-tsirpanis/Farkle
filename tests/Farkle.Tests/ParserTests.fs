@@ -21,7 +21,7 @@ let testParser grammarFile displayName text =
         let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode." grammarFile displayName streamMode
         test description {
             let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast (sprintf "../resources/%s" grammarFile)
-            let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.debug) |> using (fCharStream text)
+            let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.verbose) |> using (fCharStream text)
             match result with
             | Ok _ -> ()
             | Result.Error x -> failtest <| x.ToString()
@@ -56,5 +56,19 @@ let tests = testList "Parser tests" [
             failtestf "The F# parser failed: %O" x
         | _, _, Choice2Of2 x ->
             failtestf "The Chiron parser failed: %O" x
-        true)
+        true
+    )
+
+    testProperty "The calculator works well" (fun expr ->
+        let exprAsString = SimpleMaths.renderExpression expr
+        let parsedExpression = RuntimeFarkle.parse SimpleMaths.mathExpression exprAsString
+        let parsedNumber = RuntimeFarkle.parse SimpleMaths.int exprAsString
+        match parsedExpression, parsedNumber with
+        | Ok expr, Ok num ->
+            Expect.equal num (SimpleMaths.evalExpression expr) "The directly calculated value of the expression differs from the parsed one."
+        | Result.Error x, _ ->
+            failtestf "Parsing the mathematical expression failed: %O" x
+        | _, Result.Error x ->
+            failtestf "Calculating the mathematical expression failed: %O" x
+    )
 ]

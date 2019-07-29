@@ -12,6 +12,7 @@ open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open FsCheck
+open SimpleMaths
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
@@ -86,6 +87,35 @@ let JsonGen =
         |> Gen.oneof
     Gen.sized impl
 
+let simpleMathsASTGen =
+    let rec hasDivisionByZero =
+        function
+        | Number _ -> false
+        | Add(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
+        | Subtract(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
+        | Multiply(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
+        | Divide (x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2 || evalExpression x2 = 0
+        | Negate x -> hasDivisionByZero x
+    let rec impl size =
+        if size <= 1 then
+            Arb.generate |> Gen.map Number
+        else gen {
+            let! leftExprSize = Gen.choose(1, size)
+            let rightExprSize = size - leftExprSize
+            let! x1 = impl leftExprSize
+            if rightExprSize = 0 then
+                return Negate x1
+            else
+                let! x2 = impl rightExprSize
+                return! Gen.elements [
+                    Add(x1, x2)
+                    Subtract(x1, x2)
+                    Multiply(x1, x2)
+                    Divide(x1, x2)
+                ]
+        }
+    Gen.sized impl |> Gen.filter (hasDivisionByZero >> not)
+
 type CS = CS of CharStream * string
 
 type Generators =
@@ -105,6 +135,7 @@ type Generators =
         return CS(charStream, str)
     }
     static member Json() = Arb.fromGen <| JsonGen
+    static member SimpleMathsAST = Arb.fromGen <| simpleMathsASTGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

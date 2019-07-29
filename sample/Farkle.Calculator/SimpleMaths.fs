@@ -123,13 +123,13 @@ SQQARUkHAEkCAEkEAEVJCABJAgBJBABFTRsAYkxJEwBFSQAASQIASQUARUkDAEkCAEkFAEVJBQBJ
 AgBJBQBFSQYASQIASQUARUkHAEkCAEkFAEVJCABJAgBJBQBF"""
 //#endregion
 
-type AST =
+type MathExpression =
     | Number of int
-    | Add of AST * AST
-    | Subtract of AST * AST
-    | Multiply of AST * AST
-    | Divide of AST * AST
-    | Negate of AST
+    | Add of MathExpression * MathExpression
+    | Subtract of MathExpression * MathExpression
+    | Multiply of MathExpression * MathExpression
+    | Divide of MathExpression * MathExpression
+    | Negate of MathExpression
 
 open Fuser
 
@@ -162,38 +162,38 @@ let int =
         ]
     RuntimeFarkle.ofBase64String (PostProcessor.ofSeq<int> transformers fusers) asBase64
 
-let ast =
+let mathExpression =
     let transformers = [Transformer.int Symbol.Number]
     let fusers =
         [
             identity Production.Expression
             take2Of Production.AddExpPlus (0, 2) (fun x1 x2 -> Add(x1, x2))
-            take2Of Production.AddExpMinus (0, 2) (fun x1 x2 -> Add(x1, x2))
+            take2Of Production.AddExpMinus (0, 2) (fun x1 x2 -> Subtract(x1, x2))
             identity Production.AddExp
-            take2Of Production.MultExpTimes (0, 2) (fun x1 x2 -> Add(x1, x2))
-            take2Of Production.MultExpDiv (0, 2) (fun x1 x2 -> Add(x1, x2))
+            take2Of Production.MultExpTimes (0, 2) (fun x1 x2 -> Multiply(x1, x2))
+            take2Of Production.MultExpDiv (0, 2) (fun x1 x2 -> Divide(x1, x2))
             identity Production.MultExp
             take1Of Production.NegateExpMinus 1 Negate
             identity Production.NegateExp
             take1Of Production.ValueNumber 0 Number
-            take1Of Production.ValueLParenRParen 1 Number
+            take1Of Production.ValueLParenRParen 1 id
         ]
-    RuntimeFarkle.changePostProcessor (PostProcessor.ofSeq<AST> transformers fusers) int
+    RuntimeFarkle.changePostProcessor (PostProcessor.ofSeq<MathExpression> transformers fusers) int
     
-let rec evalAST =
+let rec evalExpression =
     function
     | Number x -> x
-    | Add(x1, x2) -> evalAST x1 + evalAST x2
-    | Subtract(x1, x2) -> evalAST x1 - evalAST x2
-    | Multiply(x1, x2) -> evalAST x1 * evalAST x2
-    | Divide(x1, x2) -> evalAST x1 / evalAST x2
-    | Negate x -> - evalAST x
+    | Add(x1, x2) -> evalExpression x1 + evalExpression x2
+    | Subtract(x1, x2) -> evalExpression x1 - evalExpression x2
+    | Multiply(x1, x2) -> evalExpression x1 * evalExpression x2
+    | Divide(x1, x2) -> evalExpression x1 / evalExpression x2
+    | Negate x -> - evalExpression x
 
-let rec renderAST =
+let rec renderExpression =
     function
     | Number x -> string x
-    | Add(x1, x2) -> sprintf "(%s)+(%s)" (renderAST x1) (renderAST x2)
-    | Subtract(x1, x2) -> sprintf "(%s)-(%s)" (renderAST x1) (renderAST x2)
-    | Multiply(x1, x2) -> sprintf "(%s)*(%s)" (renderAST x1) (renderAST x2)
-    | Divide(x1, x2) -> sprintf "(%s)/(%s)" (renderAST x1) (renderAST x2)
-    | Negate x -> sprintf "-(%s)" (renderAST x)
+    | Add(x1, x2) -> sprintf "(%s)+(%s)" (renderExpression x1) (renderExpression x2)
+    | Subtract(x1, x2) -> sprintf "(%s)-(%s)" (renderExpression x1) (renderExpression x2)
+    | Multiply(x1, x2) -> sprintf "(%s)*(%s)" (renderExpression x1) (renderExpression x2)
+    | Divide(x1, x2) -> sprintf "(%s)/(%s)" (renderExpression x1) (renderExpression x2)
+    | Negate x -> sprintf "-(%s)" (renderExpression x)

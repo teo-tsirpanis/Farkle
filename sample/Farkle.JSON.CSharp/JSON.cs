@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -74,9 +74,9 @@ namespace Farkle.JSON.CSharp
                 case Terminal.Number:
                     var num =
 #if NETCOREAPP2_1
-                        decimal.Parse(data);
+                        decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
 #else
-                        decimal.Parse(data.ToString());
+                        decimal.Parse(data.ToString(), NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
 #endif
                     // Avoid boxing by wrapping directly to the Json type.
                     return Json.NewNumber(num);

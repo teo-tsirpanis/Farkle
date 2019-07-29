@@ -1,5 +1,5 @@
 // Copyright (c) 2017 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -9,7 +9,9 @@ open Expecto
 open Expecto.Logging
 open Farkle
 open Farkle.Collections
+open Farkle.JSON
 open Farkle.PostProcessor
+open Farkle.Tests
 open System.IO
 
 let logger = Log.create "Parser tests"
@@ -30,10 +32,29 @@ let testParser grammarFile displayName text =
     ]
 
 [<Tests>]
-let tests =
+let tests = testList "Parser tests" [
     [
         "simple.egt", "\"111*555\"", "111 * 555"
         "gml.egt", "its own definition file", File.ReadAllText "../resources/gml.grm"
     ]
     |> List.collect ((<|||) testParser)
-    |> testList "Parser tests"
+    |> testList "Domain-ignorant parsing tests"
+
+    testProperty "The JSON parser works well" (fun json ->
+        let jsonAsString = Chiron.Formatting.Json.format json
+        let parsedFromFSharp = RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
+        let parsedFromCSharp = RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
+        let parsedFromChiron = Chiron.Parsing.Json.tryParse jsonAsString
+        match parsedFromFSharp, parsedFromCSharp, parsedFromChiron with
+        | Ok cs, Ok fs, Choice1Of2 chiron ->
+            Expect.equal cs json "The JSON structure generated from the C# Farkle parser is different"
+            Expect.equal fs json "The JSON structure generated from the F# Farkle parser is different"
+            Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
+        | Result.Error x, _, _ ->
+            failtestf "The C# parser failed: %O" x
+        | _, Result.Error x, _ ->
+            failtestf "The F# parser failed: %O" x
+        | _, _, Choice2Of2 x ->
+            failtestf "The Chiron parser failed: %O" x
+        true)
+]

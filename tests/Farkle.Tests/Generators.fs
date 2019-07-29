@@ -1,19 +1,23 @@
 // Copyright (c) 2017 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 [<AutoOpen>]
 module Farkle.Tests.Generators
 
+open Chiron
 open Expecto
 open Farkle
 open Farkle.Collections
 open Farkle.Grammar
 open FsCheck
+open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
+
+let nonEmptyString = Arb.generate |> Gen.filter (String.IsNullOrEmpty >> not)
 
 let productionGen = gen {
     let! index = Arb.generate
@@ -67,6 +71,21 @@ let rangeMapGen() = gen {
     return x.Value
 }
 
+let JsonGen =
+    let rec impl size =
+        [
+            yield Arb.generate |> Gen.map Json.Bool
+            yield Gen.constant <| Json.Null ()
+            yield Arb.generate |> Gen.map Json.Number
+            yield nonEmptyString |> Gen.map Json.String
+            if size > 0 then
+                let items = impl <| size - 1
+                yield items |> Gen.listOf |> Gen.map Json.Array
+                yield Gen.zip nonEmptyString items |> Gen.listOf |> Gen.map (Map.ofList >> Json.Object)
+        ]
+        |> Gen.oneof
+    Gen.sized impl
+
 type CS = CS of CharStream * string
 
 type Generators =
@@ -85,6 +104,7 @@ type Generators =
                 new StringReader(str) |> CharStream.ofTextReader
         return CS(charStream, str)
     }
+    static member Json() = Arb.fromGen <| JsonGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

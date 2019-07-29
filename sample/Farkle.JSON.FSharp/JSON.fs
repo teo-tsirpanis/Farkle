@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -50,9 +50,9 @@ let unescapeJsonString (x: ReadOnlySpan<_>) =
 let private transformers =
     [
     #if NETCOREAPP2_1
-        Transformer.create Terminal.Number <| C(fun x -> Decimal.Parse x |> Json.Number)
+        Transformer.create Terminal.Number <| C(fun x -> Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number)
     #else
-        Transformer.createS Terminal.Number (fun x -> Decimal.Parse x |> Json.Number)
+        Transformer.createS Terminal.Number (fun x -> Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number)
     #endif
         Transformer.create Terminal.String <| C unescapeJsonString
     ]

@@ -11,6 +11,7 @@ open Farkle
 open Farkle.Collections
 open Farkle.PostProcessor
 open System
+open System.Collections.Immutable
 open System.Text
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
@@ -125,14 +126,25 @@ type PostProcessor =
     /// <param name="fGetFuser">A delegate that accepts the table index of a <see cref="Farkle.Grammar.Production"/>
     /// and returns its appropriate <see cref="Fuser"/></param>
     static member Create<'TResult> (fTransform: CharStreamCallback<uint32>, fGetFuser: Func<uint32,Fuser>) =
+        let fusers =
+            let b = ImmutableArray.CreateBuilder()
+            let mutable i = 0u
+            let mutable fuser = fGetFuser.Invoke(i)
+            while fuser <> Unchecked.defaultof<_> do
+                b.Add fuser
+                i <- i + 1u
+                fuser <- fGetFuser.Invoke(i)
+            b.ToImmutable()
         {new PP<'TResult> with
             member __.Transform(term, pos, data) = fTransform.Invoke(term.Index, pos, data)
             member __.Fuse(prod, arguments) =
-                let theFuser = fGetFuser.Invoke(prod.Index)
-                if theFuser = Unchecked.defaultof<_> then
-                    raise FuserNotFound
+                let idx = int prod.Index
+                if idx < fusers.Length then
+                    // There is no need to check for null.
+                    // It is already taken care of it earlier.
+                    fusers.[idx].Invoke(arguments)
                 else
-                    theFuser.Invoke(arguments)}
+                    raise FuserNotFound}
 
     /// <summary>A <see cref="PostProcessor{Object}"/> that just checks if the given string is valid.</summary>
     /// <remarks>It always returns <c>null</c>.</remarks>

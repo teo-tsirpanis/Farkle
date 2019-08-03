@@ -4,36 +4,35 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <BuildDependsOn>GenerateFarkleTemplates;$(BuildDependsOn)</BuildDependsOn>
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
+    <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
+    <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
   </PropertyGroup>
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"
-          Outputs="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)%(OutputExtension)')"
+          Outputs="%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)"
           Condition="'@(Farkle)' != ''">
 
     <PropertyGroup>
-      <_Template>$(FarkleTemplateOverride)</_Template>
-      <_Template Condition="'$(_Template)' == ''">%(Farkle.Template)</_Template>
-      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)%(Farkle.OutputExtension)</_Output>
+      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)</_Output>
       <_Namespace>%(Farkle.Namespace)</_Namespace>
       <_Namespace Condition="'$(_Namespace)' == ''">$(RootNamespace)</_Namespace>
     </PropertyGroup>
 
     <Error
-            Condition="'$(Language)' == 'VB' AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
-            Text="Visual Basic is a language with poor performance characteristics, and is not natively supported by Farkle. Please specify your own template."/>
+            Condition="'$(Language)' == 'VB'" File="%(Farkle.FullPath)"
+            Text="Visual Basic is a language with poor performance characteristics, and is not natively supported by Farkle."/>
     <Error
-            Condition="'$(Language)' != 'C#' AND '$(Language)' != 'F#' AND '$(_Template)' == ''" File="%(Farkle.FullPath)"
-            Text="The language $(Language) is not natively supported by Farkle. Please specify your own template."/>
+            Condition="'$(Language)' != 'C#' AND '$(Language)' != 'F#'" File="%(Farkle.FullPath)"
+            Text="The language $(Language) is not natively supported by Farkle."/>
 
     <FarkleCreateTemplateTask
             Grammar="%(Farkle.FullPath)"
             Language="$(Language)"
-            CustomTemplate="$(_Template)"
             Namespace="$(_Namespace)"
             OutputFile="$(_Output)"/>
 
-    <ItemGroup Condition="'%(Farkle.CompileIt)' == 'true'">
+    <ItemGroup Condition="'$(Language)' == 'C#'">
       <!-- We have to ensure that the generated file is being included in the Compile item
       only once. It might have been already included in cases like a rebuild (the file existed,
       had been caught by the wildcard, deleted by the target below, generated again, but had
@@ -46,6 +45,6 @@
     </ItemGroup>
   </Target>
   <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">
-    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)%(OutputExtension)')"/>
+    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')"/>
   </Target> 
 </Project>

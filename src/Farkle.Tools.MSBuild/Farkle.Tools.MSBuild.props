@@ -2,22 +2,6 @@
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Language)' == 'C#'">
-    <Farkle>
-      <CompileIt>true</CompileIt>
-      <OutputExtension>.g.cs</OutputExtension>
-    </Farkle>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Language)' == 'F#'">
-    <Farkle>
-      <OutputExtension>.g.fs</OutputExtension>
-    </Farkle>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Language)' != 'C#' AND '$(Language)' != 'F#'">
-    <Farkle>
-      <OutputExtension>.out.txt</OutputExtension>
-    </Farkle>
-  </ItemDefinitionGroup>
 
   <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>

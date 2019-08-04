@@ -3,10 +3,10 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(MSBuildRuntimeType)' == 'Core'">
+  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' == 'Core'">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(MSBuildRuntimeType)' != 'Core'">
+  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' != 'Core'">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
 </Project>

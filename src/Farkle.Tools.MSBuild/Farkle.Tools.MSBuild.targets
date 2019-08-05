@@ -1,18 +1,18 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <UsingTask TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTaskAssembly)"/>
+  <UsingTask Condition="'$(DesignTimeBuild)' != 'true'" TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTaskAssembly)"/>
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <BuildDependsOn>GenerateFarkleTemplates;$(BuildDependsOn)</BuildDependsOn>
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
-    <DefaultItemExcludes>$(DefaultItemExcludes);@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')</DefaultItemExcludes>
+    <DefaultItemExcludes Condition="'$(DesignTimeBuild)' != 'true'">$(DefaultItemExcludes);@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')</DefaultItemExcludes>
   </PropertyGroup>
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"
           Outputs="%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)"
-          Condition="'@(Farkle)' != ''">
+          Condition="'@(Farkle)' != '' AND '$(DesignTimeBuild)' != 'true'">
 
     <PropertyGroup>
       <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)</_Output>

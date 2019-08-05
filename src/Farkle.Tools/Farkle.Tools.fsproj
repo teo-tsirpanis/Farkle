@@ -6,7 +6,7 @@
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>farkle</ToolCommandName>
-    <Title>The Farkle Command-Line Tools</Title>
+    <Title>The Farkle Command Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>
     <Description>This package contains a command-line tool that makes development with Farkle easier and more automatic.
 

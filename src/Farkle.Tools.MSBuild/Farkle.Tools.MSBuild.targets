@@ -6,7 +6,7 @@
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
-    <DefaultItemExcludes>$(DefaultItemExcludes);**/*$(_FarkleOutputExtension)</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')</DefaultItemExcludes>
   </PropertyGroup>
   <Target
           Name="GenerateFarkleTemplates"
@@ -34,13 +34,6 @@
             OutputFile="$(_Output)"/>
 
     <ItemGroup Condition="'$(EnableDefaultCompileItems)' == 'true'">
-      <!-- We have to ensure that the generated file is being included in the Compile item
-      only once. It might have been already included in cases like a rebuild (the file existed,
-      had been caught by the wildcard, deleted by the target below, generated again, but had
-      never been removed from Compile). Removing it from Compile at the cleaning target did not
-      work either. We also use the absolute path below, which is fine, because MSBuild removes the
-      item even if it had been imported as a relative path. And it has been tested that removing
-      a non-existent item does not cause a problem. -->
       <Compile Include="$(_Output)" />
     </ItemGroup>
   </Target>

@@ -6,9 +6,6 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\sample\Farkle.Calculator\SimpleMaths.fs">
-      <Link>SimpleMaths.fs</Link>
-    </Compile>
     <Compile Include="Generators.fs" />
     <Compile Include="RangeMapTests.fs" />
     <Compile Include="CharStreamTests.fs" />

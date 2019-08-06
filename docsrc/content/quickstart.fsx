@@ -52,7 +52,7 @@ Save this file next to the other source files of your project, open the project 
 </ItemGroup>
 ```
 
-Let's look at the second line. It tells MSBuild - the build system our projects are powered up by - that we are going to use this grammar file from Farkle. We even gave it a custom name of our own, probably to match the name of our app.
+Let's look at the second line. It tells MSBuild - the build system our projects are powered up by - that we are going to use this grammar file from Farkle. We even gave it a custom namespace of our own - probably to match the name of our app.
 
 Now, on to the second line. We are adding a new source file with an unusual extension to our project. But, where is it actually? Wouldn't the compiler refuse to compile our little project and raise a nasty compiler error? It's actually surprisingly simple. Thanks to previous line, MSBuild generated a new source file which contains our beloved grammar, with some types to make using Farkle really easy. Let's take a look at this file:
 *)

@@ -86,11 +86,8 @@ module LALRParser =
                 | false, _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
             | false, _ ->
                 let expectedSymbols =
-                    [
-                        Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term) currentState.Actions
-                        Seq.map (fun (KeyValue(x,_)) -> ExpectedSymbol.Nonterminal x) currentState.GotoActions
-                    ]
-                    |> Seq.concat
+                    currentState.Actions
+                    |> Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term) 
                     |> set
                     |> (fun s -> if currentState.EOFAction.IsSome then Set.add ExpectedSymbol.EndOfInput s else s)
                 let foundToken =

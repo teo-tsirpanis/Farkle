@@ -41,14 +41,11 @@ type InternalError =
 type ExpectedSymbol =
     /// A terminal was expected.
     | Terminal of Terminal
-    /// A nonterminal was expected.
-    | Nonterminal of Nonterminal
     /// The input was expected to end.
     | EndOfInput
     override x.ToString() =
         match x with
         | Terminal x -> x.ToString()
-        | Nonterminal x -> x.ToString()
         | EndOfInput -> "(EOF)"
 
 /// An action of the parser.

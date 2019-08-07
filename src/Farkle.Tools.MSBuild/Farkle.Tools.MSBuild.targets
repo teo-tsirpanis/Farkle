@@ -1,19 +1,13 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask Condition="'$(DesignTimeBuild)' != 'true'" TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTaskAssembly)"/>
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <BuildDependsOn>GenerateFarkleTemplates;$(BuildDependsOn)</BuildDependsOn>
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
-    <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.egt.cs</_FarkleOutputExtension>
-    <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.egt.fs</_FarkleOutputExtension>
-    <DefaultItemExcludes Condition="'$(DesignTimeBuild)' != 'true'">$(DefaultItemExcludes);**/*.$(_FarkleOutputExtension)</DefaultItemExcludes>
+    <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
+    <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
+    <DefaultItemExcludes Condition="'$(DesignTimeBuild)' != 'true'">$(DefaultItemExcludes);@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')</DefaultItemExcludes>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' == 'Core'">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp2.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' != 'Core'">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net45/Farkle.Tools.MSbuild.dll</FarkleTaskAssembly>
-  </PropertyGroup>
-  <UsingTask Condition="'$(DesignTimeBuild)' != 'true'" TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask" AssemblyFile="$(FarkleTaskAssembly)"/>
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"

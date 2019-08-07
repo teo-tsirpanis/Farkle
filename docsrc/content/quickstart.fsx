@@ -47,7 +47,7 @@ Save this file next to the other source files of your project, open the project 
 ``` xml
 <ItemGroup>
   <Farkle Include="SimpleMaths.egt" Namespace="MyBeautifulCalculator" />
-  <Compile Include="SimpleMaths.g.fs" />
+  <Compile Include="SimpleMaths.egt.fs" />
   <!--The rest of your source code files.-->
 </ItemGroup>
 ```

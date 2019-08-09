@@ -6,16 +6,17 @@
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
-    <DefaultItemExcludes Condition="'$(DesignTimeBuild)' != 'true'">$(DefaultItemExcludes);@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')</DefaultItemExcludes>
   </PropertyGroup>
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"
-          Outputs="%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)"
+          Outputs="$(MSBuildProjectDirectory)\%(Farkle.FileName)$(_FarkleOutputExtension)"
           Condition="'@(Farkle)' != '' AND '$(DesignTimeBuild)' != 'true'">
 
     <PropertyGroup>
-      <_Output>%(Farkle.RootDir)%(Farkle.Directory)%(Farkle.OutputDirectorySuffix)%(Farkle.FileName)$(_FarkleOutputExtension)</_Output>
+      <!-- TODO: Check whether the backslash works on Linux.
+      I guess it works, but I have to be sure. -->
+      <_Output>$(MSBuildProjectDirectory)\%(Farkle.FileName)$(_FarkleOutputExtension)</_Output>
       <_Namespace>%(Farkle.Namespace)</_Namespace>
       <_Namespace Condition="'$(_Namespace)' == ''">$(RootNamespace)</_Namespace>
     </PropertyGroup>
@@ -33,11 +34,19 @@
             Namespace="$(_Namespace)"
             OutputFile="$(_Output)"/>
 
-    <ItemGroup Condition="'$(EnableDefaultCompileItems)' == 'true'">
+    <ItemGroup>
+      <_CompileFullPaths Remove="@(_CompileFullPaths)"/>
+      <_CompileFullPaths Include="@(Compile->'%(FullPath)')"/>
+    </ItemGroup>
+    <PropertyGroup>
+      <_DoCompile Condition="$(EnableDefaultItems) AND $(EnableDefaultCompileItems)">true</_DoCompile>
+      <_DoCompile Condition="'$(_DoCompile)' != 'true' OR %(_CompileFullPaths.Identity) == $(_Output)">false</_DoCompile>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(_DoCompile)' == 'true'">
       <Compile Include="$(_Output)" />
     </ItemGroup>
   </Target>
   <Target Name="CleanFarkleGeneratedTemplates" BeforeTargets="Clean">
-    <Delete Files="@(Farkle->'%(RootDir)%(Directory)%(OutputDirectorySuffix)%(FileName)$(_FarkleOutputExtension)')"/>
+    <Delete Files="@(Farkle->'$(MSBuildProjectDirectory)\%(FileName)$(_FarkleOutputExtension)')"/>
   </Target>
 </Project>

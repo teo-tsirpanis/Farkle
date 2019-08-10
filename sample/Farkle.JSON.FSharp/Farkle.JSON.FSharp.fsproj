@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\src\Farkle.Tools.MSBuild\Farkle.Tools.MSBuild.props"/>
   <PropertyGroup>
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
@@ -18,5 +19,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
+  <Import Project="..\..\src\Farkle.Tools.MSBuild\Farkle.Tools.MSBuild.targets"/>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

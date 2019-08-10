@@ -7,8 +7,6 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://teo-tsirpanis.github.io/Farkle/</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
-    <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle/</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
     <PackageTags>farkle;parser;lalr;gold-parser</PackageTags>
     <PackageReleaseNotes>You can see information about the latest releases on https://github.com/teo-tsirpanis/Farkle/releases</PackageReleaseNotes>
   </PropertyGroup>

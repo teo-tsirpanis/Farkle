@@ -63,7 +63,6 @@ module Tokenizer =
                 | ValueNone, ValueNone -> input.FirstCharacter |> Error |> Some
         impl (getCurrentIndex input) states.InitialState ValueNone
 
-
     /// Returns the next token from the current position of a `CharStream`.
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.

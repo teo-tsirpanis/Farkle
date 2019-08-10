@@ -375,11 +375,11 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
-let remoteToPush =
+let remoteToPush = lazy (
     CommandHelper.getGitResult "" "remote -v"
     |> Seq.filter (String.endsWith "(push)")
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-    |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+    |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
 Target.description "Publishes the benchmark report."
 Target.create "PublishBenchmarkReport" (fun _ ->
@@ -389,7 +389,7 @@ Target.create "PublishBenchmarkReport" (fun _ ->
         | false, _, errors -> failwithf "Error while staging %s: %s" x errors
         | true, _, _ -> ())
     Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
-    Branches.pushBranch "" remoteToPush (Information.getBranchName "")
+    Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
 )
 
 Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
@@ -404,7 +404,7 @@ Target.create "GitHubRelease" (fun _ ->
         | _ -> UserInput.getUserPassword "Password: "
 
     Branches.tag "" nugetVersion
-    Branches.pushTag "" remoteToPush nugetVersion
+    Branches.pushTag "" remoteToPush.Value nugetVersion
 
     // release on github
     GitHub.createClient user pw

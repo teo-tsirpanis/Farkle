@@ -4,11 +4,11 @@
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Farkle Include="..\JSON.egt" Namespace="Farkle.JSON.FSharp" />
+    <Farkle Include="..\JSON.egt" Namespace="Farkle.JSON.FSharp" OutputDirectorySuffix="Farkle.JSON.FSharp/" />
     <Compile Include="JSON.g.fs" />
     <!-- I added the calculator here as well, to demonstrate that it works with many Farkle items.
     It doesn't have anything to do with JSON, but renaming the project is too much of an effort. -->
-    <Farkle Include="..\SimpleMaths.egt" Namespace="SimpleMaths" />
+    <Farkle Include="..\SimpleMaths.egt" Namespace="SimpleMaths" OutputDirectorySuffix="Farkle.JSON.FSharp/" />
     <Compile Include="SimpleMaths.g.fs" />
     <Compile Include="JSON.fs" />
     <Compile Include="SimpleMaths.fs" />

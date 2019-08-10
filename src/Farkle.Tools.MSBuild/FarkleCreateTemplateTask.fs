@@ -96,7 +96,7 @@ type FarkleCreateTemplateTask() =
             else
                 Path.ChangeExtension(grammarPath, generatedTemplate.FileExtension)
 
-        log.Information("Writing template to {Output}", this.GeneratedTo)
+        this.Log.LogMessage("{0} -> {1}", Path.GetFileName(this.Grammar), this.GeneratedTo)
         File.WriteAllText(this.GeneratedTo, generatedTemplate.Content)
     }
 

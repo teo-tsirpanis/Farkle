@@ -1,4 +1,7 @@
-#### 4.0.0
+#### 4.0.1 - 11-08-2019
+* Backport the fix of GitHub issue [#8](https://github.com/teo-tsirpanis/Farkle/issues/8).
+
+#### 4.0.0 - 17-01-2019
 * Optimized the way Farkle handles the input stream characters by reducing copies & improving performance.
 * Removed all 3rd-party non-Microsoft dependencies.
 

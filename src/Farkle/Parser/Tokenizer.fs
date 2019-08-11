@@ -38,7 +38,7 @@ module Tokenizer =
         impl groupStack
 
     let private tokenizeDFA {InitialState = initialState; States = states} (input: CharStream) =
-        let newToken sym idx = (sym, pinSpan input idx) |> Ok |> Some
+        let newToken sym idx = (sym, pinSpan input idx) |> Ok
         let lookupEdges x = RangeMap.tryFind x >> Option.map (SafeArray.retrieve states)
         let rec impl idx (currState: DFAState) lastAccept =
             let mutable x = '\u0103'
@@ -47,7 +47,7 @@ module Tokenizer =
             | false ->
                 match lastAccept with
                 | Some (sym, idx) -> newToken sym idx
-                | None -> None
+                | None -> Error input.FirstCharacter
             | true ->
                 let newDFA = lookupEdges x currState.Edges
                 match newDFA, lastAccept with
@@ -58,8 +58,13 @@ module Tokenizer =
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
                 | None, Some (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None -> input.FirstCharacter |> Error |> Some
-        impl (getCurrentIndex input) initialState None
+                | None, None -> Error input.FirstCharacter
+        let mutable c = '\uBABE'
+        let mutable idx = getCurrentIndex input
+        if readChar input &c &idx then
+            impl (getCurrentIndex input) initialState None |> Some
+        else
+            None
 
     /// Breaks a `CharStream` into a series of post-processed tokens, according to the given `Grammar`.
     /// This function is pretty complicated, so let's enumerate the parameters' purpose.

@@ -20,7 +20,7 @@ let parse rf str = RuntimeFarkle.parseString rf (string >> Message.eventX >> log
 [<Tests>]
 let tests = testList "Regression tests" [
     reproduceIssue 8 {
-        let rf = RuntimeFarkle.ofEGTFile PostProcessor.syntaxCheck "issue-8.egt"
+        let rf = RuntimeFarkle.ofEGTFile PostProcessor.syntaxCheck "../resources/issue-8.egt"
         Expect.isOk (parse rf "45") "The two-digit input was not successfully parsed"
         Expect.equal (parse rf "3")
             (Message(Position.Initial, ParseErrorType.LexicalError '3') |> FarkleError.ParseError |> Result.Error)

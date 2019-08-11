@@ -52,6 +52,9 @@ with
         PostProcessor = postProcessor
     }
 
+    /// <summary>Gets the grammar behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
+    member this.TryGetGrammar() = this.Grammar
+
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 

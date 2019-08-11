@@ -12,6 +12,7 @@
     <Compile Include="GrammarTests.fs" />
     <Compile Include="ParserTests.fs" />
     <Compile Include="ASTTests.fs" />
+    <Compile Include="RegressionTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

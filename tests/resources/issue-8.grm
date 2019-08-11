@@ -1,0 +1,9 @@
+"Name" = 'Issue8'
+"Author" = 'Theodore Tsirpanis'
+"About" = 'This grammar reproduces issue #8 of Farkle. Its language is either two digits, or nothing. Parsing a single digit should fail, but it succeeds, because of the aforementioned issue.'
+"Auto Whitespace" = false
+"Start Symbol" = <S>
+
+Number = {Digit}{Digit}
+
+<S> ::= Number | <>

@@ -12,8 +12,6 @@ open System.Text
 
 module internal EGTReader =
 
-    exception EGTFileException
-
     let invalidEGT() = raise EGTFileException
 
     module private Implementation =
@@ -22,7 +20,7 @@ module internal EGTReader =
 
         let inline readUInt16 (r: BinaryReader) =
             let x = r.ReadUInt16()
-            if System.BitConverter.IsLittleEndian then
+            if BitConverter.IsLittleEndian then
                 x
             else
                 ((x &&& 0xffus) <<< 8) ||| ((x >>> 8) &&& 0xffus)
@@ -62,7 +60,8 @@ module internal EGTReader =
                     | _ -> invalidEGT()
                 Ok ()
             with
-            | :? EndOfStreamException | :? EGTFileException -> Error InvalidEGTFile
+            | :? EndOfStreamException | EGTFileException -> Error InvalidEGTFile
+            | ProductionHasGroupEndException index -> Error <| ProductionHasGroupEnd index
 
     open Implementation
 

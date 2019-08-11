@@ -51,7 +51,12 @@ module internal GrammarReader =
 
         let wantTerminal x = match x with | AnyTerminal x -> x | _ -> invalidEGT()
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
-        let wantProductionHandle x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNonterminal x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantProductionHandle name x =
+            match x with
+            | AnyTerminal x -> Choice1Of2 x
+            | AnyNonterminal x -> Choice2Of2 x 
+            | AnyGroupEnd x -> raise <| ProductionHasGroupEndException name
+            | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
         let wantContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
@@ -129,7 +134,7 @@ module internal GrammarReader =
             wantEmpty mem 1
             let symbols =
                 let mem = mem.Slice(2)
-                Seq.init mem.Length (wantUInt16 mem >> fSymbol >> wantProductionHandle) |> ImmutableArray.CreateRange
+                Seq.init mem.Length (wantUInt16 mem >> fSymbol >> wantProductionHandle index) |> ImmutableArray.CreateRange
             {Index = index; Head = headSymbol; Handle = symbols}
 
         let readInitialStates fDFA fLALR mem =

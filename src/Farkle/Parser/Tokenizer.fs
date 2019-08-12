@@ -61,11 +61,9 @@ module Tokenizer =
                 | ValueNone, ValueSome (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
                 | ValueNone, ValueNone -> Error input.FirstCharacter
-        let mutable c = '\uBABE'
-        let mutable idx = getCurrentIndex input
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
-        if readChar input &c &idx then
+        if input.TryLoadFirstCharacter() then
             impl (getCurrentIndex input) states.InitialState ValueNone |> Some
         else
             None

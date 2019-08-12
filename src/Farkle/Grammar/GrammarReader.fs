@@ -55,7 +55,7 @@ module internal GrammarReader =
             match x with
             | AnyTerminal x -> Choice1Of2 x
             | AnyNonterminal x -> Choice2Of2 x 
-            | AnyGroupEnd x -> raise <| ProductionHasGroupEndException name
+            | AnyGroupEnd _ -> raise <| ProductionHasGroupEndException name
             | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
         let wantContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()

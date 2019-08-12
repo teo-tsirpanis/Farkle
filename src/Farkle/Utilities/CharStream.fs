@@ -196,7 +196,7 @@ with
             true
         // The character at the current index is the next one to be read.
         elif x.CurrentIndex = len then
-            let mutable c = Unchecked.defaultof<_>
+            let mutable c = '\uBABE'
             let mutable idx = {Index = x.CurrentIndex}
             // The input might have ended. But if not, the length so far will be
             // increased by one, and subsequent calls to this function will
@@ -283,15 +283,15 @@ module CharStream =
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs ({IndexFrom = idxStart; IndexTo = idxEnd} as span) =
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs ({IndexFrom = idxStart; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
             let span = cs.Source.GetSpanForCharacters(idxStart, length)
             cs._LastUnpinnedSpanPosition <- cs.GetCurrentPosition()
-            fPostProcess.Invoke(symbol, cs.LastUnpinnedSpanPosition, span)
+            fPostProcess.Invoke(symbol, charSpan.GetStartingPosition(), span)
         else
-            failwithf "Trying to read the character span %O, from a stream that was last read at %d." span cs.StartingIndex
+            failwithf "Trying to read the character span %O, from a stream that was last read at %d." charSpan cs.StartingIndex
 
     /// Creates a string out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.

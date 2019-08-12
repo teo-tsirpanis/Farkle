@@ -209,7 +209,7 @@ You will immediately see a file called `SimpleMaths.cs` that contains most of th
 
 ---
 
-So, I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you feel especially eager to parse some strings today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
+So, I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you feel especially eager to parse some strings with C# today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
 [quickstart-fsharp]: quickstart.html
 [paket]: https://fsprojects.github.io/Paket/

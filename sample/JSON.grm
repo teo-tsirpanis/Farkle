@@ -2,6 +2,7 @@
 "Author" = 'Theodore Tsirpanis'
 "Version" = '1.0.0'
 "About" = 'A language describing the JavaScript Object Notation'
+"Case Sensitive" = true
 
 "Start Symbol" = <Value>
 

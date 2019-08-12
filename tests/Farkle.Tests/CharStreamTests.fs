@@ -13,11 +13,9 @@ open FsCheck
 [<Tests>]
 let tests =
     testList "Character stream tests" [
-        testProperty "The first character of a character stream works as expected" (fun (CS(cs, _)) ->
-            let mutable c2 = '\u0640'
-            let mutable idx = getCurrentIndex cs
-            Flip.Expect.isTrue "Unexpected end of input" <| readChar cs &c2 &idx
-            Expect.equal cs.FirstCharacter c2 "Character mismatch")
+        testProperty "The first character of a character stream works as expected" (fun (CS(cs, str)) ->
+            Flip.Expect.isTrue "Unexpected end of input" <| cs.TryLoadFirstCharacter()
+            Expect.equal cs.FirstCharacter str.[0] "Character mismatch")
 
         testProperty "Consuming a character stream by a specified number of characters works as expected"
             (fun (CS(cs, str)) steps -> (steps <= str.Length && steps > 0) ==> (fun () ->

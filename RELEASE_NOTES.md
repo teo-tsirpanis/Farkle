@@ -1,5 +1,6 @@
 #### 5.0.0-rc.8
 * Fix a bug where the tokenizer would errorneously report an EOF instead of a lexical error. - [#8](https://github.com/teo-tsirpanis/Farkle/issues/8)
+* Add `CharStream.TryLoadFirstCharacter`. With this method, you can check whether the input of a character stream has ended, and safely access `CharStream.FirstCharacter`.
 
 #### 5.0.0-rc.7 - 10-08-2019
 * Speed-up the tokenizer by using an array that handles ASCII characters.
@@ -34,6 +35,9 @@
 * As always, performance was improved, especially in the EGT file reader.
 * __Breaking change:__ In your post-processor, if you have functions like `take2Of production (index1, index2) count func`, remove the `count` parameter.
 * __Breaking change:__ The `Token` type was moved to `Farkle.Parser` and is not needed by the `AST` type.
+
+#### 4.0.1 - 11-08-2019
+* Backport the fix of GitHub issue [#8](https://github.com/teo-tsirpanis/Farkle/issues/8).
 
 #### 4.0.0 - 17-01-2019
 * Optimized the way Farkle handles the input stream characters by reducing copies & improving performance.

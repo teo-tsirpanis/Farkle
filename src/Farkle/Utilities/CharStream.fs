@@ -34,7 +34,7 @@ type [<Struct>] CharStreamIndex = private {Index: uint64}
 /// A representation of a `CharStream`.
 // Previously, this type was a discriminated union. I changed it to an abstract because
 // pattern matches on it, which involve two type checks+casts seemed to be inferior to virtual calls.
-// Besides, the CLR is more inclined to handle inheritance and polymorphism. 
+// Besides, the CLR is more inclined to handle inheritance and polymorphism.
 // And regardless, this layout clearly separates source-specific code from the rest of it.
 [<AbstractClass>]
 type private CharStreamSource() =
@@ -92,8 +92,9 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
     /// The index of the first element in the buffer.
     let mutable bufferFirstCharacterIndex = 0UL
     /// The index of the next character to be read.
+    /// Alternatively, how many character have been read so far.
     let mutable nextReadIndex = 0UL
-    member __.CheckDisposed() =
+    member private __.CheckDisposed() =
         if disposed then
             raise <| ObjectDisposedException("Cannot use a dynamic block character stream after being disposed.")
     member private __.IsBufferFull = uint64 buffer.Length = nextReadIndex - bufferFirstCharacterIndex
@@ -186,8 +187,26 @@ with
     member x.GetCurrentPosition() = {Line = x.CurrentLine; Column = x.CurrentColumn; Index = x.CurrentIndex}
     /// The starting position of the last character span that was unpinned.
     member x.LastUnpinnedSpanPosition = x._LastUnpinnedSpanPosition
+    /// Ensures that the character at the current position is loaded in memory.
+    /// If it is not, and input has ended, returns `false`.
+    member x.TryLoadFirstCharacter() =
+        let len = x.Source.LengthSoFar
+        // The character at the current index is behind the length so far.
+        if x.CurrentIndex < len then
+            true
+        // The character at the current index is the next one to be read.
+        elif x.CurrentIndex = len then
+            let mutable c = Unchecked.defaultof<_>
+            let mutable idx = {Index = x.CurrentIndex}
+            // The input might have ended. But if not, the length so far will be
+            // increased by one, and subsequent calls to this function will
+            // go to the first if clause.
+            x.Source.ReadNextCharacter(x.StartingIndex, &idx, &c)
+        // The current index has gone beyond the immediate next character to be read? Something is wrong!
+        else
+            failwith "The current index of a character stream cannot be larger than its length."
     /// The stream's character at its current position.
-    /// Calling this function assumes that this character is actually `read`.
+    /// Call this function only when `TryLoadFirstCharacter()` returns `true`.
     member x.FirstCharacter = x.Source.[x.CurrentIndex]
     interface IDisposable with
         member x.Dispose() = (x.Source :> IDisposable).Dispose()

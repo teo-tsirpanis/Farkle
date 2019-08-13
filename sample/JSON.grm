@@ -13,7 +13,7 @@
 
 Whitespace = ({Space}|{LF}|{CR}|{HT})+
 
-Number = '-'? ('0'|{Number19}{Number}*) ('.'{Number}+)? ('E'[+-]?{Number}+)?
+Number = '-'? ('0'|{Number19}{Number}*) ('.'{Number}+)? ([eE][+-]?{Number}+)?
 
 String = '"' ({String Characters} | ('\' (["\/bfnrt] | 'u'{Hex Digit}{Hex Digit}{Hex Digit}{Hex Digit})))* '"'
 

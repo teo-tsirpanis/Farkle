@@ -8,7 +8,6 @@ module Farkle.Tests.CharStreamTests
 open Expecto
 open Farkle.Collections.CharStream
 open Farkle.Tests
-open FsCheck
 
 [<Tests>]
 let tests =
@@ -18,7 +17,7 @@ let tests =
             Expect.equal cs.FirstCharacter str.[0] "Character mismatch")
 
         testProperty "Consuming a character stream by a specified number of characters works as expected"
-            (fun (CS(cs, str, steps)) steps ->
+            (fun (CS(cs, str, steps)) ->
                 use cs = cs
                 let idx =
                     let rec impl idx n =

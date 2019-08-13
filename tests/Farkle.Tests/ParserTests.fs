@@ -12,7 +12,6 @@ open Farkle.Collections
 open Farkle.Grammar
 open Farkle.JSON
 open Farkle.Parser
-open Farkle.PostProcessor
 open Farkle.Tests
 open System.IO
 

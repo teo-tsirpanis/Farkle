@@ -15,6 +15,8 @@ type Position = {
     Index: uint64
 }
 with
+    static member Create line column index =
+        {Line = line; Column = column; Index = index}
     /// Changes the line, column and character index references according to the given character.
     static member internal AdvanceImpl (c, line: byref<_>, column: byref<_>, index: byref<_>) =
         index <- index + 1UL
@@ -33,7 +35,7 @@ with
         let mutable column = x.Column
         let mutable index = x.Index
         Position.AdvanceImpl(c, &line, &column, &index)
-        {Line = line; Column = column; Index = index}
+        Position.Create line column index
 
     /// A `Position` that points to the start.
     static member Initial = {Line = 1UL; Column = 1UL; Index = 0UL}

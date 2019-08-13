@@ -20,9 +20,6 @@ let tests =
         test "An EGT file is successfuly read" {
             let x = loadGrammar "simple.egt"
             Expect.isOk x "Reading the grammar failed"
-            match x with
-            | Ok _ -> ()
-            | Error x -> failtestf "Test failed: %A" x
         }
 
         test "An invalid Base64-encoded grammar string does not throw an exception" {

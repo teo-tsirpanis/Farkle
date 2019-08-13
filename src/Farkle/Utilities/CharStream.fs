@@ -288,8 +288,8 @@ module CharStream =
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
             let span = cs.Source.GetSpanForCharacters(idxStart, length)
-            cs._LastUnpinnedSpanPosition <- cs.GetCurrentPosition()
-            fPostProcess.Invoke(symbol, charSpan.GetStartingPosition(), span)
+            cs._LastUnpinnedSpanPosition <- charSpan.GetStartingPosition()
+            fPostProcess.Invoke(symbol, cs._LastUnpinnedSpanPosition, span)
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." charSpan cs.StartingIndex
 

@@ -6,6 +6,7 @@
 [<AutoOpen>]
 module Farkle.Tests.Common
 
+open Expecto
 open Farkle
 open Farkle.Grammar
 open Farkle.PostProcessor
@@ -25,3 +26,8 @@ let loadGrammar egtFile =
 let loadRuntimeFarkle egtFile =
     getResourceFile egtFile
     |> RuntimeFarkle.ofEGTFile PostProcessor.ast
+
+let returnOrFail fmt x =
+    match x with
+    | Ok x -> x
+    | Error x -> failtestf fmt <| box x

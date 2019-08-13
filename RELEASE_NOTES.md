@@ -1,6 +1,8 @@
 #### 5.0.0-rc.8
 * Fix a bug where the tokenizer would errorneously report an EOF instead of a lexical error. - [#8](https://github.com/teo-tsirpanis/Farkle/issues/8)
 * Add `CharStream.TryLoadFirstCharacter`. With this method, you can check whether the input of a character stream has ended, and safely access `CharStream.FirstCharacter`.
+* Bring back `Grammar.StartSymbol`, but implement it correctly this time.
+* Write more tests and documentation.
 
 #### 5.0.0-rc.7 - 10-08-2019
 * Speed-up the tokenizer by using an array that handles ASCII characters.

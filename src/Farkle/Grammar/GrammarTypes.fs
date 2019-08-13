@@ -201,6 +201,7 @@ type Grammar = internal {
 
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.
+    _StartSymbol: Nonterminal
     _Symbols: Symbols
     _Productions: Production ImmutableArray
 
@@ -215,6 +216,8 @@ type Grammar = internal {
 with
     /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
+    /// The grammar's start `Nonterminal`.
+    member x.StartSymbol = x._StartSymbol
     /// The grammar's terminals =, nonterminals, and noise symbols.
     member x.Symbols = x._Symbols
     /// The grammar's `Production`s.

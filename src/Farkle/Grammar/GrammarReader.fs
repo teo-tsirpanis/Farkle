@@ -304,8 +304,16 @@ module internal GrammarReader =
             }
             let dfaStates = dfaStates.MoveToImmutable()
             let lalrStates = lalrStates.MoveToImmutable()
+            let! startSymbol =
+                lalrStates.[initialLALR].GotoActions
+                |> Seq.tryPick(fun x ->
+                    match lalrStates.[int x.Value].EOFAction with
+                    | Some LALRAction.Accept -> Some <| Ok x.Key
+                    | _ -> None)
+                |> Option.defaultValue (Error InvalidEGTFile)
             return OptimizedOperations.createOptimizedGramamr
                 (properties.ToImmutable())
+                startSymbol
                 symbols
                 (productions.MoveToImmutable())
                 (groups.MoveToImmutable())

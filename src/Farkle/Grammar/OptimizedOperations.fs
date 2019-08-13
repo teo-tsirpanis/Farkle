@@ -54,8 +54,9 @@ module internal OptimizedOperations =
 
     /// Creates a `Grammar` from its parts, and attaches to it an `OptimizedOperations` object.
     /// To ensure optimal performance, all grammars should be created from this function.
-    let createOptimizedGramamr props symbols productions groups lalrStates dfaStates = {
+    let createOptimizedGramamr props startSymbol symbols productions groups lalrStates dfaStates = {
         _Properties = props
+        _StartSymbol = startSymbol
         _Symbols = symbols
         _Productions = productions
         _Groups = groups

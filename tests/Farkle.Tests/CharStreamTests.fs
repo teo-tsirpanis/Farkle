@@ -29,7 +29,7 @@ let tests =
                         | false -> failtestf "Unexpected end of file after %d iterations" n
                     impl (getCurrentIndex cs) 1
                 let span = pinSpan cs idx
-                consume false cs span
+                advance false cs span
                 Expect.equal steps (int <| cs.GetCurrentPosition().Index) "An unexpected number of characters was consumed"
                 let s = unpinSpanAndGenerateString cs span
                 Expect.equal (str.Substring(0, steps)) s "The generated string is different from the original"

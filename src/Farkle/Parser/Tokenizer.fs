@@ -88,23 +88,23 @@ module Tokenizer =
             let tok = tokenizeDFA grammar input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
-            // The easiest case. We consume the token, and return it.
+            // The easiest case. We advance the input, and return the token.
             | Some (Ok (Choice1Of4 term, tok)), [] ->
-                consume false input tok
+                advance false input tok
                 newToken term tok
             // We found noise outside of any group.
-            // We consume it, unpin its characters, and proceed.
+            // We discard it, unpin its characters, and proceed.
             | Some (Ok (Choice2Of4 _noise, tok)), [] ->
-                consume true input tok
+                advance true input tok
                 impl []
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
-            // in the group stack, consume the token, and continue.
+            // in the group stack, advance the input, and continue.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[int tokGroupIdx]
-                    consume (shouldUnpinCharactersInsideGroup g gs) input tok
+                    advance (shouldUnpinCharactersInsideGroup g gs) input tok
                     impl ((tok, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
@@ -113,7 +113,7 @@ module Tokenizer =
                 let popped =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        consume (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
+                        advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
                         concatSpans popped tok
                     | EndingMode.Open -> popped
                 match xs, poppedGroup.ContainerSymbol with
@@ -134,11 +134,11 @@ module Tokenizer =
                     match g2.AdvanceMode, tokenMaybe with
                     // We advance the input by the entire token.
                     | AdvanceMode.Token, Ok (_, data) ->
-                        consume doUnpin input data
+                        advance doUnpin input data
                         concatSpans tok2 data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, Error _ ->
-                        consumeOne doUnpin input
+                        advanceByOne doUnpin input
                         extendSpanByOne input tok2
                 impl ((data, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,

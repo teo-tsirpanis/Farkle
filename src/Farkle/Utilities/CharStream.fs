@@ -164,8 +164,8 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
     override db.Finalize() = db.Dispose(false)
 
 /// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
-/// It is not thread-safe.
-/// Also, if you create a character stream from a `TextReader`, you must dispose it afterwards.
+/// It is not thread-safe. Also, if you created a `TextReader` to just use it with the stream, you can
+/// dispose the stream instead of the reader.
 type CharStream = private {
     /// The stream's source.
     Source: CharStreamSource
@@ -267,7 +267,7 @@ module CharStream =
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
     [<CompiledName("AdvanceByOne")>]
-    let consumeOne doUnpin (cs: CharStream) =
+    let advanceByOne doUnpin (cs: CharStream) =
         if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
             Position.AdvanceImpl(cs.FirstCharacter, &cs.CurrentLine, &cs.CurrentColumn, &cs.CurrentIndex)
             if doUnpin then
@@ -280,11 +280,11 @@ module CharStream =
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, the characters before the span can be marked to be released from memory.
     [<CompiledName("Advance")>]
-    let consume doUnpin (cs: CharStream) span =
+    let advance doUnpin (cs: CharStream) span =
         if cs.CurrentIndex = span.IndexFrom then
             let characterCount = span.IndexTo - span.IndexFrom |> int
             for _i = 0 to characterCount do
-                consumeOne doUnpin cs
+                advanceByOne doUnpin cs
         else
             failwithf "Trying to consume the character span %O, from a stream that was left at %d." span cs.CurrentIndex
 
@@ -342,7 +342,7 @@ module CharStream =
     /// This buffer holds the characters that are the data for a terminal under discovery.
     /// If a terminal is longer than the buffer's size, the buffer becomes twice as long each time.
     /// The default buffer size is 256 characters. If the specified size is not positive, the default is used.
-    /// Also, the character stream must be disposed afterwards.
+    /// Also, the character stream can be disposed if the reader is no more needed.
     let ofTextReaderEx bufferSize textReader =
         let bufferSize =
             if bufferSize > 0 then
@@ -353,5 +353,5 @@ module CharStream =
         create source
 
     /// Creates a `CharStream` from a `TextReader`.
-    /// It must be disposed afterwards.
+    /// It can be disposed if the reader is no more needed.
     let ofTextReader textReader = ofTextReaderEx defaultBufferSize textReader

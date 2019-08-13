@@ -13,12 +13,11 @@ open Farkle.Collections
 open Farkle.Grammar
 open FsCheck
 open SimpleMaths
-open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
 
-let nonEmptyString = Arb.generate |> Gen.filter (String.IsNullOrEmpty >> not)
+let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
 let productionGen = gen {
     let! index = Arb.generate

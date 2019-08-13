@@ -13,21 +13,21 @@ open Farkle.Grammar.GOLDParser
 let tests =
     testList "Grammar tests" [
         test "A legacy CGT grammar fails to be read." {
-            let x = EGT.ofFile "../resources/legacy.cgt"
-            Expect.equal x (Result.Error ReadACGTFile) "Reading the legacy grammar did not fail"
+            let x = loadGrammar "legacy.cgt"
+            Expect.equal x (Error ReadACGTFile) "Reading the legacy grammar did not fail"
         }
 
         test "An EGT file is successfuly read" {
-            let x = EGT.ofFile "../resources/simple.egt"
+            let x = loadGrammar "simple.egt"
             Expect.isOk x "Reading the grammar failed"
             match x with
             | Ok _ -> ()
-            | Result.Error x -> failtestf "Test failed: %A" x
+            | Error x -> failtestf "Test failed: %A" x
         }
 
         test "An invalid Base64-encoded grammar string does not throw an exception" {
             let x = EGT.ofBase64String "👏🏻👏🏻👏🏻👏🏻👏🏻"
-            Expect.equal x (Result.Error InvalidBase64Format) "Reading the invalid Base64 string did not fail"
+            Expect.equal x (Error InvalidBase64Format) "Reading the invalid Base64 string did not fail"
         }
 
         test "Terminal naming works properly" {

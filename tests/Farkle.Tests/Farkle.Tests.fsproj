@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Common.fs" />
     <Compile Include="Generators.fs" />
     <Compile Include="RangeMapTests.fs" />
     <Compile Include="CharStreamTests.fs" />
@@ -14,6 +15,7 @@
     <Compile Include="ASTTests.fs" />
     <Compile Include="RegressionTests.fs" />
     <Compile Include="Program.fs" />
+    <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sample\Farkle.JSON.CSharp\Farkle.JSON.CSharp.csproj" />

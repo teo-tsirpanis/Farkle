@@ -6,14 +6,14 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "${workspaceFolder}/src/Farkle.Tools/bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
+            "program": "bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
             "args": [
                 "new",
                 "--type",
                 "postprocessor",
                 "-lang",
                 "C#",
-                "../../sample/Farkle.Calculator/SimpleMaths.egt",
+                "${workspaceFolder}/sample/SimpleMaths.egt",
             ],
             "cwd": "${workspaceFolder}/src/Farkle.Tools",
             "stopAtEntry": false,
@@ -24,14 +24,14 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "Farklei.dll",
+            "program": "bin/Debug/netcoreapp2.1/Farklei.dll",
             "args": [
                 "--egtfile",
                 "gml.egt",
                 "--inputfile",
                 "gml.grm"
             ],
-            "cwd": "${workspaceRoot}/sample/farklei/bin/Debug/netcoreapp2.1/",
+            "cwd": "${workspaceRoot}/sample/farklei",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -40,11 +40,11 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "Farkle.Calculator.dll",
+            "program": "bin/Debug/netcoreapp2.1/Farkle.Calculator.dll",
             "args": [
                 "111*555"
             ],
-            "cwd": "${workspaceRoot}/sample/Farkle.Calculator/bin/Debug/netcoreapp2.1/",
+            "cwd": "${workspaceRoot}/sample/Farkle.Calculator",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -57,7 +57,7 @@
             "args": [
                 "--sequenced"
             ],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -65,11 +65,11 @@
             "name": "Farkle.Tests (no build)",
             "type": "coreclr",
             "request": "launch",
-            "program": "Farkle.Tests.dll",
+            "program": "bin/Debug/netcoreapp2.1/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],
-            "cwd": "${workspaceRoot}/tests/Farkle.Tests/",
+            "cwd": "${workspaceRoot}/tests/Farkle.Tests",
             "stopAtEntry": false,
             "console": "internalConsole"
         }

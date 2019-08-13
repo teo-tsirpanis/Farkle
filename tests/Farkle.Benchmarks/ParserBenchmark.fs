@@ -8,7 +8,7 @@ namespace Farkle.Benchmarks
 open BenchmarkDotNet.Attributes
 open Farkle
 open Farkle.Common
-open Farkle.Collections
+open Farkle.IO
 open System.IO
 open Farkle.PostProcessor
 

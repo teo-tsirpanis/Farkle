@@ -5,8 +5,8 @@
 
 namespace Farkle.Parser
 
-open Farkle.Collections
 open Farkle.Grammar
+open Farkle.IO
 open Farkle.PostProcessor
 open System.Threading
 

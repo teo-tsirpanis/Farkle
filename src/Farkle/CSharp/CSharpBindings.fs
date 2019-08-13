@@ -8,7 +8,7 @@ namespace rec Farkle.CSharp
 // https://fsharpforfunandprofit.com/posts/cyclic-dependencies/
 
 open Farkle
-open Farkle.Collections
+open Farkle.IO
 open Farkle.PostProcessor
 open System
 open System.Collections.Immutable

@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Collections
+namespace Farkle.IO
 
 open Farkle
 #if DEBUG
@@ -222,10 +222,12 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 module CharStream =
 
     /// Creates a `CharStreamIndex` from a `CharStream` that points to its current position.
+    [<CompiledName("GetCurrentIndex")>]
     let getCurrentIndex (cs: CharStream) = {Index = cs.CurrentIndex}
 
     /// Reads the `idx`th character of `cs`, places it in `c` and returns `true`, if there are more characters left to be read.
     /// Otherwise, returns `false`.
+    [<CompiledName("Read")>]
     let readChar cs (c: outref<_>) (idx: byref<_>) =
         if idx.Index >= cs.CurrentIndex then
             cs.Source.ReadNextCharacter(cs.StartingIndex, &idx, &c)
@@ -234,6 +236,7 @@ module CharStream =
 
     /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
     /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
+    [<CompiledName("PinSpan")>]
     let pinSpan cs ({CharStreamIndex.Index = idxTo}) = {
         LineFrom = cs.CurrentLine
         ColumnFrom = cs.CurrentColumn
@@ -243,6 +246,7 @@ module CharStream =
 
     /// Creates a new `CharSpan` that spans one character more than the given one.
     /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
+    [<CompiledName("ExtendSpanByOne")>]
     let extendSpanByOne (cs: CharStream) span =
         if span.IndexTo < cs.Source.LengthSoFar then
             {span with IndexTo = span.IndexTo + 1UL}
@@ -251,6 +255,7 @@ module CharStream =
 
     /// Creates a new `CharSpan` from the union of two adjacent spans, i.e.
     /// that starts at the first's start, and ends at the second's end.
+    [<CompiledName("ConcatSpans")>]
     let concatSpans span1 span2 =
         if span1.IndexTo = span2.IndexFrom then
             {span1 with IndexTo = span2.IndexTo}
@@ -261,6 +266,7 @@ module CharStream =
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
+    [<CompiledName("AdvanceByOne")>]
     let consumeOne doUnpin (cs: CharStream) =
         if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
             Position.AdvanceImpl(cs.FirstCharacter, &cs.CurrentLine, &cs.CurrentColumn, &cs.CurrentIndex)
@@ -273,6 +279,7 @@ module CharStream =
     /// These characters will not be shown again on new `CharStreamView`s.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, the characters before the span can be marked to be released from memory.
+    [<CompiledName("Advance")>]
     let consume doUnpin (cs: CharStream) span =
         if cs.CurrentIndex = span.IndexFrom then
             let characterCount = span.IndexTo - span.IndexFrom |> int
@@ -283,6 +290,7 @@ module CharStream =
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
+    [<CompiledName("UnpinSpanAndGenerate")>]
     let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs ({IndexFrom = idxStart; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
@@ -296,6 +304,7 @@ module CharStream =
     /// Creates a string out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
     /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
+    [<CompiledName("UnpinSpanAndGenerateString")>]
     let unpinSpanAndGenerateString =
         let csCallback = CharStreamCallback (fun _ _ data -> box <| data.ToString())
         fun cs c_span ->

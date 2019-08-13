@@ -6,7 +6,7 @@
 module Farkle.Tests.CharStreamTests
 
 open Expecto
-open Farkle.Collections.CharStream
+open Farkle.IO.CharStream
 open Farkle.Tests
 
 [<Tests>]

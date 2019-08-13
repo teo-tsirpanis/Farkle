@@ -5,9 +5,9 @@
 
 namespace Farkle
 
-open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
+open Farkle.IO
 open Farkle.Parser
 open Farkle.PostProcessor
 open System

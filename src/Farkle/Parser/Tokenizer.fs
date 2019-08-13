@@ -5,13 +5,13 @@
 
 namespace Farkle.Parser
 
-open Farkle.Collections
 open Farkle.Grammar
+open Farkle.IO
 
 /// Functions to tokenize `CharStreams`.
 module Tokenizer =
 
-    open Farkle.Collections.CharStream
+    open Farkle.IO.CharStream
 
     type private TokenizerState = (CharSpan * Group) list
 

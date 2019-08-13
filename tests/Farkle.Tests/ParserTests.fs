@@ -8,8 +8,8 @@ module Farkle.Tests.ParserTests
 open Expecto
 open Expecto.Logging
 open Farkle
-open Farkle.Collections
 open Farkle.Grammar
+open Farkle.IO
 open Farkle.JSON
 open Farkle.Parser
 open Farkle.Tests

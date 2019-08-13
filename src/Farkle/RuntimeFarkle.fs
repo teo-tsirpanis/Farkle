@@ -5,12 +5,12 @@
 
 namespace Farkle
 
-open System
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.IO
 open Farkle.Parser
 open Farkle.PostProcessor
+open System
 open System.IO
 open System.Text
 

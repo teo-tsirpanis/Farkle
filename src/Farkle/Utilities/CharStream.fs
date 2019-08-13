@@ -11,6 +11,7 @@ open Operators.Checked
 #endif
 open System
 open System.IO
+open System.Runtime.InteropServices
 
 /// An continuous range of characters that is
 /// stored by its starting position and ending index.
@@ -182,6 +183,21 @@ type CharStream = private {
     mutable _LastUnpinnedSpanPosition: Position
 }
 with
+    static member private Create(src) = {
+        Source = src
+        StartingIndex = 0UL
+        CurrentLine = Position.Initial.Line
+        CurrentColumn = Position.Initial.Column
+        CurrentIndex = Position.Initial.Index
+        _LastUnpinnedSpanPosition = Position.Initial
+    }
+    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
+    static member Create(mem) = CharStream.Create(new StaticBlockSource(mem))
+    /// Creates a `CharStream` from a string.
+    static member Create(str: string) = CharStream.Create(str.AsMemory())
+    /// Creates a `CharStream` that lazily reads from a `TextReader`.
+    /// The size of the stream's internal character buffer can be optionally specified.
+    static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) = CharStream.Create(new DynamicBlockSource(reader, bufferSize))
     /// Gets the stream's current position.
     /// Reading the stream will start from here.
     member x.GetCurrentPosition() = {Line = x.CurrentLine; Column = x.CurrentColumn; Index = x.CurrentIndex}
@@ -316,42 +332,17 @@ module CharStream =
                     c_span // Created by cable
             s :?> string
 
-    let private create src =
-        {
-            Source = src
-            StartingIndex = 0UL
-            CurrentLine = Position.Initial.Line
-            CurrentColumn = Position.Initial.Column
-            CurrentIndex = Position.Initial.Index
-            _LastUnpinnedSpanPosition = Position.Initial
-        }
-
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
-    let ofReadOnlyMemory mem =
-        let source = new StaticBlockSource(mem)
-        create source
+    let ofReadOnlyMemory mem = CharStream.Create(mem: ReadOnlyMemory<_>)
 
     /// Creates a `CharStream` from a string.
     let ofString (x: string) = x.AsMemory() |> ofReadOnlyMemory
 
-    [<Literal>]
-    let private defaultBufferSize = 256
-
     /// Creates a `CharStream` that lazily reads from a `TextReader`.
     /// The size of the stream's internal character buffer is specified.
-    /// This buffer holds the characters that are the data for a terminal under discovery.
-    /// If a terminal is longer than the buffer's size, the buffer becomes twice as long each time.
-    /// The default buffer size is 256 characters. If the specified size is not positive, the default is used.
     /// Also, the character stream can be disposed if the reader is no more needed.
-    let ofTextReaderEx bufferSize textReader =
-        let bufferSize =
-            if bufferSize > 0 then
-                bufferSize
-            else
-                defaultBufferSize
-        let source = new DynamicBlockSource(textReader, bufferSize)
-        create source
+    let ofTextReaderEx bufferSize textReader = CharStream.Create(textReader, bufferSize)
 
     /// Creates a `CharStream` from a `TextReader`.
     /// It can be disposed if the reader is no more needed.
-    let ofTextReader textReader = ofTextReaderEx defaultBufferSize textReader
+    let ofTextReader textReader = CharStream.Create(textReader: TextReader)

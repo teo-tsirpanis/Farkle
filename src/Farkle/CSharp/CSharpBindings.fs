@@ -3,15 +3,16 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace rec Farkle.CSharp
 // I am pretty sure that Scott Wlaschin hates me right now...
 // https://fsharpforfunandprofit.com/posts/cyclic-dependencies/
+namespace rec Farkle.CSharp
 
 open Farkle
 open Farkle.IO
 open Farkle.PostProcessor
 open System
 open System.Collections.Immutable
+open System.IO
 open System.Text
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
@@ -28,8 +29,6 @@ type RuntimeFarkleExtensions =
     static member private fLogIgnore = fun (_: Parser.ParseMessage) -> ()
 
     static member private defaultLogFunc f = if isNull f then RuntimeFarkleExtensions.fLogIgnore else FuncConvert.FromAction<_> f
-
-    static member private defaultEncoding enc = if isNull enc then Encoding.UTF8 else enc
 
     [<Extension>]
     /// <summary>Parses and post-processes a string.</summary>
@@ -54,20 +53,30 @@ type RuntimeFarkleExtensions =
     /// <param name="doLazyLoad">Whether to gradually read the input instead of reading its entirety in memory.
     /// Defaults to <c>true</c>.</param>
     /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
-    static member Parse(rf, stream, [<Optional>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
-        let encoding = RuntimeFarkleExtensions.defaultEncoding encoding
+    static member Parse(rf, stream: Stream, [<Optional>] encoding: Encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
-        RF.parseStream rf fLog doLazyLoad encoding stream
+        use sr = new StreamReader(stream, (if isNull encoding then Encoding.UTF8 else encoding), true, 4096, true)
+        use cs =
+            if doLazyLoad then
+                CharStream.ofTextReader sr
+            else
+                CharStream.ofString <| sr.ReadToEnd()
+        RF.parseChars rf fLog cs
+        
+    [<Extension>]
+    /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
+    /// <param name="textReader">
+    static member Parse(rf, textReader, [<Optional>] fLog) =
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseTextReader rf fLog textReader
 
     [<Extension>]
     /// <summary>Parses and post-processes the file at the given path.</summary>
     /// <param name="fileName">The path of the file to parse.</param>
-    /// <param name="encoding">The character encoding of the file's data. Defaults to UTF-8.</param>
     /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
-    static member ParseFile(rf, fileName, [<Optional>] encoding, [<Optional>] fLog) =
-        let encoding = RuntimeFarkleExtensions.defaultEncoding encoding
+    static member ParseFile(rf, fileName, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
-        RF.parseFile rf fLog encoding fileName
+        RF.parseFile rf fLog fileName
 
     [<Extension>]
     /// <summary>Returns a new <see cref="RuntimeFarkle{TResult}"/> with a changed <see cref="PostProcessor"/>.</summary>

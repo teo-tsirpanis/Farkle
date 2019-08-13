@@ -5,12 +5,12 @@
 
 namespace Farkle
 
+open System
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.IO
 open Farkle.Parser
 open Farkle.PostProcessor
-open System
 open System.IO
 open System.Text
 
@@ -104,11 +104,12 @@ module RuntimeFarkle =
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage (inputString: string) = inputString.AsMemory() |> parseMemory rf fMessage
+    let parseString rf fMessage inputString = inputString |> CharStream.ofString |> parseChars rf fMessage
 
     /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily loaded.
+    /// The stream is disposed after its contents are parsed, which is why you might want to parse a text reader.
     /// This function also accepts a custom parse message handler.
-    [<CompiledName("ParseStream")>]
+    [<CompiledName("ParseStream"); Obsolete("Directly parsing streams opens questions like whether to be disposed by Farkle or not. Use parseTextReader or parseFile instead.")>]
     let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         use sr = new StreamReader(inputStream, encoding)
         use cs =
@@ -116,13 +117,17 @@ module RuntimeFarkle =
             | true -> CharStream.ofTextReader sr
             | false -> sr.ReadToEnd() |> CharStream.ofString
         parseChars rf fMessage cs
+        
+    let parseTextReader rf fMessage textReader =
+        let cs = CharStream.ofTextReader textReader
+        parseChars rf fMessage cs
 
     /// Parses and post-processes a file at the given path with the given character encoding.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
-    let parseFile rf fMessage encoding inputFile =
-        use s = File.OpenRead(inputFile)
-        parseStream rf fMessage true encoding s
+    let parseFile rf fMessage inputFile =
+        use s = File.OpenText(inputFile)
+        parseTextReader rf fMessage s
 
     /// Parses and post-processes a string.
     // This function was inspired by FParsec, which has some "runParserOn***" functions,

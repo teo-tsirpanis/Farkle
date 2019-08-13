@@ -27,7 +27,7 @@ type ParserBenchmark() =
     member x.doIt pp =
         use cs =
             if x.DynamicallyReadInput then
-                let sr = new StreamReader("gml.grm")
+                let sr = File.OpenText("gml.grm")
                 CharStream.ofTextReader sr
             else
                 CharStream.ofString gmlContents

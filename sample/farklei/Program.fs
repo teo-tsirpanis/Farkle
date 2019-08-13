@@ -1,7 +1,11 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿// Copyright (c) 2017 Theodore Tsirpanis
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
 
 open Argu
 open Farkle
+open Farkle.IO
 open System.IO
 open Farkle.PostProcessor
 
@@ -33,8 +37,12 @@ let main argv =
     let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast egtFile
     let print x = if showOutput then printfn "%O" x
     if not justLoadEGT then
-        use s = File.OpenRead inputFile
-        let result = RuntimeFarkle.parseStream rf print lazyLoad System.Text.Encoding.UTF8 s
+        use cs =
+            if lazyLoad then
+                inputFile |> File.OpenText |> CharStream.ofTextReader
+            else
+                inputFile |> File.ReadAllText |> CharStream.ofString
+        let result = RuntimeFarkle.parseChars rf print cs
         match result with
         | Ok x ->
             print "AST"

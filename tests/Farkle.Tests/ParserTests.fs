@@ -95,6 +95,6 @@ let tests = testList "Parser tests" [
         let num =
             RuntimeFarkle.parse SimpleMaths.int exprAsString
             |> returnOrFail "Calculating the mathematical expression failed: %O"
-        Expect.equal num (SimpleMaths.evalExpression parsedExpr) "The directly calculated value of the expression differs from the parsed one."
+        Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one."
     )
 ]

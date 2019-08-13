@@ -79,7 +79,7 @@ let JsonGen =
             yield Arb.generate |> Gen.map Json.Number
             yield nonEmptyString |> Gen.map Json.String
             if size > 0 then
-                let items = impl <| size - 1
+                let items = impl <| size / 2
                 yield items |> Gen.listOf |> Gen.map Json.Array
                 yield Gen.zip nonEmptyString items |> Gen.listOf |> Gen.map (Map.ofList >> Json.Object)
         ]
@@ -87,35 +87,28 @@ let JsonGen =
     Gen.sized impl
 
 let simpleMathsASTGen =
-    let rec hasDivisionByZero =
-        function
-        | Number _ -> false
-        | Add(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
-        | Subtract(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
-        | Multiply(x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2
-        | Divide (x1, x2) -> hasDivisionByZero x1 || hasDivisionByZero x2 || evalExpression x2 = 0
-        | Negate x -> hasDivisionByZero x
     let rec impl size =
         if size <= 1 then
-            Arb.generate |> Gen.map Number
+            Arb.generate |> Gen.map (Number >> MathExpression.Create)
         else gen {
             let! leftExprSize = Gen.choose(1, size)
             let rightExprSize = size - leftExprSize
             let! x1 = impl leftExprSize
             if rightExprSize = 0 then
-                return Negate x1
+                return x1 |> Negate |> MathExpression.Create
             else
                 let! x2 = impl rightExprSize
-                return! Gen.elements [
-                    Add(x1, x2)
-                    Subtract(x1, x2)
-                    Multiply(x1, x2)
-                    Divide(x1, x2)
+                return! Gen.elements <| List.map MathExpression.Create [
+                    yield Add(x1, x2)
+                    yield Subtract(x1, x2)
+                    yield Multiply(x1, x2)
+                    if x2.Value <> 0 then
+                        yield Divide(x1, x2)
                 ]
         }
-    Gen.sized impl |> Gen.filter (hasDivisionByZero >> not)
+    Gen.sized impl
 
-type CS = CS of CharStream * string
+type CS = CS of CharStream * string * steps:int
 
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
@@ -124,14 +117,15 @@ type Generators =
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
     static member CS() = Arb.fromGen <| gen {
-        let! str = Arb.generate |> Gen.filter (String.length >> (<>) 0)
+        let! str = nonEmptyString
+        let! steps = Gen.choose(1, str.Length)
         let! generateStaticBlock = Arb.generate
         let charStream =
             if generateStaticBlock then
                 CharStream.ofString str
             else
                 new StringReader(str) |> CharStream.ofTextReader
-        return CS(charStream, str)
+        return CS(charStream, str, steps)
     }
     static member Json() = Arb.fromGen <| JsonGen
     static member SimpleMathsAST = Arb.fromGen <| simpleMathsASTGen

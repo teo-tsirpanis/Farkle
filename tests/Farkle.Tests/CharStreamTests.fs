@@ -13,12 +13,12 @@ open FsCheck
 [<Tests>]
 let tests =
     testList "Character stream tests" [
-        testProperty "The first character of a character stream works as expected" (fun (CS(cs, str)) ->
+        testProperty "The first character of a character stream works as expected" (fun (CS(cs, str, _)) ->
             Flip.Expect.isTrue "Unexpected end of input" <| cs.TryLoadFirstCharacter()
             Expect.equal cs.FirstCharacter str.[0] "Character mismatch")
 
         testProperty "Consuming a character stream by a specified number of characters works as expected"
-            (fun (CS(cs, str)) steps -> (steps <= str.Length && steps > 0) ==> (fun () ->
+            (fun (CS(cs, str, steps)) steps ->
                 use cs = cs
                 let idx =
                     let rec impl idx n =
@@ -34,5 +34,5 @@ let tests =
                 Expect.equal steps (int <| cs.GetCurrentPosition().Index) "An unexpected number of characters was consumed"
                 let s = unpinSpanAndGenerateString cs span
                 Expect.equal (str.Substring(0, steps)) s "The generated string is different from the original"
-                Expect.throws (fun () -> unpinSpanAndGenerateString cs span |> ignore) "Generating a character span can be done more than once"))
+                Expect.throws (fun () -> unpinSpanAndGenerateString cs span |> ignore) "Generating a character span can be done more than once")
     ]

@@ -15,7 +15,7 @@ namespace Farkle.JSON.Sample
         {
             Console.WriteLine($"Running {description}...");
             // GC.Collect(2, GCCollectionMode.Forced, true, true);
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < 2; i++)
                 f();
         }
 

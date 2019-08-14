@@ -73,19 +73,27 @@ let rangeMapGen() = gen {
 }
 
 let JsonGen =
-    let rec impl size =
-        [
-            yield Arb.generate |> Gen.map Json.Bool
-            yield Gen.constant <| Json.Null ()
-            yield Arb.generate |> Gen.map Json.Number
-            yield nonEmptyString |> Gen.map Json.String
-            if size > 0 then
-                let items = impl <| size / 2
-                yield items |> Gen.listOf |> Gen.map Json.Array
-                yield Gen.zip nonEmptyString items |> Gen.listOf |> Gen.map (Map.ofList >> Json.Object)
+    let leaves = 
+        Gen.oneof [
+            Arb.generate |> Gen.map Bool
+            Gen.constant <| Null ()
+            Arb.generate |> Gen.map Json.Number
+            Arb.generate |> Gen.map (fun (NonNull str) -> String str)
         ]
-        |> Gen.oneof
-    Gen.sized impl
+    let branches items =
+        Gen.oneof [
+            items |> Gen.nonEmptyListOf |> Gen.map Array
+            Gen.zip nonEmptyString items |> Gen.nonEmptyListOf |> Gen.map (Map.ofList >> Object)
+        ]
+    let rec impl size =
+        if size <= 0 then
+            leaves
+        else
+            Gen.oneof [
+                leaves
+                size / 2 |> impl |> branches
+            ]
+    Gen.sized (impl >> branches)
 
 let simpleMathsASTGen =
     let rec impl size =

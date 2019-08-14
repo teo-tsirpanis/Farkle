@@ -37,13 +37,13 @@ type JsonBenchmark() =
     [<Benchmark>]
     member x.FarkleCSharp() =
         use cs = x.GetCharStream()
-        RuntimeFarkle.parseChars JSON.CSharp.Language.Runtime ignore cs
+        RuntimeFarkle.parseChars CSharp.Language.Runtime ignore cs
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]
     member x.FarkleFSharp() =
         use cs = x.GetCharStream()
-        RuntimeFarkle.parseChars JSON.FSharp.Language.runtime ignore cs
+        RuntimeFarkle.parseChars FSharp.Language.runtime ignore cs
         |> returnOrFail
 
     [<Benchmark>]  

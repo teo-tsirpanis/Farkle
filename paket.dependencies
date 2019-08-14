@@ -21,6 +21,7 @@ group Executables
   nuget Argu
   nuget Chiron
   nuget BenchmarkDotNet
+  nuget Farkle.Tools.MSBuild
   nuget FSharp.Core
   nuget Scriban
   nuget Serilog

@@ -54,9 +54,9 @@ module Tokenizer =
                     | ValueNone -> ValueNone
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | ValueSome (DFAState.Continue _ as newDFA), lastAccept -> impl idxNext newDFA lastAccept
+                | ValueSome ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | ValueSome (DFAState.Accept (_, acceptSymbol, _) as newDFA), _ -> impl idxNext newDFA (ValueSome struct (acceptSymbol, idx))
+                | ValueSome ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (ValueSome struct (acceptSymbol, idx))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
                 | ValueNone, ValueSome (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.

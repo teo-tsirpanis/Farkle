@@ -8,6 +8,7 @@ namespace Farkle.Grammar
 open Farkle.Collections
 open System
 open System.Collections.Immutable
+open System.Diagnostics
 
 /// A type indicating how a group advances.
 [<Struct; RequireQualifiedAccess>]
@@ -109,20 +110,17 @@ with
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
-/// The edges of a DFA state, that matche a character to the next state, using a custom data structure.
-type DFAEdges = RangeMap<char, uint32>
-
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
-and [<RequireQualifiedAccess>] DFAState =
-    /// This state does not accept a symbol. If the state graph cannot be further walked and
-    /// an accepting state has not been found, tokenizing fails.
-    | Continue of index: uint32 * DFAEdges
-    /// This state accepts a symbol. If the state graph cannot be further walked, the included `Symbol` is returned.
-    | Accept of index: uint32 * DFASymbol * DFAEdges
-    member x.Edges = match x with | Continue (_, edges) | Accept (_, _, edges) -> edges
-    member x.Index = match x with | Continue (idx, _) | Accept (idx, _, _) -> idx
-    override x.ToString() = string x.Index
+[<DebuggerDisplay("{Index}")>]
+type DFAState = {
+    /// The index of the state in the DFA state table.
+    Index: uint32
+    /// The edges of the state, that match a character to a next state, using a custom data structure.
+    Edges: RangeMap<char, uint32>
+    /// Whether this state accepts a symbol or not.
+    AcceptSymbol: DFASymbol option
+}
 
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
 type Production = {

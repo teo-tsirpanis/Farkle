@@ -158,11 +158,12 @@ module internal GrammarReader =
                     wantEmpty states <| 3 * idx + 2
                     charSet, target
                 Array.init edgesLength fEdge |> RangeMap.ofRanges |> Option.defaultWith invalidEGT
-            if isAcceptState then
-                let acceptSymbol = fSymbol acceptIndex |> wantDFASymbol
-                DFAState.Accept(index, acceptSymbol, edges)
-            else
-                DFAState.Continue(index, edges)
+            let acceptSymbol =
+                if isAcceptState then
+                    fSymbol acceptIndex |> wantDFASymbol |> Some
+                else
+                    None
+            {Index = index; AcceptSymbol = acceptSymbol; Edges = edges}
 
         let readLALRState fSymbol fProduction fLALR index mem =
             lengthMustBeAtLeast mem 5 // There must be at least one action per state.

@@ -185,11 +185,11 @@ type Symbols = {
 /// These functions require some computationally expensive pre-processing, which is
 /// performed only once, at the creation of this object.
 type internal OptimizedOperations = {
-    _GetNextDFAState: char -> DFAState -> uint32 voption
-}
-with
     /// Gets the next DFA state from the given current one, when the given character is encountered.
-    member x.GetNextDFAState c state = x._GetNextDFAState c state
+    GetNextDFAState: char -> DFAState -> uint32 voption
+    GetLALRAction: Terminal -> LALRState -> LALRAction option
+    GetLALRGotoAction: Nonterminal -> LALRState -> uint32 voption
+}
 
 /// A context-free grammar according to which, Farkle can parse text.
 [<NoComparison; ReferenceEquality>]

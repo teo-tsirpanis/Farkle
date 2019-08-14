@@ -40,24 +40,21 @@ module LALRParser =
     /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage {_LALRStates = lalrStates} (pp: PostProcessor<_>) fToken (input: CharStream) =
+    let parseLALR fMessage ({_LALRStates = lalrStates} as grammar) (pp: PostProcessor<_>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
         let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[x]
             let nextAction =
                 match token with
-                | Some({Symbol = x}) -> currentState.Actions.TryGetValue(x)
-                | None ->
-                    match currentState.EOFAction with
-                    | Some x -> true, x
-                    | None -> false, Unchecked.defaultof<_>
+                | Some({Symbol = x}) -> grammar.OptimizedOperations.GetLALRAction x currentState
+                | None -> currentState.EOFAction
             match nextAction with
-            | true, LALRAction.Accept ->
+            | Some LALRAction.Accept ->
                 match stack with
                 | (_, ast) :: _ -> ast
                 | [] -> internalError LALRStackEmpty
-            | true, LALRAction.Shift (LALRState nextState) ->
+            | Some(LALRAction.Shift (LALRState nextState)) ->
                 match token with
                 | Some {Data = data} ->
                     fMessage <| ParseMessage.Shift nextState.Index
@@ -65,12 +62,12 @@ module LALRParser =
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
                     impl (fToken input) nextState ((nextState, data) :: stack)
                 | None -> ShiftOnEOF |> internalError
-            | true, LALRAction.Reduce productionToReduce ->
+            | Some(LALRAction.Reduce productionToReduce) ->
                 let tokens, stack = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
                 /// The stack cannot be empty; we gave it one element in the beginning.
                 let nextState = fst stack.Head
-                match nextState.GotoActions.TryGetValue productionToReduce.Head with
-                | true, LALRState nextState ->
+                match grammar.OptimizedOperations.GetLALRGotoAction productionToReduce.Head nextState with
+                | ValueSome(LALRState nextState) ->
                     let resultObj =
                         try
                             pp.Fuse(productionToReduce, tokens)
@@ -79,8 +76,8 @@ module LALRParser =
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack)
-                | false, _ -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
-            | false, _ ->
+                | ValueNone -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
+            | None ->
                 let expectedSymbols =
                     currentState.Actions
                     |> Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term) 

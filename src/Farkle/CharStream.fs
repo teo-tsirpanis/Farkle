@@ -68,8 +68,9 @@ type private CharStreamSource() =
 /// It is not recommended for large files.
 type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     inherit CharStreamSource()
+    let length = uint64 mem.Length
     override __.Item idx = mem.Span.[int idx]
-    override __.LengthSoFar = uint64 mem.Length
+    override __.LengthSoFar = length
     override __.ReadNextCharacter(_, idx, c) =
         if idx.Index < uint64 mem.Length then
             c <- mem.Span.[int idx.Index]

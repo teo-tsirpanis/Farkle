@@ -52,6 +52,37 @@ module internal OptimizedOperations =
             else
                 RangeMap.tryFind c state.Edges
 
+    let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
+        // Thanks to GOLD Parser, some cells in the array are left unused.
+        let maxTerminalIndex = terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
+        let arr = Array2D.zeroCreate lalr.Length (maxTerminalIndex + 1)
+        lalr
+        |> Seq.iter (fun {Index = stateIndex; Actions = actions} ->
+            actions
+            |> Seq.iter (fun (KeyValue(term, action)) -> action |> Some |> Array2D.set arr (int stateIndex) (int term.Index)))
+        arr
+
+    let getLALRAction terminals lalr =
+        let arr = buildLALRActionArray terminals lalr
+        fun (Terminal(terminalIndex, _)) {LALRState.Index = stateIndex} ->
+            arr.[int stateIndex, int terminalIndex]
+
+    let buildLALRGotoActionArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
+        // Thanks to GOLD Parser, some cells in the array are left unused.
+        let maxNonterminalIndex = nonterminals |> Seq.map(fun (Nonterminal(idx, _)) -> idx) |> Seq.max |> int
+        let arr = Array2D.zeroCreate lalr.Length (maxNonterminalIndex + 1)
+        lalr
+        |> Seq.iter (fun {Index = stateIndex; GotoActions = actions} ->
+            let stateIndex = int stateIndex
+            actions
+            |> Seq.iter (fun (KeyValue(nont, idx)) -> idx |> ValueSome |> Array2D.set arr stateIndex (int nont.Index)))
+        arr
+
+    let getLALRGotoAction nonterminals lalr =
+        let arr = buildLALRGotoActionArray nonterminals lalr
+        fun (Nonterminal(nonterminalIndex, _)) {LALRState.Index = stateIndex} ->
+            arr.[int stateIndex, int nonterminalIndex]
+
     /// Creates a `Grammar` from its parts, and attaches to it an `OptimizedOperations` object.
     /// To ensure optimal performance, all grammars should be created from this function.
     let createOptimizedGramamr props startSymbol symbols productions groups lalrStates dfaStates = {
@@ -63,6 +94,8 @@ module internal OptimizedOperations =
         _LALRStates = lalrStates
         _DFAStates = dfaStates
         OptimizedOperations = {
-            _GetNextDFAState = getNextDFAState dfaStates.States
+            GetNextDFAState = getNextDFAState dfaStates.States
+            GetLALRAction = getLALRAction symbols.Terminals lalrStates.States
+            GetLALRGotoAction = getLALRGotoAction symbols.Nonterminals lalrStates.States
         }
     }

@@ -26,27 +26,26 @@ module Tokenizer =
     /// If the group stack's bottom-most container symbol is a noisy one, then it is unpinned the soonest it is consumed.
     let private shouldUnpinCharactersInsideGroup {ContainerSymbol = g} groupStack =
         let g0 = match g with | Choice1Of2 _terminal -> false | Choice2Of2 _noise -> true
-        let rec impl =
-            function
-            | [] -> g0
-            | [(_, {ContainerSymbol = Choice1Of2 _terminal})] -> false
-            | [(_, {ContainerSymbol = Choice2Of2 _noise})] -> true
-            | (_, _) :: gs -> impl gs
-        impl groupStack
+        if List.isEmpty groupStack then
+            g0
+        else
+            match (List.last groupStack) with
+            | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
+            | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
     let private tokenizeDFA (grammar: Grammar) input =
         let states = grammar.DFAStates
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
-            let newToken sym idx = struct (sym, pinSpan input idx) |> Ok
+            let newToken (sym: DFASymbol) idx = (sym, pinSpan input idx) |> Ok
             let mutable x = '\u0103'
             let mutable idxNext = idx
             match readChar input &x &idxNext with
             | false ->
                 match lastAccept with
-                | ValueSome struct (sym, idx) -> newToken sym idx
-                | ValueNone -> Error input.FirstCharacter
+                | Some struct (sym, idx) -> newToken sym idx
+                | None -> Error input.FirstCharacter
             | true ->
                 let newDFA =
                     match grammar.OptimizedOperations.GetNextDFAState x currState with
@@ -56,15 +55,15 @@ module Tokenizer =
                 // We can go further. The DFA did not accept any new symbol.
                 | ValueSome ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | ValueSome ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (ValueSome struct (acceptSymbol, idx))
+                | ValueSome ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | ValueNone, ValueSome (sym, idx) -> newToken sym idx
+                | ValueNone, Some (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | ValueNone, ValueNone -> Error input.FirstCharacter
+                | ValueNone, None -> Error input.FirstCharacter
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
-            impl (getCurrentIndex input) states.InitialState ValueNone |> Some
+            impl (getCurrentIndex input) states.InitialState None |> Some
         else
             None
 

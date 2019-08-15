@@ -30,18 +30,25 @@ type RuntimeFarkleExtensions =
 
     static member private defaultLogFunc f = if isNull f then RuntimeFarkleExtensions.fLogIgnore else FuncConvert.FromAction<_> f
 
+    /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
+    /// <param name="cs">The <see cref="Farkle.IO.CharStream"/> to parse.</param>
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
+    static member Parse(rf, cs, [<Optional>] fLog) =
+        let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
+        RF.parseChars rf fLog cs
+
     [<Extension>]
     /// <summary>Parses and post-processes a string.</summary>
     /// <param name="str">The string to parse.</param>
-    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
     static member Parse(rf, str, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         RF.parseString rf fLog str
 
     [<Extension>]
-    /// <summary>Parses and post-processes a <see cref="ReadOnlyMemory{Char}"/>.</summary>
+    /// <summary>Parses and post-processes a <see cref="System.ReadOnlyMemory{Char}"/>.</summary>
     /// <param name="mem">The memory object to parse.</param>
-    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>s
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
     static member Parse(rf, mem, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         RF.parseMemory rf fLog mem
@@ -52,7 +59,7 @@ type RuntimeFarkleExtensions =
     /// <param name="encoding">The character encoding of the stream's data. Defaults to UTF-8.</param>
     /// <param name="doLazyLoad">Whether to gradually read the input instead of reading its entirety in memory.
     /// Defaults to <c>true</c>.</param>
-    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
     static member Parse(rf, stream: Stream, [<Optional>] encoding: Encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         use sr = new StreamReader(stream, (if isNull encoding then Encoding.UTF8 else encoding), true, 4096, true)
@@ -62,10 +69,11 @@ type RuntimeFarkleExtensions =
             else
                 CharStream.ofString <| sr.ReadToEnd()
         RF.parseChars rf fLog cs
-        
+
     [<Extension>]
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
-    /// <param name="textReader">
+    /// <param name="textReader">The <see cref="System.IO.TextReader"/> to parse.</param>
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
     static member Parse(rf, textReader, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         RF.parseTextReader rf fLog textReader
@@ -73,7 +81,7 @@ type RuntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Parses and post-processes the file at the given path.</summary>
     /// <param name="fileName">The path of the file to parse.</param>
-    /// <param name="fLog">An optional delegate that gets called for ever parsing event that happens.</param>
+    /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
     static member ParseFile(rf, fileName, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         RF.parseFile rf fLog fileName

@@ -54,6 +54,7 @@ module internal OptimizedOperations =
 
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
         // Thanks to GOLD Parser, some cells in the array are left unused.
+        // But when the time comes, the symbols of Farkle's own grammars will start at zero.
         let maxTerminalIndex = terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
         let arr = Array2D.zeroCreate lalr.Length (maxTerminalIndex + 1)
         lalr
@@ -67,19 +68,21 @@ module internal OptimizedOperations =
         fun (Terminal(terminalIndex, _)) {LALRState.Index = stateIndex} ->
             arr.[int stateIndex, int terminalIndex]
 
-    let buildLALRGotoActionArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
-        // Thanks to GOLD Parser, some cells in the array are left unused.
+    let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
+        // Same with above.
         let maxNonterminalIndex = nonterminals |> Seq.map(fun (Nonterminal(idx, _)) -> idx) |> Seq.max |> int
+        // No reason to allocate many options.
+        let lalrOptions = lalr |> Seq.map Some |> Array.ofSeq
         let arr = Array2D.zeroCreate lalr.Length (maxNonterminalIndex + 1)
         lalr
         |> Seq.iter (fun {Index = stateIndex; GotoActions = actions} ->
             let stateIndex = int stateIndex
             actions
-            |> Seq.iter (fun (KeyValue(nont, idx)) -> idx |> ValueSome |> Array2D.set arr stateIndex (int nont.Index)))
+            |> Seq.iter (fun (KeyValue(nont, idx)) -> Array2D.set arr stateIndex (int nont.Index) lalrOptions.[int idx]))
         arr
 
-    let getLALRGotoAction nonterminals lalr =
-        let arr = buildLALRGotoActionArray nonterminals lalr
+    let lalrGoto nonterminals lalr =
+        let arr = buildLALRGotoArray nonterminals lalr
         fun (Nonterminal(nonterminalIndex, _)) {LALRState.Index = stateIndex} ->
             arr.[int stateIndex, int nonterminalIndex]
 
@@ -96,6 +99,6 @@ module internal OptimizedOperations =
         OptimizedOperations = {
             GetNextDFAState = getNextDFAState dfaStates.States
             GetLALRAction = getLALRAction symbols.Terminals lalrStates.States
-            GetLALRGotoAction = getLALRGotoAction symbols.Nonterminals lalrStates.States
+            LALRGoto = lalrGoto symbols.Nonterminals lalrStates.States
         }
     }

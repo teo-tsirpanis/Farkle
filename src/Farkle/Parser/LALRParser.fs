@@ -66,8 +66,8 @@ module LALRParser =
                 let tokens, stack = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
                 /// The stack cannot be empty; we gave it one element in the beginning.
                 let nextState = fst stack.Head
-                match grammar.OptimizedOperations.GetLALRGotoAction productionToReduce.Head nextState with
-                | ValueSome(LALRState nextState) ->
+                match grammar.OptimizedOperations.LALRGoto productionToReduce.Head nextState with
+                | Some nextState ->
                     let resultObj =
                         try
                             pp.Fuse(productionToReduce, tokens)
@@ -76,7 +76,7 @@ module LALRParser =
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack)
-                | ValueNone -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
+                | None -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
             | None ->
                 let expectedSymbols =
                     currentState.Actions

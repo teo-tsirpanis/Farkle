@@ -9,6 +9,7 @@ module Farkle.Tests.Generators
 open Chiron
 open Expecto
 open Farkle
+open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
@@ -72,8 +73,22 @@ let rangeMapGen() = gen {
     return x.Value
 }
 
+let regexGen =
+    let rec impl size = gen {
+        if size <= 1 then
+            return! nonEmptyString |> Gen.map Regex.oneOf
+        else
+            let gen = impl <| size / 2
+            match! Gen.choose(0, 3) with
+            | 0 -> return! nonEmptyString |> Gen.map Regex.oneOf
+            | 1 -> return! Gen.map2 (<&>) gen gen
+            | 2 -> return! Gen.map2 (<|>) gen gen
+            | _ -> return! Gen.map (Regex.atLeast 0) gen
+    }
+    Gen.sized impl
+
 let JsonGen =
-    let leaves = 
+    let leaves =
         Gen.oneof [
             Arb.generate |> Gen.map Bool
             Gen.constant <| Null ()
@@ -136,8 +151,9 @@ type Generators =
                 new StringReader(str) |> CharStream.ofTextReader
         return CS(charStream, str, steps)
     }
+    static member Regex() = Arb.fromGen regexGen
     static member Json() = Arb.fromGen <| JsonGen
-    static member SimpleMathsAST = Arb.fromGen <| simpleMathsASTGen
+    static member SimpleMathsAST() = Arb.fromGen <| simpleMathsASTGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

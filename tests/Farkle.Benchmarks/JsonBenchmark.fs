@@ -20,8 +20,6 @@ type JsonBenchmark() =
 
     let jsonFile = "generated.json"
 
-    let jsonString = File.ReadAllText(jsonFile)
-    
     let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime
 
     [<Params(true, false)>]
@@ -32,7 +30,7 @@ type JsonBenchmark() =
             let sr = File.OpenText(jsonFile)
             CharStream.ofTextReader sr
         else
-            CharStream.ofString jsonString
+            jsonFile |> File.ReadAllText |> CharStream.ofString
 
     [<Benchmark>]
     member x.FarkleCSharp() =
@@ -61,7 +59,7 @@ type JsonBenchmark() =
             if x.DynamicallyReadInput then
                 runParserOnFile !jsonR () jsonFile Encoding.UTF8
             else
-                run !jsonR jsonString
+                jsonFile |> File.ReadAllText |> runParserOnString !jsonR () jsonFile
         match parseResult with
         | Success (json, _, _) -> json
         | Failure _ -> failwithf "Error while parsing '%s'" jsonFile

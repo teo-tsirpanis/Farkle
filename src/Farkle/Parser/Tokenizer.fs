@@ -38,7 +38,7 @@ module Tokenizer =
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
-            let newToken (sym: DFASymbol) idx = (sym, pinSpan input idx) |> Ok
+            let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, pinSpan input idx) |> Ok
             let mutable x = '\u0103'
             let mutable idxNext = idx
             match readChar input &x &idxNext with
@@ -47,19 +47,16 @@ module Tokenizer =
                 | Some struct (sym, idx) -> newToken sym idx
                 | None -> Error input.FirstCharacter
             | true ->
-                let newDFA =
-                    match grammar.OptimizedOperations.GetNextDFAState x currState with
-                    | ValueSome idx -> ValueSome states.[idx]
-                    | ValueNone -> ValueNone
+                let newDFA = grammar.OptimizedOperations.GetNextDFAState x currState
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
-                | ValueSome ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
+                | Some ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
                 // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | ValueSome ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
+                | Some ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
                 // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | ValueNone, Some (sym, idx) -> newToken sym idx
+                | None, Some (sym, idx) -> newToken sym idx
                 // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | ValueNone, None -> Error input.FirstCharacter
+                | None, None -> Error input.FirstCharacter
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
@@ -72,7 +69,7 @@ module Tokenizer =
     /// as one that logs events.
     let tokenize ({_Groups = groups} as grammar) fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
-            let fail msg = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
+            let fail msg: Token option = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
             // newToken does not get optimized,
             // maybe because of the try-with.
             let newToken sym (cs: CharSpan) =

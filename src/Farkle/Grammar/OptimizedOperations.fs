@@ -25,17 +25,19 @@ module internal OptimizedOperations =
     /// ASCII character that was encountered.
     let buildDFAArray (dfa: ImmutableArray<DFAState>) =
         let arr = Array2D.zeroCreate dfa.Length (ASCIIUpperBound + 1)
+        let dfaOptions = dfa |> Seq.map Some |> Array.ofSeq
         dfa
         |> Seq.iteri (fun i state ->
             state.Edges.Elements
             |> Seq.iter (fun elem ->
+                let state = dfaOptions.[int elem.Value]
                 match isASCII elem.KeyFrom, isASCII elem.KeyTo with
                 | true, true ->
                     for c = int elem.KeyFrom to int elem.KeyTo do
-                        Array2D.set arr i c (ValueSome elem.Value)
+                        Array2D.set arr i c state
                 | true, false ->
                     for c = int elem.KeyFrom to ASCIIUpperBound do
-                        Array2D.set arr i c (ValueSome elem.Value)
+                        Array2D.set arr i c state
                 | false, _ -> ()))
         arr
 
@@ -50,7 +52,9 @@ module internal OptimizedOperations =
             if isASCII c then
                 arr.[int state.Index, int c]
             else
-                RangeMap.tryFind c state.Edges
+                match RangeMap.tryFind c state.Edges with
+                | ValueSome x -> Some dfa.[int x]
+                | ValueNone -> None
 
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
         // Thanks to GOLD Parser, some cells in the array are left unused.

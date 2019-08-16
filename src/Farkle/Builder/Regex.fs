@@ -93,7 +93,7 @@ type Regex =
     member x.ZeroOrMore() =
         match x with
         | Star _ -> x
-        | x -> x
+        | x -> Star x
     /// Returns a regex that recognizes an exact number of strings that are recognized by the given regex.
     member x.Repeat num = Regex.Join(Array.replicate num x)
     /// Returns a regex that recognizes either the given regex or the empty string.

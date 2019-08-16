@@ -27,6 +27,7 @@
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/Regex.fs" />
+    <Compile Include="Builder/RegexBuild.fs" />
     <Compile Include="Parser/AST.fs" />
     <Compile Include="PostProcessor/Transformer.fs" />
     <Compile Include="PostProcessor/Fuser.fs" />

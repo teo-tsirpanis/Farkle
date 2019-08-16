@@ -5,8 +5,8 @@
 
 open Chiron
 open Expecto
-open FsCheck
 open Farkle.Tests
+open FsCheck
 
 let jsonOutputPath = "../resources/generated.json"
 

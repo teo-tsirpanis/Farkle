@@ -134,6 +134,30 @@ let simpleMathsASTGen =
 
 type CS = CS of CharStream * string * steps:int
 
+type Regexes = Regexes of (Regex * DFASymbol) list * (string * DFASymbol) list
+
+let rec genRegexString regex =
+    match regex with
+    | Regex.Chars x -> Gen.elements x |> Gen.map string
+    | Regex.Alt xs -> xs |> Seq.map genRegexString |> Gen.oneof
+    | Regex.Concat xs -> xs |> Seq.map genRegexString |> Gen.sequenceToSeq |> Gen.map (String.concat "")
+    | Regex.Star x -> x |> genRegexString |> Gen.listOf |> Gen.map (String.concat "")
+
+let regexesGen = gen {
+    let! regexSpec =
+        Arb.generate<Regex>
+        |> Gen.filter (fun x -> not <| x.IsNullable())
+        |> Gen.nonEmptyListOf
+        |> Gen.map (List.mapi (fun idx regex ->
+            let symbol = Choice1Of4 <| Terminal(uint32 idx, sprintf "Terminal %d" idx)
+            regex, symbol))
+    let! strings =
+        regexSpec
+        |> List.map (fun (regex, symbol) -> regex |> genRegexString |> Gen.map (fun x -> x, symbol))
+        |> Gen.sequence
+    return Regexes(regexSpec, strings)
+}
+
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
     static member Production() = Arb.fromGen productionGen
@@ -152,8 +176,9 @@ type Generators =
         return CS(charStream, str, steps)
     }
     static member Regex() = Arb.fromGen regexGen
-    static member Json() = Arb.fromGen <| JsonGen
-    static member SimpleMathsAST() = Arb.fromGen <| simpleMathsASTGen
+    static member Json() = Arb.fromGen JsonGen
+    static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
+    static member Regexes() = Arb.fromGen regexesGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

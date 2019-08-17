@@ -88,7 +88,7 @@ and Group = {
     Start: GroupStart
     /// The symbol that represents the group's end.
     // As the GOLD Parser's site says, groups can end with normal terminals as well.
-    End: Choice<GroupEnd,Terminal>
+    End: Choice<Terminal, Noise, GroupEnd>
     /// The way the group advances.
     AdvanceMode: AdvanceMode
     /// The way the group ends.

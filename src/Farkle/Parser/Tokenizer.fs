@@ -20,10 +20,10 @@ module Tokenizer =
 
     let private (|CanEndGroup|_|) x =
         match x with
-        | Choice1Of4 term -> Some <| Choice2Of2 term
-        | Choice2Of4 _
+        | Choice1Of4 term -> Some <| Choice1Of3 term
+        | Choice2Of4 noise -> Some <| Choice2Of3 noise
         | Choice3Of4 _ -> None
-        | Choice4Of4 groupEnd -> Some <| Choice1Of2 groupEnd
+        | Choice4Of4 groupEnd -> Some <| Choice3Of3 groupEnd
 
     /// Returns whether to unpin the character(s) encountered by the tokenizer while being inside a group.
     /// If the group stack's bottom-most container symbol is a noisy one, then it is unpinned the soonest it is consumed.

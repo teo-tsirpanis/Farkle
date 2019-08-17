@@ -22,8 +22,9 @@ let wantNoise = function | Legacy.Noise name -> Some <| Noise name | _ -> None
 let wantGroupStart = function | Legacy.GroupStart(groupIdx, (_, name)) -> Some <| GroupStart(name, groupIdx.ReInterpret()) | _ -> None
 let wantGroupEnd =
     function
-    | Legacy.GroupEnd(_, name) -> name |> GroupEnd |> Choice1Of2 |> Some
-    | Legacy.Terminal(idx, name) -> Terminal(idx, name) |> Choice2Of2 |> Some
+    | Legacy.Terminal(idx, name) -> Terminal(idx, name) |> Choice1Of3 |> Some
+    | Legacy.Noise(name) -> Noise(name) |> Choice2Of3 |> Some
+    | Legacy.GroupEnd(_, name) -> name |> GroupEnd |> Choice3Of3 |> Some
     | _ -> None
 
 let wantProductionHandle =

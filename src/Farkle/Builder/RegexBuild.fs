@@ -118,7 +118,7 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
     let makeConcat x =
         match x with
         | [] -> Concat([], [])
-        | _ :: rest -> Concat(x, createConcatFirstPos rest @ [lazy Set.empty])
+        | _ :: rest -> Concat(x, createConcatFirstPos rest)
 
     let fIndex =
         let mutable i = 0
@@ -175,7 +175,7 @@ let internal calculateFollowPos leafCount regex =
         | Alt xs -> List.iter impl xs
         | Concat ([], _) -> ()
         | Concat (xs, firstPoses) ->
-            (xs, firstPoses) ||> List.iter2 (fun x firstPosOfTheRest ->
+            (xs, firstPoses) ||> List.iter2Safe (fun x firstPosOfTheRest ->
                 let lastPosOfThisOne = x.LastPos.Value
                 let firstPosOfTheRest = firstPosOfTheRest.Value
                 lastPosOfThisOne |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPosOfTheRest))

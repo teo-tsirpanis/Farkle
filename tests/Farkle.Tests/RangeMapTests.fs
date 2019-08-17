@@ -8,7 +8,6 @@ module Farkle.Tests.RangeMapTests
 open Expecto
 open Farkle.Collections
 open Farkle.Tests
-open FsCheck
 
 [<Tests>]
 let tests =

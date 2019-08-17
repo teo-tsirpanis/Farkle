@@ -18,6 +18,7 @@
     <Compile Include="Position.fs" />
     <Compile Include="Monads.fs" />
     <Compile Include="CharStream.fs" />
+    <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/IndexedCollections.fs" />
     <Compile Include="Grammar/EGTTypes.fs" />

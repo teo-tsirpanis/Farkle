@@ -18,6 +18,7 @@ open SimpleMaths
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
+open System.Text
 
 let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
@@ -79,10 +80,9 @@ let regexGen =
             return! nonEmptyString |> Gen.map Regex.oneOf
         else
             let gen = impl <| size / 2
-            match! Gen.choose(0, 3) with
-            | 0 -> return! nonEmptyString |> Gen.map Regex.oneOf
-            | 1 -> return! Gen.map2 (<&>) gen gen
-            | 2 -> return! Gen.map2 (<|>) gen gen
+            match! Gen.choose(0, 2) with
+            | 0 -> return! Gen.map2 (<&>) gen gen
+            | 1 -> return! Gen.map2 (<|>) gen gen
             | _ -> return! Gen.map (Regex.atLeast 0) gen
     }
     Gen.sized impl
@@ -136,12 +136,28 @@ type CS = CS of CharStream * string * steps:int
 
 type Regexes = Regexes of (Regex * DFASymbol) list * (string * DFASymbol) list
 
-let rec genRegexString regex =
-    match regex with
-    | Regex.Chars x -> Gen.elements x |> Gen.map string
-    | Regex.Alt xs -> xs |> Seq.map genRegexString |> Gen.oneof
-    | Regex.Concat xs -> xs |> Seq.map genRegexString |> Gen.sequenceToSeq |> Gen.map (String.concat "")
-    | Regex.Star x -> x |> genRegexString |> Gen.listOf |> Gen.map (String.concat "")
+let genRegexString regex =
+    let rec impl (sb: StringBuilder) regex = gen {
+        match regex with
+        | Regex.Chars x ->
+            let! c = Gen.elements x
+            do sb.Append(c) |> ignore
+        | Regex.Alt xs ->
+            let! x = Gen.elements xs
+            do! impl sb x
+        | Regex.Concat xs ->
+            for x in xs do
+                do! impl sb x
+        | Regex.Star x ->
+            let! len = Arb.generate
+            for __ = 0 to len - 1 do
+                do! impl sb x
+    }
+    gen {
+        let sb = StringBuilder()
+        do! impl sb regex
+        return sb.ToString()
+    }
 
 let regexesGen = gen {
     let! regexSpec =

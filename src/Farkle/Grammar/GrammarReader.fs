@@ -26,28 +26,11 @@ module internal GrammarReader =
             | AnyGroupEnd of GroupEnd
             | AnyError
 
-        let inline lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
-            if m.Length <> expectedLength then
-                invalidEGT()
-
-        let inline lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
-            if m.Length < expectedLength then
-                invalidEGT()
-
         let createSafeIndexed<'a> (arr: ImmutableArray.Builder<'a>) idx =
             if int idx <= arr.Capacity then
                 idx |> uint32
             else
                 invalidEGT()
-
-        // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
-        // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
-        // FFFFFFfFFFFFFF
-        let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Empty -> () | _ -> invalidEGT()
-        let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Byte x -> x | _ -> invalidEGT()
-        let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Boolean x -> x | _ -> invalidEGT()
-        let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | UInt16 x -> x | _ -> invalidEGT()
-        let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | String x -> x | _ -> invalidEGT()
 
         let wantTerminal x = match x with | AnyTerminal x -> x | _ -> invalidEGT()
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()

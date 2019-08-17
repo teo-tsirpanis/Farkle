@@ -69,3 +69,20 @@ module internal EGTReader =
         do! readNullTerminatedString r |> fHeaderCheck
         do! readRecords fRecord r
     }
+
+    let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
+        if m.Length <> expectedLength then
+            invalidEGT()
+
+    let lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
+        if m.Length < expectedLength then
+            invalidEGT()
+
+    // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
+    // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
+    // FFFFFFfFFFFFFF
+    let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Empty -> () | _ -> invalidEGT()
+    let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Byte x -> x | _ -> invalidEGT()
+    let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Boolean x -> x | _ -> invalidEGT()
+    let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | UInt16 x -> x | _ -> invalidEGT()
+    let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | String x -> x | _ -> invalidEGT()

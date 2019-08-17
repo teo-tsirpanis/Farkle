@@ -6,6 +6,7 @@
 namespace Farkle.Collections
 
 open System
+open System.Collections.Generic
 open System.Collections.Immutable
 
 [<Struct; CustomComparison; StructuralEquality>]
@@ -124,3 +125,12 @@ module RangeMap =
         | None -> empty()
 
     let inline ofSeq xs = ofSeqEx ((+) LanguagePrimitives.GenericOne) xs
+
+    let toSeqEx (fRange: 'key -> 'key -> 'key seq) (RangeMap xs) = seq {
+        for i = 0 to xs.Length - 1 do
+            let {KeyFrom = kFrom; KeyTo = kTo; Value = v} = xs.[i]
+            for k in fRange kFrom kTo do
+                yield KeyValuePair(k, v)
+    }
+
+    let inline toSeq xs = toSeqEx (fun kFrom kTo -> seq {kFrom .. kTo}) xs

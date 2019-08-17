@@ -7,6 +7,8 @@ module Farkle.Tests.RangeMapTests
 
 open Expecto
 open Farkle.Collections
+open Farkle.Tests
+open FsCheck
 
 [<Tests>]
 let tests =
@@ -30,4 +32,13 @@ let tests =
 
         testProperty "An array with distinct elements is valid"
             (Seq.ofList >> Seq.distinct >> Seq.map (fun (x: int) -> [|(x, x)|], ()) >> Array.ofSeq >> RangeMap.ofRanges >> Option.isSome)
+
+        // A boolean value type makes continuous spaces more likely.
+        testProperty "RangeMap.ofSeq is the inverse of RangeMap.toSeq" (fun (x: RangeMap<int, bool>) ->
+            let xs = RangeMap.toSeq x
+            let x' = RangeMap.ofSeq xs
+            let xs' = RangeMap.toSeq x'
+            // We have to compare the sequences, not the RangeMaps, because
+            // RangeMap.ofSeq might create an equivalent RangeMap with less elements.
+            Expect.sequenceEqual xs xs' "The RangeMaps are different.")
     ]

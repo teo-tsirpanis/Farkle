@@ -5,13 +5,13 @@
 ! The grammar was revised for version 2.0.5 of the GOLD Parser Builder. The changes
 ! were designed to:
 !
-!   1. Make it easier to use line comments to disable individual rules. 
+!   1. Make it easier to use line comments to disable individual rules.
 !   2. Allow the developer to use optional newlines for readability.
-! 
-! www.devincook.com/goldparser 
+!
+! www.devincook.com/goldparser
 ! -----------------------------------------------------------------------------------
- 
- 
+
+
 "Name"         = 'GOLD Meta-Language'
 "Version"      = '2.6.0'
 "Author"       = 'Devin Cook'
@@ -20,8 +20,8 @@
 "Start Symbol" = <Grammar>
 
 
-! The token definitions are very complex. Many definitions allow an 
-! "Override Sequence" such as the backslash in C. In this case, it is 
+! The token definitions are very complex. Many definitions allow an
+! "Override Sequence" such as the backslash in C. In this case, it is
 ! single quotes. Not all the tokens have overrides. I only added them where
 ! their use could be justified.
 
@@ -31,15 +31,15 @@
 ! ====================================================================
 
 {Parameter Ch}   = {Printable}    - ["] - ['']
-{Nonterminal Ch} = {Alphanumeric} + [_-.] + {Space} 
-{Terminal Ch}    = {Alphanumeric} + [_-.] 
-{Literal Ch}     = {Printable}    - ['']       !Basically anything, DO NOT CHANGE!
+{Nonterminal Ch} = {Alphanumeric} + [_-.] + {Space}
+{Terminal Ch}    = {Alphanumeric} + [_-.]
+{Literal Ch}     = {Printable}    - ['']       !*Basically anything, DO NOT CHANGE*!
 {Set Literal Ch} = {Printable}    - ['['']'] - ['']
 {Set Name Ch}    = {Printable}    - [{}]
 
-ParameterName  = '"' {Parameter Ch}+ '"' 
+ParameterName  = '"' {Parameter Ch}+ '"'
 Nonterminal    = '<' {Nonterminal Ch}+ '>'
-Terminal       = {Terminal Ch}+  | '' {Literal Ch}* ''  
+Terminal       = {Terminal Ch}+  | '' {Literal Ch}* ''
 SetLiteral     = '[' ({Set Literal Ch} | '' {Literal Ch}* '' )+ ']'
 SetName        = '{' {Set Name Ch}+ '}'
 
@@ -51,7 +51,7 @@ SetName        = '{' {Set Name Ch}+ '}'
 {Whitespace Ch} = {Whitespace} - {CR} - {LF}
 
 Whitespace = {Whitespace Ch}+
-Newline    = {CR}{LF} | {CR} | {LF}  
+Newline    = {CR}{LF} | {CR} | {LF}
 
 ! ====================================================================
 ! Comments
@@ -68,14 +68,14 @@ Comment End   = '*!'
 
 <Grammar>  ::= <nl opt> <Content>     ! The <nl opt> here removes all newlines before the first definition
 
-<Content> ::= <Content> <Definition> 
+<Content> ::= <Content> <Definition>
             | <Definition>
 
 <Definition> ::= <Parameter>
                | <Set Decl>
                | <Terminal Decl>
                | <Rule Decl>
-                
+
 
 ! Optional series of New Line - use below is restricted
 <nl opt> ::= NewLine <nl opt>
@@ -83,7 +83,7 @@ Comment End   = '*!'
 
 ! One or more New Lines
 <nl> ::= NewLine  <nl>
-       | NewLine 
+       | NewLine
 
 ! ====================================================================
 ! Parameter Definition
@@ -91,16 +91,16 @@ Comment End   = '*!'
 
 <Parameter> ::= ParameterName <nl opt> '=' <Parameter Body> <nl>
 
-<Parameter Body>  ::= <Parameter Body> <nl opt> '|' <Parameter Items>  
-                    | <Parameter Items> 
+<Parameter Body>  ::= <Parameter Body> <nl opt> '|' <Parameter Items>
+                    | <Parameter Items>
 
-<Parameter Items> ::= <Parameter Items> <Parameter Item> 
+<Parameter Items> ::= <Parameter Items> <Parameter Item>
                     | <Parameter Item>
 
-<Parameter Item>  ::= ParameterName 
-                    | Terminal    
-                    | SetLiteral    
-                    | SetName       
+<Parameter Item>  ::= ParameterName
+                    | Terminal
+                    | SetLiteral
+                    | SetName
                     | Nonterminal
 
 ! ====================================================================
@@ -112,25 +112,25 @@ Comment End   = '*!'
 <Set Exp>   ::= <Set Exp> <nl opt> '+' <Set Item>
               | <Set Exp> <nl opt> '-' <Set Item>
               | <Set Item>
-            
+
 <Set Item>  ::= SetLiteral         ! [ ... ]
               | SetName            ! { ... }
 
 ! ====================================================================
 ! Terminal Definition
 ! ====================================================================
-             
+
 <Terminal Decl> ::= <Terminal Name> <nl opt> '=' <Reg Exp> <nl>
- 
+
 <Terminal Name> ::= <Terminal Name> Terminal
-                  | Terminal 
+                  | Terminal
 
 
 <Reg Exp>       ::= <Reg Exp> <nl opt> '|' <Reg Exp Seq>
                   | <Reg Exp Seq>
 
 <Reg Exp Seq>   ::= <Reg Exp Seq> <Reg Exp Item>
-                  | <Reg Exp Item> 
+                  | <Reg Exp Item>
 
 <Reg Exp Item>  ::= SetLiteral          <Kleene Opt>
                   | SetName             <Kleene Opt>
@@ -143,22 +143,22 @@ Comment End   = '*!'
                   | <Reg Exp Seq>
 
 <Kleene Opt> ::= '+'
-               | '?' 
-               | '*' 
-               | 
+               | '?'
+               | '*'
+               |
 
 ! ====================================================================
 ! Rule Definition
 ! ====================================================================
 
-<Rule Decl>  ::= Nonterminal <nl opt> '::=' <Handles> <nl>  
+<Rule Decl>  ::= Nonterminal <nl opt> '::=' <Handles> <nl>
 
 <Handles>    ::= <Handles> <nl opt> '|' <Handle>
                | <Handle>
-             
-<Handle>     ::= <Handle> <Symbol>   !Zero or more               
+
+<Handle>     ::= <Handle> <Symbol>   !Zero or more
                |                     !Leave the entry blank - makes a "null"
 
 <Symbol>     ::= Terminal
-               | Nonterminal           
+               | Nonterminal
 

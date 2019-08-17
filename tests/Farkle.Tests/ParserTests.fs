@@ -42,12 +42,12 @@ let tests = testList "Parser tests" [
     test "Parsing a simple mathematical expression behaves correctly and consistently up to the parsing log" {
         let grammar = SimpleMaths.int.TryGetGrammar() |> returnOrFail "%O"
         let reduce idx = ParseMessage.Reduction grammar.Productions.[int idx]
-        let numberTerminal = Terminal(9u, "Number")
+        let numberTerminal = Terminal(14u, "Number")
 
         let expectedLog = [
             ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 1UL 0UL; Data = 475}
             ParseMessage.Shift 3u
-            ParseMessage.TokenRead {Symbol = Terminal(8u, "+"); Position = Position.Create 1UL 5UL 4UL; Data = null}
+            ParseMessage.TokenRead {Symbol = Terminal(13u, "+"); Position = Position.Create 1UL 5UL 4UL; Data = null}
             reduce 9u
             reduce 8u
             reduce 6u
@@ -67,6 +67,11 @@ let tests = testList "Parser tests" [
         let num = RuntimeFarkle.parseString SimpleMaths.int actualLog.Add "475 + 724" |> returnOrFail "Parsing '475 + 724' failed: %O"
         Expect.equal num 1199 "The numerical result is different than the expected"
         Expect.sequenceEqual actualLog expectedLog "The parsing log is different than the usual"
+    }
+
+    test "Parsing a mathematical expression with comments works well" {
+        let num = RuntimeFarkle.parse SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
+        Expect.equal num (Ok 2) "Parsing a mathematical expression with comments failed"
     }
 
     testProperty "The JSON parser works well" (fun json ->

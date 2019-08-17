@@ -5,6 +5,11 @@
 
 "Start Symbol" = <Expression>
 
+Comment Line = '//'
+
+Comment Start = '/*'
+Comment End = '*/'
+
 ! -------------------------------------------------
 ! Terminals
 ! -------------------------------------------------
@@ -16,18 +21,18 @@ Number = {Number}+
 ! -------------------------------------------------
 
 ! The grammar starts below
-<Expression>  ::= <Add Exp> 
+<Expression>  ::= <Add Exp>
 
 <Add Exp>     ::= <Add Exp> '+' <Mult Exp>
                |  <Add Exp> '-' <Mult Exp>
-               |  <Mult Exp> 
+               |  <Mult Exp>
 
-<Mult Exp>    ::= <Mult Exp> '*' <Negate Exp> 
-               |  <Mult Exp> '/' <Negate Exp> 
-               |  <Negate Exp> 
+<Mult Exp>    ::= <Mult Exp> '*' <Negate Exp>
+               |  <Mult Exp> '/' <Negate Exp>
+               |  <Negate Exp>
 
-<Negate Exp>  ::= '-' <Value> 
-               |  <Value> 
+<Negate Exp>  ::= '-' <Value>
+               |  <Value>
 
 !Add more values to the rule below - as needed
 

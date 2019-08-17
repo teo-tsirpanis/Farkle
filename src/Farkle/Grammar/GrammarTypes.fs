@@ -110,6 +110,17 @@ with
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
 
+/// Functions to work with `DFASymbol`s.
+module DFASymbol =
+
+    /// Converts a `DFASymbol` to a string.
+    let toString: DFASymbol -> _ =
+        function
+        | Choice1Of4 term -> term.ToString()
+        | Choice2Of4 noise -> noise.ToString()
+        | Choice3Of4 gStart -> gStart.ToString()
+        | Choice4Of4 gEnd -> gEnd.ToString()
+
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
 [<DebuggerDisplay("{Index}")>]

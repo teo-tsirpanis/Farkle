@@ -24,10 +24,10 @@ with
 
 /// A map data structure that works best when a continuous range of keys is assigned the same value.
 /// It can also double as a set, when the value type is a unit.
-type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
+type RangeMap<'key,'a when 'key :> IComparable<'key>> = RangeMap of RangeMapElement<'key,'a> ImmutableArray
 with
     // An immutable array of the elements of a `RangeMap`.
-    member x.Elements = let (RangeMap x) = x in x
+    member x.Elements = match x with | RangeMap x -> x
 
 /// Functions to create and use `RangeMap`s.
 module RangeMap =
@@ -103,3 +103,22 @@ module RangeMap =
         match arr with
         | arr when consistencyCheck arr -> arr.ToImmutable() |> RangeMap |> Some
         | _ -> None
+
+    /// Creates a `RangeMap` from a sequence of key-value pairs.
+    /// The keys can be of any type that can has the notion of "one" and equality checking.
+    /// The keys have to be sorted beforehand, or the resulting `RangeMap` will be broken.
+    let inline ofSeq xs =
+        match Seq.tryLast xs with
+        | Some(KeyValue(k, v)) ->
+            Seq.foldBack (fun (KeyValue(k', v')) (kFrom, kTo, v, xs) ->
+                if v = v' && kFrom = k' + LanguagePrimitives.GenericOne then
+                    (k', kTo, v, xs)
+                elif kFrom <> k' then
+                    (k', k', v', {KeyFrom = kFrom; KeyTo = kTo; Value = v} :: xs)
+                else
+                    (kFrom, kTo, v, xs))
+                xs (k, k, v, [])
+            |> (fun (kFrom, kTo, v, xs) -> {KeyFrom = kFrom; KeyTo = kTo; Value = v} :: xs)
+            |> ImmutableArray.CreateRange
+            |> RangeMap
+        | None -> empty()

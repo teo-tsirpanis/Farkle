@@ -28,6 +28,6 @@ let tests =
             Expect.isNone (RangeMap.ofRanges [|[|9,9|], (); [|2,100|], ()|]) "A RangeMap with a single element inside a range was created"
         }
 
-        testProperty "A sorted array with distinct elements is valid"
+        testProperty "An array with distinct elements is valid"
             (Seq.ofList >> Seq.distinct >> Seq.map (fun (x: int) -> [|(x, x)|], ()) >> Array.ofSeq >> RangeMap.ofRanges >> Option.isSome)
     ]

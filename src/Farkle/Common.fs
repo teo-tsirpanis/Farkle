@@ -42,6 +42,13 @@ module Result =
         | Some x -> Ok x
         | None -> Error message
 
+    /// Consolidates a sequence of `Result`s into a `Result` of a list.
+    let collect xs = Seq.foldBack (fun x xs ->
+        match x, xs with
+        | Ok x, Ok xs -> Ok <| x :: xs
+        | Error x, _ -> Error x
+        | _, Error _ -> xs) xs (Ok [])
+
     /// Returns the value of a `Result` or raises an exception.
     let returnOrFail result = tee id (failwithf "%O") result
 

@@ -3,11 +3,16 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+/// Functions to generate Deterministic Finite Automata from `Regex`es.
+/// The algorithm is a modified edition of the one found at §3.9.5 in
+/// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi & Ullman.
 module Farkle.Builder.RegexBuild
 
+open Farkle.Common
+open Farkle.Collections
 open Farkle.Grammar
 open System
-open System.Collections
+open System.Collections.Generic
 open System.Collections.Immutable
 
 type internal RegexLeaf = {
@@ -36,7 +41,19 @@ and internal RegexBuild = {
     LastPos: Lazy<int Set>
 }
 
-type internal RegexBuildLeaves = ImmutableArray<obj>
+type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<obj>
+with
+    member x.Length = match x with | RegexBuildLeaves arr -> arr.Length
+    member x.Characters idx =
+        let (RegexBuildLeaves arr) = x
+        match arr.[idx] with
+        | :? RegexLeaf as leaf -> leaf.Characters
+        | _ -> Set.empty
+    member x.TryGetAcceptSymbol idx =
+        let (RegexBuildLeaves arr) = x
+        match arr.[idx] with
+        | :? RegexEnd as leaf -> Some leaf.AcceptSymbol
+        | _ -> None
 
 let private fIsNullable =
     function
@@ -85,7 +102,7 @@ let private makeLazy tree = {
     LastPos = lazy (fLastPos tree)
 }
 
-let internal createRegexBuild regexes caseSensitive: _ * RegexBuildLeaves =
+let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
 
     let createConcatFirstPos xs: ConcatFirstPos =
         (lazy Set.empty, [])
@@ -149,10 +166,10 @@ let internal createRegexBuild regexes caseSensitive: _ * RegexBuildLeaves =
         |> List.map (fun (regex, acceptSymbol) -> createRegexBuildSingle regex acceptSymbol)
         |> (function | [x] -> x | x -> makeLazy<| Alt x)
     
-    theTree, leaves.ToImmutable()
+    theTree, leaves.ToImmutable() |> RegexBuildLeaves
 
-let internal calculateFollowPos regex leaveCount =
-    let followPoses = Array.replicate leaveCount Set.empty
+let internal calculateFollowPos leafCount regex =
+    let followPos = Array.replicate leafCount Set.empty
     let rec impl x =
         match x.Tree with
         | Alt xs -> List.iter impl xs
@@ -161,13 +178,84 @@ let internal calculateFollowPos regex leaveCount =
             (xs, firstPoses) ||> List.iter2 (fun x firstPosOfTheRest ->
                 let lastPosOfThisOne = x.LastPos.Value
                 let firstPosOfTheRest = firstPosOfTheRest.Value
-                lastPosOfThisOne |> Set.iter (fun idx -> followPoses.[idx] <- Set.union followPoses.[idx] firstPosOfTheRest))
+                lastPosOfThisOne |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPosOfTheRest))
             List.iter impl xs
         | Star x ->
             let lastPos = x.LastPos.Value
             let firstPos = x.FirstPos.Value
-            lastPos |> Set.iter (fun idx -> followPoses.[idx] <- Set.union followPoses.[idx] firstPos)
+            lastPos |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPos)
             impl x
         | Chars _ | End _ -> ()
     impl regex
-    followPoses.ToImmutableArray()
+    followPos.ToImmutableArray()
+
+type internal DFAStateBuild = {
+    Name: int Set
+    Index: uint32
+    Edges: SortedDictionary<char, uint32>
+}
+with
+    static member Create name index = {Name = name; Index = index; Edges = SortedDictionary()}
+
+let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
+    let states = Dictionary()
+    let statesList = ResizeArray()
+    let unmarkedStates = Stack()
+    let addNewState stateName =
+        let idx = uint32 statesList.Count
+        let state = DFAStateBuild.Create stateName idx
+        unmarkedStates.Push(idx)
+        statesList.Add(state)
+        states.Add(stateName, state)
+        idx
+    addNewState regex.FirstPos.Value |> ignore
+    while unmarkedStates.Count <> 0 do
+        let S = statesList.[int <| unmarkedStates.Pop()]
+        let SChars = S.Name |> Seq.map leaves.Characters
+        SChars |> Set.unionMany |> Set.iter (fun a ->
+            let U =
+                (S.Name, SChars)
+                ||> Seq.zip
+                |> Seq.filter (snd >> Set.contains a)
+                |> Seq.map (fun (s, _) -> followPos.[s])
+                |> Set.unionMany
+            let UIdx =
+                if states.ContainsKey(U) then
+                    states.[U].Index
+                else
+                    addNewState U
+            S.Edges.Add(a, UIdx))
+    let toDFAState state =
+        let acceptSymbols =
+            state.Name
+            |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
+            |> set
+        let rangeMap = RangeMap.ofSeq state.Edges
+        match acceptSymbols.Count with
+        | 0 -> Ok {Index = state.Index; AcceptSymbol = None; Edges = rangeMap}
+        | 1 -> Ok {Index = state.Index; AcceptSymbol = Some acceptSymbols.MinimumElement; Edges = rangeMap}
+        | _ -> Error <| BuildErrorType.IndistinguishableSymbols acceptSymbols
+    let acceptSymbolsOfFirstState =
+        statesList.[0].Name
+        |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
+        |> set
+    if acceptSymbolsOfFirstState.IsEmpty then
+        statesList
+        |> Seq.map toDFAState
+        |> collect
+        |> Result.map (fun dfaStates -> 
+            let theHolyDFAStates = ImmutableArray.CreateRange dfaStates
+            let theSacredDFAStartingState = theHolyDFAStates.[0]
+            {InitialState = theSacredDFAStartingState; States = theHolyDFAStates})
+    else
+        Error <| BuildErrorType.NullableSymbols acceptSymbolsOfFirstState
+
+/// Builds a DFA that recognizes the given `Regex`es, each accepting a unique `DFASymbol`.
+/// Optionally, the resulting DFA can be case sensitive.
+let buildRegexesToDFA caseSensitive regexes =
+    match List.ofSeq regexes with
+    | [] -> Error BuildErrorType.NoSymbolsSpecified
+    | _ ->
+        let tree, leaves = createRegexBuild caseSensitive regexes
+        let followPos = calculateFollowPos leaves.Length tree
+        makeDFA tree leaves followPos

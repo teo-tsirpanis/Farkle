@@ -252,7 +252,7 @@ module CharStream =
     /// Creates a new `CharSpan` from the union of two adjacent spans, i.e.
     /// that starts at the first's start, and ends at the second's end.
     let concatSpans span1 span2 =
-        if span1.IndexTo = span2.IndexFrom then
+        if span1.IndexTo + 1UL = span2.IndexFrom then
             {span1 with IndexTo = span2.IndexTo}
         else
             failwithf "Trying to concatenate character span %O with %O." span1 span2

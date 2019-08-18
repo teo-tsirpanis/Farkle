@@ -274,7 +274,7 @@ module CharStream =
     /// that starts at the first's start, and ends at the second's end.
     [<CompiledName("ConcatSpans")>]
     let concatSpans span1 span2 =
-        if span1.IndexTo = span2.IndexFrom then
+        if span1.IndexTo + 1UL = span2.IndexFrom then
             {span1 with IndexTo = span2.IndexTo}
         else
             failwithf "Trying to concatenate character span %O with %O." span1 span2

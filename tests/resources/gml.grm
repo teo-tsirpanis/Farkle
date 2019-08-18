@@ -33,7 +33,7 @@
 {Parameter Ch}   = {Printable}    - ["] - ['']
 {Nonterminal Ch} = {Alphanumeric} + [_-.] + {Space} 
 {Terminal Ch}    = {Alphanumeric} + [_-.] 
-{Literal Ch}     = {Printable}    - ['']       !Basically anything, DO NOT CHANGE!
+{Literal Ch}     = {Printable}    - ['']       !*Basically anything, DO NOT CHANGE*!
 {Set Literal Ch} = {Printable}    - ['['']'] - ['']
 {Set Name Ch}    = {Printable}    - [{}]
 

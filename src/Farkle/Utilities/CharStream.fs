@@ -186,7 +186,7 @@ module CharStream =
     /// Creates a new `CharSpan` from two continuous spans, i.e. that starts at the first's start, and ends at the second's end.
     /// Returns `None` if they were not continuous.
     let extendSpans (CharSpan (start1, end1)) (CharSpan ({Index = start2}, end2)) =
-        if end1 = start2 then
+        if end1 + GenericOne = start2 then
             CharSpan (start1, end2)
         else
             failwithf "Trying to extend a character span that ends at %d, with one that starts at %d." end1 start2

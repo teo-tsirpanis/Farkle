@@ -1,3 +1,6 @@
+#### 4.0.2
+* Fix a bug where comments in input text would sometimes crash the parser.
+
 #### 4.0.1 - 11-08-2019
 * Backport the fix of GitHub issue [#8](https://github.com/teo-tsirpanis/Farkle/issues/8).
 

@@ -62,8 +62,8 @@ module internal GrammarReader =
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
         let wantGroupEnd x =
             match x with
-            | AnyTerminal x -> Choice1Of3 x
-            | AnyNoise x -> Choice2Of3 x
+            | AnyTerminal x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> Choice1Of3 x
+            | AnyNoise x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> Choice2Of3 x
             | AnyGroupEnd x -> Choice3Of3 x
             | _ -> invalidEGT()
         let wantDFASymbol x = match x with | AnyTerminal x -> Choice1Of4 x | AnyNoise x -> Choice2Of4 x | AnyGroupStart x -> Choice3Of4 x | AnyGroupEnd x -> Choice4Of4 x | _ -> invalidEGT()

@@ -85,6 +85,15 @@ module Tokenizer =
                 let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
+            let leaveGroup tok g gs =
+                // There are three cases when we leave a group
+                match gs, g.ContainerSymbol with
+                // We have now left the group, but the whole group was noise.
+                | [], Choice2Of2 _ -> impl []
+                // We have left the group and it was a terminal.
+                | [], Choice1Of2 sym -> newToken sym tok
+                // There is still another outer group. We append the outgoing group's data to the next top group.
+                | (tok2, g2) :: xs, _ -> impl ((concatSpans tok tok2, g2) :: xs)
             let tok = tokenizeDFA grammar input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
@@ -116,13 +125,7 @@ module Tokenizer =
                         consume (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
                         concatSpans popped tok
                     | EndingMode.Open -> popped
-                match xs, poppedGroup.ContainerSymbol with
-                // We have now left the group, but the whole group was noise.
-                | [], Choice2Of2 _ -> impl []
-                // We have left the group and it was a terminal.
-                | [], Choice1Of2 sym -> newToken sym popped
-                // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((concatSpans popped tok2, g2) :: xs)
+                leaveGroup popped poppedGroup xs
             // If input ends outside of a group, it's OK.
             | None, [] ->
                 input.GetCurrentPosition() |> ParseMessage.EndOfInput |> fMessage
@@ -143,8 +146,10 @@ module Tokenizer =
                 impl ((data, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
             | Some (Ok (Choice4Of4 ge, _)), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
-            // or input ends while we are inside a group,
-            | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g // then it's an error.
+            // or input ends while we are inside a group, unless the group ends with a newline, were we leave the group,
+            | None, (gTok, g) :: gs when g.IsEndedByNewline -> leaveGroup gTok g gs
+            // then it's an error.
+            | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g
             // But if a group starts inside a group that cannot be nested at, it is an error.
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), _)), ((_, g) :: _) ->
                 fail <| ParseErrorType.CannotNestGroups(groups.[int tokGroupIdx], g)

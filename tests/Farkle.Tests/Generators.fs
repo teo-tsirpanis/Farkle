@@ -83,9 +83,10 @@ let regexGen =
             match! Gen.choose(0, 2) with
             | 0 -> return! Gen.map2 (<&>) gen gen
             | 1 -> return! Gen.map2 (<|>) gen gen
+            | 2 when size >= 16 -> return! Gen.map Regex.oneOf nonEmptyString
             | _ -> return! Gen.map (Regex.atLeast 0) gen
     }
-    Gen.sized impl
+    Gen.sized impl |> Gen.filter (fun x -> not <| x.IsNullable())
 
 let JsonGen =
     let leaves =
@@ -136,6 +137,8 @@ type CS = CS of CharStream * string * steps:int
 
 type Regexes = Regexes of (Regex * DFASymbol) list * (string * DFASymbol) list
 
+type RegexStringPair = RegexStringPair of Regex * string
+
 let genRegexString regex =
     let rec impl (sb: StringBuilder) regex = gen {
         match regex with
@@ -161,8 +164,7 @@ let genRegexString regex =
 
 let regexesGen = gen {
     let! regexSpec =
-        Arb.generate<Regex>
-        |> Gen.filter (fun x -> not <| x.IsNullable())
+        Arb.generate
         |> Gen.nonEmptyListOf
         |> Gen.map (List.mapi (fun idx regex ->
             let symbol = Choice1Of4 <| Terminal(uint32 idx, sprintf "Terminal %d" idx)
@@ -172,6 +174,12 @@ let regexesGen = gen {
         |> List.map (fun (regex, symbol) -> regex |> genRegexString |> Gen.map (fun x -> x, symbol))
         |> Gen.sequence
     return Regexes(regexSpec, strings)
+}
+
+let regexStringPairGen = gen {
+    let! regex = Arb.generate
+    let! str = genRegexString regex
+    return RegexStringPair(regex, str)
 }
 
 type Generators =
@@ -195,6 +203,7 @@ type Generators =
     static member Json() = Arb.fromGen JsonGen
     static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
     static member Regexes() = Arb.fromGen regexesGen
+    static member RegexStringPair() = Arb.fromGen regexStringPairGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

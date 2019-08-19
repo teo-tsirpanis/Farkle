@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -35,20 +35,37 @@ type CharacterRange = {
 
 type PredefinedSet = {
     Name: string
+    Category: string
     Comment: string
     Characters: CharacterRange []
 }
+
+let getCategoryFullName =
+    function
+    | "C" -> "Constants"
+    | "M" -> "Miscellaneous"
+    | "A" -> "ASCII Useful"
+    | "U" -> "Unicode Useful"
+    | "B" -> "Unicode Blocks"
+    | x -> x
 
 let private fHeaderCheck x =
     match x with
     | "GOLD Character Sets" -> Ok ()
     | _ -> Error InvalidEGTFile
 
+let private correctPredefinedSet fAdd x =
+    match x.Name with
+    | "Digit" -> ()
+    | "Euro Sign" -> fAdd {x with Category = "Constants"}
+    | _ -> fAdd x
+
 let private fRecord (fAdd: _ -> unit) (mem: ReadOnlyMemory<_>) =
     lengthMustBeAtLeast mem 4
     let name = wantString mem 0
+    let category = wantString mem 1 |> getCategoryFullName
     let comment = wantString mem 2
-    Log.Debug("Read character set with name {Name} and comment {Comment}", name, comment)
+    Log.Debug("Read character set with name {Name}, category {Category} and comment {Comment}", name, category, comment)
     let count = wantUInt16 mem 3 |> int
     lengthMustBe mem <| 4 + 2 * count
     let mem = mem.Slice(4)
@@ -57,15 +74,15 @@ let private fRecord (fAdd: _ -> unit) (mem: ReadOnlyMemory<_>) =
         let c1 = 2 * i + 0 |> wantUInt16 mem |> char
         let c2 = 2 * i + 1 |> wantUInt16 mem |> char
         Array.set characters i {CFrom = c1; CTo = c2}
-    {Name = name; Comment = comment; Characters = characters} |> fAdd
+    {Name = name; Category = category; Comment = comment; Characters = characters} |> fAdd
 
 let private readPredefinedSets filePath =
     use stream = File.OpenRead(filePath)
     use br = new BinaryReader(stream)
     let list = ResizeArray()
-    match readEGT fHeaderCheck (fRecord list.Add) br with
+    match readEGT fHeaderCheck (fRecord <| correctPredefinedSet list.Add) br with
     | Ok () ->
-        Log.Debug("Reading {FilePath} succeeded.")
+        Log.Debug("Reading {FilePath} succeeded.", filePath)
         Ok <| list.ToArray()
     | Error x ->
         Log.Error("Reading {FilePath} failed: {ErrorType}", x)
@@ -92,7 +109,7 @@ module private Utilities =
         so.Import("make_fsharp_indent", Func<_,_> makeFSharpIndent)
         so.Import("hex_char", Func<_,_> hexChar)
 
-let private template = Template.Parse """// This file was generated from data from the GOLD Parser Builder.
+let private template = """// This file was generated from data from the GOLD Parser Builder.
 
 [<AutoOpen>]
 /// Some common character sets that were imported from GOLD Parser.
@@ -102,15 +119,23 @@ module Farkle.Builder.PredefinedSets
     {{~ if s.comment != "" ~}}
     /// {{ s.comment }}
     {{~ end ~}}
+    {{~ if s.characters.size == 1 ~}}
+    {{~ c = s.characters[0] ~}}
+    let {{ make_fsharp_indent s.name }} = Set.ofRanges ['\u{{ hex_char c.cfrom }}', '\u{{ hex_char c.cto }}']
+    {{~ else ~}}
     let {{ make_fsharp_indent s.name }} = Set.ofRanges [
     {{~ for c in s.characters ~}}
         '\u{{ hex_char c.cfrom }}', '\u{{ hex_char c.cto }}'
     {{~ end ~}}
     ]
+    {{~ end ~}}
 {{ end }}"""
 
 let generatePredefinedSets filePath = either {
     let! theSets = readPredefinedSets filePath
+    let distinctCategories = theSets |> Seq.map (fun x -> x.Category) |> Seq.distinct |> Array.ofSeq
+    Log.Debug("Template categories: {Categories}", distinctCategories)
+    let! template = parseScribanTemplate Log.Logger template "Predefined Sets F# Template"
     let so = ScriptObject()
     so.SetValue("predefined_sets", theSets, true)
     Utilities.loadUtilities so

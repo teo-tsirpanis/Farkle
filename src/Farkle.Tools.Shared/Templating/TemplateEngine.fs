@@ -8,6 +8,7 @@ namespace Farkle.Tools.Templating
 open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
+open Farkle.Tools
 open Scriban
 open Scriban.Runtime
 open Serilog
@@ -35,18 +36,12 @@ module TemplateEngine =
         so.Import fr
         so.Import("to_base_64", Func<_,_>(Utilities.toBase64 fr.GrammarBytes))
         Utilities.load fr.Grammar so
-
         tc.PushGlobal so
-        
-        let template = Template.Parse(templateText, templateFileName)
-        if template.HasErrors then
-            template.Messages.ForEach (fun x -> Log.Error("{error}", x))
-            log.Error("Parsing template {templateFileName} failed.", templateFileName)
-            return! Error ()
-            
+
+        let! template = parseScribanTemplate log templateText templateFileName
+
         log.Verbose("Rendering template")
         let output = template.Render(tc)
-
         return {
             FileExtension =
                 match so.TryGetValue("file_extension") with

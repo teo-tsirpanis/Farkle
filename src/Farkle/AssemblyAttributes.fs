@@ -9,4 +9,5 @@ open System.Runtime.CompilerServices
 
 [<assembly:Extension>]
 [<assembly:InternalsVisibleTo("Farkle.Tests")>]
+[<assembly:InternalsVisibleTo("Farkle.Tools")>]
 do()

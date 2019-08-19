@@ -7,6 +7,7 @@ module Farkle.Tools.Commands.New
 
 open Argu
 open Farkle.Monads.Either
+open Farkle.Tools
 open Farkle.Tools.Templating
 open Farkle.Tools.Templating.BuiltinTemplates
 open Serilog
@@ -36,13 +37,6 @@ In this case, the language is completely ignored."
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to 'out'."
             | Namespace _ -> "Specifies the namespace of the generated source file. \
 It can be retrieved from the template with the 'namespace' variable."
-
-let assertFileExists fileName =
-    if File.Exists fileName then
-        Ok fileName
-    else
-        Log.Error("File {fileName} does not exist.", fileName)
-        Error()
 
 let tryInferGrammarFile() =
     Environment.CurrentDirectory

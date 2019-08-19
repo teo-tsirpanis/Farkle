@@ -112,13 +112,19 @@ type Regex =
             Regex.Join(x.Repeat num, x.ZeroOrMore())
     /// Returns a regex that only recognizes a literal string.
     static member Literal (str: string) = str |> Seq.map Regex.Literal |> List.ofSeq |> Concat
+    /// Returns a regex that only recognizes a single literal character.
     static member Literal c = Set.singleton c |> Chars
-    /// Returns a regex that recognizes only one character of these on the given string.
-    static member OneOf (str: string) =
-        if String.IsNullOrEmpty str then
+    /// Returns a regex that recognizes only one character of these on the given sequence of characters.
+    static member OneOf (xs: _ seq) =
+        let set =
+            match xs with
+            | :? Set<char> as x -> x
+            | :? PredefinedSet as x -> x.Characters
+            | _ -> Set.ofSeq xs
+        if set.IsEmpty then
             Regex.Empty
         else
-            str |> set |> Chars
+            Chars set
 
 /// F#-friendly membrs of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.

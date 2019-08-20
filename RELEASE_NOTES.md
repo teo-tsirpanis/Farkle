@@ -37,6 +37,8 @@
 * As always, performance was improved, especially in the EGT file reader.
 * __Breaking change:__ In your post-processor, if you have functions like `take2Of production (index1, index2) count func`, remove the `count` parameter.
 * __Breaking change:__ The `Token` type was moved to `Farkle.Parser` and is not needed by the `AST` type.
+#### 4.0.2 - 21-08-2019
+* Fix a bug where comments in input text would sometimes crash the parser.
 
 #### 4.0.1 - 11-08-2019
 * Backport the fix of GitHub issue [#8](https://github.com/teo-tsirpanis/Farkle/issues/8).

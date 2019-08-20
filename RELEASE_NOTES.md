@@ -1,4 +1,4 @@
-#### 5.0.1
+#### 5.0.1 - 21-08-2019
 * Fix a bug where comments in input text would sometimes crash the parser.
 * Allow line comments in the last line of the input text.
 

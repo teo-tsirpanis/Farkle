@@ -1,4 +1,4 @@
-#### 4.0.2
+#### 4.0.2 - 21-08-2019
 * Fix a bug where comments in input text would sometimes crash the parser.
 
 #### 4.0.1 - 11-08-2019

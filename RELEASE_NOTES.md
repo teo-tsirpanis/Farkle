@@ -1,3 +1,7 @@
+#### 5.0.1 - 21-08-2019
+* Fix a bug where comments in input text would sometimes crash the parser.
+* Allow line comments in the last line of the input text.
+
 #### 5.0.0 - 13-08-2019
 * Fix a bug where the tokenizer would erroneously report an EOF instead of a lexical error. - [#8](https://github.com/teo-tsirpanis/Farkle/issues/8)
 * Add `CharStream.TryLoadFirstCharacter`. With this method, you can check whether the input of a character stream has ended, and safely access `CharStream.FirstCharacter`.

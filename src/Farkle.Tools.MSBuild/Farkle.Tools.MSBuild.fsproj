@@ -9,7 +9,6 @@
     <!-- Because this repository does not use Paket, it does not play well with
     the others that do, and raises package downgrade warnings. To be removed when
     this project gets fixed, or the others abandon Paket. -->
-    <NoWarn>$(NoWarn);NU1605</NoWarn>
     <NuspecProperties>version=$(Version)</NuspecProperties>
     <GenerateNuspecDependsOn>PreparePack;$(GenerateNuspecDependsOn)</GenerateNuspecDependsOn>
   </PropertyGroup>
@@ -21,6 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Scriban" Version="2.*" />
+    <PackageReference Update="FSharp.Core" Version="4.7.*" />
+    <PackageReference Update="System.ValueTuple" Version="4.5.*" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.*" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
   </ItemGroup>

@@ -10,7 +10,7 @@ open System
 [<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 /// <summary>A regular expression that is used to specify a tokenizer symbol.</summary>
 /// <remarks>Checking two regular expressions for equality does not mean that they
-/// recognize the same symbols, but that their internal strucure is the same.</summary>
+/// recognize the same symbols, but that their internal strucure is the same.</remarks>
 type Regex =
     internal
     /// These regexes sorted as one after the other.
@@ -68,7 +68,7 @@ type Regex =
         | Alt xs, x
         | x, Alt xs -> Alt <| x :: xs // Alt is commutative.
         | x1, x2 -> Alt [x1; x2]
-    /// <summary>Returns a regex that recognizes a string that is recognized by either of the given regexes.<summary>
+    /// <summary>Returns a regex that recognizes a string that is recognized by either of the given regexes.</summary>
     /// <remarks>This is an optimized edition of <see cref="Or"/> for many regexes.</remarks>
     /// <seealso cref="Or"/>
     static member Choice([<ParamArray>] regexes) =

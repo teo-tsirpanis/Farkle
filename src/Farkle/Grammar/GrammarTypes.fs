@@ -7,33 +7,48 @@ namespace Farkle.Grammar
 
 open Farkle.Collections
 open System
+open System.Collections
 open System.Collections.Immutable
 open System.Diagnostics
 
-/// A type indicating how a group advances.
 [<Struct; RequireQualifiedAccess>]
+/// A type indicating how a group advances.
 type AdvanceMode =
     /// The group advances by one token at a time.
     | Token
     /// The group advances by one character at a time.
     | Character
 
-/// A type indicating how the ending symbol of a group is handled.
 [<Struct; RequireQualifiedAccess>]
+/// A type indicating how the ending symbol of a group is handled.
 type EndingMode =
     /// The ending symbol is preserved on the input queue.
     | Open
     /// The ending symbol is consumed.
     | Closed
 
+[<CustomComparison; CustomEquality>]
 /// A symbol which is produced through a DFA, and is significant for the grammar.
 type Terminal = Terminal of index: uint32 * name: string
 with
-    /// The terminal's index.
-    /// It is mainly used for the post-processor.
+    /// The terminal's index. Terminals with the same index are considered equal.
     member x.Index = match x with | Terminal (idx, _) -> idx
     /// The symbol's name.
     member x.Name = match x with | Terminal (_, name) -> name
+    interface IEquatable<Terminal> with
+        member x.Equals(x') = x.Index = x'.Index
+    interface IComparable<Terminal> with
+        member x.CompareTo(x') = compare x.Index x'.Index
+    interface IStructuralEquatable with
+        member x.Equals(x', _) = x.Equals(x')
+        member x.GetHashCode(_) = x.GetHashCode()
+    interface IStructuralComparable with
+        member x.CompareTo(x', _) = compare x.Index (x' :?> Terminal).Index
+    override x.Equals(x') =
+        match x' with
+        | :? Terminal as x' -> x.Index = x'.Index
+        | _ -> false
+    override x.GetHashCode() = hash x.Index
     override x.ToString() =
         let name = x.Name
         // The symbol's name should be quoted if...
@@ -52,12 +67,28 @@ with
         else
             name
 
+[<CustomComparison; CustomEquality>]
 /// A symbol which is produced by a concatenation of other `Terminal`s and `Nonterminal`s, as the LALR parser dictates.
 type Nonterminal = Nonterminal of index: uint32 * name: string
 with
+    /// The terminal's index. Nonterminals with the same index are considered equal.
     member x.Index = match x with | Nonterminal (idx, _) -> idx
     /// The nonterminal's name.
     member x.Name = match x with | Nonterminal (_, name) -> name
+    interface IEquatable<Nonterminal> with
+        member x.Equals(x') = x.Index = x'.Index
+    interface IComparable<Nonterminal> with
+        member x.CompareTo(x') = compare x.Index x'.Index
+    interface IStructuralEquatable with
+        member x.Equals(x', _) = x.Equals(x')
+        member x.GetHashCode(_) = x.GetHashCode()
+    interface IStructuralComparable with
+        member x.CompareTo(x', _) = compare x.Index (x' :?> Nonterminal).Index
+    override x.Equals(x') =
+        match x' with
+        | :? Nonterminal as x' -> x.Index = x'.Index
+        | _ -> false
+    override x.GetHashCode() = hash x.Index
     override x.ToString() = sprintf "<%s>" x.Name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.

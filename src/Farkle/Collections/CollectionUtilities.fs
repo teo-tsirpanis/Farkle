@@ -5,6 +5,8 @@
 
 namespace Farkle.Collections
 
+open System.Collections.Immutable
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Some extra functions on lists.
 module internal List =
@@ -17,3 +19,9 @@ module internal List =
             action x1 x2
             iter2Safe action x1s x2s
         | _, _ -> ()
+
+/// Some extra functions regarding the `ImmutableList` type
+module internal ImmutableList =
+
+    /// Adds the specified object to the end of the given immutable list.
+    let add (xs: ImmutableList<_>) x = xs.Add x

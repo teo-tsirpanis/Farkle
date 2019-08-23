@@ -7,7 +7,6 @@ open Argu
 open Farkle.Tools
 open Farkle.Tools.Commands
 open Serilog
-open Serilog.Core
 open System
 
 type FarkleCLIExiter() =

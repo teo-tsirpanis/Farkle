@@ -10,7 +10,6 @@ open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Tests
-open FsCheck
 
 /// A very simple function to check if a string is recognized by a DFA.
 /// We don't need a full-blown tokenizer here.

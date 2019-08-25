@@ -19,14 +19,12 @@ type DesigntimeFarkle =
 type Terminal =
     inherit DesigntimeFarkle
     abstract Id: Guid
-    // abstract Name: string
     abstract Regex: Regex
     abstract Transformer: T<obj>
 
 type Nonterminal =
     inherit DesigntimeFarkle
     abstract Id: Guid
-    // abstract Name: String
     abstract Productions: Production list
 
 type Production =
@@ -40,20 +38,20 @@ type DesigntimeFarkle<'T> =
 
 type Terminal<'T> = internal {
     Id: Guid
-    Name: string
+    _Name: string
     Regex: Regex
     Transformer: T<obj> 
 }
 with
-    static member Create name regex (fTransform: T<'T>): Terminal<'T> = {
+    static member Create<'T> name (fTransform: T<'T>) regex: Terminal<'T> = {
         Id = Guid.NewGuid()
-        Name = name
+        _Name = name
         Regex = regex
         Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
     }
+    member x.Name = x._Name
     interface Terminal with
         member x.Id = x.Id
-        // member x.Name = x.Name
         member x.Regex = x.Regex
         member x.Transformer = x.Transformer
     interface DesigntimeFarkle with
@@ -148,7 +146,7 @@ type ProductionBuilder<'T1, 'T2, 'T3>(members, idx1, idx2, idx3) =
 
 module DesigntimeFarkleOperators =
 
-    let (!!=) name parts =
+    let (||=) name parts =
         let nont = Nonterminal.Create name
         nont.Productions.TrySet(parts) |> ignore
         nont

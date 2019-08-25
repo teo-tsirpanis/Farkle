@@ -22,8 +22,8 @@ type PostProcessor<'T> =
     /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
     abstract Transform: Terminal * Position * ReadOnlySpan<char> -> obj
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
-    /// <summary>Fusing must always succeed. In very case of an error like
-    /// an unrecognized production, the function has to throw an exception.</summary>
+    /// <remarks>Fusing must always succeed. In very case of an error like
+    /// an unrecognized production, the function has to throw an exception.</remarks>
     /// <exception cref="FuserNotFound">This kind of exception must be thrown if a production is not
     /// recognized by the post-processor, so that Farkle properly notifies the consumer of this problem.</exception>
     abstract Fuse: Production * obj[] -> obj

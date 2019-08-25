@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -11,28 +11,53 @@ open Farkle.Collections
 open System
 open System.Collections.Immutable
 
+[<CompiledName("TerminalCallback`1")>]
+/// <summary>A delegate that accepts the position and data of a terminal, and transforms them into an arbitrary object.</summary>
+/// <remarks>
+///     <para>In F#, this type is named <c>T</c> - from "Terminal" and was shortened to avoid clutter in user code.</para>
+///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions</para>
+/// </remarks>
 type T<'T> = delegate of Position * ReadOnlySpan<char> -> 'T
 
+/// <summary>The base, untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
+/// <remarks>User code must not implement this interface, or an error may be raised.</remarks>
+/// <seealso cref="DesigntimeFarkle{T}"/>
 type DesigntimeFarkle =
     abstract Name: string
 
+[<CompiledName("AbstractTerminal")>]
+/// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
+/// <seealso cref="Terminal{T}"/>
 type Terminal =
     inherit DesigntimeFarkle
     abstract Id: Guid
     abstract Regex: Regex
     abstract Transformer: T<obj>
 
+[<CompiledName("AbstractNonterminal")>]
+/// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
+/// <seealso cref="Nonterminal{T}"/>
 type Nonterminal =
     inherit DesigntimeFarkle
     abstract Id: Guid
     abstract Productions: Production list
 
+[<CompiledName("AbstractProduction")>]
+/// <summary>The base, untyped interface of <see cref="Production{T}"/>.</summary>
+/// <seealso cref="Production{T}"/>
 type Production =
     abstract Members: Symbol ImmutableArray
     abstract Fuse: obj [] -> obj
 
 type Symbol = Choice<Terminal, Nonterminal>
 
+/// <summary>An object representing a grammar created by Farkle.Builder.
+/// It can be converted to <see cref="RuntimeFarkle{T}"/>.</summary>
+/// <remarks>
+///     <para>This interface is implemented by <see cref="Terminal{T}"/> and <see cref="Nonterminal{T}"/>.</para>
+///     <para>User code must not implement this interface, or an error may be raised.</para>
+/// </remarks>
+/// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 type DesigntimeFarkle<'T> = 
     inherit DesigntimeFarkle
 
@@ -43,12 +68,6 @@ type Terminal<'T> = internal {
     Transformer: T<obj> 
 }
 with
-    static member Create<'T> name (fTransform: T<'T>) regex: Terminal<'T> = {
-        Id = Guid.NewGuid()
-        _Name = name
-        Regex = regex
-        Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
-    }
     member x.Name = x._Name
     interface Terminal with
         member x.Id = x.Id
@@ -57,6 +76,16 @@ with
     interface DesigntimeFarkle with
         member x.Name = x.Name
     interface DesigntimeFarkle<'T>
+
+module Terminal =
+
+    [<CompiledName("Create")>]
+    let create name (fTransform: T<'T>) regex: Terminal<'T> = {
+        Id = Guid.NewGuid()
+        _Name = name
+        Regex = regex
+        Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
+    }
 
 type Nonterminal<'T> = internal {
     Id: Guid
@@ -144,15 +173,35 @@ type ProductionBuilder<'T1, 'T2, 'T3>(members, idx1, idx2, idx3) =
         Fuse = fun arr -> f (arr.[idx1] :?> _) (arr.[idx2] :?> _) (arr.[idx3] :?> _) |> box
     }
 
+module Production =
+
+    [<CompiledName("Empty")>]
+    let empty = ProductionBuilder(ImmutableList.Empty)
+
+    [<CompiledName("Append")>]
+    let (!%) df =
+        df
+        |> Symbol.specialize
+        |> ImmutableList.Empty.Add
+        |> ProductionBuilder
+
+    [<CompiledName("Extend")>]
+    let (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
+
 module DesigntimeFarkleOperators =
 
     let (||=) name parts =
         let nont = Nonterminal.Create name
-        nont.Productions.TrySet(parts) |> ignore
+        nont.SetProductions(Array.ofSeq parts)
         nont
 
+    let inline (@=>) (pb: ^TBuilder when ^TBuilder : (member Finish : ^TFunction -> Production<_>)) f =
+        (^TBuilder : (member Finish: ^TFunction -> Production<_>) (pb, f))
+
+    let inline (@=%) (pb: ProductionBuilder) (x: 'T) = pb.Finish(x)
+
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
-    let op_DotGreaterGreater (pb: AbstractProductionBuilder<_>) df = pb.Append df
+    let inline op_DotGreaterGreater (pb: #AbstractProductionBuilder<_>) df = pb.Append df
 
     let inline op_DotGreaterGreaterDot (rb: ^TBuilder when ^TBuilder : (member Extend : DesigntimeFarkle<_> -> ^TBuilderResult)) df =
         (^TBuilder : (member Extend: DesigntimeFarkle<_> -> ^TBuilderResult) (rb, df))

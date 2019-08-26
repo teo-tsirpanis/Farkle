@@ -157,11 +157,10 @@ let generatePredefinedSets filePath = either {
 
 let run (args: ParseResults<_>) = either {
     let! inputFile = args.PostProcessResult(PredefinedSetsFile, assertFileExists)
-    let outputFile = args.GetResult(OutputFile, "PredefinedSets.fs")
+    let outputFile = args.GetResult(OutputFile, "PredefinedSets.fs") |> Path.GetFullPath
 
     let! generatedSource = generatePredefinedSets inputFile
 
-    Log.Verbose("Creating file at {OutputFile}", outputFile)
     File.WriteAllText(outputFile, generatedSource)
     Log.Information("Predefined sets generated at {OutputFile}", outputFile)
 }

@@ -53,6 +53,8 @@ group FakeBuild
   nuget Fake.DotNet.Paket
   nuget Fake.Tools.Git
 
+  nuget Scriban
+
 group Test
 
   framework: netcoreapp2.1

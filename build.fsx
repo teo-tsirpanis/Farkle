@@ -9,7 +9,11 @@
 
 #r "paket: groupref FakeBuild //"
 
-#load "./.fake/build.fsx/intellisense.fsx"
+#if !FAKE
+// Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
+#load "./.fake/build.fsx/intellisense_lazys.fsx"
+#endif
+#load "./src/GenerateProductionBuilders.fsx"
 
 open Fake.Api
 open Fake.BuildServer
@@ -48,6 +52,10 @@ let solutionFile  = "./Farkle.sln"
 // Default target configuration
 let configuration = DotNet.BuildConfiguration.Release
 let configurationAsString = sprintf "%A" configuration
+
+let sourceFilesToGenerate = [
+    "./src/GenerateProductionBuilders.fsx", "./src/Farkle/Builder/ProductionBuilders.g.fs", GenerateProductionBuilders.generateProductionBuilders
+]
 
 [<Literal>]
 let LibraryFramework = "netstandard2.0"
@@ -162,6 +170,28 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
+Target.description "Generates some source code files that are needed by Farkle"
+Target.create "GenerateCode" (fun _ ->
+    sourceFilesToGenerate
+    |> List.iter (fun (src, dest, fGenerate) ->
+        File.checkExists src
+        let shouldGenerate =
+            if File.exists dest then
+                if File.GetLastWriteTimeUtc src > File.GetLastWriteTimeUtc dest then
+                    Trace.logfn "Regenerating %s because it is older than %s" dest src
+                    true
+                else
+                    Trace.logfn "Skipping %s because it is newer than %s" dest src
+                    false
+            else
+                Trace.logfn "%s does not exist so it will be generated" dest
+                true
+        if shouldGenerate then
+            let generatedSource = fGenerate()
+            File.WriteAllText(dest, generatedSource)
+    )
+)
+
 Target.description "Builds everything in Release mode"
 Target.create "BuildAllRelease" (fun _ -> DotNet.build (fConfiguration >> fCommonOptions) solutionFile)
 
@@ -169,7 +199,9 @@ Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
     testFrameworks
     |> Seq.iter (fun fx ->
-        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments))
+        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments
+    )
+)
 
 let shouldCIBenchmark =
     match BuildServer.buildServer with
@@ -434,6 +466,9 @@ Target.create "Release" ignore
     ==> "BuildAllRelease"
     ==> "CopyBinaries"
 
+["BuildAllRelease"; "RunTests"; "NuGetPack"]
+|> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
+
 "RunTests"
     ==> "NuGetPack"
     ==> "CI"
@@ -443,7 +478,7 @@ Target.create "Release" ignore
 |> Seq.iter ((==>) "CopyBinaries" >> ignore)
 
 [""; "Debug"]
-|> Seq.iter (fun x ->
+|> List.iter (fun x ->
     "CopyBinaries"
         ==> "CleanDocs"
         ==> (sprintf "GenerateHelp%s" x)

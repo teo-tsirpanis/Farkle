@@ -19,7 +19,6 @@
   <ItemGroup>
     <EmbeddedResource Include="builtin-templates\*.scriban" />
     <Compile Include="Commands/GeneratePredefinedSets.fs" />
-    <Compile Include="Commands/GenerateProductionBuilders.fs" />
     <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

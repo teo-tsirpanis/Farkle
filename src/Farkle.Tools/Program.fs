@@ -21,7 +21,6 @@ type Arguments =
     | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of Events.LogEventLevel
     | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
     | [<AltCommandLine("generate-predefined-sets"); Hidden>] GeneratePredefinedSets of ParseResults<GeneratePredefinedSets.Arguments>
-    | [<AltCommandLine("generate-production-builders"); Hidden>] GenerateProductionBuilders of ParseResults<GenerateProductionBuilders.Arguments>
 with
     interface IArgParserTemplate with
         member x.Usage =
@@ -30,8 +29,6 @@ with
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
             | GeneratePredefinedSets _ -> "Generate an F# source file with GOLD Parser's predefined sets. \
-For internal use only."
-            | GenerateProductionBuilders _ -> "Generate an F# source file with production builder definitions. \
 For internal use only."
 
 [<EntryPoint>]
@@ -53,7 +50,6 @@ let main _ =
             match results.GetSubCommand() with
             | New args -> New.run args
             | GeneratePredefinedSets args -> GeneratePredefinedSets.run args
-            | GenerateProductionBuilders args -> GenerateProductionBuilders.run args
             | Version _ | Verbosity _ -> Ok ()
             |> function | Ok () -> 0 | Error () -> 1
     with

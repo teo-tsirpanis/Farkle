@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 #if !FAKE
-#load "./.fake/build.fsx/intellisense_lazys.fsx"
+#load "./.fake/generateproductionbuilders.fsx/intellisense_lazy.fsx"
 #endif
 
 open Scriban

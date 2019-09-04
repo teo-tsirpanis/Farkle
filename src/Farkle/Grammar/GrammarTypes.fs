@@ -182,6 +182,8 @@ type DFAState = {
     AcceptSymbol: DFASymbol option
 }
 
+type LALRSymbol = Choice<Terminal, Nonterminal>
+
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
 type Production = {
     /// The index of the production.
@@ -191,7 +193,7 @@ type Production = {
     // is acceptable, because the production's head is an integral part of its definition.
     Head: Nonterminal
     /// The `Terminals`s and `Nonterminal`s, the production is made of.
-    Handle: Choice<Terminal, Nonterminal> ImmutableArray
+    Handle: LALRSymbol ImmutableArray
 }
 with
     override x.ToString() =

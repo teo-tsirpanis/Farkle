@@ -5,6 +5,7 @@
 
 module Farkle.Builder.LALRBuild
 
+open Farkle.Collections
 open Farkle.Grammar
 open System.Collections.Generic
 open System.Collections.Immutable
@@ -37,6 +38,9 @@ with
 
 let getAllProductions (map: Map<Nonterminal, Production Set>) x = map.[x]
 
+/// Creates the LR(0) kernel sets for a grammar.
+/// A function that gets the corresponding productions for
+/// a nonterminal and the starting nonterminal are accepted.
 let createLR0KernelItems fGetAllProductions startNonterminal =
 
     let itemSets = ImmutableArray.CreateBuilder()
@@ -87,3 +91,38 @@ let createLR0KernelItems fGetAllProductions startNonterminal =
     |> ignore
 
     itemSets.ToImmutable()
+
+/// Computes the FIRST set of the `Nonterminal`s of the given sequence of `Production`s.
+/// A `None` in the set of a nonterminal is the empty symbol, AKA Epsilon, or ε.
+let computeFirstSetMap productions =
+    let dict = MultiMap.create()
+    let containsEmpty (x: LALRSymbol) =
+        match x with
+        | Choice1Of2 _ -> false
+        | Choice2Of2 nont -> dict.Contains(nont, None)
+
+    productions
+    |> Seq.iter (fun {Head = x; Handle = xs} ->
+        if xs.IsEmpty then
+            dict.Add(x, None) |> ignore)
+
+    let mutable changed = true
+
+    while changed do
+        changed <- false
+        productions
+        |> Seq.iter (fun {Head = head; Handle = handle} ->
+            let mutable i = 0
+            let len = handle.Length
+            // The first member is in the FIRST set by definition.
+            // Really? Who would imagine!
+            while i < len && (i = 0 || containsEmpty handle.[i - 1]) do
+                match handle.[i] with
+                | Choice1Of2 term ->
+                    dict.Add(head, Some term)
+                | Choice2Of2 nont ->
+                    dict.Union(head, nont)
+                |> (fun x -> changed <- changed || x)
+                i <- i + 1)
+
+    MultiMap.freeze dict

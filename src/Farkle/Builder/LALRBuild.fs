@@ -40,7 +40,7 @@ let getAllProductions (map: Map<Nonterminal, Production Set>) x = map.[x]
 
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
-/// a nonterminal and the starting nonterminal are accepted.
+/// a nonterminal and the starting nonterminal are required.
 let createLR0KernelItems fGetAllProductions startNonterminal =
 
     let itemSets = ImmutableArray.CreateBuilder()
@@ -126,3 +126,42 @@ let computeFirstSetMap productions =
                 i <- i + 1)
 
     MultiMap.freeze dict
+
+/// Returns the FIRST set of the given sequence of `LALRSymbol`s.
+/// If all the symbols contain the empty symbol in their FIRST set,
+/// the terminals in `lookahead` are included in the result.
+/// A function to get the FIRST set of each `Nonterminal` is required.
+let getFirstSetOfSequence fGetFirstSet lookahead (xs: LALRSymbol seq) =
+    xs
+    |> Seq.fold (fun (symbols, doContinue) ->
+        function
+        | Choice1Of2 term when doContinue -> Set.add term symbols, false
+        | Choice2Of2 nont when doContinue ->
+            let first = fGetFirstSet nont
+            let firstClean = first |> Seq.choose id |> set
+            Set.union symbols firstClean, Set.contains None first
+        | _ -> symbols, false) (Set.empty, true)
+    |> (fun (first, containsEmpty) -> if containsEmpty then Set.union first lookahead else first)
+
+/// Computes the LR(1) CLOSURE function of a single LR(1) item, which
+/// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
+/// A function to get the FIRST set and the productons of a `Nonterminal` is required.
+let closure1 fGetAllProductions fGetFirstSet item lookahead =
+    let q = Queue()
+    let results = MultiMap.create()
+    q.Enqueue(item, lookahead)
+    while q.Count <> 0 do
+        let (item: LR0Item), lookahead = q.Dequeue()
+        if results.AddRange(item, lookahead) then
+            if not item.IsAtEnd then
+                match item.CurrentSymbol with
+                | Choice1Of2 _ -> ()
+                | Choice2Of2 nont ->
+                    let first =
+                        item.Production.Handle
+                        |> Seq.skip item.DotPosition
+                        |> getFirstSetOfSequence fGetFirstSet lookahead
+                    nont
+                    |> fGetAllProductions
+                    |> Set.iter (fun prod -> q.Enqueue(LR0Item.Create prod, first))
+    MultiMap.freeze results

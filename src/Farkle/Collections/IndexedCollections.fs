@@ -26,10 +26,28 @@ with
             x.Values.Add(k, vs)
             true
 
+    /// <summary>Assiciates the specified values with the specified key.</summary>
+    /// <returns>Whether the current multimap was modified.</returns>
+    member x.AddRange(k, vs: _ IEnumerable) =
+        match x.Values.TryGetValue(k) with
+        | true, vs' ->
+            let previousCount = vs'.Count
+            vs'.UnionWith(vs)
+            vs'.Count <> previousCount
+        | false, _ ->
+            x.Values.Add(k, HashSet vs)
+            true
+
     /// Returns whether the given key-value pair exists in this collection.
     member x.Contains(k, v) =
         match x.Values.TryGetValue(k) with
         | true, vs -> vs.Contains(v)
+        | false, _ -> false
+
+    /// Returns whether all the given values are associated with the given key.
+    member x.ContainsRange(k, vs) =
+        match x.Values.TryGetValue(k) with
+        | true, vs' -> vs'.IsSupersetOf(vs)
         | false, _ -> false
 
     /// <summary>Associates the elements that correspond to one key

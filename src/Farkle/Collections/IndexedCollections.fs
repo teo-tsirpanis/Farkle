@@ -66,6 +66,23 @@ with
         | (true, vSrcs), (false, _) -> x.Values.Add(kDest, HashSet vSrcs); true
         | (false, _), _ -> false
 
+    /// <summary>Associates the elements that correspond to one key
+    /// with the elements that correspond to the key of another <see cref="MultiMap`2"/>.</summary>
+    /// <param name="kDest">The key to associate the values of the other key.</param>
+    /// <param name="xSrc">The <see cref="MultiMap`2"/> to associate these values with.</param>
+    /// <param name="kSrc">The key whose values are to be associated with the other key.</param>
+    /// <returns>Whether the current multimap was modified.</returns>
+    /// <remarks>This association is not permanent. If a value is later associated
+    /// with <paramref name="kSrc"/>, it won't be automatically associated with <paramref name="kDest"/>.</remarks>
+    member xDest.UnionCross(kDest, xSrc, kSrc) =
+        match xSrc.Values.TryGetValue(kSrc), xDest.Values.TryGetValue(kDest) with
+        | (true, vSrcs), (true, vDests) ->
+            let previousCount = vDests.Count
+            vDests.UnionWith(vSrcs)
+            vDests.Count <> previousCount
+        | (true, vSrcs), (false, _) -> xDest.Values.Add(kDest, HashSet vSrcs); true
+        | (false, _), _ -> false
+
 /// Functions to create and manipulate `MultiMap`s.
 module internal MultiMap =
     /// Creates a `MultiMap`.

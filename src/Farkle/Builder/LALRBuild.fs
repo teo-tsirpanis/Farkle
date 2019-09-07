@@ -16,10 +16,6 @@ type LR0Item = {
 }
 with
     static member Create prod = {Production = prod; DotPosition = 0}
-    member x.IsKernel startNonterminal =
-        x.Production.Head = startNonterminal
-        // What about the items with empty productions? Are they kernel items as well?
-        || x.DotPosition <> 0
     member x.IsAtEnd = x.Production.Handle.Length = x.DotPosition
     member x.CurrentSymbol = x.Production.Handle.[x.DotPosition]
     member x.AdvanceDot() =
@@ -36,7 +32,12 @@ type LR0ItemSet = {
 with
     static member Create idx kernel = {Index = idx; Kernel = kernel; Goto = Dictionary()}
 
-let getAllProductions (map: Map<Nonterminal, Production Set>) x = map.[x]
+/// A special type which represents the lookahead symbol.
+type LookaheadSymbol =
+    /// The lookahead symbol is a `Terminal`.
+    | Terminal of Terminal
+    /// The lookahead symbol is the EOF, AKA $.
+    | [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>] End
 
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
@@ -165,3 +166,108 @@ let closure1 fGetAllProductions fGetFirstSet item lookahead =
                     |> fGetAllProductions
                     |> Set.iter (fun prod -> q.Enqueue(LR0Item.Create prod, first))
     MultiMap.freeze results
+
+/// Computes the lookahead symbols for the given `LR0ItemSet`s.
+/// In addition to the usual dependencies, this function also
+/// requires a special `Terminal` which __must not__ already exist in the grammar.
+let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets: ImmutableArray<_>) =
+    let spontaneous, propagate =
+        let spontaneous = MultiMap.create()
+        let propagate = MultiMap.create()
+        let hashTerminalSet = Set.singleton hashTerminal
+        itemSets
+        |> Seq.iter (fun itemSet ->
+            itemSet.Kernel
+            |> Set.iter (fun kernel ->
+                let closure = closure1 fGetAllProductions fGetFirstSet kernel hashTerminalSet
+                closure
+                |> Map.iter (fun item la ->
+                    if not kernel.IsAtEnd then
+                        if la.Contains(hashTerminal) then
+                            propagate.Add((kernel, itemSet.Index), (item, itemSet.Goto.[kernel.CurrentSymbol])) |> ignore
+                        spontaneous.AddRange((kernel, itemSet.Index), Seq.filter ((<>) hashTerminal) la) |> ignore
+                )
+            )
+        )
+        MultiMap.freeze spontaneous, MultiMap.freeze propagate
+
+    let lookaheads = Array.init itemSets.Length (fun _ -> MultiMap.create())
+    // The next line assumes the first item set's kernel contains only
+    // the start production which spontaneously generates an EOF symbol by definition.
+    lookaheads.[0].Add(Seq.exactlyOne itemSets.[0].Kernel, End) |> ignore
+    spontaneous |> Map.iter (fun (item, idx) la -> lookaheads.[idx].AddRange(item, Set.map Terminal la) |> ignore)
+    let mutable changed = true
+    while changed do
+        propagate
+        |> Map.iter (fun (itemFrom, idxFrom) dest ->
+            dest
+            |> Set.iter (fun (itemTo, idxTo) ->
+                changed <- lookaheads.[idxTo].UnionCross(itemTo, lookaheads.[idxFrom], itemFrom) || changed
+            )
+        )
+    lookaheads |> Seq.map MultiMap.freeze |> ImmutableArray.CreateRange
+
+/// <summary>Creates an LALR state table.</summary>
+/// <param name="fResolveConflict">A function to pick the desired state in case of a conflict.</param>
+/// <param name="fEOFResolveConflict">A function to pick the desired state in case
+/// of a conflict when the parser would reach the end.</param>
+/// <param name="startNonterminal">The starting nonterminal.</param>
+/// <param name="itemSets">The item sets of the grammar.</param>
+/// <param name="lookaheadTables">The lookahead symbols that correspond to the items of each item set.</param>
+let createLALRActions fResolveConflict fEOFResolveConflict startNonterminal itemSets lookaheadTables =
+    let resolveConflict actions =
+        match Seq.tryExactlyOne actions with
+        | Some x -> x
+        | None -> fResolveConflict actions
+    (itemSets, lookaheadTables)
+    ||> Seq.map2 (fun itemSet lookaheadTable ->
+        let index = uint32 itemSet.Index
+        let gotoActions =
+            itemSet.Goto
+            |> Seq.choose (function
+                | KeyValue(Choice2Of2 nont, stateToGoto) ->
+                    Some(KeyValuePair(nont, uint32 stateToGoto))
+                | _ -> None
+            )
+            |> ImmutableDictionary.CreateRange
+        let actions =
+            let shiftActions =
+                itemSet.Goto
+                |> Seq.choose (function
+                    | KeyValue(Choice1Of2 term, stateToShiftTo) ->
+                        Some(term, LALRAction.Shift(uint32 stateToShiftTo))
+                    | _ -> None
+                )
+            let reduceActions =
+                itemSet.Kernel
+                |> Seq.filter (fun x -> x.IsAtEnd)
+                |> Seq.collect (fun item ->
+                    Map.find item lookaheadTable
+                    |> Seq.choose (function Terminal term -> Some term | End -> None) 
+                    |> Seq.map (fun term -> term, LALRAction.Reduce item.Production))
+            let b = ImmutableDictionary.CreateBuilder()
+            Seq.append shiftActions reduceActions
+            |> Seq.groupBy fst
+            |> Seq.map snd
+            |> Seq.map resolveConflict
+            |> Seq.iter b.Add
+            b.ToImmutable()
+        let eofAction =
+            match Seq.tryExactlyOne itemSet.Kernel with
+            | Some k when k.IsAtEnd && k.Production.Head = startNonterminal ->
+                Some LALRAction.Accept
+            | _ ->
+                itemSet.Kernel
+                |> Seq.filter (fun x -> x.IsAtEnd)
+                |> Seq.choose (fun item ->
+                    let la = Map.find item lookaheadTable
+                    if Set.contains End la then
+                        Some (LALRAction.Reduce item.Production)
+                    else
+                        None)
+                |> List.ofSeq
+                |> function | [] -> None | [x] -> Some x | xs -> xs |> Seq.ofList |> fEOFResolveConflict |> Some
+        {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
+    )
+    |> ImmutableArray.CreateRange
+    |> (fun table -> {InitialState = table.[0]; States = table})

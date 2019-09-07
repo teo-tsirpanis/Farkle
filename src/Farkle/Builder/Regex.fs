@@ -149,10 +149,10 @@ module Regex =
     let atLeast num (x: Regex) = x.AtLeast num
 
     /// [omit]
-    let literal (c: char) = Regex.Literal c
+    let singleton (c: char) = Regex.Literal c
 
     /// [omit]
-    let literalS (str: string) = Regex.Literal str
+    let literal (str: string) = Regex.Literal str
 
     /// [omit]
     let oneOf str = Regex.OneOf str

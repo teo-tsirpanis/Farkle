@@ -41,8 +41,8 @@ type LookaheadSymbol =
 
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
-/// a nonterminal and the starting nonterminal are required.
-let createLR0KernelItems fGetAllProductions startNonterminal =
+/// a nonterminal and the start symbol are required.
+let createLR0KernelItems fGetAllProductions startSymbol =
 
     let itemSets = ImmutableArray.CreateBuilder()
 
@@ -85,7 +85,7 @@ let createLR0KernelItems fGetAllProductions startNonterminal =
             | false, _ -> itemSet.Goto.Add(sym, impl kernelSet))
         itemSet.Index
 
-    startNonterminal
+    startSymbol
     |> fGetAllProductions
     |> Set.map LR0Item.Create
     |> impl
@@ -208,17 +208,14 @@ let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets
     lookaheads |> Seq.map MultiMap.freeze |> ImmutableArray.CreateRange
 
 /// <summary>Creates an LALR state table.</summary>
-/// <param name="fResolveConflict">A function to pick the desired state in case of a conflict.</param>
-/// <param name="fEOFResolveConflict">A function to pick the desired state in case
-/// of a conflict when the parser would reach the end.</param>
-/// <param name="startNonterminal">The starting nonterminal.</param>
+/// <param name="fTryResolveConflict">A function to choose the
+/// preferred action in case of a conflict, if it is possible.</param>
+/// <param name="startSymbol">The start symbol.</param>
 /// <param name="itemSets">The item sets of the grammar.</param>
 /// <param name="lookaheadTables">The lookahead symbols that correspond to the items of each item set.</param>
-let createLALRActions fResolveConflict fEOFResolveConflict startNonterminal itemSets lookaheadTables =
-    let resolveConflict actions =
-        match Seq.tryExactlyOne actions with
-        | Some x -> x
-        | None -> fResolveConflict actions
+/// <returns><c>None</c> if a conflict failed to be resolved.</returns>
+let createLALRStates fTryResolveConflict startSymbol itemSets lookaheadTables =
+    let mutable hasSeenConflicts = false
     (itemSets, lookaheadTables)
     ||> Seq.map2 (fun itemSet lookaheadTable ->
         let index = uint32 itemSet.Index
@@ -231,31 +228,43 @@ let createLALRActions fResolveConflict fEOFResolveConflict startNonterminal item
             )
             |> ImmutableDictionary.CreateRange
         let actions =
-            let shiftActions =
-                itemSet.Goto
-                |> Seq.choose (function
-                    | KeyValue(Choice1Of2 term, stateToShiftTo) ->
-                        Some(term, LALRAction.Shift(uint32 stateToShiftTo))
-                    | _ -> None
-                )
-            let reduceActions =
-                itemSet.Kernel
-                |> Seq.filter (fun x -> x.IsAtEnd)
-                |> Seq.collect (fun item ->
-                    Map.find item lookaheadTable
-                    |> Seq.choose (function Terminal term -> Some term | End -> None) 
-                    |> Seq.map (fun term -> term, LALRAction.Reduce item.Production))
             let b = ImmutableDictionary.CreateBuilder()
-            Seq.append shiftActions reduceActions
-            |> Seq.groupBy fst
-            |> Seq.map snd
-            |> Seq.map resolveConflict
-            |> Seq.iter b.Add
+            let addAction term action =
+                match b.TryGetValue(term) with
+                | true, existingAction ->
+                    match fTryResolveConflict index (Some term) existingAction action with
+                    | Some action -> b.[term] <- action
+                    | None -> hasSeenConflicts <- true
+                | false, _ -> b.Add(term, action)
+            itemSet.Goto
+            |> Seq.iter (function
+                | KeyValue(Choice1Of2 term, stateToShiftTo) ->
+                    addAction term (LALRAction.Shift(uint32 stateToShiftTo))
+                | _ -> ()
+            )
+            itemSet.Kernel
+            |> Seq.filter (fun x -> x.IsAtEnd)
+            |> Seq.iter (fun item ->
+                Map.find item lookaheadTable
+                |> Set.iter (function
+                    | Terminal term -> addAction term (LALRAction.Reduce item.Production)
+                    | End -> ()
+                )
+            )
             b.ToImmutable()
         let eofAction =
+            let rec resolveEOFConflict =
+                function
+                | [] -> None
+                | x :: [] -> Some x
+                | x1 :: x2 :: xs ->
+                    match fTryResolveConflict index None x1 x2 with
+                    | Some x -> resolveEOFConflict (x :: xs)
+                    | None ->
+                        hasSeenConflicts <- true
+                        None
             match Seq.tryExactlyOne itemSet.Kernel with
-            | Some k when k.IsAtEnd && k.Production.Head = startNonterminal ->
-                Some LALRAction.Accept
+            | Some k when k.IsAtEnd && k.Production.Head = startSymbol ->  Some LALRAction.Accept
             | _ ->
                 itemSet.Kernel
                 |> Seq.filter (fun x -> x.IsAtEnd)
@@ -266,8 +275,56 @@ let createLALRActions fResolveConflict fEOFResolveConflict startNonterminal item
                     else
                         None)
                 |> List.ofSeq
-                |> function | [] -> None | [x] -> Some x | xs -> xs |> Seq.ofList |> fEOFResolveConflict |> Some
+                |> resolveEOFConflict
         {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
     )
     |> ImmutableArray.CreateRange
-    |> (fun table -> {InitialState = table.[0]; States = table})
+    |> (fun theBlessedLALRStates ->
+        if hasSeenConflicts then
+            None
+        else
+            Some {InitialState = theBlessedLALRStates.[0]; States = theBlessedLALRStates}
+    )
+
+/// Builds an LALR parsing table from the grammar that contains the given
+/// `Production`s. The grammar's starting symbol and number of terminals and nonterminals are required.
+let buildProductionsToLALRStates terminalCount nonterminalCount startSymbol (productions: ImmutableArray<_>) =
+    let s' = Nonterminal(uint32 nonterminalCount, "S'")
+    let hashTerminal = Farkle.Grammar.Terminal(uint32 terminalCount, "#")
+    let productions = productions.Add {
+        Index = uint32 productions.Length
+        Head = s'
+        Handle = ImmutableArray.Empty.Add(Choice2Of2 startSymbol)
+    }
+    let nonterminalsToProductions =
+        productions
+        |> Seq.groupBy(fun x -> x.Head)
+        |> Seq.map (fun (k, v) -> k, set v)
+        |> Map.ofSeq
+    let fGetAllProductions k = Map.find k nonterminalsToProductions
+
+    let kernelItems = createLR0KernelItems fGetAllProductions s'
+    let firstSets = computeFirstSetMap productions
+    let fGetFirstSet k = Map.find k firstSets
+    let lookaheads = computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal kernelItems
+
+    let conflicts = ResizeArray()
+    let tryResolveConflict stateIndex term x1 x2 =
+        let conflictType =
+            match x1, x2 with
+            | LALRAction.Shift state, LALRAction.Reduce prod
+            | LALRAction.Reduce prod, LALRAction.Shift state ->
+                ShiftReduce(state, prod)
+            | LALRAction.Reduce prod1, LALRAction.Reduce prod2 ->
+                ReduceReduce(prod1, prod2)
+            | _ -> failwithf "A conflict between %A and %A is impossible" x1 x2
+        conflicts.Add {
+            StateIndex = stateIndex
+            Symbol = term
+            Type = conflictType
+        }
+        None
+    match createLALRStates tryResolveConflict s' kernelItems lookaheads with
+    | Some theGloriousStateTable ->
+        Ok theGloriousStateTable
+    | None -> conflicts |> set |> BuildErrorType.LALRConflict |> Error

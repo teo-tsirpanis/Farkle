@@ -6,8 +6,43 @@
 namespace Farkle.Builder
 
 open Farkle.Grammar
+open System
 open System.Collections
 open System.Collections.Generic
+
+/// The type of an LALR conflict.
+type LALRConflictType =
+    /// A Shift-Reduce conflict
+    | ShiftReduce of uint32 * Production
+    /// A Reduce-Reduce conflict
+    | ReduceReduce of Production * Production
+with
+    override x.ToString() =
+        match x with
+        | ShiftReduce (idx, prod) ->
+            sprintf "Shift-Reduce conflict between state %d and production %O" idx prod
+        | ReduceReduce (prod1, prod2) ->
+            sprintf "Reduce-Reduce conflict between productions %O and %O" prod1 prod2
+
+/// An LALR conflict.
+/// It arises when the parser can take different
+/// actions when encountering a `Terminal` or the end.
+type LALRConflict = {
+    /// The index of the `LALRState` the conflict is taking place.
+    StateIndex: uint32
+    /// The symbol upon whose encounter, the conflict happens.
+    /// `None` means the conflict happens when the parser reaches the end of input.
+    Symbol: Terminal option
+    /// The type of the conflict.
+    Type: LALRConflictType
+}
+with
+    override x.ToString() =
+        let symbolAsString =
+            match x.Symbol with
+            | Some term -> string term
+            | None -> "(EOF)"
+        sprintf "%O while encountering the symbol %s at state %d" x.Type symbolAsString x.StateIndex
 
 [<RequireQualifiedAccess>]
 /// An error the builder encountered.
@@ -18,6 +53,7 @@ type BuildErrorType =
     | NullableSymbols of DFASymbol Set
     /// No symbols were actually specified.
     | NoSymbolsSpecified
+    | LALRConflict of LALRConflict Set
     override x.ToString() =
         match x with
         | IndistinguishableSymbols xs ->
@@ -28,6 +64,7 @@ The conflict is caused when two or more terminal definitions can accept the same
             let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
             sprintf "The symbols %s can contain zero characters." symbols
         | NoSymbolsSpecified -> "No symbols were actually specified."
+        | LALRConflict xs -> xs |> Seq.map string |> String.concat Environment.NewLine
 
 /// A commonly used set of characters.
 type PredefinedSet = private {

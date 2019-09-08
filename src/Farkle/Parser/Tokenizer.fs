@@ -33,7 +33,7 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA (grammar: Grammar) input =
+    let private tokenizeDFA (grammar: Grammar) oops input =
         let states = grammar.DFAStates
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
@@ -47,7 +47,7 @@ module Tokenizer =
                 | Some struct (sym, idx) -> newToken sym idx
                 | None -> Error input.FirstCharacter
             | true ->
-                let newDFA = grammar.OptimizedOperations.GetNextDFAState x currState
+                let newDFA = oops.GetNextDFAState x currState
                 match newDFA, lastAccept with
                 // We can go further. The DFA did not accept any new symbol.
                 | Some ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
@@ -67,7 +67,7 @@ module Tokenizer =
     /// Returns the next token from the current position of a `CharStream`.
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
-    let tokenize ({_Groups = groups} as grammar) fTransform fMessage (input: CharStream) =
+    let tokenize ({_Groups = groups} as grammar) oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
             // newToken does not get optimized,
@@ -90,7 +90,7 @@ module Tokenizer =
                 | [], Choice1Of2 sym -> newToken sym tok
                 // There is still another outer group. We append the outgoing group's data to the next top group.
                 | (tok2, g2) :: xs, _ -> impl ((concatSpans tok tok2, g2) :: xs)
-            let tok = tokenizeDFA grammar input
+            let tok = tokenizeDFA grammar oops input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.

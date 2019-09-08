@@ -300,12 +300,13 @@ module internal GrammarReader =
                     | Some LALRAction.Accept -> Some <| Ok x.Key
                     | _ -> None)
                 |> Option.defaultValue (Error InvalidEGTFile)
-            return OptimizedOperations.createOptimizedGramamr
-                (properties.ToImmutable())
-                startSymbol
-                symbols
-                (productions.MoveToImmutable())
-                (groups.MoveToImmutable())
-                {InitialState = lalrStates.[initialLALR]; States = lalrStates}
-                {InitialState = dfaStates.[initialDFA]; States = dfaStates}
+            return {
+                _Properties = properties.ToImmutable()
+                _StartSymbol = startSymbol
+                _Symbols = symbols
+                _Productions = productions.MoveToImmutable()
+                _Groups = groups.MoveToImmutable()
+                _LALRStates = {InitialState = lalrStates.[initialLALR]; States = lalrStates}
+                _DFAStates = {InitialState = dfaStates.[initialDFA]; States = dfaStates}
+            }
         }

@@ -243,18 +243,6 @@ type Symbols = {
     NoiseSymbols: Noise ImmutableArray
 }
 
-/// An object that provides optimized functions for some common operations on Grammars.
-/// These functions require some computationally expensive pre-processing, which is
-/// performed only once, at the creation of this object.
-type internal OptimizedOperations = {
-    /// Gets the next DFA state from the given current one, when the given character is encountered.
-    GetNextDFAState: char -> DFAState -> DFAState option
-    /// Gets the LALR action from the given state that corresponds to the given terminal.
-    GetLALRAction: Terminal -> LALRState -> LALRAction option
-    /// Gets the next LALR state according to the given state's GOTO actions.
-    LALRGoto: Nonterminal -> LALRState -> LALRState option
-}
-
 /// A context-free grammar according to which, Farkle can parse text.
 [<NoComparison; ReferenceEquality>]
 type Grammar = internal {
@@ -271,9 +259,6 @@ type Grammar = internal {
     _Groups: Group ImmutableArray
     _LALRStates: LALRState StateTable
     _DFAStates: DFAState StateTable
-
-    // This field makes Farkle fast(er).
-    OptimizedOperations: OptimizedOperations
 }
 with
     /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).

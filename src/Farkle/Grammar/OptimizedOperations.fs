@@ -9,7 +9,18 @@ open Farkle.Collections
 open Farkle.Grammar
 open System.Collections.Immutable
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+/// An object that provides optimized functions for some common operations on Grammars.
+/// These functions require some computationally expensive pre-processing, which is
+/// performed only once, at the creation of this object.
+type OptimizedOperations = {
+    /// Gets the next DFA state from the given current one, when the given character is encountered.
+    GetNextDFAState: char -> DFAState -> DFAState option
+    /// Gets the LALR action from the given state that corresponds to the given terminal.
+    GetLALRAction: Terminal -> LALRState -> LALRAction option
+    /// Gets the next LALR state according to the given state's GOTO actions.
+    LALRGoto: Nonterminal -> LALRState -> LALRState option
+}
+
 module internal OptimizedOperations =
 
     [<Literal>]
@@ -90,19 +101,27 @@ module internal OptimizedOperations =
         fun (Nonterminal(nonterminalIndex, _)) {LALRState.Index = stateIndex} ->
             arr.[int stateIndex, int nonterminalIndex]
 
-    /// Creates a `Grammar` from its parts, and attaches to it an `OptimizedOperations` object.
-    /// To ensure optimal performance, all grammars should be created from this function.
-    let createOptimizedGramamr props startSymbol symbols productions groups lalrStates dfaStates = {
-        _Properties = props
-        _StartSymbol = startSymbol
-        _Symbols = symbols
-        _Productions = productions
-        _Groups = groups
-        _LALRStates = lalrStates
-        _DFAStates = dfaStates
-        OptimizedOperations = {
-            GetNextDFAState = getNextDFAState dfaStates.States
-            GetLALRAction = getLALRAction symbols.Terminals lalrStates.States
-            LALRGoto = lalrGoto symbols.Nonterminals lalrStates.States
-        }
+    /// Creates an `OptimizedOperations` object that performs
+    /// its operations faster, but after some pre-processing that uses more memory.
+    let optimized (grammar: Grammar) = {
+        GetNextDFAState = getNextDFAState grammar.DFAStates.States
+        GetLALRAction = getLALRAction grammar.Symbols.Terminals grammar.LALRStates.States
+        LALRGoto = lalrGoto grammar.Symbols.Nonterminals grammar.LALRStates.States
+    }
+
+    /// Creates an `OptimizedOperations` that performs
+    /// its operations in the default way without any pre-processing.
+    let unoptimized (grammar: Grammar) = {
+        GetNextDFAState = fun c state ->
+            match RangeMap.tryFind c state.Edges with
+            | ValueSome idx -> Some grammar.DFAStates.[idx]
+            | ValueNone -> None
+        GetLALRAction = fun term state ->
+            match state.Actions.TryGetValue(term) with
+            | true, act -> Some act
+            | false, _ -> None
+        LALRGoto = fun nont state ->
+            match state.GotoActions.TryGetValue(nont) with
+            | true, idx -> Some grammar.LALRStates.[idx]
+            | false, _ -> None
     }

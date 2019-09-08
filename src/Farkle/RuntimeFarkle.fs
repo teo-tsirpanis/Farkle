@@ -31,26 +31,42 @@ type FarkleError =
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = private {
     Grammar: Result<Grammar,FarkleError>
+    OptimizedOperations: OptimizedOperations
     PostProcessor: PostProcessor<'TResult>
 }
 with
+    static member private CreateMaybe postProcessor grammarMaybe =
+        let oops =
+            match grammarMaybe with
+            | Ok grammar -> OptimizedOperations.optimized grammar
+            | Error _ -> Unchecked.defaultof<_>
+        {
+            Grammar = grammarMaybe
+            OptimizedOperations = oops
+            PostProcessor = postProcessor
+        }
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// <see cref="Grammar"/> and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member Create(grammar, postProcessor) = {Grammar = Ok grammar; PostProcessor = postProcessor}
+    static member Create(grammar, postProcessor) =
+        grammar
+        |> Ok
+        |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// EGT file and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member Create(fileName, postProcessor) = {
-        Grammar = EGT.ofFile fileName |> Result.mapError FarkleError.EGTReadError
-        PostProcessor = postProcessor
-    }
+    static member Create(fileName, postProcessor) =
+        fileName
+        |> EGT.ofFile
+        |> Result.mapError FarkleError.EGTReadError
+        |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// EGT file encoded in Base64 and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member CreateFromBase64String(str, postProcessor) = {
-        Grammar = EGT.ofBase64String str |> Result.mapError FarkleError.EGTReadError
-        PostProcessor = postProcessor
-    }
+    static member CreateFromBase64String(str, postProcessor) =
+        str
+        |> EGT.ofBase64String
+        |> Result.mapError FarkleError.EGTReadError
+        |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
     /// <summary>Gets the grammar behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
     member this.TryGetGrammar() = this.Grammar
@@ -58,15 +74,13 @@ with
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 
-    let private createMaybe postProcessor grammar =
-        {
-            Grammar = grammar
-            PostProcessor = postProcessor
-        }
-
     /// Changes the post-processor of a `RuntimeFarkle`.
     [<CompiledName("ChangePostProcessor")>]
-    let changePostProcessor pp rf = createMaybe pp rf.Grammar
+    let changePostProcessor pp rf = {
+        Grammar = rf.Grammar
+        OptimizedOperations = rf.OptimizedOperations
+        PostProcessor = pp
+    }
 
     /// Creates a `RuntimeFarkle`.
     [<CompiledName("Create")>]
@@ -89,9 +103,9 @@ module RuntimeFarkle =
         match rf.Grammar with
         | Ok grammar ->
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
-            let fTokenize input = Tokenizer.tokenize grammar fTransform fMessage input
+            let fTokenize input = Tokenizer.tokenize grammar rf.OptimizedOperations fTransform fMessage input
             try
-                LALRParser.parseLALR fMessage grammar rf.PostProcessor fTokenize input :?> 'TResult |> Ok
+                LALRParser.parseLALR fMessage grammar rf.OptimizedOperations rf.PostProcessor fTokenize input :?> 'TResult |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
         | Error x -> Error x

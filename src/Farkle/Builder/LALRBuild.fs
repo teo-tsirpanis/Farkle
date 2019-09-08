@@ -24,6 +24,7 @@ with
         else
             {x with DotPosition = x.DotPosition + 1}
 
+[<NoComparison; NoEquality>]
 type LR0ItemSet = {
     Index: int
     Kernel: Set<LR0Item>
@@ -208,14 +209,11 @@ let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets
     lookaheads |> Seq.map MultiMap.freeze |> ImmutableArray.CreateRange
 
 /// <summary>Creates an LALR state table.</summary>
-/// <param name="fTryResolveConflict">A function to choose the
-/// preferred action in case of a conflict, if it is possible.</param>
+/// <param name="fResolveConflict">A function to choose the preferred action in case of a conflict.</param>
 /// <param name="startSymbol">The start symbol.</param>
 /// <param name="itemSets">The item sets of the grammar.</param>
 /// <param name="lookaheadTables">The lookahead symbols that correspond to the items of each item set.</param>
-/// <returns><c>None</c> if a conflict failed to be resolved.</returns>
-let createLALRStates fTryResolveConflict startSymbol itemSets lookaheadTables =
-    let mutable hasSeenConflicts = false
+let createLALRStates fResolveConflict startSymbol itemSets lookaheadTables =
     (itemSets, lookaheadTables)
     ||> Seq.map2 (fun itemSet lookaheadTable ->
         let index = uint32 itemSet.Index
@@ -232,9 +230,7 @@ let createLALRStates fTryResolveConflict startSymbol itemSets lookaheadTables =
             let addAction term action =
                 match b.TryGetValue(term) with
                 | true, existingAction ->
-                    match fTryResolveConflict index (Some term) existingAction action with
-                    | Some action -> b.[term] <- action
-                    | None -> hasSeenConflicts <- true
+                    b.[term] <- fResolveConflict index (Some term) existingAction action
                 | false, _ -> b.Add(term, action)
             itemSet.Goto
             |> Seq.iter (function
@@ -256,13 +252,8 @@ let createLALRStates fTryResolveConflict startSymbol itemSets lookaheadTables =
             let rec resolveEOFConflict =
                 function
                 | [] -> None
-                | x :: [] -> Some x
-                | x1 :: x2 :: xs ->
-                    match fTryResolveConflict index None x1 x2 with
-                    | Some x -> resolveEOFConflict (x :: xs)
-                    | None ->
-                        hasSeenConflicts <- true
-                        None
+                | [x] -> Some x
+                | x1 :: x2 :: xs -> resolveEOFConflict (fResolveConflict index None x1 x2 :: xs)
             match Seq.tryExactlyOne itemSet.Kernel with
             | Some k when k.IsAtEnd && k.Production.Head = startSymbol ->  Some LALRAction.Accept
             | _ ->
@@ -279,12 +270,7 @@ let createLALRStates fTryResolveConflict startSymbol itemSets lookaheadTables =
         {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
     )
     |> ImmutableArray.CreateRange
-    |> (fun theBlessedLALRStates ->
-        if hasSeenConflicts then
-            None
-        else
-            Some {InitialState = theBlessedLALRStates.[0]; States = theBlessedLALRStates}
-    )
+    |> (fun theBlessedLALRStates -> {InitialState = theBlessedLALRStates.[0]; States = theBlessedLALRStates})
 
 /// Builds an LALR parsing table from the grammar that contains the given
 /// `Production`s. The grammar's starting symbol and number of terminals and nonterminals are required.
@@ -309,22 +295,10 @@ let buildProductionsToLALRStates terminalCount nonterminalCount startSymbol (pro
     let lookaheads = computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal kernelItems
 
     let conflicts = ResizeArray()
-    let tryResolveConflict stateIndex term x1 x2 =
-        let conflictType =
-            match x1, x2 with
-            | LALRAction.Shift state, LALRAction.Reduce prod
-            | LALRAction.Reduce prod, LALRAction.Shift state ->
-                ShiftReduce(state, prod)
-            | LALRAction.Reduce prod1, LALRAction.Reduce prod2 ->
-                ReduceReduce(prod1, prod2)
-            | _ -> failwithf "A conflict between %A and %A is impossible" x1 x2
-        conflicts.Add {
-            StateIndex = stateIndex
-            Symbol = term
-            Type = conflictType
-        }
-        None
-    match createLALRStates tryResolveConflict s' kernelItems lookaheads with
-    | Some theGloriousStateTable ->
+    let resolveConflict stateIndex term x1 x2 =
+        LALRConflict.Create stateIndex term x1 x2 |> conflicts.Add
+        x1
+    match createLALRStates resolveConflict s' kernelItems lookaheads with
+    | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
-    | None -> conflicts |> set |> BuildErrorType.LALRConflict |> Error
+    | _ -> conflicts |> set |> BuildErrorType.LALRConflict |> Error

@@ -17,6 +17,16 @@ type LALRConflictType =
     /// A Reduce-Reduce conflict
     | ReduceReduce of Production * Production
 with
+    /// Creates an `LALRConflictType` from the given conflicted `LALRAction`s.
+    /// An exception is raised if the actions are neither both "reduce" nor a "shift" and a "reduce".
+    static member Create act1 act2 =
+        match act1, act2 with
+        | LALRAction.Shift state, LALRAction.Reduce prod
+        | LALRAction.Reduce prod, LALRAction.Shift state ->
+            ShiftReduce(state, prod)
+        | LALRAction.Reduce prod1, LALRAction.Reduce prod2 ->
+            ReduceReduce(prod1, prod2)
+        | _ -> failwithf "A conflict between %A and %A is impossible" act1 act2
     override x.ToString() =
         match x with
         | ShiftReduce (idx, prod) ->
@@ -37,6 +47,12 @@ type LALRConflict = {
     Type: LALRConflictType
 }
 with
+    /// Creates an `LALRConflict`.
+    static member Create stateIndex symbol act1 act2 = {
+        StateIndex = stateIndex
+        Symbol = symbol
+        Type = LALRConflictType.Create act1 act2
+    }
     override x.ToString() =
         let symbolAsString =
             match x.Symbol with

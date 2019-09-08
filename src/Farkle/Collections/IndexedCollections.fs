@@ -102,13 +102,14 @@ type StateTable<'a> =
         /// Gets the length of the state table.
         member x.Length = x.States.Length
         [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+        /// Gets the item at the specified index.
         member x.Item (idx: uint32) = x.States.[int idx]
         interface IEnumerable with
-            /// [omit]
             member x.GetEnumerator() = (x.States :> IEnumerable).GetEnumerator()
         interface IEnumerable<'a> with
-            /// [omit]
             member x.GetEnumerator() = (x.States :> seq<_>).GetEnumerator()
         interface IReadOnlyCollection<'a> with
-            /// [omit]
             member x.Count = x.Length
+        interface IReadOnlyList<'a> with
+            member x.Item
+                with get(idx) = x.States.[idx]

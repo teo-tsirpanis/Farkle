@@ -189,6 +189,7 @@ let internal calculateFollowPos leafCount regex =
     impl regex
     followPos.ToImmutableArray()
 
+[<NoComparison; NoEquality>]
 type internal DFAStateBuild = {
     Name: int Set
     Index: uint32

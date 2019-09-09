@@ -36,6 +36,8 @@ with
 type DesigntimeFarkle =
     /// The name of the starting symbol.
     abstract Name: string
+    /// A GUID that uniquely identifies this object.
+    abstract Id: Guid
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
@@ -92,6 +94,7 @@ with
         | _ -> {InnerDesigntimeFarkle = df; Metadata = GrammarMetadata.Default}
     interface DesigntimeFarkle<'T> with
         member x.Name = x.InnerDesigntimeFarkle.Name
+        member x.Id = x.InnerDesigntimeFarkle.Id
         member x.Metadata = x.Metadata
     interface DesigntimeFarkleWithMetadata with
         member x.InnerDesigntimeFarkle = upcast x.InnerDesigntimeFarkle
@@ -112,6 +115,7 @@ with
         member x.Transformer = x.Transformer
     interface DesigntimeFarkle with
         member x.Name = x._Name
+        member x.Id = x.Id
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 
@@ -168,6 +172,7 @@ with
         member x.Productions = x.Productions.ValueOrDefault []
     interface DesigntimeFarkle with
         member x.Name = x._Name
+        member x.Id = x.Id
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 

@@ -6,8 +6,12 @@
 module internal Farkle.Builder.DesigntimeFarkleBuild
 
 open Farkle.Grammar
+open Farkle.Monads.Either
+open Farkle.PostProcessor
+open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Reflection
 
 /// A grammar type with some more information that is needed by the builder.
 type private Grammar = {
@@ -18,7 +22,7 @@ type private Grammar = {
     Productions: ImmutableArray<Production>
     Groups: ImmutableArray<Group>
 
-    DFASymbols: ImmutableArray<Regex * DFASymbol>
+    DFASymbols: (Regex * DFASymbol) list
 
     Transformers: ImmutableArray<T<obj>>
     Fusers: ImmutableArray<obj[] -> obj>
@@ -26,7 +30,7 @@ type private Grammar = {
 
 /// Creates a `Grammar` object from a `DesigntimeFarkle`. 
 let private createDesigntimeGrammar (df: DesigntimeFarkle) =
-    let dfaSymbols = ImmutableArray.CreateBuilder()
+    let mutable dfaSymbols = []
     let terminals = ImmutableArray.CreateBuilder()
     let terminalMap = Dictionary()
     let transformers = ImmutableArray.CreateBuilder()
@@ -46,7 +50,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             // This way, the indices of the terminals and their transformers will match.
             terminals.Add(symbol)
             transformers.Add(term.Transformer)
-            dfaSymbols.Add(term.Regex, Choice1Of4 symbol)
+            dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
             Choice1Of2 symbol
         | Choice2Of2 nont when nonterminalMap.ContainsKey(nont) ->
             Choice2Of2 nonterminalMap.[nont]
@@ -96,7 +100,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
         Symbols = symbols
         Productions = productions.ToImmutable()
         Groups = ImmutableArray.Empty
-        DFASymbols = dfaSymbols.ToImmutable()
+        DFASymbols = dfaSymbols
         Transformers = transformers.ToImmutable()
         Fusers = fusers.ToImmutable()
     }

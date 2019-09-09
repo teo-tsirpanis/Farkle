@@ -199,7 +199,7 @@ let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets
     spontaneous |> Map.iter (fun (item, idx) la -> lookaheads.[idx].AddRange(item, Set.map Terminal la) |> ignore)
     let mutable changed = true
     while changed do
-        changed <- true
+        changed <- false
         propagate
         |> Map.iter (fun (itemFrom, idxFrom) dest ->
             dest

@@ -103,9 +103,9 @@ module RuntimeFarkle =
         match rf.Grammar with
         | Ok grammar ->
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
-            let fTokenize input = Tokenizer.tokenize grammar rf.OptimizedOperations fTransform fMessage input
+            let fTokenize input = Tokenizer.tokenize grammar.Groups grammar.DFAStates rf.OptimizedOperations fTransform fMessage input
             try
-                LALRParser.parseLALR fMessage grammar rf.OptimizedOperations rf.PostProcessor fTokenize input :?> 'TResult |> Ok
+                LALRParser.parseLALR fMessage grammar.LALRStates rf.OptimizedOperations rf.PostProcessor fTokenize input :?> 'TResult |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
         | Error x -> Error x

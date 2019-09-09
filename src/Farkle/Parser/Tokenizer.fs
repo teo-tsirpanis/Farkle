@@ -5,8 +5,10 @@
 
 namespace Farkle.Parser
 
+open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
+open System.Collections.Immutable
 
 /// Functions to tokenize `CharStreams`.
 module Tokenizer =
@@ -33,8 +35,7 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA (grammar: Grammar) oops input =
-        let states = grammar.DFAStates
+    let private tokenizeDFA states oops input =
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
@@ -67,7 +68,7 @@ module Tokenizer =
     /// Returns the next token from the current position of a `CharStream`.
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
-    let tokenize ({_Groups = groups} as grammar) oops fTransform fMessage (input: CharStream) =
+    let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
             // newToken does not get optimized,
@@ -90,7 +91,7 @@ module Tokenizer =
                 | [], Choice1Of2 sym -> newToken sym tok
                 // There is still another outer group. We append the outgoing group's data to the next top group.
                 | (tok2, g2) :: xs, _ -> impl ((concatSpans tok tok2, g2) :: xs)
-            let tok = tokenizeDFA grammar oops input
+            let tok = tokenizeDFA states oops input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.

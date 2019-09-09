@@ -36,8 +36,6 @@ with
 type DesigntimeFarkle =
     /// The name of the starting symbol.
     abstract Name: string
-    /// A GUID that uniquely identifies this object.
-    abstract Id: Guid
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
@@ -94,15 +92,14 @@ with
         | _ -> {InnerDesigntimeFarkle = df; Metadata = GrammarMetadata.Default}
     interface DesigntimeFarkle<'T> with
         member x.Name = x.InnerDesigntimeFarkle.Name
-        member x.Id = x.InnerDesigntimeFarkle.Id
         member x.Metadata = x.Metadata
     interface DesigntimeFarkleWithMetadata with
         member x.InnerDesigntimeFarkle = upcast x.InnerDesigntimeFarkle
 
+[<NoComparison; ReferenceEquality>]
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
 type Terminal<'T> = internal {
-    Id: Guid
     _Name: string
     Regex: Regex
     Transformer: T<obj> 
@@ -115,7 +112,6 @@ with
         member x.Transformer = x.Transformer
     interface DesigntimeFarkle with
         member x.Name = x._Name
-        member x.Id = x.Id
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 
@@ -128,16 +124,15 @@ module Terminal =
     /// <param name="fTransform">The function that transforms the terminal's position and data to <c>T</c>.</param>
     /// <param name="regex">The terminal's corresponding regular expression.</param>
     let create name (fTransform: T<'T>) regex: Terminal<'T> = {
-        Id = Guid.NewGuid()
         _Name = name
         Regex = regex
         Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
     }
 
+[<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates. All productions of a nonterminal have the same type parameter.</typeparam>
 type Nonterminal<'T> = internal {
-    Id: Guid
     _Name: string
     Productions: SetOnce<AbstractProduction list>
 }
@@ -149,7 +144,6 @@ with
     /// </remarks>
     /// <param name="name">The nonterminal's name.</param>
     static member Create name = {
-        Id = Guid.NewGuid()
         _Name = name
         Productions = SetOnce<_>.Create()
     }
@@ -172,7 +166,6 @@ with
         member x.Productions = x.Productions.ValueOrDefault []
     interface DesigntimeFarkle with
         member x.Name = x._Name
-        member x.Id = x.Id
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 

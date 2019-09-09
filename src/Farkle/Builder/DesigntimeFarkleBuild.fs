@@ -28,19 +28,19 @@ type private Grammar = {
 let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let dfaSymbols = ImmutableArray.CreateBuilder()
     let terminals = ImmutableArray.CreateBuilder()
-    let terminalGuids = Dictionary()
+    let terminalMap = Dictionary()
     let transformers = ImmutableArray.CreateBuilder()
     let nonterminals = ImmutableArray.CreateBuilder()
-    let nonterminalGuids = Dictionary()
+    let nonterminalMap = Dictionary()
     let productions = ImmutableArray.CreateBuilder()
     let fusers = ImmutableArray.CreateBuilder()
     let rec impl (sym: Symbol) =
         match sym with
-        | Choice1Of2 term when terminalGuids.ContainsKey(term.Id) ->
-            Choice1Of2 terminalGuids.[term.Id]
+        | Choice1Of2 term when terminalMap.ContainsKey(term) ->
+            Choice1Of2 terminalMap.[term]
         | Choice1Of2 term ->
             let symbol = Terminal(uint32 terminals.Count, term.Name)
-            terminalGuids.Add(term.Id, symbol)
+            terminalMap.Add(term, symbol)
             // For every addition to the terminals,
             // a corresponding one will be made to the transformers.
             // This way, the indices of the terminals and their transformers will match.
@@ -48,11 +48,11 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             transformers.Add(term.Transformer)
             dfaSymbols.Add(term.Regex, Choice1Of4 symbol)
             Choice1Of2 symbol
-        | Choice2Of2 nont when nonterminalGuids.ContainsKey(nont.Id) ->
-            Choice2Of2 nonterminalGuids.[nont.Id]
+        | Choice2Of2 nont when nonterminalMap.ContainsKey(nont) ->
+            Choice2Of2 nonterminalMap.[nont]
         | Choice2Of2 nont ->
             let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
-            nonterminalGuids.Add(nont.Id, symbol)
+            nonterminalMap.Add(nont, symbol)
             nonterminals.Add(symbol)
             nont.Productions
             |> List.iter (fun aprod ->

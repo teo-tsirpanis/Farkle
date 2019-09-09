@@ -105,6 +105,17 @@ type Terminal<'T> = internal {
     Transformer: T<obj> 
 }
 with
+    /// <summary>Creates a <see cref="Terminal{T}"/>.</summary>
+    /// <param name="name">The terminal's name.</param>
+    /// <param name="fTransform">The function that transforms the terminal's position and data to <c>T</c>.</param>
+    /// <param name="regex">The terminal's corresponding regular expression.</param>
+    static member Create name (fTransform: T<'T>) regex =
+        let term = {
+            _Name = name
+            Regex = regex
+            Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
+        }
+        term :> DesigntimeFarkle<'T>
     /// The terminal's name.
     member x.Name = x._Name
     interface Terminal with
@@ -114,20 +125,6 @@ with
         member x.Name = x._Name
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
-
-/// Functions to create `Terminal`s.
-module Terminal =
-
-    [<CompiledName("Create")>]
-    /// <summary>Creates a <see cref="Terminal{T}"/>.</summary>
-    /// <param name="name">The terminal's name.</param>
-    /// <param name="fTransform">The function that transforms the terminal's position and data to <c>T</c>.</param>
-    /// <param name="regex">The terminal's corresponding regular expression.</param>
-    let create name (fTransform: T<'T>) regex: Terminal<'T> = {
-        _Name = name
-        Regex = regex
-        Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
-    }
 
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>

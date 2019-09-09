@@ -66,12 +66,24 @@ module Production =
     [<CompiledName("Extend")>]
     let (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
 
-[<AutoOpen>]
+[<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with productions and their builders.
 module DesigntimeFarkleOperators =
 
-    /// Creates a `NonTerminal<'T>` with the given name and parts.
-    let inline (||=) name parts = Nonterminal.Create(name, Array.ofSeq parts)
+    let private tNull: T<obj> = T(fun _ _ -> null)
+
+    /// Creates a `Terminal`.
+    let inline terminal name fTransform regex = Terminal.Create name fTransform regex
+
+    /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
+    let literal str = terminal str tNull (Regex.literal str) :> DesigntimeFarkle
+
+    /// Creates an empty `Nonterminal`.
+    /// It must be filled afterwards, or it will raise an error.
+    let nonterminal name = Nonterminal.Create(name)
+
+    /// Creates a `DesigntimeFarkle<'T>` with the given name and productions.
+    let inline (||=) name parts = Nonterminal.Create(name, Array.ofSeq parts) :> DesigntimeFarkle<_>
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
@@ -81,7 +93,7 @@ module DesigntimeFarkleOperators =
     let inline op_DotGreaterGreaterDot pb df = (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
 
     /// The `Finish` method of production builders as an operator.
-    let inline (@=>) pb f = (^TBuilder : (member Finish: ^TFunction -> Production<'T>) (pb, f))
+    let inline (=>) pb f = (^TBuilder : (member Finish: ^TFunction -> Production<'T>) (pb, f))
 
     /// `ProductionBuilder.FinishConstant` as an operator.
-    let inline (@=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
+    let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)

@@ -105,6 +105,25 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
         Fusers = fusers.ToImmutable()
     }
 
+/// Performs some checks on the grammar that would cause problems later.
+let private consistencyCheck grammar = either {
+    let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
+    grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
+    if emptyNonterminals.Count <> 0 then
+        do! emptyNonterminals |> set |> BuildErrorType.EmptyNonterminals |> Error
+
+    let duplicateProductions =
+        grammar.Productions
+        |> Seq.countBy (fun x -> x.Head, x.Handle)
+        |> Seq.filter (snd >> (<>) 1)
+        |> Seq.map fst
+        |> set
+    if not duplicateProductions.IsEmpty then
+        do! duplicateProductions |> BuildErrorType.DuplicateProductions |> Error
+}
+
+/// This value contains the name and version of the
+/// amazing software that created this grammar.
 let private generatedWithLoveBy =
     let asm = Assembly.GetExecutingAssembly()
     asm.GetCustomAttributes<AssemblyInformationalVersionAttribute>()
@@ -121,6 +140,7 @@ let build (df: DesigntimeFarkle<'TOutput>) =
         member __.Fuse(prod, members) = myLovelyBuilderGrammar.Fusers.[int prod.Index] members
         }
     let myDearestGrammarGrammar = either {
+        do! consistencyCheck myLovelyBuilderGrammar
         let! myDarlingLALRStateTable =
             LALRBuild.buildProductionsToLALRStates
                 myLovelyBuilderGrammar.Symbols.Terminals.Length

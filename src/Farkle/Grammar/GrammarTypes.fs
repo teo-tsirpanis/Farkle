@@ -196,11 +196,13 @@ type Production = {
     Handle: LALRSymbol ImmutableArray
 }
 with
-    override x.ToString() =
-        x.Handle
+    /// Pretty-prints the parts of a production to a string.
+    static member internal Format(head, handle) =
+        handle
         |> Seq.map (function | Choice1Of2 x -> string x | Choice2Of2 x -> string x)
         |> String.concat " "
-        |> sprintf "%O ::= %s" x.Head
+        |> sprintf "%O ::= %s" head
+    override x.ToString() = Production.Format(x.Head, x.Handle)
 
 /// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]

@@ -5,6 +5,7 @@
 
 namespace Farkle
 
+open Farkle.Builder
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.IO
@@ -21,10 +22,13 @@ type FarkleError =
     | ParseError of Message<ParseErrorType>
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
+    /// There was an error while building the grammar .
+    | BuildError of BuildErrorType
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x
         | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
+        | BuildError x -> sprintf "Error while building the grammar: %O" x
 
 /// A reusable parser and post-processor, created for a specific grammar, and returning
 /// a specific type of object that best describes an expression of the language of this grammar.
@@ -35,7 +39,7 @@ type RuntimeFarkle<'TResult> = private {
     PostProcessor: PostProcessor<'TResult>
 }
 with
-    static member private CreateMaybe postProcessor grammarMaybe =
+    static member internal CreateMaybe postProcessor grammarMaybe =
         let oops =
             match grammarMaybe with
             | Ok grammar -> OptimizedOperations.optimized grammar
@@ -96,6 +100,15 @@ module RuntimeFarkle =
     [<CompiledName("CreateFromBase64String")>]
     let ofBase64String postProcessor x = RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
 
+    /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle<T>`.
+    /// In case there is a problem with the grammar, the `RuntimeFarkle` will fail every time it is used.
+    [<CompiledName("Build")>]
+    let build df =
+        let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
+        theFabledGrammar
+        |> Result.mapError FarkleError.BuildError
+        |> RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor
+
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
@@ -131,7 +144,7 @@ module RuntimeFarkle =
             | true -> CharStream.ofTextReader sr
             | false -> sr.ReadToEnd() |> CharStream.ofString
         parseChars rf fMessage cs
-        
+
     let parseTextReader rf fMessage textReader =
         let cs = CharStream.ofTextReader textReader
         parseChars rf fMessage cs

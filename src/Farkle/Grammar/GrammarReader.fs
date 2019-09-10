@@ -36,8 +36,8 @@ module internal GrammarReader =
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
         let wantProductionHandle name x =
             match x with
-            | AnyTerminal x -> Choice1Of2 x
-            | AnyNonterminal x -> Choice2Of2 x 
+            | AnyTerminal x -> LALRSymbol.Terminal x
+            | AnyNonterminal x -> LALRSymbol.Nonterminal x
             | AnyGroupEnd _ -> raise <| ProductionHasGroupEndException name
             | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()

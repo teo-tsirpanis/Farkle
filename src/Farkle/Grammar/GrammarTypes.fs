@@ -182,7 +182,18 @@ type DFAState = {
     AcceptSymbol: DFASymbol option
 }
 
-type LALRSymbol = Choice<Terminal, Nonterminal>
+[<RequireQualifiedAccess>]
+/// A symbol that is relevant to the LALR parser.
+type LALRSymbol =
+    /// The symbol is a terminal.
+    | Terminal of Terminal
+    /// The symbol is a nonterminal.
+    | Nonterminal of Nonterminal
+    with
+        override x.ToString() =
+            match x with
+            | Terminal term -> string term
+            | Nonterminal nont -> string nont
 
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
 type Production = {
@@ -199,7 +210,7 @@ with
     /// Pretty-prints the parts of a production to a string.
     static member internal Format(head, handle) =
         handle
-        |> Seq.map (function | Choice1Of2 x -> string x | Choice2Of2 x -> string x)
+        |> Seq.map string
         |> String.concat " "
         |> sprintf "%O ::= %s" head
     override x.ToString() = Production.Format(x.Head, x.Handle)

@@ -41,7 +41,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let rec impl (sym: Symbol) =
         match sym with
         | Choice1Of2 term when terminalMap.ContainsKey(term) ->
-            Choice1Of2 terminalMap.[term]
+            LALRSymbol.Terminal terminalMap.[term]
         | Choice1Of2 term ->
             let symbol = Terminal(uint32 terminals.Count, term.Name)
             terminalMap.Add(term, symbol)
@@ -51,9 +51,9 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             terminals.Add(symbol)
             transformers.Add(term.Transformer)
             dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
-            Choice1Of2 symbol
+            LALRSymbol.Terminal symbol
         | Choice2Of2 nont when nonterminalMap.ContainsKey(nont) ->
-            Choice2Of2 nonterminalMap.[nont]
+            LALRSymbol.Nonterminal nonterminalMap.[nont]
         | Choice2Of2 nont ->
             let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
             nonterminalMap.Add(nont, symbol)
@@ -67,22 +67,22 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
                 let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                 productions.Add(prod)
                 fusers.Add(aprod.Fuse))
-            Choice2Of2 symbol
+            LALRSymbol.Nonterminal symbol
     let startSymbol =
         match df |> Symbol.specialize |> impl with
         // Our grammar is made of only one terminal.
         // We will create a production which will be made of just that.
-        | Choice1Of2 term ->
+        | LALRSymbol.Terminal term ->
             let root = Nonterminal(uint32 nonterminals.Count, term.Name)
             nonterminals.Add(root)
             productions.Add {
                 Index = uint32 productions.Count
                 Head = root
-                Handle = ImmutableArray.Empty.Add(Choice1Of2 term)
+                Handle = ImmutableArray.Empty.Add(LALRSymbol.Terminal term)
             }
             fusers.Add(fun xs -> xs.[0])
             root
-        | Choice2Of2 nont -> nont
+        | LALRSymbol.Nonterminal nont -> nont
     let symbols = {
         Terminals = terminals.ToImmutable()
         Nonterminals = nonterminals.ToImmutable()

@@ -23,6 +23,15 @@ with
             x
         else
             {x with DotPosition = x.DotPosition + 1}
+    override x.ToString() =
+        [
+            Seq.take x.DotPosition x.Production.Handle |> Seq.map string
+            Seq.singleton "•"
+            Seq.skip x.DotPosition x.Production.Handle |> Seq.map string
+        ]
+        |> Seq.concat
+        |> String.concat " "
+        |> sprintf "%O ::= %s" x.Production.Head
 
 [<NoComparison; NoEquality>]
 type LR0ItemSet = {
@@ -70,8 +79,8 @@ let createLR0KernelItems fGetAllProductions startSymbol =
                 allItems.Add(item)
                 if not item.IsAtEnd then
                     match item.CurrentSymbol with
-                    | Choice1Of2 _ -> ()
-                    | Choice2Of2 nont ->
+                    | LALRSymbol.Terminal _ -> ()
+                    | LALRSymbol.Nonterminal nont ->
                         nont
                         |> fGetAllProductions
                         |> Set.iter (LR0Item.Create >> q.Enqueue)
@@ -100,8 +109,8 @@ let computeFirstSetMap productions =
     let dict = MultiMap.create()
     let containsEmpty (x: LALRSymbol) =
         match x with
-        | Choice1Of2 _ -> false
-        | Choice2Of2 nont -> dict.Contains(nont, None)
+        | LALRSymbol.Terminal _ -> false
+        | LALRSymbol.Nonterminal nont -> dict.Contains(nont, None)
 
     productions
     |> Seq.iter (fun {Head = x; Handle = xs} ->
@@ -120,9 +129,9 @@ let computeFirstSetMap productions =
             // Really? Who would imagine!
             while i < len && (i = 0 || containsEmpty handle.[i - 1]) do
                 match handle.[i] with
-                | Choice1Of2 term ->
+                | LALRSymbol.Terminal term ->
                     dict.Add(head, Some term)
-                | Choice2Of2 nont ->
+                | LALRSymbol.Nonterminal nont ->
                     dict.Union(head, nont)
                 |> (fun x -> changed <- changed || x)
                 i <- i + 1)
@@ -137,8 +146,8 @@ let getFirstSetOfSequence fGetFirstSet lookahead (xs: LALRSymbol seq) =
     xs
     |> Seq.fold (fun (symbols, doContinue) ->
         function
-        | Choice1Of2 term when doContinue -> Set.add term symbols, false
-        | Choice2Of2 nont when doContinue ->
+        | LALRSymbol.Terminal term when doContinue -> Set.add term symbols, false
+        | LALRSymbol.Nonterminal nont when doContinue ->
             let first = fGetFirstSet nont
             let firstClean = first |> Seq.choose id |> set
             Set.union symbols firstClean, Set.contains None first
@@ -157,8 +166,8 @@ let closure1 fGetAllProductions fGetFirstSet item lookahead =
         if results.AddRange(item, lookahead) then
             if not item.IsAtEnd then
                 match item.CurrentSymbol with
-                | Choice1Of2 _ -> ()
-                | Choice2Of2 nont ->
+                | LALRSymbol.Terminal _ -> ()
+                | LALRSymbol.Nonterminal nont ->
                     let first =
                         item.Production.Handle
                         |> Seq.skip item.DotPosition
@@ -225,7 +234,7 @@ let createLALRStates fResolveConflict startSymbol itemSets (lookaheadTables: Map
         let gotoActions =
             itemSet.Goto
             |> Seq.choose (function
-                | KeyValue(Choice2Of2 nont, stateToGoto) ->
+                | KeyValue(LALRSymbol.Nonterminal nont, stateToGoto) ->
                     Some(KeyValuePair(nont, uint32 stateToGoto))
                 | _ -> None
             )
@@ -239,7 +248,7 @@ let createLALRStates fResolveConflict startSymbol itemSets (lookaheadTables: Map
                 | false, _ -> b.Add(term, action)
             itemSet.Goto
             |> Seq.iter (function
-                | KeyValue(Choice1Of2 term, stateToShiftTo) ->
+                | KeyValue(LALRSymbol.Terminal term, stateToShiftTo) ->
                     addAction term (LALRAction.Shift(uint32 stateToShiftTo))
                 | _ -> ()
             )
@@ -285,7 +294,7 @@ let buildProductionsToLALRStates terminalCount nonterminalCount startSymbol (pro
     let productions = productions.Add {
         Index = uint32 productions.Length
         Head = s'
-        Handle = ImmutableArray.Empty.Add(Choice2Of2 startSymbol)
+        Handle = ImmutableArray.Empty.Add(LALRSymbol.Nonterminal startSymbol)
     }
     let nonterminalsToProductions =
         productions

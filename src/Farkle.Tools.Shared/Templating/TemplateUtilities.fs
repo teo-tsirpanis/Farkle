@@ -82,11 +82,11 @@ module Utilities =
             else
                 handle
                 |> Seq.choose (function
-                    | Choice1Of2 term -> Some <| toIdentifier term.Name case separator
+                    | LALRSymbol.Terminal term -> Some <| toIdentifier term.Name case separator
                     // We might want to include even the nonterminals in
                     // the name, when names collide, but only then.
-                    | Choice2Of2 nont when printFull -> Some <| toIdentifier nont.Name case separator
-                    | Choice2Of2 _ -> None)
+                    | LALRSymbol.Nonterminal nont when printFull -> Some <| toIdentifier nont.Name case separator
+                    | LALRSymbol.Nonterminal _ -> None)
                 |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
@@ -94,7 +94,7 @@ module Utilities =
         let getFormattingElements prod =
             let handle =
                 prod.Handle
-                |> Seq.choose (function | Choice1Of2 term -> Some term | Choice2Of2 _ -> None)
+                |> Seq.choose (function | LALRSymbol.Terminal term -> Some term | _ -> None)
                 |> Array.ofSeq
             prod.Head, handle
         let dict =

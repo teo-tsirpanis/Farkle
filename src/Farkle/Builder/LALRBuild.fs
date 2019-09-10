@@ -170,7 +170,7 @@ let closure1 fGetAllProductions fGetFirstSet item lookahead =
                 | LALRSymbol.Nonterminal nont ->
                     let first =
                         item.Production.Handle
-                        |> Seq.skip item.DotPosition
+                        |> Seq.skip (item.DotPosition + 1)
                         |> getFirstSetOfSequence fGetFirstSet lookahead
                     nont
                     |> fGetAllProductions
@@ -188,14 +188,18 @@ let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets
         itemSets
         |> Seq.iter (fun itemSet ->
             itemSet.Kernel
-            |> Set.iter (fun kernel ->
-                let closure = closure1 fGetAllProductions fGetFirstSet kernel hashTerminalSet
+            |> Set.iter (fun item ->
+                let closure = closure1 fGetAllProductions fGetFirstSet item hashTerminalSet
                 closure
-                |> Map.iter (fun item la ->
-                    if not kernel.IsAtEnd then
-                        if la.Contains(hashTerminal) then
-                            propagate.Add((kernel, itemSet.Index), (item, itemSet.Goto.[kernel.CurrentSymbol])) |> ignore
-                        spontaneous.AddRange((kernel, itemSet.Index), Seq.filter ((<>) hashTerminal) la) |> ignore
+                |> Map.iter (fun closureItem la ->
+                    if not closureItem.IsAtEnd then
+                        match itemSet.Goto.TryGetValue(closureItem.CurrentSymbol) with
+                        | true, gotoIdx ->
+                            let gotoKernel = closureItem.AdvanceDot()
+                            if la.Contains(hashTerminal) then
+                                propagate.Add((item, itemSet.Index), (gotoKernel, gotoIdx)) |> ignore
+                            spontaneous.AddRange((gotoKernel, gotoIdx), Seq.filter ((<>) hashTerminal) la) |> ignore
+                        | false, _ -> ()
                 )
             )
         )

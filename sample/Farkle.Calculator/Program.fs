@@ -30,7 +30,7 @@ let interactive rf =
 
 [<EntryPoint>]
 let main args =
-    let rf = SimpleMaths.int
+    let rf = SimpleMaths.intNew
     match args with
     | [| |] -> interactive rf
     | [|"--ast"; x|] ->

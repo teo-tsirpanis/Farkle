@@ -192,31 +192,35 @@ let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets
         )
         MultiMap.freeze spontaneous, MultiMap.freeze propagate
 
-    let lookaheads = Array.init itemSets.Length (fun _ -> MultiMap.create())
+    let lookaheads = MultiMap.create()
     // The next line assumes the first item set's kernel contains only
     // the start production which spontaneously generates an EOF symbol by definition.
-    lookaheads.[0].Add(Seq.exactlyOne itemSets.[0].Kernel, End) |> ignore
-    spontaneous |> Map.iter (fun (item, idx) la -> lookaheads.[idx].AddRange(item, Set.map Terminal la) |> ignore)
+    lookaheads.Add((itemSets.[0].Kernel.MinimumElement, 0), End) |> ignore
+    spontaneous |> Map.iter (fun k la -> lookaheads.AddRange(k, Seq.map Terminal la) |> ignore)
     let mutable changed = true
     while changed do
         changed <- false
         propagate
-        |> Map.iter (fun (itemFrom, idxFrom) dest ->
+        |> Map.iter (fun kFrom dest ->
             dest
-            |> Set.iter (fun (itemTo, idxTo) ->
-                changed <- lookaheads.[idxTo].UnionCross(itemTo, lookaheads.[idxFrom], itemFrom) || changed
+            |> Set.iter (fun kTo ->
+                changed <- lookaheads.Union(kTo, kFrom) || changed
             )
         )
-    lookaheads |> Seq.map MultiMap.freeze |> ImmutableArray.CreateRange
+    MultiMap.freeze lookaheads
 
 /// <summary>Creates an LALR state table.</summary>
 /// <param name="fResolveConflict">A function to choose the preferred action in case of a conflict.</param>
 /// <param name="startSymbol">The start symbol.</param>
 /// <param name="itemSets">The item sets of the grammar.</param>
 /// <param name="lookaheadTables">The lookahead symbols that correspond to the items of each item set.</param>
-let createLALRStates fResolveConflict startSymbol itemSets lookaheadTables =
-    (itemSets, lookaheadTables)
-    ||> Seq.map2 (fun itemSet lookaheadTable ->
+let createLALRStates fResolveConflict startSymbol itemSets (lookaheadTables: Map<_, _>) =
+    let getLookahead item idx =
+        match lookaheadTables.TryGetValue((item, idx)) with
+        | true, v -> v
+        | false, _ -> Set.empty
+    itemSets
+    |> Seq.map (fun itemSet ->
         let index = uint32 itemSet.Index
         let gotoActions =
             itemSet.Goto
@@ -242,7 +246,7 @@ let createLALRStates fResolveConflict startSymbol itemSets lookaheadTables =
             itemSet.Kernel
             |> Seq.filter (fun x -> x.IsAtEnd)
             |> Seq.iter (fun item ->
-                Map.find item lookaheadTable
+                getLookahead item itemSet.Index
                 |> Set.iter (function
                     | Terminal term -> addAction term (LALRAction.Reduce item.Production)
                     | End -> ()
@@ -261,7 +265,7 @@ let createLALRStates fResolveConflict startSymbol itemSets lookaheadTables =
                 itemSet.Kernel
                 |> Seq.filter (fun x -> x.IsAtEnd)
                 |> Seq.choose (fun item ->
-                    let la = Map.find item lookaheadTable
+                    let la = getLookahead item itemSet.Index
                     if Set.contains End la then
                         Some (LALRAction.Reduce item.Production)
                     else

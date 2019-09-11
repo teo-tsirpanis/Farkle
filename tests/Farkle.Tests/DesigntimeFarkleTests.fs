@@ -15,7 +15,7 @@ let tests = testList "Designtime Farkle tests" [
     test "A nonterminal with no productions gives an error" {
         let nt = nonterminal "Vacuous"
         let result = nt |> DesigntimeFarkleBuild.build |> fst
-        let expectedError = "Vacuous" |> Set.singleton |> BuildErrorType.EmptyNonterminals |> Error
+        let expectedError = "Vacuous" |> Set.singleton |> BuildError.EmptyNonterminals |> Error
         Expect.equal result expectedError "A nonterminal with no productions does not give an error"
     }
 
@@ -36,7 +36,7 @@ let tests = testList "Designtime Farkle tests" [
         let expectedError =
             (Nonterminal(0u, "Superfluous"), ImmutableArray.Empty.Add(LALRSymbol.Terminal <| Terminal(0u, "a")))
             |> Set.singleton
-            |> BuildErrorType.DuplicateProductions
+            |> BuildError.DuplicateProductions
             |> Error
         Expect.equal result expectedError "A nonterminal with duplicate productions does not give an error"
     }

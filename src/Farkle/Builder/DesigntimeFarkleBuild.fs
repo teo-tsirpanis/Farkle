@@ -132,13 +132,17 @@ let private generatedWithLoveBy =
     |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())
     |> sprintf "%s %s" (asm.GetName().Name)
 
+[<RequiresExplicitTypeArguments>]
+let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
+    {
+        new PostProcessor<'TOutput> with
+                member __.Transform(term, pos, data) = transformers.[int term.Index].Invoke(pos, data)
+                member __.Fuse(prod, members) = fusers.[int prod.Index] members
+    }
+
 let build (df: DesigntimeFarkle<'TOutput>) =
     let myLovelyBuilderGrammar = createDesigntimeGrammar df
-    let myFavoritePostProcessor = {new PostProcessor<'TOutput> with
-        member __.Transform(term, pos, data) =
-            myLovelyBuilderGrammar.Transformers.[int term.Index].Invoke(pos, data)
-        member __.Fuse(prod, members) = myLovelyBuilderGrammar.Fusers.[int prod.Index] members
-        }
+    let myFavoritePostProcessor = createPostProcessor<'TOutput> myLovelyBuilderGrammar
     let myDearestGrammarGrammar = either {
         do! consistencyCheck myLovelyBuilderGrammar
         let! myDarlingLALRStateTable =

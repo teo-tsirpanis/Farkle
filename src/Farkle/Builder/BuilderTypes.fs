@@ -73,7 +73,7 @@ type BuildErrorType =
     /// An LALR conflict did occur.
     | LALRConflict of LALRConflict Set
     /// Some nonterminals have no productions.
-    | EmptyNonterminals of Nonterminal Set
+    | EmptyNonterminals of string Set
     /// Some productions are defined twice.
     | DuplicateProductions of (Nonterminal * ImmutableArray<LALRSymbol>) Set
     override x.ToString() =

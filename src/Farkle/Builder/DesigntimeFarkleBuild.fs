@@ -3,7 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Builder.DesigntimeFarkleBuild
+/// Functions to create `Farkle.Grammar.Grammar`s
+/// and `PostProcessor`s from `DesigntimeFarkle`s.
+module Farkle.Builder.DesigntimeFarkleBuild
 
 open Farkle.Grammar
 open Farkle.Monads.Either
@@ -110,7 +112,7 @@ let private consistencyCheck grammar = either {
     let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
     grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
     if emptyNonterminals.Count <> 0 then
-        do! emptyNonterminals |> set |> BuildErrorType.EmptyNonterminals |> Error
+        do! emptyNonterminals |> Seq.map (fun x -> x.Name) |> set |> BuildErrorType.EmptyNonterminals |> Error
 
     let duplicateProductions =
         grammar.Productions
@@ -140,6 +142,9 @@ let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers =
                 member __.Fuse(prod, members) = fusers.[int prod.Index] members
     }
 
+/// Creates a `Farkle.Grammar.Grammar` and a `PostProcessor`
+/// from the given `DesigntimeFarkle`.
+/// The construction of the grammar may fail.
 let build (df: DesigntimeFarkle<'TOutput>) =
     let myLovelyBuilderGrammar = createDesigntimeGrammar df
     let myFavoritePostProcessor = createPostProcessor<'TOutput> myLovelyBuilderGrammar

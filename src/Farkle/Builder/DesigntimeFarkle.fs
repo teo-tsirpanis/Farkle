@@ -24,11 +24,19 @@ type T<'T> = delegate of Position * ReadOnlySpan<char> -> 'T
 type GrammarMetadata = {
     /// Whether the grammar is case sensitive.
     CaseSensitive: bool
+    /// Whether to discard any whitespace characters encountered
+    /// outside of any terminal. Farkle considers whitespace the
+    /// characters: Space, Horizontal Tab, Carriage Return and Line feed.
+    AutoWhitespace: bool
+    /// Any other symbols definable by a regular expression that can
+    /// appear anywhere outside of any terminal and will be discarded.
+    NoiseSymbols: (string * Regex) ImmutableList
 }
 with
     /// The default metadata of a grammar.
-    /// According to them, the grammar is not case sensitive.
-    static member Default = {CaseSensitive = false}
+    /// According to them, the grammar is not case sensitive
+    /// and white space is discarded.
+    static member Default = {CaseSensitive = false; AutoWhitespace = true; NoiseSymbols = ImmutableList.Empty}
 
 /// <summary>The base, untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
 /// <remarks>User code must not implement this interface, or an error may be raised.</remarks>
@@ -203,6 +211,11 @@ module DesigntimeFarkle =
     let withMetadata metadata df =
         {DesigntimeFarkleWithMetadata.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
 
-    /// Sets whether the given `DesigntimeFarkle<T>` will be case sensitive.
-    /// By default it isn't.
-    let caseSensitive x (df: DesigntimeFarkle<_>) = withMetadata {df.Metadata with CaseSensitive = x} df
+    /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
+    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
+    
+    /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
+    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
+
+    /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
+    let addNoiseSymbol name regex df = df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}

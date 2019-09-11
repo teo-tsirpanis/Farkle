@@ -31,6 +31,10 @@ type private Grammar = {
     Fusers: ImmutableArray<obj[] -> obj>
 }
 
+// Memory conservation to the rescue! 👅
+let private whitespaceSymbol = Noise "Whitespace"
+let private whitespaceRegex = Regex.oneOf ['\n'; '\r'; '\t'; ' '] |> Regex.atLeast 1
+
 /// Creates a `Grammar` object from a `DesigntimeFarkle`.
 let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let mutable dfaSymbols = []
@@ -45,6 +49,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let transformers = ImmutableArray.CreateBuilder()
     let nonterminals = ImmutableArray.CreateBuilder()
     let nonterminalMap = Dictionary()
+    let noiseSymbols = ImmutableArray.CreateBuilder()
     let productions = ImmutableArray.CreateBuilder()
     let fusers = ImmutableArray.CreateBuilder()
     let rec impl (sym: Symbol) =
@@ -100,16 +105,25 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             fusers.Add(fun xs -> xs.[0])
             root
         | LALRSymbol.Nonterminal nont -> nont
+    metadata.NoiseSymbols
+    |> Seq.iter (fun (name, regex) ->
+        let symbol = Noise name
+        noiseSymbols.Add(symbol)
+        dfaSymbols <- (regex, Choice2Of4 symbol) :: dfaSymbols)
+    if metadata.AutoWhitespace then
+        noiseSymbols.Add(whitespaceSymbol)
+        dfaSymbols <- (whitespaceRegex, Choice2Of4 whitespaceSymbol) :: dfaSymbols
     let symbols = {
         Terminals = terminals.ToImmutable()
         Nonterminals = nonterminals.ToImmutable()
-        NoiseSymbols = ImmutableArray.Empty
+        NoiseSymbols = noiseSymbols.ToImmutable()
     }
     let properties =
         ImmutableDictionary.Empty
             .Add("Name", df.Name)
-            .Add("Case Sensitive", string df.Metadata.CaseSensitive)
+            .Add("Case Sensitive", string metadata.CaseSensitive)
             .Add("Start Symbol", string startSymbol)
+            .Add("Auto Whitespace", string metadata.AutoWhitespace)
     {
         Metadata = df.Metadata
         Properties = properties
@@ -153,8 +167,8 @@ let private generatedWithLoveBy =
 let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
     {
         new PostProcessor<'TOutput> with
-                member __.Transform(term, pos, data) = transformers.[int term.Index].Invoke(pos, data)
-                member __.Fuse(prod, members) = fusers.[int prod.Index] members
+            member __.Transform(term, pos, data) = transformers.[int term.Index].Invoke(pos, data)
+            member __.Fuse(prod, members) = fusers.[int prod.Index] members
     }
 
 /// Creates a `Farkle.Grammar.Grammar` and a `PostProcessor`

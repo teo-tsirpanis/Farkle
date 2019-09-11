@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -28,6 +28,8 @@ open System.Collections.Immutable
 /// <typeparam name="T">The type of the concrete production builder. Used so that
 /// <see cref="AbstractProductionBuilder{TBuilder}.Append"/> can return the correct production builder type</typeparam>
 type ProductionBuilder(members) =
+    /// A production builder with no members.
+    static member Empty = ProductionBuilder(ImmutableList.Empty)
     member __.Append(sym) = ProductionBuilder(Symbol.append members sym)
     member x.Append(lit) = x.Append(Literal lit)
     member __.Extend(df: DesigntimeFarkle<'T1>) = ProductionBuilder<'T1>(Symbol.append members df, members.Count)
@@ -45,29 +47,6 @@ type ProductionBuilder(members) =
     /// <summary>Creates a <see cref="Production{T}"/> that always returns a constant value.</summary>
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
 
-[<AutoOpen>]
-/// Some helper functions to create production builders.
-/// This module is also intended to be used from C#.
-module Production =
-
-    [<CompiledName("Empty")>]
-    /// A production builder with no parts.
-    let empty = ProductionBuilder(ImmutableList.Empty)
-
-    [<CompiledName("Append")>]
-    /// Creates a production builder with one non-significant `DesigntimeFarkle`.
-    /// This function is useful to start building a `Production`.
-    let (!%) df =
-        df
-        |> Symbol.specialize
-        |> ImmutableList.Empty.Add
-        |> ProductionBuilder
-
-    /// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
-    /// This function is useful to start building a `Production`.
-    [<CompiledName("Extend")>]
-    let (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
-
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with productions and their builders.
 module DesigntimeFarkleOperators =
@@ -79,7 +58,7 @@ module DesigntimeFarkleOperators =
     let inline terminal name fTransform regex = Terminal.Create name fTransform regex
 
     /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
-    let literal str = terminal str tNull (Regex.literal str) :> DesigntimeFarkle
+    let literal str = Literal str :> DesigntimeFarkle
 
     /// Creates an empty `Nonterminal`.
     /// It must be filled afterwards, or it will raise an error.
@@ -100,3 +79,17 @@ module DesigntimeFarkleOperators =
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
+    
+    /// A production builder with no members.
+    let empty = ProductionBuilder.Empty
+
+    /// Creates a production builder with one non-significant `DesigntimeFarkle`.
+    /// This function is useful to start building a `Production`.
+    let inline (!%) (df: DesigntimeFarkle) = empty.Append(df)
+
+    /// Creates a production builder with one non-significant string literal.
+    let inline (!&) str = empty.Append(str: string)
+
+    /// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
+    /// This function is useful to start building a `Production`.
+    let inline (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)

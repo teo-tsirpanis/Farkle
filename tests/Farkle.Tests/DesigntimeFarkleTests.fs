@@ -41,18 +41,12 @@ let tests = testList "Designtime Farkle tests" [
         Expect.equal result expectedError "A nonterminal with duplicate productions does not give an error"
     }
 
-    test "Duplicate literals give an error - TO BE FIXED" {
+    test "Duplicate literals do not give an error" {
         let nt = "Colliding" ||= [
             !% (literal "a") =% 1
             !% (literal "a") .>> literal "b" =% 2
         ]
         let result = nt |> DesigntimeFarkleBuild.build |> fst
-        let expectedError =
-            [Terminal(0u, "a"); Terminal(1u, "a")]
-            |> Seq.map Choice1Of4
-            |> set
-            |> BuildError.IndistinguishableSymbols
-            |> Error
-        Expect.equal result expectedError "Duplicate literals do not give an error"
+        Expect.isOk result "Duplicate literals give an error"
     }
 ]

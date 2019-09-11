@@ -98,8 +98,6 @@ let intNew =
         Regex.oneOf PredefinedSets.Number
         |> Regex.atLeast 1
         |> terminal "Number" (T(fun _ data -> System.Int32.Parse(data.ToString())))
-    let plus, minus, times, slash, pLeft, pRight =
-        literal "+", literal "-", literal "*", literal "/", literal "(", literal ")"
 
     let expression, addExp, multExp, negateExp, value =
         nonterminal "Expression", nonterminal "Add Exp", nonterminal "Mult Exp", nonterminal "Negate Exp", nonterminal "Value"
@@ -107,24 +105,24 @@ let intNew =
     expression.SetProductions(!@ addExp => id)
 
     addExp.SetProductions(
-        !@ addExp .>> plus .>>. multExp => (+),
-        !@ addExp .>> minus .>>. multExp => (-),
+        !@ addExp .>> "+" .>>. multExp => (+),
+        !@ addExp .>> "-" .>>. multExp => (-),
         !@ multExp => id
     )
 
     multExp.SetProductions(
-        !@ multExp .>> times .>>. negateExp => (*),
-        !@ multExp .>> slash .>>. negateExp => (/),
+        !@ multExp .>> "*" .>>. negateExp => (*),
+        !@ multExp .>> "/" .>>. negateExp => (/),
         !@ negateExp => id
     )
 
     negateExp.SetProductions(
-        !% minus .>>. value => (~-),
+        !& "-" .>>. value => (~-),
         !@ value => id
     )
 
     value.SetProductions(
         !@ number => id,
-        !% pLeft .>>. expression .>>  pRight => id
+        !& "(" .>>. expression .>>  ")" => id
     )
     RuntimeFarkle.build expression

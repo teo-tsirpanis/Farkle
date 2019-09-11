@@ -49,6 +49,12 @@ type internal Terminal =
     /// The delagate that converts the terminal's position and data into an arbitrary object.
     abstract Transformer: T<obj>
 
+type internal Literal = Literal of string
+with
+    interface DesigntimeFarkle with
+        member x.Name = match x with Literal x -> x
+        member __.Metadata = GrammarMetadata.Default
+
 [<CompiledName("AbstractNonterminal")>]
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
@@ -66,7 +72,7 @@ and internal AbstractProduction =
     abstract Members: Symbol ImmutableArray
     abstract Fuse: (obj [] -> obj)
 
-and internal Symbol = Choice<Terminal, Nonterminal>
+and internal Symbol = Choice<Terminal, Literal, Nonterminal>
 
 /// <summary>An object representing a grammar created by Farkle.Builder.
 /// It can be converted to <see cref="RuntimeFarkle{T}"/>.</summary>
@@ -180,8 +186,9 @@ with
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =
         match x with
-        | :? Terminal as term -> Choice1Of2 term
-        | :? Nonterminal as nont -> Choice2Of2 nont
+        | :? Terminal as term -> Choice1Of3 term
+        | :? Literal as lit -> Choice2Of3 lit
+        | :? Nonterminal as nont -> Choice3Of3 nont
         | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
         | _ -> failwith "Using a custom derivative of the DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)

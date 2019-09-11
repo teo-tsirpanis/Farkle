@@ -34,7 +34,13 @@ type private Grammar = {
 /// Creates a `Grammar` object from a `DesigntimeFarkle`.
 let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let mutable dfaSymbols = []
+    let metadata = df.Metadata
     let terminals = ImmutableArray.CreateBuilder()
+    let literalMap =
+        match metadata.CaseSensitive with
+        | true -> StringComparer.Ordinal
+        | false -> StringComparer.OrdinalIgnoreCase
+        |> Dictionary
     let terminalMap = Dictionary()
     let transformers = ImmutableArray.CreateBuilder()
     let nonterminals = ImmutableArray.CreateBuilder()
@@ -42,10 +48,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let productions = ImmutableArray.CreateBuilder()
     let fusers = ImmutableArray.CreateBuilder()
     let rec impl (sym: Symbol) =
-        match sym with
-        | Choice1Of2 term when terminalMap.ContainsKey(term) ->
-            LALRSymbol.Terminal terminalMap.[term]
-        | Choice1Of2 term ->
+        let handleTerminal (term: Farkle.Builder.Terminal) =
             let symbol = Terminal(uint32 terminals.Count, term.Name)
             terminalMap.Add(term, symbol)
             // For every addition to the terminals,
@@ -54,10 +57,21 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             terminals.Add(symbol)
             transformers.Add(term.Transformer)
             dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
+            symbol
+        match sym with
+        | Choice1Of3 term when terminalMap.ContainsKey(term) ->
+            LALRSymbol.Terminal terminalMap.[term]
+        | Choice1Of3 term -> handleTerminal term |> LALRSymbol.Terminal
+        | Choice2Of3 (Literal lit) when literalMap.ContainsKey(lit) ->
+            LALRSymbol.Terminal literalMap.[lit]
+        | Choice2Of3 (Literal lit) ->
+            let term = Terminal.Create lit tNull (Regex.literal lit) :?> Farkle.Builder.Terminal
+            let symbol = handleTerminal term
+            literalMap.Add(lit, symbol)
             LALRSymbol.Terminal symbol
-        | Choice2Of2 nont when nonterminalMap.ContainsKey(nont) ->
+        | Choice3Of3 nont when nonterminalMap.ContainsKey(nont) ->
             LALRSymbol.Nonterminal nonterminalMap.[nont]
-        | Choice2Of2 nont ->
+        | Choice3Of3 nont ->
             let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
             nonterminalMap.Add(nont, symbol)
             nonterminals.Add(symbol)

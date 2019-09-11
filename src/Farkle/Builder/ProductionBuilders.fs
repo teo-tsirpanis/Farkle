@@ -17,7 +17,8 @@ open System.Collections.Immutable
 ///     and a string.</para>
 ///     <para>Production builders have three basic methods.</para>
 ///     <para><c>Append</c> returns a production builder with the same significant members,
-///     but the given <see cref="DesigntimeFarkle"/> at the end of it.</para>
+///     but the given <see cref="DesigntimeFarkle"/> at the end of it. Alternatively, it can
+///     accept a string which will be appended to the production as a literal.</para>
 ///     <para><c>Extend</c> returns a production builder with one more significant member,
 ///     whose type is determined by the given <see cref="DesigntimeFarkle{T}"/> that will
 ///     be appended to it.</para>
@@ -28,6 +29,7 @@ open System.Collections.Immutable
 /// <see cref="AbstractProductionBuilder{TBuilder}.Append"/> can return the correct production builder type</typeparam>
 type ProductionBuilder(members) =
     member __.Append(sym) = ProductionBuilder(Symbol.append members sym)
+    member x.Append(lit) = x.Append(Literal lit)
     member __.Extend(df: DesigntimeFarkle<'T1>) = ProductionBuilder<'T1>(Symbol.append members df, members.Count)
     member x.Finish(fFuseThunk) = x.FinishRaw(fun _ -> fFuseThunk ())
     /// <summary>Like <c>Finish</c>, but the given function accepts
@@ -70,7 +72,8 @@ module Production =
 /// F# operators to easily work with productions and their builders.
 module DesigntimeFarkleOperators =
 
-    let private tNull: T<obj> = T(fun _ _ -> null)
+    /// A delegate of type `T<obj>` that always returns null.
+    let internal tNull: T<obj> = T(fun _ _ -> null)
 
     /// Creates a `Terminal`.
     let inline terminal name fTransform regex = Terminal.Create name fTransform regex
@@ -87,7 +90,7 @@ module DesigntimeFarkleOperators =
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
-    let inline op_DotGreaterGreater pb df = (^TBuilder : (member Append: DesigntimeFarkle -> ^TBuilder) (pb, df))
+    let inline op_DotGreaterGreater pb df = (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
 
     /// The `Extend` method of production builders as an operator.
     let inline op_DotGreaterGreaterDot pb df = (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))

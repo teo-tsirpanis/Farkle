@@ -235,7 +235,7 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
         match acceptSymbols.Count with
         | 0 -> Ok {Index = state.Index; AcceptSymbol = None; Edges = rangeMap}
         | 1 -> Ok {Index = state.Index; AcceptSymbol = Some acceptSymbols.MinimumElement; Edges = rangeMap}
-        | _ -> Error <| BuildErrorType.IndistinguishableSymbols acceptSymbols
+        | _ -> Error <| BuildError.IndistinguishableSymbols acceptSymbols
     let acceptSymbolsOfFirstState =
         statesList.[0].Name
         |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
@@ -249,13 +249,13 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
             let theSacredDFAStartingState = theHolyDFAStates.[0]
             {InitialState = theSacredDFAStartingState; States = theHolyDFAStates})
     else
-        Error <| BuildErrorType.NullableSymbols acceptSymbolsOfFirstState
+        Error <| BuildError.NullableSymbols acceptSymbolsOfFirstState
 
 /// Builds a DFA that recognizes the given `Regex`es, each accepting a unique `DFASymbol`.
 /// Optionally, the resulting DFA can be case sensitive.
 let buildRegexesToDFA caseSensitive regexes =
     match regexes with
-    | [] -> Error BuildErrorType.NoSymbolsSpecified
+    | [] -> Error BuildError.NoSymbolsSpecified
     | _ ->
         let tree, leaves = createRegexBuild caseSensitive regexes
         let followPos = calculateFollowPos leaves.Length tree

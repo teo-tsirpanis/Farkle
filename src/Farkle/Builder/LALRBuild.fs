@@ -319,4 +319,4 @@ let buildProductionsToLALRStates terminalCount nonterminalCount startSymbol (pro
     match createLALRStates resolveConflict s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
-    | _ -> conflicts |> set |> BuildErrorType.LALRConflict |> Error
+    | _ -> conflicts |> set |> BuildError.LALRConflict |> Error

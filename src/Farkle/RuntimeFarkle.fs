@@ -23,7 +23,7 @@ type FarkleError =
     /// There was an error while reading the grammar.
     | EGTReadError of EGTReadError
     /// There was an error while building the grammar .
-    | BuildError of BuildErrorType
+    | BuildError of BuildError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x

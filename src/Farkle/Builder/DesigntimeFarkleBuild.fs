@@ -15,6 +15,7 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
 
+[<NoComparison; ReferenceEquality>]
 /// A grammar type with some more information that is needed by the builder.
 type private Grammar = {
     Metadata: GrammarMetadata
@@ -112,7 +113,7 @@ let private consistencyCheck grammar = either {
     let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
     grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
     if emptyNonterminals.Count <> 0 then
-        do! emptyNonterminals |> Seq.map (fun x -> x.Name) |> set |> BuildErrorType.EmptyNonterminals |> Error
+        do! emptyNonterminals |> Seq.map (fun x -> x.Name) |> set |> BuildError.EmptyNonterminals |> Error
 
     let duplicateProductions =
         grammar.Productions
@@ -121,7 +122,7 @@ let private consistencyCheck grammar = either {
         |> Seq.map fst
         |> set
     if not duplicateProductions.IsEmpty then
-        do! duplicateProductions |> BuildErrorType.DuplicateProductions |> Error
+        do! duplicateProductions |> BuildError.DuplicateProductions |> Error
 }
 
 /// This value contains the name and version of the

@@ -63,7 +63,7 @@ with
 
 [<RequireQualifiedAccess>]
 /// An error the builder encountered.
-type BuildErrorType =
+type BuildError =
     /// Some symbols cannot be distinguished from each other.
     | IndistinguishableSymbols of DFASymbol Set
     /// Some symbols can contain zero characters.

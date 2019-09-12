@@ -66,17 +66,16 @@ let createLR0KernelItems fGetAllProductions startSymbol =
 
     let rec impl kernel =
         let itemSet = newItemSet kernel
-        let q = Queue()
+        let q = Queue(kernel)
         // We could use a table of visited nonterminals, but it might create problems
         // when many productions of the kernel have the same head.
-        let visitedProductions = HashSet()
-        let allItems = ResizeArray()
-        Set.iter q.Enqueue kernel
+        // Forget what you saw before! We must keep a table of visited items.
+        // It created problems when the same production appeared in the closure,
+        // but with different dot position. See the calculator's state #10 (#2 in GOLD Parser).
+        let visitedItems = HashSet()
         while q.Count <> 0 do
             let item = q.Dequeue()
-            if not <| visitedProductions.Contains(item.Production) then
-                visitedProductions.Add(item.Production) |> ignore
-                allItems.Add(item)
+            if visitedItems.Add(item) then
                 if not item.IsAtEnd then
                     match item.CurrentSymbol with
                     | LALRSymbol.Terminal _ -> ()
@@ -84,7 +83,7 @@ let createLR0KernelItems fGetAllProductions startSymbol =
                         nont
                         |> fGetAllProductions
                         |> Set.iter (LR0Item.Create >> q.Enqueue)
-        allItems
+        visitedItems
         |> Seq.filter (fun x -> not x.IsAtEnd)
         |> Seq.groupBy (fun x -> x.CurrentSymbol)
         |> Seq.iter (fun (sym, kernelItems) ->

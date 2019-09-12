@@ -42,25 +42,25 @@ let tests = testList "Parser tests" [
     test "Parsing a simple mathematical expression behaves correctly and consistently up to the parsing log" {
         let grammar = SimpleMaths.int.TryGetGrammar() |> returnOrFail "%O"
         let reduce idx = ParseMessage.Reduction grammar.Productions.[int idx]
-        let numberTerminal = Terminal(14u, "Number")
+        let numberTerminal = Terminal(3u, "Number")
 
         let expectedLog = [
             ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 1UL 0UL; Data = 475}
-            ParseMessage.Shift 3u
-            ParseMessage.TokenRead {Symbol = Terminal(13u, "+"); Position = Position.Create 1UL 5UL 4UL; Data = null}
-            reduce 9u
-            reduce 8u
-            reduce 6u
-            reduce 3u
-            ParseMessage.Shift 12u
-            ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 7UL 6UL; Data = 724}
-            ParseMessage.Shift 3u
-            ParseMessage.EndOfInput <| Position.Create 1UL 10UL 9UL
-            reduce 9u
-            reduce 8u
-            reduce 6u
-            reduce 1u
+            ParseMessage.Shift 9u
+            ParseMessage.TokenRead {Symbol = Terminal(0u, "+"); Position = Position.Create 1UL 5UL 4UL; Data = null}
             reduce 0u
+            reduce 3u
+            reduce 6u
+            reduce 9u
+            ParseMessage.Shift 3u
+            ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 7UL 6UL; Data = 724}
+            ParseMessage.Shift 9u
+            ParseMessage.EndOfInput <| Position.Create 1UL 10UL 9UL
+            reduce 0u
+            reduce 3u
+            reduce 6u
+            reduce 7u
+            reduce 10u
         ]
 
         let actualLog = ResizeArray()

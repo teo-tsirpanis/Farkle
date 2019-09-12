@@ -13,35 +13,6 @@ open SimpleMaths.Definitions
 
 open Fuser
 
-/// A very simple grammar for parsing mathematical expressions.
-let int =
-    // The transformers convert terminals to anything you want.
-    // If you don't care about a terminal (like single characters),
-    // you can remove it from below. It will be automatically ignored.
-    // And symbols other than terminals are automatically ignored,
-    // even if they are listed below.
-    let transformers =
-        [
-            Transformer.int Terminal.Number
-        ]
-    // The fusers merge the parts of a production into one object of your desire.
-    // Do not delete anything here, or the post-processor will fail.
-    let fusers =
-        [
-            identity Production.Expression
-            take2Of Production.AddExpPlus (0, 2) (+)
-            take2Of Production.AddExpMinus (0, 2) (-)
-            identity Production.AddExp
-            take2Of Production.MultExpTimes (0, 2) (*)
-            take2Of Production.MultExpDiv (0, 2) (/)
-            identity Production.MultExp
-            take1Of Production.NegateExpMinus 1 (~-)
-            identity Production.NegateExp
-            identity Production.ValueNumber
-            take1Of Production.ValueLParenRParen 1 id
-        ]
-    RuntimeFarkle.ofBase64String (PostProcessor.ofSeq<int> transformers fusers) Grammar.asBase64
-
 type MathExpression = {
     ValueTunk: Lazy<int>
     Expr: Expr
@@ -82,7 +53,7 @@ let mathExpression =
             take1Of Production.ValueNumber 0 (Number >> MathExpression.Create)
             take1Of Production.ValueLParenRParen 1 id
         ]
-    RuntimeFarkle.changePostProcessor (PostProcessor.ofSeq<MathExpression> transformers fusers) int
+    RuntimeFarkle.ofBase64String (PostProcessor.ofSeq<MathExpression> transformers fusers) Grammar.asBase64
 
 let rec renderExpression x =
     match x.Expr with
@@ -93,7 +64,7 @@ let rec renderExpression x =
     | Divide(x1, x2) -> sprintf "(%s)/(%s)" (renderExpression x1) (renderExpression x2)
     | Negate x -> sprintf "-(%s)" (renderExpression x)
 
-let intNew =
+let buildInt() =
     let number =
         Regex.oneOf PredefinedSets.Number
         |> Regex.atLeast 1
@@ -125,4 +96,9 @@ let intNew =
         !@ number => id,
         !& "(" .>>. expression .>>  ")" => id
     )
-    RuntimeFarkle.build expression
+    expression
+    |> DesigntimeFarkle.addLineComment "//"
+    |> DesigntimeFarkle.addBlockComment "/*" "*/"
+    |> RuntimeFarkle.build
+    
+let int = buildInt()

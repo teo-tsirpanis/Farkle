@@ -15,6 +15,7 @@
     <Compile Include="ASTTests.fs" />
     <Compile Include="RegexTests.fs" />
     <Compile Include="DesigntimeFarkleTests.fs" />
+    <Compile Include="GrammarEquivalenceTests.fs" />
     <Compile Include="RegressionTests.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />

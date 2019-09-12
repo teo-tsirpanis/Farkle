@@ -31,3 +31,5 @@ let returnOrFail fmt x =
     match x with
     | Ok x -> x
     | Error x -> failtestf fmt <| box x
+
+let extractGrammar (rf: RuntimeFarkle<_>) = returnOrFail "%O" <| rf.TryGetGrammar()

@@ -32,12 +32,17 @@ type private Grammar = {
 }
 
 // Memory conservation to the rescue! 👅
+let private noiseNewLine = Noise "NewLine"
+let private newLineRegex = Regex.oneOf "\r\n" <|> Regex.literal "\r\n"
+let private commentSymbol = Noise "Comment"
 let private whitespaceSymbol = Noise "Whitespace"
-let private whitespaceRegex = Regex.oneOf ['\n'; '\r'; '\t'; ' '] |> Regex.atLeast 1
+let private whitespaceRegex = Regex.oneOf ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
+let private whitespaceRegexNoNewline = Regex.oneOf ['\t'; ' '] |> Regex.atLeast 1
 
 /// Creates a `Grammar` object from a `DesigntimeFarkle`.
 let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let mutable dfaSymbols = []
+    let mutable usesNewLine = false
     let metadata = df.Metadata
     let terminals = ImmutableArray.CreateBuilder()
     let literalMap =
@@ -50,6 +55,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
     let nonterminals = ImmutableArray.CreateBuilder()
     let nonterminalMap = Dictionary()
     let noiseSymbols = ImmutableArray.CreateBuilder()
+    let groups = ImmutableArray.CreateBuilder()
     let productions = ImmutableArray.CreateBuilder()
     let fusers = ImmutableArray.CreateBuilder()
     let rec impl (sym: Symbol) =
@@ -110,9 +116,50 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
         let symbol = Noise name
         noiseSymbols.Add(symbol)
         dfaSymbols <- (regex, Choice2Of4 symbol) :: dfaSymbols)
+    metadata.Comments
+    |> Seq.iter (function
+        | LineComment cStart ->
+            let startSymbol = GroupStart(cStart, uint32 groups.Count)
+            dfaSymbols <- (Regex.literal cStart, Choice3Of4 startSymbol) :: dfaSymbols
+            usesNewLine <- true
+            groups.Add {
+                Name = "Comment Line"
+                ContainerSymbol = Choice2Of2 commentSymbol
+                Start = startSymbol
+                End = Choice2Of3 noiseNewLine
+                AdvanceMode = AdvanceMode.Character
+                EndingMode = EndingMode.Open
+                Nesting = ImmutableHashSet.Empty
+            }
+        | BlockComment(cStart, cEnd) ->
+            let startSymbol = GroupStart(cStart, uint32 groups.Count)
+            let endSymbol = GroupEnd cEnd
+            dfaSymbols <-
+                (Regex.literal cStart, Choice3Of4 startSymbol) ::
+                (Regex.literal cEnd, Choice4Of4 endSymbol) :: dfaSymbols
+            groups.Add {
+                Name = "Comment Block"
+                ContainerSymbol = Choice2Of2 commentSymbol
+                Start = startSymbol
+                End = Choice3Of3 endSymbol
+                AdvanceMode = AdvanceMode.Character
+                EndingMode = EndingMode.Closed
+                Nesting = ImmutableHashSet.Empty
+            }
+    )
+    if not metadata.Comments.IsEmpty then
+        noiseSymbols.Add(commentSymbol)
     if metadata.AutoWhitespace then
         noiseSymbols.Add(whitespaceSymbol)
+        let whitespaceRegex =
+            if usesNewLine then
+                whitespaceRegexNoNewline
+            else
+                whitespaceRegex
         dfaSymbols <- (whitespaceRegex, Choice2Of4 whitespaceSymbol) :: dfaSymbols
+    if usesNewLine then
+        noiseSymbols.Add(noiseNewLine)
+        dfaSymbols <- (newLineRegex, Choice2Of4 noiseNewLine) :: dfaSymbols
     let symbols = {
         Terminals = terminals.ToImmutable()
         Nonterminals = nonterminals.ToImmutable()
@@ -130,7 +177,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
         StartSymbol = startSymbol
         Symbols = symbols
         Productions = productions.ToImmutable()
-        Groups = ImmutableArray.Empty
+        Groups = groups.ToImmutable()
         DFASymbols = dfaSymbols
         Transformers = transformers.ToImmutable()
         Fusers = fusers.ToImmutable()

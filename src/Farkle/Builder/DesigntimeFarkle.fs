@@ -19,6 +19,16 @@ open System.Collections.Immutable
 /// </remarks>
 type T<'T> = delegate of Position * ReadOnlySpan<char> -> 'T
 
+/// A type of source code comment. As everybody might know,
+/// comments are the text fragments that are ignored by the parser.
+type Comment =
+    /// A line comment. It starts when the given literal is encountered,
+    /// and ends when the line ends.
+    | LineComment of string
+    /// A block comment. It starts when the first literal is encountered,
+    /// and ends when when the second literal is encountered.
+    | BlockComment of blockStart: string * blockEnd: string
+
 /// The information about a grammar that cannot be expressed
 /// by its terminals and nonterminals.
 type GrammarMetadata = {
@@ -28,6 +38,8 @@ type GrammarMetadata = {
     /// outside of any terminal. Farkle considers whitespace the
     /// characters: Space, Horizontal Tab, Carriage Return and Line feed.
     AutoWhitespace: bool
+    /// The comments this grammar accepts.
+    Comments: Comment ImmutableList
     /// Any other symbols definable by a regular expression that can
     /// appear anywhere outside of any terminal and will be discarded.
     NoiseSymbols: (string * Regex) ImmutableList
@@ -36,7 +48,12 @@ with
     /// The default metadata of a grammar.
     /// According to them, the grammar is not case sensitive
     /// and white space is discarded.
-    static member Default = {CaseSensitive = false; AutoWhitespace = true; NoiseSymbols = ImmutableList.Empty}
+    static member Default = {
+        CaseSensitive = false
+        AutoWhitespace = true
+        NoiseSymbols = ImmutableList.Empty
+        Comments = ImmutableList.Empty
+    }
 
 /// <summary>The base, untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
 /// <remarks>User code must not implement this interface, or an error may be raised.</remarks>
@@ -219,3 +236,11 @@ module DesigntimeFarkle =
 
     /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
     let addNoiseSymbol name regex df = df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
+
+    /// Adds a line comment to the given `DesigntimeFarkle`.
+    let addLineComment commentStart df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(LineComment commentStart)}
+
+    /// Adds a block comment to the given `DesigntimeFarkle`.
+    let addBlockComment commentStart commentEnd df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(BlockComment(commentStart, commentEnd))}

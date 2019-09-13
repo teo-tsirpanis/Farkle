@@ -10,8 +10,7 @@ open System.Globalization
 open System.Text
 open Chiron
 open Farkle
-open Farkle.PostProcessor
-open Farkle.JSON.FSharp.Definitions
+open Farkle.Builder
 
 let unescapeJsonString (x: ReadOnlySpan<_>) =
     let x = x.Slice(1, x.Length - 2)
@@ -44,49 +43,77 @@ let unescapeJsonString (x: ReadOnlySpan<_>) =
         | c -> sb.Append(c) |> ignore
     sb.ToString()
 
-// The transformers convert terminals to anything you want.
-// If you do not care about a terminal (like single characters),
-// you can remove it from below. It will be automatically ignored.
-let private transformers =
-    [
+let toDecimal (x: ReadOnlySpan<char>) =
     #if NETCOREAPP2_1
-        Transformer.create Terminal.Number <| C(fun x -> Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number)
+        Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number
     #else
-        Transformer.createS Terminal.Number (fun x -> Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number)
+        Decimal.Parse(x.ToString(), NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number
     #endif
-        Transformer.create Terminal.String <| C unescapeJsonString
+
+let designtime =
+    let number =
+        Regex.concat [
+            Regex.singleton '-' |> Regex.optional
+            Regex.choice [
+                Regex.singleton '-'
+                Regex.oneOf "123456789" <&> (Regex.oneOf Number |> Regex.atLeast 0)
+            ]
+            Regex.optional <| (Regex.singleton '.' <&> (Regex.oneOf Number |> Regex.atLeast 1))
+            [Regex.oneOf "eE"; Regex.oneOf "+-" |> Regex.optional; Regex.oneOf Number |> Regex.atLeast 1]
+            |> Regex.concat
+            |> Regex.optional]
+        |> terminal "Number" (T(fun _ data -> toDecimal data))
+    let stringCharacters = AllValid.Characters - (set ['"'; '\\'])
+    let string =
+        Regex.concat [
+            Regex.singleton '"'
+            Regex.atLeast 0 <| Regex.choice [
+                Regex.oneOf stringCharacters
+                Regex.concat [
+                    Regex.singleton '\\'
+                    Regex.choice [
+                        Regex.oneOf "\"\\/bfnrt"
+                        Regex.singleton 'u' <&> (Regex.repeat 4 <| Regex.oneOf "1234567890ABCDEF")
+                    ]
+                ]
+            ]
+            Regex.singleton '"'
+        ]
+        |> terminal "String" (T(fun _ data -> unescapeJsonString data))
+    let object = nonterminal "Object"
+    let array = nonterminal "Array"
+    let value = "Value" ||= [
+        !@ string => String
+        !@ number => id
+        !@ object => id
+        !@ array => id
+        !& "true" =% Bool true
+        !& "false" =% Bool false
+        !& "null" =% Null ()
     ]
-
-open Fuser
-
-let emptyMap: Map<string, Json> = Map.empty
-
-// The fusers merge the parts of a production into one object of your desire.
-// Do not delete anything here, or the post-processor will fail.
-let private fusers =
-    [
-        take1Of Production.ValueString 0 Json.String
-        identity Production.ValueNumber
-        identity Production.ValueObject
-        identity Production.ValueArray
-        constant Production.ValueTrue <| Json.Bool true
-        constant Production.ValueFalse <| Json.Bool false
-        constant Production.ValueNull <| Json.Null ()
-        take1Of Production.ArrayLBracketRBracket 1 Json.Array
-        take1Of Production.ArrayOptionalArrayReversed 0 (List.rev: Json list -> _)
-        constant Production.ArrayOptionalEmpty ([] : Json list)
-        take2Of Production.ArrayReversedComma (2, 0) (fun (x: Json) xs -> x :: xs)
-        take1Of Production.ArrayReversed 0 (List.singleton: Json -> _)
-        take1Of Production.ObjectLBraceRBrace 1 (Map.ofList >> Json.Object)
-        identity Production.ObjectOptionalObjectElement
-        constant Production.ObjectOptionalEmpty ([] : (string * Json) list)
-        take3Of Production.ObjectElementCommaStringColon (2, 4, 0) (fun (k: string) (v: Json) xs -> (k, v) :: xs)
-        take2Of Production.ObjectElementStringColon (0, 2) (fun (k: string) (v: Json) -> [k, v])
+    let arrayReversed = nonterminal "Array Reversed"
+    arrayReversed.SetProductions(
+        !@ arrayReversed .>> "," .>>. value => (fun xs x -> x :: xs),
+        !@ value => List.singleton
+    )
+    let arrayOptional = "Array Optional" ||= [
+        !@ arrayReversed => List.rev
+        empty =% []
     ]
+    array.SetProductions(!& "[" .>>. arrayOptional .>> "]" => Array)
 
-let private createRuntimeFarkle() =
-    RuntimeFarkle.ofBase64String
-        (PostProcessor.ofSeq<Json> transformers fusers)
-        Grammar.asBase64
+    let objectElement = nonterminal "Object Element"
+    objectElement.SetProductions(
+        !@ objectElement .>> "," .>>. string .>> ":" .>>. value => (fun xs k v -> (k, v) :: xs),
+        !@ string .>> ":" .>>. value => (fun k v -> [k, v])
+    )
+    let objectOptional = "Object Optional" ||= [
+        !@ objectElement => (Map.ofList >> Object)
+        empty =% (Object Map.empty)
+    ]
+    object.SetProductions(!& "{" .>>. objectOptional .>> "}" => id)
 
-let runtime = createRuntimeFarkle()
+    value
+    |> DesigntimeFarkle.caseSensitive true
+
+let runtime = RuntimeFarkle.build designtime

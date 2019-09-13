@@ -38,7 +38,7 @@ type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
     member __.Append(sym) = ProductionBuilder<{{ type_params n }}>(Symbol.append members sym, {{type_indices n }})
     member x.Append(lit) = x.Append(Literal lit)
     {{~ if n != capacity ~}}
-    member __.Extend(df: DesigntimeFarkle<'T{{ n }}>) = ProductionBuilder<{{ type_params n + 1 }}>(Symbol.append members df, {{type_indices n }}, members.Count)
+    member __.Extend(df: DesigntimeFarkle<'T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(Symbol.append members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
     member __.Finish(f: {{ finish_signature n }}) : Production<'TOutput> = {
         Members = members.ToImmutableArray()

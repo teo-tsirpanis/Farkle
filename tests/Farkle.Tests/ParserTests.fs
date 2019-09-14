@@ -77,10 +77,10 @@ let tests = testList "Parser tests" [
     testProperty "The JSON parser works well" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
         let cs =
-            RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
+            RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
             |> returnOrFail "The C# parser failed: %O"
         let fs =
-            RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
+            RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
             |> returnOrFail "The F# parser failed: %O"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with

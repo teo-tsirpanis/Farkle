@@ -56,7 +56,7 @@ let designtime =
             Regex.singleton '-' |> Regex.optional
             Regex.choice [
                 Regex.singleton '-'
-                Regex.oneOf "123456789" <&> (Regex.oneOf Number |> Regex.atLeast 0)
+                Regex.singleton '0' <|> (Regex.oneOf "123456789" <&> (Regex.oneOf Number |> Regex.atLeast 0))
             ]
             Regex.optional <| (Regex.singleton '.' <&> (Regex.oneOf Number |> Regex.atLeast 1))
             [Regex.oneOf "eE"; Regex.oneOf "+-" |> Regex.optional; Regex.oneOf Number |> Regex.atLeast 1]

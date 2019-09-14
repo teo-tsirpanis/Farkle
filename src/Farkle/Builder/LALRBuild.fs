@@ -33,14 +33,13 @@ with
         |> String.concat " "
         |> sprintf "%O ::= %s" x.Production.Head
 
-[<NoComparison; NoEquality>]
 type LR0ItemSet = {
     Index: int
     Kernel: Set<LR0Item>
-    Goto: Dictionary<LALRSymbol, int>
+    Goto: ImmutableDictionary<LALRSymbol, int>
 }
 with
-    static member Create idx kernel = {Index = idx; Kernel = kernel; Goto = Dictionary()}
+    static member Create idx kernel = {Index = idx; Kernel = kernel; Goto = ImmutableDictionary.Empty}
 
 /// A special type which represents the lookahead symbol.
 type LookaheadSymbol =
@@ -83,15 +82,18 @@ let createLR0KernelItems fGetAllProductions startSymbol =
                         nont
                         |> fGetAllProductions
                         |> Set.iter (LR0Item.Create >> q.Enqueue)
-        visitedItems
-        |> Seq.filter (fun x -> not x.IsAtEnd)
-        |> Seq.groupBy (fun x -> x.CurrentSymbol)
-        |> Seq.iter (fun (sym, kernelItems) ->
-            // All these items are guaranteed to be kernel items; their dot is never at the beginning.
-            let kernelSet = kernelItems |> Seq.map (fun x -> x.AdvanceDot()) |> set
-            match kernelMap.TryGetValue(kernelSet) with
-            | true, idx -> itemSet.Goto.Add(sym, idx)
-            | false, _ -> itemSet.Goto.Add(sym, impl kernelSet))
+        let goto =
+            visitedItems
+            |> Seq.filter (fun x -> not x.IsAtEnd)
+            |> Seq.groupBy (fun x -> x.CurrentSymbol)
+            |> Seq.map (fun (sym, kernelItems) ->
+                // All these items are guaranteed to be kernel items; their dot is never at the beginning.
+                let kernelSet = kernelItems |> Seq.map (fun x -> x.AdvanceDot()) |> set
+                match kernelMap.TryGetValue(kernelSet) with
+                | true, idx -> KeyValuePair(sym, idx)
+                | false, _ -> KeyValuePair(sym, impl kernelSet))
+            |> ImmutableDictionary.CreateRange
+        itemSets.[itemSet.Index] <- {itemSet with Goto = goto}
         itemSet.Index
 
     startSymbol

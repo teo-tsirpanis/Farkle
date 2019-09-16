@@ -11,7 +11,7 @@
 
 #if !FAKE
 // Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
-#load "./.fake/build.fsx/intellisense_lazys.fsx"
+#load "./.fake/build.fsx/intellisense_lazy.fsx"
 #endif
 #load "./src/GenerateProductionBuilders.fsx"
 

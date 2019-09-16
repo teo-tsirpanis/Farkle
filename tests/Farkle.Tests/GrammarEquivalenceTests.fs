@@ -96,12 +96,15 @@ let checkParserEquivalence (farkleGrammar: Grammar) (goldGrammar: Grammar) =
 [<Tests>]
 let tests =
     [
-        "the calculator", extractGrammar SimpleMaths.int, extractGrammar SimpleMaths.mathExpression
-        "JSON", extractGrammar Farkle.JSON.FSharp.Language.runtime, loadGrammar "JSON.egt" |> returnOrFail "%O"
+        "the calculator", extractGrammar SimpleMaths.int, "SimpleMaths.egt"
+        "JSON", extractGrammar Farkle.JSON.FSharp.Language.runtime, "JSON.egt"
     ]
-    |> List.map (fun (name, gFarkle, gGold) ->
+    |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {
-            checkParserEquivalence gFarkle gGold
+            match loadGrammar egt with
+            | Ok gGold ->
+                checkParserEquivalence gFarkle gGold
+            | Error x -> failtestf "Error while reading %s: %O" egt x
         }
     )
     |> testList "Grammar equivalence tests"

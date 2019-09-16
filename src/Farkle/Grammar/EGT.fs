@@ -28,7 +28,7 @@ module EGT =
             with
             | :? FormatException -> false
         if decodingSucceeded then
-            use s = new MemoryStream(x)
+            use s = new MemoryStream(x, false)
             ofStream s
         else
             Error InvalidBase64Format

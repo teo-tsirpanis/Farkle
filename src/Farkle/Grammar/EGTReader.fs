@@ -43,31 +43,31 @@ module internal EGTReader =
             | _ -> invalidEGT()
 
         let readRecords fRead (r: BinaryReader) =
-            try
-                // No need to get the length each time; it stays the same, and it's quite expensive, as it does some Win32 calls.
-                // The stream's position on the other hand is very fast. It is just a private variable read.
-                let len = r.BaseStream.Length
-                let mutable arr = Array.zeroCreate 45
-                while r.BaseStream.Position < len do
-                    match readByte r with
-                    | 'M'B ->
-                        let count = readUInt16 r |> int
-                        while count > arr.Length do
-                            Array.Resize(&arr, arr.Length * 2)
-                        for i = 0 to count - 1 do
-                            arr.[i] <- readEntry r
-                        ReadOnlyMemory(arr, 0, count) |> fRead
-                    | _ -> invalidEGT()
-                Ok ()
-            with
-            | :? EndOfStreamException | EGTFileException -> Error InvalidEGTFile
-            | ProductionHasGroupEndException index -> Error <| ProductionHasGroupEnd index
+            // No need to get the length each time; it stays the same, and it's quite expensive, as it does some Win32 calls.
+            // The stream's position on the other hand is very fast. It is just a private variable read.
+            let len = r.BaseStream.Length
+            let mutable arr = Array.zeroCreate 45
+            while r.BaseStream.Position < len do
+                match readByte r with
+                | 'M'B ->
+                    let count = readUInt16 r |> int
+                    while count > arr.Length do
+                        Array.Resize(&arr, arr.Length * 2)
+                    for i = 0 to count - 1 do
+                        arr.[i] <- readEntry r
+                    ReadOnlyMemory(arr, 0, count) |> fRead
+                | _ -> invalidEGT()
+            Ok ()
 
     open Implementation
 
     let readEGT fHeaderCheck fRecord r = either {
-        do! readNullTerminatedString r |> fHeaderCheck
-        do! readRecords fRecord r
+        try
+            do! readNullTerminatedString r |> fHeaderCheck
+            do! readRecords fRecord r
+        with
+        | :? EndOfStreamException | EGTFileException -> return! Error InvalidEGTFile
+        | ProductionHasGroupEndException index -> return! Error <| ProductionHasGroupEnd index
     }
 
     let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =

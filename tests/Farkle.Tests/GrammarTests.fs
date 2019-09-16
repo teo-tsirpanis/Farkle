@@ -26,6 +26,11 @@ let tests =
             let x = EGT.ofBase64String "👏🏻👏🏻👏🏻👏🏻👏🏻"
             Expect.equal x (Error InvalidBase64Format) "Reading the invalid Base64 string did not fail"
         }
+        
+        test "Reading an empty file works properly" {
+            let egt = EGT.ofBase64String ""
+            Expect.equal egt (Error InvalidEGTFile) "Reading an empty EGT file did not fail"
+        }
 
         test "Terminal naming works properly" {
             let fTerminal (term, expected) =

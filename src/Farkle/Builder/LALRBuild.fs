@@ -133,9 +133,11 @@ let computeFirstSetMap productions =
                 | LALRSymbol.Terminal term ->
                     dict.Add(head, Some term)
                 | LALRSymbol.Nonterminal nont ->
-                    dict.Union(head, nont)
+                    dict.AddRange(head, Seq.filter Option.isSome dict.[nont])
                 |> (fun x -> changed <- changed || x)
-                i <- i + 1)
+                i <- i + 1
+            if i = len - 1 && containsEmpty handle.[len - 1] then
+                changed <- dict.Add(head, None) || changed)
 
     MultiMap.freeze dict
 

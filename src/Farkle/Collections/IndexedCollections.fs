@@ -66,6 +66,12 @@ with
         | (true, vSrcs), (false, _) -> x.Values.Add(kDest, HashSet vSrcs); true
         | (false, _), _ -> false
 
+    /// Gets the sequence of values associated with the specified key.
+    member x.Item k =
+        match x.Values.TryGetValue(k) with
+        | true, vs -> Seq.readonly vs
+        | false, _ -> Seq.empty
+
 /// Functions to create and manipulate `MultiMap`s.
 module internal MultiMap =
     /// Creates a `MultiMap`.

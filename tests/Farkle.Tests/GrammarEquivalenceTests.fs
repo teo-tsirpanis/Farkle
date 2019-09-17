@@ -93,7 +93,7 @@ let createProductionMap (farkleProductions: ImmutableArray<_>) (goldProductions:
 
 let checkParserEquivalence (farkleGrammar: Grammar) (goldGrammar: Grammar) =
     let productionMap = createProductionMap farkleGrammar.Productions goldGrammar.Productions
-    checkLALRStateTableEquivalence productionMap farkleGrammar.LALRStates.States goldGrammar.LALRStates.States
+    checkLALRStateTableEquivalence productionMap farkleGrammar.LALRStates goldGrammar.LALRStates
 
 let balancedParentheses =
     let expr = nonterminal "Expr"

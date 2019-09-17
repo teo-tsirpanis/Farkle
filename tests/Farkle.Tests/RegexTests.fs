@@ -10,18 +10,19 @@ open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Tests
+open System.Collections.Immutable
 
 /// A very simple function to check if a string is recognized by a DFA.
 /// We don't need a full-blown tokenizer here.
-let matchDFAToString (states: StateTable<DFAState>) str =
+let matchDFAToString (states: ImmutableArray<DFAState>) str =
     let rec impl currState idx =
         if idx = String.length str then
             currState.AcceptSymbol
         else
             match RangeMap.tryFind str.[idx] currState.Edges with
-            | ValueSome s -> impl states.States.[int s] (idx + 1)
+            | ValueSome s -> impl states.[int s] (idx + 1)
             | ValueNone -> None
-    impl states.InitialState 0
+    impl states.[0] 0
 
 /// Performs a property test with a smaller sample size.
 let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop

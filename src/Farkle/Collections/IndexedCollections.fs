@@ -5,10 +5,7 @@
 
 namespace Farkle.Collections
 
-open System.Collections
 open System.Collections.Generic
-open System.Collections.Immutable
-open System.Runtime.CompilerServices
 
 /// An associative list that maps a key to multiple values.
 type internal MultiMap<'key, 'value when 'key: equality> = private {
@@ -78,27 +75,3 @@ module internal MultiMap =
     let create() = {Values = Dictionary()}
     /// Converts a `MultiMap` to an immutable collection.
     let freeze {Values = dict} = dict |> Seq.map (fun (KeyValue(k, vs)) -> k, set vs) |> Map.ofSeq
-
-/// A `SafeArray` of some "states", along with an initial one.
-type StateTable<'a> =
-    {
-        /// The initial state. It should also be kept in the states as well.
-        InitialState: 'a
-        /// All the state table's states.
-        States: ImmutableArray<'a>
-    }
-    with
-        /// Gets the length of the state table.
-        member x.Length = x.States.Length
-        [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-        /// Gets the item at the specified index.
-        member x.Item (idx: uint32) = x.States.[int idx]
-        interface IEnumerable with
-            member x.GetEnumerator() = (x.States :> IEnumerable).GetEnumerator()
-        interface IEnumerable<'a> with
-            member x.GetEnumerator() = (x.States :> seq<_>).GetEnumerator()
-        interface IReadOnlyCollection<'a> with
-            member x.Count = x.Length
-        interface IReadOnlyList<'a> with
-            member x.Item
-                with get(idx) = x.States.[idx]

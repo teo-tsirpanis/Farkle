@@ -270,8 +270,8 @@ type Grammar = internal {
 
     // These are the only fields that serve the parser.
     _Groups: Group ImmutableArray
-    _LALRStates: LALRState StateTable
-    _DFAStates: DFAState StateTable
+    _LALRStates: LALRState ImmutableArray
+    _DFAStates: DFAState ImmutableArray
 }
 with
     /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).

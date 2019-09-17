@@ -104,9 +104,9 @@ module internal OptimizedOperations =
     /// Creates an `OptimizedOperations` object that performs
     /// its operations faster, but after some pre-processing that uses more memory.
     let optimized (grammar: Grammar) = {
-        GetNextDFAState = getNextDFAState grammar.DFAStates.States
-        GetLALRAction = getLALRAction grammar.Symbols.Terminals grammar.LALRStates.States
-        LALRGoto = lalrGoto grammar.Symbols.Nonterminals grammar.LALRStates.States
+        GetNextDFAState = getNextDFAState grammar.DFAStates
+        GetLALRAction = getLALRAction grammar.Symbols.Terminals grammar.LALRStates
+        LALRGoto = lalrGoto grammar.Symbols.Nonterminals grammar.LALRStates
     }
 
     /// Creates an `OptimizedOperations` that performs
@@ -114,7 +114,7 @@ module internal OptimizedOperations =
     let unoptimized (grammar: Grammar) = {
         GetNextDFAState = fun c state ->
             match RangeMap.tryFind c state.Edges with
-            | ValueSome idx -> Some grammar.DFAStates.[idx]
+            | ValueSome idx -> Some grammar.DFAStates.[int idx]
             | ValueNone -> None
         GetLALRAction = fun term state ->
             match state.Actions.TryGetValue(term) with
@@ -122,6 +122,6 @@ module internal OptimizedOperations =
             | false, _ -> None
         LALRGoto = fun nont state ->
             match state.GotoActions.TryGetValue(nont) with
-            | true, idx -> Some grammar.LALRStates.[idx]
+            | true, idx -> Some grammar.LALRStates.[int idx]
             | false, _ -> None
     }

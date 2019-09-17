@@ -5,7 +5,6 @@
 
 namespace Farkle.Grammar.GOLDParser
 
-open Farkle.Common
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser.EGTReader
@@ -32,16 +31,15 @@ module internal GrammarReader =
             else
                 invalidEGT()
 
-        let wantTerminal x = match x with | AnyTerminal x -> x | _ -> invalidEGT()
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
-        let wantProductionHandle name x =
+        let wantLALRSymbol productionName x =
             match x with
             | AnyTerminal x -> LALRSymbol.Terminal x
             | AnyNonterminal x -> LALRSymbol.Nonterminal x
-            | AnyGroupEnd _ -> raise <| ProductionHasGroupEndException name
+            | AnyGroupEnd _ -> raise <| ProductionHasGroupEndException productionName
             | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
-        let wantContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantGroupContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
         let wantGroupEnd x =
             match x with
@@ -49,7 +47,13 @@ module internal GrammarReader =
             | AnyNoise x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> Choice2Of3 x
             | AnyGroupEnd x -> Choice3Of3 x
             | _ -> invalidEGT()
-        let wantDFASymbol x = match x with | AnyTerminal x -> Choice1Of4 x | AnyNoise x -> Choice2Of4 x | AnyGroupStart x -> Choice3Of4 x | AnyGroupEnd x -> Choice4Of4 x | _ -> invalidEGT()
+        let wantDFASymbol x =
+            match x with
+            | AnyTerminal x -> Choice1Of4 x
+            | AnyNoise x -> Choice2Of4 x
+            | AnyGroupStart x -> Choice3Of4 x
+            | AnyGroupEnd x -> Choice4Of4 x
+            | _ -> invalidEGT()
 
         let wantAdvanceMode x idx = match wantUInt16 x idx with | 0us -> AdvanceMode.Token | 1us -> AdvanceMode.Character | _ -> invalidEGT()
         let wantEndingMode x idx = match wantUInt16 x idx with | 0us -> EndingMode.Open | 1us -> EndingMode.Closed | _ -> invalidEGT()
@@ -87,7 +91,7 @@ module internal GrammarReader =
         let readGroup (symbols: ImmutableArray.Builder<_>) fSymbol fGroup index mem =
             lengthMustBeAtLeast mem 7
             let name = wantString mem 0
-            let container = wantUInt16 mem 1 |> fSymbol |> wantContainer
+            let container = wantUInt16 mem 1 |> fSymbol |> wantGroupContainer
             let startSymbol =
                 let startIdx = wantUInt16 mem 2
                 let (GroupStart(name, _)) = startIdx |> fSymbol |> wantGroupStart
@@ -122,14 +126,15 @@ module internal GrammarReader =
             wantEmpty mem 1
             let symbols =
                 let mem = mem.Slice(2)
-                Seq.init mem.Length (wantUInt16 mem >> fSymbol >> wantProductionHandle index) |> ImmutableArray.CreateRange
+                Seq.init mem.Length (wantUInt16 mem >> fSymbol >> wantLALRSymbol index) |> ImmutableArray.CreateRange
             {Index = index; Head = headSymbol; Handle = symbols}
 
-        let readInitialStates fDFA fLALR mem =
+        let readInitialStates mem =
             lengthMustBe mem 2
-            let dfa = wantUInt16 mem 0 |> fDFA |> int
-            let lalr = wantUInt16 mem 1 |> fLALR |> int
-            dfa, lalr
+            let dfa = wantUInt16 mem 0
+            let lalr = wantUInt16 mem 1
+            if dfa <> 0us || lalr <> 0us then
+                invalidEGT()
 
         let readDFAState fCharSet fSymbol fDFA index mem =
             lengthMustBeAtLeast mem 3
@@ -196,11 +201,6 @@ module internal GrammarReader =
             let content = mem.Slice(1)
             content |> fRead (uint32 index) |> arr.Add
 
-        let inline changeOnce x newValue =
-            match !x with
-            | None -> x := Some newValue
-            | Some _ -> invalidEGT()
-
         [<Literal>]
         let CGTHeader = "GOLD Parser Tables/v1.0"
         [<Literal>]
@@ -217,7 +217,6 @@ module internal GrammarReader =
     let read r =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
-        let initialStates = ref None
         let properties = ImmutableDictionary.CreateBuilder()
         let mutable charSets = Unchecked.defaultof<_>
         let mutable fCharSet = Unchecked.defaultof<_>
@@ -276,8 +275,7 @@ module internal GrammarReader =
             | 'R'B when isTableCountsInitialized ->
                 readAndAssignIndexed (readProduction fSymbol) productions mem
             | 'I'B when isTableCountsInitialized ->
-                readInitialStates fDFAIndex fLALRIndex mem
-                |> changeOnce initialStates
+                readInitialStates mem
             | 'D'B when isTableCountsInitialized ->
                 readAndAssignIndexed (readDFAState fCharSet fSymbol fDFAIndex) dfaStates mem
             | 'L'B when isTableCountsInitialized ->
@@ -285,7 +283,6 @@ module internal GrammarReader =
             | _ -> invalidEGT()
         either {
             do! readEGT headerCheck fRecord r
-            let! (initialDFA, initialLALR) = !initialStates |> failIfNone InvalidEGTFile
             let symbols = {
                 Terminals = terminals.ToImmutable()
                 Nonterminals = nonterminals.ToImmutable()
@@ -294,7 +291,7 @@ module internal GrammarReader =
             let dfaStates = dfaStates.MoveToImmutable()
             let lalrStates = lalrStates.MoveToImmutable()
             let! startSymbol =
-                lalrStates.[initialLALR].GotoActions
+                lalrStates.[0].GotoActions
                 |> Seq.tryPick(fun x ->
                     match lalrStates.[int x.Value].EOFAction with
                     | Some LALRAction.Accept -> Some <| Ok x.Key
@@ -306,7 +303,7 @@ module internal GrammarReader =
                 _Symbols = symbols
                 _Productions = productions.MoveToImmutable()
                 _Groups = groups.MoveToImmutable()
-                _LALRStates = {InitialState = lalrStates.[initialLALR]; States = lalrStates}
-                _DFAStates = {InitialState = dfaStates.[initialDFA]; States = dfaStates}
+                _LALRStates = lalrStates
+                _DFAStates = dfaStates
             }
         }

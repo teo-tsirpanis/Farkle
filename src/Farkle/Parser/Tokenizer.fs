@@ -5,7 +5,6 @@
 
 namespace Farkle.Parser
 
-open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
 open System.Collections.Immutable
@@ -35,7 +34,7 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA states oops input =
+    let private tokenizeDFA (states: ImmutableArray<_>) oops input =
         let rec impl idx (currState: DFAState) lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
@@ -61,7 +60,7 @@ module Tokenizer =
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
-            impl (getCurrentIndex input) states.InitialState None |> Some
+            impl (getCurrentIndex input) states.[0] None |> Some
         else
             None
 

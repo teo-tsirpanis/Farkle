@@ -244,10 +244,7 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
         statesList
         |> Seq.map toDFAState
         |> collect
-        |> Result.map (fun dfaStates -> 
-            let theHolyDFAStates = ImmutableArray.CreateRange dfaStates
-            let theSacredDFAStartingState = theHolyDFAStates.[0]
-            {InitialState = theSacredDFAStartingState; States = theHolyDFAStates})
+        |> Result.map ImmutableArray.CreateRange
     else
         Error <| BuildError.NullableSymbols acceptSymbolsOfFirstState
 

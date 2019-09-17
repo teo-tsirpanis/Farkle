@@ -5,11 +5,11 @@
 
 namespace Farkle.Parser
 
-open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
 open Farkle.PostProcessor
 open System.Threading
+open System.Collections.Immutable
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
@@ -41,11 +41,11 @@ module LALRParser =
     /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage (lalrStates: StateTable<LALRState>) oops (pp: PostProcessor<_>) fToken (input: CharStream) =
+    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) oops (pp: PostProcessor<_>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
         let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
         let rec impl token currentState stack =
-            let (|LALRState|) x = lalrStates.[x]
+            let (|LALRState|) x = lalrStates.[int x]
             let nextAction =
                 match token with
                 | Some({Symbol = x}) -> oops.GetLALRAction x currentState
@@ -89,4 +89,4 @@ module LALRParser =
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term
                     | None -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
-        impl (fToken input) lalrStates.InitialState [lalrStates.InitialState, null]
+        impl (fToken input) lalrStates.[0] [lalrStates.[0], null]

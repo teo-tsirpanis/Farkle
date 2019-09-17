@@ -306,7 +306,6 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
         {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
     )
     |> ImmutableArray.CreateRange
-    |> (fun theBlessedLALRStates -> {InitialState = theBlessedLALRStates.[0]; States = theBlessedLALRStates})
 
 /// Builds an LALR parsing table from the grammar that contains the given
 /// `Production`s. The grammar's starting symbol and number of terminals and nonterminals are required.

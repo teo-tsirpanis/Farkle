@@ -77,7 +77,11 @@ type internal Terminal =
 type internal Literal = Literal of string
 with
     interface DesigntimeFarkle with
-        member x.Name = match x with Literal x -> x
+        member x.Name =
+            match x with
+            // This would make things clearer when an empty literal string is created.
+            | Literal x when String.IsNullOrEmpty(x) -> "Empty String"
+            | Literal x -> x
         member __.Metadata = GrammarMetadata.Default
 
 [<CompiledName("AbstractNonterminal")>]

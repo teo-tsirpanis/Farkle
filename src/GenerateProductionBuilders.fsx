@@ -55,7 +55,6 @@ type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
 
 namespace Farkle.Builder
 
-open System
 open System.Collections.Immutable
 
 {{~ for i in 1..capacity reversed

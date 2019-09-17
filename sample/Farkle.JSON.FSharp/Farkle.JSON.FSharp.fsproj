@@ -3,8 +3,6 @@
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Farkle Include="..\JSON.egt" Namespace="Farkle.JSON.FSharp" />
-    <Compile Include="JSON.g.fs" />
     <!-- I added the calculator here as well, to demonstrate that it works with many Farkle items.
     It doesn't have anything to do with JSON, but renaming the project is too much of an effort. -->
     <Farkle Include="..\SimpleMaths.egt" Namespace="SimpleMaths" />

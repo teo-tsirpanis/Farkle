@@ -6,6 +6,8 @@
 module Farkle.Tests.GrammarEquivalenceTests
 
 open Expecto
+open Farkle
+open Farkle.Builder
 open Farkle.Grammar
 open System.Collections.Generic
 open System.Collections.Immutable
@@ -93,11 +95,20 @@ let checkParserEquivalence (farkleGrammar: Grammar) (goldGrammar: Grammar) =
     let productionMap = createProductionMap farkleGrammar.Productions goldGrammar.Productions
     checkLALRStateTableEquivalence productionMap farkleGrammar.LALRStates.States goldGrammar.LALRStates.States
 
+let balancedParentheses =
+    let expr = nonterminal "Expr"
+    expr.SetProductions(
+        !& "(" .>> expr .>> ")" .>> expr =% (),
+        empty =% ()
+    )
+    RuntimeFarkle.build expr |> extractGrammar
+
 [<Tests>]
 let tests =
     [
         "the calculator", extractGrammar SimpleMaths.int, "SimpleMaths.egt"
-        "JSON", extractGrammar Farkle.JSON.FSharp.Language.runtime, "JSON.egt"
+        "JSON", extractGrammar JSON.FSharp.Language.runtime, "JSON.egt"
+        "the language of balanced parentheses", balancedParentheses, "balanced-parentheses.egt"
     ]
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {

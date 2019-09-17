@@ -1,0 +1,8 @@
+"Name"     = 'Balanced Parentheses'
+"Author"   = 'Theodore Tsirpanis'
+"Version"  = '1.0'
+"About"    = 'The textbook example of a context-free language'
+
+"Start Symbol" = <Expr>
+
+<Expr> ::= '(' <Expr> ')' <Expr> | <>

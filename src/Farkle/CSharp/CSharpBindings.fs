@@ -15,7 +15,6 @@ open Farkle.IO
 open Farkle.PostProcessor
 open System
 open System.Collections.Immutable
-open System.IO
 open System.Text
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices

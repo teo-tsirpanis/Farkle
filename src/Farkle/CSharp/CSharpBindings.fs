@@ -3,6 +3,8 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+#nowarn "44" // This is for the RuntimeFarkle.ParseStream.
+
 // I am pretty sure that Scott Wlaschin hates me right now...
 // https://fsharpforfunandprofit.com/posts/cyclic-dependencies/
 namespace rec Farkle.CSharp
@@ -54,22 +56,17 @@ type RuntimeFarkleExtensions =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
         RF.parseMemory rf fLog mem
 
-    [<Extension>]
+    [<Extension; Obsolete("Streams are supposed to contain binary data; not text. Parse a TextReader instead.")>]
     /// <summary>Parses and post-processes a <see cref="System.IO.Stream"/>.</summary>
     /// <param name="stream">The stream to parse.</param>
     /// <param name="encoding">The character encoding of the stream's data. Defaults to UTF-8.</param>
     /// <param name="doLazyLoad">Whether to gradually read the input instead of reading its entirety in memory.
     /// Defaults to <c>true</c>.</param>
     /// <param name="fLog">An optional delegate that gets called for every parsing event that happens.</param>
-    static member Parse(rf, stream: Stream, [<Optional>] encoding: Encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
+    static member Parse(rf, stream, [<Optional>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad, [<Optional>] fLog) =
         let fLog = RuntimeFarkleExtensions.defaultLogFunc fLog
-        use sr = new StreamReader(stream, (if isNull encoding then Encoding.UTF8 else encoding), true, 4096, true)
-        use cs =
-            if doLazyLoad then
-                CharStream.ofTextReader sr
-            else
-                CharStream.ofString <| sr.ReadToEnd()
-        RF.parseChars rf fLog cs
+        let encoding = if isNull encoding then Encoding.UTF8 else encoding
+        RF.parseStream rf fLog doLazyLoad encoding stream
 
     [<Extension>]
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>

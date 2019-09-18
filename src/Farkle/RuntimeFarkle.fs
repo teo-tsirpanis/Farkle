@@ -133,18 +133,21 @@ module RuntimeFarkle =
     [<CompiledName("ParseString")>]
     let parseString rf fMessage inputString = inputString |> CharStream.ofString |> parseChars rf fMessage
 
-    /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily loaded.
-    /// The stream is disposed after its contents are parsed, which is why you might want to parse a text reader.
+    /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily read.
+    /// Better use `parseTextReader` instead.
     /// This function also accepts a custom parse message handler.
-    [<CompiledName("ParseStream"); Obsolete("Directly parsing streams opens questions like whether to be disposed by Farkle or not. Use parseTextReader or parseFile instead.")>]
+    [<CompiledName("ParseStream"); Obsolete("Streams are supposed to contain binary data; not text. Use parseTextReader instead.")>]
     let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
-        use sr = new StreamReader(inputStream, encoding)
+        use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =
             match doLazyLoad with
             | true -> CharStream.ofTextReader sr
             | false -> sr.ReadToEnd() |> CharStream.ofString
         parseChars rf fMessage cs
 
+    /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
+    /// This function also accepts a custom parse message handler.
+    [<CompiledName("ParseTextReader")>]
     let parseTextReader rf fMessage textReader =
         let cs = CharStream.ofTextReader textReader
         parseChars rf fMessage cs

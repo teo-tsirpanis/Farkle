@@ -8,6 +8,7 @@
 namespace rec Farkle.CSharp
 
 open Farkle
+open Farkle.Builder
 open Farkle.IO
 open Farkle.PostProcessor
 open System
@@ -88,13 +89,45 @@ type RuntimeFarkleExtensions =
 
     [<Extension>]
     /// <summary>Returns a new <see cref="RuntimeFarkle{TResult}"/> with a changed <see cref="PostProcessor"/>.</summary>
-    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: Farkle.PostProcessor.PostProcessor<'TNewResult>) =
+    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: PP<'TNewResult>) =
         RF.changePostProcessor pp rf
 
     [<Extension>]
     /// <summary>Returns a <see cref="RuntimeFarkle{Object}"/> that just checks if its given input is valid.</summary>
     /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
     static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
+
+[<Extension; AbstractClass; Sealed>]
+/// <summary>Extension methods for the <see cref="DesigntimeFarkle{TResult}"/> type.</summary>
+type DesigntimeFarkleExtensions =
+    [<Extension>]
+    /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/> into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
+    static member Build (df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
+    [<Extension>]
+    /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
+    /// is case sensitive.</summary>
+    static member CaseSensitive (df: DesigntimeFarkle<'TResult>, [<Optional; DefaultParameterValue(true)>] x) =
+        DesigntimeFarkle.caseSensitive x df
+    [<Extension>]
+    /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
+    /// would automatically ignore whitespace in input text.</summary>
+    static member AutoWhitespace (df: DesigntimeFarkle<'TResult>, x) =
+        DesigntimeFarkle.autoWhitespace x df
+    [<Extension>]
+    /// <summary>Adds a symbol specified by the given <see cref="Regex"/>
+    /// that will be ignored in input text.</summary>
+    static member AddNoiseSymbol (df: DesigntimeFarkle<'TResult>, name, regex) =
+        DesigntimeFarkle.addNoiseSymbol name regex df
+    [<Extension>]
+    /// <summary>Adds a new line comment in the given
+    /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
+    static member AddLineComment (df: DesigntimeFarkle<'TResult>, commentStart) =
+        DesigntimeFarkle.addLineComment commentStart df
+    [<Extension>]
+    /// <summary>Adds a new block comment in the given
+    /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
+    static member AddBlockComment (df: DesigntimeFarkle<'TResult>, commentStart, commentEnd) =
+        DesigntimeFarkle.addBlockComment commentStart commentEnd df
 
 [<Sealed>]
 /// <summary>An object that contains a function to convert a <see cref="Production"/> to an arbitrary object.</summary>

@@ -106,7 +106,7 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
             productions.Add {
                 Index = uint32 productions.Count
                 Head = root
-                Handle = ImmutableArray.Empty.Add(LALRSymbol.Terminal term)
+                Handle = ImmutableArray.Create(LALRSymbol.Terminal term)
             }
             fusers.Add(fun xs -> xs.[0])
             root

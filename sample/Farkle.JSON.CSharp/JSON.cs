@@ -88,7 +88,7 @@ namespace Farkle.JSON.CSharp
                 Join(
                     Literal('-').Optional(),
                     Literal('0').Or(OneOf("123456789").And(OneOf(PredefinedSets.Number).ZeroOrMore())),
-                    Literal('.').And(OneOf(PredefinedSets.Number).AtLeast(1)),
+                    Literal('.').And(OneOf(PredefinedSets.Number).AtLeast(1)).Optional(),
                     Join(
                         OneOf("eE"),
                         OneOf("+-").Optional(),
@@ -130,7 +130,8 @@ namespace Farkle.JSON.CSharp
                     .Finish((xs, k, v) => FSharpList<Tuple<string, Json>>.Cons(Tuple.Create(k, v), xs)),
                 jsonString.Extended().Append(":").Extend(value).Finish((k, v) =>ListModule.Singleton(Tuple.Create(k, v))));
             var objectOptional = Nonterminal.Create("Object Optional",
-                objectElement.Finish(x => Json.NewObject(MapModule.OfList(x))));
+                objectElement.Finish(x => Json.NewObject(MapModule.OfList(x))),
+                ProductionBuilder.Empty.FinishConstant(Json.NewObject(MapModule.Empty<string, Json>())));
             jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsIs());
 
             Designtime = value.CaseSensitive();

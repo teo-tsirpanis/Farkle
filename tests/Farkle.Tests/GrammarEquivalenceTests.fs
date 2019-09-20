@@ -107,7 +107,8 @@ let balancedParentheses =
 let tests =
     [
         "the calculator", extractGrammar SimpleMaths.int, "SimpleMaths.egt"
-        "JSON", extractGrammar JSON.FSharp.Language.runtime, "JSON.egt"
+        "the F# JSON parser", extractGrammar JSON.FSharp.Language.runtime, "JSON.egt"
+        "the C# JSON parser", extractGrammar JSON.CSharp.Language.Runtime, "JSON.egt"
         "the language of balanced parentheses", balancedParentheses, "balanced-parentheses.egt"
     ]
     |> List.map (fun (name, gFarkle, egt) ->

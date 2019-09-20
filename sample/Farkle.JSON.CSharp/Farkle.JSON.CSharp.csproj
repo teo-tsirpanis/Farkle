@@ -3,9 +3,6 @@
     <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Farkle Include="..\JSON.egt" Namespace="Farkle.JSON.CSharp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -117,21 +117,21 @@ namespace Farkle.JSON.CSharp
                 "null".FinishConstant(Json.NewNull(null)));
             var arrayReversed = Nonterminal.Create<FSharpList<Json>>("Array Reversed");
             arrayReversed.SetProductions(
-                arrayReversed.Extend().Append(",").Extend(value).Finish((xs, x) => FSharpList<Json>.Cons(x, xs)),
+                arrayReversed.Extended().Append(",").Extend(value).Finish((xs, x) => FSharpList<Json>.Cons(x, xs)),
                 value.Finish(ListModule.Singleton));
             var arrayOptional = Nonterminal.Create("Array Optional",
                 arrayReversed.Finish(ListModule.Reverse),
                 ProductionBuilder.Empty.FinishConstant(FSharpList<Json>.Empty));
-            jsonArray.SetProductions("[".Append().Extend(arrayOptional).Append("]").Finish(Json.NewArray));
+            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").Finish(Json.NewArray));
 
             var objectElement = Nonterminal.Create<FSharpList<Tuple<string, Json>>>("Object Element");
             objectElement.SetProductions(
-                objectElement.Extend().Append(",").Extend(jsonString).Append(":").Extend(value)
+                objectElement.Extended().Append(",").Extend(jsonString).Append(":").Extend(value)
                     .Finish((xs, k, v) => FSharpList<Tuple<string, Json>>.Cons(Tuple.Create(k, v), xs)),
-                jsonString.Extend().Append(":").Extend(value).Finish((k, v) =>ListModule.Singleton(Tuple.Create(k, v))));
+                jsonString.Extended().Append(":").Extend(value).Finish((k, v) =>ListModule.Singleton(Tuple.Create(k, v))));
             var objectOptional = Nonterminal.Create("Object Optional",
                 objectElement.Finish(x => Json.NewObject(MapModule.OfList(x))));
-            jsonObject.SetProductions("{".Append().Extend(objectOptional).Append("}").AsIs());
+            jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsIs());
 
             Designtime = value.CaseSensitive();
             Runtime = Designtime.Build();

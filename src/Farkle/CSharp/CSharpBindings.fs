@@ -104,11 +104,11 @@ type Nonterminal =
 /// <summary>Extension methods to create production builders.</summary>
 type ProductionBuilderExtensions =
     [<Extension>]
-    static member Append(lit) = !& lit
+    static member Appended(lit) = !& lit
     [<Extension>]
-    static member Append(df) = !% df
+    static member Appended(df) = !% df
     [<Extension>]
-    static member Extend(df) = !@ df
+    static member Extended(df) = !@ df
     [<Extension>]
     static member Finish(df, f) = (!@ df).Finish(f)
     [<Extension>]

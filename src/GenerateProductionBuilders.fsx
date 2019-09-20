@@ -40,7 +40,7 @@ type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
     {{~ if n != capacity ~}}
     member __.Extend(df: DesigntimeFarkle<'T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(Symbol.append members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
-    member __.Finish(f: {{ finish_signature n }}) : Production<'TOutput> = {
+    member __.FSharpFinish(f: {{ finish_signature n }}) : Production<'TOutput> = {
         Members = members.ToImmutableArray()
         Fuse =
             fun arr ->
@@ -50,11 +50,20 @@ type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
                     {{~ end ~}}
                 |> box
     }
+    {{~ if n == 1 }}
+    /// Returns a production that returns the significant member as is.
+    member x.AsIs() = x.FSharpFinish(id)
+    {{~ end ~}}
+    {{~ if n <= 5 }}
+    member x.Finish(f: Func<{{ type_params n }}, 'TOutput>) =
+        x.FSharpFinish(FuncConvert.FromFunc<{{ type_params n }}, 'TOutput>(f))
+    {{~ end ~}}
 
 {{~ end ~}}
 
 namespace Farkle.Builder
 
+open System
 open System.Collections.Immutable
 
 {{~ for i in 1..capacity reversed

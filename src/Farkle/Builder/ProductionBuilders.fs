@@ -5,6 +5,8 @@
 
 namespace Farkle.Builder
 
+open Farkle.Common
+open System
 open System.Collections.Immutable
 
 [<Sealed>]
@@ -23,7 +25,8 @@ open System.Collections.Immutable
 ///     whose type is determined by the given <see cref="DesigntimeFarkle{T}"/> that will
 ///     be appended to it.</para>
 ///     <para><c>Finish</c> accepts a function that converts all the builder's significant members
-///     into the eventual type of the returned <see cref="Production{T}"/>.</para>
+///     into the eventual type of the returned <see cref="Production{T}"/>. It comes in two editions.
+///     One that takes an F# function and another one that takes a delegate.</para>
 /// </remarks>
 /// <typeparam name="T">The type of the concrete production builder. Used so that
 /// <see cref="AbstractProductionBuilder{TBuilder}.Append"/> can return the correct production builder type</typeparam>
@@ -33,7 +36,8 @@ type ProductionBuilder(members) =
     member __.Append(sym) = ProductionBuilder(Symbol.append members sym)
     member x.Append(lit) = x.Append(Literal lit)
     member __.Extend(df: DesigntimeFarkle<'T1>) = ProductionBuilder<'T1>(Symbol.append members df, members.Count)
-    member x.Finish(fFuseThunk) = x.FinishRaw(fun _ -> fFuseThunk ())
+    member x.FSharpFinish(fFuseThunk) = x.FinishRaw(fun _ -> fFuseThunk())
+    member x.Finish(f: Func<_>) = x.FSharpFinish(FuncConvert.FromFunc(f))
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// an array of all the production's parts as objects.</summary>
     /// <remarks>
@@ -62,10 +66,16 @@ module DesigntimeFarkleOperators =
 
     /// Creates an empty `Nonterminal`.
     /// It must be filled afterwards, or it will raise an error.
-    let nonterminal name = Nonterminal.Create(name)
+    let nonterminal name = {
+        _Name = name
+        Productions = SetOnce<_>.Create()
+    }
 
     /// Creates a `DesigntimeFarkle<'T>` with the given name and productions.
-    let inline (||=) name parts = Nonterminal.Create(name, Array.ofSeq parts) :> DesigntimeFarkle<_>
+    let inline (||=) name parts =
+        let nont = nonterminal name
+        nont.SetProductions(Array.ofSeq parts)
+        nont :> DesigntimeFarkle<_>
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
@@ -75,7 +85,7 @@ module DesigntimeFarkleOperators =
     let inline op_DotGreaterGreaterDot pb df = (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
 
     /// The `Finish` method of production builders as an operator.
-    let inline (=>) pb f = (^TBuilder : (member Finish: ^TFunction -> Production<'T>) (pb, f))
+    let inline (=>) pb f = (^TBuilder : (member FSharpFinish: ^TFunction -> Production<'T>) (pb, f))
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)

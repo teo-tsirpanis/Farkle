@@ -169,16 +169,6 @@ type Nonterminal<'T> = internal {
     Productions: SetOnce<AbstractProduction list>
 }
 with
-    /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions can be later set.</summary>
-    /// <remarks>
-    ///     <para>If they are not set, it is assumed that the nonterminal consists only of the empty string.</para>
-    ///     <para>This method exists to help write recursive grammars.</para>
-    /// </remarks>
-    /// <param name="name">The nonterminal's name.</param>
-    static member Create name = {
-        _Name = name
-        Productions = SetOnce<_>.Create()
-    }
     /// The nonterminal's name.
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
@@ -189,11 +179,6 @@ with
         |> List.ofSeq
         |> x.Productions.TrySet
         |> ignore
-    /// <summary>Creates a <see cref="Nonterminal{T}"/> with the given name and productions.</summary>
-    static member Create (name, [<ParamArray>] productions) =
-        let prod = Nonterminal.Create name
-        prod.SetProductions(productions)
-        prod
     interface Nonterminal with
         member x.Productions = x.Productions.ValueOrDefault []
     interface DesigntimeFarkle with

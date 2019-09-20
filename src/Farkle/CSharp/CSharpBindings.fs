@@ -93,6 +93,29 @@ type RuntimeFarkleExtensions =
     /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
     static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
 
+[<AbstractClass; Sealed>]
+/// <summary>A helper class to create <see cref="Farkle.Builder.Nonterminal{TResult}"/>s.</summary>
+type Nonterminal =
+    static member Create(name) = nonterminal name
+
+    static member Create(name, [<ParamArray>] productions) = name ||= (Seq.ofArray productions)
+
+[<Extension; AbstractClass; Sealed>]
+/// <summary>Extension methods to create production builders.</summary>
+type ProductionBuilderExtensions =
+    [<Extension>]
+    static member Append(lit) = !& lit
+    [<Extension>]
+    static member Append(df) = !% df
+    [<Extension>]
+    static member Extend(df) = !@ df
+    [<Extension>]
+    static member Finish(df, f) = (!@ df).Finish(f)
+    [<Extension>]
+    static member FinishConstant(str, constant) = !& str =% constant
+    [<Extension>]
+    static member AsIs(df) = (!@ df).AsIs()
+
 [<Extension; AbstractClass; Sealed>]
 /// <summary>Extension methods for the <see cref="DesigntimeFarkle{TResult}"/> type.</summary>
 type DesigntimeFarkleExtensions =

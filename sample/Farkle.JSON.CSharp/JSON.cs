@@ -9,7 +9,8 @@ using System;
 using System.Globalization;
 using System.Text;
 using Farkle.CSharp;
-using Farkle.JSON.CSharp.Definitions;
+using Farkle.Builder;
+using static Farkle.Builder.Regex;
 
 namespace Farkle.JSON.CSharp
 {
@@ -49,13 +50,14 @@ namespace Farkle.JSON.CSharp
                         sb.Append('\t');
                     else if (ch == 'u')
                     {
-                        var hexCode =
+                        var hexString =
 #if NETCOREAPP2_1
-                            ushort.Parse(data.Slice(i, 4), NumberStyles.HexNumber);
+                            data.Slice(i, 4);
 #else
-                            ushort.Parse(data.Slice(i, 4).ToString(), NumberStyles.HexNumber);
+                            data.Slice(i, 4).ToString();
 #endif
-                        sb.Append((char) hexCode);
+                        var hexChar = ushort.Parse(hexString, NumberStyles.HexNumber);
+                        sb.Append((char) hexChar);
                         i += 4;
                     }
                 }
@@ -64,80 +66,75 @@ namespace Farkle.JSON.CSharp
             return sb.ToString();
         }
 
-        // This function converts terminals to anything you want.
-        // If you do not care about a terminal (like single characters),
-        // you can let the default case return null.
-        private static object Transform(uint terminal, Position position, ReadOnlySpan<char> data)
+        private static Json ToDecimal(ReadOnlySpan<char> data)
         {
-            switch ((Terminal) terminal)
-            {
-                case Terminal.Number:
-                    var num =
+            var num =
 #if NETCOREAPP2_1
-                        decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
+                decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
 #else
-                        decimal.Parse(data.ToString(), NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
+                decimal.Parse(data.ToString(), NumberStyles.AllowExponent | NumberStyles.Float,
+                    CultureInfo.InvariantCulture);
 #endif
-                    // Avoid boxing by wrapping directly to the Json type.
-                    return Json.NewNumber(num);
-                case Terminal.String:
-                    return UnescapeJsonString(data);
-                default: return null;
-            }
+            return Json.NewNumber(num);
         }
 
-        // The fusers merge the parts of a production into one object of your desire.
-        // This function maps each production to a fuser.
-        // Do not delete anything here, or the post-processor will fail.
-        private static Fuser GetFuser(uint prod)
+        public static readonly DesigntimeFarkle<Json> Designtime;
+
+        public static readonly RuntimeFarkle<Json> Runtime;
+
+        static Language()
         {
-            switch ((Production) prod)
-            {
-                case Production.ValueString:
-                    return Fuser.Create<string, Json>(0, Json.NewString);
-                case Production.ValueNumber:
-                    return Fuser.First;
-                case Production.ValueObject:
-                    return Fuser.First;
-                case Production.ValueArray:
-                    return Fuser.First;
-                case Production.ValueTrue:
-                    return Fuser.Constant(Json.NewBool(true));
-                case Production.ValueFalse:
-                    return Fuser.Constant(Json.NewBool(false));
-                case Production.ValueNull:
-                    return Fuser.Constant(Json.NewNull(null));
-                case Production.ArrayLBracketRBracket:
-                    return Fuser.Create<FSharpList<Json>, Json>(1, Json.NewArray);
-                case Production.ArrayOptionalArrayReversed:
-                    return Fuser.Create<FSharpList<Json>, FSharpList<Json>>(0, ListModule.Reverse);
-                case Production.ArrayOptionalEmpty:
-                    return Fuser.Constant(FSharpList<Json>.Empty);
-                case Production.ArrayReversedComma:
-                    return Fuser.Create<Json, FSharpList<Json>, FSharpList<Json>>(2, 0, FSharpList<Json>.Cons);
-                case Production.ArrayReversed:
-                    return Fuser.Create<Json, FSharpList<Json>>(0, ListModule.Singleton);
-                case Production.ObjectLBraceRBrace:
-                    return Fuser.Create<FSharpList<Tuple<string, Json>>, Json>(1,
-                        list => Json.NewObject(MapModule.OfList(list)));
-                case Production.ObjectOptionalObjectElement:
-                    return Fuser.First;
-                case Production.ObjectOptionalEmpty:
-                    return Fuser.Constant(FSharpList<Tuple<string, Json>>.Empty);
-                case Production.ObjectElementCommaStringColon:
-                    return Fuser.Create<string, Json, FSharpList<Tuple<string, Json>>, FSharpList<Tuple<string, Json>>>(
-                        2, 4, 0,
-                        (key, value, map) =>
-                            FSharpList<Tuple<string, Json>>.Cons(new Tuple<string, Json>(key, value), map));
-                case Production.ObjectElementStringColon:
-                    return Fuser.Create<string, Json, FSharpList<Tuple<string, Json>>>(0, 2,
-                        (key, value) => ListModule.Singleton(new Tuple<string, Json>(key, value)));
-                default: return null; // This line should never be reached.
-            }
-        }
+            var number = Terminal<Json>.Create("Number", (position, data) => ToDecimal(data),
+                Join(
+                    Literal('-').Optional(),
+                    Literal('0').Or(OneOf("123456789").And(OneOf(PredefinedSets.Number).ZeroOrMore())),
+                    Literal('.').And(OneOf(PredefinedSets.Number).AtLeast(1)),
+                    Join(
+                        OneOf("eE"),
+                        OneOf("+-").Optional(),
+                        OneOf(PredefinedSets.Number).AtLeast(1)).Optional()));
+            var stringCharacters = PredefinedSets.AllValid.Characters.Remove('"').Remove('\\');
+            var jsonString = Terminal<string>.Create("String", (position, data) => UnescapeJsonString(data),
+                Join(
+                    Literal('"'),
+                    Choice(
+                        OneOf(stringCharacters),
+                        Join(
+                            Literal('\\'),
+                            Choice(
+                                OneOf("\"\\/bfnrt"),
+                                Literal('u').And(OneOf("1234567890ABCDEF").Repeat(4))))).ZeroOrMore(),
+                    Literal('"')));
+            var jsonObject = Nonterminal.Create<Json>("Object");
+            var jsonArray = Nonterminal.Create<Json>("Array");
+            var value = Nonterminal.Create("Value",
+                jsonString.Finish(Json.NewString),
+                number.AsIs(),
+                jsonObject.AsIs(),
+                jsonArray.AsIs(),
+                "true".FinishConstant(Json.NewBool(true)),
+                "false".FinishConstant(Json.NewBool(false)),
+                "null".FinishConstant(Json.NewNull(null)));
+            var arrayReversed = Nonterminal.Create<FSharpList<Json>>("Array Reversed");
+            arrayReversed.SetProductions(
+                arrayReversed.Extend().Append(",").Extend(value).Finish((xs, x) => FSharpList<Json>.Cons(x, xs)),
+                value.Finish(ListModule.Singleton));
+            var arrayOptional = Nonterminal.Create("Array Optional",
+                arrayReversed.Finish(ListModule.Reverse),
+                ProductionBuilder.Empty.FinishConstant(FSharpList<Json>.Empty));
+            jsonArray.SetProductions("[".Append().Extend(arrayOptional).Append("]").Finish(Json.NewArray));
 
-        public static readonly RuntimeFarkle<Json> Runtime =
-            RuntimeFarkle<Json>.CreateFromBase64String(Definitions.Grammar.AsBase64,
-                Farkle.CSharp.PostProcessor.Create<Json>(Transform, GetFuser));
+            var objectElement = Nonterminal.Create<FSharpList<Tuple<string, Json>>>("Object Element");
+            objectElement.SetProductions(
+                objectElement.Extend().Append(",").Extend(jsonString).Append(":").Extend(value)
+                    .Finish((xs, k, v) => FSharpList<Tuple<string, Json>>.Cons(Tuple.Create(k, v), xs)),
+                jsonString.Extend().Append(":").Extend(value).Finish((k, v) =>ListModule.Singleton(Tuple.Create(k, v))));
+            var objectOptional = Nonterminal.Create("Object Optional",
+                objectElement.Finish(x => Json.NewObject(MapModule.OfList(x))));
+            jsonObject.SetProductions("{".Append().Extend(objectOptional).Append("}").AsIs());
+
+            Designtime = value.CaseSensitive();
+            Runtime = Designtime.Build();
+        }
     }
 }

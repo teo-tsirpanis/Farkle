@@ -13,7 +13,6 @@
 // Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
 #load "./.fake/build.fsx/intellisense_lazy.fsx"
 #endif
-#load "./src/GenerateProductionBuilders.fsx"
 
 open Fake.Api
 open Fake.BuildServer
@@ -24,6 +23,7 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
+open Scriban
 open System
 open System.IO
 open System.Text.RegularExpressions
@@ -54,7 +54,7 @@ let configuration = DotNet.BuildConfiguration.Release
 let configurationAsString = sprintf "%A" configuration
 
 let sourceFilesToGenerate = [
-    "./src/GenerateProductionBuilders.fsx", "./src/Farkle/Builder/ProductionBuilders.g.fs", GenerateProductionBuilders.generateProductionBuilders
+    "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.fs"
 ]
 
 [<Literal>]
@@ -173,7 +173,7 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 Target.description "Generates some source code files that are needed by Farkle"
 Target.create "GenerateCode" (fun _ ->
     sourceFilesToGenerate
-    |> List.iter (fun (src, dest, fGenerate) ->
+    |> List.iter (fun (src, dest) ->
         File.checkExists src
         let shouldGenerate =
             if File.exists dest then
@@ -187,7 +187,10 @@ Target.create "GenerateCode" (fun _ ->
                 Trace.logfn "%s does not exist so it will be generated" dest
                 true
         if shouldGenerate then
-            let generatedSource = fGenerate()
+            let templateText = File.readAsString src
+            let template = Template.Parse(templateText, src)
+            let tc = TemplateContext()
+            let generatedSource = template.Render(tc)
             File.WriteAllText(dest, generatedSource)
     )
 )

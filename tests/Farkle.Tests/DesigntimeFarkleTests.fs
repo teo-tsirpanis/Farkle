@@ -6,6 +6,7 @@
 module Farkle.Tests.DesigntimeFarkleTests
 
 open Expecto
+open Farkle
 open Farkle.Builder
 open Farkle.Grammar
 open System.Collections.Immutable
@@ -48,5 +49,13 @@ let tests = testList "Designtime Farkle tests" [
         ]
         let result = nt |> DesigntimeFarkleBuild.build |> fst
         Expect.isOk result "Duplicate literals give an error"
+    }
+
+    test "A grammar that only accepts the empty string indeed accepts it" {
+        let designtime = "S" ||= [empty =% ()]
+        let runtime = RuntimeFarkle.build designtime
+        let result = RuntimeFarkle.parse runtime ""
+
+        Expect.isOk result "Something went wrong"
     }
 ]

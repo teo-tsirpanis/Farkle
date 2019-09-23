@@ -70,6 +70,9 @@ module internal OptimizedOperations =
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
         // Thanks to GOLD Parser, some cells in the array are left unused.
         // But when the time comes, the symbols of Farkle's own grammars will start at zero.
+        // Edit: the time came.
+        // Also, the following line will fail if called with an empty terminal array.
+        // But the caller function below protects us.
         let maxTerminalIndex = terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
         let arr = Array2D.zeroCreate lalr.Length (maxTerminalIndex + 1)
         lalr
@@ -78,10 +81,14 @@ module internal OptimizedOperations =
             |> Seq.iter (fun (KeyValue(term, action)) -> action |> Some |> Array2D.set arr (int stateIndex) (int term.Index)))
         arr
 
-    let getLALRAction terminals lalr =
-        let arr = buildLALRActionArray terminals lalr
-        fun (Terminal(terminalIndex, _)) {LALRState.Index = stateIndex} ->
-            arr.[int stateIndex, int terminalIndex]
+    let getLALRAction (terminals: ImmutableArray<_>) lalr =
+        // If there are no terminals, this function wouldn't even be called in the first place!
+        if terminals.IsEmpty then
+            fun _ _ -> None
+        else
+            let arr = buildLALRActionArray terminals lalr
+            fun (Terminal(terminalIndex, _)) {LALRState.Index = stateIndex} ->
+                arr.[int stateIndex, int terminalIndex]
 
     let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
         // Same with above.
@@ -97,6 +104,8 @@ module internal OptimizedOperations =
         arr
 
     let lalrGoto nonterminals lalr =
+        // There is no way for a grammar to not have nonterminals,
+        // in contrast with a gramamr without terminals.
         let arr = buildLALRGotoArray nonterminals lalr
         fun (Nonterminal(nonterminalIndex, _)) {LALRState.Index = stateIndex} ->
             arr.[int stateIndex, int nonterminalIndex]

@@ -251,9 +251,6 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
 /// Builds a DFA that recognizes the given `Regex`es, each accepting a unique `DFASymbol`.
 /// Optionally, the resulting DFA can be case sensitive.
 let buildRegexesToDFA caseSensitive regexes =
-    match regexes with
-    | [] -> Error BuildError.NoSymbolsSpecified
-    | _ ->
-        let tree, leaves = createRegexBuild caseSensitive regexes
-        let followPos = calculateFollowPos leaves.Length tree
-        makeDFA tree leaves followPos
+    let tree, leaves = createRegexBuild caseSensitive regexes
+    let followPos = calculateFollowPos leaves.Length tree
+    makeDFA tree leaves followPos

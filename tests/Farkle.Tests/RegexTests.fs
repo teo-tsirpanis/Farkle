@@ -53,8 +53,7 @@ let tests = testList "Regex tests" [
         | Ok dfa ->
             List.forall (fun (str, sym) -> match matchDFAToString dfa str with | Some x -> x = sym | _ -> false) strings
         // Some regexes might turn out to be indistinguishable.
-        // It's quite unlikely, but we cannot predict it, so we
-        // just ignore it. The other two DFA generation errors are impossible to happen.
+        // It's quite unlikely, but we cannot predict it, so we just ignore it.
         | Error _ -> true
     )
 

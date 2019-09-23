@@ -58,4 +58,13 @@ let tests = testList "Designtime Farkle tests" [
 
         Expect.isOk result "Something went wrong"
     }
+
+    test "A grammar with a nullable terminal is not accepted" {
+        let designtime =
+            let term = terminal "Nullable" (T(fun _ _ -> ())) (Regex.oneOf Number |> Regex.atLeast 0)
+            "S" ||= [!% term =% ()]
+        let grammar = DesigntimeFarkleBuild.build designtime |> fst
+        Expect.equal grammar (Error (BuildError.NullableSymbols (Set.singleton (Choice1Of4 <| Terminal(0u, "Nullable")))))
+            "A grammar with a nullable symbol was accepted"
+    }
 ]

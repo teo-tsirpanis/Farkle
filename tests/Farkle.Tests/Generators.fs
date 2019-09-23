@@ -86,7 +86,7 @@ let regexGen =
             | 2 when size >= 16 -> return! Gen.map Regex.oneOf nonEmptyString
             | _ -> return! Gen.map (Regex.atLeast 0) gen
     }
-    Gen.sized impl |> Gen.filter (fun x -> not <| x.IsNullable())
+    Gen.sized impl
 
 let JsonGen =
     let leaves =

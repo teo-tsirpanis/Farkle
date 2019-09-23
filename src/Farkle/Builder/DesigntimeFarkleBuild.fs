@@ -184,6 +184,14 @@ let private createDesigntimeGrammar (df: DesigntimeFarkle) =
 
 /// Performs some checks on the grammar that would cause problems later.
 let private consistencyCheck grammar = either {
+    let nullableDFASymbols =
+        grammar.DFASymbols
+        |> List.filter (fun (regex, _) -> regex.IsNullable())
+        |> List.map snd
+        |> set
+    if not nullableDFASymbols.IsEmpty then
+        do! Error <| BuildError.NullableSymbols nullableDFASymbols
+
     let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
     grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
     if emptyNonterminals.Count <> 0 then

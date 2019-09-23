@@ -236,17 +236,10 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
         | 0 -> Ok {Index = state.Index; AcceptSymbol = None; Edges = rangeMap}
         | 1 -> Ok {Index = state.Index; AcceptSymbol = Some acceptSymbols.MinimumElement; Edges = rangeMap}
         | _ -> Error <| BuildError.IndistinguishableSymbols acceptSymbols
-    let acceptSymbolsOfFirstState =
-        statesList.[0].Name
-        |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
-        |> set
-    if acceptSymbolsOfFirstState.IsEmpty then
-        statesList
-        |> Seq.map toDFAState
-        |> collect
-        |> Result.map ImmutableArray.CreateRange
-    else
-        Error <| BuildError.NullableSymbols acceptSymbolsOfFirstState
+    statesList
+    |> Seq.map toDFAState
+    |> collect
+    |> Result.map ImmutableArray.CreateRange
 
 /// Builds a DFA that recognizes the given `Regex`es, each accepting a unique `DFASymbol`.
 /// Optionally, the resulting DFA can be case sensitive.

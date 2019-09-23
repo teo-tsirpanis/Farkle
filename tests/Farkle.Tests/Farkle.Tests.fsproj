@@ -2,21 +2,13 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <DebugType>portable</DebugType>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="Generators.fs" />
-    <Compile Include="RangeMapTests.fs" />
-    <Compile Include="CharStreamTests.fs" />
-    <Compile Include="GrammarTests.fs" />
-    <Compile Include="ParserTests.fs" />
-    <Compile Include="ASTTests.fs" />
-    <Compile Include="RegexTests.fs" />
-    <Compile Include="DesigntimeFarkleTests.fs" />
-    <Compile Include="GrammarEquivalenceTests.fs" />
-    <Compile Include="RegressionTests.fs" />
+    <!-- The test source files do not depend on each other, so why not? -->
+    <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

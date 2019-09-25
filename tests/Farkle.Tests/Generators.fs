@@ -13,6 +13,7 @@ open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
+open Farkle.Tests.GOLDParserBridge
 open FsCheck
 open SimpleMaths
 open System.Collections.Generic
@@ -21,13 +22,6 @@ open System.IO
 open System.Text
 
 let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
-
-let productionGen = gen {
-    let! index = Arb.generate
-    let! head = Arb.generate
-    let! handle = Arb.generate |> Gen.listOf
-    return {Index = index; Head = head; Handle = ImmutableArray.CreateRange handle}
-}
 
 let positionGen =
     Arb.generate
@@ -182,9 +176,44 @@ let regexStringPairGen = gen {
     return RegexStringPair(regex, str)
 }
 
+let grammarGen =
+    let impl size = gen {
+        let! terminals =
+            Gen.choose(1, size)
+            |> Gen.map (fun x ->
+                Array.init x (fun idx ->
+                    let idx = uint32 idx
+                    Terminal(uint32 idx, sprintf "T%d" idx)))
+        let! nonterminals =
+            Gen.choose(1, size)
+            |> Gen.map (fun x ->
+                Array.init x (fun idx ->
+                    let idx = uint32 idx
+                    Nonterminal(uint32 idx, sprintf "N%d" idx)))
+        let handleGen =
+            Gen.oneof [
+                Gen.elements terminals |> Gen.map LALRSymbol.Terminal
+                Gen.elements nonterminals |> Gen.map LALRSymbol.Nonterminal
+            ]
+            |> Gen.arrayOf
+            |> Gen.map ImmutableArray.CreateRange
+        let! productionPairs =
+            nonterminals
+            |> Gen.collect (fun nont ->
+                handleGen |> Gen.nonEmptyListOf |> Gen.map (List.map (fun handle -> nont, handle)))
+            |> Gen.map List.concat
+        let productions = ImmutableArray.CreateBuilder()
+        (nonterminals.[0], ImmutableArray.Create(LALRSymbol.Terminal terminals.[0])) :: productionPairs
+        |> List.iteri (fun idx (head, handle) -> productions.Add{Index = uint32 idx; Head = head; Handle = handle})
+        return GrammarDefinition(terminals.Length, nonterminals.Length, nonterminals.[0], productions.ToImmutable())
+    }
+    Gen.sized impl |> Gen.filter (fun (GrammarDefinition(terminalCount, nonterminalCount, startSymbol, productions)) ->
+        match LALRBuild.buildProductionsToLALRStates terminalCount nonterminalCount startSymbol productions with
+        | Ok _ -> true
+        | Result.Error _ -> false)
+
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
-    static member Production() = Arb.fromGen productionGen
     static member Position() = Arb.fromGen positionGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
@@ -204,6 +233,7 @@ type Generators =
     static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
+    static member GrammarDefinition() = Arb.fromGen grammarGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

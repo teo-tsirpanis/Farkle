@@ -292,17 +292,18 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
                 | [] -> None
                 | [x] -> Some x
                 | x1 :: x2 :: xs -> resolveEOFConflict (fResolveConflict index None x1 x2 :: xs)
-            match Seq.tryExactlyOne itemSet.Kernel with
-            | Some k when k.IsAtEnd && k.Production.Head = startSymbol ->  Some LALRAction.Accept
-            | _ ->
-                closedItem
-                |> Seq.choose (fun item ->
-                    if Set.contains End item.Lookahead then
-                        Some (LALRAction.Reduce item.Item.Production)
-                    else
-                        None)
-                |> List.ofSeq
-                |> resolveEOFConflict
+            closedItem
+            |> Seq.choose (fun item ->
+                if Set.contains End item.Lookahead then
+                    Some (LALRAction.Reduce item.Item.Production)
+                else
+                    None)
+            |> List.ofSeq
+            |> resolveEOFConflict
+            |> Option.map (function
+                // Essentially, reducing <S'> -> <S> means accepting.
+                | LALRAction.Reduce {Head = head} when head = startSymbol -> LALRAction.Accept
+                | action -> action)
         {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
     )
     |> ImmutableArray.CreateRange

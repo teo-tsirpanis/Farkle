@@ -67,4 +67,17 @@ let tests = testList "Designtime Farkle tests" [
         Expect.equal grammar (Error (BuildError.NullableSymbols (Set.singleton (Choice1Of4 <| Terminal(0u, "Nullable")))))
             "A grammar with a nullable symbol was accepted"
     }
+
+    test "Farkle loudly rejects an Accept-Reduce error which is silently accepted by GOLD Parser" {
+        let designtime =
+            let S = nonterminal "S"
+            let T = "T" ||= [!% S =% ()]
+            S.SetProductions(
+                !& "x" =% (),
+                !% T =% ()
+            )
+            S
+        let grammar = DesigntimeFarkleBuild.build designtime |> fst
+        Expect.isError grammar "An Accept-Reduce error was silently accepted by Farkle too."
+    }
 ]

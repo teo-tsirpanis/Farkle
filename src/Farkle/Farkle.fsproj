@@ -8,7 +8,7 @@
     <Description>Farkle is a parser library inspired by, and based on the GOLD Parser.</Description>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- Disabled, until Paket PR #3636 gets merged. -->
+    <!-- Disabled until Paket issue #3615 gets fixed. -->
     <!-- <IncludeSymbols>true</IncludeSymbols> -->
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>

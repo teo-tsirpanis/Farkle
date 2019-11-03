@@ -100,5 +100,5 @@ let buildInt() =
     |> DesigntimeFarkle.addLineComment "//"
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
     |> RuntimeFarkle.build
-    
+
 let int = buildInt()

@@ -64,10 +64,9 @@ type DesigntimeFarkle =
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
-[<CompiledName("AbstractTerminal")>]
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>
-type internal Terminal =
+type internal AbstractTerminal =
     inherit DesigntimeFarkle
     /// <summary>The <see cref="Regex"/> that defines this terminal.</summary>
     abstract Regex: Regex
@@ -84,10 +83,9 @@ with
             | Literal x -> x
         member __.Metadata = GrammarMetadata.Default
 
-[<CompiledName("AbstractNonterminal")>]
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
-type internal Nonterminal =
+type internal AbstractNonterminal =
     inherit DesigntimeFarkle
     /// The productions of the nonterminal.
     abstract Productions: AbstractProduction list
@@ -101,7 +99,7 @@ and internal AbstractProduction =
     abstract Members: Symbol ImmutableArray
     abstract Fuse: (obj [] -> obj)
 
-and internal Symbol = Choice<Terminal, Literal, Nonterminal>
+and internal Symbol = Choice<AbstractTerminal, Literal, AbstractNonterminal>
 
 /// <summary>An object representing a grammar created by Farkle.Builder.
 /// It can be converted to <see cref="RuntimeFarkle{T}"/>.</summary>
@@ -153,7 +151,7 @@ with
         term :> DesigntimeFarkle<'T>
     /// The terminal's name.
     member x.Name = x._Name
-    interface Terminal with
+    interface AbstractTerminal with
         member x.Regex = x.Regex
         member x.Transformer = x.Transformer
     interface DesigntimeFarkle with
@@ -179,7 +177,7 @@ with
         |> List.ofSeq
         |> x.Productions.TrySet
         |> ignore
-    interface Nonterminal with
+    interface AbstractNonterminal with
         member x.Productions = x.Productions.ValueOrDefault []
     interface DesigntimeFarkle with
         member x.Name = x._Name
@@ -200,9 +198,9 @@ with
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =
         match x with
-        | :? Terminal as term -> Choice1Of3 term
+        | :? AbstractTerminal as term -> Choice1Of3 term
         | :? Literal as lit -> Choice2Of3 lit
-        | :? Nonterminal as nont -> Choice3Of3 nont
+        | :? AbstractNonterminal as nont -> Choice3Of3 nont
         | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
         | _ -> failwith "Using a custom derivative of the DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)

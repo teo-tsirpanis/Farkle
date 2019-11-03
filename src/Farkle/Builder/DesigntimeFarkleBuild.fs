@@ -61,7 +61,7 @@ module DesigntimeFarkleBuild =
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
         let rec impl (sym: Symbol) =
-            let handleTerminal (term: Farkle.Builder.Terminal) =
+            let handleTerminal (term: AbstractTerminal) =
                 let symbol = Terminal(uint32 terminals.Count, term.Name)
                 terminalMap.Add(term, symbol)
                 // For every addition to the terminals,
@@ -78,7 +78,7 @@ module DesigntimeFarkleBuild =
             | Choice2Of3 (Literal lit) when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
             | Choice2Of3 (Literal lit) ->
-                let term = Terminal.Create lit tNull (Regex.literal lit) :?> Farkle.Builder.Terminal
+                let term = Terminal.Create lit tNull (Regex.literal lit) :?> AbstractTerminal
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol

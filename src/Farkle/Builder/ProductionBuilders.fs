@@ -39,10 +39,12 @@ type ProductionBuilder(members) =
     member x.FSharpFinish(fFuseThunk) = x.FinishRaw(fun _ -> fFuseThunk())
     member x.Finish(f: Func<_>) = x.FSharpFinish(FuncConvert.FromFunc(f))
     /// <summary>Like <c>Finish</c>, but the given function accepts
-    /// an array of all the production's parts as objects.</summary>
+    /// an array of all the production's members as objects.</summary>
     /// <remarks>
-    ///     <para>This method is intended to be used when finishing a production with many significant parts.</para>
-    ///     <para>Do not rely on the array's length; it can be larger than the number of parts of the production.</para>
+    ///     <para>This method is intended to be used when finishing
+    ///     a production with many significant members.</para>
+    ///     <para>Do not rely on the array's length; it can be larger
+    ///     than the number of members of the production.</para>
     /// </remarks>
     member __.FinishRaw(fFuseRaw: _ -> 'TOutput) : Production<'TOutput> = {
         Members = members.ToImmutableArray()
@@ -72,9 +74,9 @@ module DesigntimeFarkleOperators =
     }
 
     /// Creates a `DesigntimeFarkle<'T>` with the given name and productions.
-    let inline (||=) name parts =
+    let inline (||=) name members =
         let nont = nonterminal name
-        nont.SetProductions(Array.ofSeq parts)
+        nont.SetProductions(Array.ofSeq members)
         nont :> DesigntimeFarkle<_>
 
     /// The `Append` method of production builders as an operator.

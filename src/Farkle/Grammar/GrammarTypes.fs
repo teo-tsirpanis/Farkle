@@ -207,7 +207,7 @@ type Production = {
     Handle: LALRSymbol ImmutableArray
 }
 with
-    /// Pretty-prints the parts of a production to a string.
+    /// Pretty-prints the members of a production to a string.
     static member internal Format(head, handle) =
         handle
         |> Seq.map string

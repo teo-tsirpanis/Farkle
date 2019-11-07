@@ -123,6 +123,12 @@ type DesigntimeFarkleExtensions =
     /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/> into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
     static member Build (df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
     [<Extension>]
+    /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
+    /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
+    static member BuildUntyped df =
+        RuntimeFarkle.buildUntyped df
+        |> RuntimeFarkle.changePostProcessor PostProcessor.SyntaxChecker
+    [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>
     static member CaseSensitive (df: DesigntimeFarkle<'TResult>, [<Optional; DefaultParameterValue(true)>] x) =

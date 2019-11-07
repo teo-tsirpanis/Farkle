@@ -109,6 +109,16 @@ module RuntimeFarkle =
         |> Result.mapError FarkleError.BuildError
         |> RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor
 
+    /// Creates a syntax-checking `RuntimeFarkle` from an
+    /// untyped `DesigntimeFarkle`.
+    [<CompiledName("BuildUntyped")>]
+    let buildUntyped df =
+        df
+        |> DesigntimeFarkleBuild.createGrammarDefinition
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> Result.mapError FarkleError.BuildError
+        |> RuntimeFarkle<_>.CreateMaybe PostProcessor.syntaxCheck
+
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]

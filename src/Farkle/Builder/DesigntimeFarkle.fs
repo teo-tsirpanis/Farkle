@@ -102,12 +102,11 @@ and internal AbstractProduction =
 and internal Symbol = Choice<AbstractTerminal, Literal, AbstractNonterminal>
 
 /// <summary>An object representing a grammar created by Farkle.Builder.
-/// It can be converted to <see cref="RuntimeFarkle{T}"/>.</summary>
-/// <remarks>
-///     <para>This interface is implemented by <see cref="Terminal{T}"/> and <see cref="Nonterminal{T}"/>.</para>
-///     <para>User code must not implement this interface, or an error may be raised.</para>
-/// </remarks>
+/// It can be converted to a <see cref="RuntimeFarkle{T}"/>.</summary>
+/// <remarks>User types must not implement this interface,
+/// or an error will be raised.</remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
+/// <seealso cref="DesigntimeFarkle"/>
 type DesigntimeFarkle<'T> = 
     inherit DesigntimeFarkle
 
@@ -132,7 +131,7 @@ with
 [<NoComparison; ReferenceEquality>]
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
-type Terminal<'T> = internal {
+type internal Terminal<'T> = {
     _Name: string
     Regex: Regex
     Transformer: T<obj> 

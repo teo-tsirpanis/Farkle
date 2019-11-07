@@ -66,8 +66,9 @@ module DesigntimeFarkleOperators =
     /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
     let literal str = Literal str :> DesigntimeFarkle
 
-    /// Creates an empty `Nonterminal`.
-    /// It must be filled afterwards, or it will raise an error.
+    /// Creates a `Nonterminal` whose productions must be
+    /// set with `SetProductions`, or it will raise an
+    /// error. Useful for recursive productions.
     let nonterminal name = {
         _Name = name
         Productions = SetOnce<_>.Create()

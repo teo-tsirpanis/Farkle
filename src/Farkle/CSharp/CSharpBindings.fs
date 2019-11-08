@@ -94,11 +94,13 @@ type RuntimeFarkleExtensions =
     static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
 
 [<AbstractClass; Sealed>]
-/// <summary>A helper class to create <see cref="Farkle.Builder.Nonterminal{TResult}"/>s.</summary>
+/// <summary>A helper class to create nonterminals with
+/// or without their production preset.</summary>
 type Nonterminal =
     static member Create(name) = nonterminal name
 
-    static member Create(name, [<ParamArray>] productions) = name ||= (Seq.ofArray productions)
+    static member Create(name, firstProduction, [<ParamArray>] productions) =
+        name ||= (firstProduction :: List.ofArray productions)
 
 [<Extension; AbstractClass; Sealed>]
 /// <summary>Extension methods to create production builders.</summary>
@@ -125,9 +127,7 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
-    static member BuildUntyped df =
-        RuntimeFarkle.buildUntyped df
-        |> RuntimeFarkle.changePostProcessor PostProcessor.SyntaxChecker
+    static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

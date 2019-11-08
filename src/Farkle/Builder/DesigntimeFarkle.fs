@@ -54,6 +54,13 @@ with
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
     }
+    /// A stricter set of metadata for a grammar.
+    /// They specify a case sensitive grammar without any whitespace allowed.
+    static member Strict = {
+        GrammarMetadata.Default with
+            CaseSensitive = true
+            AutoWhitespace = false
+    }
 
 /// <summary>The base, untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
 /// <remarks>User code must not implement this interface, or an error may be raised.</remarks>
@@ -170,10 +177,11 @@ with
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must only be called once. Subsequent calls are ignored.</remarks>
-    member x.SetProductions([<ParamArray>] prods: Production<'T> []) =
+    member x.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
         prods
         |> Seq.map (fun x -> x :> AbstractProduction)
         |> List.ofSeq
+        |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
         |> x.Productions.TrySet
         |> ignore
     interface AbstractNonterminal with

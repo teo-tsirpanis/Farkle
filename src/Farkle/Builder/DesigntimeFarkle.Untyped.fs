@@ -29,7 +29,7 @@ with
     /// either a <see cref="DesigntimeFarkle"/> or a string. In the
     /// latter case, they will be used as literals.</remarks>
     /// <seealso cref="Nonterminal.CreateUntyped(System.String)"/>
-    member x.SetProductions([<ParamArray>] prods: obj seq []) =
+    member x.SetProductions(firstProd: obj seq, [<ParamArray>] prods: obj seq []) =
         let fSpecialize (x: obj) =
             match x with
             | :? DesigntimeFarkle as df -> df
@@ -45,6 +45,7 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
         prods
         |> Seq.map makeProduction
         |> List.ofSeq
+        |> (fun prods -> (makeProduction firstProd) :: prods)
         |> x.Productions.TrySet
         |> ignore
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
@@ -58,9 +59,9 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
     }
     /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
     /// from a nonterminal with the given name and productions.</summary>
-    static member CreateUntyped(name, [<ParamArray>] prods) =
+    static member CreateUntyped(name, firstProd, [<ParamArray>] prods) =
         let nont = Nonterminal.CreateUntyped name
-        nont.SetProductions(prods)
+        nont.SetProductions(firstProd, prods)
         nont :> DesigntimeFarkle
     interface DesigntimeFarkle with
         member x.Name = x._Name
@@ -78,4 +79,7 @@ module DesigntimeFarkleUntypedOperators =
     let inline nonterminal name = Nonterminal.CreateUntyped name
 
     let inline (||=) name members =
-        Nonterminal.CreateUntyped(name, Array.ofSeq members)
+        match members with
+        | [] -> failwithf "Cannot specify an empty list for <%s>'s productions." name
+        | x :: xs ->
+            Nonterminal.CreateUntyped(name, x, Array.ofList xs)

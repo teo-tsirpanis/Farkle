@@ -71,6 +71,15 @@ type DesigntimeFarkle =
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
+/// <summary>An object representing a grammar created by Farkle.Builder.
+/// It can be converted to a <see cref="RuntimeFarkle{T}"/>.</summary>
+/// <remarks>User types must not implement this interface,
+/// or an error will be raised.</remarks>
+/// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
+/// <seealso cref="DesigntimeFarkle"/>
+type DesigntimeFarkle<'T> = 
+    inherit DesigntimeFarkle
+
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>
 type internal AbstractTerminal =
@@ -108,17 +117,9 @@ and internal AbstractProduction =
 
 and internal Symbol = Choice<AbstractTerminal, Literal, AbstractNonterminal>
 
-/// <summary>An object representing a grammar created by Farkle.Builder.
-/// It can be converted to a <see cref="RuntimeFarkle{T}"/>.</summary>
-/// <remarks>User types must not implement this interface,
-/// or an error will be raised.</remarks>
-/// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
-/// <seealso cref="DesigntimeFarkle"/>
-type DesigntimeFarkle<'T> = 
-    inherit DesigntimeFarkle
-
 type internal DesigntimeFarkleWithMetadata =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
+    inherit DesigntimeFarkle
 
 type internal DesigntimeFarkleWithMetadata<'T> = {
     InnerDesigntimeFarkle: DesigntimeFarkle<'T>
@@ -129,11 +130,12 @@ with
         match df with
         | :? DesigntimeFarkleWithMetadata<'T> as dfwm -> dfwm
         | _ -> {InnerDesigntimeFarkle = df; Metadata = GrammarMetadata.Default}
-    interface DesigntimeFarkle<'T> with
+    interface DesigntimeFarkle with
         member x.Name = x.InnerDesigntimeFarkle.Name
         member x.Metadata = x.Metadata
     interface DesigntimeFarkleWithMetadata with
         member x.InnerDesigntimeFarkle = upcast x.InnerDesigntimeFarkle
+    interface DesigntimeFarkle<'T>
 
 [<NoComparison; ReferenceEquality>]
 /// <summary>A terminal symbol.</summary>
@@ -212,11 +214,17 @@ module internal Symbol =
         | _ -> failwith "Using a custom derivative of the DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)
 
-/// <summary>Functions to manipulate `DesigntimeFarkle`s.</summary>
-/// <remarks>Warning: Specifying any metadata on the grammar has to be done
-/// only at the topmost <see cref="DesigntimeFarkle{T}"/>. Otherwise they
-/// will be disregarded.</remarks>
+/// Functions to manipulate `DesigntimeFarkle`s.
+/// Keep in mind that only the metadata of the _topmost_
+/// designtime Farkle matter. Any other metadata changes will be disregarded.
 module DesigntimeFarkle =
+
+    /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
+    let withMetadataUntyped metadata df =
+        {new DesigntimeFarkleWithMetadata with
+            member _.InnerDesigntimeFarkle = df
+            member _.Name = df.Name
+            member _.Metadata = metadata} :> DesigntimeFarkle
 
     /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
     let withMetadata metadata df =

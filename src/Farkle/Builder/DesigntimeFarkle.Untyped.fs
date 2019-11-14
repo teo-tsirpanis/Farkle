@@ -49,7 +49,7 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
         |> x.Productions.TrySet
         |> ignore
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
-    /// Its productions can be set later.</summary>
+    /// Its productions must be set later.</summary>
     /// <remarks>This function is useful for the creation
     /// of recursive or cyclical productions.</remarks>
     /// <seealso cref="Nonterminal.SetProductions"/>
@@ -59,6 +59,7 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
     }
     /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
     /// from a nonterminal with the given name and productions.</summary>
+    /// <seealso cref="Nonterminal.SetProductions"/>
     static member CreateUntyped(name, firstProd, [<ParamArray>] prods) =
         let nont = Nonterminal.CreateUntyped name
         nont.SetProductions(firstProd, prods)
@@ -72,13 +73,21 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleUntypedOperators")>]
 /// F# operators to easily work with untyped `DesigntimeFarkle`s.
 module DesigntimeFarkleUntypedOperators =
-    let terminal name regex = terminal name tNull regex :> DesigntimeFarkle
 
-    let inline literal str = literal str
+    /// Creates an untyped terminal from the given name and specified by the given `Regex`.
+    let terminal name regex = {new AbstractTerminal with
+        member _.Name = name
+        member _.Metadata = GrammarMetadata.Default
+        member _.Regex = regex
+        member _.Transformer = tNull} :> DesigntimeFarkle
 
+    /// Creates an untyped `Nonterminal` whose productions must be set later.
     let inline nonterminal name = Nonterminal.CreateUntyped name
 
-    let inline (||=) name members =
+    /// Creates an untyped `DesigntimeFarkle` that represents
+    /// a nonterminal with the given name and productions.
+    /// If an empty list of productions is given, an exception will be raised.
+    let (||=) name members =
         match members with
         | [] -> failwithf "Cannot specify an empty list for <%s>'s productions." name
         | x :: xs ->

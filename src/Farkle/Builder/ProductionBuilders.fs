@@ -60,7 +60,8 @@ module DesigntimeFarkleOperators =
     /// A delegate of type `T<obj>` that always returns null.
     let internal tNull: T<obj> = T(fun _ _ -> null)
 
-    /// Creates a `Terminal`.
+    /// Creates a terminal with the given name, specified by the given `Regex`.
+    /// Its content will be post-processed by the given `T` delegate.
     let inline terminal name fTransform regex = Terminal.Create name fTransform regex
 
     /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
@@ -74,8 +75,10 @@ module DesigntimeFarkleOperators =
         Productions = SetOnce<_>.Create()
     }
 
-    /// Creates a `DesigntimeFarkle<'T>` with the given name and productions.
-    let inline (||=) name members =
+    /// Creates a `DesigntimeFarkle<'T>` that represents
+    /// a nonterminal with the given name and productions.
+    /// If an empty list of productions is given, an exception will be raised.
+    let (||=) name members =
         match members with
         // Errors like that are caused by the user's API misuse.
         // That's why we must raise an exception.
@@ -97,7 +100,7 @@ module DesigntimeFarkleOperators =
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
-    
+
     /// A production builder with no members.
     let empty = ProductionBuilder.Empty
 

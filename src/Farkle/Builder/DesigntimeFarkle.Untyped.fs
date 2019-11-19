@@ -75,11 +75,7 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
 module DesigntimeFarkleUntypedOperators =
 
     /// Creates an untyped terminal from the given name and specified by the given `Regex`.
-    let terminal name regex = {new AbstractTerminal with
-        member _.Name = name
-        member _.Metadata = GrammarMetadata.Default
-        member _.Regex = regex
-        member _.Transformer = tNull} :> DesigntimeFarkle
+    let inline terminal name regex = Terminal.Create(name, regex)
 
     /// Creates an untyped `Nonterminal` whose productions must be set later.
     let inline nonterminal name = Nonterminal.CreateUntyped name

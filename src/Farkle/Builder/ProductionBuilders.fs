@@ -57,12 +57,9 @@ type ProductionBuilder(members) =
 /// F# operators to easily work with productions and their builders.
 module DesigntimeFarkleOperators =
 
-    /// A delegate of type `T<obj>` that always returns null.
-    let internal tNull: T<obj> = T(fun _ _ -> null)
-
     /// Creates a terminal with the given name, specified by the given `Regex`.
     /// Its content will be post-processed by the given `T` delegate.
-    let inline terminal name fTransform regex = Terminal.Create name fTransform regex
+    let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
 
     /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
     let literal str = Literal str :> DesigntimeFarkle

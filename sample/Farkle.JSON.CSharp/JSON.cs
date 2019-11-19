@@ -84,7 +84,7 @@ namespace Farkle.JSON.CSharp
 
         static Language()
         {
-            var number = Terminal<Json>.Create("Number", (position, data) => ToDecimal(data),
+            var number = Terminal.Create("Number", (position, data) => ToDecimal(data),
                 Join(
                     Literal('-').Optional(),
                     Literal('0').Or(OneOf("123456789").And(OneOf(PredefinedSets.Number).ZeroOrMore())),
@@ -94,7 +94,7 @@ namespace Farkle.JSON.CSharp
                         OneOf("+-").Optional(),
                         OneOf(PredefinedSets.Number).AtLeast(1)).Optional()));
             var stringCharacters = PredefinedSets.AllValid.Characters.Remove('"').Remove('\\');
-            var jsonString = Terminal<string>.Create("String", (position, data) => UnescapeJsonString(data),
+            var jsonString = Terminal.Create("String", (position, data) => UnescapeJsonString(data),
                 Join(
                     Literal('"'),
                     Choice(

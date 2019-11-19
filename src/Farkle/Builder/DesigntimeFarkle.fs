@@ -146,19 +146,6 @@ type internal Terminal<'T> = {
     Transformer: T<obj> 
 }
 with
-    /// <summary>Creates a <see cref="Terminal{T}"/>.</summary>
-    /// <param name="name">The terminal's name.</param>
-    /// <param name="fTransform">The function that transforms the terminal's position and data to <c>T</c>.</param>
-    /// <param name="regex">The terminal's corresponding regular expression.</param>
-    static member Create name (fTransform: T<'T>) regex =
-        let term = {
-            _Name = name
-            Regex = regex
-            Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
-        }
-        term :> DesigntimeFarkle<'T>
-    /// The terminal's name.
-    member x.Name = x._Name
     interface AbstractTerminal with
         member x.Regex = x.Regex
         member x.Transformer = x.Transformer
@@ -167,9 +154,40 @@ with
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 
+[<AbstractClass; Sealed>]
+/// A helper static class to create terminals.
+type Terminal =
+    /// <summary>Creates a terminal that contains significant
+    /// information of type <typeparamref name="T"/>.</summary>
+    /// <param name="name">The terminal's name.</param>
+    /// <param name="fTransform">The function that transforms
+    /// the terminal's position and data to <typeparamref name="T"/>.
+    /// Must not be null.</param>
+    /// <param name="regex">The terminal's corresponding regular expression.</param>
+    static member Create (name, fTransform: T<'T>, regex) =
+        if isNull fTransform then
+            nullArg "fTransform"
+        let term = {
+            _Name = name
+            Regex = regex
+            Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
+        }
+        term :> DesigntimeFarkle<'T>
+    /// <summary>Creates a terminal that does not contain any significant
+    /// information for the parsing application.</summary>
+    /// <param name="name">The terminal's name.</param>
+    /// <param name="regex">The terminal's corresponding regular expression.</param>
+    static member Create(name, regex) =
+        {new AbstractTerminal with
+            member __.Name = name
+            member __.Metadata = GrammarMetadata.Default
+            member __.Regex = regex
+            member __.Transformer = null} :> DesigntimeFarkle
+
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
-/// <typeparam name="T">The type of the objects this nonterminal generates. All productions of a nonterminal have the same type parameter.</typeparam>
+/// <typeparam name="T">The type of the objects this nonterminal generates.
+/// All productions of a nonterminal have the same type parameter.</typeparam>
 type Nonterminal<'T> = internal {
     _Name: string
     Productions: SetOnce<AbstractProduction list>
@@ -222,9 +240,9 @@ module DesigntimeFarkle =
     /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
     let withMetadataUntyped metadata df =
         {new DesigntimeFarkleWithMetadata with
-            member _.InnerDesigntimeFarkle = df
-            member _.Name = df.Name
-            member _.Metadata = metadata} :> DesigntimeFarkle
+            member __.InnerDesigntimeFarkle = df
+            member __.Name = df.Name
+            member __.Metadata = metadata} :> DesigntimeFarkle
 
     /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
     let withMetadata metadata df =

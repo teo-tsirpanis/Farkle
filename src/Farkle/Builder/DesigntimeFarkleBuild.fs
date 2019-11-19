@@ -33,6 +33,9 @@ type GrammarDefinition = {
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
 
+    /// A delegate of type `T<obj>` that always returns null.
+    let private tNull: T<obj> = T(fun _ _ -> null)
+
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise "NewLine"
     let private newLineRegex = Regex.oneOf "\r\n" <|> Regex.literal "\r\n"
@@ -68,7 +71,7 @@ module DesigntimeFarkleBuild =
                 // a corresponding one will be made to the transformers.
                 // This way, the indices of the terminals and their transformers will match.
                 terminals.Add(symbol)
-                transformers.Add(term.Transformer)
+                transformers.Add(if isNull term.Transformer then tNull else term.Transformer)
                 dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
                 symbol
             match sym with
@@ -78,7 +81,7 @@ module DesigntimeFarkleBuild =
             | Choice2Of3 (Literal lit) when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
             | Choice2Of3 (Literal lit) ->
-                let term = Terminal.Create lit tNull (Regex.literal lit) :?> AbstractTerminal
+                let term = Terminal.Create(lit, (Regex.literal lit)) :?> AbstractTerminal
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol

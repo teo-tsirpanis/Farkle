@@ -94,8 +94,7 @@ type RuntimeFarkleExtensions =
     static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
 
 [<AbstractClass; Sealed>]
-/// <summary>A helper class to create nonterminals with
-/// or without their production preset.</summary>
+/// A helper static class to create nonterminals.
 type Nonterminal =
     static member Create(name) = nonterminal name
 

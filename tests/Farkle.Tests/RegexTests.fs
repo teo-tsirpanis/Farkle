@@ -10,6 +10,7 @@ open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Tests
+open FsCheck
 open System.Collections.Immutable
 
 /// A very simple function to check if a string is recognized by a DFA.
@@ -23,6 +24,8 @@ let matchDFAToString (states: ImmutableArray<DFAState>) str =
             | ValueSome s -> impl states.[int s] (idx + 1)
             | ValueNone -> None
     impl states.[0] 0
+
+let terminal idx = Choice1Of4 <| Terminal(uint32 idx, string idx)
 
 /// Performs a property test with a smaller sample size.
 let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
@@ -61,9 +64,16 @@ let tests = testList "Regex tests" [
         let dfa =
             DFABuild.buildRegexesToDFA false [regex, Choice1Of4 <| Terminal(0u, "My Terminal")]
             // We have only one regex. It cannot fail by accident.
-            |> returnOrFail "Generating a case insensitive DFA failed: %O"
+            |> returnOrFail "Generating a case insensitive DFA failed"
         Expect.isSome (matchDFAToString dfa str) "Recognizing the original string failed"
         Expect.isSome (matchDFAToString dfa <| str.ToLowerInvariant()) "Recognizing the lowercase string failed"
         Expect.isSome (matchDFAToString dfa <| str.ToUpperInvariant()) "Recognizing the uppercase string failed"
     )
+
+    testProperty "A DFA for a literal string is minimal" (fun (NonNull str) ->
+        let dfa =
+            [Regex.literal str, Choice1Of4 <| Terminal(0u, str)]
+            |> DFABuild.buildRegexesToDFA true
+            |> returnOrFail "Generating a DFA for a literal string failed"
+        Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")
 ]

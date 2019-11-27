@@ -40,7 +40,7 @@ let tests = testList "Parser tests" [
     |> testList "Domain-ignorant parsing tests"
 
     test "Parsing a simple mathematical expression behaves correctly and consistently up to the parsing log" {
-        let grammar = SimpleMaths.int.TryGetGrammar() |> returnOrFail "%O"
+        let grammar = SimpleMaths.int |> extractGrammar
         let reduce idx = ParseMessage.Reduction grammar.Productions.[int idx]
         let numberTerminal = Terminal(3u, "Number")
 
@@ -64,7 +64,9 @@ let tests = testList "Parser tests" [
         ]
 
         let actualLog = ResizeArray()
-        let num = RuntimeFarkle.parseString SimpleMaths.int actualLog.Add "475 + 724" |> returnOrFail "Parsing '475 + 724' failed: %O"
+        let num =
+            RuntimeFarkle.parseString SimpleMaths.int actualLog.Add "475 + 724"
+            |> returnOrFail "Parsing '475 + 724' failed"
         Expect.equal num 1199 "The numerical result is different than the expected"
         Expect.sequenceEqual actualLog expectedLog "The parsing log is different than the usual"
     }
@@ -78,10 +80,10 @@ let tests = testList "Parser tests" [
         let jsonAsString = Chiron.Formatting.Json.format json
         let cs =
             RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
-            |> returnOrFail "The C# parser failed: %O"
+            |> returnOrFail "The C# parser failed"
         let fs =
             RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
-            |> returnOrFail "The F# parser failed: %O"
+            |> returnOrFail "The F# parser failed"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with
             | Choice1Of2 x -> x
@@ -95,10 +97,10 @@ let tests = testList "Parser tests" [
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
             RuntimeFarkle.parse SimpleMaths.mathExpression exprAsString
-            |> returnOrFail "Parsing the mathematical expression failed: %O"
+            |> returnOrFail "Parsing the mathematical expression failed"
         let num =
             RuntimeFarkle.parse SimpleMaths.int exprAsString
-            |> returnOrFail "Calculating the mathematical expression failed: %O"
+            |> returnOrFail "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one."
     )
 ]

@@ -82,9 +82,7 @@ module DesigntimeFarkleUntypedOperators =
 
     /// Creates an untyped `DesigntimeFarkle` that represents
     /// a nonterminal with the given name and productions.
-    /// If an empty list of productions is given, an exception will be raised.
     let (||=) name members =
         match members with
-        | [] -> failwithf "Cannot specify an empty list for <%s>'s productions." name
-        | x :: xs ->
-            Nonterminal.CreateUntyped(name, x, Array.ofList xs)
+        | [] -> Nonterminal.CreateUntyped(name) :> DesigntimeFarkle
+        | x :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)

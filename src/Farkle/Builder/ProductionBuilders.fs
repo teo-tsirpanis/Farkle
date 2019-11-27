@@ -74,16 +74,14 @@ module DesigntimeFarkleOperators =
 
     /// Creates a `DesigntimeFarkle<'T>` that represents
     /// a nonterminal with the given name and productions.
-    /// If an empty list of productions is given, an exception will be raised.
     let (||=) name members =
+        let nont = nonterminal name
         match members with
-        // Errors like that are caused by the user's API misuse.
-        // That's why we must raise an exception.
-        | [] -> failwithf "Cannot specify an empty list for <%s>'s productions." name
-        | x :: xs ->
-            let nont = nonterminal name
-            nont.SetProductions(x, Array.ofList xs)
-            nont :> DesigntimeFarkle<_>
+        // There is no reason to throw an exception as in
+        // the past. An error will occur sooner or later.
+        | [] -> ()
+        | x :: xs -> nont.SetProductions(x, Array.ofList xs)
+        nont :> DesigntimeFarkle<_>
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203

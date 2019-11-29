@@ -80,4 +80,18 @@ let tests = testList "Designtime Farkle tests" [
         let grammar = DesigntimeFarkleBuild.build designtime |> fst
         Expect.isError grammar "An Accept-Reduce error was silently accepted by Farkle too."
     }
+
+    test "DesigntimeFarkle objects have the correct equality semantics" {
+        let lit1 = literal "Test"
+        let lit2 = literal "Test"
+        Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality."
+        
+        let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.literal "Test")
+        let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.literal "Test")
+        Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality."
+
+        let nont1 = nonterminal "Test" :> DesigntimeFarkle
+        let nont2 = nonterminal "Test" :> DesigntimeFarkle
+        Expect.isFalse (nont1 = nont2) "DesigntimeFarkle nonterminals are not checked for reference equality."
+    }
 ]

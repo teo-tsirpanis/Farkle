@@ -99,6 +99,14 @@ with
             | Literal x -> x
         member __.Metadata = GrammarMetadata.Default
 
+/// <summary>A special kind of <see cref="DesigntimeFarkle"/>
+/// that represents a new line.</summary>
+type internal NewLine = NewLine
+with
+    interface DesigntimeFarkle with
+        member __.Name = "NewLine"
+        member __.Metadata = GrammarMetadata.Default
+
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
 type internal AbstractNonterminal =
@@ -115,7 +123,7 @@ and internal AbstractProduction =
     abstract Members: Symbol ImmutableArray
     abstract Fuse: (obj [] -> obj)
 
-and internal Symbol = Choice<AbstractTerminal, Literal, AbstractNonterminal>
+and internal Symbol = Choice<AbstractTerminal, Literal, NewLine, AbstractNonterminal>
 
 type internal DesigntimeFarkleWithMetadata =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
@@ -183,6 +191,14 @@ type Terminal =
             member __.Metadata = GrammarMetadata.Default
             member __.Regex = regex
             member __.Transformer = null} :> DesigntimeFarkle
+    /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
+    /// that represents a new line.</summary>
+    /// <remarks>This is different and better than a literal of
+    /// newline characters. Its presence indicates that the grammar
+    /// is line-based, which means that newline characters are not noise.
+    /// Newline characters are considered the character sequences
+    /// <c>\r</c>, <c>\n</c>, or <c>\r\n</c>.</remarks>
+    static member NewLine = NewLine :> DesigntimeFarkle
 
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
@@ -225,9 +241,10 @@ with
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =
         match x with
-        | :? AbstractTerminal as term -> Choice1Of3 term
-        | :? Literal as lit -> Choice2Of3 lit
-        | :? AbstractNonterminal as nont -> Choice3Of3 nont
+        | :? AbstractTerminal as term -> Choice1Of4 term
+        | :? Literal as lit -> Choice2Of4 lit
+        | :? NewLine as nl -> Choice3Of4 nl
+        | :? AbstractNonterminal as nont -> Choice4Of4 nont
         | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
         | _ -> failwith "Using a custom derivative of the DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)

@@ -64,6 +64,9 @@ module DesigntimeFarkleOperators =
     /// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
     let literal str = Literal str :> DesigntimeFarkle
 
+    /// An alias for `Terminal.NewLine`.
+    let newline = Terminal.NewLine
+
     /// Creates a `Nonterminal` whose productions must be
     /// set with `SetProductions`, or it will raise an
     /// error. Useful for recursive productions.

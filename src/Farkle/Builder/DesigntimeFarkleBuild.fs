@@ -47,7 +47,15 @@ module DesigntimeFarkleBuild =
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
     let createGrammarDefinition (df: DesigntimeFarkle) =
         let mutable dfaSymbols = []
+        // This variable holds whether there is a line comment
+        // or a newline special terminal in the language.
         let mutable usesNewLine = false
+        // If the above variable is set to true, this
+        // DFASymbol will determine the representation
+        // of the newline symbol. By default it is set to
+        // a noise symbol. It can be also set to a terminal,
+        // if they are needed by a profuction.
+        let mutable newLineSymbol = Choice2Of4 noiseNewLine
         let metadata = df.Metadata
         let terminals = ImmutableArray.CreateBuilder()
         let literalMap =
@@ -75,19 +83,31 @@ module DesigntimeFarkleBuild =
                 dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
                 symbol
             match sym with
-            | Choice1Of3 term when terminalMap.ContainsKey(term) ->
+            | Choice1Of4 term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
-            | Choice1Of3 term -> handleTerminal term |> LALRSymbol.Terminal
-            | Choice2Of3 (Literal lit) when literalMap.ContainsKey(lit) ->
+            | Choice1Of4 term -> handleTerminal term |> LALRSymbol.Terminal
+            | Choice2Of4 (Literal lit) when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
-            | Choice2Of3 (Literal lit) ->
+            | Choice2Of4 (Literal lit) ->
                 let term = Terminal.Create(lit, (Regex.literal lit)) :?> AbstractTerminal
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
-            | Choice3Of3 nont when nonterminalMap.ContainsKey(nont) ->
+            | Choice3Of4 NewLine ->
+                usesNewLine <- true
+                match newLineSymbol with
+                    | Choice1Of4 nlTerminal -> LALRSymbol.Terminal nlTerminal
+                    | _ ->
+                        let nlTerminal = Terminal(uint32 terminals.Count, "NewLine")
+                        nlTerminal
+                        |> Choice1Of4
+                        |> (fun nlTerminal ->
+                            newLineSymbol <- nlTerminal
+                            dfaSymbols <- (newLineRegex, nlTerminal) :: dfaSymbols)
+                        LALRSymbol.Terminal nlTerminal
+            | Choice4Of4 nont when nonterminalMap.ContainsKey(nont) ->
                 LALRSymbol.Nonterminal nonterminalMap.[nont]
-            | Choice3Of3 nont ->
+            | Choice4Of4 nont ->
                 let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
                 nonterminalMap.Add(nont, symbol)
                 nonterminals.Add(symbol)
@@ -125,13 +145,19 @@ module DesigntimeFarkleBuild =
         |> Seq.iter (function
             | LineComment cStart ->
                 let startSymbol = GroupStart(cStart, uint32 groups.Count)
+                let endSymbol =
+                    match newLineSymbol with
+                    | Choice1Of4 term -> Choice1Of3 term
+                    | Choice2Of4 noise -> Choice2Of3 noise
+                    // We will never reach that line.
+                    | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
                 dfaSymbols <- (Regex.literal cStart, Choice3Of4 startSymbol) :: dfaSymbols
                 usesNewLine <- true
                 groups.Add {
                     Name = "Comment Line"
                     ContainerSymbol = Choice2Of2 commentSymbol
                     Start = startSymbol
-                    End = Choice2Of3 noiseNewLine
+                    End = endSymbol
                     AdvanceMode = AdvanceMode.Character
                     EndingMode = EndingMode.Open
                     Nesting = ImmutableHashSet.Empty

@@ -8,6 +8,7 @@
     <Farkle Include="..\SimpleMaths.egt" Namespace="SimpleMaths" />
     <Compile Include="SimpleMaths.g.fs" />
     <Compile Include="JSON.fs" />
+    <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
   </ItemGroup>
   <ItemGroup>

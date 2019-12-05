@@ -63,32 +63,32 @@ let designtime =
         ] |> Regex.concat |> terminal "SetName"
 
     let nlOpt = nonterminal "nl opt"
-    nlOpt.SetProductions([box newline; box nlOpt], [])
+    nlOpt.SetProductions(!% newline .>> nlOpt, empty)
     let nl = nonterminal "nl"
-    nl.SetProductions([box newline; box nl], [box newline])
+    nl.SetProductions(!% newline .>> nl, !% newline)
 
     let parameter =
         let parameterItem =
             [parameterName; _terminal; setLiteral; setName; _nonterminal]
-            |> List.map (box >> Seq.singleton)
+            |> List.map (!%)
             |> ((||=) "Parameter Item")
 
         let parameterItems = nonterminal "Parameter Items"
         parameterItems.SetProductions(
-            [box parameterItems; box parameterItem],
-            [box parameterItem])
+            !% parameterItems .>> parameterItem,
+            !% parameterItem)
 
         let parameterBody = nonterminal "Parameter Body"
         parameterBody.SetProductions(
             [box parameterBody; box nlOpt; box "|"; box parameterItems],
             [box parameterItems])
         "Parameter"
-        ||= [[box parameterName; box nlOpt; box "="; box parameterBody; box nl]]
+        ||= [!% parameterName .>> nlOpt .>> "=" .>> parameterBody .>> nl]
 
     let setDecl =
         let setItem =
             [setLiteral; setName]
-            |> List.map (box >> Seq.singleton)
+            |> List.map (!%)
             |> ((||=) "Set Item")
 
         let setExp = nonterminal "Set Exp"
@@ -98,27 +98,27 @@ let designtime =
             [box setItem])
 
         "Set Decl"
-        ||= [[box setName; box nlOpt; box "="; box setExp; box nl]]
+        ||= [!% setName .>> nlOpt .>> "=" .>> setExp .>> nl]
 
     let terminalDecl =
         let kleeneOpt =
-            Seq.empty :: (List.map (box >> Seq.singleton) ["+"; "?"; "*"])
+            empty :: (List.map (!&) ["+"; "?"; "*"])
             |> ((||=) "Kleene Opt")
         let regExp2 = nonterminal "Reg Exp 2"
         let regExpItem =
             [
-                [box setLiteral]
-                [box setName]
-                [box _terminal]
-                [box "("; box regExp2; box ")"]
+                !% setLiteral
+                !% setName
+                !% _terminal
+                !& "(" .>> regExp2 .>> ")"
             ]
-            |> List.map (fun x -> Seq.append x [box kleeneOpt])
+            |> List.map (fun x -> x .>> kleeneOpt)
             |> ((||=) "Reg Exp Item")
 
         let regExpSeq = nonterminal "Reg Exp Seq"
         regExpSeq.SetProductions(
-            [box regExpSeq; box regExpItem],
-            [box regExpItem])
+            !% regExpSeq .>> regExpItem,
+            !% regExpItem)
         // No newlines allowed
         regExp2.SetProductions(
             [box regExp2; box "|"; box regExpSeq],
@@ -131,37 +131,39 @@ let designtime =
 
         let terminalName = nonterminal "Terminal Name"
         terminalName.SetProductions(
-            [box terminalName; box _terminal],
-            [box _terminal])
+            !% terminalName .>> _terminal,
+            !% _terminal)
 
         "Terminal Decl"
-        ||= [[box terminalName; box nlOpt; box "="; box regExp; box nl]]
+        ||= [!% terminalName .>> nlOpt .>> "=" .>> regExp .>> nl]
 
     let ruleDecl =
         let symbol =
             [_terminal; _nonterminal]
-            |> List.map (box >> Seq.singleton)
+            |> List.map (!%)
             |> ((||=) "Symbol")
 
         let handle = nonterminal "Handle"
-        handle.SetProductions([box handle; box symbol], [])
+        handle.SetProductions(!% handle .>> symbol, empty)
 
         let handles = nonterminal "Handles"
+        // Cannot use production builders due to
+        // https://github.com/dotnet/fsharp/issues/7917
         handles.SetProductions(
             [box handles; box nlOpt; box "|"; box handle],
             [box handle])
 
         "Rule Decl"
-        ||= [[box _nonterminal; box nlOpt; box "::="; box handles; box nl]]
+        ||= [!%_nonterminal .>> nlOpt .>> "::=" .>> handles .>> nl]
 
     let definition =
         [parameter; setDecl; terminalDecl; ruleDecl]
-        |> List.map (box >> Seq.singleton)
+        |> List.map (!%)
         |> ((||=) "Definition")
 
     let content = nonterminal "Content"
-    content.SetProductions([box content; box definition], [box definition])
+    content.SetProductions(!% content .>> definition, !% definition)
 
-    "Grammar" ||= [[box nlOpt; box content]]
+    "Grammar" ||= [!% nlOpt .>> content]
 
 let runtime = RuntimeFarkle.buildUntyped designtime

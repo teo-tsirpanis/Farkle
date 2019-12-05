@@ -50,6 +50,11 @@ type ProductionBuilder(members) =
         Members = members.ToImmutableArray()
         Fuse = fFuseRaw >> box
     }
+    /// Creates an untyped production. This finction is internally
+    /// used by the untyped nonterminals API.
+    member internal __.FinishUntyped() = {new AbstractProduction with
+        member __.Members = members.ToImmutableArray()
+        member __.Fuse = (fun _ -> null)}
     /// <summary>Creates a <see cref="Production{T}"/> that always returns a constant value.</summary>
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
 

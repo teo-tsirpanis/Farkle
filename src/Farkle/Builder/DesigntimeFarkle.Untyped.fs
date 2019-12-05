@@ -25,9 +25,21 @@ with
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must be called exactly once. It accepts
+    /// un<c>Finish</c>ed production builders and is intended to be
+    /// used by F# because of the more terse API for creating them.</remarks>
+    member x.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
+        prods
+        |> Seq.map (fun p -> p.FinishUntyped())
+        |> List.ofSeq
+        |> (fun prods -> firstProd.FinishUntyped() :: prods)
+        |> x.Productions.TrySet
+        |> ignore
+    /// <summary>Sets the nonterminal's productions.</summary>
+    /// <remarks>This method must be called exactly once. It accepts
     /// a variable amount of object sequences. Each object should be
     /// either a <see cref="DesigntimeFarkle"/> or a string. In the
-    /// latter case, they will be used as literals.</remarks>
+    /// latter case, they will be used as literals. This method is intended
+    /// to be used by C# because</remarks>
     /// <seealso cref="Nonterminal.CreateUntyped(System.String)"/>
     member x.SetProductions(firstProd: obj seq, [<ParamArray>] prods: obj seq []) =
         let fSpecialize (x: obj) =
@@ -36,18 +48,9 @@ with
             | :? string as str -> literal str
             | x -> failwith "Only designtime Farkles and strings are \
 allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
-            |> Symbol.specialize
-        let makeProduction xs =
-            let members = Seq.map fSpecialize xs |> ImmutableArray.CreateRange
-            {new AbstractProduction with
-                member __.Members = members
-                member __.Fuse = (fun _ -> null)}
-        prods
-        |> Seq.map makeProduction
-        |> List.ofSeq
-        |> (fun prods -> (makeProduction firstProd) :: prods)
-        |> x.Productions.TrySet
-        |> ignore
+        let makePB xs =
+            (empty, xs) ||> Seq.fold (fun pb x -> pb.Append(fSpecialize x))
+        x.SetProductions(makePB firstProd, Array.map makePB prods)
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
     /// Its productions must be set later.</summary>
     /// <remarks>This function is useful for the creation
@@ -58,9 +61,18 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
         Productions = SetOnce<_>.Create()
     }
     /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
-    /// from a nonterminal with the given name and productions.</summary>
+    /// from a nonterminal with the given name and productions,
+    /// declared as production builders.</summary>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member CreateUntyped(name, firstProd, [<ParamArray>] prods) =
+    static member CreateUntyped(name, firstProd: ProductionBuilder, [<ParamArray>] prods) =
+        let nont = Nonterminal.CreateUntyped name
+        nont.SetProductions(firstProd, prods)
+        nont :> DesigntimeFarkle
+    /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
+    /// from a nonterminal with the given name and productions,
+    /// declared as sequences of objects.</summary>
+    /// <seealso cref="Nonterminal.SetProductions"/>
+    static member CreateUntyped(name, firstProd: obj seq, [<ParamArray>] prods) =
         let nont = Nonterminal.CreateUntyped name
         nont.SetProductions(firstProd, prods)
         nont :> DesigntimeFarkle
@@ -83,6 +95,8 @@ module DesigntimeFarkleUntypedOperators =
     /// Creates an untyped `DesigntimeFarkle` that represents
     /// a nonterminal with the given name and productions.
     let (||=) name members =
+        let nont = nonterminal name
         match members with
-        | [] -> Nonterminal.CreateUntyped(name) :> DesigntimeFarkle
-        | x :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)
+        | [] -> ()
+        | (x: ProductionBuilder) :: xs -> nont.SetProductions(x, Array.ofList xs)
+        nont :> DesigntimeFarkle

@@ -71,6 +71,7 @@ module DesigntimeFarkleBuild =
         let groups = ImmutableArray.CreateBuilder()
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
+
         let rec impl (sym: Symbol) =
             let handleTerminal (term: AbstractTerminal) =
                 let symbol = Terminal(uint32 terminals.Count, term.Name)
@@ -96,15 +97,17 @@ module DesigntimeFarkleBuild =
             | Choice3Of4 NewLine ->
                 usesNewLine <- true
                 match newLineSymbol with
-                    | Choice1Of4 nlTerminal -> LALRSymbol.Terminal nlTerminal
-                    | _ ->
-                        let nlTerminal = Terminal(uint32 terminals.Count, "NewLine")
-                        nlTerminal
-                        |> Choice1Of4
-                        |> (fun nlTerminal ->
-                            newLineSymbol <- nlTerminal
-                            dfaSymbols <- (newLineRegex, nlTerminal) :: dfaSymbols)
-                        LALRSymbol.Terminal nlTerminal
+                | Choice1Of4 nlTerminal -> nlTerminal
+                | _ ->
+                    let nlTerminal = Terminal(uint32 terminals.Count, "NewLine")
+                    terminals.Add(nlTerminal)
+                    transformers.Add(tNull)
+                    // Despite our certainty that NewLine will be
+                    // a terminal, we will add the DFA symbol later,
+                    // after the comments are processed, for uniformity.
+                    newLineSymbol <- Choice1Of4 nlTerminal
+                    nlTerminal
+                |> LALRSymbol.Terminal
             | Choice4Of4 nont when nonterminalMap.ContainsKey(nont) ->
                 LALRSymbol.Nonterminal nonterminalMap.[nont]
             | Choice4Of4 nont ->
@@ -121,6 +124,7 @@ module DesigntimeFarkleBuild =
                     productions.Add(prod)
                     fusers.Add(aprod.Fuse))
                 LALRSymbol.Nonterminal symbol
+
         let startSymbol =
             match df |> Symbol.specialize |> impl with
             // Our grammar is made of only one terminal.
@@ -189,8 +193,10 @@ module DesigntimeFarkleBuild =
                     whitespaceRegex
             dfaSymbols <- (whitespaceRegex, Choice2Of4 whitespaceSymbol) :: dfaSymbols
         if usesNewLine then
-            noiseSymbols.Add(noiseNewLine)
-            dfaSymbols <- (newLineRegex, Choice2Of4 noiseNewLine) :: dfaSymbols
+            match newLineSymbol with
+            | Choice2Of4 x -> noiseSymbols.Add(x)
+            | _ -> ()
+            dfaSymbols <- (newLineRegex, newLineSymbol) :: dfaSymbols
         let symbols = {
             Terminals = terminals.ToImmutable()
             Nonterminals = nonterminals.ToImmutable()

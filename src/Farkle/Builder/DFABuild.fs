@@ -15,15 +15,22 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 
-type internal RegexLeaf = {
-    Characters: char Set
-    Index: int
-}
-
-type internal RegexEnd = {
-    AcceptSymbol: DFASymbol
-    Index: int
-}
+[<RequireQualifiedAccess>]
+type internal RegexLeaf =
+    | Chars of index: int * chars: char Set
+    | End of index: int * acceptSymbol: DFASymbol
+with
+    member x.Index =
+        match x with
+        | Chars(idx, _) | End(idx, _) -> idx
+    member x.Characters =
+        match x with
+        | Chars(_, chars) -> chars
+        | End _ -> Set.empty
+    member x.AcceptSymbol =
+        match x with
+        | Chars _ -> None
+        | End(_, accSym) -> Some accSym
 
 type internal ConcatFirstPos = Lazy<int Set> list
 
@@ -31,8 +38,7 @@ type internal RegexBuildTree =
     | Concat of RegexBuild list * ConcatFirstPos
     | Alt of RegexBuild list
     | Star of RegexBuild
-    | Chars of RegexLeaf
-    | End of RegexEnd
+    | Leaf of RegexLeaf
 
 and internal RegexBuild = {
     Tree: RegexBuildTree
@@ -41,29 +47,23 @@ and internal RegexBuild = {
     LastPos: Lazy<int Set>
 }
 
-type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<obj>
+type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<RegexLeaf>
 with
     member x.Length = match x with | RegexBuildLeaves arr -> arr.Length
     member x.Characters idx =
         let (RegexBuildLeaves arr) = x
-        match arr.[idx] with
-        | :? RegexLeaf as leaf -> leaf.Characters
-        | _ -> Set.empty
+        arr.[idx].Characters
     member x.TryGetAcceptSymbol idx =
         let (RegexBuildLeaves arr) = x
-        match arr.[idx] with
-        | :? RegexEnd as leaf -> Some leaf.AcceptSymbol
-        | _ -> None
+        arr.[idx].AcceptSymbol
 
 let private fIsNullable =
     function
     | Concat (xs, _) -> xs |> List.forall (fun x -> x.IsNullable.Value)
     | Alt xs -> xs |> List.exists (fun x -> x.IsNullable.Value)
     | Star _ -> true
-    // The set of a Chars regex must never be empty; it's just here for completeness.
-    | Chars x -> x.Characters.IsEmpty
-    // End is the end, so I guess it is nullable.
-    | End _ -> true
+    // An empty set means the end, so I guess it is nullable.
+    | Leaf x -> x.Characters.IsEmpty
 
 let private fFirstPos =
     function
@@ -77,8 +77,7 @@ let private fFirstPos =
         |> fst
     | Alt xs -> xs |> Seq.map (fun x -> x.FirstPos.Value) |> Set.unionMany
     | Star x -> x.FirstPos.Value
-    | Chars x -> Set.singleton x.Index
-    | End x -> Set.singleton x.Index
+    | Leaf x -> Set.singleton x.Index
 
 let private fLastPos =
     function
@@ -92,8 +91,7 @@ let private fLastPos =
         |> fst
     | Alt xs -> xs |> Seq.map (fun x -> x.LastPos.Value) |> Set.unionMany
     | Star x -> x.LastPos.Value
-    | Chars x -> Set.singleton x.Index
-    | End x -> Set.singleton x.Index
+    | Leaf x -> Set.singleton x.Index
 
 let private makeLazy tree = {
     Tree = tree
@@ -128,7 +126,7 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
             i'
     let leaves = ImmutableArray.CreateBuilder()
     let addLeaf x =
-        leaves.Add(box x)
+        leaves.Add(x)
         x
 
     let desensitivizeCase chars =
@@ -151,10 +149,10 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                         chars
                     else
                         desensitivizeCase chars
-                {Characters = chars; Index = fIndex()} |> addLeaf |> Chars
+                RegexLeaf.Chars(fIndex(), chars) |> addLeaf |> Leaf
             |> makeLazy
         let regexBuild = impl regex
-        let endLeaf = {AcceptSymbol = acceptSymbol; Index = fIndex()} |> addLeaf |> End |> makeLazy
+        let endLeaf = RegexLeaf.End(fIndex(), acceptSymbol) |> addLeaf |> Leaf |> makeLazy
         match regexBuild.Tree with
         | Concat (xs, _) -> xs @ [endLeaf]
         | _ -> regexBuild :: [endLeaf]
@@ -165,7 +163,7 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
         regexes
         |> List.map (fun (regex, acceptSymbol) -> createRegexBuildSingle regex acceptSymbol)
         |> (function | [x] -> x | x -> makeLazy<| Alt x)
-    
+
     theTree, leaves.ToImmutable() |> RegexBuildLeaves
 
 let internal calculateFollowPos leafCount regex =
@@ -185,7 +183,7 @@ let internal calculateFollowPos leafCount regex =
             let firstPos = x.FirstPos.Value
             lastPos |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPos)
             impl x
-        | Chars _ | End _ -> ()
+        | Leaf _ -> ()
     impl regex
     followPos.ToImmutableArray()
 

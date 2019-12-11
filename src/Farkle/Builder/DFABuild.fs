@@ -230,11 +230,11 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
         let acceptSymbols =
             state.Name
             |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
-            |> set
-        let rangeMap = RangeMap.ofSeq state.Edges
-        match acceptSymbols.Count with
-        | 0 -> Ok {Index = state.Index; AcceptSymbol = None; Edges = rangeMap}
-        | 1 -> Ok {Index = state.Index; AcceptSymbol = Some acceptSymbols.MinimumElement; Edges = rangeMap}
+            |> List.ofSeq
+        let edges = RangeMap.ofSeq state.Edges
+        match acceptSymbols with
+        | [] -> Ok {Index = state.Index; AcceptSymbol = None; Edges = edges}
+        | [sym] -> Ok {Index = state.Index; AcceptSymbol = Some sym; Edges = edges}
         | _ -> Error <| BuildError.IndistinguishableSymbols acceptSymbols
     statesList
     |> Seq.map toDFAState

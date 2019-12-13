@@ -18,11 +18,11 @@ open System.Collections.Immutable
 [<RequireQualifiedAccess>]
 type internal RegexLeaf =
     | Chars of index: int * chars: char Set
-    | End of index: int * acceptSymbol: DFASymbol
+    | End of index: int * priority: int *  acceptSymbol: DFASymbol
 with
     member x.Index =
         match x with
-        | Chars(idx, _) | End(idx, _) -> idx
+        | Chars(idx, _) | End(idx, _, _) -> idx
     member x.Characters =
         match x with
         | Chars(_, chars) -> chars
@@ -30,7 +30,13 @@ with
     member x.AcceptSymbol =
         match x with
         | Chars _ -> None
-        | End(_, accSym) -> Some accSym
+        | End(_, _, accSym) -> Some accSym
+
+// ALL RISE
+[<Literal>]
+let private TerminalPriority = 521
+[<Literal>]
+let private LiteralPriority = 475
 
 type internal ConcatFirstPos = Lazy<int Set> list
 
@@ -137,6 +143,14 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                 yield Char.ToUpperInvariant(c)
         } |> set
 
+    /// Returns whether the given `Regex` contains a `Star` node.
+    let rec isVariableLength =
+        function
+        | Regex.Concat xs
+        | Regex.Alt xs -> List.exists isVariableLength xs
+        | Regex.Star _ -> true
+        | Regex.Chars _ -> false
+
     let createRegexBuildSingle regex acceptSymbol =
         let rec impl regex =
             match regex with
@@ -151,12 +165,39 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                         desensitivizeCase chars
                 RegexLeaf.Chars(fIndex(), chars) |> addLeaf |> Leaf
             |> makeLazy
-        let regexBuild = impl regex
-        let endLeaf = RegexLeaf.End(fIndex(), acceptSymbol) |> addLeaf |> Leaf |> makeLazy
-        match regexBuild.Tree with
-        | Concat (xs, _) -> xs @ [endLeaf]
-        | _ -> regexBuild :: [endLeaf]
-        |> makeConcat
+        match regex with
+        // If the symbol's regex's root is an Alt, we assign
+        // each of its children a different priority. This
+        // emulates the behavior of GOLD Parser and resolves
+        // some nasty indistinguishable symbols errors.
+        | Regex.Alt xs ->
+            let appendEndLeaf priority =
+                function
+                | [] -> []
+                | xs ->
+                    let xs = List.map impl xs |> Alt |> makeLazy
+                    let endLeaf = RegexLeaf.End(fIndex(), priority, acceptSymbol) |> addLeaf |> Leaf |> makeLazy
+                    [xs; endLeaf]
+                    |> makeConcat
+                    |> makeLazy
+                    |> List.singleton
+            // There is no way that both lists below are empty.
+            // Regex.Alt has always at least one child.
+            let variableLengthParts, fixedLengthParts = List.partition isVariableLength xs
+            appendEndLeaf TerminalPriority variableLengthParts
+            @
+            appendEndLeaf LiteralPriority fixedLengthParts
+            // I have been careful enough to minimize the depth
+            // of the regex trees, but a nested Alt does not hurt anyone.
+            |> Alt
+        // Otherwise, we assign a priority to the entire symbol.
+        | regex ->
+            let priority = if isVariableLength regex then TerminalPriority else LiteralPriority
+            let endLeaf = RegexLeaf.End(fIndex(), priority, acceptSymbol) |> addLeaf |> Leaf |> makeLazy
+            match regex with
+            | Regex.Concat xs ->
+                List.map impl xs @ [endLeaf] |> makeConcat
+            | regex -> [impl regex; endLeaf] |> makeConcat
         |> makeLazy
 
     let theTree =

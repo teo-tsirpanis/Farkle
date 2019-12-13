@@ -59,9 +59,11 @@ with
     member x.Characters idx =
         let (RegexBuildLeaves arr) = x
         arr.[idx].Characters
-    member x.TryGetAcceptSymbol idx =
+    member x.AcceptData idx =
         let (RegexBuildLeaves arr) = x
-        arr.[idx].AcceptSymbol
+        match arr.[idx] with
+        | RegexLeaf.Chars _ -> None
+        | RegexLeaf.End(_, priority, accSym) -> Some (accSym, priority)
 
 let private fIsNullable =
     function
@@ -268,14 +270,32 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
     let toDFAState state =
         let acceptSymbols =
             state.Name
-            |> Seq.choose (fun x -> leaves.TryGetAcceptSymbol(x))
+            |> Seq.choose leaves.AcceptData
+            // The sequence to be sorted is expected
+            // to have very few elements; often none,
+            // and rarely more than two.
+            |> Seq.sortBy snd
             |> List.ofSeq
         let edges = RangeMap.ofSeq state.Edges
         let acceptSymbol =
             match acceptSymbols with
+            // No symbols, no problem.
             | [] -> Ok None
-            | [sym] -> Ok <| Some sym
-            | _ -> Error <| BuildError.IndistinguishableSymbols acceptSymbols
+            // If there is only one symbol, we simply take it.
+            | [sym, _] -> Ok <| Some sym
+            // If there are more symbols, however, we will
+            // take the one with the lowest priority, if there
+            // is only one. Remember that we had sorted the
+            // list above.
+            | (sym, pri1) :: (_, pri2) :: _ when pri1 < pri2 ->
+                Ok <| Some sym
+            // If there are many symbols, and their priority is
+            // the same, we have to raise an error.
+            | _ ->
+                acceptSymbols
+                |> List.map fst
+                |> BuildError.IndistinguishableSymbols
+                |> Error
         acceptSymbol
         |> Result.map (fun ac -> {Index = state.Index; AcceptSymbol = ac; Edges = edges})
     statesList

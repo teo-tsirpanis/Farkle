@@ -3,4 +3,4 @@ image: Visual Studio 2019
 nuget:
   disable_publish_on_pr: true
 build_script:
-  - pwsh: ./build.cmd target CI
+  - cmd: ./build.cmd target CI

@@ -5,4 +5,4 @@
 
 # The script assumes that FAKE is in PATH.
 
-fake run ./build.fsx $@
+dotnet tool run fake run ./build.fsx $@

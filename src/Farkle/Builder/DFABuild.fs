@@ -239,7 +239,7 @@ type internal DFAStateBuild = {
 with
     static member Create name index = {Name = name; Index = index; Edges = SortedDictionary()}
 
-let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
+let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
     let states = Dictionary()
     let statesList = ResizeArray()
     let unmarkedStates = Stack()
@@ -285,15 +285,22 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
             | [sym, _] -> Ok <| Some sym
             // If there are more symbols, however, we will
             // take the one with the lowest priority, if there
-            // is only one. Remember that we had sorted the
-            // list above.
-            | (sym, pri1) :: (_, pri2) :: _ when pri1 < pri2 ->
+            // is only one, and we have allowed such prioritizing.
+            // However there is a small chance that the two conflicting
+            // symbols are the same, because a symbol can be derived
+            // from many paths with both variable and fixed length.
+            // In this case, we have to take it.
+            // Remember that we had sorted the list above.
+            | (sym, pri1) :: (sym2, pri2) :: _ when sym = sym2 || (pri1 < pri2 && prioritizeFixedLengthSymbols) ->
                 Ok <| Some sym
             // If there are many symbols, and their priority is
-            // the same, we have to raise an error.
+            // the same, or we are not allowed to prioritize symbols,
+            // we have to raise an error.
             | _ ->
+                // The error should contain all symbols regardless of priority.
                 acceptSymbols
                 |> List.map fst
+                |> List.distinct
                 |> BuildError.IndistinguishableSymbols
                 |> Error
         acceptSymbol
@@ -303,9 +310,12 @@ let internal makeDFA regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray
     |> collect
     |> Result.map ImmutableArray.CreateRange
 
-/// Builds a DFA that recognizes the given `Regex`es, each accepting a unique `DFASymbol`.
-/// Optionally, the resulting DFA can be case sensitive.
-let buildRegexesToDFA caseSensitive regexes =
+/// Builds a DFA that recognizes the given `Regex`es, each
+/// accepting a unique `DFASymbol`. DFA symbols that can be
+/// derived by a regular expression without stars can be
+/// prioritized over those with stars, in case of conflicts.
+/// Moreover, the resulting DFA can be case sensitive.
+let buildRegexesToDFA prioritizeFixedLengthSymbols caseSensitive regexes =
     let tree, leaves = createRegexBuild caseSensitive regexes
     let followPos = calculateFollowPos leaves.Length tree
-    makeDFA tree leaves followPos
+    makeDFA prioritizeFixedLengthSymbols tree leaves followPos

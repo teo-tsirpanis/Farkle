@@ -273,6 +273,7 @@ module DesigntimeFarkleBuild =
                     dg.Productions
             let! mySweetDFAStateTable =
                 DFABuild.buildRegexesToDFA
+                    true
                     dg.Metadata.CaseSensitive
                     dg.DFASymbols
             return {

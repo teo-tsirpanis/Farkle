@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Farkle.JSON.CSharp\Farkle.JSON.CSharp.csproj" />
-    <ProjectReference Include="..\Farkle.JSON.FSharp\Farkle.JSON.FSharp.fsproj" />
+    <ProjectReference Include="..\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
+    <ProjectReference Include="..\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

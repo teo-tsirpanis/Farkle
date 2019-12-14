@@ -14,8 +14,8 @@
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\sample\Farkle.JSON.CSharp\Farkle.JSON.CSharp.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.JSON.FSharp\Farkle.JSON.FSharp.fsproj" />
+    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
+    <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

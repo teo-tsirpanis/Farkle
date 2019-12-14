@@ -7,7 +7,7 @@ using System;
 using System.IO;
 using Farkle.CSharp;
 
-namespace Farkle.JSON.Sample
+namespace Farkle.Samples.Cli
 {
     static class Program
     {
@@ -24,8 +24,8 @@ namespace Farkle.JSON.Sample
         static void Main()
         {
             Console.WriteLine("This program was made to help profiling Farkle.");
-            Execute(() => CSharp.Language.Runtime.Parse(_jsonData), "Farkle C#");
-            Execute(() => FSharp.Language.runtime.Parse(_jsonData), "Farkle F#");
+            Execute(() => JSON.CSharp.Language.Runtime.Parse(_jsonData), "Farkle C#");
+            Execute(() => JSON.FSharp.Language.runtime.Parse(_jsonData), "Farkle F#");
             Execute(() => FParsec.CharParsers.runParserOnString(Chiron.Parsing.jsonR.Value, null, "generated.json", _jsonData), "Chiron");
         }
     }

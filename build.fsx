@@ -71,7 +71,7 @@ let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 // Additional command line arguments passed to Expecto.
 let testArguments = ""
 
-let testFrameworks = ["netcoreapp2.1"]
+let testFrameworks = ["netcoreapp3.1"]
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 

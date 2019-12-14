@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp2.1/Farkle.Tools.dll",
+            "program": "bin/Debug/netcoreapp3.1/Farkle.Tools.dll",
             "args": [
                 "new",
                 "--type",
@@ -24,7 +24,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp2.1/Farklei.dll",
+            "program": "bin/Debug/netcoreapp3.1/Farklei.dll",
             "args": [
                 "--egtfile",
                 "gml.egt",
@@ -40,7 +40,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp2.1/Farkle.Calculator.dll",
+            "program": "bin/Debug/netcoreapp3.1/Farkle.Calculator.dll",
             "args": [
                 "111*555"
             ],
@@ -53,7 +53,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp2.1/Farkle.Tests.dll",
+            "program": "bin/Debug/netcoreapp3.1/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],
@@ -65,7 +65,7 @@
             "name": "Farkle.Tests (no build)",
             "type": "coreclr",
             "request": "launch",
-            "program": "bin/Debug/netcoreapp2.1/Farkle.Tests.dll",
+            "program": "bin/Debug/netcoreapp3.1/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],

@@ -24,13 +24,13 @@ let designtime =
             Regex.singleton '"'
             cParameter |> Regex.oneOf |> Regex.atLeast 1
             Regex.singleton '"'
-        ] |> Regex.concat |> terminal "ParamaterName"
+        ] |> Regex.concat |> terminal "ParameterName"
     let _nonterminal =
         [
             Regex.singleton '<'
             cNonterminal |> Regex.oneOf |> Regex.atLeast 1
             Regex.singleton '>'
-        ] |> Regex.concat |> terminal "NonterminalName"
+        ] |> Regex.concat |> terminal "Nonterminal"
     let rLiteral =
         [
             Regex.singleton '\''

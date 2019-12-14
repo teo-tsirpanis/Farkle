@@ -51,7 +51,7 @@ SetName        = '{' {Set Name Ch}+ '}'
 {Whitespace Ch} = {Whitespace} - {CR} - {LF}
 
 Whitespace = {Whitespace Ch}+
-Newline    = {CR}{LF} | {CR} | {LF}
+NewLine    = {CR}{LF} | {CR} | {LF}
 
 ! ====================================================================
 ! Comments

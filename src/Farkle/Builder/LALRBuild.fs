@@ -7,6 +7,7 @@ module Farkle.Builder.LALRBuild
 
 open Farkle.Collections
 open Farkle.Grammar
+open System
 open System.Collections.Generic
 open System.Collections.Immutable
 
@@ -54,7 +55,7 @@ type LR1Item = {
     Item: LR0Item
     /// The lookahead symbols of this item.
     /// You could say that the lookahead is the set of the symbols that
-    /// cone after a production, but it's still too vague. Neither I do
+    /// come after a production, but it's still too vague. Neither I do
     /// precisely know what it is. But when an item's dot is at the end
     /// the parser reduces the item's production when he encounters any
     /// of the lookahead symbols.
@@ -308,11 +309,33 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
     )
     |> ImmutableArray.CreateRange
 
-/// Builds an LALR parsing table from the grammar that contains the given
-/// `Production`s. The grammar's starting symbol and number of terminals and nonterminals are required.
-let buildProductionsToLALRStates terminalCount nonterminalCount startSymbol (productions: ImmutableArray<_>) =
-    let s' = Nonterminal(uint32 nonterminalCount, "S'")
-    let hashTerminal = Terminal <| Farkle.Grammar.Terminal(uint32 terminalCount, "#")
+/// Checks for a symbol with an index of UInt32.MaxValue and
+/// throws an exception if it finds one.
+let private checkIllegalIndices (productions: ImmutableArray<_>) =
+    let inline doCheck sym =
+        let idx = (^TSymbol: (member Index: uint32) sym)
+        if idx = UInt32.MaxValue then
+            // This error needs the API to be abused in a specific
+            // way to happen, which is the reason we throw an exception.
+            failwithf "%O cannot have an index of %d." sym idx
+    for i = 0 to productions.Length - 1 do
+        let prod = productions.[i]
+        doCheck prod.Head
+        for j = 0 to prod.Handle.Length - 1 do
+            match prod.Handle.[j] with
+            | LALRSymbol.Terminal term -> doCheck term
+            | LALRSymbol.Nonterminal nont -> doCheck nont
+
+/// Builds an LALR parsing table from the grammar with the given
+/// starting symbol that contains the given `Production`s.
+/// Having a symbol with an index of `UInt32.MaxValue` will cause an exception.
+let buildProductionsToLALRStates startSymbol productions =
+    checkIllegalIndices productions
+    // This function can be abused by specifying a symbol with an index of
+    // 2^32 - 1. It can't happen from DesigntimeFarkleBuild (indices are
+    // assigned sequentially, their maximum is int's maximum). Note
+    let s' = Nonterminal(UInt32.MaxValue, "S'")
+    let hashTerminal = Terminal <| Farkle.Grammar.Terminal(UInt32.MaxValue, "#")
     let productions = productions.Add {
         Index = uint32 productions.Length
         Head = s'

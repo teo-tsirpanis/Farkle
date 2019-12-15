@@ -205,10 +205,10 @@ let grammarGen =
         let productions = ImmutableArray.CreateBuilder()
         (nonterminals.[0], ImmutableArray.Create(LALRSymbol.Terminal terminals.[0])) :: productionPairs
         |> List.iteri (fun idx (head, handle) -> productions.Add{Index = uint32 idx; Head = head; Handle = handle})
-        return GrammarDefinition(terminals.Length, nonterminals.Length, nonterminals.[0], productions.ToImmutable())
+        return GrammarDefinition(nonterminals.[0], productions.ToImmutable())
     }
-    Gen.sized impl |> Gen.filter (fun (GrammarDefinition(terminalCount, nonterminalCount, startSymbol, productions)) ->
-        match LALRBuild.buildProductionsToLALRStates terminalCount nonterminalCount startSymbol productions with
+    Gen.sized impl |> Gen.filter (fun (GrammarDefinition(startSymbol, productions)) ->
+        match LALRBuild.buildProductionsToLALRStates startSymbol productions with
         | Ok _ -> true
         | Result.Error _ -> false)
 

@@ -13,9 +13,9 @@ open System.Collections.Immutable
 open System.Diagnostics
 open System.IO
 
-type GrammarDefinition = GrammarDefinition of terminalCount: int * nonterminalCount: int * startSymbol: Nonterminal * productions: ImmutableArray<Production>
+type GrammarDefinition = GrammarDefinition of startSymbol: Nonterminal * productions: ImmutableArray<Production>
 
-let private createGML (GrammarDefinition(_, _, startSymbol, productions)) =
+let private createGML (GrammarDefinition(startSymbol, productions)) =
     [
         yield sprintf "\"Start Symbol\" = <%s>" startSymbol.Name
         yield! productions |> Seq.map string

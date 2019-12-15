@@ -267,8 +267,6 @@ module DesigntimeFarkleBuild =
             do! consistencyCheck dg
             let! myDarlingLALRStateTable =
                 LALRBuild.buildProductionsToLALRStates
-                    dg.Symbols.Terminals.Length
-                    dg.Symbols.Nonterminals.Length
                     dg.StartSymbol
                     dg.Productions
             let! mySweetDFAStateTable =

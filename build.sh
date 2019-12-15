@@ -5,4 +5,5 @@
 
 # The script assumes that FAKE is in PATH.
 
+dotnet tool restore
 dotnet tool run fake run ./build.fsx $@

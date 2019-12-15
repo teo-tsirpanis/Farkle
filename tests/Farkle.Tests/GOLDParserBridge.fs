@@ -6,19 +6,16 @@
 module Farkle.Tests.GOLDParserBridge
 
 open Expecto
-open Farkle.Grammar
+open Farkle.Builder
 open Farkle.Grammar.GOLDParser
 open System
-open System.Collections.Immutable
 open System.Diagnostics
 open System.IO
 
-type GrammarDefinition = GrammarDefinition of startSymbol: Nonterminal * productions: ImmutableArray<Production>
-
-let private createGML (GrammarDefinition(startSymbol, productions)) =
+let private createGML (x: GrammarDefinition) =
     [
-        yield sprintf "\"Start Symbol\" = <%s>" startSymbol.Name
-        yield! productions |> Seq.map string
+        yield sprintf "\"Start Symbol\" = <%s>" x.StartSymbol.Name
+        yield! x.Productions |> Seq.map string
     ]
     |> String.concat Environment.NewLine
 

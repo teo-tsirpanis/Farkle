@@ -8,7 +8,6 @@ namespace Farkle.Builder.Untyped
 open Farkle.Builder
 open Farkle.Common
 open System
-open System.Collections.Immutable
 
 /// <summary>A nonterminal that does not have an associated type.</summary>
 /// <remarks>This type is easier to work with, if you want to just

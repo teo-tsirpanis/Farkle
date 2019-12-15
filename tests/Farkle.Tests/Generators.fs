@@ -10,14 +10,13 @@ open Chiron
 open Expecto
 open Farkle
 open Farkle.Builder
+open Farkle.Builder.Untyped
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
-open Farkle.Tests.GOLDParserBridge
 open FsCheck
 open SimpleMaths
 open System.Collections.Generic
-open System.Collections.Immutable
 open System.IO
 open System.Text
 
@@ -176,41 +175,61 @@ let regexStringPairGen = gen {
     return RegexStringPair(regex, str)
 }
 
-let grammarGen =
+let designtimeFarkleGen =
     let impl size = gen {
         let! terminals =
             Gen.choose(1, size)
             |> Gen.map (fun x ->
-                Array.init x (fun idx ->
-                    let idx = uint32 idx
-                    Terminal(uint32 idx, sprintf "T%d" idx)))
+                Array.init x (sprintf "T%d" >> literal))
         let! nonterminals =
             Gen.choose(1, size)
             |> Gen.map (fun x ->
-                Array.init x (fun idx ->
-                    let idx = uint32 idx
-                    Nonterminal(uint32 idx, sprintf "N%d" idx)))
-        let handleGen =
+                Array.init x (sprintf "N%d" >> nonterminal))
+        let productionGen =
             Gen.oneof [
-                Gen.elements terminals |> Gen.map LALRSymbol.Terminal
-                Gen.elements nonterminals |> Gen.map LALRSymbol.Nonterminal
+                Gen.elements terminals
+                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle)
             ]
-            |> Gen.arrayOf
-            |> Gen.map ImmutableArray.CreateRange
-        let! productionPairs =
-            nonterminals
-            |> Gen.collect (fun nont ->
-                handleGen |> Gen.nonEmptyListOf |> Gen.map (List.map (fun handle -> nont, handle)))
-            |> Gen.map List.concat
-        let productions = ImmutableArray.CreateBuilder()
-        (nonterminals.[0], ImmutableArray.Create(LALRSymbol.Terminal terminals.[0])) :: productionPairs
-        |> List.iteri (fun idx (head, handle) -> productions.Add{Index = uint32 idx; Head = head; Handle = handle})
-        return GrammarDefinition(nonterminals.[0], productions.ToImmutable())
+            |> Gen.listOf
+        for i = 0 to nonterminals.Length - 1 do
+            let nont = nonterminals.[i]
+            
+            let! productions =
+                Gen.nonEmptyListOf productionGen
+                |> Gen.map (List.distinct >> List.map (List.fold (.>>) empty))
+            match productions with
+            | xs when i = 0 ->
+                // We will force the grammar to derive at least one terminal
+                // this way. GOLD Parser raises an error.
+                nont.SetProductions(empty .>> terminals.[0], Array.ofList xs)
+            | x :: xs ->
+                nont.SetProductions(x, Array.ofList xs)
+            | [] -> failwith "Impossible; the list was requested not to be empty."
+        return nonterminals.[0] :> DesigntimeFarkle
     }
-    Gen.sized impl |> Gen.filter (fun (GrammarDefinition(startSymbol, productions)) ->
-        match LALRBuild.buildProductionsToLALRStates startSymbol productions with
+    Gen.sized impl
+    // As the size of agrammar increases, it becomes more
+    // and more likely for LALR conflicts to appear, making
+    // the tests run for very long. I have no idea why FsCheck
+    // does not raise an error though.
+    |> Gen.resize 10
+    |> Gen.filter (fun df ->
+        let gDef = DesigntimeFarkleBuild.createGrammarDefinition df
+        match DesigntimeFarkleBuild.buildGrammarOnly gDef with
         | Ok _ -> true
         | Result.Error _ -> false)
+
+type FarkleVsGOLDParser = FarkleVsGOLDParser of farkleGramamr: Grammar * goldGrammar: Grammar
+
+let farkleVsGOLDParserGen = gen {
+    let! gDef = Gen.map DesigntimeFarkleBuild.createGrammarDefinition Arb.generate
+    let farkleGramamr =
+        gDef
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> returnOrFail "A faulty grammar was supposed to be filtered away."
+    let goldGrammar = GOLDParserBridge.buildUsingGOLDParser gDef
+    return FarkleVsGOLDParser(farkleGramamr, goldGrammar)
+}
 
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
@@ -233,7 +252,8 @@ type Generators =
     static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
-    static member GrammarDefinition() = Arb.fromGen grammarGen
+    static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
+    static member FarkleVsGOLDParser() = Arb.fromGen farkleVsGOLDParserGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

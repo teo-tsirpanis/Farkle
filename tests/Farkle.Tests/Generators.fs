@@ -70,13 +70,13 @@ let rangeMapGen() = gen {
 let regexGen =
     let rec impl size = gen {
         if size <= 1 then
-            return! nonEmptyString |> Gen.map Regex.oneOf
+            return! nonEmptyString |> Gen.map Regex.chars
         else
             let gen = impl <| size / 2
             match! Gen.choose(0, 2) with
             | 0 -> return! Gen.map2 (<&>) gen gen
             | 1 -> return! Gen.map2 (<|>) gen gen
-            | 2 when size >= 16 -> return! Gen.map Regex.oneOf nonEmptyString
+            | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
             | _ -> return! Gen.map (Regex.atLeast 0) gen
     }
     Gen.sized impl

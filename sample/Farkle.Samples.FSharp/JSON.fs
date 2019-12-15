@@ -50,34 +50,36 @@ let toDecimal (x: ReadOnlySpan<char>) =
         Decimal.Parse(x.ToString(), NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number
     #endif
 
+open Regex
+
 let designtime =
     let number =
-        Regex.concat [
-            Regex.singleton '-' |> Regex.optional
-            Regex.choice [
-                Regex.singleton '0'
-                Regex.oneOf "123456789" <&> (Regex.oneOf Number |> Regex.atLeast 0)
+        concat [
+            char '-' |> optional
+            choice [
+                char '0'
+                chars "123456789" <&> (chars Number |> atLeast 0)
             ]
-            Regex.optional <| (Regex.singleton '.' <&> (Regex.oneOf Number |> Regex.atLeast 1))
-            [Regex.oneOf "eE"; Regex.oneOf "+-" |> Regex.optional; Regex.oneOf Number |> Regex.atLeast 1]
-            |> Regex.concat
-            |> Regex.optional]
+            optional <| (char '.' <&> (chars Number |> atLeast 1))
+            [chars "eE"; chars "+-" |> optional; chars Number |> atLeast 1]
+            |> concat
+            |> optional]
         |> terminal "Number" (T(fun _ data -> toDecimal data))
     let stringCharacters = AllValid.Characters - (set ['"'; '\\'])
     let string =
-        Regex.concat [
-            Regex.singleton '"'
-            Regex.atLeast 0 <| Regex.choice [
-                Regex.oneOf stringCharacters
-                Regex.concat [
-                    Regex.singleton '\\'
-                    Regex.choice [
-                        Regex.oneOf "\"\\/bfnrt"
-                        Regex.singleton 'u' <&> (Regex.repeat 4 <| Regex.oneOf "1234567890ABCDEF")
+        concat [
+            char '"'
+            atLeast 0 <| choice [
+                chars stringCharacters
+                concat [
+                    char '\\'
+                    choice [
+                        chars "\"\\/bfnrt"
+                        char 'u' <&> (repeat 4 <| chars "1234567890ABCDEF")
                     ]
                 ]
             ]
-            Regex.singleton '"'
+            char '"'
         ]
         |> terminal "String" (T(fun _ data -> unescapeJsonString data))
     let object = nonterminal "Object"

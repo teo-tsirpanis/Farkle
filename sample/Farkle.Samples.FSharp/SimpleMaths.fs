@@ -66,7 +66,7 @@ let rec renderExpression x =
 
 let buildInt() =
     let number =
-        Regex.oneOf PredefinedSets.Number
+        Regex.chars PredefinedSets.Number
         |> Regex.atLeast 1
         |> terminal "Number" (T(fun _ data -> System.Int32.Parse(data.ToString())))
 

@@ -61,7 +61,7 @@ let tests = testList "Designtime Farkle tests" [
 
     test "A grammar with a nullable terminal is not accepted" {
         let designtime =
-            let term = terminal "Nullable" (T(fun _ _ -> ())) (Regex.oneOf Number |> Regex.atLeast 0)
+            let term = terminal "Nullable" (T(fun _ _ -> ())) (Regex.chars Number |> Regex.atLeast 0)
             "S" ||= [!% term =% ()]
         let grammar = DesigntimeFarkleBuild.build designtime |> fst
         Expect.equal grammar (Error (BuildError.NullableSymbols (Set.singleton (Choice1Of4 <| Terminal(0u, "Nullable")))))
@@ -86,8 +86,8 @@ let tests = testList "Designtime Farkle tests" [
         let lit2 = literal "Test"
         Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality."
         
-        let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.literal "Test")
-        let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.literal "Test")
+        let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
+        let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
         Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality."
 
         let nont1 = nonterminal "Test" :> DesigntimeFarkle

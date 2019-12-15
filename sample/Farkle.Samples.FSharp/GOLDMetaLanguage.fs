@@ -10,6 +10,8 @@ open Farkle.Builder
 open Farkle.Builder.Untyped
 open System.Collections.Immutable
 
+open Regex
+
 /// A `DesigntimeFarkle` that represents
 /// the grammar for the GOLD Meta-Language.
 let designtime =
@@ -22,46 +24,46 @@ let designtime =
 
     let parameterName =
         [
-            Regex.singleton '"'
-            cParameter |> Regex.oneOf |> Regex.atLeast 1
-            Regex.singleton '"'
+            char '"'
+            cParameter |> chars |> atLeast 1
+            char '"'
         ] |> Regex.concat |> terminal "ParameterName"
     let _nonterminal =
         [
-            Regex.singleton '<'
-            cNonterminal |> Regex.oneOf |> Regex.atLeast 1
-            Regex.singleton '>'
+            char '<'
+            cNonterminal |> chars |> atLeast 1
+            char '>'
         ] |> Regex.concat |> terminal "Nonterminal"
     let rLiteral =
         [
-            Regex.singleton '\''
-            cLiteral |> Regex.oneOf |> Regex.atLeast 0
-            Regex.singleton '\''
+            char '\''
+            cLiteral |> chars |> atLeast 0
+            char '\''
         ] |> Regex.concat
     let _terminal =
         [
-            cTerminal |> Regex.oneOf |> Regex.atLeast 1
+            cTerminal |> chars |> atLeast 1
             rLiteral
         ] |> Regex.choice |> terminal "Terminal"
     let setLiteral =
         [
-            Regex.singleton '['
+            char '['
             [
-                Regex.oneOf cSetLiteral
+                chars cSetLiteral
                 [
-                    Regex.singleton '\''
-                    cLiteral |> Regex.oneOf |> Regex.atLeast 0
-                    Regex.singleton '\''
-                ] |> Regex.concat
-            ] |> Regex.choice |> Regex.atLeast 1
-            Regex.singleton ']'
-        ] |> Regex.concat |> terminal "SetLiteral"
+                    char '\''
+                    cLiteral |> chars |> atLeast 0
+                    char '\''
+                ] |> concat
+            ] |> choice |> atLeast 1
+            char ']'
+        ] |> concat |> terminal "SetLiteral"
     let setName =
         [
-            Regex.singleton '{'
-            cSetName |> Regex.oneOf |> Regex.atLeast 1
-            Regex.singleton '}'
-        ] |> Regex.concat |> terminal "SetName"
+            char '{'
+            cSetName |> chars |> atLeast 1
+            char '}'
+        ] |> concat |> terminal "SetName"
 
     let nlOpt = nonterminal "nl opt"
     nlOpt.SetProductions(!% newline .>> nlOpt, empty)

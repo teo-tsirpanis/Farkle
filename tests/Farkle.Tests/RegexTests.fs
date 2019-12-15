@@ -72,10 +72,10 @@ let tests = testList "Regex tests" [
     
     testProperty "A DFA can correctly recognize literal symbols over a wildcard" (fun literals ->
         let literals = literals |> List.distinct |> List.map (fun (NonEmptyString str) -> str)
-        let ident = (Regex.oneOf [char 0 .. char 127] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
+        let ident = (Regex.chars [char 0 .. char 127] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
         let dfa =
             literals
-            |> List.mapi (fun i str -> Regex.literal str, Choice1Of4 <| Terminal(uint32 i + 1u, str))
+            |> List.mapi (fun i str -> Regex.string str, Choice1Of4 <| Terminal(uint32 i + 1u, str))
             |> (fun xs -> ident :: xs)
             |> DFABuild.buildRegexesToDFA true true
             |> returnOrFail "Generating the DFA failed"
@@ -88,7 +88,7 @@ let tests = testList "Regex tests" [
 
     testProperty "A DFA for a literal string is minimal" (fun (NonNull str) ->
         let dfa =
-            [Regex.literal str, Choice1Of4 <| Terminal(0u, str)]
+            [Regex.string str, Choice1Of4 <| Terminal(0u, str)]
             |> DFABuild.buildRegexesToDFA false true
             |> returnOrFail "Generating a DFA for a literal string failed"
         Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")

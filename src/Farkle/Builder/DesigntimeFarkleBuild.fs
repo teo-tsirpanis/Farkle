@@ -38,11 +38,11 @@ module DesigntimeFarkleBuild =
 
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise "NewLine"
-    let private newLineRegex = Regex.oneOf "\r\n" <|> Regex.literal "\r\n"
+    let private newLineRegex = Regex.chars "\r\n" <|> Regex.string "\r\n"
     let private commentSymbol = Noise "Comment"
     let private whitespaceSymbol = Noise "Whitespace"
-    let private whitespaceRegex = Regex.oneOf ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
-    let private whitespaceRegexNoNewline = Regex.oneOf ['\t'; ' '] |> Regex.atLeast 1
+    let private whitespaceRegex = Regex.chars ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
+    let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
 
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
     let createGrammarDefinition (df: DesigntimeFarkle) =
@@ -90,7 +90,7 @@ module DesigntimeFarkleBuild =
             | Choice2Of4 (Literal lit) when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
             | Choice2Of4 (Literal lit) ->
-                let term = Terminal.Create(lit, (Regex.literal lit)) :?> AbstractTerminal
+                let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
@@ -155,7 +155,7 @@ module DesigntimeFarkleBuild =
                     | Choice2Of4 noise -> Choice2Of3 noise
                     // We will never reach that line.
                     | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
-                dfaSymbols <- (Regex.literal cStart, Choice3Of4 startSymbol) :: dfaSymbols
+                dfaSymbols <- (Regex.string cStart, Choice3Of4 startSymbol) :: dfaSymbols
                 usesNewLine <- true
                 groups.Add {
                     Name = "Comment Line"
@@ -170,8 +170,8 @@ module DesigntimeFarkleBuild =
                 let startSymbol = GroupStart(cStart, uint32 groups.Count)
                 let endSymbol = GroupEnd cEnd
                 dfaSymbols <-
-                    (Regex.literal cStart, Choice3Of4 startSymbol) ::
-                    (Regex.literal cEnd, Choice4Of4 endSymbol) :: dfaSymbols
+                    (Regex.string cStart, Choice3Of4 startSymbol) ::
+                    (Regex.string cEnd, Choice4Of4 endSymbol) :: dfaSymbols
                 groups.Add {
                     Name = "Comment Block"
                     ContainerSymbol = Choice2Of2 commentSymbol

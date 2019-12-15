@@ -35,7 +35,7 @@ type Regex =
         | Alt xs -> xs |> List.exists (fun x -> x.IsNullable())
         | Star _ -> true
         | Chars x -> x.IsEmpty
-    /// The empty regex. It recognizes only the empty string.
+    /// A regex that recognizes only the empty string.
     static member Empty = Concat []
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
@@ -48,7 +48,8 @@ type Regex =
         | x1, Concat x2 -> Concat <| x1 :: x2
         | x1, x2 -> Concat [x1; x2]
     /// <summary>Concatenates many regexes.</summary>
-    /// <remarks>This is an optimized edition of <see cref="And"/> for many regexes.</remarks>
+    /// <remarks>This is an optimized edition of
+    /// <see cref="And"/> for many regexes.</remarks>
     /// <seealso cref="And"/>
     static member Join([<ParamArray>] regexes) =
         match Array.length regexes with
@@ -68,8 +69,10 @@ type Regex =
         | Alt xs, x
         | x, Alt xs -> Alt <| x :: xs // Alt is commutative.
         | x1, x2 -> Alt [x1; x2]
-    /// <summary>Returns a regex that recognizes a string that is recognized by either of the given regexes.</summary>
-    /// <remarks>This is an optimized edition of <see cref="Or"/> for many regexes.</remarks>
+    /// <summary>Returns a regex that recognizes a string that
+    /// is recognized by either of the given regexes.</summary>
+    /// <remarks>This is an optimized edition of
+    /// <see cref="Or"/> for many regexes.</remarks>
     /// <seealso cref="Or"/>
     static member Choice([<ParamArray>] regexes) =
         match Array.length regexes with
@@ -89,32 +92,41 @@ type Regex =
             else
                 Chars chars :: subtrees
             |> function | [x] -> x | x -> Alt x
-    /// Returns a regex that recognizes zero or more strings that are recognized by the given regex.
+    /// Returns a regex that recognizes zero or more
+    /// strings that are recognized by the given regex.
     member x.ZeroOrMore() =
         match x with
         | Star _ -> x
         | x -> Star x
-    /// Returns a regex that recognizes an exact number of strings that are recognized by the given regex.
+    /// Returns a regex that recognizes an exact number
+    /// of strings that are recognized by the given regex.
     member x.Repeat num = Regex.Join(Array.replicate num x)
     /// Returns a regex that recognizes either the given regex or the empty string.
     member x.Optional() = Regex.Choice(x, Regex.Empty)
-    /// Returns a regex that recognizes a ranged number of strings that are recognized by the given regex.
+    /// Returns a regex that recognizes a ranged number
+    /// of strings that are recognized by the given regex.
     /// The range is closed.
-    member x.FromTo from upTo =
+    member x.Between from upTo =
         if from > upTo then
             invalidArg "upTo" "'upTo' must be bigger or equal to 'from'"
         Regex.Join(x.Repeat from, x.Optional().Repeat <| upTo - from)
-    /// Returns a regex that recognizes at least a number of consecutive strings that are recognized by the given regex.
+    /// Returns a regex that recognizes at least a number of
+    /// consecutive strings that are recognized by the given regex.
     member x.AtLeast num =
         if num = 0 then
             x.ZeroOrMore()
         else
             Regex.Join(x.Repeat num, x.ZeroOrMore())
     /// Returns a regex that only recognizes a literal string.
-    static member Literal (str: string) = str |> Seq.map Regex.Literal |> List.ofSeq |> Concat
+    static member Literal (str: string) =
+        str
+        |> Seq.map Regex.Literal 
+        |> List.ofSeq
+        |> Concat
     /// Returns a regex that only recognizes a single literal character.
     static member Literal c = Set.singleton c |> Chars
-    /// Returns a regex that recognizes only one character of these on the given sequence of characters.
+    /// Returns a regex that recognizes only one character
+    /// of these on the given sequence of characters.
     static member OneOf (xs: _ seq) =
         let set =
             match xs with
@@ -131,6 +143,15 @@ type Regex =
 module Regex =
 
     /// [omit]
+    let char (c: char) = Regex.Literal c
+
+    /// [omit]
+    let chars str = Regex.OneOf str
+
+    /// [omit]
+    let string (str: string) = Regex.Literal str
+
+    /// [omit]
     let concat xs = Regex.Join(Array.ofSeq xs)
 
     /// [omit]
@@ -143,19 +164,10 @@ module Regex =
     let optional (x: Regex) = x.Optional()
 
     /// [omit]
-    let fromTo from upTo (x: Regex) = x.FromTo from upTo
+    let between from upTo (x: Regex) = x.Between from upTo
 
     /// [omit]
     let atLeast num (x: Regex) = x.AtLeast num
-
-    /// [omit]
-    let singleton (c: char) = Regex.Literal c
-
-    /// [omit]
-    let literal (str: string) = Regex.Literal str
-
-    /// [omit]
-    let oneOf str = Regex.OneOf str
 
 [<AutoOpen>]
 /// F# operators to easily manipulate `Regex`es.

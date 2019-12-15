@@ -8,6 +8,7 @@ module GOLDMetaLanguage
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Untyped
+open System.Collections.Immutable
 
 /// A `DesigntimeFarkle` that represents
 /// the grammar for the GOLD Meta-Language.
@@ -164,6 +165,12 @@ let designtime =
     let content = nonterminal "Content"
     content.SetProductions(!% content .>> definition, !% definition)
 
+    let metadata = {
+        GrammarMetadata.Default with
+            Comments = ImmutableList.Create(BlockComment("!*", "*!"), LineComment "!")
+    }
+
     "Grammar" ||= [!% nlOpt .>> content]
+    |> DesigntimeFarkle.withMetadataUntyped metadata
 
 let runtime = RuntimeFarkle.buildUntyped designtime

@@ -29,15 +29,15 @@ open System.Collections.Immutable
 ///     One that takes an F# function and another one that takes a delegate.</para>
 /// </remarks>
 /// <typeparam name="T">The type of the concrete production builder. Used so that
-/// <see cref="AbstractProductionBuilder{TBuilder}.Append"/> can return the correct production builder type</typeparam>
+/// <see cref="AbstractProductionBuilder{TBuilder}.Append"/>
+/// can return the correct production builder type</typeparam>
 type ProductionBuilder(members) =
     /// A production builder with no members.
     static member Empty = ProductionBuilder(ImmutableList.Empty)
     member __.Append(sym) = ProductionBuilder(Symbol.append members sym)
     member x.Append(lit) = x.Append(Literal lit)
-    member __.Extend(df: DesigntimeFarkle<'T1>) = ProductionBuilder<'T1>(Symbol.append members df, members.Count)
-    member x.FSharpFinish(fFuseThunk) = x.FinishRaw(fun _ -> fFuseThunk())
-    member x.Finish(f: Func<_>) = x.FSharpFinish(FuncConvert.FromFunc(f))
+    member __.Extend(df: DesigntimeFarkle<'T1>) =
+        ProductionBuilder<'T1>(Symbol.append members df, members.Count)
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// an array of all the production's members as objects.</summary>
     /// <remarks>
@@ -50,12 +50,15 @@ type ProductionBuilder(members) =
         Members = members.ToImmutableArray()
         Fuse = fFuseRaw >> box
     }
-    /// Creates an untyped production. This finction is internally
+    member x.FinishFSharp fFuseThunk = x.FinishRaw(fun _ -> fFuseThunk())
+    member x.Finish(f: Func<_>) = x.FinishFSharp(FuncConvert.FromFunc(f))
+    /// Creates an untyped production. This function is internally
     /// used by the untyped nonterminals API.
     member internal __.FinishUntyped() = {new AbstractProduction with
         member __.Members = members.ToImmutableArray()
         member __.Fuse = (fun _ -> null)}
-    /// <summary>Creates a <see cref="Production{T}"/> that always returns a constant value.</summary>
+    /// <summary>Creates a <see cref="Production{T}"/> tha
+    ///  always returns a constant value.</summary>
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
@@ -93,13 +96,16 @@ module DesigntimeFarkleOperators =
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
-    let inline op_DotGreaterGreater pb df = (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
+    let inline op_DotGreaterGreater pb df =
+        (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
 
     /// The `Extend` method of production builders as an operator.
-    let inline op_DotGreaterGreaterDot pb df = (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
+    let inline op_DotGreaterGreaterDot pb df =
+        (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
 
     /// The `Finish` method of production builders as an operator.
-    let inline (=>) pb f = (^TBuilder : (member FSharpFinish: ^TFunction -> Production<'T>) (pb, f))
+    let inline (=>) pb f =
+        (^TBuilder : (member FSharpFinish: ^TFunction -> Production<'T>) (pb, f))
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)

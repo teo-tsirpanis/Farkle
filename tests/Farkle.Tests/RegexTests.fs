@@ -69,6 +69,22 @@ let tests = testList "Regex tests" [
         Expect.isSome (matchDFAToString dfa <| str.ToLowerInvariant()) "Recognizing the lowercase string failed"
         Expect.isSome (matchDFAToString dfa <| str.ToUpperInvariant()) "Recognizing the uppercase string failed"
     )
+    
+    testProperty "A DFA can correctly recognize literal symbols over a wildcard" (fun literals ->
+        let literals = literals |> List.distinct |> List.map (fun (NonEmptyString str) -> str)
+        let ident = (Regex.oneOf [char 0 .. char 127] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
+        let dfa =
+            literals
+            |> List.mapi (fun i str -> Regex.literal str, Choice1Of4 <| Terminal(uint32 i + 1u, str))
+            |> (fun xs -> ident :: xs)
+            |> DFABuild.buildRegexesToDFA true true
+            |> returnOrFail "Generating the DFA failed"
+        literals
+        |> List.forall (fun str ->
+            match matchDFAToString dfa str with
+            | Some(Choice1Of4(Terminal(_, term))) -> term = str
+            | _ -> false)
+    )
 
     testProperty "A DFA for a literal string is minimal" (fun (NonNull str) ->
         let dfa =

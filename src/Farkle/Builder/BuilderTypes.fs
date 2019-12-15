@@ -74,6 +74,19 @@ type BuildError =
     | EmptyNonterminals of string Set
     /// Some productions are defined twice.
     | DuplicateProductions of (Nonterminal * ImmutableArray<LALRSymbol>) Set
+    /// The grammar has more symbols than the supported limit.
+    | SymbolLimitExceeded
+    /// The maximum number of terminals and nonterminals
+    /// a grammar built by Farkle can have.
+    /// Currently set to 2^20; sixteen times more of what
+    /// GOLD Parser can handle. To be more specific, a
+    /// grammar can have at most 2^20 terminals _and_ 2^20
+    /// nonterminals.
+    // This limitation was imposed to be able to store
+    // more informations in the upper bits of an index,
+    // in optimized operations. Still, it is a very large
+    // number for symbol in grammars.
+    static member SymbolLimit = 1 <<< 20
     override x.ToString() =
         match x with
         | IndistinguishableSymbols xs ->
@@ -96,6 +109,10 @@ the production builder called 'empty' (or 'Production.Empty' in C#)."
             |> Seq.map Production.Format
             |> String.concat ", "
             |> sprintf "Productions %s are defined twice."
+        | SymbolLimitExceeded ->
+            sprintf "A grammar built by Farkle cannot have \
+more than %d terminals or more than %d nonterminals."
+                BuildError.SymbolLimit BuildError.SymbolLimit
 
 /// A commonly used set of characters.
 type PredefinedSet = private {

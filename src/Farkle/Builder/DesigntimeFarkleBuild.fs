@@ -242,6 +242,10 @@ module DesigntimeFarkleBuild =
             |> set
         if not duplicateProductions.IsEmpty then
             do! duplicateProductions |> BuildError.DuplicateProductions |> Error
+
+        if grammar.Symbols.Terminals.Length > BuildError.SymbolLimit
+            || grammar.Symbols.Nonterminals.Length > BuildError.SymbolLimit then
+            do! Error BuildError.SymbolLimitExceeded
     }
 
     /// This value contains the name and version of that

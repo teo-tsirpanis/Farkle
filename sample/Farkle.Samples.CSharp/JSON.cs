@@ -12,6 +12,7 @@ using Farkle.CSharp;
 using Farkle.Builder;
 using static Farkle.Builder.Regex;
 
+// ReSharper disable once CheckNamespace
 namespace Farkle.JSON.CSharp
 {
     public static class Language

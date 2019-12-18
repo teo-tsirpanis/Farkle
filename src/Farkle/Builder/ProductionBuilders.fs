@@ -105,7 +105,7 @@ module DesigntimeFarkleOperators =
 
     /// The `Finish` method of production builders as an operator.
     let inline (=>) pb f =
-        (^TBuilder : (member FSharpFinish: ^TFunction -> Production<'T>) (pb, f))
+        (^TBuilder : (member FinishFSharp: ^TFunction -> Production<'T>) (pb, f))
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)

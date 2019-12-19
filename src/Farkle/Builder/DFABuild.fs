@@ -299,8 +299,8 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
             | _ ->
                 // The error should contain all symbols regardless of priority.
                 acceptSymbols
-                |> List.map fst
-                |> List.distinct
+                |> Seq.map fst
+                |> set
                 |> BuildError.IndistinguishableSymbols
                 |> Error
         acceptSymbol

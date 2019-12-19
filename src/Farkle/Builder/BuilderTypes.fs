@@ -65,7 +65,7 @@ with
 /// An error the builder encountered.
 type BuildError =
     /// Some symbols cannot be distinguished from each other.
-    | IndistinguishableSymbols of DFASymbol list
+    | IndistinguishableSymbols of DFASymbol Set
     /// Some symbols can contain zero characters.
     | NullableSymbols of DFASymbol Set
     /// An LALR conflict did occur.

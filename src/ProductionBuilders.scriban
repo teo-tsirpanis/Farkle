@@ -34,16 +34,21 @@ type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
     {{~ if n != capacity ~}}
     member __.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(Symbol.append members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
-    member __.FinishFSharp(f: {{ finish_signature n }}) : Production<{{ ap }}TOutput> = {
-        Members = members.ToImmutableArray()
-        Fuse =
-            fun arr ->
-                f
-                    {{~ for i in 1..n ~}}
-                    (arr.[idx{{ i }}] :?> _)
-                    {{~ end ~}}
-                |> box
-    }
+    member __.FinishFSharp(f: {{ finish_signature n }}) : Production<{{ ap }}TOutput> =
+        {{~ # https://github.com/dotnet/fsharp/issues/8034
+        for i in 1..n ~}}
+        let idx{{ i }} = idx{{ i }}
+        {{~ end ~}}
+        {
+            Members = members.ToImmutableArray()
+            Fuse =
+                fun arr ->
+                    f
+                        {{~ for i in 1..n ~}}
+                        (arr.[idx{{ i }}] :?> _)
+                        {{~ end ~}}
+                    |> box
+        }
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
     member x.AsIs() = x.FinishFSharp(id)

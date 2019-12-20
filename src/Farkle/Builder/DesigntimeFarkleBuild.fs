@@ -45,8 +45,11 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
 
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
+    [<CompiledName("CreateGrammarDefinition")>]
     let createGrammarDefinition (df: DesigntimeFarkle) =
         let mutable dfaSymbols = []
+        let addDFASymbol regex sym =
+            dfaSymbols <- (regex, sym) :: dfaSymbols
         // This variable holds whether there is a line comment
         // or a newline special terminal in the language.
         let mutable usesNewLine = false
@@ -72,7 +75,7 @@ module DesigntimeFarkleBuild =
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
-        let rec impl (sym: Symbol) =
+        let rec getStartSymbol (sym: Symbol) =
             let handleTerminal (term: AbstractTerminal) =
                 let symbol = Terminal(uint32 terminals.Count, term.Name)
                 terminalMap.Add(term, symbol)
@@ -81,7 +84,7 @@ module DesigntimeFarkleBuild =
                 // This way, the indices of the terminals and their transformers will match.
                 terminals.Add(symbol)
                 transformers.Add(if isNull term.Transformer then tNull else term.Transformer)
-                dfaSymbols <- (term.Regex, Choice1Of4 symbol) :: dfaSymbols
+                addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
             match sym with
             | Choice1Of4 term when terminalMap.ContainsKey(term) ->
@@ -118,15 +121,47 @@ module DesigntimeFarkleBuild =
                 |> List.iter (fun aprod ->
                     let handle =
                         aprod.Members
-                        |> Seq.map impl
+                        |> Seq.map getStartSymbol
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
                     fusers.Add(aprod.Fuse))
                 LALRSymbol.Nonterminal symbol
 
+        let newLineGroupEnd =
+            match newLineSymbol with
+            | Choice1Of4 term -> Choice1Of3 term
+            | Choice2Of4 noise -> Choice2Of3 noise
+            // We will never reach that line.
+            | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
+
+        let handleComment comment =
+            let newStartSymbol name = GroupStart(name, uint32 groups.Count)
+            let addGroup name gStart gEnd em =
+                groups.Add {
+                    Name = name
+                    ContainerSymbol = Choice2Of2  commentSymbol
+                    Start = gStart
+                    End = gEnd
+                    AdvanceMode = AdvanceMode.Character
+                    EndingMode = em
+                    Nesting = ImmutableHashSet.Empty
+                }
+            match comment with
+            | LineComment cStart ->
+                let startSymbol = newStartSymbol cStart
+                addDFASymbol (Regex.string cStart) (Choice3Of4 startSymbol)
+                usesNewLine <- true
+                addGroup "Comment Line" startSymbol newLineGroupEnd EndingMode.Open
+            | BlockComment(cStart, cEnd) ->
+                let startSymbol = newStartSymbol cStart
+                let endSymbol = GroupEnd cEnd
+                addDFASymbol (Regex.string cStart) (Choice3Of4 startSymbol)
+                addDFASymbol (Regex.string cEnd) (Choice4Of4 endSymbol)
+                addGroup "Comment Block" startSymbol (Choice3Of3 endSymbol) EndingMode.Closed
+
         let startSymbol =
-            match df |> Symbol.specialize |> impl with
+            match df |> Symbol.specialize |> getStartSymbol with
             // Our grammar is made of only one terminal.
             // We will create a production which will be made of just that.
             | LALRSymbol.Terminal term ->
@@ -140,48 +175,14 @@ module DesigntimeFarkleBuild =
                 fusers.Add(fun xs -> xs.[0])
                 root
             | LALRSymbol.Nonterminal nont -> nont
-        metadata.NoiseSymbols
-        |> Seq.iter (fun (name, regex) ->
+
+        Seq.iter (fun (name, regex) ->
             let symbol = Noise name
             noiseSymbols.Add(symbol)
-            dfaSymbols <- (regex, Choice2Of4 symbol) :: dfaSymbols)
-        metadata.Comments
-        |> Seq.iter (function
-            | LineComment cStart ->
-                let startSymbol = GroupStart(cStart, uint32 groups.Count)
-                let endSymbol =
-                    match newLineSymbol with
-                    | Choice1Of4 term -> Choice1Of3 term
-                    | Choice2Of4 noise -> Choice2Of3 noise
-                    // We will never reach that line.
-                    | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
-                dfaSymbols <- (Regex.string cStart, Choice3Of4 startSymbol) :: dfaSymbols
-                usesNewLine <- true
-                groups.Add {
-                    Name = "Comment Line"
-                    ContainerSymbol = Choice2Of2 commentSymbol
-                    Start = startSymbol
-                    End = endSymbol
-                    AdvanceMode = AdvanceMode.Character
-                    EndingMode = EndingMode.Open
-                    Nesting = ImmutableHashSet.Empty
-                }
-            | BlockComment(cStart, cEnd) ->
-                let startSymbol = GroupStart(cStart, uint32 groups.Count)
-                let endSymbol = GroupEnd cEnd
-                dfaSymbols <-
-                    (Regex.string cStart, Choice3Of4 startSymbol) ::
-                    (Regex.string cEnd, Choice4Of4 endSymbol) :: dfaSymbols
-                groups.Add {
-                    Name = "Comment Block"
-                    ContainerSymbol = Choice2Of2 commentSymbol
-                    Start = startSymbol
-                    End = Choice3Of3 endSymbol
-                    AdvanceMode = AdvanceMode.Character
-                    EndingMode = EndingMode.Closed
-                    Nesting = ImmutableHashSet.Empty
-                }
-        )
+            addDFASymbol regex (Choice2Of4 symbol)
+        ) metadata.NoiseSymbols
+        Seq.iter handleComment metadata.Comments
+
         if not metadata.Comments.IsEmpty then
             noiseSymbols.Add(commentSymbol)
         if metadata.AutoWhitespace then
@@ -191,12 +192,13 @@ module DesigntimeFarkleBuild =
                     whitespaceRegexNoNewline
                 else
                     whitespaceRegex
-            dfaSymbols <- (whitespaceRegex, Choice2Of4 whitespaceSymbol) :: dfaSymbols
+            addDFASymbol whitespaceRegex (Choice2Of4 whitespaceSymbol)
         if usesNewLine then
             match newLineSymbol with
             | Choice2Of4 x -> noiseSymbols.Add(x)
             | _ -> ()
-            dfaSymbols <- (newLineRegex, newLineSymbol) :: dfaSymbols
+            addDFASymbol newLineRegex newLineSymbol
+
         let symbols = {
             Terminals = terminals.ToImmutable()
             Nonterminals = nonterminals.ToImmutable()
@@ -267,6 +269,7 @@ module DesigntimeFarkleBuild =
         }
 
     /// Creates a `Grammar` from a `GrammarDefinition`.
+    [<CompiledName("BuildGrammarOnly")>]
     let buildGrammarOnly dg = either {
             do! consistencyCheck dg
             let! myDarlingLALRStateTable =
@@ -295,15 +298,17 @@ module DesigntimeFarkleBuild =
     /// Creates a `Grammar` and a `PostProcessor`
     /// from a typed `DesigntimeFarkle`.
     /// The construction of the grammar may fail.
+    [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
-        let myLovelyBuilderGrammar = createGrammarDefinition df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> myLovelyBuilderGrammar
-        let myDearestGrammarGrammar = buildGrammarOnly myLovelyBuilderGrammar
-        myDearestGrammarGrammar, myFavoritePostProcessor
+        let myLovelyGrammarDefinition = createGrammarDefinition df
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> myLovelyGrammarDefinition
+        let myDearestGrammar = buildGrammarOnly myLovelyGrammarDefinition
+        myDearestGrammar, myFavoritePostProcessor
 
     /// Creates a `PostProcessor` from the given `DesigntimeFarkle`.
     /// By not creating a grammar, some potentially expensive steps are skipped.
     /// This function is useful only for some very limited scenarios, such as
     /// having many designtime Farkles with an identical grammar but different post-processors.
+    [<CompiledName("BuildPostProcessorOnly")>]
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
         df |> createGrammarDefinition |> createPostProcessor<'TOutput>

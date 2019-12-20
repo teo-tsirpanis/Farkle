@@ -250,6 +250,7 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
         statesList.Add(state)
         states.Add(stateName, state)
         idx
+
     addNewState regex.FirstPos.Value |> ignore
     while unmarkedStates.Count <> 0 do
         let S = statesList.[int <| unmarkedStates.Pop()]
@@ -305,6 +306,7 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
                 |> Error
         acceptSymbol
         |> Result.map (fun ac -> {Index = state.Index; AcceptSymbol = ac; Edges = edges})
+
     statesList
     |> Seq.map toDFAState
     |> collect

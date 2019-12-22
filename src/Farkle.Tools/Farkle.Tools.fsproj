@@ -2,7 +2,7 @@
   <Import Project="../NuGet.props" />
   <Import Project="../Farkle.Tools.Shared/Farkle.Tools.Shared.proj" />
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>farkle</ToolCommandName>

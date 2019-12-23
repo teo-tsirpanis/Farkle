@@ -15,13 +15,14 @@ group Executables
   framework: net472, netcoreapp3.1
 
   source https://api.nuget.org/v3/index.json
+  source https://ci.appveyor.com/nuget/farkle
 
   storage: none
 
   nuget Argu
   nuget Chiron
   nuget BenchmarkDotNet
-  nuget Farkle.Tools.MSBuild
+  nuget Farkle.Tools.MSBuild = 5.1.0-ci.545
   nuget FSharp.Core
   nuget Scriban
   nuget Serilog

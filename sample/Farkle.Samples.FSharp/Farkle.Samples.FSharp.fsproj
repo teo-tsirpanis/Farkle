@@ -12,7 +12,6 @@
     <Compile Include="SimpleMaths.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="5.1.0-ci.545" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -43,7 +43,6 @@ NUGET
       FSharp.Core (>= 4.3.4)
       System.ValueTuple (>= 4.4) - restriction: || (== net472) (&& (== netcoreapp3.1) (>= net452))
     CommandLineParser (2.6)
-    Farkle.Tools.MSBuild (5.0.1)
     FParsec (1.0.3)
       FSharp.Core (>= 4.0.0.1) - restriction: || (== net472) (&& (== netcoreapp3.1) (>= net40))
       FSharp.Core (>= 4.2.3) - restriction: || (&& (== net472) (< net40)) (== netcoreapp3.1)
@@ -194,6 +193,8 @@ NUGET
     System.ValueTuple (4.5)
     System.Windows.Extensions (4.7) - restriction: || (&& (== net472) (>= netcoreapp3.0)) (== netcoreapp3.1)
       System.Drawing.Common (>= 4.7) - restriction: || (&& (== net472) (>= netcoreapp3.0)) (== netcoreapp3.1)
+  remote: https://ci.appveyor.com/nuget/farkle
+    Farkle.Tools.MSBuild (5.1.0-ci.545)
 
 GROUP FakeBuild
 STORAGE: NONE

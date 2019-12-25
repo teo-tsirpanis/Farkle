@@ -46,7 +46,9 @@
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="RuntimeFarkle.fs" />
-    <Compile Include="CSharp/CSharpBindings.fs" />
+    <Compile Include="CSharp/PostProcessorExtensions.fs" />
+    <Compile Include="CSharp/RuntimeFarkleExtensions.fs" />
+    <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-19351-01" PrivateAssets="All" />

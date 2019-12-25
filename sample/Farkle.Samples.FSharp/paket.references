@@ -1,3 +1,4 @@
 group Executables
 Chiron
+Farkle.Tools.MSBuild
 FSharp.Core

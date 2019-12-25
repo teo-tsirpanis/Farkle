@@ -469,8 +469,7 @@ Target.create "Release" ignore
     ==> "BuildAllRelease"
     ==> "CopyBinaries"
 
-["BuildAllRelease"; "RunTests"; "NuGetPack"]
-|> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
+"GenerateCode" <== ["BuildAllRelease"; "RunTests"; "NuGetPack"; "Benchmark"]
 
 "RunTests"
     ==> "NuGetPack"

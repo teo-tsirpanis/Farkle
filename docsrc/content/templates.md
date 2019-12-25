@@ -48,7 +48,7 @@ Having written your template, it's time to use it to generate some code.
 
 ### Installing Farkle.Tools
 
-But before we continue, I haven't told you how to install Farkle.Tools. This hand-made CLI tool is available [on NuGet][farkle-tools-nuget] and is ready to be installed by all of you. You just need .NET Core version 2.1 or higher to be installed, and to run this command:
+But before we continue, I haven't told you how to install Farkle.Tools. This hand-made CLI tool is available [on NuGet][farkle-tools-nuget] and is ready to be installed by all of you. You just need .NET Core version 3.1 or higher to be installed, and to run this command:
 
 `dotnet tool install -g Farkle.Tools`
 

@@ -28,7 +28,7 @@ https://opensource.org/licenses/MIT ~}}
         n = $0 ~}}
 [<Sealed>]
 /// [omit]
-type ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}) =
+type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
     member __.Append(sym) = ProductionBuilder<{{ type_params n }}>(Symbol.append members sym, {{type_indices n }})
     member x.Append(lit) = x.Append(Literal lit)
     {{~ if n != capacity ~}}

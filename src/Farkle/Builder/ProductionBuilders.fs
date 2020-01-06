@@ -30,7 +30,7 @@ open System.Collections.Immutable
 /// <typeparam name="T">The type of the concrete production builder. Used so that
 /// <see cref="AbstractProductionBuilder{TBuilder}.Append"/>
 /// can return the correct production builder type</typeparam>
-type ProductionBuilder(members) =
+type ProductionBuilder internal(members) =
     /// A production builder with no members.
     static member Empty = ProductionBuilder(ImmutableList.Empty)
     member __.Append(sym) = ProductionBuilder(Symbol.append members sym)

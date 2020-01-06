@@ -8,6 +8,7 @@ namespace Farkle.CSharp
 open Farkle
 open Farkle.Builder
 open System
+open System.Collections.Generic
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
@@ -70,3 +71,69 @@ type DesigntimeFarkleExtensions =
     /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
     static member AddBlockComment (df: DesigntimeFarkle<'TResult>, commentStart, commentEnd) =
         DesigntimeFarkle.addBlockComment commentStart commentEnd df
+    [<Extension>]
+    /// <summary>Creates a new <see cref="DesigntimeFarkle{TResult}"/>
+    /// that transforms the output of the given one with the given delegate.</summary>
+    static member Select(df: DesigntimeFarkle<'TResult>, f): DesigntimeFarkle<'TConverted> =
+        df |>> (FuncConvert.FromFunc<_,_> f)
+    [<Extension>]
+    /// <summary>Creates a new <see cref="DesigntimeFarkle{TCollection}"/>
+    /// that recognizes many occurrences of the given
+    /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
+    /// <param name="atLeastOne">Whether at least one occurrence
+    /// is required. Defaults to false.</param>
+    /// <typeparam name="TCollection">The type of the collection to
+    /// store the results. It must implement
+    /// <see cref="System.Collections.Generic.ICollection{TResult}"/>
+    /// and have a parameterless constructor.</typeparam>
+    /// <seealso cref="SeparatedBy"/>
+    static member Many (df: DesigntimeFarkle<'TResult>,
+        [<Optional; DefaultParameterValue(false)>] atLeastOne): DesigntimeFarkle<'TCollection> =
+        if atLeastOne then
+            manyCollection1 df
+        else
+            manyCollection df
+    [<Extension>]
+    /// <summary>Creates a new <see cref="DesigntimeFarkle{TCollection}"/>
+    /// that recognizes many occurrences of the given
+    /// <see cref="DesigntimeFarkle{TResult}"/>, separated by a
+    /// <see cref="DesigntimeFarkle"/>.</summary>
+    /// <param name="atLeastOne">Whether at least one occurrence
+    /// is required. Defaults to false.</param>
+    /// <typeparam name="TCollection">The type of the collection to
+    /// store the results. It must implement
+    /// <see cref="System.Collections.Generic.ICollection{TResult}"/>
+    /// and have a parameterless constructor.</typeparam>
+    /// <seealso cref="Many"/>
+    static member SeparatedBy<'TResult, 'TCollection
+        when 'TCollection :> ICollection<'TResult>
+            and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'TResult>, separator: DesigntimeFarkle,
+            [<Optional; DefaultParameterValue(false)>] atLeastOne): DesigntimeFarkle<'TCollection> =
+        let fName modifier = sprintf "%s%s %s" df.Name modifier typeof<'TCollection>.Name
+
+        if atLeastOne then
+            fName " Non-empty"
+            ||= [!@ df.SeparatedBy(separator, false) .>> separator .>>. df => (fun xs x -> xs.Add(x); xs)]
+        else
+            let nont = nonterminal <| fName ""
+            nont.SetProductions(
+                empty => (fun () -> new 'TCollection()),
+                !@ nont .>> separator .>>. df => (fun xs x -> (xs :> ICollection<_>) .Add(x); xs)
+            )
+            nont :> DesigntimeFarkle<_>
+    [<Extension>]
+    /// <summary>Creates a new <see cref="DesigntimeFarkle{TResult}"/>
+    /// that might recognize the given one, or not. In the latter
+    /// case, it returns the default value of the result type (null,
+    /// zero, you got the idea).</summary>
+    /// <seealso cref="Nullable"/>
+    static member Optional(df: DesigntimeFarkle<'TResult>) =
+        Nonterminal.Create(sprintf "%s Maybe" df.Name,
+            df.Extended().AsIs(),
+            ProductionBuilder.Empty.FinishConstant(Unchecked.defaultof<'TResult>))
+    [<Extension>]
+    /// <seealso cref="Optional"/>
+    static member Nullable(df: DesigntimeFarkle<'TResult>) =
+        Nonterminal.Create(sprintf "%s Maybe" df.Name,
+            df.Extended().Finish(Nullable.op_Implicit),
+            ProductionBuilder.Empty.FinishConstant(Unchecked.defaultof<'TResult Nullable>))

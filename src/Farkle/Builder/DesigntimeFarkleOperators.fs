@@ -80,12 +80,12 @@ let mapEx label f df =
 
 /// Creates a new `DesigntimeFarkle<'T>` that transforms
 /// the output of the given one with the given function.
-let (|>>) (f: _ -> 'b) df =
+let (|>>) df (f: _ -> 'b) =
     let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
     mapEx name f df
 
 /// Creates a `DesigntimeFarkle<'T>` that recognizes many
-/// occurences of the given one and returns them in a list.
+/// occurrences of the given one and returns them in a list.
 let many df =
     let nont = nonterminalf "%s List" df |> nonterminal
     nont.SetProductions(

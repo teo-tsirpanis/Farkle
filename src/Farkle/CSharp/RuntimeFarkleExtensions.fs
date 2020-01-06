@@ -5,10 +5,10 @@
 
 #nowarn "44" // This is for the RuntimeFarkle.ParseStream.
 
-namespace Farkle.CSharp
+namespace Farkle
 
 open Farkle
-open Farkle.PostProcessor
+open Farkle.PostProcessor.CSharp
 open System
 open System.Runtime.InteropServices
 open System.Runtime.CompilerServices

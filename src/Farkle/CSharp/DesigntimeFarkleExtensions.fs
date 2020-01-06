@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.CSharp
+namespace Farkle.Builder
 
 open Farkle
 open Farkle.Builder
@@ -21,7 +21,7 @@ type Nonterminal =
         name ||= (firstProduction :: List.ofArray productions)
 
 [<Extension; AbstractClass; Sealed>]
-/// <summary>Extension methods to create production builders.</summary>
+/// Extension methods to create production builders.
 type ProductionBuilderExtensions =
     [<Extension>]
     static member Appended(lit) = !& lit

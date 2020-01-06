@@ -2,6 +2,7 @@
 * __It happened. Farkle can create grammars without the need of GOLD Parser. Farkle is now a parsing library on its own.__
 * Move the `CharStream` type in the `Farkle.IO` namespace.
 * Add methods to parse text from .NET `TextReader`s. They should be preferred over parsing .NET `Stream`s because the latter are supposed to contain binary data, not text.
+* The `Farkle.CSharp` namespace is no longer used. C# users just have to use `Farkle` to get their extension methods, unless they are writing their own post-processors for GOLD Parser grammars, where they have to use `Farkle.PostProcessor.CSharp`.
 
 #### 5.0.1 - 21-08-2019
 * Fix a bug where comments in input text would sometimes crash the parser.

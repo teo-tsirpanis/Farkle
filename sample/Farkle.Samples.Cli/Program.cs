@@ -5,7 +5,6 @@
 
 using System;
 using System.IO;
-using Farkle.CSharp;
 
 namespace Farkle.Samples.Cli
 {

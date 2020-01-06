@@ -87,17 +87,17 @@ module DesigntimeFarkleBuild =
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
             match sym with
-            | Choice1Of4 term when terminalMap.ContainsKey(term) ->
+            | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
-            | Choice1Of4 term -> handleTerminal term |> LALRSymbol.Terminal
-            | Choice2Of4 (Literal lit) when literalMap.ContainsKey(lit) ->
+            | Symbol.Terminal term -> handleTerminal term |> LALRSymbol.Terminal
+            | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
-            | Choice2Of4 (Literal lit) ->
+            | Symbol.Literal lit ->
                 let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
-            | Choice3Of4 NewLine ->
+            | Symbol.NewLine ->
                 usesNewLine <- true
                 match newLineSymbol with
                 | Choice1Of4 nlTerminal -> nlTerminal
@@ -111,9 +111,9 @@ module DesigntimeFarkleBuild =
                     newLineSymbol <- Choice1Of4 nlTerminal
                     nlTerminal
                 |> LALRSymbol.Terminal
-            | Choice4Of4 nont when nonterminalMap.ContainsKey(nont) ->
+            | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
                 LALRSymbol.Nonterminal nonterminalMap.[nont]
-            | Choice4Of4 nont ->
+            | Symbol.Nonterminal nont ->
                 let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
                 nonterminalMap.Add(nont, symbol)
                 nonterminals.Add(symbol)

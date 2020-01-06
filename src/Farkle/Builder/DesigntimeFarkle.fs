@@ -123,7 +123,12 @@ and internal AbstractProduction =
     abstract Members: Symbol ImmutableArray
     abstract Fuse: (obj [] -> obj)
 
-and internal Symbol = Choice<AbstractTerminal, Literal, NewLine, AbstractNonterminal>
+/// A strongly-typed representation of a `DesigntimeFarkle`.
+and [<RequireQualifiedAccess>] internal Symbol =
+    | Terminal of AbstractTerminal
+    | Nonterminal of AbstractNonterminal
+    | Literal of string
+    | NewLine
 
 type internal DesigntimeFarkleWithMetadata =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
@@ -241,12 +246,13 @@ with
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =
         match x with
-        | :? AbstractTerminal as term -> Choice1Of4 term
-        | :? Literal as lit -> Choice2Of4 lit
-        | :? NewLine as nl -> Choice3Of4 nl
-        | :? AbstractNonterminal as nont -> Choice4Of4 nont
+        | :? AbstractTerminal as term -> Symbol.Terminal term
+        | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
+        | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
+        | :? NewLine -> Symbol.NewLine
         | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
-        | _ -> failwith "Using a custom derivative of the DesigntimeFarkle interface is not allowed."
+        | _ -> invalidArg "x" "Using a custom implementation of the \
+DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)
 
 /// Functions to manipulate `DesigntimeFarkle`s.

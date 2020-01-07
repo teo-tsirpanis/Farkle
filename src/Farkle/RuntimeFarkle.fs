@@ -20,14 +20,11 @@ open System.Text
 type FarkleError =
     /// There was a parsing error.
     | ParseError of Message<ParseErrorType>
-    /// There was an error while reading the grammar.
-    | EGTReadError of EGTReadError
     /// There was an error while building the grammar .
     | BuildError of BuildError
     override x.ToString() =
         match x with
         | ParseError x -> sprintf "Parsing error: %O" x
-        | EGTReadError x -> sprintf "Error while reading the grammar file: %O" x
         | BuildError x -> sprintf "Error while building the grammar: %O" x
 
 /// A reusable parser and post-processor, created for a specific grammar, and returning
@@ -61,7 +58,7 @@ with
     static member Create(fileName, postProcessor) =
         fileName
         |> EGT.ofFile
-        |> Result.mapError FarkleError.EGTReadError
+        |> Ok
         |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
@@ -69,7 +66,7 @@ with
     static member CreateFromBase64String(str, postProcessor) =
         str
         |> EGT.ofBase64String
-        |> Result.mapError FarkleError.EGTReadError
+        |> Ok
         |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
     /// <summary>Gets the grammar behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>

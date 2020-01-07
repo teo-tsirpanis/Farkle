@@ -21,7 +21,6 @@
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/IndexedCollections.fs" />
-    <Compile Include="Grammar/EGTTypes.fs" />
     <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/OptimizedOperations.fs" />

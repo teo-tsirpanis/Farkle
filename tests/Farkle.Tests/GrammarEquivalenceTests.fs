@@ -119,12 +119,10 @@ let farkleGOLDGrammarEquivalenceTests =
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {
             let gFarkle = extractGrammar gFarkle
-            match loadGrammar egt with
-            | Ok gGold ->
-                checkParserEquivalence
-                    (gFarkle.Productions, gFarkle.LALRStates)
-                    (gGold.Productions, gGold.LALRStates)
-            | Error x -> failtestf "Error while reading %s: %O" egt x
+            let gGold = loadGrammar egt
+            checkParserEquivalence
+                (gFarkle.Productions, gFarkle.LALRStates)
+                (gGold.Productions, gGold.LALRStates)
         }
     )
     |> testList "Farkle-GOLD grammar equivalence tests"

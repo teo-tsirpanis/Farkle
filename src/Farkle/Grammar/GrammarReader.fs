@@ -8,12 +8,12 @@ namespace Farkle.Grammar.GOLDParser
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.GOLDParser.EGTReader
-open Farkle.Monads.Either
 open System
 open System.Collections.Immutable
 
 module internal GrammarReader =
 
+    [<AutoOpen>]
     module private Implementation =
 
         type AnySymbol =
@@ -36,7 +36,7 @@ module internal GrammarReader =
             match x with
             | AnyTerminal x -> LALRSymbol.Terminal x
             | AnyNonterminal x -> LALRSymbol.Nonterminal x
-            | AnyGroupEnd _ -> raise <| ProductionHasGroupEndException productionName
+            | AnyGroupEnd _ -> invalidEGTf "Production %d contains a Group End symbol, which is unsupported." productionName
             | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
         let wantGroupContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
@@ -208,11 +208,11 @@ module internal GrammarReader =
 
         let headerCheck =
             function
-            | CGTHeader -> Error ReadACGTFile
-            | EGTHeader -> Ok ()
-            | _ -> Error InvalidEGTFile
-
-    open Implementation
+            | CGTHeader -> invalidEGTf "This file is a legacy GOLD Parser 1.0 file, \
+which is not supported. You should update to the last version of GOLD Parser and save \
+it as an \"Enhanced Grammar Tables (version 5.0)\"."
+            | EGTHeader -> ()
+            | _ -> invalidEGT()
 
     let read r =
         let mutable isTableCountsInitialized = false
@@ -281,29 +281,27 @@ module internal GrammarReader =
             | 'L'B when isTableCountsInitialized ->
                 readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
             | _ -> invalidEGT()
-        either {
-            do! readEGT headerCheck fRecord r
-            let symbols = {
-                Terminals = terminals.ToImmutable()
-                Nonterminals = nonterminals.ToImmutable()
-                NoiseSymbols = noiseSymbols.ToImmutable()
-            }
-            let dfaStates = dfaStates.MoveToImmutable()
-            let lalrStates = lalrStates.MoveToImmutable()
-            let! startSymbol =
-                lalrStates.[0].GotoActions
-                |> Seq.tryPick(fun x ->
-                    match lalrStates.[int x.Value].EOFAction with
-                    | Some LALRAction.Accept -> Some <| Ok x.Key
-                    | _ -> None)
-                |> Option.defaultValue (Error InvalidEGTFile)
-            return {
-                _Properties = properties.ToImmutable()
-                _StartSymbol = startSymbol
-                _Symbols = symbols
-                _Productions = productions.MoveToImmutable()
-                _Groups = groups.MoveToImmutable()
-                _LALRStates = lalrStates
-                _DFAStates = dfaStates
-            }
+        readEGT headerCheck fRecord r
+        let symbols = {
+            Terminals = terminals.ToImmutable()
+            Nonterminals = nonterminals.ToImmutable()
+            NoiseSymbols = noiseSymbols.ToImmutable()
+        }
+        let dfaStates = dfaStates.MoveToImmutable()
+        let lalrStates = lalrStates.MoveToImmutable()
+        let startSymbol =
+            lalrStates.[0].GotoActions
+            |> Seq.tryPick(fun x ->
+                match lalrStates.[int x.Value].EOFAction with
+                | Some LALRAction.Accept -> Some x.Key
+                | _ -> None)
+            |> Option.defaultWith invalidEGT
+        {
+            _Properties = properties.ToImmutable()
+            _StartSymbol = startSymbol
+            _Symbols = symbols
+            _Productions = productions.MoveToImmutable()
+            _Groups = groups.MoveToImmutable()
+            _LALRStates = lalrStates
+            _DFAStates = dfaStates
         }

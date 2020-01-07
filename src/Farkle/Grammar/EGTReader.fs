@@ -5,15 +5,36 @@
 
 namespace Farkle.Grammar.GOLDParser
 
-open Farkle.Monads.Either
 open System
 open System.IO
 open System.Text
 
+/// An exception that gets thrown when
+/// reading an EGT file goes wrong.
+type EGTFileException(msg) =
+    inherit exn(msg)
+
 module internal EGTReader =
 
-    let invalidEGT() = raise EGTFileException
+    /// An entry of an EGT file.
+    [<Struct>]
+    type Entry =
+        /// [omit]
+        | Empty
+        /// [omit]
+        | Byte of byteValue: byte
+        /// [omit]
+        | Boolean of boolValue: bool
+        /// [omit]
+        | UInt16 of intValue: uint16
+        /// [omit]
+        | String of stringValue: string
 
+    let invalidEGT() = raise <| EGTFileException "Invalid EGT file"
+
+    let invalidEGTf fmt = Printf.ksprintf (EGTFileException >> raise) fmt
+
+    [<AutoOpen>]
     module private Implementation =
 
         let inline readByte (r: BinaryReader) = r.ReadByte()
@@ -40,7 +61,7 @@ module internal EGTReader =
             | 'B'B -> r |> readByte |> ((<>) 0uy) |> Entry.Boolean
             | 'I'B -> r |> readUInt16 |> Entry.UInt16
             | 'S'B -> r |> readNullTerminatedString |> Entry.String
-            | _ -> invalidEGT()
+            | x -> invalidEGTf "Invalid entry code: %x." x
 
         let readRecords fRead (r: BinaryReader) =
             // No need to get the length each time; it stays the same, and it's quite expensive, as it does some Win32 calls.
@@ -56,33 +77,25 @@ module internal EGTReader =
                     for i = 0 to count - 1 do
                         arr.[i] <- readEntry r
                     ReadOnlyMemory(arr, 0, count) |> fRead
-                | _ -> invalidEGT()
-            Ok ()
+                | x -> invalidEGTf "Invalid record code, read %x." x
 
-    open Implementation
-
-    let readEGT fHeaderCheck fRecord r = either {
-        try
-            do! readNullTerminatedString r |> fHeaderCheck
-            do! readRecords fRecord r
-        with
-        | :? EndOfStreamException | EGTFileException -> return! Error InvalidEGTFile
-        | ProductionHasGroupEndException index -> return! Error <| ProductionHasGroupEnd index
-    }
+    let readEGT fHeaderCheck fRecord r =
+        readNullTerminatedString r |> fHeaderCheck
+        readRecords fRecord r
 
     let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
         if m.Length <> expectedLength then
-            invalidEGT()
+            invalidEGTf "Length must have been %d but was %d" expectedLength m.Length
 
     let lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
         if m.Length < expectedLength then
-            invalidEGT()
+            invalidEGTf "Length must have been at least %d but was %d" expectedLength m.Length
 
     // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
     // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
     // FFFFFFfFFFFFFF
-    let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Empty -> () | _ -> invalidEGT()
-    let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Byte x -> x | _ -> invalidEGT()
-    let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Boolean x -> x | _ -> invalidEGT()
-    let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | UInt16 x -> x | _ -> invalidEGT()
-    let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | String x -> x | _ -> invalidEGT()
+    let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
+    let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
+    let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
+    let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | UInt16 x -> x | _ -> invalidEGTf "Invalid entry, expecting UInt16."
+    let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"

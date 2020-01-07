@@ -52,9 +52,9 @@ module private Implementation =
         | x -> x
 
     let fHeaderCheck x =
-        match x with
-        | "GOLD Character Sets" -> Ok ()
-        | _ -> Error InvalidEGTFile
+        if x <> "GOLD Character Sets" then
+            EGTFileException "Invalid GOLD Parser sets file"
+            |> raise
 
     let correctPredefinedSet fAdd x =
         match x.Name with
@@ -84,13 +84,9 @@ module private Implementation =
         use stream = File.OpenRead(filePath)
         use br = new BinaryReader(stream)
         let list = ResizeArray()
-        match readEGT fHeaderCheck (fRecord <| correctPredefinedSet list.Add) br with
-        | Ok () ->
-            Log.Debug("Reading {FilePath} succeeded.", filePath)
-            Ok <| list.ToArray()
-        | Error x ->
-            Log.Error("Reading {FilePath} failed: {ErrorType}", x)
-            Error()
+        readEGT fHeaderCheck (fRecord <| correctPredefinedSet list.Add) br
+        Log.Debug("Reading {FilePath} succeeded.", filePath)
+        Ok <| list.ToArray()
 
     module private Utilities =
 

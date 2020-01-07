@@ -7,31 +7,10 @@ module Farkle.Tests.GrammarTests
 
 open Expecto
 open Farkle.Grammar
-open Farkle.Grammar.GOLDParser
 
 [<Tests>]
 let tests =
     testList "Grammar tests" [
-        test "A legacy CGT grammar fails to be read." {
-            let x = loadGrammar "legacy.cgt"
-            Expect.equal x (Error ReadACGTFile) "Reading the legacy grammar did not fail"
-        }
-
-        test "An EGT file is successfuly read" {
-            let x = loadGrammar "simple.egt"
-            Expect.isOk x "Reading the grammar failed"
-        }
-
-        test "An invalid Base64-encoded grammar string does not throw an exception" {
-            let x = EGT.ofBase64String "👏🏻👏🏻👏🏻👏🏻👏🏻"
-            Expect.equal x (Error InvalidBase64Format) "Reading the invalid Base64 string did not fail"
-        }
-        
-        test "Reading an empty file works properly" {
-            let egt = EGT.ofBase64String ""
-            Expect.equal egt (Error InvalidEGTFile) "Reading an empty EGT file did not fail"
-        }
-
         test "Terminal naming works properly" {
             let fTerminal (term, expected) =
                 (1u, term)

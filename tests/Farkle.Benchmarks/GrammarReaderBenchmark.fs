@@ -23,7 +23,7 @@ type GrammarReaderBenchmark() =
 
     [<Benchmark>]
     member __.Base64EGT() =
-        base64EGT |> EGT.ofBase64String |> returnOrFail
+        base64EGT |> EGT.ofBase64String
 
     [<Benchmark>]
     member __.BuildGrammar() =

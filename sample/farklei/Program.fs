@@ -5,7 +5,6 @@
 
 open Argu
 open Farkle
-open Farkle.IO
 open System.IO
 open Farkle.PostProcessor
 
@@ -37,12 +36,12 @@ let main argv =
     let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast egtFile
     let print x = if showOutput then printfn "%O" x
     if not justLoadEGT then
-        use cs =
+        let result =
             if lazyLoad then
-                inputFile |> File.OpenText |> CharStream.ofTextReader
+                RuntimeFarkle.parseFile rf print inputFile
             else
-                inputFile |> File.ReadAllText |> CharStream.ofString
-        let result = RuntimeFarkle.parseChars rf print cs
+                inputFile |> File.ReadAllText
+                |> RuntimeFarkle.parseString rf print
         match result with
         | Ok x ->
             print "AST"

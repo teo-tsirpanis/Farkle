@@ -21,14 +21,8 @@ module TemplateEngine =
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
-        let! grammar =
-            match GOLDParser.EGT.ofFile grammarFile with
-            | Ok grammar ->
-                log.Verbose("{grammarFile} was read successfuly", grammarFile)
-                grammar |> Grammar.Create |> Ok
-            | Error message ->
-                log.Error("Error while reading {grammarFile}: {message}", grammarFile, message)
-                Error ()
+        let grammar = GOLDParser.EGT.ofFile grammarFile |> Grammar.Create
+        log.Verbose("{grammarFile} was read successfully", grammarFile)
         let ns = generatedFileNamespace |> Option.defaultValue (Path.GetFileNameWithoutExtension(grammarFile))
         let fr = FarkleRoot.Create grammar grammarFile ns bytes
 

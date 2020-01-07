@@ -38,9 +38,7 @@ Please set the GOLD_BUILD environment variable to the path of the CLI builder's 
             Process.Start(startInfo)
         builderProcess.WaitForExit()
         if File.Exists(egtPath) then
-            match EGT.ofFile egtPath with
-            | Ok grammar -> grammar
-            | Error x -> failwithf "Reading the generated EGT file failed: %O" x
+            EGT.ofFile egtPath
         else
             let log = File.ReadAllText(logPath)
             failwithf "Building the grammar failed: %s" log

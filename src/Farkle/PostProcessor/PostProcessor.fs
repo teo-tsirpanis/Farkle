@@ -67,11 +67,13 @@ module PostProcessor =
                 /// Throwing an exception would destroy performance, but it will
                 /// be caught nevertheless, in case of an error inside the transformer.
                 match term.Index with
-                | idx when idx < uint32 transformers.Length && transformers.[int idx] <> null -> transformers.[int idx].Invoke(pos, data)
+                | idx when idx < uint32 transformers.Length && not <| isNull transformers.[int idx] ->
+                    transformers.[int idx].Invoke(pos, data)
                 | _ -> null
             member __.Fuse(prod, arguments) =
                 /// But if a fuser is not found, it is always an error stemming from incorrect configuration; not input,
                 /// so an exception will not hurt, and will be caught by the LALR parser.
                 match prod.Index with
-                | idx when idx < uint32 fusers.Length && fusers.[int idx] <> null -> fusers.[int idx].Invoke(arguments)
+                | idx when idx < uint32 fusers.Length && not <| isNull fusers.[int idx] ->
+                    fusers.[int idx].Invoke(arguments)
                 | _ -> raise FuserNotFound}

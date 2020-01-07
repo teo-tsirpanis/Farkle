@@ -35,9 +35,8 @@ module Maybe =
         member x.Using(d:#IDisposable, body) =
             let result = fun () -> body d
             x.TryFinally (result, fun () ->
-                match d with
-                | null -> ()
-                | d -> d.Dispose())
+                if not <| isNull d then
+                    d.Dispose())
         member x.While (guard, body) =
             if not <| guard () then
                 x.Zero()
@@ -74,9 +73,8 @@ module Either =
         member x.Using(d:#IDisposable, body) =
             let result = fun () -> body d
             x.TryFinally (result, fun () ->
-                match d with
-                | null -> ()
-                | d -> d.Dispose())
+                if not <| isNull d then
+                    d.Dispose())
         member x.While (guard, body) =
             if not <| guard () then
                 x.Zero()

@@ -39,7 +39,7 @@ module internal EGTReader =
 
         let inline readByte (r: BinaryReader) = r.ReadByte()
 
-        let inline readUInt16 (r: BinaryReader) =
+        let readUInt16 (r: BinaryReader) =
             let x = r.ReadUInt16()
             if BitConverter.IsLittleEndian then
                 x

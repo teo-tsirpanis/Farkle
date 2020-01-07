@@ -22,7 +22,7 @@ type Token =
     with
         /// A shortcut for creating a token.
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
-        override x.ToString() = if x.Data = null then "" else sprintf "\"%O\"" x.Data
+        override x.ToString() = if isNull x.Data then "" else sprintf "\"%O\"" x.Data
 
 /// An internal error. These errors are known errors a parser might experience.
 /// An encounter of it is most certainly a library bug (or deliberately corrupted grammars).

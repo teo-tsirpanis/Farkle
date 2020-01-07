@@ -31,19 +31,16 @@ type FarkleError =
 /// a specific type of object that best describes an expression of the language of this grammar.
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = private {
-    Grammar: Result<Grammar,FarkleError>
-    OptimizedOperations: OptimizedOperations
+    Grammar: Result<Grammar * OptimizedOperations,FarkleError>
     PostProcessor: PostProcessor<'TResult>
 }
 with
     static member internal CreateMaybe postProcessor grammarMaybe =
-        let oops =
-            match grammarMaybe with
-            | Ok grammar -> OptimizedOperations.optimized grammar
-            | Error _ -> Unchecked.defaultof<_>
+        let grammarMaybe =
+            grammarMaybe
+            |> Result.map (fun g -> g, OptimizedOperations.optimized g)
         {
             Grammar = grammarMaybe
-            OptimizedOperations = oops
             PostProcessor = postProcessor
         }
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
@@ -79,7 +76,6 @@ module RuntimeFarkle =
     [<CompiledName("ChangePostProcessor")>]
     let changePostProcessor pp rf = {
         Grammar = rf.Grammar
-        OptimizedOperations = rf.OptimizedOperations
         PostProcessor = pp
     }
 
@@ -121,11 +117,11 @@ module RuntimeFarkle =
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         match rf.Grammar with
-        | Ok grammar ->
+        | Ok (grammar, oops) ->
             let fTransform = CharStreamCallback(fun sym pos data -> rf.PostProcessor.Transform(sym, pos, data))
-            let fTokenize input = Tokenizer.tokenize grammar.Groups grammar.DFAStates rf.OptimizedOperations fTransform fMessage input
+            let fTokenize input = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops fTransform fMessage input
             try
-                LALRParser.parseLALR fMessage grammar.LALRStates rf.OptimizedOperations rf.PostProcessor fTokenize input :?> 'TResult |> Ok
+                LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input :?> 'TResult |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
         | Error x -> Error x

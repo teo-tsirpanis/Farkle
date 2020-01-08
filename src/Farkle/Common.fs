@@ -63,7 +63,7 @@ with
 
 /// Functions to work with the `FSharp.Core.Result` type.
 [<AutoOpen>]
-module Result =
+module internal Result =
 
     let tee fOk fError =
         function
@@ -74,12 +74,6 @@ module Result =
         match f with
         | Ok f -> x |> Result.map f
         | Error x -> Error x
-
-    /// Converts an `option` into a `Result`.
-    let failIfNone message =
-        function
-        | Some x -> Ok x
-        | None -> Error message
 
     /// Consolidates a sequence of `Result`s into a `Result` of a list.
     let collect xs = Seq.foldBack (fun x xs ->
@@ -96,8 +90,3 @@ module Result =
 
     /// Returns if the given `Result` failed.
     let isError x = match x with | Ok _ -> false | Error _ -> true
-
-    /// A shorthand operator for `Result.bind`.
-    let inline ( >>= ) m f = Result.bind f m
-
-    let inline ( <*> ) f m = apply f m

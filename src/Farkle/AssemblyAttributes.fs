@@ -8,6 +8,8 @@ namespace global
 open System.Runtime.CompilerServices
 
 [<assembly:Extension>]
+[<assembly:InternalsVisibleTo("Farkle.Benchmarks")>]
 [<assembly:InternalsVisibleTo("Farkle.Tests")>]
 [<assembly:InternalsVisibleTo("Farkle.Tools")>]
+[<assembly:InternalsVisibleTo("Farkle.Tools.MSBuild")>]
 do()

@@ -20,7 +20,7 @@ open System.Text
 type FarkleError =
     /// There was a parsing error.
     | ParseError of Message<ParseErrorType>
-    /// There was an error while building the grammar .
+    /// There had been an error while building the grammar .
     | BuildError of BuildError
     override x.ToString() =
         match x with
@@ -31,7 +31,7 @@ type FarkleError =
 /// a specific type of object that best describes an expression of the language of this grammar.
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = private {
-    Grammar: Result<Grammar * OptimizedOperations,FarkleError>
+    Grammar: Result<Grammar * OptimizedOperations,BuildError>
     PostProcessor: PostProcessor<'TResult>
 }
 with
@@ -66,8 +66,9 @@ with
         |> Ok
         |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
-    /// <summary>Gets the grammar behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
-    member this.TryGetGrammar() = this.Grammar
+    /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
+    /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
+    member this.TryGetGrammar() = Result.map fst this.Grammar
 
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
@@ -99,7 +100,6 @@ module RuntimeFarkle =
     let build df =
         let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
         theFabledGrammar
-        |> Result.mapError FarkleError.BuildError
         |> RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor
 
     /// Creates a syntax-checking `RuntimeFarkle` from an
@@ -109,7 +109,6 @@ module RuntimeFarkle =
         df
         |> DesigntimeFarkleBuild.createGrammarDefinition
         |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> Result.mapError FarkleError.BuildError
         |> RuntimeFarkle<_>.CreateMaybe PostProcessor.syntaxCheck
 
     /// Parses and post-processes a `CharStream`.
@@ -124,7 +123,7 @@ module RuntimeFarkle =
                 LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input :?> 'TResult |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
-        | Error x -> Error x
+        | Error x -> Error <| FarkleError.BuildError x
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.

@@ -3,6 +3,7 @@
 // it to define helpers that you do not want to show in the documentation.
 #I "../../bin/Farkle/net45/"
 #load "../../packages/formatting/FSharp.Formatting/FSharp.formatting.fsx"
+#r "System.Memory.dll"
 #r "Farkle.dll"
 
 (**
@@ -59,7 +60,7 @@ Now, on to the second line. We are adding a new source file with an unusual exte
 
 // This file was created by Farkle.Tools version 5.0.0 at 2019-05-12.
 // It should NOT be committed to source control.
-// namespace ``MyBeautifulCalculator``.Definitions
+// namespace MyBeautifulCalculator.Definitions
 // EDIT: We can't declare a namespace in a documentation file.
 
 /// A terminal of the MyBeautifulCalculator language.
@@ -219,31 +220,36 @@ Let's look at some some examples:
 *)
 
 open System.IO
-open System.Text
 
-/// A utility to print a parse result.
-let printIt (x: Result<_,FarkleError>) =
-    match x with
-    | Ok x -> printfn "%d" x
-    // The following line pretty-prints the error message in English.
-    | Error x -> printfn "%O" x
+// You can consume the parsing result like this:
+match RuntimeFarkle.parse myMarvelousRuntimeFarkle "103 + 137+281" with
+| Ok result -> printfn "The answer is %d" result
+| Error err -> eprintfn "Error: %O" err
 
 RuntimeFarkle.parse myMarvelousRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248"
-|> printIt
+// Same as the following:
+myMarvelousRuntimeFarkle.Parse "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248"
 
-RuntimeFarkle.parseString myMarvelousRuntimeFarkle Console.WriteLine "111*555"
-|> printIt
+RuntimeFarkle.parseString myMarvelousRuntimeFarkle (printfn "%O") "111*555"
+// Same as the following:
+// Note that extension methods accept
+// optional delegates for C# convenience.
+myMarvelousRuntimeFarkle.Parse("111*555", fun msg -> printfn "%O" msg)
 
-RuntimeFarkle.parseFile myMarvelousRuntimeFarkle ignore Encoding.ASCII "gf.m"
-|> printIt
+// You can parse any Memory<char>, such a substring or even an array of characters!
+let mem = "The answer is 45".AsMemory().Slice(14)
+RuntimeFarkle.parseMemory myMarvelousRuntimeFarkle ignore mem
+// Same as following:
+myMarvelousRuntimeFarkle.Parse mem
 
-File.OpenRead "fish.es"
-|> RuntimeFarkle.parseStream myMarvelousRuntimeFarkle ignore false Encoding.UTF8
-|> printIt // The third parameter, shows whether to lazily load the file into memory.
-// Here, false means to read it all at once.
 
-RuntimeFarkle.parseFile myMarvelousRuntimeFarkle Console.WriteLine Encoding.Unicode "math.txt"
-|> printIt
+RuntimeFarkle.parseFile myMarvelousRuntimeFarkle ignore "gf.m"
+// Same as the following:
+myMarvelousRuntimeFarkle.ParseFile("gf.m")
+
+RuntimeFarkle.parseTextReader myMarvelousRuntimeFarkle ignore (File.OpenText "fish.es")
+// Same as the following:
+myMarvelousRuntimeFarkle.Parse(File.OpenText "fish.es")
 
 (**
 ## Bonus: Using Farkle.Tools

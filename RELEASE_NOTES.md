@@ -4,6 +4,7 @@
 * Add methods to parse text from .NET `TextReader`s. They should be preferred over parsing .NET `Stream`s because the latter are supposed to contain binary data, not text.
 * The `Farkle.CSharp` namespace is no longer used. C# users just have to use `Farkle` to get their extension methods, unless they are writing their own post-processors for GOLD Parser grammars, where they have to use `Farkle.PostProcessor.CSharp`.
 * __Breaking change:__ Reading grammars from EGT files now raises an exception. [Rationale](https://github.com/teo-tsirpanis/Farkle/commit/84b96ccc85753e4deebffcf561cc89edb1e252bc)
+* __Breaking change:__ Some utility functions that had nothing to do with parsing were either removed or made internal.
 
 #### 5.0.1 - 21-08-2019
 * Fix a bug where comments in input text would sometimes crash the parser.

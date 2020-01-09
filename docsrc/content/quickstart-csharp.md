@@ -90,8 +90,8 @@ Let's take a look at the first thing: Create a new source file, and write this:
 ``` csharp
 using System;
 using Farkle;
-using Farkle.CSharp;
 using Farkle.PostProcessor;
+using Farkle.PostProcessor.CSharp;
 using SimpleMaths.Definitions;
 
 namespace SimpleMaths
@@ -160,7 +160,7 @@ A C# fuser contains just a delegate that converts an array of objects, into a si
 
 We see two types of fusers. `Fuser.First` is a fuser that always takes the first element of a production as-is.
 
-`Fuser.create` needs a little more attention. In our example, `Fuser.Create<int, int, int>(0, 2, (x1, x2) => x1 + x2)` is just a fuser that takes the integers at the zeroth and second position of our production - because as we all know, arrays start at zero - and just adds them. You can see all the other ways to create a fuser [in this page][fuser-doc].
+`Fuser.Create` needs a little more attention. In our example, `Fuser.Create<int, int, int>(0, 2, (x1, x2) => x1 + x2)` is just a fuser that takes the integers at the zeroth and second position of our production - because as we all know, arrays start at zero - and just adds them. You can see all the other ways to create a fuser [in this page][fuser-doc].
 
 And keep in mind, that fusers are mandatory. If this function returns null, it will result in an error.
 

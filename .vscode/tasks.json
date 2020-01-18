@@ -90,7 +90,7 @@
                 "run",
                 "build.fsx",
                 "target",
-                "KeepGeneratingDocs"
+                "GenerateReferenceDocsDebug"
             ],
             "problemMatcher": []
         }

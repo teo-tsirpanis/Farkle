@@ -9,25 +9,21 @@
 (**
 # Quick Start: Creating a calculator
 
-This guide will help you to start using Farkle. It is assumed that you are using F# as your development language.
+This guide will help you to start using Farkle. It is assumed that you are using F# as your development language, and that you know about parsers and grammars.
 
-## Installing GOLD Parser Builder
+## Preparing the GOLD Parser Builder
 
 First, you need to install the GOLD Parser Builder. You can grab it from [here][goldBuilder].
 
-> __Note:__ You might run into some issues with GOLD's site. A way to mitigate them is to explicitly write `http://` at the beginning of the site. If you still cannot download them for any reason, I have made [a mirror in MEGA][mega].
+> If you have any problem downloading it, I have made [a mirror in MEGA][mega].
 
-GOLD Parser Builder is a .NET Framework application. If you don't run Windows, I think it will work fine on Mono.
+GOLD Parser Builder is a .NET Framework application. If you don't use Windows, I think it will work fine on Mono.
 
-## Writing a grammar for the calculator
-
-Now it's a good time to learn [how to write GOLD grammars][writingGrammars].
-
-So, let's write our own simple grammar for this tutorial. Open GOLD Parser Builder and write [this sample grammar][sampleGrammar].
+With the GOLD Parser Builder ready, open it and write [this sample grammar][sampleGrammar].
 
 ## Preparing Farkle.
 
-It's also time to install Farkle's NuGet package with [your favorite NuGet client][paket] (or another one).
+It's also time to install [Farkle's NuGet package][farkleNuGet] with [your favorite NuGet client][paket] (or another one).
 
 You also need to add the package named [Farkle.Tools.MSBuild][farkleToolsMSBuildNuGet]. This gives us some additional design-time support that we will need later.
 
@@ -123,7 +119,7 @@ A post-processor converts the syntax tree of an expression of a language into an
 
 ### Making the transformers
 
-First, we have to say what a transformer is. A transformer is a special object that converts a terminal symbol of a type to any object you want.
+First, we have to explain what a transformer is. A transformer is a special object that converts a terminal of a specific type to any object you want.
 
 For example, let's say that in our grammar we have a terminal of type `Number` with value `"478"`. We want to convert this string of digits to an integer. Therefore a transformer for `Number`s will just convert this string to an integer.
 
@@ -270,9 +266,10 @@ So that's it. I hope you understand. If you have any question, found a bug, or w
 
 [goldBuilder]: http://goldparser.org/builder/index.htm
 [mega]: https://mega.nz/#F!opp3yToY!FMRD5CxS-q_-SN8f5TAbrA
+[farkleNuGet]: https://www.nuget.org/packages/Farkle
 [farkleToolsMSBuildNuGet]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
 [writingGrammars]: http://goldparser.org/doc/grammars/index.htm
-[sampleGrammar]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Calculator/SimpleMaths.grm
+[sampleGrammar]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/SimpleMaths.grm
 [paket]: https://fsprojects.github.io/Paket/
 [transformerDocumentation]: reference/farkle-postprocessor-transformermodule.html
 [parseMessageDocumentation]: reference/farkle-parser-parsemessage.html

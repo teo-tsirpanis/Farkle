@@ -12,7 +12,7 @@ open System.Collections.Immutable
 
 /// An exception that gets thrown when a post-processor does not find the appropriate `Fuser` for a production.
 /// This means that the post-processor is not properly configured.
-exception FuserNotFound
+exception internal FuserNotFound
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
@@ -24,8 +24,6 @@ type PostProcessor<'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     /// <remarks>Fusing must always succeed. In very case of an error like
     /// an unrecognized production, the function has to throw an exception.</remarks>
-    /// <exception cref="FuserNotFound">This kind of exception must be thrown if a production is not
-    /// recognized by the post-processor, so that Farkle properly notifies the consumer of this problem.</exception>
     abstract Fuse: Production * obj[] -> obj
 
 /// Functions to create `PostProcessor`s, as well as some ready to use.

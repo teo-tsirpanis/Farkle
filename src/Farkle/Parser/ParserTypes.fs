@@ -24,18 +24,6 @@ type Token =
         static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
         override x.ToString() = if isNull x.Data then "" else sprintf "\"%O\"" x.Data
 
-/// An internal error. These errors are known errors a parser might experience.
-/// An encounter of it is most certainly a library bug (or deliberately corrupted grammars).
-/// The user is encouraged to report it to GitHub.
-/// The `ToString()` method is not overriden here, because users don't need to know that many details about them.
-type InternalError =
-    /// After a reduction, a corresponding GOTO action should have been found but wasn't.
-    | GotoNotFoundAfterReduction of Production * LALRState
-    /// The LALR stack is empty; it should never be.
-    | LALRStackEmpty
-    /// The LALR table says to shift when input ends.
-    | ShiftOnEOF
-
 [<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.
 type ExpectedSymbol =
@@ -83,10 +71,6 @@ type ParseErrorType =
     | TransformError of Terminal * exn
     /// The post-processor had a problem fusing the tokems of a production.
     | FuseError of Production * exn
-    /// The post-processor did not find an appropriate fuser for a production.
-    | FuserNotFound of Production
-    /// Internal error. This is a bug.
-    | InternalError of InternalError
     override x.ToString() =
         match x with
         | LexicalError x -> sprintf "Cannot recognize character '%c'" x
@@ -98,8 +82,6 @@ type ParseErrorType =
         | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside group '%s'." g.Name
         | TransformError (term, ex) -> sprintf "Exception in user code while post-processing terminal '%s'.\nException:\n%O" term.Name ex
         | FuseError (prod, ex) -> sprintf "Exception in user code while post-processing production '%O'.\nException:\n%O" prod ex
-        | FuserNotFound prod -> sprintf "Configuration error: No fuser specified for production '%O'.\nYou have to write one, and recompile your program." prod
-        | InternalError x -> sprintf "Internal error. This is most probably a bug in the parser. If you see this error, please file an issue on GitHub.\nDetails:\n%A" x
 
 /// A log message that contains a position it was encountered.
 type Message<'a> = Message of Position * 'a

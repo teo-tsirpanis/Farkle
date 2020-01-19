@@ -5,6 +5,7 @@
 * The `Farkle.CSharp` namespace is no longer used. C# users just have to use `Farkle` to get their extension methods, unless they are writing their own post-processors for GOLD Parser grammars, where they have to use `Farkle.PostProcessor.CSharp`.
 * __Breaking change:__ Reading grammars from EGT files now raises an exception. [Rationale](https://github.com/teo-tsirpanis/Farkle/commit/84b96ccc85753e4deebffcf561cc89edb1e252bc)
 * __Breaking change:__ Some utility functions that had nothing to do with parsing were either removed or made internal.
+* __Breaking change:__ Internal errors of the parser (in the unfortunate case they happen) throw an exception. In the next release, exceptions in a transformer or fuser will not be caught either.
 
 #### 5.0.1 - 21-08-2019
 * Fix a bug where comments in input text would sometimes crash the parser.

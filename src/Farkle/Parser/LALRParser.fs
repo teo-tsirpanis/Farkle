@@ -43,7 +43,6 @@ module LALRParser =
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
     let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) oops (pp: PostProcessor<_>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
-        let internalError msg: obj = msg |> ParseErrorType.InternalError |> fail
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
             let nextAction =
@@ -51,10 +50,7 @@ module LALRParser =
                 | Some({Symbol = x}) -> oops.GetLALRAction x currentState
                 | None -> currentState.EOFAction
             match nextAction with
-            | Some LALRAction.Accept ->
-                match stack with
-                | (_, ast) :: _ -> ast
-                | [] -> internalError LALRStackEmpty
+            | Some LALRAction.Accept -> stack |> List.head |> snd
             | Some(LALRAction.Shift (LALRState nextState)) ->
                 match token with
                 | Some {Data = data} ->
@@ -62,7 +58,7 @@ module LALRParser =
                     // We can't use <| because it prevents optimization into a loop.
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
                     impl (fToken input) nextState ((nextState, data) :: stack)
-                | None -> ShiftOnEOF |> internalError
+                | None -> failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
             | Some(LALRAction.Reduce productionToReduce) ->
                 let tokens, stack = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
                 /// The stack cannot be empty; we gave it one element in the beginning.
@@ -73,11 +69,11 @@ module LALRParser =
                         try
                             pp.Fuse(productionToReduce, tokens)
                         with
-                        | FuserNotFound -> ParseErrorType.FuserNotFound productionToReduce |> fail
+                        | FuserNotFound -> failwithf "Production %O has no matching fuser" productionToReduce
                         | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack)
-                | None -> GotoNotFoundAfterReduction (productionToReduce, nextState) |> internalError
+                | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
             | None ->
                 let expectedSymbols =
                     currentState.Actions

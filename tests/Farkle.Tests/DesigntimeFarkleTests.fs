@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
+open FsCheck
 open System.Collections.Immutable
 
 [<Tests>]
@@ -94,4 +95,16 @@ let tests = testList "Designtime Farkle tests" [
         let nont2 = nonterminal "Test" :> DesigntimeFarkle
         Expect.isFalse (nont1 = nont2) "DesigntimeFarkle nonterminals are not checked for reference equality."
     }
+
+    testProperty "Farkle can properly read signed integers" (fun num ->
+        let runtime = Terminals.int64 "Signed" |> RuntimeFarkle.build
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing a signed integer failed.")
+
+    testProperty "Farkle can properly read unsigned integers" (fun num ->
+        let runtime = Terminals.uint64 "Unsigned" |> RuntimeFarkle.build
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed.")
+
+    testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
+        let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed.")
 ]

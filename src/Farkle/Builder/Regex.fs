@@ -169,6 +169,10 @@ module Regex =
     /// [omit]
     let atLeast num (x: Regex) = x.AtLeast num
 
+    /// An alias for `Regex.ZeroOrMore`.
+    /// The name alludes to the Kleene Star.
+    let star (x: Regex) = x.ZeroOrMore()
+
 [<AutoOpen>]
 /// F# operators to easily manipulate `Regex`es.
 module RegexOperators =

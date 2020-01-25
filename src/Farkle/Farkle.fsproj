@@ -36,6 +36,7 @@
     <Compile Include="Builder/ProductionBuilders.fs" />
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/DesigntimeFarkle.Untyped.fs" />
+    <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Parser/AST.fs" />
     <Compile Include="PostProcessor/Transformer.fs" />
     <Compile Include="PostProcessor/Fuser.fs" />

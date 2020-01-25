@@ -7,81 +7,39 @@ module Farkle.JSON.FSharp.Language
 
 open System
 open System.Globalization
-open System.Text
 open Chiron
 open Farkle
 open Farkle.Builder
 
-let unescapeJsonString (x: ReadOnlySpan<_>) =
-    let x = x.Slice(1, x.Length - 2)
-    let mutable i = 0
-    let sb = StringBuilder(x.Length)
-    while i < x.Length do
-        let c = x.[i]
-        i <- i + 1
-        match c with
-        | '\\' ->
-            let c = x.[i]
-            i <- i + 1
-            match c with
-            | '\"' | '\\' | '/' -> sb.Append c |> ignore
-            | 'b' -> sb.Append '\b' |> ignore
-            | 'f' -> sb.Append '\f' |> ignore
-            | 'n' -> sb.Append '\n' |> ignore
-            | 'r' -> sb.Append '\r' |> ignore
-            | 't' -> sb.Append '\t' |> ignore
-            | 'u' ->
-                let hexCode =
-                #if NETCOREAPP2_1
-                    UInt16.Parse(x.Slice(i, 4), NumberStyles.HexNumber)
-                #else
-                    UInt16.Parse(x.Slice(i, 4).ToString(), NumberStyles.HexNumber)
-                #endif
-                sb.Append(char hexCode) |> ignore
-                i <- i + 4
-            | _ -> ()
-        | c -> sb.Append(c) |> ignore
-    sb.ToString()
-
 let toDecimal (x: ReadOnlySpan<char>) =
-    #if NETCOREAPP2_1
-        Decimal.Parse(x, NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number
+    Decimal.Parse(
+    #if NETCOREAPP3_1
+        x,
     #else
-        Decimal.Parse(x.ToString(), NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture) |> Json.Number
+        x.ToString(),
     #endif
+        NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture)
+        |> Json.Number
 
 open Regex
 
 let designtime =
+    // Better let that regex stay.
+    // JSON prohibits leading zeroes,
+    // and we want to avoid boxing.
     let number =
         concat [
             char '-' |> optional
             choice [
                 char '0'
-                chars "123456789" <&> (chars Number |> atLeast 0)
+                chars "123456789" <&> (chars Number |> star)
             ]
             optional <| (char '.' <&> (chars Number |> atLeast 1))
             [chars "eE"; chars "+-" |> optional; chars Number |> atLeast 1]
             |> concat
             |> optional]
         |> terminal "Number" (T(fun _ data -> toDecimal data))
-    let stringCharacters = AllValid.Characters - (set ['"'; '\\'])
-    let string =
-        concat [
-            char '"'
-            atLeast 0 <| choice [
-                chars stringCharacters
-                concat [
-                    char '\\'
-                    choice [
-                        chars "\"\\/bfnrt"
-                        char 'u' <&> (repeat 4 <| chars "1234567890ABCDEF")
-                    ]
-                ]
-            ]
-            char '"'
-        ]
-        |> terminal "String" (T(fun _ data -> unescapeJsonString data))
+    let string = Terminals.stringEx "/bfnrt" true false '"' "String"
     let object = nonterminal "Object"
     let array = nonterminal "Array"
     let value = "Value" ||= [

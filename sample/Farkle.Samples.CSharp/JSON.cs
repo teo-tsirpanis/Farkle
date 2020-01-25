@@ -7,7 +7,6 @@ using static Chiron;
 using Microsoft.FSharp.Collections;
 using System;
 using System.Globalization;
-using System.Text;
 using Farkle.Builder;
 using static Farkle.Builder.Regex;
 
@@ -16,60 +15,10 @@ namespace Farkle.JSON.CSharp
 {
     public static class Language
     {
-        private static string UnescapeJsonString(ReadOnlySpan<char> data)
-        {
-            // Trim the initial and final double quotes
-            data = data.Slice(1, data.Length - 2);
-            var sb = new StringBuilder(data.Length);
-            var i = 0;
-            while (i < data.Length)
-            {
-                var ch = data[i++];
-                if (ch != '\\')
-                {
-                    sb.Append(ch);
-                }
-                else
-                {
-                    ch = data[i++];
-                    if (ch == '\"')
-                        sb.Append('\"');
-                    else if (ch == '\\')
-                        sb.Append('\\');
-                    else if (ch == '/')
-                        sb.Append('/');
-                    else if (ch == 'b')
-                        sb.Append('\b');
-                    else if (ch == 'f')
-                        sb.Append('\f');
-                    else if (ch == 'n')
-                        sb.Append('\n');
-                    else if (ch == 'r')
-                        sb.Append('\r');
-                    else if (ch == 't')
-                        sb.Append('\t');
-                    else if (ch == 'u')
-                    {
-                        var hexString =
-#if NETCOREAPP2_1
-                            data.Slice(i, 4);
-#else
-                            data.Slice(i, 4).ToString();
-#endif
-                        var hexChar = ushort.Parse(hexString, NumberStyles.HexNumber);
-                        sb.Append((char) hexChar);
-                        i += 4;
-                    }
-                }
-            }
-
-            return sb.ToString();
-        }
-
         private static Json ToDecimal(ReadOnlySpan<char> data)
         {
             var num =
-#if NETCOREAPP2_1
+#if NETCOREAPP3_1
                 decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
 #else
                 decimal.Parse(data.ToString(), NumberStyles.AllowExponent | NumberStyles.Float,
@@ -93,18 +42,7 @@ namespace Farkle.JSON.CSharp
                         OneOf("eE"),
                         OneOf("+-").Optional(),
                         OneOf(PredefinedSets.Number).AtLeast(1)).Optional()));
-            var stringCharacters = PredefinedSets.AllValid.Characters.Remove('"').Remove('\\');
-            var jsonString = Terminal.Create("String", (position, data) => UnescapeJsonString(data),
-                Join(
-                    Literal('"'),
-                    Choice(
-                        OneOf(stringCharacters),
-                        Join(
-                            Literal('\\'),
-                            Choice(
-                                OneOf("\"\\/bfnrt"),
-                                Literal('u').And(OneOf("1234567890ABCDEF").Repeat(4))))).ZeroOrMore(),
-                    Literal('"')));
+            var jsonString = Terminals.StringEx("/bfnrt", true, false, '"', "String");
             var jsonObject = Nonterminal.Create<Json>("Object");
             var jsonArray = Nonterminal.Create<Json>("Array");
             var value = Nonterminal.Create("Value",

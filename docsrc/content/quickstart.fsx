@@ -30,11 +30,13 @@ To be able to use a designtime Farkle, we will first feed it to a component call
 
 ## Designing our grammar
 
-We want to design a grammar that represents a mathematical expressions on the reals. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
+We want to design a grammar that represents a mathematical expressions on floating-point numbers. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
+
+A similar grammar but on the integers, can be found [here][calculator]
 
 ### The terminals
 
-This grammar will have seven terminals: the number, and each of the math symbols, and the parentheses. In Farkle, we create terminals from hard-coded regular expressions (regexes). Let's see how a regular expression that recognizes an integer looks like:
+This grammar will have seven terminals: the number, and each of the math symbols, and the parentheses. In Farkle, we create terminals from hard-coded regular expressions (regexes). Let's see how a regular expression that recognizes a deimal number looks like:
 *)
 
 open Farkle
@@ -46,8 +48,6 @@ let numberRegex =
     // Regexes are composable!
     let atLeastOneNumber = chars Number |> atLeast 1
     concat [
-        // There are many more sets in this module.
-        // We also use the Kleene star (zero or more occurrences).
         atLeastOneNumber
         optional <| (char '.' <&> atLeastOneNumber)
         [chars "eE"; chars "+-" |> optional; atLeastOneNumber]
@@ -56,6 +56,8 @@ let numberRegex =
     ]
 
 (**
+`Number` is an object implementing `IEnumerable<char>` which is called a _predefined set_. [A list of all predefined sets][predefinedSets] can be found at the documentation of GOLD Parser, the project that inspired Farkle.
+
 > __Note:__ A future release will allow creating regexes from strings.
 
 With our regex being ready, we will create the terminal this way:
@@ -241,19 +243,13 @@ We will see some customizations as an example:
 
 let _customized =
     expression
-    // You can add many types of block or line comments.
+    // You can add as many types of block or line comments as you want.
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
     |> DesigntimeFarkle.addLineComment "//"
     // Obviously, only the last change matters.
     |> DesigntimeFarkle.caseSensitive true
     |> DesigntimeFarkle.autoWhitespace false
-    // We can't force it to be ignored only when
-    // it appears in the first line though.
-    |> DesigntimeFarkle.addNoiseSymbol "Shebang" (concat [
-        string "#!"
-        AllValid.Characters - set "\r\n" |> chars
-        ["\r"; "\n"; "\r\n"] |> List.map string |> choice
-    ])
+    |> DesigntimeFarkle.addNoiseSymbol "Letters" (chars AllLetters)
 
 (**
 ---
@@ -261,7 +257,8 @@ let _customized =
 So that's it. I hope you understand. If you have any question, found a bug, or want a feature, feel free to [open a GitHub issue][githubIssues].
 
 [csharp]: csharp.html
-[sampleGrammar]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/SimpleMaths.grm
+[calculator]: https://github.com/teo-tsirpanis/Farkle/blob/2ecc66d6b7b43a1b52b889aec78e865c0c5cf325/sample/Farkle.JSON.FSharp/SimpleMaths.fs#L68
+[predefinedSets]: http://goldparser.org/doc/grammars/predefined-sets.htm
 [parseMessageDocumentation]: reference/farkle-parser-parsemessage.html
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

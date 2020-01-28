@@ -9,188 +9,18 @@
 (**
 # Quick Start: Creating a calculator
 
-This guide will help you to start using Farkle. It is assumed that you are using F# as your development language, and that you know about parsers and grammars.
 
-## Preparing the GOLD Parser Builder
+Hello everyone. This guide will help you use Farkle. We will be using F#, but during the process, you will learn some useful things about Farkle itself. There's [another guide that explains what's different with C#][csharp]. You also have to be familiar with context-free grammars and parsing.
 
-First, you need to install the GOLD Parser Builder. You can grab it from [here][goldBuilder].
+## How Farkle works
 
-> If you have any problem downloading it, I have made [a mirror in MEGA][mega].
+> __Note__: This is an oversimplified, high-level description of Farkle. I will write a more technical description of it in the future.
 
-GOLD Parser Builder is a .NET Framework application. If you don't use Windows, I think it will work fine on Mono.
+While parser combinator libraries like FParsec combine many small parsers into a big parser, Farkle combines simple _grammars_ (i.e. descriptions of languages) into more complex ones, and has a single, multi-purpose parser. These composable grammars are called _designtime Farkles_.
 
-With the GOLD Parser Builder ready, open it and write [this sample grammar][sampleGrammar].
+Also, as with FParsec, a designtime Farkle can "return" something. To accomplish this, there is a special object called a _post-proessor_. Post-processors create a domain-specific type from the input text. For our calculator, we will automatically create a post-processor that returns a number, which is the numerical result of our mathematical expression.
 
-## Preparing Farkle.
-
-It's also time to install [Farkle's NuGet package][farkleNuGet] with [your favorite NuGet client][paket] (or another one).
-
-You also need to add the package named [Farkle.Tools.MSBuild][farkleToolsMSBuildNuGet]. This gives us some additional design-time support that we will need later.
-
-## Compiling the grammar
-
-Let's get back to GOLD Parser:
-
-![The GOLD Parser Builder](img/goldBuilder.png)
-
-See the button writing "Next" at the bottom-right? Keep pressing it until you see this dialog.
-
-![The save dialog](img/saveAsEGT.png)
-
-Pay attention to the file type. Only EGT files work.
-
-Save this file next to the other source files of your project, open the project file and modify it by adding the following lines before your source files as shown:
-
-``` xml
-<ItemGroup>
-  <Farkle Include="SimpleMaths.egt" Namespace="MyBeautifulCalculator" />
-  <Compile Include="SimpleMaths.g.fs" />
-  <!--The rest of your source code files.-->
-</ItemGroup>
-```
-
-Let's look at the second line. It tells MSBuild - the build system our projects are powered up by - that we are going to use this grammar file from Farkle. We even gave it a custom namespace of our own - probably to match the name of our app.
-
-Now, on to the second line. We are adding a new source file with an unusual extension to our project. But, where is it actually? Wouldn't the compiler refuse to compile our little project and raise a nasty compiler error? It's actually surprisingly simple. Thanks to previous line, MSBuild generated a new source file which contains our beloved grammar, with some types to make using Farkle really easy. Let's take a look at this file:
-*)
-
-// This file was created by Farkle.Tools version 5.0.0 at 2019-05-12.
-// It should NOT be committed to source control.
-// namespace MyBeautifulCalculator.Definitions
-// EDIT: We can't declare a namespace in a documentation file.
-
-/// A terminal of the MyBeautifulCalculator language.
-type Terminal =
-    /// '-'
-    | Minus = 3u
-    /// '('
-    | LParen = 4u
-    /// ')'
-    | RParen = 5u
-    /// '*'
-    | Times = 6u
-    /// '/'
-    | Div = 7u
-    /// '+'
-    | Plus = 8u
-    /// Number
-    | Number = 9u
-
-/// A production of the MyBeautifulCalculator language.
-type Production =
-    /// <Expression> ::= <Add Exp>
-    | Expression = 0u
-    /// <Add Exp> ::= <Add Exp> '+' <Mult Exp>
-    | AddExpPlus = 1u
-    /// <Add Exp> ::= <Add Exp> '-' <Mult Exp>
-    | AddExpMinus = 2u
-    /// <Add Exp> ::= <Mult Exp>
-    | AddExp = 3u
-    /// <Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-    | MultExpTimes = 4u
-    /// <Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-    | MultExpDiv = 5u
-    /// <Mult Exp> ::= <Negate Exp>
-    | MultExp = 6u
-    /// <Negate Exp> ::= '-' <Value>
-    | NegateExpMinus = 7u
-    /// <Negate Exp> ::= <Value>
-    | NegateExp = 8u
-    /// <Value> ::= Number
-    | ValueNumber = 9u
-    /// <Value> ::= '(' <Expression> ')'
-    | ValueLParenRParen = 10u
-
-[<RequireQualifiedAccess>]
-module Grammar =
-    /// The grammar of MyBeautifulCalculator, encoded in Base64.
-    let asBase64 = "[Too big to fit here :-p]"
-
-(**
-This file contains enumeration types to represent each possible terminal and production that may appear in our grammar, but also, our EGT encoded in Base-64. This way, we don't have to carry it around in a separate file. Hooray!
-
-> __Note:__ As you have seen at the beginning of this generated source file, this file our hard-working build system generated does not need to be tracked by source control. It can just be generated when it's time to build. Moreover, if we change the EGT file, it gets generated again, and if we run `dotnet clean`, it gets deleted. We should however keep the EGT file, and the GOLD parser grammar in text form (to make it easier to change), because Farkle does not make its own EGT files. Yet.
-
-## Making a post-processor
-
-To calculate the value of a mathematical expression, we will need to make a post-processor.
-
-A post-processor converts the syntax tree of an expression of a language into anything we want. In this case, it converts it down to a single integer which is the result of the math operation. A post-processor is made of `Transformer`s and `Fuser`s.
-
-### Making the transformers
-
-First, we have to explain what a transformer is. A transformer is a special object that converts a terminal of a specific type to any object you want.
-
-For example, let's say that in our grammar we have a terminal of type `Number` with value `"478"`. We want to convert this string of digits to an integer. Therefore a transformer for `Number`s will just convert this string to an integer.
-
-For this grammar actually, `Number` is the only terminal we care about. There are others like `+`, `-` and so on, but we don't care about them because they can only take one value.
-
-Having said that, it's time to create a file that will house our heroic post-processor, whose only transformer will be the following:
-*)
-
-open Farkle
-open Farkle.PostProcessor
-open System
-
-let transformers = [
-    Transformer.createS Terminal.Number Int32.Parse
-]
-
-(**
-Let's take a look at the definition of our transformer. `Transformer.createS Terminal.Number Int32.Parse` creates a transformer that transforms the characters of the terminals of type `Number` into a string, and immediately, converts this string into an integer.
-
-> __Note:__ As you might have noticed, each time a `Number` gets transformed, Farkle creates a string which is immediately discarded, after its conversion to an integer. If you are parsing larger grammars and want to really minimize allocations like this, there are more advanced methods to create a transformer, [which you can see in the documentation][transformerDocumentation].
-
-Don't worry about the terminals that are missing from the list. They are automatically transformed into `null`.
-
-### Making the fusers
-
-Now, let's see what a fuser is. A fuser is another special object that combines the parts of a production into one object.
-
-For example, we have the following production: `<Add Exp> ::= <Add Exp> '+' <Mult Exp>` (also known as `Productions.AddExpPlus`). This production is made of three parts: an expression, the "plus" character and another expression. The plus character's value is always `null`, because we did not declare a transformer for this terminal. We want to take the first and the last parts and add them together. So we have the following fuser:
-*)
-
-let myFuser = Fuser.take2Of Production.AddExpPlus (0, 2) (+)
-
-(**
-Here we take the zeroth and the second parts - because as we all know, arrays start at zero -, and add them together.
-
-You might wonder: how can we "add" expressions as if they were integers? It's actually surprisingly simple. Our magical post-processor will make them _actual_ integers. But you will understand it better when we complete the fusers:
-*)
-
-open Fuser // This will make our declarations shorter.
-
-let fusers =
-    [
-        identity Production.Expression // identity means that we just take the first item of a production, as it is.
-        myFuser // We have already written this fuser before.
-        take2Of Production.AddExpMinus (0, 2) (-)
-        identity Production.AddExp
-        take2Of Production.MultExpTimes (0, 2) (*)
-        take2Of Production.MultExpDiv (0, 2) (/)
-        identity Production.MultExp
-        take1Of Production.NegateExpMinus 1 (~-) // (~-) is different than (-). The tilde denotes an unary operator.
-        identity Production.NegateExp
-        identity Production.ValueNumber
-        take1Of Production.ValueLParenRParen 1 id
-    ]
-
-(**
-As you see, the fuser turns the production `<Value> ::= Number` into an integer, by taking the `Number`, which is an integer, because the transformer made it so. The `<Negate Exp>` becomes an integer as well, because in both its definitions, it takes a `<Value>` which either negates it, or takes it as it is. By following this logic, we fill find out that every production becomes an integer. Hooray!
-
-As a sidenote, if we forget to add a fuser that is needed by the post-processor, it will raise an error that specifically tells us which fuser we forgot.
-
-With the transformers and fusers ready, we now create the post-processor like this. See that we specified the type of final objects it produces.
-*)
-
-let pp = PostProcessor.ofSeq<int> transformers fusers
-
-(**
-> __Note__: The post-processor is not perfectly type-safe. I could have used a function that returns something else other than an integer, and the compiler would not shed a tear at all. However, the library will catch this error and will not throw an exception into your code.
-
-## Making a runtime Farkle
-
-With our post-processor ready, we need to make a `RuntimeFarkle`. This object is responsible for parsing our beautiful mathematical expressions and post-process them into an integer
+To be able to use a designtime Farkle, we will first feed it to a component called the _builder_. The builder will check the grammar for errors, create parsing tables with the LALR algoritm, and give us another special object called a _runtime Farkle_. Runtime Farkles contain a grammar and a post-processor. With a runtime Farkle, we can parse text to our heart's desires.
 
 10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
 
@@ -198,19 +28,176 @@ With our post-processor ready, we need to make a `RuntimeFarkle`. This object is
 
 30: I guess you can't read this line.
 
-A runtime Farkle is made of a grammar, and a post-processor. We have already created the post-processor, and the grammar is in a Base64-encoded string, so we can create it this way:
+## Designing our grammar
+
+We want to design a grammar that represents a mathematical expressions on the reals. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
+
+### The terminals
+
+This grammar will have seven terminals: the number, and each of the math symbols, and the parentheses. In Farkle, we create terminals from hard-coded regular expressions (regexes). Let's see how a regular expression that recognizes an integer looks like:
 *)
 
-let myMarvelousRuntimeFarkle = RuntimeFarkle.ofBase64String pp Grammar.asBase64
+open Farkle
+open Farkle.Builder
+open Farkle.Builder.Regex
+open System
+
+let numberRegex =
+    // Regexes are composable!
+    let atLeastOneNumber = chars Number |> atLeast 1
+    concat [
+        // There are many more sets in this module.
+        // We also use the Kleene star (zero or more occurrences).
+        atLeastOneNumber
+        optional <| (char '.' <&> atLeastOneNumber)
+        [chars "eE"; chars "+-" |> optional; atLeastOneNumber]
+        |> concat
+        |> optional
+    ]
 
 (**
-### Using the runtime Farkle
+> __Note:__ A future release will allow creating regexes from strings.
 
-Now that we got it, it's time to use it. The `RuntimeFarkle` module has many functions to parse text from different sources. There is a simple function called `parse` which just parses a string. If you want to log what the parser actually does, you can use the function `parseString`. 
+With our regex being ready, we will create the terminal this way:
+*)
+
+let number = terminal "Number" (T(fun _ x -> Double.Parse(x.ToString()))) numberRegex
+
+// Farkle also gives us this, but we can't
+// use it because we only want positive numbers.
+let _number = Terminals.float "Number"
+
+(**
+The function `terminal` takes three arguments. The first is the name of the terminal. The name is a purely informative field; many terminals with the same name are allowed. The second argument is called a _transformer_. It's a delegate that gets the position of the terminal and a `ReadOnlySpan<char>` that contains the terminal's data. The third argument is the regex that recognizes it. As we saw in `_number`, there are many more sample terminals in the [`Terminals` module](reference/farkle-builder-terminals.html). 
+
+> __Note:__ The regexes' type is `Farkle.Builder.Regex`. They are totally unrelated to `System.Text.ResularExpressions.Regex`. We can't convert between these two types, or directly match text against Farkle's regexes.
+
+The terminal we created is of type `DesigntimeFarkle<float>`. This means that we can theoretically use it to parse floating-point numbers from text. But we want to create someting bugger than that. As we are going to see, we can compose designtime Farkles into bigger ones, using nonterminals.
+
+Also, before we continue, we don't have to explicitly write a terminal for the mathematical symbols. These are just symbols that do not return anything meaningful. We call them _literals_. Literals in Farkle are specially treated to reduce boilerplate.
+
+## The nonterminals.
+
+### Writing simple nonterminals.
+
+Because the calculator's nonterminals are a bit complicated, we have to take a brief interlude and tell how to create simpler ones.
+
+Say we want to make a very simple calculator that can either add or subtract two numbers together. And let's say that an empty string would result to zero. Writing this is actually surprisingly simple:
+*)
+
+let _justTwoNumbers = "Exp" ||= [
+    !@ number .>> "+" .>>. number => (fun x1 x2 -> x1 + x2)
+    !@ number .>> "-" .>>. number => (fun x1 x2 -> x1 - x2)
+    empty =% 0.
+]
+
+(**
+Let's explain what was going here. With the `||=` operator, we define a nonterminal. In its left side goes its name, and in its right side go the productions that produce it. In the above code, we defined these two productions:
+
+```
+<Exp> ::= Number + Number
+<Exp> ::= Number - Number
+<Exp> ::= <>
+```
+
+See these strange symbols? They chain designtime Farkles together and signify which of them carry information we care about. `!@` starts defining a production with its first member carrying significant information (the first operand). To start a production with a designtime Farkle that does not carry significant information, we can use `!%`. The `.>>` and `.>>.` operators resemble FParsec's ones. `.>>` chains a new designtime Farkle we don't care what contains, and `.>>.` chains one we do.
+
+With `.>>`, we can also chain string literals, instead of creating a terminal for each.
+
+> __Note:__ `!@ x` is essentially equivalent to `empty .>>. x`.
+
+> __Note:__ To start a production with a literal, use the `!&` operator.
+
+The `=>` operator finishes a production with a function that decides what to do with its members that we marked as significant. In the first case, we added the numbers, and in the second, we subtracted them. So, depending on the text, `_justTwoNumbers` would return either the sum, or the difference of them. Obviously, all productions of a nonterminal have to return the same type.
+
+In the third case, we defined an empty production using `empty` (what a coincidence!) We used `empty =% 0.` instead of writing `empty => (fun () -> 0.)`.
+
+> __Note:__ An unfinished production is called a _production builder_. You can mark up to 16 significant members in a production builder.
+
+> __Note:__ You can't pass an empty list in the right hand of the `||=` operator, or the grammar will be invalid.
+
+### Writing more complex nonterminals
+
+Now, our complete calculator grammar would look like this:
+
+```
+// That 's the starting symbol
+<Expression> ::= <Add Exp>
+
+<Add Exp> ::= <Add Exp> '+' <Mult Exp>
+<Add Exp> ::= <Add Exp> '-' <Mult Exp>
+<Add Exp> ::= <Mult Exp>
+
+<Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
+<Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
+<Mult Exp> ::= <Negate Exp>
+
+<Negate Exp> ::= '-' <Value>
+<Negate Exp> ::= <Value>
+
+<Value> ::= Number
+<Value> ::= '(' <Expression> ')'
+```
+
+> __Note:__ We hardcoded associativity and operator precedence to make the grammar unambiguous. A future release will allow configuring them more intuitively.
+
+The problem with this grammar is that the definitions of all nonterminals form a circle. And designtime Farkles are immutable, like almost everything else with F#. We can solve this problem however and the solution is actually surprisingly simple. But it's better to see how it is done in code:
+*)
+
+let addExp, multExp, negateExp, value =
+    nonterminal "Add Exp", nonterminal "Mult Exp",
+    nonterminal "Negate Exp", nonterminal "Value"
+
+let expression = "Expression" ||= [
+    !@ addExp => id
+]
+
+addExp.SetProductions(
+    !@ addExp .>> "+" .>>. multExp => (+),
+    !@ addExp .>> "-" .>>. multExp => (-),
+    !@ multExp => id
+)
+
+multExp.SetProductions(
+    !@ multExp .>> "*" .>>. negateExp => (*),
+    !@ multExp .>> "/" .>>. negateExp => (/),
+    !@ negateExp => id
+)
+
+negateExp.SetProductions(
+    !& "-" .>>. value => (~-),
+    !@ value => id
+)
+
+value.SetProductions(
+    !@ number => id,
+    !& "(" .>>. expression .>>  ")" => id
+)
+
+(**
+The magic lies within the `nonterminal` function. With this function, we create a nonterminal with a name, but we can set its production _later_ with the `SetProductions` method. We can only once set them, all together. Calling the method again will be ignored.
+
+The nonterminals are of type `Nonterminal<float>`, but implement `DesigntimeFarkle<float>`; it's actually an interface.
+
+> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if used.
+
+## Building our grammar
+
+With our nonterminals being ready, it's time to create a runtime Farkle that can parse mathematical expressions. The builder uses the LALR algorithm to create parser tables for our parser. It also creates a post-processor that will handle the parsed numbers.
+
+> __Note:__ If a grammar is invalid (has an LALR conflict, two terminals are indistinguishable or something else), building would still succeed, but parsing would fail every time.
+*)
+
+let myMarvelousRuntimeFarkle = RuntimeFarkle.build expression
+
+(**
+## Using the runtime Farkle
+
+Now that we got it, it's time to put it to action. The `RuntimeFarkle` module has many functions to parse text from different sources. There is a simple function called `parse` which just parses a string. If you want to log what the parser actually does, you can use the function `parseString`. 
 
 Actually, all functions except `parse` take a function as a parameter, that gets called for every parser event. You can see what these events look like [here][parseMessageDocumentation].
 
-Furthermore, all functions return an F# `Result` type whose error value (if it unfortunately exists), can show exactly what did go wrong.
+The functions return an F# `Result` type whose error value (if it unfortunately exists), can show exactly what did go wrong.
 
 Let's look at some some examples:
 *)
@@ -219,60 +206,62 @@ open System.IO
 
 // You can consume the parsing result like this:
 match RuntimeFarkle.parse myMarvelousRuntimeFarkle "103 + 137+281" with
-| Ok result -> printfn "The answer is %d" result
+| Ok result -> printfn "The answer is %f" result
 | Error err -> eprintfn "Error: %O" err
 
 RuntimeFarkle.parse myMarvelousRuntimeFarkle "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248"
-// Same as the following:
-myMarvelousRuntimeFarkle.Parse "45 + 198 - 647 + 2 * 478 - 488 + 801 - 248"
 
 RuntimeFarkle.parseString myMarvelousRuntimeFarkle (printfn "%O") "111*555"
-// Same as the following:
-// Note that extension methods accept
-// optional delegates for C# convenience.
-myMarvelousRuntimeFarkle.Parse("111*555", fun msg -> printfn "%O" msg)
 
 // You can parse any Memory<char>, such a substring or even an array of characters!
 let mem = "The answer is 45".AsMemory().Slice(14)
 RuntimeFarkle.parseMemory myMarvelousRuntimeFarkle ignore mem
-// Same as following:
-myMarvelousRuntimeFarkle.Parse mem
-
 
 RuntimeFarkle.parseFile myMarvelousRuntimeFarkle ignore "gf.m"
-// Same as the following:
-myMarvelousRuntimeFarkle.ParseFile("gf.m")
 
 RuntimeFarkle.parseTextReader myMarvelousRuntimeFarkle ignore (File.OpenText "fish.es")
-// Same as the following:
-myMarvelousRuntimeFarkle.Parse(File.OpenText "fish.es")
 
 (**
-## Bonus: Using Farkle.Tools
+## Bonus: Customizing our designtime Farkle
 
-What if I told you, that there is a way to make this entire process much simpler? Since Version 5.0, Farkle has a set of command-line tools to help you make beautiful parsers. They are [distributed over NuGet][farkleToolsNuGet], and you can install them by running this little command:
+Before we continue, it would be nice to see how we can customize a designtime Farkle.
 
-`dotnet tool install -g Farkle.Tools`
+Most programming languages have comments, so why would Farkle not support them as well? We can create a designtime Farkle that adds support for comments in another one. Both block and line comments are supported. They cannot be nested.
 
-Let's go back now, right after we added the EGT file into our project. Now, open your favorite command line shell, and type the following lines:
+By default, grammars are not case sensitive. But we can customize this behavior.
 
-`farkle new -t postprocessor SimpleMaths.egt`
+By default, whitespace characters is ignored. We can customize it once again.
 
-You will see a file named `SimpleMaths.fs` that contains most of the post-processor code we have already written. What you have to do, is to fix the compiler errors by completing your own transformers and fusers, and you are ready to go!
+We can also specify a symbol that will be discarded when encountered by the parser. These symbols are called _noise symbols_.
 
+We will see some customizations as an example:
+
+> __Warning:__ These customizations have to be done at the designtime Farkle that is going to be built (or they will have no effect) and always apply to the entire grammar.
+*)
+
+let _customized =
+    expression
+    // You can add many types of block or line comments.
+    |> DesigntimeFarkle.addBlockComment "/*" "*/"
+    |> DesigntimeFarkle.addLineComment "//"
+    // Obviously, only the last change matters.
+    |> DesigntimeFarkle.caseSensitive true
+    |> DesigntimeFarkle.autoWhitespace false
+    // We can't force it to be ignored only when
+    // it appears in the first line though.
+    |> DesigntimeFarkle.addNoiseSymbol "Shebang" (concat [
+        string "#!"
+        AllValid.Characters - set "\r\n" |> chars
+        ["\r"; "\n"; "\r\n"] |> List.map string |> choice
+    ])
+
+(**
 ---
 
 So that's it. I hope you understand. If you have any question, found a bug, or want a feature, feel free to [open a GitHub issue][githubIssues].
 
-[goldBuilder]: http://goldparser.org/builder/index.htm
-[mega]: https://mega.nz/#F!opp3yToY!FMRD5CxS-q_-SN8f5TAbrA
-[farkleNuGet]: https://www.nuget.org/packages/Farkle
-[farkleToolsMSBuildNuGet]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
-[writingGrammars]: http://goldparser.org/doc/grammars/index.htm
+[csharp]: csharp.html
 [sampleGrammar]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/SimpleMaths.grm
-[paket]: https://fsprojects.github.io/Paket/
-[transformerDocumentation]: reference/farkle-postprocessor-transformermodule.html
 [parseMessageDocumentation]: reference/farkle-parser-parsemessage.html
-[farkleToolsNuGet]: https://www.nuget.org/packages/Farkle.Tools
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

@@ -3,6 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+[<RequireQualifiedAccess>]
 /// <summary>Some desingtime Farkles that
 /// are commonly used in many grammars.</summary>
 /// <remarks>
@@ -80,11 +81,19 @@ let uint32 name = genericUnsigned<uint32> name
 let uint64 name = genericUnsigned<uint64> name
 
 let private realRegex =
-    let atLeastOneNumber = chars Number |> atLeast 1
+    let numberStar = chars Number |> star
+    let atLeastOneNumber = chars Number <&> numberStar
+    let dotOptional = char '.' |> optional
     concat [
-        signedRegex
-        optional <| (char '.' <&> atLeastOneNumber)
-        [chars "eE"; chars "+-" |> optional; atLeastOneNumber]
+        optional <| char '-'
+        choice [
+            // There has to be at least one digit
+            // either before or after the dot.
+            // Or no dot at all!
+            atLeastOneNumber <&> dotOptional <&> numberStar
+            numberStar <&> dotOptional <&> atLeastOneNumber
+        ]
+        [chars "eE"; optional <| chars "+-"; atLeastOneNumber]
         |> concat
         |> optional
     ]

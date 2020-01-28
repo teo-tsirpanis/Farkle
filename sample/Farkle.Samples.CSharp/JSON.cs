@@ -17,13 +17,14 @@ namespace Farkle.JSON.CSharp
     {
         private static Json ToDecimal(ReadOnlySpan<char> data)
         {
-            var num =
+            var data2 =
 #if NETCOREAPP3_1
-                decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
+                data;
 #else
-                decimal.Parse(data.ToString(), NumberStyles.AllowExponent | NumberStyles.Float,
-                    CultureInfo.InvariantCulture);
+                data.ToString();
 #endif
+            var num =
+                decimal.Parse(data2, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
             return Json.NewNumber(num);
         }
 

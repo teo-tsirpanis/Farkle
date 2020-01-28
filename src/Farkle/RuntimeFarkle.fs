@@ -99,8 +99,7 @@ module RuntimeFarkle =
     [<CompiledName("Build")>]
     let build df =
         let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
-        theFabledGrammar
-        |> RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor
+        RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
     /// Creates a syntax-checking `RuntimeFarkle` from an
     /// untyped `DesigntimeFarkle`.

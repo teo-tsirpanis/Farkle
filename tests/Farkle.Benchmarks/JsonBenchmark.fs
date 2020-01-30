@@ -9,11 +9,9 @@ open BenchmarkDotNet.Attributes
 open Chiron
 open Farkle
 open Farkle.Common
-open Farkle.IO
 open Farkle.JSON
 open Farkle.PostProcessor
 open FParsec
-open System.IO
 open System.Text
 
 type JsonBenchmark() =
@@ -23,6 +21,8 @@ type JsonBenchmark() =
     let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime
 
     [<Benchmark>]
+    // There are performance differences between the F# and C# editions.
+    // The separate benchmarks will stay for now.
     member __.FarkleCSharp() =
         RuntimeFarkle.parseFile CSharp.Language.Runtime ignore jsonFile
         |> returnOrFail

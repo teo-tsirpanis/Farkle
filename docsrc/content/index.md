@@ -19,7 +19,7 @@ The library comes with comprehensible documentation.
 
  * [Quick Start: Creating a calculator](quickstart.html) to get started with writing a simple calculator in F#.
 
- * [Quick Start with C#: Creating a calculator](quickstart-csharp.html) to learn how to create the previous example with C#.
+ * [Using Farkle with C#](csharp.html) to learn what changes when using Farkle in a C# project.
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules and functions in the library.
 

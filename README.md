@@ -10,6 +10,7 @@ Farkle is a modern and easy-to-use parser library for F# and C#, that creates [L
 ## Documentation
 
 * [Quick Start: Creating a calculator](https://teo-tsirpanis.github.io/Farkle/quickstart.html)
+* [Using Farkle with C#](https://teo-tsirpanis.github.io/Farkle/csharp.html)
 * [API Reference](https://teo-tsirpanis.github.io/Farkle/reference/index.html)
 
 ## Maintainer(s)

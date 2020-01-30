@@ -62,8 +62,8 @@ with
             AutoWhitespace = false
     }
 
-/// <summary>The base, untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
-/// <remarks>User code must not implement this interface, or an error may be raised.</remarks>
+/// <summary>The base untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
+/// <remarks>User code must not implement this interface, or an exception might be thrown.</remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
 type DesigntimeFarkle =
     /// The name of the starting symbol.
@@ -74,7 +74,7 @@ type DesigntimeFarkle =
 /// <summary>An object representing a grammar created by Farkle.Builder.
 /// It can be converted to a <see cref="RuntimeFarkle{T}"/>.</summary>
 /// <remarks>User types must not implement this interface,
-/// or an error will be raised.</remarks>
+/// or an exception might be thrown.</remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 /// <seealso cref="DesigntimeFarkle"/>
 type DesigntimeFarkle<'T> = 

@@ -54,8 +54,8 @@ module Transformer =
     let inline createS sym fTransform = createPS sym (fun _ data -> fTransform data)
 
     /// Creates a `Transformer` that transforms a terminal's data to a 32-bit signed integer.
-    [<Obsolete("This function will be removed in the future: \
-Farkle was not supposed to post-process numbers from GOLD Parser out of the box.")>]
+    [<Obsolete("This function will be removed in a future release. \
+Write a transformer directly or use Farkle.Builder.Terminals.int with a Farkle-built grammar.")>]
     let inline int sym = create sym <| C (fun data -> Int32.Parse(data.ToString()))
 
     /// Creates a `Transformer` that transforms a terminal's data to a string as-is.

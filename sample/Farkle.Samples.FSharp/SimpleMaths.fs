@@ -38,7 +38,7 @@ and Expr =
     | Negate of MathExpression
 
 let mathExpression =
-    let transformers = [Transformer.int Terminal.Number]
+    let transformers = [Transformer.createS Terminal.Number System.Int32.Parse]
     let fusers =
         [
             identity Production.Expression

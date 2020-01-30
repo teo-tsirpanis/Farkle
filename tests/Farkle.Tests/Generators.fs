@@ -15,7 +15,7 @@ open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
 open FsCheck
-open SimpleMaths
+open SimpleMaths.SimpleMaths
 open System.Collections.Generic
 open System.IO
 open System.Text

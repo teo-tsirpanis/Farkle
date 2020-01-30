@@ -6,6 +6,7 @@
 open Farkle
 open System
 open Farkle.PostProcessor
+open SimpleMaths
 
 let inline prettyPrintResult x =
     match x with

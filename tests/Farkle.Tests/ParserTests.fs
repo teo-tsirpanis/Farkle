@@ -13,6 +13,7 @@ open Farkle.IO
 open Farkle.JSON
 open Farkle.Parser
 open Farkle.Tests
+open SimpleMaths
 open System.IO
 
 let logger = Log.create "Parser tests"

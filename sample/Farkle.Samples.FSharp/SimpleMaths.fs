@@ -3,8 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module SimpleMaths
+// Having a midule named SimpleMaths effectively
+// hides the SimpleMaths.Definitions namespace.
+module SimpleMaths.SimpleMaths
 
 open Farkle
 open Farkle.Builder

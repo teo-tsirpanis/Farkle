@@ -142,31 +142,25 @@ type Regex =
 /// Please consult the members of the `Regex` class for documentation.
 module Regex =
 
-    /// [omit]
+    /// An alias for `Regex.Literal` that takes a character.
     let char (c: char) = Regex.Literal c
 
-    /// [omit]
+    /// An alias for `Regex.OneOf`.
     let chars str = Regex.OneOf str
 
-    /// [omit]
+    /// An alias for `Regex.Literal` that takes a string.
     let string (str: string) = Regex.Literal str
 
-    /// [omit]
     let concat xs = Regex.Join(Array.ofSeq xs)
 
-    /// [omit]
     let choice xs = Regex.Choice(Array.ofSeq xs)
 
-    /// [omit]
     let repeat num (x: Regex) = x.Repeat num
 
-    /// [omit]
     let optional (x: Regex) = x.Optional()
 
-    /// [omit]
     let between from upTo (x: Regex) = x.Between from upTo
 
-    /// [omit]
     let atLeast num (x: Regex) = x.AtLeast num
 
     /// An alias for `Regex.ZeroOrMore`.

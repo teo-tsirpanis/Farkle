@@ -1,6 +1,6 @@
 # What is Farkle?
 
-Farkle is a parser generator for F# and C#. It is made of an engine for the [GOLD Parsing system][gold], and an easy-to-use API to convert Abstract Syntax Trees into custom types.
+Farkle is an parser library for F# and C#. It creates LALR parsers from composable objects that resemble parser combinators.
 
 <div class="row">
   <div class="span1"></div>

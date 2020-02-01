@@ -16,7 +16,7 @@ module LALRParser =
 
     module internal ObjectBuffer =
 
-        let private arrayStorage = new ThreadLocal<obj[]>(fun () -> Array.zeroCreate 1)
+        let private arrayStorage = new ThreadLocal<obj[]>(fun () -> Array.zeroCreate 16)
 
         let private checkLength length = if Array.length arrayStorage.Value < length then arrayStorage.Value <- Array.zeroCreate length
 
@@ -28,7 +28,7 @@ module LALRParser =
                 | (_, x) :: xs when i >= 0 ->
                     Array.set arr i x
                     impl xs (i - 1)
-                | _ -> arr, stack
+                | _ -> arr
             impl stack (length - 1)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
@@ -60,7 +60,8 @@ module LALRParser =
                     impl (fToken input) nextState ((nextState, data) :: stack)
                 | None -> failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
             | Some(LALRAction.Reduce productionToReduce) ->
-                let tokens, stack = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
+                let tokens = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
+                let stack = List.skip productionToReduce.Handle.Length stack
                 /// The stack cannot be empty; we gave it one element in the beginning.
                 let nextState = fst stack.Head
                 match oops.LALRGoto productionToReduce.Head nextState with

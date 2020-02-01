@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
+open Farkle.PostProcessor
 open FsCheck
 open System.Collections.Immutable
 
@@ -107,4 +108,12 @@ let tests = testList "Designtime Farkle tests" [
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
         Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed.")
+    
+    test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
+        let df = "Sbubby" ||= [!& "Eef" =% "Freef"]
+        let t = T(fun _ x -> x.ToString())
+        Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant."
+        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessor.ast) "Post-processors are not covariant."
+        Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant."
+    }
 ]

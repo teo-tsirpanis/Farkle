@@ -17,7 +17,7 @@ exception internal FuserNotFound
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
 /// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>
-type PostProcessor<'T> =
+type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Converts a <see cref="Terminal"/> into an arbitrary object.</summary>
     /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
     abstract Transform: Terminal * Position * ReadOnlySpan<char> -> obj

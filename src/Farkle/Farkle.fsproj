@@ -2,6 +2,7 @@
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <EnableCovarsky>true</EnableCovarsky>
     <Title>The Farkle Parser</Title>
     <PackageId>Farkle</PackageId>
     <Product>Farkle</Product>
@@ -51,7 +52,8 @@
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Covarsky" Version="1.0.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -17,7 +17,7 @@ open System.Collections.Immutable
 ///     <para>In F#, this type is named <c>T</c> - from "Terminal" and was shortened to avoid clutter in user code.</para>
 ///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions</para>
 /// </remarks>
-type T<'T> = delegate of Position * ReadOnlySpan<char> -> 'T
+type T<[<CovariantOut>] 'T> = delegate of Position * ReadOnlySpan<char> -> 'T
 
 /// A type of source code comment. As everybody might know,
 /// comments are the text fragments that are ignored by the parser.
@@ -77,7 +77,7 @@ type DesigntimeFarkle =
 /// or an exception might be thrown.</remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 /// <seealso cref="DesigntimeFarkle"/>
-type DesigntimeFarkle<'T> = 
+type DesigntimeFarkle< [<CovariantOut>] 'T> = 
     inherit DesigntimeFarkle
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
@@ -180,10 +180,16 @@ type Terminal =
     static member Create (name, fTransform: T<'T>, regex) =
         if isNull fTransform then
             nullArg "fTransform"
+        let fTransform =
+            // https://stackoverflow.com/questions/12454794
+            if Reflection.isValueType<'T>() then
+                T(fun pos data -> fTransform.Invoke(pos, data) |> box)
+            else
+                unbox fTransform
         let term = {
             _Name = name
             Regex = regex
-            Transformer = T(fun pos data -> fTransform.Invoke(pos, data) |> box)
+            Transformer = fTransform
         }
         term :> DesigntimeFarkle<'T>
     /// <summary>Creates a terminal that does not contain any significant

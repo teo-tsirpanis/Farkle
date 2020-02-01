@@ -81,7 +81,4 @@ type PostProcessor =
 
     /// <summary>A <see cref="PostProcessor{Object}"/> that just checks if the given string is valid.</summary>
     /// <remarks>It always returns <c>null</c>.</remarks>
-    static member SyntaxChecker =
-        {new PP<obj> with
-            member __.Transform(_, _, _) = null
-            member __.Fuse(_, _) = null}
+    static member SyntaxChecker = unbox<PP<obj>> PostProcessor.syntaxCheck

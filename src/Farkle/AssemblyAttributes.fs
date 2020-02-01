@@ -5,7 +5,12 @@
 
 namespace global
 
+open System
 open System.Runtime.CompilerServices
+
+[<AttributeUsage(AttributeTargets.GenericParameter)>]
+type internal CovariantOutAttribute() =
+    inherit Attribute()
 
 [<assembly:Extension>]
 [<assembly:InternalsVisibleTo("Farkle.Benchmarks")>]

@@ -1,3 +1,6 @@
+#### 5.2.0
+* The types `DesigntimeFarkle<TResult>` and `PostProcessor<TResult>` are covariant. The change was made possible by [Covarsky](https://github.com/teo-tsirpanis/Covarsky), a tool written for this purpose.
+
 #### 5.1.0 - 31-01-2019
 * It happened. Farkle can create grammars without the need of GOLD Parser. __Farkle is now a parsing library on its own.__
 * Move the `CharStream` type in the `Farkle.IO` namespace.

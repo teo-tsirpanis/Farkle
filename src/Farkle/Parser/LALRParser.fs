@@ -70,7 +70,6 @@ module LALRParser =
                             pp.Fuse(productionToReduce, tokens)
                         with
                         | FuserNotFound -> failwithf "Production %O has no matching fuser" productionToReduce
-                        | ex -> ParseErrorType.FuseError(productionToReduce, ex) |> fail
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack)
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce

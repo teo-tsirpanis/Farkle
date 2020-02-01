@@ -73,11 +73,7 @@ module Tokenizer =
             // newToken does not get optimized,
             // maybe because of the try-with.
             let newToken sym (cs: CharSpan) =
-                let data =
-                    try
-                        unpinSpanAndGenerate sym fTransform input cs
-                    with
-                    | ex -> Message(input.LastUnpinnedSpanPosition, ParseErrorType.TransformError(sym, ex)) |> ParseError |> raise
+                let data = unpinSpanAndGenerate sym fTransform input cs
                 let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken

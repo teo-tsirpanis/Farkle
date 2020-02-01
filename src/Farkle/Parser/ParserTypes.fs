@@ -67,10 +67,6 @@ type ParseErrorType =
     | UnexpectedGroupEnd of GroupEnd
     /// Unexpected end of input while being inside a group.
     | UnexpectedEndOfInput of Group
-    /// The post-processor had a problem transforming a terminal.
-    | TransformError of Terminal * exn
-    /// The post-processor had a problem fusing the tokems of a production.
-    | FuseError of Production * exn
     override x.ToString() =
         match x with
         | LexicalError x -> sprintf "Cannot recognize character '%c'" x
@@ -80,8 +76,6 @@ type ParseErrorType =
         | CannotNestGroups(g1, g2) -> sprintf "Group '%s' cannot be nested inside '%s'" g1.Name g2.Name
         | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
         | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside group '%s'." g.Name
-        | TransformError (term, ex) -> sprintf "Exception in user code while post-processing terminal '%s'.\nException:\n%O" term.Name ex
-        | FuseError (prod, ex) -> sprintf "Exception in user code while post-processing production '%O'.\nException:\n%O" prod ex
 
 /// A log message that contains a position it was encountered.
 type Message<'a> = Message of Position * 'a

@@ -57,10 +57,6 @@ let sourceFilesToGenerate = [
     "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.fs"
 ]
 
-[<Literal>]
-let LibraryFramework = "netstandard2.0"
-
-[<Literal>]
 let DocumentationAssemblyFramework = "net45"
 
 let sourceProjects = !! "./src/**/*.??proj"
@@ -286,31 +282,18 @@ let info =
         "project-nuget", "http://nuget.org/packages/Farkle"
     ]
 
-let referenceBinaries = []
-
 let layoutRootsAll = System.Collections.Generic.Dictionary()
 layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
 
 let generateReferenceDocs isRelease =
     Directory.ensure (output @@ "reference")
 
-    let binaries =
-        let manuallyAdded =
-            referenceBinaries
-            |> List.map (fun b -> bin @@ b)
+    // Let's not fool ourselves. We are going
+    // to create documentation for just one library.
+    let farkleBinary =
+        bin @@ project @@ DocumentationAssemblyFramework @@ sprintf "%s.dll" project
 
-        let conventionBased =
-            bin
-            |> DirectoryInfo.ofPath
-            |> DirectoryInfo.getSubDirectories
-            |> Array.filter (fun x -> x.FullName @@ LibraryFramework |> Directory.Exists)
-            |> Array.map ((fun x -> x.FullName @@ DocumentationAssemblyFramework @@ (sprintf "%s.dll" x.Name)))
-            |> Array.filter File.exists
-            |> List.ofArray
-
-        conventionBased @ manuallyAdded
-
-    binaries
+    [farkleBinary]
     |> FSFormatting.createDocsForDlls (fun args ->
         {args with
             OutputDirectory = output @@ "reference"
@@ -328,15 +311,15 @@ let copyFiles () =
     Shell.copyRecursive (formatting @@ "styles") (output @@ "content") true
     |> Trace.logItems "Copying styles and scripts: "
 
+let moveFileTemporarily src dest =
+    File.delete dest
+    Shell.copyFile (Path.getDirectory dest) src
+    Shell.rename dest (Path.GetDirectoryName dest @@ Path.GetFileName src)
+    {new IDisposable with member __.Dispose() = File.delete dest}
+
 let generateDocs isRelease =
-    File.delete "docsrc/content/release-notes.md"
-    Shell.copyFile "docsrc/content/" "RELEASE_NOTES.md"
-    Shell.rename "docsrc/content/release-notes.md" "docsrc/content/RELEASE_NOTES.md"
-
-    File.delete "docsrc/content/license.md"
-    Shell.copyFile "docsrc/content/" "LICENSE.txt"
-    Shell.rename "docsrc/content/license.md" "docsrc/content/LICENSE.txt"
-
+    use __ = moveFileTemporarily "RELEASE_NOTES.md" "docsrc/content/release-notes.md"
+    use __ = moveFileTemporarily "LICENSE.txt" "docsrc/content/license.md"
 
     DirectoryInfo.getSubDirectories (DirectoryInfo.ofPath templates)
     |> Seq.iter
@@ -354,9 +337,9 @@ let generateDocs isRelease =
         )
     copyFiles ()
 
-    for dir in  [ content; ] do
+    for dir in  [content] do
         let langSpecificPath(lang, path:string) =
-            path.Split([|'/'; '\\'|], System.StringSplitOptions.RemoveEmptyEntries)
+            path.Split([|'/'; '\\'|], StringSplitOptions.RemoveEmptyEntries)
             |> Array.exists(fun i -> i = lang)
         let layoutRoots =
             let key = layoutRootsAll.Keys |> Seq.tryFind (fun i -> langSpecificPath(i, dir))
@@ -380,11 +363,13 @@ Target.create "KeepGeneratingDocs" (fun _ ->
     )
 
     Trace.traceImportant "Waiting for help edits. Press any key to stop."
-
     System.Console.ReadKey() |> ignore
 )
 
-Target.create "GenerateDocs" (fun _ -> !! "./docs/**" |> Zip.zip "docs" "docs.zip"; Trace.publish ImportData.BuildArtifact "docs.zip")
+Target.create "GenerateDocs" (fun _ ->
+    !! "./docs/**" |> Zip.zip "docs" "docs.zip"
+    Trace.publish ImportData.BuildArtifact "docs.zip"
+)
 Target.description "Generates the website for the project, except for the API documentation - for release"
 Target.create "GenerateHelp" (fun _ -> generateDocs true)
 Target.description "Generates the website for the project, except for the API documentation - for local use"

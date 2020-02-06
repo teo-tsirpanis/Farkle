@@ -182,10 +182,10 @@ docsrc/content/release-notes.md
 docsrc/tools/FSharp.Formatting.svclog
 
 docs.zip
-**/*.nupkg
+*.nupkg
 docs/
 **/BenchmarkDotNet.Artifacts/
 temp/
 .idea/
-**/*.g.[fc]s
+*.g.[fc]s
 .ionide/

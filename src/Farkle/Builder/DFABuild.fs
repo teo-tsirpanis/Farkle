@@ -27,10 +27,6 @@ with
         match x with
         | Chars(_, chars) -> chars
         | End _ -> Set.empty
-    member x.AcceptSymbol =
-        match x with
-        | Chars _ -> None
-        | End(_, _, accSym) -> Some accSym
 
 // ALL RISE
 [<Literal>]
@@ -254,13 +250,12 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
     addNewState regex.FirstPos.Value |> ignore
     while unmarkedStates.Count <> 0 do
         let S = statesList.[int <| unmarkedStates.Pop()]
-        let SChars = S.Name |> Seq.map leaves.Characters
-        SChars |> Set.unionMany |> Set.iter (fun a ->
+        let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
+        SChars |> Set.iter (fun a ->
             let U =
-                (S.Name, SChars)
-                ||> Seq.zip
-                |> Seq.filter (snd >> Set.contains a)
-                |> Seq.map (fun (s, _) -> followPos.[s])
+                S.Name
+                |> Seq.filter (leaves.Characters >> Set.contains a)
+                |> Seq.map (fun p -> followPos.[p])
                 |> Set.unionMany
             let UIdx =
                 if states.ContainsKey(U) then

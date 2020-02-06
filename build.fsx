@@ -414,24 +414,15 @@ Target.create "PublishBenchmarkReport" (fun _ ->
 
 Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
 Target.create "GitHubRelease" (fun _ ->
-    let user =
-        match Environment.environVarOrDefault "github-user" String.Empty with
-        | s when not (String.IsNullOrWhiteSpace s) -> s
-        | _ -> UserInput.getUserInput "Username: "
-    let pw =
-        match Environment.environVarOrDefault "github-pw" String.Empty with
-        | s when not (String.IsNullOrWhiteSpace s) -> s
-        | _ -> UserInput.getUserPassword "Password: "
+    let token = Environment.environVarOrFail "farkle-github-token"
 
     Branches.tag "" nugetVersion
     Branches.pushTag "" remoteToPush.Value nugetVersion
 
-    // release on github
-    GitHub.createClient user pw
+    GitHub.createClientWithToken token
     |> GitHub.createRelease gitOwner gitName nugetVersion
         (fun x ->
             {x with
-                Draft = true
                 Name = sprintf "Version %s" nugetVersion
                 Prerelease = releaseInfo.SemVer.PreRelease.IsSome
                 Body = releaseNotes |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
@@ -440,8 +431,8 @@ Target.create "GitHubRelease" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target.description "The CI generates the documentation, the NuGet packages, and uploads them as artifacts, along with \
-the benchmark report."
+Target.description "The CI generates the documentation, the NuGet packages, \
+and uploads them as artifacts, along with the benchmark report."
 Target.create "CI" ignore
 
 Target.description "Publishes the documentation and makes a GitHub release"

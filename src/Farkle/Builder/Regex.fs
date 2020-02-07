@@ -26,6 +26,13 @@ type Regex =
     /// One of these characters.
     // A `Chars` regex with an empty set is as bad as an Empty `Alt` regex.
     | Chars of char Set
+    /// All characters but these ones.
+    // An empty `AllButChars` regex is allowed here, but one with
+    // all 65536 characters isn't, so we must be extra careful.
+    | AllButChars of char Set
+    static member internal CharSetFull = set [char 0 .. char UInt16.MaxValue]
+    static member internal IsCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
+    static member internal IsCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
     /// Returns whether this regular expression can recognize the empty string.
     /// These nullable regexes are rejected by Farkle.
     member x.IsNullable() =
@@ -35,8 +42,12 @@ type Regex =
         | Alt xs -> xs |> List.exists (fun x -> x.IsNullable())
         | Star _ -> true
         | Chars x -> x.IsEmpty
+        // Full sets will be simplified to an empty Chars set.
+        | AllButChars _ -> false
     /// A regex that recognizes only the empty string.
     static member Empty = Concat []
+    /// A regex that recignizes any single character.
+    static member Any = AllButChars Set.empty
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
     member x1.And x2 =
@@ -65,6 +76,10 @@ type Regex =
     member x1.Or x2 =
         match x1, x2 with
         | Chars x1, Chars x2 -> Chars <| Set.union x1 x2
+        // A character has to belong in both sets to not be recognized.
+        | AllButChars x1, AllButChars x2 -> AllButChars <| Set.intersect x1 x2
+        | AllButChars x1, Chars x2
+        | Chars x2, AllButChars x1 -> AllButChars <| x1 - x2
         | Alt x1, Alt x2 -> Alt <| x1 @ x2
         | Alt xs, x
         | x, Alt xs -> Alt <| x :: xs // Alt is commutative.
@@ -80,17 +95,16 @@ type Regex =
         | 1 -> regexes.[0]
         | _ ->
             let chars = regexes |> Seq.choose (function | Chars x -> Some x | _ -> None) |> Set.unionMany
-            let subtrees =
-                regexes
-                |> Seq.ofArray
-                |> Seq.choose (function | Chars _ -> None | x -> Some x)
-                |> Seq.collect (function | Alt x -> x | x -> [x])
-                |> Seq.distinct
-                |> List.ofSeq
-            if chars.IsEmpty then
-                subtrees
-            else
-                Chars chars :: subtrees
+            let allButChars = regexes |> Seq.choose (function | AllButChars x -> Some x | _ -> None) |> Set.unionMany
+
+            regexes
+            |> Seq.ofArray
+            |> Seq.choose (function | Chars _ | AllButChars _ -> None | x -> Some x)
+            |> Seq.collect (function | Alt x -> x | x -> [x])
+            |> Seq.distinct
+            |> List.ofSeq
+            |> (fun x -> if chars.IsEmpty then x else Chars chars :: x)
+            |> (fun x -> if Regex.IsCharSetFull allButChars then x else AllButChars allButChars :: x)
             |> function | [x] -> x | x -> Alt x
     /// Returns a regex that recognizes zero or more
     /// strings that are recognized by the given regex.
@@ -135,8 +149,25 @@ type Regex =
             | _ -> Set.ofSeq xs
         if set.IsEmpty then
             Regex.Empty
+        elif Regex.IsCharSetHalfFull set then
+            AllButChars <| Regex.CharSetFull - set
         else
             Chars set
+    /// Returns a regex that recognizes any character,
+    /// except of these on the given sequence.
+    /// An empty sequence is equivalent to `Regex.Any`.
+    static member NotOneOf (xs: _ seq) =
+        let set =
+            match xs with
+            | :? Set<char> as x -> x
+            | :? PredefinedSet as x -> x.Characters
+            | _ -> Set.ofSeq xs
+        if Regex.IsCharSetFull set then
+            Regex.Empty
+        elif Regex.IsCharSetHalfFull set then
+            Chars <| Regex.CharSetFull - set
+        else
+            AllButChars set
 
 /// F#-friendly membrs of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.
@@ -147,6 +178,9 @@ module Regex =
 
     /// An alias for `Regex.OneOf`.
     let chars str = Regex.OneOf str
+
+    /// An alias for `Regex.NotOneOf`.
+    let allButChars str = Regex.NotOneOf str
 
     /// An alias for `Regex.Literal` that takes a string.
     let string (str: string) = Regex.Literal str

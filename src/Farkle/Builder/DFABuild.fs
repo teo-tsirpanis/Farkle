@@ -162,7 +162,8 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
         | Regex.Concat xs
         | Regex.Alt xs -> List.exists isVariableLength xs
         | Regex.Star _ -> true
-        | Regex.Chars _ -> false
+        | Regex.Chars _
+        | Regex.AllButChars _ -> false
 
     let createRegexBuildSingle regex acceptSymbol =
         let rec impl regex =
@@ -177,6 +178,18 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                     else
                         desensitivizeCase chars
                 RegexLeaf.Chars(fIndex(), chars) |> addLeaf |> Leaf
+            | Regex.AllButChars chars ->
+                let chars =
+                    if caseSensitive then
+                        chars
+                    else
+                        desensitivizeCase chars
+                // It's likely that the character set would not become full until now,
+                // because of the case desensitivization. Therefore we have to check it again.
+                if Regex.IsCharSetFull chars then
+                    makeConcat []
+                else
+                    RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf |> Leaf
             |> makeLazy
         match regex with
         // If the symbol's regex's root is an Alt, we assign

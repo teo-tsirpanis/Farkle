@@ -17,16 +17,34 @@ open System.Collections.Immutable
 
 [<RequireQualifiedAccess>]
 type internal RegexLeaf =
+    | AllButChars of index: int * chars: char Set
     | Chars of index: int * chars: char Set
     | End of index: int * priority: int *  acceptSymbol: DFASymbol
 with
+    member x._IsAllButChars =
+        match x with
+        | AllButChars _ -> true
+        | _ -> false
     member x.Index =
         match x with
-        | Chars(idx, _) | End(idx, _, _) -> idx
+        | Chars(idx, _)
+        | AllButChars(idx, _)
+        | End(idx, _, _) -> idx
     member x.Characters =
         match x with
         | Chars(_, chars) -> chars
+        | AllButChars _
         | End _ -> Set.empty
+    member x.AllButCharacters =
+        match x with
+        | AllButChars(_, chars) -> chars
+        | Chars _
+        | End _ -> Set.empty
+    member x.AcceptData =
+        match x with
+        | Chars _
+        | AllButChars _ -> None
+        | End(_, priority, accSym) -> Some (accSym, priority)
 
 // ALL RISE
 [<Literal>]
@@ -51,15 +69,12 @@ and internal RegexBuild = {
 
 type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<RegexLeaf>
 with
-    member x.Length = match x with | RegexBuildLeaves arr -> arr.Length
-    member x.Characters idx =
-        let (RegexBuildLeaves arr) = x
-        arr.[idx].Characters
-    member x.AcceptData idx =
-        let (RegexBuildLeaves arr) = x
-        match arr.[idx] with
-        | RegexLeaf.Chars _ -> None
-        | RegexLeaf.End(_, priority, accSym) -> Some (accSym, priority)
+    member private x.Value = match x with | RegexBuildLeaves x -> x
+    member x.Length = x.Value.Length
+    member x.Item idx = x.Value.[idx]
+    member x.Characters idx = x.Value.[idx].Characters
+    member x.AllButCharacters idx = x.Value.[idx].AllButCharacters
+    member x.AcceptData idx = x.Value.[idx].AcceptData
 
 let private fIsNullable =
     function
@@ -231,38 +246,58 @@ type internal DFAStateBuild = {
     Name: int Set
     Index: uint32
     Edges: SortedDictionary<char, uint32>
+    mutable AnythingElse: uint32 option
 }
 with
-    static member Create name index = {Name = name; Index = index; Edges = SortedDictionary()}
+    static member Create name index = {
+        Name = name
+        Index = index
+        Edges = SortedDictionary()
+        AnythingElse = None
+    }
 
 let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
     let states = Dictionary()
     let statesList = ResizeArray()
     let unmarkedStates = Stack()
-    let addNewState stateName =
-        let idx = uint32 statesList.Count
-        let state = DFAStateBuild.Create stateName idx
-        unmarkedStates.Push(idx)
-        statesList.Add(state)
-        states.Add(stateName, state)
-        idx
+    let getOrAddState stateName =
+        if states.ContainsKey stateName then
+            states.[stateName].Index
+        else
+            let idx = uint32 statesList.Count
+            let state = DFAStateBuild.Create stateName idx
+            unmarkedStates.Push(idx)
+            statesList.Add(state)
+            states.Add(stateName, state)
+            idx
 
-    addNewState regex.FirstPos.Value |> ignore
+    getOrAddState regex.FirstPos.Value |> ignore
     while unmarkedStates.Count <> 0 do
         let S = statesList.[int <| unmarkedStates.Pop()]
         let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
+        let SAllButChars = S.Name |> Seq.map leaves.AllButCharacters |> Set.unionMany
+
+        // SAllButChars |> Set.iter (fun a -> S.Edges.[a] <- None)
         SChars |> Set.iter (fun a ->
             let U =
                 S.Name
                 |> Seq.filter (leaves.Characters >> Set.contains a)
                 |> Seq.map (fun p -> followPos.[p])
                 |> Set.unionMany
-            let UIdx =
-                if states.ContainsKey(U) then
-                    states.[U].Index
-                else
-                    addNewState U
-            S.Edges.Add(a, UIdx))
+            let UIdx = getOrAddState U
+            // Any previous `None` set by the all-but characters will be overwritten,
+            // because a concrete character takes precedence.
+            // That's why we don't use `Dictionary.Add`.
+            S.Edges.[a] <- UIdx)
+
+        S.Name
+        |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)
+        |> Seq.map (fun p -> followPos.[p])
+        |> Set.unionMany
+        |> (fun x ->
+            if not x.IsEmpty then
+                S.AnythingElse <- Some <| getOrAddState x)
+
     let toDFAState state =
         let acceptSymbols =
             state.Name

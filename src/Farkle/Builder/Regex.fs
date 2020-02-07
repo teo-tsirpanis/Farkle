@@ -94,8 +94,15 @@ type Regex =
         | 0 -> Regex.Empty
         | 1 -> regexes.[0]
         | _ ->
+            let mutable foundAllButChars = false
             let chars = regexes |> Seq.choose (function | Chars x -> Some x | _ -> None) |> Set.unionMany
-            let allButChars = regexes |> Seq.choose (function | AllButChars x -> Some x | _ -> None) |> Set.unionMany
+            let allButChars =
+                regexes
+                |> Seq.choose (function
+                | AllButChars x ->
+                    foundAllButChars <- true
+                    Some x
+                | _ -> None) |> Set.unionMany
 
             regexes
             |> Seq.ofArray
@@ -104,7 +111,7 @@ type Regex =
             |> Seq.distinct
             |> List.ofSeq
             |> (fun x -> if chars.IsEmpty then x else Chars chars :: x)
-            |> (fun x -> if Regex.IsCharSetFull allButChars then x else AllButChars allButChars :: x)
+            |> (fun x -> if not foundAllButChars || Regex.IsCharSetFull allButChars then x else AllButChars allButChars :: x)
             |> function | [x] -> x | x -> Alt x
     /// Returns a regex that recognizes zero or more
     /// strings that are recognized by the given regex.

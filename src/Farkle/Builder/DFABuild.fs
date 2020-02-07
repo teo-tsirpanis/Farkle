@@ -258,7 +258,7 @@ let internal calculateFollowPos leafCount regex =
 type internal DFAStateBuild = {
     Name: int Set
     Index: uint32
-    Edges: SortedDictionary<char, uint32>
+    Edges: SortedDictionary<char, uint32 option>
     mutable AnythingElse: uint32 option
 }
 with
@@ -290,7 +290,7 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
         let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
         let SAllButChars = S.Name |> Seq.map leaves.AllButCharacters |> Set.unionMany
 
-        // SAllButChars |> Set.iter (fun a -> S.Edges.[a] <- None)
+        SAllButChars |> Set.iter (fun a -> S.Edges.[a] <- None)
         SChars |> Set.iter (fun a ->
             let U =
                 S.Name
@@ -301,7 +301,7 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
             // Any previous `None` set by the all-but characters will be overwritten,
             // because a concrete character takes precedence.
             // That's why we don't use `Dictionary.Add`.
-            S.Edges.[a] <- UIdx)
+            S.Edges.[a] <- Some UIdx)
 
         S.Name
         |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)

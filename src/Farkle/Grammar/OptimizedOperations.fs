@@ -15,9 +15,13 @@ open System.Collections.Immutable
 type DFAStateTag = DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
-    static member Ok x = DFAStateTag <| int x
+    static member Ok (x: uint32) = DFAStateTag <| int x
     /// A failed `DFAStateTag`.
     static member Error = DFAStateTag -1
+    static member FromOption x =
+        match x with
+        | Some x -> DFAStateTag.Ok x
+        | None -> DFAStateTag.Error
     /// The state number of this `DFAStateTag`, or
     /// a negative number.
     member x.Value = match x with DFAStateTag x -> x
@@ -63,7 +67,7 @@ module OptimizedOperations =
                 |> RangeMap.toSeq
                 |> Seq.takeWhile (fun x -> isASCII x.Key)
                 |> Seq.iter (fun x ->
-                    Array2D.set arr i (int x.Key) (DFAStateTag.Ok x.Value)))
+                    Array2D.set arr i (int x.Key) (DFAStateTag.FromOption x.Value)))
             arr
 
         /// <summary>Gets the next DFA state from the given current one, when the given character
@@ -80,7 +84,8 @@ module OptimizedOperations =
                     arr.[state.Value, int c]
                 else
                     match RangeMap.tryFind c dfa.[state.Value].Edges with
-                    | ValueSome x -> DFAStateTag.Ok x
+                    | ValueSome (Some x) -> DFAStateTag.Ok x
+                    | ValueSome None
                     | ValueNone -> DFAStateTag.Error
 
         let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
@@ -142,7 +147,8 @@ module OptimizedOperations =
                 DFAStateTag.Error
             else
                 match RangeMap.tryFind c grammar.DFAStates.[state.Value].Edges with
-                | ValueSome idx -> DFAStateTag.Ok idx
+                | ValueSome (Some idx) -> DFAStateTag.Ok idx
+                | ValueSome None
                 | ValueNone -> DFAStateTag.Error
         GetLALRAction = fun term state ->
             match state.Actions.TryGetValue(term) with

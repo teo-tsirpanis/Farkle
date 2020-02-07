@@ -138,6 +138,11 @@ let genRegexString regex =
         | Regex.Chars x ->
             let! c = Gen.elements x
             do sb.Append(c) |> ignore
+        | Regex.AllButChars x ->
+            // This is our best shot here; creating the
+            // complement is probably not a good idea.
+            let! c = Arb.generate |> Gen.filter (x.Contains >> not)
+            do sb.Append(c) |> ignore
         | Regex.Alt xs ->
             let! x = Gen.elements xs
             do! impl sb x

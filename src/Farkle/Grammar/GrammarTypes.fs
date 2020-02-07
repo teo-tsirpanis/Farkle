@@ -177,7 +177,7 @@ type DFAState = {
     /// The index of the state in the DFA state table.
     Index: uint32
     /// The edges of the state, that match a character to a next state, using a custom data structure.
-    Edges: RangeMap<char, uint32>
+    Edges: RangeMap<char, uint32 option>
     /// Whether this state accepts a symbol or not.
     AcceptSymbol: DFASymbol option
 }

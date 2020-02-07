@@ -147,7 +147,7 @@ module internal GrammarReader =
                 let edgesLength = states.Length / 3
                 let fEdge idx =
                     let charSet = wantUInt16 states <| 3 * idx |> fCharSet
-                    let target = wantUInt16 states <| 3 * idx + 1 |> fDFA
+                    let target = wantUInt16 states <| 3 * idx + 1 |> fDFA |> Some
                     wantEmpty states <| 3 * idx + 2
                     charSet, target
                 Array.init edgesLength fEdge |> RangeMap.ofRanges |> Option.defaultWith invalidEGT

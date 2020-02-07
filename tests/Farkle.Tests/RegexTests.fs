@@ -21,7 +21,8 @@ let matchDFAToString (states: ImmutableArray<DFAState>) str =
             currState.AcceptSymbol
         else
             match RangeMap.tryFind str.[idx] currState.Edges with
-            | ValueSome s -> impl states.[int s] (idx + 1)
+            | ValueSome (Some s) -> impl states.[int s] (idx + 1)
+            | ValueSome None
             | ValueNone -> None
     impl states.[0] 0
 

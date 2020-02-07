@@ -228,6 +228,9 @@ module Farkle.Builder.PredefinedSets
         '\u0020', '\u007e'
         '\u00a0', '\u00ff'
     ]
+    [<System.Obsolete("This character set is a relic from GOLD Parser, \
+does not include characters outside the Basic Multillingual Plane, and might lead to performance problems. \
+Instead, use Regex.allButChars (or NotOneOf) to more efficiently exlude certain characters.")>]
     let AllValid = PredefinedSet.Create "All Valid" [
         '\u0001', '\ud7ff'
         '\ue000', '\uffef'

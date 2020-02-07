@@ -181,13 +181,12 @@ let stringEx escapeChars allowEscapeUnicode multiline delim name =
             escapeChars
     let regex =
         let stringCharacters =
-            AllValid.Characters
-            - set [delim; '\\']
-            - if multiline then set ['\r'; '\n'] else Set.empty
+            [delim; '\\'] @ if multiline then ['\r'; '\n'] else []
+            |> allButChars
         concat [
             char delim
             star <| choice [
-                chars stringCharacters
+                stringCharacters
                 concat [
                     char '\\'
                     choice [

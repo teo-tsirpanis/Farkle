@@ -1,5 +1,6 @@
 #### 5.2.0
 * The types `DesigntimeFarkle<TResult>` and `PostProcessor<TResult>` are covariant. The change was made possible by [Covarsky](https://github.com/teo-tsirpanis/Covarsky), a tool written for this purpose.
+* Added a function called `Regex.allButChars` (`Regex.NotOneOf` for C#) that creates regexes accepting all characters except certain ones.
 * User code exceptions during post-processing are not captured anymore.
 * Farkle.Tools.MSBuild works with all .NET Core SDK versions after 2.0.
 

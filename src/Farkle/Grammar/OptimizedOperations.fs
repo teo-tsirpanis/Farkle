@@ -9,12 +9,29 @@ open Farkle.Collections
 open Farkle.Grammar
 open System.Collections.Immutable
 
+[<Struct>]
+/// An object representing a DFA state or its absence.
+/// It is returned from optimized operations.
+type DFAStateTag = DFAStateTag of int
+with
+    /// Creates a successful `DFAStateTag`.
+    static member Ok x = DFAStateTag <| int x
+    /// A failed `DFAStateTag`.
+    static member Error = DFAStateTag -1
+    /// The state number of this `DFAStateTag`, or
+    /// a negative number.
+    member x.Value = match x with DFAStateTag x -> x
+    /// Whether this `DFAStateTag` represents a successful operation.
+    member x.IsOk = x.Value >= 0
+    /// Whether this `DFAStateTag` represents a failed operation.
+    member x.IsError = x.Value < 0
+
 /// An object that provides optimized functions for some common operations on Grammars.
 /// These functions require some computationally expensive pre-processing, which is
 /// performed only once, at the creation of this object.
 type OptimizedOperations = {
     /// Gets the next DFA state from the given current one, when the given character is encountered.
-    GetNextDFAState: char -> DFAState -> DFAState option
+    GetNextDFAState: char -> DFAStateTag -> DFAStateTag
     /// Gets the LALR action from the given state that corresponds to the given terminal.
     GetLALRAction: Terminal -> LALRState -> LALRAction option
     /// Gets the next LALR state according to the given state's GOTO actions.
@@ -39,21 +56,14 @@ module OptimizedOperations =
         /// represents the index of the current DFA state, and the second represents the
         /// ASCII character that was encountered.
         let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-            let arr = Array2D.zeroCreate dfa.Length (ASCIIUpperBound + 1)
-            let dfaOptions = dfa |> Seq.map Some |> Array.ofSeq
+            let arr = Array2D.create dfa.Length (ASCIIUpperBound + 1) DFAStateTag.Error
             dfa
             |> Seq.iteri (fun i state ->
-                state.Edges.Elements
-                |> Seq.iter (fun elem ->
-                    let state = dfaOptions.[int elem.Value]
-                    match isASCII elem.KeyFrom, isASCII elem.KeyTo with
-                    | true, true ->
-                        for c = int elem.KeyFrom to int elem.KeyTo do
-                            Array2D.set arr i c state
-                    | true, false ->
-                        for c = int elem.KeyFrom to ASCIIUpperBound do
-                            Array2D.set arr i c state
-                    | false, _ -> ()))
+                state.Edges
+                |> RangeMap.toSeq
+                |> Seq.takeWhile (fun x -> isASCII x.Key)
+                |> Seq.iter (fun x ->
+                    Array2D.set arr i (int x.Key) (DFAStateTag.Ok x.Value)))
             arr
 
         /// <summary>Gets the next DFA state from the given current one, when the given character
@@ -63,13 +73,15 @@ module OptimizedOperations =
         /// the array for the ASCII characters is created, which is a relatively costly procedure.</remarks>
         let getNextDFAState dfa =
             let arr = buildDFAArray dfa
-            fun c (state: DFAState) ->
-                if isASCII c then
-                    arr.[int state.Index, int c]
+            fun c (state: DFAStateTag) ->
+                if state.IsError then
+                    DFAStateTag.Error
+                elif isASCII c then
+                    arr.[state.Value, int c]
                 else
-                    match RangeMap.tryFind c state.Edges with
-                    | ValueSome x -> Some dfa.[int x]
-                    | ValueNone -> None
+                    match RangeMap.tryFind c dfa.[state.Value].Edges with
+                    | ValueSome x -> DFAStateTag.Ok x
+                    | ValueNone -> DFAStateTag.Error
 
         let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
             // Thanks to GOLD Parser, some cells in the array are left unused.
@@ -126,9 +138,12 @@ module OptimizedOperations =
     /// its operations in the default way without any pre-processing.
     let unoptimized (grammar: Grammar) = {
         GetNextDFAState = fun c state ->
-            match RangeMap.tryFind c state.Edges with
-            | ValueSome idx -> Some grammar.DFAStates.[int idx]
-            | ValueNone -> None
+            if state.IsError then
+                DFAStateTag.Error
+            else
+                match RangeMap.tryFind c grammar.DFAStates.[state.Value].Edges with
+                | ValueSome idx -> DFAStateTag.Ok idx
+                | ValueNone -> DFAStateTag.Error
         GetLALRAction = fun term state ->
             match state.Actions.TryGetValue(term) with
             | true, act -> Some act

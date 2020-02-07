@@ -34,8 +34,8 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA (states: ImmutableArray<_>) oops input =
-        let rec impl idx (currState: DFAState) lastAccept =
+    let private tokenizeDFA (states: ImmutableArray<DFAState>) oops input =
+        let rec impl idx currState lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
             let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, pinSpan input idx) |> Ok
@@ -48,19 +48,22 @@ module Tokenizer =
                 | None -> Error input.FirstCharacter
             | true ->
                 let newDFA = oops.GetNextDFAState x currState
-                match newDFA, lastAccept with
-                // We can go further. The DFA did not accept any new symbol.
-                | Some ({AcceptSymbol = None} as newDFA), lastAccept -> impl idxNext newDFA lastAccept
-                // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                | Some ({AcceptSymbol = Some acceptSymbol} as newDFA), _ -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
-                // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                | None, Some (sym, idx) -> newToken sym idx
-                // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
-                | None, None -> Error input.FirstCharacter
+                if not newDFA.IsError then
+                    match states.[newDFA.Value].AcceptSymbol with
+                    // We can go further. The DFA did not accept any new symbol.
+                    | None -> impl idxNext newDFA lastAccept
+                    // We can go further. The DFA has just accepted a new symbol; we take note of it.
+                    | Some acceptSymbol -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
+                else
+                    match lastAccept with
+                    // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
+                    | Some (sym, idx) -> newToken sym idx
+                    // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
+                    | None -> Error input.FirstCharacter
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
-            impl (getCurrentIndex input) states.[0] None |> Some
+            impl (getCurrentIndex input) (DFAStateTag.Ok 0u) None |> Some
         else
             None
 

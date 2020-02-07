@@ -11,7 +11,7 @@ open System.Collections.Immutable
 
 [<Struct; CustomComparison; StructuralEquality>]
 /// Αn closed intereval whose elements are assigned a value .
-type RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
+type internal RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
     /// The start of the intereval.
     KeyFrom: 'key
     /// The end of the intereval.
@@ -28,7 +28,7 @@ with
 type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
 with
     // An immutable array of the elements of a `RangeMap`.
-    member x.Elements = match x with | RangeMap x -> x
+    member internal x.Elements = match x with | RangeMap x -> x
 
 /// Functions to create and use `RangeMap`s.
 module RangeMap =

@@ -176,10 +176,16 @@ module DFASymbol =
 type DFAState = {
     /// The index of the state in the DFA state table.
     Index: uint32
-    /// The edges of the state, that match a character to a next state, using a custom data structure.
+    /// The edges of the state, that match a character to a
+    /// next state, using a custom data structure. A character
+    /// can be set to explicitly fail, prohibiting the use of
+    /// `AnythingElse`.
     Edges: RangeMap<char, uint32 option>
     /// Whether this state accepts a symbol or not.
     AcceptSymbol: DFASymbol option
+    /// The state to maybe go to (or fail) in
+    /// case the character had no matching edge.
+    AnythingElse: uint32 option
 }
 
 [<RequireQualifiedAccess>]

@@ -348,7 +348,7 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
                 |> BuildError.IndistinguishableSymbols
                 |> Error
         acceptSymbol
-        |> Result.map (fun ac -> {Index = state.Index; AcceptSymbol = ac; Edges = edges})
+        |> Result.map (fun ac -> {Index = state.Index; AcceptSymbol = ac; Edges = edges; AnythingElse = state.AnythingElse})
 
     statesList
     |> Seq.map toDFAState

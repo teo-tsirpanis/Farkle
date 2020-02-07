@@ -156,7 +156,7 @@ module internal GrammarReader =
                     fSymbol acceptIndex |> wantDFASymbol |> Some
                 else
                     None
-            {Index = index; AcceptSymbol = acceptSymbol; Edges = edges}
+            {Index = index; AcceptSymbol = acceptSymbol; Edges = edges; AnythingElse = None}
 
         let readLALRState fSymbol fProduction fLALR index mem =
             lengthMustBeAtLeast mem 5 // There must be at least one action per state.

@@ -20,10 +20,13 @@ let matchDFAToString (states: ImmutableArray<DFAState>) str =
         if idx = String.length str then
             currState.AcceptSymbol
         else
-            match RangeMap.tryFind str.[idx] currState.Edges with
-            | ValueSome (Some s) -> impl states.[int s] (idx + 1)
-            | ValueSome None
-            | ValueNone -> None
+            let newState =
+                match RangeMap.tryFind str.[idx] currState.Edges with
+                | ValueSome s -> s
+                | ValueNone -> currState.AnythingElse
+            match newState with
+            | Some s -> impl states.[int s] (idx + 1)
+            | None -> None
     impl states.[0] 0
 
 let terminal idx = Choice1Of4 <| Terminal(uint32 idx, string idx)

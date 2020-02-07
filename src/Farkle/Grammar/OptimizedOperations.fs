@@ -60,9 +60,12 @@ module OptimizedOperations =
         /// represents the index of the current DFA state, and the second represents the
         /// ASCII character that was encountered.
         let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-            let arr = Array2D.create dfa.Length (ASCIIUpperBound + 1) DFAStateTag.Error
+            let arr = Array2D.zeroCreate dfa.Length (ASCIIUpperBound + 2)
             dfa
             |> Seq.iteri (fun i state ->
+                let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
+                for j = 0 to ASCIIUpperBound + 1 do
+                    Array2D.set arr i j anythingElse
                 state.Edges
                 |> RangeMap.toSeq
                 |> Seq.takeWhile (fun x -> isASCII x.Key)
@@ -84,9 +87,8 @@ module OptimizedOperations =
                     arr.[state.Value, int c]
                 else
                     match RangeMap.tryFind c dfa.[state.Value].Edges with
-                    | ValueSome (Some x) -> DFAStateTag.Ok x
-                    | ValueSome None
-                    | ValueNone -> DFAStateTag.Error
+                    | ValueSome x -> DFAStateTag.FromOption x
+                    | ValueNone -> arr.[state.Value, ASCIIUpperBound + 1]
 
         let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
             // Thanks to GOLD Parser, some cells in the array are left unused.
@@ -143,13 +145,14 @@ module OptimizedOperations =
     /// its operations in the default way without any pre-processing.
     let unoptimized (grammar: Grammar) = {
         GetNextDFAState = fun c state ->
+            let states = grammar.DFAStates
             if state.IsError then
                 DFAStateTag.Error
             else
-                match RangeMap.tryFind c grammar.DFAStates.[state.Value].Edges with
-                | ValueSome (Some idx) -> DFAStateTag.Ok idx
-                | ValueSome None
-                | ValueNone -> DFAStateTag.Error
+                match RangeMap.tryFind c states.[state.Value].Edges with
+                | ValueSome idx -> idx
+                | ValueNone -> states.[state.Value].AnythingElse
+                |> DFAStateTag.FromOption
         GetLALRAction = fun term state ->
             match state.Actions.TryGetValue(term) with
             | true, act -> Some act

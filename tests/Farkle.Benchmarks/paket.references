@@ -1,3 +1,4 @@
 group Executables
 FSharp.Core
 BenchmarkDotNet
+Newtonsoft.Json

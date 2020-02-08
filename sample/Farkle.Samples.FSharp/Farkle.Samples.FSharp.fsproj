@@ -3,6 +3,16 @@
     <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Parser.fsi" />
+    <Compile Include="Parser.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <Compile Include="Lexer.fs" />
+    <Compile Include="FsLexYacc.fs" />
     <Farkle Include="SimpleMaths.egt" Namespace="SimpleMaths" />
     <Compile Include="SimpleMaths.g.fs" />
     <Compile Include="JSON.fs" />
@@ -11,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <PackageReference Include="FsLexYacc" Version="10.0.0" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -48,6 +48,8 @@ NUGET
       FSharp.Core (>= 4.2.3) - restriction: || (&& (== net472) (< net40)) (== netcoreapp3.1)
       NETStandard.Library (>= 1.6.1) - restriction: || (&& (== net472) (< net40)) (== netcoreapp3.1)
     FSharp.Core (4.7)
+    FsLexYacc.Runtime (10.0)
+      FSharp.Core (>= 4.3.4)
     Microsoft.CodeAnalysis.Analyzers (2.9.8)
     Microsoft.CodeAnalysis.Common (3.4)
       Microsoft.CodeAnalysis.Analyzers (>= 2.9.6)

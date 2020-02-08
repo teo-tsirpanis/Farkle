@@ -24,6 +24,7 @@ group Executables
   nuget BenchmarkDotNet
   nuget Farkle.Tools.MSBuild = 5.1.0-ci.545
   nuget FSharp.Core
+  nuget FsLexYacc.Runtime
   nuget Scriban
   nuget Serilog
   nuget Serilog.Sinks.Console

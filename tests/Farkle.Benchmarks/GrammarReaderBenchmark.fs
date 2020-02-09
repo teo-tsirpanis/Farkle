@@ -16,6 +16,9 @@ type GrammarReaderBenchmark() =
 
     let mutable base64EGT = ""
 
+    [<VolatileField>]
+    let mutable builtGrammar = Unchecked.defaultof<_>
+
     [<GlobalSetup>]
     member __.Setup() =
         let bytes = File.ReadAllBytes "gml.egt"
@@ -25,9 +28,11 @@ type GrammarReaderBenchmark() =
     member __.Base64EGT() =
         base64EGT |> EGT.ofBase64String
 
-    [<Benchmark>]
+    [<Benchmark(OperationsPerInvoke = 100)>]
     member __.BuildGrammar() =
-        GOLDMetaLanguage.designtime
-        |> DesigntimeFarkleBuild.createGrammarDefinition
-        |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> returnOrFail
+        for __ = 0 to 99 do
+            builtGrammar <-
+                GOLDMetaLanguage.designtime
+                |> DesigntimeFarkleBuild.createGrammarDefinition
+                |> DesigntimeFarkleBuild.buildGrammarOnly
+                |> returnOrFail

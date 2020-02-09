@@ -1,10 +1,10 @@
-#### 5.2.0
+#### 5.2.0 - 09-02-2020
 * The types `DesigntimeFarkle<TResult>` and `PostProcessor<TResult>` are covariant. The change was made possible by [Covarsky](https://github.com/teo-tsirpanis/Covarsky), a tool written for this purpose.
 * Added a function called `Regex.allButChars` (`Regex.NotOneOf` for C#) that creates regexes accepting all characters except certain ones.
 * User code exceptions during post-processing are not captured anymore.
 * Farkle.Tools.MSBuild works with all .NET Core SDK versions after 2.0.
 
-#### 5.1.0 - 31-01-2019
+#### 5.1.0 - 31-01-2020
 * It happened. Farkle can create grammars without the need of GOLD Parser. __Farkle is now a parsing library on its own.__
 * Move the `CharStream` type in the `Farkle.IO` namespace.
 * Add methods to parse text from .NET `TextReader`s. They should be preferred over parsing .NET `Stream`s because the latter are supposed to contain binary data, not text.

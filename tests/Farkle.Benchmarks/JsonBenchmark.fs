@@ -18,6 +18,8 @@ open System.Text
 
 type JsonBenchmark() =
 
+    // File I/O during parsing will affect them, but the benchmarks measure
+    // parsing when not the entire file is available on memory.
     let jsonFile = "generated.json"
 
     let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime

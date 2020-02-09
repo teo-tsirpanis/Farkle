@@ -395,6 +395,13 @@ Target.create "ReleaseDocs" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
+let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
+
+Target.description "Fails the build if the appropriate environment variables for the release do not exist"
+Target.create "CheckForReleaseCredentials" (fun _ ->
+    githubToken.Value |> ignore
+    Environment.environVarOrFail "NUGET_KEY" |> ignore)
+
 let remoteToPush = lazy (
     CommandHelper.getGitResult "" "remote -v"
     |> Seq.filter (String.endsWith "(push)")
@@ -488,6 +495,10 @@ Target.create "Release" ignore
 
 "CI" <== ["NuGetPack"; "GenerateDocs"]
 "Benchmark" =?> ("CI", shouldCIBenchmark)
-"Release" <== ["ReleaseDocs"; "GitHubRelease"]
+
+"CheckForReleaseCredentials"
+==> "GitHubRelease"
+==> "ReleaseDocs"
+==> "Release"
 
 Target.runOrDefault "NuGetPack"

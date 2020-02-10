@@ -12,8 +12,6 @@ open Farkle.Common
 open Farkle.JSON
 open Farkle.PostProcessor
 open FParsec
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
 open System.Text
 
 type JsonBenchmark() =
@@ -41,7 +39,7 @@ type JsonBenchmark() =
         RuntimeFarkle.parseFile syntaxChecker ignore jsonFile
         |> returnOrFail
 
-    [<Benchmark>]
+    [<Benchmark(Baseline = true)>]
     // Chiron uses FParsec underneath, which is the main competitor of Farkle.
     // I could use the Big Data edition, but it is not branded as their main
     // edition, and I am not going to do them any favors by allowing unsafe code.
@@ -51,15 +49,17 @@ type JsonBenchmark() =
         | Success (json, _, _) -> json
         | Failure _ -> failwithf "Error while parsing '%s'" jsonFile
 
+    #if BENCHMARK_3RD_PARTY
     [<Benchmark>]
     // Holy fuzzy, that was unbelievably fast! 🚄
     member __.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseFile jsonFile
 
-    [<Benchmark(Baseline = true)>]
+    [<Benchmark>]
     // I was reluctant to add this, but I did, after I saw FsLexYacc in action.
     // I am interested to know how fast it can be. And yes, I know
     // about System.Text.Json! 😛
     member __.JsonNET() =
         use f = System.IO.File.OpenText jsonFile
-        use jtr = new JsonTextReader(f)
-        JToken.ReadFrom jtr
+        use jtr = new Newtonsoft.Json.JsonTextReader(f)
+        Newtonsoft.Json.Linq.JToken.ReadFrom jtr
+    #endif

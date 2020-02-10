@@ -139,7 +139,7 @@ let inline fCommonOptions x =
         sprintf "/p:Version=%s" nugetVersion
     ] |> DotNet.Options.withAdditionalArgs <| x
 
-let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
+let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
     let handleFailure (p: ProcessResult) =
         if p.ExitCode <> 0 then
             sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
@@ -149,7 +149,7 @@ let dotNetRun proj fx (c: DotNet.BuildConfiguration) args =
     DotNet.exec
         (fun p -> {p with WorkingDirectory = Path.getDirectory proj})
         "run"
-        (sprintf "--project %s%s -c %A -- %s" (Path.GetFileName proj) fx c args)
+        (sprintf "--project %s%s -c %A %s -- %s" (Path.GetFileName proj) fx config buildArgs args)
     |> handleFailure
 
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
@@ -198,7 +198,7 @@ Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
     testFrameworks
     |> Seq.iter (fun fx ->
-        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug testArguments
+        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug "" testArguments
     )
 )
 
@@ -211,8 +211,10 @@ let shouldCIBenchmark =
     | _ -> true
 
 Target.description "Runs all benchmarks"
-Target.create "Benchmark" (fun _ ->
-    dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release benchmarkArguments
+Target.create "Benchmark" (fun opts ->
+    let benchmark3rdPartyLibraries = opts.Context.TryFindTarget("AddBenchmarkReport").IsSome
+    let buildArgs = sprintf "/p:Benchmark3rdPartyLibraries:%b" benchmark3rdPartyLibraries
+    dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release buildArgs benchmarkArguments
     Seq.iter pushArtifact benchmarkReports)
 
 Target.description "Adds the benchmark results to the appropriate folder"
@@ -410,11 +412,7 @@ let remoteToPush = lazy (
 
 Target.description "Publishes the benchmark report."
 Target.create "PublishBenchmarkReport" (fun _ ->
-    !! "performance/**"
-    |> Seq.iter (fun x ->
-        match Staging.stageFile "" x with
-        | false, _, errors -> failwithf "Error while staging %s: %s" x errors
-        | true, _, _ -> ())
+    !! "performance/**" |> Seq.iter (Staging.stageFile "" >> ignore)
     Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
     Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
 )

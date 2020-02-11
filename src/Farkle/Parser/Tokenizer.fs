@@ -34,7 +34,7 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA (states: ImmutableArray<DFAState>) oops input =
+    let private tokenizeDFA (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) input =
         let rec impl idx currState lastAccept =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.

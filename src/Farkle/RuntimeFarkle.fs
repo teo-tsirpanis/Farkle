@@ -38,7 +38,7 @@ with
     static member internal CreateMaybe postProcessor grammarMaybe =
         let grammarMaybe =
             grammarMaybe
-            |> Result.map (fun g -> g, OptimizedOperations.optimized g)
+            |> Result.map (fun g -> g, OptimizedOperations.Create g)
         {
             Grammar = grammarMaybe
             PostProcessor = postProcessor

@@ -2,6 +2,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <!-- We want the best JITed code the soonest. -->
+    <TieredCompilation>false</TieredCompilation>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />

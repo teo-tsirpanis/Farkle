@@ -37,35 +37,35 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
     let private tokenizeDFA (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) input =
-        let rec impl idx currState lastAccept =
+        let rec impl idx currState lastAcceptIdx lastAcceptSym =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
             let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, pinSpan input idx) |> Ok
-            let mutable x = '\u0103'
+            let mutable nextChar = '\u0103'
             let mutable idxNext = idx
-            match readChar input &idxNext &x with
+            match readChar input &idxNext &nextChar with
             | false ->
-                match lastAccept with
-                | Some struct (sym, idx) -> newToken sym idx
+                match lastAcceptSym with
+                | Some sym -> newToken sym lastAcceptIdx
                 | None -> Error input.FirstCharacter
             | true ->
-                let newDFA = oops.GetNextDFAState x currState
+                let newDFA = oops.GetNextDFAState nextChar currState
                 if not newDFA.IsError then
                     match states.[newDFA.Value].AcceptSymbol with
                     // We can go further. The DFA did not accept any new symbol.
-                    | None -> impl idxNext newDFA lastAccept
+                    | None -> impl idxNext newDFA lastAcceptIdx lastAcceptSym
                     // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                    | Some acceptSymbol -> impl idxNext newDFA (Some struct (acceptSymbol, idx))
+                    | Some acceptSymbol -> impl idxNext newDFA idx (Some acceptSymbol)
                 else
-                    match lastAccept with
+                    match lastAcceptSym with
                     // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
-                    | Some (sym, idx) -> newToken sym idx
+                    | Some sym -> newToken sym lastAcceptIdx
                     // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
                     | None -> Error input.FirstCharacter
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
-            impl input.CurrentIndex (DFAStateTag.Ok 0u) None |> Some
+            impl input.CurrentIndex DFAStateTag.InitialState input.CurrentIndex None |> Some
         else
             None
 
@@ -75,8 +75,6 @@ module Tokenizer =
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParseError |> raise
-            // newToken does not get optimized,
-            // maybe because of the try-with.
             let newToken sym (cs: CharSpan) =
                 let data = unpinSpanAndGenerate sym fTransform input cs
                 let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data

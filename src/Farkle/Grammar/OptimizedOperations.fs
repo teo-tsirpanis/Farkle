@@ -15,10 +15,11 @@ open System.Collections.Immutable
 type DFAStateTag = DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
-    static member Ok (x: uint32) = DFAStateTag <| int x
+    static member internal Ok (x: uint32) = DFAStateTag <| int x
+    static member InitialState = DFAStateTag 0
     /// A failed `DFAStateTag`.
     static member Error = DFAStateTag -1
-    static member FromOption x =
+    static member internal FromOption x =
         match x with
         | Some x -> DFAStateTag.Ok x
         | None -> DFAStateTag.Error

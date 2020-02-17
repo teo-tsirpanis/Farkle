@@ -30,7 +30,7 @@ type FarkleError =
 /// A reusable parser and post-processor, created for a specific grammar, and returning
 /// a specific type of object that best describes an expression of the language of this grammar.
 [<NoComparison; ReferenceEquality>]
-type RuntimeFarkle<'TResult> = private {
+type RuntimeFarkle<'TResult> = internal {
     Grammar: Result<Grammar * OptimizedOperations,BuildError>
     PostProcessor: PostProcessor<'TResult>
 }

@@ -10,8 +10,7 @@
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JsonBenchmark.fs" />
-    <Compile Include="GrammarReaderBenchmark.fs" />
+    <Compile Include="*Benchmark.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

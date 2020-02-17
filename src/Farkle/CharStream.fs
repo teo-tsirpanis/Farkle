@@ -13,6 +13,12 @@ open System
 open System.IO
 open System.Runtime.InteropServices
 
+/// The bridge between a character stream and the post-processor API.
+type ITransformer<'sym> =
+    /// <summary>Converts a terminal into an arbitrary object.</summary>
+    /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
+    abstract Transform: 'sym * Position * ReadOnlySpan<char> -> obj
+
 [<Struct>]
 /// An continuous range of characters that is
 /// stored by its starting position and ending index.
@@ -221,6 +227,7 @@ with
 /// It accepts a generic type (a `Terminal` usually), the `Position` of the symbol, and a
 /// `ReadOnlySpan` of characters that are going to be converted into an object.
 /// This type is not an F# native function type, because of limitations while handling `ReadOnlySpan`s.
+// That type is still used by the C# post-processor API. What a failure it was!
 type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan<char> -> obj
 
 /// Functions to create and work with `CharStream`s.
@@ -296,16 +303,19 @@ module CharStream =
     /// After that call, the characters at and before the
     /// span might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs
+    let unpinSpanAndGenerate symbol (transformer: ITransformer<'symbol>) cs
         ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
             let span = cs.Source.GetSpanForCharacters(idxStart, length)
             cs._LastUnpinnedSpanPosition <- charSpan.StartingPosition
-            fPostProcess.Invoke(symbol, cs._LastUnpinnedSpanPosition, span)
+            transformer.Transform(symbol, cs._LastUnpinnedSpanPosition, span)
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." charSpan cs.StartingIndex
+
+    let private toStringTransformer =
+        {new ITransformer<unit> with member _.Transform(_, _, data) = box <| data.ToString()}
 
     /// Creates a string out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the span might be
@@ -313,16 +323,14 @@ module CharStream =
     /// It is recommended to use the `unpinSpanAndGenerate` function
     /// to avoid excessive allocations, unless you specifically want a string.
     [<CompiledName("UnpinSpanAndGenerateString")>]
-    let unpinSpanAndGenerateString =
-        let csCallback = CharStreamCallback (fun _ _ data -> box <| data.ToString())
-        fun cs c_span ->
-            let s =
-                unpinSpanAndGenerate
-                    null
-                    csCallback
-                    cs
-                    c_span // Created by cable
-            s :?> string
+    let unpinSpanAndGenerateString cs c_span =
+        let s =
+            unpinSpanAndGenerate
+                ()
+                toStringTransformer
+                cs
+                c_span // Created by cable
+        s :?> string
 
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     let ofReadOnlyMemory mem = CharStream.Create(mem: ReadOnlyMemory<_>)

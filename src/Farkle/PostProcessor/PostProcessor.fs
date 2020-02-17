@@ -18,13 +18,11 @@ exception internal FuserNotFound
 /// meaningful types for the library that uses the parser.</summary>
 /// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>
 type PostProcessor<[<CovariantOut>] 'T> =
-    /// <summary>Converts a <see cref="Terminal"/> into an arbitrary object.</summary>
-    /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
-    abstract Transform: Terminal * Position * ReadOnlySpan<char> -> obj
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     /// <remarks>Fusing must always succeed. In very case of an error like
     /// an unrecognized production, the function has to throw an exception.</remarks>
     abstract Fuse: Production * obj[] -> obj
+    inherit IO.ITransformer<Terminal>
 
 /// Functions to create `PostProcessor`s, as well as some ready to use.
 module PostProcessor =

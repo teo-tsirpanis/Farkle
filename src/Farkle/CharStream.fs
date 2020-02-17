@@ -13,6 +13,7 @@ open System
 open System.IO
 open System.Runtime.InteropServices
 
+[<Struct>]
 /// An continuous range of characters that is
 /// stored by its starting position and ending index.
 type CharSpan = private {

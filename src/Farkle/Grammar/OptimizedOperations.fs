@@ -12,7 +12,7 @@ open System.Collections.Immutable
 [<Struct>]
 /// An object representing a DFA state or its absence.
 /// It is returned from optimized operations.
-type DFAStateTag = DFAStateTag of int
+type DFAStateTag = private DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
     static member internal Ok (x: uint32) = DFAStateTag <| int x

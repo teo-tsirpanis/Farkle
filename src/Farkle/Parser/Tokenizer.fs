@@ -23,8 +23,10 @@ module Tokenizer =
         | Choice3Of4 _ -> None
         | Choice4Of4 groupEnd -> Some <| Choice3Of3 groupEnd
 
-    /// Returns whether to unpin the character(s) encountered by the tokenizer while being inside a group.
-    /// If the group stack's bottom-most container symbol is a noisy one, then it is unpinned the soonest it is consumed.
+    /// Returns whether to unpin the character(s)
+    /// encountered by the tokenizer while being inside a group.
+    /// If the group stack's bottom-most container symbol is
+    /// a noisy one, then it is unpinned the soonest it is consumed.
     let private shouldUnpinCharactersInsideGroup {ContainerSymbol = g} groupStack =
         let g0 = match g with | Choice1Of2 _terminal -> false | Choice2Of2 _noise -> true
         if List.isEmpty groupStack then
@@ -41,7 +43,7 @@ module Tokenizer =
             let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, pinSpan input idx) |> Ok
             let mutable x = '\u0103'
             let mutable idxNext = idx
-            match readChar input &x &idxNext with
+            match readChar input &idxNext &x with
             | false ->
                 match lastAccept with
                 | Some struct (sym, idx) -> newToken sym idx
@@ -63,7 +65,7 @@ module Tokenizer =
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
-            impl (getCurrentIndex input) (DFAStateTag.Ok 0u) None |> Some
+            impl input.CurrentIndex (DFAStateTag.Ok 0u) None |> Some
         else
             None
 
@@ -72,7 +74,7 @@ module Tokenizer =
     /// as one that logs events.
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
-            let fail msg: Token option = Message (input.GetCurrentPosition(), msg) |> ParseError |> raise
+            let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParseError |> raise
             // newToken does not get optimized,
             // maybe because of the try-with.
             let newToken sym (cs: CharSpan) =
@@ -123,7 +125,7 @@ module Tokenizer =
                 leaveGroup popped poppedGroup xs
             // If input ends outside of a group, it's OK.
             | None, [] ->
-                input.GetCurrentPosition() |> ParseMessage.EndOfInput |> fMessage
+                input.CurrentPosition |> ParseMessage.EndOfInput |> fMessage
                 None
             // We are still inside a group.
             | Some tokenMaybe, (tok2, g2) :: xs ->
@@ -151,7 +153,8 @@ module Tokenizer =
             /// If a group starts while being outside of any group...
             /// Wait a minute! Haven't we already checked this case?
             /// Ssh, don't tell the compiler. She doesn't know about it. 😊
-            | Some (Ok (Choice3Of4 _, _)), [] -> failwith "Impossible case: The group stack was already checked to be empty."
+            | Some (Ok (Choice3Of4 _, _)), [] ->
+                failwith "Impossible case: The group stack was already checked to be empty."
             // We found an unrecognized symbol while being outside a group. This is an error.
             | Some (Error x), [] -> fail <| ParseErrorType.LexicalError x
         impl []

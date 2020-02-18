@@ -25,9 +25,6 @@ with
     member x.Length = x.IndexTo - x.StartingPosition.Index + 1UL |> int
     override x.ToString() = sprintf "[%d,%d]" x.StartingPosition.Index x.IndexTo
 
-/// A type pointing to a character in a character stream.
-type [<Struct>] CharStreamIndex = private {Index: uint64}
-
 /// A representation of a `CharStream`.
 // Previously, this type was a discriminated union. I changed it to an abstract because
 // pattern matches on it, which involve two type checks+casts seemed to be inferior to virtual calls.
@@ -44,7 +41,7 @@ type private CharStreamSource() =
     /// Reads the character at the specified index, places it into the outref, and moves the
     /// index one position forward. Returns `false` when input ended. The first parameter
     /// is used for the dynamic block source.
-    abstract ReadNextCharacter: uint64 * byref<CharStreamIndex> * outref<char> -> bool
+    abstract ReadNextCharacter: uint64 * byref<uint64> * outref<char> -> bool
     /// Returns a `ReadOnlySpan` containing the characters from the given index with the given length.
     /// The characters in the span are not bound to be released from memory after that call;
     /// this is the responsibility of the unpinning functions.
@@ -68,9 +65,9 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     override __.Item idx = mem.Span.[int idx]
     override __.LengthSoFar = length
     override __.ReadNextCharacter(_, idx, c) =
-        if idx.Index < uint64 mem.Length then
-            c <- mem.Span.[int idx.Index]
-            idx <- {Index = idx.Index + 1UL}
+        if idx < uint64 mem.Length then
+            c <- mem.Span.[int idx]
+            idx <- idx + 1UL
             true
         else
             false
@@ -112,12 +109,12 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
     override db.ReadNextCharacter(startingIndex, idx, c) =
         db.CheckDisposed()
         // The character we want to read is already in memory. Easy stuff.
-        if idx.Index < nextReadIndex then
-            c <- db.[idx.Index]
-            idx <- {Index = idx.Index + 1UL}
+        if idx < nextReadIndex then
+            c <- db.[idx]
+            idx <- idx + 1UL
             true
         // The character we want to read is the next one to be read.
-        elif idx.Index = nextReadIndex then
+        elif idx = nextReadIndex then
             // The buffer might be full however.
             if db.IsBufferFull then
                 // If not all characters in the buffer are needed, we move those we need to the start.
@@ -139,9 +136,9 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
             // character in the buffer, and return it as well.
             if cRead <> -1 then
                 nextReadIndex <- nextReadIndex + 1UL
-                buffer.[int <| idx.Index - bufferFirstCharacterIndex] <- char cRead
+                buffer.[int <| idx - bufferFirstCharacterIndex] <- char cRead
                 c <- char cRead
-                idx <- {Index = nextReadIndex}
+                idx <- nextReadIndex
                 true
             // We have reached the end.
             else
@@ -149,7 +146,7 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         // We cannot read past the first character that has not been read.
         // This is how the CharStream works; you have to read one character at a time.
         else
-            failwithf "Cannot read character at %d because the latest one was read at %d." idx.Index nextReadIndex
+            failwithf "Cannot read character at %d because the latest one was read at %d." idx nextReadIndex
     override db.GetSpanForCharacters(startIndex, length) =
         db.CheckDisposed()
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
@@ -170,7 +167,7 @@ type CharStream = private {
     /// The index of the first element that _must_ be retained in memory
     /// because it is going to be used to generate a token.
     mutable StartingIndex: uint64
-    mutable CurrentPosition: Position
+    mutable _CurrentPosition: Position
     /// [omit]
     mutable _LastUnpinnedSpanPosition: Position
 }
@@ -178,7 +175,7 @@ with
     static member private Create(src) = {
         Source = src
         StartingIndex = 0UL
-        CurrentPosition = Position.Initial
+        _CurrentPosition = Position.Initial
         _LastUnpinnedSpanPosition = Position.Initial
     }
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
@@ -191,8 +188,8 @@ with
         CharStream.Create(new DynamicBlockSource(reader, bufferSize))
     member internal x.CurrentIndex = x.CurrentPosition.Index
     /// Gets the stream's current position.
-    /// Reading the stream will start from here.
-    member x.GetCurrentPosition() = x.CurrentPosition
+    /// Reading the stream should start from here.
+    member x.CurrentPosition = x._CurrentPosition
     /// The starting position of the last character span that was unpinned.
     member x.LastUnpinnedSpanPosition = x._LastUnpinnedSpanPosition
     /// Ensures that the character at the current position is loaded in memory.
@@ -205,7 +202,7 @@ with
         // The character at the current index is the next one to be read.
         elif x.CurrentIndex = len then
             let mutable c = '\uBABE'
-            let mutable idx = {Index = x.CurrentIndex}
+            let mutable idx = x.CurrentIndex
             // The input might have ended. But if not, the length so far will be
             // increased by one, and subsequent calls to this function will
             // go to the first if clause.
@@ -229,29 +226,30 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 /// They are not thread-safe.
 module CharStream =
 
-    /// Creates a `CharStreamIndex` from a `CharStream` that points to its current position.
-    [<CompiledName("GetCurrentIndex")>]
-    let getCurrentIndex (cs: CharStream) = {Index = cs.CurrentIndex}
-
-    /// Reads the `idx`th character of `cs`, places it in `c` and returns `true`, if there are more characters left to be read.
+    /// Reads the `idx`th character of `cs`, places it in `c` and
+    /// returns `true`, if there are more characters left to be read.
     /// Otherwise, returns `false`.
     [<CompiledName("Read")>]
-    let readChar (cs: CharStream) (c: outref<_>) (idx: byref<_>) =
-        if idx.Index >= cs.CurrentIndex then
+    let readChar (cs: CharStream) (idx: byref<_>) (c: outref<_>) =
+        if idx >= cs.CurrentIndex then
             cs.Source.ReadNextCharacter(cs.StartingIndex, &idx, &c)
         else
-            failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx.Index cs.CurrentIndex
+            failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx cs.CurrentIndex
 
-    /// Creates a `CharSpan` that contains the next `idxTo` characters of a `CharStream` from its position.
-    /// On the dynamic block character stream, it ensures that the characters in the span stay in memory.
+    /// Creates a `CharSpan` that contains the next `idxTo`
+    /// characters of a `CharStream` from its position.
+    /// On the dynamic block character stream, it ensures that
+    /// the characters in the span stay in memory.
     [<CompiledName("PinSpan")>]
-    let pinSpan (cs: CharStream) ({CharStreamIndex.Index = idxTo}) = {
+    let pinSpan (cs: CharStream) idxTo = {
         StartingPosition = cs.CurrentPosition
         IndexTo = idxTo
     }
 
-    /// Creates a new `CharSpan` that spans one character more than the given one.
-    /// A `CharStream` must also be given to validate its length so that out-of-bounds errors are prevented.
+    /// Creates a new `CharSpan` that spans one
+    /// character more than the given one.
+    /// A `CharStream` must also be given to validate
+    /// its length so that out-of-bounds errors are prevented.
     [<CompiledName("ExtendSpanByOne")>]
     let extendSpanByOne (cs: CharStream) span =
         if span.IndexTo < cs.Source.LengthSoFar then
@@ -269,20 +267,20 @@ module CharStream =
             failwithf "Trying to concatenate character span %O with %O." span1 span2
 
     /// Advances a `CharStream`'s position by one character.
-    /// These characters will not be shown again on new `CharStreamView`s.
+    /// Next reads should start from that position.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
     [<CompiledName("AdvanceByOne")>]
     let advanceByOne doUnpin (cs: CharStream) =
         if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
-            cs.CurrentPosition <- cs.CurrentPosition.Advance cs.FirstCharacter
+            cs._CurrentPosition <- cs.CurrentPosition.Advance cs.FirstCharacter
             if doUnpin then
                 cs.StartingIndex <- cs.CurrentIndex
         else
             failwith "Cannot consume a character stream past its end."
 
     /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
-    /// These characters will not be shown again on new `CharStreamView`s.
+    /// Next reads should start from that position.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, the characters before the span can be marked to be released from memory.
     [<CompiledName("Advance")>]
@@ -294,9 +292,11 @@ module CharStream =
             failwithf "Trying to consume the character span %O, from a stream that was left at %d." span cs.CurrentIndex
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
-    /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
+    /// After that call, the characters at and before the
+    /// span might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
+    let unpinSpanAndGenerate symbol (fPostProcess: CharStreamCallback<'symbol>) cs
+        ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let length = idxEnd - idxStart + 1UL |> int
@@ -307,8 +307,10 @@ module CharStream =
             failwithf "Trying to read the character span %O, from a stream that was last read at %d." charSpan cs.StartingIndex
 
     /// Creates a string out of the characters at the given `CharSpan`.
-    /// After that call, the characters at and before the span might be freed from memory, so this function must not be used twice.
-    /// It is recommended to use the `unpinSpanAndGenerate` function to avoid excessive allocations, unless you specifically want a string.
+    /// After that call, the characters at and before the span might be
+    /// freed from memory, so this function must not be used twice.
+    /// It is recommended to use the `unpinSpanAndGenerate` function
+    /// to avoid excessive allocations, unless you specifically want a string.
     [<CompiledName("UnpinSpanAndGenerateString")>]
     let unpinSpanAndGenerateString =
         let csCallback = CharStreamCallback (fun _ _ data -> box <| data.ToString())

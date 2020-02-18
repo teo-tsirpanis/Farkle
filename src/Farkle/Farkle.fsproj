@@ -12,6 +12,9 @@
     <!-- Disabled until Paket issue #3615 gets fixed. -->
     <!-- <IncludeSymbols>true</IncludeSymbols> -->
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- For a totally unexplained reason, disabling
+    tailcalls really boosted performance. -->
+    <Tailcalls>false</Tailcalls>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyAttributes.fs" />

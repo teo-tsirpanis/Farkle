@@ -6,7 +6,6 @@
 namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
-open Chiron
 open Farkle
 open Farkle.Common
 open Farkle.IO
@@ -20,7 +19,7 @@ type TokenizerBenchmark() =
 
     let jsonFile = "generated.json"
 
-    let farkleTokenize (rf: RuntimeFarkle<Json>) =
+    let farkleTokenize (rf: RuntimeFarkle<_>) =
         use f = File.OpenText jsonFile
         let cs = CharStream.ofTextReader f
         let grammar, oops = rf.Grammar |> returnOrFail

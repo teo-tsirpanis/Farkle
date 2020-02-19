@@ -32,11 +32,7 @@ with
     member x.Length = x.IndexTo - x.StartingPosition.Index + 1UL |> int
     override x.ToString() = sprintf "[%d,%d]" x.StartingPosition.Index x.IndexTo
 
-/// A representation of a `CharStream`.
-// Previously, this type was a discriminated union. I changed it to an abstract because
-// pattern matches on it, which involve two type checks+casts seemed to be inferior to virtual calls.
-// Besides, the CLR is more inclined to handle inheritance and polymorphism.
-// And regardless, this layout clearly separates source-specific code from the rest of it.
+/// The source a `CharStream` reads characters from.
 [<AbstractClass>]
 type private CharStreamSource() =
     /// Gets a specified character by index; if it exists in memory, or raises an exception.
@@ -48,7 +44,7 @@ type private CharStreamSource() =
     /// Reads the character at the specified index, places it into the outref, and moves the
     /// index one position forward. Returns `false` when input ended. The first parameter
     /// is used for the dynamic block source.
-    abstract ReadNextCharacter: uint64 * byref<uint64> * outref<char> -> bool
+    abstract ReadNextCharacter: startingIndex: uint64 * idx: byref<uint64> * c: outref<char> -> bool
     /// Returns a `ReadOnlySpan` containing the characters from the given index with the given length.
     /// The characters in the span are not bound to be released from memory after that call;
     /// this is the responsibility of the unpinning functions.
@@ -63,9 +59,8 @@ type private CharStreamSource() =
             GC.SuppressFinalize(x)
 
 [<Sealed>]
-/// A representation of a `CharStream` that stores
+/// A source of a `CharStream` that stores
 /// the characters in one continuous area of memory.
-/// It is not recommended for large files.
 type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     inherit CharStreamSource()
     let length = uint64 mem.Length
@@ -82,8 +77,8 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
 
 [<Sealed>]
 /// A representation of a `CharStream` that lazily
-/// loads input from a `TextReader` when it is needed
-/// and unloads it when it is not.
+/// reads charactes from a `TextReader` when needed
+/// and might unload them when not.
 type private DynamicBlockSource(reader: TextReader, bufferSize) =
     inherit CharStreamSource()
     /// Whether the `Dispose` method has been called.
@@ -165,9 +160,9 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         reader.Dispose()
     override db.Finalize() = db.Dispose(false)
 
-/// A data structure that supports efficient and copy-free access to a read-only sequence of characters.
-/// It is not thread-safe. Also, if you created a `TextReader` to just use it with the stream, you can
-/// dispose the stream instead of the reader.
+/// A data structure that supports efficient access to a
+/// read-only sequence of characters. It is not thread-safe.
+/// And disposing it also disposes the underlying text reader (if exists).
 type CharStream = private {
     /// The stream's source.
     Source: CharStreamSource

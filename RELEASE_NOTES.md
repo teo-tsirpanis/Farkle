@@ -1,3 +1,6 @@
+#### 5.3.0
+* For a very strange and unexplained reason, disabling tailcall optimization __more than _doubled_ Farkle's speed__.
+
 #### 5.2.0 - 09-02-2020
 * The types `DesigntimeFarkle<TResult>` and `PostProcessor<TResult>` are covariant. The change was made possible by [Covarsky](https://github.com/teo-tsirpanis/Covarsky), a tool written for this purpose.
 * Added a function called `Regex.allButChars` (`Regex.NotOneOf` for C#) that creates regexes accepting all characters except certain ones.

@@ -25,27 +25,21 @@ type TokenizerBenchmark() =
         let grammar, oops = rf.Grammar |> returnOrFail
         let fTokenize() = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor ignore cs
 
-        let tokens = ResizeArray()
-        let mutable tok = fTokenize()
-        while tok.IsSome do
-            tokens.Add tok.Value
-            tok <- fTokenize()
-        tokens
+        while fTokenize().IsSome do ()
 
-    [<Benchmark>]
-    member _.FarkleCSharp() = farkleTokenize CSharp.Language.Runtime
+    [<Benchmark(OperationsPerInvoke = 64)>]
+    member _.FarkleCSharp() =
+        for _ = 1 to 64 do
+            farkleTokenize CSharp.Language.Runtime
 
-    [<Benchmark>]
-    member _.FarkleFSharp() = farkleTokenize FSharp.Language.runtime
+    [<Benchmark(OperationsPerInvoke = 64)>]
+    member _.FarkleFSharp() =
+        for _ = 1 to 64 do
+            farkleTokenize FSharp.Language.runtime
 
     [<Benchmark(Baseline = true)>]
     member _.FsLexYacc() =
         use f = File.OpenText jsonFile
         let lexBuf = LexBuffer<_>.FromTextReader f
 
-        let mutable tok = Lexer.read lexBuf
-        let tokens = ResizeArray()
-        while tok <> Parser.EOF do
-            tokens.Add tok
-            tok <- Lexer.read lexBuf
-        tokens
+        while Lexer.read lexBuf <> Parser.EOF do ()

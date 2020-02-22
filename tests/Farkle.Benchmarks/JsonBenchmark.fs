@@ -12,7 +12,7 @@ open Farkle.Common
 open Farkle.JSON
 open Farkle.PostProcessor
 open FParsec
-open System.Text
+open System.IO
 
 type JsonBenchmark() =
 
@@ -20,23 +20,36 @@ type JsonBenchmark() =
     // parsing when not the entire file is available on memory.
     let jsonFile = "generated.json"
 
+    let jsonData = File.ReadAllText jsonFile
+
+    let createTR() = new StringReader(jsonData) :> TextReader
+
     let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime
 
     [<Benchmark>]
     // There are performance differences between the F# and C# editions.
     // The separate benchmarks will stay for now.
     member __.FarkleCSharp() =
-        RuntimeFarkle.parseFile CSharp.Language.Runtime ignore jsonFile
+        RuntimeFarkle.parseTextReader CSharp.Language.Runtime ignore <| createTR()
         |> returnOrFail
 
     [<Benchmark>]
     member __.FarkleFSharp() =
-        RuntimeFarkle.parseFile FSharp.Language.runtime ignore jsonFile
+        RuntimeFarkle.parseTextReader FSharp.Language.runtime ignore <| createTR()
         |> returnOrFail
 
-    [<Benchmark>]  
+    [<Benchmark>]
+    // The pseudo-static block mode (a dynamic block with
+    // a preloaded buffer as large as the input) is quite
+    // the waste on large inputs. That's why we parse from
+    // string readers earlier.
+    member __.FarkleFSharpStaticBlock() =
+        RuntimeFarkle.parse FSharp.Language.runtime jsonData
+        |> returnOrFail
+
+    [<Benchmark>]
     member __.FarkleSyntaxCheck() =
-        RuntimeFarkle.parseFile syntaxChecker ignore jsonFile
+        RuntimeFarkle.parseTextReader syntaxChecker ignore <| createTR()
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]
@@ -44,7 +57,7 @@ type JsonBenchmark() =
     // I could use the Big Data edition, but it is not branded as their main
     // edition, and I am not going to do them any favors by allowing unsafe code.
     member __.Chiron() =
-        let parseResult = runParserOnFile !jsonR () jsonFile Encoding.UTF8
+        let parseResult = run !jsonR jsonData
         match parseResult with
         | Success (json, _, _) -> json
         | Failure _ -> failwithf "Error while parsing '%s'" jsonFile
@@ -52,14 +65,13 @@ type JsonBenchmark() =
     #if BENCHMARK_3RD_PARTY
     [<Benchmark>]
     // Holy fuzzy, that was unbelievably fast! 🚄
-    member __.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseFile jsonFile
+    member __.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseTextReader <| createTR()
 
     [<Benchmark>]
     // I was reluctant to add this, but I did, after I saw FsLexYacc in action.
     // I am interested to know how fast it can be. And yes, I know
     // about System.Text.Json! 😛
     member __.JsonNET() =
-        use f = System.IO.File.OpenText jsonFile
-        use jtr = new Newtonsoft.Json.JsonTextReader(f)
+        use jtr = new Newtonsoft.Json.JsonTextReader(createTR())
         Newtonsoft.Json.Linq.JToken.ReadFrom jtr
     #endif

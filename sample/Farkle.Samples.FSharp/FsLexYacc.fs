@@ -12,9 +12,12 @@ let parseString x =
     let lexBuf = LexBuffer<_>.FromString x
     Parser.value Lexer.read lexBuf
 
-let parseFile path =
+let parseTextReader tr =
     // Holy fuzzy, they didn't even
     // make LexBuffers disposable!
-    use f = File.OpenText path
-    let lexBuf = LexBuffer<_>.FromTextReader f
+    let lexBuf = LexBuffer<_>.FromTextReader tr
     Parser.value Lexer.read lexBuf
+
+let parseFile path =
+    use f = File.OpenText path
+    parseTextReader f

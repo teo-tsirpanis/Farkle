@@ -8,33 +8,45 @@ using System.IO;
 
 namespace Farkle.Samples.Cli
 {
-    static class Program
+    internal static class Program
     {
-        static void Execute(Action f, string description)
+        private const int IterationCount = 1000;
+        private const string JsonPath = "../../tests/resources/generated.json";
+        private static string _jsonData;
+        private static readonly RuntimeFarkle<object> _syntaxCheck = JSON.CSharp.Language.Runtime.SyntaxCheck();
+
+        private static void Execute(Action f, string description)
         {
             Console.WriteLine($"Running {description}...");
             // GC.Collect(2, GCCollectionMode.Forced, true, true);
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < IterationCount; i++)
                 f();
         }
 
-        private const string JsonPath = "../../tests/resources/generated.json";
-        private static string _jsonData;
+        private static bool ParseFarkle<T>(this RuntimeFarkle<T> rf) => rf.Parse(_jsonData).IsOk;
+        private static bool ParseFarkleCSharp() => JSON.CSharp.Language.Runtime.ParseFarkle();
+        private static bool ParseFarkleFSharp() => JSON.FSharp.Language.Runtime.ParseFarkle();
+        private static bool ParseFarkleSyntaxCheck() => _syntaxCheck.ParseFarkle();
+        private static bool ParseChiron() => FParsec.CharParsers.run(Chiron.Parsing.jsonR.Value, _jsonData).IsSuccess;
 
-        static void Main()
+        private static void Prepare()
         {
             _jsonData = File.ReadAllText(JsonPath);
-            Console.WriteLine("This program was made to help profiling Farkle.");
-            
-            Console.WriteLine("JITting the parser...");
-            if (JSON.CSharp.Language.Runtime.Parse(_jsonData).IsError
-                || JSON.FSharp.Language.runtime.Parse(_jsonData).IsError)
+            Console.WriteLine("JITting the parsers...");
+            if (!(ParseFarkleCSharp() && ParseFarkleFSharp() && ParseChiron()))
             {
                 throw new Exception("Parsing went wrong...");
             }
-            Execute(() => JSON.CSharp.Language.Runtime.Parse(_jsonData), "Farkle C#");
-            Execute(() => JSON.FSharp.Language.runtime.Parse(_jsonData), "Farkle F#");
-            Execute(() => FParsec.CharParsers.runParserOnString(Chiron.Parsing.jsonR.Value, null, "generated.json", _jsonData), "Chiron");
+        }
+
+        internal static void Main()
+        {
+            Console.WriteLine("This program was made to help profiling Farkle.");
+            Prepare();
+            Execute(() => ParseFarkleCSharp(), "Farkle C#");
+            Execute(() => ParseFarkleFSharp(), "Farkle F#");
+            Execute(() => ParseFarkleSyntaxCheck(), "Farkle Syntax Check");
+            Execute(() => ParseChiron(), "Chiron");
         }
     }
 }

@@ -507,8 +507,8 @@ Target.create "Release" ignore
 "Benchmark" =?> ("CI", shouldCIBenchmark)
 
 "CheckForReleaseCredentials"
-==> "GitHubRelease"
-==> "ReleaseDocs"
-==> "Release"
+    ==> "GitHubRelease"
+
+"Release" <== ["GitHubRelease"; "ReleaseDocs"]
 
 Target.runOrDefault "NuGetPack"

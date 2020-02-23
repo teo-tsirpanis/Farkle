@@ -33,13 +33,11 @@ The following table highlights the differences between the F# and C# designtime 
 
 ### Customizing designtime Farkles
 
-To customize things like the case-sensitivity of designtime Farkles, there are some [extension methods for designtime Farkles][designtimeFarkleExtensions].
+To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for designtime Farkles.
 
 ## Parsing
 
-To parse text, there are some [extension methods for runtime Farkles][runtimeFarkleExtensions].
+To parse text, there are some extension methods for runtime Farkles.
 
 [fsharp]: quickstart.html
 [regex]: reference/farkle-builder-regex.html
-[designtimeFarkleExtensions]: reference/farkle-designtimefarkleextensions.html
-[runtimeFarkleExtensions]: reference/farkle-runtimefarkleextensions.html

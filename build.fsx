@@ -398,6 +398,8 @@ Target.create "ReleaseDocs" (fun _ ->
     Shell.cleanDir tempDocsDir
     Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
 
+    // Some files might no longer exist; better delete them all before the copy.
+    !! "temp/gh-pages/**" -- "temp/gh-pages/.git/**" |> File.deleteAll
     Shell.copyRecursive "docs" tempDocsDir true |> Trace.tracefn "Copied %A"
     Staging.stageAll tempDocsDir
     Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)

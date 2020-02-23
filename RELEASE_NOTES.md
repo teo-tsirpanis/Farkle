@@ -1,5 +1,6 @@
-#### 5.3.0
-* For a very strange and unexplained reason, disabling tailcall optimization __more than _doubled_ Farkle's speed__.
+#### 5.3.0 - 23-02-2020
+* Farkle's speed __more than doubled__ by disabling tailcall optimizations.
+* __Minor breaking change:__ The API of the `CharStream` type slightly changed. Most notably, the type `CharStreamIndex` was removed in favor of `uint64`, and the order of the last two arguments in the function `CharStream.read` has changed.
 
 #### 5.2.0 - 09-02-2020
 * The types `DesigntimeFarkle<TResult>` and `PostProcessor<TResult>` are covariant. The change was made possible by [Covarsky](https://github.com/teo-tsirpanis/Covarsky), a tool written for this purpose.

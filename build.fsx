@@ -157,7 +157,6 @@ let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.get
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
     Shell.cleanDirs ["bin"; "temp"]
-    DotNet.exec id "clean" "" |> ignore
 )
 
 Target.description "Cleans the output documentation directory"

@@ -51,12 +51,10 @@ type private CharStreamSource() =
     abstract GetSpanForCharacters: uint64 * int -> ReadOnlySpan<char>
     /// Disposes unmanaged resources using a well-known pattern.
     /// To be overriden on sources that require it.
-    abstract Dispose: bool -> unit
-    default __.Dispose _ = ()
+    abstract Dispose: unit -> unit
+    default __.Dispose () = ()
     interface IDisposable with
-        member x.Dispose() =
-            x.Dispose(true)
-            GC.SuppressFinalize(x)
+        member x.Dispose() = x.Dispose()
 
 [<Sealed>]
 /// A source of a `CharStream` that stores
@@ -67,7 +65,7 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     override __.Item idx = mem.Span.[int idx]
     override __.LengthSoFar = length
     override __.ReadNextCharacter(_, idx, c) =
-        if idx < uint64 mem.Length then
+        if idx < length then
             c <- mem.Span.[int idx]
             idx <- idx + 1UL
             true
@@ -153,12 +151,10 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         db.CheckDisposed()
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
         ReadOnlySpan(buffer).Slice(startIndex, length)
-    override __.Dispose(disposing) =
+    override __.Dispose() =
         disposed <- true
-        if disposing then
-            buffer <- null
+        buffer <- null
         reader.Dispose()
-    override db.Finalize() = db.Dispose(false)
 
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
@@ -191,9 +187,9 @@ with
     member internal x.CurrentIndex = x.CurrentPosition.Index
     /// Gets the stream's current position.
     /// Reading the stream should start from here.
-    member x.CurrentPosition = x._CurrentPosition
+    member x.CurrentPosition: inref<_> = &x._CurrentPosition
     /// The starting position of the last character span that was unpinned.
-    member x.LastUnpinnedSpanPosition = x._LastUnpinnedSpanPosition
+    member x.LastUnpinnedSpanPosition: inref<_> = &x._LastUnpinnedSpanPosition
     /// Ensures that the character at the current position is loaded in memory.
     /// If it is not, and input has ended, returns `false`.
     member x.TryLoadFirstCharacter() =

@@ -55,7 +55,7 @@ module Tokenizer =
                     // We can go further. The DFA did not accept any new symbol.
                     | None -> impl idxNext newDFA lastAcceptIdx lastAcceptSym
                     // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                    | Some acceptSymbol -> impl idxNext newDFA idx (Some acceptSymbol)
+                    | Some _ as acceptSymbol -> impl idxNext newDFA idx acceptSymbol
                 else
                     match lastAcceptSym with
                     // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.

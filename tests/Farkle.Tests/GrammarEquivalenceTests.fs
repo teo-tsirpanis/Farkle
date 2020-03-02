@@ -119,7 +119,7 @@ let farkleGOLDGrammarEquivalenceTests =
     ]
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {
-            let gFarkle = extractGrammar gFarkle
+            let gFarkle = gFarkle.GetGrammar()
             let gGold =
                 if egt.StartsWith("./") then
                     loadGrammar egt

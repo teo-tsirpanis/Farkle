@@ -66,9 +66,36 @@ with
         |> Ok
         |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
+    /// Returns whether building was successful.
+    /// If loaded from an EGT file, it will always return true.
+    member this.IsBuildSuccessful =
+        match this.Grammar with
+        | Ok _ -> true
+        | Error _ -> false
+
+    /// Returns a user-friendly error message that
+    /// describes what had gone wrong while building,
+    /// or an empty string if building had been successful.
+    member this.GetBuildErrorMessage() =
+        match this.Grammar with
+        | Ok _ -> String.Empty
+        | Error msg -> string msg
+
+    [<Obsolete("This method will be removed in a future release. \
+Use a conjunction of IsBuildSuccessful, GetBuildErrorMessage and GetGrammar.")>]
+    /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
+    /// behind the <see cref="RuntimeFarkle{TResult}"/>, wrapped
+    /// in an F# result type.</summary>
+    member this.TryGetGrammar() = Result.map fst this.Grammar
+
     /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
     /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
-    member this.TryGetGrammar() = Result.map fst this.Grammar
+    /// <exception cref="System.Exception">Building the grammar
+    /// had failed. The exception's message contains further details.</exception>
+    member this.GetGrammar() =
+        match this.Grammar with
+        | Ok (grammar, _) -> grammar
+        | Error msg -> msg |> string |> failwith
 
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =

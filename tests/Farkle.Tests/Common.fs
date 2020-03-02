@@ -31,5 +31,3 @@ let returnOrFail msg x =
     match x with
     | Ok x -> x
     | Error x -> failtestf "%s: %O" msg <| box x
-
-let extractGrammar (rf: RuntimeFarkle<_>) = returnOrFail "The grammar could not be loaded" <| rf.TryGetGrammar()

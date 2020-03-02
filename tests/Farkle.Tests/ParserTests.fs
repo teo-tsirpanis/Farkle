@@ -41,7 +41,7 @@ let tests = testList "Parser tests" [
     |> testList "Domain-ignorant parsing tests"
 
     test "Parsing a simple mathematical expression behaves correctly and consistently up to the parsing log" {
-        let grammar = SimpleMaths.int |> extractGrammar
+        let grammar = SimpleMaths.int.GetGrammar()
         let reduce idx = ParseMessage.Reduction grammar.Productions.[int idx]
         let numberTerminal = Terminal(3u, "Number")
 

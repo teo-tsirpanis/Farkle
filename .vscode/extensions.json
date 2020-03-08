@@ -2,7 +2,7 @@
     "recommendations": [
         "Ionide.ionide-fsharp",
         "Ionide.ionide-paket",
-        "ms-vscode.csharp",
+        "ms-dotnettools.csharp",
         "ymotongpoo.licenser"
     ]
 }

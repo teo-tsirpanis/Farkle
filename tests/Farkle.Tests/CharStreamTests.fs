@@ -21,15 +21,14 @@ let tests =
                 use cs = cs
                 let idx =
                     let rec impl idx n =
-                        let mutable idxNext = idx
                         let mutable c = '\u0549'
-                        match readChar cs &idxNext &c with
+                        match readChar cs idx &c with
                         | true when n = steps -> idx
-                        | true -> impl idxNext <| n + 1
+                        | true -> impl (idx + 1UL) (n + 1)
                         | false -> failtestf "Unexpected end of file after %d iterations" n
                     impl cs.CurrentIndex 1
                 let span = pinSpan cs idx
-                advance false cs span
+                advance false cs idx
                 Expect.equal steps (int <| cs.CurrentIndex) "An unexpected number of characters was consumed"
                 let s = unpinSpanAndGenerateString cs span
                 Expect.equal (str.Substring(0, steps)) s "The generated string is different from the original"

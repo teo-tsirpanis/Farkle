@@ -40,10 +40,9 @@ module Tokenizer =
         let rec impl idx currState lastAcceptIdx lastAcceptSym =
             // Apparently, if you bring the function to the
             // innermost scope, it gets optimized away.
-            let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, pinSpan input idx) |> Ok
+            let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, idx) |> Ok
             let mutable nextChar = '\u0103'
-            let mutable idxNext = idx
-            match readChar input &idxNext &nextChar with
+            match readChar input idx &nextChar with
             | false ->
                 match lastAcceptSym with
                 | Some sym -> newToken sym lastAcceptIdx
@@ -53,14 +52,14 @@ module Tokenizer =
                 if not newDFA.IsError then
                     match states.[newDFA.Value].AcceptSymbol with
                     // We can go further. The DFA did not accept any new symbol.
-                    | None -> impl idxNext newDFA lastAcceptIdx lastAcceptSym
+                    | None -> impl (idx + 1UL) newDFA lastAcceptIdx lastAcceptSym
                     // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                    | Some _ as acceptSymbol -> impl idxNext newDFA idx acceptSymbol
+                    | Some _ as acceptSymbol -> impl (idx + 1UL) newDFA idx acceptSymbol
                 else
                     match lastAcceptSym with
-                    // We can't go further, but the DFA had accepted a symbol in the past; we finish it up until there.
+                    // We can't go further, but the DFA had previosuly accepted a symbol in the past; we finish it up until there.
                     | Some sym -> newToken sym lastAcceptIdx
-                    // We can't go further, and the DFA had never accepted a symbol; we mark the first character as unrecognized.
+                    // We can't go further, and the DFA had never accepted a symbol; we mark this character as unrecognized.
                     | None -> Error input.FirstCharacter
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
@@ -88,14 +87,15 @@ module Tokenizer =
                 // We have left the group and it was a terminal.
                 | [], Choice1Of2 sym -> newToken sym tok
                 // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((concatSpans tok tok2, g2) :: xs)
+                | (tok2, g2) :: xs, _ -> impl ((extendSpan input tok tok2.IndexTo, g2) :: xs)
             let tok = tokenizeDFA states oops input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.
             | Some (Ok (Choice1Of4 term, tok)), [] ->
+                let span = pinSpan input tok
                 advance false input tok
-                newToken term tok
+                newToken term span
             // We found noise outside of any group.
             // We discard it, unpin its characters, and proceed.
             | Some (Ok (Choice2Of4 _noise, tok)), [] ->
@@ -108,8 +108,9 @@ module Tokenizer =
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[int tokGroupIdx]
+                    let span = pinSpan input tok
                     advance (shouldUnpinCharactersInsideGroup g gs) input tok
-                    impl ((tok, g) :: gs)
+                    impl ((span, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
@@ -118,7 +119,7 @@ module Tokenizer =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
                         advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
-                        concatSpans popped tok
+                        extendSpan input popped tok
                     | EndingMode.Open -> popped
                 leaveGroup popped poppedGroup xs
             // If input ends outside of a group, it's OK.
@@ -133,7 +134,7 @@ module Tokenizer =
                     // We advance the input by the entire token.
                     | AdvanceMode.Token, Ok (_, data) ->
                         advance doUnpin input data
-                        concatSpans tok2 data
+                        extendSpan input tok2 data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, Error _ ->
                         advanceByOne doUnpin input

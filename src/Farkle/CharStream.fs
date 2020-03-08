@@ -22,13 +22,12 @@ type ITransformer<'sym> =
 [<Struct>]
 /// An continuous range of characters that is
 /// stored by its starting position and ending index.
-type CharSpan = private {
+type CharSpan = internal {
     StartingPosition: Position
     IndexTo: uint64
 }
 with
-    /// The length of the span.
-    /// It can never be zero.
+    /// The length of the span. It can never be zero.
     member x.Length = x.IndexTo - x.StartingPosition.Index + 1UL |> int
     override x.ToString() = sprintf "[%d,%d]" x.StartingPosition.Index x.IndexTo
 
@@ -39,14 +38,16 @@ type private CharStreamSource() =
     abstract Item: uint64 -> char
     /// Returns the length of the input; or at least the
     /// length of the input that has ever crossed the memory.
-    /// In dynamic block streams, it doesn't mean that all these characters are still in memory.
+    /// In dynamic block streams, it doesn't mean
+    /// that all these characters are still in memory.
     abstract LengthSoFar: uint64
-    /// Reads the character at the specified index, places it into the outref, and moves the
-    /// index one position forward. Returns `false` when input ended. The first parameter
+    /// Reads the character at the specified index and places it into
+    /// the outref. Returns `false` when input ended. The first parameter
     /// is used for the dynamic block source.
-    abstract ReadNextCharacter: startingIndex: uint64 * idx: byref<uint64> * c: outref<char> -> bool
-    /// Returns a `ReadOnlySpan` containing the characters from the given index with the given length.
-    /// The characters in the span are not bound to be released from memory after that call;
+    abstract ReadNextCharacter: startingIndex: uint64 * idx: uint64 * c: outref<char> -> bool
+    /// Returns a `ReadOnlySpan` containing the characters from the given
+    /// index with the given length. The characters in the span are not
+    /// bound to be released from memory after that call;
     /// this is the responsibility of the unpinning functions.
     abstract GetSpanForCharacters: uint64 * int -> ReadOnlySpan<char>
     /// Disposes unmanaged resources using a well-known pattern.
@@ -67,7 +68,6 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     override __.ReadNextCharacter(_, idx, c) =
         if idx < length then
             c <- mem.Span.[int idx]
-            idx <- idx + 1UL
             true
         else
             false
@@ -111,7 +111,6 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         // The character we want to read is already in memory. Easy stuff.
         if idx < nextReadIndex then
             c <- db.[idx]
-            idx <- idx + 1UL
             true
         // The character we want to read is the next one to be read.
         elif idx = nextReadIndex then
@@ -138,7 +137,6 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
                 nextReadIndex <- nextReadIndex + 1UL
                 buffer.[int <| idx - bufferFirstCharacterIndex] <- char cRead
                 c <- char cRead
-                idx <- nextReadIndex
                 true
             // We have reached the end.
             else
@@ -204,7 +202,7 @@ with
             // The input might have ended. But if not, the length so far will be
             // increased by one, and subsequent calls to this function will
             // go to the first if clause.
-            x.Source.ReadNextCharacter(x.StartingIndex, &idx, &c)
+            x.Source.ReadNextCharacter(x.StartingIndex, idx, &c)
         // The current index has gone beyond the immediate next character to be read? Something is wrong!
         else
             failwith "The current index of a character stream cannot be larger than its length."
@@ -225,20 +223,23 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 /// They are not thread-safe.
 module CharStream =
 
+    let private spanLength idxFrom idxTo = idxTo - idxFrom + 1UL |> int
+
     /// Reads the `idx`th character of `cs`, places it in `c` and
-    /// returns `true`, if there are more characters left to be read.
-    /// Otherwise, returns `false`.
+    /// returns `false` only if input ended. Only characters in
+    /// memory are allowed to be read or one character past the length so far.
     [<CompiledName("Read")>]
-    let readChar (cs: CharStream) (idx: byref<_>) (c: outref<_>) =
+    let readChar (cs: CharStream) idx (c: outref<_>) =
         if idx >= cs.CurrentIndex then
-            cs.Source.ReadNextCharacter(cs.StartingIndex, &idx, &c)
+            cs.Source.ReadNextCharacter(cs.StartingIndex, idx, &c)
         else
-            failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed." idx cs.CurrentIndex
+            failwithf "Trying to view the %dth character of a stream, while the first %d have already been consumed."
+                idx cs.CurrentIndex
 
     /// Creates a `CharSpan` that contains the next `idxTo`
     /// characters of a `CharStream` from its position.
-    /// On the dynamic block character stream, it ensures that
-    /// the characters in the span stay in memory.
+    /// You must call this function _before_ calling `advance`.
+    /// Despite the name, nothing happens if you don't unpin it.
     [<CompiledName("PinSpan")>]
     let pinSpan (cs: CharStream) idxTo = {
         StartingPosition = cs.CurrentPosition
@@ -256,14 +257,31 @@ module CharStream =
         else
             failwith "Trying to extend a character span by one character past these that were already read."
 
-    /// Creates a new `CharSpan` from the union of two adjacent spans, i.e.
-    /// that starts at the first's start, and ends at the second's end.
-    [<CompiledName("ConcatSpans")>]
-    let concatSpans span1 span2 =
-        if span1.IndexTo + 1UL = span2.StartingPosition.Index then
-            {span1 with IndexTo = span2.IndexTo}
+    /// Updates the ending index of a `CharSpan`.
+    /// It must not exceed the stream's number of
+    /// currently read characters.
+    [<CompiledName("ExtendSpan")>]
+    let extendSpan (cs: CharStream) span endIdx =
+        if endIdx < cs.Source.LengthSoFar then
+            {span with IndexTo = endIdx}
         else
-            failwithf "Trying to concatenate character span %O with %O." span1 span2
+            failwithf "Trying to extend a character span from a stream with currently %d characters to %d."
+                cs.Source.LengthSoFar endIdx
+
+    /// Returns the position of the character at `idx`.
+    /// It cannot be less than the stream's index
+    /// of the current position.
+    [<CompiledName("GetPositionAtIndex")>]
+    let getPositionAtIndex (cs: CharStream) idx =
+        if idx >= cs.CurrentIndex then
+            let mutable pos = cs.CurrentPosition
+            let mutable i = idx + 1UL
+            let mutable c = '\u0521'
+            while i < idx && readChar cs i &c do
+                pos <- pos.Advance c
+            pos
+        else
+            failwithf "Cannot get the position of the character at index %d (the stream is at %d)," idx cs.CurrentIndex
 
     /// Advances a `CharStream`'s position by one character.
     /// Next reads should start from that position.
@@ -278,17 +296,14 @@ module CharStream =
         else
             failwith "Cannot consume a character stream past its end."
 
-    /// Advances a `CharStream`'s position by as many characters the given `CharSpan` indicates.
+    /// Advances a `CharStream`'s position up to the given index.
     /// Next reads should start from that position.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, the characters before the span can be marked to be released from memory.
     [<CompiledName("Advance")>]
-    let advance doUnpin (cs: CharStream) span =
-        if cs.CurrentIndex = span.StartingPosition.Index then
-            for _i = 1 to span.Length do
-                advanceByOne doUnpin cs
-        else
-            failwithf "Trying to consume the character span %O, from a stream that was left at %d." span cs.CurrentIndex
+    let advance doUnpin (cs: CharStream) idxTo =
+        for _i = 1 to spanLength cs.StartingIndex idxTo do
+            advanceByOne doUnpin cs
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the
@@ -298,12 +313,12 @@ module CharStream =
         ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
-            let length = idxEnd - idxStart + 1UL |> int
-            let span = cs.Source.GetSpanForCharacters(idxStart, length)
+            let span = cs.Source.GetSpanForCharacters(idxStart, charSpan.Length)
             cs._LastUnpinnedSpanPosition <- charSpan.StartingPosition
             transformer.Transform(symbol, cs._LastUnpinnedSpanPosition, span)
         else
-            failwithf "Trying to read the character span %O, from a stream that was last read at %d." charSpan cs.StartingIndex
+            failwithf "Trying to read the character span %O, from a stream that was last read at %d."
+                charSpan cs.StartingIndex
 
     let private toStringTransformer =
         {new ITransformer<unit> with member _.Transform(_, _, data) = box <| data.ToString()}

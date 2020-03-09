@@ -72,6 +72,16 @@ let tests = testList "Parser tests" [
         Expect.sequenceEqual actualLog expectedLog "The parsing log is different than the usual"
     }
 
+    test "Lexical errors report the correct position" {
+        let jsonString = "{\"Almost True\": truffle}"
+        let result = RuntimeFarkle.parse FSharp.Language.runtime jsonString
+        let error =
+            Message(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
+            |> FarkleError.ParseError
+            |> Result.Error
+        Expect.equal result error "The wrong position was reported on a lexical error"
+    }
+
     test "Parsing a mathematical expression with comments works well" {
         let num = RuntimeFarkle.parse SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
         Expect.equal num (Ok 2) "Parsing a mathematical expression with comments failed"

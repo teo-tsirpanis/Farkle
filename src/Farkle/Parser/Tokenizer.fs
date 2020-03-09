@@ -38,15 +38,13 @@ module Tokenizer =
 
     let private tokenizeDFA (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) input =
         let rec impl idx currState lastAcceptIdx lastAcceptSym =
-            // Apparently, if you bring the function to the
-            // innermost scope, it gets optimized away.
-            let newToken (sym: DFASymbol) idx: Result<_, char> = (sym, idx) |> Ok
-            let mutable nextChar = '\u0103'
+            let newToken (sym: DFASymbol) idx: Result<DFASymbol, char> * uint64 = Ok sym, idx
+            let mutable nextChar = Unchecked.defaultof<_>
             match readChar input idx &nextChar with
             | false ->
                 match lastAcceptSym with
                 | Some sym -> newToken sym lastAcceptIdx
-                | None -> Error input.FirstCharacter
+                | None -> Error nextChar, idx
             | true ->
                 let newDFA = oops.GetNextDFAState nextChar currState
                 if not newDFA.IsError then
@@ -60,7 +58,7 @@ module Tokenizer =
                     // We can't go further, but the DFA had previosuly accepted a symbol in the past; we finish it up until there.
                     | Some sym -> newToken sym lastAcceptIdx
                     // We can't go further, and the DFA had never accepted a symbol; we mark this character as unrecognized.
-                    | None -> Error input.FirstCharacter
+                    | None -> Error nextChar, idx
         // We have to first check if more input is available.
         // If not, this is the only place we can report an EOF.
         if input.TryLoadFirstCharacter() then
@@ -92,20 +90,20 @@ module Tokenizer =
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.
-            | Some (Ok (Choice1Of4 term, tok)), [] ->
+            | Some (Ok (Choice1Of4 term), tok), [] ->
                 let span = pinSpan input tok
                 advance false input tok
                 newToken term span
             // We found noise outside of any group.
             // We discard it, unpin its characters, and proceed.
-            | Some (Ok (Choice2Of4 _noise, tok)), [] ->
+            | Some (Ok (Choice2Of4 _noise), tok), [] ->
                 advance true input tok
                 impl []
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, advance the input, and continue.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), tok)), gs
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), tok), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[int tokGroupIdx]
                     let span = pinSpan input tok
@@ -113,7 +111,7 @@ module Tokenizer =
                     impl ((span, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
-            | Some (Ok (CanEndGroup gSym, tok)), (popped, poppedGroup) :: xs
+            | Some (Ok (CanEndGroup gSym), tok), (popped, poppedGroup) :: xs
                 when poppedGroup.End = gSym ->
                 let popped =
                     match poppedGroup.EndingMode with
@@ -132,28 +130,30 @@ module Tokenizer =
                     let doUnpin = shouldUnpinCharactersInsideGroup g2 xs
                     match g2.AdvanceMode, tokenMaybe with
                     // We advance the input by the entire token.
-                    | AdvanceMode.Token, Ok (_, data) ->
+                    | AdvanceMode.Token, (Ok (_), data) ->
                         advance doUnpin input data
                         extendSpan input tok2 data
                     // Or by just one character.
-                    | AdvanceMode.Character, _ | _, Error _ ->
+                    | AdvanceMode.Character, _ | _, (Error _, _) ->
                         advanceByOne doUnpin input
                         extendSpanByOne input tok2
                 impl ((data, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
-            | Some (Ok (Choice4Of4 ge, _)), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
+            | Some (Ok (Choice4Of4 ge), _), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // or input ends while we are inside a group, unless the group ends with a newline, were we leave the group,
             | None, (gTok, g) :: gs when g.IsEndedByNewline -> leaveGroup gTok g gs
             // then it's an error.
             | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g
             // But if a group starts inside a group that cannot be nested at, it is an error.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx)), _)), ((_, g) :: _) ->
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), _), ((_, g) :: _) ->
                 fail <| ParseErrorType.CannotNestGroups(groups.[int tokGroupIdx], g)
             /// If a group starts while being outside of any group...
             /// Wait a minute! Haven't we already checked this case?
             /// Ssh, don't tell the compiler. She doesn't know about it. 😊
-            | Some (Ok (Choice3Of4 _, _)), [] ->
+            | Some (Ok (Choice3Of4 _), _), [] ->
                 failwith "Impossible case: The group stack was already checked to be empty."
             // We found an unrecognized symbol while being outside a group. This is an error.
-            | Some (Error x), [] -> fail <| ParseErrorType.LexicalError x
+            | Some (Error c, idx), [] ->
+                let errorPos = getPositionAtIndex input idx
+                Message(errorPos, ParseErrorType.LexicalError c) |> ParseError |> raise
         impl []

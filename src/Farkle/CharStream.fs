@@ -275,10 +275,11 @@ module CharStream =
     let getPositionAtIndex (cs: CharStream) idx =
         if idx >= cs.CurrentIndex then
             let mutable pos = cs.CurrentPosition
-            let mutable i = idx + 1UL
+            let mutable i = cs.CurrentIndex + 1UL
             let mutable c = '\u0521'
-            while i < idx && readChar cs i &c do
+            while i <= idx && readChar cs i &c do
                 pos <- pos.Advance c
+                i <- i + 1UL
             pos
         else
             failwithf "Cannot get the position of the character at index %d (the stream is at %d)," idx cs.CurrentIndex

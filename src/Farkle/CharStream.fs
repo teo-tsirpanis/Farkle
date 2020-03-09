@@ -223,8 +223,6 @@ type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan
 /// They are not thread-safe.
 module CharStream =
 
-    let private spanLength idxFrom idxTo = idxTo - idxFrom + 1UL |> int
-
     /// Reads the `idx`th character of `cs`, places it in `c` and
     /// returns `false` only if input ended. Only characters in
     /// memory are allowed to be read or one character past the length so far.
@@ -274,37 +272,36 @@ module CharStream =
     [<CompiledName("GetPositionAtIndex")>]
     let getPositionAtIndex (cs: CharStream) idx =
         if idx >= cs.CurrentIndex then
-            let mutable pos = cs.CurrentPosition
-            let mutable i = cs.CurrentIndex + 1UL
-            let mutable c = '\u0521'
-            while i <= idx && readChar cs i &c do
-                pos <- pos.Advance c
-                i <- i + 1UL
-            pos
+            // If the index is equal to the current index,
+            // we don't want to advance the position at all.
+            // In this case, the span would be empty.
+            let len = idx - cs.CurrentIndex |> int
+            let span = cs.Source.GetSpanForCharacters(cs.CurrentIndex, len)
+            cs.CurrentPosition.Advance(span)
         else
             failwithf "Cannot get the position of the character at index %d (the stream is at %d)," idx cs.CurrentIndex
 
+    /// Advances a `CharStream`'s position just after the given index.
+    /// Further reads should start one character after it.
+    /// Calling this function does not affect the pinned `CharSpan`s.
+    /// Optionally, the characters before the index can be marked to be released from memory.
+    [<CompiledName("Advance")>]
+    let advance doUnpin (cs: CharStream) idxTo =
+        // We want to place the current position just after the index.
+        cs._CurrentPosition <- getPositionAtIndex cs (idxTo + 1UL)
+        if doUnpin then
+            cs.StartingIndex <- cs.CurrentIndex
+
     /// Advances a `CharStream`'s position by one character.
-    /// Next reads should start from that position.
+    /// Further reads should start from the next one.
     /// Calling this function does not affect the pinned `CharSpan`s.
     /// Optionally, this character and all before it can be marked to be released from memory.
     [<CompiledName("AdvanceByOne")>]
     let advanceByOne doUnpin (cs: CharStream) =
         if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
-            cs._CurrentPosition <- cs.CurrentPosition.Advance cs.FirstCharacter
-            if doUnpin then
-                cs.StartingIndex <- cs.CurrentIndex
+            advance doUnpin cs cs.CurrentIndex
         else
             failwith "Cannot consume a character stream past its end."
-
-    /// Advances a `CharStream`'s position up to the given index.
-    /// Next reads should start from that position.
-    /// Calling this function does not affect the pinned `CharSpan`s.
-    /// Optionally, the characters before the span can be marked to be released from memory.
-    [<CompiledName("Advance")>]
-    let advance doUnpin (cs: CharStream) idxTo =
-        for _i = 1 to spanLength cs.StartingIndex idxTo do
-            advanceByOne doUnpin cs
 
     /// Creates an arbitrary object out of the characters at the given `CharSpan`.
     /// After that call, the characters at and before the

@@ -23,7 +23,7 @@ let tests = testList "Regression tests" [
         let rf = loadRuntimeFarkle "issue-8.egt" |> RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck
         Expect.isOk (parse rf "45") "The two-digit input was not successfully parsed"
         Expect.equal (parse rf "3")
-            (Message(Position.Initial, ParseErrorType.LexicalError '\000') |> FarkleError.ParseError |> Result.Error)
+            (Message(Position.Initial.Advance '3', ParseErrorType.LexicalError '\000') |> FarkleError.ParseError |> Result.Error)
             "The issue was reproduced; parsing a single-digit input was successful, while it shouldn't"
     }
 ]

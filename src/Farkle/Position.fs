@@ -5,6 +5,8 @@
 
 namespace Farkle
 
+open System
+
 [<Struct>]
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position = {
@@ -28,15 +30,25 @@ with
             column <- 1UL
         | _ -> column <- column + 1UL
 
-    /// Changes the position according to the given character.
-    /// It always increases the index by one, but it takes newlines into account to
-    /// change the line and column accordingly.
+    /// Returns the position of the next character if it was the given one.
     member x.Advance c =
         let mutable line = x.Line
         let mutable column = x.Column
         let mutable index = x.Index
         Position.AdvanceImpl(c, &line, &column, &index)
         Position.Create line column index
+    /// Applies `Position.Advance` successively for every character of the span.
+    // No reason to make it public; this is an implementation detail.
+    member internal x.Advance(span: ReadOnlySpan<_>) =
+        if span.Length = 0 then
+            x
+        else
+            let mutable line = x.Line
+            let mutable column = x.Column
+            let mutable index = x.Index
+            for i = 0 to span.Length - 1 do
+                Position.AdvanceImpl(span.[i], &line, &column, &index)
+            Position.Create line column index
 
     /// A `Position` that points to the start.
     static member Initial = {Line = 1UL; Column = 1UL; Index = 0UL}

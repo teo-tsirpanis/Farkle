@@ -1,3 +1,7 @@
+#### 5.4.0
+* Add a couple of methods in runtime Farkles to easily check whether building it had succeeded.
+* Lexical errors are reported at the point they occur; not at the point of the first character read by the tokenizer.
+
 #### 5.3.0 - 23-02-2020
 * Farkle's speed __more than doubled__ by disabling tailcall optimizations.
 * __Minor breaking change:__ The API of the `CharStream` type slightly changed. Most notably, the type `CharStreamIndex` was removed in favor of `uint64`, and the order of the last two arguments in the function `CharStream.read` has changed.

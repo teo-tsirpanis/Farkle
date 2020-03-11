@@ -27,7 +27,6 @@
     <Compile Include="Collections/IndexedCollections.fs" />
     <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
-    <Compile Include="Grammar/OptimizedOperations.fs" />
     <Compile Include="Grammar/GrammarReader.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
@@ -46,6 +45,7 @@
     <Compile Include="PostProcessor/Fuser.fs" />
     <Compile Include="PostProcessor/PostProcessor.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
+    <Compile Include="Parser/OptimizedOperations.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />

@@ -1,6 +1,9 @@
 #### 5.4.0
 * Add a couple of methods in runtime Farkles to easily check whether building it had succeeded.
 * Lexical errors are reported at the point they occur; not at the point of the first character read by the tokenizer.
+* __Minor breaking change:__ The `CharStream.readChar` value gets the character index by value, not by reference. Callers have to increment it accordingly to get further characters.
+* __Minor breaking change:__ The type `Farkle.Grammar.OptimizedOperations` was moved to the `Farkle.Parser` namespace; it was there for historical reasons.
+* As you might have seen, breaking changes on public members that do not affect the average Farkle user will not warrant a major version increase.
 
 #### 5.3.0 - 23-02-2020
 * Farkle's speed __more than doubled__ by disabling tailcall optimizations.

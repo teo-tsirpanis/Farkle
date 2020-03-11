@@ -47,7 +47,7 @@ module Tokenizer =
                 | None -> Error nextChar, idx
             | true ->
                 let newDFA = oops.GetNextDFAState nextChar currState
-                if not newDFA.IsError then
+                if newDFA.IsOk then
                     match states.[newDFA.Value].AcceptSymbol with
                     // We can go further. The DFA did not accept any new symbol.
                     | None -> impl (idx + 1UL) newDFA lastAcceptIdx lastAcceptSym

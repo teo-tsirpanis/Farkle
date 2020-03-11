@@ -21,7 +21,7 @@ with
     static member Create line column index =
         {Line = line; Column = column; Index = index}
     /// Changes the line, column and character index references according to the given character.
-    static member internal AdvanceImpl (c, line: byref<_>, column: byref<_>, index: byref<_>) =
+    static member inline private AdvanceImpl (c, line: byref<_>, column: byref<_>, index: byref<_>) =
         index <- index + 1UL
         match c with
         | '\n' when column = 1UL -> ()

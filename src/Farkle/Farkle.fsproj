@@ -24,7 +24,7 @@
     <Compile Include="CharStream.fs" />
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
-    <Compile Include="Collections/IndexedCollections.fs" />
+    <Compile Include="Collections/MultiMap.fs" />
     <Compile Include="Grammar/EGTReader.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/GrammarReader.fs" />

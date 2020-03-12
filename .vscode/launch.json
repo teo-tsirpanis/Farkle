@@ -2,57 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Farkle.Tools",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp3.1/Farkle.Tools.dll",
-            "args": [
-                "new",
-                "--type",
-                "postprocessor",
-                "-lang",
-                "C#",
-                "${workspaceFolder}/sample/SimpleMaths.egt",
-            ],
-            "cwd": "${workspaceFolder}/src/Farkle.Tools",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Farklei",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp3.1/Farklei.dll",
-            "args": [
-                "--egtfile",
-                "gml.egt",
-                "--inputfile",
-                "gml.grm"
-            ],
-            "cwd": "${workspaceRoot}/sample/farklei",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Farkle.Calculator",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "dotnet-build",
-            "program": "bin/Debug/netcoreapp3.1/Farkle.Calculator.dll",
-            "args": [
-                "111*555"
-            ],
-            "cwd": "${workspaceRoot}/sample/Farkle.Calculator",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
             "name": "Farkle.Tests",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "dotnet-build",
+            "preLaunchTask": "⚙BUILD TESTS⚙",
             "program": "bin/Debug/netcoreapp3.1/Farkle.Tests.dll",
             "args": [
                 "--sequenced"

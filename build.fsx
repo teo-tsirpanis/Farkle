@@ -75,7 +75,7 @@ let projects = !! "**/*.??proj" -- "**/*.shproj"
 let benchmarkProject = "./tests/Farkle.Benchmarks/Farkle.Benchmarks.fsproj"
 
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = sprintf "-f * --memory true -e github %s" (if BuildServer.isLocalBuild then "" else "-j medium")
+let benchmarkArguments = "-f * --memory true -e github"
 
 let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 

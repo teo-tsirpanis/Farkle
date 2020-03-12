@@ -19,8 +19,7 @@
             ]
         },
         {
-            "label": "⚙COMPILE⚙",
-            "identifier": "dotnet-build",
+            "label": "⚙BUILD TESTS⚙",
             "type": "process",
             "group": "build",
             "presentation": {
@@ -28,7 +27,10 @@
             },
             "command": "dotnet",
             "args": [
-                "build"
+                "build",
+                "tests/Farkle.Tests/Farkle.Tests.fsproj",
+                "-c",
+                "Debug"
             ],
             "problemMatcher": []
         },

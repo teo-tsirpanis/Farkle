@@ -12,14 +12,6 @@ open System.Collections.Generic
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
-[<AbstractClass; Sealed>]
-/// A helper static class to create nonterminals.
-type Nonterminal =
-    static member Create(name) = nonterminal name
-
-    static member Create(name, firstProduction, [<ParamArray>] productions) =
-        name ||= (firstProduction :: List.ofArray productions)
-
 [<Extension; AbstractClass; Sealed>]
 /// Extension methods to create production builders.
 type ProductionBuilderExtensions =

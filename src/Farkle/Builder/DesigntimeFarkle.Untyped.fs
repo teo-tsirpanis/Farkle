@@ -13,8 +13,8 @@ open System
 /// <remarks>This type is easier to work with, if you want to just
 /// define a grammar as you would do in GOLD Parser. Because it only implements
 /// the untyped <see cref="Farkle.Builder.DesigntimeFarkle"/> interface,
-/// it can still be <c>Append</c>ed, but not <c>Extend</c>ed in
-/// typed production builders. Overall, it is a normal designtime Farkle.</remarks>
+/// it can only be <c>Append</c>ed but not <c>Extend</c>ed in
+/// production builders. Overall, it is a normal designtime Farkle.</remarks>
 type Nonterminal = internal {
     _Name: string
     Productions: SetOnce<AbstractProduction list>
@@ -44,18 +44,19 @@ with
         let fSpecialize (x: obj) =
             match x with
             | :? DesigntimeFarkle as df -> df
-            | :? string as str -> literal str
+            | :? string as str -> Terminal.Literal str
             | x -> failwith "Only designtime Farkles and strings are \
 allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
         let makePB xs =
-            (empty, xs) ||> Seq.fold (fun pb x -> pb.Append(fSpecialize x))
+            (ProductionBuilder.Empty, xs)
+            ||> Seq.fold (fun pb x -> pb.Append(fSpecialize x))
         x.SetProductions(makePB firstProd, Array.map makePB prods)
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
     /// Its productions must be set later.</summary>
     /// <remarks>This function is useful for the creation
     /// of recursive or cyclical productions.</remarks>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member CreateUntyped(name) = {
+    static member Create(name) = {
         _Name = name
         Productions = SetOnce<_>.Create()
     }
@@ -63,18 +64,26 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
     /// from a nonterminal with the given name and productions,
     /// declared as production builders.</summary>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member CreateUntyped(name, firstProd: ProductionBuilder, [<ParamArray>] prods) =
-        let nont = Nonterminal.CreateUntyped name
+    static member Create(name, firstProd: ProductionBuilder, [<ParamArray>] prods) =
+        let nont = Nonterminal.Create name
         nont.SetProductions(firstProd, prods)
         nont :> DesigntimeFarkle
     /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
     /// from a nonterminal with the given name and productions,
     /// declared as sequences of objects.</summary>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member CreateUntyped(name, firstProd: obj seq, [<ParamArray>] prods) =
-        let nont = Nonterminal.CreateUntyped name
+    static member Create(name, firstProd: obj seq, [<ParamArray>] prods) =
+        let nont = Nonterminal.Create name
         nont.SetProductions(firstProd, prods)
         nont :> DesigntimeFarkle
+    [<Obsolete("Use Create.")>]
+    static member CreateUntyped(name) = Nonterminal.Create(name)
+    [<Obsolete("Use Create.")>]
+    static member CreateUntyped(name, firstProd: ProductionBuilder, [<ParamArray>] prods) =
+        Nonterminal.Create(name, firstProd, prods)
+    [<Obsolete("Use Create.")>]
+    static member CreateUntyped(name, firstProd: obj seq, [<ParamArray>] prods) =
+        Nonterminal.Create(name, firstProd, prods)
     interface DesigntimeFarkle with
         member x.Name = x._Name
         member __.Metadata = GrammarMetadata.Default
@@ -85,17 +94,18 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
 /// F# operators to easily work with untyped `DesigntimeFarkle`s.
 module DesigntimeFarkleUntypedOperators =
 
+    [<Obsolete("Open Farkle.Builder and use terminalU.")>]
     /// Creates an untyped terminal from the given name and specified by the given `Regex`.
     let inline terminal name regex = Terminal.Create(name, regex)
 
+    [<Obsolete("Open Farkle.Builder and use nonterminalU.")>]
     /// Creates an untyped `Nonterminal` whose productions must be set later.
-    let inline nonterminal name = Nonterminal.CreateUntyped name
+    let inline nonterminal name = Nonterminal.Create name
 
+    [<Obsolete("Open Farkle.Builder and use the |||= operator.")>]
     /// Creates an untyped `DesigntimeFarkle` that represents
     /// a nonterminal with the given name and productions.
     let (||=) name members =
-        let nont = nonterminal name
         match members with
-        | [] -> ()
-        | (x: ProductionBuilder) :: xs -> nont.SetProductions(x, Array.ofList xs)
-        nont :> DesigntimeFarkle
+        | [] -> Nonterminal.Create name :> DesigntimeFarkle
+        | (x: ProductionBuilder) :: xs -> Nonterminal.Create(name, x, Array.ofList xs)

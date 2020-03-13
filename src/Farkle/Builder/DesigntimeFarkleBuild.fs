@@ -75,7 +75,7 @@ module DesigntimeFarkleBuild =
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
-        let rec getStartSymbol (sym: Symbol) =
+        let rec getLALRSymbol (sym: Symbol) =
             let handleTerminal (term: AbstractTerminal) =
                 let symbol = Terminal(uint32 terminals.Count, term.Name)
                 terminalMap.Add(term, symbol)
@@ -121,7 +121,7 @@ module DesigntimeFarkleBuild =
                 |> List.iter (fun aprod ->
                     let handle =
                         aprod.Members
-                        |> Seq.map getStartSymbol
+                        |> Seq.map getLALRSymbol
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
@@ -161,7 +161,7 @@ module DesigntimeFarkleBuild =
                 addGroup "Comment Block" startSymbol (Choice3Of3 endSymbol) EndingMode.Closed
 
         let startSymbol =
-            match df |> Symbol.specialize |> getStartSymbol with
+            match df |> Symbol.specialize |> getLALRSymbol with
             // Our grammar is made of only one terminal.
             // We will create a production which will be made of just that.
             | LALRSymbol.Terminal term ->

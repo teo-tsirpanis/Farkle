@@ -14,30 +14,40 @@ open System.Collections.Generic
 /// Its content will be post-processed by the given `T` delegate.
 let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
 
-/// Creates an untyped `DesigntimeFarkle` that recognizes a literal string
-let literal str = Literal str :> DesigntimeFarkle
+/// Creates a terminal with the given name,
+/// specified by the given `Regex`,
+/// but not returning anything.
+let inline terminalU name regex = Terminal.Create(name, regex)
+
+/// An alias for the `Terminal.NewLine` function.
+let inline literal str = Terminal.Literal str
 
 /// An alias for `Terminal.NewLine`.
 let newline = Terminal.NewLine
 
 /// Creates a `Nonterminal` whose productions must be
-/// set with `SetProductions`, or it will raise an
-/// error. Useful for recursive productions.
-let nonterminal name = {
-    _Name = name
-    Productions = SetOnce<_>.Create()
-}
+/// later set with `SetProductions`, or it will raise an
+/// error on building. Useful for recursive productions.
+let inline nonterminal name = Nonterminal.Create name
+
+/// Creates an `Untyped.Nonterminal` whose productions must be
+/// later set with `SetProductions`, or it will raise an
+/// error on building. Useful for recursive productions.
+let inline nonterminalU name = Untyped.Nonterminal.Create(name)
 
 /// Creates a `DesigntimeFarkle<'T>` that represents
 /// a nonterminal with the given name and productions.
 let (||=) name members =
-    let nont = nonterminal name
     match members with
     // There is no reason to throw an exception as in
     // the past. An error will occur sooner or later.
-    | [] -> ()
-    | x :: xs -> nont.SetProductions(x, Array.ofList xs)
-    nont :> DesigntimeFarkle<_>
+    | [] -> nonterminal name :> DesigntimeFarkle<_>
+    | x :: xs -> Nonterminal.Create(name, x, Array.ofList xs)
+
+let (|||=) name members =
+    match members with
+    | [] -> nonterminalU name :> DesigntimeFarkle
+    | (x: ProductionBuilder) :: xs -> Untyped.Nonterminal.Create(name, x, Array.ofList xs)
 
 /// The `Append` method of production builders as an operator.
 // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
@@ -55,7 +65,7 @@ let inline (=>) pb f =
 /// `ProductionBuilder.FinishConstant` as an operator.
 let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
 
-/// A production builder with no members.
+/// An alias for `ProductionBuilder.Empty`.
 let empty = ProductionBuilder.Empty
 
 /// Creates a production builder with one non-significant `DesigntimeFarkle`.

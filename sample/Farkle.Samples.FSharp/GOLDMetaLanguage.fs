@@ -7,7 +7,6 @@ module GOLDMetaLanguage
 
 open Farkle
 open Farkle.Builder
-open Farkle.Builder.Untyped
 open System.Collections.Immutable
 
 open Regex
@@ -27,13 +26,13 @@ let designtime =
             char '"'
             cParameter |> chars |> atLeast 1
             char '"'
-        ] |> Regex.concat |> terminal "ParameterName"
+        ] |> Regex.concat |> terminalU "ParameterName"
     let _nonterminal =
         [
             char '<'
             cNonterminal |> chars |> atLeast 1
             char '>'
-        ] |> Regex.concat |> terminal "Nonterminal"
+        ] |> Regex.concat |> terminalU "Nonterminal"
     let rLiteral =
         [
             char '\''
@@ -44,7 +43,7 @@ let designtime =
         [
             cTerminal |> chars |> atLeast 1
             rLiteral
-        ] |> Regex.choice |> terminal "Terminal"
+        ] |> Regex.choice |> terminalU "Terminal"
     let setLiteral =
         [
             char '['
@@ -57,57 +56,57 @@ let designtime =
                 ] |> concat
             ] |> choice |> atLeast 1
             char ']'
-        ] |> concat |> terminal "SetLiteral"
+        ] |> concat |> terminalU "SetLiteral"
     let setName =
         [
             char '{'
             cSetName |> chars |> atLeast 1
             char '}'
-        ] |> concat |> terminal "SetName"
+        ] |> concat |> terminalU "SetName"
 
-    let nlOpt = nonterminal "nl opt"
+    let nlOpt = nonterminalU "nl opt"
     nlOpt.SetProductions(!% newline .>> nlOpt, empty)
-    let nl = nonterminal "nl"
+    let nl = nonterminalU "nl"
     nl.SetProductions(!% newline .>> nl, !% newline)
 
     let parameter =
         let parameterItem =
             [parameterName; _terminal; setLiteral; setName; _nonterminal]
             |> List.map (!%)
-            |> ((||=) "Parameter Item")
+            |> ((|||=) "Parameter Item")
 
-        let parameterItems = nonterminal "Parameter Items"
+        let parameterItems = nonterminalU "Parameter Items"
         parameterItems.SetProductions(
             !% parameterItems .>> parameterItem,
             !% parameterItem)
 
-        let parameterBody = nonterminal "Parameter Body"
+        let parameterBody = nonterminalU "Parameter Body"
         parameterBody.SetProductions(
             [box parameterBody; box nlOpt; box "|"; box parameterItems],
             [box parameterItems])
         "Parameter"
-        ||= [!% parameterName .>> nlOpt .>> "=" .>> parameterBody .>> nl]
+        |||= [!% parameterName .>> nlOpt .>> "=" .>> parameterBody .>> nl]
 
     let setDecl =
         let setItem =
             [setLiteral; setName]
             |> List.map (!%)
-            |> ((||=) "Set Item")
+            |> ((|||=) "Set Item")
 
-        let setExp = nonterminal "Set Exp"
+        let setExp = nonterminalU "Set Exp"
         setExp.SetProductions(
             [box setExp; box nlOpt; box "+"; box setItem],
             [box setExp; box nlOpt; box "-"; box setItem],
             [box setItem])
 
         "Set Decl"
-        ||= [!% setName .>> nlOpt .>> "=" .>> setExp .>> nl]
+        |||= [!% setName .>> nlOpt .>> "=" .>> setExp .>> nl]
 
     let terminalDecl =
         let kleeneOpt =
             empty :: (List.map (!&) ["+"; "?"; "*"])
-            |> ((||=) "Kleene Opt")
-        let regExp2 = nonterminal "Reg Exp 2"
+            |> ((|||=) "Kleene Opt")
+        let regExp2 = nonterminalU "Reg Exp 2"
         let regExpItem =
             [
                 !% setLiteral
@@ -116,9 +115,9 @@ let designtime =
                 !& "(" .>> regExp2 .>> ")"
             ]
             |> List.map (fun x -> x .>> kleeneOpt)
-            |> ((||=) "Reg Exp Item")
+            |> ((|||=) "Reg Exp Item")
 
-        let regExpSeq = nonterminal "Reg Exp Seq"
+        let regExpSeq = nonterminalU "Reg Exp Seq"
         regExpSeq.SetProductions(
             !% regExpSeq .>> regExpItem,
             !% regExpItem)
@@ -127,29 +126,29 @@ let designtime =
             [box regExp2; box "|"; box regExpSeq],
             [box regExpSeq])
 
-        let regExp = nonterminal "Reg Exp"
+        let regExp = nonterminalU "Reg Exp"
         regExp.SetProductions(
             [box regExp; box nlOpt; box "|"; box regExpSeq],
             [box regExpSeq])
 
-        let terminalName = nonterminal "Terminal Name"
+        let terminalName = nonterminalU "Terminal Name"
         terminalName.SetProductions(
             !% terminalName .>> _terminal,
             !% _terminal)
 
         "Terminal Decl"
-        ||= [!% terminalName .>> nlOpt .>> "=" .>> regExp .>> nl]
+        |||= [!% terminalName .>> nlOpt .>> "=" .>> regExp .>> nl]
 
     let ruleDecl =
         let symbol =
             [_terminal; _nonterminal]
             |> List.map (!%)
-            |> ((||=) "Symbol")
+            |> ((|||=) "Symbol")
 
-        let handle = nonterminal "Handle"
+        let handle = nonterminalU "Handle"
         handle.SetProductions(!% handle .>> symbol, empty)
 
-        let handles = nonterminal "Handles"
+        let handles = nonterminalU "Handles"
         // Cannot use production builders due to
         // https://github.com/dotnet/fsharp/issues/7917
         handles.SetProductions(
@@ -157,14 +156,14 @@ let designtime =
             [box handle])
 
         "Rule Decl"
-        ||= [!%_nonterminal .>> nlOpt .>> "::=" .>> handles .>> nl]
+        |||= [!%_nonterminal .>> nlOpt .>> "::=" .>> handles .>> nl]
 
     let definition =
         [parameter; setDecl; terminalDecl; ruleDecl]
         |> List.map (!%)
-        |> ((||=) "Definition")
+        |> ((|||=) "Definition")
 
-    let content = nonterminal "Content"
+    let content = nonterminalU "Content"
     content.SetProductions(!% content .>> definition, !% definition)
 
     let metadata = {
@@ -172,7 +171,7 @@ let designtime =
             Comments = ImmutableList.Create(BlockComment("!*", "*!"), LineComment "!")
     }
 
-    "Grammar" ||= [!% nlOpt .>> content]
+    "Grammar" |||= [!% nlOpt .>> content]
     |> DesigntimeFarkle.withMetadataUntyped metadata
 
 let runtime = RuntimeFarkle.buildUntyped designtime

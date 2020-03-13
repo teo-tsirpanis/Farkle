@@ -94,7 +94,8 @@ with
     interface DesigntimeFarkle with
         member x.Name =
             match x with
-            // This would make things clearer when an empty literal string is created.
+            // This would make error messages clearer
+            // when an empty literal string is created.
             | Literal x when String.IsNullOrEmpty(x) -> "Empty String"
             | Literal x -> x
         member __.Metadata = GrammarMetadata.Default
@@ -202,10 +203,14 @@ type Terminal =
             member __.Metadata = GrammarMetadata.Default
             member __.Regex = regex
             member __.Transformer = null} :> DesigntimeFarkle
+    /// <summary>Creates a terminal that recognizes a literal string.</summary>
+    /// <param name="str">The string literal this terminal will recognize.</param>
+    /// <remarks>It does not return anything.</remarks>
+    static member Literal(str) = Literal str :> DesigntimeFarkle
     /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
     /// that represents a new line.</summary>
     /// <remarks>This is different and better than a literal of
-    /// newline characters. Its presence indicates that the grammar
+    /// newline characters. If used anywhere in a grammar, it indicates that it
     /// is line-based, which means that newline characters are not noise.
     /// Newline characters are considered the character sequences
     /// <c>\r</c>, <c>\n</c>, or <c>\r\n</c>.</remarks>
@@ -248,6 +253,24 @@ with
     interface AbstractProduction with
         member x.Members = x.Members
         member x.Fuse = x.Fuse
+
+[<AbstractClass; Sealed>]
+/// A helper static class to create nonterminals.
+type Nonterminal =
+    /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
+    /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
+    /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
+    static member Create(name) = {
+        _Name = name
+        Productions = SetOnce<_>.Create()
+    }
+
+    /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
+    /// a nonterminal with a given name and productions.</summary>
+    static member Create(name, firstProduction, [<ParamArray>] productions) =
+        let nont = Nonterminal.Create name
+        nont.SetProductions(firstProduction, productions)
+        nont :> DesigntimeFarkle<_>
 
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =

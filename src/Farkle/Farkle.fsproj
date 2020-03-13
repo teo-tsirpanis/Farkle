@@ -37,8 +37,8 @@
     <Compile Include="Builder/DesigntimeFarkle.fs" />
     <Compile Include="Builder/ProductionBuilders.g.fs" AutoGen="true" />
     <Compile Include="Builder/ProductionBuilders.fs" />
-    <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/DesigntimeFarkle.Untyped.fs" />
+    <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Parser/AST.fs" />
     <Compile Include="PostProcessor/Transformer.fs" />

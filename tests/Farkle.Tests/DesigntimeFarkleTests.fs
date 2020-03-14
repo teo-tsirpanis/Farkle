@@ -112,8 +112,28 @@ let tests = testList "Designtime Farkle tests" [
     test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
         let df = "Sbubby" ||= [!& "Eef" =% "Freef"]
         let t = T(fun _ x -> x.ToString())
+        let tInt = T(fun _ _ -> 380)
         Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant."
         Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessor.ast) "Post-processors are not covariant."
         Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant."
+        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformer callbacks on value types are covariant while they shouldn't."
+    }
+
+    test "Farkle can properly handle line groups" {
+        let runtime =
+            Group.Line("LineGroup", "!!", T(fun _ data -> data.ToString()))
+            |> RuntimeFarkle.build
+        Expect.equal (runtime.Parse "!! No new line") (Ok "!! No new line")
+            "Farkle does not properly handle line groups that end on EOF."
+        Expect.equal (runtime.Parse "!! Has new line\n") (Ok "!! Has new line")
+            "Farkle does not properly handle line groups that end on a new line."
+    }
+
+    test "Farkle can properly handle block groups" {
+        let runtime =
+            Group.Block("Block Group", "{", "}", T(fun _ data -> data.ToString()))
+            |> RuntimeFarkle.build
+
+        Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups."
     }
 ]

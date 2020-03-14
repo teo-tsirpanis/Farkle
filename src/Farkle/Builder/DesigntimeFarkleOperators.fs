@@ -27,6 +27,67 @@ type Nonterminal =
         nont.SetProductions(firstProduction, productions)
         nont :> DesigntimeFarkle<_>
 
+[<AbstractClass; Sealed>]
+/// A helper static class to create groups. In Farkle (and GOLD parser),
+/// groups are used to define lexical elements that start and
+/// end with specified literals, and contain arbitrary characters.
+/// Groups are a tokenizer's construct, and their content is
+/// considered to be a terminal by the parser.
+/// Comments are essentially groups, but this class is concerned
+/// about groups that have significant content.
+type Group =
+    /// <summary>Creates a line group. As the name says, it ends with a new line.</summary>
+    /// <param name="name">The group's name.</param>
+    /// <param name="groupStart"> The sequence of characters
+    /// that specify the beginning of the group.</param>
+    /// <param name="fTransform">The function that transforms
+    /// the group's position and data to <typeparamref name="T"/>. Must not be null.
+    /// The given position is the position where <paramref name="groupStart"/> starts
+    /// and the group's data do not include the new line that end it.</param>
+    static member Line(name, groupStart, fTransform: T<'T>) =
+        if isNull fTransform then
+            nullArg "fTransform"
+        LineGroup(name, groupStart, T.box fTransform) :> DesigntimeFarkle<'T>
+    /// <summary>Creates a block group. Block groups end with a string literal.</summary>
+    /// <param name="name">The group's name.</param>
+    /// <param name="groupStart"> The sequence of characters
+    /// that specify the beginning of the group.</param>
+    /// <param name="groupEnd"> The sequence of characters
+    /// that specify the end of the group.</param>
+    /// <param name="fTransform">The function that transforms
+    /// the group's position and data to <typeparamref name="T"/>. Must not be null.
+    /// The given position is the position where <paramref name="groupStart"/> starts
+    /// and the group's data do include <paramref name="groupEnd"/>.</param>
+    static member Block(name, groupStart, groupEnd, fTransform: T<'T>) =
+        if isNull fTransform then
+            nullArg "fTransform"
+        BlockGroup(name, groupStart, groupEnd, T.box fTransform) :> DesigntimeFarkle<'T>
+    /// <summary>Creates a line group that does not contain any significant
+    /// information for the parsing application.</summary>
+    /// <param name="name">The group's name.</param>
+    /// <param name="groupStart"> The sequence of characters
+    /// that specify the beginning of the group.</param>
+    static member Line(name, groupStart) =
+        {new AbstractLineGroup with
+            member _.Name = name
+            member _.Metadata = GrammarMetadata.Default
+            member _.GroupStart = groupStart
+            member _.Transformer = null} :> DesigntimeFarkle
+    /// <summary>Creates a line group that does not contain any significant
+    /// information for the parsing application.</summary>
+    /// <param name="name">The group's name.</param>
+    /// <param name="groupStart"> The sequence of characters
+    /// that specify the beginning of the group.</param>
+    /// <param name="groupEnd"> The sequence of characters
+    /// that specify the end of the group.</param>
+    static member Block(name, groupStart, groupEnd) =
+        {new AbstractBlockGroup with
+            member _.Name = name
+            member _.Metadata = GrammarMetadata.Default
+            member _.GroupStart = groupStart
+            member _.GroupEnd = groupEnd
+            member _.Transformer = null} :> DesigntimeFarkle
+
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.
 module DesigntimeFarkleOperators =

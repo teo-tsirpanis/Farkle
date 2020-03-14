@@ -117,13 +117,7 @@ with
         member __.Name = "NewLine"
         member __.Metadata = GrammarMetadata.Default
 
-/// The base interface of groups. In Farkle (and GOLD parser),
-/// groups are used to define lexical elements that start and
-/// end with specified literals, and contain arbitrary characters.
-/// Groups are a tokenizer's construct, and their content is
-/// considered to be a terminal by the parser.
-/// Comments are essentially groups, but this interface is concerned
-/// about groups that have significant content.
+/// The base interface of groups.
 type internal AbstractGroup =
     inherit DesigntimeFarkle
     /// The sequence of characters that

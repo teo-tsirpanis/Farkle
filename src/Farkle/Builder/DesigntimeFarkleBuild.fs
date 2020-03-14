@@ -72,12 +72,14 @@ module DesigntimeFarkleBuild =
         let nonterminalMap = Dictionary()
         let noiseSymbols = ImmutableArray.CreateBuilder()
         let groups = ImmutableArray.CreateBuilder()
+        let groupMap = Dictionary<AbstractGroup,_>()
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
         let rec getLALRSymbol (sym: Symbol) =
+            let newTerminal name = Terminal(uint32 terminals.Count, name)
             let handleTerminal (term: AbstractTerminal) =
-                let symbol = Terminal(uint32 terminals.Count, term.Name)
+                let symbol = newTerminal term.Name
                 terminalMap.Add(term, symbol)
                 // For every addition to the terminals,
                 // a corresponding one will be made to the transformers.
@@ -86,6 +88,41 @@ module DesigntimeFarkleBuild =
                 transformers.Add(if isNull term.Transformer then tNull else term.Transformer)
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
+
+            let getNewLineTerminal() =
+                usesNewLine <- true
+                match newLineSymbol with
+                | Choice1Of4 nlTerminal -> nlTerminal
+                | _ ->
+                    let nlTerminal = newTerminal "NewLine"
+                    terminals.Add(nlTerminal)
+                    transformers.Add(tNull)
+                    newLineSymbol <- Choice1Of4 nlTerminal
+                    nlTerminal
+
+            let addTerminalGroup name transformer gStart gEnd =
+                let term = newTerminal name
+                let container = Choice1Of2 term
+                let gStart' = GroupStart(gStart, uint32 groups.Count)
+                addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
+                // The end symbol might be a NewLine, so it will not be added to the DFA here.
+                groups.Add {
+                    Name = name
+                    ContainerSymbol = container
+                    Start = gStart'
+                    End = gEnd
+                    AdvanceMode = AdvanceMode.Character
+                    // We want to keep the NewLine for the rest of the tokenizer to see.
+                    EndingMode =
+                        match gEnd with
+                        | Choice3Of3 _term -> EndingMode.Closed
+                        | _newLine -> EndingMode.Open
+                    Nesting = ImmutableHashSet.Empty
+                }
+                terminals.Add term
+                transformers.Add transformer
+                term
+
             match sym with
             | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
@@ -97,20 +134,7 @@ module DesigntimeFarkleBuild =
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
-            | Symbol.NewLine ->
-                usesNewLine <- true
-                match newLineSymbol with
-                | Choice1Of4 nlTerminal -> nlTerminal
-                | _ ->
-                    let nlTerminal = Terminal(uint32 terminals.Count, "NewLine")
-                    terminals.Add(nlTerminal)
-                    transformers.Add(tNull)
-                    // Despite our certainty that NewLine will be
-                    // a terminal, we will add the DFA symbol later,
-                    // after the comments are processed, for uniformity.
-                    newLineSymbol <- Choice1Of4 nlTerminal
-                    nlTerminal
-                |> LALRSymbol.Terminal
+            | Symbol.NewLine -> LALRSymbol.Terminal <| getNewLineTerminal()
             | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
                 LALRSymbol.Nonterminal nonterminalMap.[nont]
             | Symbol.Nonterminal nont ->
@@ -127,6 +151,24 @@ module DesigntimeFarkleBuild =
                     productions.Add(prod)
                     fusers.Add(aprod.Fuse))
                 LALRSymbol.Nonterminal symbol
+            | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
+                LALRSymbol.Terminal groupMap.[lg]
+            | Symbol.LineGroup lg ->
+                getNewLineTerminal()
+                |> Choice1Of3
+                |> addTerminalGroup lg.Name lg.Transformer lg.GroupStart
+                |> (fun x -> groupMap.[lg] <- x; x)
+                |> LALRSymbol.Terminal
+            | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
+                LALRSymbol.Terminal groupMap.[bg]
+            | Symbol.BlockGroup bg ->
+                let gEnd = GroupEnd bg.GroupEnd
+                addDFASymbol (Regex.string bg.GroupEnd) (Choice4Of4 gEnd)
+                gEnd
+                |> Choice3Of3
+                |> addTerminalGroup bg.Name bg.Transformer bg.GroupStart
+                |> (fun x -> groupMap.[bg] <- x; x)
+                |> LALRSymbol.Terminal
 
         let newLineGroupEnd =
             match newLineSymbol with
@@ -140,7 +182,7 @@ module DesigntimeFarkleBuild =
             let addGroup name gStart gEnd em =
                 groups.Add {
                     Name = name
-                    ContainerSymbol = Choice2Of2  commentSymbol
+                    ContainerSymbol = Choice2Of2 commentSymbol
                     Start = gStart
                     End = gEnd
                     AdvanceMode = AdvanceMode.Character
@@ -176,15 +218,22 @@ module DesigntimeFarkleBuild =
                 root
             | LALRSymbol.Nonterminal nont -> nont
 
+        // Add miscellaneous noise symbols.
         Seq.iter (fun (name, regex) ->
             let symbol = Noise name
             noiseSymbols.Add(symbol)
             addDFASymbol regex (Choice2Of4 symbol)
         ) metadata.NoiseSymbols
+        // Add explicitly created comments.
         Seq.iter handleComment metadata.Comments
 
+        // Add the comment noise symbol once and only if it is needed.
         if not metadata.Comments.IsEmpty then
             noiseSymbols.Add(commentSymbol)
+
+        // Add whitespace as noise, only if it is enabled.
+        // If it is, we have to be careful not to consider
+        // newlines as whitespace if we are on a line-based grammar.
         if metadata.AutoWhitespace then
             noiseSymbols.Add(whitespaceSymbol)
             let whitespaceRegex =
@@ -193,6 +242,9 @@ module DesigntimeFarkleBuild =
                 else
                     whitespaceRegex
             addDFASymbol whitespaceRegex (Choice2Of4 whitespaceSymbol)
+
+        // And finally, add the newline symbol to the DFA and to the noise symbols.
+        // If it was a terminal, it is already included.
         if usesNewLine then
             match newLineSymbol with
             | Choice2Of4 x -> noiseSymbols.Add(x)

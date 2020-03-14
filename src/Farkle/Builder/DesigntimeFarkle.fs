@@ -108,6 +108,33 @@ with
         member __.Name = "NewLine"
         member __.Metadata = GrammarMetadata.Default
 
+/// The base interface of groups. In Farkle (and GOLD parser),
+/// groups are used to define lexical elements that start and
+/// end with specified literals, and contain arbitrary characters.
+/// Groups are a tokenizer's construct, and their content is
+/// considered to be a terminal by the parser.
+/// Comments are essentially groups, but this interface is concerned
+/// about groups that have significant content.
+type internal AbstractGroup =
+    inherit DesigntimeFarkle
+    /// The sequence of characters that
+    /// specifies the beginning of the group.
+    abstract GroupStart: string
+    /// The delegate that converts the group's position and data into an arbitrary object.
+    abstract Transformer: T<obj>
+
+/// The base, untyped interface of line groups.
+/// A line group starts with a literal and ends when the line changes.
+type internal AbstractLineGroup =
+    inherit AbstractGroup
+
+/// The base, untyped interface of block groups.
+/// A block group starts and ends with a literal.
+type internal AbstractBlockGroup =
+    inherit AbstractGroup
+    /// The sequence of characters that specifies the end of the group.
+    abstract GroupEnd: string
+
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
 type internal AbstractNonterminal =
@@ -128,6 +155,8 @@ and internal AbstractProduction =
 and [<RequireQualifiedAccess>] internal Symbol =
     | Terminal of AbstractTerminal
     | Nonterminal of AbstractNonterminal
+    | LineGroup of AbstractLineGroup
+    | BlockGroup of AbstractBlockGroup
     | Literal of string
     | NewLine
 
@@ -272,11 +301,37 @@ type Nonterminal =
         nont.SetProductions(firstProduction, productions)
         nont :> DesigntimeFarkle<_>
 
+[<AbstractClass>]
+/// The typed implementation of the `AbstractGroup` interface.
+type internal Group<'T>(name, groupStart, transformer) =
+    interface DesigntimeFarkle with
+        member _.Name = name
+        member _.Metadata = GrammarMetadata.Default
+    interface AbstractGroup with
+        member _.GroupStart = groupStart
+        member _.Transformer = transformer
+    interface DesigntimeFarkle<'T>
+
+[<Sealed; NoComparison>]
+/// The typed implementation of the `AbstractLineGroup` interface.
+type internal LineGroup<'T>(name, groupStart, transformer) =
+    inherit Group<'T>(name, groupStart, transformer)
+    interface AbstractLineGroup
+
+[<Sealed; NoComparison>]
+/// The typed implementation of the `AbstractBlockGroup` interface.
+type internal BlockGroup<'T>(name, groupStart, groupEnd, transformer) =
+    inherit Group<'T>(name, groupStart, transformer)
+    interface AbstractBlockGroup with
+        member _.GroupEnd = groupEnd
+
 module internal Symbol =
     let rec specialize (x: DesigntimeFarkle): Symbol =
         match x with
         | :? AbstractTerminal as term -> Symbol.Terminal term
         | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
+        | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
+        | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
         | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
         | :? NewLine -> Symbol.NewLine
         | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle

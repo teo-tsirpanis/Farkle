@@ -196,6 +196,7 @@ module DesigntimeFarkleBuild =
         // Now we can add the line groups.
         lineGroupsToProcess
         |> Seq.iter (fun (lg, container) ->
+            usesNewLine <- true
             addTerminalGroup lg.Name container lg.Transformer lg.GroupStart newLineGroupEnd)
 
         let handleComment comment =

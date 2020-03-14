@@ -10,7 +10,6 @@ open Chiron
 open Expecto
 open Farkle
 open Farkle.Builder
-open Farkle.Builder.Untyped
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
@@ -186,10 +185,10 @@ let designtimeFarkleGen =
             Gen.choose(1, size)
             |> Gen.map (fun x ->
                 Array.init x (sprintf "T%d" >> literal))
-        let! nonterminals =
+        let! (nonterminals : Untyped.Nonterminal[]) =
             Gen.choose(1, size)
             |> Gen.map (fun x ->
-                Array.init x (sprintf "N%d" >> nonterminal))
+                Array.init x (sprintf "N%d" >> nonterminalU))
         let productionGen =
             Gen.oneof [
                 Gen.elements terminals

@@ -3,157 +3,213 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-[<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
-/// F# operators to easily work with productions and their builders.
-module Farkle.Builder.DesigntimeFarkleOperators
+namespace Farkle.Builder
 
 open Farkle.Common
+open System
 open System.Collections.Generic
 
-/// Creates a terminal with the given name, specified by the given `Regex`.
-/// Its content will be post-processed by the given `T` delegate.
-let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
+[<AbstractClass; Sealed>]
+/// A helper static class to create nonterminals.
+type Nonterminal =
+    /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
+    /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
+    /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
+    static member Create(name) = {
+        _Name = name
+        Productions = SetOnce<_>.Create()
+    }
 
-/// Creates a terminal with the given name,
-/// specified by the given `Regex`,
-/// but not returning anything.
-let inline terminalU name regex = Terminal.Create(name, regex)
+    /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
+    /// a nonterminal with a given name and productions.</summary>
+    static member Create(name, firstProduction, [<ParamArray>] productions) =
+        let nont = Nonterminal.Create name
+        nont.SetProductions(firstProduction, productions)
+        nont :> DesigntimeFarkle<_>
 
-/// An alias for the `Terminal.NewLine` function.
-let inline literal str = Terminal.Literal str
+[<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
+/// F# operators to easily work with designtime Farkles and production builders.
+module DesigntimeFarkleOperators =
 
-/// An alias for `Terminal.NewLine`.
-let newline = Terminal.NewLine
+    /// Creates a terminal with the given name, specified by the given `Regex`.
+    /// Its content will be post-processed by the given `T` delegate.
+    let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
 
-/// Creates a `Nonterminal` whose productions must be
-/// later set with `SetProductions`, or it will raise an
-/// error on building. Useful for recursive productions.
-let inline nonterminal name = Nonterminal.Create name
+    /// Creates a terminal with the given name,
+    /// specified by the given `Regex`,
+    /// but not returning anything.
+    let inline terminalU name regex = Terminal.Create(name, regex)
 
-/// Creates an `Untyped.Nonterminal` whose productions must be
-/// later set with `SetProductions`, or it will raise an
-/// error on building. Useful for recursive productions.
-let inline nonterminalU name = Untyped.Nonterminal.Create(name)
+    /// An alias for the `Terminal.NewLine` function.
+    let inline literal str = Terminal.Literal str
 
-/// Creates a `DesigntimeFarkle<'T>` that represents
-/// a nonterminal with the given name and productions.
-let (||=) name members =
-    match members with
-    // There is no reason to throw an exception as in
-    // the past. An error will occur sooner or later.
-    | [] -> nonterminal name :> DesigntimeFarkle<_>
-    | x :: xs -> Nonterminal.Create(name, x, Array.ofList xs)
+    /// An alias for `Terminal.NewLine`.
+    let newline = Terminal.NewLine
 
-let (|||=) name members =
-    match members with
-    | [] -> nonterminalU name :> DesigntimeFarkle
-    | (x: ProductionBuilder) :: xs -> Untyped.Nonterminal.Create(name, x, Array.ofList xs)
+    /// Creates a `Nonterminal` whose productions must be
+    /// later set with `SetProductions`, or it will raise an
+    /// error on building. Useful for recursive productions.
+    let inline nonterminal name = Nonterminal.Create name
 
-/// The `Append` method of production builders as an operator.
-// https://github.com/ionide/ionide-vscode-fsharp/issues/1203
-let inline op_DotGreaterGreater pb df =
-    (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
+    /// Creates an `Untyped.Nonterminal` whose productions must be
+    /// later set with `SetProductions`, or it will raise an
+    /// error on building. Useful for recursive productions.
+    let inline nonterminalU name = Untyped.Nonterminal.Create(name)
 
-/// The `Extend` method of production builders as an operator.
-let inline op_DotGreaterGreaterDot pb df =
-    (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
+    /// Creates a `DesigntimeFarkle<'T>` that represents
+    /// a nonterminal with the given name and productions.
+    let (||=) name members =
+        match members with
+        // There is no reason to throw an exception as in
+        // the past. An error will occur sooner or later.
+        | [] -> nonterminal name :> DesigntimeFarkle<_>
+        | x :: xs -> Nonterminal.Create(name, x, Array.ofList xs)
 
-/// The `Finish` method of production builders as an operator.
-let inline (=>) pb f =
-    (^TBuilder : (member FinishFSharp: ^TFunction -> Production<'T>) (pb, f))
+    let (|||=) name members =
+        match members with
+        | [] -> nonterminalU name :> DesigntimeFarkle
+        | (x: ProductionBuilder) :: xs -> Untyped.Nonterminal.Create(name, x, Array.ofList xs)
 
-/// `ProductionBuilder.FinishConstant` as an operator.
-let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
+    /// The `Append` method of production builders as an operator.
+    // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
+    let inline op_DotGreaterGreater pb df =
+        (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
 
-/// An alias for `ProductionBuilder.Empty`.
-let empty = ProductionBuilder.Empty
+    /// The `Extend` method of production builders as an operator.
+    let inline op_DotGreaterGreaterDot pb df =
+        (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
 
-/// Creates a production builder with one non-significant `DesigntimeFarkle`.
-/// This function is useful to start building a `Production`.
-let inline (!%) (df: DesigntimeFarkle) = empty.Append(df)
+    /// The `Finish` method of production builders as an operator.
+    let inline (=>) pb f =
+        (^TBuilder : (member FinishFSharp: ^TFunction -> Production<'T>) (pb, f))
 
-/// Creates a production builder with one non-significant string literal.
-let inline (!&) str = empty.Append(str: string)
+    /// `ProductionBuilder.FinishConstant` as an operator.
+    let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
 
-/// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
-/// This function is useful to start building a `Production`.
-let inline (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
+    /// An alias for `ProductionBuilder.Empty`.
+    let empty = ProductionBuilder.Empty
 
-let inline private dfName (df: DesigntimeFarkle) = df.Name
+    /// Creates a production builder with one non-significant `DesigntimeFarkle`.
+    /// This function is useful to start building a `Production`.
+    let inline (!%) (df: DesigntimeFarkle) = empty.Append(df)
 
-let private nonterminalf fmt df : string = (sprintf fmt (dfName df))
+    /// Creates a production builder with one non-significant string literal.
+    let inline (!&) str = empty.Append(str: string)
 
-/// Like `|>>`, but allows setting a custom
-/// name to the resulting `DesigntimeFarkle<T>`.
-let mapEx label f df =
-    label ||= [!@ df => f]
+    /// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
+    /// This function is useful to start building a `Production`.
+    let inline (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
 
-/// Creates a new `DesigntimeFarkle<'T>` that transforms
-/// the output of the given one with the given function.
-let (|>>) df (f: _ -> 'b) =
-    let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
-    mapEx name f df
+    let inline private dfName (df: DesigntimeFarkle) = df.Name
 
-/// Creates a `DesigntimeFarkle<'T>` that recognizes many
-/// occurrences of the given one and returns them in a list.
-let many df =
-    let nont = nonterminalf "%s List" df |> nonterminal
-    nont.SetProductions(
-        // A left-recursive design uses the LALR stack
-        // more efficiently, but due to the nature of
-        // F#'s cons list, we will make it right recursive, as
-        // it avoids us an extra production that reverses the list.
-        !@ df .>>. nont => (fun x xs -> x :: xs),
-        empty =% []
-    )
-    nont :> DesigntimeFarkle<_>
+    let private nonterminalf fmt df : string = (sprintf fmt (dfName df))
 
-/// Like `many1`, but requires at least one element to be present.
-let many1 df =
-    nonterminalf "%s Non-empty List" df
-    ||= [!@ df .>>. many df => (fun x xs -> x :: xs)]
+    /// Like `|>>`, but allows setting a custom
+    /// name to the resulting `DesigntimeFarkle<T>`.
+    let mapEx label f df =
+        label ||= [!@ df => f]
 
-/// Like `many`, but returns the result in
-/// any type that implements `ICollection<T>`.
-let manyCollection<'T, 'TCollection
-    when 'TCollection :> ICollection<'T>
-    and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
-        let nont = sprintf "%s %s" df.Name typeof<'TCollection>.Name |> nonterminal
+    /// Creates a new `DesigntimeFarkle<'T>` that transforms
+    /// the output of the given one with the given function.
+    let (|>>) df (f: _ -> 'b) =
+        let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
+        mapEx name f df
+
+    /// Creates a `DesigntimeFarkle<'T>` that recognizes many
+    /// occurrences of the given one and returns them in a list.
+    let many df =
+        let nont = nonterminalf "%s List" df |> nonterminal
         nont.SetProductions(
-            empty => (fun () -> new 'TCollection()),
-            !@ nont .>>. df => (fun xs x -> (xs :> ICollection<_>).Add(x); xs)
+            // A left-recursive design uses the LALR stack
+            // more efficiently, but due to the nature of
+            // F#'s cons list, we will make it right recursive, as
+            // it avoids us an extra production that reverses the list.
+            !@ df .>>. nont => (fun x xs -> x :: xs),
+            empty =% []
         )
         nont :> DesigntimeFarkle<_>
 
-/// A combination of `many1` and `manyCollection`.
-let manyCollection1 (df: DesigntimeFarkle<'T>): DesigntimeFarkle<'TCollection> =
-    sprintf "%s Non-empty %s" df.Name typeof<'TCollection>.Name
-    ||= [!@ (manyCollection df) .>>. df => (fun xs x -> xs.Add(x); xs)]
+    /// Like `many1`, but requires at least one element to be present.
+    let many1 df =
+        nonterminalf "%s Non-empty List" df
+        ||= [!@ df .>>. many df => (fun x xs -> x :: xs)]
 
-/// Like `sep`, but requires at least one element to be present.
-let sepBy1 (sep: DesigntimeFarkle) df =
-    let nont = nonterminalf "%s Non-empty List" df |> nonterminal
-    nont.SetProductions(
-        !@ df .>> sep .>>. nont => (fun x xs -> x :: xs),
-        !@ df => List.singleton
-    )
-    nont :> DesigntimeFarkle<_>
+    /// Like `many`, but returns the result in
+    /// any type that implements `ICollection<T>`.
+    let manyCollection<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
+            let nont = sprintf "%s %s" df.Name typeof<'TCollection>.Name |> nonterminal
+            nont.SetProductions(
+                empty => (fun () -> new 'TCollection()),
+                !@ nont .>>. df => (fun xs x -> (xs :> ICollection<_>).Add(x); xs)
+            )
+            nont :> DesigntimeFarkle<_>
 
-/// Creates a `DesigntimeFarkle<T>` that recognizes
-/// many occurences of `df` separated by `sep`.
-let sepBy (sep: DesigntimeFarkle) df =
-    nonterminalf "%s List" df
-    ||= [
-        !@ df .>> sep .>>. sepBy1 sep df => (fun x xs -> x :: xs)
-        empty =% []
-    ]
+    /// A combination of `many1` and `manyCollection`.
+    let manyCollection1 (df: DesigntimeFarkle<'T>): DesigntimeFarkle<'TCollection> =
+        sprintf "%s Non-empty %s" df.Name typeof<'TCollection>.Name
+        ||= [!@ (manyCollection df) .>>. df => (fun xs x -> xs.Add(x); xs)]
 
-/// Creates a `DesigntimeFarkle<T>` that recognizes `df`,
-/// which might not be found. In this case, the resulting
-/// value is `None`.
-let opt df =
-    nonterminalf "%s Maybe" df
-    ||= [
-        !@ df => Some
-        empty =% None
-    ]
+    /// Like `sep`, but requires at least one element to be present.
+    let sepBy1 (sep: DesigntimeFarkle) df =
+        let nont = nonterminalf "%s Non-empty List" df |> nonterminal
+        nont.SetProductions(
+            !@ df .>> sep .>>. nont => (fun x xs -> x :: xs),
+            !@ df => List.singleton
+        )
+        nont :> DesigntimeFarkle<_>
+
+    /// Creates a `DesigntimeFarkle<T>` that recognizes
+    /// many occurences of `df` separated by `sep`.
+    let sepBy (sep: DesigntimeFarkle) df =
+        nonterminalf "%s List" df
+        ||= [
+            !@ df .>> sep .>>. sepBy1 sep df => (fun x xs -> x :: xs)
+            empty =% []
+        ]
+
+    /// Creates a `DesigntimeFarkle<T>` that recognizes `df`,
+    /// which might not be found. In this case, the resulting
+    /// value is `None`.
+    let opt df =
+        nonterminalf "%s Maybe" df
+        ||= [
+            !@ df => Some
+            empty =% None
+        ]
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+/// Functions to set metadata for designtime Farkles.
+/// Keep in mind that only the metadata of the _topmost_
+/// designtime Farkle matter. Any other metadata changes will be disregarded.
+module DesigntimeFarkle =
+
+    /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
+    let withMetadataUntyped metadata df =
+        {new DesigntimeFarkleWithMetadata with
+            member __.InnerDesigntimeFarkle = df
+            member __.Name = df.Name
+            member __.Metadata = metadata} :> DesigntimeFarkle
+
+    /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
+    let withMetadata metadata df =
+        {DesigntimeFarkleWithMetadata.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+
+    /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
+    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
+    
+    /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
+    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
+
+    /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
+    let addNoiseSymbol name regex df =
+        df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
+
+    /// Adds a line comment to the given `DesigntimeFarkle`.
+    let addLineComment commentStart df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(LineComment commentStart)}
+
+    /// Adds a block comment to the given `DesigntimeFarkle`.
+    let addBlockComment commentStart commentEnd df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(BlockComment(commentStart, commentEnd))}

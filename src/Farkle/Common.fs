@@ -63,8 +63,9 @@ with
 
 /// Functions that involve reflection.
 module internal Reflection =
+    [<RequiresExplicitTypeArguments>]
     /// Returns whether the given type is a value type.
-    let inline isValueType<'T> () = typeof<'T>.IsValueType
+    let inline isValueType<'T> = typeof<'T>.IsValueType
 
 /// Functions to work with the `FSharp.Core.Result` type.
 [<AutoOpen>]

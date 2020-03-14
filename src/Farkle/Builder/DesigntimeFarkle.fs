@@ -15,9 +15,18 @@ open System.Collections.Immutable
 /// <summary>A delegate that accepts the position and data of a terminal, and transforms them into an arbitrary object.</summary>
 /// <remarks>
 ///     <para>In F#, this type is named <c>T</c> - from "Terminal" and was shortened to avoid clutter in user code.</para>
-///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions</para>
+///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions.</para>
 /// </remarks>
 type T<[<CovariantOut>] 'T> = delegate of Position * ReadOnlySpan<char> -> 'T
+
+module internal T =
+    /// Converts a `T` callback so that it returns an object.
+    let box (f: T<'T>) =
+        // https://stackoverflow.com/questions/12454794
+        if Reflection.isValueType<'T> then
+            T(fun pos data -> f.Invoke(pos, data) |> box)
+        else
+            unbox f
 
 /// A type of source code comment. As everybody might know,
 /// comments are the text fragments that are ignored by the parser.
@@ -199,6 +208,7 @@ with
 
 [<AbstractClass; Sealed>]
 /// A helper static class to create terminals.
+// Can't move this one to the operators, because the untyped API uses it.
 type Terminal =
     /// <summary>Creates a terminal that contains significant
     /// information of type <typeparamref name="T"/>.</summary>
@@ -210,16 +220,10 @@ type Terminal =
     static member Create (name, fTransform: T<'T>, regex) =
         if isNull fTransform then
             nullArg "fTransform"
-        let fTransform =
-            // https://stackoverflow.com/questions/12454794
-            if Reflection.isValueType<'T>() then
-                T(fun pos data -> fTransform.Invoke(pos, data) |> box)
-            else
-                unbox fTransform
         let term = {
             _Name = name
             Regex = regex
-            Transformer = fTransform
+            Transformer = T.box fTransform
         }
         term :> DesigntimeFarkle<'T>
     /// <summary>Creates a terminal that does not contain any significant
@@ -283,24 +287,6 @@ with
         member x.Members = x.Members
         member x.Fuse = x.Fuse
 
-[<AbstractClass; Sealed>]
-/// A helper static class to create nonterminals.
-type Nonterminal =
-    /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
-    /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
-    /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
-    static member Create(name) = {
-        _Name = name
-        Productions = SetOnce<_>.Create()
-    }
-
-    /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
-    /// a nonterminal with a given name and productions.</summary>
-    static member Create(name, firstProduction, [<ParamArray>] productions) =
-        let nont = Nonterminal.Create name
-        nont.SetProductions(firstProduction, productions)
-        nont :> DesigntimeFarkle<_>
-
 [<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.
 type internal Group<'T>(name, groupStart, transformer) =
@@ -338,36 +324,3 @@ module internal Symbol =
         | _ -> invalidArg "x" "Using a custom implementation of the \
 DesigntimeFarkle interface is not allowed."
     let append xs df = ImmutableList.add xs (specialize df)
-
-/// Functions to manipulate `DesigntimeFarkle`s.
-/// Keep in mind that only the metadata of the _topmost_
-/// designtime Farkle matter. Any other metadata changes will be disregarded.
-module DesigntimeFarkle =
-
-    /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
-    let withMetadataUntyped metadata df =
-        {new DesigntimeFarkleWithMetadata with
-            member __.InnerDesigntimeFarkle = df
-            member __.Name = df.Name
-            member __.Metadata = metadata} :> DesigntimeFarkle
-
-    /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
-    let withMetadata metadata df =
-        {DesigntimeFarkleWithMetadata.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
-
-    /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
-    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
-    
-    /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
-    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
-
-    /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
-    let addNoiseSymbol name regex df = df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
-
-    /// Adds a line comment to the given `DesigntimeFarkle`.
-    let addLineComment commentStart df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(LineComment commentStart)}
-
-    /// Adds a block comment to the given `DesigntimeFarkle`.
-    let addBlockComment commentStart commentEnd df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(BlockComment(commentStart, commentEnd))}

@@ -61,6 +61,7 @@ module DesigntimeFarkleBuild =
         let mutable newLineSymbol = Choice2Of4 noiseNewLine
         let metadata = df.Metadata
         let terminals = ImmutableArray.CreateBuilder()
+        let newTerminal name = Terminal(uint32 terminals.Count, name)
         let literalMap =
             match metadata.CaseSensitive with
             | true -> StringComparer.Ordinal
@@ -73,11 +74,32 @@ module DesigntimeFarkleBuild =
         let noiseSymbols = ImmutableArray.CreateBuilder()
         let groups = ImmutableArray.CreateBuilder()
         let groupMap = Dictionary<AbstractGroup,_>()
+        let lineGroupsToProcess = ResizeArray()
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
+        let addTerminalGroup name term transformer gStart gEnd =
+            let container = Choice1Of2 term
+            let gStart' = GroupStart(gStart, uint32 groups.Count)
+            addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
+            // The end symbol might be a NewLine, so it will not be added to the DFA here.
+            groups.Add {
+                Name = name
+                ContainerSymbol = container
+                Start = gStart'
+                End = gEnd
+                AdvanceMode = AdvanceMode.Character
+                // We want to keep the NewLine for the rest of the tokenizer to see.
+                EndingMode =
+                    match gEnd with
+                    | Choice3Of3 _term -> EndingMode.Closed
+                    | _newLine -> EndingMode.Open
+                Nesting = ImmutableHashSet.Empty
+            }
+            terminals.Add term
+            transformers.Add transformer
+
         let rec getLALRSymbol (sym: Symbol) =
-            let newTerminal name = Terminal(uint32 terminals.Count, name)
             let handleTerminal (term: AbstractTerminal) =
                 let symbol = newTerminal term.Name
                 terminalMap.Add(term, symbol)
@@ -88,40 +110,6 @@ module DesigntimeFarkleBuild =
                 transformers.Add(if isNull term.Transformer then tNull else term.Transformer)
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
-
-            let getNewLineTerminal() =
-                usesNewLine <- true
-                match newLineSymbol with
-                | Choice1Of4 nlTerminal -> nlTerminal
-                | _ ->
-                    let nlTerminal = newTerminal "NewLine"
-                    terminals.Add(nlTerminal)
-                    transformers.Add(tNull)
-                    newLineSymbol <- Choice1Of4 nlTerminal
-                    nlTerminal
-
-            let addTerminalGroup name transformer gStart gEnd =
-                let term = newTerminal name
-                let container = Choice1Of2 term
-                let gStart' = GroupStart(gStart, uint32 groups.Count)
-                addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
-                // The end symbol might be a NewLine, so it will not be added to the DFA here.
-                groups.Add {
-                    Name = name
-                    ContainerSymbol = container
-                    Start = gStart'
-                    End = gEnd
-                    AdvanceMode = AdvanceMode.Character
-                    // We want to keep the NewLine for the rest of the tokenizer to see.
-                    EndingMode =
-                        match gEnd with
-                        | Choice3Of3 _term -> EndingMode.Closed
-                        | _newLine -> EndingMode.Open
-                    Nesting = ImmutableHashSet.Empty
-                }
-                terminals.Add term
-                transformers.Add transformer
-                term
 
             match sym with
             | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
@@ -134,7 +122,17 @@ module DesigntimeFarkleBuild =
                 let symbol = handleTerminal term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
-            | Symbol.NewLine -> LALRSymbol.Terminal <| getNewLineTerminal()
+            | Symbol.NewLine -> 
+                usesNewLine <- true
+                match newLineSymbol with
+                | Choice1Of4 nlTerminal -> nlTerminal
+                | _ ->
+                    let nlTerminal = newTerminal "NewLine"
+                    terminals.Add(nlTerminal)
+                    transformers.Add(tNull)
+                    newLineSymbol <- Choice1Of4 nlTerminal
+                    nlTerminal
+                |> LALRSymbol.Terminal
             | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
                 LALRSymbol.Nonterminal nonterminalMap.[nont]
             | Symbol.Nonterminal nont ->
@@ -154,28 +152,51 @@ module DesigntimeFarkleBuild =
             | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                 LALRSymbol.Terminal groupMap.[lg]
             | Symbol.LineGroup lg ->
-                getNewLineTerminal()
-                |> Choice1Of3
-                |> addTerminalGroup lg.Name lg.Transformer lg.GroupStart
-                |> (fun x -> groupMap.[lg] <- x; x)
-                |> LALRSymbol.Terminal
+                // We don't know yet if the grammar is line-based, so
+                // we queue it until the entire grammar is traversed.
+                let term = newTerminal lg.Name
+                groupMap.[lg] <- term
+                lineGroupsToProcess.Add(lg, term)
+                LALRSymbol.Terminal term
             | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
                 LALRSymbol.Terminal groupMap.[bg]
             | Symbol.BlockGroup bg ->
+                let term = newTerminal bg.Name
                 let gEnd = GroupEnd bg.GroupEnd
+                groupMap.[bg] <- term
                 addDFASymbol (Regex.string bg.GroupEnd) (Choice4Of4 gEnd)
-                gEnd
-                |> Choice3Of3
-                |> addTerminalGroup bg.Name bg.Transformer bg.GroupStart
-                |> (fun x -> groupMap.[bg] <- x; x)
-                |> LALRSymbol.Terminal
+                addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Choice3Of3 gEnd)
+                LALRSymbol.Terminal term
 
+        let startSymbol =
+            match df |> Symbol.specialize |> getLALRSymbol with
+            // Our grammar is made of only one terminal.
+            // We will create a production which will be made of just that.
+            | LALRSymbol.Terminal term as t ->
+                let root = Nonterminal(uint32 nonterminals.Count, term.Name)
+                nonterminals.Add(root)
+                productions.Add {
+                    Index = uint32 productions.Count
+                    Head = root
+                    Handle = ImmutableArray.Create(t)
+                }
+                fusers.Add(fun xs -> xs.[0])
+                root
+            | LALRSymbol.Nonterminal nont -> nont
+
+        // This must be declared AFTER the start symbol,
+        // because we are now sure of what kind of symbol NewLine is.
         let newLineGroupEnd =
             match newLineSymbol with
             | Choice1Of4 term -> Choice1Of3 term
             | Choice2Of4 noise -> Choice2Of3 noise
             // We will never reach that line.
             | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
+
+        // Now we can add the line groups.
+        lineGroupsToProcess
+        |> Seq.iter (fun (lg, container) ->
+            addTerminalGroup lg.Name container lg.Transformer lg.GroupStart newLineGroupEnd)
 
         let handleComment comment =
             let newStartSymbol name = GroupStart(name, uint32 groups.Count)
@@ -201,22 +222,6 @@ module DesigntimeFarkleBuild =
                 addDFASymbol (Regex.string cStart) (Choice3Of4 startSymbol)
                 addDFASymbol (Regex.string cEnd) (Choice4Of4 endSymbol)
                 addGroup "Comment Block" startSymbol (Choice3Of3 endSymbol) EndingMode.Closed
-
-        let startSymbol =
-            match df |> Symbol.specialize |> getLALRSymbol with
-            // Our grammar is made of only one terminal.
-            // We will create a production which will be made of just that.
-            | LALRSymbol.Terminal term ->
-                let root = Nonterminal(uint32 nonterminals.Count, term.Name)
-                nonterminals.Add(root)
-                productions.Add {
-                    Index = uint32 productions.Count
-                    Head = root
-                    Handle = ImmutableArray.Create(LALRSymbol.Terminal term)
-                }
-                fusers.Add(fun xs -> xs.[0])
-                root
-            | LALRSymbol.Nonterminal nont -> nont
 
         // Add miscellaneous noise symbols.
         Seq.iter (fun (name, regex) ->
@@ -244,7 +249,7 @@ module DesigntimeFarkleBuild =
             addDFASymbol whitespaceRegex (Choice2Of4 whitespaceSymbol)
 
         // And finally, add the newline symbol to the DFA and to the noise symbols.
-        // If it was a terminal, it is already included.
+        // If it was a terminal, it is already included in the terminals.
         if usesNewLine then
             match newLineSymbol with
             | Choice2Of4 x -> noiseSymbols.Add(x)

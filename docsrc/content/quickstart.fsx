@@ -9,7 +9,6 @@
 (**
 # Quick Start: Creating a calculator
 
-
 Hello everyone. This guide will help you use Farkle. We will be using F#, but during the process, you will learn some useful things about Farkle itself. There's [another guide that explains what's different with C#][csharp]. You also have to be familiar with context-free grammars and parsing.
 
 ## How Farkle works
@@ -181,7 +180,7 @@ The magic lies within the `nonterminal` function. With this function, we create 
 
 The nonterminals are of type `Nonterminal<float>`, but implement `DesigntimeFarkle<float>`; it's actually an interface.
 
-> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if used.
+> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if done.
 
 ## Building our grammar
 

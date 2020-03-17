@@ -55,7 +55,7 @@
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Covarsky" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Covarsky" Version="1.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

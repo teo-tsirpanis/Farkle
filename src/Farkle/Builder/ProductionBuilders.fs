@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle.Collections
 open System
 open System.Collections.Immutable
 
@@ -33,10 +34,10 @@ open System.Collections.Immutable
 type ProductionBuilder internal(members) =
     /// A production builder with no members.
     static member Empty = ProductionBuilder(ImmutableList.Empty)
-    member __.Append(sym) = ProductionBuilder(Symbol.append members sym)
+    member __.Append(sym) = ProductionBuilder(listAdd members sym)
     member x.Append(lit) = x.Append(Literal lit)
     member __.Extend(df: DesigntimeFarkle<'T1>) =
-        ProductionBuilder<'T1>(Symbol.append members df, members.Count)
+        ProductionBuilder<'T1>(listAdd members df, members.Count)
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// an array of all the production's members as objects.</summary>
     /// <remarks>

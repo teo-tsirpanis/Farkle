@@ -138,30 +138,21 @@ type internal AbstractBlockGroup =
     /// The sequence of characters that specifies the end of the group.
     abstract GroupEnd: string
 
+/// <summary>The base, untyped interface of <see cref="Production{T}"/>.</summary>
+/// <seealso cref="Production{T}"/>
+// This type's naming differs from the other interfaces, because there is
+// an module that must be called `Production` (so that it has a C#-friendly name).
+type internal AbstractProduction =
+    /// The members of the production.
+    abstract Members: DesigntimeFarkle ImmutableArray
+    abstract Fuse: (obj [] -> obj)
+
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
 type internal AbstractNonterminal =
     inherit DesigntimeFarkle
     /// The productions of the nonterminal.
     abstract Productions: AbstractProduction list
-
-/// <summary>The base, untyped interface of <see cref="Production{T}"/>.</summary>
-/// <seealso cref="Production{T}"/>
-// This type's naming differs from the other interfaces, because there is
-// an module that must be called `Production` (so that it has a C#-friendly name).
-and internal AbstractProduction =
-    /// The members of the production.
-    abstract Members: Symbol ImmutableArray
-    abstract Fuse: (obj [] -> obj)
-
-/// A strongly-typed representation of a `DesigntimeFarkle`.
-and [<RequireQualifiedAccess>] internal Symbol =
-    | Terminal of AbstractTerminal
-    | Nonterminal of AbstractNonterminal
-    | LineGroup of AbstractLineGroup
-    | BlockGroup of AbstractBlockGroup
-    | Literal of string
-    | NewLine
 
 type internal DesigntimeFarkleWithMetadata =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
@@ -272,8 +263,8 @@ with
 
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
-and Production<'T> = internal {
-    Members: Symbol ImmutableArray
+and [<NoComparison; ReferenceEquality>] Production<'T> = internal {
+    Members: DesigntimeFarkle ImmutableArray
     Fuse: obj [] -> obj
 }
 with
@@ -304,17 +295,3 @@ type internal BlockGroup<'T>(name, groupStart, groupEnd, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
     interface AbstractBlockGroup with
         member _.GroupEnd = groupEnd
-
-module internal Symbol =
-    let rec specialize (x: DesigntimeFarkle): Symbol =
-        match x with
-        | :? AbstractTerminal as term -> Symbol.Terminal term
-        | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
-        | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
-        | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
-        | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
-        | :? NewLine -> Symbol.NewLine
-        | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
-        | _ -> invalidArg "x" "Using a custom implementation of the \
-DesigntimeFarkle interface is not allowed."
-    let append xs df = ImmutableList.add xs (specialize df)

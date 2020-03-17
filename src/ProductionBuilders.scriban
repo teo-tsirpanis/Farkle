@@ -31,10 +31,10 @@ https://opensource.org/licenses/MIT ~}}
 [<Sealed>]
 /// [omit]
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
-    member __.Append(sym) = ProductionBuilder<{{ type_params n }}>(Symbol.append members sym, {{type_indices n }})
+    member __.Append(sym) = ProductionBuilder<{{ type_params n }}>(listAdd members sym, {{type_indices n }})
     member x.Append(lit) = x.Append(Literal lit)
     {{~ if n != capacity ~}}
-    member __.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(Symbol.append members df, {{type_indices n }}, members.Count)
+    member __.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
     member __.FinishFSharp(f: {{ finish_signature n }}) : Production<{{ ap }}TOutput> =
         {{~ # https://github.com/dotnet/fsharp/issues/8034
@@ -68,9 +68,14 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
 
 namespace Farkle.Builder
 
+open Farkle.Collections
 open LanguagePrimitives.IntrinsicFunctions
 open System
 open System.Collections.Immutable
+
+[<AutoOpen>]
+module internal ProductionBuilderHelpers =
+    let inline listAdd list (df: DesigntimeFarkle) = ImmutableList.add list df
 
 {{~ capacity = 16;
     for i in 1..capacity reversed

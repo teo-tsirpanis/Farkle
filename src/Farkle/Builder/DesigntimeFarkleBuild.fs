@@ -29,6 +29,28 @@ type GrammarDefinition = {
     Fusers: ImmutableArray<obj[] -> obj>
 }
 
+/// A strongly-typed representation of a `DesigntimeFarkle`.
+type [<RequireQualifiedAccess>] internal Symbol =
+    | Terminal of AbstractTerminal
+    | Nonterminal of AbstractNonterminal
+    | LineGroup of AbstractLineGroup
+    | BlockGroup of AbstractBlockGroup
+    | Literal of string
+    | NewLine
+
+module internal Symbol =
+    let rec specialize (x: DesigntimeFarkle): Symbol =
+        match x with
+        | :? AbstractTerminal as term -> Symbol.Terminal term
+        | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
+        | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
+        | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
+        | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
+        | :? NewLine -> Symbol.NewLine
+        | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
+        | _ -> invalidArg "x" "Using a custom implementation of the \
+DesigntimeFarkle interface is not allowed."
+
 /// Functions to create `Grammar`s
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
@@ -99,9 +121,9 @@ module DesigntimeFarkleBuild =
             terminals.Add term
             transformers.Add transformer
 
-        let rec getLALRSymbol (sym: Symbol) =
-            let handleTerminal (term: AbstractTerminal) =
-                let symbol = newTerminal term.Name
+        let rec getLALRSymbol (df: DesigntimeFarkle) =
+            let handleTerminal dfName (term: AbstractTerminal) =
+                let symbol = newTerminal dfName
                 terminalMap.Add(term, symbol)
                 // For every addition to the terminals,
                 // a corresponding one will be made to the transformers.
@@ -111,15 +133,16 @@ module DesigntimeFarkleBuild =
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
 
-            match sym with
+            let dfName = df.Name
+            match Symbol.specialize df with
             | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
-            | Symbol.Terminal term -> handleTerminal term |> LALRSymbol.Terminal
+            | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal
             | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
             | Symbol.Literal lit ->
                 let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
-                let symbol = handleTerminal term
+                let symbol = handleTerminal dfName term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
             | Symbol.NewLine -> 
@@ -169,7 +192,7 @@ module DesigntimeFarkleBuild =
                 LALRSymbol.Terminal term
 
         let startSymbol =
-            match df |> Symbol.specialize |> getLALRSymbol with
+            match getLALRSymbol df with
             // Our grammar is made of only one terminal.
             // We will create a production which will be made of just that.
             | LALRSymbol.Terminal term as t ->

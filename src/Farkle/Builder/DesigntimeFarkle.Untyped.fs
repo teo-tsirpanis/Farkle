@@ -5,6 +5,10 @@
 
 namespace Farkle.Builder.Untyped
 
+// The obsolete Nonterminal.CreateUntyped
+// calls the obsolete SetProductions.
+#nowarn "44"
+
 open Farkle.Builder
 open Farkle.Common
 open System
@@ -24,8 +28,7 @@ with
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must be called exactly once. It accepts
-    /// un<c>Finish</c>ed production builders and is intended to be
-    /// used by F# because of the more terse API for creating them.</remarks>
+    /// un<c>Finish</c>ed production builders with no significant members.</remarks>
     member x.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
         prods
         |> Seq.map (fun p -> p.FinishUntyped())
@@ -33,6 +36,7 @@ with
         |> (fun prods -> firstProd.FinishUntyped() :: prods)
         |> x.Productions.TrySet
         |> ignore
+    [<Obsolete("Create production builders from an array of objects.")>]
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must be called exactly once. It accepts
     /// a variable amount of object sequences. Each object should be
@@ -41,16 +45,8 @@ with
     /// to be used by C# because</remarks>
     /// <seealso cref="Nonterminal.CreateUntyped(System.String)"/>
     member x.SetProductions(firstProd: obj seq, [<ParamArray>] prods: obj seq []) =
-        let fSpecialize (x: obj) =
-            match x with
-            | :? DesigntimeFarkle as df -> df
-            | :? string as str -> Terminal.Literal str
-            | x -> failwith "Only designtime Farkles and strings are \
-allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
-        let makePB xs =
-            (ProductionBuilder.Empty, xs)
-            ||> Seq.fold (fun pb x -> pb.Append(fSpecialize x))
-        x.SetProductions(makePB firstProd, Array.map makePB prods)
+        x.SetProductions(Array.ofSeq firstProd |> ProductionBuilder,
+            Array.map (Array.ofSeq >> ProductionBuilder) prods)
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
     /// Its productions must be set later.</summary>
     /// <remarks>This function is useful for the creation
@@ -72,7 +68,8 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
     /// from a nonterminal with the given name and productions,
     /// declared as sequences of objects.</summary>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member Create(name, firstProd: obj seq, [<ParamArray>] prods) =
+    [<Obsolete("Create production builders from an array of objects.")>]
+    static member CreateUntyped(name, firstProd: obj seq, [<ParamArray>] prods) =
         let nont = Nonterminal.Create name
         nont.SetProductions(firstProd, prods)
         nont :> DesigntimeFarkle
@@ -80,9 +77,6 @@ allowed in an untyped nonterminal. You provided a %O" <| x.GetType()
     static member CreateUntyped(name) = Nonterminal.Create(name)
     [<Obsolete("Use Create.")>]
     static member CreateUntyped(name, firstProd: ProductionBuilder, [<ParamArray>] prods) =
-        Nonterminal.Create(name, firstProd, prods)
-    [<Obsolete("Use Create.")>]
-    static member CreateUntyped(name, firstProd: obj seq, [<ParamArray>] prods) =
         Nonterminal.Create(name, firstProd, prods)
     interface DesigntimeFarkle with
         member x.Name = x._Name

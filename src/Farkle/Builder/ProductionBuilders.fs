@@ -32,6 +32,22 @@ open System.Collections.Immutable
 /// <see cref="AbstractProductionBuilder{TBuilder}.Append"/>
 /// can return the correct production builder type</typeparam>
 type ProductionBuilder internal(members) =
+    /// Creates a production builder whose members are the given objects.
+    /// The objects must be either strings or characters (where they will be
+    /// interpreted as literals), or designtime Farkles. Passing an object of
+    /// different type will raise an exception.
+    new ([<ParamArray>] members: obj []) =
+        let members =
+            members
+            |> Seq.map (
+                function
+                | :? DesigntimeFarkle as df -> df
+                | :? string as s -> Literal s :> DesigntimeFarkle
+                | :? char as c -> c |> string |> Literal :> DesigntimeFarkle
+                | x -> failwith "Only designtime Farkles, strings and characters are \
+allowed in a production builder's constructor. You provided a %O" <| x.GetType())
+            |> ImmutableList.CreateRange
+        ProductionBuilder(members)
     /// A production builder with no members.
     static member Empty = ProductionBuilder(ImmutableList.Empty)
     member __.Append(sym) = ProductionBuilder(listAdd members sym)

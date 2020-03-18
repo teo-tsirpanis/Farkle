@@ -82,8 +82,8 @@ let designtime =
 
         let parameterBody = nonterminalU "Parameter Body"
         parameterBody.SetProductions(
-            [box parameterBody; box nlOpt; box "|"; box parameterItems],
-            [box parameterItems])
+            ProductionBuilder(parameterBody, nlOpt, "|", parameterItems),
+            ProductionBuilder(parameterItems))
         "Parameter"
         |||= [!% parameterName .>> nlOpt .>> "=" .>> parameterBody .>> nl]
 
@@ -95,9 +95,9 @@ let designtime =
 
         let setExp = nonterminalU "Set Exp"
         setExp.SetProductions(
-            [box setExp; box nlOpt; box "+"; box setItem],
-            [box setExp; box nlOpt; box "-"; box setItem],
-            [box setItem])
+            ProductionBuilder(setExp, nlOpt, "+", setItem),
+            ProductionBuilder(setExp, nlOpt, "-", setItem),
+            ProductionBuilder(setItem))
 
         "Set Decl"
         |||= [!% setName .>> nlOpt .>> "=" .>> setExp .>> nl]
@@ -123,13 +123,13 @@ let designtime =
             !% regExpItem)
         // No newlines allowed
         regExp2.SetProductions(
-            [box regExp2; box "|"; box regExpSeq],
-            [box regExpSeq])
+            ProductionBuilder(regExp2, "|", regExpSeq),
+            ProductionBuilder(regExpSeq))
 
         let regExp = nonterminalU "Reg Exp"
         regExp.SetProductions(
-            [box regExp; box nlOpt; box "|"; box regExpSeq],
-            [box regExpSeq])
+            ProductionBuilder(regExp, nlOpt, "|", regExpSeq),
+            ProductionBuilder(regExpSeq))
 
         let terminalName = nonterminalU "Terminal Name"
         terminalName.SetProductions(
@@ -149,11 +149,11 @@ let designtime =
         handle.SetProductions(!% handle .>> symbol, empty)
 
         let handles = nonterminalU "Handles"
-        // Cannot use production builders due to
+        // Cannot use the production builder operators due to
         // https://github.com/dotnet/fsharp/issues/7917
         handles.SetProductions(
-            [box handles; box nlOpt; box "|"; box handle],
-            [box handle])
+            ProductionBuilder(handles, nlOpt, "|", handle),
+            ProductionBuilder(handle))
 
         "Rule Decl"
         |||= [!%_nonterminal .>> nlOpt .>> "::=" .>> handles .>> nl]

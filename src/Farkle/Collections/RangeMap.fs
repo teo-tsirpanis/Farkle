@@ -26,16 +26,14 @@ with
 /// A map data structure that works best when a continuous range of keys is assigned the same value.
 /// It can also double as a set, when the value type is a unit.
 type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
-with
-    // An immutable array of the elements of a `RangeMap`.
-    member internal x.Elements = match x with | RangeMap x -> x
 
 /// Functions to create and use `RangeMap`s.
 module RangeMap =
 
-    /// Returns an empty `RangeMap`.
+    /// An empty `RangeMap`.
     [<CompiledName("Empty")>]
-    let empty() = RangeMap ImmutableArray.Empty
+    let empty<'key, 'a when 'key :> IComparable<'key>> : RangeMap<'key, 'a> =
+        RangeMap ImmutableArray.Empty
 
     /// Looks up an element in a `RangeMap`, returning its corresponding value if it exists.
     [<CompiledName("TryFind")>]
@@ -109,8 +107,9 @@ module RangeMap =
     /// The keys can be of any type that can has the notion of "one" and equality checking.
     /// The keys have to be sorted beforehand, or the resulting `RangeMap` will be broken.
     let ofSeqEx fSuccessor xs =
-        match Seq.tryLast xs with
-        | Some(KeyValue(k, v)) ->
+        if not <| Seq.isEmpty xs then
+            let xs = Seq.sortBy (fun (KeyValue(k, _)) -> k) xs
+            let (KeyValue(k, v)) = Seq.last xs
             Seq.foldBack (fun (KeyValue(k', v')) (kFrom, kTo, v, xs) ->
                 if v = v' && kFrom = fSuccessor k' then
                     (k', kTo, v, xs)
@@ -122,7 +121,8 @@ module RangeMap =
             |> (fun (kFrom, kTo, v, xs) -> {KeyFrom = kFrom; KeyTo = kTo; Value = v} :: xs)
             |> ImmutableArray.CreateRange
             |> RangeMap
-        | None -> empty()
+        else
+            empty
 
     let inline ofSeq xs = ofSeqEx ((+) LanguagePrimitives.GenericOne) xs
 

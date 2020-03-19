@@ -23,7 +23,7 @@ module internal T =
     /// Converts a `T` callback so that it returns an object.
     let box (f: T<'T>) =
         // https://stackoverflow.com/questions/12454794
-        if Reflection.isValueType<'T> then
+        if typeof<'T>.IsValueType then
             T(fun pos data -> f.Invoke(pos, data) |> box)
         else
             unbox f

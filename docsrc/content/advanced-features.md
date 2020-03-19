@@ -1,0 +1,132 @@
+# Advanced features
+
+Farkle has a couple of features that were not covered in other guides because they are less likely to be useful. In this guide, we will take a look at some of these features that truly push Farkle's capabilities to the fullest. So, are you ready? Let's do this!
+
+## The untyped API
+
+The first feature we are going to discuss is a different API for creating grammars, which is called the untyped API. Usually, when we write our designtime Farkles, we do not only state how our grammar is structured, but also what should our parser do when he encounters a specific symbol. There are times however that we do not want to do the latter thing: we just want Farkle to create a grammar. Let's take a look at the following grammar which matches matching parentheses:
+
+```
+<S> ::= <S> ( <S> )
+<S> ::= <>
+```
+
+In Farkle, one way to write this grammar, is to just write it, but return dummy types like units on every production:
+
+``` fsharp
+// In all our examples, we always open this namespace.
+open Farkle.Builder
+
+let S = nonterminal "S"
+
+S.SetProductions(
+    !% S .>> "(" .>> S .>> ")" =% (),
+    empty =% ()
+)
+```
+
+On larger grammars however, this habit of adding `=% ()` to the end of each production tends to be repetitive. Also imagine if we had more complex terminals. We would have done something like this:
+
+``` fsharp
+let X =
+    myComplexRegex
+    |> terminal "X" (T(fun _ _ -> ()))
+```
+
+The parentheses-ridden delegate definition at the end would have to be repeated, for every terminal we would have to create.
+
+For this reason, the untyped API was created, to minimize code duplication. Let's first see how we would write our terminal:
+
+__F#:__
+``` fsharp
+let X =
+    myComplexRegex
+    |> terminalU "X"
+```
+
+__C#:__
+``` csharp
+DesigntimeFarkle X = Terminal.Create("X", myComplexRegex);
+```
+
+In F#, we use the `terminalU` function (guess what the U stands for), and in C# we just omit the delegate (it would have otherwise appeared between the name and the regex).
+
+As you might have seen, the terminal is of type `DesigntimeFarkle`, without a generic parameter at the end. This means it can be normally used from other grammars (even typed), but it cannot be the significant member of a production. You can write for example `!@ W .>> X` (or `W.Extended().Append(X)` in C#), but not `!@ W .>>. X` (or `W.Extended().Extend(X)`).
+
+> If you don't remember how to use an API from C#, [this guide][csharp.html] can help you.
+
+The nonterminals use a slightly different approach. Let's see how we would write the nonterminal that recognizes the balanced parentheses:
+
+__F#:__
+``` fsharp
+let S = nonterminalU "S"
+
+S.SetProductions(
+    ProductionBuilder(S, "(", S, ")"),
+    empty
+)
+```
+
+__C#:__
+``` csharp
+// If you need both typed and untyped nonterminals,
+// you unfortuantely have to write the fully qualified
+// name every time you want to use the latter
+using Nonterminal = Farkle.Builder.Untyped.Nonterminal;
+
+var S = Nonterminal.Create("S");
+
+S.SetProductions(
+    new ProductionBuilder(S, "(", S, ")"),
+    ProductionBuilder.Empty
+);
+```
+
+Let's take a closer look. The `ProductionBuilder`'s constructor accepts a variable amount of objects (or none, but this is essentially the empty one). You can pass designtime Farkles to be used in the resulting production as they are, or strings or characters to be used as literals. To avoid boxing, it's better to not pass characters at all, but not prohibited. If you pass any other type, an exception will be thrown. `S` is of type `Farkle.Builder.Untyped.Nonterminal`, which implements only the untyped `DesigntimeFarkle` interface.
+
+In F#, instead of the last fourth line, we could have used the much terser `!% S .>> "(" .>> S .>> ")"`, but unfortunately, it wouldn't work due to [a nasty and totally unexplained compiler bug][issue-7917]. This guide will be updated when the bug gets fixed.
+
+Let's take a look at a different example. consider this F# designtime Farkle:
+
+``` fsharp
+let number = Terminals.uint32 "Number"
+
+let adder = "Add" ||= [!@ number .>> "+" .>>. number => (+)]
+```
+
+It does exactly what you think it does. Gets a string of the form `X + Y`, and returns an unsigned integer containing their sum.
+
+A grammar that recognizes the same language without returning anything can be defined like this:
+
+``` fsharp
+let number = Terminals.uint32 "Number"
+
+let adder = "Add" |||= [ProductionBuilder(number, "+", number)]
+```
+
+The difference above is in the operator in the last line. In C# we can do the same thing like that:
+
+``` csharp
+using Nonterminal = Farkle.Builder.Untyped.Nonterminal;
+
+DesigntimeFarkle<uint> Number = Terminals.UInt32("Number");
+DesigntimeFarkle Adder = Nonterminal.Create(Adder, new ProductionBuilder(Number, "+", Number))
+```
+
+Let's take a look now at how to actually use these untyped designtime Farkles. It's actually surprisingly simple, and can be done this way:
+
+__F#:__
+``` fsharp
+// This is of type `RuntimeFarkle<unit>`.
+let adderRuntime = RuntimeFarkle.buildUntyped adder
+```
+
+__C#:__
+``` csharp
+// The object it returns will always be null.
+RuntimeFarkle<object> AdderRuntime = Adder.BuildUntyped();
+```
+
+`buildUntyped` creates a `RuntimeFarkle` that does not return anything meaningful, and succeeds if the input text is valid.
+
+[issue-7917]: https://github.com/dotnet/fsharp/issues/7917

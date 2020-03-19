@@ -27,8 +27,8 @@ with
     /// The name of the nonterminal.
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
-    /// <remarks>This method must be called exactly once. It accepts
-    /// un<c>Finish</c>ed production builders with no significant members.</remarks>
+    /// <remarks>This method must be called exactly once. Subsequent calls are ignored.
+    /// It accepts un<c>Finish</c>ed production builders with no significant members.</remarks>
     member x.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
         prods
         |> Seq.map (fun p -> p.FinishUntyped())
@@ -41,8 +41,7 @@ with
     /// <remarks>This method must be called exactly once. It accepts
     /// a variable amount of object sequences. Each object should be
     /// either a <see cref="DesigntimeFarkle"/> or a string. In the
-    /// latter case, they will be used as literals. This method is intended
-    /// to be used by C# because</remarks>
+    /// latter case, they will be used as literals.</remarks>
     /// <seealso cref="Nonterminal.CreateUntyped(System.String)"/>
     member x.SetProductions(firstProd: obj seq, [<ParamArray>] prods: obj seq []) =
         x.SetProductions(Array.ofSeq firstProd |> ProductionBuilder,

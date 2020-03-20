@@ -27,6 +27,8 @@ To be able to use a designtime Farkle, we will first feed it to a component call
 
 30: I guess you can't read this line.
 
+> The original idea was to name the designtime Farkles simply _Farkles_, but having a type named `Farkle.Farkle` would create lots of confusion and compile errors.
+
 ## Designing our grammar
 
 We want to design a grammar that represents a mathematical expressions on floating-point numbers. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.

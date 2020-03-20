@@ -129,4 +129,49 @@ RuntimeFarkle<object> AdderRuntime = Adder.BuildUntyped();
 
 `buildUntyped` creates a `RuntimeFarkle` that does not return anything meaningful, and succeeds if the input text is valid.
 
+## Syntax checking
+
+It is sometimes useful to just check if a string is syntactically valid, instead of giving it a meaning by returning an object out of it.
+
+This is what the untyped API does, and we can call `buildUntyped` on a typed designtime Farkle to achieve the same.
+
+Because building a designtime Farkle is expensive, if we already have a runtime Farkle, we can create a new one with the same grammar, but with a post-processor that does nothing. This post-processor is called a _syntax checker_. We can change the post-processor of a runtime Farkle this way:
+
+__F#:__
+``` fsharp
+open Farkle.PostProcessor
+
+let designtime: DesigntimeFarkle<int> = foo()
+
+let runtime: RuntimeFarkle<int> = RuntimeFarkle.build designtime
+
+// syntaxChecker is of type RuntimeFarkle<unit>.
+let syntaxCheck = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck runtime
+```
+
+__C#:__
+``` csharp
+DesigntimeFarkle<int> Designtime = Foo();
+
+RuntimeFarkle<int> Runtime = Designtime.Build();
+
+RuntimeFarkle<object> SyntaxCheck = Runtime.SyntaxCheck();
+// or
+using Farkle.PostProcessor.CSharp;
+RuntimeFarkle<object> SyntaxCheck = Runtime.ChangePostProcessor(PostProcessor.SyntaxChecker);
+```
+
+> The namespaces for the post-processor APIs are a mess and will be streamlined in a next release.
+
+Changing the post-processor is extremely cheap; no new grammar objects are created, and the syntax-checking post-processor is the same.
+
+> Actually, the post-processor used in both the F# and the C# example is the same object too. Post-processors are [covariant][covariance] like designtime Farkles, because they are interfaces. Runtime Farkles on the other hand are classes and therefore not variant at all.
+
+---
+
+Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference.html), as well as while you code.
+
+So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
+
 [issue-7917]: https://github.com/dotnet/fsharp/issues/7917
+[covariance]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/

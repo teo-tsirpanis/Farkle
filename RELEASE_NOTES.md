@@ -1,4 +1,4 @@
-#### 5.4.0
+#### 5.4.0 - 20-03-2020
 * You can now add lexical groups in a grammar. They resemble [GOLD Parser's feature](http://www.goldparser.org/doc/grammars/define-groups.htm), but always advance by character and do not not support nesting.
 * Add a couple of methods in runtime Farkles to easily check whether building it had succeeded.
 * Lexical errors are reported at the point they occur; not at the point of the first character read by the tokenizer.

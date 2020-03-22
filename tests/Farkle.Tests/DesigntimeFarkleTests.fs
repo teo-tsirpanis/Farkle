@@ -9,7 +9,6 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
-open Farkle.PostProcessor
 open FsCheck
 open System.Collections.Immutable
 
@@ -114,7 +113,7 @@ let tests = testList "Designtime Farkle tests" [
         let t = T(fun _ x -> x.ToString())
         let tInt = T(fun _ _ -> 380)
         Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant."
-        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessor.ast) "Post-processors are not covariant."
+        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant."
         Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant."
         Expect.isNone (tryUnbox<T<obj>> tInt) "Transformer callbacks on value types are covariant while they shouldn't."
     }

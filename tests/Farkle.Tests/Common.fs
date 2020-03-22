@@ -9,7 +9,6 @@ module Farkle.Tests.Common
 open Expecto
 open Farkle
 open Farkle.Grammar
-open Farkle.PostProcessor
 open System.IO
 open System.Reflection
 
@@ -25,7 +24,7 @@ let loadGrammar egtFile =
 
 let loadRuntimeFarkle egtFile =
     getResourceFile egtFile
-    |> RuntimeFarkle.ofEGTFile PostProcessor.ast
+    |> RuntimeFarkle.ofEGTFile PostProcessors.ast
 
 let returnOrFail msg x =
     match x with

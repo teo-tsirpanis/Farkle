@@ -9,7 +9,6 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
-open Farkle.PostProcessor
 open Farkle.Tests
 open SimpleMaths
 open System.Collections.Generic
@@ -106,12 +105,12 @@ let balancedParentheses =
     )
     RuntimeFarkle.buildUntyped expr
 
-let rfIgnore x = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck x
+let rfIgnore x = RuntimeFarkle.changePostProcessor PostProcessors.syntaxCheck x
 
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =
     [
-        "the calculator", rfIgnore SimpleMaths.int, SimpleMaths.Definitions.Grammar.asBase64
+        "the calculator", rfIgnore SimpleMaths.int, Definitions.Grammar.asBase64
         "the F# JSON parser", rfIgnore JSON.FSharp.Language.runtime, "./JSON.egt"
         "the C# JSON parser", rfIgnore JSON.CSharp.Language.Runtime, "./JSON.egt"
         "the language of balanced parentheses", balancedParentheses, "./balanced-parentheses.egt"

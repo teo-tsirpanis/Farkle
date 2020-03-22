@@ -107,22 +107,30 @@ module RuntimeFarkle =
         PostProcessor = pp
     }
 
-    /// Creates a `RuntimeFarkle`.
+    /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
     [<CompiledName("Create")>]
-    let create postProcessor (grammar: Grammar) = RuntimeFarkle<_>.Create(grammar, postProcessor)
+    let create postProcessor (grammar: Grammar) =
+        RuntimeFarkle<_>.Create(grammar, postProcessor)
 
-    /// Creates a `RuntimeFarkle` from the given post-processor, and the .egt file at the given path.
-    /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
+    /// Creates a `RuntimeFarkle` from the given
+    /// post-processor, and the .egt file at the given path.
+    /// In case the grammar file fails to be read,
+    /// an exception will be raised.
     [<CompiledName("CreateFromFile")>]
-    let ofEGTFile postProcessor (fileName: string) = RuntimeFarkle<_>.Create(fileName, postProcessor)
+    let ofEGTFile postProcessor (fileName: string) =
+        RuntimeFarkle<_>.Create(fileName, postProcessor)
 
-    /// Creates a `RuntimeFarkle` from the given post-processor, and the given Base64 representation of an .egt file.
-    /// In case the grammar file fails to be read, the `RuntimeFarkle` will fail every time it is used.
+    /// Creates a `RuntimeFarkle` from the given post-processor,
+    /// and the given Base64 representation of an .egt file.
+    /// In case the grammar file fails to be read,
+    /// an exception will be raised.
     [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String postProcessor x = RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
+    let ofBase64String postProcessor x =
+        RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle<T>`.
-    /// In case there is a problem with the grammar, the `RuntimeFarkle` will fail every time it is used.
+    /// In case there is a problem with the grammar,
+    /// the `RuntimeFarkle` will fail every time it is used.
     [<CompiledName("Build")>]
     let build df =
         let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
@@ -153,17 +161,21 @@ module RuntimeFarkle =
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
     /// This function also accepts a custom parse message handler.
-    let parseMemory rf fMessage input = input |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
+    let parseMemory rf fMessage input =
+        input |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
 
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage inputString = inputString |> CharStream.ofString |> parseChars rf fMessage
+    let parseString rf fMessage inputString =
+        inputString |> CharStream.ofString |> parseChars rf fMessage
 
-    /// Parses and post-processes a .NET `Stream` with the given character encoding, which may be lazily read.
+    /// Parses and post-processes a .NET `Stream` with the
+    /// given character encoding, which may be lazily read.
     /// Better use `parseTextReader` instead.
     /// This function also accepts a custom parse message handler.
-    [<CompiledName("ParseStream"); Obsolete("Streams are supposed to contain binary data; not text. Use parseTextReader instead.")>]
+    [<CompiledName("ParseStream"); Obsolete("Streams are supposed to \
+contain binary data; not text. Use parseTextReader instead.")>]
     let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =

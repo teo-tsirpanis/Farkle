@@ -6,7 +6,6 @@
 open Argu
 open Farkle
 open System.IO
-open Farkle.PostProcessor
 
 type Arguments =
     | [<ExactlyOnce>] EGTFile of string
@@ -33,7 +32,7 @@ let main argv =
     let showOutput = args.Contains <@ Silent @> |> not
     let lazyLoad = args.TryGetResult <@ LazyLoad @> |> Option.defaultValue true
     let justLoadEGT = args.Contains <@ JustLoadEGT @>
-    let rf = RuntimeFarkle.ofEGTFile PostProcessor.ast egtFile
+    let rf = RuntimeFarkle.ofEGTFile PostProcessors.ast egtFile
     let print x = if showOutput then printfn "%O" x
     if not justLoadEGT then
         let result =

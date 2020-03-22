@@ -5,7 +5,6 @@
 
 open Farkle
 open System
-open Farkle.PostProcessor
 open SimpleMaths
 
 let inline prettyPrintResult x =
@@ -31,11 +30,11 @@ let interactive rf =
 
 [<EntryPoint>]
 let main args =
-    let rf = SimpleMaths.buildInt()
+    let rf = SimpleMaths.int
     match args with
     | [| |] -> interactive rf
     | [|"--ast"; x|] ->
-        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessor.ast rf) Console.WriteLine x
+        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessors.ast rf) Console.WriteLine x
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
     | x -> x |> Array.iter (RuntimeFarkle.parseString rf Console.WriteLine >> prettyPrintResult >> Console.WriteLine)

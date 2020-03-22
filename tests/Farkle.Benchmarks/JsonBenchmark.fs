@@ -10,7 +10,6 @@ open Chiron
 open Farkle
 open Farkle.Common
 open Farkle.JSON
-open Farkle.PostProcessor
 open FParsec
 open System.IO
 
@@ -24,7 +23,7 @@ type JsonBenchmark() =
 
     let createTR() = new StringReader(jsonData) :> TextReader
 
-    let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck FSharp.Language.runtime
+    let syntaxChecker = RuntimeFarkle.changePostProcessor PostProcessors.syntaxCheck FSharp.Language.runtime
 
     [<Benchmark>]
     // There are performance differences between the F# and C# editions.

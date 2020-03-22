@@ -157,11 +157,8 @@ RuntimeFarkle<int> Runtime = Designtime.Build();
 
 RuntimeFarkle<object> SyntaxCheck = Runtime.SyntaxCheck();
 // or
-using Farkle.PostProcessor.CSharp;
-RuntimeFarkle<object> SyntaxCheck = Runtime.ChangePostProcessor(PostProcessor.SyntaxChecker);
+RuntimeFarkle<object> SyntaxCheck = Runtime.ChangePostProcessor(PostProcessors.SyntaxChecker);
 ```
-
-> The namespaces for the post-processor APIs are a mess and will be streamlined in a next release.
 
 Changing the post-processor is extremely cheap; no new grammar objects are created, and the syntax-checking post-processor is the same.
 

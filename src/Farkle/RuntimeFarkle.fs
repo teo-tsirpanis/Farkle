@@ -10,7 +10,6 @@ open Farkle.Grammar
 open Farkle.Grammar.GOLDParser
 open Farkle.IO
 open Farkle.Parser
-open Farkle.PostProcessor
 open System
 open System.IO
 open System.Text
@@ -97,6 +96,24 @@ Use a conjunction of IsBuildSuccessful, GetBuildErrorMessage and GetGrammar.")>]
         | Ok (grammar, _) -> grammar
         | Error msg -> msg |> string |> failwith
 
+/// Some `PostProcessor`s, reusable and ready to use.
+module PostProcessors =
+
+    [<CompiledName("SyntacChecker")>]
+    /// This post-processor does not return anything meaningful to its consumer.
+    /// It is useful for checking the syntax of a string with respect to a grammar.
+    let syntaxCheck =
+        {new PostProcessor<unit> with
+            member __.Transform (_, _, _) = null
+            member __.Fuse (_, _) = null}
+
+    [<CompiledName("AST")>]
+    /// This post-processor creates a domain-ignorant `AST`.
+    let ast =
+        {new PostProcessor<AST> with
+            member __.Transform (sym, pos, x) = AST.Content(sym, pos, x.ToString()) |> box
+            member __.Fuse (prod, items) = AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}
+
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 
@@ -143,7 +160,7 @@ module RuntimeFarkle =
         df
         |> DesigntimeFarkleBuild.createGrammarDefinition
         |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> RuntimeFarkle<_>.CreateMaybe PostProcessor.syntaxCheck
+        |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.

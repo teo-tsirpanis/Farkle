@@ -41,8 +41,6 @@
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Parser/AST.fs" />
-    <Compile Include="PostProcessor/Transformer.fs" />
-    <Compile Include="PostProcessor/Fuser.fs" />
     <Compile Include="PostProcessor/PostProcessor.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />
@@ -50,7 +48,6 @@
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="RuntimeFarkle.fs" />
-    <Compile Include="CSharp/PostProcessorExtensions.fs" />
     <Compile Include="CSharp/RuntimeFarkleExtensions.fs" />
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>

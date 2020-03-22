@@ -8,7 +8,6 @@
 namespace Farkle
 
 open Farkle
-open Farkle.PostProcessor.CSharp
 open System
 open System.Runtime.InteropServices
 open System.Runtime.CompilerServices
@@ -78,10 +77,10 @@ type RuntimeFarkleExtensions =
 
     [<Extension>]
     /// <summary>Returns a new <see cref="RuntimeFarkle{TResult}"/> with a changed <see cref="PostProcessor"/>.</summary>
-    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: PP<'TNewResult>) =
+    static member ChangePostProcessor(rf: RuntimeFarkle<'TResult>, pp: PostProcessor<'TNewResult>) =
         RF.changePostProcessor pp rf
 
     [<Extension>]
     /// <summary>Returns a <see cref="RuntimeFarkle{Object}"/> that just checks if its given input is valid.</summary>
     /// <remarks>If syntax-checking succeeds, the value of the result will be always <c>null</c></remarks>
-    static member SyntaxCheck(rf) = RF.changePostProcessor PostProcessor.SyntaxChecker rf
+    static member SyntaxCheck(rf) = RF.changePostProcessor (unbox<PostProcessor<obj>> PostProcessors.syntaxCheck) rf

@@ -5,9 +5,9 @@
 
 namespace Farkle.Builder
 
+open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
-open Farkle.PostProcessor
 open System
 open System.Collections.Generic
 open System.Collections.Immutable

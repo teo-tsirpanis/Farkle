@@ -5,9 +5,9 @@
 
 namespace Farkle.Parser
 
+open Farkle
 open Farkle.Grammar
 open Farkle.IO
-open Farkle.PostProcessor
 open System.Threading
 open System.Collections.Immutable
 

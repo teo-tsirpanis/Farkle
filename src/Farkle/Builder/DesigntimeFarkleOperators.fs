@@ -165,6 +165,7 @@ module DesigntimeFarkleOperators =
 
     let private nonterminalf fmt df : string = (sprintf fmt (dfName df))
 
+    [<Obsolete("Use the |>> operator and call DesigntimeFarkle.rename.")>]
     /// Like `|>>`, but allows setting a custom
     /// name to the resulting `DesigntimeFarkle<T>`.
     let mapEx label f df =

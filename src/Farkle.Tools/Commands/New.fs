@@ -29,8 +29,8 @@ with
 Otherwise, the EGT file in the current directory, if only one exists."
             | Language _ -> "Specifies the language of the template to create. If there is a C# or F# project, \
 defaults to this language. If there are both, the language must be specified. If there is neither, defaults to F#."
-            | Type _ -> "Specifies the type of the template to create, i.e. either a file containing \
-the grammar and its symbol types, or a skeleton for a post-processor. Defaults to the latter."
+            | Type _ -> "Specifies the type of the template to create. Currently, only a file containing the grammar \
+and its symbol types is allowed."
             | TemplateFile _ -> "Specifies the template file to use, in case you want a custom one. \
 In this case, the language is completely ignored."
             | OutputFile _ -> "Specifies where the generated output will be stored. \
@@ -81,7 +81,7 @@ let run (args: ParseResults<_>) = either {
     let! grammarFile =
         args.TryPostProcessResult(GrammarFile, assertFileExists)
         |> Option.defaultWith tryInferGrammarFile
-    let typ = args.GetResult(Type, defaultValue = TemplateType.PostProcessor)
+    let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
     let ns = args.TryGetResult(Namespace)
     let! templateSource =
         // First, see if a custom template is specified.

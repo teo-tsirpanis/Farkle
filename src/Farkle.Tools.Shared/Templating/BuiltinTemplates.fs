@@ -21,7 +21,6 @@ let private (|LanguageNames|) lang =
 [<RequireQualifiedAccess>]
 type TemplateType =
     | Grammar
-    | PostProcessor
 
 type TemplateSource =
     | CustomFile of string

@@ -27,12 +27,13 @@ open System.Text
 // A string prefixed by four spaces will be replaced in the future with
 // a ReadOnlySpan of characters.
 
+[<CompiledName("UnsignedIntRegex")>]
 /// A `Regex` that recognizes a series of decimal digits.
 /// Leading zeros are accepted.
 // Seriously though, why not? Looking at you, JSON!
-let unsignedRegex = Number |> chars |> atLeast 1
+let unsignedIntRegex = Number |> chars |> atLeast 1
 
-[<CompiledName("FSharpOnlyGenericUnsigned"); RequiresExplicitTypeArguments>]
+[<CompiledName("FSharpOnlyGenericUnsigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 /// Creates a designtimeFarkle that parses an unsigned decimal integer
 /// into the desired number type. No bounds checking is performed.
 /// Using this function from a language other than F# will throw an exception.
@@ -40,16 +41,17 @@ let inline genericUnsigned< ^TInt when ^TInt: (static member Parse:    string * 
     terminal name
         (T (fun _ x ->
             (^TInt: (static member Parse:    string * NumberStyles * IFormatProvider -> ^TInt)
-                (x.ToString(), NumberStyles.Integer, NumberFormatInfo.InvariantInfo))))
-        unsignedRegex
+                (x.ToString(), NumberStyles.None, NumberFormatInfo.InvariantInfo))))
+        unsignedIntRegex
 
+[<CompiledName("SignedIntRegex")>]
 /// A `Regex` that recognizes a series of decimal digits
 /// that might be prefixed with a minus sign "-".
 /// Leading zeros are accepted.
-let signedRegex = (optional <| char '-') <&> unsignedRegex
+let signedIntRegex = (optional <| char '-') <&> unsignedIntRegex
 
-[<CompiledName("FSharpOnlyGenericSigned"); RequiresExplicitTypeArguments>]
-/// Creates a designtimeFarkle that parses a signed decimal integer
+[<CompiledName("FSharpOnlyGenericSigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
+/// Creates a designtime Farkle that parses a signed decimal integer
 /// into the desired number type. No bounds checking is performed.
 /// The type parameter must support the unary negation operator.
 /// Using this function from a language other than F# will throw an exception.
@@ -58,7 +60,7 @@ let inline genericSigned< ^TInt when ^TInt: (static member Parse:    string * Nu
         (T (fun _ x ->
             (^TInt: (static member Parse:    string * NumberStyles * IFormatProvider -> ^TInt)
                 (x.ToString(), NumberStyles.Integer, NumberFormatInfo.InvariantInfo))))
-        signedRegex
+        signedIntRegex
 
 /// Creates a designtime Farkle that parses and returns a
 /// signed 32-bit signed integer. No bounds checking is performed.
@@ -80,12 +82,17 @@ let uint32 name = genericUnsigned<uint32> name
 /// signed 64-bit unsigned integer. No bounds checking is performed.
 let uint64 name = genericUnsigned<uint64> name
 
-let private realRegex =
+[<CompiledName("UnsignedRealRegex")>]
+/// A `Regex` that recognizes an unsigned real number.
+/// The number is expected to be written in scientific
+/// notation, with the decimal point symbol being the dot.
+/// Numbers before or after the dot are optional, but they
+/// must exist in at least one of the two places.
+let unsignedRealRegex =
     let numberStar = chars Number |> star
     let atLeastOneNumber = chars Number <&> numberStar
     let dotOptional = char '.' |> optional
     concat [
-        optional <| char '-'
         choice [
             // There has to be at least one digit
             // either before or after the dot.
@@ -98,37 +105,49 @@ let private realRegex =
         |> optional
     ]
 
-[<RequiresExplicitTypeArguments>]
-// We have exhausted all the cases, so let's make it private.
-let inline private genericReal< ^TReal when ^TReal: (static member Parse:    string * NumberStyles * IFormatProvider -> ^TReal)> name =
+[<CompiledName("SignedRealRegex")>]
+/// Like `unsignedRealRegex`, but with an optional
+/// sign in the beginning being allowed.
+let signedRealRegex = (optional <| char '-') <&> unsignedRealRegex
+
+[<CompiledName("FSharpOnlyGenericReal"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
+/// Creates a designtime Farkle that parses a real number
+/// into the desired number type. No bounds checking is performed.
+/// Using this function from a language other than F# will throw an exception.
+let inline genericReal< ^TReal when ^TReal: (static member Parse:    string * NumberStyles * IFormatProvider -> ^TReal)> allowSign name =
+    let regex =
+        if allowSign then
+            signedRealRegex
+        else
+            unsignedRealRegex
     terminal name
         (T (fun _ x ->
             (^TReal: (static member Parse:    string * NumberStyles * IFormatProvider -> ^TReal)
-                (x.ToString(), NumberStyles.AllowExponent ||| NumberStyles.Float, NumberFormatInfo.InvariantInfo))))
-        realRegex
+                (x.ToString(), NumberStyles.Float, NumberFormatInfo.InvariantInfo))))
+        regex
 
 [<CompiledName("Single")>]
 /// Creates a designtime Farkle that parses and returns
-/// a single-precision floating-point number. The number
+/// a signed single-precision floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot. Special values
 /// such as NaN or infinity are not recognized.
-let float32 name = genericReal<float32> name
+let float32 name = genericReal<float32> true name
 
 [<CompiledName("Double")>]
 /// Creates a designtime Farkle that parses and returns
-/// a single-precision floating-point number. The number
+/// a signed double-precision floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot. Special values
 /// such as NaN or infinity are not recognized.
-let float name = genericReal<float> name
+let float name = genericReal<float> true name
 
 [<CompiledName("Decimal")>]
 /// Creates a designtime Farkle that parses and returns
-/// a single-precision floating-point number. The number
+/// a signed decimal floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot.
-let decimal name = genericReal<decimal> name
+let decimal name = genericReal<decimal> true name
 
 let private stringTransformer = T (fun _ span ->
     let span = span.Slice(1, span.Length - 2)

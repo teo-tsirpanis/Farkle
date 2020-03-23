@@ -284,10 +284,13 @@ module DesigntimeFarkle =
     let addNoiseSymbol name regex df =
         df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
 
+    let private addComment comment df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add comment}
+
     /// Adds a line comment to the given `DesigntimeFarkle`.
     let addLineComment commentStart df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(LineComment commentStart)}
+        addComment (LineComment commentStart) df
 
     /// Adds a block comment to the given `DesigntimeFarkle`.
     let addBlockComment commentStart commentEnd df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add(BlockComment(commentStart, commentEnd))}
+        addComment (BlockComment(commentStart, commentEnd)) df

@@ -31,7 +31,8 @@ type SetOnce< [<ComparisonConditionalOn; EqualityConditionalOn>] 'T> = private {
 with
     /// Tries to set this `SetOnce`'s value to an object.
     /// Returns whether the value was changed.
-    /// This method is thread-safe.
+    /// This method is thread-safe, in the sense that only
+    /// one thread will ever be able to set a value to this object.
     member x.TrySet v =
         if Interlocked.CompareExchange(&x._IsSet, 1, 0) = 0 then
             x._Value <- v

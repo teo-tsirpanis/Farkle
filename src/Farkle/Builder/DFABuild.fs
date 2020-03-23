@@ -5,7 +5,7 @@
 
 /// Functions to generate Deterministic Finite Automata from `Regex`es.
 /// The algorithm is a modified edition of the one found at §3.9.5 in
-/// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi & Ullman.
+/// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi &amp; Ullman.
 module Farkle.Builder.DFABuild
 
 open Farkle.Common

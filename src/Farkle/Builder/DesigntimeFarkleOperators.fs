@@ -174,7 +174,7 @@ module DesigntimeFarkleOperators =
     /// the output of the given one with the given function.
     let (|>>) df (f: _ -> 'b) =
         let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
-        mapEx name f df
+        name ||= [!@ df => f]
 
     /// Creates a `DesigntimeFarkle<'T>` that recognizes many
     /// occurrences of the given one and returns them in a list.
@@ -192,8 +192,12 @@ module DesigntimeFarkleOperators =
 
     /// Like `many1`, but requires at least one element to be present.
     let many1 df =
-        nonterminalf "%s Non-empty List" df
-        ||= [!@ df .>>. many df => (fun x xs -> x :: xs)]
+        let nont = nonterminalf "%s Non-empty List" df |> nonterminal
+        nont.SetProductions(
+            !@ df .>>. nont => (fun x xs -> x :: xs),
+            !@ df => List.singleton
+        )
+        nont :> DesigntimeFarkle<_>
 
     /// Like `many`, but returns the result in
     /// any type that implements `ICollection<T>`.
@@ -201,16 +205,26 @@ module DesigntimeFarkleOperators =
         when 'TCollection :> ICollection<'T>
         and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
             let nont = sprintf "%s %s" df.Name typeof<'TCollection>.Name |> nonterminal
+
             nont.SetProductions(
                 empty => (fun () -> new 'TCollection()),
                 !@ nont .>>. df => (fun xs x -> (xs :> ICollection<_>).Add(x); xs)
             )
+
             nont :> DesigntimeFarkle<_>
 
     /// A combination of `many1` and `manyCollection`.
-    let manyCollection1 (df: DesigntimeFarkle<'T>): DesigntimeFarkle<'TCollection> =
-        sprintf "%s Non-empty %s" df.Name typeof<'TCollection>.Name
-        ||= [!@ (manyCollection df) .>>. df => (fun xs x -> xs.Add(x); xs)]
+    let manyCollection1<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
+            let nont = sprintf "%s Non-empty %s" df.Name typeof<'TCollection>.Name |> nonterminal
+
+            nont.SetProductions(
+                !@ df => (fun x -> let xs = new 'TCollection() in xs.Add x; xs),
+                !@ nont .>>. df => (fun xs x -> (xs :> ICollection<_>).Add(x); xs)
+            )
+
+            nont :> DesigntimeFarkle<_>
 
     /// Like `sep`, but requires at least one element to be present.
     let sepBy1 (sep: DesigntimeFarkle) df =

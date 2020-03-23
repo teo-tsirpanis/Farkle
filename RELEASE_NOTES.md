@@ -3,6 +3,10 @@
 * __Breaking change:__ The `PostProcessor` type was moved to the root `Farkle` namespace. Some reusable post-processors were moved to the new `Farkle.PostProcessors` module.
 * Added a function to rename designtime Farkles; it might be useful for better diagnostic messages.
 
+#### 5.4.1 - 23-03-2020
+* Refactor some designtime Farkle functions (like `many1`) to use less nonterminals.
+* Add functions and regexes to create terminals for unsigned real numbers.
+
 #### 5.4.0 - 20-03-2020
 * You can now add lexical groups in a grammar. They resemble [GOLD Parser's feature](http://www.goldparser.org/doc/grammars/define-groups.htm), but always advance by character and do not not support nesting.
 * Add a couple of methods in runtime Farkles to easily check whether building it had succeeded.

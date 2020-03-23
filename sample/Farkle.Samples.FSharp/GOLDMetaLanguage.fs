@@ -7,7 +7,6 @@ module GOLDMetaLanguage
 
 open Farkle
 open Farkle.Builder
-open System.Collections.Immutable
 
 open Regex
 

@@ -154,24 +154,25 @@ type internal AbstractNonterminal =
     /// The productions of the nonterminal.
     abstract Productions: AbstractProduction list
 
-type internal DesigntimeFarkleWithMetadata =
+type internal DesigntimeFarkleWrapper =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
     inherit DesigntimeFarkle
 
-type internal DesigntimeFarkleWithMetadata<'T> = {
-    InnerDesigntimeFarkle: DesigntimeFarkle<'T>
+type internal DesigntimeFarkleWrapper<'T> = {
+    InnerDesigntimeFarkle: DesigntimeFarkle
+    Name: string
     Metadata: GrammarMetadata
 }
 with
     static member Create (df: DesigntimeFarkle<'T>) =
         match df with
-        | :? DesigntimeFarkleWithMetadata<'T> as dfwm -> dfwm
-        | _ -> {InnerDesigntimeFarkle = df; Metadata = GrammarMetadata.Default}
+        | :? DesigntimeFarkleWrapper<'T> as dfwm -> dfwm
+        | _ -> {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = GrammarMetadata.Default}
     interface DesigntimeFarkle with
-        member x.Name = x.InnerDesigntimeFarkle.Name
+        member x.Name = x.Name
         member x.Metadata = x.Metadata
-    interface DesigntimeFarkleWithMetadata with
-        member x.InnerDesigntimeFarkle = upcast x.InnerDesigntimeFarkle
+    interface DesigntimeFarkleWrapper with
+        member x.InnerDesigntimeFarkle = x.InnerDesigntimeFarkle
     interface DesigntimeFarkle<'T>
 
 [<NoComparison; ReferenceEquality>]

@@ -135,4 +135,15 @@ let tests = testList "Designtime Farkle tests" [
 
         Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups."
     }
+
+    test "Renaming designtime Farkles works" {
+        let runtime =
+            Terminals.int "Number"
+            |> DesigntimeFarkle.rename "Integer"
+            |> RuntimeFarkle.build
+        
+        let grammar = runtime.GetGrammar()
+
+        Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect."
+    }
 ]

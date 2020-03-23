@@ -166,12 +166,10 @@ let designtime =
     let content = nonterminalU "Content"
     content.SetProductions(!% content .>> definition, !% definition)
 
-    let metadata = {
-        GrammarMetadata.Default with
-            Comments = ImmutableList.Create(BlockComment("!*", "*!"), LineComment "!")
-    }
-
     "Grammar" |||= [!% nlOpt .>> content]
-    |> DesigntimeFarkle.withMetadataUntyped metadata
+    |> DesigntimeFarkle.cast
+    |> DesigntimeFarkle.addBlockComment "!*" "*!"
+    |> DesigntimeFarkle.addLineComment "!"
+    :> DesigntimeFarkle
 
 let runtime = RuntimeFarkle.buildUntyped designtime

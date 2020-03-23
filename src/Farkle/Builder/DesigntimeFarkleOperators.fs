@@ -242,24 +242,41 @@ module DesigntimeFarkleOperators =
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to set metadata for designtime Farkles.
-/// Keep in mind that only the metadata of the _topmost_
+/// Keep in mind that apart from renames, only the metadata of the _topmost_
 /// designtime Farkle matter. Any other metadata changes will be disregarded.
 module DesigntimeFarkle =
 
+    [<Obsolete("Use DesigntimeFarkle.cast and set the metadata to it afterwards.")>]
     /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
     let withMetadataUntyped metadata df =
-        {new DesigntimeFarkleWithMetadata with
+        {new DesigntimeFarkleWrapper with
             member __.InnerDesigntimeFarkle = df
             member __.Name = df.Name
             member __.Metadata = metadata} :> DesigntimeFarkle
 
     /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
     let withMetadata metadata df =
-        {DesigntimeFarkleWithMetadata.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+        {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+
+    /// Converts an untyped designtime Farkle to a typed one that accepts an object.
+    /// This is the recommended way to apply metadata to untyped designtime Farkles.
+    /// The object they will return is typically null, but it should not be taken for granted.
+    /// After the metadata have been set, it is better to upcast back to an untyped one.
+    let cast (df: DesigntimeFarkle) =
+        match df with
+        | :? DesigntimeFarkle<obj> as dfObj -> dfObj
+        | _ -> upcast {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = df.Metadata}
+
+    /// Changes the name of a designtime Farkle. This function can be applied
+    /// anywhere, not only to the topmost one, like with other metadata changes.
+    /// Using the same designtime Farkle with a different name will create only
+    /// one grammar symbol whose name cannot be controlled by user code.
+    let rename newName df =
+        {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>
 
     /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
     let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
-    
+
     /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
     let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
 

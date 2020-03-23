@@ -47,7 +47,7 @@ module internal Symbol =
         | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
         | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
         | :? NewLine -> Symbol.NewLine
-        | :? DesigntimeFarkleWithMetadata as x -> specialize x.InnerDesigntimeFarkle
+        | :? DesigntimeFarkleWrapper as x -> specialize x.InnerDesigntimeFarkle
         | _ -> invalidArg "x" "Using a custom implementation of the \
 DesigntimeFarkle interface is not allowed."
 

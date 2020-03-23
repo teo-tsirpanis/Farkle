@@ -114,4 +114,9 @@ let tests = testList "Parser tests" [
             |> returnOrFail "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one."
     )
+
+    test "The Farkle-build grammar that recognizes the GOLD Meta-Language works well" {
+        let result = GOLDMetaLanguage.runtime.ParseFile <| getResourceFile "gml.grm"
+        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed."
+    }
 ]

@@ -31,9 +31,9 @@ with
     /// It accepts un<c>Finish</c>ed production builders with no significant members.</remarks>
     member x.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
         prods
-        |> Seq.map (fun p -> p.FinishUntyped())
+        |> Seq.cast<AbstractProduction>
         |> List.ofSeq
-        |> (fun prods -> firstProd.FinishUntyped() :: prods)
+        |> (fun prods -> firstProd :> AbstractProduction :: prods)
         |> x.Productions.TrySet
         |> ignore
     [<Obsolete("Create production builders from an array of objects.")>]

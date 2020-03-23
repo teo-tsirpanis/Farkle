@@ -38,7 +38,7 @@ type DesigntimeFarkleExtensions =
     /// The object it would return is undefined.</remarks>
     static member Cast df = DesigntimeFarkle.cast df
     [<Extension>]
-    /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.<summary>
+    /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.</summary>
     /// <remarks>Useful for diagnostic purposes.</remarks>
     static member Rename(df: DesigntimeFarkle<'TResult>, name) = DesigntimeFarkle.rename name df
     [<Extension>]

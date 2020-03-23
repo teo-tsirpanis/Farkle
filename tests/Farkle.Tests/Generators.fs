@@ -12,6 +12,7 @@ open Farkle
 open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
+open Farkle.Grammar.GOLDParser
 open Farkle.IO
 open FsCheck
 open SimpleMaths.SimpleMaths
@@ -26,6 +27,16 @@ let positionGen =
     |> Gen.three
     |> Gen.filter (fun (line, col, idx) -> line <> 0UL && col <> 0UL && line - 1UL + col - 1UL <= idx)
     |> Gen.map (fun (line, col, idx) -> {Line = line; Column = col; Index = idx})
+
+let egtEntryGen =
+    [
+        Gen.constant Entry.Empty
+        Arb.generate |> Gen.map Entry.Byte
+        Arb.generate |> Gen.map Entry.Boolean
+        Arb.generate |> Gen.map Entry.UInt32
+        Arb.generate |> Gen.map (fun (NonNull str) -> Entry.String str)
+    ]
+    |> Gen.oneof
 
 let ASTGen() =
     let rec impl size =
@@ -238,6 +249,7 @@ let farkleVsGOLDParserGen = gen {
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
+    static member EGTEntry() = Arb.fromGen egtEntryGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
     static member CS() = Arb.fromGen <| gen {

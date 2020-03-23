@@ -51,8 +51,8 @@ type ParseMessage =
         match x with
         | EndOfInput pos -> sprintf "%O Input ended" pos
         | TokenRead x -> sprintf "%O Token read: %O (%s)" x.Position x x.Symbol.Name
-        | Reduction x -> sprintf "Rule reduced: %O" x
-        | Shift x -> sprintf "The parser shifted to state %d" x
+        | Reduction x -> sprintf "Reduction: %O" x
+        | Shift x -> sprintf "Shift: %d" x
 
 /// An error the parser encountered.
 [<RequireQualifiedAccess>]

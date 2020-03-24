@@ -264,7 +264,8 @@ type Grammar = internal {
     _DFAStates: DFAState ImmutableArray
 }
 with
-    /// Metadata about the grammar. See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
+    /// Key-value pairs of strings that store informative properties about the grammar.
+    /// See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
     /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol

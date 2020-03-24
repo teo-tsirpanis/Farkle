@@ -96,7 +96,6 @@ module DesigntimeFarkleBuild =
         let noiseSymbols = ImmutableArray.CreateBuilder()
         let groups = ImmutableArray.CreateBuilder()
         let groupMap = Dictionary<AbstractGroup,_>()
-        let lineGroupsToProcess = ResizeArray()
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
@@ -114,8 +113,8 @@ module DesigntimeFarkleBuild =
                 // We want to keep the NewLine for the rest of the tokenizer to see.
                 EndingMode =
                     match gEnd with
-                    | Choice3Of3 _term -> EndingMode.Closed
-                    | _newLine -> EndingMode.Open
+                    | Some _ -> EndingMode.Closed
+                    | None -> EndingMode.Open
                 Nesting = ImmutableHashSet.Empty
             }
             terminals.Add term
@@ -179,7 +178,7 @@ module DesigntimeFarkleBuild =
                 // we queue it until the entire grammar is traversed.
                 let term = newTerminal lg.Name
                 groupMap.[lg] <- term
-                lineGroupsToProcess.Add(lg, term)
+                addTerminalGroup lg.Name term lg.Transformer lg.GroupStart None
                 LALRSymbol.Terminal term
             | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
                 LALRSymbol.Terminal groupMap.[bg]
@@ -188,7 +187,7 @@ module DesigntimeFarkleBuild =
                 let gEnd = GroupEnd bg.GroupEnd
                 groupMap.[bg] <- term
                 addDFASymbol (Regex.string bg.GroupEnd) (Choice4Of4 gEnd)
-                addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Choice3Of3 gEnd)
+                addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Some gEnd)
                 LALRSymbol.Terminal term
 
         let startSymbol =
@@ -207,21 +206,6 @@ module DesigntimeFarkleBuild =
                 root
             | LALRSymbol.Nonterminal nont -> nont
 
-        // This must be declared AFTER the start symbol,
-        // because we are now sure of what kind of symbol NewLine is.
-        let newLineGroupEnd =
-            match newLineSymbol with
-            | Choice1Of4 term -> Choice1Of3 term
-            | Choice2Of4 noise -> Choice2Of3 noise
-            // We will never reach that line.
-            | _ -> failwith "Newline cannot be represented by something other than a terminal or a noise symbol."
-
-        // Now we can add the line groups.
-        lineGroupsToProcess
-        |> Seq.iter (fun (lg, container) ->
-            usesNewLine <- true
-            addTerminalGroup lg.Name container lg.Transformer lg.GroupStart newLineGroupEnd)
-
         let handleComment comment =
             let newStartSymbol name = GroupStart(name, uint32 groups.Count)
             let addGroup name gStart gEnd em =
@@ -239,13 +223,13 @@ module DesigntimeFarkleBuild =
                 let startSymbol = newStartSymbol cStart
                 addDFASymbol (Regex.string cStart) (Choice3Of4 startSymbol)
                 usesNewLine <- true
-                addGroup "Comment Line" startSymbol newLineGroupEnd EndingMode.Open
+                addGroup "Comment Line" startSymbol None EndingMode.Open
             | BlockComment(cStart, cEnd) ->
                 let startSymbol = newStartSymbol cStart
                 let endSymbol = GroupEnd cEnd
                 addDFASymbol (Regex.string cStart) (Choice3Of4 startSymbol)
                 addDFASymbol (Regex.string cEnd) (Choice4Of4 endSymbol)
-                addGroup "Comment Block" startSymbol (Choice3Of3 endSymbol) EndingMode.Closed
+                addGroup "Comment Block" startSymbol (Some endSymbol) EndingMode.Closed
 
         // Add miscellaneous noise symbols.
         Seq.iter (fun (name, regex) ->

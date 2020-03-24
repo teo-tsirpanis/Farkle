@@ -61,10 +61,11 @@ module internal EGTLegacyReader =
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
         let wantGroupEnd x =
             match x with
-            | AnyTerminal x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> Choice1Of3 x
-            | AnyNoise x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> Choice2Of3 x
-            | AnyGroupEnd x -> Choice3Of3 x
-            | _ -> invalidEGT()
+            | AnyTerminal x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> None
+            | AnyNoise x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> None
+            | AnyGroupEnd x -> Some x
+            | x -> invalidEGTf "A group ended with %A which is not a NewLine. \
+This error is unexpected. Please report it on GitHub." x
         let wantDFASymbol x =
             match x with
             | AnyTerminal x -> Choice1Of4 x

@@ -126,8 +126,8 @@ and Group = {
     /// The symbol that represents the group's start.
     Start: GroupStart
     /// The symbol that represents the group's end.
-    // As the GOLD Parser's site says, groups can end with normal terminals as well.
-    End: Choice<Terminal, Noise, GroupEnd>
+    /// None (or null in C#) means that the group is ended by a new line.
+    End: GroupEnd option
     /// The way the group advances.
     AdvanceMode: AdvanceMode
     /// The way the group ends.
@@ -137,23 +137,7 @@ and Group = {
 }
 with
     /// Whether this group is ended by a new line.
-    member x.IsEndedByNewline =
-        // There are three kinds of groups in GOLD Parser.
-        match x.End with
-        // The group is ended by a newline, in a grammar where newlines are significant.
-        | Choice1Of3 _terminal -> true
-        // The group is ended by a newline, in a grammar where newlines are insignificant.
-        | Choice2Of3 _noise -> true
-        // The group is a block group which is ended by a group end symbol.
-        // Experiments with GOLD Parser have shown that group end symbols are literals,
-        // i.e. an arbitrary number cannot end a group.
-        // A way to cheese GOLD Parser is to redefine a newline as something else. However,
-        // it is very absurd and counterintuitive, and we cannot use actual line groups.
-        // And if we redefine NewLine, we have to redefine Whitespace as well!
-        // Allowing to redefine NewLine is a bad idea, but accepting all three possible
-        // group end symbols is a strategy Farkle.Builder should follow. We just must not allow
-        // the user to arbitrarily redefine NewLine.
-        | Choice3Of3 _groupEnd -> false
+    member x.IsEndedByNewline = x.End.IsNone
     override x.ToString() = x.Name
 
 /// A symbol that can be yielded by the DFA.

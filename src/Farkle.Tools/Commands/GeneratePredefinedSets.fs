@@ -65,18 +65,19 @@ module private Implementation =
         | _ -> fAdd x
 
     let fRecord (fAdd: _ -> unit) (mem: ReadOnlyMemory<_>) =
+        let mem = mem.Span
         lengthMustBeAtLeast mem 4
         let name = wantString mem 0
         let category = wantString mem 1 |> getCategoryFullName
         let comment = wantString mem 2
         Log.Debug("Read character set with name {Name}, category {Category} and comment {Comment}", name, category, comment)
-        let count = wantUInt16 mem 3 |> int
-        lengthMustBe mem <| 4 + 2 * count
+        let count = wantUInt32 mem 3 |> int
+        lengthMustBe mem (4 + 2 * count)
         let mem = mem.Slice(4)
         let characters = Array.zeroCreate count
         for i = 0 to count - 1 do
-            let c1 = 2 * i + 0 |> wantUInt16 mem |> char
-            let c2 = 2 * i + 1 |> wantUInt16 mem |> char
+            let c1 = wantUInt32 mem (2 * i + 0) |> char
+            let c2 = wantUInt32 mem (2 * i + 1) |> char
             Array.set characters i {CFrom = c1; CTo = c2}
         {Name = name; Category = category; Comment = comment; Characters = characters} |> fAdd
 

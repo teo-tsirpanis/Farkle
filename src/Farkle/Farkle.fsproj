@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
@@ -27,7 +27,8 @@
     <Compile Include="Collections/MultiMap.fs" />
     <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
-    <Compile Include="Grammar/GOLDParserReader.fs" />
+    <Compile Include="Grammar/EGTLegacy.fs" />
+    <Compile Include="Grammar/EGTNeo.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />

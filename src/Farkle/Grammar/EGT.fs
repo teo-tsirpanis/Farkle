@@ -15,7 +15,7 @@ module EGT =
     [<CompiledName("CreateFromStream")>]
     let ofStream stream =
         use r = new BinaryReader(stream)
-        EGTFile.GOLDParserReader.read r
+        EGTFile.EGTLegacyReader.read r
 
     /// Reads a Base64-encoded string of the EGT file and returns a `Grammar`.
     [<CompiledName("CreateFromBase64String")>]

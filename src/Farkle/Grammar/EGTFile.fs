@@ -27,6 +27,8 @@ type Entry =
     | UInt32 of intValue: uint32
     /// [omit]
     | String of stringValue: string
+    static member UInt16 (x: uint16) = UInt32 <| uint32 x
+    static member Char (x: char) = UInt32 <| uint32 x
 
 /// Functions to read EGT files.
 module internal EGTReader =
@@ -45,7 +47,7 @@ module internal EGTReader =
         if BitConverter.IsLittleEndian then
             x
         else
-            ((x &&& 0xffus) <<< 8) ||| ((x >>> 8) &&& 0xffus)
+            Binary.BinaryPrimitives.ReverseEndianness x
 
     /// Reads a null-terminated string, encoded
     /// with the UTF-16 character set from a binary reader.
@@ -126,25 +128,25 @@ module internal EGTReader =
 
     /// Raises an error if a read-only memory's
     /// length is different than the expected.
-    let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
+    let lengthMustBe (m: ReadOnlySpan<_>) expectedLength =
         if m.Length <> expectedLength then
             invalidEGTf "Length must have been %d but was %d" expectedLength m.Length
 
     /// Raises an error if a read-only memory's
     /// length is less than the expected.
-    let lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
+    let lengthMustBeAtLeast (m: ReadOnlySpan<_>) expectedLength =
         if m.Length < expectedLength then
             invalidEGTf "Length must have been at least %d but was %d" expectedLength m.Length
 
     // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
     // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
     // FFFFFFfFFFFFFF
-    let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
-    let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
-    let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
-    let wantUInt32 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
-    let wantUInt16 x idx = wantUInt32 x idx |> uint16
-    let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
+    let wantEmpty (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
+    let wantByte (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
+    let wantBoolean (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
+    let wantUInt32 (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
+    let wantChar x idx = wantUInt32 x idx |> char
+    let wantString (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
 
 /// Functions to write EGT files.
 module internal EGTWriter =

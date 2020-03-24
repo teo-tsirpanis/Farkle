@@ -31,6 +31,8 @@ module internal GrammarReader =
             else
                 invalidEGT()
 
+        let wantUInt16 mem idx = wantUInt32 mem idx |> uint16
+
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
         let wantLALRSymbol productionName x =
             match x with

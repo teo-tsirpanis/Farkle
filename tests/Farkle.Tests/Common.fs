@@ -20,7 +20,7 @@ let getResourceFile fileName = Path.Combine(resourcesPath, fileName)
 
 let loadGrammar egtFile =
     getResourceFile egtFile
-    |> GOLDParser.EGT.ofFile
+    |> EGT.ofFile
 
 let loadRuntimeFarkle egtFile =
     getResourceFile egtFile

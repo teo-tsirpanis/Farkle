@@ -7,7 +7,7 @@ namespace Farkle
 
 open Farkle.Builder
 open Farkle.Grammar
-open Farkle.Grammar.GOLDParser
+open Farkle.Grammar.EGTFile
 open Farkle.IO
 open Farkle.Parser
 open System

@@ -3,15 +3,15 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.GOLDParser
+namespace Farkle.Grammar.EGTFile
 
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Grammar.GOLDParser.EGTReader
+open Farkle.Grammar.EGTFile.EGTReader
 open System
 open System.Collections.Immutable
 
-module internal GrammarReader =
+module internal GOLDParserReader =
 
     [<AutoOpen>]
     module private Implementation =
@@ -31,17 +31,17 @@ module internal GrammarReader =
             else
                 invalidEGT()
 
-        let wantUInt16 mem idx = wantUInt32 mem idx |> uint16
-
         let wantNonterminal x = match x with | AnyNonterminal x -> x | _ -> invalidEGT()
         let wantLALRSymbol productionName x =
             match x with
             | AnyTerminal x -> LALRSymbol.Terminal x
             | AnyNonterminal x -> LALRSymbol.Nonterminal x
-            | AnyGroupEnd _ -> invalidEGTf "Production %d contains a Group End symbol, which is unsupported." productionName
+            | AnyGroupEnd _ ->
+                invalidEGTf "Production %d contains a Group End symbol, which is unsupported." productionName
             | _ -> invalidEGT()
         let wantNoise x = match x with | AnyNoise x -> x | _ -> invalidEGT()
-        let wantGroupContainer x = match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
+        let wantGroupContainer x =
+            match x with | AnyTerminal x -> Choice1Of2 x | AnyNoise x -> Choice2Of2 x | _ -> invalidEGT()
         let wantGroupStart x = match x with | AnyGroupStart x -> x | _ -> invalidEGT()
         let wantGroupEnd x =
             match x with
@@ -57,8 +57,10 @@ module internal GrammarReader =
             | AnyGroupEnd x -> Choice4Of4 x
             | _ -> invalidEGT()
 
-        let wantAdvanceMode x idx = match wantUInt16 x idx with | 0us -> AdvanceMode.Token | 1us -> AdvanceMode.Character | _ -> invalidEGT()
-        let wantEndingMode x idx = match wantUInt16 x idx with | 0us -> EndingMode.Open | 1us -> EndingMode.Closed | _ -> invalidEGT()
+        let wantAdvanceMode x idx =
+            match wantUInt16 x idx with | 0us -> AdvanceMode.Token | 1us -> AdvanceMode.Character | _ -> invalidEGT()
+        let wantEndingMode x idx =
+            match wantUInt16 x idx with | 0us -> EndingMode.Open | 1us -> EndingMode.Closed | _ -> invalidEGT()
 
         let readProperty mem =
             lengthMustBe mem 3
@@ -74,7 +76,9 @@ module internal GrammarReader =
             let wantChar idx = wantUInt16 rangesSpan idx |> char
             Array.init count (fun idx -> wantChar <| 2 * idx, wantChar <| 2 * idx + 1)
 
-        let defaultGroupIndex = UInt32.MaxValue // This is impossible to occur in a grammar file; it only goes up to 65536.
+        [<Literal>]
+        // This is impossible to occur in a grammar file; it only goes up to 65536.
+        let defaultGroupIndex = UInt32.MaxValue
 
         let readSymbol index mem =
             lengthMustBe mem 2
@@ -188,7 +192,12 @@ module internal GrammarReader =
                     | AnyEndOfFile when EOFAction.IsNone -> EOFAction <- Some srAction
                     | _ -> invalidEGT()
             for i = 0 to mem.Length / 4 - 1 do fAction i
-            {Index = index; Actions = SRActions.ToImmutable(); EOFAction = EOFAction; GotoActions = GotoActions.ToImmutable()}
+            {
+                Index = index
+                Actions = SRActions.ToImmutable()
+                EOFAction = EOFAction
+                GotoActions = GotoActions.ToImmutable()
+            }
 
         let itemTry (arr: ImmutableArray.Builder<_>) idx =
             let idx = int idx

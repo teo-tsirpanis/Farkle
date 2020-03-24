@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.GOLDParser
+namespace Farkle.Grammar
 
 open System
 open System.IO
@@ -15,7 +15,7 @@ module EGT =
     [<CompiledName("CreateFromStream")>]
     let ofStream stream =
         use r = new BinaryReader(stream)
-        GrammarReader.read r
+        EGTFile.GOLDParserReader.read r
 
     /// Reads a Base64-encoded string of the EGT file and returns a `Grammar`.
     [<CompiledName("CreateFromBase64String")>]

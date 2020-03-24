@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.GOLDParser
+namespace Farkle.Grammar.EGTFile
 
 open System
 open System.Buffers
@@ -143,6 +143,7 @@ module internal EGTReader =
     let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
     let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
     let wantUInt32 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
+    let wantUInt16 x idx = wantUInt32 x idx |> uint16
     let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
 
 /// Functions to write EGT files.

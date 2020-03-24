@@ -25,9 +25,9 @@
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/MultiMap.fs" />
-    <Compile Include="Grammar/EGTReader.fs" />
+    <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
-    <Compile Include="Grammar/GrammarReader.fs" />
+    <Compile Include="Grammar/GOLDParserReader.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />

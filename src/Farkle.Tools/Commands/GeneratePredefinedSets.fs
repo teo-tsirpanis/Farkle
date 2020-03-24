@@ -6,8 +6,8 @@
 module Farkle.Tools.Commands.GeneratePredefinedSets
 
 open Argu
-open Farkle.Grammar.GOLDParser
-open Farkle.Grammar.GOLDParser.EGTReader
+open Farkle.Grammar.EGTFile
+open Farkle.Grammar.EGTFile.EGTReader
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban

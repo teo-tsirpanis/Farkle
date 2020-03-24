@@ -123,7 +123,7 @@ let farkleGOLDGrammarEquivalenceTests =
                 if egt.StartsWith("./") then
                     loadGrammar egt
                 else
-                    GOLDParser.EGT.ofBase64String egt
+                    EGT.ofBase64String egt
             checkParserEquivalence
                 (gFarkle.Productions, gFarkle.LALRStates)
                 (gGold.Productions, gGold.LALRStates)

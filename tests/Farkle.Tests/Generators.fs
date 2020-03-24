@@ -12,7 +12,7 @@ open Farkle
 open Farkle.Builder
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Grammar.GOLDParser
+open Farkle.Grammar.EGTFile
 open Farkle.IO
 open FsCheck
 open SimpleMaths.SimpleMaths

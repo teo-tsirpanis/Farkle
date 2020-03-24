@@ -126,13 +126,13 @@ module internal EGTReader =
         readNullTerminatedString r |> fHeaderCheck
         readRecords fRecord r
 
-    /// Raises an error if a read-only memory's
+    /// Raises an error if a read-only span's
     /// length is different than the expected.
     let lengthMustBe (m: ReadOnlySpan<_>) expectedLength =
         if m.Length <> expectedLength then
             invalidEGTf "Length must have been %d but was %d" expectedLength m.Length
 
-    /// Raises an error if a read-only memory's
+    /// Raises an error if a read-only span's
     /// length is less than the expected.
     let lengthMustBeAtLeast (m: ReadOnlySpan<_>) expectedLength =
         if m.Length < expectedLength then

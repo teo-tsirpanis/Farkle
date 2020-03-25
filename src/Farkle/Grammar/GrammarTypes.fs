@@ -113,12 +113,26 @@ with
     member x.Name = match x with | GroupStart (name, _) -> name
     override x.ToString() = sprintf "(%s)" x.Name
 
+/// A symbol that can be yielded by the DFA.
+type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
+
+/// Functions to work with `DFASymbol`s.
+module DFASymbol =
+
+    /// Converts a `DFASymbol` to a string.
+    let toString: DFASymbol -> _ =
+        function
+        | Choice1Of4 term -> term.ToString()
+        | Choice2Of4 noise -> noise.ToString()
+        | Choice3Of4 gStart -> gStart.ToString()
+        | Choice4Of4 gEnd -> gEnd.ToString()
+
 /// A lexical group.
 /// In GOLD, lexical groups are used for situations where a number
 /// of recognized tokens should be organized into a single "group".
 /// This mechanism is most commonly used to handle line and block comments.
 /// However, it is not limited to "noise", but can be used for any content.
-and Group = {
+type Group = {
     /// The name of the group.
     Name: string
     /// The symbol that represents the group's content.
@@ -138,21 +152,16 @@ and Group = {
 with
     /// Whether this group is ended by a new line.
     member x.IsEndedByNewline = x.End.IsNone
+    /// Whether this group is ended by the given `DFASymbol`.
+    member x.IsEndedBy (sym: DFASymbol) =
+        match sym, x.End with
+        | Choice1Of4 (Terminal(_, name)), None
+        | Choice2Of4 (Noise(name)), None ->
+            // GOLD Parser might use a different capitalization for NewLines.
+            name.Equals("NewLine", StringComparison.OrdinalIgnoreCase)
+        | Choice4Of4 ge, Some ge' -> ge = ge'
+        | _ -> false
     override x.ToString() = x.Name
-
-/// A symbol that can be yielded by the DFA.
-type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>
-
-/// Functions to work with `DFASymbol`s.
-module DFASymbol =
-
-    /// Converts a `DFASymbol` to a string.
-    let toString: DFASymbol -> _ =
-        function
-        | Choice1Of4 term -> term.ToString()
-        | Choice2Of4 noise -> noise.ToString()
-        | Choice3Of4 gStart -> gStart.ToString()
-        | Choice4Of4 gEnd -> gEnd.ToString()
 
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.

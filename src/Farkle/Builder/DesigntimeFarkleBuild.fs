@@ -103,7 +103,10 @@ module DesigntimeFarkleBuild =
             let container = Choice1Of2 term
             let gStart' = GroupStart(gStart, uint32 groups.Count)
             addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
-            // The end symbol might be a NewLine, so it will not be added to the DFA here.
+            match gEnd with
+            | Some (GroupEnd str as ge) ->
+                addDFASymbol (Regex.string str) (Choice4Of4 ge)
+            | None -> usesNewLine <- true
             groups.Add {
                 Name = name
                 ContainerSymbol = container
@@ -186,7 +189,6 @@ module DesigntimeFarkleBuild =
                 let term = newTerminal bg.Name
                 let gEnd = GroupEnd bg.GroupEnd
                 groupMap.[bg] <- term
-                addDFASymbol (Regex.string bg.GroupEnd) (Choice4Of4 gEnd)
                 addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Some gEnd)
                 LALRSymbol.Terminal term
 

@@ -16,25 +16,6 @@ module Tokenizer =
 
     type private TokenizerState = (CharSpan * Group) list
 
-    let private (|CanEndGroup|_|) x =
-        // There are three kinds of groups in GOLD Parser.
-        match x with
-        // The group is ended by a newline, in a grammar where newlines are significant.
-        | Choice1Of4 _ -> Some None
-        // The group is ended by a newline, in a grammar where newlines are insignificant.
-        | Choice2Of4 _ -> Some None
-        | Choice3Of4 _ -> None
-        // The group is a block group which is ended by a group end symbol.
-        // Experiments with GOLD Parser have shown that group end symbols are literals,
-        // i.e. an arbitrary number cannot end a group.
-        // A way to cheese GOLD Parser is to redefine a newline as something else. However,
-        // it is very absurd and counterintuitive, and we cannot use actual line groups.
-        // And if we redefine NewLine, we have to redefine Whitespace as well!
-        // Allowing to redefine NewLine is a bad idea, but accepting all three possible
-        // group end symbols is a strategy Farkle.Builder should follow. We just must not allow
-        // the user to arbitrarily redefine NewLine.
-        | Choice4Of4 groupEnd -> Some <| Some groupEnd
-
     /// Returns whether to unpin the character(s)
     /// encountered by the tokenizer while being inside a group.
     /// If the group stack's bottom-most container symbol is
@@ -123,8 +104,7 @@ module Tokenizer =
                     impl ((span, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
-            | Some (Ok (CanEndGroup gSym), tok), (popped, poppedGroup) :: xs
-                when poppedGroup.End = gSym ->
+            | Some (Ok sym, tok), (popped, poppedGroup) :: xs when poppedGroup.IsEndedBy sym ->
                 let popped =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->

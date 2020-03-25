@@ -27,8 +27,7 @@ type Entry =
     | UInt32 of intValue: uint32
     /// [omit]
     | String of stringValue: string
-    static member UInt16 (x: uint16) = UInt32 <| uint32 x
-    static member Char (x: char) = UInt32 <| uint32 x
+    static member inline Int x = UInt32 <| uint32 x
 
 /// Functions to read EGT files.
 module internal EGTReader =

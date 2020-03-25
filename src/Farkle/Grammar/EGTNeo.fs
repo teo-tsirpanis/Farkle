@@ -103,22 +103,25 @@ module EGTNeoReader =
                     match span.[i + 4] with
                     | Entry.Empty -> None
                     | Entry.String str -> Some <| GroupEnd str
-                    | e -> failwithf "Cannot retrieve group end for %s. Got %A." name e
+                    | e -> invalidEGTf "Cannot retrieve group end for %s. Got %A." name e
                 let advanceMode =
-                    match span.[i + 5] with
-                    | Entry.Byte 'T'B -> AdvanceMode.Token
-                    | Entry.Byte 'C'B -> AdvanceMode.Character
-                    | e -> failwithf "Cannot retrieve group advance mode for %s. Got %A." name e
+                    match wantByte span (i + 5) with
+                    | 'T'B -> AdvanceMode.Token
+                    | 'C'B -> AdvanceMode.Character
+                    | x -> invalidEGTf "Cannot retrieve group advance mode for %s. Got %x." name x
                 let endingMode =
-                    match span.[i + 6] with
-                    | Entry.Byte 'O'B -> EndingMode.Open
-                    | Entry.Byte 'C'B -> EndingMode.Closed
-                    | e -> failwithf "Cannot retrieve group ending mode for %s. Got %A." name e
+                    match wantByte span (i + 6) with
+                    | 'O'B -> EndingMode.Open
+                    | 'C'B -> EndingMode.Closed
+                    | x -> invalidEGTf "Cannot retrieve group ending mode for %s. Got %x." name x
+                let nestingCount = wantUInt32 span (i + 7) |> int
+                i <- i + 8
+
                 let nesting =
-                    let nestingCount = wantUInt32 span (i + 7) |> int
                     let nesting = ImmutableHashSet.CreateBuilder()
-                    for j = 0 to nestingCount - 1 do
-                        nesting.Add(wantUInt32 span (i + 8 + j)) |> ignore
+                    let span = span.Slice(i)
+                    for i = 0 to span.Length - 1 do
+                        nesting.Add(wantUInt32 span i) |> ignore
                     nesting.ToImmutable()
 
                 groups.Add {
@@ -130,14 +133,48 @@ module EGTNeoReader =
                     EndingMode = endingMode
                     Nesting = nesting
                 }
-                i <- i + 8 + nesting.Count
+                i <- i + nestingCount
 
             groups.MoveToImmutable()
+
+        let readProductions (terminals: ImmutableArray<_>) (nonterminals: ImmutableArray<_>) span =
+            let span = checkHeader span productionsHeader
+            let prodCount = wantUInt32 span 0 |> int
+            let prods = ImmutableArray.CreateBuilder(prodCount)
+
+            let mutable i = 1
+            while i < span.Length do
+                let head = nonterminals.[int <| wantUInt32 span (i + 0)]
+
+                let handleLength = int <| wantUInt32 span (i + 1)
+                i <- i + 2
+
+                let handle =
+                    let handle = ImmutableArray.CreateBuilder(handleLength)
+                    let span = span.Slice(i)
+                    for i = 0 to handleLength - 1 do
+                        let idx = wantUInt32 span (2 * i + 1) |> int
+                        match wantByte span (2 * i) with
+                        | 'T'B -> LALRSymbol.Terminal terminals.[idx]
+                        | 'N'B -> LALRSymbol.Nonterminal nonterminals.[idx]
+                        | x -> invalidEGTf "Cannot retrieve production handle tag. Got %x" x
+                        |> handle.Add
+                    handle.MoveToImmutable()
+
+                prods.Add {
+                    Index = uint32 prods.Count
+                    Head = head
+                    Handle = handle
+                }
+                i <- i + 2 * handleLength
+
+            prods.MoveToImmutable()
 
 /// Functions to write a grammar to EGTneo files.
 module EGTNeoWriter =
 
     open EGTWriter
+    open System.Buffers
 
     module private Implementation =
 
@@ -201,6 +238,15 @@ module EGTNeoWriter =
             indexOf "Start symbol" nonterminals startSymbol
             |> writeSingleValued w startSymbolHeader
 
+        let writeResizeArray w (xs: ResizeArray<_>) =
+            let count = xs.Count
+            let mem = ArrayPool.Shared.Rent count
+            try
+                xs.CopyTo(mem)
+                writeRecord w (ReadOnlySpan(mem, 0, count))
+            finally
+                ArrayPool.Shared.Return mem
+
         let writeGroups w noiseSymbols (groups: ImmutableArray<Group>) =
             let arr = ResizeArray()
 
@@ -209,6 +255,7 @@ module EGTNeoWriter =
 
             for i = 0 to groups.Length - 1 do
                 let group = groups.[i]
+
                 arr.Add <| Entry.String group.Name
                 arr.Add <| Entry.Boolean group.IsTerminal
                 arr.Add <|
@@ -230,10 +277,33 @@ module EGTNeoWriter =
                     | EndingMode.Open -> 'O'B
                     | EndingMode.Closed -> 'C'B
                     |> Entry.Byte)
+
                 arr.Add <| Entry.Int group.Nesting.Count
                 group.Nesting
                 |> Seq.sort
                 |> Seq.iter(Entry.UInt32 >> arr.Add)
 
-            let arr = arr.ToArray()
-            writeRecord w (ReadOnlySpan arr)
+            writeResizeArray w arr
+
+        let writeProductions w (productions: ImmutableArray<Production>) =
+            let arr = ResizeArray()
+
+            arr.Add <| Entry.String productionsHeader
+            arr.Add <| Entry.Int productions.Length
+
+            for i = 0 to productions.Length - 1 do
+                let prod = productions.[i]
+
+                arr.Add <| Entry.Int prod.Head.Index
+                arr.Add <| Entry.Int prod.Handle.Length
+                prod.Handle
+                |> Seq.iter (
+                    function
+                    | LALRSymbol.Terminal term ->
+                        arr.Add <| Entry.Byte 'T'B
+                        arr.Add <| Entry.Int term.Index
+                    | LALRSymbol.Nonterminal nont ->
+                        arr.Add <| Entry.Byte 'N'B
+                        arr.Add <| Entry.Int nont.Index)
+
+            writeResizeArray w arr

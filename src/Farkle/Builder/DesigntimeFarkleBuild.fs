@@ -25,12 +25,17 @@ type GrammarDefinition = {
 
     DFASymbols: (Regex * DFASymbol) list
 
+    // These two fields contain code from user assemblies.
+    // They must not be preserved across AppDomain boundaries.
+    [<NonSerialized>]
     Transformers: ImmutableArray<T<obj>>
+    [<NonSerialized>]
     Fusers: ImmutableArray<obj[] -> obj>
 }
 
+[<RequireQualifiedAccess>]
 /// A strongly-typed representation of a `DesigntimeFarkle`.
-type [<RequireQualifiedAccess>] internal Symbol =
+type internal Symbol =
     | Terminal of AbstractTerminal
     | Nonterminal of AbstractNonterminal
     | LineGroup of AbstractLineGroup
@@ -79,7 +84,7 @@ module DesigntimeFarkleBuild =
         // DFASymbol will determine the representation
         // of the newline symbol. By default it is set to
         // a noise symbol. It can be also set to a terminal,
-        // if they are needed by a profuction.
+        // if they are needed by a production.
         let mutable newLineSymbol = Choice2Of4 noiseNewLine
         let metadata = df.Metadata
         let terminals = ImmutableArray.CreateBuilder()
@@ -362,9 +367,9 @@ module DesigntimeFarkleBuild =
             }
         }
 
-    /// Creates a `Grammar` and a `PostProcessor`
-    /// from a typed `DesigntimeFarkle`.
-    /// The construction of the grammar may fail.
+    /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
+    /// The construction of the grammar may fail. In this case, the output of the
+    /// post-processor is indeterminate.
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
         let myLovelyGrammarDefinition = createGrammarDefinition df

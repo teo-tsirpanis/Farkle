@@ -168,9 +168,9 @@ module RuntimeFarkle =
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         match rf.Grammar with
         | Ok (grammar, oops) ->
-            let fTokenize input = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor fMessage input
+            let fTokenize = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor fMessage
             try
-                LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input :?> 'TResult |> Ok
+                LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input |> Ok
             with
             | ParseError msg -> msg |> FarkleError.ParseError |> Error
         | Error x -> Error <| FarkleError.BuildError x

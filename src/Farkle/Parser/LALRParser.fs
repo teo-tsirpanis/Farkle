@@ -41,7 +41,7 @@ module LALRParser =
     /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (oops: OptimizedOperations) (pp: PostProcessor<_>) fToken (input: CharStream) =
+    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (oops: OptimizedOperations) (pp: PostProcessor<'TResult>) fToken (input: CharStream) =
         let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParseError |> raise
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
@@ -85,4 +85,4 @@ module LALRParser =
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term
                     | None -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
-        impl (fToken input) lalrStates.[0] [lalrStates.[0], null]
+        impl (fToken input) lalrStates.[0] [lalrStates.[0], null] :?> 'TResult

@@ -13,7 +13,7 @@
     </FsLex>
     <Compile Include="Lexer.fs" />
     <Compile Include="FsLexYacc.fs" />
-    <Farkle Include="SimpleMaths.egt" Namespace="SimpleMaths" />
+    <Farkle Include="../../tests/resources/SimpleMaths.egt" Namespace="SimpleMaths" />
     <Compile Include="SimpleMaths.g.fs" />
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />

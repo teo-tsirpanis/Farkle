@@ -31,11 +31,13 @@ let testParser grammarFile displayName text =
         testImpl "dynamic" (fun x -> new StringReader(x) |> CharStream.ofTextReader)
     ]
 
+let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
+
 [<Tests>]
 let tests = testList "Parser tests" [
     [
         "simple.egt", "\"111*555\"", "111 * 555"
-        "gml.egt", "its own definition file", File.ReadAllText <| getResourceFile "gml.grm"
+        "gml.egt", "its own definition file", gmlSourceContent
     ]
     |> List.collect ((<|||) testParser)
     |> testList "Domain-ignorant parsing tests"
@@ -116,7 +118,7 @@ let tests = testList "Parser tests" [
     )
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
-        let result = GOLDMetaLanguage.runtime.ParseFile <| getResourceFile "gml.grm"
+        let result = GOLDMetaLanguage.runtime.Parse gmlSourceContent
         Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed."
     }
 ]

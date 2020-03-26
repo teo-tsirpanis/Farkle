@@ -13,18 +13,22 @@ open System.IO
 open System.Reflection
 
 // It guarantees to work regardless of current directory.
-// The resources folder is copied to the output directory.
+// The resources folder is copied alongside with the executable.
 let resourcesPath = Assembly.GetExecutingAssembly().Location |> Path.GetDirectoryName
+
+let allEGTFiles =
+    Directory.GetFiles(resourcesPath, "*.egt")
+    |> List.ofArray
 
 let getResourceFile fileName = Path.Combine(resourcesPath, fileName)
 
-let loadGrammar egtFile =
+let loadGrammar (egtFile: string) =
     getResourceFile egtFile
     |> EGT.ofFile
 
 let loadRuntimeFarkle egtFile =
-    getResourceFile egtFile
-    |> RuntimeFarkle.ofEGTFile PostProcessors.ast
+    loadGrammar egtFile
+    |> RuntimeFarkle.create PostProcessors.ast
 
 let returnOrFail msg x =
     match x with

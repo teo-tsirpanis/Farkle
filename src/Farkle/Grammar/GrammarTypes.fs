@@ -226,24 +226,29 @@ type LALRAction =
     | Shift of uint32
     /// This action indicates the parser to reduce a `Production`.
     | Reduce of Production
-    /// When the parser encounters this action for a given symbol, the input text is accepted as correct and parsing ends.
+    /// When the parser encounters this action for a given symbol,
+    /// the input text is accepted as correct and parsing ends.
     | Accept
     override x.ToString() =
         match x with
-        | Shift x -> sprintf "Shift to state %d" x
-        | Reduce x -> sprintf "Reduce production %O" x
+        | Shift x -> sprintf "Shift: %d" x
+        // Shift has a colon, Reduction doesn't.
+        // This way, both words have the same number of characters.
+        | Reduce x -> sprintf "Reduce %O" x
         | Accept -> "Accept"
 
 /// A LALR state. Many of them define the parsing logic of a `Grammar`.
-and LALRState = {
+type LALRState = {
     /// The index of the state.
     Index: uint32
-    /// The available next `LALRAction`s of the state, depending on the next `Terminal` encountered.
+    /// The available next `LALRAction`s of the state,
+    /// depending on the next `Terminal` encountered.
     Actions: ImmutableDictionary<Terminal, LALRAction>
     /// The available `LALRAction` to be taken if input ends.
     EOFAction: LALRAction option
-    /// The available GOTO actions of the state.
-    /// These actions are used when a production is reduced and the parser jumps to the state that represents the shifted nonterminal.
+    /// The available GOTO actions of the state. These actions
+    /// are used when a production is reduced and the parser
+    /// jumps to the state that represents the shifted nonterminal.
     GotoActions: ImmutableDictionary<Nonterminal, uint32>
 }
 with

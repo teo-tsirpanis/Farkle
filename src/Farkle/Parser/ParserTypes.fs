@@ -51,7 +51,7 @@ type ParseMessage =
         match x with
         | EndOfInput pos -> sprintf "%O Input ended" pos
         | TokenRead x -> sprintf "%O Token read: %O (%s)" x.Position x x.Symbol.Name
-        | Reduction x -> sprintf "Reduction: %O" x
+        | Reduction x -> sprintf "Reduce %O" x
         | Shift x -> sprintf "Shift: %d" x
 
 /// An error the parser encountered.

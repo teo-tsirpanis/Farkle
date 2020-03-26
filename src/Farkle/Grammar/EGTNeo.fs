@@ -154,7 +154,7 @@ module EGTNeoReader =
                     let span = span.Slice(i)
                     for i = 0 to handleLength - 1 do
                         let idx = wantUInt32 span (2 * i + 1) |> int
-                        match wantByte span (2 * i) with
+                        match wantByte span (2 * i + 0) with
                         | 'T'B -> LALRSymbol.Terminal terminals.[idx]
                         | 'N'B -> LALRSymbol.Nonterminal nonterminals.[idx]
                         | x -> invalidEGTf "Cannot retrieve production handle tag. Got %x" x
@@ -169,6 +169,60 @@ module EGTNeoReader =
                 i <- i + 2 * handleLength
 
             prods.MoveToImmutable()
+
+        let readLALRAction (productions: ImmutableArray<_>) span idx =
+            match wantByte span idx, span.[idx + 1] with
+            | 'S'B, Entry.UInt32 x -> LALRAction.Shift x
+            | 'R'B, Entry.UInt32 x -> LALRAction.Reduce productions.[int x]
+            | 'A'B, _ -> LALRAction.Accept
+            | x, e -> invalidEGTf "Invalid LALR action entries. Got %x and %A" x e
+
+        let readLALRStates (terminals: ImmutableArray<_>) (nonterminals: ImmutableArray<_>) productions span =
+            let span = checkHeader span lalrHeader
+            let stateCount = wantUInt32 span 0 |> int
+            let states = ImmutableArray.CreateBuilder(stateCount)
+
+            let mutable i = 1
+            while i < span.Length do
+                let eofAction =
+                    match span.[i + 0] with
+                    | Entry.Empty -> None
+                    | _ -> Some <| readLALRAction productions span (i + 1)
+
+                let actionCount = wantUInt32 span (i + 3) |> int
+                i <- i + 4
+
+                let actions =
+                    let actions = ImmutableDictionary.CreateBuilder()
+                    let span = span.Slice i
+                    for i = 0 to actionCount - 1 do
+                        let term = terminals.[wantUInt32 span (3 * i + 0) |> int]
+                        let action = readLALRAction productions span (3 * i + 1)
+                        actions.Add(term, action)
+                    actions.ToImmutable()
+                i <- i + 3 * actionCount
+
+                let gotoCount = wantUInt32 span i |> int
+                i <- i + 1
+
+                let goto =
+                    let goto = ImmutableDictionary.CreateBuilder()
+                    let span = span.Slice i
+                    for i = 0 to gotoCount - 1 do
+                        let nont = nonterminals.[wantUInt32 span (2 * i + 0) |> int]
+                        let idx = wantUInt32 span (2 * i + 1)
+                        goto.Add(nont, idx)
+                    goto.ToImmutable()
+                i <- i + 2 * gotoCount
+
+                states.Add {
+                    Index = uint32 states.Count
+                    Actions = actions
+                    EOFAction = eofAction
+                    GotoActions = goto
+                }
+
+            states.MoveToImmutable()
 
 /// Functions to write a grammar to EGTneo files.
 module EGTNeoWriter =
@@ -305,5 +359,46 @@ module EGTNeoWriter =
                     | LALRSymbol.Nonterminal nont ->
                         arr.Add <| Entry.Byte 'N'B
                         arr.Add <| Entry.Int nont.Index)
+
+            writeResizeArray w arr
+
+        let writeLALRAction action (arr: ResizeArray<_>) =
+            match action with
+            | LALRAction.Shift idx ->
+                arr.Add <| Entry.Byte 'S'B
+                arr.Add <| Entry.UInt32 idx
+            | LALRAction.Reduce {Index = idx} ->
+                arr.Add <| Entry.Byte 'R'B
+                arr.Add <| Entry.UInt32 idx
+            | LALRAction.Accept ->
+                arr.Add <| Entry.Byte 'A'B
+                arr.Add <| Entry.Empty
+
+        let writeLALRStates w (states: ImmutableArray<LALRState>) =
+            let arr = ResizeArray()
+
+            arr.Add <| Entry.String lalrHeader
+            arr.Add <| Entry.Int states.Length
+
+            for i = 0 to states.Length - 1 do
+                let s = states.[i]
+
+                match s.EOFAction with
+                | Some x -> writeLALRAction x arr
+                | None ->
+                    arr.Add <| Entry.Byte 0uy
+                    arr.Add Entry.Empty
+
+                arr.Add <| Entry.Int s.Actions.Count
+                s.Actions
+                |> Seq.iter (fun (KeyValue(term, action)) ->
+                    arr.Add <| Entry.UInt32 term.Index
+                    writeLALRAction action arr)
+
+                arr.Add <| Entry.Int s.GotoActions.Count
+                s.GotoActions
+                |> Seq.iter (fun (KeyValue(nont, idx)) ->
+                    arr.Add <| Entry.UInt32 nont.Index
+                    arr.Add <| Entry.UInt32 idx)
 
             writeResizeArray w arr

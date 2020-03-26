@@ -21,7 +21,7 @@ module private Implementation =
     let checkHeader span hdr =
         lengthMustBeAtLeast span 1
         let h = wantString span 0
-        if h <> hdr then
+        if h = hdr then
             span.Slice 1
         else
             invalidEGTf "Invalid EGTneo section header: expected '%s', got '%s'." hdr h
@@ -50,7 +50,7 @@ module private Implementation =
 
     let readTerminals span = readLALRSymbols terminalsHeader Terminal span
 
-    let readNonterminals span = readLALRSymbols terminalsHeader Nonterminal span
+    let readNonterminals span = readLALRSymbols nonterminalsHeader Nonterminal span
 
     let readNoiseSymbols span = readLALRSymbols noiseSymbolsHeader (snd >> Noise) span
 
@@ -101,7 +101,7 @@ module private Implementation =
             let nesting =
                 let nesting = ImmutableHashSet.CreateBuilder()
                 let span = span.Slice(i)
-                for i = 0 to span.Length - 1 do
+                for i = 0 to nestingCount - 1 do
                     nesting.Add(wantUInt32 span i) |> ignore
                 nesting.ToImmutable()
 
@@ -168,10 +168,10 @@ module private Implementation =
             let eofAction =
                 match span.[i + 0] with
                 | Entry.Empty -> None
-                | _ -> Some <| readLALRAction productions span (i + 1)
+                | _ -> Some <| readLALRAction productions span (i + 0)
 
-            let actionCount = wantUInt32 span (i + 3) |> int
-            i <- i + 4
+            let actionCount = wantUInt32 span (i + 2) |> int
+            i <- i + 3
 
             let actions =
                 let actions = ImmutableDictionary.CreateBuilder()
@@ -251,6 +251,7 @@ module private Implementation =
                 match RangeMap.ofRanges (edges.ToArray()) with
                 | Some edges -> edges
                 | None -> invalidEGTf "Invalid DFA state range map."
+            i <- i + 3 * edgeCount
 
             states.Add {
                 Index = uint32 states.Count

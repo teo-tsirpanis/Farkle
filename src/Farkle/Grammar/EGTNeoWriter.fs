@@ -16,6 +16,8 @@ open System.Collections.Immutable
 
 [<AutoOpen>]
 module private Implementation =
+    
+    type IndexMap = ImmutableDictionary<uint32, uint32>
 
     let writeProperties w (props: ImmutableDictionary<_,_>) =
         let len = 1 + 2 * props.Count
@@ -33,15 +35,16 @@ module private Implementation =
     let inline writeLALRSymbols w header (symbols: ImmutableArray<_>) =
         let len = 1 + symbols.Length
         let arr = Array.zeroCreate len
+        let dict = ImmutableDictionary.CreateBuilder()
 
         arr.[0] <- Entry.String header
         for i = 0 to symbols.Length - 1 do
             let sym = symbols.[i]
-            if (^Symbol: (member Index: uint32) (sym)) <> uint32 i then
-                failwithf "%A is out of order (found at position %d)." sym i
+            dict.[(^Symbol: (member Index: uint32) (sym))] <- uint32 i
             arr.[i + 1] <- Entry.String (^Symbol: (member Name: string) (sym))
 
         writeRecord w (ReadOnlySpan arr)
+        dict.ToImmutable()
 
     let writeTerminals w (terms: ImmutableArray<Terminal>) =
         writeLALRSymbols w terminalsHeader terms
@@ -71,10 +74,11 @@ module private Implementation =
     let indexOf message (xs: ImmutableArray<_>) x =
         match xs.IndexOf x with
         | -1 -> failwithf "%s %O not found" message x
-        | idx -> Entry.Int idx
+        | idx -> uint32 idx
 
-    let writeStartSymbol w (nonterminals: ImmutableArray<Nonterminal>) startSymbol =
-        indexOf "Start symbol" nonterminals startSymbol
+    let writeStartSymbol w (nonterminalMap: IndexMap) (startSymbol: Nonterminal) =
+        nonterminalMap.[startSymbol.Index]
+        |> Entry.UInt32
         |> writeSingleValued w startSymbolHeader
 
     let writeResizeArray w (xs: ResizeArray<_>) =
@@ -86,7 +90,7 @@ module private Implementation =
         finally
             ArrayPool.Shared.Return mem
 
-    let writeGroups w noiseSymbols (groups: ImmutableArray<Group>) =
+    let writeGroups w noiseSymbols (terminalMap: IndexMap) (groups: ImmutableArray<Group>) =
         let arr = ResizeArray()
 
         arr.Add <| Entry.String groupsHeader
@@ -98,9 +102,10 @@ module private Implementation =
             arr.Add <| Entry.String group.Name
             arr.Add <| Entry.Boolean group.IsTerminal
             arr.Add <|
-                match group.ContainerSymbol with
-                | Choice1Of2(Terminal(idx, _)) -> Entry.UInt32 idx
+                (match group.ContainerSymbol with
+                | Choice1Of2(Terminal(idx, _)) -> terminalMap.[idx]
                 | Choice2Of2 x -> indexOf "Noise symbol" noiseSymbols x
+                |> Entry.UInt32)
             arr.Add <| match group.Start with GroupStart(name, _) -> Entry.String name
             arr.Add <|
                 match group.End with
@@ -124,7 +129,8 @@ module private Implementation =
 
         writeResizeArray w arr
 
-    let writeProductions w (productions: ImmutableArray<Production>) =
+    let writeProductions w (terminalMap: IndexMap) (nonterminalMap: IndexMap)
+        (productions: ImmutableArray<Production>) =
         let arr = ResizeArray()
 
         arr.Add <| Entry.String productionsHeader
@@ -133,17 +139,17 @@ module private Implementation =
         for i = 0 to productions.Length - 1 do
             let prod = productions.[i]
 
-            arr.Add <| Entry.Int prod.Head.Index
+            arr.Add <| Entry.Int nonterminalMap.[prod.Head.Index]
             arr.Add <| Entry.Int prod.Handle.Length
             prod.Handle
             |> Seq.iter (
                 function
                 | LALRSymbol.Terminal term ->
                     arr.Add <| Entry.Byte 'T'B
-                    arr.Add <| Entry.Int term.Index
+                    arr.Add <| Entry.Int terminalMap.[term.Index]
                 | LALRSymbol.Nonterminal nont ->
                     arr.Add <| Entry.Byte 'N'B
-                    arr.Add <| Entry.Int nont.Index)
+                    arr.Add <| Entry.Int nonterminalMap.[nont.Index])
 
         writeResizeArray w arr
 
@@ -159,7 +165,7 @@ module private Implementation =
             arr.Add <| Entry.Byte 'A'B
             arr.Add <| Entry.Empty
 
-    let writeLALRStates w (states: ImmutableArray<LALRState>) =
+    let writeLALRStates w (terminalMap: IndexMap) (nonterminalMap: IndexMap) (states: ImmutableArray<LALRState>) =
         let arr = ResizeArray()
 
         arr.Add <| Entry.String lalrHeader
@@ -171,24 +177,24 @@ module private Implementation =
             match s.EOFAction with
             | Some x -> writeLALRAction x arr
             | None ->
-                arr.Add <| Entry.Byte 0uy
+                arr.Add Entry.Empty
                 arr.Add Entry.Empty
 
             arr.Add <| Entry.Int s.Actions.Count
             s.Actions
             |> Seq.iter (fun (KeyValue(term, action)) ->
-                arr.Add <| Entry.UInt32 term.Index
+                arr.Add <| Entry.UInt32 terminalMap.[term.Index]
                 writeLALRAction action arr)
 
             arr.Add <| Entry.Int s.GotoActions.Count
             s.GotoActions
             |> Seq.iter (fun (KeyValue(nont, idx)) ->
-                arr.Add <| Entry.UInt32 nont.Index
+                arr.Add <| Entry.UInt32 nonterminalMap.[nont.Index]
                 arr.Add <| Entry.UInt32 idx)
 
         writeResizeArray w arr
 
-    let writeDFAStates w noiseSymbols (groups: ImmutableArray<_>) (states: ImmutableArray<DFAState>) =
+    let writeDFAStates w (terminalMap: IndexMap) noiseSymbols (groups: ImmutableArray<_>) (states: ImmutableArray<DFAState>) =
         let arr = ResizeArray()
         let writeUInt32Maybe x =
             match x with
@@ -204,14 +210,14 @@ module private Implementation =
 
             match s.AcceptSymbol with
             | None ->
-                arr.Add <| Entry.Byte 0uy
+                arr.Add Entry.Empty
                 arr.Add Entry.Empty
             | Some (Choice1Of4 term) ->
                 arr.Add <| Entry.Byte 'T'B
-                arr.Add <| Entry.UInt32 term.Index
+                arr.Add <| Entry.UInt32 terminalMap.[term.Index]
             | Some (Choice2Of4 noise) ->
                 arr.Add <| Entry.Byte 'N'B
-                arr.Add <| indexOf "Noise symbol" noiseSymbols noise
+                indexOf "Noise symbol" noiseSymbols noise |> Entry.UInt32 |> arr.Add
             | Some (Choice3Of4 gs) ->
                 arr.Add <| Entry.Byte 'G'B
                 groups
@@ -239,13 +245,16 @@ module private Implementation =
         writeResizeArray w arr
 
 let write w (grammar: Grammar) =
-    // For symmetry, the header will not be written here.
+    // For symmetry with the reader, the header
+    // will be written at the EGT module.
     writeProperties w grammar.Properties
-    writeTerminals w grammar.Symbols.Terminals
-    writeNonterminals w grammar.Symbols.Nonterminals
+    // In GOLD Parser's EGT files, the symbols do
+    // not start from zero; we have to adjust them.
+    let terminalMap = writeTerminals w grammar.Symbols.Terminals
+    let nonterminalMap = writeNonterminals w grammar.Symbols.Nonterminals
     writeNoiseSymbols w grammar.Symbols.NoiseSymbols
-    writeStartSymbol w grammar.Symbols.Nonterminals grammar.StartSymbol
-    writeGroups w grammar.Symbols.NoiseSymbols grammar.Groups
-    writeProductions w grammar.Productions
-    writeLALRStates w grammar.LALRStates
-    writeDFAStates w grammar.Symbols.NoiseSymbols grammar.Groups grammar.DFAStates
+    writeStartSymbol w nonterminalMap grammar.StartSymbol
+    writeGroups w grammar.Symbols.NoiseSymbols terminalMap grammar.Groups
+    writeProductions w terminalMap nonterminalMap grammar.Productions
+    writeLALRStates w terminalMap nonterminalMap grammar.LALRStates
+    writeDFAStates w terminalMap grammar.Symbols.NoiseSymbols grammar.Groups grammar.DFAStates

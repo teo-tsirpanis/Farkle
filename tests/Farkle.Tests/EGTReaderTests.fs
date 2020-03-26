@@ -7,6 +7,7 @@ module Farkle.Tests.EGTReaderTests
 
 open Expecto
 open Farkle.Tests
+open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open System
 open System.IO
@@ -56,3 +57,25 @@ let tests = testList "EGT Reader tests" [
         doTest <| x * 0x01010101u
     )
 ]
+
+[<Tests>]
+let egtNeoTests =
+    allEGTFiles
+    |> List.map (fun egtFile ->
+        let testName = sprintf "Roundtripping %s into the EGTneo format works" <| Path.GetFileName egtFile
+        test testName {
+            let grammar = EGT.ofFile egtFile
+            use s1 = new MemoryStream()
+            EGT.toStreamNeo s1 grammar
+            s1.Position <- 0L
+            let grammar2 = EGT.ofStream s1
+            use s2 = new MemoryStream()
+            EGT.toStreamNeo s2 grammar2
+
+            // Grammars follow reference equality semantics,
+            // so we will check the streams for equality.
+            s1.Position <- 0L
+            s2.Position <- 0L
+            Expect.streamsEqual s1 s2 ""
+        })
+    |> testList "EGTneo tests"

@@ -91,33 +91,31 @@ module internal EGTReader =
         | x -> invalidEGTf "Invalid entry code: %x." x
 
     /// Reads a collection of EGT file entries (record) from a binary reader.
-    /// The returned buffer must be disposed to avoid memory leaks.
-    /// The buffer might be bigger than the record's length, which
-    /// is why the actual length is written to the given reference.
-    let readRecord (entryCount: outref<_>) r =
-        entryCount <-
+    /// This function accepts a reference to an array that will contain the
+    /// entries of this record and will return how many entries were read.
+    /// If the entries do not fit in the array, it will grow.
+    let readRecord (buffer: byref<_>) r =
+        let entryCount =
             match readByte r with
             | 'M'B ->
                 readUInt16 r |> int
             | 'm'B ->
                 read7BitEncodedUInt32 r |> int
             | x -> invalidEGTf "Invalid record code, read %x" x
-        let mem = MemoryPool.Shared.Rent(entryCount)
-        let span = mem.Memory.Span
+        if Array.length buffer < entryCount then
+            buffer <- Array.zeroCreate <| max (buffer.Length * 2) entryCount
         for i = 0 to entryCount - 1 do
-            span.[i] <- readEntry r
-        mem
+            buffer.[i] <- readEntry r
+        entryCount
 
     /// Reads all EGT file records from a binary reader
     /// and passes them to the given function, until the reader ends.
     let readRecords fRead (r: BinaryReader) =
+        let mutable buf = Array.zeroCreate 45
         let len = r.BaseStream.Length
-        let mutable entryCount = 0
         while r.BaseStream.Position < len do
-            use mem = readRecord &entryCount r
-            mem.Memory.Slice(0, entryCount)
-            |> Memory.op_Implicit
-            |> fRead
+            let entryCount = readRecord &buf r
+            fRead(ReadOnlyMemory(buf, 0, entryCount))
 
     /// Like `readRecords`, but adds a function to
     /// check the file's header for errors.

@@ -260,3 +260,43 @@ module private Implementation =
             }
 
         states.MoveToImmutable()
+
+let read r =
+    let mutable buffer = Array.zeroCreate 128
+    let mutable len = 0
+    let readNext() = len <- readRecord r &buffer
+
+    readNext()
+    let properties = readProperties (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let terminals = readTerminals (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let nonterminals = readNonterminals (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let noiseSymbols = readNoiseSymbols (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let startSymbol = readStartSymbol nonterminals (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let groups = readGroups terminals noiseSymbols (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let productions = readProductions terminals nonterminals (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let lalrStates = readLALRStates terminals nonterminals productions (ReadOnlySpan(buffer, 0, len))
+    readNext()
+    let dfaStates = readDFAStates terminals noiseSymbols groups (ReadOnlySpan(buffer, 0, len))
+
+    let symbols = {
+        Terminals = terminals
+        Nonterminals = nonterminals
+        NoiseSymbols = noiseSymbols
+    }
+
+    {
+        _Properties = properties
+        _StartSymbol = startSymbol
+        _Symbols = symbols
+        _Productions = productions
+        _Groups = groups
+        _LALRStates = lalrStates
+        _DFAStates = dfaStates
+    }

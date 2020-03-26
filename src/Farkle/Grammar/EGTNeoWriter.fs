@@ -237,3 +237,16 @@ module private Implementation =
                 writeUInt32Maybe x.Value)
 
         writeResizeArray w arr
+
+let write w (grammar: Grammar) =
+    writeNullTerminatedString egtNeoHeader w
+
+    writeProperties w grammar.Properties
+    writeTerminals w grammar.Symbols.Terminals
+    writeNonterminals w grammar.Symbols.Nonterminals
+    writeNoiseSymbols w grammar.Symbols.NoiseSymbols
+    writeStartSymbol w grammar.Symbols.Nonterminals grammar.StartSymbol
+    writeGroups w grammar.Symbols.NoiseSymbols grammar.Groups
+    writeProductions w grammar.Productions
+    writeLALRStates w grammar.LALRStates
+    writeDFAStates w grammar.Symbols.NoiseSymbols grammar.Groups grammar.DFAStates

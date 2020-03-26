@@ -51,7 +51,7 @@ module private Implementation =
         | "B" -> "Unicode Blocks"
         | x -> x
 
-    let fHeaderCheck x =
+    let headerCheck x =
         if x <> "GOLD Character Sets" then
             EGTFileException "Invalid GOLD Parser sets file"
             |> raise
@@ -85,7 +85,8 @@ module private Implementation =
         use stream = File.OpenRead(filePath)
         use br = new BinaryReader(stream)
         let list = ResizeArray()
-        readEGT fHeaderCheck (fRecord <| correctPredefinedSet list.Add) br
+        readNullTerminatedString br |> headerCheck
+        iterRecords (fRecord <| correctPredefinedSet list.Add) br
         Log.Debug("Reading {FilePath} succeeded.", filePath)
         Ok <| list.ToArray()
 

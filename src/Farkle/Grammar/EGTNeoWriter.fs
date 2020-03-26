@@ -4,11 +4,11 @@
 // https://opensource.org/licenses/MIT
 
 /// Functions to write a grammar to EGTneo files.
-module Farkle.Grammar.EGTFile.EGTNeoWriter
+module internal Farkle.Grammar.EGTFile.EGTNeoWriter
 
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
-open Farkle.Grammar.EGTFile.EGTNeoHeaders
+open Farkle.Grammar.EGTFile.EGTHeaders
 open Farkle.Grammar.EGTFile.EGTWriter
 open System
 open System.Buffers
@@ -239,8 +239,7 @@ module private Implementation =
         writeResizeArray w arr
 
 let write w (grammar: Grammar) =
-    writeNullTerminatedString egtNeoHeader w
-
+    // For symmetry, the header will not be written here.
     writeProperties w grammar.Properties
     writeTerminals w grammar.Symbols.Terminals
     writeNonterminals w grammar.Symbols.Nonterminals

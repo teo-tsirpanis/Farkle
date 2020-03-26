@@ -110,18 +110,12 @@ module internal EGTReader =
 
     /// Reads all EGT file records from a binary reader
     /// and passes them to the given function, until the reader ends.
-    let readRecords fRead (r: BinaryReader) =
+    let iterRecords fRead (r: BinaryReader) =
         let mutable buf = Array.zeroCreate 45
         let len = r.BaseStream.Length
         while r.BaseStream.Position < len do
             let entryCount = readRecord &buf r
             fRead(ReadOnlyMemory(buf, 0, entryCount))
-
-    /// Like `readRecords`, but adds a function to
-    /// check the file's header for errors.
-    let readEGT fHeaderCheck fRecord r =
-        readNullTerminatedString r |> fHeaderCheck
-        readRecords fRecord r
 
     /// Raises an error if a read-only span's
     /// length is different than the expected.
@@ -193,12 +187,17 @@ module internal EGTWriter =
         for i = 0 to records.Length - 1 do
             writeEntry w records.[i]
 
-module internal EGTNeoHeaders =
+module internal EGTHeaders =
+
+    // For better error messages only.
+    let [<Literal>] CGTHeader = "GOLD Parser Tables/v1.0"
+
+    let [<Literal>] EGTHeader = "GOLD Parser Tables/v5.0"
 
     // I initially wanted a more fancy header, one that was readable
     // in both Base64 and ASCII, perhaps loaded with easter eggs. But
     // I settled to this, plain and boring header.
-    let [<Literal>] egtNeoHeader = "Farkle Parser Tables/v6.0-alpha"
+    let [<Literal>] EGTNeoHeader = "Farkle Parser Tables/v6.0-alpha"
 
     // The headers for each section of the EGTneo file.
     // They must be present in the file in that order.

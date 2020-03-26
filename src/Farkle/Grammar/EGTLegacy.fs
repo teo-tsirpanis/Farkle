@@ -229,19 +229,6 @@ This error is unexpected. Please report it on GitHub." x
             let content = mem.Slice(1)
             content |> fRead (uint32 index) |> arr.Add
 
-        [<Literal>]
-        let CGTHeader = "GOLD Parser Tables/v1.0"
-        [<Literal>]
-        let EGTHeader = "GOLD Parser Tables/v5.0"
-
-        let headerCheck =
-            function
-            | CGTHeader -> invalidEGTf "This file is a legacy GOLD Parser 1.0 file, \
-which is not supported. You should update to the last version of GOLD Parser and save \
-it as an \"Enhanced Grammar Tables (version 5.0)\"."
-            | EGTHeader -> ()
-            | _ -> invalidEGT()
-
     let read r =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
@@ -309,7 +296,8 @@ it as an \"Enhanced Grammar Tables (version 5.0)\"."
             | 'L'B when isTableCountsInitialized ->
                 readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
             | _ -> invalidEGT()
-        readEGT headerCheck fRecord r
+
+        iterRecords fRecord r
         let symbols = {
             Terminals = terminals.ToImmutable()
             Nonterminals = nonterminals.ToImmutable()

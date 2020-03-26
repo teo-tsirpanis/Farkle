@@ -25,8 +25,8 @@
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/MultiMap.fs" />
-    <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
+    <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/EGTLegacy.fs" />
     <Compile Include="Grammar/EGTNeoReader.fs" />
     <Compile Include="Grammar/EGTNeoWriter.fs" />

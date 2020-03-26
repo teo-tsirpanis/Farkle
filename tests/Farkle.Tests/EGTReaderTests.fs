@@ -30,9 +30,11 @@ let tests = testList "EGT Reader tests" [
         testBinaryIO
             (fun w x -> EGTWriter.writeRecord w (ReadOnlySpan x))
             (fun r ->
-                let mutable count = 0
-                use mem = EGTReader.readRecord &count r
-                mem.Memory.Slice(0, count).ToArray())
+                // An empty array will force the
+                // reader to make it exactly fit.
+                let mutable arr = [||]
+                EGTReader.readRecord &arr r |> ignore
+                arr)
             "The EGT record that was read was not the same with what was written"
     )
 
@@ -45,7 +47,7 @@ let tests = testList "EGT Reader tests" [
                     | Entry.UInt32 x -> x
                     | _ -> failtest "Wrong entry type")
                 "Got the wrong number while reading the EGT file back."
-        
+
         // I have to make sure large numbers are tested as well.
         // The numbers FsCheck tests are pretty small.
         doTest <| x

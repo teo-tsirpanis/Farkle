@@ -5,11 +5,11 @@
 
 /// Functions to read a grammar from EGTneo files.
 /// EGTneo files are more compact and easier to read from Farkle.
-module Farkle.Gramamr.EGTFile.EGTNeoReader
+module internal Farkle.Grammar.EGTFile.EGTNeoReader
 
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
-open Farkle.Grammar.EGTFile.EGTNeoHeaders
+open Farkle.Grammar.EGTFile.EGTHeaders
 open Farkle.Grammar.EGTFile.EGTReader
 open Farkle.Collections
 open System
@@ -264,7 +264,7 @@ module private Implementation =
 let read r =
     let mutable buffer = Array.zeroCreate 128
     let mutable len = 0
-    let readNext() = len <- readRecord r &buffer
+    let readNext() = len <- readRecord &buffer r
 
     readNext()
     let properties = readProperties (ReadOnlySpan(buffer, 0, len))

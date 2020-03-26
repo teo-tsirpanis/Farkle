@@ -35,6 +35,7 @@ module private EGTNeoUtils =
 module EGTNeoReader =
 
     open EGTReader
+    open Farkle.Collections
 
     module private Implementation =
         let checkHeader span hdr =
@@ -224,6 +225,62 @@ module EGTNeoReader =
 
             states.MoveToImmutable()
 
+        let readUInt32Maybe (span: ReadOnlySpan<_>) idx =
+            match span.[idx] with
+            | Entry.Empty -> None
+            | Entry.UInt32 x -> Some x
+            | e -> invalidEGTf "Invalid state index. Expected Empty or UInt32, got %A" e
+
+        let readDFAStates (terminals: ImmutableArray<_>) (noiseSymbols: ImmutableArray<_>)
+            (groups: ImmutableArray<_>) span =
+            let span = checkHeader span dfaHeader
+            let stateCount = wantUInt32 span 0 |> int
+            let states = ImmutableArray.CreateBuilder(stateCount)
+
+            let mutable i = 1
+            while i < span.Length do
+                let acceptSymbol =
+                    match span.[i + 0] with
+                    | Entry.Empty -> None
+                    | Entry.Byte x ->
+                        let idx = wantUInt32 span (i + 1) |> int
+                        match x with
+                        | 'T'B -> terminals.[idx] |> Choice1Of4
+                        | 'N'B -> noiseSymbols.[idx] |> Choice2Of4
+                        | 'G'B -> groups.[idx].Start |> Choice3Of4
+                        | 'g'B ->
+                            match groups.[idx].End with
+                            | Some ge -> Choice4Of4 ge
+                            | None -> invalidEGT()
+                        | x -> invalidEGTf "Invalid DFA accept symbol tag. Got %x" x
+                        |> Some
+                    | x -> invalidEGTf "Invalid DFA accept symbol entry. Expected Empty or Byte, got %A" x
+
+                let anythingElse = readUInt32Maybe span (i + 2)
+                let edgeCount = wantUInt32 span (i + 3) |> int
+                i <- i + 4
+
+                let edges =
+                    let edges = ResizeArray(edgeCount)
+                    let span = span.Slice i
+                    for i = 0 to edgeCount - 1 do
+                        let cFrom = wantChar span (3 * i + 0)
+                        let cTo = wantChar span (3 * i + 1)
+                        let destination = readUInt32Maybe span (3 * i + 2)
+                        edges.Add(Seq.singleton (cFrom, cTo), destination)
+                    match RangeMap.ofRanges (edges.ToArray()) with
+                    | Some edges -> edges
+                    | None -> invalidEGTf "Invalid DFA state range map."
+
+                states.Add {
+                    Index = uint32 states.Count
+                    Edges = edges
+                    AcceptSymbol = acceptSymbol
+                    AnythingElse = anythingElse
+                }
+
+            states.MoveToImmutable()
+
 /// Functions to write a grammar to EGTneo files.
 module EGTNeoWriter =
 
@@ -400,5 +457,55 @@ module EGTNeoWriter =
                 |> Seq.iter (fun (KeyValue(nont, idx)) ->
                     arr.Add <| Entry.UInt32 nont.Index
                     arr.Add <| Entry.UInt32 idx)
+
+            writeResizeArray w arr
+
+        let writeDFAStates w noiseSymbols (groups: ImmutableArray<_>) (states: ImmutableArray<DFAState>) =
+            let arr = ResizeArray()
+            let writeUInt32Maybe x =
+                match x with
+                | Some x -> Entry.UInt32 x
+                | None -> Entry.Empty
+                |> arr.Add
+
+            arr.Add <| Entry.String dfaHeader
+            arr.Add <| Entry.Int states.Length
+
+            for i = 0 to states.Length - 1 do
+                let s = states.[i]
+
+                match s.AcceptSymbol with
+                | None ->
+                    arr.Add <| Entry.Byte 0uy
+                    arr.Add Entry.Empty
+                | Some (Choice1Of4 term) ->
+                    arr.Add <| Entry.Byte 'T'B
+                    arr.Add <| Entry.UInt32 term.Index
+                | Some (Choice2Of4 noise) ->
+                    arr.Add <| Entry.Byte 'N'B
+                    arr.Add <| indexOf "Noise symbol" noiseSymbols noise
+                | Some (Choice3Of4 gs) ->
+                    arr.Add <| Entry.Byte 'G'B
+                    groups
+                    |> Seq.findIndex (fun g -> g.Start = gs)
+                    |> Entry.Int
+                    |> arr.Add
+                | Some (Choice4Of4 ge) ->
+                    arr.Add <| Entry.Byte 'g'B
+                    let ge = Some ge
+                    groups
+                    |> Seq.findIndex (fun g -> g.End = ge)
+                    |> Entry.Int
+                    |> arr.Add
+
+                writeUInt32Maybe s.AnythingElse
+
+                let elements = s.Edges.Elements
+                arr.Add <| Entry.Int elements.Length
+                elements
+                |> Seq.iter (fun x ->
+                    arr.Add <| Entry.Int x.KeyFrom
+                    arr.Add <| Entry.Int x.KeyTo
+                    writeUInt32Maybe x.Value)
 
             writeResizeArray w arr

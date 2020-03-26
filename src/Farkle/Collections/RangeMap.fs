@@ -26,6 +26,8 @@ with
 /// A map data structure that works best when a continuous range of keys is assigned the same value.
 /// It can also double as a set, when the value type is a unit.
 type RangeMap<'key,'a when 'key :> IComparable<'key>> = private RangeMap of RangeMapElement<'key,'a> ImmutableArray
+with
+    member internal x.Elements = match x with RangeMap elements -> elements
 
 /// Functions to create and use `RangeMap`s.
 module RangeMap =

@@ -28,7 +28,8 @@
     <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="Grammar/EGTLegacy.fs" />
-    <Compile Include="Grammar/EGTNeo.fs" />
+    <Compile Include="Grammar/EGTNeoReader.fs" />
+    <Compile Include="Grammar/EGTNeoWriter.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />

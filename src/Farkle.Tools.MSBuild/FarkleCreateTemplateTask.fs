@@ -88,7 +88,7 @@ type FarkleCreateTemplateTask() =
                 log.Error("Need to specify either a language, or a custom template"); Error()
         let ns = if hasValue this.Namespace then Some this.Namespace else None
 
-        let! generatedTemplate = TemplateEngine.renderTemplate log "Farkle.Tools.MSBuild" ns grammarPath templateSource
+        let! generatedTemplate = TemplateEngine.renderTemplate log ns grammarPath templateSource
 
         this.GeneratedTo <-
             if hasValue this.OutputFile then

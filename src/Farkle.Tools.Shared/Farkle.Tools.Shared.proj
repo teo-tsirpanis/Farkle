@@ -3,10 +3,16 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Farkle.Tools.Shared/Common.fs" />
-    <Compile Include="../Farkle.Tools.Shared/Templating/TemplateTypes.fs" />
-    <Compile Include="../Farkle.Tools.Shared/Templating/TemplateUtilities.fs" />
-    <Compile Include="../Farkle.Tools.Shared/Templating/BuiltinTemplates.fs" />
-    <Compile Include="../Farkle.Tools.Shared/Templating/TemplateEngine.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Common.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Templating/TemplateTypes.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Templating/TemplateUtilities.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Templating/BuiltinTemplates.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Templating/TemplateEngine.fs" />
+    <EmbeddedResource
+      Include="$(MSBuildThisFileDirectory)/builtin-templates/Grammar.CSharp.scriban"
+      LogicalName="Farkle.BuiltinTemplate.Grammar.CSharp" />
+    <EmbeddedResource
+      Include="$(MSBuildThisFileDirectory)/builtin-templates/Grammar.FSharp.scriban"
+      LogicalName="Farkle.BuiltinTemplate.Grammar.FSharp" />
   </ItemGroup>
 </Project>

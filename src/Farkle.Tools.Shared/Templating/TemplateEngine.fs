@@ -16,8 +16,8 @@ open System
 open System.IO
 
 module TemplateEngine =
-    let renderTemplate (log: ILogger) resourceNamespace generatedFileNamespace grammarFile templateSource = either {
-        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate resourceNamespace templateSource
+    let renderTemplate (log: ILogger) generatedFileNamespace grammarFile templateSource = either {
+        let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate templateSource
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile

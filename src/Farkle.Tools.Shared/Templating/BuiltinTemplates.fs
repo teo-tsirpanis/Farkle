@@ -18,6 +18,9 @@ let private (|LanguageNames|) lang =
     | Language.``F#`` -> "FSharp", "F# internal template"
     | Language.``C#`` -> "CSharp", "C# internal template"
 
+[<Literal>]
+let private builtinTemplateRootName = "Farkle.BuiltinTemplate"
+
 [<RequireQualifiedAccess>]
 type TemplateType =
     | Grammar
@@ -26,11 +29,9 @@ type TemplateSource =
     | CustomFile of string
     | BuiltinTemplate of Language * TemplateType
 
-let private fetchResource nameSpace (typ: TemplateType) lang =
+let private fetchResource (typ: TemplateType) lang =
     let assembly = Assembly.GetExecutingAssembly()
-    let resourceName = sprintf "%s.%A.%s.scriban" nameSpace typ lang
-    // TODO: Find a better way to handle resources.
-    // I guess I am doing something the wrong way.
+    let resourceName = sprintf "%s.%A.%s" builtinTemplateRootName typ lang
     let resourceStream = assembly.GetManifestResourceStream(resourceName) |> Option.ofObj
     match resourceStream with
     | Some resourceStream ->
@@ -38,8 +39,8 @@ let private fetchResource nameSpace (typ: TemplateType) lang =
         sr.ReadToEnd()
     | None -> failwithf "Cannot find resource name '%s' inside the assembly." resourceName
 
-let getLanguageTemplate nameSpace x =
+let getLanguageTemplate x =
     match x with
     | CustomFile path -> File.ReadAllText path, path
     | BuiltinTemplate(LanguageNames(fullName, templateFileName), typ) ->
-        fetchResource nameSpace typ fullName, templateFileName
+        fetchResource typ fullName, templateFileName

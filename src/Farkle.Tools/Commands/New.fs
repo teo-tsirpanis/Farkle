@@ -96,16 +96,7 @@ let run (args: ParseResults<_>) = either {
             |> Result.map (fun lang -> BuiltinTemplate(lang, typ)))
 
     let! generatedTemplate =
-        TemplateEngine.renderTemplate
-            Log.Logger
-            // The folder has a dash, not an underscore!
-            // And the hell the namespace here must have the name
-            // of the folder, while it doesn't on Farkle.Tools.MSBuild??
-            // TODO: Find out why.
-            "Farkle.Tools.builtin_templates"
-            ns
-            grammarFile
-            templateSource
+        TemplateEngine.renderTemplate Log.Logger ns grammarFile templateSource
 
     let outputFile =
         args.TryGetResult OutputFile

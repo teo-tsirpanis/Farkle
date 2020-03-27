@@ -13,7 +13,6 @@
     <GenerateNuspecDependsOn>PreparePack;$(GenerateNuspecDependsOn)</GenerateNuspecDependsOn>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="../Farkle.Tools/builtin-templates/Grammar.*.scriban" />
     <Compile Include="FarkleCreateTemplateTask.fs" />
     <None Include="Farkle.Tools.MSBuild.props" />
     <None Include="Farkle.Tools.MSBuild.targets" />

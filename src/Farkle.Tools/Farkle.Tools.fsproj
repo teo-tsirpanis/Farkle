@@ -17,7 +17,6 @@
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="builtin-templates\*.scriban" />
     <Compile Include="Commands/GeneratePredefinedSets.fs" />
     <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />

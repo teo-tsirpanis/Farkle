@@ -11,28 +11,31 @@ open Farkle.Common
 open Farkle.Grammar
 open System
 open System.IO
+open System.Runtime.Serialization.Formatters.Binary
 
 type GrammarReaderBenchmark() =
 
     let mutable base64EGT = ""
 
-    [<VolatileField>]
-    let mutable builtGrammar = Unchecked.defaultof<_>
+    let mutable base64EGTneo = ""
 
     [<GlobalSetup>]
     member __.Setup() =
         let bytes = File.ReadAllBytes "gml.egt"
         base64EGT <- Convert.ToBase64String bytes
 
-    [<Benchmark>]
-    member __.Base64EGT() =
-        base64EGT |> EGT.ofBase64String
+        let grammar = EGT.ofBase64String base64EGT
+        base64EGTneo <- EGT.toBase64StringNeo Base64FormattingOptions.None grammar
 
-    [<Benchmark(OperationsPerInvoke = 100)>]
+    [<Benchmark>]
+    member __.Base64EGT() = EGT.ofBase64String base64EGT
+
+    [<Benchmark(Baseline = true)>]
+    member _.Base64EGTneo() = EGT.ofBase64String base64EGTneo
+
+    [<Benchmark>]
     member __.BuildGrammar() =
-        for __ = 0 to 99 do
-            builtGrammar <-
-                GOLDMetaLanguage.designtime
-                |> DesigntimeFarkleBuild.createGrammarDefinition
-                |> DesigntimeFarkleBuild.buildGrammarOnly
-                |> returnOrFail
+        GOLDMetaLanguage.designtime
+        |> DesigntimeFarkleBuild.createGrammarDefinition
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> returnOrFail

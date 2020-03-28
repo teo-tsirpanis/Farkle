@@ -40,7 +40,7 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.</summary>
     /// <remarks>Useful for diagnostic purposes.</remarks>
-    static member Rename(df: DesigntimeFarkle<'TResult>, name) = DesigntimeFarkle.rename name df
+    static member Rename (df: DesigntimeFarkle<'TResult>, name) = DesigntimeFarkle.rename name df
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/>
     /// into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
@@ -49,6 +49,12 @@ type DesigntimeFarkleExtensions =
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
     static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
+    [<Extension>]
+    /// <summary>Marks a <see cref="DesigntimeFarkle{TResult}"/> as available to have
+    /// its grammar precompiled ahead of time.</summary>
+    /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompile"/>
+    static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
+        RuntimeFarkle.markForPrecompile df
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

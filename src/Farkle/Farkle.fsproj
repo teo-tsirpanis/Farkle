@@ -45,6 +45,7 @@
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
+    <Compile Include="Builder/Precompiler.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Parser/Tokenizer.fs" />

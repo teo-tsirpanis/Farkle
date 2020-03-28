@@ -11,7 +11,6 @@ open Farkle.Common
 open Farkle.Grammar
 open System
 open System.IO
-open System.Runtime.Serialization.Formatters.Binary
 
 type GrammarReaderBenchmark() =
 

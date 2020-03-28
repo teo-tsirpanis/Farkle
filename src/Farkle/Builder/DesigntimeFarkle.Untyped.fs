@@ -48,8 +48,7 @@ with
             Array.map (Array.ofSeq >> ProductionBuilder) prods)
     /// <summary>Creates an untyped <see cref="Nonterminal"/>.
     /// Its productions must be set later.</summary>
-    /// <remarks>This function is useful for the creation
-    /// of recursive or cyclical productions.</remarks>
+    /// <remarks>This function is useful for the creation of recursive productions.</remarks>
     /// <seealso cref="Nonterminal.SetProductions"/>
     static member Create(name) = {
         _Name = name

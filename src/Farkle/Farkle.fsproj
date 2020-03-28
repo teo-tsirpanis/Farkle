@@ -26,6 +26,8 @@
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/MultiMap.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
+    <Compile Include="AST.fs" />
+    <Compile Include="PostProcessor.fs" />
     <Compile Include="Grammar/EGTFile.fs" />
     <Compile Include="Grammar/EGTLegacy.fs" />
     <Compile Include="Grammar/EGTNeoReader.fs" />
@@ -42,8 +44,6 @@
     <Compile Include="Builder/DesigntimeFarkle.Untyped.fs" />
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
-    <Compile Include="Parser/AST.fs" />
-    <Compile Include="PostProcessor/PostProcessor.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />
     <Compile Include="Parser/ParserTypes.fs" />

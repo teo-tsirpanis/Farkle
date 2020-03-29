@@ -79,43 +79,43 @@ let tests = testList "Designtime Farkle tests" [
             )
             S
         let grammar = DesigntimeFarkleBuild.build designtime |> fst
-        Expect.isError grammar "An Accept-Reduce error was silently accepted by Farkle too."
+        Expect.isError grammar "An Accept-Reduce error was silently accepted by Farkle too"
     }
 
     test "DesigntimeFarkle objects have the correct equality semantics" {
         let lit1 = literal "Test"
         let lit2 = literal "Test"
-        Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality."
+        Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality"
         
         let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
         let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
-        Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality."
+        Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality"
 
         let nont1 = nonterminal "Test" :> DesigntimeFarkle
         let nont2 = nonterminal "Test" :> DesigntimeFarkle
-        Expect.isFalse (nont1 = nont2) "DesigntimeFarkle nonterminals are not checked for reference equality."
+        Expect.isFalse (nont1 = nont2) "DesigntimeFarkle nonterminals are not checked for reference equality"
     }
 
     testProperty "Farkle can properly read signed integers" (fun num ->
         let runtime = Terminals.int64 "Signed" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing a signed integer failed.")
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing a signed integer failed")
 
     testProperty "Farkle can properly read unsigned integers" (fun num ->
         let runtime = Terminals.uint64 "Unsigned" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed.")
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
 
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed.")
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
     
     test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
         let df = "Sbubby" ||= [!& "Eef" =% "Freef"]
         let t = T(fun _ x -> x.ToString())
         let tInt = T(fun _ _ -> 380)
-        Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant."
-        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant."
-        Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant."
-        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformer callbacks on value types are covariant while they shouldn't."
+        Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant"
+        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
+        Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant"
+        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformer callbacks on value types are covariant while they shouldn't"
     }
 
     test "Farkle can properly handle line groups" {
@@ -123,9 +123,9 @@ let tests = testList "Designtime Farkle tests" [
             Group.Line("LineGroup", "!!", T(fun _ data -> data.ToString()))
             |> RuntimeFarkle.build
         Expect.equal (runtime.Parse "!! No new line") (Ok "!! No new line")
-            "Farkle does not properly handle line groups that end on EOF."
+            "Farkle does not properly handle line groups that end on EOF"
         Expect.equal (runtime.Parse "!! Has new line\n") (Ok "!! Has new line")
-            "Farkle does not properly handle line groups that end on a new line."
+            "Farkle does not properly handle line groups that end on a new line"
     }
 
     test "Farkle can properly handle block groups" {
@@ -133,7 +133,7 @@ let tests = testList "Designtime Farkle tests" [
             Group.Block("Block Group", "{", "}", T(fun _ data -> data.ToString()))
             |> RuntimeFarkle.build
 
-        Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups."
+        Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups"
     }
 
     test "Renaming designtime Farkles works" {
@@ -144,6 +144,6 @@ let tests = testList "Designtime Farkle tests" [
         
         let grammar = runtime.GetGrammar()
 
-        Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect."
+        Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect"
     }
 ]

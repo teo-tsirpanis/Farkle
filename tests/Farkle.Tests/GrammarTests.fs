@@ -16,7 +16,7 @@ let tests =
                 (1u, term)
                 |> Terminal
                 |> string
-                |> Flip.Expect.equal "String value of a terminal is not the same as expected." expected
+                |> Flip.Expect.equal "The string representation of a terminal is not the same as expected" expected
             [
                 "'", "''"
                 ".NET", "'.NET'"

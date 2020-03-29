@@ -20,7 +20,7 @@ let logger = Log.create "Parser tests"
 
 let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
-        let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode." grammarFile displayName streamMode
+        let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode" grammarFile displayName streamMode
         test description {
             let rf = loadRuntimeFarkle grammarFile
             let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.verbose) |> using (fCharStream text)
@@ -114,11 +114,11 @@ let tests = testList "Parser tests" [
         let num =
             RuntimeFarkle.parse SimpleMaths.int exprAsString
             |> returnOrFail "Calculating the mathematical expression failed"
-        Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one."
+        Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
         let result = GOLDMetaLanguage.runtime.Parse gmlSourceContent
-        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed."
+        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
     }
 ]

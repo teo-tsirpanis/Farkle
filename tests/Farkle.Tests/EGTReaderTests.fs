@@ -47,7 +47,7 @@ let tests = testList "EGT Reader tests" [
                     match EGTReader.readEntry r with
                     | Entry.UInt32 x -> x
                     | _ -> failtest "Wrong entry type")
-                "Got the wrong number while reading the EGT file back."
+                "Got the wrong number while reading the EGT file back"
 
         // I have to make sure large numbers are tested as well.
         // The numbers FsCheck tests are pretty small.

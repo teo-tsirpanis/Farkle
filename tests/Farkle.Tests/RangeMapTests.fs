@@ -39,5 +39,5 @@ let tests =
             let xs' = RangeMap.toSeq x'
             // We have to compare the sequences, not the RangeMaps, because
             // RangeMap.ofSeq might create an equivalent RangeMap with less elements.
-            Expect.sequenceEqual xs xs' "The RangeMaps are different.")
+            Expect.sequenceEqual xs xs' "The RangeMaps are different")
     ]

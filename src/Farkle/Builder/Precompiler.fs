@@ -7,6 +7,7 @@ module internal Farkle.Builder.Precompiler
 
 open Farkle.Grammar
 open System.Reflection
+module DFB = DesigntimeFarkleBuild
 
 let precompiledGrammarNamespace = "__Farkle.PrecompiledGrammar"
 
@@ -45,7 +46,11 @@ type PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
         member _.Grammar = grammarDef
         member _.DeclaringAssembly = asm
 
-let build (df: DesigntimeFarkle<'T>) =
+/// Tries to find a precompiled grammar for the given
+/// designtime Farkle, and returns it if it finds it
+/// and the designtime Farkle is marked,
+/// or else it builds it on the spot.
+let buildGrammar (df: DesigntimeFarkle) =
     match df with
     | :? PrecompilableDesigntimeFarkle as pcdf ->
         // The grammar is loaded from an EGTneo file in the
@@ -57,13 +62,6 @@ let build (df: DesigntimeFarkle<'T>) =
             |> pcdf.DeclaringAssembly.GetManifestResourceStream
             |> Option.ofObj
             |> Option.map (EGT.ofStream >> Ok)
-            |> Option.defaultWith (fun () -> DesigntimeFarkleBuild.buildGrammarOnly pcdf.Grammar)
-        // The post-processor is always created here.
-        // It is likely (bizarre yet likely) for the grammar definition of this
-        // designtime Farkle to be different from pcdf.Grammar. If the designtime
-        // Farkle has nonterminals that were not yet set, there is a window of
-        // opportunity for the grammars to change That's the reason to expose the
-        // following method: to create a post-processor for the same grammar definition.
-        let pp = DesigntimeFarkleBuild.createPostProcessor<_> pcdf.Grammar
-        grammar, pp
-    | df -> DesigntimeFarkleBuild.build df
+            |> Option.defaultWith (fun () -> DFB.buildGrammarOnly pcdf.Grammar)
+        grammar
+    | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly

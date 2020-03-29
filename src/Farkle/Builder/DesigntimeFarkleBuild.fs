@@ -169,6 +169,7 @@ module DesigntimeFarkleBuild =
                 let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
                 nonterminalMap.Add(nont, symbol)
                 nonterminals.Add(symbol)
+                nont.Freeze()
                 nont.Productions
                 |> List.iter (fun aprod ->
                     let handle =
@@ -333,7 +334,7 @@ module DesigntimeFarkleBuild =
         |> sprintf "%s %s" (asm.GetName().Name)
 
     [<RequiresExplicitTypeArguments>]
-    let internal createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
+    let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
         {
             new PostProcessor<'TOutput> with
                 member __.Transform(term, pos, data) = transformers.[int term.Index].Invoke(pos, data)

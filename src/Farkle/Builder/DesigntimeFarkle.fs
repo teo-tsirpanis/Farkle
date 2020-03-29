@@ -151,6 +151,10 @@ type internal AbstractProduction =
 /// <seealso cref="Nonterminal{T}"/>
 type internal AbstractNonterminal =
     inherit DesigntimeFarkle
+    /// Makes the nonterminal's productions immutable.
+    /// This function was introduced to add some determinism
+    /// to the limited mutability allowed in nonterminals.
+    abstract Freeze: unit -> unit
     /// The productions of the nonterminal.
     abstract Productions: AbstractProduction list
 
@@ -247,7 +251,9 @@ with
     /// The nonterminal's name.
     member x.Name = x._Name
     /// <summary>Sets the nonterminal's productions.</summary>
-    /// <remarks>This method must only be called once. Subsequent calls are ignored.</remarks>
+    /// <remarks>This method must only be called once, and before
+    /// building a designtime Farkle containing this one.
+    /// Subsequent calls (and those after building) are ignored.</remarks>
     member x.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
         prods
         |> Seq.map (fun x -> x :> AbstractProduction)
@@ -256,6 +262,10 @@ with
         |> x.Productions.TrySet
         |> ignore
     interface AbstractNonterminal with
+        // If they are already set, nothing will happen.
+        // If they haven't been set, they will be permanently
+        // set to a broken state.
+        member x.Freeze() = x.Productions.TrySet [] |> ignore
         member x.Productions = x.Productions.ValueOrDefault []
     interface DesigntimeFarkle with
         member x.Name = x._Name

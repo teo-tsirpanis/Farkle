@@ -149,10 +149,11 @@ module RuntimeFarkle =
     /// In case there is a problem with the grammar,
     /// the `RuntimeFarkle` will fail every time it is used.
     /// If the designtime Farkle is marked for precompilation and a suitable
-    /// precompiled grammar is found, building it will be avoided.
+    /// precompiled grammar is found, building it again will be avoided.
     [<CompiledName("Build")>]
     let build df =
-        let theFabledGrammar, theTriumphantPostProcessor = Precompiler.build df
+        let theFabledGrammar = Precompiler.buildGrammar df
+        let theTriumphantPostProcessor = DesigntimeFarkleBuild.buildPostProcessorOnly df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
     /// Creates a syntax-checking `RuntimeFarkle`
@@ -160,8 +161,7 @@ module RuntimeFarkle =
     [<CompiledName("BuildUntyped")>]
     let buildUntyped df =
         df
-        |> DesigntimeFarkleBuild.createGrammarDefinition
-        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> Precompiler.buildGrammar
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
     [<CompiledName("MarkForPrecompile")>]

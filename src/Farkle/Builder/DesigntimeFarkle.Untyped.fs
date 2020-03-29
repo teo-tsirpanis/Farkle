@@ -80,6 +80,7 @@ with
         member x.Name = x._Name
         member __.Metadata = GrammarMetadata.Default
     interface AbstractNonterminal with
+        member x.Freeze() = x.Productions.TrySet [] |> ignore
         member x.Productions = x.Productions.ValueOrDefault []
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleUntypedOperators")>]

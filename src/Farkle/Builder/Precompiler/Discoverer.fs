@@ -30,24 +30,18 @@ let private fieldsBindingFlags =
 /// type of that field must inherit `DesigntimeFarkle`.
 let discover (asm: Assembly) =
     let probeType (typ: Type) =
-        let fromProperties =
-            typ.GetProperties(fieldsBindingFlags)
-            |> Seq.filter (fun prop ->
-                // We can't know at runtime whether the designtime Farkle is
-                // precompilable; we have to first load all designtime Farkles.
-                typeof<DesigntimeFarkle>.IsAssignableFrom prop.PropertyType
-                && (not <| isNull prop.GetMethod)
-                && isNull prop.SetMethod)
-            |> Seq.map (fun prop -> prop.GetValue(null))
-        let fromFields =
-            typ.GetFields(fieldsBindingFlags)
-            |> Seq.filter (fun fld ->
-                typeof<DesigntimeFarkle>.IsAssignableFrom fld.FieldType
-                && fld.IsInitOnly)
-            |> Seq.map (fun fld -> fld.GetValue(null))
-        Seq.append fromProperties fromFields
+        // F# values are properties, but are backed by a static read-only
+        // field in a cryptic "<StartupCode$_>" namespace.
+        typ.GetFields(fieldsBindingFlags)
+        |> Seq.filter (fun fld ->
+            // We can't know in advance whether the designtime Farkle is
+            // precompilable; we have to test all designtime Farkles.
+            typeof<DesigntimeFarkle>.IsAssignableFrom fld.FieldType
+            && fld.IsInitOnly)
+        |> Seq.map (fun fld -> fld.GetValue(null))
         |> Seq.choose tryUnbox<PrecompilableDesigntimeFarkle>
         |> Seq.filter (fun pcdf -> pcdf.DeclaringAssembly = asm)
+
     let types = ResizeArray()
     let typesToProcess = Queue(asm.GetTypes())
     while typesToProcess.Count <> 0 do
@@ -58,4 +52,7 @@ let discover (asm: Assembly) =
         |> Array.iter typesToProcess.Enqueue
     types
     |> Seq.collect probeType
+    // Precompiled designtime Farkles are F# object types, which
+    // means they follow reference equality semantics.
+    |> Seq.distinct
     |> List.ofSeq

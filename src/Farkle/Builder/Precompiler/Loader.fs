@@ -25,7 +25,7 @@ type internal PrecompilableDesigntimeFarkle =
     /// precompiled grammar (if it exists).
     abstract DeclaringAssembly: Assembly
 
-type internal PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
+type private PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
     // We have to be 100% sure that the designtime Farkle's
     // name never changes because it is part of its identity.
     // All its implementations return a fixed value, but that's
@@ -42,7 +42,7 @@ type internal PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) 
         member _.Grammar = grammarDef
         member _.DeclaringAssembly = asm
 
-module Loader =
+module internal Loader =
 
     let precompiledGrammarNamespace = "__Farkle.PrecompiledGrammar"
 
@@ -68,3 +68,11 @@ module Loader =
                 |> Option.defaultWith (fun () -> DFB.buildGrammarOnly pcdf.Grammar)
             grammar
         | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly
+
+    /// Marks the given designtime Farkle as eligible to
+    /// be precompiled. The assembly it resides is also given.
+    let prepare df asm =
+        // We won't try to flatten this one; it might make sense
+        // when we want to prepare a designtime Farkle that has
+        // already been prepared in a different assembly.
+        PrecompilableDesigntimeFarkle(df, asm) :> DesigntimeFarkle<_>

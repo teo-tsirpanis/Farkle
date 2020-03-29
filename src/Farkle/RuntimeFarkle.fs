@@ -177,7 +177,7 @@ module RuntimeFarkle =
     /// called directly from user code.
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
-        Precompiler.PrecompilableDesigntimeFarkle<_>(df, asm) :> DesigntimeFarkle<_>
+        Precompiler.Loader.prepare df asm
 
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.

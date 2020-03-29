@@ -55,7 +55,11 @@ type DesigntimeFarkleExtensions =
     /// <remarks>This function has to be directly called from user code.</remarks>
     /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompile"/>
     static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
-        RuntimeFarkle.markForPrecompile df
+        // This function must mot forward to RuntimeFarkle's
+        // corresponding function. It would register it
+        // with Farkle's own assembly otherwise.
+        let asm = Reflection.Assembly.GetCallingAssembly()
+        Precompiler.Loader.prepare df asm
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

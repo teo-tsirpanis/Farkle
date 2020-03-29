@@ -52,6 +52,7 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Marks a <see cref="DesigntimeFarkle{TResult}"/> as available to have
     /// its grammar precompiled ahead of time.</summary>
+    /// <remarks>This function has to be directly called from user code.</remarks>
     /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompile"/>
     static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
         RuntimeFarkle.markForPrecompile df

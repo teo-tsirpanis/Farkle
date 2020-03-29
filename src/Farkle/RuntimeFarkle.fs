@@ -152,7 +152,7 @@ module RuntimeFarkle =
     /// precompiled grammar is found, building it again will be avoided.
     [<CompiledName("Build")>]
     let build df =
-        let theFabledGrammar = Precompiler.buildGrammar df
+        let theFabledGrammar = Precompiler.Loader.getGrammarOrBuild df
         let theTriumphantPostProcessor = DesigntimeFarkleBuild.buildPostProcessorOnly df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
@@ -161,7 +161,7 @@ module RuntimeFarkle =
     [<CompiledName("BuildUntyped")>]
     let buildUntyped df =
         df
-        |> Precompiler.buildGrammar
+        |> Precompiler.Loader.getGrammarOrBuild
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
     [<CompiledName("MarkForPrecompile")>]
@@ -173,7 +173,8 @@ module RuntimeFarkle =
     /// topmost designtime Farkle that is stored in a read-only static
     /// field (like a let-cound value in a module). Untyped designtime
     /// Farkles can use DesigntimeFarkle.cast and then cast back to
-    /// the untyped designtime Farkle.
+    /// the untyped designtime Farkle. This function also has to be
+    /// called directly from user code.
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
         Precompiler.PrecompilableDesigntimeFarkle<_>(df, asm) :> DesigntimeFarkle<_>

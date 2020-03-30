@@ -71,6 +71,7 @@ with
             AutoWhitespace = false
     }
 
+[<NoComparison>]
 /// <summary>The base untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
 /// <remarks>User code must not implement this interface, or an exception might be thrown.</remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
@@ -162,6 +163,7 @@ type internal DesigntimeFarkleWrapper =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
     inherit DesigntimeFarkle
 
+[<NoComparison; ReferenceEquality>]
 type internal DesigntimeFarkleWrapper<'T> = {
     InnerDesigntimeFarkle: DesigntimeFarkle
     Name: string

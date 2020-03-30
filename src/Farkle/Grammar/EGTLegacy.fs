@@ -18,19 +18,15 @@ module internal EGTLegacyReader =
 
         // The older code that accepted memories is
         // copied here. EGTFile.fs uses spans.
-        let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength =
-            if m.Length <> expectedLength then
-                invalidEGTf "Length must have been %d but was %d" expectedLength m.Length
+        let lengthMustBe (m: ReadOnlyMemory<_>) expectedLength = lengthMustBe m.Span expectedLength
 
-        let lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength =
-            if m.Length < expectedLength then
-                invalidEGTf "Length must have been at least %d but was %d" expectedLength m.Length
+        let lengthMustBeAtLeast (m: ReadOnlyMemory<_>) expectedLength = lengthMustBeAtLeast m.Span expectedLength
 
-        let wantEmpty (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
-        let wantByte (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
-        let wantBoolean (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
-        let wantUInt16 (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.UInt32 x -> uint16 x | _ -> invalidEGTf "Invalid entry, expecting Integer."
-        let wantString (x: ReadOnlyMemory<_>) idx = match x.Span.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
+        let wantEmpty (x: ReadOnlyMemory<_>) idx = wantEmpty x.Span idx
+        let wantByte (x: ReadOnlyMemory<_>) idx = wantByte x.Span idx
+        let wantBoolean (x: ReadOnlyMemory<_>) idx = wantBoolean x.Span idx
+        let wantUInt16 (x: ReadOnlyMemory<_>) idx = wantUInt32 x.Span idx |> uint16
+        let wantString (x: ReadOnlyMemory<_>) idx = wantString x.Span idx
 
         type AnySymbol =
             | AnyTerminal of Terminal

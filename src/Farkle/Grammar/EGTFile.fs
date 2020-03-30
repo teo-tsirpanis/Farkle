@@ -197,7 +197,7 @@ module internal EGTHeaders =
     // I initially wanted a more fancy header, one that was readable
     // in both Base64 and ASCII, perhaps loaded with easter eggs. But
     // I settled to this, plain and boring header.
-    let [<Literal>] EGTNeoHeader = "Farkle Parser Tables/v6.0-alpha"
+    let [<Literal>] EGTNeoHeader = "Farkle Parser Tables/v6.0"
 
     // The headers for each section of the EGTneo file.
     // They must be present in the file in that order.

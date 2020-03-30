@@ -25,11 +25,7 @@ type GrammarDefinition = {
 
     DFASymbols: (Regex * DFASymbol) list
 
-    // These two fields contain code from user assemblies.
-    // They must not be preserved across AppDomain boundaries.
-    [<NonSerialized>]
     Transformers: ImmutableArray<T<obj>>
-    [<NonSerialized>]
     Fusers: ImmutableArray<obj[] -> obj>
 }
 

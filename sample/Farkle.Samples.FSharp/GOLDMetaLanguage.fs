@@ -169,6 +169,7 @@ let designtime =
     |> DesigntimeFarkle.cast
     |> DesigntimeFarkle.addBlockComment "!*" "*!"
     |> DesigntimeFarkle.addLineComment "!"
+    |> RuntimeFarkle.markForPrecompile
     :> DesigntimeFarkle
 
 let runtime = RuntimeFarkle.buildUntyped designtime

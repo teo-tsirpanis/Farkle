@@ -91,3 +91,14 @@ module internal Result =
 
     /// Returns if the given `Result` failed.
     let isError x = match x with | Ok _ -> false | Error _ -> true
+
+    let ofOption = function Some x -> Ok x | None -> Error ()
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal List =
+
+    let allSome xs =
+        List.foldBack (fun x state ->
+            match x, state with
+            | Some x, Some state -> Some <| x :: state
+            | _, _ -> None) xs (Some [])

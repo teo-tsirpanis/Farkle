@@ -75,6 +75,7 @@ let designtime =
 
     value
     |> DesigntimeFarkle.caseSensitive true
+    |> RuntimeFarkle.markForPrecompile
 
 [<CompiledName("Runtime")>]
 let runtime = RuntimeFarkle.build designtime

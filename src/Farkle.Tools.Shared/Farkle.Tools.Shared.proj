@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)/Common.fs" />
+    <Compile Include="$(MSBuildThisFileDirectory)/Precompiler.fs" />
     <Compile Include="$(MSBuildThisFileDirectory)/Templating/TemplateTypes.fs" />
     <Compile Include="$(MSBuildThisFileDirectory)/Templating/TemplateUtilities.fs" />
     <Compile Include="$(MSBuildThisFileDirectory)/Templating/BuiltinTemplates.fs" />

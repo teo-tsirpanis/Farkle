@@ -6,11 +6,20 @@
     <CleanDependsOn>$(CleanDependsOn);CleanFarkleGeneratedTemplates</CleanDependsOn>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
+    <MSBuildMajorVersion Condition="'$(MSBuildToolsVersion)' != ''">$([System.Version]::Parse($(MSBuildToolsVersion)).Major)</MSBuildMajorVersion>
   </PropertyGroup>
+
+  <Target
+          Name="CheckForMSBuild16">
+    <Error
+            Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 16)"
+            Text="Farkle.Tools.MSBuild is only supported on MSBuild 16 and above. Current version is $(MsBuildMajorVersion)." />
+  </Target>
   <Target
           Name="GenerateFarkleTemplates"
           Inputs="@(Farkle)"
           Outputs="$(MSBuildProjectDirectory)\%(Farkle.FileName)$(_FarkleOutputExtension)"
+          DependsOnTargets="CheckForMSBuild16"
           Condition="'@(Farkle)' != '' AND '$(DesignTimeBuild)' != 'true'">
 
     <PropertyGroup>

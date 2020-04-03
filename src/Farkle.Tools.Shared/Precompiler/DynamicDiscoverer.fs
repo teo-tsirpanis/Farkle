@@ -48,7 +48,7 @@ type private DynamicDiscoverer(log: LoggerWrapper) =
         |> ofOption
 
 let getPrecompilableGrammars (log: ILogger) path =
-    #if NET45
+    #if NET472
     log.Debug("Creating AppDomain...")
     let ad = AppDomain.CreateDomain(sprintf "Farkle precompiler for %s" path)
     try

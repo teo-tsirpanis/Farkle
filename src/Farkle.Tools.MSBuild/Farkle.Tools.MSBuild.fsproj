@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../Farkle.Tools.Shared/Farkle.Tools.Shared.proj" />
   <PropertyGroup>
-    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NuspecFile>Farkle.Tools.MSBuild.nuspec</NuspecFile>
     <!-- Isn't that supposed to be automatiaclly included?? -->
@@ -23,6 +22,7 @@
     <PackageReference Update="System.ValueTuple" Version="4.5.*" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.*" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
   </ItemGroup>
 
   <Target Name="PreparePack" BeforeTargets="GenerateNuspec" DependsOnTargets="Build">

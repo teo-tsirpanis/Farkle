@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -16,5 +16,6 @@ type internal CovariantOutAttribute() =
 [<assembly:InternalsVisibleTo("Farkle.Benchmarks")>]
 [<assembly:InternalsVisibleTo("Farkle.Tests")>]
 [<assembly:InternalsVisibleTo("Farkle.Tools")>]
+[<assembly:InternalsVisibleTo("Farkle.Tools.Shared")>]
 [<assembly:InternalsVisibleTo("Farkle.Tools.MSBuild")>]
 do()

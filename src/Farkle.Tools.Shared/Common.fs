@@ -22,6 +22,7 @@ let toolsVersion =
 
 /// Logs an error if the given filename does not exist.
 let assertFileExists fileName =
+    let fileName = Path.GetFullPath fileName
     if File.Exists fileName then
         Ok fileName
     else

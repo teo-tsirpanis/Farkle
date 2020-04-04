@@ -15,10 +15,13 @@ open Sigourney
 open System
 open System.IO
 open System.Reflection
+open System.Runtime.CompilerServices
 
 type private LoggerWrapper(log: ILogger) =
+#if NET472
     inherit MarshalByRefObject()
     override _.InitializeLifetimeService() = null
+#endif
     member _.Verbose(template) = log.Verbose(template)
     member _.Information(template, [<ParamArray>] args: _ []) = log.Information(template, args)
     member _.Error(template, [<ParamArray>] args: _ []) = log.Error(template, args)
@@ -34,7 +37,7 @@ let private getPrecompilableGrammarsImpl asm (log: LoggerWrapper) =
             |> DesigntimeFarkleBuild.buildGrammarOnly
         match grammar with
         | Ok grammar ->
-            log.Information("Precompiling {Grammar} succeeded.")
+            log.Information("Precompiling {Grammar} succeeded.", name)
             use stream = new MemoryStream()
             EGT.toStreamNeo stream grammar
             Some(name, stream.ToArray())
@@ -78,7 +81,8 @@ let ensureUnloaded (log: ILogger) (alc: byref<AssemblyLoadContext>) =
             log.Warning("The assembly context was not collected! Writing to the assembly might fail.")
 #endif
 
-let getPrecompilableGrammars (log: ILogger) path =
+[<MethodImpl(MethodImplOptions.NoInlining)>]
+let getPrecompilableGrammars (log: ILogger) references path =
     let logw = LoggerWrapper(log)
     #if NET472
     log.Debug("Creating AppDomain...")
@@ -97,6 +101,7 @@ let getPrecompilableGrammars (log: ILogger) path =
     let mutable alc = FarkleAwareAssemblyLoadContext() :> AssemblyLoadContext
     try
         let asm = alc.LoadFromAssemblyPath path
+        references |> List.iter (Path.GetFullPath >> alc.LoadFromAssemblyPath >> ignore)
         getPrecompilableGrammarsImpl asm logw
     finally
         ensureUnloaded log &alc

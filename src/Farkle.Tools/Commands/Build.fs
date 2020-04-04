@@ -23,12 +23,8 @@ with
             | OutputAssembly _ -> "The path to write the processed assembly. Defaults to the input assembly."
 
 let run (args: ParseResults<_>) = either {
-    let! inputAssembly =
-        args.PostProcessResult(InputAssembly, assertFileExists)
-        |> Result.map Path.GetFullPath
-    let outputAssembly =
-        args.GetResult(InputAssembly, inputAssembly)
-        |> Path.GetFullPath
+    let! inputAssembly = args.PostProcessResult(InputAssembly, assertFileExists)
+    let outputAssembly = args.GetResult(OutputAssembly, inputAssembly)
 
     do! precompile Log.Logger inputAssembly outputAssembly
 }

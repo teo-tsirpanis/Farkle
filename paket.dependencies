@@ -28,6 +28,7 @@ group Executables
   nuget Scriban
   nuget Serilog
   nuget Serilog.Sinks.Console
+  nuget Sigourney
 
 group Formatting
 

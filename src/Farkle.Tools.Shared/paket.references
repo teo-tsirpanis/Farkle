@@ -2,3 +2,4 @@ group Executables
 FSharp.Core
 Scriban
 Serilog
+Sigourney

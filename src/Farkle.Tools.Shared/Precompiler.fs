@@ -11,6 +11,7 @@ open Farkle.Grammar
 open Farkle.Monads.Either
 open Mono.Cecil
 open Serilog
+open Sigourney
 open System
 open System.IO
 open System.Reflection
@@ -108,7 +109,7 @@ let weaveAssembly pcdfs (asm: AssemblyDefinition) =
         asm.MainModule.Resources.Add res) pcdfs
     not pcdfs.IsEmpty
 
-let precompile log path = either {
+let precompile log path output = either {
     let! pcdfs = getPrecompilableGrammars log path
 
     do!
@@ -122,5 +123,5 @@ let precompile log path = either {
         |> Seq.fold (||) false
         |> (function true -> Error() | false -> Ok())
 
-    // TODO
+    Weaver.Weave(path, output, Converter(weaveAssembly pcdfs), log, WeaverConfig(), "Farkle")
 }

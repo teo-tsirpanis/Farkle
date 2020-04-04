@@ -16,8 +16,7 @@
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Commands/GeneratePredefinedSets.fs" />
-    <Compile Include="Commands/New.fs" />
+    <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@ namespace Farkle.Builder.Precompiler
 open Farkle.Builder
 open Farkle.Grammar
 open System.Reflection
+
 module DFB = DesigntimeFarkleBuild
 
 /// A kind of designtime Farkle whose grammar can be precompiled
@@ -46,8 +47,8 @@ module internal Loader =
 
     let precompiledGrammarNamespace = "__Farkle.PrecompiledGrammar"
 
-    let getPrecompiledGrammarResourceName (df: DesigntimeFarkle) =
-        sprintf "%s.%s" precompiledGrammarNamespace df.Name
+    let getPrecompiledGrammarResourceName name =
+        sprintf "%s.%s" precompiledGrammarNamespace name
 
     /// Tries to find a precompiled grammar for the given
     /// designtime Farkle, and returns it if it finds it
@@ -60,7 +61,7 @@ module internal Loader =
             // assembly's resources, if it exists. Errors reading
             // the grammar are unexpected and will throw.
             let grammar =
-                pcdf
+                pcdf.Name
                 |> getPrecompiledGrammarResourceName
                 |> pcdf.DeclaringAssembly.GetManifestResourceStream
                 |> Option.ofObj

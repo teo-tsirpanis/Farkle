@@ -81,6 +81,8 @@ let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
             // This is great news.
             log.Debug("The assembly context was not collected after {GCTries} attempts! \
 Writing to the assembly might fail.", 10 - i)
+        else
+            log.Debug("Assembly context unloaded after {GCTries} tries.", 10 - i)
 #endif
 
 [<MethodImpl(MethodImplOptions.NoInlining)>]
@@ -98,21 +100,18 @@ let getPrecompilableGrammars (log: ILogger) references path =
                 typeof<DynamicDiscoverer>.FullName,
                 [|logw|])
             |> unbox<DynamicDiscoverer>
-        theHeroicPrecompiler.GetPrecompilableGrammars path
+        theHeroicPrecompiler.GetPrecompilableGrammars path, WeakReference(obj())
     finally
         AppDomain.Unload(ad)
     #else
-    let mutable alc = FarkleAwareAssemblyLoadContext(path) :> AssemblyLoadContext
+    let alc = FarkleAwareAssemblyLoadContext(path) :> AssemblyLoadContext
     try
         let asm = alc.LoadFromAssemblyPath path
         for r in references do
             r |> Path.GetFullPath |> alc.LoadFromAssemblyPath |> ignore
-        getPrecompilableGrammarsImpl asm logw
+        getPrecompilableGrammarsImpl asm logw, WeakReference(alc)
     finally
-        let wr = WeakReference(alc)
         alc.Unload()
-        alc <- null
-        ensureUnloaded log wr
     #endif
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
@@ -123,7 +122,11 @@ let weaveAssembly pcdfs (asm: AssemblyDefinition) =
     not pcdfs.IsEmpty
 
 let precompile log path output = either {
-    let! pcdfs = getPrecompilableGrammars log ["Chiron.dll"; "FsLexYacc.Runtime.dll"] path
+    let pcdfs, wr = getPrecompilableGrammars log ["Chiron.dll"; "FsLexYacc.Runtime.dll"] path
+    let! pcdfs = pcdfs
+    #if !NET472
+    ensureUnloaded log wr
+    #endif
 
     do!
         pcdfs

@@ -58,8 +58,8 @@ type private DynamicDiscoverer(log: LoggerWrapper) =
 #if !NET472
 open System.Runtime.Loader
 
-type FarkleAwareAssemblyLoadContext() =
-    inherit AssemblyLoadContext("Farkle.Tools precompiler", true)
+type FarkleAwareAssemblyLoadContext(path) =
+    inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
     override x.Load(name) =
         // We want Farkle loaded only once.
         let farkleAssembly = typeof<DesigntimeFarkle>.Assembly
@@ -68,17 +68,19 @@ type FarkleAwareAssemblyLoadContext() =
         else
             null
 
-let ensureUnloaded (log: ILogger) (alc: byref<AssemblyLoadContext>) =
-    let wr = WeakReference alc
-    alc.Unload()
-    alc <- null
+let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
     if wr.IsAlive then
         log.Debug("Running a full GC to free the assembly context...")
-        GC.Collect()
-        GC.WaitForPendingFinalizers()
-        GC.Collect()
+        let mutable i = 10
+        while wr.IsAlive && (i > 0) do
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            i <- i - 1
         if wr.IsAlive then
-            log.Warning("The assembly context was not collected! Writing to the assembly might fail.")
+            // Not getting unloaded does not affect weaving an assembly.
+            // This is great news.
+            log.Debug("The assembly context was not collected after {GCTries} attempts! \
+Writing to the assembly might fail.", 10 - i)
 #endif
 
 [<MethodImpl(MethodImplOptions.NoInlining)>]
@@ -88,6 +90,8 @@ let getPrecompilableGrammars (log: ILogger) references path =
     log.Debug("Creating AppDomain...")
     let ad = AppDomain.CreateDomain(sprintf "Farkle.Tools precompiler for %s" path)
     try
+        for r in references do
+            r |> Path.GetFullPath |> ad.Load |> ignore
         let theHeroicPrecompiler =
             ad.CreateInstanceAndUnwrap(
                 Assembly.GetExecutingAssembly().FullName,
@@ -98,13 +102,17 @@ let getPrecompilableGrammars (log: ILogger) references path =
     finally
         AppDomain.Unload(ad)
     #else
-    let mutable alc = FarkleAwareAssemblyLoadContext() :> AssemblyLoadContext
+    let mutable alc = FarkleAwareAssemblyLoadContext(path) :> AssemblyLoadContext
     try
         let asm = alc.LoadFromAssemblyPath path
-        references |> List.iter (Path.GetFullPath >> alc.LoadFromAssemblyPath >> ignore)
+        for r in references do
+            r |> Path.GetFullPath |> alc.LoadFromAssemblyPath |> ignore
         getPrecompilableGrammarsImpl asm logw
     finally
-        ensureUnloaded log &alc
+        let wr = WeakReference(alc)
+        alc.Unload()
+        alc <- null
+        ensureUnloaded log wr
     #endif
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
@@ -115,7 +123,7 @@ let weaveAssembly pcdfs (asm: AssemblyDefinition) =
     not pcdfs.IsEmpty
 
 let precompile log path output = either {
-    let! pcdfs = getPrecompilableGrammars log path
+    let! pcdfs = getPrecompilableGrammars log ["Chiron.dll"; "FsLexYacc.Runtime.dll"] path
 
     do!
         pcdfs
@@ -123,10 +131,15 @@ let precompile log path output = either {
         |> Seq.countBy id
         |> Seq.map (fun (name, count) ->
             if count <> 1 then
-                Log.Error("Cannot have many precompilable designtime Farkles named {Name}", name)
+                log.Error("Cannot have many precompilable designtime Farkles named {Name}", name)
             count <> 1)
         |> Seq.fold (||) false
-        |> (function true -> Error() | false -> Ok())
+        |> (function
+            | true ->
+                log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function, \
+or the Rename extension method.")
+                Error()
+            | false -> Ok())
 
     Weaver.Weave(path, output, Converter(weaveAssembly pcdfs), log, WeaverConfig(), "Farkle")
 }

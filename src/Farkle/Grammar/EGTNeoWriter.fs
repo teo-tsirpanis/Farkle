@@ -16,7 +16,7 @@ open System.Collections.Immutable
 
 [<AutoOpen>]
 module private Implementation =
-    
+
     type IndexMap = ImmutableDictionary<uint32, uint32>
 
     let writeProperties w (props: ImmutableDictionary<_,_>) =
@@ -88,7 +88,7 @@ module private Implementation =
             xs.CopyTo(mem)
             writeRecord w (ReadOnlySpan(mem, 0, count))
         finally
-            ArrayPool.Shared.Return mem
+            ArrayPool.Shared.Return(mem, true)
 
     let writeGroups w noiseSymbols (terminalMap: IndexMap) (groups: ImmutableArray<Group>) =
         let arr = ResizeArray()

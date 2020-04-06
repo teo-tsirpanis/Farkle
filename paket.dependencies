@@ -24,11 +24,11 @@ group Executables
   nuget Farkle.Tools.MSBuild
   nuget FSharp.Core
   nuget FsLexYacc.Runtime
+  nuget Mono.Cecil
   nuget Newtonsoft.Json
   nuget Scriban
   nuget Serilog
   nuget Serilog.Sinks.Console
-  nuget Sigourney
 
 group Formatting
 

@@ -13,6 +13,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FarkleCreateTemplateTask.fs" />
+    <Compile Include="FarklePrecompileTask.fs" />
     <None Include="Farkle.Tools.MSBuild.props" />
     <None Include="Farkle.Tools.MSBuild.targets" />
   </ItemGroup>
@@ -21,6 +22,7 @@
     <PackageReference Update="FSharp.Core" Version="4.7.*" />
     <PackageReference Update="System.ValueTuple" Version="4.5.*" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.*" />
+    <PackageReference Include="Sigourney" Version="0.1.0" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
   </ItemGroup>
@@ -28,9 +30,7 @@
   <Target Name="PreparePack" BeforeTargets="GenerateNuspec" DependsOnTargets="Build">
     <ItemGroup>
       <_FrameworksToBuild Include="$(TargetFrameworks)" />
-      <_ProjectsToPublish
-              Include="$(MSBuildThisFileFullPath)"
-              AdditionalProperties="TargetFramework=%(_FrameworksToBuild.Identity);PublishDir=tools\%(_FrameworksToBuild.Identity)\" />
+      <_ProjectsToPublish Include="$(MSBuildThisFileFullPath)" AdditionalProperties="TargetFramework=%(_FrameworksToBuild.Identity);PublishDir=tools\%(_FrameworksToBuild.Identity)\" />
     </ItemGroup>
     <RemoveDir Directories="tools/" />
     <MSBuild Projects="@(_ProjectsToPublish)" Properties="NoBuild=true;Configuration=$(Configuration)" Targets="Publish" BuildInParallel="$(BuildInParallel)" />

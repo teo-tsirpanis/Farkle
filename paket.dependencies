@@ -1,5 +1,7 @@
 framework: net45, netstandard2.0
 
+version 5.242.2
+
 source https://api.nuget.org/v3/index.json
 
 storage: none
@@ -42,6 +44,7 @@ group FakeBuild
   source https://api.nuget.org/v3/index.json
 
   storage: none
+  framework: netstandard2.0
 
   nuget Fake.Api.GitHub
   nuget Fake.BuildServer.AppVeyor

@@ -189,3 +189,4 @@ temp/
 .idea/
 *.g.[fc]s
 .ionide/
+.paket/

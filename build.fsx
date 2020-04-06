@@ -65,7 +65,7 @@ let sourceProjects = !! "./src/**/*.??proj"
 let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 
 // Additional command line arguments passed to Expecto.
-let testArguments = ""
+let testArguments = "--nunit-summary TestResults.xml"
 
 let testFrameworks = ["netcoreapp3.1"]
 
@@ -106,7 +106,7 @@ let releaseNotes =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | BuildServer.AppVeyor ->
+    | AppVeyor ->
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
             AppVeyor.Environment.RepoCommit
             AppVeyor.Environment.RepoName
@@ -195,10 +195,8 @@ Target.create "BuildAllRelease" (fun _ -> DotNet.build (fConfiguration >> fCommo
 
 Target.description "Runs the unit tests using test runner"
 Target.create "RunTests" (fun _ ->
-    testFrameworks
-    |> Seq.iter (fun fx ->
-        dotNetRun testProject (Some fx) DotNet.BuildConfiguration.Debug "" testArguments
-    )
+    dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
+    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")
 )
 
 let shouldCIBenchmark =

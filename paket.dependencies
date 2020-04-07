@@ -30,11 +30,14 @@ group Executables
   nuget Newtonsoft.Json
   nuget Scriban
   nuget Serilog
-  nuget Serilog.Sinks.Console
+  // Version 4.0 directly targets .NET Standard 2.0, reducing dependencies.
+  nuget Serilog.Sinks.Console prerelease
 
 group Formatting
 
   source https://api.nuget.org/v3/index.json
+
+  framework: net45
 
   nuget FSharp.Formatting
   nuget FSharp.Formatting.CommandTool

@@ -12,6 +12,6 @@ let main argv =
     BenchmarkSwitcher
         .FromAssembly(Assembly.GetEntryAssembly())
         // FParsec is shipped in Debug mode. See their issue 44.
-        .Run(argv, ManualConfig.Create(DefaultConfig.Instance).With(ConfigOptions.DisableOptimizationsValidator))
+        .Run(argv, ManualConfig.Create(DefaultConfig.Instance).WithOptions(ConfigOptions.DisableOptimizationsValidator))
     |> ignore
     0

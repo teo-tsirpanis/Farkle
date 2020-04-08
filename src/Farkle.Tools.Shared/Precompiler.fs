@@ -11,6 +11,8 @@ open Farkle.Grammar
 open Mono.Cecil
 open Serilog
 open System
+open System.Collections.Generic
+open System.Collections.Immutable
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -34,6 +36,7 @@ let private dynamicDiscoverAndPrecompile asm (log: LoggerWrapper) =
             // FsLexYacc does it, so why not us?
             log.Information("{Grammar} was successfully precompiled: {Terminals} terminals, {Nonterminals} \
 nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} DFA states",
+                name,
                 grammar.Symbols.Terminals.Length,
                 grammar.Symbols.Nonterminals.Length,
                 grammar.Productions.Length,
@@ -53,17 +56,39 @@ type private DynamicDiscoverer(log: LoggerWrapper) =
         let asm = Assembly.LoadFile path
         dynamicDiscoverAndPrecompile asm log
 
-#if !NET472
+let getAssemblyName (path: string) = AssemblyDefinition.ReadAssembly(path).Name.Name
+
+#if NET472
+let makeResolver references =
+    let dict =
+        references
+        |> Seq.map (fun path -> KeyValuePair(getAssemblyName path, path))
+        |> ImmutableDictionary.CreateRange
+    ResolveEventHandler(fun _ e ->
+        match e.Name with
+        | "Farkle" -> null
+        | name ->
+            match dict.TryGetValue name with
+            | true, path -> Assembly.LoadFile path
+            | false, _ -> null)
+#else
 open System.Runtime.Loader
 
-type private FarkleAwareAssemblyLoadContext(path) =
+type private FarkleAwareAssemblyLoadContext(path, references) =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
-    let farkleAssembly = typeof<DesigntimeFarkle>.Assembly
-    override _.Load(name) =
-        if name.Name = farkleAssembly.GetName().Name then
-            farkleAssembly
-        else
-            null
+    let dict =
+        references
+        |> Seq.map (fun path -> KeyValuePair(getAssemblyName path, path))
+        |> ImmutableDictionary.CreateRange
+    override this.Load(name) =
+        match name.Name with
+        | "Farkle" -> typeof<DesigntimeFarkle>.Assembly
+        | "FSharp.Core" -> typeof<FuncConvert>.Assembly
+        | "mscorlib" | "System.Private.CoreLib" | "System.Runtime" -> null
+        | name ->
+            match dict.TryGetValue name with
+            | true, path -> this.LoadFromAssemblyPath path
+            | false, _ -> null
 
 let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
     if wr.IsAlive then
@@ -90,8 +115,7 @@ let private getPrecompilableGrammars (log: ILogger) references path =
     log.Debug("Creating AppDomain...")
     let ad = AppDomain.CreateDomain(sprintf "Farkle.Tools precompiler for %s" path)
     try
-        for r in references do
-            r |> Path.GetFullPath |> ad.Load |> ignore
+        ad.add_AssemblyResolve(makeResolver references)
         let theHeroicPrecompiler =
             ad.CreateInstanceAndUnwrap(
                 Assembly.GetExecutingAssembly().FullName,
@@ -100,13 +124,14 @@ let private getPrecompilableGrammars (log: ILogger) references path =
             |> unbox<DynamicDiscoverer>
         theHeroicPrecompiler.DiscoverAndPrecompile path, WeakReference(obj())
     finally
+        // Fody does that, no idea why. Maybe it's needed
+        // because the lifetime service is set to null.
+        Runtime.Remoting.RemotingServices.Disconnect logw |> ignore
         AppDomain.Unload(ad)
     #else
-    let alc = FarkleAwareAssemblyLoadContext(path) :> AssemblyLoadContext
+    let alc = FarkleAwareAssemblyLoadContext(path, references) :> AssemblyLoadContext
     try
         let asm = alc.LoadFromAssemblyPath path
-        for r in references do
-            r |> Path.GetFullPath |> alc.LoadFromAssemblyPath |> ignore
         dynamicDiscoverAndPrecompile asm logw, WeakReference(alc)
     finally
         alc.Unload()
@@ -116,7 +141,7 @@ let private getPrecompilableGrammars (log: ILogger) references path =
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
     List.iter (fun (name, data: _ []) ->
         let name = Precompiler.Loader.getPrecompiledGrammarResourceName name
-        let res = EmbeddedResource(name, Mono.Cecil.ManifestResourceAttributes.Private, data)
+        let res = EmbeddedResource(name, Mono.Cecil.ManifestResourceAttributes.Public, data)
         asm.MainModule.Resources.Add res) pcdfs
     not pcdfs.IsEmpty
 

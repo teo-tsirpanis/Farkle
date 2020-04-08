@@ -8,6 +8,7 @@
 // --------------------------------------------------------------------------------------
 
 #r "paket: groupref FakeBuild //"
+#nowarn "3180" // Mutable locals allocated as reference cells.
 
 #if !FAKE
 // Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.

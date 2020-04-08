@@ -45,10 +45,7 @@ type private PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
 
 module internal Loader =
 
-    let precompiledGrammarNamespace = "__Farkle.PrecompiledGrammar"
-
-    let getPrecompiledGrammarResourceName name =
-        sprintf "%s.%s" precompiledGrammarNamespace name
+    let getPrecompiledGrammarResourceName name = sprintf "Farkle.PrecompiledGrammar.%s.egtn" name
 
     /// Tries to find a precompiled grammar for the given
     /// designtime Farkle, and returns it if it finds it
@@ -64,9 +61,9 @@ module internal Loader =
                 pcdf.Name
                 |> getPrecompiledGrammarResourceName
                 |> pcdf.DeclaringAssembly.GetManifestResourceStream
-                |> Option.ofObj
-                |> Option.map (EGT.ofStream >> Ok)
-                |> Option.defaultWith (fun () -> DFB.buildGrammarOnly pcdf.Grammar)
+                |> function
+                | null -> DFB.buildGrammarOnly pcdf.Grammar
+                | stream -> stream |> EGT.ofStream |> Ok
             grammar
         | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly
 

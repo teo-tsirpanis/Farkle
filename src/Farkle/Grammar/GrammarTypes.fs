@@ -265,7 +265,7 @@ type Symbols = {
     NoiseSymbols: Noise ImmutableArray
 }
 
-/// A context-free grammar according to which, Farkle can parse text.
+/// A context-free grammar according to which Farkle can parse text.
 [<NoComparison; ReferenceEquality>]
 type Grammar = internal {
     // This field is totally informative; it serves only the template maker.
@@ -284,11 +284,11 @@ type Grammar = internal {
 }
 with
     /// Key-value pairs of strings that store informative properties about the grammar.
-    /// See the [GOLD Parser's documentation for more](http://www.goldparser.org/doc/egt/index.htm).
+    /// See the [GOLD Parser's documentation](http://www.goldparser.org/doc/egt/index.htm).
     member x.Properties = x._Properties
     /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol
-    /// The grammar's terminals =, nonterminals, and noise symbols.
+    /// The grammar's terminals, nonterminals, and noise symbols.
     member x.Symbols = x._Symbols
     /// The grammar's `Production`s.
     member x.Productions = x._Productions

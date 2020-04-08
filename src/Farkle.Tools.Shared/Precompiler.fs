@@ -31,6 +31,14 @@ let private dynamicDiscoverAndPrecompile asm (log: LoggerWrapper) =
         let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.Grammar
         match grammar with
         | Ok grammar ->
+            // FsLexYacc does it, so why not us?
+            log.Information("{Grammar} was successfully precompiled: {Terminals} terminals, {Nonterminals} \
+nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} DFA states",
+                grammar.Symbols.Terminals.Length,
+                grammar.Symbols.Nonterminals.Length,
+                grammar.Productions.Length,
+                grammar.LALRStates.Length,
+                grammar.DFAStates.Length)
             use stream = new MemoryStream()
             EGT.toStreamNeo stream grammar
             Ok(stream.ToArray())
@@ -64,10 +72,11 @@ let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
         while wr.IsAlive && (i > 0) do
             GC.Collect()
             GC.WaitForPendingFinalizers()
+            GC.Collect()
             i <- i - 1
         if wr.IsAlive then
             // Not getting unloaded does not affect weaving an assembly.
-            // This is great news.
+            // This is great news; a warning is not necessary.
             log.Debug("The assembly context was not collected after {GCTries} attempts! \
 Writing to the assembly might fail.", 10 - i)
         else

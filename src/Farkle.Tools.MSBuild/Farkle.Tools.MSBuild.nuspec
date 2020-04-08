@@ -11,11 +11,13 @@ This provides a smoother development experience while using Farkle.</description
     <releaseNotes>You can see information about the latest releases on https://github.com/teo-tsirpanis/Farkle/releases</releaseNotes>
     <projectUrl>https://teo-tsirpanis.github.io/Farkle/</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</iconUrl>
+    <icon>logo.png</icon>
     <license type="expression">MIT</license>
     <tags>farkle parser lalr gold-parser msbuild</tags>
     <repository type="git" url="https://github.com/teo-tsirpanis/Farkle/" />
   </metadata>
   <files>
+    <file src="..\..\docsrc\files\img\logo.png" target ="" />
     <file src="tools\**\*.*" target="tools" />
     <file src="Farkle.Tools.MSBuild.props" target="build" />
     <file src="Farkle.Tools.MSBuild.targets" target="build" />

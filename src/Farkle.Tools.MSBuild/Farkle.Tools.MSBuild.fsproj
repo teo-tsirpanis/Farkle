@@ -22,7 +22,7 @@
     <PackageReference Update="FSharp.Core" Version="4.7.*" />
     <PackageReference Update="System.ValueTuple" Version="4.5.*" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.*" />
-    <PackageReference Include="Sigourney" Version="0.1.0" />
+    <PackageReference Include="Sigourney" Version="0.1.1" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
   </ItemGroup>

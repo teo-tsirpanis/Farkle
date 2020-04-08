@@ -15,7 +15,7 @@
     <FarkleSuppressGrammarErrors Condition="'FarkleSuppressGrammarErrors' == ''">false</FarkleSuppressGrammarErrors>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
-    <MSBuildMajorVersion Condition="'$(MSBuildToolsVersion)' != ''">$([System.Version]::Parse($(MSBuildToolsVersion)).Major)</MSBuildMajorVersion>
+    <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
   </PropertyGroup>
 
   <Target Name="CheckForMSBuild16">
@@ -68,7 +68,7 @@
       DependsOnTargets="CheckForMSBuild16"
       Condition="$(DesignTimeBuild) != true AND $(FarkleEnablePrecompile) != false AND '@(IntermediateAssembly)' != ''">
     <FarklePrecompileTask
-        AssemblyPath="@(IntermediateAssembly)"
+        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         IntermediateDirectory="$(ProjectDir)$(IntermediateOutputPath)"
         KeyOriginatorFile="$(KeyOriginatorFile)"
         AssemblyOriginatorKeyFile="$(AssemblyOriginatorKeyFile)"

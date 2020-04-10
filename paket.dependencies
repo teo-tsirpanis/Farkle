@@ -22,16 +22,16 @@ group Executables
 
   nuget Argu
   nuget Chiron
-  nuget BenchmarkDotNet
   nuget Farkle.Tools.MSBuild
   nuget FSharp.Core
   nuget FsLexYacc.Runtime
   nuget Mono.Cecil
-  nuget Newtonsoft.Json
   nuget Scriban
   nuget Serilog
   // Version 4.0 directly targets .NET Standard 2.0, reducing dependencies.
   nuget Serilog.Sinks.Console prerelease
+  // Scriban requires this version.
+  nuget System.Threading.Tasks.Extensions = 4.5.1
 
 group Formatting
 
@@ -71,7 +71,9 @@ group Test
 
   storage: none
 
+  nuget BenchmarkDotNet
   nuget Expecto
   nuget Expecto.FsCheck
   nuget FSharp.Core
+  nuget Newtonsoft.Json
   nuget System.Collections.Immutable

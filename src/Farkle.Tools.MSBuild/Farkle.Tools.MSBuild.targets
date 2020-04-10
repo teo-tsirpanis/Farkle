@@ -16,6 +16,8 @@
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
     <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
+    <!-- The timestamp of this file will be used to support incremental builds. -->
+    <_PrecompiledByFarkle>$(IntermediateOutputPath)$(MSBuildProjectFile).PrecompiledByFarkle</_PrecompiledByFarkle>
   </PropertyGroup>
 
   <Target Name="CheckForMSBuild16">
@@ -66,7 +68,9 @@
       Name="FarklePrecompileGrammars"
       AfterTargets="CoreCompile"
       DependsOnTargets="CheckForMSBuild16"
-      Condition="$(DesignTimeBuild) != true AND $(FarkleEnablePrecompile) != false AND '@(IntermediateAssembly)' != ''">
+      Condition="$(DesignTimeBuild) != true AND $(FarkleEnablePrecompile) != false AND '@(IntermediateAssembly)' != ''"
+      Inputs="@(IntermediateAssembly)"
+      Outputs="$(_PrecompiledByFarkle)">
     <FarklePrecompileTask
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         IntermediateDirectory="$(ProjectDir)$(IntermediateOutputPath)"
@@ -75,6 +79,12 @@
         SignAssembly="$(SignAssembly)"
         References="@(ReferencePath)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>
+
+    <WriteLinesToFile File="$(_PrecompiledByFarkle)" Lines="" Overwrite="true"/>
+
+    <ItemGroup>
+      <FileWrites Include="$(_PrecompiledByFarkle)" />
+    </ItemGroup>
   </Target>
   <Target Name="FarkleCleanGeneratedTemplates" BeforeTargets="Clean">
     <Delete Files="@(Farkle->'$(MSBuildProjectDirectory)\%(FileName)$(_FarkleOutputExtension)')"/>

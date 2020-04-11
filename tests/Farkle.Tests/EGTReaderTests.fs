@@ -25,6 +25,26 @@ let testBinaryIO fWrite fRead message x =
 
     Expect.equal xRead x message
 
+let egtNeoTests =
+    allEGTFiles
+    |> List.map (fun egtFile ->
+        let testName = sprintf "Roundtripping %s into the EGTneo format works" <| Path.GetFileName egtFile
+        test testName {
+            let grammar = EGT.ofFile egtFile
+            use s1 = new MemoryStream()
+            EGT.toStreamNeo s1 grammar
+            s1.Position <- 0L
+            let grammar2 = EGT.ofStream s1
+            use s2 = new MemoryStream()
+            EGT.toStreamNeo s2 grammar2
+
+            // Grammars follow reference equality semantics,
+            // so we will check the streams for equality.
+            s1.Position <- 0L
+            s2.Position <- 0L
+            Expect.streamsEqual s1 s2 ""
+        })
+
 [<Tests>]
 let tests = testList "EGT Reader tests" [
     testProperty "Writing an EGT record and reading it back works" (
@@ -56,26 +76,12 @@ let tests = testList "EGT Reader tests" [
         doTest <| x * 0x010101u
         doTest <| x * 0x01010101u
     )
+
+    yield! egtNeoTests
+
+    test "The EGTneo file format is stable" {
+        // This test was made just to ensure the EGTneo file format
+        // does change in a breaking way without us knowing.
+        "JSON.egtn" |> getResourceFile |> EGT.ofFile |> ignore
+    }
 ]
-
-[<Tests>]
-let egtNeoTests =
-    allEGTFiles
-    |> List.map (fun egtFile ->
-        let testName = sprintf "Roundtripping %s into the EGTneo format works" <| Path.GetFileName egtFile
-        test testName {
-            let grammar = EGT.ofFile egtFile
-            use s1 = new MemoryStream()
-            EGT.toStreamNeo s1 grammar
-            s1.Position <- 0L
-            let grammar2 = EGT.ofStream s1
-            use s2 = new MemoryStream()
-            EGT.toStreamNeo s2 grammar2
-
-            // Grammars follow reference equality semantics,
-            // so we will check the streams for equality.
-            s1.Position <- 0L
-            s2.Position <- 0L
-            Expect.streamsEqual s1 s2 ""
-        })
-    |> testList "EGTneo tests"

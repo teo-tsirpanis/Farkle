@@ -241,7 +241,7 @@ let farkleVsGOLDParserGen = gen {
     let farkleGramamr =
         gDef
         |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> returnOrFail "A faulty grammar was supposed to be filtered away."
+        |> Flip.Expect.wantOk "A faulty grammar was supposed to be filtered away."
     let goldGrammar = GOLDParserBridge.buildUsingGOLDParser gDef
     return FarkleVsGOLDParser(farkleGramamr, goldGrammar)
 }

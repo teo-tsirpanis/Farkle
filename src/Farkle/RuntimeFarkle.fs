@@ -12,6 +12,7 @@ open Farkle.Parser
 open System
 open System.IO
 open System.Reflection
+open System.Runtime.CompilerServices
 open System.Text
 
 /// A type signifying an error during the parsing process.
@@ -164,7 +165,7 @@ module RuntimeFarkle =
         |> Precompiler.Loader.getGrammarOrBuild
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
-    [<CompiledName("MarkForPrecompile")>]
+    [<CompiledName("MarkForPrecompile"); MethodImpl(MethodImplOptions.NoInlining)>]
     /// Marks the given designtime as available to have its grammar
     /// precompiled ahead of time. Besides performance improvements,
     /// precompiling a grammar reports any errors at compile-time

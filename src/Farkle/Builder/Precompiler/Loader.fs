@@ -26,7 +26,7 @@ type internal PrecompilableDesigntimeFarkle =
     /// precompiled grammar (if it exists).
     abstract DeclaringAssembly: Assembly
 
-type private PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
+type private PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle, asm) =
     // We have to be 100% sure that the designtime Farkle's
     // name never changes because it is part of its identity.
     // All its implementations return a fixed value, but that's
@@ -38,19 +38,20 @@ type private PrecompilableDesigntimeFarkle<'T> (df: DesigntimeFarkle<'T>, asm) =
         member _.Metadata = df.Metadata
     interface DesigntimeFarkle<'T>
     interface DesigntimeFarkleWrapper with
-        member _.InnerDesigntimeFarkle = upcast df
+        member _.InnerDesigntimeFarkle = df
     interface PrecompilableDesigntimeFarkle with
         member _.Grammar = grammarDef
         member _.DeclaringAssembly = asm
 
+/// Functions to load precompiled grammars
+/// from assemblies using reflection.
 module internal Loader =
 
-    let getPrecompiledGrammarResourceName name = sprintf "Farkle.PrecompiledGrammar.%s.egtn" name
+    /// Gets the manifest resource name of the precompiled grammar with the given name.
+    let getPrecompiledGrammarResourceName name = sprintf "%s.precompiled.egtn" name
 
     /// Tries to find a precompiled grammar for the given
-    /// designtime Farkle, and returns it if it finds it
-    /// and the designtime Farkle is marked,
-    /// or else it builds it on the spot.
+    /// designtime Farkle, and returns it if found.
     let getGrammarOrBuild (df: DesigntimeFarkle) =
         match df with
         | :? PrecompilableDesigntimeFarkle as pcdf ->
@@ -69,8 +70,9 @@ module internal Loader =
 
     /// Marks the given designtime Farkle as eligible to
     /// be precompiled. The assembly it resides is also given.
-    let prepare df asm =
-        // We won't try to flatten this one; it might make sense
-        // when we want to prepare a designtime Farkle that has
-        // already been prepared in a different assembly.
-        PrecompilableDesigntimeFarkle(df, asm) :> DesigntimeFarkle<_>
+    let prepare (df: DesigntimeFarkle<'T>) asm =
+        match df with
+        | :? PrecompilableDesigntimeFarkle as pcdf ->
+            PrecompilableDesigntimeFarkle(pcdf.InnerDesigntimeFarkle, asm)
+        | df -> PrecompilableDesigntimeFarkle(df, asm)
+        :> DesigntimeFarkle<'T>

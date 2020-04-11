@@ -1,5 +1,5 @@
 ﻿// Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -26,7 +26,7 @@ namespace Farkle.Samples.Cli
         private static bool ParseFarkle<T>(this RuntimeFarkle<T> rf) => rf.Parse(_jsonData).IsOk;
         private static bool ParseFarkleCSharp() => JSON.CSharp.Language.Runtime.ParseFarkle();
         private static bool ParseFarkleFSharp() => JSON.FSharp.Language.Runtime.ParseFarkle();
-        private static bool ParseFarkleSyntaxCheck() => _syntaxCheck.ParseFarkle();
+        private static void ParseFarkleSyntaxCheck() => _syntaxCheck.ParseFarkle();
         private static bool ParseChiron() => FParsec.CharParsers.run(Chiron.Parsing.jsonR.Value, _jsonData).IsSuccess;
 
         private static void Prepare()

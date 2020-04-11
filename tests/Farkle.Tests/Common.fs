@@ -1,12 +1,11 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 [<AutoOpen>]
 module Farkle.Tests.Common
 
-open Expecto
 open Farkle
 open Farkle.Grammar
 open System.IO
@@ -29,8 +28,3 @@ let loadGrammar (egtFile: string) =
 let loadRuntimeFarkle egtFile =
     loadGrammar egtFile
     |> RuntimeFarkle.create PostProcessors.ast
-
-let returnOrFail msg x =
-    match x with
-    | Ok x -> x
-    | Error x -> failtestf "%s: %O" msg <| box x

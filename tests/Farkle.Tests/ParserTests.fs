@@ -69,7 +69,7 @@ let tests = testList "Parser tests" [
         let actualLog = ResizeArray()
         let num =
             RuntimeFarkle.parseString SimpleMaths.int actualLog.Add "475 + 724"
-            |> returnOrFail "Parsing '475 + 724' failed"
+            |> Flip.Expect.wantOk "Parsing '475 + 724' failed"
         Expect.equal num 1199 "The numerical result is different than the expected"
         Expect.sequenceEqual actualLog expectedLog "The parsing log is different than the usual"
     }
@@ -93,10 +93,10 @@ let tests = testList "Parser tests" [
         let jsonAsString = Chiron.Formatting.Json.format json
         let cs =
             RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
-            |> returnOrFail "The C# parser failed"
+            |> Flip.Expect.wantOk "The C# parser failed"
         let fs =
             RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
-            |> returnOrFail "The F# parser failed"
+            |> Flip.Expect.wantOk "The F# parser failed"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with
             | Choice1Of2 x -> x
@@ -110,10 +110,10 @@ let tests = testList "Parser tests" [
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
             RuntimeFarkle.parse SimpleMaths.mathExpression exprAsString
-            |> returnOrFail "Parsing the mathematical expression failed"
+            |> Flip.Expect.wantOk "Parsing the mathematical expression failed"
         let num =
             RuntimeFarkle.parse SimpleMaths.int exprAsString
-            |> returnOrFail "Calculating the mathematical expression failed"
+            |> Flip.Expect.wantOk "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )
 

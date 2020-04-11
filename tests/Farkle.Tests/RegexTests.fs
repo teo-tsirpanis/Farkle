@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -68,12 +68,12 @@ let tests = testList "Regex tests" [
         let dfa =
             DFABuild.buildRegexesToDFA false false [regex, Choice1Of4 <| Terminal(0u, "My Terminal")]
             // We have only one regex. It cannot fail by accident.
-            |> returnOrFail "Generating a case insensitive DFA failed"
+            |> Flip.Expect.wantOk "Generating a case insensitive DFA failed"
         Expect.isSome (matchDFAToString dfa str) "Recognizing the original string failed"
         Expect.isSome (matchDFAToString dfa <| str.ToLowerInvariant()) "Recognizing the lowercase string failed"
         Expect.isSome (matchDFAToString dfa <| str.ToUpperInvariant()) "Recognizing the uppercase string failed"
     )
-    
+
     testProperty "A DFA can correctly recognize literal symbols over a wildcard" (fun literals ->
         let literals = literals |> List.distinct |> List.map (fun (NonEmptyString str) -> str)
         let ident = (Regex.chars [char 0 .. char 127] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
@@ -82,7 +82,7 @@ let tests = testList "Regex tests" [
             |> List.mapi (fun i str -> Regex.string str, Choice1Of4 <| Terminal(uint32 i + 1u, str))
             |> (fun xs -> ident :: xs)
             |> DFABuild.buildRegexesToDFA true true
-            |> returnOrFail "Generating the DFA failed"
+            |> Flip.Expect.wantOk "Generating the DFA failed"
         literals
         |> List.forall (fun str ->
             match matchDFAToString dfa str with
@@ -94,6 +94,6 @@ let tests = testList "Regex tests" [
         let dfa =
             [Regex.string str, Choice1Of4 <| Terminal(0u, str)]
             |> DFABuild.buildRegexesToDFA false true
-            |> returnOrFail "Generating a DFA for a literal string failed"
+            |> Flip.Expect.wantOk "Generating a DFA for a literal string failed"
         Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")
 ]

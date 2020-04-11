@@ -49,7 +49,7 @@ type DesigntimeFarkleExtensions =
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
     static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
-    [<Extension>]
+    [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
     /// <summary>Marks a <see cref="DesigntimeFarkle{TResult}"/> as available to have
     /// its grammar precompiled ahead of time.</summary>
     /// <remarks>This function has to be directly called from user code.</remarks>

@@ -71,7 +71,12 @@
       Condition="$(DesignTimeBuild) != true AND $(FarkleEnablePrecompile) != false AND '@(IntermediateAssembly)' != ''"
       Inputs="@(IntermediateAssembly)"
       Outputs="$(_PrecompiledByFarkle)">
+    <Warning
+      Condition="$(MSBuildRuntimeType) != Core"
+        Code="FARKLE0001"
+        Text="Farkle can only precompile grammars when the project is built with the .NET Core command-line SDK (dotnet build etc.); not when built with an IDE. Your project will still work, but at a slightly reduced performance."/>
     <FarklePrecompileTask
+        Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         IntermediateDirectory="$(ProjectDir)$(IntermediateOutputPath)"
         KeyOriginatorFile="$(KeyOriginatorFile)"
@@ -80,9 +85,13 @@
         References="@(ReferencePath)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>
 
-    <WriteLinesToFile File="$(_PrecompiledByFarkle)" Lines="" Overwrite="true"/>
+    <WriteLinesToFile
+        Condition="$(MSBuildRuntimeType) == Core"
+        File="$(_PrecompiledByFarkle)"
+        Lines=""
+        Overwrite="true"/>
 
-    <ItemGroup>
+    <ItemGroup Condition="$(MSBuildRuntimeType) == Core">
       <FileWrites Include="$(_PrecompiledByFarkle)" />
     </ItemGroup>
   </Target>

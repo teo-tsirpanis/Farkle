@@ -23,24 +23,24 @@ Identifier = {Number}+
 ! The grammar starts below
 <Program> ::= <Expression>
 
-<Expression>  ::= <Expression> '>'  <Add Exp> 
-               |  <Expression> '<'  <Add Exp> 
-               |  <Expression> '<=' <Add Exp> 
+<Expression>  ::= <Expression> '>'  <Add Exp>
+               |  <Expression> '<'  <Add Exp>
+               |  <Expression> '<=' <Add Exp>
                |  <Expression> '>=' <Add Exp>
                |  <Expression> '==' <Add Exp>    !Equal
                |  <Expression> '<>' <Add Exp>    !Not equal
-               |  <Add Exp> 
+               |  <Add Exp>
 
 <Add Exp>     ::= <Add Exp> '+' <Mult Exp>
                |  <Add Exp> '-' <Mult Exp>
-               |  <Mult Exp> 
+               |  <Mult Exp>
 
-<Mult Exp>    ::= <Mult Exp> '*' <Negate Exp> 
-               |  <Mult Exp> '/' <Negate Exp> 
-               |  <Negate Exp> 
+<Mult Exp>    ::= <Mult Exp> '*' <Negate Exp>
+               |  <Mult Exp> '/' <Negate Exp>
+               |  <Negate Exp>
 
-<Negate Exp>  ::= '-' <Value> 
-               |  <Value> 
+<Negate Exp>  ::= '-' <Value>
+               |  <Value>
 
 !Add more values to the rule below - as needed
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2019 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -141,7 +141,7 @@ type Regex =
     /// Returns a regex that only recognizes a literal string.
     static member Literal (str: string) =
         str
-        |> Seq.map Regex.Literal 
+        |> Seq.map Regex.Literal
         |> List.ofSeq
         |> Concat
     /// Returns a regex that only recognizes a single literal character.

@@ -11,7 +11,7 @@ exception SyntaxError of string
 
 let lexeme = LexBuffer<_>.LexemeString
 
-let newline (lexbuf: LexBuffer<_>) = 
+let newline (lexbuf: LexBuffer<_>) =
   lexbuf.StartPos <- lexbuf.StartPos.NextLine
 }
 
@@ -31,7 +31,7 @@ rule read =
   | "true"   { TRUE }
   | "false"  { FALSE }
   | "null"   { NULL }
-  | '"'      { read_string "" false lexbuf } 
+  | '"'      { read_string "" false lexbuf }
   | '{'      { LEFT_BRACE }
   | '}'      { RIGHT_BRACE }
   | '['      { LEFT_BRACK }

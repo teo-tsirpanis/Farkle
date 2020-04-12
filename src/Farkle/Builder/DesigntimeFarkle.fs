@@ -87,7 +87,7 @@ type DesigntimeFarkle =
 /// or an exception might be thrown.</remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 /// <seealso cref="DesigntimeFarkle"/>
-type DesigntimeFarkle< [<CovariantOut>] 'T> = 
+type DesigntimeFarkle< [<CovariantOut>] 'T> =
     inherit DesigntimeFarkle
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
@@ -187,7 +187,7 @@ with
 type internal Terminal<'T> = {
     _Name: string
     Regex: Regex
-    Transformer: T<obj> 
+    Transformer: T<obj>
 }
 with
     interface AbstractTerminal with

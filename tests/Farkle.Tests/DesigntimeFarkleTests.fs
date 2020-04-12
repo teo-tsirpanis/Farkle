@@ -86,7 +86,7 @@ let tests = testList "Designtime Farkle tests" [
         let lit1 = literal "Test"
         let lit2 = literal "Test"
         Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality"
-        
+       
         let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
         let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
         Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality"
@@ -107,7 +107,7 @@ let tests = testList "Designtime Farkle tests" [
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
         Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
-    
+   
     test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
         let df = "Sbubby" ||= [!& "Eef" =% "Freef"]
         let t = T(fun _ x -> x.ToString())
@@ -141,7 +141,7 @@ let tests = testList "Designtime Farkle tests" [
             Terminals.int "Number"
             |> DesigntimeFarkle.rename "Integer"
             |> RuntimeFarkle.build
-        
+       
         let grammar = runtime.GetGrammar()
 
         Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect"

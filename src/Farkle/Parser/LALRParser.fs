@@ -77,7 +77,7 @@ module LALRParser =
             | None ->
                 let expectedSymbols =
                     currentState.Actions
-                    |> Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term) 
+                    |> Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term)
                     |> set
                     |> (fun s -> if currentState.EOFAction.IsSome then Set.add ExpectedSymbol.EndOfInput s else s)
                 let foundToken =

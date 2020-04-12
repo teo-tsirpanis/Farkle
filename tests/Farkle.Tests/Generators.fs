@@ -208,7 +208,7 @@ let designtimeFarkleGen =
             |> Gen.listOf
         for i = 0 to nonterminals.Length - 1 do
             let nont = nonterminals.[i]
-            
+           
             let! productions =
                 Gen.nonEmptyListOf productionGen
                 |> Gen.map (List.distinct >> List.map (List.fold (.>>) empty))

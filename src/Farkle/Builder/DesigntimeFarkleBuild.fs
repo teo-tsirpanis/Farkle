@@ -148,7 +148,7 @@ module DesigntimeFarkleBuild =
                 let symbol = handleTerminal dfName term
                 literalMap.Add(lit, symbol)
                 LALRSymbol.Terminal symbol
-            | Symbol.NewLine -> 
+            | Symbol.NewLine ->
                 usesNewLine <- true
                 match newLineSymbol with
                 | Choice1Of4 nlTerminal -> nlTerminal

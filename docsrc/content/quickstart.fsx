@@ -71,7 +71,7 @@ let number = terminal "Number" (T(fun _ x -> Double.Parse(x.ToString()))) number
 let _number = Terminals.float "Number"
 
 (**
-The function `terminal` takes three arguments. The first is the name of the terminal. The name is a purely informative field; many terminals with the same name are allowed. The second argument is called a _transformer_. It's a delegate that gets the position of the terminal and a `ReadOnlySpan<char>` that contains the terminal's data. The third argument is the regex that recognizes it. As we saw in `_number`, there are many more sample terminals in the [`Terminals` module](reference/farkle-builder-terminals.html). 
+The function `terminal` takes three arguments. The first is the name of the terminal. The name is a purely informative field; many terminals with the same name are allowed. The second argument is called a _transformer_. It's a delegate that gets the position of the terminal and a `ReadOnlySpan<char>` that contains the terminal's data. The third argument is the regex that recognizes it. As we saw in `_number`, there are many more sample terminals in the [`Terminals` module](reference/farkle-builder-terminals.html).
 
 > __Note:__ The regexes' type is `Farkle.Builder.Regex`. They are totally unrelated to `System.Text.ResularExpressions.Regex`. We can't convert between these two types, or directly match text against Farkle's regexes.
 
@@ -196,7 +196,7 @@ let myMarvelousRuntimeFarkle = RuntimeFarkle.build expression
 (**
 ## Using the runtime Farkle
 
-Now that we got it, it's time to put it to action. The `RuntimeFarkle` module has many functions to parse text from different sources. There is a simple function called `parse` which just parses a string. If you want to log what the parser actually does, you can use the function `parseString`. 
+Now that we got it, it's time to put it to action. The `RuntimeFarkle` module has many functions to parse text from different sources. There is a simple function called `parse` which just parses a string. If you want to log what the parser actually does, you can use the function `parseString`.
 
 Actually, all functions except `parse` take a function as a parameter, that gets called for every parser event. You can see what these events look like [here][parseMessageDocumentation].
 

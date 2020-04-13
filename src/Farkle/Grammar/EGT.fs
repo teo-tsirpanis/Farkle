@@ -53,17 +53,3 @@ it as an \"Enhanced Grammar Tables (version 5.0)\"."
         use w = new BinaryWriter(stream, Encoding.UTF8, true)
         writeNullTerminatedString EGTNeoHeader w
         EGTNeoWriter.write w grammar
-
-    /// Writes the given `Grammar` to a Base64-encoded
-    /// string in the EGTneo format and returns it.
-    [<CompiledName("WriteToBase64StringNeo")>]
-    let toBase64StringNeo (options: Base64FormattingOptions) grammar =
-        use s = new MemoryStream()
-        toStreamNeo s grammar
-        Convert.ToBase64String(s.ToArray(), options)
-
-    /// Writes the given `Grammar` to a file in the EGTneo format.
-    [<CompiledName("WriteToFileNeo")>]
-    let toFileNeo path grammar =
-        use stream = File.OpenWrite path
-        toStreamNeo stream grammar

@@ -6,6 +6,7 @@
 namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
+open Farkle
 open Farkle.Builder
 open Farkle.Common
 open Farkle.Grammar
@@ -16,25 +17,21 @@ type GrammarReaderBenchmark() =
 
     let mutable base64EGT = ""
 
-    let mutable base64EGTneo = ""
-
     [<GlobalSetup>]
     member __.Setup() =
         let bytes = File.ReadAllBytes "gml.egt"
         base64EGT <- Convert.ToBase64String bytes
 
-        let grammar = EGT.ofBase64String base64EGT
-        base64EGTneo <- EGT.toBase64StringNeo Base64FormattingOptions.None grammar
-
     [<Benchmark>]
     member __.Base64EGT() = EGT.ofBase64String base64EGT
 
-    [<Benchmark(Baseline = true)>]
-    member _.Base64EGTneo() = EGT.ofBase64String base64EGTneo
-
     [<Benchmark>]
-    member __.BuildGrammar() =
+    member __.Build() =
         GOLDMetaLanguage.designtime
         |> DesigntimeFarkleBuild.createGrammarDefinition
         |> DesigntimeFarkleBuild.buildGrammarOnly
         |> returnOrFail
+
+    [<Benchmark>]
+    member __.BuildPrecompiled() =
+        RuntimeFarkle.buildUntyped GOLDMetaLanguage.designtime

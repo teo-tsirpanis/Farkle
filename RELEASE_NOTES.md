@@ -1,4 +1,4 @@
-#### 6.0.0-alpha.1
+#### 6.0.0-alpha.1 - 13-04-2020
 * __Breaking change:__ Removed the legacy API for creating runtime Farkles from EGT files (the API with the transformers and fusers). EGT files are still supported (for now), but users are strongly urged to rewrite their grammars using `Farkle.Builder`, or implement the `PostProcessor` interface themselves (not recommended).
 * __Breaking change:__ The `PostProcessor` type was moved to the root `Farkle` namespace. Some reusable post-processors were moved to the new `Farkle.PostProcessors` module.
 * Farkle can now build grammars at compile-time. See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html.

@@ -210,8 +210,8 @@ type Terminal =
     /// Must not be null.</param>
     /// <param name="regex">The terminal's corresponding regular expression.</param>
     static member Create (name, fTransform: T<'T>, regex) =
-        if isNull fTransform then
-            nullArg "fTransform"
+        nullCheck "name" name
+        nullCheck "fTransform" fTransform
         let term = {
             _Name = name
             Regex = regex
@@ -223,6 +223,7 @@ type Terminal =
     /// <param name="name">The terminal's name.</param>
     /// <param name="regex">The terminal's corresponding regular expression.</param>
     static member Create(name, regex) =
+        nullCheck "name" name
         {new AbstractTerminal with
             member __.Name = name
             member __.Metadata = GrammarMetadata.Default
@@ -231,7 +232,9 @@ type Terminal =
     /// <summary>Creates a terminal that recognizes a literal string.</summary>
     /// <param name="str">The string literal this terminal will recognize.</param>
     /// <remarks>It does not return anything.</remarks>
-    static member Literal(str) = Literal str :> DesigntimeFarkle
+    static member Literal(str) =
+        nullCheck "str" str
+        Literal str :> DesigntimeFarkle
     /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
     /// that represents a new line.</summary>
     /// <remarks>This is different and better than a literal of
@@ -288,6 +291,9 @@ with
 [<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.
 type internal Group<'T>(name, groupStart, transformer) =
+    do nullCheck "name" name
+    do nullCheck "groupStart" groupStart
+    do nullCheck "transformer" transformer
     interface DesigntimeFarkle with
         member _.Name = name
         member _.Metadata = GrammarMetadata.Default
@@ -306,5 +312,6 @@ type internal LineGroup<'T>(name, groupStart, transformer) =
 /// The typed implementation of the `AbstractBlockGroup` interface.
 type internal BlockGroup<'T>(name, groupStart, groupEnd, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
+    do nullCheck "groupEnd" groupEnd
     interface AbstractBlockGroup with
         member _.GroupEnd = groupEnd

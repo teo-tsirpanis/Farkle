@@ -102,3 +102,11 @@ module internal List =
             match x, state with
             | Some x, Some state -> Some <| x :: state
             | _, _ -> None) xs (Some [])
+
+[<AutoOpen>]
+module internal ErrorHandling =
+
+    /// Raises an exception if `x` is null.
+    let inline nullCheck argName x =
+        if isNull x then
+            nullArg argName

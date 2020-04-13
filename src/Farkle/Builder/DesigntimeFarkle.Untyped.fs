@@ -51,10 +51,12 @@ with
     /// Its productions must be set later.</summary>
     /// <remarks>This function is useful for the creation of recursive productions.</remarks>
     /// <seealso cref="Nonterminal.SetProductions"/>
-    static member Create(name) = {
-        _Name = name
-        Productions = SetOnce<_>.Create()
-    }
+    static member Create(name) =
+        nullCheck "name" name
+        {
+            _Name = name
+            Productions = SetOnce<_>.Create()
+        }
     /// <summary>Creates an untyped <see cref="DesigntimeFarkle"/>
     /// from a nonterminal with the given name and productions,
     /// declared as production builders.</summary>

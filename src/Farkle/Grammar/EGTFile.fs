@@ -177,6 +177,8 @@ module internal EGTWriter =
             w.Write('i'B)
             write7BitEncodedInt w x
         | Entry.String str ->
+            if isNull str then
+                invalidOp "Cannot write null as a string in an EGTneo file."
             w.Write('s'B)
             w.Write(str)
 

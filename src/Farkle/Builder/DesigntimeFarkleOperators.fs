@@ -15,10 +15,12 @@ type Nonterminal =
     /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
     /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
     /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
-    static member Create(name) = {
-        _Name = name
-        Productions = SetOnce<_>.Create()
-    }
+    static member Create(name) =
+        nullCheck "name" name
+        {
+            _Name = name
+            Productions = SetOnce<_>.Create()
+        }
 
     /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
     /// a nonterminal with a given name and productions.</summary>
@@ -45,8 +47,6 @@ type Group =
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do not include the new line that end it.</param>
     static member Line(name, groupStart, fTransform: T<'T>) =
-        if isNull fTransform then
-            nullArg "fTransform"
         LineGroup(name, groupStart, T.box fTransform) :> DesigntimeFarkle<'T>
     /// <summary>Creates a block group. Block groups end with a string literal.</summary>
     /// <param name="name">The group's name.</param>
@@ -59,8 +59,6 @@ type Group =
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do include <paramref name="groupEnd"/>.</param>
     static member Block(name, groupStart, groupEnd, fTransform: T<'T>) =
-        if isNull fTransform then
-            nullArg "fTransform"
         BlockGroup(name, groupStart, groupEnd, T.box fTransform) :> DesigntimeFarkle<'T>
     /// <summary>Creates a line group that does not contain any significant
     /// information for the parsing application.</summary>
@@ -68,6 +66,8 @@ type Group =
     /// <param name="groupStart"> The sequence of characters
     /// that specify the beginning of the group.</param>
     static member Line(name, groupStart) =
+        nullCheck "name" name
+        nullCheck "groupStart" groupStart
         {new AbstractLineGroup with
             member _.Name = name
             member _.Metadata = GrammarMetadata.Default
@@ -81,6 +81,9 @@ type Group =
     /// <param name="groupEnd"> The sequence of characters
     /// that specify the end of the group.</param>
     static member Block(name, groupStart, groupEnd) =
+        nullCheck "name" name
+        nullCheck "groupStart" groupStart
+        nullCheck "groupEnd" groupEnd
         {new AbstractBlockGroup with
             member _.Name = name
             member _.Metadata = GrammarMetadata.Default
@@ -287,6 +290,7 @@ module DesigntimeFarkle =
     /// Using the same designtime Farkle with a different name will create only
     /// one grammar symbol whose name cannot be controlled by user code.
     let rename newName df =
+        nullCheck "newName" newName
         {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>
 
     /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
@@ -297,6 +301,7 @@ module DesigntimeFarkle =
 
     /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
     let addNoiseSymbol name regex df =
+        nullCheck "name" name
         df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
 
     let private addComment comment df =
@@ -304,8 +309,11 @@ module DesigntimeFarkle =
 
     /// Adds a line comment to the given `DesigntimeFarkle`.
     let addLineComment commentStart df =
+        nullCheck "commentStart" commentStart
         addComment (LineComment commentStart) df
 
     /// Adds a block comment to the given `DesigntimeFarkle`.
     let addBlockComment commentStart commentEnd df =
+        nullCheck "commentStart" commentStart
+        nullCheck "commentEnd" commentEnd
         addComment (BlockComment(commentStart, commentEnd)) df

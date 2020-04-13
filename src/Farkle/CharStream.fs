@@ -6,6 +6,7 @@
 namespace Farkle.IO
 
 open Farkle
+open Farkle.Common
 #if DEBUG
 open Operators.Checked
 #endif
@@ -79,6 +80,7 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
 /// and might unload them when not.
 type private DynamicBlockSource(reader: TextReader, bufferSize) =
     inherit CharStreamSource()
+    do nullCheck "reader" reader
     /// Whether the `Dispose` method has been called.
     /// Using this class is prohibited afterwards.
     let mutable disposed = false
@@ -340,7 +342,9 @@ module CharStream =
     let ofReadOnlyMemory mem = CharStream.Create(mem: ReadOnlyMemory<_>)
 
     /// Creates a `CharStream` from a string.
-    let ofString (x: string) = x.AsMemory() |> ofReadOnlyMemory
+    let ofString (str: string) =
+        nullCheck "str" str
+        str.AsMemory() |> ofReadOnlyMemory
 
     /// Creates a `CharStream` that lazily reads from a `TextReader`.
     /// The size of the stream's internal character buffer is specified.

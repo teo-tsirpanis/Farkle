@@ -33,8 +33,7 @@ The library is available under the MIT license, which allows modification and
 redistribution for both commercial and non-commercial purposes. For more information see the
 [License file][license] in the GitHub repository.
 
-  [content]: https://github.com/teo-tsirpanis/Farkle/tree/master/docs/content
+  [content]: https://github.com/teo-tsirpanis/Farkle/tree/master/docsrc/content
   [gh]: https://github.com/teo-tsirpanis/Farkle
   [issues]: https://github.com/teo-tsirpanis/Farkle/issues
   [license]: https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt
-  [gold]: http://www.goldparser.org/

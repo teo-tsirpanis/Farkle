@@ -73,7 +73,7 @@
       Outputs="$(_PrecompiledByFarkle)">
     <Warning
         Condition="$(MSBuildRuntimeType) != Core"
-        Text="Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). Your project will still work, but the grammar will be build every time."/>
+        Text="Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). Your project will still work, but the grammar will be build every time. See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE"/>
     <FarklePrecompileTask
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"

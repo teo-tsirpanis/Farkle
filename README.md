@@ -5,7 +5,7 @@
 # Farkle
 
 <!--"Modern" is a marketing catchphrase, but keep in mind that FsLexYacc is definitely not "modern"-->
-Farkle is a modern and easy-to-use parser library for F# and C#, that creates [LALR parsers][lalr] from composable [parser combinator][combinator]-like objects. Moreover, it can read grammars created by [GOLD Parser][gold] (the project that inspired Farkle) and provides an API to post-process them into arbitrary types.
+Farkle is a modern and easy-to-use parser library for F# and C#, that creates [LALR parsers][lalr] from composable [parser combinator][combinator]-like objects.
 
 ## Documentation
 

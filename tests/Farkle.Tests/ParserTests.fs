@@ -91,18 +91,14 @@ let tests = testList "Parser tests" [
 
     testProperty "The JSON parser works well" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
-        let cs =
-            RuntimeFarkle.parse CSharp.Language.Runtime jsonAsString
-            |> Flip.Expect.wantOk "The C# parser failed"
-        let fs =
+        let farkle =
             RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
-            |> Flip.Expect.wantOk "The F# parser failed"
+            |> Flip.Expect.wantOk "Farkle's parser failed"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with
             | Choice1Of2 x -> x
             | Choice2Of2 x -> failtestf "The Chiron parser failed: %s" x
-        Expect.equal cs json "The JSON structure generated from the C# Farkle parser is different"
-        Expect.equal fs json "The JSON structure generated from the F# Farkle parser is different"
+        Expect.equal farkle json "The JSON structure generated from the Farkle parser is different"
         Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
     )
 

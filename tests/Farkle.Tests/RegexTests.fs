@@ -74,9 +74,12 @@ let tests = testList "Regex tests" [
         Expect.isSome (matchDFAToString dfa <| str.ToUpperInvariant()) "Recognizing the uppercase string failed"
     )
 
-    testProperty "A DFA can correctly recognize literal symbols over a wildcard" (fun literals ->
-        let literals = literals |> List.distinct |> List.map (fun (NonEmptyString str) -> str)
-        let ident = (Regex.chars [char 0 .. char 127] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
+    testProperty "A DFA can correctly recognize literal symbols over a wildcard" (fun (literals: uint32 list) ->
+        let literals = literals |> List.distinct |> List.map string
+        // By limiting the characters to just the decimal digits,
+        // the test becomes more fast. In the past it was by far
+        // the slowest test.
+        let ident = (Regex.chars ['0' .. '9'] |> Regex.atLeast 1, Choice1Of4 <| Terminal(0u, "Identifier"))
         let dfa =
             literals
             |> List.mapi (fun i str -> Regex.string str, Choice1Of4 <| Terminal(uint32 i + 1u, str))

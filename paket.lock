@@ -30,7 +30,7 @@ NUGET
       FParsec (>= 1.0.3)
       FSharp.Core (>= 4.3.4)
       System.ValueTuple (>= 4.4) - restriction: || (== net472) (&& (== netcoreapp3.1) (>= net452))
-    Farkle.Tools.MSBuild (5.4.1)
+    Farkle.Tools.MSBuild (6.0.0-alpha.1)
     FParsec (1.1.1)
       FSharp.Core (>= 4.3.4)
       System.ValueTuple (>= 4.4) - restriction: || (== net472) (&& (== netcoreapp3.1) (>= net45))

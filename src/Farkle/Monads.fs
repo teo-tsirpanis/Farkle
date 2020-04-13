@@ -3,12 +3,12 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Monads
+namespace Farkle.Monads
 
 open System
 
 /// [omit]
-module Either =
+module internal Either =
 
     type EitherBuilder() =
         member __.Zero() = Ok ()

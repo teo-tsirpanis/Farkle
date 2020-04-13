@@ -22,7 +22,7 @@ group Executables
 
   nuget Argu
   nuget Chiron
-  nuget Farkle.Tools.MSBuild
+  nuget Farkle.Tools.MSBuild prerelease
   nuget FSharp.Core
   nuget FsLexYacc.Runtime
   nuget Mono.Cecil

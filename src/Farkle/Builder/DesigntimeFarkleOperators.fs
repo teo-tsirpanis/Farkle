@@ -29,14 +29,21 @@ type Nonterminal =
         nont.SetProductions(firstProduction, productions)
         nont :> DesigntimeFarkle<_>
 
+    /// <seealso cref="Farkle.Builder.Untyped.Nonterminal.Create" />
+    static member CreateUntyped(name) = Untyped.Nonterminal.Create name
+
+    /// <seealso cref="Farkle.Builder.Untyped.Nonterminal.Create" />
+    static member CreateUntyped(name, firstProd, prods) =
+        Untyped.Nonterminal.Create(name, firstProd, prods)
+
 [<AbstractClass; Sealed>]
 /// A helper static class to create groups. In Farkle (and GOLD parser),
 /// groups are used to define lexical elements that start and
 /// end with specified literals, and contain arbitrary characters.
 /// Groups are a tokenizer's construct, and their content is
 /// considered to be a terminal by the parser.
-/// Comments are essentially groups, but this class is concerned
-/// about groups that have significant content.
+/// Comments are essentially groups, but this class
+/// creates groups that have significant content.
 type Group =
     /// <summary>Creates a line group. As the name says, it ends with a new line.</summary>
     /// <param name="name">The group's name.</param>
@@ -118,7 +125,7 @@ module DesigntimeFarkleOperators =
     /// Creates an `Untyped.Nonterminal` whose productions must be
     /// later set with `SetProductions`, or it will raise an
     /// error on building. Useful for recursive productions.
-    let inline nonterminalU name = Untyped.Nonterminal.Create(name)
+    let inline nonterminalU name = Nonterminal.CreateUntyped(name)
 
     /// Creates a `DesigntimeFarkle<'T>` that represents
     /// a nonterminal with the given name and productions.
@@ -132,7 +139,7 @@ module DesigntimeFarkleOperators =
     let (|||=) name members =
         match members with
         | [] -> nonterminalU name :> DesigntimeFarkle
-        | (x: ProductionBuilder) :: xs -> Untyped.Nonterminal.Create(name, x, Array.ofList xs)
+        | (x: ProductionBuilder) :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)
 
     /// The `Append` method of production builders as an operator.
     // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
@@ -167,12 +174,6 @@ module DesigntimeFarkleOperators =
     let inline private dfName (df: DesigntimeFarkle) = df.Name
 
     let private nonterminalf fmt df : string = (sprintf fmt (dfName df))
-
-    [<Obsolete("Use the |>> operator and call DesigntimeFarkle.rename.")>]
-    /// Like `|>>`, but allows setting a custom
-    /// name to the resulting `DesigntimeFarkle<T>`.
-    let mapEx label f df =
-        label ||= [!@ df => f]
 
     /// Creates a new `DesigntimeFarkle<'T>` that transforms
     /// the output of the given one with the given function.
@@ -263,14 +264,6 @@ module DesigntimeFarkleOperators =
 /// Keep in mind that apart from renames, only the metadata of the _topmost_
 /// designtime Farkle matter. Any other metadata changes will be disregarded.
 module DesigntimeFarkle =
-
-    [<Obsolete("Use DesigntimeFarkle.cast and set the metadata to it afterwards.")>]
-    /// Sets a custom `GrammarMetadata` object to an untyped `DesigntimeFarkle`.
-    let withMetadataUntyped metadata df =
-        {new DesigntimeFarkleWrapper with
-            member __.InnerDesigntimeFarkle = df
-            member __.Name = df.Name
-            member __.Metadata = metadata} :> DesigntimeFarkle
 
     /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
     let withMetadata metadata df =

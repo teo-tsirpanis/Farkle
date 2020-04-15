@@ -73,6 +73,14 @@ with
         | Ok _ -> true
         | Error _ -> false
 
+    /// Returns a domain-specific error object that
+    /// describes what had gone wrong while building,
+    /// or raises an exception if building had been successful.
+    member this.GetBuildError() =
+        match this.Grammar with
+        | Ok _ -> invalidOp "Building the grammar did not fail."
+        | Error msg -> msg
+
     /// Returns a user-friendly error message that
     /// describes what had gone wrong while building,
     /// or an empty string if building had been successful.
@@ -80,13 +88,6 @@ with
         match this.Grammar with
         | Ok _ -> String.Empty
         | Error msg -> string msg
-
-    [<Obsolete("This method will be removed in a future release. \
-Use a conjunction of IsBuildSuccessful, GetBuildErrorMessage and GetGrammar.")>]
-    /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
-    /// behind the <see cref="RuntimeFarkle{TResult}"/>, wrapped
-    /// in an F# result type.</summary>
-    member this.TryGetGrammar() = Result.map fst this.Grammar
 
     /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
     /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>

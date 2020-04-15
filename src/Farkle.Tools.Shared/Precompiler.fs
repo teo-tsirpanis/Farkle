@@ -74,13 +74,14 @@ let makeResolver references =
 #else
 open System.Runtime.Loader
 
-type private FarkleAwareAssemblyLoadContext(path, references) =
+type private FarkleAwareAssemblyLoadContext(path, references, log: ILogger) =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
     let dict =
         references
         |> Seq.map (fun path -> KeyValuePair(getAssemblyName path, path))
         |> ImmutableDictionary.CreateRange
     override this.Load(name) =
+        log.Verbose("Requesting assembly {AssemblyName}", name)
         match name.Name with
         | "Farkle" -> typeof<DesigntimeFarkle>.Assembly
         | "FSharp.Core" -> typeof<FuncConvert>.Assembly
@@ -129,7 +130,7 @@ let private getPrecompilableGrammars (log: ILogger) references path =
         Runtime.Remoting.RemotingServices.Disconnect logw |> ignore
         AppDomain.Unload(ad)
     #else
-    let alc = FarkleAwareAssemblyLoadContext(path, references) :> AssemblyLoadContext
+    let alc = FarkleAwareAssemblyLoadContext(path, references, log) :> AssemblyLoadContext
     try
         let asm = alc.LoadFromAssemblyPath path
         dynamicDiscoverAndPrecompile asm logw, WeakReference(alc)

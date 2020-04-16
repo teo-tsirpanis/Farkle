@@ -186,6 +186,8 @@ module Regex =
     /// An alias for `Regex.OneOf`.
     let chars str = Regex.OneOf str
 
+    let any = Regex.Any
+
     /// An alias for `Regex.NotOneOf`.
     let allButChars str = Regex.NotOneOf str
 
@@ -207,6 +209,10 @@ module Regex =
     /// An alias for `Regex.ZeroOrMore`.
     /// The name alludes to the Kleene Star.
     let star (x: Regex) = x.ZeroOrMore()
+
+    /// An alias for `atLeast 1`.
+    /// The name alludes to the plus symbol of regular expressions.
+    let plus x = atLeast 1 x
 
 [<AutoOpen>]
 /// F# operators to easily manipulate `Regex`es.

@@ -114,15 +114,15 @@ module DesigntimeFarkleOperators =
 
     /// Creates a terminal with the given name, specified by the given `Regex`.
     /// Its content will be post-processed by the given `T` delegate.
-    let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
+    let terminal name fTransform regex = Terminal.Create(name, fTransform, regex)
 
     /// Creates a terminal with the given name,
     /// specified by the given `Regex`,
     /// but not returning anything.
-    let inline terminalU name regex = Terminal.Create(name, regex)
+    let terminalU name regex = Terminal.Create(name, regex)
 
     /// An alias for the `Terminal.NewLine` function.
-    let inline literal str = Terminal.Literal str
+    let literal str = Terminal.Literal str
 
     /// An alias for `Terminal.NewLine`.
     let newline = Terminal.NewLine
@@ -130,14 +130,14 @@ module DesigntimeFarkleOperators =
     /// Creates a `Nonterminal` whose productions must be
     /// later set with `SetProductions`, or it will raise an
     /// error on building. Useful for recursive productions.
-    let inline nonterminal name = Nonterminal.Create name
+    let nonterminal name = Nonterminal.Create name
 
     /// Creates an `Untyped.Nonterminal` whose productions must be
     /// later set with `SetProductions`, or it will raise an
     /// error on building. Useful for recursive productions.
-    let inline nonterminalU name = Nonterminal.CreateUntyped(name)
+    let nonterminalU name = Nonterminal.CreateUntyped(name)
 
-    /// Creates a `DesigntimeFarkle<'T>` that represents
+    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.
     let (||=) name members =
         match members with
@@ -165,21 +165,21 @@ module DesigntimeFarkleOperators =
         (^TBuilder : (member FinishFSharp: ^TFunction -> Production<'T>) (pb, f))
 
     /// `ProductionBuilder.FinishConstant` as an operator.
-    let inline (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
+    let (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
 
     /// An alias for `ProductionBuilder.Empty`.
     let empty = ProductionBuilder.Empty
 
     /// Creates a production builder with one non-significant `DesigntimeFarkle`.
     /// This function is useful to start building a `Production`.
-    let inline (!%) (df: DesigntimeFarkle) = empty.Append(df)
+    let (!%) (df: DesigntimeFarkle) = empty.Append(df)
 
     /// Creates a production builder with one non-significant string literal.
-    let inline (!&) str = empty.Append(str: string)
+    let (!&) str = empty.Append(str: string)
 
     /// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
     /// This function is useful to start building a `Production`.
-    let inline (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
+    let (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
 
     let inline private dfName (df: DesigntimeFarkle) = df.Name
 

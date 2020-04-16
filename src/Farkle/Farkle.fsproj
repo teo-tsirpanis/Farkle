@@ -54,6 +54,7 @@
     <Compile Include="Parser/Tokenizer.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="RuntimeFarkle.fs" />
+    <Compile Include="Builder/RegexGrammar.fs" />
     <Compile Include="CSharp/RuntimeFarkleExtensions.fs" />
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>

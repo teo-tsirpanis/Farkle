@@ -57,7 +57,7 @@ type FarkleCreateTemplateTask() =
 
     /// <summary>The file path to write the output to.</summary>
     /// <remarks>If not specified, it defaults to the name of the grammar file,
-    /// with the extension set by the template, which defaults to <c>.out</c>.
+    /// with the extension set by the template, which defaults to <c>.out</c>.</remarks>
     member val OutputFile = null with get, set
 
     [<Output>]

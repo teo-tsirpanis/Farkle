@@ -15,7 +15,7 @@ open System.Collections.Immutable
 /// the parser, but from user code during post-processing.</summary>
 /// <remarks>Exceptions of this type during post-processing
 /// will be caught and more neatly displayed as parser errors.
-/// F# users can use the <c>error</c> or <c>errorf</c> functions.
+/// F# users can use the <c>error</c> or <c>errorf</c> functions.</remarks>
 type ParserApplicationException(msg) = inherit exn(msg)
 
 /// The type of an LALR conflict.

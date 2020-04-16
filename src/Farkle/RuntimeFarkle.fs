@@ -24,7 +24,7 @@ type FarkleError =
     | BuildError of BuildError
     override x.ToString() =
         match x with
-        | ParseError x -> sprintf "Parsing error: %O" x
+        | ParseError x -> string x
         | BuildError x -> sprintf "Error while building the grammar: %O" x
 
 /// A reusable parser and post-processor, created for a specific grammar, and returning
@@ -192,13 +192,18 @@ module RuntimeFarkle =
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
+        let mkError msg = msg |> FarkleError.ParseError |> Error
         match rf.Grammar with
         | Ok (grammar, oops) ->
             let fTokenize = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor fMessage
             try
                 LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input |> Ok
             with
-            | ParseError msg -> msg |> FarkleError.ParseError |> Error
+            | ParserError msg -> mkError msg
+            | :? ParserApplicationException as e ->
+                (input.CurrentPosition, ParseErrorType.UserError e.Message)
+                |> Message
+                |> mkError
         | Error x -> Error <| FarkleError.BuildError x
 
     [<CompiledName("ParseMemory")>]

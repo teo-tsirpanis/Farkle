@@ -69,6 +69,7 @@ type ParseErrorType =
     | UnexpectedGroupEnd of GroupEnd
     /// Unexpected end of input while being inside a group.
     | UnexpectedEndOfInput of Group
+    | UserError of string
     override x.ToString() =
         match x with
         | LexicalError '\000' -> "Unexpected end of input."
@@ -79,6 +80,7 @@ type ParseErrorType =
         | CannotNestGroups(g1, g2) -> sprintf "Group '%s' cannot be nested inside '%s'" g1.Name g2.Name
         | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
         | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
+        | UserError x -> x
 
 /// A log message that contains a position it was encountered.
 type Message<'a> = Message of Position * 'a
@@ -87,4 +89,4 @@ type Message<'a> = Message of Position * 'a
 
 /// An exception to be thrown when parsing goes wrong.
 /// It is thrown by the `Parser` and `Tokenizer` APIs, and caught by the `RuntimeFarkle`.
-exception ParseError of ParseErrorType Message
+exception ParserError of ParseErrorType Message

@@ -64,7 +64,7 @@ module Tokenizer =
     /// as one that logs events.
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
-            let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParseError |> raise
+            let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParserError |> raise
             let newToken sym (cs: CharSpan) =
                 let data = unpinSpanAndGenerate sym fTransform input cs
                 let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data
@@ -147,5 +147,7 @@ module Tokenizer =
             // We found an unrecognized symbol while being outside a group. This is an error.
             | Some (Error c, idx), [] ->
                 let errorPos = getPositionAtIndex input idx
-                Message(errorPos, ParseErrorType.LexicalError c) |> ParseError |> raise
+                Message(errorPos, ParseErrorType.LexicalError c)
+                |> ParserError
+                |> raise
         impl []

@@ -102,6 +102,16 @@ type Group =
 /// F# operators to easily work with designtime Farkles and production builders.
 module DesigntimeFarkleOperators =
 
+    /// Raises an error that happened during the parsing process.
+    /// In contrast with raising an exception, these errors are caught
+    /// by the `RuntimeFarkle` API and track their position.
+    /// Use this function when the error might occur under normal circumstances
+    /// (such as an unknown identifier name in a programming language).
+    let error msg = raise(ParserApplicationException msg)
+
+    /// An edition of `error` that supports formatted strings.
+    let errorf fmt = Printf.ksprintf error fmt
+
     /// Creates a terminal with the given name, specified by the given `Regex`.
     /// Its content will be post-processed by the given `T` delegate.
     let inline terminal name fTransform regex = Terminal.Create(name, fTransform, regex)

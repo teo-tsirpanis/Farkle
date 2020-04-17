@@ -173,7 +173,7 @@ module RuntimeFarkle =
     /// instead of when a string is going to be parsed.
     /// For this function to have effect, it has to be applied to the
     /// topmost designtime Farkle that is stored in a read-only static
-    /// field (like a let-cound value in a module). Untyped designtime
+    /// field (like a let-bound value in a module). Untyped designtime
     /// Farkles can use DesigntimeFarkle.cast and then cast back to
     /// the untyped designtime Farkle. This function also has to be
     /// called directly from user code.
@@ -184,9 +184,7 @@ module RuntimeFarkle =
     /// This designtime Farkle is used in the tests to test
     /// whether an object from a different assembly is eligible
     /// for precompilation (it isn't, unless it is marked again).
-    let internal dummyPrecompilable =
-        Terminals.int "Dummy"
-        |> markForPrecompile
+    let internal dummyPrecompilable = "Dummy" ||= [empty =% 521]
 
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.

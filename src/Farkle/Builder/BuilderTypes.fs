@@ -73,8 +73,10 @@ with
 type BuildError =
     /// Some symbols cannot be distinguished from each other.
     | IndistinguishableSymbols of DFASymbol Set
-    /// Some symbols can contain zero characters.
-    | NullableSymbols of DFASymbol Set
+    /// A symbol can contain zero characters.
+    /// If many symbols are nullable, they will
+    /// be marked as indistinguishable instead.
+    | NullableSymbol of DFASymbol
     /// An LALR conflict did occur.
     | LALRConflict of LALRConflict Set
     /// Some nonterminals have no productions.
@@ -100,9 +102,8 @@ type BuildError =
             let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
             sprintf "Cannot distinguish between symbols: %s. \
 The conflict is caused when two or more terminal definitions can accept the same text." symbols
-        | NullableSymbols xs ->
-            let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
-            sprintf "The symbols %s can contain zero characters." symbols
+        | NullableSymbol x ->
+            sprintf "The symbol %s can contain zero characters." <| DFASymbol.toString x
         | LALRConflict xs -> xs |> Seq.map string |> String.concat Environment.NewLine
         | EmptyNonterminals xs ->
             xs

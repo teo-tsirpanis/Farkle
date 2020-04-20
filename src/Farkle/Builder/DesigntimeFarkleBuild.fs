@@ -291,14 +291,7 @@ module DesigntimeFarkleBuild =
         }
 
     /// Performs some checks on the grammar that would cause problems later.
-    let private consistencyCheck grammar = either {
-        let nullableDFASymbols =
-            grammar.DFASymbols
-            |> List.filter (fun (regex, _) -> regex.IsNullable())
-            |> List.map snd
-            |> set
-        if not nullableDFASymbols.IsEmpty then
-            do! Error <| BuildError.NullableSymbols nullableDFASymbols
+    let private aPrioriConsistencyCheck grammar = either {
 
         let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
         grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
@@ -317,6 +310,15 @@ module DesigntimeFarkleBuild =
         if grammar.Symbols.Terminals.Length > BuildError.SymbolLimit
             || grammar.Symbols.Nonterminals.Length > BuildError.SymbolLimit then
             do! Error BuildError.SymbolLimitExceeded
+    }
+
+    /// Performs some checks on the generated LALR and DFA tables.
+    let private aPosterioriConsistencyCheck grammar (lalr: ImmutableArray<_>) (dfa: ImmutableArray<_>) = either {
+        ignore grammar
+        ignore lalr
+        match dfa.[0].AcceptSymbol with
+        | Some x -> do! Error <| BuildError.NullableSymbol x
+        | None -> ()
     }
 
     /// This value contains the name and version of that
@@ -340,7 +342,7 @@ module DesigntimeFarkleBuild =
     /// Creates a `Grammar` from a `GrammarDefinition`.
     [<CompiledName("BuildGrammarOnly")>]
     let buildGrammarOnly dg = either {
-            do! consistencyCheck dg
+            do! aPrioriConsistencyCheck dg
             let! myDarlingLALRStateTable =
                 LALRBuild.buildProductionsToLALRStates
                     dg.StartSymbol
@@ -350,6 +352,7 @@ module DesigntimeFarkleBuild =
                     true
                     dg.Metadata.CaseSensitive
                     dg.DFASymbols
+            do! aPosterioriConsistencyCheck dg myDarlingLALRStateTable mySweetDFAStateTable
             return {
                 _Properties =
                     dg.Properties

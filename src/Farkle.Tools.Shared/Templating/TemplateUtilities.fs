@@ -10,6 +10,7 @@ open Scriban.Runtime
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Linq
 open System.Text
 
 type IdentifierTypeCase =
@@ -120,9 +121,9 @@ module Utilities =
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 
-    let load grammar (so: ScriptObject) =
+    let load (grammar:Grammar) (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)
         so.SetValue("lower_case", LowerCase, true)
         so.SetValue("pascal_case", PascalCase, true)
         so.SetValue("camel_case", CamelCase, true)
-        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction grammar.Productions))
+        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction (grammar.Productions.ToArray())))

@@ -5,7 +5,6 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
 open Farkle.Tools
@@ -21,7 +20,7 @@ module TemplateEngine =
         let tc = TemplateContext()
         tc.StrictVariables <- true
         let bytes = File.ReadAllBytes grammarFile
-        let grammar = EGT.ofFile grammarFile |> Grammar.Create
+        let grammar = EGT.ofFile grammarFile
         log.Verbose("{grammarFile} was read successfully", grammarFile)
         let ns = generatedFileNamespace |> Option.defaultValue (Path.GetFileNameWithoutExtension(grammarFile))
         let fr = FarkleRoot.Create grammar grammarFile ns bytes

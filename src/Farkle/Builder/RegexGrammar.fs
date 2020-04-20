@@ -3,6 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+[<RequireQualifiedAccess>]
 module Farkle.Builder.RegexGrammar
 
 open Farkle
@@ -24,21 +25,29 @@ let private allPredefinedSets =
         |> Seq.map (fun x -> KeyValuePair(x.Name, x))
     ImmutableDictionary.CreateRange(StringComparer.OrdinalIgnoreCase, sets)
 
-let private escapeLiteralString = T(fun _ data ->
-    let data = data.Slice(1, data.Length - 2)
+let private unescapeString (data: ReadOnlySpan<_>) =
     let sb = StringBuilder(data.Length)
     let mutable i = 0
     while i < data.Length do
-        match data.[i] with
-        | '\'' ->
+        // This trick will allow this function to work with both literal strings
+        // and character sets. Two single quotes are always reduced to one. Since
+        // multiple character in a set don't matter, we are okay.
+        if data.[i] = '\\' || (data.[i] = '\'' && i + 1 < data.Length && data.[i + 1] = '\'') then
             i <- i + 1
-            sb.Append('\'')
-        | c -> sb.Append(c)
-        |> ignore
+        sb.Append(data.[i]) |> ignore
         i <- i + 1
-    sb.ToString())
+    sb.ToString()
+
+let private unescapeChar (span: ReadOnlySpan<_>) i =
+    match span.[i] with
+    | '\\' -> span.[i + 1]
+    | x -> x
 
 let designtime =
+    let escapedChar = choice [
+        char '\\' <&> chars "\\]^-"
+        any
+    ]
     let number = Terminals.genericUnsigned<int> "Number"
     let singleChar =
         terminal "Single Character" (T(fun _ data -> char data.[0])) any
@@ -50,24 +59,24 @@ let designtime =
             | true, set -> chars set
             | false, _ -> errorf "Cannot found a predefined set named %s." name))
     let oneOfCharacters =
-        concat [char '['; plus any; char ']']
+        concat [char '['; plus escapedChar; char ']']
         |> terminal "Character set" (T(fun _ data ->
-            data.Slice(1, data.Length - 2).ToString() |> chars))
+            unescapeString(data.Slice(1, data.Length - 2)) |> chars))
     let notOneOfCharacters =
-        concat [string "[^"; plus any; char ']']
+        concat [string "[^"; plus escapedChar; char ']']
         |> terminal "All but Character set" (T(fun _ data ->
-            data.Slice(2, data.Length - 3).ToString() |> allButChars))
+            unescapeString(data.Slice(2, data.Length - 3)) |> allButChars))
     let oneOfRange =
-        concat [char '['; any; char '-'; any; char ']']
+        concat [char '['; escapedChar; char '-'; escapedChar; char ']']
         |> terminal "Character range" (T(fun _ data ->
-            chars [data.[1] .. data.[3]]))
+            chars [unescapeChar data 1 .. unescapeChar data 3]))
     let notOneOfRange =
-        concat [string "[^"; any; char '-'; any; char ']']
+        concat [string "[^"; escapedChar; char '-'; escapedChar; char ']']
         |> terminal "All but Character range" (T(fun _ data ->
-            allButChars [data.[2] .. data.[4]]))
+            allButChars [unescapeChar data 2 .. unescapeChar data 4]))
     let literalString =
         concat [char '\''; plus (string "''" <|> any); char '\'']
-        |> terminal "Literal string" escapeLiteralString
+        |> terminal "Literal string" (T(fun _ data -> unescapeString(data.Slice(1, data.Length - 2))))
 
     let regex = nonterminal "Regex"
     let regexQuantified =

@@ -274,3 +274,5 @@ type Generators =
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 
 let testProperty x = testPropertyWithConfig fsCheckConfig x
+
+let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x

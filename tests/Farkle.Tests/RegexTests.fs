@@ -7,32 +7,11 @@ module Farkle.Tests.RegexTests
 
 open Expecto
 open Farkle.Builder
-open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Tests
 open FsCheck
-open System.Collections.Immutable
-
-/// A very simple function to check if a string is recognized by a DFA.
-/// We don't need a full-blown tokenizer here.
-let matchDFAToString (states: ImmutableArray<DFAState>) str =
-    let rec impl currState idx =
-        if idx = String.length str then
-            currState.AcceptSymbol
-        else
-            let newState =
-                match RangeMap.tryFind str.[idx] currState.Edges with
-                | ValueSome s -> s
-                | ValueNone -> currState.AnythingElse
-            match newState with
-            | Some s -> impl states.[int s] (idx + 1)
-            | None -> None
-    impl states.[0] 0
 
 let terminal idx = Choice1Of4 <| Terminal(uint32 idx, string idx)
-
-/// Performs a property test with a smaller sample size.
-let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
 
 [<Tests>]
 let tests = testList "Regex tests" [

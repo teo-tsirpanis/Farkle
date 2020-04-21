@@ -278,3 +278,6 @@ let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Genera
 let testProperty x = testPropertyWithConfig fsCheckConfig x
 
 let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x
+
+/// Performs a property test with a smaller sample size.
+let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop

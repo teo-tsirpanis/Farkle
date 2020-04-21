@@ -9,7 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Regex
-open Farkle.Collections
+open Farkle.Grammar
 open Farkle.Tests
 
 let seqToString x =
@@ -50,11 +50,20 @@ let mkTest str regex =
     }
 
 [<Tests>]
-let tests =
+let tests = testList "Regex grammar tests" [
     testProperty "The regex parser works" (fun regex ->
         let regexStr = formatRegex regex
         checkRegex regexStr regex)
-    :: ([
+
+    testPropertySmall "The Regex.regexString function works" (fun (RegexStringPair (regex, str)) ->
+        let regexStr = formatRegex regex
+        let dfa =
+            [regexString regexStr, Choice1Of4 <| Terminal(0u, "Test")]
+            |> DFABuild.buildRegexesToDFA true false
+            |> Flip.Expect.wantOk "Building DFA failed"
+        matchDFAToString dfa str |> Option.isSome)
+
+    yield! [
         "[a\-z]", chars "a-z"
         "\d+", Number |> chars |> plus
         "[^^]", allButChars "^"
@@ -63,5 +72,5 @@ let tests =
         "'[a-z]'", string "[a-z]"
         "[1'2]", chars "1'2"
     ]
-    |> List.map ((<||) mkTest))
-    |> testList "Regex grammar tests"
+    |> List.map ((<||) mkTest)
+]

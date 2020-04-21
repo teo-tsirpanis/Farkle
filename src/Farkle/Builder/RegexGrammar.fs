@@ -111,7 +111,13 @@ let designtime =
 let runtime = RuntimeFarkle.build designtime
 
 let internal DoParse x =
-    RuntimeFarkle.parse runtime x
-    |> Result.mapError (function
-        | FarkleError.ParseError x -> x
-        | FarkleError.BuildError x -> failwithf "Error while building the regex grammar: %O" x)
+    match RuntimeFarkle.parse runtime x with
+    | Ok x -> Ok x
+    | Error(FarkleError.ParseError x) -> Error x
+    | Error(FarkleError.BuildError x) -> failwithf "Error while building the regex grammar: %O" x
+
+#if DEBUG
+// The following line ensures the signature of
+// DoParse matches the one of the delegate.
+RegexParserFunction DoParse |> ignore
+#endif

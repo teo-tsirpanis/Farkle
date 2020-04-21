@@ -7,9 +7,27 @@
 module Farkle.Tests.Common
 
 open Farkle
+open Farkle.Collections
 open Farkle.Grammar
+open System.Collections.Immutable
 open System.IO
 open System.Reflection
+
+/// A very simple function to check if a string is recognized by a DFA.
+/// We don't need a full-blown tokenizer here.
+let matchDFAToString (states: ImmutableArray<DFAState>) str =
+    let rec impl currState idx =
+        if idx = String.length str then
+            currState.AcceptSymbol
+        else
+            let newState =
+                match RangeMap.tryFind str.[idx] currState.Edges with
+                | ValueSome s -> s
+                | ValueNone -> currState.AnythingElse
+            match newState with
+            | Some s -> impl states.[int s] (idx + 1)
+            | None -> None
+    impl states.[0] 0
 
 // It guarantees to work regardless of current directory.
 // The resources folder is copied alongside with the executable.

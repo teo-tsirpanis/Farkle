@@ -166,7 +166,7 @@ Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-Target.description "Generates some source code files that are needed by Farkle"
+Target.description "Generates some required source code files"
 Target.create "GenerateCode" (fun _ ->
     sourceFilesToGenerate
     |> List.iter (fun (src, dest) ->
@@ -194,7 +194,7 @@ Target.create "GenerateCode" (fun _ ->
 Target.description "Builds everything in Release mode"
 Target.create "BuildAllRelease" (fun _ -> DotNet.build (fConfiguration >> fCommonOptions) solutionFile)
 
-Target.description "Runs the unit tests using test runner"
+Target.description "Runs the unit tests"
 Target.create "RunTests" (fun _ ->
     dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
     Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")

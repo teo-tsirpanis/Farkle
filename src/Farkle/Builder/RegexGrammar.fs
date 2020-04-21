@@ -44,10 +44,7 @@ let private unescapeChar (span: ReadOnlySpan<_>) i =
     | x -> x
 
 let designtime =
-    let escapedChar = choice [
-        char '\\' <&> chars "\\]^-"
-        any
-    ]
+    let escapedChar = char '\\' |> optional <&> any
     let number = Terminals.genericUnsigned<int> "Number"
     let singleChar =
         terminal "Single Character" (T(fun _ data -> char data.[0])) any

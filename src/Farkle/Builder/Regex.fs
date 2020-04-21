@@ -3,9 +3,26 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Builder
+namespace rec Farkle.Builder
 
+open Farkle.Parser
 open System
+open System.Reflection
+
+type internal RegexParserResult = Result<Regex, Message<ParseErrorType>>
+
+type internal RegexParserFunction = Func<string, RegexParserResult>
+
+[<RequireQualifiedAccess>]
+module private RegexParser =
+    // Taking the concept of circular references to a whole new level.
+    let DoParse =
+        Assembly
+            .GetExecutingAssembly()
+            .GetType("Farkle.Builder.RegexGrammar", true)
+            .GetMethod("DoParse", BindingFlags.NonPublic ||| BindingFlags.Static)
+            .CreateDelegate(typeof<RegexParserFunction>)
+        :?> RegexParserFunction
 
 [<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 /// <summary>A regular expression that is used to specify a tokenizer symbol.</summary>
@@ -30,20 +47,12 @@ type Regex =
     // An empty `AllButChars` regex is allowed here, but one with
     // all 65536 characters isn't, so we must be extra careful.
     | AllButChars of char Set
+    /// Another Regex, but specified as a string which
+    /// will be parsed when a DFA will be generated.
+    | RegexString of string * Lazy<RegexParserResult>
     static member internal CharSetFull = set [char 0 .. char UInt16.MaxValue]
     static member internal IsCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
     static member internal IsCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
-    /// Returns whether this regular expression can recognize the empty string.
-    /// These nullable regexes are rejected by Farkle.
-    member x.IsNullable() =
-        match x with
-        // The empty `Concat` is nullable, by vacuous truth.
-        | Concat xs -> xs |> List.forall (fun x -> x.IsNullable())
-        | Alt xs -> xs |> List.exists (fun x -> x.IsNullable())
-        | Star _ -> true
-        | Chars x -> x.IsEmpty
-        // Full sets will be simplified to an empty Chars set.
-        | AllButChars _ -> false
     /// A regex that recognizes only the empty string.
     static member Empty = Concat []
     /// A regex that recignizes any single character.
@@ -175,6 +184,12 @@ type Regex =
             Chars <| Regex.CharSetFull - set
         else
             AllButChars set
+    /// Returns a regex specified by a string.
+    /// An invalid regex string will make the building process fail.
+    // TODO: Add documentation and link it here.
+    static member FromRegexString x =
+        let thunk = lazy(RegexParser.DoParse.Invoke x)
+        RegexString(x, thunk)
 
 /// F#-friendly membrs of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.
@@ -213,6 +228,8 @@ module Regex =
     /// An alias for `atLeast 1`.
     /// The name alludes to the plus symbol of regular expressions.
     let plus x = atLeast 1 x
+
+    let regexString x = Regex.FromRegexString x
 
 [<AutoOpen>]
 /// F# operators to easily manipulate `Regex`es.

@@ -163,6 +163,8 @@ let genRegexString regex =
             let! (NonNegativeInt len) = Arb.generate
             for __ = 0 to len - 1 do
                 do! impl sb x
+        // Regex strings are never created by the generator.
+        | Regex.RegexString _ -> ()
     }
     gen {
         let sb = StringBuilder()

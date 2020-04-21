@@ -6,6 +6,7 @@
 namespace Farkle.Builder
 
 open Farkle.Grammar
+open Farkle.Parser
 open System
 open System.Collections
 open System.Collections.Generic
@@ -83,6 +84,8 @@ type BuildError =
     | EmptyNonterminals of string Set
     /// Some productions are defined twice.
     | DuplicateProductions of (Nonterminal * ImmutableArray<LALRSymbol>) Set
+    /// An error occured while parsing a regular expression.
+    | RegexParseError of (DFASymbol * Message<ParseErrorType>) list
     /// The grammar has more symbols than the supported limit.
     | SymbolLimitExceeded
     /// The maximum number of terminals and nonterminals
@@ -117,6 +120,10 @@ the production builder called 'empty' (or 'Production.Empty' in C#)."
             |> Seq.map Production.Format
             |> String.concat ", "
             |> sprintf "Productions %s are defined twice."
+        | RegexParseError xs ->
+            xs
+            |> Seq.map ((<||) (sprintf "Error while processing %O: %O"))
+            |> String.concat Environment.NewLine
         | SymbolLimitExceeded ->
             sprintf "A grammar built by Farkle cannot have \
 more than %d terminals or more than %d nonterminals."

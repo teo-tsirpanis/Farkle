@@ -11,6 +11,7 @@ module Farkle.Builder.DFABuild
 open Farkle.Common
 open Farkle.Collections
 open Farkle.Grammar
+open Farkle.Monads.Either
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
@@ -119,7 +120,7 @@ let private makeLazy tree = {
     LastPos = lazy (fLastPos tree)
 }
 
-let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
+let internal createRegexBuild caseSensitive regexes =
 
     let createConcatFirstPos xs: ConcatFirstPos =
         (lazy Set.empty, [])
@@ -147,6 +148,8 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
     let addLeaf x =
         leaves.Add(x)
         x
+
+    let regexParseErrors = ResizeArray()
 
     let desensitivizeCase chars =
         let chars = Set.toSeq chars
@@ -189,6 +192,12 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                     makeConcat []
                 else
                     RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf |> Leaf
+            | Regex.RegexString (_, Lazy regex) ->
+                match regex with
+                | Ok x -> impl x
+                | Error x ->
+                    regexParseErrors.Add(acceptSymbol, x)
+                    Alt []
         match impl regex with
         // If the symbol's regex's root is an Alt, we assign
         // each of its children a different priority. This
@@ -200,14 +209,17 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
                 | [] -> []
                 | xs ->
                     let xs = xs |> Alt |> makeLazy
-                    let endLeaf = RegexLeaf.End(fIndex(), priority, acceptSymbol) |> addLeaf |> Leaf |> makeLazy
+                    let endLeaf =
+                        RegexLeaf.End(fIndex(), priority, acceptSymbol)
+                        |> addLeaf |> Leaf |> makeLazy
                     [xs; endLeaf]
                     |> makeConcat
                     |> makeLazy
                     |> List.singleton
             // There is no way that both lists below are empty.
-            // Alt has always at least one child.
-            let variableLengthParts, fixedLengthParts = xs |> List.partition (fun x -> isVariableLength x.Tree)
+            // Regex.Alt has always at least one child.
+            let variableLengthParts, fixedLengthParts =
+                xs |> List.partition (fun x -> isVariableLength x.Tree)
             appendEndLeaf TerminalPriority variableLengthParts
             @
             appendEndLeaf LiteralPriority fixedLengthParts
@@ -215,7 +227,9 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
         // Otherwise, we assign a priority to the entire symbol.
         | regex ->
             let priority = if isVariableLength regex then TerminalPriority else LiteralPriority
-            let endLeaf = RegexLeaf.End(fIndex(), priority, acceptSymbol) |> addLeaf |> Leaf |> makeLazy
+            let endLeaf =
+                RegexLeaf.End(fIndex(), priority, acceptSymbol)
+                |> addLeaf |> Leaf |> makeLazy
             makeConcat [makeLazy regex; endLeaf]
         |> makeLazy
 
@@ -224,7 +238,10 @@ let internal createRegexBuild caseSensitive regexes: _ * RegexBuildLeaves =
         |> List.map (fun (regex, acceptSymbol) -> createRegexBuildSingle regex acceptSymbol)
         |> (function | [x] -> x | x -> makeLazy<| Alt x)
 
-    theTree, leaves.ToImmutable() |> RegexBuildLeaves
+    if regexParseErrors.Count = 0 then
+        Ok (theTree, leaves.ToImmutable() |> RegexBuildLeaves)
+    else
+        regexParseErrors |> List.ofSeq |> BuildError.RegexParseError |> Error
 
 let internal calculateFollowPos leafCount regex =
     let followPos = Array.replicate leafCount Set.empty
@@ -236,7 +253,9 @@ let internal calculateFollowPos leafCount regex =
             (xs, firstPoses) ||> List.iter2Safe (fun x firstPosOfTheRest ->
                 let lastPosOfThisOne = x.LastPos.Value
                 let firstPosOfTheRest = firstPosOfTheRest.Value
-                lastPosOfThisOne |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPosOfTheRest))
+                lastPosOfThisOne
+                |> Set.iter (fun idx ->
+                    followPos.[idx] <- Set.union followPos.[idx] firstPosOfTheRest))
             List.iter impl xs
         | Star x ->
             let lastPos = x.LastPos.Value
@@ -262,7 +281,8 @@ with
         AnythingElse = None
     }
 
-let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
+let internal makeDFA
+    prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
     let states = Dictionary()
     let statesList = ResizeArray()
     let unmarkedStates = Stack()
@@ -341,7 +361,8 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
                 |> BuildError.IndistinguishableSymbols
                 |> Error
         acceptSymbol
-        |> Result.map (fun ac -> {Index = state.Index; AcceptSymbol = ac; Edges = edges; AnythingElse = state.AnythingElse})
+        |> Result.map (fun ac ->
+            {Index = state.Index; AcceptSymbol = ac; Edges = edges; AnythingElse = state.AnythingElse})
 
     statesList
     |> Seq.map toDFAState
@@ -349,11 +370,12 @@ let internal makeDFA prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeave
     |> Result.map ImmutableArray.CreateRange
 
 /// Builds a DFA that recognizes the given `Regex`es, each
-/// accepting a unique `DFASymbol`. DFA symbols that can be
+/// accepting a `DFASymbol`. DFA symbols that can be
 /// derived by a regular expression without stars can be
-/// prioritized over those with stars, in case of conflicts.
+/// prioritized over those with them, in case of conflicts.
 /// Moreover, the resulting DFA can be case sensitive.
-let buildRegexesToDFA prioritizeFixedLengthSymbols caseSensitive regexes =
-    let tree, leaves = createRegexBuild caseSensitive regexes
+let buildRegexesToDFA prioritizeFixedLengthSymbols caseSensitive regexes = either {
+    let! tree, leaves = createRegexBuild caseSensitive regexes
     let followPos = calculateFollowPos leaves.Length tree
-    makeDFA prioritizeFixedLengthSymbols tree leaves followPos
+    return! makeDFA prioritizeFixedLengthSymbols tree leaves followPos
+}

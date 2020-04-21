@@ -112,3 +112,9 @@ let designtime =
     |> RuntimeFarkle.markForPrecompile
 
 let runtime = RuntimeFarkle.build designtime
+
+let internal DoParse x =
+    RuntimeFarkle.parse runtime x
+    |> Result.mapError (function
+        | FarkleError.ParseError x -> x
+        | FarkleError.BuildError x -> failwithf "Error while building the regex grammar: %O" x)

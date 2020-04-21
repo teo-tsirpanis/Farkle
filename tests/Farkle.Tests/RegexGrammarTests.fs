@@ -56,8 +56,6 @@ let tests =
     :: ([
         "[a\-z]", chars "a-z"
         "\d+", Number |> chars |> plus
-        "[]", Regex.Empty
-        "[^]", any
         "[^^]", allButChars "^"
         "''", char '\''
         "'It''s beautiful'", string "It's beautiful"

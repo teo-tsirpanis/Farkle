@@ -81,8 +81,8 @@ let private fIsNullable =
     | Concat (xs, _) -> xs |> List.forall (fun x -> x.IsNullable.Value)
     | Alt xs -> xs |> List.exists (fun x -> x.IsNullable.Value)
     | Star _ -> true
-    // An empty set means the end, so I guess it is nullable.
-    | Leaf x -> x.Characters.IsEmpty
+    | Leaf (RegexLeaf.End _) -> true
+    | Leaf _ -> false
 
 let private fFirstPos =
     function

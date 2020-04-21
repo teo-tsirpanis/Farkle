@@ -87,7 +87,7 @@ let regexGen =
             | 0 -> return! Gen.map2 (<&>) gen gen
             | 1 -> return! Gen.map2 (<|>) gen gen
             | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
-            | _ -> return! Gen.map (Regex.atLeast 0) gen
+            | _ -> return! Gen.map Regex.star gen
     }
     Gen.sized impl
 
@@ -160,7 +160,7 @@ let genRegexString regex =
             for x in xs do
                 do! impl sb x
         | Regex.Star x ->
-            let! len = Arb.generate
+            let! (NonNegativeInt len) = Arb.generate
             for __ = 0 to len - 1 do
                 do! impl sb x
     }
@@ -203,12 +203,12 @@ let designtimeFarkleGen =
         let productionGen =
             Gen.oneof [
                 Gen.elements terminals
-                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle)
+                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle) 
             ]
             |> Gen.listOf
         for i = 0 to nonterminals.Length - 1 do
             let nont = nonterminals.[i]
-           
+
             let! productions =
                 Gen.nonEmptyListOf productionGen
                 |> Gen.map (List.distinct >> List.map (List.fold (.>>) empty))

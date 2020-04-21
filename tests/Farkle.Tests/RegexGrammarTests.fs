@@ -28,7 +28,7 @@ let rec formatRegex =
     | Regex.Chars x -> sprintf "[%s]" (seqToString x)
     | Regex.AllButChars x -> sprintf "[^%s]" (seqToString x)
     | Regex.Star(Regex.Concat _ as x)
-    | Regex.Star(Regex.Alt _ as x) -> sprintf "(" + formatRegex x + ")*"
+    | Regex.Star(Regex.Alt _ as x) -> "(" + formatRegex x + ")*"
     | Regex.Star x -> formatRegex x + "*"
     | Regex.Alt x -> x |> Seq.map formatRegex |> String.concat "|"
     | Regex.Concat x ->

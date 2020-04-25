@@ -11,8 +11,6 @@ open Farkle.Grammar
 open Mono.Cecil
 open Serilog
 open System
-open System.Collections.Generic
-open System.Collections.Immutable
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -56,14 +54,19 @@ type private DynamicDiscoverer(log: LoggerWrapper) =
         let asm = Assembly.LoadFile path
         dynamicDiscoverAndPrecompile asm log
 
-let getAssemblyName (path: string) = AssemblyDefinition.ReadAssembly(path).Name.Name
+let isReferenceAssembly (asm: AssemblyDefinition) =
+    asm.CustomAttributes
+    |> Seq.exists (fun attr ->
+        attr.AttributeType.FullName = typeof<ReferenceAssemblyAttribute>.FullName)
 
 #if NET472
+let getAssemblyName (path: string) = AssemblyDefinition.ReadAssembly(path).Name.Name
+
 let makeResolver references =
     let dict =
         references
-        |> Seq.map (fun path -> KeyValuePair(getAssemblyName path, path))
-        |> ImmutableDictionary.CreateRange
+        |> Seq.map (fun path -> getAssemblyName path, path)
+        |> readOnlyDict
     ResolveEventHandler(fun _ e ->
         match e.Name with
         | "Farkle" -> null
@@ -74,21 +77,35 @@ let makeResolver references =
 #else
 open System.Runtime.Loader
 
-type private FarkleAwareAssemblyLoadContext(path, references, log: ILogger) =
+type private FarkleAwareAssemblyLoadContext(path, references: string seq, log: ILogger) as this =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
     let dict =
         references
-        |> Seq.map (fun path -> KeyValuePair(getAssemblyName path, path))
-        |> ImmutableDictionary.CreateRange
+        |> Seq.choose (fun path ->
+            use asm = AssemblyDefinition.ReadAssembly(path)
+            if isReferenceAssembly asm then
+                None
+            else
+                log.Debug("Using reference from {AssemblyPath}", path)
+                Some (asm.Name.Name, path))
+        |> readOnlyDict
+    let asm =
+        let bytes = File.ReadAllBytes path
+        let m = new MemoryStream(bytes, true)
+        this.LoadFromStream m
+    member _.TheAssembly = asm
     override this.Load(name) =
         log.Verbose("Requesting assembly {AssemblyName}", name)
         match name.Name with
         | "Farkle" -> typeof<DesigntimeFarkle>.Assembly
         | "FSharp.Core" -> typeof<FuncConvert>.Assembly
-        | "mscorlib" | "System.Private.CoreLib" | "System.Runtime" -> null
+        | "mscorlib" | "System.Private.CoreLib"
+        | "System.Runtime" | "netstandard" -> null
         | name ->
             match dict.TryGetValue name with
-            | true, path -> this.LoadFromAssemblyPath path
+            | true, path ->
+                log.Verbose("Loading assembly from {AssemblyPath}", path)
+                this.LoadFromAssemblyPath path
             | false, _ -> null
 
 let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
@@ -103,8 +120,7 @@ let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
         if wr.IsAlive then
             // Not getting unloaded does not affect weaving an assembly.
             // This is great news; a warning is not necessary.
-            log.Debug("The assembly context was not collected after {GCTries} attempts! \
-Writing to the assembly might fail.", 10 - i)
+            log.Debug("The assembly context was not collected after {GCTries} tries.", 10)
         else
             log.Debug("Assembly context unloaded after {GCTries} tries.", 10 - i)
 #endif
@@ -130,10 +146,15 @@ let private getPrecompilableGrammars (log: ILogger) references path =
         Runtime.Remoting.RemotingServices.Disconnect logw |> ignore
         AppDomain.Unload(ad)
     #else
-    let alc = FarkleAwareAssemblyLoadContext(path, references, log) :> AssemblyLoadContext
+    let alc = FarkleAwareAssemblyLoadContext(path, references, log)
     try
-        let asm = alc.LoadFromAssemblyPath path
-        dynamicDiscoverAndPrecompile asm logw, WeakReference(alc)
+        let asm = alc.TheAssembly
+        if asm.GetName().Name = typeof<DesigntimeFarkle>.Assembly.GetName().Name then
+            log.Error("Cannot precompile an assembly named 'Farkle'")
+            []
+        else
+            dynamicDiscoverAndPrecompile asm logw
+        , WeakReference(alc)
     finally
         alc.Unload()
         log.Verbose("The context is at generation {Generation}", GC.GetGeneration(alc))

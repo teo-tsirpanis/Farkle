@@ -1,6 +1,6 @@
 framework: net45, netstandard2.0
 
-version 5.241.2
+version 5.245.1
 
 source https://api.nuget.org/v3/index.json
 

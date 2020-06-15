@@ -29,7 +29,7 @@ type FarkleCreateTemplateTask() =
             Error()
 
     let (|EqualTo|_|) x1 x2 =
-        if StringComparer.OrdinalIgnoreCase.Compare(x1, x2) = 0 then
+        if String.Equals(x1, x2, StringComparison.OrdinalIgnoreCase) then
             Some EqualTo
         else
             None
@@ -85,7 +85,7 @@ type FarkleCreateTemplateTask() =
                     log.Debug("Using built-in template for language {Language}", lang)
                     BuiltinTemplate(lang, TemplateType.Grammar))
             | false, false ->
-                log.Error("Need to specify either a language, or a custom template"); Error()
+                log.Error("Need to specify either a language or a custom template"); Error()
         let ns = if hasValue this.Namespace then Some this.Namespace else None
 
         let! generatedTemplate = TemplateEngine.renderTemplate log ns grammarPath templateSource

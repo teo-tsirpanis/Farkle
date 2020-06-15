@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use
 // it to define helpers that you do not want to show in the documentation.
-#I "../../bin/Farkle/net45/"
+#I "../../bin/Farkle/netstandard2.0/"
 #load "../../packages/formatting/FSharp.Formatting/FSharp.formatting.fsx"
 #r "System.Memory.dll"
 #r "Farkle.dll"

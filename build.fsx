@@ -271,7 +271,7 @@ let output     = __SOURCE_DIRECTORY__ @@ "docs"
 let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
 let templates  = __SOURCE_DIRECTORY__ @@ "docsrc/tools/templates"
 let formatting = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting"
-let toolpath = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting.CommandTool/tools/fsformatting.exe"
+let toolpath = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting.CommandTool/tools/netcoreapp3.1/any/fsformatting.dll"
 let docTemplate = "docpage.cshtml"
 
 let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner

@@ -7,4 +7,4 @@ cache:
 nuget:
   disable_publish_on_pr: true
 build_script:
-  - cmd: ./build.cmd target CI
+  - pwsh: ./build.ps1 target CI

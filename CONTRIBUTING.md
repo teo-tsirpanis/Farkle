@@ -2,8 +2,9 @@
 
 ## How to build
 
-* Install .NET Core SDK, version 3.1.
-* `build.cmd` / `build.sh`
+* Install .NET Core SDK, version 3.1
+* Install PowerShell
+* `build.ps1`
 
 There are Visual Studio Code tasks to make your life easier.
 

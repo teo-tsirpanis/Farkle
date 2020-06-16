@@ -58,7 +58,7 @@ let sourceFilesToGenerate = [
     "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.fs"
 ]
 
-let DocumentationAssemblyFramework = "net45"
+let DocumentationAssemblyFramework = "netstandard2.0"
 
 let sourceProjects = !! "./src/**/*.??proj"
 

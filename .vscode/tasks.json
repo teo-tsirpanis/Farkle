@@ -10,10 +10,9 @@
                 "kind": "test",
                 "isDefault": true
             },
-            "command": "fake",
+            "command": "pwsh",
             "args": [
-                "run",
-                "build.fsx",
+                "./build.ps1",
                 "target",
                 "RunTests"
             ]
@@ -37,10 +36,9 @@
         {
             "label": "📦PACK📦",
             "type": "process",
-            "command": "fake",
+            "command": "pwsh",
             "args": [
-                "run",
-                "build.fsx",
+                "./build.ps1",
                 "target",
                 "NuGetPack"
             ],
@@ -49,10 +47,9 @@
         {
             "label": "⏱BENCHMARK⏱",
             "type": "process",
-            "command": "fake",
+            "command": "pwsh",
             "args": [
-                "run",
-                "build.fsx",
+                "./build.ps1",
                 "target",
                 "Benchmark"
             ],
@@ -68,10 +65,9 @@
                 "showReuseMessage": false,
                 "clear": true
             },
-            "command": "fake",
+            "command": "pwsh",
             "args": [
-                "run",
-                "build.fsx",
+                "./build.ps1",
                 "target",
                 "Release"
             ],
@@ -87,10 +83,9 @@
                 "showReuseMessage": false,
                 "clear": true
             },
-            "command": "fake",
+            "command": "pwsh",
             "args": [
-                "run",
-                "build.fsx",
+                "./build.ps1",
                 "target",
                 "GenerateReferenceDocsDebug"
             ],

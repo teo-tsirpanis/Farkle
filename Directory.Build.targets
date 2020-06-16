@@ -2,6 +2,6 @@
   <Target Name="CheckForPaketRestoreTargets">
     <Error
         Condition="!Exists('$(MSBuildThisFileDirectory)/.paket/Paket.Restore.targets')"
-        Text="File '.paket/Paket.Restore.Targets' is missing. Run the build scripts (build.cmd/sh) once to create it. After that, you can build Farkle without relying on them." />
+        Text="File '.paket/Paket.Restore.Targets' is missing. Run the build script (build.ps1) once to create it. After that, you can build Farkle without relying on them." />
   </Target>
 </Project>

@@ -483,10 +483,8 @@ NUGET
       System.Runtime.Handles (>= 4.3)
 
 GROUP Formatting
-RESTRICTION: == net45
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FSharp.Formatting (4.1)
     FSharp.Formatting.CommandTool (4.1)
 
 GROUP Test

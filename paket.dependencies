@@ -39,7 +39,6 @@ group Formatting
 
   framework: net45
 
-  nuget FSharp.Formatting
   nuget FSharp.Formatting.CommandTool
 
 group FakeBuild

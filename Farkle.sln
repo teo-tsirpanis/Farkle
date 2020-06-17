@@ -5,21 +5,21 @@ VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Tests", "tests\Farkle.Tests\Farkle.Tests.fsproj", "{C17CDA30-3991-4AC7-8A38-060A1DB7C190}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tests", "tests\Farkle.Tests\Farkle.Tests.fsproj", "{C17CDA30-3991-4AC7-8A38-060A1DB7C190}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EC37407F-B092-4C11-B701-462471EF42A8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Farkle", "src\Farkle\Farkle.fsproj", "{847FAA87-2682-469E-84B1-0203DB26FF81}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle", "src\Farkle\Farkle.fsproj", "{847FAA87-2682-469E-84B1-0203DB26FF81}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Benchmarks", "tests\Farkle.Benchmarks\Farkle.Benchmarks.fsproj", "{696AC44B-AD20-4906-A397-1A1A0A3B1F18}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Benchmarks", "tests\Farkle.Benchmarks\Farkle.Benchmarks.fsproj", "{696AC44B-AD20-4906-A397-1A1A0A3B1F18}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "farklei", "sample\farklei\farklei.fsproj", "{8756BE36-4FC7-457F-8487-55F3061E8894}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "farklei", "sample\farklei\farklei.fsproj", "{8756BE36-4FC7-457F-8487-55F3061E8894}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Calculator", "sample\Farkle.Calculator\Farkle.Calculator.fsproj", "{D4448E3A-434C-4322-8A50-F9954040D80B}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Calculator", "sample\Farkle.Calculator\Farkle.Calculator.fsproj", "{D4448E3A-434C-4322-8A50-F9954040D80B}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Farkle.Tools", "src\Farkle.Tools\Farkle.Tools.fsproj", "{E282044A-E72A-4BA7-B875-B9F991B6CEC7}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools", "src\Farkle.Tools\Farkle.Tools.fsproj", "{E282044A-E72A-4BA7-B875-B9F991B6CEC7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{99555D79-E44E-463E-98AA-BAD6A6569B2C}"
 	ProjectSection(SolutionItems) = preProject
@@ -34,7 +34,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Samples.CSharp", "sa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Samples.Cli", "sample\Farkle.Samples.Cli\Farkle.Samples.Cli.csproj", "{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Shared", "src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj", "{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Shared", "src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj", "{C6FB5564-2D84-4380-ADCC-3579DB4BF133}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -166,18 +166,18 @@ Global
 		{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E}.Release|x64.Build.0 = Release|Any CPU
 		{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E}.Release|x86.ActiveCfg = Release|Any CPU
 		{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E}.Release|x86.Build.0 = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|x64.Build.0 = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Debug|x86.Build.0 = Debug|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|x64.ActiveCfg = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|x64.Build.0 = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|x86.ActiveCfg = Release|Any CPU
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC}.Release|x86.Build.0 = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|x64.Build.0 = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|x86.Build.0 = Debug|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|x64.ActiveCfg = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|x64.Build.0 = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|x86.ActiveCfg = Release|Any CPU
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -193,7 +193,7 @@ Global
 		{EA56475F-D782-487C-8582-98FE6A0FFB5D} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
 		{4BB17BD7-34F0-4AAC-82BE-9105B1A0AB89} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
 		{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
-		{2AEA9007-A1E0-4240-AE2B-AAD7D001EEEC} = {EC37407F-B092-4C11-B701-462471EF42A8}
+		{C6FB5564-2D84-4380-ADCC-3579DB4BF133} = {EC37407F-B092-4C11-B701-462471EF42A8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94BF4A95-7FC5-4237-8119-C83972D4E1E9}

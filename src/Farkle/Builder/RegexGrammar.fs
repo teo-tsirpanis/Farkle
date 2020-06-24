@@ -48,13 +48,21 @@ let designtime =
     let number = Terminals.genericUnsigned<int> "Number"
     let singleChar =
         terminal "Single Character" (T(fun _ data -> char data.[0])) any
-    let predefinedSet =
-        char '{' <&> plus any <&> char '}'
-        |> terminal "Predefined set" (T(fun _ data ->
-            let name = data.Slice(1, data.Length - 2).Trim().ToString()
+    let mkPredefinedSet name start fChars =
+        string start <&> plus (allButChars "{}") <&> char '}'
+        |> terminal name (T(fun _ data ->
+            let name = data.Slice(1, data.Length - start.Length - 1).Trim().ToString()
             match allPredefinedSets.TryGetValue(name) with
-            | true, set -> chars set
+            | true, set -> fChars set
             | false, _ -> errorf "Cannot found a predefined set named %s." name))
+    let mkCategory name start =
+        string start <&> repeat 2 (chars Letter)
+        |> terminal name (T(fun _ data ->
+            error "Farkle does not yet support Unicode categories."))
+    let predefinedSet = mkPredefinedSet "Predefined set" "\p{" chars
+    let notPredefinedSet = mkPredefinedSet "All but Predefined set" "\P{" allButChars
+    let category = mkCategory "\p" "Unicode category (unused)"
+    let notCategory = mkCategory "\P" "All but Unicode category (unused)"
     let oneOfCharacters =
         concat [char '['; plus escapedChar; char ']']
         |> terminal "Character set" (T(fun _ data ->
@@ -86,6 +94,13 @@ let designtime =
             !& "{" .>>. number .>> "," .>>. number .>> "}" => between
             empty =% id
         ]
+        let miscLiterals = [
+            singleChar
+            predefinedSet; notPredefinedSet
+            category; notCategory
+            oneOfCharacters; notOneOfCharacters
+            oneOfRange; notOneOfRange
+        ]
         let regexItem = "Regex item" ||= [
             !& "." =% any
             !& "\d" =% chars Number
@@ -94,8 +109,7 @@ let designtime =
             !& "\S" =% allButChars Whitespace
             !& "''" =% char '\''
             !@ literalString => string
-            yield! [singleChar; predefinedSet; oneOfCharacters; notOneOfCharacters; oneOfRange; notOneOfRange]
-            |> List.map (fun x -> !@ x => id)
+            yield! List.map (fun x -> !@ x => id) miscLiterals
             !& "(" .>>. regex .>> ")" => id
         ]
         "Regex quantified" ||= [!@ regexItem .>>. quantifier => (|>)]
@@ -106,7 +120,6 @@ let designtime =
     )
     regex
     |> DesigntimeFarkle.caseSensitive true
-    |> RuntimeFarkle.markForPrecompile
 
 let runtime = RuntimeFarkle.build designtime
 

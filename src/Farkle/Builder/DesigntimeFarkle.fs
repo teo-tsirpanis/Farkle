@@ -153,7 +153,7 @@ type internal AbstractProduction =
 type internal AbstractNonterminal =
     inherit DesigntimeFarkle
     /// Makes the nonterminal's productions immutable.
-    /// This function was introduced to add some determinism
+    /// This function was introduced to add more determinism
     /// to the limited mutability allowed in nonterminals.
     abstract Freeze: unit -> unit
     /// The productions of the nonterminal.

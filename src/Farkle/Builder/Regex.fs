@@ -55,7 +55,16 @@ type Regex =
     static member internal IsCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
     /// A regex that recognizes only the empty string.
     static member Empty = Concat []
-    /// A regex that recignizes any single character.
+    /// <summary>A regex that recognizes any single character
+    /// that was not matched by anything else.</summary>
+    /// <remarks><para>Note that it's not the same with "any character".
+    /// For example, the regex <c>\(.*\)</c> recognizes a pair of
+    /// parentheses with any character except a closing parenthesis
+    /// inside them. If we turn the Kleene star into a cross, only the
+    /// first of the characters inside the parentheses can be a closing
+    /// one, making strings like <c>()test)</c> valid.</para>
+    /// <para>In other words, this regex is matched only if no other regex
+    /// can be matched.</para></remarks>
     static member Any = AllButChars Set.empty
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
@@ -201,6 +210,8 @@ module Regex =
     /// An alias for `Regex.OneOf`.
     let chars str = Regex.OneOf str
 
+    /// An alias for `Regex.Any`.
+    /// See its documentation of it for caveats.
     let any = Regex.Any
 
     /// An alias for `Regex.NotOneOf`.

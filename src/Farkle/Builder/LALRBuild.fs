@@ -47,7 +47,7 @@ type LookaheadSymbol =
     /// The lookahead symbol is a `Terminal`.
     | Terminal of Terminal
     /// The lookahead symbol is the EOF, AKA $.
-    | [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>] End
+    | End
 
 /// An LR(1) item. It's essentially an LR(0) item with a set of lookahead symbols.
 type LR1Item = {

@@ -129,16 +129,14 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
                 // buffer size is some hundreds of characters.
                 else
                     Array.Resize(&buffer, buffer.Length * 2)
+            let bufferContentLength = int <| nextReadIndex - bufferFirstCharacterIndex
             // It's now time to read the next character.
-            // We read each character at a time from the reader. It does not adversely
-            // affect performance because the reader has its own buffer as well!
-            let cRead = reader.Read()
+            let nRead = reader.Read(buffer, bufferContentLength, buffer.Length - bufferContentLength)
             // There are still characters to read. We store this little
             // character in the buffer, and return it as well.
-            if cRead <> -1 then
-                nextReadIndex <- nextReadIndex + 1UL
-                buffer.[int <| idx - bufferFirstCharacterIndex] <- char cRead
-                c <- char cRead
+            if nRead <> 0 then
+                nextReadIndex <- nextReadIndex + uint64 nRead
+                c <- db.[idx]
                 true
             // We have reached the end.
             else

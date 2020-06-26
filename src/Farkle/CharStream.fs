@@ -147,7 +147,7 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
     override db.GetSpanForCharacters(startIndex, length) =
         db.CheckDisposed()
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
-        ReadOnlySpan(buffer).Slice(startIndex, length)
+        ReadOnlySpan(buffer, startIndex, length)
     override __.Dispose() =
         disposed <- true
         buffer <- null
@@ -159,7 +159,7 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
 type CharStream = private {
     /// The stream's source.
     Source: CharStreamSource
-    /// The index of the first element that _must_ be retained in memory
+    /// The index of the first element that must be retained in memory
     /// because it is going to be used to generate a token.
     mutable StartingIndex: uint64
     mutable _CurrentPosition: Position
@@ -180,6 +180,8 @@ with
     /// Creates a `CharStream` that lazily reads from a `TextReader`.
     /// The size of the stream's internal character buffer can be optionally specified.
     static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
+        if bufferSize <= 0 then
+            invalidArg "bufferSize" "The buffer size cannot be negative."
         CharStream.Create(new DynamicBlockSource(reader, bufferSize))
     member internal x.CurrentIndex = x.CurrentPosition.Index
     /// Gets the stream's current position.

@@ -40,7 +40,7 @@ module private OptimizedOperations =
 
     /// Checks if the given character belongs to ASCII.
     /// The first control characters are included.
-    let isASCII c = c <= char ASCIIUpperBound
+    let inline isASCII c = c <= char ASCIIUpperBound
 
     /// Creates a two-dimensional array of DFA state indices, whose first dimension
     /// represents the index of the current DFA state, and the second represents the

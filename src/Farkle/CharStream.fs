@@ -17,7 +17,6 @@ open System.Runtime.InteropServices
 /// The bridge between a character stream and the post-processor API.
 type ITransformer<'sym> =
     /// <summary>Converts a terminal into an arbitrary object.</summary>
-    /// <remarks>In case of an insignificant token, implementations can return <c>null</c></remarks>.
     abstract Transform: 'sym * Position * ReadOnlySpan<char> -> obj
 
 [<Struct>]
@@ -211,13 +210,6 @@ with
     member x.FirstCharacter = x.Source.[x.CurrentIndex]
     interface IDisposable with
         member x.Dispose() = (x.Source :> IDisposable).Dispose()
-
-/// A .NET delegate that is the interface between the `CharStream` API and the post-processor.
-/// It accepts a generic type (a `Terminal` usually), the `Position` of the symbol, and a
-/// `ReadOnlySpan` of characters that are going to be converted into an object.
-/// This type is not an F# native function type, because of limitations while handling `ReadOnlySpan`s.
-// That type is still used by the C# post-processor API. What a failure it was!
-type CharStreamCallback<'symbol> = delegate of 'symbol * Position * ReadOnlySpan<char> -> obj
 
 /// Functions to create and work with `CharStream`s.
 /// They are not thread-safe.

@@ -42,21 +42,27 @@ module private OptimizedOperations =
     /// The first control characters are included.
     let inline isASCII c = c <= char ASCIIUpperBound
 
+    let private createJaggedArray2D length1 length2 =
+        let arr = Array.zeroCreate length1
+        for i = 0 to length1 - 1 do
+            arr.[i] <- Array.zeroCreate length2
+        arr
+
     /// Creates a two-dimensional array of DFA state indices, whose first dimension
     /// represents the index of the current DFA state, and the second represents the
     /// ASCII character that was encountered.
     let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-        let arr = Array2D.zeroCreate dfa.Length (ASCIIUpperBound + 2)
+        let arr = createJaggedArray2D dfa.Length (ASCIIUpperBound + 2)
         dfa
         |> Seq.iteri (fun i state ->
             let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
             for j = 0 to ASCIIUpperBound + 1 do
-                Array2D.set arr i j anythingElse
+                arr.[i].[j] <- anythingElse
             state.Edges
             |> RangeMap.toSeq
             |> Seq.takeWhile (fun x -> isASCII x.Key)
             |> Seq.iter (fun x ->
-                Array2D.set arr i (int x.Key) (DFAStateTag.FromOption x.Value)))
+                arr.[i].[int x.Key] <- DFAStateTag.FromOption x.Value))
         arr
 
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
@@ -65,11 +71,12 @@ module private OptimizedOperations =
                 0
             else
                 terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
-        let arr = Array2D.zeroCreate lalr.Length (maxTerminalIndex + 1)
+        let arr = createJaggedArray2D lalr.Length (maxTerminalIndex + 1)
         lalr
         |> Seq.iter (fun {Index = stateIndex; Actions = actions} ->
             actions
-            |> Seq.iter (fun (KeyValue(term, action)) -> action |> Some |> Array2D.set arr (int stateIndex) (int term.Index)))
+            |> Seq.iter (fun (KeyValue(term, action)) ->
+                arr.[int stateIndex].[int term.Index] <- Some action))
         arr
 
     let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
@@ -77,12 +84,13 @@ module private OptimizedOperations =
         let maxNonterminalIndex = nonterminals |> Seq.map(fun (Nonterminal(idx, _)) -> idx) |> Seq.max |> int
         // No reason to allocate many options.
         let lalrOptions = lalr |> Seq.map Some |> Array.ofSeq
-        let arr = Array2D.zeroCreate lalr.Length (maxNonterminalIndex + 1)
+        let arr = createJaggedArray2D lalr.Length (maxNonterminalIndex + 1)
         lalr
         |> Seq.iter (fun {Index = stateIndex; GotoActions = actions} ->
             let stateIndex = int stateIndex
             actions
-            |> Seq.iter (fun (KeyValue(nont, idx)) -> Array2D.set arr stateIndex (int nont.Index) lalrOptions.[int idx]))
+            |> Seq.iter (fun (KeyValue(nont, idx)) ->
+                arr.[stateIndex].[int nont.Index] <- lalrOptions.[int idx]))
         arr
 
 /// An object that provides optimized functions for some common operations on Grammars.
@@ -90,9 +98,9 @@ module private OptimizedOperations =
 /// performed only once, at the creation of this object.
 type OptimizedOperations = private {
     Grammar: Grammar
-    DFAArray: DFAStateTag [,]
-    LALRActionArray: LALRAction option [,]
-    LALRGotoArray: LALRState option [,]
+    DFAArray: DFAStateTag [][]
+    LALRActionArray: LALRAction option [][]
+    LALRGotoArray: LALRState option [][]
 }
 with
     static member Create g = {
@@ -107,14 +115,14 @@ with
         if state.IsError then
             DFAStateTag.Error
         elif isASCII c then
-            arr.[state.Value, int c]
+            arr.[state.Value].[int c]
         else
             match RangeMap.tryFind c x.Grammar.DFAStates.[state.Value].Edges with
             | ValueSome x -> DFAStateTag.FromOption x
-            | ValueNone -> arr.[state.Value, ASCIIUpperBound + 1]
+            | ValueNone -> arr.[state.Value].[ASCIIUpperBound + 1]
     /// Gets the LALR action from the given state that corresponds to the given terminal.
     member x.GetLALRAction (Terminal (term, _)) {LALRState.Index = idx} =
-        x.LALRActionArray.[int idx, int term]
+        x.LALRActionArray.[int idx].[int term]
     /// Gets the next LALR state according to the given state's GOTO actions.
     member x.LALRGoto (Nonterminal (nont, _)) {LALRState.Index = idx} =
-        x.LALRGotoArray.[int idx, int nont]
+        x.LALRGotoArray.[int idx].[int nont]

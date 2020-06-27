@@ -205,7 +205,7 @@ let designtimeFarkleGen =
         let productionGen =
             Gen.oneof [
                 Gen.elements terminals
-                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle) 
+                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle)
             ]
             |> Gen.listOf
         for i = 0 to nonterminals.Length - 1 do
@@ -276,8 +276,8 @@ type Generators =
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 
 let testProperty x = testPropertyWithConfig fsCheckConfig x
-
 let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x
+let ptestProperty x = ptestPropertyWithConfig fsCheckConfig x
 
 /// Performs a property test with a smaller sample size.
 let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop

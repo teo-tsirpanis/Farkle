@@ -7,6 +7,7 @@ namespace Farkle.Parser
 
 open Farkle.Grammar
 open Farkle.IO
+open System
 open System.Collections.Immutable
 
 /// Functions to tokenize `CharStreams`.
@@ -29,33 +30,31 @@ module Tokenizer =
             | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
             | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
 
-    let private tokenizeDFA (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) input =
-        let rec impl idx currState lastAcceptIdx lastAcceptSym =
-            let newToken (sym: DFASymbol) idx: Result<DFASymbol, char> * uint64 = Ok sym, idx
-            let mutable nextChar = Unchecked.defaultof<_>
-            match readChar input idx &nextChar with
-            | false ->
+    // Unfortunately we can't have ref structs on inner functions yet.
+    let rec private tokenizeDFA_impl (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) (input: CharStream)
+        ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
+        if ofs = span.Length then
+            if input.TryExpandPastOffset(ofs) then
+                tokenizeDFA_impl states oops input ofs currState lastAcceptOfs lastAcceptSym input.CharacterBuffer
+            else
                 match lastAcceptSym with
-                | Some sym -> newToken sym lastAcceptIdx
-                | None -> Error nextChar, idx
-            | true ->
-                let newDFA = oops.GetNextDFAState nextChar currState
-                if newDFA.IsOk then
-                    match states.[newDFA.Value].AcceptSymbol with
-                    // We can go further. The DFA did not accept any new symbol.
-                    | None -> impl (idx + 1UL) newDFA lastAcceptIdx lastAcceptSym
-                    // We can go further. The DFA has just accepted a new symbol; we take note of it.
-                    | Some _ as acceptSymbol -> impl (idx + 1UL) newDFA idx acceptSymbol
-                else
-                    match lastAcceptSym with
-                    // We can't go further, but the DFA had previosuly accepted a symbol in the past; we finish it up until there.
-                    | Some sym -> newToken sym lastAcceptIdx
-                    // We can't go further, and the DFA had never accepted a symbol; we mark this character as unrecognized.
-                    | None -> Error nextChar, idx
-        // We have to first check if more input is available.
-        // If not, this is the only place we can report an EOF.
-        if input.TryLoadFirstCharacter() then
-            impl input.CurrentIndex DFAStateTag.InitialState input.CurrentIndex None |> Some
+                | Some sym -> Ok sym, (input.ConvertOffsetToIndex lastAcceptOfs)
+                | None -> Error '\000', (input.ConvertOffsetToIndex ofs)
+        else
+            let c = span.[ofs]
+            let newDFA = oops.GetNextDFAState c currState
+            if newDFA.IsOk then
+                match states.[newDFA.Value].AcceptSymbol with
+                | None -> tokenizeDFA_impl states oops input (ofs + 1) newDFA lastAcceptOfs lastAcceptSym span
+                | Some _ as acceptSymbol -> tokenizeDFA_impl states oops input (ofs + 1) newDFA ofs acceptSymbol span
+            else
+                match lastAcceptSym with
+                | Some sym -> Ok sym, (input.ConvertOffsetToIndex lastAcceptOfs)
+                | None -> Error c, (input.ConvertOffsetToIndex ofs)
+
+    let private tokenizeDFA states oops (input: CharStream) =
+        if input.TryExpandPastOffset 0 then
+            tokenizeDFA_impl states oops input 0 DFAStateTag.InitialState 0 None input.CharacterBuffer |> Some
         else
             None
 

@@ -209,20 +209,8 @@ let shouldCIBenchmark =
     | _ -> true
 
 Target.description "Runs all benchmarks"
-Target.create "Benchmark" (fun opts ->
-    let benchmark3rdPartyLibraries =
-        opts.Context.TryFindTarget("AddBenchmarkReport").IsSome
-    DotNet.build (fConfiguration >> (fun p ->
-        {p with
-            MSBuildParams = {
-                p.MSBuildParams with
-                    Properties =
-                        ("Benchmark3rdPartyLibraries", string benchmark3rdPartyLibraries)
-                        :: p.MSBuildParams.Properties
-            }
-        }
-    )) benchmarkProject
-    dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "--no-build" benchmarkArguments
+Target.create "Benchmark" (fun _ ->
+    dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
     Seq.iter pushArtifact benchmarkReports)
 
 Target.description "Adds the benchmark results to the appropriate folder"

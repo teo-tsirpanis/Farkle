@@ -134,14 +134,14 @@ type CharStream = private {
     mutable StartingIndex: uint64
     mutable _CurrentPosition: Position
     /// [omit]
-    mutable _LastUnpinnedSpanPosition: Position
+    mutable _LastTokenPosition: Position
 }
 with
     static member private Create(src) = {
         Source = src
         StartingIndex = 0UL
         _CurrentPosition = Position.Initial
-        _LastUnpinnedSpanPosition = Position.Initial
+        _LastTokenPosition = Position.Initial
     }
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     static member Create(mem) = CharStream.Create(new StaticBlockSource(mem))
@@ -159,8 +159,8 @@ with
     /// Gets the stream's current position.
     /// Reading the stream for a new token starts from here.
     member x.CurrentPosition: inref<_> = &x._CurrentPosition
-    /// The starting position of the last character span that was unpinned.
-    member x.LastUnpinnedSpanPosition: inref<_> = &x._LastUnpinnedSpanPosition
+    /// The starting position of the last token that was generated.
+    member x.LastTokenPosition: inref<_> = &x._LastTokenPosition
     /// A read-only span of characters that contains all characters from `CurrentPosition`.
     /// The first character of a new token is always in the zeroth position.
     member internal x.CharacterBuffer = x.Source.GetAllCharactersAfterIndex x.CurrentIndex
@@ -255,31 +255,13 @@ module internal CharStream =
     /// After that call, the characters at and before the
     /// span might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerate symbol (transformer: ITransformer<'symbol>) cs
+    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs
         ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let span = cs.Source.GetSpanForCharacters(idxStart, charSpan.Length)
-            cs._LastUnpinnedSpanPosition <- charSpan.StartingPosition
-            transformer.Transform(symbol, cs._LastUnpinnedSpanPosition, span)
+            cs._LastTokenPosition <- charSpan.StartingPosition
+            transformer.Transform(symbol, cs._LastTokenPosition, span)
         else
             failwithf "Trying to read the character span %O, from a stream that was last read at %d."
                 charSpan cs.StartingIndex
-
-    let private toStringTransformer =
-        {new ITransformer<unit> with member _.Transform(_, _, data) = box <| data.ToString()}
-
-    /// Creates a string out of the characters at the given `CharSpan`.
-    /// After that call, the characters at and before the span might be
-    /// freed from memory, so this function must not be used twice.
-    /// It is recommended to use the `unpinSpanAndGenerate` function
-    /// to avoid excessive allocations, unless you specifically want a string.
-    [<CompiledName("UnpinSpanAndGenerateString")>]
-    let unpinSpanAndGenerateString cs c_span =
-        let s =
-            unpinSpanAndGenerate
-                ()
-                toStringTransformer
-                cs
-                c_span // Created by cable
-        s :?> string

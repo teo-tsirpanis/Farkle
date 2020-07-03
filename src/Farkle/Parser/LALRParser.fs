@@ -42,7 +42,7 @@ module LALRParser =
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
     let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (oops: OptimizedOperations) (pp: PostProcessor<'TResult>) fToken (input: CharStream) =
-        let fail msg: obj = (input.LastUnpinnedSpanPosition, msg) |> Message |> ParserError |> raise
+        let fail msg: obj = (input.LastTokenPosition, msg) |> Message |> ParserError |> raise
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
             let nextAction =

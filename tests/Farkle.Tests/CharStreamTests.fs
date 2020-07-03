@@ -6,8 +6,27 @@
 module Farkle.Tests.CharStreamTests
 
 open Expecto
+open Farkle.IO
 open Farkle.IO.CharStream
 open Farkle.Tests
+
+let private toStringTransformer =
+    {new ITransformer<unit> with member _.Transform(_, _, data) = box <| data.ToString()}
+
+/// Creates a string out of the characters at the given `CharSpan`.
+/// After that call, the characters at and before the span might be
+/// freed from memory, so this function must not be used twice.
+/// It is recommended to use the `unpinSpanAndGenerate` function
+/// to avoid excessive allocations, unless you specifically want a string.
+[<CompiledName("UnpinSpanAndGenerateString")>]
+let private unpinSpanAndGenerateString cs c_span =
+    let s =
+        unpinSpanAndGenerateObject
+            ()
+            toStringTransformer
+            cs
+            c_span // Created by cable
+    s :?> string
 
 [<Tests>]
 let tests =

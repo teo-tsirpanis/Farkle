@@ -65,8 +65,8 @@ module Tokenizer =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParserError |> raise
             let newToken sym (cs: CharSpan) =
-                let data = unpinSpanAndGenerate sym fTransform input cs
-                let theHolyToken = Token.Create input.LastUnpinnedSpanPosition sym data
+                let data = unpinSpanAndGenerateObject sym fTransform input cs
+                let theHolyToken = Token.Create input.LastTokenPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
             let leaveGroup tok g gs =

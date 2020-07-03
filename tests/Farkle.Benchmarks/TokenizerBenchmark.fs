@@ -21,7 +21,7 @@ type TokenizerBenchmark() =
 
     let farkleTokenize (rf: RuntimeFarkle<_>) =
         use f = File.OpenText jsonFile
-        let cs = CharStream.ofTextReader f
+        use cs = CharStream.Create f
         let grammar, oops = rf.Grammar |> returnOrFail
         let fTokenize() = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor ignore cs
 

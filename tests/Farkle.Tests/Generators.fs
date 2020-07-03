@@ -260,9 +260,9 @@ type Generators =
         let! generateStaticBlock = Arb.generate
         let charStream =
             if generateStaticBlock then
-                CharStream.ofString str
+                CharStream.Create str
             else
-                new StringReader(str) |> CharStream.ofTextReader
+                new StringReader(str) |> CharStream.Create
         return CS(charStream, str, steps)
     }
     static member Regex() = Arb.fromGen regexGen

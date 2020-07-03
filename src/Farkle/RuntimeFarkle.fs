@@ -207,14 +207,14 @@ module RuntimeFarkle =
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
     /// This function also accepts a custom parse message handler.
-    let parseMemory rf fMessage input =
-        input |> CharStream.ofReadOnlyMemory |> parseChars rf fMessage
+    let parseMemory rf fMessage (input: ReadOnlyMemory<_>) =
+        input |> CharStream.Create |> parseChars rf fMessage
 
     /// Parses and post-processes a string.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage inputString =
-        inputString |> CharStream.ofString |> parseChars rf fMessage
+    let parseString rf fMessage (inputString: string) =
+        inputString |> CharStream.Create |> parseChars rf fMessage
 
     /// Parses and post-processes a .NET `Stream` with the
     /// given character encoding, which may be lazily read.
@@ -226,15 +226,15 @@ contain binary data; not text. Use parseTextReader instead.")>]
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =
             match doLazyLoad with
-            | true -> CharStream.ofTextReader sr
-            | false -> sr.ReadToEnd() |> CharStream.ofString
+            | true -> CharStream.Create sr
+            | false -> sr.ReadToEnd() |> CharStream.Create
         parseChars rf fMessage cs
 
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
     /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseTextReader")>]
-    let parseTextReader rf fMessage textReader =
-        let cs = CharStream.ofTextReader textReader
+    let parseTextReader rf fMessage (textReader: TextReader) =
+        let cs = CharStream.Create textReader
         parseChars rf fMessage cs
 
     /// Parses and post-processes a file at the given path with the given character encoding.

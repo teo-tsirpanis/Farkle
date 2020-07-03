@@ -22,7 +22,7 @@ type ITransformer<'sym> =
 [<Struct>]
 /// An continuous range of characters that is
 /// stored by its starting position and ending index.
-type CharSpan = internal {
+type internal CharSpan = {
     StartingPosition: Position
     IndexTo: uint64
 }
@@ -146,7 +146,9 @@ with
     /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
     static member Create(mem) = CharStream.Create(new StaticBlockSource(mem))
     /// Creates a `CharStream` from a string.
-    static member Create(str: string) = CharStream.Create(str.AsMemory())
+    static member Create(str: string) =
+        nullCheck "str" str
+        CharStream.Create(str.AsMemory())
     /// Creates a `CharStream` that lazily reads from a `TextReader`.
     /// The size of the stream's internal character buffer can be optionally specified.
     static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
@@ -161,24 +163,24 @@ with
     member x.LastUnpinnedSpanPosition: inref<_> = &x._LastUnpinnedSpanPosition
     /// A read-only span of characters that contains all characters from `CurrentPosition`.
     /// The first character of a new token is always in the zeroth position.
-    member x.CharacterBuffer = x.Source.GetAllCharactersAfterIndex x.CurrentIndex
+    member internal x.CharacterBuffer = x.Source.GetAllCharactersAfterIndex x.CurrentIndex
     /// Converts an offset relative to the current
     /// position to an absolute character index.
-    member x.ConvertOffsetToIndex ofs =
+    member internal x.ConvertOffsetToIndex ofs =
         if ofs < 0 then
             invalidArg "ofs" "The offset cannot be negative"
         x.CurrentIndex + uint64 ofs
     /// Tries to load the `ofs`th character after the stream's current position.
     /// If input ended, returns false. This function invalidates the stream's
     /// character buffer but keeps the indices of the new buffer valid.
-    member x.TryExpandPastOffset ofs =
+    member internal x.TryExpandPastOffset ofs =
         x.Source.TryExpandPastIndex(x.StartingIndex, x.ConvertOffsetToIndex ofs)
     interface IDisposable with
         member x.Dispose() = (x.Source :> IDisposable).Dispose()
 
 /// Functions to create and work with `CharStream`s.
 /// They are not thread-safe.
-module CharStream =
+module internal CharStream =
 
     /// Creates a `CharSpan` that contains the next `idxTo`
     /// characters of a `CharStream` from its position.
@@ -281,20 +283,3 @@ module CharStream =
                 cs
                 c_span // Created by cable
         s :?> string
-
-    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
-    let ofReadOnlyMemory mem = CharStream.Create(mem: ReadOnlyMemory<_>)
-
-    /// Creates a `CharStream` from a string.
-    let ofString (str: string) =
-        nullCheck "str" str
-        str.AsMemory() |> ofReadOnlyMemory
-
-    /// Creates a `CharStream` that lazily reads from a `TextReader`.
-    /// The size of the stream's internal character buffer is specified.
-    /// Also, the character stream can be disposed if the reader is no more needed.
-    let ofTextReaderEx bufferSize textReader = CharStream.Create(textReader, bufferSize)
-
-    /// Creates a `CharStream` from a `TextReader`.
-    /// It can be disposed if the reader is no more needed.
-    let ofTextReader textReader = CharStream.Create(textReader: TextReader)

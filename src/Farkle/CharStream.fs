@@ -76,15 +76,17 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
     let mutable buffer = Array.zeroCreate bufferSize
     let mutable bufferFirstCharacterIndex = 0UL
     let mutable nextReadIndex = 0UL
-    member private _.CheckDisposed() =
+    let checkDisposed() =
         if isNull buffer then
             raise <| ObjectDisposedException("Cannot use a dynamic block character stream after being disposed.")
+    let growBuffer newLength =
+        Array.Resize(&buffer, newLength)
     member private _.BufferContentLength = nextReadIndex - bufferFirstCharacterIndex |> int
-    override db.LengthSoFar =
-        db.CheckDisposed()
+    override _.LengthSoFar =
+        checkDisposed()
         nextReadIndex
     override db.TryExpandPastIndex(startingIndex, idx) =
-        db.CheckDisposed()
+        checkDisposed()
         // The character we want to read is already in memory. Easy stuff.
         if idx < nextReadIndex then
             true
@@ -99,7 +101,8 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
                     Array.blit buffer importantCharStart buffer 0 importantCharLength
                     bufferFirstCharacterIndex <- startingIndex
                 else
-                    Array.Resize(&buffer, buffer.Length * 2)
+                    // Otherwise we make the buffer larger.
+                    growBuffer (buffer.Length * 2)
             let bufferContentLength = db.BufferContentLength
             // It's now time to read more characters.
             let nRead = reader.Read(buffer, bufferContentLength, buffer.Length - bufferContentLength)
@@ -112,16 +115,15 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         else
             failwith "Cannot expand past the final character in the buffer."
     override db.GetAllCharactersAfterIndex idx =
-        db.CheckDisposed()
+        checkDisposed()
         let startIndex = idx - bufferFirstCharacterIndex |> int
         ReadOnlySpan(buffer, startIndex, db.BufferContentLength - startIndex)
-    override db.GetSpanForCharacters(startIndex, length) =
-        db.CheckDisposed()
+    override _.GetSpanForCharacters(startIndex, length) =
+        checkDisposed()
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
         ReadOnlySpan(buffer, startIndex, length)
-    override __.Dispose() =
+    override _.Dispose() =
         buffer <- null
-        reader.Dispose()
 
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
@@ -151,6 +153,8 @@ with
         CharStream.Create(str.AsMemory())
     /// Creates a `CharStream` that lazily reads from a `TextReader`.
     /// The size of the stream's internal character buffer can be optionally specified.
+    /// `CharStreams` made from this function must be `Dispose`d.
+    /// The `TextReader` inside must be separately disposed as well.
     static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
         if bufferSize <= 0 then
             invalidArg "bufferSize" "The buffer size cannot be negative."

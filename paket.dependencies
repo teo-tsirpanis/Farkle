@@ -37,8 +37,6 @@ group Formatting
 
   source https://api.nuget.org/v3/index.json
 
-  framework: net45
-
   nuget FSharp.Formatting.CommandTool
 
 group FakeBuild

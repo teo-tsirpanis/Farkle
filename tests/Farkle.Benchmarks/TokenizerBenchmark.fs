@@ -17,29 +17,27 @@ open System.IO
 
 type TokenizerBenchmark() =
 
-    let jsonFile = "generated.json"
+    let jsonData = File.ReadAllText "generated.json"
 
     let farkleTokenize (rf: RuntimeFarkle<_>) =
-        use f = File.OpenText jsonFile
+        use f = new StringReader(jsonData)
         use cs = CharStream.Create f
         let grammar, oops = rf.Grammar |> returnOrFail
         let fTokenize() = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor ignore cs
 
         while fTokenize().IsSome do ()
 
-    [<Benchmark(OperationsPerInvoke = 64)>]
+    [<Benchmark>]
     member _.FarkleCSharp() =
-        for _ = 1 to 64 do
-            farkleTokenize CSharp.Language.Runtime
+        farkleTokenize CSharp.Language.Runtime
 
-    [<Benchmark(OperationsPerInvoke = 64)>]
+    [<Benchmark>]
     member _.FarkleFSharp() =
-        for _ = 1 to 64 do
-            farkleTokenize FSharp.Language.runtime
+        farkleTokenize FSharp.Language.runtime
 
     [<Benchmark(Baseline = true)>]
     member _.FsLexYacc() =
-        use f = File.OpenText jsonFile
+        use f = new StringReader(jsonData)
         let lexBuf = LexBuffer<_>.FromTextReader f
 
         while Lexer.read lexBuf <> Parser.EOF do ()

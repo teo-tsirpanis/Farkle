@@ -68,8 +68,8 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     }
     member x.FinishFSharp fFuseThunk = x.FinishRaw(fun _ -> fFuseThunk())
     member x.Finish(f: Func<_>) = x.FinishFSharp(FuncConvert.FromFunc(f))
-    /// <summary>Creates a <see cref="Production{T}"/> tha
-    ///  always returns a constant value.</summary>
+    /// <summary>Creates a <see cref="Production{T}"/> that
+    /// always returns a constant value.</summary>
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
     interface AbstractProduction with
         member _.Members = members.ToImmutableArray()

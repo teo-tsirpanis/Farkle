@@ -8,28 +8,22 @@ namespace Farkle.Parser
 open Farkle
 open Farkle.Grammar
 open Farkle.IO
-open System.Threading
+open System
+open System.Buffers
 open System.Collections.Immutable
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 
-    module internal ObjectBuffer =
-
-        let private arrayStorage = new ThreadLocal<obj[]>(fun () -> Array.zeroCreate 16)
-
-        let private checkLength length = if Array.length arrayStorage.Value < length then arrayStorage.Value <- Array.zeroCreate length
-
-        let unloadStackIntoBuffer length stack =
-            checkLength length
-            let arr = arrayStorage.Value
-            let rec impl stack i =
-                match stack with
-                | (_, x) :: xs when i >= 0 ->
-                    Array.set arr i x
-                    impl xs (i - 1)
-                | _ -> arr
-            impl stack (length - 1)
+    let private unloadStackIntoBuffer length stack =
+        let arr = ArrayPool.Shared.Rent length
+        let rec impl stack i =
+            match stack with
+            | (_, x) :: xs when i >= 0 ->
+                Array.set arr i x
+                impl xs (i - 1)
+            | _ -> arr
+        impl stack (length - 1)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
     /// <param name="fMessage">A function that gets called for every event that happens.
@@ -60,19 +54,21 @@ module LALRParser =
                     impl (fToken input) nextState ((nextState, data) :: stack)
                 | None -> failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
             | Some(LALRAction.Reduce productionToReduce) ->
-                let tokens = ObjectBuffer.unloadStackIntoBuffer productionToReduce.Handle.Length stack
-                let stack = List.skip productionToReduce.Handle.Length stack
+                let handleLength = productionToReduce.Handle.Length
+                let stack' = List.skip handleLength stack
                 /// The stack cannot be empty; we gave it one element in the beginning.
-                let nextState = fst stack.Head
+                let nextState = fst stack'.Head
                 match oops.LALRGoto productionToReduce.Head nextState with
                 | Some nextState ->
                     let resultObj =
+                        let tokens = unloadStackIntoBuffer handleLength stack
                         try
                             pp.Fuse(productionToReduce, tokens)
-                        with
-                        | FuserNotFound -> failwithf "Production %O has no matching fuser" productionToReduce
+                        finally
+                            Array.Clear(tokens, 0, handleLength)
+                            ArrayPool.Shared.Return(tokens)
                     fMessage <| ParseMessage.Reduction productionToReduce
-                    impl token nextState ((nextState, resultObj) :: stack)
+                    impl token nextState ((nextState, resultObj) :: stack')
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
             | None ->
                 let expectedSymbols =

@@ -9,10 +9,6 @@ open Farkle
 open Farkle.Grammar
 open System
 
-/// An exception that gets thrown when a post-processor does not find the appropriate `Fuser` for a production.
-/// This means that the post-processor is not properly configured.
-exception internal FuserNotFound
-
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
 /// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>

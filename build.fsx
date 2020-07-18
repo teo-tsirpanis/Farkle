@@ -136,9 +136,9 @@ Target.create "CopyBinaries" (fun _ ->
 let fConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
-    [
+    DotNet.Options.withAdditionalArgs [
         sprintf "/p:Version=%s" nugetVersion
-    ] |> DotNet.Options.withAdditionalArgs <| x
+    ] x
 
 let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
     let handleFailure (p: ProcessResult) =

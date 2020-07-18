@@ -11,6 +11,7 @@ open Farkle.Common
 open Operators.Checked
 #endif
 open System
+open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
 
@@ -36,7 +37,6 @@ with
 type private CharStreamSource() =
     /// Ensures that all characters from `startingIndex` to `idx` are
     /// available for reading. Returns false when input ends or when
-    /// TODO: `startingIndex` is before the first character stored on the buffer.
     /// This is the only place when I/O occurs. After this call, more characters
     /// after the requested range might be available as well.
     abstract TryExpandPastIndex: startingIndex: uint64 * idx: uint64 -> bool
@@ -81,19 +81,20 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
             raise <| ObjectDisposedException("Cannot use a dynamic block character stream after being disposed.")
     let growBuffer newLength =
         Array.Resize(&buffer, newLength)
-    member private _.BufferContentLength = nextReadIndex - bufferFirstCharacterIndex |> int
-    override _.LengthSoFar =
+    let getBufferContentLength() = nextReadIndex - bufferFirstCharacterIndex |> int
+    let rec tryExpandPastIndex startingIndex idx =
         checkDisposed()
-        nextReadIndex
-    override db.TryExpandPastIndex(startingIndex, idx) =
-        checkDisposed()
+        Debug.Assert(startingIndex >= bufferFirstCharacterIndex,
+            "The starting index was behind the first character in the buffer.")
+        Debug.Assert(idx >= startingIndex,
+            "The index to expand to was behind the starting index.")
         // The character we want to read is already in memory. Easy stuff.
         if idx < nextReadIndex then
             true
         // The character we want to read is the next one to be read.
-        elif idx = nextReadIndex then
+        else
             // The buffer might be full however.
-            if db.BufferContentLength = buffer.Length then
+            if getBufferContentLength() = buffer.Length then
                 // If not all characters in the buffer are needed, we move those we need to the start.
                 if bufferFirstCharacterIndex <> startingIndex then
                     let importantCharStart = int <| startingIndex - bufferFirstCharacterIndex
@@ -103,21 +104,23 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
                 else
                     // Otherwise we make the buffer larger.
                     growBuffer (buffer.Length * 2)
-            let bufferContentLength = db.BufferContentLength
+            let bufferContentLength = getBufferContentLength()
             // It's now time to read more characters.
             let nRead = reader.Read(buffer, bufferContentLength, buffer.Length - bufferContentLength)
             nextReadIndex <- nextReadIndex + uint64 nRead
-            // If zero characters were actually read, we have reached the end.
-            nRead <> 0
-        // We cannot read past the first character that has not been read.
-        // This is how the CharStream works; you have to read one character at a time.
-        // TODO: Make it read more than one character away from it.
-        else
-            failwith "Cannot expand past the final character in the buffer."
-    override db.GetAllCharactersAfterIndex idx =
+            // If no new characters were read, we have reached the end of the file.
+            // Otherwise we check again if the character we want is available.
+            // We will then either return or expand the buffer again.
+            nRead <> 0 && tryExpandPastIndex startingIndex idx
+    override _.TryExpandPastIndex(startingIndex, idx) =
+        tryExpandPastIndex startingIndex idx
+    override _.LengthSoFar =
+        checkDisposed()
+        nextReadIndex
+    override _.GetAllCharactersAfterIndex idx =
         checkDisposed()
         let startIndex = idx - bufferFirstCharacterIndex |> int
-        ReadOnlySpan(buffer, startIndex, db.BufferContentLength - startIndex)
+        ReadOnlySpan(buffer, startIndex, getBufferContentLength() - startIndex)
     override _.GetSpanForCharacters(startIndex, length) =
         checkDisposed()
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
@@ -157,7 +160,7 @@ with
     /// The `TextReader` inside must be separately disposed as well.
     static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
         if bufferSize <= 0 then
-            invalidArg "bufferSize" "The buffer size cannot be negative."
+            invalidArg "bufferSize" "The buffer size cannot be negative or zero."
         CharStream.Create(new DynamicBlockSource(reader, bufferSize))
     member internal x.CurrentIndex = x.CurrentPosition.Index
     /// Gets the stream's current position.

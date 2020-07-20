@@ -2,7 +2,7 @@
 
 Every time an app using Farkle starts, it generates the parser tables. This process takes some time, and it take even more, the app does not reuse the runtime Farkles it creates.
 
-Most apps need to parse a static grammar whose specifications never change between program executions. For example, a compiler or a JSON parser will parse text from the same language every time you use it. Farkle would spend time generating the parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST server parsing hundreds of input strings, but a compiler that parses only one file, building the grammar every time it is run would take some time, maybe more than the time spent for the parser, if the grammar is big.
+Most apps need to parse a static grammar whose specifications never change between program executions. For example, a compiler or a JSON parser will parse text from the same language every time you use it. Farkle would spend time generating the parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST server parsing hundreds of input strings, but for a compiler that parses only one file, building the grammar every time it is run would take some time, maybe more than the time spent for the parser, if the grammar is big.
 
 What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's life cycle?
 
@@ -56,7 +56,9 @@ With this simple function (or extension method), Farkle will be able to discover
 
 * The designtime Farkle's field can be of any visibility (public, internal, private, it doesn't matter). It will be detected even in nested types. Just remember the rule above.
 
-* The `markForPrecompile` function must be the absolute last function to be applied in the designtime Farkle. If you don't apply it to the starting symbol, or applied any other function on top of it, Farkle will not precompile the designtime Farkle, but it will still be perfectly functional.
+* The designtime Farkle's field name must not start with an underscore. Because the precompiler will evaluate all designtime Farkles that satisfy the rule above, prepending an underscore to the field's name is an easy way to tell the precompiler to not touch it.
+
+* The `markForPrecompile` function must be the absolute last function to be applied in the designtime Farkle.
 
 * The `markForPrecompile` function must be called in the assembly the designtime Farkle was created and should better not used from inside another function.
 
@@ -76,20 +78,22 @@ And say you use the function above in assembly B. It won't work; Farkle won't be
 ``` csharp
 public class MyLanguage {
     // This will work.
-    public static readonly DesigntimeFarkle Foo = MySimpleDesigntimeFarkle.MarkForPrecompile();
+    public static readonly DesigntimeFarkle Foo = MyUntypedDesigntimeFarkle.Cast().MarkForPrecompile();
     // But not this.
-    public static readonly object Foo = MyComplicatedDesigntimeFarkle.MarkForPrecompile();
+    public static readonly object Bar = MyComplicatedDesigntimeFarkle.MarkForPrecompile();
 }
 ```
 
 * All precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. That's actually why the `DesigntimeFarkle.rename` function was created.
 
-* Multiple references to the same precompilable designtime Farkle do not pose a problem. The following example will work:
+* Multiple references to the same precompilable designtime Farkle do not pose a problem and will be precompiled once. The following example will work:
 
 ``` fsharp
 let designtime1 = myComplicatedDesigntimeFarkle |> RuntimeFarkle.markForPrecompile
 let designtime2 = designtime1
 ```
+
+> __Note__: If any of the rules above is violated, building your app will not fail (unless a name collision was detected which will always fail the build), the designtime Farkle will not be precompiled but will be otherwise perfectly functional.
 
 ### Preparing your project
 
@@ -117,11 +121,13 @@ If you compile your program now, you should get a message that your designtime F
 
 Farkle's precompiler was made for grammars that are static, that's the reason it only works on static readonly fields: once you created it in your code, you cannot change it. Otherwise, what good would the precompiler be?
 
-You can always call a non-deterministic function like `DateTime.Now()` that will make your designtime Farkle parse integers in the hexadecimal format in your birthday, and in the decimal format in all other days. If you build your app on your birthday, it will produce bizarre results on all the other days, and if you build it on a day other than your birthday, it will work every time, except of your birthday (the worst birthday present) __Just don't do it.__ Farkle cannot be made to detect such things, and you are not getting any smarter by doing it.
+You can always call a non-deterministic function like `DateTime.Now()` that will make your designtime Farkle parse integers in the hexadecimal format in your birthday, and in the decimal format in all other days. If you build your app on your birthday, it will produce bizarre results on all the other days, and if you build it on a day other than your birthday, it will work every time, except of your birthday (the worst birthday present). __Just don't do it.__ Farkle cannot be made to detect such things, and you are not getting any smarter by doing it.
 
 ### Building from an IDE
 
-And last but not least, the precompiler will not work when running a .NET Framework-based edition of MSBuild. This includes building from IDEs such as Visual Studio. The recommended way to build an app that uses the precompiler is through `dotnet build` and its friends. This _doesn't mean_ that the precompiler won't work on .NET Framework assemblies; you have to use the new project format and build with the .NET Core SDK; it will normally work.
+And last but not least, the precompiler will not work when running a .NET Framework-based edition of MSBuild. This includes building from IDEs such as Visual Studio. The recommended way to build an app that uses the precompiler is through `dotnet build` and its friends. This doesn't mean that the precompiler won't work on .NET Framework assemblies; you have to use the new project format and build with the .NET Core SDK; it will normally work.
+
+> __Note__: Precompiling a .NET Framework assembly will load it to the .NET Core-based precompiler. While it sometimes works due to a compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features. It might work, it might fail, who knows? And why are you still using the .NET Framework?
 
 Rider however can use the precompiler with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET Core SDK (it typically has a `.dll` extension).
 

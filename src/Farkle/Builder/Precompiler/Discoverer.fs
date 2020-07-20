@@ -36,8 +36,10 @@ let discover (asm: Assembly) =
         |> Seq.filter (fun fld ->
             // We can't know in advance whether the designtime Farkle is
             // precompilable; we have to test all designtime Farkles.
+            // The user however can explicitly prohibit a designtime Farkle
+            // from being probed by prepending its name with an underscore.
             typeof<DesigntimeFarkle>.IsAssignableFrom fld.FieldType
-            && fld.IsInitOnly)
+            && fld.IsInitOnly && not (fld.Name.StartsWith("_")))
         |> Seq.map (fun fld -> fld.GetValue(null))
         |> Seq.choose tryUnbox<PrecompilableDesigntimeFarkle>
         |> Seq.filter (fun pcdf -> pcdf.DeclaringAssembly = asm)

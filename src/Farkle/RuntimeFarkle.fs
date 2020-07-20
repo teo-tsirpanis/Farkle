@@ -184,7 +184,9 @@ module RuntimeFarkle =
     /// This designtime Farkle is used in the tests to test
     /// whether an object from a different assembly is eligible
     /// for precompilation (it isn't, unless it is marked again).
-    let internal dummyPrecompilable = "Dummy" ||= [empty =% 521]
+    let internal dummyPrecompilable =
+        "Dummy" ||= [empty =% 521]
+        |> markForPrecompile
 
     /// Parses and post-processes a `CharStream`.
     /// This function also accepts a custom parse message handler.

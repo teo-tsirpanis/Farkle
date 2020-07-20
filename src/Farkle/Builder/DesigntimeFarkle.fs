@@ -258,7 +258,7 @@ with
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must only be called once, and before
     /// building a designtime Farkle containing this one.
-    /// Subsequent calls (and those after building) are ignored.</remarks>
+    /// Subsequent calls (and these after building) are ignored.</remarks>
     member x.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
         prods
         |> Seq.map (fun x -> x :> AbstractProduction)

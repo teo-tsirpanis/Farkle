@@ -291,7 +291,7 @@ module DesigntimeFarkle =
     /// Changes the name of a designtime Farkle. This function can be applied
     /// anywhere, not only to the topmost one, like with other metadata changes.
     /// Using the same designtime Farkle with a different name will create only
-    /// one grammar symbol whose name cannot be controlled by user code.
+    /// one grammar symbol whose name is undefined.
     let rename newName df =
         nullCheck "newName" newName
         {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>

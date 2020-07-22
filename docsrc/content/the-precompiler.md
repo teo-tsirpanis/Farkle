@@ -102,8 +102,8 @@ With our designtime Farkles being ready to be precompiled, it's time to prepare 
 ``` xml
 <!-- The following properties are optional. -->
 <PropertyGroup>
-    <!-- Set it to false to disable the precompiler. Your app
-    will still work, but without the performance boost the precompiler offers. -->
+    <!-- Set it to false to disable the precompiler. Your app will still
+    work, but without the initial performance boost the precompiler offers. -->
     <FarkleEnablePrecompiler>false</FarkleEnablePrecompiler>
     <!-- If it is true, grammar errors will raise a warning
     instead of an error and not fail the entire build. -->
@@ -113,6 +113,7 @@ With our designtime Farkles being ready to be precompiled, it's time to prepare 
     <PackageReference Include="Farkle.Tools.MSBuild" Version="6.*" PrivateAssets="all" />
 </ItemGroup>
 ```
+
 If you compile your program now, you should get a message that your designtime Farkles' grammars got precompiled. Hooray! With our grammars being precompiled, calling `RuntimeFarkle.build designtime` (or `buildUntyped`) is now much, much faster.
 
 ## Some final notes

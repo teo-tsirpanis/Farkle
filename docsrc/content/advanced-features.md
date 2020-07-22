@@ -69,12 +69,7 @@ S.SetProductions(
 
 __C#:__
 ``` csharp
-// If you need both typed and untyped nonterminals,
-// you unfortuantely have to write the fully qualified
-// name every time you want to use the latter
-using Nonterminal = Farkle.Builder.Untyped.Nonterminal;
-
-var S = Nonterminal.Create("S");
+var S = Nonterminal.CreateUntyped("S");
 
 S.SetProductions(
     new ProductionBuilder(S, "(", S, ")"),
@@ -107,10 +102,8 @@ let adder = "Add" |||= [ProductionBuilder(number, "+", number)]
 The difference above is in the operator in the last line. In C# we can do the same thing like that:
 
 ``` csharp
-using Nonterminal = Farkle.Builder.Untyped.Nonterminal;
-
 DesigntimeFarkle<uint> Number = Terminals.UInt32("Number");
-DesigntimeFarkle Adder = Nonterminal.Create(Adder, new ProductionBuilder(Number, "+", Number))
+DesigntimeFarkle Adder = Nonterminal.CreateUntyped("Adder", new ProductionBuilder(Number, "+", Number))
 ```
 
 Let's take a look now at how to actually use these untyped designtime Farkles. It's actually surprisingly simple, and can be done this way:
@@ -146,7 +139,7 @@ let designtime: DesigntimeFarkle<int> = foo()
 let runtime: RuntimeFarkle<int> = RuntimeFarkle.build designtime
 
 // syntaxChecker is of type RuntimeFarkle<unit>.
-let syntaxCheck = RuntimeFarkle.changePostProcessor PostProcessor.syntaxCheck runtime
+let syntaxCheck = RuntimeFarkle.changePostProcessor PostProcessors.syntaxCheck runtime
 ```
 
 __C#:__
@@ -157,7 +150,7 @@ RuntimeFarkle<int> Runtime = Designtime.Build();
 
 RuntimeFarkle<object> SyntaxCheck = Runtime.SyntaxCheck();
 // or
-RuntimeFarkle<object> SyntaxCheck = Runtime.ChangePostProcessor(PostProcessors.SyntaxChecker);
+RuntimeFarkle<Unit> SyntaxCheck = Runtime.ChangePostProcessor(PostProcessors.SyntaxChecker);
 ```
 
 Changing the post-processor is extremely cheap; no new grammar objects are created, and the syntax-checking post-processor is the same.

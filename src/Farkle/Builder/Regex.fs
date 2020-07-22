@@ -195,7 +195,7 @@ type Regex =
             AllButChars set
     /// Returns a regex specified by a string.
     /// An invalid regex string will make the building process fail.
-    // TODO: Add documentation and link it here.
+    /// See more at https://teo-tsirpanis.github.io/Farkle/string-regexes.html
     static member FromRegexString x =
         let thunk = lazy(RegexParser.DoParse.Invoke x)
         RegexString(x, thunk)

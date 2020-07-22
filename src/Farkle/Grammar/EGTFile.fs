@@ -7,6 +7,7 @@ namespace Farkle.Grammar.EGTFile
 
 open System
 open System.Buffers
+open System.Buffers.Binary
 open System.IO
 open System.Text
 
@@ -39,14 +40,12 @@ module internal EGTReader =
     /// Like `invalidEGT`, but allows specifying a formatted message.
     let invalidEGTf fmt = Printf.ksprintf (EGTFileException >> raise) fmt
 
-    let inline private readByte (r: BinaryReader) = r.ReadByte()
-
     let private readUInt16 (r: BinaryReader) =
         let x = r.ReadUInt16()
         if BitConverter.IsLittleEndian then
             x
         else
-            Binary.BinaryPrimitives.ReverseEndianness x
+            BinaryPrimitives.ReverseEndianness x
 
     /// Reads a null-terminated string, encoded
     /// with the UTF-16 character set from a binary reader.
@@ -55,17 +54,17 @@ module internal EGTReader =
         let sr = StringBuilder()
         let mutable c = readUInt16 r
         while c <> 0us do
-            c |> char |> sr.Append |> ignore
+            sr.Append(char c) |> ignore
             c <- readUInt16 r
         sr.ToString()
 
     /// An implementation of the BinaryReader.Read7BitEncodedInt method.
     /// Adapted from .NET Core's source.
     let private read7BitEncodedUInt32 r =
-        let rec impl r count shift =
+        let rec impl (r: BinaryReader) count shift =
             if shift = 5 * 7 then
                 raise <| FormatException "Too many bytes in what should have been a 7 bit encoded UInt32."
-            let b = readByte r
+            let b = r.ReadByte()
             let count = count ||| ((uint32 b &&& 0x7fu) <<< shift)
             if b &&& 0x80uy <> 0uy then
                 impl r count (shift + 7)
@@ -73,49 +72,66 @@ module internal EGTReader =
                 count
         impl r 0u 0
 
-    /// Reads an EGT file entry from a binary reader.
-    let readEntry r =
-        match readByte r with
-        | 'E'B -> Entry.Empty
-        | 'b'B -> r |> readByte |> Entry.Byte
-        | 'B'B -> r |> readByte |> ((<>) 0uy) |> Entry.Boolean
-        | 'I'B -> r |> readUInt16 |> uint32 |> Entry.UInt32
-        | 'S'B -> r |> readNullTerminatedString |> Entry.String
-        // These two are the EGTneo entry tags.
-        // They allow more compact representation.
-        | 'i'B -> r |> read7BitEncodedUInt32 |> Entry.UInt32
-        // The encoding is assumed to be UTF-8.
-        // Opening files from binary readers is
-        // not exposed so we can be more sure.
-        | 's'B -> r.ReadString() |> Entry.String
-        | x -> invalidEGTf "Invalid entry code: %x." x
+    type internal EGTReader(br: BinaryReader) =
 
-    /// Reads a collection of EGT file entries (record) from a binary reader.
-    /// This function accepts a reference to an array that will contain the
-    /// entries of this record and will return how many entries were read.
-    /// If the entries do not fit in the array, it will grow.
-    let readRecord (buffer: byref<_>) r =
-        let entryCount =
-            match readByte r with
-            | 'M'B ->
-                readUInt16 r |> int
-            | 'm'B ->
-                read7BitEncodedUInt32 r |> int
-            | x -> invalidEGTf "Invalid record code, read %x" x
-        if Array.length buffer < entryCount then
-            buffer <- Array.zeroCreate <| max (buffer.Length * 2) entryCount
-        for i = 0 to entryCount - 1 do
-            buffer.[i] <- readEntry r
-        entryCount
+        let mutable buffer = ArrayPool.Shared.Rent(128)
+        let mutable length = 0
+
+        /// Reads an EGT file entry from a binary reader.
+        let readEntry() =
+            match br.ReadByte() with
+            | 'E'B -> Entry.Empty
+            | 'b'B -> Entry.Byte(br.ReadByte())
+            | 'B'B -> Entry.Boolean(br.ReadByte() <> 0uy)
+            | 'I'B -> Entry.Int(readUInt16 br)
+            | 'S'B -> Entry.String(readNullTerminatedString br)
+            // These two are the EGTneo entry tags.
+            // They allow more compact representation.
+            | 'i'B -> Entry.UInt32(read7BitEncodedUInt32 br)
+            // The encoding is assumed to be UTF-8.
+            // Opening files from binary readers is
+            // not exposed so we can be more sure.
+            | 's'B -> Entry.String(br.ReadString())
+            | x -> invalidEGTf "Invalid entry code: %x." x
+
+        let readNextRecord() =
+            let entryCount =
+                match br.ReadByte() with
+                | 'M'B ->
+                    readUInt16 br |> int
+                | 'm'B ->
+                    read7BitEncodedUInt32 br |> int
+                | x -> invalidEGTf "Invalid record code, read %x" x
+            if Array.length buffer < entryCount then
+                ArrayPool.Shared.Return(buffer, true)
+                buffer <- ArrayPool.Shared.Rent(max (buffer.Length * 2) entryCount)
+            for i = 0 to entryCount - 1 do
+                buffer.[i] <- readEntry()
+            entryCount
+
+        member _.NextRecord() =
+            if isNull buffer then
+                raise (new ObjectDisposedException("buffer"))
+            length <- readNextRecord()
+
+        member _.Span = ReadOnlySpan(buffer, 0, length)
+
+        member _.Memory = ReadOnlyMemory(buffer, 0, length)
+
+        interface IDisposable with
+            member _.Dispose() =
+                ArrayPool.Shared.Return(buffer, true)
+                buffer <- null
+                length <- 0
 
     /// Reads all EGT file records from a binary reader
     /// and passes them to the given function, until the reader ends.
     let iterRecords fRead (r: BinaryReader) =
-        let mutable buf = Array.zeroCreate 45
         let len = r.BaseStream.Length
+        use er = new EGTReader(r)
         while r.BaseStream.Position < len do
-            let entryCount = readRecord &buf r
-            fRead(ReadOnlyMemory(buf, 0, entryCount))
+            er.NextRecord()
+            fRead er.Memory
 
     /// Raises an error if a read-only span's
     /// length is different than the expected.
@@ -132,14 +148,19 @@ module internal EGTReader =
     // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
     // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
     // FFFFFFfFFFFFFF
-    let wantEmpty (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
-    let wantByte (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
-    let wantBoolean (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
-    let wantUInt32 (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
+    let wantEmpty (x: ReadOnlySpan<_>) idx =
+        match x.[idx] with | Entry.Empty -> () | _ -> invalidEGTf "Invalid entry, expecting Empty."
+    let wantByte (x: ReadOnlySpan<_>) idx =
+        match x.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
+    let wantBoolean (x: ReadOnlySpan<_>) idx =
+        match x.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
+    let wantUInt32 (x: ReadOnlySpan<_>) idx =
+        match x.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
     let wantChar x idx = wantUInt32 x idx |> char
-    let wantString (x: ReadOnlySpan<_>) idx = match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
+    let wantString (x: ReadOnlySpan<_>) idx =
+        match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
 
-/// Functions to write EGT files.
+/// Functions to write EGTneo files.
 module internal EGTWriter =
 
     /// Writes a null-terminated string, encoded
@@ -163,7 +184,7 @@ module internal EGTWriter =
             w.Write(byte x)
 
     /// Writes an `Entry` to a binary writer.
-    let writeEntry (w: BinaryWriter) e =
+    let private writeEntry (w: BinaryWriter) (e: inref<_>) =
         match e with
         | Entry.Empty ->
             w.Write('E'B)
@@ -187,7 +208,7 @@ module internal EGTWriter =
         w.Write('m'B)
         write7BitEncodedInt w <| uint32 records.Length
         for i = 0 to records.Length - 1 do
-            writeEntry w records.[i]
+            writeEntry w &records.[i]
 
 module internal EGTHeaders =
 

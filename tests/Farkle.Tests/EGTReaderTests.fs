@@ -9,19 +9,22 @@ open Expecto
 open Farkle.Tests
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
+open Farkle.Grammar.EGTFile.EGTReader
 open System
 open System.IO
+open System.Runtime.InteropServices
 
-let testBinaryIO fWrite fRead message x =
+let private testBinaryIO fWrite fRead message x =
     let stream = new MemoryStream()
     let br = new BinaryReader(stream)
+    use er = new EGTReader(br)
     let bw = new BinaryWriter(stream)
 
     fWrite bw x
     bw.Flush()
     bw.Seek(0, SeekOrigin.Begin) |> ignore
 
-    let xRead = fRead br
+    let xRead = fRead er
 
     Expect.equal xRead x message
 
@@ -50,24 +53,23 @@ let tests = testList "EGT Reader tests" [
     testProperty "Writing an EGT record and reading it back works" (
         testBinaryIO
             (fun w x -> EGTWriter.writeRecord w (ReadOnlySpan x))
-            (fun r ->
-                // An empty array will force the
-                // reader to make it exactly fit.
-                let mutable arr = [||]
-                EGTReader.readRecord &arr r |> ignore
-                arr)
+            (fun er ->
+                er.NextRecord()
+                er.Span.ToArray())
             "The EGT record that was read was not the same with what was written"
     )
 
     testProperty "Writing unsigned integers to an EGT file and reading them back works" (fun x ->
-        let doTest =
+        let doTest x =
             testBinaryIO
-                (fun w -> Entry.UInt32 >> EGTWriter.writeEntry w)
-                (fun r ->
-                    match EGTReader.readEntry r with
-                    | Entry.UInt32 x -> x
-                    | _ -> failtest "Wrong entry type")
-                "Got the wrong number while reading the EGT file back"
+                (fun w x ->
+                    let mutable entry = Entry.UInt32 x
+                    let span = MemoryMarshal.CreateReadOnlySpan(&entry, 1)
+                    EGTWriter.writeRecord w span)
+                (fun er ->
+                    er.NextRecord()
+                    wantUInt32 er.Span 0)
+                "Got the wrong number while reading the EGT file back" x
 
         // I have to make sure large numbers are tested as well.
         // The numbers FsCheck tests are pretty small.
@@ -81,7 +83,7 @@ let tests = testList "EGT Reader tests" [
 
     test "The EGTneo file format is stable" {
         // This test was made just to ensure the EGTneo file format
-        // does change in a breaking way without us knowing.
+        // does not change in a breaking way without us knowing.
         "JSON.egtn" |> getResourceFile |> EGT.ofFile |> ignore
     }
 ]

@@ -263,28 +263,26 @@ module private Implementation =
         states.MoveToImmutable()
 
 let read r =
-    let mutable buffer = Array.zeroCreate 128
-    let mutable len = 0
-    let readNext() = len <- readRecord &buffer r
+    use er = new EGTReader(r)
 
-    readNext()
-    let properties = readProperties (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let terminals = readTerminals (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let nonterminals = readNonterminals (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let noiseSymbols = readNoiseSymbols (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let startSymbol = readStartSymbol nonterminals (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let groups = readGroups terminals noiseSymbols (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let productions = readProductions terminals nonterminals (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let lalrStates = readLALRStates terminals nonterminals productions (ReadOnlySpan(buffer, 0, len))
-    readNext()
-    let dfaStates = readDFAStates terminals noiseSymbols groups (ReadOnlySpan(buffer, 0, len))
+    er.NextRecord()
+    let properties = readProperties er.Span
+    er.NextRecord()
+    let terminals = readTerminals er.Span
+    er.NextRecord()
+    let nonterminals = readNonterminals er.Span
+    er.NextRecord()
+    let noiseSymbols = readNoiseSymbols er.Span
+    er.NextRecord()
+    let startSymbol = readStartSymbol nonterminals er.Span
+    er.NextRecord()
+    let groups = readGroups terminals noiseSymbols er.Span
+    er.NextRecord()
+    let productions = readProductions terminals nonterminals er.Span
+    er.NextRecord()
+    let lalrStates = readLALRStates terminals nonterminals productions er.Span
+    er.NextRecord()
+    let dfaStates = readDFAStates terminals noiseSymbols groups er.Span
 
     let symbols = {
         Terminals = terminals

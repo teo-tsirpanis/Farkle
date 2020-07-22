@@ -40,8 +40,8 @@ module private Implementation =
         arr.[0] <- Entry.String header
         for i = 0 to symbols.Length - 1 do
             let sym = symbols.[i]
-            dict.[(^Symbol: (member Index: uint32) (sym))] <- uint32 i
-            arr.[i + 1] <- Entry.String (^Symbol: (member Name: string) (sym))
+            dict.[(^Symbol: (member Index: uint32) sym)] <- uint32 i
+            arr.[i + 1] <- Entry.String (^Symbol: (member Name: string) sym)
 
         writeRecord w (ReadOnlySpan arr)
         dict.ToImmutable()

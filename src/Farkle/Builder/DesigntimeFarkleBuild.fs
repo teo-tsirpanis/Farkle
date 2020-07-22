@@ -56,7 +56,6 @@ DesigntimeFarkle interface is not allowed."
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
 
-    /// A delegate of type `T<obj>` that always returns null.
     let private tNull: T<obj> = T(fun _ _ -> null)
 
     // Memory conservation to the rescue! 👅

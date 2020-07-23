@@ -4,7 +4,10 @@
 // https://opensource.org/licenses/MIT
 
 /// Functions to read a grammar from EGTneo files.
-/// EGTneo files are more compact and easier to read from Farkle.
+// Why are EGTneo files better? They use a more compact encoding that
+// encodes strings in UTF-8 and small integers in only one byte. Furthermore,
+// because they are more tightly coupled with Farkle's domain model and because
+// the order the records appear is defined, they are significantly easier to parse.
 module internal Farkle.Grammar.EGTFile.EGTNeoReader
 
 open Farkle.Grammar

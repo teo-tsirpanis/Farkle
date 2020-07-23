@@ -6,11 +6,9 @@
 namespace Farkle.Grammar
 
 open Farkle.Grammar.EGTFile
-open EGTHeaders
-open EGTWriter
+open Farkle.Grammar.EGTFile.EGTHeaders
 open System
 open System.IO
-open System.Text
 
 /// Functions to read and write grammars from EGT files.
 /// Grammars can be read either from GOLD Parser's Enhanced
@@ -48,6 +46,5 @@ it as an \"Enhanced Grammar Tables (version 5.0)\"."
     /// Writes the given `Grammar` to a stream in the EGTneo format.
     [<CompiledName("WriteToStreamNeo")>]
     let toStreamNeo stream grammar =
-        use w = new BinaryWriter(stream, Encoding.UTF8, true)
-        writeNullTerminatedString EGTNeoHeader w
+        use w = new EGTWriter(stream, EGTNeoHeader, true)
         EGTNeoWriter.write w grammar

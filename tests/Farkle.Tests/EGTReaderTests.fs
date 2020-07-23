@@ -11,18 +11,18 @@ open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open System
 open System.IO
-open System.Runtime.InteropServices
 
 let private testBinaryIO fWrite fRead message x =
     let stream = new MemoryStream()
-    use er = new EGTReader(stream)
-    let bw = new BinaryWriter(stream)
 
-    fWrite bw x
-    bw.Flush()
-    bw.Seek(0, SeekOrigin.Begin) |> ignore
+    do
+        use ew = new EGTWriter(stream, "Farkle Test EGT File", true)
+        fWrite ew x
+    stream.Position <- 0L
 
-    let xRead = fRead er
+    let xRead =
+        use er = new EGTReader(stream, true)
+        fRead er
 
     Expect.equal xRead x message
 
@@ -50,7 +50,7 @@ let egtNeoTests =
 let tests = testList "EGT Reader tests" [
     testProperty "Writing an EGT record and reading it back works" (
         testBinaryIO
-            (fun w x -> EGTWriter.writeRecord w (ReadOnlySpan x))
+            (fun w x -> w.WriteFullRecord(ReadOnlySpan x))
             (fun er ->
                 er.NextRecord()
                 er.Span.ToArray())
@@ -61,9 +61,9 @@ let tests = testList "EGT Reader tests" [
         let doTest x =
             testBinaryIO
                 (fun w x ->
-                    let mutable entry = Entry.UInt32 x
-                    let span = MemoryMarshal.CreateReadOnlySpan(&entry, 1)
-                    EGTWriter.writeRecord w span)
+                    let entry = Entry.UInt32 x
+                    w.WriteEntry entry
+                    w.FinishPendingRecord())
                 (fun er ->
                     er.NextRecord()
                     wantUInt32 er.Span 0)

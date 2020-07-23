@@ -7,7 +7,6 @@ namespace Farkle.Grammar.EGTFile
 
 open System
 open System.Buffers
-open System.Buffers.Binary
 open System.IO
 open System.Text
 open System.Runtime.InteropServices
@@ -140,7 +139,7 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
     /// Note that these two properties are invalidated after this function gets called.
     member _.NextRecord() =
         if isNull buffer then
-            raise (new ObjectDisposedException("buffer"))
+            raise (ObjectDisposedException("buffer"))
         length <- readNextRecord()
 
     /// The EGT file's header. It is located at
@@ -166,12 +165,19 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
                 br.Dispose()
                 length <- 0
 
-/// Functions to write EGTneo files.
-module internal EGTWriter =
+/// A class that writes EGT files to a stream.
+/// An EGT file consists of a header, a UTF-16-encoded string at the start of
+/// the file, and a series of records. A record contains entries that can
+/// contain a byte, a boolean, an unsigned integer, a string, or nothing.
+type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)>] leaveOpen) =
+
+    let w = new BinaryWriter(stream, Encoding.UTF8, leaveOpen)
+
+    let buffer = ResizeArray()
 
     /// Writes a null-terminated string, encoded
     /// with the UTF-16 character set to a binary writer.
-    let writeNullTerminatedString str (w: BinaryWriter) =
+    let writeNullTerminatedString str =
         // God, why does String.length null return zero?
         if isNull str then
             nullArg "str"
@@ -181,16 +187,22 @@ module internal EGTWriter =
             w.Write(uint16 str.[i])
         w.Write(0us)
 
-    /// An implementation of the BinaryWriter.
-    let rec private write7BitEncodedInt (w: BinaryWriter) x =
+    do
+        if isNull header then
+            nullArg "header"
+        writeNullTerminatedString header
+
+    /// An implementation of the BinaryWriter.Write7BitEncodedInt
+    /// method. Adapted from .NET Core's sources.
+    let rec write7BitEncodedInt x =
         if x >= 0x80u then
             w.Write(byte x ||| 0x80uy)
-            write7BitEncodedInt w (x >>> 7)
+            write7BitEncodedInt (x >>> 7)
         else
             w.Write(byte x)
 
     /// Writes an `Entry` to a binary writer.
-    let private writeEntry (w: BinaryWriter) (e: inref<_>) =
+    let writeEntry (e: inref<_>) =
         match e with
         | Entry.Empty ->
             w.Write('E'B)
@@ -202,19 +214,64 @@ module internal EGTWriter =
             w.Write(b)
         | Entry.UInt32 x ->
             w.Write('i'B)
-            write7BitEncodedInt w x
+            write7BitEncodedInt x
         | Entry.String str ->
             if isNull str then
-                invalidOp "Cannot write a null string in an EGTneo file."
+                invalidOp "Cannot write a null string in an EGT file."
             w.Write('s'B)
             w.Write(str)
 
-    /// Writes a series of `Entry`ies to a binary writer.
-    let writeRecord (w: BinaryWriter) (records: ReadOnlySpan<_>) =
+    let writeRecord (record: ReadOnlySpan<_>) =
         w.Write('m'B)
-        write7BitEncodedInt w <| uint32 records.Length
-        for i = 0 to records.Length - 1 do
-            writeEntry w &records.[i]
+        write7BitEncodedInt (uint32 record.Length)
+        for i = 0 to record.Length - 1 do
+            writeEntry &record.[i]
+        w.Flush()
+
+    /// Appends an `Entry` to the next record.
+    /// This record is not written until `FinishPendingRecord` is called.
+    member _.WriteEntry e = buffer.Add e
+    /// Appends an empty entry to the next record.
+    member x.WriteEmpty() = x.WriteEntry Entry.Empty
+    /// Appends an entry with a byte to the next record.
+    member x.WriteByte b = x.WriteEntry(Entry.Byte b)
+    /// Appends an entry with a boolean to the next record.
+    member x.WriteBoolean b = x.WriteEntry(Entry.Boolean b)
+    /// Appends an entry with an unsigned 32-bit integer to the next record.
+    member x.WriteUInt32 i = x.WriteEntry(Entry.UInt32 i)
+    /// Appends an entry with any integer to the next record.
+    /// That integer must fit in an unsigned 32-bit integer.
+    member inline x.WriteInt i = x.WriteEntry(Entry.Int i)
+    /// Appends an entry with a string to the next record.
+    member x.WriteString s = x.WriteEntry(Entry.String s)
+    /// Writes a record to the stream that contains the entries added
+    /// by the `Write***` functions, in order they were called.
+    member _.FinishPendingRecord() =
+        let count = buffer.Count
+        // TODO: When .NET 5 comes, use CollectionsMarshal.
+        let mem = ArrayPool.Shared.Rent count
+        try
+            buffer.CopyTo(mem)
+            writeRecord (ReadOnlySpan(mem, 0, count))
+            buffer.Clear()
+        finally
+            ArrayPool.Shared.Return(mem, true)
+    /// Directly writes a record. If there are pending
+    /// entries this function throws an exception.
+    member _.WriteFullRecord record =
+        if buffer.Count > 0 then
+            invalidOp "Cannot write a full record when an unfinished one is about to be written."
+        writeRecord record
+
+    interface IDisposable with
+        /// Disposes the class' buffers and optionally the underlying stream.
+        /// If there are pending entries this function throws an exception.
+        member _.Dispose() =
+            if buffer.Count > 0 then
+                invalidOp "Cannot dispose an EGT writer with an unfinished pending record."
+            buffer.Clear()
+            buffer.Capacity <- 0
+            w.Dispose()
 
 module internal EGTHeaders =
 

@@ -15,25 +15,31 @@ open System.IO
 
 type GrammarReaderBenchmark() =
 
-    let mutable base64EGT = ""
+    let base64EGT =
+        File.ReadAllBytes "gml.egt"
+        |> Convert.ToBase64String
+
+    let base64EGTneo =
+        use stream = new MemoryStream()
+        EGT.ofFile "gml.egt" |> EGT.toStreamNeo stream
+        stream.ToArray()
+        |> Convert.ToBase64String
 
     let designtime = GOLDMetaLanguage.designtime
 
-    [<GlobalSetup>]
-    member __.Setup() =
-        let bytes = File.ReadAllBytes "gml.egt"
-        base64EGT <- Convert.ToBase64String bytes
+    [<Benchmark>]
+    member _.Base64EGT() = EGT.ofBase64String base64EGT
 
     [<Benchmark>]
-    member __.Base64EGT() = EGT.ofBase64String base64EGT
+    member _.Base64EGTneo() = EGT.ofBase64String base64EGTneo
 
     [<Benchmark>]
-    member __.Build() =
+    member _.Build() =
         designtime
         |> DesigntimeFarkleBuild.createGrammarDefinition
         |> DesigntimeFarkleBuild.buildGrammarOnly
         |> returnOrFail
 
     [<Benchmark>]
-    member __.BuildPrecompiled() =
+    member _.BuildPrecompiled() =
         RuntimeFarkle.buildUntyped GOLDMetaLanguage.designtime

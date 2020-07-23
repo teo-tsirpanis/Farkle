@@ -225,14 +225,7 @@ This error is unexpected. Please report it on GitHub." x
             let content = mem.Slice(1)
             content |> fRead (uint32 index) |> arr.Add
 
-        /// Reads all EGT file records from a binary reader
-        /// and passes them to the given function, until the reader ends.
-        let iterRecords fRead (er: EGTReader) =
-            while not er.IsEndOfFile do
-                er.NextRecord()
-                fRead er.Memory
-
-    let read er =
+    let read (er: EGTReader) =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
         let properties = ImmutableDictionary.CreateBuilder()
@@ -251,7 +244,10 @@ This error is unexpected. Please report it on GitHub." x
         let terminals = ImmutableArray.CreateBuilder()
         let nonterminals = ImmutableArray.CreateBuilder()
         let noiseSymbols = ImmutableArray.CreateBuilder()
-        let fRecord mem =
+
+        while not er.IsEndOfFile do
+            er.NextRecord()
+            let mem = er.Memory
             lengthMustBeAtLeast mem 1
             let magicCode = wantByte mem 0
             let mem = mem.Slice(1)
@@ -300,7 +296,6 @@ This error is unexpected. Please report it on GitHub." x
                 readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
             | _ -> invalidEGT()
 
-        iterRecords fRecord er
         let symbols = {
             Terminals = terminals.ToImmutable()
             Nonterminals = nonterminals.ToImmutable()

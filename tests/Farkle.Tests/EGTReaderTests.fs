@@ -9,15 +9,13 @@ open Expecto
 open Farkle.Tests
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
-open Farkle.Grammar.EGTFile.EGTReader
 open System
 open System.IO
 open System.Runtime.InteropServices
 
 let private testBinaryIO fWrite fRead message x =
     let stream = new MemoryStream()
-    let br = new BinaryReader(stream)
-    use er = new EGTReader(br)
+    use er = new EGTReader(stream)
     let bw = new BinaryWriter(stream)
 
     fWrite bw x

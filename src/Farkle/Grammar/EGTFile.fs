@@ -10,6 +10,7 @@ open System.Buffers
 open System.Buffers.Binary
 open System.IO
 open System.Text
+open System.Runtime.InteropServices
 
 /// An exception that gets thrown when
 /// reading an EGT file goes wrong.
@@ -30,8 +31,9 @@ type Entry =
     | String of stringValue: string
     static member inline Int x = UInt32 <| uint32 x
 
-/// Functions to read EGT files.
-module internal EGTReader =
+[<AutoOpen>]
+/// Functions to help EGT file readers.
+module internal EGTReaderUtilities =
 
     /// Raises an exception indicating that something
     /// went wrong with reading an EGT file.
@@ -39,99 +41,6 @@ module internal EGTReader =
 
     /// Like `invalidEGT`, but allows specifying a formatted message.
     let invalidEGTf fmt = Printf.ksprintf (EGTFileException >> raise) fmt
-
-    let private readUInt16 (r: BinaryReader) =
-        let x = r.ReadUInt16()
-        if BitConverter.IsLittleEndian then
-            x
-        else
-            BinaryPrimitives.ReverseEndianness x
-
-    /// Reads a null-terminated string, encoded
-    /// with the UTF-16 character set from a binary reader.
-    /// Commonly used to read the header of an EGT file.
-    let readNullTerminatedString r =
-        let sr = StringBuilder()
-        let mutable c = readUInt16 r
-        while c <> 0us do
-            sr.Append(char c) |> ignore
-            c <- readUInt16 r
-        sr.ToString()
-
-    /// An implementation of the BinaryReader.Read7BitEncodedInt method.
-    /// Adapted from .NET Core's source.
-    let private read7BitEncodedUInt32 r =
-        let rec impl (r: BinaryReader) count shift =
-            if shift = 5 * 7 then
-                raise <| FormatException "Too many bytes in what should have been a 7 bit encoded UInt32."
-            let b = r.ReadByte()
-            let count = count ||| ((uint32 b &&& 0x7fu) <<< shift)
-            if b &&& 0x80uy <> 0uy then
-                impl r count (shift + 7)
-            else
-                count
-        impl r 0u 0
-
-    type internal EGTReader(br: BinaryReader) =
-
-        let mutable buffer = ArrayPool.Shared.Rent(128)
-        let mutable length = 0
-
-        /// Reads an EGT file entry from a binary reader.
-        let readEntry() =
-            match br.ReadByte() with
-            | 'E'B -> Entry.Empty
-            | 'b'B -> Entry.Byte(br.ReadByte())
-            | 'B'B -> Entry.Boolean(br.ReadByte() <> 0uy)
-            | 'I'B -> Entry.Int(readUInt16 br)
-            | 'S'B -> Entry.String(readNullTerminatedString br)
-            // These two are the EGTneo entry tags.
-            // They allow more compact representation.
-            | 'i'B -> Entry.UInt32(read7BitEncodedUInt32 br)
-            // The encoding is assumed to be UTF-8.
-            // Opening files from binary readers is
-            // not exposed so we can be more sure.
-            | 's'B -> Entry.String(br.ReadString())
-            | x -> invalidEGTf "Invalid entry code: %x." x
-
-        let readNextRecord() =
-            let entryCount =
-                match br.ReadByte() with
-                | 'M'B ->
-                    readUInt16 br |> int
-                | 'm'B ->
-                    read7BitEncodedUInt32 br |> int
-                | x -> invalidEGTf "Invalid record code, read %x" x
-            if Array.length buffer < entryCount then
-                ArrayPool.Shared.Return(buffer, true)
-                buffer <- ArrayPool.Shared.Rent(max (buffer.Length * 2) entryCount)
-            for i = 0 to entryCount - 1 do
-                buffer.[i] <- readEntry()
-            entryCount
-
-        member _.NextRecord() =
-            if isNull buffer then
-                raise (new ObjectDisposedException("buffer"))
-            length <- readNextRecord()
-
-        member _.Span = ReadOnlySpan(buffer, 0, length)
-
-        member _.Memory = ReadOnlyMemory(buffer, 0, length)
-
-        interface IDisposable with
-            member _.Dispose() =
-                ArrayPool.Shared.Return(buffer, true)
-                buffer <- null
-                length <- 0
-
-    /// Reads all EGT file records from a binary reader
-    /// and passes them to the given function, until the reader ends.
-    let iterRecords fRead (r: BinaryReader) =
-        let len = r.BaseStream.Length
-        use er = new EGTReader(r)
-        while r.BaseStream.Position < len do
-            er.NextRecord()
-            fRead er.Memory
 
     /// Raises an error if a read-only span's
     /// length is different than the expected.
@@ -159,6 +68,110 @@ module internal EGTReader =
     let wantChar x idx = wantUInt32 x idx |> char
     let wantString (x: ReadOnlySpan<_>) idx =
         match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
+
+/// A class that reads EGT files from a stream.
+type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leaveOpen) =
+
+    let br = new BinaryReader(stream, Encoding.UTF8, leaveOpen)
+    let mutable buffer = ArrayPool.Shared.Rent(128)
+    let mutable length = 0
+
+    let readUInt16() =
+        let x = br.ReadUInt16()
+        if BitConverter.IsLittleEndian then
+            x
+        else
+            BinaryPrimitives.ReverseEndianness x
+
+    /// Reads a null-terminated string, encoded
+    /// with the UTF-16 character set from a binary reader.
+    /// Commonly used to read the header of an EGT file.
+    let readNullTerminatedString() =
+        let sr = StringBuilder()
+        let mutable c = readUInt16()
+        while c <> 0us do
+            sr.Append(char c) |> ignore
+            c <- readUInt16()
+        sr.ToString()
+
+    /// An implementation of the BinaryReader.Read7BitEncodedInt method.
+    /// Adapted from .NET Core's source.
+    let read7BitEncodedUInt32() =
+        let rec impl count shift =
+            if shift = 5 * 7 then
+                raise <| FormatException "Too many bytes in what should have been a 7 bit encoded UInt32."
+            let b = br.ReadByte()
+            let count = count ||| ((uint32 b &&& 0x7fu) <<< shift)
+            if b &&& 0x80uy <> 0uy then
+                impl count (shift + 7)
+            else
+                count
+        impl 0u 0
+
+    let header = readNullTerminatedString()
+
+    /// Reads an EGT file entry from a binary reader.
+    let readEntry() =
+        match br.ReadByte() with
+        | 'E'B -> Entry.Empty
+        | 'b'B -> Entry.Byte(br.ReadByte())
+        | 'B'B -> Entry.Boolean(br.ReadByte() <> 0uy)
+        | 'I'B -> Entry.Int(readUInt16())
+        | 'S'B -> Entry.String(readNullTerminatedString())
+        // These two are the EGTneo entry tags.
+        // They allow more compact representation.
+        | 'i'B -> Entry.UInt32(read7BitEncodedUInt32())
+        // The encoding is assumed to be UTF-8.
+        // Opening files from binary readers is
+        // not exposed so we can be more sure.
+        | 's'B -> Entry.String(br.ReadString())
+        | x -> invalidEGTf "Invalid entry code: %x." x
+
+    let readNextRecord() =
+        let entryCount =
+            match br.ReadByte() with
+            | 'M'B ->
+                readUInt16() |> int
+            | 'm'B ->
+                read7BitEncodedUInt32() |> int
+            | x -> invalidEGTf "Invalid record code, read %x" x
+        if Array.length buffer < entryCount then
+            ArrayPool.Shared.Return(buffer, true)
+            buffer <- ArrayPool.Shared.Rent(max (buffer.Length * 2) entryCount)
+        for i = 0 to entryCount - 1 do
+            buffer.[i] <- readEntry()
+        entryCount
+
+    /// Loads the next EGT record in memory.
+    /// It will then be accessible via the `Span` or `Memory` property.
+    /// Note that these two properties are invalidated after this function gets called.
+    member _.NextRecord() =
+        if isNull buffer then
+            raise (new ObjectDisposedException("buffer"))
+        length <- readNextRecord()
+
+    /// The EGT file's header. It is located at
+    /// the beginning of the file and is read as
+    /// soon as this object gets created.
+    member _.Header = header
+
+    /// A read-only span with the entries of the current record.
+    member _.Span = ReadOnlySpan(buffer, 0, length)
+
+    /// A read-only memory with the entries of the current record.
+    member _.Memory = ReadOnlyMemory(buffer, 0, length)
+
+    /// Whether the underlying stream has reached its end.
+    /// Supported only when that stream is seekable.
+    member _.IsEndOfFile = stream.Position = stream.Length
+
+    interface IDisposable with
+        member _.Dispose() =
+            if not <| isNull buffer then
+                ArrayPool.Shared.Return(buffer, true)
+                buffer <- null
+                br.Dispose()
+                length <- 0
 
 /// Functions to write EGTneo files.
 module internal EGTWriter =
@@ -199,7 +212,7 @@ module internal EGTWriter =
             write7BitEncodedInt w x
         | Entry.String str ->
             if isNull str then
-                invalidOp "Cannot write null as a string in an EGTneo file."
+                invalidOp "Cannot write a null string in an EGTneo file."
             w.Write('s'B)
             w.Write(str)
 
@@ -219,7 +232,7 @@ module internal EGTHeaders =
 
     // I initially wanted a more fancy header, one that was readable
     // in both Base64 and ASCII, perhaps loaded with easter eggs. But
-    // I settled to this, plain and boring header.
+    // I settled to this plain and boring header.
     let [<Literal>] EGTNeoHeader = "Farkle Parser Tables/v6.0"
 
     // The headers for each section of the EGTneo file.

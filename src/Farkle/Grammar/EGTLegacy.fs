@@ -7,7 +7,7 @@ namespace Farkle.Grammar.EGTFile
 
 open Farkle.Collections
 open Farkle.Grammar
-open Farkle.Grammar.EGTFile.EGTReader
+open Farkle.Grammar.EGTFile
 open System
 open System.Collections.Immutable
 
@@ -225,7 +225,14 @@ This error is unexpected. Please report it on GitHub." x
             let content = mem.Slice(1)
             content |> fRead (uint32 index) |> arr.Add
 
-    let read r =
+        /// Reads all EGT file records from a binary reader
+        /// and passes them to the given function, until the reader ends.
+        let iterRecords fRead (er: EGTReader) =
+            while not er.IsEndOfFile do
+                er.NextRecord()
+                fRead er.Memory
+
+    let read er =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
         let properties = ImmutableDictionary.CreateBuilder()
@@ -293,7 +300,7 @@ This error is unexpected. Please report it on GitHub." x
                 readAndAssignIndexed (readLALRState fSymbol fProduction fLALRIndex) lalrStates mem
             | _ -> invalidEGT()
 
-        iterRecords fRecord r
+        iterRecords fRecord er
         let symbols = {
             Terminals = terminals.ToImmutable()
             Nonterminals = nonterminals.ToImmutable()

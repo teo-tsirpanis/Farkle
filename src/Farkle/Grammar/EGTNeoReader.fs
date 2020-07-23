@@ -10,7 +10,6 @@ module internal Farkle.Grammar.EGTFile.EGTNeoReader
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open Farkle.Grammar.EGTFile.EGTHeaders
-open Farkle.Grammar.EGTFile.EGTReader
 open Farkle.Collections
 open System
 open System.Collections.Immutable
@@ -262,9 +261,7 @@ module private Implementation =
 
         states.MoveToImmutable()
 
-let read r =
-    use er = new EGTReader(r)
-
+let read (er: EGTReader) =
     er.NextRecord()
     let properties = readProperties er.Span
     er.NextRecord()

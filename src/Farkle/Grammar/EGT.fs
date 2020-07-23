@@ -7,7 +7,6 @@ namespace Farkle.Grammar
 
 open Farkle.Grammar.EGTFile
 open EGTHeaders
-open EGTReader
 open EGTWriter
 open System
 open System.IO
@@ -18,20 +17,19 @@ open System.Text
 /// Grammar Tables (version 5.0) or from Farkle's EGTneo format.
 /// EGTneo (new encoding option) is a file format designed for Farkle that
 /// is more compact and easier to read. GOLD Parser cannot read EGTneo files.
-/// Grammars can only be written in EGTneo format.
+/// Grammars can only be written in the EGTneo format.
 module EGT =
 
     /// Reads a `Grammar` from a stream.
     [<CompiledName("ReadFromStream")>]
     let ofStream stream =
-        use r = new BinaryReader(stream, Encoding.UTF8, true)
-        let header = readNullTerminatedString r
-        match header with
+        use er = new EGTReader(stream, true)
+        match er.Header with
         | CGTHeader -> invalidEGTf "This file is a legacy GOLD Parser 1.0 file, \
 which is not supported. You should update to the last version of GOLD Parser and save \
 it as an \"Enhanced Grammar Tables (version 5.0)\"."
-        | EGTHeader -> EGTLegacyReader.read r
-        | EGTNeoHeader -> EGTNeoReader.read r
+        | EGTHeader -> EGTLegacyReader.read er
+        | EGTNeoHeader -> EGTNeoReader.read er
         | _ -> invalidEGT()
 
     /// Reads a `Grammar` from a Base64-encoded string.

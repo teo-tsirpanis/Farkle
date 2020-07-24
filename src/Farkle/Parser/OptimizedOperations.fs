@@ -117,7 +117,7 @@ with
         elif isASCII c then
             arr.[state.Value].[int c]
         else
-            match RangeMap.tryFind c x.Grammar.DFAStates.[state.Value].Edges with
+            match x.Grammar.DFAStates.[state.Value].Edges.TryFind c with
             | ValueSome x -> DFAStateTag.FromOption x
             | ValueNone -> arr.[state.Value].[ASCIIUpperBound + 1]
     /// Gets the LALR action from the given state that corresponds to the given terminal.

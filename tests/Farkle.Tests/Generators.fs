@@ -16,7 +16,6 @@ open Farkle.Grammar.EGTFile
 open Farkle.IO
 open FsCheck
 open SimpleMaths.SimpleMaths
-open System.Collections.Generic
 open System.IO
 open System.Text
 
@@ -56,25 +55,19 @@ let rangeMapGen() = gen {
     let! arr = Arb.generate |> Gen.arrayOf |> Gen.map Array.distinct
     Array.sortInPlace arr
     let mutable i = 0
-    let l = List(arr.Length)
-    let buf = List(arr.Length)
+    let l = ResizeArray(arr.Length)
     while i < arr.Length do
+        let! v = Arb.generate
         match! Arb.generate with
         // Make a range between the next two consecutive elements.
         | true when i < arr.Length - 1 ->
-            buf.Add(arr.[i], arr.[i + 1])
+            l.Add(arr.[i], arr.[i + 1], v)
             i <- i + 2
         // Or add a single one.
         | _ ->
-            buf.Add(arr.[i], arr.[i])
+            l.Add(arr.[i], arr.[i], v)
             i <- i + 1
-        match! Arb.generate with
-        | true ->
-            do! Arb.generate |> Gen.map (fun x -> l.Add(buf.ToArray(), x))
-            buf.Clear()
-        | false -> ()
-    let x = l.ToArray() |> RangeMap.ofRanges
-    return x.Value
+    return RangeMap l
 }
 
 let regexGen =

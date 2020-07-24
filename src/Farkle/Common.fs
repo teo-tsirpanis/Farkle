@@ -5,23 +5,7 @@
 
 namespace Farkle.Common
 
-open System
 open System.Threading
-
-/// Faster functions to compare two objects.
-module internal FastCompare =
-
-    /// Compares the first object with another object of the same type.
-    /// The types must implement the `IComparable<T>` generic interface.
-    /// This function is faster than the F#'s compare methods because it
-    /// avoids the overhead of structural comparisons.
-    let inline compare (x1: 'a) (x2: 'a) = (x1 :> IComparable<'a>).CompareTo(x2)
-
-    let inline greater x1 x2 = compare x1 x2 > 0
-    let inline greaterOrEqual x1 x2 = compare x1 x2 >= 0
-
-    let inline smaller x1 x2 = compare x1 x2 < 0
-    let inline smallerOrEqual x1 x2 = compare x1 x2 <= 0
 
 /// A reference type whose value can only be set once.
 type SetOnce< [<ComparisonConditionalOn; EqualityConditionalOn>] 'T> = private {

@@ -13,24 +13,26 @@ open Farkle.Tests
 let tests =
     testList "RangeMap tests" [
         test "The empty RangeMap is empty" {
-            let rm: RangeMap<int,int> = RangeMap.empty
-            Expect.isTrue (RangeMap.isEmpty rm) "The empty RangeMap is not empty"
+            let rm: RangeMap<int,int> = RangeMap.Empty
+            Expect.isTrue rm.IsEmpty "The empty RangeMap is not empty"
         }
 
         testProperty "The empty RangeMap does not contain anything" (fun (x: int) ->
-            let rm = RangeMap.empty
-            RangeMap.tryFind x rm |> ValueOption.isNone)
+            let rm = RangeMap.Empty
+            rm.ContainsKey(x) |> not)
 
         test "Overlapping ranges are not accepted" {
-            Expect.isNone (RangeMap.ofRanges [|[|4, 8|], (); [|5, 30|], ()|]) "A RangeMap with overlapping ranges was created"
+            Expect.throws (fun () -> RangeMap.ofGroupedRanges [|[|4, 8|], (); [|5, 30|], ()|] |> ignore)
+                "A RangeMap with overlapping ranges was created"
         }
 
         test "Single elements inside ranges are not accepted" {
-            Expect.isNone (RangeMap.ofRanges [|[|9,9|], (); [|2,100|], ()|]) "A RangeMap with a single element inside a range was created"
+            Expect.throws (fun () -> RangeMap.ofGroupedRanges [|[|9,9|], (); [|2,100|], ()|] |> ignore)
+                "A RangeMap with a single element inside a range was created"
         }
 
         testProperty "An array with distinct elements is valid"
-            (Seq.ofList >> Seq.distinct >> Seq.map (fun (x: int) -> [|(x, x)|], ()) >> Array.ofSeq >> RangeMap.ofRanges >> Option.isSome)
+            (Seq.ofList >> Seq.distinct >> Seq.map (fun (x: int) -> [|(x, x)|], ()) >> Array.ofSeq >> RangeMap.ofGroupedRanges >> ignore)
 
         // A boolean value type makes continuous spaces more likely.
         testProperty "RangeMap.ofSeq is the inverse of RangeMap.toSeq" (fun (x: RangeMap<int, bool>) ->

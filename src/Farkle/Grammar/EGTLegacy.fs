@@ -169,7 +169,7 @@ This error is unexpected. Please report it on GitHub." x
                     let target = wantUInt16 states <| 3 * idx + 1 |> fDFA |> Some
                     wantEmpty states <| 3 * idx + 2
                     charSet, target
-                Array.init edgesLength fEdge |> RangeMap.ofRanges |> Option.defaultWith invalidEGT
+                Array.init edgesLength fEdge |> RangeMap.ofGroupedRanges
             let acceptSymbol =
                 if isAcceptState then
                     fSymbol acceptIndex |> wantDFASymbol |> Some

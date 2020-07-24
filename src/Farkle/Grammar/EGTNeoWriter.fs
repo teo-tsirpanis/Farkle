@@ -201,11 +201,10 @@ module private Implementation =
 
             let elements = s.Edges.Elements
             w.WriteInt elements.Length
-            elements
-            |> Seq.iter (fun x ->
+            for x in elements do
                 w.WriteInt x.KeyFrom
                 w.WriteInt x.KeyTo
-                writeUInt32Maybe x.Value)
+                writeUInt32Maybe x.Value
 
         w.FinishPendingRecord()
 

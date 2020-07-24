@@ -243,16 +243,14 @@ module private Implementation =
             i <- i + 4
 
             let edges =
-                let edges = ResizeArray(edgeCount)
+                let edges = Array.zeroCreate edgeCount
                 let span = span.Slice i
                 for i = 0 to edgeCount - 1 do
                     let cFrom = wantChar span (3 * i + 0)
                     let cTo = wantChar span (3 * i + 1)
                     let destination = readUInt32Maybe span (3 * i + 2)
-                    edges.Add(Seq.singleton (cFrom, cTo), destination)
-                match RangeMap.ofRanges (edges.ToArray()) with
-                | Some edges -> edges
-                | None -> invalidEGTf "Invalid DFA state range map."
+                    edges.[i] <- (cFrom, cTo, destination)
+                RangeMap edges
             i <- i + 3 * edgeCount
 
             states.Add {

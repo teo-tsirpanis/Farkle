@@ -14,7 +14,10 @@ type internal RegexParserResult = Result<Regex, Message<ParseErrorType>>
 type internal RegexParserFunction = Func<string, RegexParserResult>
 
 [<RequireQualifiedAccess>]
-module private RegexParser =
+module private RegexUtils =
+    let charSetFull = set [char 0 .. char UInt16.MaxValue]
+    let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
+    let isCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
     // Taking the concept of circular references to a whole new level.
     let DoParse =
         Assembly
@@ -50,21 +53,12 @@ type Regex =
     /// Another Regex, but specified as a string which
     /// will be parsed when a DFA will be generated.
     | RegexString of string * Lazy<RegexParserResult>
-    static member internal CharSetFull = set [char 0 .. char UInt16.MaxValue]
-    static member internal IsCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
-    static member internal IsCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
     /// A regex that recognizes only the empty string.
     static member Empty = Concat []
     /// <summary>A regex that recognizes any single character
     /// that was not matched by anything else.</summary>
-    /// <remarks><para>Note that it's not the same with "any character".
-    /// For example, the regex <c>\(.*\)</c> recognizes a pair of
-    /// parentheses with any character except a closing parenthesis
-    /// inside them. If we turn the Kleene star into a cross, only the
-    /// first of the characters inside the parentheses can be a closing
-    /// one, making strings like <c>()test)</c> valid.</para>
-    /// <para>In other words, this regex is matched only if no other regex
-    /// can be matched.</para></remarks>
+    /// <remarks>Note that it's not the same with "any character". See more at
+    /// https://teo-tsirpanis.github.io/Farkle/string-regexes.html#the-dot-regex</remarks>
     static member Any = AllButChars Set.empty
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
@@ -129,7 +123,7 @@ type Regex =
             |> Seq.distinct
             |> List.ofSeq
             |> (fun x -> if chars.IsEmpty then x else Chars chars :: x)
-            |> (fun x -> if not foundAllButChars || Regex.IsCharSetFull allButChars then x else AllButChars allButChars :: x)
+            |> (fun x -> if not foundAllButChars || RegexUtils.isCharSetFull allButChars then x else AllButChars allButChars :: x)
             |> function | [x] -> x | x -> Alt x
     /// Returns a regex that recognizes zero or more
     /// strings that are recognized by the given regex.
@@ -174,8 +168,8 @@ type Regex =
             | _ -> Set.ofSeq xs
         if set.IsEmpty then
             Regex.Empty
-        elif Regex.IsCharSetHalfFull set then
-            AllButChars <| Regex.CharSetFull - set
+        elif RegexUtils.isCharSetHalfFull set then
+            AllButChars <| RegexUtils.charSetFull - set
         else
             Chars set
     /// Returns a regex that recognizes any character,
@@ -187,17 +181,17 @@ type Regex =
             | :? Set<char> as x -> x
             | :? PredefinedSet as x -> x.Characters
             | _ -> Set.ofSeq xs
-        if Regex.IsCharSetFull set then
+        if RegexUtils.isCharSetFull set then
             Regex.Empty
-        elif Regex.IsCharSetHalfFull set then
-            Chars <| Regex.CharSetFull - set
+        elif RegexUtils.isCharSetHalfFull set then
+            Chars <| RegexUtils.charSetFull - set
         else
             AllButChars set
     /// Returns a regex specified by a string.
     /// An invalid regex string will make the building process fail.
     /// See more at https://teo-tsirpanis.github.io/Farkle/string-regexes.html
     static member FromRegexString x =
-        let thunk = lazy(RegexParser.DoParse.Invoke x)
+        let thunk = lazy(RegexUtils.DoParse.Invoke x)
         RegexString(x, thunk)
 
 /// F#-friendly membrs of the `Regex` class.

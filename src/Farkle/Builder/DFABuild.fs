@@ -188,7 +188,7 @@ let internal createRegexBuild caseSensitive regexes =
                         desensitivizeCase chars
                 // It's likely that the character set would not become full until now,
                 // because of the case desensitivization. Therefore we have to check it again.
-                if Regex.IsCharSetFull chars then
+                if RegexUtils.isCharSetFull chars then
                     makeConcat []
                 else
                     RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf |> Leaf

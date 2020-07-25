@@ -152,12 +152,14 @@ let internal createRegexBuild caseSensitive regexes =
     let regexParseErrors = ResizeArray()
 
     let desensitivizeCase chars =
-        let chars = Set.toSeq chars
-        seq {
-            for c in chars do
-                yield Char.ToLowerInvariant(c)
-                yield Char.ToUpperInvariant(c)
-        } |> set
+        if caseSensitive then
+            chars
+        else
+            seq {
+                for c in chars do
+                    yield Char.ToLowerInvariant(c)
+                    yield Char.ToUpperInvariant(c)
+            } |> set
 
     /// Returns whether the given `RegexBuildTree` contains a `Star` node.
     let rec isVariableLength =
@@ -174,18 +176,9 @@ let internal createRegexBuild caseSensitive regexes =
             | Regex.Alt xs -> xs |> List.map (impl >> makeLazy) |> Alt
             | Regex.Star x -> x |> impl |> makeLazy |> Star
             | Regex.Chars chars ->
-                let chars =
-                    if caseSensitive then
-                        chars
-                    else
-                        desensitivizeCase chars
-                RegexLeaf.Chars(fIndex(), chars) |> addLeaf |> Leaf
+                RegexLeaf.Chars(fIndex(), desensitivizeCase chars) |> addLeaf |> Leaf
             | Regex.AllButChars chars ->
-                let chars =
-                    if caseSensitive then
-                        chars
-                    else
-                        desensitivizeCase chars
+                let chars = desensitivizeCase chars
                 // It's likely that the character set would not become full until now,
                 // because of the case desensitivization. Therefore we have to check it again.
                 if RegexUtils.isCharSetFull chars then

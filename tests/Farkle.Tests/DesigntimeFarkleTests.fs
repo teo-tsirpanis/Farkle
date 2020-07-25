@@ -146,4 +146,17 @@ let tests = testList "Designtime Farkle tests" [
 
         Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect"
     }
+
+    test "Many block groups can be ended by the same symbol" {
+        // It doesn't cause a DFA conflict because the
+        // end symbols of the different groups are considered equal.
+        let runtime =
+            "Test" ||= [
+                !% Group.Block("Group 1", "{", "}", T(fun _ _ -> ())) => id
+                !% Group.Block("Group 2", "[", "}", T(fun _ _ -> ())) => id
+            ]
+            |> RuntimeFarkle.buildUntyped
+
+        runtime.GetGrammar() |> ignore
+    }
 ]

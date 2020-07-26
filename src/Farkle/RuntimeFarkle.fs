@@ -147,7 +147,7 @@ module RuntimeFarkle =
     let ofBase64String postProcessor x =
         RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
 
-    /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle<T>`.
+    /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle&lt;'T&gt;`.
     /// In case there is a problem with the grammar,
     /// the `RuntimeFarkle` will fail every time it is used.
     /// If the designtime Farkle is marked for precompilation and a suitable

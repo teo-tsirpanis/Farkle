@@ -177,7 +177,7 @@ module DesigntimeFarkleOperators =
     /// Creates a production builder with one non-significant string literal.
     let (!&) str = empty.Append(str: string)
 
-    /// Creates a production builder with one significant `DesigntimeFarkle<'T>`.
+    /// Creates a production builder with one significant `DesigntimeFarkle&lt;'T&gt;`.
     /// This function is useful to start building a `Production`.
     let (!@) (df: DesigntimeFarkle<'T>) = empty.Extend(df)
 
@@ -185,13 +185,13 @@ module DesigntimeFarkleOperators =
 
     let private nonterminalf fmt df : string = (sprintf fmt (dfName df))
 
-    /// Creates a new `DesigntimeFarkle<'T>` that transforms
+    /// Creates a new `DesigntimeFarkle&lt;'T&gt;` that transforms
     /// the output of the given one with the given function.
     let (|>>) df (f: _ -> 'b) =
         let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
         name ||= [!@ df => f]
 
-    /// Creates a `DesigntimeFarkle<'T>` that recognizes many
+    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes many
     /// occurrences of the given one and returns them in a list.
     let many df =
         let nont = nonterminalf "%s List" df |> nonterminal
@@ -215,7 +215,7 @@ module DesigntimeFarkleOperators =
         nont :> DesigntimeFarkle<_>
 
     /// Like `many`, but returns the result in
-    /// any type that implements `ICollection<T>`.
+    /// any type that implements `ICollection&lt;'T&gt;`.
     let manyCollection<'T, 'TCollection
         when 'TCollection :> ICollection<'T>
         and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
@@ -250,7 +250,7 @@ module DesigntimeFarkleOperators =
         )
         nont :> DesigntimeFarkle<_>
 
-    /// Creates a `DesigntimeFarkle<T>` that recognizes
+    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes
     /// many occurences of `df` separated by `sep`.
     let sepBy (sep: DesigntimeFarkle) df =
         nonterminalf "%s List" df
@@ -259,7 +259,7 @@ module DesigntimeFarkleOperators =
             empty =% []
         ]
 
-    /// Creates a `DesigntimeFarkle<T>` that recognizes `df`,
+    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes `df`,
     /// which might not be found. In this case, the resulting
     /// value is `None`.
     let opt df =
@@ -275,7 +275,7 @@ module DesigntimeFarkleOperators =
 /// designtime Farkle matter. Any other metadata changes will be disregarded.
 module DesigntimeFarkle =
 
-    /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle<T>`.
+    /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle&lt;'T&gt;`.
     let withMetadata metadata df =
         {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
 

@@ -327,33 +327,21 @@ let internal makeDFA
             |> Seq.sortBy snd
             |> List.ofSeq
         let edges = RangeMap.ofSeq state.Edges
-        let acceptSymbol =
-            match acceptSymbols with
-            // No symbols, no problem.
+        let rec getAcceptSymbol xs =
+            match xs with
             | [] -> Ok None
-            // If there is only one symbol, we simply take it.
             | [sym, _] -> Ok <| Some sym
-            // If there are more symbols, however, we will
-            // take the one with the lowest priority, if there
-            // is only one, and we have allowed such prioritizing.
-            // However there is a small chance that the two conflicting
-            // symbols are the same, because a symbol can be derived
-            // from many paths with both variable and fixed length.
-            // In this case, we have to take it.
-            // Remember that we had sorted the list above.
-            | (sym, pri1) :: (sym2, pri2) :: _ when sym = sym2 || (pri1 < pri2 && prioritizeFixedLengthSymbols) ->
+            | ((sym1, _) as first) :: (sym2, _) :: xs when sym1 = sym2 ->
+                getAcceptSymbol (first :: xs)
+            | (sym, pri1) :: (_, pri2) :: _ when pri1 < pri2 && prioritizeFixedLengthSymbols ->
                 Ok <| Some sym
-            // If there are many symbols, and their priority is
-            // the same, or we are not allowed to prioritize symbols,
-            // we have to raise an error.
             | _ ->
-                // The error should contain all symbols regardless of priority.
                 acceptSymbols
                 |> Seq.map fst
                 |> set
                 |> BuildError.IndistinguishableSymbols
                 |> Error
-        acceptSymbol
+        getAcceptSymbol acceptSymbols
         |> Result.map (fun ac ->
             {Index = state.Index; AcceptSymbol = ac; Edges = edges; AnythingElse = state.AnythingElse})
 

@@ -71,6 +71,11 @@ let tests = testList "Regex grammar tests" [
         "'It''s beautiful'", string "It's beautiful"
         "'[a-z]'", string "[a-z]"
         "[1'2]", chars "1'2"
+        "\p{Number}", chars Number
+        @"[\--\\]", chars ['-' .. '\\']
+        "[\^-|]", chars ['^' .. '|']
+        "[^\^-|]", allButChars ['^' .. '|']
+        "[\^\-|]", chars "^-|"
     ]
     |> List.map ((<||) mkTest)
 ]

@@ -20,7 +20,7 @@ let private allPredefinedSets =
             .GetExecutingAssembly()
             .GetType("Farkle.Builder.PredefinedSets")
             .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
-        |> Seq.filter (fun prop -> prop.DeclaringType = typeof<PredefinedSet>)
+        |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
         |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
         |> Seq.map (fun x -> KeyValuePair(x.Name, x))
     ImmutableDictionary.CreateRange(StringComparer.OrdinalIgnoreCase, sets)
@@ -31,17 +31,12 @@ let private unescapeString (data: ReadOnlySpan<_>) =
     while i < data.Length do
         // This trick will allow this function to work with both literal strings
         // and character sets. Two single quotes are always reduced to one. Since
-        // multiple character in a set don't matter, we are okay.
+        // multiple characters in a set don't matter, we are okay.
         if data.[i] = '\\' || (data.[i] = '\'' && i + 1 < data.Length && data.[i + 1] = '\'') then
             i <- i + 1
         sb.Append(data.[i]) |> ignore
         i <- i + 1
     sb.ToString()
-
-let private unescapeChar (span: ReadOnlySpan<_>) i =
-    match span.[i] with
-    | '\\' -> span.[i + 1]
-    | x -> x
 
 let designtime =
     let escapedChar = char '\\' |> optional <&> any
@@ -51,7 +46,7 @@ let designtime =
     let mkPredefinedSet name start fChars =
         string start <&> plus (allButChars "{}") <&> char '}'
         |> terminal name (T(fun _ data ->
-            let name = data.Slice(1, data.Length - start.Length - 1).Trim().ToString()
+            let name = data.Slice(start.Length, data.Length - start.Length - 1).Trim().ToString()
             match allPredefinedSets.TryGetValue(name) with
             | true, set -> fChars set
             | false, _ -> errorf "Cannot found a predefined set named %s." name))
@@ -59,29 +54,41 @@ let designtime =
         string start <&> repeat 2 (chars Letter)
         |> terminal name (T(fun _ data ->
             error "Farkle does not yet support Unicode categories."))
+    let mkOneOf name start fChars =
+        concat [string start; plus escapedChar; char ']']
+        |> terminal name (T(fun _ data ->
+            unescapeString(data.Slice(start.Length, data.Length - start.Length - 1)) |> fChars))
+    let mkRange name start fChars =
+        concat [string start; escapedChar; char '-'; escapedChar; char ']']
+        |> terminal name (T(fun _ data ->
+            let idxStart =
+                start.Length +
+                match data.[start.Length] with
+                | '\\' -> 1
+                | _ -> 0
+            let idxEnd =
+                idxStart + 2 +
+                match data.[idxStart + 2] with
+                | '\\' -> 1
+                | _ -> 0
+            let cStart = data.[idxStart]
+            let cEnd = data.[idxEnd]
+            if cEnd < cStart then
+                errorf "Range [%c-%c] is out of order." cStart cEnd
+            fChars {cStart .. cEnd}))
+
     let predefinedSet = mkPredefinedSet "Predefined set" "\p{" chars
     let notPredefinedSet = mkPredefinedSet "All but Predefined set" "\P{" allButChars
-    let category = mkCategory "\p" "Unicode category (unused)"
-    let notCategory = mkCategory "\P" "All but Unicode category (unused)"
-    let oneOfCharacters =
-        concat [char '['; plus escapedChar; char ']']
-        |> terminal "Character set" (T(fun _ data ->
-            unescapeString(data.Slice(1, data.Length - 2)) |> chars))
-    let notOneOfCharacters =
-        concat [string "[^"; plus escapedChar; char ']']
-        |> terminal "All but Character set" (T(fun _ data ->
-            unescapeString(data.Slice(2, data.Length - 3)) |> allButChars))
-    let oneOfRange =
-        concat [char '['; escapedChar; char '-'; escapedChar; char ']']
-        |> terminal "Character range" (T(fun _ data ->
-            chars [unescapeChar data 1 .. unescapeChar data 3]))
-    let notOneOfRange =
-        concat [string "[^"; escapedChar; char '-'; escapedChar; char ']']
-        |> terminal "All but Character range" (T(fun _ data ->
-            allButChars [unescapeChar data 2 .. unescapeChar data 4]))
+    let category = mkCategory "Unicode category (unused)" "\p"
+    let notCategory = mkCategory "All but Unicode category (unused)" "\P"
+    let oneOfCharacters = mkOneOf "Character set" "[" chars
+    let notOneOfCharacters = mkOneOf "All but character set" "[^" allButChars
+    let oneOfRange = mkRange "Character range" "[" chars
+    let notOneOfRange = mkRange "All but Character range" "[^" allButChars
     let literalString =
-        concat [char '\''; plus (string "''" <|> any); char '\'']
-        |> terminal "Literal string" (T(fun _ data -> unescapeString(data.Slice(1, data.Length - 2))))
+        concat [char '\''; plus (string "''" <|> allButChars "'"); char '\'']
+        |> terminal "Literal string" (T(fun _ data ->
+            unescapeString(data.Slice(1, data.Length - 2))))
 
     let regex = nonterminal "Regex"
     let regexQuantified =

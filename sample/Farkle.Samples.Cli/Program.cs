@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using static Farkle.Builder.DesigntimeFarkleBuild;
 
 namespace Farkle.Samples.Cli
 {
@@ -24,6 +25,8 @@ namespace Farkle.Samples.Cli
         }
 
         private static bool ParseFarkle<T>(this RuntimeFarkle<T> rf) => rf.Parse(_jsonData).IsOk;
+        private static bool BuildJson() => Build(JSON.CSharp.Language.Designtime).Item1.IsOk;
+        private static bool BuildGML() => BuildGrammarOnly(CreateGrammarDefinition(GOLDMetaLanguage.designtime)).IsOk;
         private static bool ParseFarkleCSharp() => JSON.CSharp.Language.Runtime.ParseFarkle();
         private static bool ParseFarkleFSharp() => JSON.FSharp.Language.Runtime.ParseFarkle();
         private static void ParseFarkleSyntaxCheck() => _syntaxCheck.ParseFarkle();
@@ -32,10 +35,10 @@ namespace Farkle.Samples.Cli
         private static void Prepare()
         {
             _jsonData = File.ReadAllText(JsonPath);
-            Console.WriteLine("JITting the parsers...");
-            if (!(ParseFarkleCSharp() && ParseFarkleFSharp() && ParseChiron()))
+            Console.WriteLine("JITting Farkle...");
+            if (!(BuildJson() && BuildGML() && ParseFarkleCSharp() && ParseFarkleFSharp() && ParseChiron()))
             {
-                throw new Exception("Parsing went wrong...");
+                throw new Exception("Preparing went wrong.");
             }
         }
 
@@ -45,7 +48,9 @@ namespace Farkle.Samples.Cli
             Prepare();
             Execute(() => ParseFarkleCSharp(), "Farkle C#");
             Execute(() => ParseFarkleFSharp(), "Farkle F#");
-            Execute(() => ParseFarkleSyntaxCheck(), "Farkle Syntax Check");
+            Execute(ParseFarkleSyntaxCheck, "Farkle Syntax Check");
+            Execute(() => BuildJson(), "Farkle Build JSON");
+            Execute(() => BuildGML(), "Farkle Build GOLD Meta-Language");
             Execute(() => ParseChiron(), "Chiron");
         }
     }

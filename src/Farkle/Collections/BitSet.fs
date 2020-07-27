@@ -94,6 +94,8 @@ type BitSet private(data: BitField, extra: BitField []) =
             BitSet(0UL, extra)
     member private _.Data = data
     member private _.Extra = ReadOnlySpan extra
+    /// Whether the bit set contains no elements.
+    member _.IsEmpty = data = 0UL && extra.Length = 0
     /// Returns whether the bit set has the given number.
     member _.Contains(x) =
         if x < 0 then
@@ -114,6 +116,21 @@ type BitSet private(data: BitField, extra: BitField []) =
         for i = 0 to x2.Extra.Length - 1 do
             let cell = &extra.[i]
             cell <- cell ||| x2.Extra.[i]
+        BitSet(data, extra)
+    /// Returns the union of many bit sets.
+    static member UnionMany(xs: BitSet seq) =
+        let xs = Array.ofSeq xs
+        let mutable data = 0UL
+        let mutable extraLength = 0
+        for i = 0 to xs.Length - 1 do
+            let x = &xs.[i]
+            data <- data ||| x.Data
+            extraLength <- Math.Max(extraLength, x.Extra.Length)
+        let extra = newArray extraLength
+        for i = 0 to xs.Length - 1 do
+            let x = xs.[i].Extra
+            for i = 0 to x.Length - 1 do
+                extra.[i] <- extra.[i] ||| x.[i]
         BitSet(data, extra)
     /// Returns the intersection of two bit sets.
     static member Intersection(x1: inref<BitSet>, x2: inref<BitSet>) =

@@ -53,7 +53,7 @@ let private TerminalPriority = 521
 [<Literal>]
 let private LiteralPriority = 475
 
-type internal ConcatFirstPos = Lazy<int Set> list
+type internal ConcatFirstPos = BitSet list
 
 type internal RegexBuildTree =
     | Concat of RegexBuild list * ConcatFirstPos
@@ -63,9 +63,9 @@ type internal RegexBuildTree =
 
 and internal RegexBuild = {
     Tree: RegexBuildTree
-    IsNullable: Lazy<bool>
-    FirstPos: Lazy<int Set>
-    LastPos: Lazy<int Set>
+    IsNullable: bool
+    FirstPos: BitSet
+    LastPos: BitSet
 }
 
 type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<RegexLeaf>
@@ -79,57 +79,57 @@ with
 
 let private fIsNullable =
     function
-    | Concat (xs, _) -> xs |> List.forall (fun x -> x.IsNullable.Value)
-    | Alt xs -> xs |> List.exists (fun x -> x.IsNullable.Value)
+    | Concat (xs, _) -> xs |> List.forall (fun x -> x.IsNullable)
+    | Alt xs -> xs |> List.exists (fun x -> x.IsNullable)
     | Star _ -> true
     | Leaf (RegexLeaf.End _) -> true
     | Leaf _ -> false
 
 let private fFirstPos =
     function
-    | Concat ([], _) -> Set.empty
+    | Concat ([], _) -> BitSet.Empty
     | Concat (xs, _) ->
         List.fold (fun (firstPos, isNullable) x ->
             if isNullable then
-                Set.union firstPos x.FirstPos.Value, x.IsNullable.Value
+                BitSet.Union(&firstPos, &x.FirstPos), x.IsNullable
             else
-                firstPos, false) (Set.empty, true) xs
+                firstPos, false) (BitSet.Empty, true) xs
         |> fst
-    | Alt xs -> xs |> Seq.map (fun x -> x.FirstPos.Value) |> Set.unionMany
-    | Star x -> x.FirstPos.Value
-    | Leaf x -> Set.singleton x.Index
+    | Alt xs -> xs |> Seq.map (fun x -> x.FirstPos) |> BitSet.UnionMany
+    | Star x -> x.FirstPos
+    | Leaf x -> BitSet.Singleton x.Index
 
 let private fLastPos =
     function
-    | Concat ([], _) -> Set.empty
+    | Concat ([], _) -> BitSet.Empty
     | Concat (xs, _) ->
         List.foldBack (fun x (lastPos, isNullable) ->
             if isNullable then
-                Set.union lastPos x.LastPos.Value, x.IsNullable.Value
+                BitSet.Union(&lastPos, &x.LastPos), x.IsNullable
             else
-                lastPos, false) xs (Set.empty, true)
+                lastPos, false) xs (BitSet.Empty, true)
         |> fst
-    | Alt xs -> xs |> Seq.map (fun x -> x.LastPos.Value) |> Set.unionMany
-    | Star x -> x.LastPos.Value
-    | Leaf x -> Set.singleton x.Index
+    | Alt xs -> xs |> Seq.map (fun x -> x.LastPos) |> BitSet.UnionMany
+    | Star x -> x.LastPos
+    | Leaf x -> BitSet.Singleton x.Index
 
 let private makeLazy tree = {
     Tree = tree
-    IsNullable = lazy (fIsNullable tree)
-    FirstPos = lazy (fFirstPos tree)
-    LastPos = lazy (fLastPos tree)
+    IsNullable = fIsNullable tree
+    FirstPos = fFirstPos tree
+    LastPos = fLastPos tree
 }
 
 let internal createRegexBuild caseSensitive regexes =
 
     let createConcatFirstPos xs: ConcatFirstPos =
-        (lazy Set.empty, [])
+        (BitSet.Empty, [])
         |> List.foldBack (fun x (firstPos, xs) ->
-            let firstPos = lazy(
-                if x.IsNullable.Value then
-                    Set.union x.FirstPos.Value firstPos.Value
+            let firstPos =
+                if x.IsNullable then
+                    BitSet.Union(&x.FirstPos, &firstPos)
                 else
-                    x.FirstPos.Value)
+                    x.FirstPos
             firstPos, firstPos :: xs) xs
         |> snd
 
@@ -237,23 +237,22 @@ let internal createRegexBuild caseSensitive regexes =
         regexParseErrors |> List.ofSeq |> BuildError.RegexParseError |> Error
 
 let internal calculateFollowPos leafCount regex =
-    let followPos = Array.replicate leafCount Set.empty
+    let followPos = Array.replicate leafCount BitSet.Empty
     let rec impl x =
         match x.Tree with
         | Alt xs -> List.iter impl xs
         | Concat ([], _) -> ()
         | Concat (xs, firstPoses) ->
             (xs, firstPoses) ||> List.iter2Safe (fun x firstPosOfTheRest ->
-                let lastPosOfThisOne = x.LastPos.Value
-                let firstPosOfTheRest = firstPosOfTheRest.Value
-                lastPosOfThisOne
-                |> Set.iter (fun idx ->
-                    followPos.[idx] <- Set.union followPos.[idx] firstPosOfTheRest))
+                let lastPosOfThisOne = x.LastPos
+                for idx in lastPosOfThisOne do
+                    followPos.[idx] <- BitSet.Union(&followPos.[idx], &firstPosOfTheRest))
             List.iter impl xs
         | Star x ->
-            let lastPos = x.LastPos.Value
-            let firstPos = x.FirstPos.Value
-            lastPos |> Set.iter (fun idx -> followPos.[idx] <- Set.union followPos.[idx] firstPos)
+            let lastPos = x.LastPos
+            let firstPos = x.FirstPos
+            for idx in lastPos do
+                followPos.[idx] <- BitSet.Union(&followPos.[idx], &firstPos)
             impl x
         | Leaf _ -> ()
     impl regex
@@ -261,7 +260,7 @@ let internal calculateFollowPos leafCount regex =
 
 [<NoComparison; NoEquality>]
 type internal DFAStateBuild = {
-    Name: int Set
+    Name: BitSet
     Index: uint32
     Edges: SortedDictionary<char, uint32 option>
     mutable AnythingElse: uint32 option
@@ -275,7 +274,7 @@ with
     }
 
 let internal makeDFA
-    prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<int Set>) =
+    prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =
     let states = Dictionary()
     let statesList = ResizeArray()
     let unmarkedStates = Stack()
@@ -290,7 +289,7 @@ let internal makeDFA
             states.Add(stateName, state)
             idx
 
-    getOrAddState regex.FirstPos.Value |> ignore
+    getOrAddState regex.FirstPos |> ignore
     while unmarkedStates.Count <> 0 do
         let S = statesList.[int <| unmarkedStates.Pop()]
         let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
@@ -302,7 +301,7 @@ let internal makeDFA
                 S.Name
                 |> Seq.filter (leaves.Characters >> Set.contains a)
                 |> Seq.map (fun p -> followPos.[p])
-                |> Set.unionMany
+                |> BitSet.UnionMany
             let UIdx = getOrAddState U
             // Any previous `None` set by the all-but characters will be overwritten,
             // because a concrete character takes precedence.
@@ -312,7 +311,7 @@ let internal makeDFA
         S.Name
         |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)
         |> Seq.map (fun p -> followPos.[p])
-        |> Set.unionMany
+        |> BitSet.UnionMany
         |> (fun x ->
             if not x.IsEmpty then
                 S.AnythingElse <- Some <| getOrAddState x)

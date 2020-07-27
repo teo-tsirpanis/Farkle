@@ -29,6 +29,16 @@ let tests = testList "Bit set tests" [
         Expect.equal direct indirect "The union of the bit sets is wrong"
     )
 
+    testProperty "The union of many bit sets works" (fun xs ->
+        let indirect =
+            xs
+            |> Array.map set
+            |> Set.unionMany
+            |> BitSet.CreateRange
+        let direct = BitSet.UnionMany xs
+        Expect.equal direct indirect "The union of many bit sets is wrong"
+    )
+
     testProperty "The intersection of two bit sets works" (fun x1 x2 ->
         let indirect =
             let set1 = set x1

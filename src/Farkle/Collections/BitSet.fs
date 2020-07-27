@@ -163,7 +163,14 @@ type BitSet private(data: BitField, extra: BitField []) =
         match x' with
         | :? BitSet as x' -> BitSet.AreEqual(&x, &x')
         | _ -> false
-    override _.GetHashCode() = hash data ^^^ hash extra
+    override _.GetHashCode() =
+        /// TODO: Use System.HashCode.
+        let mutable hash = 17
+        hash <- hash * 31 + data.GetHashCode()
+        hash <- hash * 31 + extra.Length.GetHashCode()
+        for i = 0 to extra.Length - 1 do
+            hash <- hash * 31 + extra.[i].GetHashCode()
+        hash
     override _.ToString() =
         let sb = StringBuilder()
         sb.Append(data.ToString("X16")) |> ignore

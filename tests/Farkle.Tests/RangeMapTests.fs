@@ -9,6 +9,10 @@ open Expecto
 open Farkle.Collections
 open Farkle.Tests
 
+let ofSeq xs = RangeMap.ofSeqEx xs
+
+let toSeq xs = RangeMap.toSeqEx xs
+
 [<Tests>]
 let tests =
     testList "RangeMap tests" [
@@ -36,9 +40,9 @@ let tests =
 
         // A boolean value type makes continuous spaces more likely.
         testProperty "RangeMap.ofSeq is the inverse of RangeMap.toSeq" (fun (x: RangeMap<int, bool>) ->
-            let xs = RangeMap.toSeq x
-            let x' = RangeMap.ofSeq xs
-            let xs' = RangeMap.toSeq x'
+            let xs = toSeq x
+            let x' = ofSeq xs
+            let xs' = toSeq x'
             // We have to compare the sequences, not the RangeMaps, because
             // RangeMap.ofSeq might create an equivalent RangeMap with less elements.
             Expect.sequenceEqual xs xs' "The RangeMaps are different")

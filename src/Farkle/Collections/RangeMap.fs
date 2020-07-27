@@ -121,14 +121,20 @@ module RangeMap =
 
     /// Creates a `RangeMap` from a sequence of key-value pairs.
     /// The keys can be of any type that can has the notion of "one" and equality checking.
-    let ofSeqEx fSuccessor xs =
+    // This function can be used from F# like this:
+    // let ofSeq xs = ofSeqEx
+    // let rangeMap =
+    //     mySequence
+    //     |> Seq.map f
+    //     |> ofSeq
+    let inline ofSeqEx xs =
         if not <| Seq.isEmpty xs then
             let xs = Seq.sortBy (fun (KeyValue(k, _)) -> k) xs
             let (KeyValue(k, v)) = Seq.last xs
             Seq.foldBack (fun (KeyValue(k', v')) (kFrom, kTo, v, xs) ->
-                if v = v' && kFrom = fSuccessor k' then
+                if EqualityComparer.Default.Equals(v, v') && EqualityComparer.Default.Equals(kFrom, k + LanguagePrimitives.GenericOne) then
                     (k', kTo, v, xs)
-                elif kFrom <> k' then
+                elif not (EqualityComparer.Default.Equals(kFrom, k')) then
                     (k', k', v', (kFrom, kTo, v) :: xs)
                 else
                     (kFrom, kTo, v, xs))
@@ -138,12 +144,7 @@ module RangeMap =
         else
             RangeMap.Empty
 
-    let inline ofSeq xs = ofSeqEx ((+) LanguagePrimitives.GenericOne) xs
-
-    let toSeqEx (fRange: _ -> _ -> 'key seq) (rm: RangeMap<'key, _>) =
+    let inline toSeqEx (rm: RangeMap<'key, _>) =
         rm
         |> Seq.collect (fun {KeyFrom = kFrom; KeyTo = kTo; Value = v} ->
-            fRange kFrom kTo
-            |> Seq.map (fun k -> KeyValuePair(k, v)))
-
-    let inline toSeq xs = toSeqEx (fun kFrom kTo -> seq {kFrom .. kTo}) xs
+            Seq.map (fun k -> KeyValuePair(k, v)) {kFrom .. kTo})

@@ -273,6 +273,8 @@ with
         AnythingElse = None
     }
 
+let createRangeMap xs = RangeMap.ofSeqEx xs
+
 let internal makeDFA
     prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =
     let states = Dictionary()
@@ -325,7 +327,7 @@ let internal makeDFA
             // and rarely more than two.
             |> Seq.sortBy snd
             |> List.ofSeq
-        let edges = RangeMap.ofSeq state.Edges
+        let edges = createRangeMap state.Edges
         let rec getAcceptSymbol xs =
             match xs with
             | [] -> Ok None

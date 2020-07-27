@@ -48,6 +48,8 @@ module private OptimizedOperations =
             arr.[i] <- Array.zeroCreate length2
         arr
 
+    let private rangeMapToSeq xs = RangeMap.toSeqEx xs
+
     /// Creates a two-dimensional array of DFA state indices, whose first dimension
     /// represents the index of the current DFA state, and the second represents the
     /// ASCII character that was encountered.
@@ -59,7 +61,7 @@ module private OptimizedOperations =
             for j = 0 to ASCIIUpperBound + 1 do
                 arr.[i].[j] <- anythingElse
             state.Edges
-            |> RangeMap.toSeq
+            |> rangeMapToSeq
             |> Seq.takeWhile (fun x -> isASCII x.Key)
             |> Seq.iter (fun x ->
                 arr.[i].[int x.Key] <- DFAStateTag.FromOption x.Value))

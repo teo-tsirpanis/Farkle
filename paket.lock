@@ -2,7 +2,12 @@ STORAGE: NONE
 RESTRICTION: || (== net45) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
+    BitCollections (1.0)
+      Microsoft.Bcl.HashCode (>= 1.1) - restriction: || (&& (== net45) (>= net461)) (== netstandard2.0)
+      System.Buffers (>= 4.5.1)
+      System.Memory (>= 4.5.4)
     FSharp.Core (4.7.2)
+    Microsoft.Bcl.HashCode (1.1) - restriction: || (&& (== net45) (>= net461)) (== netstandard2.0)
     System.Buffers (4.5.1)
     System.Collections.Immutable (1.7.1)
       System.Memory (>= 4.5.4) - restriction: || (&& (== net45) (>= net46)) (&& (== net45) (>= net461)) (&& (== net45) (>= uap10.1)) (== netstandard2.0)

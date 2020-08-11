@@ -8,6 +8,7 @@
 /// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi &amp; Ullman.
 module Farkle.Builder.DFABuild
 
+open BitCollections
 open Farkle.Common
 open Farkle.Collections
 open Farkle.Grammar

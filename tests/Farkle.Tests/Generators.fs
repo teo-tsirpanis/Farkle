@@ -70,14 +70,6 @@ let rangeMapGen() = gen {
     return RangeMap l
 }
 
-let bitSetGen =
-    Arb.generate
-    |> Gen.listOf
-    |> Gen.map (
-        List.distinct
-        >> List.map (fun (NonNegativeInt x) -> x)
-        >> BitSet.CreateRange)
-
 let regexGen =
     let rec impl size = gen {
         if size <= 1 then
@@ -255,7 +247,6 @@ type Generators =
     static member EGTEntry() = Arb.fromGen egtEntryGen
     static member AST() = Arb.fromGen <| ASTGen()
     static member RangeMap() = Arb.fromGen <| rangeMapGen()
-    static member BitSet() = Arb.fromGen bitSetGen
     static member CS() = Arb.fromGen <| gen {
         let! str = nonEmptyString
         let! steps = Gen.choose(1, str.Length)

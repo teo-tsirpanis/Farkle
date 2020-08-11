@@ -27,7 +27,6 @@
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Collections/MultiMap.fs" />
-    <Compile Include="Collections\BitSet.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="AST.fs" />
     <Compile Include="PostProcessor.fs" />

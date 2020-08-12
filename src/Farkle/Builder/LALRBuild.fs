@@ -7,60 +7,10 @@ module Farkle.Builder.LALRBuild
 
 open Farkle.Collections
 open Farkle.Grammar
+open Farkle.Builder.LALRBuildTypes
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
-
-type LR0Item = {
-    Production: Production
-    DotPosition: int
-}
-with
-    static member Create prod = {Production = prod; DotPosition = 0}
-    member x.IsAtEnd = x.Production.Handle.Length = x.DotPosition
-    member x.CurrentSymbol = x.Production.Handle.[x.DotPosition]
-    member x.AdvanceDot() =
-        if x.IsAtEnd then
-            x
-        else
-            {x with DotPosition = x.DotPosition + 1}
-    override x.ToString() =
-        [
-            Seq.take x.DotPosition x.Production.Handle |> Seq.map string
-            Seq.singleton "•"
-            Seq.skip x.DotPosition x.Production.Handle |> Seq.map string
-        ]
-        |> Seq.concat
-        |> String.concat " "
-        |> sprintf "%O ::= %s" x.Production.Head
-
-type LR0ItemSet = {
-    Index: int
-    Kernel: Set<LR0Item>
-    Goto: ImmutableDictionary<LALRSymbol, int>
-}
-with
-    static member Create idx kernel = {Index = idx; Kernel = kernel; Goto = ImmutableDictionary.Empty}
-
-/// A special type which represents the lookahead symbol.
-type LookaheadSymbol =
-    /// The lookahead symbol is a `Terminal`.
-    | Terminal of Terminal
-    /// The lookahead symbol is the EOF, AKA $.
-    | End
-
-/// An LR(1) item. It's essentially an LR(0) item with a set of lookahead symbols.
-type LR1Item = {
-    /// The LR(0) item contained within.
-    Item: LR0Item
-    /// The lookahead symbols of this item.
-    /// You could say that the lookahead is the set of the symbols that
-    /// come after a production, but it's still too vague. Neither I do
-    /// precisely know what it is. But when an item's dot is at the end
-    /// the parser reduces the item's production when he encounters any
-    /// of the lookahead symbols.
-    Lookahead: Set<LookaheadSymbol>
-}
 
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
@@ -120,66 +70,71 @@ let createLR0KernelItems fGetAllProductions startSymbol =
 
 /// Computes the FIRST set of the `Nonterminal`s of the given sequence of `Production`s.
 /// A `None` in the set of a nonterminal is the empty symbol, AKA Epsilon, or ε.
-let computeFirstSetMap productions =
-    let dict = MultiMap.create()
+let computeFirstSetMap (terminals: ImmutableArray<_>) (nonterminals: ImmutableArray<Nonterminal>) productions =
+    let dict = FirstSets(terminals, nonterminals.Length + 1)
     let containsEmpty (x: LALRSymbol) =
         match x with
         | LALRSymbol.Terminal _ -> false
-        | LALRSymbol.Nonterminal nont -> dict.Contains(nont, None)
+        | LALRSymbol.Nonterminal nont -> dict.HasEmpty nont
 
     productions
     |> Seq.iter (fun {Head = x; Handle = xs} ->
         if xs.IsEmpty then
-            dict.Add(x, None) |> ignore)
+            dict.AddEmpty x |> ignore)
 
     let mutable changed = true
 
     while changed do
         changed <- false
-        productions
-        |> Seq.iter (fun {Head = head; Handle = handle} ->
+        for {Head = head; Handle = handle} in productions do
             let mutable i = 0
             let len = handle.Length
             // The first member is in the FIRST set by definition.
             // Really? Who would imagine!
             while i < len && (i = 0 || containsEmpty handle.[i - 1]) do
-                match handle.[i] with
-                | LALRSymbol.Terminal term ->
-                    dict.Add(head, Some term)
-                | LALRSymbol.Nonterminal nont ->
-                    dict.AddRange(head, Seq.filter Option.isSome dict.[nont])
-                |> (fun x -> changed <- changed || x)
+                let changed' =
+                    match handle.[i] with
+                    | LALRSymbol.Terminal term ->
+                        dict.Add head term
+                    | LALRSymbol.Nonterminal nont ->
+                        dict.AddFromNonterminal head nont
+                changed <- changed || changed'
                 i <- i + 1
             if i = len - 1 && containsEmpty handle.[len - 1] then
-                changed <- dict.Add(head, None) || changed)
+                changed <- dict.AddEmpty head || changed
 
-    MultiMap.freeze dict
+    dict.Freeze()
+    dict
 
 /// Returns the FIRST set of the given sequence of `LALRSymbol`s.
 /// If all the symbols contain the empty symbol in their FIRST set,
 /// the terminals in `lookahead` are included in the result.
 /// A function to get the FIRST set of each `Nonterminal` is required.
-let getFirstSetOfSequence fGetFirstSet lookahead xs =
+let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
+    let laSet = LookaheadSet(firstSets.AllTerminals.Length)
     xs
-    |> Seq.fold (fun (symbols, doContinue) ->
+    |> Seq.fold (fun doContinue ->
         function
-        | LALRSymbol.Terminal term when doContinue -> Set.add (Terminal term) symbols, false
+        | LALRSymbol.Terminal term when doContinue ->
+            laSet.HasTerminal term <- true
+            false
         | LALRSymbol.Nonterminal nont when doContinue ->
-            let first = fGetFirstSet nont
-            let firstClean = first |> Seq.choose id |> Seq.map Terminal |> set
-            Set.union symbols firstClean, Set.contains None first
-        | _ -> symbols, false) (Set.empty, true)
-    |> (fun (first, containsEmpty) -> if containsEmpty then Set.union first lookahead else first)
+            firstSets.CopyToLookaheadSet nont laSet |> ignore
+            firstSets.HasEmpty nont
+        | _ -> false) true
+    |> function true -> laSet.AddRange lookahead |> ignore | false -> ()
+    laSet.Freeze()
+    laSet
 
 /// Computes the LR(1) CLOSURE function of a single LR(1) item, which
 /// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
 /// A function to get the FIRST set and the productons of a `Nonterminal` is required.
-let closure1 fGetAllProductions fGetFirstSet xs =
+let closure1 fGetAllProductions (firstSets: FirstSets) xs =
     let q = Queue(xs: _ seq)
-    let results = MultiMap.create()
+    let results = Closure1Table(firstSets.AllTerminals.Length)
     while q.Count <> 0 do
         let (item: LR0Item), lookahead = q.Dequeue()
-        if results.AddRange(item, lookahead) then
+        if results.AddRange item lookahead then
             if not item.IsAtEnd then
                 match item.CurrentSymbol with
                 | LALRSymbol.Terminal _ -> ()
@@ -187,59 +142,55 @@ let closure1 fGetAllProductions fGetFirstSet xs =
                     let first =
                         item.Production.Handle
                         |> Seq.skip (item.DotPosition + 1)
-                        |> getFirstSetOfSequence fGetFirstSet lookahead
+                        |> getFirstSetOfSequence firstSets lookahead
                     nont
                     |> fGetAllProductions
                     |> Set.iter (fun prod -> q.Enqueue(LR0Item.Create prod, first))
-    MultiMap.freeze results
-    |> Map.toSeq
-    |> Seq.map (fun (item, la) -> {Item = item; Lookahead = la})
+    results.AsEnumerable()
+    |> Seq.map (fun (KeyValue(k, v)) -> {Item = k; Lookahead = v})
     |> List.ofSeq
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
 /// In addition to the usual dependencies, this function also
 /// requires a special `Terminal` which __must not__ already exist in the grammar.
-let computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal (itemSets: ImmutableArray<_>) =
-    let spontaneous, propagate =
-        let spontaneous = MultiMap.create()
-        let propagate = MultiMap.create()
-        let hashTerminalSet = Set.singleton hashTerminal
+let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: ImmutableArray<_>) =
+    let lookaheads = LookaheadItemsTable(firstSets.AllTerminals.Length)
+    let propagate =
+        let propagate = ResizeArray()
+        let hashTerminalSet = LookaheadSet firstSets.AllTerminals.Length
+        hashTerminalSet.HasHash <- true
+        hashTerminalSet.Freeze()
         itemSets
         |> Seq.iter (fun itemSet ->
             itemSet.Kernel
             |> Set.iter (fun item ->
-                let closure = closure1 fGetAllProductions fGetFirstSet [item, hashTerminalSet]
+                let closure = closure1 fGetAllProductions firstSets [item, hashTerminalSet]
                 closure
                 |> List.iter (fun {Item = closureItem; Lookahead = la} ->
                     if not closureItem.IsAtEnd then
                         match itemSet.Goto.TryGetValue(closureItem.CurrentSymbol) with
                         | true, gotoIdx ->
                             let gotoKernel = closureItem.AdvanceDot()
-                            if la.Contains(hashTerminal) then
-                                propagate.Add((item, itemSet.Index), (gotoKernel, gotoIdx)) |> ignore
-                            spontaneous.AddRange((gotoKernel, gotoIdx), Seq.filter ((<>) hashTerminal) la) |> ignore
+                            if la.HasHash then
+                                propagate.Add((item, itemSet.Index), (gotoKernel, gotoIdx))
+                            lookaheads.AddRange (gotoKernel, gotoIdx) la |> ignore
                         | false, _ -> ())))
-        MultiMap.freeze spontaneous, MultiMap.freeze propagate
+        propagate
 
-    let lookaheads = MultiMap.create()
     // The next line assumes the first item set's kernel contains only
     // the start production which spontaneously generates an EOF symbol by definition.
-    lookaheads.Add((itemSets.[0].Kernel.MinimumElement, 0), End) |> ignore
-    spontaneous |> Map.iter (fun k la -> lookaheads.AddRange(k, la) |> ignore)
+    lookaheads.GetOrCreateEmpty(itemSets.[0].Kernel.MinimumElement, 0).HasEnd <- true
     let mutable changed = true
     while changed do
         changed <- false
-        propagate
-        |> Map.iter (fun kFrom dest ->
-            dest
-            |> Set.iter (fun kTo ->
-                changed <- lookaheads.Union(kTo, kFrom) || changed
-            )
-        )
-    MultiMap.freeze lookaheads
+        for (kFrom, kTo) in propagate do
+            changed <- lookaheads.Union kTo kFrom || changed
+    lookaheads
 
 /// Creates an LALR state table.
-let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbol itemSets (lookaheadTables: Map<_, _>) =
+let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+    let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
+    emptyLookahead.Freeze()
     itemSets
     |> Seq.map (fun itemSet ->
         let index = uint32 itemSet.Index
@@ -253,9 +204,9 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
                 let lookahead =
                     match lookaheadTables.TryGetValue((kernelItem, int index)) with
                     | true, v -> v
-                    | false, _ -> Set.empty
+                    | false, _ -> emptyLookahead
                 kernelItem, lookahead)
-            |> closure1 fGetAllProductions fGetFirstSet
+            |> closure1 fGetAllProductions firstSets
             |> List.filter (fun x -> x.Item.IsAtEnd)
         let gotoActions =
             itemSet.Goto
@@ -280,11 +231,9 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
             )
             closedItem
             |> List.iter (fun item ->
-                item.Lookahead
-                |> Set.iter (function
-                    | Terminal term -> addAction term (LALRAction.Reduce item.Item.Production)
-                    | End -> ()
-                )
+                for idx in item.Lookahead do
+                    if idx <> 0 then
+                        addAction firstSets.AllTerminals.[idx - 1] (LALRAction.Reduce item.Item.Production)
             )
             b.ToImmutable()
         let eofAction =
@@ -295,7 +244,7 @@ let createLALRStates fGetAllProductions fGetFirstSet fResolveConflict startSymbo
                 | x1 :: x2 :: xs -> resolveEOFConflict (fResolveConflict index None x1 x2 :: xs)
             closedItem
             |> Seq.choose (fun item ->
-                if Set.contains End item.Lookahead then
+                if item.Lookahead.HasEnd then
                     Some (LALRAction.Reduce item.Item.Production)
                 else
                     None)
@@ -329,13 +278,13 @@ let private checkIllegalIndices (productions: ImmutableArray<_>) =
 /// Builds an LALR parsing table from the grammar with the given
 /// starting symbol that contains the given `Production`s.
 /// Having a symbol with an index of `UInt32.MaxValue` will cause an exception.
-let buildProductionsToLALRStates startSymbol productions =
+let buildProductionsToLALRStates startSymbol (terminals: ImmutableArray<Terminal>)
+    (nonterminals: ImmutableArray<Nonterminal>) productions =
     checkIllegalIndices productions
     // This function can be abused by specifying a symbol with an index of
     // 2^32 - 1. It can't happen from DesigntimeFarkleBuild (indices are
     // assigned sequentially, their maximum is int's maximum). Note
-    let s' = Nonterminal(UInt32.MaxValue, "S'")
-    let hashTerminal = Terminal <| Farkle.Grammar.Terminal(UInt32.MaxValue, "#")
+    let s' = Nonterminal(uint32 nonterminals.Length, "S'")
     let productions = productions.Add {
         Index = uint32 productions.Length
         Head = s'
@@ -349,15 +298,14 @@ let buildProductionsToLALRStates startSymbol productions =
     let fGetAllProductions k = Map.find k nonterminalsToProductions
 
     let kernelItems = createLR0KernelItems fGetAllProductions s'
-    let firstSets = computeFirstSetMap productions
-    let fGetFirstSet k = Map.find k firstSets
-    let lookaheads = computeLookaheadItems fGetAllProductions fGetFirstSet hashTerminal kernelItems
+    let firstSets = computeFirstSetMap terminals nonterminals productions
+    let lookaheads = computeLookaheadItems fGetAllProductions firstSets kernelItems
 
     let conflicts = ResizeArray()
     let resolveConflict stateIndex term x1 x2 =
         LALRConflict.Create stateIndex term x1 x2 |> conflicts.Add
         x1
-    match createLALRStates fGetAllProductions fGetFirstSet resolveConflict s' kernelItems lookaheads with
+    match createLALRStates fGetAllProductions firstSets resolveConflict s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
     | _ -> conflicts |> set |> BuildError.LALRConflict |> Error

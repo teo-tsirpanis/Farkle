@@ -345,6 +345,8 @@ module DesigntimeFarkleBuild =
         let! myDarlingLALRStateTable =
             LALRBuild.buildProductionsToLALRStates
                 dg.StartSymbol
+                dg.Symbols.Terminals
+                dg.Symbols.Nonterminals
                 dg.Productions
         let! mySweetDFAStateTable =
             DFABuild.buildRegexesToDFA

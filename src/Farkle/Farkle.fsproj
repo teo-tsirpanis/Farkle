@@ -40,6 +40,7 @@
     <Compile Include="Builder/PredefinedSets.fs" />
     <Compile Include="Builder/Regex.fs" />
     <Compile Include="Builder/DFABuild.fs" />
+    <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
     <Compile Include="Builder/DesigntimeFarkle.fs" />
     <Compile Include="Builder/ProductionBuilders.g.fs" AutoGen="true" />

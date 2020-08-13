@@ -147,7 +147,7 @@ let closure1 fGetAllProductions (firstSets: FirstSets) xs =
                     |> fGetAllProductions
                     |> Set.iter (fun prod -> q.Enqueue(LR0Item.Create prod, first))
     results.AsEnumerable()
-    |> Seq.map (fun (KeyValue(k, v)) -> {Item = k; Lookahead = v})
+    |> Seq.map (fun (KeyValue(k, v)) -> v.Freeze(); {Item = k; Lookahead = v})
     |> List.ofSeq
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
@@ -185,6 +185,7 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: I
         changed <- false
         for (kFrom, kTo) in propagate do
             changed <- lookaheads.Union kTo kFrom || changed
+    lookaheads.Freeze()
     lookaheads
 
 /// Creates an LALR state table.
@@ -232,8 +233,7 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
             closedItem
             |> List.iter (fun item ->
                 for idx in item.Lookahead do
-                    if idx <> 0 then
-                        addAction firstSets.AllTerminals.[idx - 1] (LALRAction.Reduce item.Item.Production)
+                    addAction firstSets.AllTerminals.[idx] (LALRAction.Reduce item.Item.Production)
             )
             b.ToImmutable()
         let eofAction =

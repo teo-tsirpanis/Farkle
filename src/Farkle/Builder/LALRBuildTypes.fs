@@ -72,6 +72,12 @@ type LookaheadSet(terminalCount) =
             changed
         else
             ban.Or laSet.Bits
+    member _.Clone() =
+        let laSet = LookaheadSet terminalCount
+        laSet.Bits.Or ban |> ignore
+        laSet.HasEnd <- hasEnd
+        laSet.HasHash <- hasHash
+        laSet
     member _.GetEnumerator() = ban.GetEnumerator()
     member _.Freeze() =
         isFrozen <- true
@@ -116,11 +122,17 @@ type LR1Item = {
 
 type LookaheadSetDictionary<'key when 'key: equality>(terminalCount) =
     let dict = Dictionary<'key,LookaheadSet>()
+    let mutable isFrozen = false
+    let checkFrozen() =
+        if isFrozen then
+            invalidOp "The collection is frozen."
     member _.AddRange item lookahead =
+        checkFrozen()
         match dict.TryGetValue item with
         | true, laSet -> laSet.AddRange lookahead
-        | false, _ -> dict.Add(item, lookahead); true
+        | false, _ -> dict.Add(item, lookahead.Clone()); true
     member _.GetOrCreateEmpty k =
+        checkFrozen()
         match dict.TryGetValue k with
         | true, laSet -> laSet
         | false, _ ->
@@ -128,13 +140,18 @@ type LookaheadSetDictionary<'key when 'key: equality>(terminalCount) =
             dict.Add(k, laSet)
             laSet
     member this.Union kDest kSrc =
-        let src = this.GetOrCreateEmpty kSrc
-        let dest = this.GetOrCreateEmpty kDest
-        dest.AddRange src
+        checkFrozen()
+        match dict.TryGetValue(kSrc), dict.TryGetValue(kDest) with
+        | (true, vSrcs), (true, vDests) -> vDests.AddRange vSrcs
+        | (true, vSrcs), (false, _) -> dict.Add(kDest, vSrcs.Clone()); true
+        | (false, _), _ -> false
     member _.Item k = dict.[k]
     member _.TryGetValue k = dict.TryGetValue k
     member _.AsEnumerable() = Seq.readonly dict
     member _.GetEnumerator() = dict.GetEnumerator()
+    member _.Freeze() =
+        isFrozen <- true
+        for v in dict.Values do v.Freeze()
 
 type Closure1Table = LookaheadSetDictionary<LR0Item>
 

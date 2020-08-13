@@ -232,6 +232,7 @@ let designtimeFarkleGen =
 type FarkleVsGOLDParser = FarkleVsGOLDParser of farkleGramamr: Grammar * goldGrammar: Grammar
 
 let farkleVsGOLDParserGen = gen {
+    GOLDParserBridge.checkIfGOLDExists()
     let! gDef = Gen.map DesigntimeFarkleBuild.createGrammarDefinition Arb.generate
     let farkleGramamr =
         gDef

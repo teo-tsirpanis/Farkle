@@ -125,7 +125,7 @@ let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
             firstSets.CopyToLookaheadSet nont laSet |> ignore
             firstSets.HasEmpty nont
         | _ -> false) true
-    |> function true -> laSet.AddRange lookahead |> ignore | false -> ()
+    |> function true -> laSet.UnionWith lookahead |> ignore | false -> ()
     laSet.Freeze()
     laSet
 
@@ -148,7 +148,7 @@ let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
                         |> getFirstSetOfSequence firstSets lookahead
                     for prod in fGetAllProductions nont do
                         q.Enqueue(LR0Item.Create prod, first)
-    results.AsEnumerable()
+    results
     |> Seq.map (fun (KeyValue(k, v)) -> v.Freeze(); {Item = k; Lookahead = v})
     |> List.ofSeq
 

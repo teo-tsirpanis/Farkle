@@ -8,16 +8,19 @@ module Farkle.Builder.LALRBuild
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Builder.LALRBuildTypes
-open System
 open System.Collections.Generic
 open System.Collections.Immutable
+
+/// A lightweight type annotation for different types of collections.
+let inline private IA<'a> (x: ImmutableArray<'a>) = ignore x
+let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
 /// a nonterminal and the start symbol are required.
 let createLR0KernelItems fGetAllProductions startSymbol =
 
-    let itemSets = ImmutableArray.CreateBuilder()
+    let itemSets = ResizeArray()
 
     let kernelMap = Dictionary()
 
@@ -65,11 +68,13 @@ let createLR0KernelItems fGetAllProductions startSymbol =
     |> impl
     |> ignore
 
-    itemSets.ToImmutable()
+    itemSets
 
 /// Computes the FIRST set of the `Nonterminal`s of the given sequence of `Production`s.
 /// A `None` in the set of a nonterminal is the empty symbol, AKA Epsilon, or ε.
-let computeFirstSetMap (terminals: ImmutableArray<_>) (nonterminals: ImmutableArray<Nonterminal>) productions =
+let computeFirstSetMap terminals nonterminals productions =
+    IA<Nonterminal> nonterminals
+
     let dict = FirstSets(terminals, nonterminals.Length + 1)
     let containsEmpty (x: LALRSymbol) =
         match x with
@@ -127,7 +132,7 @@ let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
 /// Computes the LR(1) CLOSURE function of a single LR(1) item, which
 /// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
 /// A function to get the FIRST set and the productons of a `Nonterminal` is required.
-let closure1 fGetAllProductions (firstSets: FirstSets) xs =
+let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
     let q = Queue(xs: _ seq)
     let results = Closure1Table(firstSets.AllTerminals.Length)
     while q.Count <> 0 do
@@ -150,7 +155,9 @@ let closure1 fGetAllProductions (firstSets: FirstSets) xs =
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
 /// In addition to the usual dependencies, this function also
 /// requires a special `Terminal` which __must not__ already exist in the grammar.
-let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: ImmutableArray<_>) =
+let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
+    RA itemSets
+
     let lookaheads = LookaheadItemsTable(firstSets.AllTerminals.Length)
     let propagate =
         let propagate = ResizeArray()
@@ -173,7 +180,7 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: I
 
     // The next line assumes the first item set's kernel contains only
     // the start production which spontaneously generates an EOF symbol by definition.
-    lookaheads.GetOrCreateEmpty(itemSets.[0].Kernel.MinimumElement, 0).HasEnd <- true
+    lookaheads.GetOrCreateEmpty(itemSets.[0].Kernel.Head, 0).HasEnd <- true
     let mutable changed = true
     while changed do
         changed <- false
@@ -184,10 +191,12 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: I
 
 /// Creates an LALR state table.
 let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+    RA itemSets
+
     let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
     emptyLookahead.Freeze()
-    itemSets
-    |> Seq.map (fun itemSet ->
+    let states = ImmutableArray.CreateBuilder itemSets.Count
+    for itemSet in itemSets do
         let index = uint32 itemSet.Index
         // The book says we have to close the kernel under LR(1) to create the
         // action table. However, we have already created the GOTO table from the LR(0)
@@ -245,48 +254,28 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
                 // Essentially, reducing <S'> -> <S> means accepting.
                 | LALRAction.Reduce {Head = head} when head = startSymbol -> LALRAction.Accept
                 | action -> action)
-        {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
-    )
-    |> ImmutableArray.CreateRange
-
-/// Checks for a symbol with an index of UInt32.MaxValue and
-/// throws an exception if it finds one.
-let private checkIllegalIndices (productions: ImmutableArray<_>) =
-    let inline doCheck sym =
-        let idx = (^TSymbol: (member Index: uint32) sym)
-        if idx = UInt32.MaxValue then
-            // This error needs the API to be abused in a specific
-            // way to happen, which is the reason we throw an exception.
-            failwithf "%O cannot have an index of %d." sym idx
-    for i = 0 to productions.Length - 1 do
-        let prod = productions.[i]
-        doCheck prod.Head
-        for j = 0 to prod.Handle.Length - 1 do
-            match prod.Handle.[j] with
-            | LALRSymbol.Terminal term -> doCheck term
-            | LALRSymbol.Nonterminal nont -> doCheck nont
+        states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
+    states.MoveToImmutable()
 
 /// Builds an LALR parsing table from the grammar with the given
 /// starting symbol that contains the given `Production`s.
 /// Having a symbol with an index of `UInt32.MaxValue` will cause an exception.
 let buildProductionsToLALRStates startSymbol (terminals: ImmutableArray<Terminal>)
     (nonterminals: ImmutableArray<Nonterminal>) productions =
-    checkIllegalIndices productions
-    // This function can be abused by specifying a symbol with an index of
-    // 2^32 - 1. It can't happen from DesigntimeFarkleBuild (indices are
-    // assigned sequentially, their maximum is int's maximum). Note
+    IA productions
+
     let s' = Nonterminal(uint32 nonterminals.Length, "S'")
     let productions = productions.Add {
         Index = uint32 productions.Length
         Head = s'
-        Handle = ImmutableArray.Empty.Add(LALRSymbol.Nonterminal startSymbol)
+        Handle = ImmutableArray.Create(LALRSymbol.Nonterminal startSymbol)
     }
     let nonterminalsToProductions =
         productions
         |> Seq.groupBy(fun x -> x.Head)
-        |> Seq.map (fun (k, v) -> k, set v)
-        |> Map.ofSeq
-    let fGetAllProductions k = Map.find k nonterminalsToProductions
+        |> Seq.map (fun (k, v) -> KeyValuePair(k, set v))
+        |> ImmutableDictionary.CreateRange
+    let fGetAllProductions k = nonterminalsToProductions.[k]
 
     let kernelItems = createLR0KernelItems fGetAllProductions s'
     let firstSets = computeFirstSetMap terminals nonterminals productions

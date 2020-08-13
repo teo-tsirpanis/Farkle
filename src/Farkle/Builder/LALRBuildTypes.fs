@@ -34,11 +34,11 @@ with
 
 type LR0ItemSet = {
     Index: int
-    Kernel: Set<LR0Item>
+    Kernel: LR0Item list
     Goto: ImmutableDictionary<LALRSymbol, int>
 }
 with
-    static member Create idx kernel = {Index = idx; Kernel = kernel; Goto = ImmutableDictionary.Empty}
+    static member Create idx kernel = {Index = idx; Kernel = Set.toList kernel; Goto = ImmutableDictionary.Empty}
 
 type LookaheadSet(terminalCount) =
     let ban = BitArrayNeo(terminalCount, false)

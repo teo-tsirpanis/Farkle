@@ -43,9 +43,8 @@ let createLR0KernelItems fGetAllProductions startSymbol =
                     match item.CurrentSymbol with
                     | LALRSymbol.Terminal _ -> ()
                     | LALRSymbol.Nonterminal nont ->
-                        nont
-                        |> fGetAllProductions
-                        |> Set.iter (LR0Item.Create >> q.Enqueue)
+                        for prod in fGetAllProductions nont do
+                            prod |> LR0Item.Create |> q.Enqueue
         let goto =
             visitedItems
             |> Seq.filter (fun x -> not x.IsAtEnd)
@@ -77,10 +76,9 @@ let computeFirstSetMap (terminals: ImmutableArray<_>) (nonterminals: ImmutableAr
         | LALRSymbol.Terminal _ -> false
         | LALRSymbol.Nonterminal nont -> dict.HasEmpty nont
 
-    productions
-    |> Seq.iter (fun {Head = x; Handle = xs} ->
+    for {Head = x; Handle = xs} in productions do
         if xs.IsEmpty then
-            dict.AddEmpty x |> ignore)
+            dict.AddEmpty x |> ignore
 
     let mutable changed = true
 
@@ -143,9 +141,8 @@ let closure1 fGetAllProductions (firstSets: FirstSets) xs =
                         item.Production.Handle
                         |> Seq.skip (item.DotPosition + 1)
                         |> getFirstSetOfSequence firstSets lookahead
-                    nont
-                    |> fGetAllProductions
-                    |> Set.iter (fun prod -> q.Enqueue(LR0Item.Create prod, first))
+                    for prod in fGetAllProductions nont do
+                        q.Enqueue(LR0Item.Create prod, first)
     results.AsEnumerable()
     |> Seq.map (fun (KeyValue(k, v)) -> v.Freeze(); {Item = k; Lookahead = v})
     |> List.ofSeq
@@ -160,13 +157,10 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: I
         let hashTerminalSet = LookaheadSet firstSets.AllTerminals.Length
         hashTerminalSet.HasHash <- true
         hashTerminalSet.Freeze()
-        itemSets
-        |> Seq.iter (fun itemSet ->
-            itemSet.Kernel
-            |> Set.iter (fun item ->
+        for itemSet in itemSets do
+            for item in itemSet.Kernel do
                 let closure = closure1 fGetAllProductions firstSets [item, hashTerminalSet]
-                closure
-                |> List.iter (fun {Item = closureItem; Lookahead = la} ->
+                for {Item = closureItem; Lookahead = la} in closure do
                     if not closureItem.IsAtEnd then
                         match itemSet.Goto.TryGetValue(closureItem.CurrentSymbol) with
                         | true, gotoIdx ->
@@ -174,7 +168,7 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) (itemSets: I
                             if la.HasHash then
                                 propagate.Add((item, itemSet.Index), (gotoKernel, gotoIdx))
                             lookaheads.AddRange (gotoKernel, gotoIdx) la |> ignore
-                        | false, _ -> ())))
+                        | false, _ -> ()
         propagate
 
     // The next line assumes the first item set's kernel contains only
@@ -224,17 +218,14 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
                 | true, existingAction ->
                     b.[term] <- fResolveConflict index (Some term) existingAction action
                 | false, _ -> b.Add(term, action)
-            itemSet.Goto
-            |> Seq.iter (function
+            for item in itemSet.Goto do
+                match item with
                 | KeyValue(LALRSymbol.Terminal term, stateToShiftTo) ->
                     addAction term (LALRAction.Shift(uint32 stateToShiftTo))
                 | _ -> ()
-            )
-            closedItem
-            |> List.iter (fun item ->
+            for item in closedItem do
                 for idx in item.Lookahead do
                     addAction firstSets.AllTerminals.[idx] (LALRAction.Reduce item.Item.Production)
-            )
             b.ToImmutable()
         let eofAction =
             let rec resolveEOFConflict =

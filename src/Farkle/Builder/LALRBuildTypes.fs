@@ -66,9 +66,9 @@ type LookaheadSet(terminalCount) =
     member _.AddRange (laSet: LookaheadSet, ?changeExtraSymbols) =
         checkFrozen()
         if defaultArg changeExtraSymbols true then
-            let changed = ban.Or laSet.Bits || hasEnd <> laSet.HasEnd || hasHash <> laSet.HasHash
-            hasEnd <- laSet.HasEnd
-            hasHash <- laSet.HasHash
+            let changed = ban.Or laSet.Bits || (not hasEnd && laSet.HasEnd) || (not hasHash && laSet.HasHash)
+            hasEnd <- hasEnd || laSet.HasEnd
+            hasHash <- hasHash || laSet.HasHash
             changed
         else
             ban.Or laSet.Bits
@@ -156,12 +156,3 @@ type LookaheadSetDictionary<'key when 'key: equality>(terminalCount) =
 type Closure1Table = LookaheadSetDictionary<LR0Item>
 
 type LookaheadItemsTable = LookaheadSetDictionary<LR0Item * int>
-
-/// A special type which represents the lookahead symbol.
-type LookaheadSymbol =
-    /// The lookahead symbol is a `Terminal`.
-    | Terminal of Terminal
-    /// The lookahead symbol is a special symbol used for the LR(1) closure.
-    | Hash
-    /// The lookahead symbol is the EOF, AKA $.
-    | End

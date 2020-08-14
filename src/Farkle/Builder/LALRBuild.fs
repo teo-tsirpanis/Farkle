@@ -3,15 +3,15 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+/// Functions to generate LALR state tables from a grammar.
 module Farkle.Builder.LALRBuild
 
-open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Builder.LALRBuildTypes
 open System.Collections.Generic
 open System.Collections.Immutable
 
-/// A lightweight type annotation for different types of collections.
+// Lightweight type annotations for different types of collections.
 let inline private IA<'a> (x: ImmutableArray<'a>) = ignore x
 let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 
@@ -260,8 +260,8 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
 /// Builds an LALR parsing table from the grammar with the given
 /// starting symbol that contains the given `Production`s.
 /// Having a symbol with an index of `UInt32.MaxValue` will cause an exception.
-let buildProductionsToLALRStates startSymbol (terminals: ImmutableArray<Terminal>)
-    (nonterminals: ImmutableArray<Nonterminal>) productions =
+let buildProductionsToLALRStates startSymbol terminals nonterminals productions =
+    IA nonterminals
     IA productions
 
     let s' = Nonterminal(uint32 nonterminals.Length, "S'")

@@ -1,4 +1,4 @@
-//This lexer has been writen with help of "Real world OCaml" book By Yaron Minsky, Anil Madhavapeddy, Jason Hickey (chapter 15)
+//This lexer has been written with help of "Real world OCaml" book By Yaron Minsky, Anil Madhavapeddy, Jason Hickey (chapter 15)
 {
 
 module FsLexYacc.JSON.Lexer

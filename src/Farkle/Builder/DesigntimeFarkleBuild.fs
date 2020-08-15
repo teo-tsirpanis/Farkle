@@ -293,7 +293,8 @@ module DesigntimeFarkleBuild =
     let private aPrioriConsistencyCheck grammar = either {
 
         let emptyNonterminals = HashSet grammar.Symbols.Nonterminals
-        grammar.Productions |> Seq.iter (fun x -> emptyNonterminals.Remove(x.Head) |> ignore)
+        for prod in grammar.Productions do
+            emptyNonterminals.Remove prod.Head |> ignore
         if emptyNonterminals.Count <> 0 then
             do! emptyNonterminals |> Seq.map (fun x -> x.Name) |> set |> BuildError.EmptyNonterminals |> Error
 

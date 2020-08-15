@@ -39,7 +39,7 @@ let discover (asm: Assembly) =
             // The user however can explicitly prohibit a designtime Farkle
             // from being probed by prepending its name with an underscore.
             typeof<DesigntimeFarkle>.IsAssignableFrom fld.FieldType
-            && fld.IsInitOnly && not (fld.Name.StartsWith("_")))
+            && fld.IsInitOnly && not (fld.Name.StartsWith("_", StringComparison.Ordinal)))
         |> Seq.map (fun fld -> fld.GetValue(null))
         |> Seq.choose tryUnbox<PrecompilableDesigntimeFarkle>
         |> Seq.filter (fun pcdf -> pcdf.DeclaringAssembly = asm)
@@ -49,9 +49,8 @@ let discover (asm: Assembly) =
     while typesToProcess.Count <> 0 do
         let typ = typesToProcess.Dequeue()
         types.Add typ
-        nestedTypesBindingFlags
-        |> typ.GetNestedTypes
-        |> Array.iter typesToProcess.Enqueue
+        for nestedType in typ.GetNestedTypes(nestedTypesBindingFlags) do
+            typesToProcess.Enqueue nestedType
     types
     |> Seq.collect probeType
     // Precompiled designtime Farkles are F# object types, which

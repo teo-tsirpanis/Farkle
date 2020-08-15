@@ -119,6 +119,7 @@ module RangeMap =
             Seq.map (fun (kFrom, kTo) -> kFrom, kTo, value) keys)
         |> RangeMap
 
+    [<NoDynamicInvocation>]
     /// Creates a `RangeMap` from a sequence of key-value pairs.
     /// The keys can be of any type that can has the notion of "one" and equality checking.
     // This function can be used from F# like this:
@@ -144,6 +145,7 @@ module RangeMap =
         else
             RangeMap.Empty
 
+    [<NoDynamicInvocation>]
     let inline toSeqEx (rm: RangeMap<'key, _>) =
         rm
         |> Seq.collect (fun {KeyFrom = kFrom; KeyTo = kTo; Value = v} ->

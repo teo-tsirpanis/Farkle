@@ -8,6 +8,7 @@ namespace global
 open System
 open System.Runtime.CompilerServices
 
+/// This attribute is used by Covarsky.
 [<AttributeUsage(AttributeTargets.GenericParameter)>]
 type internal CovariantOutAttribute() =
     inherit Attribute()

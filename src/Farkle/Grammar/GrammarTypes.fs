@@ -36,19 +36,17 @@ with
     /// The symbol's name.
     member x.Name = match x with | Terminal (_, name) -> name
     interface IEquatable<Terminal> with
-        member x.Equals(x') = x.Index = x'.Index
+        member x.Equals x' = x.Index = x'.Index
     interface IComparable<Terminal> with
-        member x.CompareTo(x') = compare x.Index x'.Index
-    interface IStructuralEquatable with
-        member x.Equals(x', _) = x.Equals(x')
-        member x.GetHashCode(_) = x.GetHashCode()
-    interface IStructuralComparable with
-        member x.CompareTo(x', _) = compare x.Index (x' :?> Terminal).Index
+        member x.CompareTo x' = compare x.Index x'.Index
+    interface IComparable with
+        member x.CompareTo x' = compare x.Index (x' :?> Terminal).Index
     override x.Equals(x') =
+        obj.ReferenceEquals(x, x') ||
         match x' with
         | :? Terminal as x' -> x.Index = x'.Index
         | _ -> false
-    override x.GetHashCode() = hash x.Index
+    override x.GetHashCode() = x.Index.GetHashCode()
     override x.ToString() =
         let name = x.Name
         // The symbol's name should be quoted if...
@@ -71,24 +69,22 @@ with
 /// A symbol which is produced by a concatenation of other `Terminal`s and `Nonterminal`s, as the LALR parser dictates.
 type Nonterminal = Nonterminal of index: uint32 * name: string
 with
-    /// The terminal's index. Nonterminals with the same index are considered equal.
+    /// The nonterminal's index. Nonterminals with the same index are considered equal.
     member x.Index = match x with | Nonterminal (idx, _) -> idx
     /// The nonterminal's name.
     member x.Name = match x with | Nonterminal (_, name) -> name
     interface IEquatable<Nonterminal> with
-        member x.Equals(x') = x.Index = x'.Index
+        member x.Equals x' = x.Index = x'.Index
     interface IComparable<Nonterminal> with
-        member x.CompareTo(x') = compare x.Index x'.Index
-    interface IStructuralEquatable with
-        member x.Equals(x', _) = x.Equals(x')
-        member x.GetHashCode(_) = x.GetHashCode()
-    interface IStructuralComparable with
-        member x.CompareTo(x', _) = compare x.Index (x' :?> Nonterminal).Index
-    override x.Equals(x') =
+        member x.CompareTo x' = compare x.Index x'.Index
+    interface IComparable with
+        member x.CompareTo x' = compare x.Index (x' :?> Nonterminal).Index
+    override x.Equals x' =
+        obj.ReferenceEquals(x, x') ||
         match x' with
         | :? Nonterminal as x' -> x.Index = x'.Index
         | _ -> false
-    override x.GetHashCode() = hash x.Index
+    override x.GetHashCode() = x.Index.GetHashCode()
     override x.ToString() = sprintf "<%s>" x.Name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
@@ -96,14 +92,14 @@ with
 type Noise = Noise of name: string
 with
     /// The symbol's name.
-    member x.Name = match x with | Noise (name) -> name
+    member x.Name = match x with | Noise name -> name
     override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the end of a group.
 type GroupEnd = GroupEnd of name: string
 with
     /// The symbol's name.
-    member x.Name = match x with | GroupEnd (name) -> name
+    member x.Name = match x with | GroupEnd name -> name
     override x.ToString() = sprintf "(%s)" x.Name
 
 /// A symbol signifying the start of a group.
@@ -199,9 +195,11 @@ type LALRSymbol =
             | Terminal term -> string term
             | Nonterminal nont -> string nont
 
+[<CustomEquality; CustomComparison>]
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
 type Production = {
-    /// The index of the production.
+    /// The index of the production. Productions
+    /// with the same index are considered equal.
     Index: uint32
     /// The `Nonterminal` the production is referring to.
     // Storing the map's key (the nonterminal) inside its value (this production)
@@ -217,7 +215,21 @@ with
         |> Seq.map string
         |> String.concat " "
         |> sprintf "%O ::= %s" head
+    member x.Equals x' = x.Index = x'.Index
+    member x.CompareTo x' = compare x.Index x'.Index
+    override x.Equals x' =
+        obj.ReferenceEquals(x, x') ||
+        match x' with
+        | :? Production as x' -> x.Index = x'.Index
+        | _ -> false
+    override x.GetHashCode() = x.Index.GetHashCode()
     override x.ToString() = Production.Format(x.Head, x.Handle)
+    interface IEquatable<Production> with
+        member x.Equals x' = x.Index = x'.Index
+    interface IComparable<Production> with
+        member x.CompareTo x' = compare x.Index x'.Index
+    interface IComparable with
+        member x.CompareTo x' = x.CompareTo (x' :?> _)
 
 /// An action to be taken by the LALR parser according to the given `Terminal`.
 [<RequireQualifiedAccess>]

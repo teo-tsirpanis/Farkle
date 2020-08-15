@@ -5,24 +5,17 @@
 
 module Farkle.Tools.Precompiler
 
+#if !NETFRAMEWORK
 open Farkle.Builder
 open Farkle.Common
 open Farkle.Grammar
 open Mono.Cecil
 open Serilog
-open System
 open System.IO
-open System.Reflection
 open System.Runtime.CompilerServices
+open System.Runtime.Loader
 
-type private LoggerWrapper(log: ILogger) =
-    inherit MarshalByRefObject()
-    override _.InitializeLifetimeService() = null
-    member _.Verbose(template) = log.Verbose(template)
-    member _.Information(template, [<ParamArray>] args: _ []) = log.Information(template, args)
-    member _.Error(template, [<ParamArray>] args: _ []) = log.Error(template, args)
-
-let private dynamicDiscoverAndPrecompile asm (log: LoggerWrapper) =
+let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
     asm
     |> Precompiler.Discoverer.discover
     |> List.map (fun pcdf ->
@@ -46,38 +39,12 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
         | Error msg -> Error(string msg)
         |> (fun x -> name, x))
 
-type private DynamicDiscoverer(log: LoggerWrapper) =
-    inherit MarshalByRefObject()
-    override _.InitializeLifetimeService() = null
-    member _.DiscoverAndPrecompile(path) =
-        log.Verbose("Hello from the other side")
-        let asm = Assembly.LoadFile path
-        dynamicDiscoverAndPrecompile asm log
-
-let isReferenceAssembly (asm: AssemblyDefinition) =
+let private isReferenceAssembly (asm: AssemblyDefinition) =
     asm.CustomAttributes
     |> Seq.exists (fun attr ->
         attr.AttributeType.FullName = typeof<ReferenceAssemblyAttribute>.FullName)
 
-#if NET472
-let getAssemblyName (path: string) = AssemblyDefinition.ReadAssembly(path).Name.Name
-
-let makeResolver references =
-    let dict =
-        references
-        |> Seq.map (fun path -> getAssemblyName path, path)
-        |> readOnlyDict
-    ResolveEventHandler(fun _ e ->
-        match e.Name with
-        | "Farkle" -> null
-        | name ->
-            match dict.TryGetValue name with
-            | true, path -> Assembly.LoadFile path
-            | false, _ -> null)
-#else
-open System.Runtime.Loader
-
-type private FarkleAwareAssemblyLoadContext(path, references: string seq, log: ILogger) as this =
+type private PrecompilerContext(path, references: string seq, log: ILogger) as this =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
     let dict =
         references
@@ -91,7 +58,7 @@ type private FarkleAwareAssemblyLoadContext(path, references: string seq, log: I
         |> readOnlyDict
     let asm =
         let bytes = File.ReadAllBytes path
-        let m = new MemoryStream(bytes, true)
+        let m = new MemoryStream(bytes, false)
         this.LoadFromStream m
     member _.TheAssembly = asm
     override this.Load(name) =
@@ -108,72 +75,28 @@ type private FarkleAwareAssemblyLoadContext(path, references: string seq, log: I
                 this.LoadFromAssemblyPath path
             | false, _ -> null
 
-let private ensureUnloaded (log: ILogger) (wr: WeakReference) =
-    if wr.IsAlive then
-        log.Debug("Running a full GC to free the assembly context...")
-        let mutable i = 10
-        while wr.IsAlive && (i > 0) do
-            GC.Collect()
-            GC.WaitForPendingFinalizers()
-            GC.Collect()
-            i <- i - 1
-        if wr.IsAlive then
-            // Not getting unloaded does not affect weaving an assembly.
-            // This is great news; a warning is not necessary.
-            log.Debug("The assembly context was not collected after {GCTries} tries.", 10)
-        else
-            log.Debug("Assembly context unloaded after {GCTries} tries.", 10 - i)
-#endif
-
 [<MethodImpl(MethodImplOptions.NoInlining)>]
-let private getPrecompilableGrammars (log: ILogger) references path =
-    let logw = LoggerWrapper(log)
-    #if NET472
-    log.Debug("Creating AppDomain...")
-    let ad = AppDomain.CreateDomain(sprintf "Farkle.Tools precompiler for %s" path)
-    try
-        ad.add_AssemblyResolve(makeResolver references)
-        let theHeroicPrecompiler =
-            ad.CreateInstanceAndUnwrap(
-                Assembly.GetExecutingAssembly().FullName,
-                typeof<DynamicDiscoverer>.FullName,
-                [|logw|])
-            |> unbox<DynamicDiscoverer>
-        theHeroicPrecompiler.DiscoverAndPrecompile path, WeakReference(obj())
-    finally
-        // Fody does that, no idea why. Maybe it's needed
-        // because the lifetime service is set to null.
-        Runtime.Remoting.RemotingServices.Disconnect logw |> ignore
-        AppDomain.Unload(ad)
-    #else
-    let alc = FarkleAwareAssemblyLoadContext(path, references, log)
+let private getPrecompilableGrammars log references path =
+    let alc = PrecompilerContext(path, references, log)
     try
         let asm = alc.TheAssembly
         if asm.GetName().Name = typeof<DesigntimeFarkle>.Assembly.GetName().Name then
             log.Error("Cannot precompile an assembly named 'Farkle'")
             []
         else
-            dynamicDiscoverAndPrecompile asm logw
-        , WeakReference(alc)
+            dynamicDiscoverAndPrecompile asm log
     finally
         alc.Unload()
-        log.Verbose("The context is at generation {Generation}", GC.GetGeneration(alc))
-    #endif
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
     List.iter (fun (name, data: _ []) ->
         let name = Precompiler.Loader.getPrecompiledGrammarResourceName name
-        let res = EmbeddedResource(name, Mono.Cecil.ManifestResourceAttributes.Public, data)
+        let res = EmbeddedResource(name, ManifestResourceAttributes.Public, data)
         asm.MainModule.Resources.Add res) pcdfs
     not pcdfs.IsEmpty
 
 let discoverAndPrecompile log references path =
-    let pcdfs, wr = getPrecompilableGrammars log references path
-    #if NET472
-    ignore wr
-    #else
-    ensureUnloaded log wr
-    #endif
+    let pcdfs = getPrecompilableGrammars log references path
 
     pcdfs
     |> Seq.map fst
@@ -189,4 +112,8 @@ let discoverAndPrecompile log references path =
 or the Rename extension method.")
             Error()
         | false -> Ok pcdfs)
+#else
+let discoverAndPrecompile _ _ _ = Ok []
 
+let weaveAssembly _ _ = false
+#endif

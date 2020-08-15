@@ -24,4 +24,4 @@ module internal List =
 module internal ImmutableList =
 
     /// Adds the specified object to the end of the given immutable list.
-    let add (xs: ImmutableList<_>) x = xs.Add x
+    let inline add (xs: ImmutableList<_>) x = xs.Add x

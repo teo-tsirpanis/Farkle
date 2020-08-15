@@ -81,7 +81,8 @@ type LookaheadSet(terminalCount) =
     member _.UnionWith (laSet: LookaheadSet, ?changeExtraSymbols) =
         checkFrozen()
         if defaultArg changeExtraSymbols true then
-            let changed = ban.Or laSet.Bits || (not hasEnd && laSet.HasEnd) || (not hasHash && laSet.HasHash)
+            // Instead of "not a && b", we can write a < b.
+            let changed = ban.Or laSet.Bits || hasEnd < laSet.HasEnd || hasHash < laSet.HasHash
             hasEnd <- hasEnd || laSet.HasEnd
             hasHash <- hasHash || laSet.HasHash
             changed

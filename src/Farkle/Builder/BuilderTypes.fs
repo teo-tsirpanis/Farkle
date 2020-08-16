@@ -84,7 +84,7 @@ type BuildError =
     | EmptyNonterminals of string Set
     /// Some productions are defined twice.
     | DuplicateProductions of (Nonterminal * ImmutableArray<LALRSymbol>) Set
-    /// An error occured while parsing a regular expression.
+    /// An error occurred while parsing a regular expression.
     | RegexParseError of (DFASymbol * Message<ParseErrorType>) list
     /// The grammar has more symbols than the supported limit.
     | SymbolLimitExceeded

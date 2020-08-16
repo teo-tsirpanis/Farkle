@@ -6,7 +6,7 @@ So, are we ready? Let's do this!
 
 ## Virtual Terminals
 
-When GOLD Parser's version 2.2 was released, back in 2004, one of its new features was the so-called "Virtual Terminals". So, what are these? A virtual terminal is a terminal that does not come from the engine's tokenizer, but from the user code that interacts with the engine. A connon use for virtual terminals is a parser for a language like Python. As you might have known, Python does not use keywords to define blocks of code, but instead uses indentation; the so-called "off-side rule". With virtual terminals, you could have written a grammar like this one:
+When GOLD Parser's version 2.2 was released, back in 2004, one of its new features was the so-called "Virtual Terminals". So, what are these? A virtual terminal is a terminal that does not come from the engine's tokenizer, but from the user code that interacts with the engine. A common use for virtual terminals is a parser for a language like Python. As you might have known, Python does not use keywords to define blocks of code, but instead uses indentation; the so-called "off-side rule". With virtual terminals, you could have written a grammar like this one:
 
 ```
 "Start Symbol" = <Code Block>

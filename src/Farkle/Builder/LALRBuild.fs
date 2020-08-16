@@ -131,7 +131,7 @@ let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
 
 /// Computes the LR(1) CLOSURE function of a single LR(1) item, which
 /// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
-/// A function to get the FIRST set and the productons of a `Nonterminal` is required.
+/// A function to get the FIRST set and the productions of a `Nonterminal` is required.
 let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
     let q = Queue(xs: _ seq)
     let results = Closure1Table(firstSets.AllTerminals.Length)

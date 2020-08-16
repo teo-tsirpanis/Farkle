@@ -14,7 +14,7 @@ open System.Collections.Immutable
 [<CompiledName("TerminalCallback`1")>]
 /// <summary>A delegate that accepts the position and data of a terminal, and transforms them into an arbitrary object.</summary>
 /// <remarks>
-///     <para>In F#, this type is named <c>T</c> - from "Terminal" and was shortened to avoid clutter in user code.</para>
+///     <para>In F#, this type is named <c>T</c> - from "Transformer" and was shortened to avoid clutter in user code.</para>
 ///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions.</para>
 /// </remarks>
 type T<[<CovariantOut>] 'T> = delegate of Position * ReadOnlySpan<char> -> 'T
@@ -97,7 +97,7 @@ type internal AbstractTerminal =
     inherit DesigntimeFarkle
     /// <summary>The <see cref="Regex"/> that defines this terminal.</summary>
     abstract Regex: Regex
-    /// The delagate that converts the terminal's position and data into an arbitrary object.
+    /// The delegate that converts the terminal's position and data into an arbitrary object.
     abstract Transformer: T<obj>
 
 type internal Literal = Literal of string

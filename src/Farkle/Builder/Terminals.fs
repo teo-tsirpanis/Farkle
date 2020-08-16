@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 [<RequireQualifiedAccess>]
-/// <summary>Some desingtime Farkles that
+/// <summary>Some designtime Farkles that
 /// are commonly used in many grammars.</summary>
 /// <remarks>
 /// These functions take a name and create

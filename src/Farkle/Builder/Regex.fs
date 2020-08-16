@@ -30,7 +30,7 @@ module private RegexUtils =
 [<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 /// <summary>A regular expression that is used to specify a tokenizer symbol.</summary>
 /// <remarks>Checking two regular expressions for equality does not mean that they
-/// recognize the same symbols, but that their internal strucure is the same.</remarks>
+/// recognize the same symbols, but that their internal structure is the same.</remarks>
 type Regex =
     internal
     /// These regexes sorted as one after the other.
@@ -194,7 +194,7 @@ type Regex =
         let thunk = lazy(RegexUtils.DoParse.Invoke x)
         RegexString(x, thunk)
 
-/// F#-friendly membrs of the `Regex` class.
+/// F#-friendly members of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.
 module Regex =
 

@@ -126,7 +126,7 @@ type FirstSets(terminals: ImmutableArray<Terminal>, nonterminalCount) =
         not previousValue
     /// Adds the FIRST set of the second
     /// nonterminal to the FIRST set of the first one.
-    /// Returns whether the colelction was actually changed.
+    /// Returns whether the collection was actually changed.
     /// The empty symbol is not copied if it exists.
     member _.AddFromNonterminal (Nonterminal(idxDest, _)) (Nonterminal(idxSrc, _)) =
         let banDest = arr.[int idxDest]

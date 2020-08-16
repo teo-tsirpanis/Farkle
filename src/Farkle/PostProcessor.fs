@@ -11,7 +11,8 @@ open System
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
-/// <typeparam name="T">The type of the final object this post-processor will return from a gramamr.</typeparam>
+/// <typeparam name="T">The type of the final object this post-processor
+/// will return from a grammar.</typeparam>
 type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     abstract Fuse: Production * obj[] -> obj

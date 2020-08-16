@@ -372,7 +372,7 @@ module DesigntimeFarkleBuild =
     /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
     /// The construction of the grammar may fail. In this case, the output of the
     /// post-processor is indeterminate. Using this function (and all others in this
-    /// mudule) will always build a new grammar, even if a precompiled one is available.
+    /// module) will always build a new grammar, even if a precompiled one is available.
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
         let myLovelyGrammarDefinition = createGrammarDefinition df

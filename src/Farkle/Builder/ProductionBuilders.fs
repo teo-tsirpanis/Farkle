@@ -28,9 +28,6 @@ open System.Collections.Immutable
 ///     into the eventual type of the returned <see cref="Production{T}"/>. It comes in two editions.
 ///     One that takes an F# function and another one that takes a delegate.</para>
 /// </remarks>
-/// <typeparam name="T">The type of the concrete production builder. Used so that
-/// <see cref="AbstractProductionBuilder{TBuilder}.Append"/>
-/// can return the correct production builder type</typeparam>
 type ProductionBuilder internal(members) =
     /// Creates a production builder whose members are the given objects.
     /// The objects must be either strings or characters (where they will be

@@ -12,15 +12,15 @@ To create these beautiful source files, Farkle uses [Scriban][scriban]. Scriban 
 
 ---
 
-To integrate with Scriban, external libraries like Farkle expose certain veriables and functions to Scriban templates. The variables exposed by Farkle are the following:
+To integrate with Scriban, external libraries like Farkle expose certain variables and functions to Scriban templates. The variables exposed by Farkle are the following:
 
 * `file_extension`: If you did not specify the file name of the generated file, it will have the same name as your grammar file, with the extension changed to the value of this variable. It is good practice to change it from the default `.out.txt`. For example, if Farkle gets ported to Pascal, you'd better write `{{ file_extension = ".pas" }}` at the beginning of the template for this language.
 
 * `farkle`: An object containing information about Farkle itself.
 
-  * `farkle.version`: The version of the tool used to grnerate the template.
+  * `farkle.version`: The version of the tool used to generate the template.
 
-* `grammar`: An objct describing the grammar that was given. It is not a full-blown object of type `Farkle.Grammar.Gramamr`, but a cut-down object, because of [problems of Scriban][scriban-issue-151]. If you want extra functionality to this object, fell free to open an issue.
+* `grammar`: An object describing the grammar that was given. It is not a full-blown object of type `Farkle.Grammar.Gramamr`, but a cut-down object, because of [problems of Scriban][scriban-issue-151]. If you want extra functionality to this object, fell free to open an issue.
 
   * `grammar.properties`: A key-value pair of the grammar's metadata. See more at the [documentation of GOLD Parser][gold-properties].
 

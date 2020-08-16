@@ -52,7 +52,7 @@ type private CharStreamSource() =
     /// from the given index with the given length.
     abstract GetSpanForCharacters: idx: uint64 * len: int -> ReadOnlySpan<char>
     /// Disposes unmanaged resources using a well-known pattern.
-    /// To be overriden on sources that require it.
+    /// To be overridden on sources that require it.
     abstract Dispose: unit -> unit
     default __.Dispose () = ()
     interface IDisposable with

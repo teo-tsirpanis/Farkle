@@ -251,7 +251,7 @@ module DesigntimeFarkleOperators =
         nont :> DesigntimeFarkle<_>
 
     /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes
-    /// many occurences of `df` separated by `sep`.
+    /// many occurrences of `df` separated by `sep`.
     let sepBy (sep: DesigntimeFarkle) df =
         nonterminalf "%s List" df
         ||= [

@@ -6,7 +6,7 @@ Farkle is a library written in F#, but supporting the much more used C# is a val
 
 ## Building grammars
 
-F# programs using Farkle use an operator-ladden API to compose designtime Farkles. Because C# does not support custom operators, we can instead use a different API based on extension methods.
+F# programs using Farkle use an operator-laden API to compose designtime Farkles. Because C# does not support custom operators, we can instead use a different API based on extension methods.
 
 ### Creating regexes
 

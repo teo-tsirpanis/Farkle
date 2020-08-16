@@ -149,7 +149,7 @@ with
     /// Whether this group's content is a terminal.
     member x.IsTerminal =
         match x.ContainerSymbol with
-        | Choice1Of2 (_: Terminal) -> true
+        | Choice1Of2 _ -> true
         | Choice2Of2 _ -> false
     /// Whether this group is ended by a new line.
     member x.IsEndedByNewline = x.End.IsNone

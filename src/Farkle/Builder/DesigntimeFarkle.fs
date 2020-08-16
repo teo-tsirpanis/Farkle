@@ -73,7 +73,8 @@ with
 
 [<NoComparison>]
 /// <summary>The base untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
-/// <remarks>User code must not implement this interface, or an exception will be thrown.</remarks>
+/// <remarks>User code must not implement this interface,
+/// or an exception might be thrown.</remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
 type DesigntimeFarkle =
     /// The name of the starting symbol.

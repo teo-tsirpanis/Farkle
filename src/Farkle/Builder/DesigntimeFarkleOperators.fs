@@ -241,7 +241,7 @@ module DesigntimeFarkleOperators =
 
             nont :> DesigntimeFarkle<_>
 
-    /// Like `sep`, but requires at least one element to be present.
+    /// Like `sepBy`, but requires at least one element to be present.
     let sepBy1 (sep: DesigntimeFarkle) df =
         let nont = nonterminalf "%s Non-empty List" df |> nonterminal
         nont.SetProductions(

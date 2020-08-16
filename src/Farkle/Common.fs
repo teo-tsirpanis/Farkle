@@ -20,6 +20,7 @@ with
     member x.TrySet v =
         if Interlocked.CompareExchange(&x._IsSet, 1, 0) = 0 then
             x._Value <- v
+            Thread.MemoryBarrier()
             true
         else
             false

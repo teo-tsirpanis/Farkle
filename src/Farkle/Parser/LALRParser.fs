@@ -15,15 +15,27 @@ open System.Collections.Immutable
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
 
-    let private unloadStackIntoBuffer length stack =
-        let arr = ArrayPool.Shared.Rent length
-        let rec impl stack i =
-            match stack with
-            | (_, x) :: xs when i >= 0 ->
-                Array.set arr i x
-                impl xs (i - 1)
-            | _ -> arr
-        impl stack (length - 1)
+    type private ObjectBuffer() =
+        let mutable arr = ArrayPool.Shared.Rent 16
+        let ensureSized newSize =
+            if newSize > arr.Length then
+                ArrayPool.Shared.Return arr
+                arr <- ArrayPool.Shared.Rent newSize
+        member _.GetBufferFromStack length stack =
+            ensureSized length
+            let mutable i = length - 1
+            let mutable stack = stack
+            // Remember: "a > b" in boolean means "a && (not b)".
+            while i >= 0 > List.isEmpty stack do
+                match stack with
+                | (_, x) :: xs ->
+                    arr.[i] <- x
+                    i <- i - 1
+                    stack <- xs
+                | [] -> ()
+            arr
+        interface IDisposable with
+            member _.Dispose() = ArrayPool.Shared.Return(arr, true)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
     /// <param name="fMessage">A function that gets called for every event that happens.
@@ -36,6 +48,7 @@ module LALRParser =
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
     let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (oops: OptimizedOperations) (pp: PostProcessor<'TResult>) fToken (input: CharStream) =
+        use objBuffer = new ObjectBuffer()
         let fail msg: obj = (input.LastTokenPosition, msg) |> Message |> ParserError |> raise
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
@@ -61,12 +74,8 @@ module LALRParser =
                 match oops.LALRGoto productionToReduce.Head nextState with
                 | Some nextState ->
                     let resultObj =
-                        let tokens = unloadStackIntoBuffer handleLength stack
-                        try
-                            pp.Fuse(productionToReduce, tokens)
-                        finally
-                            Array.Clear(tokens, 0, handleLength)
-                            ArrayPool.Shared.Return(tokens)
+                        let tokens = objBuffer.GetBufferFromStack handleLength stack
+                        pp.Fuse(productionToReduce, tokens)
                     fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack')
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce

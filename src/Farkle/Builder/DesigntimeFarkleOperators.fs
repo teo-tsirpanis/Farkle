@@ -54,7 +54,7 @@ type Group =
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do not include the new line that end it.</param>
     static member Line(name, groupStart, fTransform: T<'T>) =
-        LineGroup(name, groupStart, T.box fTransform) :> DesigntimeFarkle<'T>
+        LineGroup(name, groupStart, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a block group. Block groups end with a string literal.</summary>
     /// <param name="name">The group's name.</param>
     /// <param name="groupStart"> The sequence of characters
@@ -66,7 +66,7 @@ type Group =
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do include <paramref name="groupEnd"/>.</param>
     static member Block(name, groupStart, groupEnd, fTransform: T<'T>) =
-        BlockGroup(name, groupStart, groupEnd, T.box fTransform) :> DesigntimeFarkle<'T>
+        BlockGroup(name, groupStart, groupEnd, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a line group that does not contain any significant
     /// information for the parsing application.</summary>
     /// <param name="name">The group's name.</param>

@@ -69,14 +69,12 @@ and internal RegexBuild = {
     LastPos: BitSet
 }
 
-type internal RegexBuildLeaves = RegexBuildLeaves of ImmutableArray<RegexLeaf>
-with
-    member private x.Value = match x with | RegexBuildLeaves x -> x
-    member x.Length = x.Value.Length
-    member x.Item idx = x.Value.[idx]
-    member x.Characters idx = x.Value.[idx].Characters
-    member x.AllButCharacters idx = x.Value.[idx].AllButCharacters
-    member x.AcceptData idx = x.Value.[idx].AcceptData
+type internal RegexBuildLeaves(arr: ImmutableArray<RegexLeaf>) =
+    member _.Length = arr.Length
+    member _.Item idx = arr.[idx]
+    member _.Characters idx = arr.[idx].Characters
+    member _.AllButCharacters idx = arr.[idx].AllButCharacters
+    member _.AcceptData idx = arr.[idx].AcceptData
 
 let private fIsNullable =
     function
@@ -114,7 +112,7 @@ let private fLastPos =
     | Star x -> x.LastPos
     | Leaf x -> BitSet.Singleton x.Index
 
-let private makeLazy tree = {
+let private makeRB tree = {
     Tree = tree
     IsNullable = fIsNullable tree
     FirstPos = fFirstPos tree
@@ -148,7 +146,7 @@ let internal createRegexBuild caseSensitive regexes =
     let leaves = ImmutableArray.CreateBuilder()
     let addLeaf x =
         leaves.Add(x)
-        x
+        Leaf x
 
     let regexParseErrors = ResizeArray()
 
@@ -171,13 +169,13 @@ let internal createRegexBuild caseSensitive regexes =
         | Leaf _ -> false
 
     let createRegexBuildSingle regex acceptSymbol =
-        let rec impl regex =
+        let rec createTree regex =
             match regex with
-            | Regex.Concat xs -> xs |> List.map (impl >> makeLazy) |> makeConcat
-            | Regex.Alt xs -> xs |> List.map (impl >> makeLazy) |> Alt
-            | Regex.Star x -> x |> impl |> makeLazy |> Star
+            | Regex.Concat xs -> xs |> List.map (createTree >> makeRB) |> makeConcat
+            | Regex.Alt xs -> xs |> List.map (createTree >> makeRB) |> Alt
+            | Regex.Star x -> x |> createTree |> makeRB |> Star
             | Regex.Chars chars ->
-                RegexLeaf.Chars(fIndex(), desensitivizeCase chars) |> addLeaf |> Leaf
+                RegexLeaf.Chars(fIndex(), desensitivizeCase chars) |> addLeaf
             | Regex.AllButChars chars ->
                 let chars = desensitivizeCase chars
                 // It's likely that the character set would not become full until now,
@@ -185,14 +183,14 @@ let internal createRegexBuild caseSensitive regexes =
                 if RegexUtils.isCharSetFull chars then
                     makeConcat []
                 else
-                    RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf |> Leaf
+                    RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf
             | Regex.RegexString (_, Lazy regex) ->
                 match regex with
-                | Ok x -> impl x
+                | Ok x -> createTree x
                 | Error x ->
                     regexParseErrors.Add(acceptSymbol, x)
                     Alt []
-        match impl regex with
+        match createTree regex with
         // If the symbol's regex's root is an Alt, we assign
         // each of its children a different priority. This
         // emulates the behavior of GOLD Parser and resolves
@@ -202,13 +200,13 @@ let internal createRegexBuild caseSensitive regexes =
                 match x with
                 | [] -> []
                 | xs ->
-                    let xs = xs |> Alt |> makeLazy
+                    let xs = xs |> Alt |> makeRB
                     let endLeaf =
                         RegexLeaf.End(fIndex(), priority, acceptSymbol)
-                        |> addLeaf |> Leaf |> makeLazy
+                        |> addLeaf |> makeRB
                     [xs; endLeaf]
                     |> makeConcat
-                    |> makeLazy
+                    |> makeRB
                     |> List.singleton
             // There is no way that both lists below are empty.
             // Regex.Alt has always at least one child.
@@ -223,14 +221,14 @@ let internal createRegexBuild caseSensitive regexes =
             let priority = if isVariableLength regex then TerminalPriority else LiteralPriority
             let endLeaf =
                 RegexLeaf.End(fIndex(), priority, acceptSymbol)
-                |> addLeaf |> Leaf |> makeLazy
-            makeConcat [makeLazy regex; endLeaf]
-        |> makeLazy
+                |> addLeaf |> makeRB
+            makeConcat [makeRB regex; endLeaf]
+        |> makeRB
 
     let theTree =
         regexes
         |> List.map (fun (regex, acceptSymbol) -> createRegexBuildSingle regex acceptSymbol)
-        |> (function | [x] -> x | x -> makeLazy<| Alt x)
+        |> (function | [x] -> x | x -> makeRB (Alt x))
 
     if regexParseErrors.Count = 0 then
         Ok (theTree, leaves.ToImmutable() |> RegexBuildLeaves)

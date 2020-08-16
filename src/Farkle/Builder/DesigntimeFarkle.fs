@@ -291,16 +291,17 @@ with
 
 [<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.
-type internal Group<'T>(name, groupStart, transformer) =
+type internal Group<'T>(name, groupStart, transformer: T<'T>) =
     do nullCheck "name" name
     do nullCheck "groupStart" groupStart
     do nullCheck "transformer" transformer
+    let transformerBoxed = T.box transformer
     interface DesigntimeFarkle with
         member _.Name = name
         member _.Metadata = GrammarMetadata.Default
     interface AbstractGroup with
         member _.GroupStart = groupStart
-        member _.Transformer = transformer
+        member _.Transformer = transformerBoxed
     interface DesigntimeFarkle<'T>
 
 [<Sealed; NoComparison>]

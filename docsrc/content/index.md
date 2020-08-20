@@ -19,6 +19,8 @@ The library comes with comprehensible documentation.
 
  * [Quick Start: Creating a calculator](quickstart.html) to get started with writing a simple calculator in F#.
 
+ * [Choosing a parser for your .NET project](choosing-a-parser.html) to compare Farkle with its competition. 
+
  * [Using Farkle with C#](csharp.html) to learn what changes when using Farkle in a C# project.
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules and functions in the library.

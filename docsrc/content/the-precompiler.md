@@ -1,6 +1,6 @@
 # Farkle's precompiler
 
-Every time an app using Farkle starts, it generates the parser tables. This process takes some time, and it take even more, the app does not reuse the runtime Farkles it creates.
+Every time an app using Farkle starts, it generates the parser tables. This process takes some time, and it take even more, if the app does not reuse the runtime Farkles it creates.
 
 Most apps need to parse a static grammar whose specifications never change between program executions. For example, a compiler or a JSON parser will parse text from the same language every time you use it. Farkle would spend time generating the parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST server parsing hundreds of input strings, but for a compiler that parses only one file, building the grammar every time it is run would take some time, maybe more than the time spent for the parser, if the grammar is big.
 
@@ -10,7 +10,7 @@ One of Farkle's new features that came with version 6 is called _the precompiler
 
 ## How to use it
 
-Using the precompiler is a very easy procedure and does not differ very much from regularly using Farkle.
+Using the precompiler is surprisingly simple and does not differ very much from regularly using Farkle.
 
 ### Preparing the your code
 

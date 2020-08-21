@@ -5,10 +5,6 @@
 
 namespace Farkle.Builder.Untyped
 
-// The obsolete Nonterminal.CreateUntyped
-// calls the obsolete SetProductions.
-#nowarn "44"
-
 open Farkle.Builder
 open Farkle.Common
 open System

@@ -277,7 +277,7 @@ let info =
         "project-author", String.concat ", " authors
         "project-summary", summary
         "project-github", githubLink
-        "project-nuget", "http://nuget.org/packages/Farkle"
+        "project-nuget", "https://nuget.org/packages/Farkle"
     ]
 
 let layoutRootsAll = System.Collections.Generic.Dictionary()

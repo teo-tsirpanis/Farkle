@@ -4,7 +4,7 @@ Besides Farkle, there are many other general-purpose parsing projects for the .N
 
 ## Farkle vs FParsec vs FsLexYacc
 
-The comparison between Farkle, FParsec and FsLexYacc is outlined in the following table. A more detailed explanation is following.
+The comparison between Farkle, [FParsec] and [FsLexYacc] is outlined in the following table. A more detailed explanation is following.
 
 > __Note:__ All projects we will discuss support .NET Standard.
 
@@ -21,12 +21,11 @@ The comparison between Farkle, FParsec and FsLexYacc is outlined in the followin
 |Parsing speed|Good|Good|Subpar|
 |MSBuild integration|Optional|N/A|Required|
 |C# support|Yes|No|No|
-|Written in|F#|F# & C#|F#|
 |Maturity|Ever-evolving|Mature|Mature|
 
 ### Grammar definition language
 
-FsLexYacc follows more closely the paradigm of the traditional `lex`/`yacc` tools and its users write their grammars in separate files (having the extension `fsl` and `fsy`). These files are not F# code which means that they do not support features like IntelliSense or instant error reporting.
+FsLexYacc follows more closely the paradigm of the traditional `lex`/`yacc` tools and its users write their grammars in separate files (having the extension `.fsl` and `.fsy`). These files are not F# code which means that they do not support features like IntelliSense or instant error reporting.
 
 In Farkle and FParsec, the languages are specified in code, resulting in higher productivity and a smoother learning curve. Furthermore, the grammars for these languages are first-class language objects that can be easily composed and extended. This is very hard to do in parser generators like FsLexYacc.
 
@@ -34,9 +33,9 @@ In Farkle and FParsec, the languages are specified in code, resulting in higher 
 
 FParsec uses parser combinators which are little functions that parse fragments of text and can be composed into bigger ones. FParsec's parsers are therefore the most flexible of the three libraries, allowing context-sensitive grammars with infinite lookahead and their behavior can be fully customized by arbitrary code. This immense flexibility parser combinators bring to the table makes the library user responsible to keep their parser's performance adequate and predictable. Furthermore, parser combinator libraries use a form of recursive descent parsing, prohibiting the use of left recursion.
 
-LALR parsing libraries use a universal parsing algorithm, customizing its behavior with parsing tables generatedW based on a grammar. While it restricts the allowed grammars to those who adhere to a set of parsing formalisms, this erga omnes approach makes the parser's performance more predictable, guaranteeing it will finish in linear time, but it also means that if the parser is slow, there are little things the user can do; only the library's author can make it faster. Custom code can be injected in far fewer places than anywhere, namely when the parser reduces a production and between the lexer and the parser. Context-sensitive grammars can still be created with a bit of creativity.
+The other two libraries use a universal LALR parser whose behavior is customized with parsing tables generated from a grammar. While it restricts the allowed grammars to those who adhere to a set of parsing formalisms, this erga omnes approach makes the parser's performance more predictable, guaranteeing it will finish in linear time, but it also means that if the parser is slow, there are little things the user can do; only the library's author can make it faster. Custom code can be injected in far fewer places than anywhere, namely when the parser reduces a production and between the lexer and the parser. Context-sensitive grammars can still be created with a bit of creativity.
 
-As stated before, FsYacc uses an external grammar definition language. Farkle sits between FsYacc and FParsec, supports composing grammars from smaller grammars (called _designtime Farkles_). Designtime Farkles however are not parser combinators; they are backed by a formal grammar element, either a terminal or a nonterminal.
+As stated before, FsYacc uses an external grammar definition language. Farkle sits between FsYacc and FParsec, supporting composing grammars from smaller grammars (called _designtime Farkles_). Designtime Farkles however are not parser combinators; they are backed by a formal grammar element, either a terminal or a nonterminal.
 
 Parsing text with all three libraries ends up with the parser returning a custom object, usually representing an Abstract Syntax Tree (AST). Farkle supports easily changing the returned object of a grammar (for example to just perform syntax checking without creating an AST).
 
@@ -52,13 +51,13 @@ In Farkle the tokenizer and the parser are separate but using them separately to
 
 ### Operator precedence support
 
-FParsec and FsYacc support operator precedence and associativity to more intuitively write grammars (and automatically resolve LALR conflicts in the latter case). The former does it with a special type, and the latter has direct support in the grammar definition files.
+FParsec and FsYacc support operator precedence and associativity to more intuitively write grammars (and automatically resolve LALR conflicts in the latter case). The former does it [via a special type][FParsec-operators], and the latter has direct support in the grammar definition files.
 
 Farkle does not yet support operator precedence but will add it in a future release. Until then, productions will have to be written in a way that does not produce LALR conflicts.
 
 ### Whitespace/comment handling
 
-FParsec's approach to handling whitespace and comments is the most tedious of the three. Users have to manually state every place whitespace might appear. Comments are much harder to implement, requiring constructs like `charsTillString`.
+FParsec's approach to handling whitespace and comments is the most tedious of the three. Users have to manually state every place whitespace might appear. Comments are not directly supported either.
 
 Comments in FsLex are still nontrivial but more manageable since their presence does not affect FsYacc at all, thanks to the lexer/parser separation.
 
@@ -66,7 +65,7 @@ Farkle ignores whitespace by default with an option to disable. __In fact, autom
 
 ### Parsing speed
 
-This is quite the controversial topic. Farkle was made with performance in mind, lots of time has been invested to increase it, and it's getting faster with each release. Its performance is compared against the other two libraries by parsing a 74KB JSON file with Chiron (which uses FParsec), Farkle and FsLexYacc.
+This is quite the controversial topic. Farkle was made with performance in mind, lots of time has been invested to increase it, and it's getting faster with each release. [Its performance is compared][Farkle-benchmarks] against the other two libraries by parsing a 74KB JSON file with Chiron (which uses FParsec), Farkle and FsLexYacc.
 
 On such a big file, Farkle was shown to be faster than the other two libraries, but on very small JSON files, FParsec was winning. FsLexYacc was in both cases the slowest of the three.
 
@@ -80,27 +79,21 @@ FParsec does not have any reason to integrate with MSBuild.
 
 FsLexYacc requires a tool to generate the source files for the lexer and the parser (there is a reason it's called a parser _generator_). Fortunately this tool can be integrated with MSBuild and transparently generate the source files when the project is built.
 
-Farkle integrates with MSBuild to generate the parsing tables for a grammar ahead of time for increased start-up performance and error checking. It does not generate any source file but serializes the grammar into a binary file which is embedded in the compiled assembly. This feature is totally optional. Moreover, Farkle's MSBuild integration is more robust than FsLexYacc's, using custom MSBuild tasks, instead of FsLexYacc calling external command-line tools. In a future release, more things will be possible with Farkle and MSBuild.
+Farkle integrates with MSBuild [to generate the parsing tables for a grammar ahead of time](the-precompiler.html) for increased start-up performance and error checking. It does not generate any source file but serializes the grammar into a binary file which is embedded in the compiled assembly. This feature is totally optional. Moreover, Farkle's MSBuild integration is more robust than FsLexYacc's, using custom MSBuild tasks, instead of FsLexYacc calling external command-line tools. In a future release, more things will be possible with Farkle and MSBuild.
 
 ### C\# support
 
-While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them to fluently support C# for creating grammars.
+While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them [to fluently support C# for creating grammars](csharp.html).
 
 It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing.
 
 Since FParsec is just a library and does not require tooling support, C# users can theoretically write an FParsec parser but the sheer amount of F# custom operators and idiomatisms it uses would definitely result in very unreadable code.
 
-### Language written
-
-Both Farkle and FsLexYacc were written in F#. FParsec was written in F# as well, with the more performance-sensitive parts written in C#.
-
-Farkle uses some external libraries written by the same author in C#. There used to be an idea of porting part of Farkle to C# for performance reasons but was abandoned because of the dramatic development complexity increase.
-
 ### Maturity
 
-Another tough topic. FParsec and FsLexYacc are mature projects, used in various applications for a long time, and their feature set seems stabilized. Owing to their longevity, they have a community around them. Even Microsoft is using them in some of its products: FParsec in the parser for the Q# programming language and FsLexYacc in the parser for F# itself.
+Another tough topic. FParsec and FsLexYacc are mature projects, used in various applications for a long time, and their feature set seems stabilized. Owing to their longevity, they have a community around them. Even Microsoft is using them in some of its products: FParsec in [the parser][QSharp-parser] for the Q# programming language and FsLexYacc in [the parser][FSharp-parser] [and lexer][FSharp-lexer] for F# itself.
 
-Farkle on the other hand is relatively new. It started being developed in 2017 and was not a standalone parsing library until version 5.1.0 was released in January 2020. It is still actively developed, with lots of big features slated to arrive. It also means that Farkle's API is still unstable, with minor breaking changes even in minor releases. Its development is a one-man show but it's going to continue until at least 2022.
+Farkle on the other hand is relatively new. It started being developed in 2017 and was not a standalone parsing library until version 5.1.0 was released in January 2020. It is still actively developed, with lots of big features slated to arrive. It also means that Farkle's API is still unstable, with minor breaking changes even in minor releases. Its development is a one-man show but other developers are more than welcome to contribute.
 
 ## Some C\# parsing projects
 
@@ -108,13 +101,13 @@ To further convince the indecisive C# users to use Farkle, we will also take a b
 
 > __Disclaimer__: Not all the libraries below were actually tried. And this is not an objective evaluation, but more of a subjective review. If any comment made is wrong, feel free to open a GitHub issue or pull request to fix it.
 
-### Sprache
+### [Sprache]
 
 Sprache is a parser combinator library, just like FParsec. It creatively uses the LINQ query expression syntax to easily define parsers.
 
-The problem with Sprache is that it is quite slow. Sprache's performance was going to be benchmarked against the three other libraries but the code was not committed because it was significantly slower than all of them.
+The problem with Sprache is that it is slow. Sprache's performance was going to be benchmarked against the three other libraries but the code was not committed because it was significantly slower than all of them.
 
-### Irony
+### [Irony]
 
 Irony is interesting. Like Farkle, it uses the LALR algorithm while being a library, not a parser generator, requiring no external tools. Its API is object-oriented; each grammar is a subclass of a `Grammar` class and the initialization is performed at the constructor and takes advantage of overloading the `|` and `+` operators to succinctly define productions, more simply than the admittingly verbose C# API of Farkle. It supports features like comments and operator precedence. The lexer's output can be customized by what Irony calls `Scanner Filters`.
 
@@ -124,7 +117,7 @@ Unlike Farkle however, Irony's grammars are not composable, and unlike all the t
 
 A more serious problem with Irony is that its development is fragmented between two projects called `Irony` and `Irony.NetCore` (eventually the first package got .NET Core support as well), making it a little hard to choose which one to use.
 
-### ANTLR
+### [ANTLR]
 
 The Abrams tank of parser generators, ANTLR is a tool written in Java but supports generating parsers for other languages including C# but not F#. A very mature and well-known project, it uses a variation of the LL algorithm called Adaptive LL (ALL) that supports left recursion.
 
@@ -149,3 +142,14 @@ A parsing library or parser generator like the ones we described above is not a 
 ---
 
 So I hope you enjoyed this little comparison. If you did, don't forget to give Farkle a try, and maybe you feel especially left-recursive today, and want to hit the star button as well. I hope that all of you have a wonderful day and to see you soon. Goodbye!
+
+[FParsec]: https://www.quanttec.com/fparsec/
+[FsLexYacc]: https://fsprojects.github.io/FsLexYacc/
+[FParsec-operators]: https://www.quanttec.com/fparsec/reference/operatorprecedenceparser.html
+[Farkle-benchmarks]: https://github.com/teo-tsirpanis/Farkle/tree/master/performance
+[QSharp-parser]: https://github.com/microsoft/qsharp-compiler/tree/master/src/QsCompiler/TextProcessor
+[FSharp-parser]: https://github.com/dotnet/fsharp/blob/main/src/fsharp/pars.fsy
+[FSharp-lexer]: https://github.com/dotnet/fsharp/blob/main/src/fsharp/lex.fsl
+[Sprache]: https://github.com/sprache/Sprache
+[Irony]: https://github.com/IronyProject/Irony
+[ANTLR]: https://github.com/antlr/antlr4/tree/master/runtime/CSharp

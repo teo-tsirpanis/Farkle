@@ -101,15 +101,15 @@ To further convince the indecisive C# users to use Farkle, we will also take a b
 
 > __Disclaimer__: Not all the libraries below were actually tried. And this is not an objective evaluation, but more of a subjective review. If any comment made is wrong, feel free to open a GitHub issue or pull request to fix it.
 
-### [Sprache]
+### Sprache
 
-Sprache is a parser combinator library, just like FParsec. It creatively uses the LINQ query expression syntax to easily define parsers.
+[Sprache] is a parser combinator library, just like FParsec. It creatively uses the LINQ query expression syntax to easily define parsers.
 
 The problem with Sprache is that it is slow. Sprache's performance was going to be benchmarked against the three other libraries but the code was not committed because it was significantly slower than all of them.
 
-### [Irony]
+### Irony
 
-Irony is interesting. Like Farkle, it uses the LALR algorithm while being a library, not a parser generator, requiring no external tools. Its API is object-oriented; each grammar is a subclass of a `Grammar` class and the initialization is performed at the constructor and takes advantage of overloading the `|` and `+` operators to succinctly define productions, more simply than the admittingly verbose C# API of Farkle. It supports features like comments and operator precedence. The lexer's output can be customized by what Irony calls `Scanner Filters`.
+[Irony] is interesting. Like Farkle, it uses the LALR algorithm while being a library, not a parser generator, requiring no external tools. Its API is object-oriented; each grammar is a subclass of a `Grammar` class and the initialization is performed at the constructor and takes advantage of overloading the `|` and `+` operators to succinctly define productions, more simply than the admittingly verbose C# API of Farkle. It supports features like comments and operator precedence. The lexer's output can be customized by what Irony calls `Scanner Filters`.
 
 Irony is used by Microsoft to parse Android API definition files and generate the bindings for `Xamarin.Android`.
 
@@ -117,9 +117,9 @@ Unlike Farkle however, Irony's grammars are not composable, and unlike all the t
 
 A more serious problem with Irony is that its development is fragmented between two projects called `Irony` and `Irony.NetCore` (eventually the first package got .NET Core support as well), making it a little hard to choose which one to use.
 
-### [ANTLR]
+### ANTLR
 
-The Abrams tank of parser generators, ANTLR is a tool written in Java but supports generating parsers for other languages including C# but not F#. A very mature and well-known project, it uses a variation of the LL algorithm called Adaptive LL (ALL) that supports left recursion.
+The Abrams tank of parser generators, [ANTLR] is a tool written in Java but supports generating parsers for other languages including C# but not F#. A very mature and well-known project, it uses a variation of the LL algorithm called Adaptive LL (ALL) that supports left recursion.
 
 ANTLR's problems are the same with any parser generator, mainly looser integration between the grammar and the rest of the program. The language independence ANTLR and other tools offer is good but not really amazing; only large projects would make use of that feature. ANTLR's use of syntax tree listeners and visitors steeps up the learning curve compared to Farkle, FsLexYacc or a parser combinator library. Furthermore, using ANTLR to a .NET project would add a dependency to Java in its build process.
 
@@ -127,7 +127,7 @@ It is this guide's recommendation to use ANTLR only if other parsers are inadequ
 
 ### GOLD Parser
 
-GOLD Parser's approach is rather unique. Instead of generating source code for each language it supports (though it optionally supports that too), it creates a binary file with the grammar's parsing tables which can be read by libraries called _engines_ that can be written in any language. Farkle started as an engine for GOLD Parser, even though its support for GOLD Parser is being gradually phased out.
+[GOLD Parser][gold]'s approach is rather unique. Instead of generating source code for each language it supports (though it optionally supports that too), it creates a binary file with the grammar's parsing tables which can be read by libraries called _engines_ that can be written in any language. Farkle started as an engine for GOLD Parser, even though its support for GOLD Parser is being gradually phased out.
 
 The biggest problem with GOLD Parser is that it is unmaintained. The latest version of the builder (the tool that creates the grammar tables) was released in 2012. Moreover, the tools are running on .NET Framework but can run in non-Windows operating systems with Mono. And these tools are closed-source, under a license that looks like MIT. For these reasons, GOLD Parser is not recommended for new projects. Older ones are encouraged by this guide to migrate to other parsers for increased performance and maintainability.
 
@@ -153,3 +153,4 @@ So I hope you enjoyed this little comparison. If you did, don't forget to give F
 [Sprache]: https://github.com/sprache/Sprache
 [Irony]: https://github.com/IronyProject/Irony
 [ANTLR]: https://github.com/antlr/antlr4/tree/master/runtime/CSharp
+[gold]: http://www.goldparser.org/

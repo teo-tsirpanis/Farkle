@@ -133,7 +133,7 @@ Target.create "CopyBinaries" (fun _ ->
     |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
 )
 
-let fConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
+let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
     DotNet.Options.withAdditionalArgs [
@@ -192,7 +192,7 @@ Target.create "GenerateCode" (fun _ ->
 )
 
 Target.description "Builds everything in Release mode"
-Target.create "BuildAllRelease" (fun _ -> DotNet.build (fConfiguration >> fCommonOptions) solutionFile)
+Target.create "BuildAllRelease" (fun _ -> DotNet.build (fReleaseConfiguration >> fCommonOptions) solutionFile)
 
 Target.description "Runs the unit tests"
 Target.create "RunTests" (fun _ ->

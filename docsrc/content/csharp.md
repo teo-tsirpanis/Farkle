@@ -39,6 +39,17 @@ To customize things like the case-sensitivity of designtime Farkles, there are s
 
 To parse text, there are some extension methods for runtime Farkles that reside in the `Farkle` namespace.
 
+These functions return an F# result type that can nevertheless be used from C# like this:
+
+``` csharp
+var designtime = /*...*/;
+var runtime = designtime.Build();
+var result = runtime.Parse("foobar");
+
+if (result.IsOk)
+    Console.WriteLine("Success. Result: {0}", result.OkValue);
+else
+    Console.WriteLine("Failure. Error message: {0}", result.ErrorValue);
 ---
 
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially sharp today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!

@@ -70,11 +70,12 @@ let createLR0KernelItems fGetAllProductions startSymbol =
 
     itemSets
 
-/// Computes the FIRST set of the `Nonterminal`s of the given sequence of `Production`s.
-/// A `None` in the set of a nonterminal is the empty symbol, AKA Epsilon, or ε.
+/// Computes the FIRST set of the `Nonterminal`s
+/// of the given sequence of `Production`s.
 let computeFirstSetMap terminals nonterminals productions =
     IA<Nonterminal> nonterminals
 
+    // The last nonterminal at the end is the starting one.
     let dict = FirstSets(terminals, nonterminals.Length + 1)
     let containsEmpty (x: LALRSymbol) =
         match x with
@@ -100,7 +101,7 @@ let computeFirstSetMap terminals nonterminals productions =
                     | LALRSymbol.Terminal term ->
                         dict.Add head term
                     | LALRSymbol.Nonterminal nont ->
-                        dict.AddFromNonterminal head nont
+                        dict.AddTerminalsFromNonterminal head nont
                 changed <- changed || changed'
                 i <- i + 1
             if i = len - 1 && containsEmpty handle.[len - 1] then
@@ -112,7 +113,6 @@ let computeFirstSetMap terminals nonterminals productions =
 /// Returns the FIRST set of the given sequence of `LALRSymbol`s.
 /// If all the symbols contain the empty symbol in their FIRST set,
 /// the terminals in `lookahead` are included in the result.
-/// A function to get the FIRST set of each `Nonterminal` is required.
 let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
     let laSet = LookaheadSet(firstSets.AllTerminals.Length)
     xs
@@ -122,7 +122,7 @@ let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
             laSet.HasTerminal term <- true
             false
         | LALRSymbol.Nonterminal nont when doContinue ->
-            firstSets.CopyToLookaheadSet nont laSet |> ignore
+            firstSets.CopyTerminalsToLookaheadSet nont laSet |> ignore
             firstSets.HasEmpty nont
         | _ -> false) true
     |> function true -> laSet.UnionWith lookahead |> ignore | false -> ()
@@ -153,8 +153,6 @@ let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
     |> List.ofSeq
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
-/// In addition to the usual dependencies, this function also
-/// requires a special `Terminal` which __must not__ already exist in the grammar.
 let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
     RA itemSets
 

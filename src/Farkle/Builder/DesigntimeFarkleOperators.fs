@@ -29,10 +29,10 @@ type Nonterminal =
         nont.SetProductions(firstProduction, productions)
         nont :> DesigntimeFarkle<_>
 
-    /// <seealso cref="Farkle.Builder.Untyped.Nonterminal.Create" />
+    /// <inheritdoc cref="Farkle.Builder.Untyped.Nonterminal.Create" />
     static member CreateUntyped(name) = Untyped.Nonterminal.Create name
 
-    /// <seealso cref="Farkle.Builder.Untyped.Nonterminal.Create" />
+    /// <inheritdoc cref="Farkle.Builder.Untyped.Nonterminal.Create" />
     static member CreateUntyped(name, firstProd, prods) =
         Untyped.Nonterminal.Create(name, firstProd, prods)
 

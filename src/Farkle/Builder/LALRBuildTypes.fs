@@ -128,14 +128,14 @@ type FirstSets(terminals: ImmutableArray<Terminal>, nonterminalCount) =
     /// nonterminal to the FIRST set of the first one.
     /// Returns whether the collection was actually changed.
     /// The empty symbol is not copied if it exists.
-    member _.AddFromNonterminal (Nonterminal(idxDest, _)) (Nonterminal(idxSrc, _)) =
+    member _.AddTerminalsFromNonterminal (Nonterminal(idxDest, _)) (Nonterminal(idxSrc, _)) =
         let banDest = arr.[int idxDest]
         let banSrc = arr.[int idxSrc]
         banDest.UnionWith(banSrc, false)
     /// Adds the FIRST set of a nonterminal to a lookahead set.
     /// Returns whether the lookahead set was modified by this method.
     /// The empty symbol is not copied if it exists.
-    member _.CopyToLookaheadSet (Nonterminal(idx, _)) (laSet: LookaheadSet) =
+    member _.CopyTerminalsToLookaheadSet (Nonterminal(idx, _)) (laSet: LookaheadSet) =
         let table = arr.[int idx]
         laSet.UnionWith(table, false)
     /// Whether the special empty symbol (also

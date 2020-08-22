@@ -53,7 +53,7 @@ In F#, we use the `terminalU` function (guess what the U stands for), and in C# 
 
 As you might have seen, the terminal is of type `DesigntimeFarkle`, without a generic parameter at the end. This means it can be normally used from other grammars (even typed), but it cannot be the significant member of a production. You can write for example `!@ W .>> X` (or `W.Extended().Append(X)` in C#), but not `!@ W .>>. X` (or `W.Extended().Extend(X)`).
 
-> If you don't remember how to use an API from C#, [this guide][csharp.html] can help you.
+> If you don't remember how to use an API from C#, [this guide](csharp.html) can help you.
 
 The nonterminals use a slightly different approach. Let's see how we would write the nonterminal that recognizes the balanced parentheses:
 
@@ -159,7 +159,7 @@ Changing the post-processor is extremely cheap; no new grammar objects are creat
 
 ---
 
-Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference.html), as well as while you code.
+Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference/index.html), as well as while you code.
 
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 

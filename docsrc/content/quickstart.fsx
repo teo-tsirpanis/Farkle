@@ -59,7 +59,7 @@ let numberRegex =
 (**
 `Number` is an object implementing `IEnumerable<char>` which is called a _predefined set_. [A list of all predefined sets][predefinedSets] can be found at the documentation of GOLD Parser, the project that inspired Farkle.
 
-> __Note:__ A future release will allow creating regexes from strings.
+> __Note:__ [You can also create `Regex`es from strings.][stringRegexes]
 
 With our regex being ready, we will create the terminal this way:
 *)
@@ -115,9 +115,9 @@ The `=>` operator finishes a production with a function that decides what to do 
 
 In the third case, we defined an empty production using `empty` (what a coincidence!) We used `empty =% 0.` instead of writing `empty => (fun () -> 0.)`.
 
-> __Note:__ An unfinished production is called a _production builder_. You can mark up to 16 significant members in a production builder.
+An unfinished production is called a _production builder_. You can mark up to 16 significant members in a production builder.
 
-> __Note:__ You can't pass an empty list in the right hand of the `||=` operator, or the grammar will be invalid.
+You can pass an empty list in the right hand of the `||=` operator but the grammar will fail to be built. A nonterminal must always have at least one production.
 
 ### Writing more complex nonterminals
 
@@ -182,7 +182,7 @@ The magic lies within the `nonterminal` function. With this function, we create 
 
 The nonterminals are of type `Nonterminal<float>`, but implement `DesigntimeFarkle<float>`; it's actually an interface.
 
-> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if done.
+> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if a custom designtime Farkle implementation is somehow passed to the Farkle library.
 
 ## Building our grammar
 
@@ -247,7 +247,6 @@ let _customized =
     // You can add as many types of block or line comments as you want.
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
     |> DesigntimeFarkle.addLineComment "//"
-    // Obviously, only the last change matters.
     |> DesigntimeFarkle.caseSensitive true
     |> DesigntimeFarkle.autoWhitespace false
     |> DesigntimeFarkle.addNoiseSymbol "Letters" (chars AllLetters)
@@ -260,6 +259,7 @@ So that's it. I hope you understand. If you have any question, found a bug, or w
 [csharp]: csharp.html
 [calculator]: https://github.com/teo-tsirpanis/Farkle/blob/2ecc66d6b7b43a1b52b889aec78e865c0c5cf325/sample/Farkle.JSON.FSharp/SimpleMaths.fs#L68
 [predefinedSets]: http://goldparser.org/doc/grammars/predefined-sets.htm
+[stringRegexes]: string-regexes.html
 [parseMessageDocumentation]: reference/farkle-parser-parsemessage.html
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

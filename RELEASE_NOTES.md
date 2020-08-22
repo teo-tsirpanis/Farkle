@@ -1,3 +1,9 @@
+#### 6.0.0-alpha.2 - 23-08-2020
+* Farkle supports creating regexes from strings. See more in https://teo-tsirpanis.github.io/Farkle/string-regexes.html.
+* The parser, the builder and the EGT(neo) reader became faster once again.
+* The precompiler does not crash when used from .NET Standard libraries.
+* __Breaking change:__ The `CharStream` API became internal. A new one will be published in the next release.
+
 #### 6.0.0-alpha.1 - 13-04-2020
 * __Breaking change:__ Removed the legacy API for creating runtime Farkles from EGT files (the API with the transformers and fusers). EGT files are still supported (for now), but users are strongly urged to rewrite their grammars using `Farkle.Builder`, or implement the `PostProcessor` interface themselves (not recommended).
 * __Breaking change:__ The `PostProcessor` type was moved to the root `Farkle` namespace. Some reusable post-processors were moved to the new `Farkle.PostProcessors` module.
@@ -33,7 +39,7 @@
 * Add methods to parse text from .NET `TextReader`s. They should be preferred over parsing .NET `Stream`s because the latter are supposed to contain binary data, not text.
 * The `Farkle.CSharp` namespace is no longer required. C# users just have to use `Farkle` to get their extension methods, unless they are writing their own post-processors for GOLD Parser grammars, where they have to use `Farkle.PostProcessor.CSharp`.
 * __Breaking change:__ Farkle.Tools.MSBuild was upgraded to .NET Core 3.1. Nothing significant changed though, which means those who still use .NET Core 2.1 can stay in a previous version.
-* __Breaking change:__ Reading grammars from EGT files now raises an exception. [Rationale](https://github.com/teo-tsirpanis/Farkle/commit/84b96ccc85753e4deebffcf561cc89edb1e252bc)
+* __Breaking change:__ Reading grammars from EGT files now raises an exception.
 * __Breaking change:__ Some utility functions that had nothing to do with parsing were either removed or made internal.
 * __Breaking change:__ Internal errors of the parser (in the unfortunate case they happen) throw an exception. In the next release, exceptions in a transformer or fuser will not be caught either.
 
@@ -92,7 +98,7 @@
 * Removed all 3rd-party non-Microsoft dependencies.
 
 #### 3.1.0-alpha003 - 10-10-2018
-* The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-procssing operations are unified.
+* The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-processing operations are unified.
 * The code became cleaner and faster yet again, with a notable optimization in the tokenizer.
 * This release coincided with the author's birthday. 🎂
 

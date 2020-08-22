@@ -173,7 +173,7 @@ type internal DesigntimeFarkleWrapper<'T> = {
 with
     static member Create (df: DesigntimeFarkle<'T>) =
         match df with
-        | :? DesigntimeFarkleWrapper<'T> as dfwm -> dfwm
+        | :? DesigntimeFarkleWrapper<'T> as dfw -> dfw
         | _ -> {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = GrammarMetadata.Default}
     interface DesigntimeFarkle with
         member x.Name = x.Name

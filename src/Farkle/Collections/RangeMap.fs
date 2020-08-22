@@ -51,7 +51,7 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
     // Adapted from .NET's binary search function.
     let rec binarySearch lo hi k =
         if lo <= hi then
-            let median = lo + (hi - lo) / 2
+            let median = int ((uint32 hi + uint32 lo) >>> 1)
             match arr.[median].KeyTo.CompareTo k with
             | 0 -> median
             | x when x < 0 -> binarySearch (median + 1) hi k
@@ -87,8 +87,9 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
                 // the next nearest element to be found. We also limit
                 // it to the highest index in the array.
                 | x -> Math.Min(~~~x, arr.Length - 1)
-            if arr.[idx].KeyFrom.CompareTo k <= 0 && k.CompareTo arr.[idx].KeyTo <= 0 then
-                ValueSome arr.[idx].Value
+            let element = &arr.[idx]
+            if element.KeyFrom.CompareTo k <= 0 && k.CompareTo element.KeyTo <= 0 then
+                ValueSome element.Value
             else
                 ValueNone
     /// A read-only span containing the elements of the range map.

@@ -95,9 +95,9 @@ type BuildError =
     /// grammar can have at most 2^20 terminals _and_ 2^20
     /// nonterminals.
     // This limitation was imposed to be able to store
-    // more informations in the upper bits of an index,
+    // more information in the upper bits of an index,
     // in optimized operations. Still, it is a very large
-    // number for symbol in grammars.
+    // number for symbols in a grammar.
     static member SymbolLimit = 1 <<< 20
     override x.ToString() =
         match x with

@@ -190,7 +190,7 @@ type LookaheadSetDictionary<'key when 'key: equality>(terminalCount) =
     /// Associates the elements that correspond to the first key
     /// with the elements that correspond to the second.
     /// Returns whether the lookahead set was modified by this method.
-    member this.Union kDest kSrc =
+    member _.Union kDest kSrc =
         checkFrozen()
         match dict.TryGetValue(kSrc), dict.TryGetValue(kDest) with
         | (true, vSrcs), (true, vDests) -> vDests.UnionWith vSrcs

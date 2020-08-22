@@ -245,6 +245,17 @@ type Terminal =
     /// <c>\r</c>, <c>\n</c>, or <c>\r\n</c>.</remarks>
     static member NewLine = NewLine :> DesigntimeFarkle
 
+/// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
+/// <typeparam name="T">The type of the objects this production generates.</typeparam>
+type [<NoComparison; ReferenceEquality>] Production<'T> = internal {
+    Members: DesigntimeFarkle ImmutableArray
+    Fuse: obj [] -> obj
+}
+with
+    interface AbstractProduction with
+        member x.Members = x.Members
+        member x.Fuse = x.Fuse
+
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
@@ -277,17 +288,6 @@ with
         member x.Name = x._Name
         member __.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
-
-/// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
-/// <typeparam name="T">The type of the objects this production generates.</typeparam>
-and [<NoComparison; ReferenceEquality>] Production<'T> = internal {
-    Members: DesigntimeFarkle ImmutableArray
-    Fuse: obj [] -> obj
-}
-with
-    interface AbstractProduction with
-        member x.Members = x.Members
-        member x.Fuse = x.Fuse
 
 [<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.

@@ -81,8 +81,8 @@ module LALRParser =
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
             | None ->
                 let expectedSymbols =
-                    currentState.Actions
-                    |> Seq.map (fun (KeyValue(term, _)) -> ExpectedSymbol.Terminal term)
+                    currentState.Actions.Keys
+                    |> Seq.map ExpectedSymbol.Terminal
                     |> set
                     |> (fun s -> if currentState.EOFAction.IsSome then Set.add ExpectedSymbol.EndOfInput s else s)
                 let foundToken =

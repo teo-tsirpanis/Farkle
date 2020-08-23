@@ -64,60 +64,60 @@ module Tokenizer =
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParserError |> raise
-            let newToken sym cs =
-                let data = unpinSpanAndGenerateObject sym fTransform input cs
+            let newToken sym idx =
+                let data = unpinSpanAndGenerateObject sym fTransform input idx
                 let theHolyToken = Token.Create input.LastTokenPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
-            let leaveGroup tok g gs =
+            let leaveGroup idx g gs =
                 // There are three cases when we leave a group
                 match gs, g.ContainerSymbol with
                 // We have now left the group, but the whole group was noise.
                 | [], Choice2Of2 _ -> impl []
                 // We have left the group and it was a terminal.
-                | [], Choice1Of2 sym -> newToken sym tok
+                | [], Choice1Of2 sym -> newToken sym idx
                 // There is still another outer group.
                 | gs, _ -> impl gs
             let tok = tokenizeDFA states oops input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.
-            | Some (Ok (Choice1Of4 term), tok), [] ->
+            | Some (Ok (Choice1Of4 term), idx), [] ->
                 input.StartNewToken()
-                advance false input tok
-                newToken term tok
+                advance false input idx
+                newToken term idx
             // We found noise outside of any group.
             // We discard it, unpin its characters, and proceed.
-            | Some (Ok (Choice2Of4 _noise), tok), [] ->
-                advance true input tok
+            | Some (Ok (Choice2Of4 _noise), idx), [] ->
+                advance true input idx
                 impl []
             // A new group just started, and it was found by its symbol in the group table.
             // If we are already in a group, we check whether it can be nested inside this new one.
             // If it can (or we were not in a group previously), push the token and the group
             // in the group stack, advance the input, and continue.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), tok), gs
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), idx), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[int tokGroupIdx]
                     input.StartNewToken()
-                    advance (shouldUnpinCharactersInsideGroup g gs) input tok
-                    impl ((tok, g) :: gs)
+                    advance (shouldUnpinCharactersInsideGroup g gs) input idx
+                    impl ((idx, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
-            | Some (Ok sym, tok), (popped, poppedGroup) :: xs when poppedGroup.IsEndedBy sym ->
-                let popped =
+            | Some (Ok sym, idx), (poppedIdx, poppedGroup) :: xs when poppedGroup.IsEndedBy sym ->
+                let poppedIdx =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
-                        advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
-                        tok
-                    | EndingMode.Open -> popped
-                leaveGroup popped poppedGroup xs
+                        advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input idx
+                        idx
+                    | EndingMode.Open -> poppedIdx
+                leaveGroup poppedIdx poppedGroup xs
             // If input ends outside of a group, it's OK.
             | None, [] ->
                 input.CurrentPosition |> ParseMessage.EndOfInput |> fMessage
                 None
             // We are still inside a group.
-            | Some tokenMaybe, (tok2, g2) :: xs ->
-                let data =
+            | Some tokenMaybe, (idx2, g2) :: xs ->
+                let newIdx =
                     let doUnpin = shouldUnpinCharactersInsideGroup g2 xs
                     match g2.AdvanceMode, tokenMaybe with
                     // We advance the input by the entire token.
@@ -127,12 +127,12 @@ module Tokenizer =
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, (Error _, _) ->
                         advanceByOne doUnpin input
-                        tok2 + 1UL
-                impl ((data, g2) :: xs)
+                        idx2 + 1UL
+                impl ((newIdx, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
             | Some (Ok (Choice4Of4 ge), _), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // or input ends while we are inside a group, unless the group ends with a newline, were we leave the group,
-            | None, (gTok, g) :: gs when g.IsEndedByNewline -> leaveGroup gTok g gs
+            | None, (gIdx, g) :: gs when g.IsEndedByNewline -> leaveGroup gIdx g gs
             // then it's an error.
             | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g
             // But if a group starts inside a group that cannot be nested at, it is an error.

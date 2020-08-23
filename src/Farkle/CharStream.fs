@@ -216,9 +216,10 @@ module internal CharStream =
         else
             failwith "Cannot consume a character stream past its end."
 
-    /// Creates an arbitrary object out of the characters at the given `CharSpan`.
-    /// After that call, the characters at and before the
-    /// span might be freed from memory, so this function must not be used twice.
+    /// Creates an arbitrary object out of the characters
+    /// from the `CharStream`'s last token position to `idxEnd`.
+    /// After that call, the characters at and before `idxEnd`
+    /// might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
     let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs idxEnd =
         let idxStart = cs._LastTokenPosition.Index

@@ -6,7 +6,7 @@ Most apps need to parse a static grammar whose specifications never change betwe
 
 What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's life cycle?
 
-One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of how Farkle works with grammars. Instead of generating it every time, the grammar's parser tables are built ahead of time and stored in the program's assembly, when it gets compiled. This significantly boosts the program's startup time by orders of magnitude.
+One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of how Farkle works with grammars. Instead of building it every time, the grammar's parser tables are built ahead of time and stored in the program's assembly, when it gets compiled. This boosts the program's startup time by orders of magnitude.
 
 ## How to use it
 
@@ -68,7 +68,7 @@ Say you have the following function in assembly A:
 let markForPrecompileAndRename (df: DesigntimeFarkle<_>) =
     df
     |> DesigntimeFarkle.rename (df.Name + " Precompiled")
-    |> DesigntimeFarkle.markForPrecompile
+    |> RuntimeFarkle.markForPrecompile
 ```
 
 And say you use the function above in assembly B. It won't work; Farkle won't be able to precompile the designtime Farkle. A solution would have been to make the function inline, but don't be 100% sure it will work.
@@ -133,6 +133,20 @@ And last but not least, the precompiler will not work when running a .NET Framew
 Rider however can use the precompiler with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET Core SDK (it typically has a `.dll` extension).
 
 ![The Settings window in JetBrains Rider](img/rider_msbuild_workaround.png)
+
+### If loading fails
+
+A precompiled grammar might fail to be loaded when your app uses it. The most possible reason for a precompiler loader crash is that different versions of Farkle were used in the same project, and the second most possible reason is that Farkle has a bug. If a precompiled grammar fails to be loaded, it will throw an exception.
+
+However there are cases when the underlying reasons for that loader failure cannot be fixed. That's why Farkle allows these errors to be suppressed and the grammar to be rebuilt at runtime, if the precompiled grammar failed to be loaded. It can be enabled with an `AppContext` switch like this:
+
+``` fsharp
+open System
+open Farkle
+
+AppContext.SetSwitch("Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors", true)
+let runtime = RuntimeFarkle.build myFaultyDesigntimeFarkle
+```
 
 ---
 

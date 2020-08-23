@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Precompiler
+open System
 open System.Reflection
 
 // The following must be discovered.
@@ -52,5 +53,21 @@ let tests = testList "Precompiler tests" [
             |> List.map (fun df -> df.Name)
             |> List.sort
         Expect.sequenceEqual actual expected "The discovered designtime Farkles are not the right ones"
+    }
+
+    test "Suppressing precompiler loader errors works" {
+        let switch = "Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors"
+        try
+            let df =
+                literal "FaultyPrecompiled"
+                |> DesigntimeFarkle.cast
+                |> RuntimeFarkle.markForPrecompile
+            Expect.throwsT<PrecompilerLoaderException>
+                (fun () -> df.Build() |> ignore)
+                "Loading the precompiled grammar did not throw an exception"
+            AppContext.SetSwitch(switch, true)
+            df.Build() |> ignore
+        finally
+            AppContext.SetSwitch(switch, false)
     }
 ]

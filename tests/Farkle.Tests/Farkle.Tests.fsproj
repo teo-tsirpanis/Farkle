@@ -12,6 +12,8 @@
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Farkle.Tools.MSBuild is not used in this package so won't change the resource. -->
+    <EmbeddedResource Include="../resources/legacy.cgt" LogicalName="FaultyPrecompiled.precompiled.egtn" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />

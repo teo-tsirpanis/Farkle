@@ -1,4 +1,4 @@
-framework: net45, netstandard2.0
+framework: netstandard2.0, netstandard2.1
 
 version 5.245.1
 
@@ -8,10 +8,9 @@ storage: none
 
 nuget BitCollections
 nuget FSharp.Core
-nuget System.Buffers
+nuget System.Buffers framework: netstandard2.0
 nuget System.Collections.Immutable
-nuget System.Memory
-nuget System.ValueTuple framework: net45
+nuget System.Memory framework: netstandard2.0
 
 group Executables
 

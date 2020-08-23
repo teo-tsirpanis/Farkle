@@ -1,3 +1,6 @@
+#### 6.0.0-alpha.3
+* __Breaking change:__ .NET Framework 4.5 is not longer supported. The library targets .NET Standard 2.0 and .NET Standard 2.1.
+
 #### 6.0.0-alpha.2 - 23-08-2020
 * Farkle supports creating regexes from strings. See more in https://teo-tsirpanis.github.io/Farkle/string-regexes.html.
 * The parser, the builder and the EGT(neo) reader became faster once again.

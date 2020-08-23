@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <EnableCovarsky>true</EnableCovarsky>
     <Title>The Farkle Parser</Title>
     <PackageId>Farkle</PackageId>

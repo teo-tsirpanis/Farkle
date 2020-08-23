@@ -130,13 +130,13 @@ This error is unexpected. Please report it on GitHub." x
                 else
                     ImmutableHashSet.Empty
             {
-                    Name = name
-                    ContainerSymbol = container
-                    Start = startSymbol
-                    End = endSymbol
-                    AdvanceMode = advanceMode
-                    EndingMode = endingMode
-                    Nesting = nesting
+                Name = name
+                ContainerSymbol = container
+                Start = startSymbol
+                End = endSymbol
+                AdvanceMode = advanceMode
+                EndingMode = endingMode
+                Nesting = nesting
             }
 
         let readProduction fSymbol index mem =

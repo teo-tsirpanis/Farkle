@@ -63,8 +63,6 @@ type ParseErrorType =
     | LexicalError of char
     /// A symbol was read, while some others were expected.
     | SyntaxError of expected: ExpectedSymbol Set * actual: ExpectedSymbol
-    /// A group was read, but cannot be nested on top of the previous one.
-    | CannotNestGroups of Group * Group
     /// A group did end, but outside of any group.
     | UnexpectedGroupEnd of GroupEnd
     /// Unexpected end of input while being inside a group.
@@ -77,7 +75,6 @@ type ParseErrorType =
         | SyntaxError (expected, actual) ->
             let expected = expected |> Seq.map string |> String.concat ", "
             sprintf "Found %O, while expecting one of the following tokens: %s." actual expected
-        | CannotNestGroups(g1, g2) -> sprintf "Group '%s' cannot be nested inside '%s'" g1.Name g2.Name
         | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
         | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
         | UserError x -> x

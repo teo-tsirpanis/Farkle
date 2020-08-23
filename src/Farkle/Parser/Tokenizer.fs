@@ -15,7 +15,7 @@ module Tokenizer =
 
     open Farkle.IO.CharStream
 
-    type private TokenizerState = (CharSpan * Group) list
+    type private TokenizerState = (uint64 * Group) list
 
     /// Returns whether to unpin the character(s)
     /// encountered by the tokenizer while being inside a group.
@@ -64,7 +64,7 @@ module Tokenizer =
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
         let rec impl (gs: TokenizerState) =
             let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParserError |> raise
-            let newToken sym (cs: CharSpan) =
+            let newToken sym cs =
                 let data = unpinSpanAndGenerateObject sym fTransform input cs
                 let theHolyToken = Token.Create input.LastTokenPosition sym data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
@@ -76,16 +76,16 @@ module Tokenizer =
                 | [], Choice2Of2 _ -> impl []
                 // We have left the group and it was a terminal.
                 | [], Choice1Of2 sym -> newToken sym tok
-                // There is still another outer group. We append the outgoing group's data to the next top group.
-                | (tok2, g2) :: xs, _ -> impl ((extendSpan input tok tok2.IndexTo, g2) :: xs)
+                // There is still another outer group.
+                | gs, _ -> impl gs
             let tok = tokenizeDFA states oops input
             match tok, gs with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.
             | Some (Ok (Choice1Of4 term), tok), [] ->
-                let span = pinSpan input tok
+                input.StartNewToken()
                 advance false input tok
-                newToken term span
+                newToken term tok
             // We found noise outside of any group.
             // We discard it, unpin its characters, and proceed.
             | Some (Ok (Choice2Of4 _noise), tok), [] ->
@@ -98,9 +98,9 @@ module Tokenizer =
             | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), tok), gs
                 when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
                     let g = groups.[int tokGroupIdx]
-                    let span = pinSpan input tok
+                    input.StartNewToken()
                     advance (shouldUnpinCharactersInsideGroup g gs) input tok
-                    impl ((span, g) :: gs)
+                    impl ((tok, g) :: gs)
             // We are inside a group, and this new token is going to end it.
             // Depending on the group's definition, this end symbol might be kept.
             | Some (Ok sym, tok), (popped, poppedGroup) :: xs when poppedGroup.IsEndedBy sym ->
@@ -108,7 +108,7 @@ module Tokenizer =
                     match poppedGroup.EndingMode with
                     | EndingMode.Closed ->
                         advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input tok
-                        extendSpan input popped tok
+                        tok
                     | EndingMode.Open -> popped
                 leaveGroup popped poppedGroup xs
             // If input ends outside of a group, it's OK.
@@ -123,11 +123,11 @@ module Tokenizer =
                     // We advance the input by the entire token.
                     | AdvanceMode.Token, (Ok (_), data) ->
                         advance doUnpin input data
-                        extendSpan input tok2 data
+                        data
                     // Or by just one character.
                     | AdvanceMode.Character, _ | _, (Error _, _) ->
                         advanceByOne doUnpin input
-                        extendSpanByOne input tok2
+                        tok2 + 1UL
                 impl ((data, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
             | Some (Ok (Choice4Of4 ge), _), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge

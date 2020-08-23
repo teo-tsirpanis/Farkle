@@ -20,18 +20,6 @@ type ITransformer<'sym> =
     /// <summary>Converts a terminal into an arbitrary object.</summary>
     abstract Transform: 'sym * Position * ReadOnlySpan<char> -> obj
 
-[<Struct>]
-/// An continuous range of characters that is
-/// stored by its starting position and ending index.
-type internal CharSpan = {
-    StartingPosition: Position
-    IndexTo: uint64
-}
-with
-    /// The length of the span. It can never be zero.
-    member x.Length = x.IndexTo - x.StartingPosition.Index + 1UL |> int
-    override x.ToString() = sprintf "[%d,%d]" x.StartingPosition.Index x.IndexTo
-
 /// The source a `CharStream` reads characters from.
 [<AbstractClass>]
 type private CharStreamSource() =
@@ -171,6 +159,8 @@ with
     /// A read-only span of characters that contains all characters from `CurrentPosition`.
     /// The first character of a new token is always in the zeroth position.
     member internal x.CharacterBuffer = x.Source.GetAllCharactersAfterIndex x.CurrentIndex
+    /// Sets the stream's last token position to the current one.
+    member internal x.StartNewToken() = x._LastTokenPosition <- x._CurrentPosition
     /// Converts an offset relative to the current
     /// position to an absolute character index.
     member internal x.ConvertOffsetToIndex ofs =
@@ -188,38 +178,6 @@ with
 /// Functions to create and work with `CharStream`s.
 /// They are not thread-safe.
 module internal CharStream =
-
-    /// Creates a `CharSpan` that contains the next `idxTo`
-    /// characters of a `CharStream` from its position.
-    /// You must call this function _before_ calling `advance`.
-    /// Despite the name, nothing happens if you don't unpin it.
-    [<CompiledName("PinSpan")>]
-    let pinSpan (cs: CharStream) idxTo = {
-        StartingPosition = cs.CurrentPosition
-        IndexTo = idxTo
-    }
-
-    /// Creates a new `CharSpan` that spans one
-    /// character more than the given one.
-    /// A `CharStream` must also be given to validate
-    /// its length so that out-of-bounds errors are prevented.
-    [<CompiledName("ExtendSpanByOne")>]
-    let extendSpanByOne (cs: CharStream) span =
-        if span.IndexTo < cs.Source.LengthSoFar then
-            {span with IndexTo = span.IndexTo + 1UL}
-        else
-            failwith "Trying to extend a character span by one character past these that were already read."
-
-    /// Updates the ending index of a `CharSpan`.
-    /// It must not exceed the stream's number of
-    /// currently read characters.
-    [<CompiledName("ExtendSpan")>]
-    let extendSpan (cs: CharStream) span endIdx =
-        if endIdx < cs.Source.LengthSoFar then
-            {span with IndexTo = endIdx}
-        else
-            failwithf "Trying to extend a character span from a stream with currently %d characters to %d."
-                cs.Source.LengthSoFar endIdx
 
     /// Returns the position of the character at `idx`.
     /// It cannot be less than the stream's index
@@ -262,13 +220,13 @@ module internal CharStream =
     /// After that call, the characters at and before the
     /// span might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs
-        ({StartingPosition = {Index = idxStart}; IndexTo = idxEnd} as charSpan) =
+    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs idxEnd =
+        let idxStart = cs._LastTokenPosition.Index
+        let length = idxEnd - idxStart + 1UL |> int
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
-            let span = cs.Source.GetSpanForCharacters(idxStart, charSpan.Length)
-            cs._LastTokenPosition <- charSpan.StartingPosition
+            let span = cs.Source.GetSpanForCharacters(idxStart, length)
             transformer.Transform(symbol, cs._LastTokenPosition, span)
         else
-            failwithf "Trying to read the character span %O, from a stream that was last read at %d."
-                charSpan cs.StartingIndex
+            failwithf "Trying to read from %d to %d, from a stream that was last read at %d."
+                idxStart idxEnd cs.StartingIndex

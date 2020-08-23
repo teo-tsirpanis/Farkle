@@ -15,21 +15,6 @@ module Tokenizer =
 
     open Farkle.IO.CharStream
 
-    type private TokenizerState = (uint64 * Group) list
-
-    /// Returns whether to unpin the character(s)
-    /// encountered by the tokenizer while being inside a group.
-    /// If the group stack's bottom-most container symbol is
-    /// a noisy one, then it is unpinned the soonest it is consumed.
-    let private shouldUnpinCharactersInsideGroup {ContainerSymbol = g} groupStack =
-        let g0 = match g with | Choice1Of2 _terminal -> false | Choice2Of2 _noise -> true
-        if List.isEmpty groupStack then
-            g0
-        else
-            match (List.last groupStack) with
-            | (_, {ContainerSymbol = Choice1Of2 _terminal}) -> false
-            | (_, {ContainerSymbol = Choice2Of2 _noise}) -> true
-
     // Unfortunately we can't have ref structs on inner functions yet.
     let rec private tokenizeDFA_impl (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) (input: CharStream)
         ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
@@ -62,91 +47,84 @@ module Tokenizer =
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
     let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
-        let rec impl (gs: TokenizerState) =
-            let fail msg: Token option = Message (input.CurrentPosition, msg) |> ParserError |> raise
-            let newToken sym idx =
-                let data = unpinSpanAndGenerateObject sym fTransform input idx
-                let theHolyToken = Token.Create input.LastTokenPosition sym data
+        let fail msg = Message (input.CurrentPosition, msg) |> ParserError |> raise
+        let rec groupLoop isNoiseGroup idxEnd groupStack =
+            match groupStack with
+            | [] -> idxEnd
+            | currentGroup :: gs ->
+                let tok = tokenizeDFA states oops input
+                match tok with
+                // A new group begins that is allowed to nest into this one.
+                | Some(Ok(Choice3Of4(GroupStart(_, tokGroupIdx))), idx)
+                    when currentGroup.Nesting.Contains tokGroupIdx ->
+                        let g = groups.[int tokGroupIdx]
+                        advance isNoiseGroup input idx
+                        groupLoop isNoiseGroup idx (g :: groupStack)
+                // A symbol is found that ends the current group.
+                | Some(Ok sym, idx) when currentGroup.IsEndedBy sym ->
+                    let newIdx =
+                        match currentGroup.EndingMode with
+                        | EndingMode.Closed ->
+                            advance isNoiseGroup input idx
+                            idx
+                        | EndingMode.Open -> idxEnd
+                    groupLoop isNoiseGroup newIdx gs
+                // The existing group is continuing.
+                | Some tokenMaybe ->
+                    let newIdx =
+                        match currentGroup.AdvanceMode, tokenMaybe with
+                        | AdvanceMode.Token, (Ok _, idx) ->
+                            advance isNoiseGroup input idx
+                            idx
+                        | AdvanceMode.Character, _ | _, (Error _, _) ->
+                            advanceByOne isNoiseGroup input
+                            idxEnd + 1UL
+                    groupLoop isNoiseGroup newIdx groupStack
+                // Input ended and the current group can be ended by a newline.
+                | None when currentGroup.IsEndedByNewline -> groupLoop isNoiseGroup idxEnd gs
+                // Input ended unexpectedly.
+                | None -> fail <| ParseErrorType.UnexpectedEndOfInput currentGroup
+        let rec tokenLoop() =
+            let newToken term idx =
+                let data = unpinSpanAndGenerateObject term fTransform input idx
+                let theHolyToken = Token.Create input.LastTokenPosition term data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
-            let leaveGroup idx g gs =
-                // There are three cases when we leave a group
-                match gs, g.ContainerSymbol with
-                // We have now left the group, but the whole group was noise.
-                | [], Choice2Of2 _ -> impl []
-                // We have left the group and it was a terminal.
-                | [], Choice1Of2 sym -> newToken sym idx
-                // There is still another outer group.
-                | gs, _ -> impl gs
             let tok = tokenizeDFA states oops input
-            match tok, gs with
+            match tok with
             // We are neither inside any group, nor a new one is going to start.
             // The easiest case. We advance the input, and return the token.
-            | Some (Ok (Choice1Of4 term), idx), [] ->
+            | Some (Ok (Choice1Of4 term), idx) ->
                 input.StartNewToken()
                 advance false input idx
                 newToken term idx
             // We found noise outside of any group.
             // We discard it, unpin its characters, and proceed.
-            | Some (Ok (Choice2Of4 _noise), idx), [] ->
+            | Some (Ok (Choice2Of4 _noise), idx) ->
                 advance true input idx
-                impl []
-            // A new group just started, and it was found by its symbol in the group table.
-            // If we are already in a group, we check whether it can be nested inside this new one.
-            // If it can (or we were not in a group previously), push the token and the group
-            // in the group stack, advance the input, and continue.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), idx), gs
-                when gs.IsEmpty || (snd gs.Head).Nesting.Contains tokGroupIdx ->
-                    let g = groups.[int tokGroupIdx]
-                    input.StartNewToken()
-                    advance (shouldUnpinCharactersInsideGroup g gs) input idx
-                    impl ((idx, g) :: gs)
-            // We are inside a group, and this new token is going to end it.
-            // Depending on the group's definition, this end symbol might be kept.
-            | Some (Ok sym, idx), (poppedIdx, poppedGroup) :: xs when poppedGroup.IsEndedBy sym ->
-                let poppedIdx =
-                    match poppedGroup.EndingMode with
-                    | EndingMode.Closed ->
-                        advance (shouldUnpinCharactersInsideGroup poppedGroup xs) input idx
-                        idx
-                    | EndingMode.Open -> poppedIdx
-                leaveGroup poppedIdx poppedGroup xs
+                tokenLoop()
+            // A new group just started. We will enter the group loop function.
+            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), idx) ->
+                let g = groups.[int tokGroupIdx]
+                input.StartNewToken()
+                let isNoise = not g.IsTerminal
+                advance isNoise input idx
+                let idxEnd = groupLoop isNoise idx [g]
+                match g.ContainerSymbol with
+                // The group is a terminal. We return it.
+                | Choice1Of2 term -> newToken term idxEnd
+                // The group had been noise all along. We discard it and move on.
+                | Choice2Of2 _ -> tokenLoop()
             // If input ends outside of a group, it's OK.
-            | None, [] ->
+            | None ->
                 input.CurrentPosition |> ParseMessage.EndOfInput |> fMessage
                 None
-            // We are still inside a group.
-            | Some tokenMaybe, (idx2, g2) :: xs ->
-                let newIdx =
-                    let doUnpin = shouldUnpinCharactersInsideGroup g2 xs
-                    match g2.AdvanceMode, tokenMaybe with
-                    // We advance the input by the entire token.
-                    | AdvanceMode.Token, (Ok (_), data) ->
-                        advance doUnpin input data
-                        data
-                    // Or by just one character.
-                    | AdvanceMode.Character, _ | _, (Error _, _) ->
-                        advanceByOne doUnpin input
-                        idx2 + 1UL
-                impl ((newIdx, g2) :: xs)
             // If a group end symbol is encountered but outside of any group,
-            | Some (Ok (Choice4Of4 ge), _), [] -> fail <| ParseErrorType.UnexpectedGroupEnd ge
-            // or input ends while we are inside a group, unless the group ends with a newline, were we leave the group,
-            | None, (gIdx, g) :: gs when g.IsEndedByNewline -> leaveGroup gIdx g gs
-            // then it's an error.
-            | None, (_, g) :: _ -> fail <| ParseErrorType.UnexpectedEndOfInput g
-            // But if a group starts inside a group that cannot be nested at, it is an error.
-            | Some (Ok (Choice3Of4 (GroupStart (_, tokGroupIdx))), _), ((_, g) :: _) ->
-                fail <| ParseErrorType.CannotNestGroups(groups.[int tokGroupIdx], g)
-            /// If a group starts while being outside of any group...
-            /// Wait a minute! Haven't we already checked this case?
-            /// Ssh, don't tell the compiler. She doesn't know about it. 😊
-            | Some (Ok (Choice3Of4 _), _), [] ->
-                failwith "Impossible case: The group stack was already checked to be empty."
+            | Some (Ok (Choice4Of4 ge), _) -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // We found an unrecognized symbol while being outside a group. This is an error.
-            | Some (Error c, idx), [] ->
+            | Some (Error c, idx) ->
                 let errorPos = getPositionAtIndex input idx
                 Message(errorPos, ParseErrorType.LexicalError c)
                 |> ParserError
                 |> raise
-        impl []
+        tokenLoop()

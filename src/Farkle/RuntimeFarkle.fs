@@ -31,14 +31,11 @@ type FarkleError =
 /// a specific type of object that best describes an expression of the language of this grammar.
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = internal {
-    Grammar: Result<Grammar * OptimizedOperations,BuildError>
+    Grammar: Result<Grammar,BuildError>
     PostProcessor: PostProcessor<'TResult>
 }
 with
     static member internal CreateMaybe postProcessor grammarMaybe =
-        let grammarMaybe =
-            grammarMaybe
-            |> Result.map (fun g -> g, OptimizedOperations.Create g)
         {
             Grammar = grammarMaybe
             PostProcessor = postProcessor
@@ -95,7 +92,7 @@ with
     /// had failed. The exception's message contains further details.</exception>
     member this.GetGrammar() =
         match this.Grammar with
-        | Ok (grammar, _) -> grammar
+        | Ok grammar -> grammar
         | Error msg -> msg |> string |> failwith
 
 /// Some `PostProcessor`s, reusable and ready to use.
@@ -194,7 +191,8 @@ module RuntimeFarkle =
     let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
         let mkError msg = msg |> FarkleError.ParseError |> Error
         match rf.Grammar with
-        | Ok (grammar, oops) ->
+        | Ok grammar ->
+            let oops = OptimizedOperations.Create grammar
             let fTokenize = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor fMessage
             try
                 LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input |> Ok

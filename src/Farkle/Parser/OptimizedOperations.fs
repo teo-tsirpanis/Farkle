@@ -8,6 +8,7 @@ namespace Farkle.Parser
 open Farkle.Collections
 open Farkle.Grammar
 open System.Collections.Immutable
+open System.Runtime.CompilerServices
 
 [<Struct>]
 /// An value type representing a DFA state or its absence.
@@ -96,35 +97,37 @@ module private OptimizedOperations =
         arr
 
 /// An object that provides optimized functions for some common operations on Grammars.
-/// These functions require some computationally expensive pre-processing, which is
-/// performed only once, at the creation of this object.
-type OptimizedOperations = private {
-    Grammar: Grammar
-    DFAArray: DFAStateTag [][]
-    LALRActionArray: LALRAction option [][]
-    LALRGotoArray: LALRState option [][]
-}
-with
-    static member Create g = {
-        Grammar = g
-        DFAArray = buildDFAArray g.DFAStates
-        LALRActionArray = buildLALRActionArray g.Symbols.Terminals g.LALRStates
-        LALRGotoArray = buildLALRGotoArray g.Symbols.Nonterminals g.LALRStates
-    }
+/// These functions require some memory-intensive
+/// pre-processing, which is performed only once per grammar.
+type OptimizedOperations private(grammar: Grammar) =
+    // I love this type. It surprisingly simply allows
+    // for some very efficient decoupled object caches.
+    // It's also fast and thread-safe. Getting a value
+    // from a CWT does not lock unless the key does not exist.
+    static let cache = ConditionalWeakTable()
+    static let cacheItemCreator = ConditionalWeakTable.CreateValueCallback OptimizedOperations
+    let dfaArray = buildDFAArray grammar.DFAStates
+    let lalrActionArray = buildLALRActionArray grammar.Symbols.Terminals grammar.LALRStates
+    let lalrGotoArray = buildLALRGotoArray grammar.Symbols.Nonterminals grammar.LALRStates
+    /// Returns an `OptimizedOperations` object associated
+    /// with the given `Grammar`. Multiple invocations of
+    /// this method with the same grammar might return the
+    /// same instance which is collected with the grammar.
+    static member Create grammar = cache.GetValue(grammar, cacheItemCreator)
     /// Gets the next DFA state from the given current one, when the given character is encountered.
-    member x.GetNextDFAState c (state: DFAStateTag) =
-        let arr = x.DFAArray
+    member _.GetNextDFAState c (state: DFAStateTag) =
+        let arr = dfaArray
         if state.IsError then
             DFAStateTag.Error
         elif isASCII c then
             arr.[state.Value].[int c]
         else
-            match x.Grammar.DFAStates.[state.Value].Edges.TryFind c with
+            match grammar.DFAStates.[state.Value].Edges.TryFind c with
             | ValueSome x -> DFAStateTag.FromOption x
             | ValueNone -> arr.[state.Value].[ASCIIUpperBound + 1]
     /// Gets the LALR action from the given state that corresponds to the given terminal.
-    member x.GetLALRAction (Terminal (term, _)) {LALRState.Index = idx} =
-        x.LALRActionArray.[int idx].[int term]
+    member _.GetLALRAction (Terminal (term, _)) {LALRState.Index = idx} =
+        lalrActionArray.[int idx].[int term]
     /// Gets the next LALR state according to the given state's GOTO actions.
-    member x.LALRGoto (Nonterminal (nont, _)) {LALRState.Index = idx} =
-        x.LALRGotoArray.[int idx].[int nont]
+    member _.LALRGoto (Nonterminal (nont, _)) {LALRState.Index = idx} =
+        lalrGotoArray.[int idx].[int nont]

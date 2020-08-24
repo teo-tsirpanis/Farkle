@@ -10,7 +10,7 @@ open Farkle.Grammar
 open System.Collections.Immutable
 
 [<Struct>]
-/// An object representing a DFA state or its absence.
+/// An value type representing a DFA state or its absence.
 /// It is returned from optimized operations.
 type DFAStateTag = private DFAStateTag of int
 with
@@ -23,8 +23,8 @@ with
         match x with
         | Some x -> DFAStateTag.Ok x
         | None -> DFAStateTag.Error
-    /// The state number of this `DFAStateTag`, or
-    /// a negative number.
+    /// The state number of this `DFAStateTag`,
+    /// or a negative number.
     member x.Value = match x with DFAStateTag x -> x
     /// Whether this `DFAStateTag` represents a successful operation.
     member x.IsOk = x.Value >= 0

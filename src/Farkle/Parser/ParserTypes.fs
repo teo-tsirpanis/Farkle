@@ -57,26 +57,28 @@ type ParseMessage =
 /// An error the parser encountered.
 [<RequireQualifiedAccess>]
 type ParseErrorType =
+    /// Unexpected end of input.
+    | UnexpectedEndOfInput
     /// A character was not recognized.
-    /// Specifying the null `U+0000` character
-    /// means that input ended while tokenizing.
     | LexicalError of char
     /// A symbol was read, while some others were expected.
     | SyntaxError of expected: ExpectedSymbol Set * actual: ExpectedSymbol
     /// A group did end, but outside of any group.
     | UnexpectedGroupEnd of GroupEnd
     /// Unexpected end of input while being inside a group.
-    | UnexpectedEndOfInput of Group
+    | UnexpectedEndOfInputInGroup of Group
+    /// A custom error was raised by calling the `error` function
+    /// or by throwing a `ParserApplicationException`.
     | UserError of string
     override x.ToString() =
         match x with
-        | LexicalError '\000' -> "Unexpected end of input."
+        | UnexpectedEndOfInput -> "Unexpected end of input."
         | LexicalError x -> sprintf "Cannot recognize character '%c'." x
         | SyntaxError (expected, actual) ->
             let expected = expected |> Seq.map string |> String.concat ", "
             sprintf "Found %O, while expecting one of the following tokens: %s." actual expected
         | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
-        | UnexpectedEndOfInput g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
+        | UnexpectedEndOfInputInGroup g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
         | UserError x -> x
 
 /// A log message that contains a position it was encountered.

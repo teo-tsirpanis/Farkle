@@ -24,7 +24,7 @@ module Tokenizer =
             else
                 match lastAcceptSym with
                 | Some sym -> Ok sym, lastAcceptOfs
-                | None -> Error '\000', ofs
+                | None -> Error(), ofs
         else
             let c = span.[ofs]
             let newDFA = oops.GetNextDFAState c currState
@@ -35,7 +35,7 @@ module Tokenizer =
             else
                 match lastAcceptSym with
                 | Some sym -> Ok sym, lastAcceptOfs
-                | None -> Error c, ofs
+                | None -> Error(), ofs
 
     let private tokenizeDFA states oops (input: CharStream) =
         if input.TryExpandPastOffset 0 then
@@ -78,7 +78,7 @@ module Tokenizer =
                 // Input ended and the current group can be ended by a newline.
                 | None when currentGroup.IsEndedByNewline -> groupLoop isNoiseGroup gs
                 // Input ended unexpectedly.
-                | None -> fail <| ParseErrorType.UnexpectedEndOfInput currentGroup
+                | None -> fail <| ParseErrorType.UnexpectedEndOfInputInGroup currentGroup
         let rec tokenLoop() =
             let newToken term =
                 let data = unpinSpanAndGenerateObject term fTransform input
@@ -117,9 +117,15 @@ module Tokenizer =
             // A group end symbol is encountered but outside of any group.
             | Some (Ok (Choice4Of4 ge), _) -> fail <| ParseErrorType.UnexpectedGroupEnd ge
             // We found an unrecognized symbol while being outside a group. This is an error.
-            | Some (Error c, ofs) ->
+            | Some (Error(), ofs) ->
                 let errorPos = getPositionAtOffset input ofs
-                Message(errorPos, ParseErrorType.LexicalError c)
+                let errorType =
+                    let span = input.CharacterBuffer
+                    if ofs = span.Length then
+                        ParseErrorType.UnexpectedEndOfInput
+                    else
+                        ParseErrorType.LexicalError span.[ofs]
+                Message(errorPos, errorType)
                 |> ParserError
                 |> raise
         tokenLoop()

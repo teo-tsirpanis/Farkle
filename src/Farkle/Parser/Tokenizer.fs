@@ -8,7 +8,6 @@ namespace Farkle.Parser
 open Farkle.Grammar
 open Farkle.IO
 open System
-open System.Collections.Immutable
 
 [<Struct>]
 /// A value type representing the result of a DFA tokenizer invocation.
@@ -35,43 +34,50 @@ type private DFAResult private(symbol: DFASymbol, offset: int) =
     /// stream's current position it is.
     member _.LastCharacterOffset = offset
 
-/// Functions to tokenize `CharStreams`.
-module Tokenizer =
+/// <summary>A class that breaks down the characters of a
+/// <see cref="CharStream"/> into <see cref="Token"/>s.</summary>
+/// <remarks>User code can inherit this class and implement additional
+/// tokenizer logic by overriding the <see cref="GetNextToken"/>
+/// method.</remarks>
+type Tokenizer(grammar: Grammar) =
+
+    let dfaStates = grammar.DFAStates
+    let groups = grammar.Groups
+    let oops = OptimizedOperations.Create grammar
 
     // Unfortunately we can't have ref structs on inner functions yet.
-    let rec private tokenizeDFA_impl (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) (input: CharStream)
-        ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
+    let rec tokenizeDFA_impl (input: CharStream) ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
         if ofs = span.Length then
             if input.TryExpandPastOffset(ofs) then
-                tokenizeDFA_impl states oops input ofs currState lastAcceptOfs lastAcceptSym input.CharacterBuffer
+                tokenizeDFA_impl input ofs currState lastAcceptOfs lastAcceptSym input.CharacterBuffer
             else
                 DFAResult.Create lastAcceptSym lastAcceptOfs ofs
         else
             let c = span.[ofs]
             let newDFA = oops.GetNextDFAState c currState
             if newDFA.IsOk then
-                match states.[newDFA.Value].AcceptSymbol with
-                | None -> tokenizeDFA_impl states oops input (ofs + 1) newDFA lastAcceptOfs lastAcceptSym span
-                | Some _ as acceptSymbol -> tokenizeDFA_impl states oops input (ofs + 1) newDFA ofs acceptSymbol span
+                match dfaStates.[newDFA.Value].AcceptSymbol with
+                | None -> tokenizeDFA_impl input (ofs + 1) newDFA lastAcceptOfs lastAcceptSym span
+                | Some _ as acceptSymbol -> tokenizeDFA_impl input (ofs + 1) newDFA ofs acceptSymbol span
             else
                 DFAResult.Create lastAcceptSym lastAcceptOfs ofs
 
-    let private tokenizeDFA states oops (input: CharStream) =
+    let tokenizeDFA (input: CharStream) =
         if input.TryExpandPastOffset 0 then
-            tokenizeDFA_impl states oops input 0 DFAStateTag.InitialState 0 None input.CharacterBuffer
+            tokenizeDFA_impl input 0 DFAStateTag.InitialState 0 None input.CharacterBuffer
         else
             DFAResult.EOF
 
     /// Returns the next token from the current position of a `CharStream`.
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
-    let tokenize (groups: ImmutableArray<_>) states oops fTransform fMessage (input: CharStream) =
+    let tokenize transformer fMessage (input: CharStream) =
         let fail msg = Message (input.CurrentPosition, msg) |> ParserError |> raise
         let rec groupLoop isNoiseGroup (groupStack: Group list) =
             match groupStack with
             | [] -> ()
             | currentGroup :: gs ->
-                let dfaResult = tokenizeDFA states oops input
+                let dfaResult = tokenizeDFA input
                 if dfaResult.ReachedEOF then
                     // Input ended but the current group can be ended by a newline.
                     if currentGroup.IsEndedByNewline then
@@ -96,7 +102,7 @@ module Tokenizer =
                         groupLoop isNoiseGroup gs
                     // The existing group is continuing.
                     | foundSymbol, _ ->
-                        let ofsToAdvancePast = 
+                        let ofsToAdvancePast =
                             match currentGroup.AdvanceMode, foundSymbol with
                             | AdvanceMode.Token, true -> ofs
                             | AdvanceMode.Character, _ | _, false -> 0
@@ -104,11 +110,11 @@ module Tokenizer =
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken term =
-                let data = input.FinishNewToken term fTransform
+                let data = input.FinishNewToken term transformer
                 let theHolyToken = Token.Create input.LastTokenPosition term data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
-            let dfaResult = tokenizeDFA states oops input
+            let dfaResult = tokenizeDFA input
             // Input ends outside of a group.
             if dfaResult.ReachedEOF then
                 input.CurrentPosition |> ParseMessage.EndOfInput |> fMessage
@@ -155,3 +161,26 @@ module Tokenizer =
                     |> ParserError
                     |> raise
         tokenLoop()
+
+    /// The `OptimizedOperations` object of the grammar of this tokenizer.
+    /// Used to avoid explicitly passing it to the LALR parser.
+    member internal _.OptimizedOperations = oops
+
+    /// <summary>Gets the next <see cref="Token"/>
+    /// from a <see cref="CharStream"/>.</summary>
+    /// <remarks>Custom inheritors that want to defer to Farkle's
+    /// tokenizer can do it by calling the base method.</remarks>
+    /// <param name="transformer">This parameter is used for the
+    /// post-processor. It should be passed to the base method if needed.</param>
+    /// <param name="fMessage">A function that is used for logging parsing events.</param>
+    /// <param name="input">The <see cref="CharStream"/> whose characters will be processed</param>
+    /// <returns>The next token, or <c>None</c> if input ended.</returns>
+    abstract GetNextToken: transformer: ITransformer<Terminal> * fMessage: (ParseMessage -> unit) * input: CharStream -> Token option
+    default _.GetNextToken(transformer, fMessage, input) =
+        tokenize transformer fMessage input
+
+[<Sealed>]
+/// A sealed dummy descendant of `Tokenizer`.
+/// It is used to help the runtime to maybe
+/// do its devirtualization shenanigans.
+type internal DefaultTokenizer(grammar) = inherit Tokenizer(grammar)

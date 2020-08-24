@@ -192,10 +192,9 @@ module RuntimeFarkle =
         let mkError msg = msg |> FarkleError.ParseError |> Error
         match rf.Grammar with
         | Ok grammar ->
-            let oops = OptimizedOperations.Create grammar
-            let fTokenize = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor fMessage
+            let tokenizer = DefaultTokenizer grammar
             try
-                LALRParser.parseLALR fMessage grammar.LALRStates oops rf.PostProcessor fTokenize input |> Ok
+                LALRParser.parseLALR fMessage grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
             with
             | ParserError msg -> mkError msg
             | :? ParserApplicationException as e ->

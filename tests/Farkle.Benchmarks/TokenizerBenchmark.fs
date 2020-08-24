@@ -7,7 +7,6 @@ namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
 open Farkle
-open Farkle.Common
 open Farkle.IO
 open Farkle.JSON
 open Farkle.Parser
@@ -21,11 +20,12 @@ type TokenizerBenchmark() =
 
     let farkleTokenize (rf: RuntimeFarkle<_>) =
         use f = new StringReader(jsonData)
-        use cs = CharStream.Create f
-        let grammar, oops = rf.Grammar |> returnOrFail
-        let fTokenize() = Tokenizer.tokenize grammar.Groups grammar.DFAStates oops rf.PostProcessor ignore cs
+        use cs = new CharStream(f)
+        let grammar = rf.GetGrammar()
+        let pp = rf.PostProcessor
+        let tokenizer = DefaultTokenizer(grammar)
 
-        while fTokenize().IsSome do ()
+        while tokenizer.GetNextToken(pp, ignore, cs).IsSome do ()
 
     [<Benchmark>]
     member _.FarkleCSharp() =

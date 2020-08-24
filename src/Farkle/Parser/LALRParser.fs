@@ -43,12 +43,13 @@ module LALRParser =
     /// <param name="lalrStates">The LALR state table to use.</param>
     /// <param name="oops">The <see cref="OptimizedOperations"/> object that will make the parsing faster.</param>
     /// <param name="pp">The <see cref="PostProcessor"/> to use on the newly-fused productions.</param>
-    /// <param name="fToken">The a function that takes an <see cref="InputStream"/> and
-    /// returns a <see cref="Token"/> (if input did not end) and its <see cref="Position"/>.</param>
+    /// <param name="fToken">A <see cref="Tokenizer"/> object to get the next tokens.</param>
     /// <param name="input">The <see cref="InputStream"/>.</param>
-    /// <exception cref="ParseError">An error did happen. In Farkle, this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (oops: OptimizedOperations) (pp: PostProcessor<'TResult>) fToken (input: CharStream) =
+    /// <exception cref="ParseError">An error did happen. In Farkle,
+    /// this exception is caught by the <see cref="RuntimeFarkle"/></exception>
+    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
         use objBuffer = new ObjectBuffer()
+        let oops = tokenizer.OptimizedOperations
         let fail msg: obj = (input.LastTokenPosition, msg) |> Message |> ParserError |> raise
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
@@ -62,9 +63,10 @@ module LALRParser =
                 match token with
                 | Some {Data = data} ->
                     fMessage <| ParseMessage.Shift nextState.Index
+                    let nextToken = tokenizer.GetNextToken(pp, fMessage, input)
                     // We can't use <| because it prevents optimization into a loop.
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
-                    impl (fToken input) nextState ((nextState, data) :: stack)
+                    impl nextToken nextState ((nextState, data) :: stack)
                 | None -> failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
             | Some(LALRAction.Reduce productionToReduce) ->
                 let handleLength = productionToReduce.Handle.Length
@@ -90,4 +92,5 @@ module LALRParser =
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term
                     | None -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
-        impl (fToken input) lalrStates.[0] [lalrStates.[0], null] :?> 'TResult
+        let firstToken = tokenizer.GetNextToken(pp, fMessage, input)
+        impl firstToken lalrStates.[0] [lalrStates.[0], null] :?> 'TResult

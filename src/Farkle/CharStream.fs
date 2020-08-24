@@ -135,41 +135,57 @@ type CharStream private(source: CharStreamSource) =
     /// Converts an offset relative to the current
     /// position to an absolute character index.
     let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs
-    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
+    /// <summary>Creates a <see cref="CharStream"/> from a
+    /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
     new(mem) = new CharStream(new StaticBlockSource(mem))
-    /// Creates a `CharStream` from a string.
+    /// <summary>Creates a <see cref="CharStream"/> from a string.</summary>
     new (str: string) =
         nullCheck "str" str
         new CharStream(str.AsMemory())
-    /// Creates a `CharStream` that lazily reads the characters from a `TextReader`.
-    /// The size of the stream's internal character buffer can be optionally specified.
+    /// <summary>Creates a <see cref="CharStream"/> that lazily reads
+    /// its characters from a <see cref="TextReader"/>.</summary>
+    /// <param name="reader">The text reader to read characters from.</param>
+    /// <param name="bufferSize">The size of the stream's
+    /// internal character buffer. It has a default value.</param>
     new(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
         if bufferSize <= 0 then
             invalidArg "bufferSize" "The buffer size cannot be negative or zero."
         new CharStream(new DynamicBlockSource(reader, bufferSize))
     member internal _.CurrentIndex = currentPosition.Index
-    /// Gets the stream's current position.
-    /// Reading the stream for a new token starts from here.
-    member _.CurrentPosition: inref<_> = &currentPosition
     /// The starting position of the last token that was generated.
-    member _.LastTokenPosition: inref<_> = &lastTokenPosition
-    /// A read-only span of characters that contains all characters from `CurrentPosition`.
-    /// The first character of a new token is always in the zeroth position.
-    member internal _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index
-    /// Tries to load the `ofs`th character after the stream's current position.
-    /// If input ended, returns false. This function invalidates the stream's
-    /// character buffer but keeps the indices of the new buffer valid.
-    member internal _.TryExpandPastOffset ofs =
+    member internal _.LastTokenPosition: inref<_> = &lastTokenPosition
+    /// The position of the next character the stream has to read.
+    member _.CurrentPosition: inref<_> = &currentPosition
+    /// A read-only span of characters that contains all
+    /// available characters at and after the stream's current position.
+    member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index
+    /// <summary>Tries to load the <paramref name="ofs"/>th character after the stream's
+    /// current position. If it does not exist, returns false. This function invalidates
+    /// the stream's <see cref="CharacterBuffer"/> but keeps the indices of the new buffer
+    /// valid.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="ofs"/> is negative.</exception>
+    member _.TryExpandPastOffset ofs =
         checkOfsetPositive ofs
         source.TryExpandPastIndex(startingIndex, convertOffsetToIndex ofs)
-    /// Returns the position of the character at `ofs`
-    /// characters after the current position.
-    /// It cannot be negative.
-    member internal _.GetPositionAtOffset ofs =
+    /// <aummary>Returns the position of the character at <paramref name="ofs"/>
+    /// characters after the current position.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="ofs"/> is negative.</exception>
+    member _.GetPositionAtOffset ofs =
         checkOfsetPositive ofs
         let span = source.GetSpanForCharacters(currentPosition.Index, ofs)
         currentPosition.Advance span
-    /// Advances a `CharStream`'s current position just after the
+    /// <summary>Advances the stream's current position by <paramref name="ofs"/>
+    /// characters. This function invalidates the indices for the stream's
+    /// <see cref="CharacterBuffer"/> and the characters might be released
+    /// from memory.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="ofs"/> is negative.</exception>
+    member x.AdvanceBy ofs =
+        if ofs <> 0 then
+            x.AdvancePastOffset(ofs - 1, true)
+    /// Advances the stream's current position just after the
     /// next `ofs`th character from the stream's current position.
     /// This function invalidates the indices for the stream's `CharacterBuffer`.
     /// Optionally, the characters can be marked to be released from memory.

@@ -38,8 +38,6 @@ type private DFAResult private(symbol: DFASymbol, offset: int) =
 /// Functions to tokenize `CharStreams`.
 module Tokenizer =
 
-    open Farkle.IO.CharStream
-
     // Unfortunately we can't have ref structs on inner functions yet.
     let rec private tokenizeDFA_impl (states: ImmutableArray<DFAState>) (oops: OptimizedOperations) (input: CharStream)
         ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
@@ -88,25 +86,25 @@ module Tokenizer =
                     | true, Choice3Of4(GroupStart(_, tokGroupIdx))
                         when currentGroup.Nesting.Contains tokGroupIdx ->
                             let g = groups.[int tokGroupIdx]
-                            advance isNoiseGroup input ofs
+                            input.AdvancePastOffset(ofs, isNoiseGroup)
                             groupLoop isNoiseGroup (g :: groupStack)
                     // A symbol is found that ends the current group.
                     | true, sym when currentGroup.IsEndedBy sym ->
                         match currentGroup.EndingMode with
-                        | EndingMode.Closed -> advance isNoiseGroup input ofs
+                        | EndingMode.Closed -> input.AdvancePastOffset(ofs, isNoiseGroup)
                         | EndingMode.Open -> ()
                         groupLoop isNoiseGroup gs
                     // The existing group is continuing.
                     | foundSymbol, _ ->
-                        match currentGroup.AdvanceMode, foundSymbol with
-                        | AdvanceMode.Token, true ->
-                            advance isNoiseGroup input ofs
-                        | AdvanceMode.Character, _ | _, false ->
-                            advanceByOne isNoiseGroup input
+                        let ofsToAdvancePast = 
+                            match currentGroup.AdvanceMode, foundSymbol with
+                            | AdvanceMode.Token, true -> ofs
+                            | AdvanceMode.Character, _ | _, false -> 0
+                        input.AdvancePastOffset(ofsToAdvancePast, isNoiseGroup)
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken term =
-                let data = unpinSpanAndGenerateObject term fTransform input
+                let data = input.FinishNewToken term fTransform
                 let theHolyToken = Token.Create input.LastTokenPosition term data
                 theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
@@ -122,19 +120,19 @@ module Tokenizer =
                 // The easiest case. We advance the input, and return the token.
                 | true, Choice1Of4 term ->
                     input.StartNewToken()
-                    advance false input ofs
+                    input.AdvancePastOffset(ofs, false)
                     newToken term
                 // We found noise outside of any group.
                 // We discard it, unpin its characters, and proceed.
                 | true, Choice2Of4 _noise ->
-                    advance true input ofs
+                    input.AdvancePastOffset(ofs, true)
                     tokenLoop()
                 // A new group just started. We will enter the group loop function.
                 | true, Choice3Of4(GroupStart(_, tokGroupIdx)) ->
                     let g = groups.[int tokGroupIdx]
                     input.StartNewToken()
                     let isNoiseGroup = not g.IsTerminal
-                    advance isNoiseGroup input ofs
+                    input.AdvancePastOffset(ofs, isNoiseGroup)
                     groupLoop isNoiseGroup [g]
                     match g.ContainerSymbol with
                     // The group is a terminal. We return it.
@@ -146,7 +144,7 @@ module Tokenizer =
                     fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
                 // We found an unrecognized symbol while being outside a group. This is an error.
                 | false, _ ->
-                    let errorPos = getPositionAtOffset input ofs
+                    let errorPos = input.GetPositionAtOffset ofs
                     let errorType =
                         let span = input.CharacterBuffer
                         if ofs = span.Length then

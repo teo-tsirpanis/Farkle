@@ -42,7 +42,7 @@ type private CharStreamSource() =
     /// Disposes unmanaged resources using a well-known pattern.
     /// To be overridden on sources that require it.
     abstract Dispose: unit -> unit
-    default __.Dispose () = ()
+    default _.Dispose () = ()
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
@@ -60,7 +60,11 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
 [<Sealed>]
 type private DynamicBlockSource(reader: TextReader, bufferSize) =
     inherit CharStreamSource()
-    do nullCheck "reader" reader
+    do
+        nullCheck "reader" reader
+        if bufferSize <= 0 then
+            raise <| ArgumentOutOfRangeException("bufferSize", bufferSize,
+                "The buffer size cannot be negative or zero.")
     let mutable buffer = Array.zeroCreate bufferSize
     let mutable bufferFirstCharacterIndex = 0UL
     let mutable nextReadIndex = 0UL
@@ -119,113 +123,77 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
 /// And disposing it also disposes the underlying text reader (if exists).
-type CharStream = private {
-    /// The stream's source.
-    Source: CharStreamSource
+type CharStream private(source: CharStreamSource) =
     /// The index of the first element that must be retained in memory
     /// because it is going to be used to generate a token.
-    mutable StartingIndex: uint64
-    mutable _CurrentPosition: Position
-    /// [omit]
-    mutable _LastTokenPosition: Position
-}
-with
-    static member private Create(src) = {
-        Source = src
-        StartingIndex = 0UL
-        _CurrentPosition = Position.Initial
-        _LastTokenPosition = Position.Initial
-    }
-    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
-    static member Create(mem) = CharStream.Create(new StaticBlockSource(mem))
-    /// Creates a `CharStream` from a string.
-    static member Create(str: string) =
-        nullCheck "str" str
-        CharStream.Create(str.AsMemory())
-    /// Creates a `CharStream` that lazily reads from a `TextReader`.
-    /// The size of the stream's internal character buffer can be optionally specified.
-    /// `CharStreams` made from this function must be `Dispose`d.
-    /// The `TextReader` inside must be separately disposed as well.
-    static member Create(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
-        if bufferSize <= 0 then
-            invalidArg "bufferSize" "The buffer size cannot be negative or zero."
-        CharStream.Create(new DynamicBlockSource(reader, bufferSize))
-    member internal x.CurrentIndex = x.CurrentPosition.Index
-    /// Gets the stream's current position.
-    /// Reading the stream for a new token starts from here.
-    member x.CurrentPosition: inref<_> = &x._CurrentPosition
-    /// The starting position of the last token that was generated.
-    member x.LastTokenPosition: inref<_> = &x._LastTokenPosition
-    /// A read-only span of characters that contains all characters from `CurrentPosition`.
-    /// The first character of a new token is always in the zeroth position.
-    member internal x.CharacterBuffer = x.Source.GetAllCharactersAfterIndex x.CurrentIndex
-    /// Sets the stream's last token position to the current one.
-    member internal x.StartNewToken() = x._LastTokenPosition <- x._CurrentPosition
+    let mutable startingIndex = 0UL
+    let mutable currentPosition = Position.Initial
+    let mutable lastTokenPosition = Position.Initial
+    let checkOfsetPositive ofs =
+        if ofs < 0 then
+            raise(ArgumentOutOfRangeException("ofs", ofs, "The offset cannot be negative."))
     /// Converts an offset relative to the current
     /// position to an absolute character index.
-    member private x.ConvertOffsetToIndex ofs =
-        if ofs < 0 then
-            invalidArg "ofs" "The offset cannot be negative"
-        x.CurrentIndex + uint64 ofs
+    let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs
+    /// Creates a `CharStream` from a `ReadOnlyMemory` of characters.
+    new(mem) = new CharStream(new StaticBlockSource(mem))
+    /// Creates a `CharStream` from a string.
+    new (str: string) =
+        nullCheck "str" str
+        new CharStream(str.AsMemory())
+    /// Creates a `CharStream` that lazily reads the characters from a `TextReader`.
+    /// The size of the stream's internal character buffer can be optionally specified.
+    new(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
+        if bufferSize <= 0 then
+            invalidArg "bufferSize" "The buffer size cannot be negative or zero."
+        new CharStream(new DynamicBlockSource(reader, bufferSize))
+    member internal _.CurrentIndex = currentPosition.Index
+    /// Gets the stream's current position.
+    /// Reading the stream for a new token starts from here.
+    member _.CurrentPosition: inref<_> = &currentPosition
+    /// The starting position of the last token that was generated.
+    member _.LastTokenPosition: inref<_> = &lastTokenPosition
+    /// A read-only span of characters that contains all characters from `CurrentPosition`.
+    /// The first character of a new token is always in the zeroth position.
+    member internal _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index
     /// Tries to load the `ofs`th character after the stream's current position.
     /// If input ended, returns false. This function invalidates the stream's
     /// character buffer but keeps the indices of the new buffer valid.
-    member internal x.TryExpandPastOffset ofs =
-        x.Source.TryExpandPastIndex(x.StartingIndex, x.ConvertOffsetToIndex ofs)
-    interface IDisposable with
-        member x.Dispose() = (x.Source :> IDisposable).Dispose()
-
-/// Functions to create and work with `CharStream`s.
-/// They are not thread-safe.
-module internal CharStream =
-
+    member internal _.TryExpandPastOffset ofs =
+        checkOfsetPositive ofs
+        source.TryExpandPastIndex(startingIndex, convertOffsetToIndex ofs)
     /// Returns the position of the character at `ofs`
     /// characters after the current position.
     /// It cannot be negative.
-    [<CompiledName("GetPositionAtOffset")>]
-    let getPositionAtOffset (cs: CharStream) ofs =
-        if ofs >= 0 then
-            // If the offset is equal to zero,
-            // we don't want to advance the position at all.
-            // In this case, the span would be empty.
-            let span = cs.Source.GetSpanForCharacters(cs.CurrentIndex, ofs)
-            cs.CurrentPosition.Advance(span)
-        else
-            failwithf "Cannot get the position of the character at index %d (the stream is at %d)," ofs cs.CurrentIndex
-
-    /// Advances a `CharStream`'s position just after the
-    /// `ofs`th character from the stream's current position.
+    member internal _.GetPositionAtOffset ofs =
+        checkOfsetPositive ofs
+        let span = source.GetSpanForCharacters(currentPosition.Index, ofs)
+        currentPosition.Advance span
+    /// Advances a `CharStream`'s current position just after the
+    /// next `ofs`th character from the stream's current position.
     /// This function invalidates the indices for the stream's `CharacterBuffer`.
     /// Optionally, the characters can be marked to be released from memory.
-    [<CompiledName("Advance")>]
-    let advance doUnpin (cs: CharStream) ofsTo =
-        // We want to place the current position just after the index.
-        cs._CurrentPosition <- getPositionAtOffset cs (ofsTo + 1)
+    member internal x.AdvancePastOffset(ofs, doUnpin) =
+        currentPosition <- x.GetPositionAtOffset(ofs + 1)
         if doUnpin then
-            cs.StartingIndex <- cs.CurrentIndex
-
-    /// Advances a `CharStream`'s position by one character.
-    /// Optionally, this character can be marked to be released from memory.
-    [<CompiledName("AdvanceByOne")>]
-    let advanceByOne doUnpin (cs: CharStream) =
-        if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
-            advance doUnpin cs 0
-        else
-            failwith "Cannot consume a character stream past its end."
-
-    /// Creates an arbitrary object out of the characters
-    /// from the `CharStream`'s last token position to the current position.
+            startingIndex <- currentPosition.Index
+    /// Marks the start of the next token by setting the
+    /// stream's last token position to the current one.
+    member internal _.StartNewToken() = lastTokenPosition <- currentPosition
+    /// Creates an arbitrary object from the characters
+    /// between the `CharStream`'s last token position and its current position.
     /// After that call, the characters at and before the current position
-    /// might be freed from memory, so this function must not be used twice.
-    [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs =
-        let idxStart = cs._LastTokenPosition.Index
-        let idxEnd = cs.CurrentIndex - 1UL
-        let length = cs.CurrentIndex - idxStart |> int
-        if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
-            cs.StartingIndex <- idxEnd + 1UL
-            let span = cs.Source.GetSpanForCharacters(idxStart, length)
-            transformer.Transform(symbol, cs._LastTokenPosition, span)
+    /// might be freed from memory, so this method must not be used twice.
+    member internal x.FinishNewToken symbol (transformer: ITransformer<'TSymbol>) =
+        let idxStart = lastTokenPosition.Index
+        let idxEnd = x.CurrentIndex - 1UL
+        let length = x.CurrentIndex - idxStart |> int
+        if startingIndex <= idxStart && source.LengthSoFar > idxEnd then
+            startingIndex <- idxEnd + 1UL
+            let span = source.GetSpanForCharacters(idxStart, length)
+            transformer.Transform(symbol, lastTokenPosition, span)
         else
             failwithf "Trying to read from %d to %d, from a stream that was last read at %d."
-                idxStart idxEnd cs.StartingIndex
+                idxStart idxEnd startingIndex
+    interface IDisposable with
+        member _.Dispose() = (source :> IDisposable).Dispose()

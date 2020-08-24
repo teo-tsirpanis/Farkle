@@ -27,8 +27,8 @@ let testParser grammarFile displayName text =
             Expect.isOk result "Parsing failed"
         }
     [
-        testImpl "static" (CharStream.Create: string -> _)
-        testImpl "dynamic" (fun x -> new StringReader(x) |> CharStream.Create)
+        testImpl "static" (CharStream: string -> _)
+        testImpl "dynamic" (fun x -> StringReader(x) |> CharStream)
     ]
 
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"

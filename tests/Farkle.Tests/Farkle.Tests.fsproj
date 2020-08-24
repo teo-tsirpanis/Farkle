@@ -3,6 +3,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsPackable>false</IsPackable>
+    <!-- Using "new" to create disposable types. -->
+    <NoWarn>$(NoWarn);FS0760</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />

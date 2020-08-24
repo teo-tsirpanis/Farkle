@@ -163,7 +163,7 @@ with
     member internal x.StartNewToken() = x._LastTokenPosition <- x._CurrentPosition
     /// Converts an offset relative to the current
     /// position to an absolute character index.
-    member internal x.ConvertOffsetToIndex ofs =
+    member private x.ConvertOffsetToIndex ofs =
         if ofs < 0 then
             invalidArg "ofs" "The offset cannot be negative"
         x.CurrentIndex + uint64 ofs
@@ -179,51 +179,49 @@ with
 /// They are not thread-safe.
 module internal CharStream =
 
-    /// Returns the position of the character at `idx`.
-    /// It cannot be less than the stream's index
-    /// of the current position.
-    [<CompiledName("GetPositionAtIndex")>]
-    let getPositionAtIndex (cs: CharStream) idx =
-        if idx >= cs.CurrentIndex then
-            // If the index is equal to the current index,
+    /// Returns the position of the character at `ofs`
+    /// characters after the current position.
+    /// It cannot be negative.
+    [<CompiledName("GetPositionAtOffset")>]
+    let getPositionAtOffset (cs: CharStream) ofs =
+        if ofs >= 0 then
+            // If the offset is equal to zero,
             // we don't want to advance the position at all.
             // In this case, the span would be empty.
-            let len = idx - cs.CurrentIndex |> int
-            let span = cs.Source.GetSpanForCharacters(cs.CurrentIndex, len)
+            let span = cs.Source.GetSpanForCharacters(cs.CurrentIndex, ofs)
             cs.CurrentPosition.Advance(span)
         else
-            failwithf "Cannot get the position of the character at index %d (the stream is at %d)," idx cs.CurrentIndex
+            failwithf "Cannot get the position of the character at index %d (the stream is at %d)," ofs cs.CurrentIndex
 
-    /// Advances a `CharStream`'s position just after the given index.
-    /// Further reads should start one character after it.
-    /// Calling this function does not affect the pinned `CharSpan`s.
-    /// Optionally, the characters before the index can be marked to be released from memory.
+    /// Advances a `CharStream`'s position just after the
+    /// `ofs`th character from the stream's current position.
+    /// This function invalidates the indices for the stream's `CharacterBuffer`.
+    /// Optionally, the characters can be marked to be released from memory.
     [<CompiledName("Advance")>]
-    let advance doUnpin (cs: CharStream) idxTo =
+    let advance doUnpin (cs: CharStream) ofsTo =
         // We want to place the current position just after the index.
-        cs._CurrentPosition <- getPositionAtIndex cs (idxTo + 1UL)
+        cs._CurrentPosition <- getPositionAtOffset cs (ofsTo + 1)
         if doUnpin then
             cs.StartingIndex <- cs.CurrentIndex
 
     /// Advances a `CharStream`'s position by one character.
-    /// Further reads should start from the next one.
-    /// Calling this function does not affect the pinned `CharSpan`s.
-    /// Optionally, this character and all before it can be marked to be released from memory.
+    /// Optionally, this character can be marked to be released from memory.
     [<CompiledName("AdvanceByOne")>]
     let advanceByOne doUnpin (cs: CharStream) =
         if cs.CurrentIndex < uint64 cs.Source.LengthSoFar then
-            advance doUnpin cs cs.CurrentIndex
+            advance doUnpin cs 0
         else
             failwith "Cannot consume a character stream past its end."
 
     /// Creates an arbitrary object out of the characters
-    /// from the `CharStream`'s last token position to `idxEnd`.
-    /// After that call, the characters at and before `idxEnd`
+    /// from the `CharStream`'s last token position to the current position.
+    /// After that call, the characters at and before the current position
     /// might be freed from memory, so this function must not be used twice.
     [<CompiledName("UnpinSpanAndGenerate")>]
-    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs idxEnd =
+    let unpinSpanAndGenerateObject symbol (transformer: ITransformer<'symbol>) cs =
         let idxStart = cs._LastTokenPosition.Index
-        let length = idxEnd - idxStart + 1UL |> int
+        let idxEnd = cs.CurrentIndex - 1UL
+        let length = cs.CurrentIndex - idxStart |> int
         if cs.StartingIndex <= idxStart && cs.Source.LengthSoFar > idxEnd then
             cs.StartingIndex <- idxEnd + 1UL
             let span = cs.Source.GetSpanForCharacters(idxStart, length)

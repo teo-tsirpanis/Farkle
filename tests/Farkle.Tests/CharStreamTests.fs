@@ -19,13 +19,12 @@ let private toStringTransformer =
 /// It is recommended to use the `unpinSpanAndGenerate` function
 /// to avoid excessive allocations, unless you specifically want a string.
 [<CompiledName("UnpinSpanAndGenerateString")>]
-let private unpinSpanAndGenerateString cs c_span =
+let private unpinSpanAndGenerateString cs =
     let s =
         unpinSpanAndGenerateObject
             ()
             toStringTransformer
             cs
-            c_span // Created by cable
     s :?> string
 
 [<Tests>]

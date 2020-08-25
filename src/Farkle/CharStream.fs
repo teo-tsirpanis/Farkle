@@ -58,7 +58,7 @@ type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     override _.GetSpanForCharacters(startIndex, length) = mem.Span.Slice(int startIndex, length)
 
 [<Sealed>]
-type private DynamicBlockSource(reader: TextReader, bufferSize) =
+type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
     inherit CharStreamSource()
     do
         nullCheck "reader" reader
@@ -119,10 +119,11 @@ type private DynamicBlockSource(reader: TextReader, bufferSize) =
         ReadOnlySpan(buffer, startIndex, length)
     override _.Dispose() =
         buffer <- null
+        if not leaveOpen then
+            reader.Dispose()
 
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
-/// And disposing it also disposes the underlying text reader (if exists).
 type CharStream private(source: CharStreamSource) =
     /// The index of the first element that must be retained in memory
     /// because it is going to be used to generate a token.
@@ -145,12 +146,14 @@ type CharStream private(source: CharStreamSource) =
     /// <summary>Creates a <see cref="CharStream"/> that lazily reads
     /// its characters from a <see cref="TextReader"/>.</summary>
     /// <param name="reader">The text reader to read characters from.</param>
+    /// <param name="leaveOpen">Whether to keep the underlying text reader
+    /// open when the character stream gets disposed.</param>
     /// <param name="bufferSize">The size of the stream's
     /// internal character buffer. It has a default value.</param>
-    new(reader, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
+    new(reader, [<Optional>] leaveOpen, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
         if bufferSize <= 0 then
             invalidArg "bufferSize" "The buffer size cannot be negative or zero."
-        new CharStream(new DynamicBlockSource(reader, bufferSize))
+        new CharStream(new DynamicBlockSource(reader, leaveOpen, bufferSize))
     member internal _.CurrentIndex = currentPosition.Index
     /// The starting position of the last token that was generated.
     member internal _.LastTokenPosition: inref<_> = &lastTokenPosition

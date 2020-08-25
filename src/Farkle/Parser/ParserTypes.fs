@@ -81,11 +81,12 @@ type ParseErrorType =
         | UnexpectedEndOfInputInGroup g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
         | UserError x -> x
 
-/// A log message that contains a position it was encountered.
+/// A log message that contains the position it was encountered.
 type Message<'a> = Message of Position * 'a
     with
         override x.ToString() = let (Message(pos, m)) = x in sprintf "%O %O" pos m
 
-/// An exception to be thrown when parsing goes wrong.
-/// It is thrown by the `Parser` and `Tokenizer` APIs, and caught by the `RuntimeFarkle`.
-exception ParserError of ParseErrorType Message
+/// <summary>An exception to be thrown when parsing goes wrong.</summary>
+/// <remarks>It is thrown by the <see cref="LALRParser"/> and <see cref="Tokenizer"/>
+/// APIs and transparently caught by the <see cref="RuntimeFarkle"/>.</remarks>
+exception ParserException of ParseErrorType Message

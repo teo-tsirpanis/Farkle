@@ -196,7 +196,7 @@ module RuntimeFarkle =
             try
                 LALRParser.parseLALR fMessage grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
             with
-            | ParserError msg -> mkError msg
+            | ParserException msg -> mkError msg
             | :? ParserApplicationException as e ->
                 (input.CurrentPosition, ParseErrorType.UserError e.Message)
                 |> Message

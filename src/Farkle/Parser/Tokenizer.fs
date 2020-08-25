@@ -72,7 +72,9 @@ type Tokenizer(grammar: Grammar) =
     /// A delegate to transform the resulting terminal is also given, as well
     /// as one that logs events.
     let tokenize transformer fMessage (input: CharStream) =
-        let fail msg = Message (input.CurrentPosition, msg) |> ParserError |> raise
+        // By returning unit the compiler does
+        // not translate it to an FSharpTypeFunc.
+        let fail msg = Message (input.CurrentPosition, msg) |> ParserException |> raise |> ignore
         let rec groupLoop isNoiseGroup (groupStack: Group list) =
             match groupStack with
             | [] -> ()
@@ -148,6 +150,7 @@ type Tokenizer(grammar: Grammar) =
                 // A group end symbol is encountered but outside of any group.
                 | true, Choice4Of4 groupEnd ->
                     fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
+                    None
                 // We found an unrecognized symbol while being outside a group. This is an error.
                 | false, _ ->
                     let errorPos = input.GetPositionAtOffset ofs
@@ -158,7 +161,7 @@ type Tokenizer(grammar: Grammar) =
                         else
                             ParseErrorType.LexicalError span.[ofs]
                     Message(errorPos, errorType)
-                    |> ParserError
+                    |> ParserException
                     |> raise
         tokenLoop()
 

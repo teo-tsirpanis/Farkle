@@ -13,6 +13,7 @@ open Operators.Checked
 open System
 open System.Diagnostics
 open System.IO
+open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
 /// The bridge between a character stream and the post-processor API.
@@ -158,7 +159,8 @@ type CharStream private(source: CharStreamSource) =
     /// The starting position of the last token that was generated.
     member internal _.LastTokenPosition: inref<_> = &lastTokenPosition
     /// The position of the next character the stream has to read.
-    member _.CurrentPosition: inref<_> = &currentPosition
+    // https://github.com/dotnet/fsharp/issues/9997
+    member _.CurrentPosition: [<IsReadOnly>] inref<_> = &currentPosition
     /// A read-only span of characters that contains all
     /// available characters at and after the stream's current position.
     member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index

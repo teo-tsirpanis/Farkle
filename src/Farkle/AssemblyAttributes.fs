@@ -3,6 +3,17 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+#if NETSTANDARD2_0
+namespace System.Runtime.CompilerServices
+
+open System
+open System.ComponentModel
+
+[<AttributeUsage(AttributeTargets.All, Inherited = false)>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
+type IsReadOnlyAttribute() = inherit Attribute()
+#endif
+
 namespace global
 
 open System

@@ -173,7 +173,7 @@ type CharStream private(source: CharStreamSource) =
     member _.TryExpandPastOffset ofs =
         checkOfsetPositive ofs
         source.TryExpandPastIndex(startingIndex, convertOffsetToIndex ofs)
-    /// <aummary>Returns the position of the character at <paramref name="ofs"/>
+    /// <summary>Returns the position of the character at <paramref name="ofs"/>
     /// characters after the current position.</summary>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>

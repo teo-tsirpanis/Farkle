@@ -21,16 +21,20 @@ type JsonBenchmark() =
 
     let createTR() = new StringReader(jsonData)
 
+    let csharpRuntime = CSharp.Language.Runtime
+
+    let fsharpRuntime = FSharp.Language.runtime
+
     [<Benchmark>]
     // There are performance differences between the F# and C# editions.
     // The separate benchmarks will stay for now.
     member _.FarkleCSharp() =
-        RuntimeFarkle.parseTextReader CSharp.Language.Runtime ignore (createTR())
+        RuntimeFarkle.parseTextReader csharpRuntime ignore (createTR())
         |> returnOrFail
 
     [<Benchmark>]
     member _.FarkleFSharp() =
-        RuntimeFarkle.parseTextReader FSharp.Language.runtime ignore (createTR())
+        RuntimeFarkle.parseTextReader fsharpRuntime ignore (createTR())
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]

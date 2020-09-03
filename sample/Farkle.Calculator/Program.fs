@@ -18,7 +18,7 @@ let interactive rf =
         let input = Console.ReadLine() |> Option.ofObj
         match input with
             | Some x ->
-                RuntimeFarkle.parseString rf (string >> Console.Error.WriteLine) x
+                RuntimeFarkle.parseString rf x
                 |> prettyPrintResult
                 impl()
             | None -> ()
@@ -34,8 +34,12 @@ let main args =
     match args with
     | [| |] -> interactive rf
     | [|"--ast"; x|] ->
-        RuntimeFarkle.parseString (RuntimeFarkle.changePostProcessor PostProcessors.ast rf) Console.WriteLine x
+        let rf = RuntimeFarkle.changePostProcessor PostProcessors.ast rf
+        RuntimeFarkle.parseString rf x
         |> Result.map AST.toASCIITree
         |> prettyPrintResult
-    | x -> x |> Array.iter (RuntimeFarkle.parseString rf Console.WriteLine >> prettyPrintResult >> Console.WriteLine)
-    0 // return an integer exit code
+    | _ ->
+        for x in args do
+            RuntimeFarkle.parseString rf x
+            |> prettyPrintResult
+    0

@@ -186,15 +186,14 @@ module RuntimeFarkle =
         |> markForPrecompile
 
     /// Parses and post-processes a `CharStream`.
-    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseChars")>]
-    let parseChars (rf: RuntimeFarkle<'TResult>) fMessage input =
+    let parseChars (rf: RuntimeFarkle<'TResult>) input =
         let mkError msg = msg |> FarkleError.ParseError |> Error
         match rf.Grammar with
         | Ok grammar ->
             let tokenizer = DefaultTokenizer grammar
             try
-                LALRParser.parseLALR fMessage grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
+                LALRParser.parseLALR grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
             with
             | ParserException msg -> mkError msg
             | :? ParserApplicationException as e ->
@@ -205,48 +204,41 @@ module RuntimeFarkle =
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
-    /// This function also accepts a custom parse message handler.
-    let parseMemory rf fMessage (input: ReadOnlyMemory<_>) =
+    let parseMemory rf (input: ReadOnlyMemory<_>) =
         use cs = new CharStream(input)
-        parseChars rf fMessage cs
+        parseChars rf cs
 
     /// Parses and post-processes a string.
-    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseString")>]
-    let parseString rf fMessage (inputString: string) =
+    let parseString rf (inputString: string) =
         use cs = new CharStream(inputString)
-        parseChars rf fMessage cs
+        parseChars rf cs
 
     /// Parses and post-processes a .NET `Stream` with the
     /// given character encoding, which may be lazily read.
     /// Better use `parseTextReader` instead.
-    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseStream"); Obsolete("Streams are supposed to \
 contain binary data; not text. Use parseTextReader instead.")>]
-    let parseStream rf fMessage doLazyLoad (encoding: Encoding) (inputStream: Stream) =
+    let parseStream rf doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =
             match doLazyLoad with
             | true -> new CharStream(sr)
             | false -> new CharStream(sr.ReadToEnd())
-        parseChars rf fMessage cs
+        parseChars rf cs
 
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
-    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseTextReader")>]
-    let parseTextReader rf fMessage (textReader: TextReader) =
+    let parseTextReader rf (textReader: TextReader) =
         let cs = new CharStream(textReader)
-        parseChars rf fMessage cs
+        parseChars rf cs
 
     /// Parses and post-processes a file at the given path with the given character encoding.
-    /// This function also accepts a custom parse message handler.
     [<CompiledName("ParseFile")>]
-    let parseFile rf fMessage inputFile =
+    let parseFile rf inputFile =
         use s = File.OpenText(inputFile)
-        parseTextReader rf fMessage s
+        parseTextReader rf s
 
     /// Parses and post-processes a string.
-    // This function was inspired by FParsec, which has some "runParserOn***" functions,
-    // and the simple and easy-to-use function named "run", that just parses a string.
     [<CompiledName("Parse")>]
-    let parse rf x = parseString rf ignore x
+    let parse rf x = parseString rf x

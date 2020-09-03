@@ -69,9 +69,7 @@ type Tokenizer(grammar: Grammar) =
             DFAResult.EOF
 
     /// Returns the next token from the current position of a `CharStream`.
-    /// A delegate to transform the resulting terminal is also given, as well
-    /// as one that logs events.
-    let tokenize transformer fMessage (input: CharStream) =
+    let tokenize transformer (input: CharStream) =
         // By returning unit the compiler does
         // not translate it to an FSharpTypeFunc.
         let fail msg = Message (input.CurrentPosition, msg) |> ParserException |> raise |> ignore
@@ -114,12 +112,10 @@ type Tokenizer(grammar: Grammar) =
             let newToken term =
                 let data = input.FinishNewToken term transformer
                 let theHolyToken = Token.Create input.LastTokenPosition term data
-                theHolyToken |> ParseMessage.TokenRead |> fMessage
                 Some theHolyToken
             let dfaResult = tokenizeDFA input
             // Input ends outside of a group.
             if dfaResult.ReachedEOF then
-                input.CurrentPosition |> ParseMessage.EndOfInput |> fMessage
                 None
             else
                 let ofs = dfaResult.LastCharacterOffset
@@ -174,13 +170,11 @@ type Tokenizer(grammar: Grammar) =
     /// <remarks>Custom inheritors that want to defer to Farkle's
     /// tokenizer can do it by calling the base method.</remarks>
     /// <param name="transformer">This parameter is used for the
-    /// post-processor. It should be passed to the base method if needed.</param>
-    /// <param name="fMessage">A function that is used for logging parsing events.</param>
+    /// post-processor. It should be passed to the base method if called.</param>
     /// <param name="input">The <see cref="CharStream"/> whose characters will be processed</param>
     /// <returns>The next token, or <c>None</c> if input ended.</returns>
-    abstract GetNextToken: transformer: ITransformer<Terminal> * fMessage: (ParseMessage -> unit) * input: CharStream -> Token option
-    default _.GetNextToken(transformer, fMessage, input) =
-        tokenize transformer fMessage input
+    abstract GetNextToken: transformer: ITransformer<Terminal> * input: CharStream -> Token option
+    default _.GetNextToken(transformer, input) = tokenize transformer input
 
 [<Sealed>]
 /// A sealed dummy descendant of `Tokenizer`.

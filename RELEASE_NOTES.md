@@ -1,5 +1,6 @@
 #### 6.0.0-alpha.3
-* __Breaking change:__ .NET Framework 4.5 is not longer supported. The library targets .NET Standard 2.0 and .NET Standard 2.1.
+* __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0 and .NET Standard 2.1.
+* __Breaking change:__ Logging parser events is no longer supported. The logging function was removed from the signatures of parser APIs.
 * Precompiler loader errors can be suppressed with an `AppContext` switch.
 
 #### 6.0.0-alpha.2 - 23-08-2020

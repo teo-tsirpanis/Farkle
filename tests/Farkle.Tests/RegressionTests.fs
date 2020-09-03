@@ -6,15 +6,12 @@
 module Farkle.Tests.RegressionTests
 
 open Expecto
-open Expecto.Logging
 open Farkle
 open Farkle.Parser
 
-let logger = Log.create "Regression tests"
-
 let private reproduceIssue issueNumber = test (sprintf "GitHub issue #%02i" issueNumber)
 
-let parse rf str = RuntimeFarkle.parseString rf (string >> Message.eventX >> logger.verbose) str
+let parse rf str = RuntimeFarkle.parseString rf str
 
 [<Tests>]
 let tests = testList "Regression tests" [

@@ -6,7 +6,6 @@
 module Farkle.Tests.ParserTests
 
 open Expecto
-open Expecto.Logging
 open Farkle
 open Farkle.Grammar
 open Farkle.IO
@@ -16,14 +15,12 @@ open Farkle.Tests
 open SimpleMaths
 open System.IO
 
-let logger = Log.create "Parser tests"
-
 let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
         let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode" grammarFile displayName streamMode
         test description {
             let rf = loadRuntimeFarkle grammarFile
-            let result = RuntimeFarkle.parseChars rf (string >> Message.eventX >> logger.verbose) |> using (fCharStream text)
+            let result = RuntimeFarkle.parseChars rf |> using (fCharStream text)
             Expect.isOk result "Parsing failed"
         }
     [
@@ -42,36 +39,39 @@ let tests = testList "Parser tests" [
     |> List.collect ((<|||) testParser)
     |> testList "Domain-ignorant parsing tests"
 
-    test "Parsing a simple mathematical expression behaves correctly and consistently up to the parsing log" {
-        let grammar = SimpleMaths.int.GetGrammar()
-        let reduce idx = ParseMessage.Reduction grammar.Productions.[int idx]
-        let numberTerminal = Terminal(3u, "Number")
+    test "Parsing a simple mathematical expression generates the correct AST" {
+        let testString = "475 + 724"
+        let expectedAST =
+            let grammar = SimpleMaths.int.GetGrammar()
+            let nont idx xs = AST.Nonterminal(grammar.Productions.[idx], xs)
+            let numberTerminal = Terminal(3u, "Number")
+            nont 10 [
+                nont 7 [
+                    nont 9 [
+                        nont 6 [
+                            nont 3 [
+                                nont 0 [AST.Content(numberTerminal, Position.Create 1UL 1UL 0UL, "475")]
+                            ]
+                        ]
+                    ]
+                    AST.Content(Terminal(0u, "+"), Position.Create 1UL 5UL 4UL, "+")
+                    nont 6 [
+                        nont 3 [
+                            nont 0 [AST.Content(numberTerminal, Position.Create 1UL 7UL 6UL, "724")]
+                        ]
+                    ]
+                ]
+            ]
 
-        let expectedLog = [
-            ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 1UL 0UL; Data = 475}
-            ParseMessage.Shift 9u
-            ParseMessage.TokenRead {Symbol = Terminal(0u, "+"); Position = Position.Create 1UL 5UL 4UL; Data = null}
-            reduce 0u
-            reduce 3u
-            reduce 6u
-            reduce 9u
-            ParseMessage.Shift 3u
-            ParseMessage.TokenRead {Symbol = numberTerminal; Position = Position.Create 1UL 7UL 6UL; Data = 724}
-            ParseMessage.Shift 9u
-            ParseMessage.EndOfInput <| Position.Create 1UL 10UL 9UL
-            reduce 0u
-            reduce 3u
-            reduce 6u
-            reduce 7u
-            reduce 10u
-        ]
-
-        let actualLog = ResizeArray()
         let num =
-            RuntimeFarkle.parseString SimpleMaths.int actualLog.Add "475 + 724"
-            |> Flip.Expect.wantOk "Parsing '475 + 724' failed"
+            RuntimeFarkle.parseString SimpleMaths.int testString
+            |> Flip.Expect.wantOk "Parsing failed"
+        let astRuntime = RuntimeFarkle.changePostProcessor PostProcessors.ast SimpleMaths.int
+        let ast =
+            RuntimeFarkle.parseString astRuntime testString
+            |> Flip.Expect.wantOk "Parsing failed"
         Expect.equal num 1199 "The numerical result is different than the expected"
-        Expect.sequenceEqual actualLog expectedLog "The parsing log is different than the usual"
+        Expect.equal (AST.toASCIITree ast) (AST.toASCIITree expectedAST) "The AST is different"
     }
 
     test "Lexical errors report the correct position" {

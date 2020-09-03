@@ -29,12 +29,12 @@ type JsonBenchmark() =
     // There are performance differences between the F# and C# editions.
     // The separate benchmarks will stay for now.
     member _.FarkleCSharp() =
-        RuntimeFarkle.parseTextReader csharpRuntime ignore (createTR())
+        RuntimeFarkle.parseTextReader csharpRuntime (createTR())
         |> returnOrFail
 
     [<Benchmark>]
     member _.FarkleFSharp() =
-        RuntimeFarkle.parseTextReader fsharpRuntime ignore (createTR())
+        RuntimeFarkle.parseTextReader fsharpRuntime (createTR())
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]

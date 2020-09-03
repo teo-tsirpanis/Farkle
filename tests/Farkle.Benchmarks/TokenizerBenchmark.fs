@@ -25,7 +25,7 @@ type TokenizerBenchmark() =
         let pp = rf.PostProcessor
         let tokenizer = DefaultTokenizer(grammar)
 
-        while tokenizer.GetNextToken(pp, ignore, cs).IsSome do ()
+        while tokenizer.GetNextToken(pp, cs).IsSome do ()
 
     [<Benchmark>]
     member _.FarkleCSharp() =

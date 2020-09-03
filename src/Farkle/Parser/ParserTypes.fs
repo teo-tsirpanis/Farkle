@@ -36,24 +36,6 @@ type ExpectedSymbol =
         | Terminal x -> x.ToString()
         | EndOfInput -> "(EOF)"
 
-/// An action of the parser.
-[<RequireQualifiedAccess>]
-type ParseMessage =
-    /// Input ended.
-    | EndOfInput of Position
-    /// A token was read.
-    | TokenRead of Token
-    /// A rule was reduced.
-    | Reduction of Production
-    /// The parser shifted to a different LALR state.
-    | Shift of uint32
-    override x.ToString() =
-        match x with
-        | EndOfInput pos -> sprintf "%O Input ended" pos
-        | TokenRead x -> sprintf "%O Token read: %O (%s)" x.Position x x.Symbol.Name
-        | Reduction x -> sprintf "Reduce %O" x
-        | Shift x -> sprintf "Shift: %d" x
-
 /// An error the parser encountered.
 [<RequireQualifiedAccess>]
 type ParseErrorType =

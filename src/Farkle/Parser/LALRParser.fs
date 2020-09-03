@@ -38,8 +38,6 @@ module LALRParser =
             member _.Dispose() = ArrayPool.Shared.Return(arr, true)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
-    /// <param name="fMessage">A function that gets called for every event that happens.
-    /// Useful for logging</param>
     /// <param name="lalrStates">The LALR state table to use.</param>
     /// <param name="oops">The <see cref="OptimizedOperations"/> object that will make the parsing faster.</param>
     /// <param name="pp">The <see cref="PostProcessor"/> to use on the newly-fused productions.</param>
@@ -47,7 +45,7 @@ module LALRParser =
     /// <param name="input">The <see cref="InputStream"/>.</param>
     /// <exception cref="ParseError">An error did happen. In Farkle,
     /// this exception is caught by the <see cref="RuntimeFarkle"/></exception>
-    let parseLALR fMessage (lalrStates: ImmutableArray<LALRState>) (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
+    let parseLALR (lalrStates: ImmutableArray<LALRState>) (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
         use objBuffer = new ObjectBuffer()
         let oops = tokenizer.OptimizedOperations
         let fail msg: obj = (input.LastTokenPosition, msg) |> Message |> ParserException |> raise
@@ -62,8 +60,7 @@ module LALRParser =
             | Some(LALRAction.Shift (LALRState nextState)) ->
                 match token with
                 | Some {Data = data} ->
-                    fMessage <| ParseMessage.Shift nextState.Index
-                    let nextToken = tokenizer.GetNextToken(pp, fMessage, input)
+                    let nextToken = tokenizer.GetNextToken(pp, input)
                     // We can't use <| because it prevents optimization into a loop.
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
                     impl nextToken nextState ((nextState, data) :: stack)
@@ -78,7 +75,6 @@ module LALRParser =
                     let resultObj =
                         let tokens = objBuffer.GetBufferFromStack handleLength stack
                         pp.Fuse(productionToReduce, tokens)
-                    fMessage <| ParseMessage.Reduction productionToReduce
                     impl token nextState ((nextState, resultObj) :: stack')
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
             | None ->
@@ -92,5 +88,5 @@ module LALRParser =
                     | Some {Symbol = term} -> ExpectedSymbol.Terminal term
                     | None -> ExpectedSymbol.EndOfInput
                 (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
-        let firstToken = tokenizer.GetNextToken(pp, fMessage, input)
+        let firstToken = tokenizer.GetNextToken(pp, input)
         impl firstToken lalrStates.[0] [lalrStates.[0], null] :?> 'TResult

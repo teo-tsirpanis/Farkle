@@ -23,7 +23,7 @@ let interactive rf =
                 impl()
             | None -> ()
     eprintfn "This is a simple mathematical expression parser powered by Farkle,"
-    eprintfn "Copyright (c) 2018 Theodore Tsirpanis."
+    eprintfn "Written by Theodore Tsirpanis."
     eprintfn "Insert your expression and press enter."
     eprintfn "Press Control + C to exit."
     impl()

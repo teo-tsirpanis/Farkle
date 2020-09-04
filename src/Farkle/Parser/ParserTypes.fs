@@ -64,11 +64,10 @@ type ParseErrorType =
         | UserError x -> x
 
 /// A log message that contains the position it was encountered.
-type Message<'a> = Message of Position * 'a
+type ParserError = ParserError of Position * ParseErrorType
     with
-        override x.ToString() = let (Message(pos, m)) = x in sprintf "%O %O" pos m
-
-/// <summary>An exception to be thrown when parsing goes wrong.</summary>
-/// <remarks>It is thrown by the <see cref="LALRParser"/> and <see cref="Tokenizer"/>
-/// APIs and transparently caught by the <see cref="RuntimeFarkle"/>.</remarks>
-exception ParserException of ParseErrorType Message
+        /// The position this parser error occured.
+        member x.Position = let (ParserError(pos, _)) = x in pos
+        /// The type of this parser error.
+        member x.ErrorType = let (ParserError(_, errorType)) = x in errorType
+        override x.ToString() = let (ParserError(pos, m)) = x in sprintf "%O %O" pos m

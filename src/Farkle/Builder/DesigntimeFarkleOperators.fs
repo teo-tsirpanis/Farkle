@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle
 open Farkle.Common
 open System
 open System.Collections.Generic

@@ -19,7 +19,7 @@ open System.Text
 [<RequireQualifiedAccess>]
 type FarkleError =
     /// There was a parsing error.
-    | ParseError of Message<ParseErrorType>
+    | ParseError of ParserError
     /// There had been an error while building the grammar .
     | BuildError of BuildError
     override x.ToString() =
@@ -195,10 +195,9 @@ module RuntimeFarkle =
             try
                 LALRParser.parseLALR grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
             with
-            | ParserException msg -> mkError msg
+            | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->
-                (input.CurrentPosition, ParseErrorType.UserError e.Message)
-                |> Message
+                ParserError(input.CurrentPosition, ParseErrorType.UserError e.Message)
                 |> mkError
         | Error x -> Error <| FarkleError.BuildError x
 

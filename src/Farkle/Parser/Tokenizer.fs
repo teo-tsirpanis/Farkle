@@ -5,6 +5,7 @@
 
 namespace Farkle.Parser
 
+open Farkle
 open Farkle.Grammar
 open Farkle.IO
 open System
@@ -72,7 +73,7 @@ type Tokenizer(grammar: Grammar) =
     let tokenize transformer (input: CharStream) =
         // By returning unit the compiler does
         // not translate it to an FSharpTypeFunc.
-        let fail msg = Message (input.CurrentPosition, msg) |> ParserException |> raise |> ignore
+        let fail msg = ParserError(input.CurrentPosition, msg) |> ParserException |> raise |> ignore
         let rec groupLoop isNoiseGroup (groupStack: Group list) =
             match groupStack with
             | [] -> ()
@@ -156,7 +157,7 @@ type Tokenizer(grammar: Grammar) =
                             ParseErrorType.UnexpectedEndOfInput
                         else
                             ParseErrorType.LexicalError span.[ofs]
-                    Message(errorPos, errorType)
+                    ParserError(errorPos, errorType)
                     |> ParserException
                     |> raise
         tokenLoop()

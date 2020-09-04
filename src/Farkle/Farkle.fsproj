@@ -35,6 +35,7 @@
     <Compile Include="Grammar/EGTNeoWriter.fs" />
     <Compile Include="Grammar/EGT.fs" />
     <Compile Include="Parser/ParserTypes.fs" />
+    <Compile Include="Exceptions.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />
     <Compile Include="Builder/Regex.fs" />

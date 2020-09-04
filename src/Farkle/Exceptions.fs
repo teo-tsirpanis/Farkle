@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -11,6 +11,7 @@ open Farkle.Parser
 /// that might be thrown from Farkle.
 type FarkleException(msg: string, innerExn) =
     inherit exn(msg, innerExn)
+    new msg = FarkleException(msg, null)
 
 /// An exception thrown by Farkle's parser on a snytax or lexical error.
 type ParserException(error: ParserError) =

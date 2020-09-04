@@ -78,7 +78,7 @@ let tests = testList "Parser tests" [
         let jsonString = "{\"Almost True\": truffle}"
         let result = RuntimeFarkle.parse FSharp.Language.runtime jsonString
         let error =
-            Message(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
+            ParserError(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
             |> FarkleError.ParseError
             |> Result.Error
         Expect.equal result error "The wrong position was reported on a lexical error"

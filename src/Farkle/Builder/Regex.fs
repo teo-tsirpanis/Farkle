@@ -9,7 +9,7 @@ open Farkle.Parser
 open System
 open System.Reflection
 
-type internal RegexParserResult = Result<Regex, Message<ParseErrorType>>
+type internal RegexParserResult = Result<Regex, ParserError>
 
 type internal RegexParserFunction = Func<string, RegexParserResult>
 

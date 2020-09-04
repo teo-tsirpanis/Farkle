@@ -95,24 +95,6 @@ with
         | Ok grammar -> grammar
         | Error msg -> msg |> string |> failwith
 
-/// Some `PostProcessor`s, reusable and ready to use.
-module PostProcessors =
-
-    [<CompiledName("SyntacChecker")>]
-    /// This post-processor does not return anything meaningful to its consumer.
-    /// It is useful for checking the syntax of a string with respect to a grammar.
-    let syntaxCheck =
-        {new PostProcessor<unit> with
-            member __.Transform (_, _, _) = null
-            member __.Fuse (_, _) = null}
-
-    [<CompiledName("AST")>]
-    /// This post-processor creates a domain-ignorant `AST`.
-    let ast =
-        {new PostProcessor<AST> with
-            member __.Transform (sym, pos, x) = AST.Content(sym, pos, x.ToString()) |> box
-            member __.Fuse (prod, items) = AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}
-
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =
 

@@ -17,3 +17,21 @@ type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     abstract Fuse: Production * obj[] -> obj
     inherit IO.ITransformer<Terminal>
+
+/// Some reusable `PostProcessor`s.
+module PostProcessors =
+
+    [<CompiledName("SyntaxChecker")>]
+    /// This post-processor does not return anything meaningful to its consumer.
+    /// It is useful for checking the syntax of a string with respect to a grammar.
+    let syntaxCheck =
+        {new PostProcessor<unit> with
+            member __.Transform (_, _, _) = null
+            member __.Fuse (_, _) = null}
+
+    [<CompiledName("AST")>]
+    /// This post-processor creates a domain-ignorant `AST`.
+    let ast =
+        {new PostProcessor<AST> with
+            member __.Transform (sym, pos, x) = AST.Content(sym, pos, x.ToString()) |> box
+            member __.Fuse (prod, items) = AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}

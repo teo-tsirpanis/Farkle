@@ -114,6 +114,10 @@ module RuntimeFarkle =
         PostProcessor = pp
     }
 
+    /// Changes the post-processor of a runtime Farkle to a
+    /// dummy one suitable for syntax-checking, not parsing.
+    let syntaxCheck rf = changePostProcessor PostProcessors.syntaxCheck rf
+
     /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
     [<CompiledName("Create")>]
     let create postProcessor (grammar: Grammar) =

@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder.Precompiler
 
+open Farkle
 open Farkle.Builder
 open Farkle.Grammar
 open System
@@ -12,7 +13,7 @@ open System.Reflection
 
 module DFB = DesigntimeFarkleBuild
 
-type PrecompilerLoaderException(msg, innerExn: exn) = inherit exn(msg, innerExn)
+type PrecompilerLoaderException(msg, innerExn) = inherit FarkleException(msg, innerExn)
 
 /// A kind of designtime Farkle whose grammar can be precompiled
 /// when the assembly containing it is compiled. Its distinguishing

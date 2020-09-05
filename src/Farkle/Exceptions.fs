@@ -5,6 +5,7 @@
 
 namespace Farkle
 
+open Farkle.Grammar
 open Farkle.Parser
 
 /// The base class for all exceptions
@@ -19,6 +20,15 @@ type ParserException(error: ParserError) =
     /// <summary>The <see cref="ParserError"/>
     /// object this exception holds.</summary>
     member _.Error = error
+
+type PostProcessorException private(msg, innerExn) =
+    inherit FarkleException(msg, innerExn)
+    new (term: Terminal, innerExn) =
+        let message = sprintf "Exception while transforming terminal %O" term
+        PostProcessorException(message, innerExn)
+    new (prod: Production, innerExn) =
+        let message = sprintf "Exception while fusing production %O" prod
+        PostProcessorException(message, innerExn)
 
 /// <summary>A parsing error that did not originate from
 /// the parser, but from user code during post-processing.</summary>

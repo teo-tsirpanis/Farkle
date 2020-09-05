@@ -110,8 +110,12 @@ type Tokenizer(grammar: Grammar) =
                         input.AdvancePastOffset(ofsToAdvancePast, isNoiseGroup)
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
-            let newToken term =
-                let data = input.FinishNewToken term transformer
+            let newToken (term: Terminal) =
+                let data =
+                    try
+                        input.FinishNewToken term transformer
+                    with
+                    | e -> PostProcessorException(term, e) |> raise
                 let theHolyToken = Token.Create input.LastTokenPosition term data
                 Some theHolyToken
             let dfaResult = tokenizeDFA input

@@ -74,7 +74,10 @@ module LALRParser =
                 | Some nextState ->
                     let resultObj =
                         let tokens = objBuffer.GetBufferFromStack handleLength stack
-                        pp.Fuse(productionToReduce, tokens)
+                        try
+                            pp.Fuse(productionToReduce, tokens)
+                        with
+                        | e -> PostProcessorException(productionToReduce, e) |> raise
                     impl token nextState ((nextState, resultObj) :: stack')
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
             | None ->

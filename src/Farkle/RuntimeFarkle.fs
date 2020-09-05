@@ -5,6 +5,7 @@
 
 namespace Farkle
 
+open System.Runtime.InteropServices
 open Farkle.Builder
 open Farkle.Grammar
 open Farkle.IO
@@ -209,6 +210,7 @@ module RuntimeFarkle =
     [<CompiledName("ParseStream"); Obsolete("Streams are supposed to \
 contain binary data; not text. Use parseTextReader instead.")>]
     let parseStream rf doLazyLoad (encoding: Encoding) (inputStream: Stream) =
+        let encoding = if isNull encoding then Encoding.UTF8 else encoding
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =
             match doLazyLoad with
@@ -238,6 +240,8 @@ contain binary data; not text. Use parseTextReader instead.")>]
 
 open RuntimeFarkle
 
+#nowarn "44"
+
 type RuntimeFarkle<'TResult> with
     /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
     /// <param name="charStream">The character stream to parse.</param>
@@ -260,6 +264,19 @@ type RuntimeFarkle<'TResult> with
     /// what did wrong and where.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.Parse str = parseString this str
+    /// <summary>Parses and post-processes a
+    /// <see cref="System.IO.Stream"/>.</summary>
+    /// <param name="stream">The stream to parse.</param>
+    /// <param name="encoding">The character encoding of
+    /// the stream's data. Defaults to UTF-8.</param>
+    /// <param name="doLazyLoad">Whether to gradually read the
+    /// input instead of reading its entirety in memory.
+    /// Defaults to <see langword="true"/>.</param>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    [<Obsolete("Streams are supposed to contain binary \
+data; not text. Parse a TextReader instead.")>]
+    member this.Parse(stream, [<Optional>] encoding, [<Optional>] doLazyLoad) =
+        parseStream stream encoding doLazyLoad
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="charStream">The string to parse.</param>
     /// <returns>An F# result type containing either the
@@ -271,7 +288,7 @@ type RuntimeFarkle<'TResult> with
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
     /// <param name="pp">The new post-processor.</param>
     /// <returns>A new runtime Farkle with ite post-
-    /// processor changed to <paramref="pp"/>.</returns>
+    /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.ChangePostProcessor pp = changePostProcessor pp this
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to a dummy

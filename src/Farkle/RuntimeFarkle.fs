@@ -160,15 +160,8 @@ module RuntimeFarkle =
 
     [<CompiledName("MarkForPrecompile"); MethodImpl(MethodImplOptions.NoInlining)>]
     /// Marks the given designtime as available to have its grammar
-    /// precompiled ahead of time. Besides performance improvements,
-    /// precompiling a grammar reports any errors at compile-time
-    /// instead of when a string is going to be parsed.
-    /// For this function to have effect, it has to be applied to the
-    /// topmost designtime Farkle that is stored in a read-only static
-    /// field (like a let-bound value in a module). Untyped designtime
-    /// Farkles can use DesigntimeFarkle.cast and then cast back to
-    /// the untyped designtime Farkle. This function also has to be
-    /// called directly from user code.
+    /// precompiled ahead of time. See more, including usage restrictions
+    /// on https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
         Precompiler.Loader.prepare df asm
@@ -235,8 +228,7 @@ contain binary data; not text. Use parseTextReader instead.")>]
         parseTextReader rf s
 
     /// Parses and post-processes a string.
-    [<CompiledName("Parse")>]
-    [<Obsolete("Use parseString")>]
+    [<CompiledName("Parse"); Obsolete("Use parseString.")>]
     let parse rf x = parseString rf x
 
     let internal syntaxCheckerObj =

@@ -35,7 +35,7 @@ type DesigntimeFarkleExtensions =
     /// <summary>Casts a <see cref="DesigntimeFarkle"/>
     /// into a <see cref="DesigntimeFarkle{Object}"/></summary>
     /// <remarks>Useful for setting metadata to untyped designtime Farkles.
-    /// The object it would return is undefined.</remarks>
+    /// The object <paramref name="df"/> will return is undefined.</remarks>
     static member Cast df = DesigntimeFarkle.cast df
     [<Extension>]
     /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.</summary>
@@ -52,7 +52,9 @@ type DesigntimeFarkleExtensions =
     [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
     /// <summary>Marks a <see cref="DesigntimeFarkle{TResult}"/> as available to have
     /// its grammar precompiled ahead of time.</summary>
-    /// <remarks>This function has to be directly called from user code.</remarks>
+    /// <remarks>This function has to be directly called from
+    /// user code. See more, including usage restrictions at
+    /// <a href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"/></remarks>
     /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompile"/>
     static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
         // This function must mot forward to RuntimeFarkle's

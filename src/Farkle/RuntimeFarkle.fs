@@ -27,8 +27,16 @@ type FarkleError =
         | ParseError x -> string x
         | BuildError x -> sprintf "Error while building the grammar: %O" x
 
-/// A reusable parser and post-processor, created for a specific grammar, and returning
-/// a specific type of object that best describes an expression of the language of this grammar.
+/// <summary>A reusable parser and post-processor,
+/// created for a specific grammar, and returning
+/// a specific type of object that best describes
+/// an expression of the language of this grammar.</summary>
+/// <remarks><para>Its parsing methods return an F# result
+/// type containing either the post-processed return
+/// type, or a type describing what did wrong and where.</para>
+/// <para>Exceptions during post-processing (apart from
+/// <see cref="ParserApplicationException"/>) are thrown
+/// after being wrapped in a <see cref="PostProcessorException"/>.</para></remarks>
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = internal {
     Grammar: Result<Grammar,BuildError>
@@ -214,7 +222,7 @@ contain binary data; not text. Use parseTextReader instead.")>]
         let cs = new CharStream(textReader)
         parseChars rf cs
 
-    /// Parses and post-processes a file at the given path with the given character encoding.
+    /// Parses and post-processes a file at the given path.
     [<CompiledName("ParseFile")>]
     let parseFile rf inputFile =
         use s = File.OpenText(inputFile)
@@ -222,4 +230,52 @@ contain binary data; not text. Use parseTextReader instead.")>]
 
     /// Parses and post-processes a string.
     [<CompiledName("Parse")>]
+    [<Obsolete("Use parseString")>]
     let parse rf x = parseString rf x
+
+    let internal syntaxCheckerObj =
+        unbox<PostProcessor<obj>> PostProcessors.syntaxCheck
+
+open RuntimeFarkle
+
+type RuntimeFarkle<'TResult> with
+    /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
+    /// <param name="charStream">The character stream to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.Parse charStream = parseChars this charStream
+    /// <summary>Parses and post-processes a string.</summary>
+    /// <param name="charStream">The string to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.Parse mem = parseMemory this mem
+    /// <summary>Parses and post-processes a <see cref="ReadOnlyMemory{Char}"/>.</summary>
+    /// <param name="charStream">The read-only memory to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.Parse str = parseString this str
+    /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
+    /// <param name="charStream">The string to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    /// <remarks>The text reader's content will be lazily read</remarks>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.Parse textReader = parseTextReader this textReader
+    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
+    /// <param name="pp">The new post-processor.</param>
+    /// <returns>A new runtime Farkle with ite post-
+    /// processor changed to <paramref="pp"/>.</returns>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.ChangePostProcessor pp = changePostProcessor pp this
+    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to a dummy
+    /// one that is useful for syntax-checking, not parsing.</summary>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.SyntaxCheck() =
+        changePostProcessor syntaxCheckerObj this

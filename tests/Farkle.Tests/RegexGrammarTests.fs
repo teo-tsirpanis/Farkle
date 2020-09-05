@@ -39,7 +39,7 @@ let rec formatRegex =
 
 let checkRegex str regex =
     let regex' =
-        RuntimeFarkle.parse RegexGrammar.runtime str
+        RuntimeFarkle.parseString RegexGrammar.runtime str
         |> Flip.Expect.wantOk (sprintf "Error while parsing %A" str)
     Expect.equal regex' regex "The regexes are different"
 

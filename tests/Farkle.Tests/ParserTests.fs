@@ -76,7 +76,7 @@ let tests = testList "Parser tests" [
 
     test "Lexical errors report the correct position" {
         let jsonString = "{\"Almost True\": truffle}"
-        let result = RuntimeFarkle.parse FSharp.Language.runtime jsonString
+        let result = RuntimeFarkle.parseString FSharp.Language.runtime jsonString
         let error =
             ParserError(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
             |> FarkleError.ParseError
@@ -85,14 +85,14 @@ let tests = testList "Parser tests" [
     }
 
     test "Parsing a mathematical expression with comments works well" {
-        let num = RuntimeFarkle.parse SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
+        let num = RuntimeFarkle.parseString SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
         Expect.equal num (Ok 2) "Parsing a mathematical expression with comments failed"
     }
 
     testProperty "The JSON parser works well" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
         let farkle =
-            RuntimeFarkle.parse FSharp.Language.runtime jsonAsString
+            RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with
@@ -105,10 +105,10 @@ let tests = testList "Parser tests" [
     testProperty "The calculator works well" (fun expr ->
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
-            RuntimeFarkle.parse SimpleMaths.mathExpression exprAsString
+            RuntimeFarkle.parseString SimpleMaths.mathExpression exprAsString
             |> Flip.Expect.wantOk "Parsing the mathematical expression failed"
         let num =
-            RuntimeFarkle.parse SimpleMaths.int exprAsString
+            RuntimeFarkle.parseString SimpleMaths.int exprAsString
             |> Flip.Expect.wantOk "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )

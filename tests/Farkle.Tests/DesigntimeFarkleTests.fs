@@ -55,7 +55,7 @@ let tests = testList "Designtime Farkle tests" [
     test "A grammar that only accepts the empty string indeed accepts it" {
         let designtime = "S" ||= [empty =% ()]
         let runtime = RuntimeFarkle.build designtime
-        let result = RuntimeFarkle.parse runtime ""
+        let result = RuntimeFarkle.parseString runtime ""
 
         Expect.isOk result "Something went wrong"
     }

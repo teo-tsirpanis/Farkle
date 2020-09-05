@@ -131,7 +131,7 @@ let designtime =
 let runtime = RuntimeFarkle.build designtime
 
 let internal DoParse x =
-    match RuntimeFarkle.parse runtime x with
+    match RuntimeFarkle.parseString runtime x with
     | Ok x -> Ok x
     | Error(FarkleError.ParseError x) -> Error x
     | Error(FarkleError.BuildError x) -> failwithf "Error while building the regex grammar: %O" x

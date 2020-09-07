@@ -17,7 +17,7 @@ type internal DFAStateTag = private DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
     static member internal Ok (x: uint32) = DFAStateTag <| int x
-    static member InitialState = DFAStateTag 0
+    static member InitialState = 0
     /// A failed `DFAStateTag`.
     static member Error = DFAStateTag -1
     static member internal FromOption x =
@@ -55,17 +55,23 @@ module private OptimizedOperations =
     /// represents the index of the current DFA state, and the second represents the
     /// ASCII character that was encountered.
     let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-        let arr = createJaggedArray2D dfa.Length (ASCIIUpperBound + 2)
+        let arr = createJaggedArray2D dfa.Length (ASCIIUpperBound + 1)
         dfa
         |> Seq.iteri (fun i state ->
             let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
-            for j = 0 to ASCIIUpperBound + 1 do
+            for j = 0 to ASCIIUpperBound do
                 arr.[i].[j] <- anythingElse
             state.Edges
             |> rangeMapToSeq
             |> Seq.takeWhile (fun x -> isASCII x.Key)
             |> Seq.iter (fun x ->
                 arr.[i].[int x.Key] <- DFAStateTag.FromOption x.Value))
+        arr
+
+    let buildDFAAnythingElseArray (dfa: ImmutableArray<DFAState>) =
+        let arr = Array.zeroCreate dfa.Length
+        for i = 0 to arr.Length - 1 do
+            arr.[i] <- DFAStateTag.FromOption dfa.[i].AnythingElse
         arr
 
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
@@ -106,7 +112,9 @@ type internal OptimizedOperations private(grammar: Grammar) =
     // from a CWT does not lock unless the key does not exist.
     static let cache = ConditionalWeakTable()
     static let cacheItemCreator = ConditionalWeakTable.CreateValueCallback OptimizedOperations
+
     let dfaArray = buildDFAArray grammar.DFAStates
+    let dfaAnythingElseArray = buildDFAAnythingElseArray grammar.DFAStates
     let lalrActionArray = buildLALRActionArray grammar.Symbols.Terminals grammar.LALRStates
     let lalrGotoArray = buildLALRGotoArray grammar.Symbols.Nonterminals grammar.LALRStates
     /// Returns an `OptimizedOperations` object associated
@@ -115,16 +123,13 @@ type internal OptimizedOperations private(grammar: Grammar) =
     /// same instance which is collected with the grammar.
     static member Create grammar = cache.GetValue(grammar, cacheItemCreator)
     /// Gets the next DFA state from the given current one, when the given character is encountered.
-    member _.GetNextDFAState c (state: DFAStateTag) =
-        let arr = dfaArray
-        if state.IsError then
-            DFAStateTag.Error
-        elif isASCII c then
-            arr.[state.Value].[int c]
+    member _.GetNextDFAState c state =
+        if isASCII c then
+            dfaArray.[state].[int c]
         else
-            match grammar.DFAStates.[state.Value].Edges.TryFind c with
+            match grammar.DFAStates.[state].Edges.TryFind c with
             | ValueSome x -> DFAStateTag.FromOption x
-            | ValueNone -> arr.[state.Value].[ASCIIUpperBound + 1]
+            | ValueNone -> dfaAnythingElseArray.[state]
     /// Gets the LALR action from the given state that corresponds to the given terminal.
     member _.GetLALRAction (Terminal (term, _)) {LALRState.Index = idx} =
         lalrActionArray.[int idx].[int term]

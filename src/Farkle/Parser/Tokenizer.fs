@@ -57,7 +57,8 @@ type Tokenizer(grammar: Grammar) =
             let c = span.[ofs]
             let newDFA = oops.GetNextDFAState c currState
             if newDFA.IsOk then
-                match dfaStates.[newDFA.Value].AcceptSymbol with
+                let newDFA = newDFA.Value
+                match dfaStates.[newDFA].AcceptSymbol with
                 | None -> tokenizeDFA_impl input (ofs + 1) newDFA lastAcceptOfs lastAcceptSym span
                 | Some _ as acceptSymbol -> tokenizeDFA_impl input (ofs + 1) newDFA ofs acceptSymbol span
             else

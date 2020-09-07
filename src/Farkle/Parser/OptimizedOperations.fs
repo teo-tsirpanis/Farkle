@@ -13,7 +13,7 @@ open System.Runtime.CompilerServices
 [<Struct>]
 /// An value type representing a DFA state or its absence.
 /// It is returned from optimized operations.
-type DFAStateTag = private DFAStateTag of int
+type internal DFAStateTag = private DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
     static member internal Ok (x: uint32) = DFAStateTag <| int x
@@ -99,7 +99,7 @@ module private OptimizedOperations =
 /// An object that provides optimized functions for some common operations on Grammars.
 /// These functions require some memory-intensive
 /// pre-processing, which is performed only once per grammar.
-type OptimizedOperations private(grammar: Grammar) =
+type internal OptimizedOperations private(grammar: Grammar) =
     // I love this type. It surprisingly simply allows
     // for some very efficient decoupled object caches.
     // It's also fast and thread-safe. Getting a value

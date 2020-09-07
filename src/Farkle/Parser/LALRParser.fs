@@ -39,12 +39,11 @@ module LALRParser =
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
     /// <param name="lalrStates">The LALR state table to use.</param>
-    /// <param name="oops">The <see cref="OptimizedOperations"/> object that will make the parsing faster.</param>
     /// <param name="pp">The <see cref="PostProcessor"/> to use on the newly-fused productions.</param>
-    /// <param name="fToken">A <see cref="Tokenizer"/> object to get the next tokens.</param>
-    /// <param name="input">The <see cref="InputStream"/>.</param>
-    /// <exception cref="ParseError">An error did happen. In Farkle,
-    /// this exception is caught by the <see cref="RuntimeFarkle"/></exception>
+    /// <param name="tokenizer">A <see cref="Tokenizer"/> object that gives the next tokens.</param>
+    /// <param name="input">The <see cref="CharStream"/> whose characters are to be parsed.</param>
+    /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
+    /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
     let parseLALR (lalrStates: ImmutableArray<LALRState>) (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
         use objBuffer = new ObjectBuffer()
         let oops = tokenizer.OptimizedOperations

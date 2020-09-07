@@ -8,8 +8,9 @@ namespace Farkle.Collections
 open System
 open System.Collections
 open System.Collections.Generic
+open System.Runtime.CompilerServices
 
-[<Struct; CustomComparison; StructuralEquality>]
+[<Struct; IsReadOnly; CustomComparison; StructuralEquality>]
 /// Α closed interval whose elements are assigned a value.
 type RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
     /// The start of the interval.

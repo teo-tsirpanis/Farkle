@@ -6,8 +6,9 @@
 namespace Farkle
 
 open System
+open System.Runtime.CompilerServices
 
-[<Struct>]
+[<Struct; IsReadOnly>]
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position = {
     /// The position's line.

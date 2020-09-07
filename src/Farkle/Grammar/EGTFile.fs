@@ -9,6 +9,7 @@ open System
 open System.Buffers
 open System.IO
 open System.Text
+open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
 /// An exception that gets thrown when
@@ -16,7 +17,7 @@ open System.Runtime.InteropServices
 type EGTFileException(msg) = inherit exn(msg)
 
 /// An entry of an EGT file.
-[<Struct; RequireQualifiedAccess>]
+[<Struct; IsReadOnly; RequireQualifiedAccess>]
 type Entry =
     /// [omit]
     | Empty

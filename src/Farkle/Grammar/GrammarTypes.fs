@@ -7,11 +7,11 @@ namespace Farkle.Grammar
 
 open Farkle.Collections
 open System
-open System.Collections
 open System.Collections.Immutable
 open System.Diagnostics
+open System.Runtime.CompilerServices
 
-[<Struct; RequireQualifiedAccess>]
+[<Struct; IsReadOnly; RequireQualifiedAccess>]
 /// A type indicating how a group advances.
 type AdvanceMode =
     /// The group advances by one token at a time.
@@ -19,7 +19,7 @@ type AdvanceMode =
     /// The group advances by one character at a time.
     | Character
 
-[<Struct; RequireQualifiedAccess>]
+[<Struct; IsReadOnly; RequireQualifiedAccess>]
 /// A type indicating how the ending symbol of a group is handled.
 type EndingMode =
     /// The ending symbol is preserved on the input queue.

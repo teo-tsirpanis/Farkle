@@ -174,7 +174,7 @@ module DesigntimeFarkleBuild =
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
-                    fusers.Add(if isNull aprod.Fuse then fNull else aprod.Fuse))
+                    fusers.Add(if isNull aprod.Fuser then fNull else aprod.Fuser))
                 LALRSymbol.Nonterminal symbol
             | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                 LALRSymbol.Terminal groupMap.[lg]

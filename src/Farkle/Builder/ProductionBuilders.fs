@@ -52,17 +52,13 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     member __.Extend(df: DesigntimeFarkle<'T1>) =
         ProductionBuilder<'T1>(listAdd members df, members.Count)
     /// <summary>Like <c>Finish</c>, but the given function accepts
-    /// an array of all the production's members as objects.</summary>
+    /// a read-only span of all the production's members as objects.</summary>
     /// <remarks>
     ///     <para>This method is intended to be used when finishing
     ///     a production with many significant members.</para>
-    ///     <para>Do not rely on the array's length; it can be larger
-    ///     than the number of members of the production.</para>
     /// </remarks>
-    member _.FinishRaw(fFuseRaw: F<'TOutput>) : Production<'TOutput> = {
-        Members = members.ToImmutableArray()
-        Fuse = F.box fFuseRaw
-    }
+    member _.FinishRaw(fuser: F<'TOutput>) : Production<'TOutput> =
+        Production(members, fuser)
     member x.FinishFSharp fFuseThunk = x.FinishRaw(fun _ -> fFuseThunk())
     member x.Finish(f: Func<_>) = x.FinishFSharp(FuncConvert.FromFunc(f))
     /// <summary>Creates a <see cref="Production{T}"/> that
@@ -70,4 +66,4 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
     interface AbstractProduction with
         member _.Members = members.ToImmutableArray()
-        member _.Fuse = null
+        member _.Fuser = null

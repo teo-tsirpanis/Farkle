@@ -37,7 +37,7 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
     {{~ if n != capacity ~}}
     member _.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
-    member _.FinishFSharp(f: {{ finish_signature n }}) : Production<{{ ap }}TOutput> =
+    member _.FinishFSharp(f: {{ finish_signature n }}) =
         {{~ # https://github.com/dotnet/fsharp/issues/8034
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}
@@ -45,21 +45,19 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         {{~ if fast ~}}
         let f = OptimizedClosures.FSharpFunc<{{ type_params n}}, _>.Adapt(f)
         {{~ end ~}}
-        {
-            Members = members.ToImmutableArray()
-            Fuse =
-                F(fun arr ->
-                    f{{ if fast }}.Invoke({{ end }}
-                        {{~ for i in 1..n
-                        # Lol, even an unbox in F# generic typess is expensive.
-                        # They want to make sure that unboxing an F# non-nullable type
-                        # is never unboxed from null. But that would pose problems for those
-                        # that might use Unchecked.defaultof, and an exception will already be thrown.~}}
-                        (UnboxFast arr.[idx{{ i }}]){{ if fast && i != n }},{{ end }}
-                        {{~ end ~}}
-                    {{ if fast }}){{ end }}
-                    |> box)
-        }
+        let fuser =
+            F(fun arr ->
+                f{{ if fast }}.Invoke({{ end }}
+                    {{~ for i in 1..n
+                    # Lol, even an unbox in F# generic typess is expensive.
+                    # They want to make sure that unboxing an F# non-nullable type
+                    # is never unboxed from null. But that would pose problems for those
+                    # that might use Unchecked.defaultof, and an exception will already be thrown.~}}
+                    (UnboxFast arr.[idx{{ i }}]){{ if fast && i != n }},{{ end }}
+                    {{~ end ~}}
+                {{ if fast }}){{ end }}
+            )
+        Production(members, fuser)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
     member x.AsIs() = x.FinishFSharp(id)

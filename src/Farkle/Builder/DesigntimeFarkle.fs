@@ -123,7 +123,7 @@ type internal AbstractTerminal =
     inherit DesigntimeFarkle
     /// <summary>The <see cref="Regex"/> that defines this terminal.</summary>
     abstract Regex: Regex
-    /// The delegate that converts the terminal's position and data into an arbitrary object.
+    /// The transformer to process the characters of this terminal.
     abstract Transformer: T<obj>
 
 type internal Literal = Literal of string
@@ -151,7 +151,7 @@ type internal AbstractGroup =
     /// The sequence of characters that
     /// specifies the beginning of the group.
     abstract GroupStart: string
-    /// The delegate that converts the group's position and data into an arbitrary object.
+    /// The transformer to process the characters of this group.
     abstract Transformer: T<obj>
 
 /// The base, untyped interface of line groups.
@@ -173,7 +173,8 @@ type internal AbstractBlockGroup =
 type internal AbstractProduction =
     /// The members of the production.
     abstract Members: DesigntimeFarkle ImmutableArray
-    abstract Fuse: F<obj>
+    /// The fuser to process the members of this production.
+    abstract Fuser: F<obj>
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
@@ -273,14 +274,14 @@ type Terminal =
 
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
-type [<NoComparison; ReferenceEquality>] Production<'T> = internal {
-    Members: DesigntimeFarkle ImmutableArray
-    Fuse: F<obj>
-}
-with
+[<Sealed>]
+type Production<'T> internal(members: _ seq, fuser: F<'T>) =
+    let members = members.ToImmutableArray()
+    do nullCheck "fuser" fuser
+    let fuserBoxed = F.box fuser
     interface AbstractProduction with
-        member x.Members = x.Members
-        member x.Fuse = x.Fuse
+        member _.Members = members
+        member _.Fuser = fuserBoxed
 
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>

@@ -7,6 +7,7 @@ namespace Farkle
 
 open Farkle
 open Farkle.Grammar
+open System
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
@@ -14,7 +15,7 @@ open Farkle.Grammar
 /// will return from a grammar.</typeparam>
 type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
-    abstract Fuse: Production * obj[] -> obj
+    abstract Fuse: Production * ReadOnlySpan<obj> -> obj
     inherit ITransformer<Terminal>
 
 /// Some reusable `PostProcessor`s.
@@ -32,7 +33,10 @@ module PostProcessors =
     /// This post-processor creates a domain-ignorant `AST`.
     let ast =
         {new PostProcessor<AST> with
-            member _.Transform (sym, context, x) =
-                AST.Content(sym, context.StartPosition, x.ToString()) |> box
-            member _.Fuse (prod, items) =
-                AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}
+            member _.Transform (sym, context, data) =
+                AST.Content(sym, context.StartPosition, data.ToString()) |> box
+            member _.Fuse (prod, members) =
+                let mutable xs = []
+                for i = members.Length - 1 downto 0 do
+                    xs <- members.[i] :?> AST :: xs
+                AST.Nonterminal(prod, xs) |> box}

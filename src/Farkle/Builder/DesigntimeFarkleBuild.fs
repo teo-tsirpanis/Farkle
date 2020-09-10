@@ -26,7 +26,7 @@ type GrammarDefinition = {
     DFASymbols: (Regex * DFASymbol) list
 
     Transformers: ImmutableArray<T<obj>>
-    Fusers: ImmutableArray<obj[] -> obj>
+    Fusers: ImmutableArray<F<obj>>
 }
 
 [<RequireQualifiedAccess>]
@@ -57,6 +57,7 @@ DesigntimeFarkle interface is not allowed."
 module DesigntimeFarkleBuild =
 
     let private tNull: T<obj> = T(fun _ _ -> null)
+    let private fNull: F<obj> = F(fun _ -> null)
 
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise "NewLine"
@@ -173,7 +174,7 @@ module DesigntimeFarkleBuild =
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
-                    fusers.Add(aprod.Fuse))
+                    fusers.Add(if isNull aprod.Fuse then fNull else aprod.Fuse))
                 LALRSymbol.Nonterminal symbol
             | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                 LALRSymbol.Terminal groupMap.[lg]
@@ -336,7 +337,7 @@ module DesigntimeFarkleBuild =
         {
             new PostProcessor<'TOutput> with
                 member __.Transform(term, context, data) = transformers.[int term.Index].Invoke(context, data)
-                member __.Fuse(prod, members) = fusers.[int prod.Index] members
+                member __.Fuse(prod, members) = fusers.[int prod.Index].Invoke(members)
         }
 
     /// Creates a `Grammar` from a `GrammarDefinition`.

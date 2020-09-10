@@ -25,12 +25,32 @@ open System.Collections.Immutable
 /// </remarks>
 type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
 
+[<CompiledName("Fuser`1")>]
+/// <summary>A delegate that fuses the many members
+/// of a production into one arbitrary object.</summary>
+/// <param name="members">A read-only span of the production's members.</param>
+/// <remarks>
+/// <para>In F# this type is shortened to
+/// <c>F</c> to avoid clutter in user code.</para>
+/// <para>A .NET delegate was used because read-only
+/// spans are incompatible with F# functions.</para>
+/// </remarks>
+type F<[<CovariantOut>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
+
 module internal T =
     /// Converts a `T` callback so that it returns an object.
     let box (f: T<'T>) =
         // https://stackoverflow.com/questions/12454794
         if typeof<'T>.IsValueType then
             T(fun context data -> f.Invoke(context, data) |> box)
+        else
+            unbox f
+
+module internal F =
+    /// Converts an `F` delegate so that it returns an object.
+    let box (f: F<'T>) =
+        if typeof<'T>.IsValueType then
+            F(fun data -> f.Invoke(data) |> box)
         else
             unbox f
 
@@ -153,7 +173,7 @@ type internal AbstractBlockGroup =
 type internal AbstractProduction =
     /// The members of the production.
     abstract Members: DesigntimeFarkle ImmutableArray
-    abstract Fuse: (obj [] -> obj)
+    abstract Fuse: F<obj>
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
@@ -255,7 +275,7 @@ type Terminal =
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
 type [<NoComparison; ReferenceEquality>] Production<'T> = internal {
     Members: DesigntimeFarkle ImmutableArray
-    Fuse: obj [] -> obj
+    Fuse: F<obj>
 }
 with
     interface AbstractProduction with

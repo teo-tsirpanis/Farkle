@@ -74,7 +74,7 @@ module LALRParser =
                     let resultObj =
                         let tokens = objBuffer.GetBufferFromStack handleLength stack
                         try
-                            pp.Fuse(productionToReduce, tokens)
+                            pp.Fuse(productionToReduce, ReadOnlySpan(tokens, 0, handleLength))
                         with
                         | e -> PostProcessorException(productionToReduce, e) |> raise
                     impl token nextState ((nextState, resultObj) :: stack')

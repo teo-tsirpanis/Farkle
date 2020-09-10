@@ -59,9 +59,9 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     ///     <para>Do not rely on the array's length; it can be larger
     ///     than the number of members of the production.</para>
     /// </remarks>
-    member __.FinishRaw(fFuseRaw: _ -> 'TOutput) : Production<'TOutput> = {
+    member _.FinishRaw(fFuseRaw: F<'TOutput>) : Production<'TOutput> = {
         Members = members.ToImmutableArray()
-        Fuse = fFuseRaw >> box
+        Fuse = F.box fFuseRaw
     }
     member x.FinishFSharp fFuseThunk = x.FinishRaw(fun _ -> fFuseThunk())
     member x.Finish(f: Func<_>) = x.FinishFSharp(FuncConvert.FromFunc(f))
@@ -70,4 +70,4 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)
     interface AbstractProduction with
         member _.Members = members.ToImmutableArray()
-        member _.Fuse = fun _ -> null
+        member _.Fuse = null

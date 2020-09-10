@@ -48,7 +48,7 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         {
             Members = members.ToImmutableArray()
             Fuse =
-                fun arr ->
+                F(fun arr ->
                     f{{ if fast }}.Invoke({{ end }}
                         {{~ for i in 1..n
                         # Lol, even an unbox in F# generic typess is expensive.
@@ -58,7 +58,7 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
                         (UnboxFast arr.[idx{{ i }}]){{ if fast && i != n }},{{ end }}
                         {{~ end ~}}
                     {{ if fast }}){{ end }}
-                    |> box
+                    |> box)
         }
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.

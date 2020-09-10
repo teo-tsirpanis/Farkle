@@ -12,19 +12,25 @@ open System
 open System.Collections.Immutable
 
 [<CompiledName("TerminalCallback`1")>]
-/// <summary>A delegate that accepts the position and data of a terminal, and transforms them into an arbitrary object.</summary>
+/// <summary>A delegate that transforms the content
+/// of a terminal to an arbitrary object.</summary>
+/// <param name="context">An <see cref="ITransformerContext"/>
+/// that provides additional info about the terminal.</param>
+/// <param name="data">A read-only span of the terminal's characters.</param>
 /// <remarks>
-///     <para>In F#, this type is named <c>T</c> - from "Transformer" and was shortened to avoid clutter in user code.</para>
-///     <para>A .NET delegate was used because <see cref="ReadOnlySpan{Char}"/>s are incompatible with F# functions.</para>
+/// <para>In F# this type is shortened to
+/// <c>T</c> to avoid clutter in user code.</para>
+/// <para>A .NET delegate was used because read-only
+/// spans are incompatible with F# functions.</para>
 /// </remarks>
-type T<[<CovariantOut>] 'T> = delegate of Position * ReadOnlySpan<char> -> 'T
+type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
 
 module internal T =
     /// Converts a `T` callback so that it returns an object.
     let box (f: T<'T>) =
         // https://stackoverflow.com/questions/12454794
         if typeof<'T>.IsValueType then
-            T(fun pos data -> f.Invoke(pos, data) |> box)
+            T(fun context data -> f.Invoke(context, data) |> box)
         else
             unbox f
 

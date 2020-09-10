@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -28,4 +28,4 @@ type ITransformerContext =
 /// The bridge between a character stream and the post-processor API.
 type ITransformer<'sym> =
     /// <summary>Converts a terminal into an arbitrary object.</summary>
-    abstract Transform: 'sym * Position * ReadOnlySpan<char> -> obj
+    abstract Transform: 'sym * ITransformerContext * ReadOnlySpan<char> -> obj

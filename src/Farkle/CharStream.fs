@@ -211,7 +211,7 @@ type CharStream private(source: CharStreamSource) =
         if startingIndex <= idxStart && source.LengthSoFar > idxEnd then
             startingIndex <- idxEnd + 1UL
             let span = source.GetSpanForCharacters(idxStart, length)
-            transformer.Transform(symbol, lastTokenPosition, span)
+            transformer.Transform(symbol, x, span)
         else
             failwithf "Trying to read from %d to %d, from a stream that was last read at %d."
                 idxStart idxEnd startingIndex

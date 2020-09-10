@@ -25,12 +25,14 @@ module PostProcessors =
     /// It is useful for checking the syntax of a string with respect to a grammar.
     let syntaxCheck =
         {new PostProcessor<unit> with
-            member __.Transform (_, _, _) = null
-            member __.Fuse (_, _) = null}
+            member _.Transform (_, _, _) = null
+            member _.Fuse (_, _) = null}
 
     [<CompiledName("AST")>]
     /// This post-processor creates a domain-ignorant `AST`.
     let ast =
         {new PostProcessor<AST> with
-            member __.Transform (sym, pos, x) = AST.Content(sym, pos, x.ToString()) |> box
-            member __.Fuse (prod, items) = AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}
+            member _.Transform (sym, context, x) =
+                AST.Content(sym, context.StartPosition, x.ToString()) |> box
+            member _.Fuse (prod, items) =
+                AST.Nonterminal(prod, items |> Seq.take prod.Handle.Length |> Seq.cast |> List.ofSeq) |> box}

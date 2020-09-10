@@ -335,7 +335,7 @@ module DesigntimeFarkleBuild =
     let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
         {
             new PostProcessor<'TOutput> with
-                member __.Transform(term, pos, data) = transformers.[int term.Index].Invoke(pos, data)
+                member __.Transform(term, context, data) = transformers.[int term.Index].Invoke(context, data)
                 member __.Fuse(prod, members) = fusers.[int prod.Index] members
         }
 

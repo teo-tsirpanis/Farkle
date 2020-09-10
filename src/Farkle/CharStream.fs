@@ -11,15 +11,11 @@ open Farkle.Common
 open Operators.Checked
 #endif
 open System
+open System.Collections.Generic
 open System.Diagnostics
 open System.IO
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
-
-/// The bridge between a character stream and the post-processor API.
-type ITransformer<'sym> =
-    /// <summary>Converts a terminal into an arbitrary object.</summary>
-    abstract Transform: 'sym * Position * ReadOnlySpan<char> -> obj
 
 /// The source a `CharStream` reads characters from.
 [<AbstractClass>]
@@ -126,6 +122,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
 type CharStream private(source: CharStreamSource) =
+    let objectStore = Dictionary(StringComparer.Ordinal)
     /// The index of the first element that must be retained in memory
     /// because it is going to be used to generate a token.
     let mutable startingIndex = 0UL
@@ -161,6 +158,8 @@ type CharStream private(source: CharStreamSource) =
     /// The position of the next character the stream has to read.
     // https://github.com/dotnet/fsharp/issues/9997
     member _.CurrentPosition: [<IsReadOnly>] inref<_> = &currentPosition
+    /// <inheritdoc cref="ITokenizerContext.ObjectStore"/>
+    member _.ObjectStore = objectStore :> IDictionary<_,_>
     /// A read-only span of characters that contains all
     /// available characters at and after the stream's current position.
     member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index
@@ -216,5 +215,9 @@ type CharStream private(source: CharStreamSource) =
         else
             failwithf "Trying to read from %d to %d, from a stream that was last read at %d."
                 idxStart idxEnd startingIndex
+    interface ITransformerContext with
+        member _.StartPosition = &lastTokenPosition
+        member _.EndPosition = &currentPosition
+        member x.ObjectStore = x.ObjectStore
     interface IDisposable with
         member _.Dispose() = (source :> IDisposable).Dispose()

@@ -7,7 +7,6 @@ namespace Farkle
 
 open Farkle
 open Farkle.Grammar
-open System
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
@@ -16,7 +15,7 @@ open System
 type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     abstract Fuse: Production * obj[] -> obj
-    inherit IO.ITransformer<Terminal>
+    inherit ITransformer<Terminal>
 
 /// Some reusable `PostProcessor`s.
 module PostProcessors =

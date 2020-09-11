@@ -1,7 +1,14 @@
 #### 6.0.0-alpha.3
 * __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0 and .NET Standard 2.1.
 * __Breaking change:__ Logging parser events is no longer supported. The logging function was removed from the signatures of parser APIs.
-* Precompiler loader errors can be suppressed with an `AppContext` switch.
+* __Breaking change:__ The function `LALRParser.parseLALR` was renamed to `LALRParser.parse`.
+* __Breaking change:__ The `Farkle.Parser.OptimizedOperations` type was made internal.
+* __Breaking change:__ Transformers no longer take the position of a terminal, but an `ITransformerContext` type containing more information.
+* __Breaking change:__ Farkle's exception types were refactored. They inherit from `FarkleException`.
+* __Breaking change:__ Post-processor exceptions are wrapped inside a `PostProcessorException` and thrown to user code.
+* The runtime Farkle's extension methods became regular methods.
+* The tokenizer can be extended by user code. TODO: write documentation
+* Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.
 
 #### 6.0.0-alpha.2 - 23-08-2020
 * Farkle supports creating regexes from strings. See more in https://teo-tsirpanis.github.io/Farkle/string-regexes.html.

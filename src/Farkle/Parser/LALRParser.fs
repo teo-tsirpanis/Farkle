@@ -10,7 +10,6 @@ open Farkle.Grammar
 open Farkle.IO
 open System
 open System.Buffers
-open System.Collections.Immutable
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
@@ -38,15 +37,16 @@ module LALRParser =
             member _.Dispose() = ArrayPool.Shared.Return(arr, true)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
-    /// <param name="lalrStates">The LALR state table to use.</param>
+    /// <param name="grammar">The grammar to use.</param>
     /// <param name="pp">The <see cref="PostProcessor"/> to use on the newly-fused productions.</param>
     /// <param name="tokenizer">A <see cref="Tokenizer"/> object that gives the next tokens.</param>
     /// <param name="input">The <see cref="CharStream"/> whose characters are to be parsed.</param>
     /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
     /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
-    let parseLALR (lalrStates: ImmutableArray<LALRState>) (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
+    let parseLALR grammar (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
         use objBuffer = new ObjectBuffer()
-        let oops = tokenizer.OptimizedOperations
+        let oops = OptimizedOperations.Create grammar
+        let lalrStates = grammar.LALRStates
         let fail msg: obj = (input.LastTokenPosition, msg) |> ParserError |> ParserException |> raise
         let rec impl token currentState stack =
             let (|LALRState|) x = lalrStates.[int x]

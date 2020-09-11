@@ -181,7 +181,7 @@ module RuntimeFarkle =
         | Ok grammar ->
             let tokenizer = DefaultTokenizer grammar
             try
-                LALRParser.parseLALR grammar.LALRStates rf.PostProcessor tokenizer input |> Ok
+                LALRParser.parseLALR grammar rf.PostProcessor tokenizer input |> Ok
             with
             | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->
@@ -272,7 +272,7 @@ type RuntimeFarkle<'TResult> with
     [<Obsolete("Streams are supposed to contain binary \
 data; not text. Parse a TextReader instead.")>]
     member this.Parse(stream, [<Optional>] encoding, [<Optional>] doLazyLoad) =
-        parseStream stream encoding doLazyLoad
+        parseStream this stream encoding doLazyLoad
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="charStream">The string to parse.</param>
     /// <returns>An F# result type containing either the

@@ -278,11 +278,6 @@ type Symbols = {
 }
 
 /// A context-free grammar according to which Farkle can parse text.
-// Grammars can only be created by either the EGT reader or the designtime
-// Farkle builder. The constructor of a grammar is internal, forming an
-// implicit contract that any grammar object is well-formed. But the most
-// daring users can directly use the parser functions which do not need a
-// full grammar.
 [<NoComparison; ReferenceEquality>]
 type Grammar = internal {
     // This field is totally informative; it serves only the template maker.

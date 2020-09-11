@@ -167,10 +167,6 @@ type Tokenizer(grammar: Grammar) =
                     |> raise
         tokenLoop()
 
-    /// The `OptimizedOperations` object of the grammar of this tokenizer.
-    /// Used to avoid explicitly passing it to the LALR parser.
-    member internal _.OptimizedOperations = oops
-
     /// <summary>Gets the next <see cref="Token"/>
     /// from a <see cref="CharStream"/>.</summary>
     /// <remarks>Custom inheritors that want to defer to Farkle's

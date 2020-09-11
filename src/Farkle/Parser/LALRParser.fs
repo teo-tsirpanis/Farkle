@@ -43,7 +43,7 @@ module LALRParser =
     /// <param name="input">The <see cref="CharStream"/> whose characters are to be parsed.</param>
     /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
     /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
-    let parseLALR grammar (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
+    let parse grammar (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream) =
         use objBuffer = new ObjectBuffer()
         let oops = OptimizedOperations.Create grammar
         let lalrStates = grammar.LALRStates

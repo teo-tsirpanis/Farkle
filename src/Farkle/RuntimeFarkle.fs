@@ -181,7 +181,7 @@ module RuntimeFarkle =
         | Ok grammar ->
             let tokenizer = DefaultTokenizer grammar
             try
-                LALRParser.parseLALR grammar rf.PostProcessor tokenizer input |> Ok
+                LALRParser.parse grammar rf.PostProcessor tokenizer input |> Ok
             with
             | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->

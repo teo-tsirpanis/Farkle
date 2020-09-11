@@ -21,7 +21,7 @@ module LALRParser =
             if newSize > arr.Length then
                 ArrayPool.Shared.Return arr
                 arr <- ArrayPool.Shared.Rent newSize
-        member _.GetBufferFromStack length stack =
+        member _.GetBufferFromStack(length, stack) =
             ensureSized length
             let mutable i = length - 1
             let mutable stack = stack
@@ -33,7 +33,7 @@ module LALRParser =
                     i <- i - 1
                     stack <- xs
                 | [] -> ()
-            arr
+            ReadOnlySpan(arr, 0, length)
         interface IDisposable with
             member _.Dispose() = ArrayPool.Shared.Return(arr, true)
 
@@ -72,9 +72,9 @@ module LALRParser =
                 match oops.LALRGoto productionToReduce.Head nextState with
                 | Some nextState ->
                     let resultObj =
-                        let tokens = objBuffer.GetBufferFromStack handleLength stack
+                        let tokens = objBuffer.GetBufferFromStack(handleLength, stack)
                         try
-                            pp.Fuse(productionToReduce, ReadOnlySpan(tokens, 0, handleLength))
+                            pp.Fuse(productionToReduce, tokens)
                         with
                         | e -> PostProcessorException(productionToReduce, e) |> raise
                     impl token nextState ((nextState, resultObj) :: stack')

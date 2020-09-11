@@ -5,6 +5,7 @@
 
 namespace Farkle.Common
 
+open System
 open System.Threading
 
 /// A reference type whose value can only be set once.
@@ -95,3 +96,11 @@ module internal ErrorHandling =
     let inline nullCheck argName x =
         if isNull x then
             nullArg argName
+
+module internal Delegate =
+    /// Creates a delegate from an arbitrary
+    /// object's `Invoke` method. Useful turning
+    /// optimized closures to delegates without
+    /// an extra level of indirection.
+    let ofInvokeMethod<'TDelegate when 'TDelegate :> Delegate> (func: obj) =
+        Delegate.CreateDelegate(typeof<'TDelegate>, func, "Invoke", false, true) :?> 'TDelegate

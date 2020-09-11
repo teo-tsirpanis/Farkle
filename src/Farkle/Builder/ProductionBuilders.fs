@@ -47,20 +47,19 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
         ProductionBuilder(members)
     /// A production builder with no members.
     static member Empty = ProductionBuilder(ImmutableList.Empty)
-    member __.Append(sym) = ProductionBuilder(listAdd members sym)
+    member __.Append(sym) = ProductionBuilder(members.Add sym)
     member x.Append(lit) = x.Append(Literal lit)
     member __.Extend(df: DesigntimeFarkle<'T1>) =
-        ProductionBuilder<'T1>(listAdd members df, members.Count)
+        ProductionBuilder<'T1>(members.Add df, members.Count)
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// a read-only span of all the production's members as objects.</summary>
     /// <remarks>
     ///     <para>This method is intended to be used when finishing
     ///     a production with many significant members.</para>
     /// </remarks>
-    member _.FinishRaw(fuser: F<'TOutput>) : Production<'TOutput> =
-        Production(members, fuser)
-    member x.FinishFSharp fFuseThunk = x.FinishRaw(fun _ -> fFuseThunk())
-    member x.Finish(f: Func<_>) = x.FinishFSharp(FuncConvert.FromFunc(f))
+    member _.FinishRaw(fuser: F<'TOutput>) = Production(members, fuser)
+    member x.FinishFSharp f = x.FinishRaw(fun _ -> f())
+    member x.Finish(f: Func<_>) = x.FinishRaw(fun _ -> f.Invoke())
     /// <summary>Creates a <see cref="Production{T}"/> that
     /// always returns a constant value.</summary>
     member x.FinishConstant(v) = x.FinishRaw(fun _ -> v)

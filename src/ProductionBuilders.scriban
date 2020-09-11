@@ -23,8 +23,11 @@ https://opensource.org/licenses/MIT ~}}
     func type_indices
         ret gen_type_params_impl $0 "idx" ", "
     end
-    func finish_signature
+    func func_signature
         ret (gen_type_params_impl $0 "'T" " -> ") + "-> 'TOutput"
+    end
+    func delegate_signature
+        ret "Func<" + (type_params $0) + ", 'TOutput>"
     end ~}}
 {{~ func gen_builder
         n = $0
@@ -32,52 +35,58 @@ https://opensource.org/licenses/MIT ~}}
 [<Sealed>]
 /// [omit]
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
-    member _.Append(sym) = ProductionBuilder<{{ type_params n }}>(listAdd members sym, {{type_indices n }})
-    member x.Append(lit) = x.Append(Literal lit)
+    member _.Append(df) = ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }})
+    member x.Append(literal) = x.Append(Literal literal)
     {{~ if n != capacity ~}}
     member _.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
-    member _.FinishFSharp(f: {{ finish_signature n }}) =
-        {{~ # https://github.com/dotnet/fsharp/issues/8034
+    member _.Finish(f: {{delegate_signature n}}) =
+        {{~ # By explicitly declaring the variables the closure will not capture `members`.
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}
         {{~ end ~}}
-        {{~ if fast ~}}
-        let f = OptimizedClosures.FSharpFunc<{{ type_params n}}, _>.Adapt(f)
-        {{~ end ~}}
         let fuser =
             F(fun arr ->
-                f{{ if fast }}.Invoke({{ end }}
+                f.Invoke(
                     {{~ for i in 1..n
                     # Lol, even an unbox in F# generic typess is expensive.
                     # They want to make sure that unboxing an F# non-nullable type
                     # is never unboxed from null. But that would pose problems for those
                     # that might use Unchecked.defaultof, and an exception will already be thrown.~}}
-                    (UnboxFast arr.[idx{{ i }}]){{ if fast && i != n }},{{ end }}
+                    (UnboxFast arr.[idx{{ i }}]){{ if !for.last }},{{ end }}
                     {{~ end ~}}
-                {{ if fast }}){{ end }}
+                )
             )
         Production(members, fuser)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
-    member x.AsIs() = x.FinishFSharp(id)
+    member x.AsIs() = x.Finish(fun x -> x)
     {{~ end ~}}
-    member x.Finish(f: Func<{{ type_params n }}, {{ ap }}TOutput>) =
-        (fun {{ gen_type_params_impl n "x" " " }} ->
-            f.Invoke({{ gen_type_params_impl n "x" ", " }}))
-        |> x.FinishFSharp
+    member x.FinishFSharp(f: {{ func_signature n }}): Production<{{ ap }}TOutput> =
+        {{~ if fast ~}}
+        let fOptimized =
+            OptimizedClosures.FSharpFunc<{{ type_params n }}, _>.Adapt(f)
+            |> Delegate.ofInvokeMethod
+        x.Finish(fOptimized)
+        {{~ else if n == 1 ~}}
+        x.Finish(Delegate.ofInvokeMethod f)
+        {{~ else
+        func_call_arguments = gen_type_params_impl n "x" " " ~}}
+        x.Finish(fun {{ func_call_arguments }} ->
+            f {{ func_call_arguments}})
+        {{~ end ~}}
 
 {{~ end ~}}
 
 namespace Farkle.Builder
 
 open Farkle.Collections
+open Farkle.Common
 open LanguagePrimitives.IntrinsicFunctions
 open System
-open System.Collections.Immutable
 
 [<AutoOpen>]
-module internal ProductionBuilderHelpers =
+module private ProductionBuilderHelpers =
     let inline listAdd list (df: DesigntimeFarkle) = ImmutableList.add list df
 
 {{~ capacity = 16;

@@ -1,5 +1,0 @@
-group Executables
-FSharp.Core
-Mono.Cecil
-Scriban
-Serilog

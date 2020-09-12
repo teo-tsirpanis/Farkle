@@ -7,6 +7,7 @@
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="*Benchmark.fs" />
@@ -15,5 +16,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

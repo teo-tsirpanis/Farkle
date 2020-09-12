@@ -1,37 +1,4 @@
-framework: netstandard2.0, netstandard2.1
-
 version 5.245.1
-
-source https://api.nuget.org/v3/index.json
-
-storage: none
-
-nuget BitCollections
-nuget FSharp.Core
-nuget System.Buffers framework: netstandard2.0
-nuget System.Collections.Immutable
-nuget System.Memory framework: netstandard2.0
-
-group Executables
-
-  framework: net472, netcoreapp3.1
-
-  source https://api.nuget.org/v3/index.json
-
-  storage: none
-
-  nuget Argu
-  nuget Chiron
-  nuget Farkle.Tools.MSBuild prerelease
-  nuget FSharp.Core
-  nuget FsLexYacc.Runtime
-  nuget Mono.Cecil
-  nuget Scriban
-  nuget Serilog
-  // Version 4.0 directly targets .NET Standard 2.0, reducing dependencies.
-  nuget Serilog.Sinks.Console prerelease
-  // Scriban requires this version.
-  nuget System.Threading.Tasks.Extensions = 4.5.1
 
 group Formatting
 
@@ -59,18 +26,3 @@ group FakeBuild
   nuget Fake.Tools.Git
 
   nuget Scriban
-
-group Test
-
-  framework: netcoreapp3.1
-
-  source https://api.nuget.org/v3/index.json
-
-  storage: none
-
-  nuget BenchmarkDotNet
-  nuget Expecto
-  nuget Expecto.FsCheck
-  nuget FSharp.Core
-  nuget Newtonsoft.Json
-  nuget System.Collections.Immutable

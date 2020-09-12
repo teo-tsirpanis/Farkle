@@ -18,8 +18,6 @@
     <None Include="Farkle.Tools.MSBuild.targets" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Scriban" Version="2.1.4" />
-    <PackageReference Update="FSharp.Core" Version="4.7.2" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.2.1" />
     <PackageReference Include="Sigourney" Version="0.1.1" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />

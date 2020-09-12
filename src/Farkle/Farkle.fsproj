@@ -62,6 +62,10 @@
   <ItemGroup>
     <PackageReference Include="Covarsky" Version="1.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="BitCollections" Version="1.0.0" />
+    <PackageReference Include="FSharp.Core" Version="4.7.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.7.1" />
+    <PackageReference Include="System.Buffers" Condition="'$(TargetFramework)' == 'netstandard2.0'" Version="4.5.1" />
+    <PackageReference Include="System.Memory" Condition="'$(TargetFramework)' == 'netstandard2.0'" Version="4.5.4" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -190,3 +190,4 @@ temp/
 *.g.[fc]s
 .ionide/
 .paket/
+*.binlog

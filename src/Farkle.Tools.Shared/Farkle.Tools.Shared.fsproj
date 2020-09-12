@@ -12,7 +12,11 @@
     <Compile Include="Templating/TemplateEngine.fs" />
     <EmbeddedResource Include="builtin-templates/Grammar.CSharp.scriban" LogicalName="Farkle.BuiltinTemplate.Grammar.CSharp" />
     <EmbeddedResource Include="builtin-templates/Grammar.FSharp.scriban" LogicalName="Farkle.BuiltinTemplate.Grammar.FSharp" />
-    <ProjectReference Include="../Farkle/Farkle.fsproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <ProjectReference Include="../Farkle/Farkle.fsproj" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.2" />
+    <PackageReference Include="Scriban" Version="2.1.4" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+  </ItemGroup>
 </Project>

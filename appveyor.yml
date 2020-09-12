@@ -1,10 +1,10 @@
 version: 6.0.0.{build}
 image: Visual Studio 2019
 cache:
-  - '%USERPROFILE%\.dotnet\tools -> .config\dotnet-tools.json'
-  - '%USERPROFILE%\.nuget\packages -> paket.lock'
   - 'packages -> paket.lock'
 nuget:
   disable_publish_on_pr: true
+install:
+  - cmd: dotnet tool restore
 build_script:
-  - pwsh: ./build.ps1 target CI
+  - cmd: dotnet tool run fake run ./build.fsx target CI

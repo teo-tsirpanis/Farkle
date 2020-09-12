@@ -17,24 +17,22 @@ type JsonBenchmark() =
 
     // File I/O during parsing will affect them, but the benchmarks measure
     // parsing when not the entire file is immediately available on memory.
-    let jsonData = File.ReadAllText "generated.json"
+    let mutable jsonData = ""
 
     let createTR() = new StringReader(jsonData)
 
-    let csharpRuntime = CSharp.Language.Runtime
+    let farkleRuntime = FSharp.Language.runtime
 
-    let fsharpRuntime = FSharp.Language.runtime
+    [<Params("small.json", "medium.json", "big.json")>]
+    member val FileName = "" with get, set
 
-    [<Benchmark>]
-    // There are performance differences between the F# and C# editions.
-    // The separate benchmarks will stay for now.
-    member _.FarkleCSharp() =
-        RuntimeFarkle.parseTextReader csharpRuntime (createTR())
-        |> returnOrFail
+    [<GlobalSetup>]
+    member this.GlobalSetup() =
+        jsonData <- File.ReadAllText(this.FileName)
 
     [<Benchmark>]
-    member _.FarkleFSharp() =
-        RuntimeFarkle.parseTextReader fsharpRuntime (createTR())
+    member _.Farkle() =
+        RuntimeFarkle.parseTextReader farkleRuntime (createTR())
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]
@@ -45,14 +43,3 @@ type JsonBenchmark() =
 
     [<Benchmark>]
     member _.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseTextReader (createTR())
-
-    // Sprache was about to be included but it's
-    // significanty slower than the other libraries.
-
-    [<Benchmark>]
-    member _.JsonNET() =
-        use jtr = new Newtonsoft.Json.JsonTextReader(createTR())
-        Newtonsoft.Json.Linq.JToken.ReadFrom jtr
-
-    [<Benchmark>]
-    member _.SystemTextJson() = System.Text.Json.JsonDocument.Parse(jsonData).Dispose()

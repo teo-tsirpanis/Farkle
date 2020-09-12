@@ -5,9 +5,6 @@
     <NuspecFile>Farkle.Tools.MSBuild.nuspec</NuspecFile>
     <!-- Isn't that supposed to be automatiaclly included?? -->
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
-    <!-- Because this repository does not use Paket, it does not play well with
-    the others that do, and raises package downgrade warnings. To be removed when
-    this project gets fixed, or the others abandon Paket. -->
     <NuspecProperties>version=$(Version)</NuspecProperties>
     <GenerateNuspecDependsOn>PreparePack;$(GenerateNuspecDependsOn)</GenerateNuspecDependsOn>
   </PropertyGroup>

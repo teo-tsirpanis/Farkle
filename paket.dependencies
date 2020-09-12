@@ -1,4 +1,4 @@
-version 5.245.1
+version 5.249.0
 
 group Formatting
 
@@ -22,7 +22,6 @@ group FakeBuild
   nuget Fake.IO.Zip
   nuget Fake.DotNet.Cli
   nuget Fake.DotNet.FsFormatting
-  nuget Fake.DotNet.Paket
   nuget Fake.Tools.Git
 
   nuget Scriban

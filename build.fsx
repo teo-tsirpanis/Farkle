@@ -123,6 +123,14 @@ let nugetVersion =
 
 BuildServer.install [AppVeyor.Installer]
 
+let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
+let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
+
+Target.description "Fails the build if the appropriate environment variables for the release do not exist"
+Target.create "CheckForReleaseCredentials" (fun _ ->
+    githubToken.Value |> ignore
+    nugetKey.Value |> ignore)
+
 Target.description "Copies binaries from default VS location to expected bin folder, but keeps a \
 subdirectory structure for each project in the src folder to support multiple project outputs"
 Target.create "CopyBinaries" (fun _ ->
@@ -243,10 +251,15 @@ Target.create "NuGetPack" (fun _ ->
 
 Target.description "Publishes the NuGet packages"
 Target.create "NuGetPublish" (fun _ ->
-    Paket.push(fun p ->
+    Seq.iter (DotNet.nugetPush (fun p ->
         {p with
-            PublishUrl = "https://www.nuget.org"
-            WorkingDir = "bin" })
+            PushParams =
+                {p.PushParams with
+                    Source = Some "https://www.nuget.org"
+                    ApiKey = Some nugetKey.Value
+                }
+        }
+    )) nugetPackages
 )
 
 // --------------------------------------------------------------------------------------
@@ -394,13 +407,6 @@ Target.create "ReleaseDocs" (fun _ ->
 
 // --------------------------------------------------------------------------------------
 // Release Scripts
-
-let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
-
-Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-Target.create "CheckForReleaseCredentials" (fun _ ->
-    githubToken.Value |> ignore
-    Environment.environVarOrFail "NUGET_KEY" |> ignore)
 
 let remoteToPush = lazy (
     CommandHelper.getGitResult "" "remote -v"

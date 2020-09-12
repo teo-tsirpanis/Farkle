@@ -1,7 +1,5 @@
 version: 6.0.0.{build}
 image: Visual Studio 2019
-cache:
-  - 'packages -> paket.lock'
 nuget:
   disable_publish_on_pr: true
 install:

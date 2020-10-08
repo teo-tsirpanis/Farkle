@@ -3,21 +3,12 @@
       Condition="'$(DesignTimeBuild)' != 'true'"
       TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask"
       AssemblyFile="$(FarkleTaskAssembly)"/>
-  <UsingTask
-      Condition="'$(DesignTimeBuild)' != 'true'"
-      TaskName="Farkle.Tools.MSBuild.FarklePrecompileTask"
-      AssemblyFile="$(FarkleTaskAssembly)"/>
   <PropertyGroup>
-    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <BuildDependsOn>FarkleGenerateTemplates;$(BuildDependsOn)</BuildDependsOn>
-    <CompileDependsOn>$(CompileDependsOn);FarklePrecompileGrammars</CompileDependsOn>
     <CleanDependsOn>$(CleanDependsOn);FarkleCleanGeneratedTemplates</CleanDependsOn>
-    <FarkleSuppressGrammarErrors Condition="'FarkleSuppressGrammarErrors' == ''">false</FarkleSuppressGrammarErrors>
     <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
     <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
     <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
-    <!-- The timestamp of this file will be used to support incremental builds. -->
-    <_PrecompiledByFarkle>$(IntermediateOutputPath)$(MSBuildProjectFile).PrecompiledByFarkle</_PrecompiledByFarkle>
   </PropertyGroup>
 
   <Target Name="CheckForMSBuild16">
@@ -64,37 +55,7 @@
     </ItemGroup>
   </Target>
 
-  <Target
-      Name="FarklePrecompileGrammars"
-      AfterTargets="CoreCompile"
-      DependsOnTargets="CheckForMSBuild16"
-      Condition="$(DesignTimeBuild) != true AND $(FarkleEnablePrecompile) != false AND '@(IntermediateAssembly)' != ''"
-      Inputs="@(IntermediateAssembly)"
-      Outputs="$(_PrecompiledByFarkle)">
-    <Warning
-        Condition="$(MSBuildRuntimeType) != Core"
-        Text="Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). Your project will still work, but the grammar will not be built ahead of time. See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE"/>
-    <FarklePrecompileTask
-        Condition="$(MSBuildRuntimeType) == Core"
-        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
-        IntermediateDirectory="$(ProjectDir)$(IntermediateOutputPath)"
-        KeyOriginatorFile="$(KeyOriginatorFile)"
-        AssemblyOriginatorKeyFile="$(AssemblyOriginatorKeyFile)"
-        SignAssembly="$(SignAssembly)"
-        References="@(ReferencePath)"
-        SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>
-
-    <WriteLinesToFile
-        Condition="$(MSBuildRuntimeType) == Core"
-        File="$(_PrecompiledByFarkle)"
-        Lines=""
-        Overwrite="true"/>
-
-    <ItemGroup Condition="$(MSBuildRuntimeType) == Core">
-      <FileWrites Include="$(_PrecompiledByFarkle)" />
-    </ItemGroup>
-  </Target>
-  <Target Name="FarkleCleanGeneratedTemplates" BeforeTargets="Clean">
+  <Target Name="FarkleCleanGeneratedTemplates">
     <Delete Files="@(Farkle->'$(MSBuildProjectDirectory)\%(FileName)$(_FarkleOutputExtension)')"/>
   </Target>
 </Project>

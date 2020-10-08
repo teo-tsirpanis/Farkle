@@ -1,12 +1,14 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <SigourneyRegisteredTargetFiles>$(SigourneyRegisteredTargetFiles);$(MSBuildThisFileDirectory)Farkle.Tools.MSBuild.Precompiler.targets</SigourneyRegisteredTargetFiles>
+    <SigourneyRegisteredTargets>$(SigourneyRegisteredTargets);FarklePrecompileGrammars</SigourneyRegisteredTargets>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' == 'Core'">
+  <PropertyGroup Condition="$(MSBuildRuntimeType) == Core">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp3.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(FarkleTaskAssembly)' == '' AND '$(MSBuildRuntimeType)' != 'Core'">
+  <PropertyGroup Condition="$(MSBuildRuntimeType) != Core">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net472/Farkle.Tools.MSbuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
 </Project>

@@ -2,7 +2,7 @@
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-    <EnableCovarsky>true</EnableCovarsky>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Title>The Farkle Parser</Title>
     <PackageId>Farkle</PackageId>
     <Product>Farkle</Product>
@@ -57,7 +57,7 @@
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Covarsky" Version="1.2.0" PrivateAssets="All" />
+    <PackageReference Include="Covarsky" Version="1.3.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="BitCollections" Version="1.0.0" />
     <PackageReference Include="FSharp.Core" Version="4.7.2" />

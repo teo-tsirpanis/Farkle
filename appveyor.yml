@@ -2,7 +2,5 @@ version: 6.0.0.{build}
 image: Visual Studio 2019
 nuget:
   disable_publish_on_pr: true
-install:
-  - cmd: dotnet tool restore
 build_script:
-  - cmd: dotnet tool run fake run ./build.fsx target CI
+  - pwsh: ./build.ps1 target CI; exit $LASTEXITCODE

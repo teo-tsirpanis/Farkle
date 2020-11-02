@@ -109,7 +109,11 @@ or the Rename extension method.")
             Error()
         | false -> Ok pcdfs)
 #else
-let discoverAndPrecompile _ _ _ = Ok []
+let discoverAndPrecompile (log: ILogger) _ _ =
+    log.Warning("Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). \
+Your project will still work, but without the benefits the precompiler offers. \
+See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
+    Ok []
 
 let weaveAssembly _ _ = false
 #endif

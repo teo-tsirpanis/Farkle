@@ -10,13 +10,10 @@
   <ItemGroup>
     <Compile Include="FarkleCreateTemplateTask.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
-    <None Include="Farkle.Tools.MSBuild.props" Pack="true" PackagePath="build" />
-    <None Include="Farkle.Tools.MSBuild.targets" Pack="true" PackagePath="build" />
+    <None Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Sigourney" Version="0.2.1" PrivateAssets="compile" />
-    <PackageReference Include="Microsoft.Build.Framework" Version="16.7.0" ExcludeAssets="runtime" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.7.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Sigourney" Version="0.3.0" PrivateAssets="compile" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
   </ItemGroup>

@@ -8,24 +8,10 @@
       TaskName="Farkle.Tools.MSBuild.FarklePrecompileTask"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
-  <Target Name="FarklePreparePrecompiler" BeforeTargets="FarklePrecompileGrammars">
-    <GetNextSentinel
-      IntermediateDirectory="$(IntermediateDirectory)"
-      WeaverName="Farkle.Tools.Precompiler"
-      AssemblyPath="@(IntermediateAssembly)"
-      InputSentinel="$(SigourneyInputSentinel)"
-      OutputSentinel="$(SigourneyOutputSentinel)">
-      <Output TaskParameter="InputSentinel" PropertyName="SigourneyInputSentinel" />
-      <Output TaskParameter="OutputSentinel" PropertyName="SigourneyOutputSentinel" />
-    </GetNextSentinel>
-  </Target>
-
   <Target
       Name="FarklePrecompileGrammars"
       Condition="$(FarkleEnablePrecompiler) != false"
-      DependsOnTargets="CheckForMSBuild16"
-      Inputs="$(SigourneyInputSentinel)"
-      Outputs="$(SIgourneyOutputSentinel)">
+      DependsOnTargets="CheckForMSBuild16">
     <Warning
         Condition="$(MSBuildRuntimeType) != Core"
         Text="Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). Your project will still work, but without the benefits the precompiler offers. See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE"/>
@@ -33,7 +19,6 @@
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="%(IntermediateAssembly.Identity)"
         WeaverName="Farkle.Tools.Precompiler"
-        OutputSentinel="$(SigourneyOutputSentinel)"
         Configuration="@(SigourneyConfiguration)"
         References="@(ReferencePath)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>

@@ -13,18 +13,12 @@ open Sigourney
 type FarklePrecompileTask() =
     inherit MSBuildWeaver()
     let mutable precompiledGrammars = []
-    [<Required>]
-    /// The references of the assembly to be precompiled.
-    member val References = Array.empty<ITaskItem> with get, set
     /// Whether to treat grammar precompilation
     /// errors (like LALR conflicts) as warnings.
     member val SuppressGrammarErrors = false with get, set
     override this.Execute() =
-        let references =
-            this.References
-            |> Array.map (fun x -> x.ItemSpec)
         let log = this.Log2
-        let grammars = Precompiler.discoverAndPrecompile log references this.AssemblyPath
+        let grammars = Precompiler.discoverAndPrecompile log this.AssemblyReferences this.AssemblyPath
         match grammars with
         | Ok grammars ->
             precompiledGrammars <-

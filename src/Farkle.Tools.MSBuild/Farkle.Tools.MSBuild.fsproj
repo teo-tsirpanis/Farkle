@@ -8,6 +8,7 @@
     <SigourneyPublish>true</SigourneyPublish>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Precompiler.fs" />
     <Compile Include="FarkleCreateTemplateTask.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
     <None Include="build/**" Pack="true" PackagePath="build" />

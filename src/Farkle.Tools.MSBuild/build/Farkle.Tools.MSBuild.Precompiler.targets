@@ -17,10 +17,9 @@
         Text="Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). Your project will still work, but without the benefits the precompiler offers. See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE"/>
     <FarklePrecompileTask
         Condition="$(MSBuildRuntimeType) == Core"
-        AssemblyPath="%(IntermediateAssembly.Identity)"
+        AssemblyPath="@(IntermediateAssembly)"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
-        References="@(ReferencePath)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>
   </Target>
 </Project>

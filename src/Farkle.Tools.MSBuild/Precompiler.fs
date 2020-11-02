@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.Precompiler
+module internal Farkle.Tools.Precompiler
 
 #if !NETFRAMEWORK
 open Farkle.Builder
@@ -11,6 +11,7 @@ open Farkle.Common
 open Farkle.Grammar
 open Mono.Cecil
 open Serilog
+open Sigourney
 open System.IO
 open System.Runtime.CompilerServices
 open System.Runtime.Loader
@@ -39,24 +40,19 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
         | Error msg -> Error(string msg)
         |> (fun x -> name, x))
 
-let private isReferenceAssembly (asm: AssemblyDefinition) =
-    asm.CustomAttributes
-    |> Seq.exists (fun attr ->
-        attr.AttributeType.FullName = typeof<ReferenceAssemblyAttribute>.FullName)
-
-type private PrecompilerContext(path, references: string seq, log: ILogger) as this =
+type private PrecompilerContext(path, references: AssemblyReference seq, log: ILogger) as this =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
     let dict =
         references
-        |> Seq.choose (fun path ->
-            use asm = AssemblyDefinition.ReadAssembly(path)
-            if isReferenceAssembly asm then
+        |> Seq.choose (fun asm ->
+            if asm.IsReferenceAssembly then
                 None
             else
-                log.Debug("Using reference from {AssemblyPath}", path)
-                Some (asm.Name.Name, path))
+                log.Verbose("Using reference from {AssemblyPath}", asm.FileName)
+                Some (asm.AssemblyName.FullName, path))
         |> readOnlyDict
     let asm =
+        // We first read the assembly into a byte array to avoid the runtime locking the file.
         let bytes = File.ReadAllBytes path
         let m = new MemoryStream(bytes, false)
         this.LoadFromStream m
@@ -68,8 +64,8 @@ type private PrecompilerContext(path, references: string seq, log: ILogger) as t
         | "FSharp.Core" -> typeof<FuncConvert>.Assembly
         | "mscorlib" | "System.Private.CoreLib"
         | "System.Runtime" | "netstandard" -> null
-        | name ->
-            match dict.TryGetValue name with
+        | _ ->
+            match dict.TryGetValue name.FullName with
             | true, path ->
                 log.Verbose("Loading assembly from {AssemblyPath}", path)
                 this.LoadFromAssemblyPath path

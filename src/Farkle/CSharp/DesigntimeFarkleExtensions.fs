@@ -61,7 +61,7 @@ type DesigntimeFarkleExtensions =
         // corresponding function. It would register it
         // with Farkle's own assembly otherwise.
         let asm = Reflection.Assembly.GetCallingAssembly()
-        Precompiler.Loader.prepare df asm
+        PrecompilerInterface.prepare df asm
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

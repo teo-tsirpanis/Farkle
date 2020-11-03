@@ -20,9 +20,9 @@ let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
     asm
     |> Precompiler.Discoverer.discover
     |> List.map (fun pcdf ->
-        let name = pcdf.Name
+        let name = (pcdf :> DesigntimeFarkle).Name
         log.Information("Precompiling {Grammar}...", name)
-        let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.Grammar
+        let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.GrammarDefinition
         match grammar with
         | Ok grammar ->
             // FsLexYacc does it, so why not us?
@@ -86,7 +86,7 @@ let private getPrecompilableGrammars log references path =
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
     List.iter (fun (name, data: _ []) ->
-        let name = Precompiler.Loader.getPrecompiledGrammarResourceName name
+        let name = PrecompiledGrammar.GetResourceName name
         let res = EmbeddedResource(name, ManifestResourceAttributes.Public, data)
         asm.MainModule.Resources.Add res) pcdfs
     not pcdfs.IsEmpty

@@ -42,7 +42,7 @@ let discover (asm: Assembly) =
             && fld.IsInitOnly && not (fld.Name.StartsWith("_", StringComparison.Ordinal)))
         |> Seq.map (fun fld -> fld.GetValue(null))
         |> Seq.choose tryUnbox<PrecompilableDesigntimeFarkle>
-        |> Seq.filter (fun pcdf -> pcdf.DeclaringAssembly = asm)
+        |> Seq.filter (fun pcdf -> pcdf.Assembly = asm)
 
     let types = ResizeArray()
     let typesToProcess = Queue(asm.GetTypes())

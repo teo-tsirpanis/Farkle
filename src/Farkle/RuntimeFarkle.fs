@@ -146,7 +146,7 @@ module RuntimeFarkle =
     /// precompiled grammar is found, building it again will be avoided.
     [<CompiledName("Build")>]
     let build df =
-        let theFabledGrammar = Precompiler.Loader.getGrammarOrBuild df
+        let theFabledGrammar = PrecompilerInterface.getGrammarOrBuild df
         let theTriumphantPostProcessor = DesigntimeFarkleBuild.buildPostProcessorOnly df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
@@ -155,7 +155,7 @@ module RuntimeFarkle =
     [<CompiledName("BuildUntyped")>]
     let buildUntyped df =
         df
-        |> Precompiler.Loader.getGrammarOrBuild
+        |> PrecompilerInterface.getGrammarOrBuild
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
     [<CompiledName("MarkForPrecompile"); MethodImpl(MethodImplOptions.NoInlining)>]
@@ -164,7 +164,7 @@ module RuntimeFarkle =
     /// on https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
-        Precompiler.Loader.prepare df asm
+        PrecompilerInterface.prepare df asm
 
     /// This designtime Farkle is used in the tests to test
     /// whether an object from a different assembly is eligible

@@ -166,6 +166,12 @@ module RuntimeFarkle =
         let asm = Assembly.GetCallingAssembly()
         PrecompilerInterface.prepare df asm
 
+    [<CompiledName("MarkForPrecompileU"); MethodImpl(MethodImplOptions.NoInlining)>]
+    /// The untyped edition of `markForPrecompile`.
+    let markForPrecompileU df =
+        let asm = Assembly.GetCallingAssembly()
+        PrecompilerInterface.prepareU df asm
+
     /// This designtime Farkle is used in the tests to test
     /// whether an object from a different assembly is eligible
     /// for precompilation (it isn't, unless it is marked again).

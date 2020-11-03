@@ -62,6 +62,19 @@ type DesigntimeFarkleExtensions =
         // with Farkle's own assembly otherwise.
         let asm = Reflection.Assembly.GetCallingAssembly()
         PrecompilerInterface.prepare df asm
+    [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
+    /// <summary>Marks an untyped <see cref="DesigntimeFarkle{TResult}"/>
+    /// as available to have its grammar precompiled ahead of time.</summary>
+    /// <remarks>This function has to be directly called from
+    /// user code. See more, including usage restrictions at
+    /// <a href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"/></remarks>
+    /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompileU"/>
+    static member MarkForPrecompile (df: DesigntimeFarkle) =
+        // This function must mot forward to RuntimeFarkle's
+        // corresponding function. It would register it
+        // with Farkle's own assembly otherwise.
+        let asm = Reflection.Assembly.GetCallingAssembly()
+        PrecompilerInterface.prepareU df asm
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

@@ -6,6 +6,7 @@
 * __Breaking change:__ Transformers no longer take the position of a terminal, but an `ITransformerContext` type containing more information.
 * __Breaking change:__ Farkle's exception types were refactored. They inherit from `FarkleException`.
 * __Breaking change:__ Post-processor exceptions are wrapped inside a `PostProcessorException` and thrown to user code.
+* __Breaking change:__ Only objects of type `PrecompilableDesigntimeFarkle` can be marked for precompilation.
 * The runtime Farkle's extension methods became regular methods.
 * The tokenizer can be extended by user code. TODO: write documentation
 * Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.

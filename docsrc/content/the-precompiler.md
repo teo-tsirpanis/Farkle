@@ -1,12 +1,12 @@
 # Farkle's precompiler
 
-Every time an app using Farkle starts, it generates the parser tables. This process takes some time, and it take even more, if the app does not reuse the runtime Farkles it creates.
+Every time an app using Farkle starts, it generates the parser tables for its grammars. This process takes some time, and it take even more, if the app does not reuse the runtime Farkles it creates.
 
-Most apps need to parse a static grammar whose specifications never change between program executions. For example, a compiler or a JSON parser will parse text from the same language every time you use it. Farkle would spend time generating the parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST server parsing hundreds of input strings, but for a compiler that parses only one file, building the grammar every time it is run would take some time, maybe more than the time spent for the parser, if the grammar is big.
+Most apps need to parse a static grammar whose specification never changes between program executions. For example, a compiler or a JSON parsing library will parse text from the same language every time you use them. Farkle would spend time generating these parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST API server parsing lots of input strings, but for a compiler that parses only one file, building that grammar every time it is executed would impose an unnecssary overhead, maybe more than the time spent for the rest of the program, if the grammar is big.
 
-What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's life cycle?
+What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's developemnt lifecycle?
 
-One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of how Farkle works with grammars. Instead of building it every time, the grammar's parser tables are built ahead of time and stored in the program's assembly, when it gets compiled. This boosts the program's startup time by orders of magnitude.
+One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of Farkle's grammars being objects defined in code. Instead of building it every time, the grammar's parser tables are built __ahead of time__ and stored in the program's assembly when it gets compiled. When that program is executed, instead of building the parser tables, it loads the precompiled grammar from the assembly, which is orders of magnitude faster.
 
 ## How to use it
 
@@ -14,7 +14,7 @@ Using the precompiler is surprisingly simple and does not differ very much from 
 
 ### Preparing the your code
 
-Let's say you have a very complicated designtime Farkle that you want its grammar to be precompiled. The first thing to do is to use the `RuntimeFarkle.markForPrecompile` function. Here's an example in both F# and C#:
+Let's say you have a very complicated designtime Farkle that you want its grammar to be precompiled. The first thing to do is to use the `RuntimeFarkle.markForPrecompile` function. In F# it can be done by applying a the `RuntimeFarkle.markForPrecompile` function at the end of your designtime Farkle:
 
 ``` fsharp
 open Farkle;
@@ -29,12 +29,18 @@ let designtime =
 let runtime = RuntimeFarkle.build designtime
 ```
 
+Untyped designtime Farkles can be marked for precompilation with the `markForPrecompileU` function.
+
+---
+
+In C#, you have to do two things. First, you have to declare your designtime Farkle as a `PrecompilableDesigntimeFarkle`. Second, you have to put a `.MarkForPrecompile()` at the end, like what to do in F#.
+
 ``` csharp
 using Farkle;
 using Farkle.Builder;
 
 public class MyLanguage {
-    public static readonly DesigntimeFarkle<int> Designtime;
+    public static readonly PrecompilableDesigntimeFarkle<int> Designtime;
     public static readonly RuntimeFarkle<int> Runtime;
 
     static MyLanguage() {
@@ -50,71 +56,70 @@ public class MyLanguage {
 }
 ```
 
+The type for untyped precompilable designime Farkles is `PrecompilableDesigntimeFarkle`, without a type parameter.
+
+### The rules
+
+A precompilable designtime Farkle will be discovered by Farkle if it follows these rules:
+
 With this simple function (or extension method), Farkle will be able to discover this designtime Farkle in your assembly and precompile it. It will be able to actually find it if you follow these rules:
 
-* The designtime Farkle must be declared in a `static readonly` _field_ (not property). For F#, a let-bound value in a module is equivalent, but it __must not__ be mutable.
+* The designtime Farkle must be declared in a `static readonly` _field_ (not property). For F#, a let-bound value in a module is equivalent, but it must not be mutable.
 
-* The designtime Farkle's field can be of any visibility (public, internal, private, it doesn't matter). It will be detected even in nested types. Just remember the rule above.
-
-* The designtime Farkle's field name must not start with an underscore. Because the precompiler will evaluate all designtime Farkles that satisfy the rule above, prepending an underscore to the field's name is an easy way to tell the precompiler to not touch it.
+* The designtime Farkle's field can be of any visibility (public, internal, private, it doesn't matter). It will be detected even in nested classes or modules.
 
 * The `markForPrecompile` function must be the absolute last function to be applied in the designtime Farkle.
 
-* The `markForPrecompile` function must be called in the assembly the designtime Farkle was created and should better not used from inside another function.
+* The `markForPrecompile` function must be called from the assembly the designtime Farkle will be stored.
 
-Say you have the following function in assembly A:
-
-``` fsharp
-let markForPrecompileAndRename (df: DesigntimeFarkle<_>) =
-    df
-    |> DesigntimeFarkle.rename (df.Name + " Precompiled")
-    |> RuntimeFarkle.markForPrecompile
-```
-
-And say you use the function above in assembly B. It won't work; Farkle won't be able to precompile the designtime Farkle. A solution would have been to make the function inline, but don't be 100% sure it will work.
-
-* The field of the precompilable designtime Farkle must be either a typed or untyped designtime Farkle:
+* The field of the precompilable designtime Farkle must be either a typed or untyped `PrecompilableDesigntimeFarkle`:
 
 ``` csharp
 public class MyLanguage {
-    // This will work.
-    public static readonly DesigntimeFarkle Foo = MyUntypedDesigntimeFarkle.Cast().MarkForPrecompile();
+    // This will be precompiled.
+    public static readonly PrecompilableDesigntimeFarkle Foo = MyUntypedDesigntimeFarkle.MarkForPrecompile();
     // But not this.
-    public static readonly object Bar = MyComplicatedDesigntimeFarkle.MarkForPrecompile();
+    public static readonly DesigntimeFarkle Bar = MyUntypedDesigntimeFarkle.MarkForPrecompile();
 }
 ```
 
-* All precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. That's actually why the `DesigntimeFarkle.rename` function was created.
+* All precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. Use the `DesigntimeFarkle.rename` function or the `Rename` extension method to rename a designtime Farkle.
 
-* Multiple references to the same precompilable designtime Farkle do not pose a problem and will be precompiled once. The following example will work:
+* Multiple references to the same precompilable designtime Farkle do not pose a problem and will be precompiled once.
 
-``` fsharp
-let designtime1 = myComplicatedDesigntimeFarkle |> RuntimeFarkle.markForPrecompile
-let designtime2 = designtime1
-```
-
-> __Note__: If any of the rules above is violated, building your app will not fail (unless a name collision was detected which will always fail the build), the designtime Farkle will not be precompiled but will be otherwise perfectly functional.
+If any of the rules above is violated, building your app will not fail (unless a name collision was detected, which will always fail the build) and the designtime Farkle will not be precompiled but will be otherwise perfectly functional.
 
 ### Preparing your project
 
-With our designtime Farkles being ready to be precompiled, it's time to prepare our project files. Add a reference to [the `Farkle.Tools.MSBuild` package][msbuild] like that:
+With your designtime Farkles being ready to be precompiled, it's time to prepare your project file. Add a reference to [the `Farkle.Tools.MSBuild` package][msbuild] like that:
 
 ``` xml
-<!-- The following properties are optional. -->
-<PropertyGroup>
-    <!-- Set it to false to disable the precompiler. Your app will still
-    work, but without the initial performance boost the precompiler offers. -->
-    <FarkleEnablePrecompiler>false</FarkleEnablePrecompiler>
-    <!-- If it is true, grammar errors will raise a warning
-    instead of an error and not fail the entire build. -->
-    <FarkleSuppressGrammarErrors>true</FarkleSuppressGrammarErrors>
-</PropertyGroup>
 <ItemGroup>
+    <PackageReference Include="Farkle" Version="6.*" />
     <PackageReference Include="Farkle.Tools.MSBuild" Version="6.*" PrivateAssets="all" />
 </ItemGroup>
 ```
 
-If you compile your program now, you should get a message that your designtime Farkles' grammars got precompiled. Hooray! With our grammars being precompiled, calling `RuntimeFarkle.build designtime` (or `buildUntyped`) is now much, much faster.
+> __Important:__ The packages `Farkle` and `Farkle.Tools.MSBuild` must be at the same version.
+
+If you build your program now, you should get a message that your designtime Farkles' grammars got precompiled. Hooray! With your designtime Farkles being precompiled, building them is now much, much faster.
+
+## Customizing the precompiler
+
+The precompiler can be customized by the following optional MSBuild properties you can set in your project file:
+
+``` xml
+<PropertyGroup>
+    <!-- Set it to false to disable the precompiler. Your grammar will still
+    work, but without the initial performance boost the precompiler offers. -->
+    <FarkleEnablePrecompiler>false</FarkleEnablePrecompiler>
+    <!-- If it is set to true, grammar errors will raise a warning
+    instead of an error and not fail the entire build. -->
+    <FarkleSuppressGrammarErrors>true</FarkleSuppressGrammarErrors>
+</PropertyGroup>
+```
+
+Furthermore, Farkle's precompiler is based on [Sigourney], which means that it can be disabled by setting the `SigourneyEnable` property to false.
 
 ## Some final notes
 
@@ -153,3 +158,4 @@ let runtime = RuntimeFarkle.build myFaultyDesigntimeFarkle
 So I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you feel especially precompiled today, and want to hit the star button as well. I hope that all of you have an wonderful day, and to see you soon. Goodbye!
 
 [msbuild]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
+[Sigourney]: https://github.com/teo-tsirpanis/Sigourney

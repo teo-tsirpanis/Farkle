@@ -27,21 +27,23 @@ let private fieldsBindingFlags =
 /// To be discovered, they must reside in a static read-only field
 /// (in C#). or in an immutable let-bound value (in F#) that has been
 /// applied the function `RuntimeFarkle.markForPrecompile`. The declared
-/// type of that field must inherit `DesigntimeFarkle`.
+/// type of that field must inherit `PrecompilableDesigntimeFarkle`.
 let discover (asm: Assembly) =
     let probeType (typ: Type) =
         // F# values are properties, but are backed by a static read-only
         // field in a cryptic "<StartupCode$_>" namespace.
         typ.GetFields(fieldsBindingFlags)
         |> Seq.filter (fun fld ->
-            // We can't know in advance whether the designtime Farkle is
-            // precompilable; we have to test all designtime Farkles.
-            // The user however can explicitly prohibit a designtime Farkle
-            // from being probed by prepending its name with an underscore.
-            typeof<DesigntimeFarkle>.IsAssignableFrom fld.FieldType
-            && fld.IsInitOnly && not (fld.Name.StartsWith("_", StringComparison.Ordinal)))
-        |> Seq.map (fun fld -> fld.GetValue(null))
-        |> Seq.choose tryUnbox<PrecompilableDesigntimeFarkle>
+            // In the past, the PrecompilableDesigntimeFarkle type was
+            // internal, meaning that we had to examine all static readonly
+            // designtime Farkle fields for precompilability. However this
+            // is no longer the case; the user can more explicitly mark a
+            // designtime Farkle as precompilable, and the discoverer can be
+            // more precise (code from another assembly is essentially executed
+            // so we must be precise).
+            typeof<PrecompilableDesigntimeFarkle>.IsAssignableFrom fld.FieldType
+            && fld.IsInitOnly)
+        |> Seq.map (fun fld -> fld.GetValue(null) :?> PrecompilableDesigntimeFarkle)
         |> Seq.filter (fun pcdf -> pcdf.Assembly = asm)
 
     let types = ResizeArray()

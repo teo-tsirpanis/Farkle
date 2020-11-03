@@ -22,7 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <PackageReference Include="Chiron" Version="6.3.1" />
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="6.0.0-alpha.1" PrivateAssets="All" />
     <PackageReference Include="FsLexYacc" Version="10.0.0" PrivateAssets="All" />
     <PackageReference Include="FsLexYacc.Runtime" Version="10.0.0" />
   </ItemGroup>

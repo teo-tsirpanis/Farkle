@@ -14,8 +14,9 @@
     <None Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="4.7.2" PrivateAssets="all" />
     <PackageReference Include="Sigourney" Version="0.3.0" PrivateAssets="compile" />
-    <ProjectReference Include="..\Farkle\Farkle.fsproj" />
-    <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
+    <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
   </ItemGroup>
 </Project>

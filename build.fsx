@@ -62,13 +62,19 @@ let DocumentationAssemblyFramework = "netstandard2.0"
 
 let sourceProjects = !! "./src/**/*.??proj"
 
+let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
+
 // The project to be tested
 let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
+
+let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
 // Additional command line arguments passed to Expecto.
 let testArguments = "--nunit-summary TestResults.xml"
 
 let testFrameworks = ["netcoreapp3.1"]
+
+let localPackagesFolder = "./tests/Farkle.Tools.MSBuild.Tests/packages/"
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
@@ -207,6 +213,25 @@ Target.create "RunTests" (fun _ ->
     dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
     Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")
 )
+
+Target.description "Runs the MSBuild integration tests"
+Target.create "RunMSBuildTests" (fun _ ->
+    Shell.cleanDir localPackagesFolder
+    Directory.ensure localPackagesFolder
+    farkleToolsMSBuildProject
+    |> DotNet.pack (fun p ->
+        {p with
+            OutputPath = Some localPackagesFolder
+            Common = {p.Common with CustomParams = Some "/p:Version=0.0.0-local"}
+        }
+    )
+
+    for fx in testFrameworks do
+        dotNetRun msBuildTestProject (Some fx) DotNet.BuildConfiguration.Debug "" ""
+)
+
+Target.description "Runs all tests"
+Target.create "Test" ignore
 
 let shouldCIBenchmark =
     match BuildServer.buildServer with
@@ -454,10 +479,12 @@ Target.create "Release" ignore
     ==> "BuildAllRelease"
     ==> "CopyBinaries"
 
-["BuildAllRelease"; "RunTests"; "NuGetPack"; "Benchmark"]
+["BuildAllRelease"; "RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
-"RunTests"
+"Test" <== ["RunTests"; "RunMSBuildTests"]
+
+"Test"
     ==> "NuGetPack"
     ==> "CI"
 

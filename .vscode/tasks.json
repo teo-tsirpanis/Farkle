@@ -14,7 +14,7 @@
             "args": [
                 "./build.ps1",
                 "target",
-                "RunTests"
+                "Test"
             ]
         },
         {

@@ -40,7 +40,6 @@ module MustNotTouch =
         member _.InstancePropertyNumber = mustNotTouch "are declared in an instance property"
         static member StaticPropertyNumber = mustNotTouch "are declared in a static property"
 
-[<Tests>]
 let tests = testList "Precompiler tests" [
     test "The precompilable designtime Farkle discoverer works properly" {
         let actual =

@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Samples.Cli", "sampl
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Shared", "src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj", "{C6FB5564-2D84-4380-ADCC-3579DB4BF133}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Tools.MSBuild.Tests", "tests\Farkle.Tools.MSBuild.Tests\Farkle.Tools.MSBuild.Tests.csproj", "{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,10 @@ Global
 		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6FB5564-2D84-4380-ADCC-3579DB4BF133}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,6 +101,7 @@ Global
 		{4BB17BD7-34F0-4AAC-82BE-9105B1A0AB89} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
 		{5B1890FE-9F48-43EA-9958-6E1CB2FAE05E} = {B59FC07B-0B1C-4F60-AEEE-AD7AC42D746E}
 		{C6FB5564-2D84-4380-ADCC-3579DB4BF133} = {EC37407F-B092-4C11-B701-462471EF42A8}
+		{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7} = {67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94BF4A95-7FC5-4237-8119-C83972D4E1E9}

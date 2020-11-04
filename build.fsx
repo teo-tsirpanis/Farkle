@@ -62,6 +62,8 @@ let DocumentationAssemblyFramework = "netstandard2.0"
 
 let sourceProjects = !! "./src/**/*.??proj"
 
+let farkleProject = "./src/Farkle/Farkle.fsproj"
+
 let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
 
 // The project to be tested
@@ -137,16 +139,6 @@ Target.create "CheckForReleaseCredentials" (fun _ ->
     githubToken.Value |> ignore
     nugetKey.Value |> ignore)
 
-Target.description "Copies binaries from default VS location to expected bin folder, but keeps a \
-subdirectory structure for each project in the src folder to support multiple project outputs"
-Target.create "CopyBinaries" (fun _ ->
-    projects
-    |> Seq.map (fun f -> ((Path.GetDirectoryName f) @@ "bin" @@ configurationAsString, "bin" @@ (Path.GetFileNameWithoutExtension f)))
-    |> Seq.distinct
-    |> Seq.filter (fst >> Directory.Exists)
-    |> Seq.iter (fun (fromDir, toDir) -> Shell.copyDir toDir fromDir (fun _ -> true))
-)
-
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
@@ -205,9 +197,6 @@ Target.create "GenerateCode" (fun _ ->
     )
 )
 
-Target.description "Builds everything in Release mode"
-Target.create "BuildAllRelease" (fun _ -> DotNet.build (fReleaseConfiguration >> fCommonOptions) solutionFile)
-
 Target.description "Runs the unit tests"
 Target.create "RunTests" (fun _ ->
     dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
@@ -222,7 +211,7 @@ Target.create "RunMSBuildTests" (fun _ ->
     |> DotNet.pack (fun p ->
         {p with
             OutputPath = Some localPackagesFolder
-            Common = {p.Common with CustomParams = Some "/p:Version=0.0.0-local"}
+            MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
         }
     )
 
@@ -291,7 +280,7 @@ Target.create "NuGetPublish" (fun _ ->
 // Generate the documentation
 
 // Paths with template/source/output locations
-let bin        = __SOURCE_DIRECTORY__ @@ "bin"
+let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
 let content    = __SOURCE_DIRECTORY__ @@ "docsrc/content"
 let output     = __SOURCE_DIRECTORY__ @@ "docs"
 let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
@@ -321,13 +310,20 @@ let info =
 let layoutRootsAll = System.Collections.Generic.Dictionary()
 layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
 
+Target.description "Prepares the reference documentation generator"
+Target.create "PrepareReferenceDocs" (fun _ ->
+    DotNet.publish (fun p ->
+        {p with
+            Framework = Some DocumentationAssemblyFramework
+            Configuration = configuration
+            OutputPath = Some referenceDocsTempPath}
+    ) farkleProject
+)
+
 let generateReferenceDocs isRelease =
     Directory.ensure (output @@ "reference")
-
-    // Let's not fool ourselves. We are going
-    // to create documentation for just one library.
     let farkleBinary =
-        bin @@ project @@ DocumentationAssemblyFramework @@ sprintf "%s.dll" project
+        referenceDocsTempPath @@ sprintf "%s.dll" project
 
     [farkleBinary]
     |> FSFormatting.createDocsForDlls (fun args ->
@@ -338,7 +334,6 @@ let generateReferenceDocs isRelease =
             SourceRepository = githubLink @@ "tree" @@ (Information.getCurrentHash())
             ToolPath = toolpath}
     )
-
 
 let copyFiles () =
     Shell.copyRecursive files output true
@@ -476,10 +471,9 @@ Target.create "Release" ignore
 // Run all targets by default. Invoke 'build target <Target>' to override
 
 "Clean"
-    ==> "BuildAllRelease"
-    ==> "CopyBinaries"
+    ==> "GenerateCode"
 
-["BuildAllRelease"; "RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"]
+["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
 "Test" <== ["RunTests"; "RunMSBuildTests"]
@@ -489,15 +483,13 @@ Target.create "Release" ignore
     ==> "CI"
 
 [""; "Debug"]
-|> Seq.map (sprintf "GenerateReferenceDocs%s")
-|> Seq.iter ((==>) "CopyBinaries" >> ignore)
-
-[""; "Debug"]
 |> List.iter (fun x ->
-    "CopyBinaries"
-        ==> "CleanDocs"
+    "CleanDocs"
         ==> (sprintf "GenerateHelp%s" x)
         ==> (sprintf "GenerateReferenceDocs%s" x) |> ignore)
+
+"PrepareReferenceDocs" ==> "GenerateReferenceDocs"
+"PrepareReferenceDocs" ==> "GenerateReferenceDocsDebug"
 
 "GenerateReferenceDocs"
     ==> "GenerateDocs"

@@ -56,6 +56,17 @@
             "problemMatcher": []
         },
         {
+            "label": "📜DOCS📜",
+            "type": "process",
+            "command": "pwsh",
+            "args": [
+                "./build.ps1",
+                "target",
+                "GenerateReferenceDocsDebug"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "🛳RELEASE🛳",
             "type": "process",
             "presentation": {
@@ -70,24 +81,6 @@
                 "./build.ps1",
                 "target",
                 "Release"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "📜DOCS📜",
-            "type": "process",
-            "presentation": {
-                "reveal": "always",
-                "focus": false,
-                "panel": "new",
-                "showReuseMessage": false,
-                "clear": true
-            },
-            "command": "pwsh",
-            "args": [
-                "./build.ps1",
-                "target",
-                "GenerateReferenceDocsDebug"
             ],
             "problemMatcher": []
         }

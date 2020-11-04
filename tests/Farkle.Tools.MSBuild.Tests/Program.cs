@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Farkle.Builder;
 using PCDF = Farkle.Builder.PrecompilableDesigntimeFarkle<int>;
 
-namespace Farkle.PrecompilerTests
+namespace Farkle.Tools.MSBuild.Tests
 {
     class Program
     {

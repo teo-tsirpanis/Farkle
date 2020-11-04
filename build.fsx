@@ -473,7 +473,7 @@ Target.create "Release" ignore
 "Clean"
     ==> "GenerateCode"
 
-["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"]
+["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareReferenceDocs"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
 "Test" <== ["RunTests"; "RunMSBuildTests"]

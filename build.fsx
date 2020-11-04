@@ -255,6 +255,10 @@ Target.create "NuGetPack" (fun _ ->
         DotNet.pack (fun p ->
             {p with
                 Configuration = configuration
+                MSBuildParams =
+                    {p.MSBuildParams with
+                        Properties = ("ContinuousIntegrationBuild", "true") :: p.MSBuildParams.Properties
+                    }
                 OutputPath = __SOURCE_DIRECTORY__ @@ "bin" |> Some
             }
             |> fCommonOptions

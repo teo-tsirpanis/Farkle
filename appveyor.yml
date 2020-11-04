@@ -1,5 +1,7 @@
 version: 6.0.0.{build}
-image: Visual Studio 2019
+image:
+  - Visual Studio 2019
+  - Ubuntu
 nuget:
   disable_publish_on_pr: true
 build_script:

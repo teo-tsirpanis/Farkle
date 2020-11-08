@@ -36,6 +36,8 @@ namespace Farkle.Tools.MSBuild.Tests
         public static readonly DesigntimeFarkle UnmarkedUntyped =
             Terminal.Literal(nameof(UnmarkedUntyped)).MarkForPrecompile();
 
+        private static bool _gotError;
+
         static void Log(string text, ConsoleColor color)
         {
             var existingColor = Console.ForegroundColor;
@@ -50,50 +52,98 @@ namespace Farkle.Tools.MSBuild.Tests
             }
         }
 
+        private static void Fail(string message)
+        {
+            Log(message, ConsoleColor.Red);
+            _gotError = true;
+        }
+
+        static void Assert(bool condition, string message)
+        {
+            if (!condition) Fail(message);
+        }
+
+        static void AssertThrows<TException>(Action f, string message) where TException : Exception
+        {
+            var hasThrown = false;
+            try
+            {
+                f();
+            }
+            catch (TException)
+            {
+                hasThrown = true;
+            }
+
+            Assert(hasThrown, message);
+        }
+
+        static void TestDiscoverer()
+        {
+            var expected = new HashSet<PrecompilableDesigntimeFarkle>()
+            {
+                Public,
+                Internal,
+                Private,
+                NestedClass.Nested,
+                MarkedAgain,
+                Untyped
+            };
+            var precompiledGrammarCount = PrecompiledGrammar.GetAllFromAssembly(typeof(Program).Assembly).Count;
+
+            // The one we subtracted is the FaultyPrecompiled grammar which we embedded as a resource ourselves.
+            Assert(expected.Count == precompiledGrammarCount - 1,
+                $"The precompiled grammars of this assembly are {precompiledGrammarCount} instead of {expected.Count}");
+            foreach (var x in expected)
+            {
+                var grammar = x.TryGetPrecompiledGrammar();
+                if (grammar != null)
+                {
+                    var grammarName = grammar.Value.GrammarName;
+                    if (!grammarName.Equals(x.Name, StringComparison.Ordinal))
+                    {
+                        _gotError = true;
+                        Fail("Name mismatch between precompiled grammar and designtime Farkle names.");
+                        Fail($"The grammar is named {grammarName}.");
+                        Fail($"The designtime Farkle is named {x.Name}");
+                    }
+                }
+                else
+                    Fail($"{x.Name} was not discovered.");
+            }
+        }
+
+        static void TestErrorSuppression()
+        {
+            var appContextSwitch = "Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors";
+            var df = Terminal.Literal("FaultyPrecompiled").MarkForPrecompile();
+
+            AssertThrows<PrecompilerLoaderException>(() => df.BuildUntyped(),
+                "Loading a faulty precompiled grammar did not throw an exception.");
+
+            try
+            {
+                AppContext.SetSwitch(appContextSwitch, true);
+                _ = df.BuildUntyped();
+            }
+            catch (Exception e)
+            {
+                Fail($"Loading the precompiled grammar threw an error in spite of its suppression:\n{e}.");
+            }
+            finally
+            {
+                AppContext.SetSwitch(appContextSwitch, false);
+            }
+        }
+
         static int Main()
         {
-            var gotError = false;
+            Console.WriteLine("Testing the precompiled grammar discoverer...");
+            TestDiscoverer();
+            Console.WriteLine("Testing the precompiler loader error suppression...");
+            TestErrorSuppression();
 
-            Console.WriteLine("Checking the precompiled grammars...");
-
-            var allPrecompiledGrammars =
-                PrecompiledGrammar.GetAllFromAssembly(typeof(Program).Assembly);
-            var expected = new HashSet<string>()
-            {
-                nameof(Public),
-                nameof(Internal),
-                nameof(Private),
-                nameof(NestedClass.Nested),
-                nameof(MarkedAgain),
-                nameof(Untyped)
-            };
-            var actual = new HashSet<string>(allPrecompiledGrammars.Keys);
-
-            if (!expected.SetEquals(actual))
-            {
-                Log("The discoverer found the wrong designtime Farkles.", ConsoleColor.Red);
-                Log($"Expected: {string.Join(',', expected)}", ConsoleColor.Red);
-                Log($"Actual:   {string.Join(',', actual)}", ConsoleColor.Red);
-                gotError = true;
-            }
-
-            Console.WriteLine("Checking for grammar read errors...");
-
-            foreach (var x in allPrecompiledGrammars)
-            {
-                try
-                {
-                    _ = x.Value.GetGrammar();
-                }
-                catch (Exception e)
-                {
-                    Log($"Error while reading {x.Key}", ConsoleColor.Red);
-                    Log(e.ToString(), ConsoleColor.Red);
-                    gotError = true;
-                }
-            }
-
-            return gotError ? 1 : 0;
+            return _gotError ? 1 : 0;
         }
     }
 }

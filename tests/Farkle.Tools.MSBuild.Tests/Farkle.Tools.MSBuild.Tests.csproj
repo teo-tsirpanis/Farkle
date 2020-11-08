@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../resources/legacy.cgt" LogicalName="FaultyPrecompiled.precompiled.egtn" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <PackageReference Include="Farkle.Tools.MSBuild" Version="0.0.0-local" />
   </ItemGroup>

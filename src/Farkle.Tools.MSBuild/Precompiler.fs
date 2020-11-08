@@ -18,7 +18,7 @@ open System.Runtime.Loader
 
 let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
     asm
-    |> Precompiler.Discoverer.discover
+    |> PrecompilerDiscoverer.discover
     |> List.map (fun pcdf ->
         let name = (pcdf :> DesigntimeFarkle).Name
         log.Information("Precompiling {Grammar}...", name)

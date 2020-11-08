@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Builder.Precompiler.Discoverer
+module internal Farkle.Tools.PrecompilerDiscoverer
 
 open Farkle.Builder
 open System

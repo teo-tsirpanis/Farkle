@@ -10,6 +10,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="PrecompilerDiscoverer.fs" />
     <Compile Include="Precompiler.fs" />
     <Compile Include="FarkleCreateTemplateTask.fs" />
     <Compile Include="FarklePrecompileTask.fs" />

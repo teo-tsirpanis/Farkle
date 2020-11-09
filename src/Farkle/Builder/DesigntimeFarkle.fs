@@ -98,9 +98,13 @@ with
     }
 
 [<NoComparison>]
-/// <summary>The base untyped interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
-/// <remarks>User code must not implement this interface,
-/// or an exception might be thrown.</remarks>
+/// <summary>The base interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
+/// <remarks><para>In contrast with its typed descendant, untyped designtime
+/// Farkles do not return any value. They typically represent literal symbols
+/// that can only take one value. Building an untyped designtime Farkle will
+/// result in a syntax-checking runtime Farkle with no custom post-processor.</para>
+/// <para>User code must not implement this interface,
+/// or an exception might be thrown.</para></remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
 type DesigntimeFarkle =
     /// The name of the starting symbol.
@@ -108,10 +112,13 @@ type DesigntimeFarkle =
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
-/// <summary>An object representing a grammar created by Farkle.Builder.
-/// It can be converted to a <see cref="RuntimeFarkle{T}"/>.</summary>
-/// <remarks>User types must not implement this interface,
-/// or an exception might be thrown.</remarks>
+/// <summary>An object representing a grammar created by Farkle.Builder.</summary>
+/// <remarks><para>Designtime Farkles cannot be used to parse text but can be
+/// composed into larger designtime Farkles. To actually use them, they
+/// have to be converted to a <see cref="RuntimeFarkle{T}"/> which however
+/// is not composable.</para>
+/// <para>User code must not implement this interface,
+/// or an exception might be thrown.</para></remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 /// <seealso cref="DesigntimeFarkle"/>
 type DesigntimeFarkle< [<CovariantOut>] 'T> =

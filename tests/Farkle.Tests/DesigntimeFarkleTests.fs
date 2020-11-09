@@ -120,7 +120,7 @@ let tests = testList "Designtime Farkle tests" [
 
     test "Farkle can properly handle line groups" {
         let runtime =
-            Group.Line("LineGroup", "!!", T(fun _ data -> data.ToString()))
+            Group.Line("Line Group", "!!", fun _ data -> data.ToString())
             |> RuntimeFarkle.build
         Expect.equal (runtime.Parse "!! No new line") (Ok "!! No new line")
             "Farkle does not properly handle line groups that end on EOF"
@@ -130,7 +130,7 @@ let tests = testList "Designtime Farkle tests" [
 
     test "Farkle can properly handle block groups" {
         let runtime =
-            Group.Block("Block Group", "{", "}", T(fun _ data -> data.ToString()))
+            Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())
             |> RuntimeFarkle.build
 
         Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups"
@@ -152,11 +152,21 @@ let tests = testList "Designtime Farkle tests" [
         // end symbols of the different groups are considered equal.
         let runtime =
             "Test" ||= [
-                !% Group.Block("Group 1", "{", "}", T(fun _ _ -> ())) => id
-                !% Group.Block("Group 2", "[", "}", T(fun _ _ -> ())) => id
+                !% Group.Block("Group 1", "{", "}", fun _ _ -> ()) => id
+                !% Group.Block("Group 2", "[", "}", fun _ _ -> ()) => id
             ]
             |> RuntimeFarkle.buildUntyped
 
         runtime.GetGrammar() |> ignore
+    }
+
+    test "Parsing untyped groups works" {
+        let runtime =
+            "Test" ||= [
+                !% Group.Block("Untyped Group", "{", "}") =% ()
+            ]
+            |> RuntimeFarkle.build
+
+        Expect.isOk (runtime.Parse "{test}") "Parsing a test string failed"
     }
 ]

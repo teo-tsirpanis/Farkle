@@ -56,8 +56,11 @@ DesigntimeFarkle interface is not allowed."
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
 
+    // The type annotations are needed because the
+    // compiler makes the former two generic values.
     let private tNull: T<obj> = T(fun _ _ -> null)
     let private fNull: F<obj> = F(fun _ -> null)
+    let private fFirst = F(fun x -> x.[0])
 
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise "NewLine"
@@ -84,7 +87,6 @@ module DesigntimeFarkleBuild =
         let mutable newLineSymbol = Choice2Of4 noiseNewLine
         let metadata = df.Metadata
         let terminals = ImmutableArray.CreateBuilder()
-        let newTerminal name = Terminal(uint32 terminals.Count, name)
         let literalMap =
             match metadata.CaseSensitive with
             | true -> StringComparer.Ordinal
@@ -100,39 +102,44 @@ module DesigntimeFarkleBuild =
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ImmutableArray.CreateBuilder()
 
-        let addTerminalGroup name term transformer gStart gEnd =
-            let container = Choice1Of2 term
-            let gStart' = GroupStart(gStart, uint32 groups.Count)
-            addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
-            match gEnd with
-            | Some (GroupEnd str as ge) ->
-                addDFASymbol (Regex.string str) (Choice4Of4 ge)
-            | None -> usesNewLine <- true
-            groups.Add {
-                Name = name
-                ContainerSymbol = container
-                Start = gStart'
-                End = gEnd
-                AdvanceMode = AdvanceMode.Character
-                // We want to keep the NewLine for the rest of the tokenizer to see.
-                EndingMode =
-                    match gEnd with
-                    | Some _ -> EndingMode.Closed
-                    | None -> EndingMode.Open
-                Nesting = ImmutableHashSet.Empty
-            }
-            terminals.Add term
-            transformers.Add transformer
-
         let rec getLALRSymbol (df: DesigntimeFarkle) =
+            let newTerminal name = Terminal(uint32 terminals.Count, name)
+
+            let addTerminal term fTransformer =
+                terminals.Add term
+                if isNull fTransformer then tNull else fTransformer
+                |> transformers.Add
+
+            let addTerminalGroup name term transformer gStart gEnd =
+                let container = Choice1Of2 term
+                let gStart' = GroupStart(gStart, uint32 groups.Count)
+                addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
+                match gEnd with
+                | Some (GroupEnd str as ge) ->
+                    addDFASymbol (Regex.string str) (Choice4Of4 ge)
+                | None -> usesNewLine <- true
+                groups.Add {
+                    Name = name
+                    ContainerSymbol = container
+                    Start = gStart'
+                    End = gEnd
+                    AdvanceMode = AdvanceMode.Character
+                    // We want to keep the NewLine for the rest of the tokenizer to see.
+                    EndingMode =
+                        match gEnd with
+                        | Some _ -> EndingMode.Closed
+                        | None -> EndingMode.Open
+                    Nesting = ImmutableHashSet.Empty
+                }
+                addTerminal term transformer
+
             let handleTerminal dfName (term: AbstractTerminal) =
                 let symbol = newTerminal dfName
                 terminalMap.Add(term, symbol)
                 // For every addition to the terminals,
                 // a corresponding one will be made to the transformers.
                 // This way, the indices of the terminals and their transformers will match.
-                terminals.Add(symbol)
-                transformers.Add(if isNull term.Transformer then tNull else term.Transformer)
+                addTerminal symbol term.Transformer
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
 
@@ -154,8 +161,7 @@ module DesigntimeFarkleBuild =
                 | Choice1Of4 nlTerminal -> nlTerminal
                 | _ ->
                     let nlTerminal = newTerminal "NewLine"
-                    terminals.Add(nlTerminal)
-                    transformers.Add(tNull)
+                    addTerminal nlTerminal tNull
                     newLineSymbol <- Choice1Of4 nlTerminal
                     nlTerminal
                 |> LALRSymbol.Terminal
@@ -206,7 +212,7 @@ module DesigntimeFarkleBuild =
                     Head = root
                     Handle = ImmutableArray.Create(t)
                 }
-                fusers.Add(fun xs -> xs.[0])
+                fusers.Add(fFirst)
                 root
             | LALRSymbol.Nonterminal nont -> nont
 

@@ -37,7 +37,7 @@ let discover (asm: Assembly) =
             // In the past, the PrecompilableDesigntimeFarkle type was
             // internal, meaning that we had to examine all static readonly
             // designtime Farkle fields for precompilability. However this
-            // is no longer the case; the user can more explicitly mark a
+            // is no longer the case; the user can no more explicitly mark a
             // designtime Farkle as precompilable, and the discoverer can be
             // more precise (code from another assembly is essentially executed
             // so we must be precise).

@@ -46,6 +46,7 @@
     <Compile Include="Builder/DesigntimeFarkle.Untyped.fs" />
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
+    <Compile Include="Builder/PostProcessorCreator.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
     <Compile Include="Builder/PrecompilerInterface.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />

@@ -78,6 +78,14 @@ type GrammarMetadata = {
     /// Any other symbols definable by a regular expression that can
     /// appear anywhere outside of any terminal and will be discarded.
     NoiseSymbols: (string * Regex) ImmutableList
+    /// Whether to optimize the grammar using dynamic code generation
+    /// techniques. This property is automatically set to true when
+    /// the designtime Farkle is marked for precompilation. It is ignored
+    /// if the runtime does not support dynamic code or if the library's
+    /// .NET Standard 2.0 edition is used (primarily on .NET Framework or
+    /// on .NET Core versions lower than 3). Currently however, this property
+    /// is ignored and actual optimizations will come at a future version of Farkle.
+    UseDynamicCodeGeneration: bool
 }
 with
     /// The default metadata of a grammar.
@@ -88,6 +96,7 @@ with
         AutoWhitespace = true
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
+        UseDynamicCodeGeneration = false
     }
     /// A stricter set of metadata for a grammar.
     /// They specify a case sensitive grammar without any whitespace allowed.

@@ -339,12 +339,10 @@ module DesigntimeFarkleBuild =
         |> sprintf "%s %s" (asm.GetName().Name)
 
     [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> {Transformers = transformers; Fusers = fusers} =
-        {
-            new PostProcessor<'TOutput> with
-                member __.Transform(term, context, data) = transformers.[int term.Index].Invoke(context, data)
-                member __.Fuse(prod, members) = fusers.[int prod.Index].Invoke(members)
-        }
+    let private createPostProcessor<'TOutput> grammarDef =
+        PostProcessorCreator.create<'TOutput>
+            grammarDef.Metadata.UseDynamicCodeGeneration
+            grammarDef.Transformers grammarDef.Fusers
 
     /// Creates a `Grammar` from a `GrammarDefinition`.
     [<CompiledName("BuildGrammarOnly")>]

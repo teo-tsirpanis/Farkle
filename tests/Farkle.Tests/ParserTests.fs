@@ -30,6 +30,11 @@ let testParser grammarFile displayName text =
 
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
 
+let dynamicCodeJSON = lazy(
+    FSharp.Language.designtime
+    |> RuntimeFarkle.markForPrecompile
+    |> RuntimeFarkle.build)
+
 [<Tests>]
 let tests = testList "Parser tests" [
     [
@@ -100,6 +105,19 @@ let tests = testList "Parser tests" [
             | Choice2Of2 x -> failtestf "The Chiron parser failed: %s" x
         Expect.equal farkle json "The JSON structure generated from the Farkle parser is different"
         Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
+    )
+
+    ptestProperty "The JSON parser produces the same results even when it uses dynamic code" (fun json ->
+        let jsonAsString = Chiron.Formatting.Json.format json
+        let farkleResult =
+            RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString
+            |> Flip.Expect.wantOk "Farkle's parser failed"
+        let farkleDynamicCodeResult =
+            RuntimeFarkle.parseString dynamicCodeJSON.Value jsonAsString
+            |> Flip.Expect.wantOk "Farkle's dynamic code parser failed"
+
+        Expect.equal farkleResult json "The JSON structure generated from Farkle's parser is different"
+        Expect.equal farkleDynamicCodeResult json "The JSON structure generated from Farkle's dynamic code parser is different"
     )
 
     testProperty "The calculator works well" (fun expr ->

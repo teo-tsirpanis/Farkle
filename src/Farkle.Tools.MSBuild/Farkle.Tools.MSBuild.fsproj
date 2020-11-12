@@ -5,6 +5,7 @@
     <Description>Farkle's integration with MSBuild. This package supports facilities like the precompiler and the template creator.</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
+    <DebugType>none</DebugType>
     <SigourneyPublish>true</SigourneyPublish>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     <NoWarn>$(NoWarn);NU5128</NoWarn>

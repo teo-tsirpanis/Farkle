@@ -8,9 +8,6 @@
     <Product>Farkle</Product>
     <Description>Farkle is an LALR parser library with an API similar to parser combinators.</Description>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <!-- For a totally unexplained reason, disabling
     tailcalls really boosted performance. -->
     <Tailcalls>false</Tailcalls>

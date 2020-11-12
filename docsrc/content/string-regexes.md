@@ -27,7 +27,7 @@ using Farkle.Builder;
 var number = Regex.FromRegexString("[+-]?\d+");
 ```
 
-These regexes are full-blown `Regex`-typed objects. They are composable, reusable and can be used anywhere instead of constructed regexes. Despite their similarity however, the language of regex strings is not the same with the language of say PCRE regexes. In this guide we will take a look at what is supported in regex strings and what isn't. So, are you ready? Let's do this!
+These regexes are full-blown `Regex`-typed objects. They are composable, reusable and can be used anywhere instead of constructed regexes. Despite their similarity however, the language of regex strings is not the same with the language of popular regex libraries, say PCRE. In this guide we will take a look at what is supported in regex strings and what isn't. So, are you ready? Let's do this!
 
 ## Supported string regex constructs
 
@@ -51,7 +51,7 @@ As with PCRE regexes, quantifiers like the `*`, `+` or `?` mean "zero or more", 
 
 ### Precedence and grouping
 
-The regex disjunction operator `|` takes precedence over regex concatenation, which means that `foo|bar` matches either `foo` or `bar`, not `fo`, either `o` or `b` and then `ar`. You can specify a custom operator precedence with parentheses. For example, `fo(o|u)` matches only either `foo` or `fou`.
+The regex disjunction operator `|` takes precedence over regex concatenation, which means that `foo|bar` matches either `foo` or `bar`, not `fo`, either `o` or `b`, and then `ar`. You can specify a custom operator precedence with parentheses. For example, `fo(o|u)` matches only either `foo` or `fou`.
 
 > __Note__: Parentheses exist only for defining operator precedence. Capturing groups is not supported.
 

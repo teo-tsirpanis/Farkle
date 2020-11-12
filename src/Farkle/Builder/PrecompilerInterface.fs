@@ -57,7 +57,7 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, asm: Assembly)
     // All its implementations return a fixed value, but that's
     // an informal rule.
     let name = df.Name
-    let metadata = {df.Metadata with UseDynamicCodeGeneration = true}
+    let metadata = df.Metadata
     let grammarDef = DesigntimeFarkleBuild.createGrammarDefinition df
     /// <inheritDoc cref="DesigntimeFarkle.Name"/>
     member _.Name = name
@@ -75,6 +75,7 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, asm: Assembly)
         member _.Metadata = metadata
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = df
+    interface EligibleForDynamicCodeGeneration
 
 /// The typed edition of `PrecompilableDesigntimeFarkle`.
 [<Sealed>]

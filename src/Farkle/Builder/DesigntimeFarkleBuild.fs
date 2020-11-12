@@ -5,7 +5,6 @@
 
 namespace Farkle.Builder
 
-open Farkle
 open Farkle.Grammar
 open Farkle.Monads.Either
 open System
@@ -338,10 +337,13 @@ module DesigntimeFarkleBuild =
         |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())
         |> sprintf "%s %s" (asm.GetName().Name)
 
+    let private shouldUseDynamicCodeGeneration (df: DesigntimeFarkle) =
+        df :? EligibleForDynamicCodeGeneration
+
     [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> grammarDef =
+    let private createPostProcessor<'TOutput> df grammarDef =
         PostProcessorCreator.create<'TOutput>
-            grammarDef.Metadata.UseDynamicCodeGeneration
+            (shouldUseDynamicCodeGeneration df)
             grammarDef.Transformers grammarDef.Fusers
 
     /// Creates a `Grammar` from a `GrammarDefinition`.
@@ -381,7 +383,7 @@ module DesigntimeFarkleBuild =
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
         let myLovelyGrammarDefinition = createGrammarDefinition df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> myLovelyGrammarDefinition
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> df myLovelyGrammarDefinition
         let myDearestGrammar = buildGrammarOnly myLovelyGrammarDefinition
         myDearestGrammar, myFavoritePostProcessor
 
@@ -391,4 +393,4 @@ module DesigntimeFarkleBuild =
     /// having many designtime Farkles with an identical grammar but different post-processors.
     [<CompiledName("BuildPostProcessorOnly")>]
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
-        df |> createGrammarDefinition |> createPostProcessor<'TOutput>
+        df |> createGrammarDefinition |> createPostProcessor<'TOutput> df

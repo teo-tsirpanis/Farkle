@@ -78,13 +78,6 @@ type GrammarMetadata = {
     /// Any other symbols definable by a regular expression that can
     /// appear anywhere outside of any terminal and will be discarded.
     NoiseSymbols: (string * Regex) ImmutableList
-    /// Whether to optimize the grammar using dynamic code generation
-    /// techniques. This property is automatically set to true when
-    /// the designtime Farkle is marked for precompilation. It is ignored
-    /// if the runtime does not support dynamic code or if the library's
-    /// .NET Standard 2.0 edition is used (primarily on .NET Framework or
-    /// on .NET Core versions lower than 3).
-    UseDynamicCodeGeneration: bool
 }
 with
     /// The default metadata of a grammar.
@@ -95,7 +88,6 @@ with
         AutoWhitespace = true
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
-        UseDynamicCodeGeneration = false
     }
     /// A stricter set of metadata for a grammar.
     /// They specify a case sensitive grammar without any whitespace allowed.
@@ -131,6 +123,10 @@ type DesigntimeFarkle =
 /// <seealso cref="DesigntimeFarkle"/>
 type DesigntimeFarkle< [<CovariantOut>] 'T> =
     inherit DesigntimeFarkle
+
+/// This interface is implemented by precompilable designtime Farkles.
+/// It indicates that dynamic code generation optimizations may be applied.
+type internal EligibleForDynamicCodeGeneration = interface end
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>

@@ -8,6 +8,7 @@ namespace Farkle.Benchmarks
 open BenchmarkDotNet.Attributes
 open Chiron
 open Farkle
+open Farkle.Builder
 open Farkle.Common
 open Farkle.JSON
 open System.IO
@@ -23,6 +24,8 @@ type JsonBenchmark() =
 
     let farkleRuntime = FSharp.Language.runtime
 
+    let farkleDynamicCodeRuntime = FSharp.Language.designtime.MarkForPrecompile().Build()
+
     [<Params("small.json", "medium.json", "big.json")>]
     member val FileName = "" with get, set
 
@@ -33,6 +36,11 @@ type JsonBenchmark() =
     [<Benchmark>]
     member _.Farkle() =
         RuntimeFarkle.parseTextReader farkleRuntime (createTR())
+        |> returnOrFail
+
+    [<Benchmark>]
+    member _.FarkleDynamicCode() =
+        RuntimeFarkle.parseTextReader farkleDynamicCodeRuntime (createTR())
         |> returnOrFail
 
     [<Benchmark(Baseline = true)>]

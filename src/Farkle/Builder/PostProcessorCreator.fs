@@ -21,8 +21,9 @@ let private createDefault<'T> (transformers: ImmutableArray<T<obj>>) (fusers: Im
 // Turns out that statically calling a delegate's
 // method is not as easy as previously thought.
 // The emitter code will be pseudo-commented for now.
-#if USE_DYNAMIC_CODE && !NETSTANDARD2_0
+#if !NETSTANDARD2_0
 open System
+open System.Collections.Generic
 open System.Reflection
 open System.Reflection.Emit
 open System.Runtime.CompilerServices
@@ -45,6 +46,8 @@ let private getParameterTypes (xs: ParameterInfo []) =
 let private argOutOfRangeCtor =
     typeof<ArgumentOutOfRangeException>.GetConstructor([|typeof<string>|])
 
+let private justStringCtorParameters = [|typeof<string>|]
+
 let private ppCtorParameters = Array.replicate 2 typeof<obj[]>
 
 let private transformParameters =
@@ -58,12 +61,19 @@ let private fuseParameters =
 let private stringFormatMethodOneObj =
     typeof<string>.GetMethod("Format", [|typeof<string>; typeof<obj>|])
 
-let getTransformLdargs = [|OpCodes.Ldarg_1; OpCodes.Ldarg_2|]
+let getTransformLdargs = [|OpCodes.Ldarg_2; OpCodes.Ldarg_3|]
 
-let getFuseLdargs = [|OpCodes.Ldarg_1|]
+let getFuseLdargs = [|OpCodes.Ldarg_2|]
+
+let createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
+    let attrType = _mod.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.Public, typeof<Attribute>)
+
+    let ctor = attrType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, justStringCtorParameters)
+    ctor.GetILGenerator().Emit(OpCodes.Ret)
+    attrType.CreateType().GetConstructor(justStringCtorParameters)
 
 [<RequiresExplicitTypeArguments>]
-let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> methodName argTypes
+let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> methodName argTypes fAssembly
     (ldArgOpCodes: _ []) (targetsFld: FieldInfo) (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
@@ -86,14 +96,16 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> metho
     ilg.Emit(OpCodes.Ldarg_1)
     ilg.Emit(OpCodes.Callvirt, getIndexMethod)
     ilg.Emit(OpCodes.Stloc, indexLocal)
-    ilg.Emit(OpCodes.Ldloc, indexLocal)
+
     // We branch depending on the index.
+    ilg.Emit(OpCodes.Ldloc, indexLocal)
     ilg.Emit(OpCodes.Switch, labels)
     // If the index is not recognized we jump to the exception-throwing path at the end.
     ilg.Emit(OpCodes.Br, indexOutOfRangeLabel)
 
     for i = 0 to delegates.Length - 1 do
         let d = delegates.[i]
+        fAssembly d.Method.Module.Assembly
         ilg.MarkLabel(labels.[i])
         // If the method is an instance method, we push that instance to the stack.
         // Because IL does not support literal objects, we pass these objects through
@@ -108,8 +120,10 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> metho
         for opCode in ldArgOpCodes do
             ilg.Emit(opCode)
         // And now we call the delegate's method, which is statically resolved.
+        // Tail calls have caused performance issues in the past and might prevent method inlining.
         // ilg.Emit(OpCodes.Tailcall)
-        ilg.Emit(OpCodes.Callvirt, d.Method)
+        let callOpCode = if d.Method.IsStatic then OpCodes.Call else OpCodes.Callvirt
+        ilg.Emit(callOpCode, d.Method)
         ilg.Emit(OpCodes.Ret)
 
     ilg.MarkLabel(indexOutOfRangeLabel)
@@ -135,12 +149,22 @@ let private createDynamic<'T> transformers fusers =
     // nevertheless name each generated assembly with a different name. A GUID would have
     // been an easier solution but it is long and has special characters.
     let ppIdx = Interlocked.Increment(&generatedPostProcessorIndex)
-    let name = sprintf "Farkle.DynamicPostProcessor%d" ppIdx
+    let name = sprintf "Farkle.DynamicCodeAssembly%d" ppIdx
     let asmName = AssemblyName(name)
     let asmBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.RunAndCollect)
     let mainModule = asmBuilder.DefineDynamicModule("MainModule")
 
-    let ppType = mainModule.DefineType(name, TypeAttributes.Sealed)
+    let ctorIgnoreAccessChecksTo = createIgnoresAccessChecksToAttribute mainModule
+
+    let fNewAssembly =
+        let cache = HashSet(StringComparer.Ordinal)
+        fun (asm: Assembly) ->
+            // Passing the assembly's full name to the attribute fails.
+            let name = asm.GetName().Name
+            if cache.Add(name) then
+                asmBuilder.SetCustomAttribute(CustomAttributeBuilder(ctorIgnoreAccessChecksTo, [|name|]))
+
+    let ppType = mainModule.DefineType("DynamicCodePostProcessor", TypeAttributes.Sealed)
     ppType.AddInterfaceImplementation(typeof<ITransformer<Grammar.Terminal>>)
     ppType.AddInterfaceImplementation(typeof<PostProcessor<'T>>)
 
@@ -159,9 +183,9 @@ let private createDynamic<'T> transformers fusers =
         ilg.Emit(OpCodes.Ret)
 
     emitPPMethod<Grammar.Terminal,T<obj>>
-        "Transform" transformParameters getTransformLdargs transformerTargetsFld transformers ppType
+        "Transform" transformParameters fNewAssembly getTransformLdargs transformerTargetsFld transformers ppType
     emitPPMethod<Grammar.Production,F<obj>>
-        "Fuse" fuseParameters getFuseLdargs fuserTargetsFld fusers ppType
+        "Fuse" fuseParameters fNewAssembly getFuseLdargs fuserTargetsFld fusers ppType
 
     let transformerTargets = getTargetArray transformers
     let fuserTargets = getTargetArray fusers
@@ -174,7 +198,7 @@ let private createDynamic<'T> transformers fusers =
 
 [<RequiresExplicitTypeArguments>]
 let create<'T> (useDynamicCode: bool) transformers fusers =
-    #if USE_DYNAMIC_CODE && !NETSTANDARD2_0
+    #if !NETSTANDARD2_0
     if RuntimeFeature.IsDynamicCodeCompiled && useDynamicCode then
         createDynamic<'T> transformers fusers
     else

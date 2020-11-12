@@ -83,8 +83,7 @@ type GrammarMetadata = {
     /// the designtime Farkle is marked for precompilation. It is ignored
     /// if the runtime does not support dynamic code or if the library's
     /// .NET Standard 2.0 edition is used (primarily on .NET Framework or
-    /// on .NET Core versions lower than 3). Currently however, this property
-    /// is ignored and actual optimizations will come at a future version of Farkle.
+    /// on .NET Core versions lower than 3).
     UseDynamicCodeGeneration: bool
 }
 with

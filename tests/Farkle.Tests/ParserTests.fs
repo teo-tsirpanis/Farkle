@@ -107,7 +107,7 @@ let tests = testList "Parser tests" [
         Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
     )
 
-    ptestProperty "The JSON parser produces the same results even when it uses dynamic code" (fun json ->
+    testProperty "The JSON parser produces the same results even when it uses dynamic code" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
         let farkleResult =
             RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString

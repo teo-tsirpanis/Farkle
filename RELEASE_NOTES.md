@@ -7,8 +7,11 @@
 * __Breaking change:__ Farkle's exception types were refactored. They inherit from `FarkleException`.
 * __Breaking change:__ Post-processor exceptions are wrapped inside a `PostProcessorException` and thrown to user code.
 * __Breaking change:__ Only objects of type `PrecompilableDesigntimeFarkle` can be marked for precompilation.
-* The runtime Farkle's extension methods became regular methods.
+* Farkle will now optimize precompilable designtime Farkles using dynamic code generation. This feature is only supported on .NET Standard 2.1 if the runtime supports dynamic code compilation.
+* An API for the `CharStream` type was published.
+* [An API for getting precompiled grammars](https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-precompilerinterface.html) was published.
 * The tokenizer can be extended by user code. TODO: write documentation
+* The runtime Farkle's extension methods became regular methods.
 * Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.
 
 #### 6.0.0-alpha.2 - 23-08-2020

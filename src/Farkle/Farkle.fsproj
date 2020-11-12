@@ -25,7 +25,7 @@
     <Compile Include="AST.fs" />
     <Compile Include="PostProcessor.fs" />
     <Compile Include="Grammar/EGTFile.fs" />
-    <Compile Include="Grammar/EGTLegacy.fs" />
+    <Compile Include="Grammar/EGTLegacyReader.fs" />
     <Compile Include="Grammar/EGTNeoReader.fs" />
     <Compile Include="Grammar/EGTNeoWriter.fs" />
     <Compile Include="Grammar/EGT.fs" />
@@ -40,7 +40,7 @@
     <Compile Include="Builder/DesigntimeFarkle.fs" />
     <Compile Include="Builder/ProductionBuilders.g.fs" AutoGen="true" />
     <Compile Include="Builder/ProductionBuilders.fs" />
-    <Compile Include="Builder/DesigntimeFarkle.Untyped.fs" />
+    <Compile Include="Builder/DesigntimeFarkleUntyped.fs" />
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Builder/PostProcessorCreator.fs" />

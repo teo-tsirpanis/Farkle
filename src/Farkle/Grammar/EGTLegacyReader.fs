@@ -37,7 +37,7 @@ module internal EGTLegacyReader =
             | AnyGroupEnd of GroupEnd
             | AnyError
 
-        let createSafeIndexed<'a> (arr: ImmutableArray.Builder<'a>) idx =
+        let createSafeIndexed<'a> (arr: ImmutableArray<'a>.Builder) idx =
             if int idx <= arr.Capacity then
                 idx |> uint32
             else
@@ -107,7 +107,7 @@ This error is unexpected. Please report it on GitHub." x
             | 7us -> AnyError
             | _ -> invalidEGT()
 
-        let readGroup (symbols: ImmutableArray.Builder<_>) fSymbol fGroup index mem =
+        let readGroup (symbols: ImmutableArray<_>.Builder) fSymbol fGroup index mem =
             lengthMustBeAtLeast mem 7
             let name = wantString mem 0
             let container = wantUInt16 mem 1 |> fSymbol |> wantGroupContainer
@@ -212,14 +212,14 @@ This error is unexpected. Please report it on GitHub." x
                 GotoActions = GotoActions.ToImmutable()
             }
 
-        let itemTry (arr: ImmutableArray.Builder<_>) idx =
+        let itemTry (arr: ImmutableArray<_>.Builder) idx =
             let idx = int idx
             if idx < arr.Count then
                 arr.[idx]
             else
                 invalidEGT()
 
-        let readAndAssignIndexed fRead (arr: ImmutableArray.Builder<_>) mem =
+        let readAndAssignIndexed fRead (arr: ImmutableArray<_>.Builder) mem =
             lengthMustBeAtLeast mem 1
             let index = wantUInt16 mem 0
             let content = mem.Slice(1)

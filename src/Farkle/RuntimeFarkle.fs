@@ -224,7 +224,7 @@ contain binary data; not text. Use parseTextReader instead.")>]
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
     [<CompiledName("ParseTextReader")>]
     let parseTextReader rf (textReader: TextReader) =
-        let cs = new CharStream(textReader)
+        use cs = new CharStream(textReader, true)
         parseChars rf cs
 
     /// Parses and post-processes a file at the given path.

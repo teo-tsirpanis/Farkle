@@ -315,7 +315,7 @@ let layoutRootsAll = System.Collections.Generic.Dictionary()
 layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
 
 Target.description "Prepares the reference documentation generator"
-Target.create "PrepareReferenceDocs" (fun _ ->
+Target.create "PrepareDocsGeneration" (fun _ ->
     DotNet.publish (fun p ->
         {p with
             Framework = Some DocumentationAssemblyFramework
@@ -477,7 +477,7 @@ Target.create "Release" ignore
 "Clean"
     ==> "GenerateCode"
 
-["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareReferenceDocs"]
+["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
 "Test" <== ["RunTests"; "RunMSBuildTests"]
@@ -489,11 +489,9 @@ Target.create "Release" ignore
 [""; "Debug"]
 |> List.iter (fun x ->
     "CleanDocs"
+        ==> "PrepareDocsGeneration"
         ==> (sprintf "GenerateHelp%s" x)
         ==> (sprintf "GenerateReferenceDocs%s" x) |> ignore)
-
-"PrepareReferenceDocs" ==> "GenerateReferenceDocs"
-"PrepareReferenceDocs" ==> "GenerateReferenceDocsDebug"
 
 "GenerateReferenceDocs"
     ==> "GenerateDocs"

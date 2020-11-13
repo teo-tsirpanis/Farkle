@@ -5,7 +5,6 @@
 
 namespace Farkle
 
-open System.Runtime.InteropServices
 open Farkle.Builder
 open Farkle.Grammar
 open Farkle.IO
@@ -14,6 +13,7 @@ open System
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 open System.Text
 
 /// A type signifying an error during the parsing process.
@@ -277,8 +277,8 @@ type RuntimeFarkle<'TResult> with
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     [<Obsolete("Streams are supposed to contain binary \
 data; not text. Parse a TextReader instead.")>]
-    member this.Parse(stream, [<Optional>] encoding, [<Optional>] doLazyLoad) =
-        parseStream this stream encoding doLazyLoad
+    member this.Parse(stream, [<Optional>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
+        parseStream this doLazyLoad encoding stream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="charStream">The string to parse.</param>
     /// <returns>An F# result type containing either the

@@ -110,7 +110,7 @@ let rfIgnore x = RuntimeFarkle.changePostProcessor PostProcessors.syntaxCheck x
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =
     [
-        "the calculator", rfIgnore SimpleMaths.int, Definitions.Grammar.asBase64
+        "the calculator", rfIgnore SimpleMaths.int, "./SimpleMaths.egt"
         "the F# JSON parser", rfIgnore JSON.FSharp.Language.runtime, "./JSON.egt"
         "the C# JSON parser", rfIgnore JSON.CSharp.Language.Runtime, "./JSON.egt"
         "the language of balanced parentheses", balancedParentheses, "./balanced-parentheses.egt"
@@ -119,11 +119,7 @@ let farkleGOLDGrammarEquivalenceTests =
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {
             let gFarkle = gFarkle.GetGrammar()
-            let gGold =
-                if egt.StartsWith("./") then
-                    loadGrammar egt
-                else
-                    EGT.ofBase64String egt
+            let gGold = loadGrammar egt
             checkParserEquivalence
                 (gFarkle.Productions, gFarkle.LALRStates)
                 (gGold.Productions, gGold.LALRStates)

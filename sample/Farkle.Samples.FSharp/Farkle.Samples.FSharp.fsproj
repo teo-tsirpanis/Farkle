@@ -13,8 +13,6 @@
     </FsLex>
     <Compile Include="Lexer.fs" />
     <Compile Include="FsLexYacc.fs" />
-    <Farkle Include="../../tests/resources/SimpleMaths.egt" Namespace="SimpleMaths" />
-    <Compile Include="SimpleMaths.g.fs" />
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
@@ -22,8 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <PackageReference Include="Chiron" Version="6.3.1" />
-    <!-- Used only for the templates. -->
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="5.4.1" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc" Version="10.0.0" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc.Runtime" Version="10.0.0" />
   </ItemGroup>

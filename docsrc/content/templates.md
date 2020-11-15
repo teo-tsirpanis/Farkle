@@ -20,7 +20,7 @@ To integrate with Scriban, external libraries like Farkle expose certain variabl
 
   * `farkle.version`: The version of the tool used to generate the template.
 
-* `grammar`: An object describing the grammar that was given. It is not a full-blown object of type `Farkle.Grammar.Gramamr`, but a cut-down object, because of [problems of Scriban][scriban-issue-151]. If you want extra functionality to this object, fell free to open an issue.
+* `grammar`: An object describing the grammar that was given. It is not a full-blown object of type `Farkle.Grammar.Grammar`, but a cut-down object, because of [problems of Scriban][scriban-issue-151]. If you want extra functionality to this object, fell free to open an issue.
 
   * `grammar.properties`: A key-value pair of the grammar's metadata. See more at the [documentation of GOLD Parser][gold-properties].
 

@@ -229,19 +229,6 @@ let designtimeFarkleGen =
         | Ok _ -> true
         | Result.Error _ -> false)
 
-type FarkleVsGOLDParser = FarkleVsGOLDParser of farkleGramamr: Grammar * goldGrammar: Grammar
-
-let farkleVsGOLDParserGen = gen {
-    GOLDParserBridge.checkIfGOLDExists()
-    let! gDef = Gen.map DesigntimeFarkleBuild.createGrammarDefinition Arb.generate
-    let farkleGramamr =
-        gDef
-        |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> Flip.Expect.wantOk "A faulty grammar was supposed to be filtered away."
-    let goldGrammar = GOLDParserBridge.buildUsingGOLDParser gDef
-    return FarkleVsGOLDParser(farkleGramamr, goldGrammar)
-}
-
 type Generators =
     static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
     static member Position() = Arb.fromGen positionGen
@@ -265,7 +252,6 @@ type Generators =
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
-    static member FarkleVsGOLDParser() = Arb.fromGen farkleVsGOLDParserGen
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

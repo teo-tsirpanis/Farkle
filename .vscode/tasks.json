@@ -4,8 +4,26 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "🧹CLEAN🧹",
+            "command": "git",
+            "args": [
+                "clean",
+                "-Xdf"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "🏭GENERATE CODE🏭",
+            "command": "pwsh",
+            "args": [
+                "./build.ps1",
+                "target",
+                "GenerateCode"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "🔬TEST🔬",
-            "type": "process",
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -19,7 +37,6 @@
         },
         {
             "label": "⚙BUILD TESTS⚙",
-            "type": "process",
             "group": "build",
             "presentation": {
                 "reveal": "silent"
@@ -35,7 +52,6 @@
         },
         {
             "label": "📦PACK📦",
-            "type": "process",
             "command": "pwsh",
             "args": [
                 "./build.ps1",
@@ -46,7 +62,6 @@
         },
         {
             "label": "⏱BENCHMARK⏱",
-            "type": "process",
             "command": "pwsh",
             "args": [
                 "./build.ps1",
@@ -57,7 +72,6 @@
         },
         {
             "label": "📜DOCS📜",
-            "type": "process",
             "command": "pwsh",
             "args": [
                 "./build.ps1",
@@ -68,7 +82,6 @@
         },
         {
             "label": "🛳RELEASE🛳",
-            "type": "process",
             "presentation": {
                 "reveal": "always",
                 "focus": false,

@@ -58,7 +58,7 @@ type Regex =
     /// <summary>A regex that recognizes any single character
     /// that was not matched by anything else.</summary>
     /// <remarks>Note that it's not the same with "any character". See more at
-    /// https://teo-tsirpanis.github.io/Farkle/string-regexes.html#the-dot-regex</remarks>
+    /// https://teo-tsirpanis.github.io/Farkle/string-regexes.html#The-dot-regex</remarks>
     static member Any = AllButChars Set.empty
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
@@ -205,7 +205,7 @@ module Regex =
     let chars str = Regex.OneOf str
 
     /// An alias for `Regex.Any`.
-    /// See its documentation of it for caveats.
+    /// See the documentation of it for caveats.
     let any = Regex.Any
 
     /// An alias for `Regex.NotOneOf`.

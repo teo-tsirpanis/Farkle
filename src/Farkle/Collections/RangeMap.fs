@@ -8,6 +8,7 @@ namespace Farkle.Collections
 open System
 open System.Collections
 open System.Collections.Generic
+open System.ComponentModel
 open System.Runtime.CompilerServices
 
 [<Struct; IsReadOnly; CustomComparison; StructuralEquality>]
@@ -109,10 +110,9 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
         member _.Count = arr.Length
 
 [<CompiledName("RangeMapInternalUtils")>]
-/// Additional functions to create and export range maps to sequences.
-/// They are public due to compiler limitations.
-/// Their use is not recommended by user code and they might be
-/// removed or altered between non-major releases.
+[<EditorBrowsable(EditorBrowsableState.Never)>]
+/// This module is public due to compiler limitations.
+/// Do not use it; it is subject to be removed or altered at any time.
 module RangeMap =
 
     let ofGroupedRanges xs =

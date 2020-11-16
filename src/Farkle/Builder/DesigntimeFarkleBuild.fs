@@ -13,7 +13,8 @@ open System.Collections.Immutable
 open System.Reflection
 
 [<NoComparison; ReferenceEquality>]
-/// A grammar type with some more information that is needed by the builder.
+/// An object containing the symbols of a grammar,
+/// but lacking the LALR and DFA states.
 type GrammarDefinition = {
     Metadata: GrammarMetadata
     Properties: ImmutableDictionary<string, string>
@@ -23,7 +24,9 @@ type GrammarDefinition = {
     Groups: ImmutableArray<Group>
 
     DFASymbols: (Regex * DFASymbol) list
+}
 
+type private PostProcessorDefinition = {
     Transformers: ImmutableArray<T<obj>>
     Fusers: ImmutableArray<F<obj>>
 }
@@ -69,9 +72,7 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegex = Regex.chars ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
     let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
 
-    /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
-    [<CompiledName("CreateGrammarDefinition")>]
-    let createGrammarDefinition (df: DesigntimeFarkle) =
+    let private createGrammarDefinitionEx (df: DesigntimeFarkle) =
         let mutable dfaSymbols = []
         let addDFASymbol regex sym =
             dfaSymbols <- (regex, sym) :: dfaSymbols
@@ -291,9 +292,16 @@ module DesigntimeFarkleBuild =
             Productions = productions.ToImmutable()
             Groups = groups.ToImmutable()
             DFASymbols = dfaSymbols
+        },
+        {
             Transformers = transformers.ToImmutable()
             Fusers = fusers.ToImmutable()
         }
+
+    /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
+    [<CompiledName("CreateGrammarDefinition")>]
+    let createGrammarDefinition df =
+        createGrammarDefinitionEx df |> fst
 
     /// Performs some checks on the grammar that would cause problems later.
     let private aPrioriConsistencyCheck grammar = either {
@@ -382,8 +390,8 @@ module DesigntimeFarkleBuild =
     /// module) will always build a new grammar, even if a precompiled one is available.
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
-        let myLovelyGrammarDefinition = createGrammarDefinition df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> df myLovelyGrammarDefinition
+        let myLovelyGrammarDefinition, myWonderfulPostProcessorDefinition = createGrammarDefinitionEx df
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> df myWonderfulPostProcessorDefinition
         let myDearestGrammar = buildGrammarOnly myLovelyGrammarDefinition
         myDearestGrammar, myFavoritePostProcessor
 
@@ -393,4 +401,7 @@ module DesigntimeFarkleBuild =
     /// having many designtime Farkles with an identical grammar but different post-processors.
     [<CompiledName("BuildPostProcessorOnly")>]
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
-        df |> createGrammarDefinition |> createPostProcessor<'TOutput> df
+        df
+        |> createGrammarDefinitionEx
+        |> snd
+        |> createPostProcessor<'TOutput> df

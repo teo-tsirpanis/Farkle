@@ -248,8 +248,12 @@ type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)
     /// Writes a record to the stream that contains the entries added
     /// by the `Write***` functions, in order they were called.
     member _.FinishPendingRecord() =
+        #if NET
+        let span = Span.op_Implicit(CollectionsMarshal.AsSpan(buffer))
+        writeRecord span
+        buffer.Clear()
+        #else
         let count = buffer.Count
-        // TODO: When .NET 5 comes, use CollectionsMarshal.
         let mem = ArrayPool.Shared.Rent count
         try
             buffer.CopyTo(mem)
@@ -257,6 +261,7 @@ type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)
             buffer.Clear()
         finally
             ArrayPool.Shared.Return(mem, true)
+        #endif
     /// Directly writes a record. If there are pending
     /// entries this function throws an exception.
     member _.WriteFullRecord record =

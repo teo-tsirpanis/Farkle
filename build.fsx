@@ -74,7 +74,7 @@ let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuil
 // Additional command line arguments passed to Expecto.
 let testArguments = "--nunit-summary TestResults.xml"
 
-let testFrameworks = ["netcoreapp3.1"]
+let testFrameworks = ["net5.0"]
 
 let localPackagesFolder = "./tests/Farkle.Tools.MSBuild.Tests/packages/"
 

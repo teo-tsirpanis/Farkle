@@ -18,10 +18,7 @@ let private createDefault<'T> (transformers: ImmutableArray<T<obj>>) (fusers: Im
                 fusers.[int prod.Index].Invoke(members)
     }
 
-// Turns out that statically calling a delegate's
-// method is not as easy as previously thought.
-// The emitter code will be pseudo-commented for now.
-#if !NETSTANDARD2_0
+#if MODERN_FRAMEWORK
 open System
 open System.Collections.Generic
 open System.Reflection
@@ -198,7 +195,7 @@ let private createDynamic<'T> transformers fusers =
 
 [<RequiresExplicitTypeArguments>]
 let create<'T> (useDynamicCode: bool) transformers fusers =
-    #if !NETSTANDARD2_0
+    #if MODERN_FRAMEWORK
     if RuntimeFeature.IsDynamicCodeCompiled && useDynamicCode then
         createDynamic<'T> transformers fusers
     else

@@ -27,7 +27,7 @@ open System.Text
 // It's public because of https://github.com/dotnet/fsharp/issues/8348
 [<EditorBrowsable(EditorBrowsableState.Never)>]
 module Internal =
-    #if NETSTANDARD2_0
+    #if !MODERN_FRAMEWORK
     type Characters = string
     let inline toCharacters (x: ReadOnlySpan<char>): Characters = x.ToString()
     #else
@@ -163,7 +163,7 @@ let private stringTransformer = T (fun _ span ->
     let mutable span = span.Slice(1, span.Length - 2)
     let sb = StringBuilder(span.Length)
 
-    #if NETSTANDARD2_0
+    #if !MODERN_FRAMEWORK
     let mutable i = 0
     while i < span.Length do
         let c = span.[i]

@@ -11,6 +11,7 @@ open System.ComponentModel
 
 [<AttributeUsage(AttributeTargets.All, Inherited = false)>]
 [<EditorBrowsable(EditorBrowsableState.Never)>]
+/// [omit]
 type IsReadOnlyAttribute() = inherit Attribute()
 #endif
 
@@ -25,9 +26,4 @@ type internal CovariantOutAttribute() =
     inherit Attribute()
 
 [<assembly:Extension>]
-[<assembly:InternalsVisibleTo("Farkle.Benchmarks")>]
-[<assembly:InternalsVisibleTo("Farkle.Tests")>]
-[<assembly:InternalsVisibleTo("Farkle.Tools")>]
-[<assembly:InternalsVisibleTo("Farkle.Tools.Shared")>]
-[<assembly:InternalsVisibleTo("Farkle.Tools.MSBuild")>]
 do()

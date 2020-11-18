@@ -1,5 +1,5 @@
 #### 6.0.0-alpha.3
-* __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0 and .NET Standard 2.1.
+* __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0, .NET Standard 2.1 and .NET 5.
 * __Breaking change:__ Logging parser events is no longer supported. The logging function was removed from the signatures of parser APIs.
 * __Breaking change:__ The function `LALRParser.parseLALR` was renamed to `LALRParser.parse`.
 * __Breaking change:__ The `Farkle.Parser.OptimizedOperations` type was made internal.

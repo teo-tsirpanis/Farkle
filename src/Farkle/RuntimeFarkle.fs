@@ -97,12 +97,16 @@ with
 
     /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
     /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
-    /// <exception cref="System.Exception">Building the grammar
+    /// <exception cref="InvalidOperationException">Building the grammar
     /// had failed. The exception's message contains further details.</exception>
     member this.GetGrammar() =
         match this.Grammar with
         | Ok grammar -> grammar
-        | Error msg -> msg |> string |> failwith
+        | Error msg -> msg |> string |> invalidOp
+    interface IGrammarProvider with
+        member this.IsBuildSuccessful = this.IsBuildSuccessful
+        member this.GetGrammar() = this.GetGrammar()
+        member this.GetBuildErrorMessage() = this.GetBuildErrorMessage()
 
 /// Functions to create and use `RuntimeFarkle`s.
 module RuntimeFarkle =

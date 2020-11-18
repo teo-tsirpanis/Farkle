@@ -277,9 +277,27 @@ type Symbols = {
     NoiseSymbols: Noise ImmutableArray
 }
 
+/// This interface is implemented by <see cref="Grammar"/>s and
+/// <see cref="RuntimeFarkle{TResult}"/>s and provides a uniform
+/// way to work with grammars inside runtime Farkles and grammars
+/// themselves, while accounting for potential build errors in an
+/// exception-free way.
+type IGrammarProvider =
+    /// <summary>Whether the grammar has been successfuly built.</summary>
+    /// <remarks>A <see langword="true"/> value of this property indicates
+    /// that <see cref="GetGrammar"/> is safe to be called.</remarks>
+    abstract IsBuildSuccessful: bool
+    /// <summary>Gets the <see cref="Grammar"/> of this provider.</summary>
+    /// <exception cref="InvalidOperationException">This method was called
+    /// with <see cref="IsBuildSuccessful"/> being false.</exception>
+    abstract GetGrammar: unit -> Grammar
+    /// Returns a user-friendly error message that
+    /// describes what had gone wrong while building,
+    /// or an empty string if building had been successful.
+    abstract GetBuildErrorMessage: unit -> string
+
 /// A context-free grammar according to which Farkle can parse text.
-[<NoComparison; ReferenceEquality>]
-type Grammar = internal {
+and [<NoComparison; ReferenceEquality>] Grammar = internal {
     // This field is totally informative; it serves only the template maker.
     _Properties: ImmutableDictionary<string,string>
 
@@ -310,3 +328,7 @@ with
     member x.LALRStates = x._LALRStates
     /// The grammar's DFA state table.
     member x.DFAStates = x._DFAStates
+    interface IGrammarProvider with
+        member _.IsBuildSuccessful = true
+        member x.GetGrammar() = x
+        member x.GetBuildErrorMessage() = ""

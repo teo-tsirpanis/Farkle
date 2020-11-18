@@ -112,16 +112,14 @@ let balancedParentheses =
     )
     RuntimeFarkle.buildUntyped expr
 
-let rfIgnore x = RuntimeFarkle.changePostProcessor PostProcessors.syntaxCheck x
-
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =
     ([
-        "the calculator", rfIgnore SimpleMaths.int, "./SimpleMaths.egt"
-        "the F# JSON parser", rfIgnore JSON.FSharp.Language.runtime, "./JSON.egt"
-        "the C# JSON parser", rfIgnore JSON.CSharp.Language.Runtime, "./JSON.egt"
-        "the language of balanced parentheses", balancedParentheses, "./balanced-parentheses.egt"
-        "GOLD Meta-Language", rfIgnore GOLDMetaLanguage.runtime, "./gml.egt"
+        "the calculator", SimpleMaths.int :> IGrammarProvider, "./SimpleMaths.egt"
+        "the F# JSON parser", JSON.FSharp.Language.runtime :> _, "./JSON.egt"
+        "the C# JSON parser", JSON.CSharp.Language.Runtime :> _, "./JSON.egt"
+        "the language of balanced parentheses", balancedParentheses :> _, "./balanced-parentheses.egt"
+        "GOLD Meta-Language", GOLDMetaLanguage.runtime :> _, "./gml.egt"
     ]
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {

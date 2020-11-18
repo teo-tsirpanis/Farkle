@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "⚙BUILD TESTS⚙",
-            "program": "bin/Debug/netcoreapp3.1/Farkle.Tests.dll",
+            "program": "bin/Debug/net5.0/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],
@@ -18,7 +18,7 @@
             "name": "Farkle.Tests (no build)",
             "type": "coreclr",
             "request": "launch",
-            "program": "bin/Debug/netcoreapp3.1/Farkle.Tests.dll",
+            "program": "bin/Debug/net5.0/Farkle.Tests.dll",
             "args": [
                 "--sequenced"
             ],

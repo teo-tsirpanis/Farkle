@@ -5,7 +5,6 @@
 
 module Farkle.Tests.DesigntimeFarkleTests
 
-open System.Globalization
 open Expecto
 open Farkle
 open Farkle.Builder
@@ -107,9 +106,7 @@ let tests = testList "Designtime Farkle tests" [
 
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
-        // string num does not round-trip on .NET Framework.
-        let result = runtime.Parse(num.ToString("R", NumberFormatInfo.InvariantInfo))
-        Expect.equal (result) (Ok num) "Parsing a floating-point number failed")
+        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
 
     test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
         let df = "Sbubby" ||= [!& "Eef" =% "Freef"]

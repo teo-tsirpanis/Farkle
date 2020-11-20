@@ -71,10 +71,12 @@ let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
-// Additional command line arguments passed to Expecto.
-let testArguments = "--nunit-summary TestResults.xml"
+let getTestResultsFile tfm = sprintf "./temp/TestResults-%s.xml" tfm |> Path.GetFullPath
 
-let testFrameworks = ["net5.0"]
+// Additional command line arguments passed to Expecto.
+let getTestArguments resultsFile = sprintf "--nunit-summary %s" resultsFile
+
+let testFrameworks = ["net5.0"; "net48"]
 
 let localPackagesFolder = "./tests/Farkle.Tools.MSBuild.Tests/packages/"
 
@@ -146,18 +148,28 @@ let inline fCommonOptions x =
         sprintf "/p:Version=%s" nugetVersion
     ] x
 
-let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
-    let handleFailure (p: ProcessResult) =
-        if p.ExitCode <> 0 then
-            sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
-            |> exn
-            |> raise
-    let fx = fx |> Option.map (sprintf " --framework %s") |> Option.defaultValue ""
-    DotNet.exec
-        (fun p -> {p with WorkingDirectory = Path.getDirectory proj})
-        "run"
-        (sprintf "--project %s%s -c %A %s -- %s" (Path.GetFileName proj) fx config buildArgs args)
-    |> handleFailure
+let dotNetRun proj (fx: string option) (config: DotNet.BuildConfiguration) buildArgs args =
+    match fx with
+    | Some fx when fx.StartsWith("net4", StringComparison.Ordinal) && not Environment.isWindows ->
+        DotNet.build (fun p -> {p with Framework = Some fx}) proj
+        let exePath = Path.getDirectory project @@ "bin" @@ fx @@ config.ToString() @@ (project |> Path.GetFileName |> Path.changeExtension ".exe")
+        CreateProcess.fromRawCommandLine "mono" (exePath + " " + args)
+        |> CreateProcess.withWorkingDirectory (Path.getDirectory project)
+        |> CreateProcess.ensureExitCode
+        |> Proc.run
+        |> ignore
+    | _ ->
+        let handleFailure (p: ProcessResult) =
+            if p.ExitCode <> 0 then
+                sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
+                |> exn
+                |> raise
+        let fx = fx |> Option.map (sprintf " --framework %s") |> Option.defaultValue ""
+        DotNet.exec
+            (fun p -> {p with WorkingDirectory = Path.getDirectory proj})
+            "run"
+            (sprintf "--project %s%s -c %A %s -- %s" (Path.GetFileName proj) fx config buildArgs args)
+        |> handleFailure
 
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
@@ -197,10 +209,13 @@ Target.create "GenerateCode" (fun _ ->
     )
 )
 
-Target.description "Runs the unit tests"
+Target.description "Runs the unit tests on .NET"
 Target.create "RunTests" (fun _ ->
-    dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
-    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")
+    for tfm in testFrameworks do
+        let resultsFile = getTestResultsFile tfm
+        let testArguments = getTestArguments resultsFile
+        dotNetRun testProject (Some tfm) DotNet.BuildConfiguration.Debug "" testArguments
+        Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) resultsFile
 )
 
 Target.description "Runs the MSBuild integration tests"

@@ -12,7 +12,7 @@ namespace Farkle.Samples.Cli
     internal static class Program
     {
         private const int IterationCount = 1000;
-        private const string JsonPath = "../../tests/resources/generated.json";
+        private const string JsonPath = "../../tests/resources/big.json";
         private static string _jsonData;
         private static readonly RuntimeFarkle<object> _syntaxCheck = JSON.CSharp.Language.Runtime.SyntaxCheck();
 

@@ -245,7 +245,7 @@ match RuntimeFarkle.parseString myMarvelousRuntimeFarkle "103 + 137+281" with
 let mem = "The answer is 45".AsMemory().Slice(14)
 RuntimeFarkle.parseMemory myMarvelousRuntimeFarkle mem
 
-RuntimeFarkle.parseFile myMarvelousRuntimeFarkle "gf.m"
+RuntimeFarkle.parseFile myMarvelousRuntimeFarkle "example.txt"
 
 let myStringReader = new StringReader("45 + 198 - 647 + 2 * 478 - 488 + 801 - 248")
 RuntimeFarkle.parseTextReader myMarvelousRuntimeFarkle myStringReader

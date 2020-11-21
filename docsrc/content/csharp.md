@@ -10,7 +10,37 @@ F# programs using Farkle use an operator-laden API to compose designtime Farkles
 
 ### Creating regexes
 
-Regular expressions are created using [members of the `Regex` class][regex], which is well documented. Predefined sets are in the `PredefinedSets` class.
+Regular expressions are created using [members of the `Regex` class][regex], which is well documented. Predefined sets are in the [`PredefinedSets`][predefinedsets] class. Let's see a comparison:
+
+``` fsharp
+open Farkle.Builder
+open Farkle.Builder.Regex
+
+let regex1 = regexString "Hello+' '?World!*"
+
+let regex2 = concat [
+    string "Hell"
+    char 'o' |> plus
+    char ' ' |> optional
+    string "World"
+    char '!' |> star
+]
+```
+
+``` csharp
+using Farkle.Builder;
+using static Farkle.Builder.Regex;
+
+var regex1 = FromRegexString("Hello+' '?World!*");
+
+var regex2 = Join(
+    Literal("Hell"),
+    Literal('o').AtLeast(1),
+    Literal(' ').Optional(),
+    Literal("World"),
+    Literal('!').ZeroOrMore()
+);
+```
 
 ### Cerating & building designtime Farkles
 
@@ -18,7 +48,7 @@ The following table highlights the differences between the F# and C# designtime 
 
 |F#|C#|
 |--|--|
-|`terminal "X" (T (fun _ x -> x.ToString())) r`|`Terminal.Create("X", (position, data) => data.ToString(), r)`|
+|`terminal "X" (T (fun _ x -> x.ToString())) r`|`Terminal.Create("X", (_, x) => x.ToString(), r)`|
 |`"S" ||= [p1; p2]`|`Nonterminal.Create("S", p1, p2)`|
 |`!@ x`|`x.Extended()`|
 |`!% x`|`x.Appended()`|
@@ -33,26 +63,49 @@ The following table highlights the differences between the F# and C# designtime 
 
 ### Customizing designtime Farkles
 
-To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle` namespace.
+To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle` namespace. Let's take a look at an example:
+
+``` csharp
+var test =
+    Terminals.Int32("Test")
+        .AddBlockComment("/*", "*/")
+        .AddLineComment("//")
+        .AutoWhitespace(false)
+        .CaseSensitive(false)
+        .MarkForPrecompile()
+        .Build();
+```
 
 ## Parsing
 
-To parse text, there are some extension methods for runtime Farkles that reside in the `Farkle` namespace.
-
-These functions return an F# result type that can nevertheless be used from C# like this:
+To parse text, there are some extension methods for runtime Farkles that reside in the `Farkle` namespace. These functions return an F# result type that can nevertheless be used from C# like this:
 
 ``` csharp
 var designtime = /*...*/;
 var runtime = designtime.Build();
+// Parsing strings.
 var result = runtime.Parse("foobar");
 
 if (result.IsOk)
     Console.WriteLine("Success. Result: {0}", result.OkValue);
 else
     Console.WriteLine("Failure. Error message: {0}", result.ErrorValue);
+
+// Parsing ReadOnlyMemories
+runtime.Parse("foobar".AsMemory());
+// Parsing TextReaders
+using (var f = File.OpenText("foobar.txt"))
+{
+    runtime.Parse(f);
+}
+// Parsing files
+runtime.ParseFile("foobar.txt");
+```
+
 ---
 
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially sharp today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
 [fsharp]: quickstart.html
 [regex]: reference/farkle-builder-regex.html
+[predefinedsets]: reference/farkle-builder-predefinedsets.html

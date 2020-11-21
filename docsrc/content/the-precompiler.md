@@ -8,6 +8,8 @@ What is more, Farkle does not report any grammar error (such as an LALR conflict
 
 One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of Farkle's grammars being objects defined in code. Instead of building it every time, the grammar's parser tables are built __ahead of time__ and stored in the program's assembly when it gets compiled. When that program is executed, instead of building the parser tables, it loads the precompiled grammar from the assembly, which is orders of magnitude faster.
 
+Moreover, Farkle will dynamically generate code to even further optimize the parsing process. To avoid the code generation overhead, dynamic code generation is employed only on precompilable grammars, when the .NET Standard 2.1 edition of Farkle (or any more modern framework) is used, and when [the underlying runtime compiles dynamic code][is-dynamic-code-compiled].
+
 ## How to use it
 
 Using the precompiler is surprisingly simple and does not differ very much from regularly using Farkle.
@@ -89,6 +91,8 @@ public class MyLanguage {
 
 If any of the rules above is violated, building your app will not fail (unless a name collision was detected, which will always fail the build) and the designtime Farkle will not be precompiled but will be otherwise perfectly functional.
 
+> __Note:__ It makes sense to mark a designtime Farkle as precompilable and immediately build it without actually precompiling it. Merely marking it as precompilable will allow the dynamic code generation optimizations.
+
 ### Preparing your project
 
 With your designtime Farkles being ready to be precompiled, it's time to prepare your project file. Add a reference to [the `Farkle.Tools.MSBuild` package][msbuild] like that:
@@ -157,5 +161,6 @@ let runtime = RuntimeFarkle.build myFaultyDesigntimeFarkle
 
 So I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you feel especially precompiled today, and want to hit the star button as well. I hope that all of you have an wonderful day, and to see you soon. Goodbye!
 
+[is-dynamic-code-compiled]: https://docs.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.runtimefeature.isdynamiccodecompiled
 [msbuild]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
 [Sigourney]: https://github.com/teo-tsirpanis/Sigourney

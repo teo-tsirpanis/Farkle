@@ -157,7 +157,7 @@ type CharStream private(source: CharStreamSource) =
     member internal _.LastTokenPosition: inref<_> = &lastTokenPosition
     /// The position of the next character the stream has to read.
     // https://github.com/dotnet/fsharp/issues/9997
-    member _.CurrentPosition: [<IsReadOnly>] inref<_> = &currentPosition
+    member _.CurrentPosition: inref<_> = &currentPosition
     /// <inheritdoc cref="ITokenizerContext.ObjectStore"/>
     member _.ObjectStore = objectStore :> IDictionary<_,_>
     /// A read-only span of characters that contains all

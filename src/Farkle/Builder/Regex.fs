@@ -19,6 +19,9 @@ module private RegexUtils =
     let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
     let isCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
     // Taking the concept of circular references to a whole new level.
+    #if NET
+    [<System.Diagnostics.CodeAnalysis.DynamicDependency("DoParse", "Farkle.Builder.RegexGrammar", "Farkle")>]
+    #endif
     let DoParse =
         Assembly
             .GetExecutingAssembly()

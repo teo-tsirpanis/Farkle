@@ -14,7 +14,10 @@ namespace Farkle.Samples.CSharp
         public static void TestCharStreamPosition()
         {
             var cs = new CharStream("");
-            Console.WriteLine(cs.CurrentPosition.Index);
+            ITransformerContext ctx = cs;
+            ref readonly var csPos = ref cs.CurrentPosition;
+            ref readonly var ctxPos = ref ctx.StartPosition;
+            Console.WriteLine(ctxPos.Index == csPos.Index);
         }
     }
 }

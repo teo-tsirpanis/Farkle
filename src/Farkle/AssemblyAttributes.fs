@@ -11,8 +11,7 @@ open System.ComponentModel
 
 [<AttributeUsage(AttributeTargets.All, Inherited = false)>]
 [<EditorBrowsable(EditorBrowsableState.Never)>]
-/// [omit]
-type IsReadOnlyAttribute() = inherit Attribute()
+type internal IsReadOnlyAttribute() = inherit Attribute()
 #endif
 
 namespace global

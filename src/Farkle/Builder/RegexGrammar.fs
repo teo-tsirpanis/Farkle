@@ -14,6 +14,11 @@ open System.Collections.Immutable
 open System.Reflection
 open System.Text
 
+#if NET
+open System.Diagnostics.CodeAnalysis
+
+[<DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, "Farkle.Builder.PredefinedSets", "Farkle")>]
+#endif
 let private allPredefinedSets =
     let sets =
         Assembly

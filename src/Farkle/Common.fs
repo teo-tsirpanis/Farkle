@@ -98,9 +98,20 @@ module internal ErrorHandling =
             nullArg argName
 
 module internal Delegate =
+
+    #if NET
+    open System.Diagnostics.CodeAnalysis
+    #endif
+
     /// Creates a delegate from an arbitrary
     /// object's `Invoke` method. Useful turning
     /// optimized closures to delegates without
     /// an extra level of indirection.
-    let ofInvokeMethod<'TDelegate when 'TDelegate :> Delegate> (func: obj) =
+    let ofInvokeMethod<'TDelegate,
+                        #if NET
+                        // We have to tell the IL Linker to spare the Invoke method.
+                        [<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)>]
+                        #endif
+                        'TFunction
+        when 'TDelegate :> Delegate and 'TFunction : not struct> (func: 'TFunction) =
         Delegate.CreateDelegate(typeof<'TDelegate>, func, "Invoke", false, true) :?> 'TDelegate

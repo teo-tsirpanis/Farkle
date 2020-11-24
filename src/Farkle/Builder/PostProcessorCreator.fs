@@ -102,15 +102,32 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> metho
 
     for i = 0 to delegates.Length - 1 do
         let d = delegates.[i]
-        fAssembly d.Method.Module.Assembly
+        let dMethod = d.Method
+        fAssembly dMethod.Module.Assembly
         ilg.MarkLabel(labels.[i])
-        // If the method is an instance method, we push that instance to the stack.
-        // Because IL does not support literal objects, we pass these objects through
-        // the constructor
-        if not d.Method.IsStatic then
+
+        // We have to push the delegate's target if the delegate represents
+        // an instance method or a static method closed over its first argument.
+        // Merely checking the target object for null is not a good idea; the
+        // runtime allows delegates of instance methods with null targets.
+        let targetType =
+            match dMethod.IsStatic, dMethod.GetParameters() with
+            | false, _ -> dMethod.DeclaringType
+            | true, methParams when methParams.Length = ldArgOpCodes.Length + 1 ->
+                methParams.[0].ParameterType
+            | true, _ -> null
+        if not (isNull targetType) then
             ilg.Emit(OpCodes.Ldloc, targetsLocal)
             ilg.Emit(OpCodes.Ldloc, indexLocal)
             ilg.Emit(OpCodes.Ldelem_Ref)
+            if targetType.IsValueType then
+                // If the target is a struct we have to unbox it.
+                // We use the unbox opcode, returning a reference
+                // to the boxed struct which is passed to the method
+                // (remember that struct instance methods take a
+                // reference to that struct). This boxed struct can
+                // be modified, just like how delegates behave.
+                ilg.Emit(OpCodes.Unbox, targetType)
 
         // We push the method's other arguments.
         // They vary, depending on whether we have a transformer of a fuser.
@@ -119,8 +136,13 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> metho
         // And now we call the delegate's method, which is statically resolved.
         // Tail calls have caused performance issues in the past and might prevent method inlining.
         // ilg.Emit(OpCodes.Tailcall)
-        let callOpCode = if d.Method.IsStatic then OpCodes.Call else OpCodes.Callvirt
-        ilg.Emit(callOpCode, d.Method)
+
+        // We always use call. It has been tested that the method
+        // is devirtualized when the delegate gets created. We don't
+        // care about the null check callvirt provides. We can create
+        // delegates from instance methods with a null target. When they
+        // are caled, they don't NRE until that null target is attempted to be actually used.
+        ilg.Emit(OpCodes.Call, dMethod)
         ilg.Emit(OpCodes.Ret)
 
     ilg.MarkLabel(indexOutOfRangeLabel)

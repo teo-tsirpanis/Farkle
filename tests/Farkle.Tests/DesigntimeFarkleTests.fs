@@ -10,7 +10,20 @@ open Farkle
 open Farkle.Builder
 open Farkle.Grammar
 open FsCheck
+open System
 open System.Collections.Immutable
+
+type TestClass = TestClass of string
+with
+    member x.ClassInstance(_: ITransformerContext, _: ReadOnlySpan<char>) =
+        match x with TestClass x -> x
+    static member ClassStatic (TestClass x, _: ITransformerContext, _: ReadOnlySpan<char>) = x
+
+[<Struct>]
+type TestStruct = TestStruct of string
+with
+    member x.StructInstance(_: ITransformerContext, _: ReadOnlySpan<char>) =
+        match x with TestStruct x -> x
 
 [<Tests>]
 let tests = testList "Designtime Farkle tests" [
@@ -168,5 +181,31 @@ let tests = testList "Designtime Farkle tests" [
             |> RuntimeFarkle.build
 
         Expect.isOk (runtime.Parse "{test}") "Parsing a test string failed"
+    }
+
+    test "The dynamic post-processor works with various kinds of delegates" {
+        let magic = Guid.NewGuid().ToString()
+        let testClass = magic |> TestClass |> box
+        let testStruct = magic |> TestStruct |> box
+        let testData = [
+            "ClassInstance", typeof<TestClass>, testClass
+            "ClassStatic", typeof<TestClass>, testClass
+            "StructInstance", typeof<TestStruct>, testStruct
+            // A StructStatic like ClassStatic above is not supported.
+            // See https://github.com/dotnet/dotnet-api-docs/pull/5141
+        ]
+
+        let mkTerminal (name, typ: Type, target) =
+            let t = typ.GetMethod(name).CreateDelegate<T<string>>(target)
+            terminal name t (Regex.string name)
+        let runtime =
+            "Test" ||=
+                List.map (fun x -> !@ (mkTerminal x) => id) testData
+            |> RuntimeFarkle.markForPrecompile
+            |> RuntimeFarkle.build
+
+        testData
+        |> List.iter (fun (x,_,_) ->
+            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x))
     }
 ]

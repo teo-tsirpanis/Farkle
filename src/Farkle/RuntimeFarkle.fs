@@ -25,8 +25,18 @@ type FarkleError =
     | BuildError of BuildError
     override x.ToString() =
         match x with
-        | ParseError x -> string x
-        | BuildError x -> sprintf "Error while building the grammar: %O" x
+        | ParseError x -> x.ToString()
+        | BuildError x ->
+            let sb = StringBuilder("Error while building the grammar:")
+            let msg = x.ToString()
+            // We will add a line break before the error message if it is multiline.
+            if msg.Contains(Environment.NewLine) then
+                Environment.NewLine
+            else
+                " "
+            |> sb.Append |> ignore
+            sb.Append(msg) |> ignore
+            sb.ToString()
 
 /// <summary>A reusable parser and post-processor,
 /// created for a specific grammar, and returning

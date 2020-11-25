@@ -32,7 +32,7 @@ with
     override x.ToString() =
         match x with
         | ShiftReduce (idx, prod) ->
-            sprintf "Shift-Reduce conflict between state %d and production %O" idx prod
+            sprintf "Shift-Reduce conflict between shifting to state %d and reducing production %O" idx prod
         | ReduceReduce (prod1, prod2) ->
             sprintf "Reduce-Reduce conflict between productions %O and %O" prod1 prod2
 
@@ -60,7 +60,7 @@ with
             match x.Symbol with
             | Some term -> string term
             | None -> "(EOF)"
-        sprintf "%O while encountering the symbol %s at state %d" x.Type symbolAsString x.StateIndex
+        sprintf "%O, while encountering the symbol %s at state %d" x.Type symbolAsString x.StateIndex
 
 [<RequireQualifiedAccess>]
 /// An error the builder encountered.
@@ -106,8 +106,8 @@ The conflict is caused when two or more terminal definitions can accept the same
             |> Seq.map string
             |> String.concat ", "
             |> sprintf "Nonterminals %s are empty. \
-If you want to define a nonterminal with the empty production, you can use \
-the production builder called 'empty' (or 'Production.Empty' in C#)."
+If you want to define a nonterminal with an empty production, you can use \
+the production builder called 'empty' (or 'ProductionBuilder.Empty' in C#)."
         | DuplicateProductions xs ->
             xs
             |> Seq.map Production.Format
@@ -115,7 +115,8 @@ the production builder called 'empty' (or 'Production.Empty' in C#)."
             |> sprintf "Productions %s are defined twice."
         | RegexParseError xs ->
             xs
-            |> Seq.map ((<||) (sprintf "Error while processing %O: %O"))
+            |> Seq.map (fun (sym, err) ->
+                sprintf "Error while parsing the regex of %s: %O" (DFASymbol.toString sym) err)
             |> String.concat Environment.NewLine
         | SymbolLimitExceeded ->
             sprintf "A grammar built by Farkle cannot have \

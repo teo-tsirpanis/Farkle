@@ -54,7 +54,7 @@ let designtime =
             let name = data.Slice(start.Length, data.Length - start.Length - 1).Trim().ToString()
             match allPredefinedSets.TryGetValue(name) with
             | true, set -> fChars set
-            | false, _ -> errorf "Cannot found a predefined set named %s." name))
+            | false, _ -> errorf "Cannot find a predefined set named %s." name))
     let mkCategory name start =
         string start <&> repeat 2 (chars Letter)
         |> terminal name (T(fun _ data ->

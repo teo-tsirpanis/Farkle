@@ -56,9 +56,11 @@ type ParseErrorType =
         match x with
         | UnexpectedEndOfInput -> "Unexpected end of input."
         | LexicalError x -> sprintf "Cannot recognize character '%c'." x
+        | SyntaxError (expected, actual) when expected.Count = 1 ->
+            sprintf "Found %O while expecting %O" actual expected.MinimumElement
         | SyntaxError (expected, actual) ->
             let expected = expected |> Seq.map string |> String.concat ", "
-            sprintf "Found %O, while expecting one of the following tokens: %s." actual expected
+            sprintf "Found %O while expecting one of the following tokens: %s." actual expected
         | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
         | UnexpectedEndOfInputInGroup g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
         | UserError x -> x

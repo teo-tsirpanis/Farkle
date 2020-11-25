@@ -167,8 +167,8 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
                 length <- 0
 
 /// A class that writes EGT files to a stream.
-/// An EGT file consists of a header, a UTF-16-encoded string at the start of
-/// the file, and a series of records. A record contains entries that can
+/// An EGT file consists of a header -a UTF-16-encoded string at the start of
+/// the file- and a series of records. A record contains entries that can
 /// contain a byte, a boolean, an unsigned integer, a string, or nothing.
 type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)>] leaveOpen) =
 

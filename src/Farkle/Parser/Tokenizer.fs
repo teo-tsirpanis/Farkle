@@ -116,6 +116,7 @@ type Tokenizer(grammar: Grammar) =
                     try
                         input.FinishNewToken term transformer
                     with
+                    | :? ParserApplicationException -> reraise()
                     | e -> PostProcessorException(term, e) |> raise
                 let theHolyToken = Token.Create input.LastTokenPosition term data
                 Some theHolyToken

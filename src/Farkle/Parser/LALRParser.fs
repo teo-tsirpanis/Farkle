@@ -76,6 +76,7 @@ module LALRParser =
                         try
                             pp.Fuse(productionToReduce, tokens)
                         with
+                        | :? ParserApplicationException -> reraise()
                         | e -> PostProcessorException(productionToReduce, e) |> raise
                     impl token nextState ((nextState, resultObj) :: stack')
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce

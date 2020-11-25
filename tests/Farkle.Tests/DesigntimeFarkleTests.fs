@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
+open Farkle.Parser
 open FsCheck
 open System
 open System.Collections.Immutable
@@ -207,5 +208,25 @@ let tests = testList "Designtime Farkle tests" [
         testData
         |> List.iter (fun (x,_,_) ->
             Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x))
+    }
+
+    test "Parser application errors are correctly handled" {
+        let terminal =
+            Regex.string "O"
+            |> terminal "Terminal" (T(fun _ _ -> error "Terminal found" |> ignore))
+        let designtime =
+            "Nonterminal" ||= [!@ terminal => id; empty => (fun () -> error "Empty input")]
+        let runtime = designtime.Build()
+
+        let mkError column msg =
+            ParserError(Position.Create 1UL column (column - 1UL), ParseErrorType.UserError msg)
+            |> FarkleError.ParseError |> Error
+
+        // TODO: Fix the positions
+        let error1 = mkError 9UL "Terminal found"
+        Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught."
+
+        let error2 = mkError 4UL "Empty input"
+        Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught."
     }
 ]

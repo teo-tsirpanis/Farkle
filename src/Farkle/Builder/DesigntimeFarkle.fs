@@ -11,49 +11,6 @@ open Farkle.Collections
 open System
 open System.Collections.Immutable
 
-[<CompiledName("TerminalCallback`1")>]
-/// <summary>A delegate that transforms the content
-/// of a terminal to an arbitrary object.</summary>
-/// <param name="context">An <see cref="ITransformerContext"/>
-/// that provides additional info about the terminal.</param>
-/// <param name="data">A read-only span of the terminal's characters.</param>
-/// <remarks>
-/// <para>In F# this type is shortened to
-/// <c>T</c> to avoid clutter in user code.</para>
-/// <para>A .NET delegate was used because read-only
-/// spans are incompatible with F# functions.</para>
-/// </remarks>
-type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
-
-[<CompiledName("Fuser`1")>]
-/// <summary>A delegate that fuses the many members
-/// of a production into one arbitrary object.</summary>
-/// <param name="members">A read-only span of the production's members.</param>
-/// <remarks>
-/// <para>In F# this type is shortened to
-/// <c>F</c> to avoid clutter in user code.</para>
-/// <para>A .NET delegate was used because read-only
-/// spans are incompatible with F# functions.</para>
-/// </remarks>
-type F<[<CovariantOut>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
-
-module internal T =
-    /// Converts a `T` callback so that it returns an object.
-    let box (f: T<'T>) =
-        // https://stackoverflow.com/questions/12454794
-        if typeof<'T>.IsValueType then
-            T(fun context data -> f.Invoke(context, data) |> box)
-        else
-            unbox f
-
-module internal F =
-    /// Converts an `F` delegate so that it returns an object.
-    let box (f: F<'T>) =
-        if typeof<'T>.IsValueType then
-            F(fun data -> f.Invoke(data) |> box)
-        else
-            unbox f
-
 /// A type of source code comment. As everybody might know,
 /// comments are the text fragments that are ignored by the parser.
 type Comment =

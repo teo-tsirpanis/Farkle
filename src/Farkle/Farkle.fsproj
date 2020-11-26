@@ -39,6 +39,7 @@
     <Compile Include="Builder/DFABuild.fs" />
     <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
+    <Compile Include="Builder/DesigntimeFarkleDelegates.fs" />
     <Compile Include="Builder/DesigntimeFarkle.fs" />
     <Compile Include="Builder/ProductionBuilders.g.fs" AutoGen="true" />
     <Compile Include="Builder/ProductionBuilders.fs" />

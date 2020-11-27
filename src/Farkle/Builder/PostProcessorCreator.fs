@@ -9,13 +9,13 @@ open Farkle
 open System.Collections.Immutable
 
 [<RequiresExplicitTypeArguments>]
-let private createDefault<'T> (transformers: ImmutableArray<T<obj>>) (fusers: ImmutableArray<F<obj>>) =
+let private createDefault<'T> (transformers: ImmutableArray<TransformerData>) (fusers: ImmutableArray<FuserData>) =
     {
         new PostProcessor<'T> with
             member _.Transform(term, context, data) =
-                transformers.[int term.Index].Invoke(context, data)
+                transformers.[int term.Index].BoxedDelegate.Invoke(context, data)
             member _.Fuse(prod, members) =
-                fusers.[int prod.Index].Invoke(members)
+                fusers.[int prod.Index].BoxedDelegate.Invoke(members)
     }
 
 #if MODERN_FRAMEWORK
@@ -30,12 +30,6 @@ open System.Threading
 let private fldPrivateReadonly = FieldAttributes.Private ||| FieldAttributes.InitOnly
 
 let mutable generatedPostProcessorIndex = 0L
-
-let private getTargetArray (xs: #Delegate ImmutableArray) =
-    let arr = Array.zeroCreate xs.Length
-    for i = 0 to arr.Length - 1 do
-        arr.[i] <- xs.[i].Target
-    arr
 
 let private getParameterTypes (xs: ParameterInfo []) =
     xs |> Array.map (fun p -> p.ParameterType)
@@ -58,11 +52,12 @@ let private fuseParameters =
 let private stringFormatMethodOneObj =
     typeof<string>.GetMethod("Format", [|typeof<string>; typeof<obj>|])
 
-let getTransformLdargs = [|OpCodes.Ldarg_2; OpCodes.Ldarg_3|]
+let private readOnlySpanOfObjectIndexer =
+    Type.GetType("System.ReadOnlySpan`1").MakeGenericType(typeof<obj>).GetProperty("Item").GetGetMethod()
 
-let getFuseLdargs = [|OpCodes.Ldarg_2|]
+let private typedefofFuser = typedefof<F<_>>
 
-let createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
+let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
     let attrType = _mod.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.Public, typeof<Attribute>)
 
     let ctor = attrType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, justStringCtorParameters)
@@ -70,8 +65,8 @@ let createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
     attrType.CreateType().GetConstructor(justStringCtorParameters)
 
 [<RequiresExplicitTypeArguments>]
-let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> methodName argTypes fAssembly
-    (ldArgOpCodes: _ []) (targetsFld: FieldInfo) (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
+let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegateProvider> methodName argTypes fAssembly
+    fEmitArgs delegateArgCount (targetsFld: FieldInfo) (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
@@ -101,48 +96,59 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> Delegate> metho
     ilg.Emit(OpCodes.Br, indexOutOfRangeLabel)
 
     for i = 0 to delegates.Length - 1 do
-        let d = delegates.[i]
-        let dMethod = d.Method
-        fAssembly dMethod.Module.Assembly
-        ilg.MarkLabel(labels.[i])
 
-        // We have to push the delegate's target if the delegate represents
-        // an instance method or a static method closed over its first argument.
-        // Merely checking the target object for null is not a good idea; the
-        // runtime allows delegates of instance methods with null targets.
-        let targetType =
-            match dMethod.IsStatic, dMethod.GetParameters() with
-            | false, _ -> dMethod.DeclaringType
-            | true, methParams when methParams.Length = ldArgOpCodes.Length + 1 ->
-                methParams.[0].ParameterType
-            | true, _ -> null
-        if not (isNull targetType) then
+        let d = delegates.[i]
+        if d.IsConstant then
             ilg.Emit(OpCodes.Ldloc, targetsLocal)
             ilg.Emit(OpCodes.Ldloc, indexLocal)
             ilg.Emit(OpCodes.Ldelem_Ref)
-            if targetType.IsValueType then
-                // If the target is a struct we have to unbox it.
-                // We use the unbox opcode, returning a reference
-                // to the boxed struct which is passed to the method
-                // (remember that struct instance methods take a
-                // reference to that struct). This boxed struct can
-                // be modified, just like how delegates behave.
-                ilg.Emit(OpCodes.Unbox, targetType)
+        elif d.IsNull then
+            ilg.Emit(OpCodes.Ldnull)
+        else
+            let dMethod = d.RawDelegate.Method
+            fAssembly dMethod.Module.Assembly
+            ilg.MarkLabel(labels.[i])
 
-        // We push the method's other arguments.
-        // They vary, depending on whether we have a transformer of a fuser.
-        for opCode in ldArgOpCodes do
-            ilg.Emit(opCode)
-        // And now we call the delegate's method, which is statically resolved.
-        // Tail calls have caused performance issues in the past and might prevent method inlining.
-        // ilg.Emit(OpCodes.Tailcall)
+            // We have to push the delegate's target if the delegate represents
+            // an instance method or a static method closed over its first argument.
+            // Merely checking the target object for null is not a good idea; the
+            // runtime allows delegates of instance methods with null targets.
+            let targetType =
+                match dMethod.IsStatic, dMethod.GetParameters() with
+                | false, _ -> dMethod.DeclaringType
+                | true, methParams when methParams.Length = delegateArgCount + 1 ->
+                    methParams.[0].ParameterType
+                | true, _ -> null
+            if not (isNull targetType) then
+                ilg.Emit(OpCodes.Ldloc, targetsLocal)
+                ilg.Emit(OpCodes.Ldloc, indexLocal)
+                ilg.Emit(OpCodes.Ldelem_Ref)
+                if targetType.IsValueType then
+                    // If the target is a struct we have to unbox it.
+                    // We use the unbox opcode, returning a reference
+                    // to the boxed struct which is passed to the method
+                    // (remember that struct instance methods take a
+                    // reference to that struct). This boxed struct can
+                    // be modified, just like how delegates behave.
+                    ilg.Emit(OpCodes.Unbox, targetType)
 
-        // We always use call. It has been tested that the method
-        // is devirtualized when the delegate gets created. We don't
-        // care about the null check callvirt provides. We can create
-        // delegates from instance methods with a null target. When they
-        // are caled, they don't NRE until that null target is attempted to be actually used.
-        ilg.Emit(OpCodes.Call, dMethod)
+            // We push the method's other arguments.
+            // They vary, depending on whether we have a transformer of a fuser.
+            fEmitArgs d ilg
+
+            // And now we call the delegate's method, which is statically resolved.
+            // Tail calls have caused performance issues in the past and might prevent method inlining.
+            // ilg.Emit(OpCodes.Tailcall)
+
+            // We always use call. It has been tested that the method
+            // is devirtualized when the delegate gets created. We don't
+            // care about the null check callvirt provides. We can create
+            // delegates from instance methods with a null target. When they
+            // are caled, they don't NRE until that null target is attempted to be actually used.
+            ilg.Emit(OpCodes.Call, dMethod)
+            if d.ReturnType.IsValueType then
+                ilg.Emit(OpCodes.Box, d.ReturnType)
+
         ilg.Emit(OpCodes.Ret)
 
     ilg.MarkLabel(indexOutOfRangeLabel)
@@ -201,13 +207,38 @@ let private createDynamic<'T> transformers fusers =
         ilg.Emit(OpCodes.Stfld, fuserTargetsFld)
         ilg.Emit(OpCodes.Ret)
 
-    emitPPMethod<Grammar.Terminal,T<obj>>
-        "Transform" transformParameters fNewAssembly getTransformLdargs transformerTargetsFld transformers ppType
-    emitPPMethod<Grammar.Production,F<obj>>
-        "Fuse" fuseParameters fNewAssembly getFuseLdargs fuserTargetsFld fusers ppType
+    emitPPMethod<Grammar.Terminal,TransformerData>
+        "Transform" transformParameters fNewAssembly
+        (fun _ ilg ->
+            ilg.Emit(OpCodes.Ldarg_2)
+            ilg.Emit(OpCodes.Ldarg_3))
+        2 transformerTargetsFld transformers ppType
 
-    let transformerTargets = getTargetArray transformers
-    let fuserTargets = getTargetArray fusers
+    emitPPMethod<Grammar.Production,FuserData>
+        "Fuse" fuseParameters fNewAssembly
+        (fun d ilg ->
+            if d.RawDelegate.GetType() = typedefofFuser.MakeGenericType d.ReturnType then
+                ilg.Emit(OpCodes.Ldarg_2)
+            else
+                for (idx, typ) in d.Parameters do
+                    ilg.Emit(OpCodes.Ldarga_S, 2uy)
+                    ilg.Emit(OpCodes.Ldc_I4, idx)
+                    ilg.Emit(OpCodes.Call, readOnlySpanOfObjectIndexer)
+                    ilg.Emit(OpCodes.Ldind_Ref)
+                    ilg.Emit(OpCodes.Unbox_Any, typ))
+        1 fuserTargetsFld fusers ppType
+
+    let transformerTargets =
+        transformers
+        |> Seq.map (fun x -> x.RawDelegate.Target)
+        |> Array.ofSeq
+    let fuserTargets =
+        fusers
+        |> Seq.map (fun x ->
+            match x.Constant with
+            | ValueSome x -> x
+            | ValueNone -> x.RawDelegate.Target)
+        |> Array.ofSeq
 
     let ppTypeReal = ppType.CreateType()
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)

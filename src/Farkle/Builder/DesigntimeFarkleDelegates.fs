@@ -35,6 +35,8 @@ type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: R
 type F<[<CovariantOut>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
 
 type IRawDelegateProvider =
+    abstract IsNull: bool
+    abstract IsConstant: bool
     abstract RawDelegate: Delegate
     abstract ReturnType: Type
 
@@ -56,6 +58,8 @@ type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, retu
                 unbox t
         TransformerData(t, tBoxed, typeof<'T>)
     interface IRawDelegateProvider with
+        member x.IsNull = x = tdNull
+        member _.IsConstant = false
         member _.RawDelegate = rawDelegate
         member _.ReturnType = returnType
 
@@ -82,7 +86,12 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
     static member CreateConstant (x: 'T) =
         let xBoxed = box x
         let fBoxed = F(fun _ -> xBoxed)
-        FuserData(null, fBoxed, typeof<'T>, [], ValueSome xBoxed)
+        FuserData(fBoxed, fBoxed, typeof<'T>, [], ValueSome xBoxed)
+    interface IRawDelegateProvider with
+        member x.IsNull = x = fdNull
+        member _.IsConstant = constant.IsSome
+        member _.RawDelegate = rawDelegate
+        member _.ReturnType = returnType
 
 module internal T =
     /// Converts a `T` callback so that it returns an object.

@@ -30,6 +30,7 @@ https://opensource.org/licenses/MIT ~}}
         ret "Func<" + (type_params $0) + ", 'TOutput>"
     end ~}}
 {{~ func gen_builder
+
         n = $0
         fast = n > 1 && n <= 5 ~}}
 [<Sealed>]
@@ -45,7 +46,13 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}
         {{~ end ~}}
-        let fuser =
+        let parameters =
+            [
+                {{~ for i in 1..n ~}}
+                idx{{ i }}, typeof<{{ ap }}T{{ i }}>
+                {{~ end ~}}
+            ]
+        let fBoxed =
             F(fun arr ->
                 f.Invoke(
                     {{~ for i in 1..n
@@ -57,7 +64,8 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
                     {{~ end ~}}
                 )
             )
-        Production(members, fuser)
+        let fuserData = FuserData.Create(f, fBoxed, parameters)
+        Production<{{ ap }}TOutput>(members, fuserData)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
     member x.AsIs() = x.Finish(fun x -> x)

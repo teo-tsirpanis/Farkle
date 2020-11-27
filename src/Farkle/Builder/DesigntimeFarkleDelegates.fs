@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -68,6 +68,10 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
     // Fusers returning null will be special-cased anyway.
     // There's no reason to model them as constants.
     static let fdNull = FuserData(fNull, fNull, typeof<obj>, [], ValueNone)
+    static let fdFirst =
+        let fFirst = F(fun x -> x.[0])
+        let fId = Func<obj,obj>(fun x -> x)
+        FuserData(fId, fFirst, typeof<obj>, [0, typeof<obj>], ValueNone)
     static let boxF (f: F<'T>) =
         if typeof<'T>.IsValueType then
             F(fun data -> f.Invoke data |> box)
@@ -79,6 +83,7 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
     member _.Parameters = parameters
     member _.Constant = constant
     static member Null = fdNull
+    static member First = fdFirst
     static member Create (fRaw, f: F<'T>, parameters) =
         FuserData(fRaw, boxF f, typeof<'T>, parameters, ValueNone)
     static member CreateRaw (f: F<'T>) =

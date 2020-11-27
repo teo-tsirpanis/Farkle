@@ -142,7 +142,7 @@ type internal AbstractProduction =
     /// The members of the production.
     abstract Members: DesigntimeFarkle ImmutableArray
     /// The fuser to process the members of this production.
-    abstract Fuser: F<obj>
+    abstract Fuser: FuserData
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
@@ -233,13 +233,13 @@ type Terminal =
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
 [<Sealed>]
-type Production<'T> internal(members: _ seq, fuser: F<'T>) =
+type Production<'T> internal(members: _ seq, fuser: FuserData) =
+    do if typeof<'T> <> fuser.ReturnType then
+        invalidArg "fuser" "There is a type mismatch between the production's and the fuser's return type."
     let members = members.ToImmutableArray()
-    do nullCheck "fuser" fuser
-    let fuserBoxed = F.box fuser
     interface AbstractProduction with
         member _.Members = members
-        member _.Fuser = fuserBoxed
+        member _.Fuser = fuser
 
 [<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>

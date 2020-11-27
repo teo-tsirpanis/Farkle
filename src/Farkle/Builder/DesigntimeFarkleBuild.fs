@@ -28,7 +28,7 @@ type GrammarDefinition = {
 
 type private PostProcessorDefinition = {
     Transformers: ImmutableArray<TransformerData>
-    Fusers: ImmutableArray<F<obj>>
+    Fusers: ImmutableArray<FuserData>
 }
 
 [<RequireQualifiedAccess>]
@@ -178,7 +178,7 @@ module DesigntimeFarkleBuild =
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
-                    fusers.Add(if isNull aprod.Fuser then fNull else aprod.Fuser))
+                    fusers.Add(aprod.Fuser))
                 LALRSymbol.Nonterminal symbol
             | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                 LALRSymbol.Terminal groupMap.[lg]
@@ -210,7 +210,7 @@ module DesigntimeFarkleBuild =
                     Head = root
                     Handle = ImmutableArray.Create(t)
                 }
-                fusers.Add(fFirst)
+                fusers.Add(FuserData.First)
                 root
             | LALRSymbol.Nonterminal nont -> nont
 

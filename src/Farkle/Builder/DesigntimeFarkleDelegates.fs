@@ -93,15 +93,6 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
         member _.RawDelegate = rawDelegate
         member _.ReturnType = returnType
 
-module internal T =
-    /// Converts a `T` callback so that it returns an object.
-    let box (f: T<'T>) =
-        // https://stackoverflow.com/questions/12454794
-        if typeof<'T>.IsValueType then
-            T(fun context data -> f.Invoke(context, data) |> box)
-        else
-            unbox f
-
 module internal F =
     /// Converts an `F` delegate so that it returns an object.
     let box (f: F<'T>) =

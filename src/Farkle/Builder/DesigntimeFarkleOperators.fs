@@ -80,7 +80,7 @@ type Group =
             member _.Name = name
             member _.Metadata = GrammarMetadata.Default
             member _.GroupStart = groupStart
-            member _.Transformer = null} :> DesigntimeFarkle
+            member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
     /// <summary>Creates a line group that does not contain any significant
     /// information for the parsing application.</summary>
     /// <param name="name">The group's name.</param>
@@ -97,7 +97,7 @@ type Group =
             member _.Metadata = GrammarMetadata.Default
             member _.GroupStart = groupStart
             member _.GroupEnd = groupEnd
-            member _.Transformer = null} :> DesigntimeFarkle
+            member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.

@@ -92,7 +92,7 @@ type internal AbstractTerminal =
     /// <summary>The <see cref="Regex"/> that defines this terminal.</summary>
     abstract Regex: Regex
     /// The transformer to process the characters of this terminal.
-    abstract Transformer: T<obj>
+    abstract Transformer: TransformerData
 
 type internal Literal = Literal of string
 with
@@ -120,7 +120,7 @@ type internal AbstractGroup =
     /// specifies the beginning of the group.
     abstract GroupStart: string
     /// The transformer to process the characters of this group.
-    abstract Transformer: T<obj>
+    abstract Transformer: TransformerData
 
 /// The base, untyped interface of line groups.
 /// A line group starts with a literal and ends when the line changes.
@@ -177,21 +177,16 @@ with
         member x.InnerDesigntimeFarkle = x.InnerDesigntimeFarkle
     interface DesigntimeFarkle<'T>
 
-[<NoComparison; ReferenceEquality>]
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
-type internal Terminal<'T> = {
-    _Name: string
-    Regex: Regex
-    Transformer: T<obj>
-}
-with
+type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
+    let tData = TransformerData.Create fTransform
     interface AbstractTerminal with
-        member x.Regex = x.Regex
-        member x.Transformer = x.Transformer
+        member _.Regex = regex
+        member _.Transformer = tData
     interface DesigntimeFarkle with
-        member x.Name = x._Name
-        member __.Metadata = GrammarMetadata.Default
+        member _.Name = name
+        member _.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 
 [<AbstractClass; Sealed>]
@@ -208,12 +203,7 @@ type Terminal =
     static member Create (name, fTransform: T<'T>, regex) =
         nullCheck "name" name
         nullCheck "fTransform" fTransform
-        let term = {
-            _Name = name
-            Regex = regex
-            Transformer = T.box fTransform
-        }
-        term :> DesigntimeFarkle<'T>
+        Terminal(name, regex, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a terminal that does not contain any significant
     /// information for the parsing application.</summary>
     /// <param name="name">The terminal's name.</param>
@@ -224,7 +214,7 @@ type Terminal =
             member __.Name = name
             member __.Metadata = GrammarMetadata.Default
             member __.Regex = regex
-            member __.Transformer = null} :> DesigntimeFarkle
+            member __.Transformer = TransformerData.Null} :> DesigntimeFarkle
     /// <summary>Creates a terminal that recognizes a literal string.</summary>
     /// <param name="str">The string literal this terminal will recognize.</param>
     /// <remarks>It does not return anything.</remarks>
@@ -286,17 +276,17 @@ with
 
 [<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.
-type internal Group<'T>(name, groupStart, transformer: T<'T>) =
+type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
     do nullCheck "name" name
     do nullCheck "groupStart" groupStart
-    do nullCheck "transformer" transformer
-    let transformerBoxed = T.box transformer
+    do nullCheck "fTransform" fTransform
+    let tData = TransformerData.Create fTransform
     interface DesigntimeFarkle with
         member _.Name = name
         member _.Metadata = GrammarMetadata.Default
     interface AbstractGroup with
         member _.GroupStart = groupStart
-        member _.Transformer = transformerBoxed
+        member _.Transformer = tData
     interface DesigntimeFarkle<'T>
 
 [<Sealed; NoComparison>]

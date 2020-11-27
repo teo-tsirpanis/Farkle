@@ -27,7 +27,7 @@ type GrammarDefinition = {
 }
 
 type private PostProcessorDefinition = {
-    Transformers: ImmutableArray<T<obj>>
+    Transformers: ImmutableArray<TransformerData>
     Fusers: ImmutableArray<F<obj>>
 }
 
@@ -60,7 +60,6 @@ module DesigntimeFarkleBuild =
 
     // The type annotations are needed because the
     // compiler makes the former two generic values.
-    let private tNull: T<obj> = T(fun _ _ -> null)
     let private fNull: F<obj> = F(fun _ -> null)
     let private fFirst = F(fun x -> x.[0])
 
@@ -107,8 +106,7 @@ module DesigntimeFarkleBuild =
 
             let addTerminal term fTransformer =
                 terminals.Add term
-                if isNull fTransformer then tNull else fTransformer
-                |> transformers.Add
+                transformers.Add fTransformer
 
             let addTerminalGroup name term transformer gStart gEnd =
                 let container = Choice1Of2 term
@@ -161,7 +159,7 @@ module DesigntimeFarkleBuild =
                 | Choice1Of4 nlTerminal -> nlTerminal
                 | _ ->
                     let nlTerminal = newTerminal "NewLine"
-                    addTerminal nlTerminal tNull
+                    addTerminal nlTerminal TransformerData.Null
                     newLineSymbol <- Choice1Of4 nlTerminal
                     nlTerminal
                 |> LALRSymbol.Terminal
@@ -349,10 +347,10 @@ module DesigntimeFarkleBuild =
         df :? EligibleForDynamicCodeGeneration
 
     [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> df grammarDef =
+    let private createPostProcessor<'TOutput> df ppDef =
         PostProcessorCreator.create<'TOutput>
             (shouldUseDynamicCodeGeneration df)
-            grammarDef.Transformers grammarDef.Fusers
+            ppDef.Transformers ppDef.Fusers
 
     /// Creates a `Grammar` from a `GrammarDefinition`.
     [<CompiledName("BuildGrammarOnly")>]

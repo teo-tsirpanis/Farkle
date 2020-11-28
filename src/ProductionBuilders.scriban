@@ -31,8 +31,7 @@ https://opensource.org/licenses/MIT ~}}
     end ~}}
 {{~ func gen_builder
 
-        n = $0
-        fast = n > 1 && n <= 5 ~}}
+        n = $0 ~}}
 [<Sealed>]
 /// [omit]
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
@@ -68,16 +67,16 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         Production<{{ ap }}TOutput>(members, fuserData)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
-    member x.AsIs() = x.Finish(fun x -> x)
+    member _.AsIs() = Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1)
     {{~ end ~}}
     member x.FinishFSharp(f: {{ func_signature n }}): Production<{{ ap }}TOutput> =
-        {{~ if fast ~}}
+        {{~ if n == 1 ~}}
+        x.Finish(Delegate.ofInvokeMethod f)
+        {{~ else if n <= 5 ~}}
         let fOptimized =
             OptimizedClosures.FSharpFunc<{{ type_params n }}, _>.Adapt(f)
             |> Delegate.ofInvokeMethod
         x.Finish(fOptimized)
-        {{~ else if n == 1 ~}}
-        x.Finish(Delegate.ofInvokeMethod f)
         {{~ else
         func_call_arguments = gen_type_params_impl n "x" " " ~}}
         x.Finish(fun {{ func_call_arguments }} ->

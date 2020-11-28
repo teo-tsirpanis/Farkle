@@ -234,8 +234,6 @@ type Terminal =
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
 [<Sealed>]
 type Production<'T> internal(members: _ seq, fuser: FuserData) =
-    do if typeof<'T> <> fuser.ReturnType then
-        invalidArg "fuser" "There is a type mismatch between the production's and the fuser's return type."
     let members = members.ToImmutableArray()
     interface AbstractProduction with
         member _.Members = members

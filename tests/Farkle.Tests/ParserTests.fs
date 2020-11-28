@@ -30,8 +30,13 @@ let testParser grammarFile displayName text =
 
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
 
-let dynamicCodeJSON = lazy(
+let dynamicCodeJSONFSharp = lazy(
     FSharp.Language.designtime
+    |> RuntimeFarkle.markForPrecompile
+    |> RuntimeFarkle.build)
+
+let dynamicCodeJSONCSharp = lazy(
+    CSharp.Language.Designtime
     |> RuntimeFarkle.markForPrecompile
     |> RuntimeFarkle.build)
 
@@ -112,12 +117,16 @@ let tests = testList "Parser tests" [
         let farkleResult =
             RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
-        let farkleDynamicCodeResult =
-            RuntimeFarkle.parseString dynamicCodeJSON.Value jsonAsString
-            |> Flip.Expect.wantOk "Farkle's dynamic code parser failed"
+        let farkleFSharpDynamicCodeResult =
+            RuntimeFarkle.parseString dynamicCodeJSONFSharp.Value jsonAsString
+            |> Flip.Expect.wantOk "Farkle's F# dynamic code parser failed"
+        let farkleCSharpDynamicCodeResult =
+            RuntimeFarkle.parseString dynamicCodeJSONCSharp.Value jsonAsString
+            |> Flip.Expect.wantOk "Farkle's C# dynamic code parser failed"
 
         Expect.equal farkleResult json "The JSON structure generated from Farkle's parser is different"
-        Expect.equal farkleDynamicCodeResult json "The JSON structure generated from Farkle's dynamic code parser is different"
+        Expect.equal farkleFSharpDynamicCodeResult json "The JSON structure generated from Farkle's F# dynamic code parser is different"
+        Expect.equal farkleCSharpDynamicCodeResult json "The JSON structure generated from Farkle's C# dynamic code parser is different"
     )
 
     testProperty "The calculator works well" (fun expr ->

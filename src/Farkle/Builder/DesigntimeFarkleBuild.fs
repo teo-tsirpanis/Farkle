@@ -58,10 +58,7 @@ DesigntimeFarkle interface is not allowed."
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
 
-    // The type annotations are needed because the
-    // compiler makes the former two generic values.
-    let private fNull: F<obj> = F(fun _ -> null)
-    let private fFirst = F(fun x -> x.[0])
+    let private fdAsIs0 = FuserData.CreateAsIs 0
 
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise "NewLine"
@@ -210,7 +207,7 @@ module DesigntimeFarkleBuild =
                     Head = root
                     Handle = ImmutableArray.Create(t)
                 }
-                fusers.Add(FuserData.First)
+                fusers.Add(fdAsIs0)
                 root
             | LALRSymbol.Nonterminal nont -> nont
 

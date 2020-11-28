@@ -64,8 +64,6 @@ let private readOnlySpanOfObjectIndexer =
     // Type.GetType("System.ReadOnlySpan`1").MakeGenericType(typeof<obj>).GetProperty("Item").GetGetMethod()
     typeof<ReadOnlySpanOfObjectIndexer>.GetMethod("GetItem", BindingFlags.NonPublic ||| BindingFlags.Static)
 
-let private typedefofFuser = typedefof<F<_>>
-
 let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
     let attrType = _mod.DefineType("System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute", TypeAttributes.Public, typeof<Attribute>)
 
@@ -75,7 +73,8 @@ let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
 
 [<RequiresExplicitTypeArguments>]
 let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegateProvider> methodName argTypes fAssembly
-    fEmitArgs delegateArgCount (targetsFld: FieldInfo) (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
+    fIsSpecialCase fEmitArgs delegateArgCount (targetsFld: FieldInfo)
+    (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
@@ -108,7 +107,9 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
         ilg.MarkLabel(labels.[i])
 
         let d = delegates.[i]
-        if d.IsConstant then
+        if fIsSpecialCase d ilg then
+            ()
+        elif d.IsConstant then
             ilg.Emit(OpCodes.Ldloc, targetsLocal)
             ilg.Emit(OpCodes.Ldloc, indexLocal)
             ilg.Emit(OpCodes.Ldelem_Ref)
@@ -218,6 +219,7 @@ let private createDynamic<'T> transformers fusers =
 
     emitPPMethod<Grammar.Terminal,TransformerData>
         "Transform" transformParameters fNewAssembly
+        (fun _ _ -> false)
         (fun _ ilg ->
             ilg.Emit(OpCodes.Ldarg_2)
             ilg.Emit(OpCodes.Ldarg_3))
@@ -227,7 +229,16 @@ let private createDynamic<'T> transformers fusers =
     emitPPMethod<Grammar.Production,FuserData>
         "Fuse" fuseParameters fNewAssembly
         (fun d ilg ->
-            if d.RawDelegate.GetType() = typedefofFuser.MakeGenericType d.ReturnType then
+            match d.Parameters with
+            | [idx, _] when d.IsAsIs ->
+                ilg.Emit(OpCodes.Ldarga_S, 2uy)
+                ilg.Emit(OpCodes.Ldc_I4, idx)
+                ilg.Emit(OpCodes.Call, readOnlySpanOfObjectIndexer)
+                ilg.Emit(OpCodes.Ldind_Ref)
+                true
+            | _ -> false)
+        (fun d ilg ->
+            if d.IsRaw then
                 ilg.Emit(OpCodes.Ldarg_2)
             else
                 for (idx, typ) in d.Parameters do

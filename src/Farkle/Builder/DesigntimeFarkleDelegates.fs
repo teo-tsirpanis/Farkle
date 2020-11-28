@@ -41,8 +41,9 @@ type IRawDelegateProvider =
     abstract ReturnType: Type
 
 type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, returnType) =
-    static let tNull = T(fun _ _ -> null: obj)
-    static let tdNull = TransformerData(tNull, tNull, typeof<obj>)
+    static let tdNull =
+        let tNull = T(fun _ _ -> null: obj)
+        TransformerData(tNull, tNull, typeof<obj>)
     // This is used by the dynamic code generator.
     member _.RawDelegate = rawDelegate
     // And this is used by the static post-processor.
@@ -64,14 +65,13 @@ type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, retu
         member _.ReturnType = returnType
 
 type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType, parameters: (int * Type) list, constant) =
-    static let fNull = F(fun _ -> null: obj)
+    static let typedefofFuser = typedefof<F<_>>
     // Fusers returning null will be special-cased anyway.
     // There's no reason to model them as constants.
-    static let fdNull = FuserData(fNull, fNull, typeof<obj>, [], ValueNone)
-    static let fdFirst =
-        let fFirst = F(fun x -> x.[0])
-        let fId = Func<obj,obj>(fun x -> x)
-        FuserData(fId, fFirst, typeof<obj>, [0, typeof<obj>], ValueNone)
+    static let fdNull =
+        let fNull = F(fun _ -> null: obj)
+        FuserData(fNull, fNull, typeof<obj>, [], ValueNone)
+    static let fAsIs = Func<obj,obj>(fun x -> x)
     static let boxF (f: F<'T>) =
         if typeof<'T>.IsValueType then
             F(fun data -> f.Invoke data |> box)
@@ -82,12 +82,15 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
     member _.ReturnType = returnType
     member _.Parameters = parameters
     member _.Constant = constant
+    member _.IsAsIs = rawDelegate = upcast fAsIs
+    member _.IsRaw = Type.op_Equality(rawDelegate.GetType(), typedefofFuser.MakeGenericType(returnType))
     static member Null = fdNull
-    static member First = fdFirst
     static member Create (fRaw, f: F<'T>, parameters) =
         FuserData(fRaw, boxF f, typeof<'T>, parameters, ValueNone)
     static member CreateRaw (f: F<'T>) =
         FuserData(f, boxF f, typeof<'T>, [], ValueNone)
+    static member CreateAsIs idx =
+        FuserData.Create(fAsIs, F(fun x -> x.[idx]), [idx, typeof<obj>])
     static member CreateConstant (x: 'T) =
         let xBoxed = box x
         let fBoxed = F(fun _ -> xBoxed)

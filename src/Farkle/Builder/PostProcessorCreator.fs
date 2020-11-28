@@ -26,6 +26,14 @@ open System.Reflection.Emit
 open System.Runtime.CompilerServices
 open System.Threading
 
+// We can't directly access ReadOnlySpan's indexer due to
+// https://github.com/dotnet/runtime/issues/45283
+[<AbstractClass; Sealed>]
+type private ReadOnlySpanOfObjectIndexer =
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    static member GetItem(span: byref<ReadOnlySpan<obj>>, idx) =
+        &span.[idx]
+
 [<Literal>]
 let private fldPrivateReadonly = FieldAttributes.Private ||| FieldAttributes.InitOnly
 
@@ -53,7 +61,8 @@ let private stringFormatMethodOneObj =
     typeof<string>.GetMethod("Format", [|typeof<string>; typeof<obj>|])
 
 let private readOnlySpanOfObjectIndexer =
-    Type.GetType("System.ReadOnlySpan`1").MakeGenericType(typeof<obj>).GetProperty("Item").GetGetMethod()
+    // Type.GetType("System.ReadOnlySpan`1").MakeGenericType(typeof<obj>).GetProperty("Item").GetGetMethod()
+    typeof<ReadOnlySpanOfObjectIndexer>.GetMethod("GetItem", BindingFlags.NonPublic ||| BindingFlags.Static)
 
 let private typedefofFuser = typedefof<F<_>>
 
@@ -96,6 +105,7 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
     ilg.Emit(OpCodes.Br, indexOutOfRangeLabel)
 
     for i = 0 to delegates.Length - 1 do
+        ilg.MarkLabel(labels.[i])
 
         let d = delegates.[i]
         if d.IsConstant then
@@ -107,7 +117,6 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
         else
             let dMethod = d.RawDelegate.Method
             fAssembly dMethod.Module.Assembly
-            ilg.MarkLabel(labels.[i])
 
             // We have to push the delegate's target if the delegate represents
             // an instance method or a static method closed over its first argument.
@@ -214,6 +223,7 @@ let private createDynamic<'T> transformers fusers =
             ilg.Emit(OpCodes.Ldarg_3))
         2 transformerTargetsFld transformers ppType
 
+    fNewAssembly typeof<ReadOnlySpanOfObjectIndexer>.Assembly
     emitPPMethod<Grammar.Production,FuserData>
         "Fuse" fuseParameters fNewAssembly
         (fun d ilg ->

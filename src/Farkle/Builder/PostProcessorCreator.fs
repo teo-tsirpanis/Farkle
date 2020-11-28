@@ -10,12 +10,14 @@ open System.Collections.Immutable
 
 [<RequiresExplicitTypeArguments>]
 let private createDefault<'T> (transformers: ImmutableArray<TransformerData>) (fusers: ImmutableArray<FuserData>) =
+    let transformers = transformers |> Seq.map (fun x -> x.BoxedDelegate) |> Array.ofSeq
+    let fusers = fusers |> Seq.map (fun x -> x.BoxedDelegate) |> Array.ofSeq
     {
         new PostProcessor<'T> with
             member _.Transform(term, context, data) =
-                transformers.[int term.Index].BoxedDelegate.Invoke(context, data)
+                transformers.[int term.Index].Invoke(context, data)
             member _.Fuse(prod, members) =
-                fusers.[int prod.Index].BoxedDelegate.Invoke(members)
+                fusers.[int prod.Index].Invoke(members)
     }
 
 #if MODERN_FRAMEWORK
@@ -73,28 +75,21 @@ let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
 
 [<RequiresExplicitTypeArguments>]
 let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegateProvider> methodName argTypes fAssembly
-    fIsSpecialCase fEmitArgs delegateArgCount (targetsFld: FieldInfo)
+    fIsSpecialCase fEmitArgs delegateArgCount (targetFields: FieldInfo option [])
     (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
     let ilg = method.GetILGenerator()
 
-    let getIndexMethod = typeof<'TSymbol>.GetProperty("Index").GetGetMethod()
-    // object[] targets;
-    let targetsLocal = ilg.DeclareLocal(typeof<obj[]>)
     // int index;
     let indexLocal = ilg.DeclareLocal(typeof<int>)
     let labels = Array.init delegates.Length (fun _ -> ilg.DefineLabel())
     let indexOutOfRangeLabel = ilg.DefineLabel()
-    // targets = this._***Targets;
-    ilg.Emit(OpCodes.Ldarg_0)
-    ilg.Emit(OpCodes.Ldfld, targetsFld)
-    ilg.Emit(OpCodes.Stloc, targetsLocal)
 
     // index = symbol.Index;
     ilg.Emit(OpCodes.Ldarg_1)
-    ilg.Emit(OpCodes.Callvirt, getIndexMethod)
+    ilg.Emit(OpCodes.Callvirt, typeof<'TSymbol>.GetProperty("Index").GetGetMethod())
     ilg.Emit(OpCodes.Stloc, indexLocal)
 
     // We branch depending on the index.
@@ -110,9 +105,11 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
         if fIsSpecialCase d ilg then
             ()
         elif d.IsConstant then
-            ilg.Emit(OpCodes.Ldloc, targetsLocal)
-            ilg.Emit(OpCodes.Ldloc, indexLocal)
-            ilg.Emit(OpCodes.Ldelem_Ref)
+            match targetFields.[i] with
+            | None -> ilg.Emit(OpCodes.Ldnull)
+            | Some fld ->
+                ilg.Emit(OpCodes.Ldarg_0)
+                ilg.Emit(OpCodes.Ldfld, fld)
         elif d.IsNull then
             ilg.Emit(OpCodes.Ldnull)
         else
@@ -130,17 +127,19 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
                     methParams.[0].ParameterType
                 | true, _ -> null
             if not (isNull targetType) then
-                ilg.Emit(OpCodes.Ldloc, targetsLocal)
-                ilg.Emit(OpCodes.Ldloc, indexLocal)
-                ilg.Emit(OpCodes.Ldelem_Ref)
-                if targetType.IsValueType then
-                    // If the target is a struct we have to unbox it.
-                    // We use the unbox opcode, returning a reference
-                    // to the boxed struct which is passed to the method
-                    // (remember that struct instance methods take a
-                    // reference to that struct). This boxed struct can
-                    // be modified, just like how delegates behave.
-                    ilg.Emit(OpCodes.Unbox, targetType)
+                match targetFields.[i] with
+                | None -> ilg.Emit(OpCodes.Ldnull)
+                | Some fld ->
+                    ilg.Emit(OpCodes.Ldarg_0)
+                    ilg.Emit(OpCodes.Ldfld, fld)
+                    if targetType.IsValueType then
+                        // If the target is a struct we have to unbox it.
+                        // We use the unbox opcode, returning a reference
+                        // to the boxed struct which is passed to the method
+                        // (remember that struct instance methods take a
+                        // reference to that struct). This boxed struct can
+                        // be modified, just like how delegates behave.
+                        ilg.Emit(OpCodes.Unbox, targetType)
 
             // We push the method's other arguments.
             // They vary, depending on whether we have a transformer of a fuser.
@@ -178,8 +177,41 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
     ilg.Emit(OpCodes.Newobj, argOutOfRangeCtor)
     ilg.Emit(OpCodes.Throw)
 
+let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGenerator)
+    (targets: obj[]) (argIdx: int16) namePrefix =
+    let fields = Array.zeroCreate targets.Length
+    let fieldDigitCount =
+        targets.Length |> float |> Math.Log10 |> Math.Ceiling |> int
+
+    // We load the fields in descending order to avoid many range checks.
+    for i = targets.Length - 1 downto 0 do
+        match targets.[i] with
+        | null -> ()
+        | target ->
+            // By prepending zeroes, the debugger vill show the fields in order.
+            let fieldName = sprintf "_%sTarget%0*d" namePrefix fieldDigitCount i
+            let fieldType =
+                match target.GetType() with
+                // We will store value-typed targets in their boxed form.
+                // It will keep the transformers
+                | x when x.IsValueType -> typeof<obj>
+                | x -> x
+            let field = typeBuilder.DefineField(fieldName, fieldType, fldPrivateReadonly) :> FieldInfo
+
+            ctorIlg.Emit(OpCodes.Ldarg_0)
+            ctorIlg.Emit(OpCodes.Ldarg, argIdx)
+            ctorIlg.Emit(OpCodes.Ldc_I4, i)
+            ctorIlg.Emit(OpCodes.Ldelem_Ref)
+            if not fieldType.IsValueType then
+                ctorIlg.Emit(OpCodes.Castclass, fieldType)
+            ctorIlg.Emit(OpCodes.Stfld, field)
+
+            fields.[i] <- Some field
+
+    fields
+
 [<RequiresExplicitTypeArguments>]
-let private createDynamic<'T> transformers fusers =
+let private createDynamic<'T> (transformers: ImmutableArray<TransformerData>) (fusers: ImmutableArray<FuserData>) =
     // I am not sure of the effects of name collisions in dynamic assemblies but we will
     // nevertheless name each generated assembly with a different name. A GUID would have
     // been an easier solution but it is long and has special characters.
@@ -203,19 +235,27 @@ let private createDynamic<'T> transformers fusers =
     ppType.AddInterfaceImplementation(typeof<ITransformer<Grammar.Terminal>>)
     ppType.AddInterfaceImplementation(typeof<PostProcessor<'T>>)
 
-    let transformerTargetsFld = ppType.DefineField("_transformerTargets", typeof<obj[]>, fldPrivateReadonly)
-    let fuserTargetsFld = ppType.DefineField("_fuserTargets", typeof<obj[]>, fldPrivateReadonly)
-    do
-        let ctor = ppType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ppCtorParameters)
+    let transformerTargets =
+        transformers
+        |> Seq.map (fun x -> x.RawDelegate.Target)
+        |> Array.ofSeq
+    let fuserTargets =
+        fusers
+        |> Seq.map (fun x ->
+            match x.Constant with
+            | ValueSome x -> x
+            | ValueNone -> x.RawDelegate.Target)
+        |> Array.ofSeq
 
+    let transformerTargetFields, fuserTargetFields =
+        let ctor = ppType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ppCtorParameters)
         let ilg = ctor.GetILGenerator()
-        ilg.Emit(OpCodes.Ldarg_0)
-        ilg.Emit(OpCodes.Ldarg_1)
-        ilg.Emit(OpCodes.Stfld, transformerTargetsFld)
-        ilg.Emit(OpCodes.Ldarg_0)
-        ilg.Emit(OpCodes.Ldarg_2)
-        ilg.Emit(OpCodes.Stfld, fuserTargetsFld)
+        let transformerTargetFields = createDelegateTargetFields ppType ilg transformerTargets 1s "transformer"
+        let fuserTargetFields = createDelegateTargetFields ppType ilg fuserTargets 2s "fuser"
+
         ilg.Emit(OpCodes.Ret)
+
+        transformerTargetFields, fuserTargetFields
 
     emitPPMethod<Grammar.Terminal,TransformerData>
         "Transform" transformParameters fNewAssembly
@@ -223,7 +263,7 @@ let private createDynamic<'T> transformers fusers =
         (fun _ ilg ->
             ilg.Emit(OpCodes.Ldarg_2)
             ilg.Emit(OpCodes.Ldarg_3))
-        2 transformerTargetsFld transformers ppType
+        2 transformerTargetFields transformers ppType
 
     fNewAssembly typeof<ReadOnlySpanOfObjectIndexer>.Assembly
     emitPPMethod<Grammar.Production,FuserData>
@@ -247,19 +287,7 @@ let private createDynamic<'T> transformers fusers =
                     ilg.Emit(OpCodes.Call, readOnlySpanOfObjectIndexer)
                     ilg.Emit(OpCodes.Ldind_Ref)
                     ilg.Emit(OpCodes.Unbox_Any, typ))
-        1 fuserTargetsFld fusers ppType
-
-    let transformerTargets =
-        transformers
-        |> Seq.map (fun x -> x.RawDelegate.Target)
-        |> Array.ofSeq
-    let fuserTargets =
-        fusers
-        |> Seq.map (fun x ->
-            match x.Constant with
-            | ValueSome x -> x
-            | ValueNone -> x.RawDelegate.Target)
-        |> Array.ofSeq
+        1 fuserTargetFields fusers ppType
 
     let ppTypeReal = ppType.CreateType()
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)

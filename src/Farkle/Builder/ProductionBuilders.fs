@@ -29,6 +29,7 @@ open System.Collections.Immutable
 ///     One that takes an F# function and another one that takes a delegate.</para>
 /// </remarks>
 type ProductionBuilder internal(members) =
+    static let empty = ProductionBuilder(ImmutableList.Empty)
     /// Creates a production builder whose members are the given objects.
     /// The objects must be either strings or characters (where they will be
     /// interpreted as literals), or designtime Farkles. Passing an object of
@@ -46,7 +47,7 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
             |> ImmutableList.CreateRange
         ProductionBuilder(members)
     /// A production builder with no members.
-    static member Empty = ProductionBuilder(ImmutableList.Empty)
+    static member Empty = empty
     member _.Append(sym) = ProductionBuilder(members.Add sym)
     member x.Append(lit) = x.Append(Literal lit)
     member _.Extend(df: DesigntimeFarkle<'T1>) =

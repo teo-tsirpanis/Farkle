@@ -33,7 +33,7 @@ type private PostProcessorDefinition = {
 
 [<RequireQualifiedAccess>]
 /// A strongly-typed representation of a `DesigntimeFarkle`.
-type internal Symbol =
+type private Symbol =
     | Terminal of AbstractTerminal
     | Nonterminal of AbstractNonterminal
     | LineGroup of AbstractLineGroup
@@ -41,8 +41,8 @@ type internal Symbol =
     | Literal of string
     | NewLine
 
-module internal Symbol =
-    let rec specialize (x: DesigntimeFarkle): Symbol =
+module private Symbol =
+    let rec create (x: DesigntimeFarkle): Symbol =
         match x with
         | :? AbstractTerminal as term -> Symbol.Terminal term
         | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
@@ -50,8 +50,8 @@ module internal Symbol =
         | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
         | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
         | :? NewLine -> Symbol.NewLine
-        | :? DesigntimeFarkleWrapper as x -> specialize x.InnerDesigntimeFarkle
-        | _ -> invalidArg "x" "Using a custom implementation of the \
+        | :? DesigntimeFarkleWrapper as x -> create x.InnerDesigntimeFarkle
+        | _ -> invalidOp "Using a custom implementation of the \
 DesigntimeFarkle interface is not allowed."
 
 /// Functions to create `Grammar`s
@@ -139,7 +139,7 @@ module DesigntimeFarkleBuild =
                 symbol
 
             let dfName = df.Name
-            match Symbol.specialize df with
+            match Symbol.create df with
             | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
             | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal

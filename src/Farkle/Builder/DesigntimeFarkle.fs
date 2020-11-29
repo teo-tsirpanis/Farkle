@@ -32,8 +32,8 @@ type GrammarMetadata = {
     AutoWhitespace: bool
     /// The comments this grammar accepts.
     Comments: Comment ImmutableList
-    /// Any other symbols definable by a regular expression that can
-    /// appear anywhere outside of any terminal and will be discarded.
+    /// Any other symbols definable by a regular expression that will
+    /// be discarded if they appear anywhere outside of any terminal.
     NoiseSymbols: (string * Regex) ImmutableList
 }
 with
@@ -69,11 +69,16 @@ type DesigntimeFarkle =
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
-/// <summary>An object representing a grammar created by Farkle.Builder.</summary>
+/// <summary>An object representing a grammar symbol created by Farkle.Builder.
+/// It is usually either a terminal or a nonterminal, containing other
+/// designtime Farkles.</summary>
 /// <remarks><para>Designtime Farkles cannot be used to parse text but can be
 /// composed into larger designtime Farkles. To actually use them, they
 /// have to be converted to a <see cref="RuntimeFarkle{T}"/> which however
-/// is not composable.</para>
+/// is not composable. This conversion is performed by the <c>RuntimeFarkle.Build</c>
+/// function or the <c>Build</c> extension method.</para>
+/// <para>This interface has no members on its own; they are
+/// inherited from <see cref="DesigntimeFarkle"/></para>
 /// <para>User code must not implement this interface,
 /// or an exception might be thrown.</para></remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>

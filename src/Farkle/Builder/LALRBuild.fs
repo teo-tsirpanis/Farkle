@@ -257,7 +257,6 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
 
 /// Builds an LALR parsing table from the grammar with the given
 /// starting symbol that contains the given `Production`s.
-/// Having a symbol with an index of `UInt32.MaxValue` will cause an exception.
 let buildProductionsToLALRStates startSymbol terminals nonterminals productions =
     IA nonterminals
     IA productions

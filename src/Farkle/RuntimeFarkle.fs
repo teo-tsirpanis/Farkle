@@ -186,13 +186,6 @@ module RuntimeFarkle =
         let asm = Assembly.GetCallingAssembly()
         PrecompilerInterface.prepareU df asm
 
-    /// This designtime Farkle is used in the tests to test
-    /// whether an object from a different assembly is eligible
-    /// for precompilation (it isn't, unless it is marked again).
-    let internal dummyPrecompilable =
-        "Dummy" ||= [empty =% 521]
-        |> markForPrecompile
-
     /// Parses and post-processes a `CharStream`.
     [<CompiledName("ParseChars")>]
     let parseChars (rf: RuntimeFarkle<'TResult>) input =
@@ -307,8 +300,8 @@ data; not text. Parse a TextReader instead.")>]
     /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.ChangePostProcessor pp = changePostProcessor pp this
-    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to a dummy
-    /// one that is useful for syntax-checking, not parsing.</summary>
+    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
+    /// a dummy one that is useful for syntax-checking, not parsing.</summary>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.SyntaxCheck() =
         changePostProcessor syntaxCheckerObj this

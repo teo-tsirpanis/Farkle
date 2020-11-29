@@ -55,7 +55,7 @@ let configuration = DotNet.BuildConfiguration.Release
 let configurationAsString = sprintf "%A" configuration
 
 let sourceFilesToGenerate = [
-    "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.fs"
+    "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/DesigntimeFarkle/ProductionBuilders.g.fs"
 ]
 
 let DocumentationAssemblyFramework = "netstandard2.0"

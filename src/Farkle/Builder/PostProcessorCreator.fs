@@ -6,12 +6,11 @@
 module internal Farkle.Builder.PostProcessorCreator
 
 open Farkle
-open System.Collections.Immutable
 
 [<RequiresExplicitTypeArguments>]
-let private createDefault<'T> (transformers: ImmutableArray<TransformerData>) (fusers: ImmutableArray<FuserData>) =
-    let transformers = transformers |> Seq.map (fun x -> x.BoxedDelegate) |> Array.ofSeq
-    let fusers = fusers |> Seq.map (fun x -> x.BoxedDelegate) |> Array.ofSeq
+let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserData []) =
+    let transformers = transformers |> Array.map (fun x -> x.BoxedDelegate)
+    let fusers = fusers |> Array.map (fun x -> x.BoxedDelegate)
     {
         new PostProcessor<'T> with
             member _.Transform(term, context, data) =
@@ -76,7 +75,7 @@ let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
 [<RequiresExplicitTypeArguments>]
 let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegateProvider> methodName argTypes fAssembly
     fIsSpecialCase fEmitArgs delegateArgCount (targetFields: FieldInfo option [])
-    (delegates: ImmutableArray<'TDelegate>) (ppType: TypeBuilder) =
+    (delegates: 'TDelegate []) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
@@ -211,7 +210,7 @@ let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGe
     fields
 
 [<RequiresExplicitTypeArguments>]
-let private createDynamic<'T> (transformers: ImmutableArray<TransformerData>) (fusers: ImmutableArray<FuserData>) =
+let private createDynamic<'T> (transformers: TransformerData []) (fusers: FuserData []) =
     // I am not sure of the effects of name collisions in dynamic assemblies but we will
     // nevertheless name each generated assembly with a different name. A GUID would have
     // been an easier solution but it is long and has special characters.
@@ -237,15 +236,13 @@ let private createDynamic<'T> (transformers: ImmutableArray<TransformerData>) (f
 
     let transformerTargets =
         transformers
-        |> Seq.map (fun x -> x.RawDelegate.Target)
-        |> Array.ofSeq
+        |> Array.map (fun x -> x.RawDelegate.Target)
     let fuserTargets =
         fusers
-        |> Seq.map (fun x ->
+        |> Array.map (fun x ->
             match x.Constant with
             | ValueSome x -> x
             | ValueNone -> x.RawDelegate.Target)
-        |> Array.ofSeq
 
     let transformerTargetFields, fuserTargetFields =
         let ctor = ppType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ppCtorParameters)

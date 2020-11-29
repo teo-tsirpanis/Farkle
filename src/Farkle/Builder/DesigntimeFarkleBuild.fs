@@ -27,8 +27,8 @@ type GrammarDefinition = {
 }
 
 type private PostProcessorDefinition = {
-    Transformers: ImmutableArray<TransformerData>
-    Fusers: ImmutableArray<FuserData>
+    Transformers: TransformerData []
+    Fusers: FuserData []
 }
 
 [<RequireQualifiedAccess>]
@@ -89,14 +89,14 @@ module DesigntimeFarkleBuild =
             | false -> StringComparer.OrdinalIgnoreCase
             |> Dictionary
         let terminalMap = Dictionary()
-        let transformers = ImmutableArray.CreateBuilder()
+        let transformers = ResizeArray()
         let nonterminals = ImmutableArray.CreateBuilder()
         let nonterminalMap = Dictionary()
         let noiseSymbols = ImmutableArray.CreateBuilder()
         let groups = ImmutableArray.CreateBuilder()
         let groupMap = Dictionary<AbstractGroup,_>()
         let productions = ImmutableArray.CreateBuilder()
-        let fusers = ImmutableArray.CreateBuilder()
+        let fusers = ResizeArray()
 
         let rec getLALRSymbol (df: DesigntimeFarkle) =
             let newTerminal name = Terminal(uint32 terminals.Count, name)
@@ -289,8 +289,8 @@ module DesigntimeFarkleBuild =
             DFASymbols = dfaSymbols
         },
         {
-            Transformers = transformers.ToImmutable()
-            Fusers = fusers.ToImmutable()
+            Transformers = transformers.ToArray()
+            Fusers = fusers.ToArray()
         }
 
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.

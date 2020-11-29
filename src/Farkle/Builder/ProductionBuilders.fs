@@ -59,7 +59,6 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     /// </remarks>
     member _.FinishRaw(fuser: F<'TOutput>) =
         Production<'TOutput>(members, FuserData.CreateRaw fuser)
-    // TODO: Optimize it
     member x.FinishFSharp f = x.FinishRaw(fun _ -> f())
     member _.Finish(f: Func<'TOutput>) =
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])

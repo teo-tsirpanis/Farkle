@@ -12,6 +12,10 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
 
+/// This interface is implemented by precompilable designtime Farkles.
+/// It indicates that dynamic code generation optimizations may be applied.
+type internal EligibleForDynamicCodeGeneration = interface end
+
 [<NoComparison; ReferenceEquality>]
 /// An object containing the symbols of a grammar,
 /// but lacking the LALR and DFA states.

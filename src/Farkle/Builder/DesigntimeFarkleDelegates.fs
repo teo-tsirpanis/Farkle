@@ -100,11 +100,3 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
         member _.IsConstant = constant.IsSome
         member _.RawDelegate = rawDelegate
         member _.ReturnType = returnType
-
-module internal F =
-    /// Converts an `F` delegate so that it returns an object.
-    let box (f: F<'T>) =
-        if typeof<'T>.IsValueType then
-            F(fun data -> f.Invoke(data) |> box)
-        else
-            unbox f

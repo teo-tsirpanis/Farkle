@@ -39,11 +39,16 @@
     <Compile Include="Builder/DFABuild.fs" />
     <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
+    <Compile Include="Builder/GrammarMetadata.fs" />
     <Compile Include="Builder/DesigntimeFarkleDelegates.fs" />
-    <Compile Include="Builder/DesigntimeFarkle.fs" />
+    <Compile Include="Builder/DesigntimeFarklePrimitives.fs" />
+    <Compile Include="Builder/DesigntimeFarkleTerminals.fs" />
+    <Compile Include="Builder/DesigntimeFarkleNonterminals.fs" />
+    <Compile Include="Builder/DesigntimeFarkleGroups.fs" />
     <Compile Include="Builder/ProductionBuilders.g.fs" AutoGen="true" />
     <Compile Include="Builder/ProductionBuilders.fs" />
     <Compile Include="Builder/DesigntimeFarkleUntyped.fs" />
+    <Compile Include="Builder/DesigntimeFarkleHelpers.fs" />
     <Compile Include="Builder/DesigntimeFarkleOperators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Builder/PostProcessorCreator.fs" />

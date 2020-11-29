@@ -14,7 +14,6 @@ open System
 open System.Collections.Generic
 open System.Diagnostics
 open System.IO
-open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
 /// The source a `CharStream` reads characters from.

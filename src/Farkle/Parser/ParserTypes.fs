@@ -9,20 +9,30 @@ open Farkle
 open Farkle.Grammar
 
 /// A token is an instance of a `Terminal`.
-/// Tokens carry post-processed terminals, as well as their position within the text file.
-type Token =
-    {
-        /// The `Terminal` whose instance is this token.
-        Symbol: Terminal
-        /// The `Position` of the token in the input string.
-        Position: Position
-        /// The actual content of the token.
-        Data: obj
-    }
-    with
-        /// A shortcut for creating a token.
-        static member Create pos sym data = {Symbol = sym; Position = pos; Data = data}
-        override x.ToString() = if isNull x.Data then "" else sprintf "\"%O\"" x.Data
+/// Tokens carry post-processed terminals,
+/// as well as their position in the text.
+type Token(position, symbol, data) =
+    static let eofTerminal =
+        // "EOF!" in ASCII.
+        Terminal(0x454F4621u, "EOF")
+    static let eofSentinel = obj()
+    /// The `Position` of the token in the input string.
+    member _.Position: Position = position
+    /// The `Terminal` whose instance is this token.
+    member _.Symbol: Terminal = symbol
+    /// The object the `PostProcessor` created for this token.
+    member _.Data: obj = data
+    /// Whether the token signifies that input ended.
+    /// When this property is set to true, the `Token.Symbol`
+    /// and `Token.Data` properties have undefined values.
+    member _.IsEOF = data = eofSentinel
+    /// Creates a token that signifies the end of input at the given position.
+    static member CreateEOF position = Token(position, eofTerminal, eofSentinel)
+    override x.ToString() =
+        if x.IsEOF then
+            sprintf "(%O) (EOF)" position
+        else
+            sprintf "(%O) %O: \"%O\"" position symbol data
 
 [<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.

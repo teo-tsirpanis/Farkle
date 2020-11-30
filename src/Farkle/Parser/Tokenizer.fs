@@ -118,12 +118,12 @@ type Tokenizer(grammar: Grammar) =
                     with
                     | :? ParserApplicationException -> reraise()
                     | e -> PostProcessorException(term, e) |> raise
-                let theHolyToken = Token.Create input.LastTokenPosition term data
-                Some theHolyToken
+                let theHolyToken = Token(input.LastTokenPosition, term, data)
+                theHolyToken
             let dfaResult = tokenizeDFA input
             // Input ends outside of a group.
             if dfaResult.ReachedEOF then
-                None
+                Token.CreateEOF input.CurrentPosition
             else
                 let ofs = dfaResult.LastCharacterOffset
                 match dfaResult.FoundToken, dfaResult.Symbol with
@@ -153,7 +153,8 @@ type Tokenizer(grammar: Grammar) =
                 // A group end symbol is encountered but outside of any group.
                 | true, Choice4Of4 groupEnd ->
                     fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
-                    None
+                    // This line will not be executed.
+                    Token.CreateEOF input.CurrentPosition
                 // We found an unrecognized symbol while being outside a group. This is an error.
                 | false, _ ->
                     let errorPos = input.GetPositionAtOffset ofs
@@ -174,9 +175,8 @@ type Tokenizer(grammar: Grammar) =
     /// tokenizer can do it by calling the base method.</remarks>
     /// <param name="transformer">This parameter is used for the
     /// post-processor. It should be passed to the base method if called.</param>
-    /// <param name="input">The <see cref="CharStream"/> whose characters will be processed</param>
-    /// <returns>The next token, or <c>None</c> if input ended.</returns>
-    abstract GetNextToken: transformer: ITransformer<Terminal> * input: CharStream -> Token option
+    /// <param name="input">The <see cref="CharStream"/> whose characters will be processed.</param>
+    abstract GetNextToken: transformer: ITransformer<Terminal> * input: CharStream -> Token
     default _.GetNextToken(transformer, input) = tokenize transformer input
 
 [<Sealed>]

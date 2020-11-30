@@ -47,23 +47,23 @@ module LALRParser =
         use objBuffer = new ObjectBuffer()
         let oops = OptimizedOperations.Create grammar
         let lalrStates = grammar.LALRStates
-        let fail msg: obj = (input.LastTokenPosition, msg) |> ParserError |> ParserException |> raise
-        let rec impl token currentState stack =
+        let rec impl (token: Token) currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
             let nextAction =
-                match token with
-                | Some({Symbol = x}) -> oops.GetLALRAction x currentState
-                | None -> currentState.EOFAction
+                if not token.IsEOF then
+                    oops.GetLALRAction token.Symbol currentState
+                else
+                    currentState.EOFAction
             match nextAction with
             | Some LALRAction.Accept -> stack |> List.head |> snd
             | Some(LALRAction.Shift (LALRState nextState)) ->
-                match token with
-                | Some {Data = data} ->
+                if not token.IsEOF then
                     let nextToken = tokenizer.GetNextToken(pp, input)
                     // We can't use <| because it prevents optimization into a loop.
                     // See https://github.com/dotnet/fsharp/issues/6984 for details.
-                    impl nextToken nextState ((nextState, data) :: stack)
-                | None -> failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
+                    impl nextToken nextState ((nextState, token.Data) :: stack)
+                else
+                    failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
             | Some(LALRAction.Reduce productionToReduce) ->
                 let handleLength = productionToReduce.Handle.Length
                 let stack' = List.skip handleLength stack
@@ -87,9 +87,11 @@ module LALRParser =
                     |> set
                     |> (fun s -> if currentState.EOFAction.IsSome then Set.add ExpectedSymbol.EndOfInput s else s)
                 let foundToken =
-                    match token with
-                    | Some {Symbol = term} -> ExpectedSymbol.Terminal term
-                    | None -> ExpectedSymbol.EndOfInput
-                (expectedSymbols, foundToken) |> ParseErrorType.SyntaxError |> fail
+                    if not token.IsEOF then
+                        ExpectedSymbol.Terminal token.Symbol
+                    else
+                        ExpectedSymbol.EndOfInput
+                let syntaxError = ParseErrorType.SyntaxError(expectedSymbols, foundToken)
+                ParserError(token.Position, syntaxError) |> ParserException |> raise
         let firstToken = tokenizer.GetNextToken(pp, input)
         impl firstToken lalrStates.[0] [lalrStates.[0], null] :?> 'TResult

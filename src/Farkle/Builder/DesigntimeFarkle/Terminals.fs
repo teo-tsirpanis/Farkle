@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle.Common
 open System
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
@@ -28,6 +29,21 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
         member _.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
 
+/// <summary>A terminal that is not backed by the tokenizer.</summary>
+/// <remarks><para>Virtual terminals don't have a regex associated with them
+/// and the tokenizer will never extract a virtual terminal from source text.
+/// Instead, they have to be created by the developer from a custom descendant
+/// of the <see cref="Farkle.Parser.Tokenizer"/> class.</para>
+/// <para>They are useful for indentation-based languages like Python and F#.
+/// TODO: add an example in documentation.</para></remarks>
+type internal VirtualTerminal internal(name) =
+    do nullCheck "name" name
+    /// The virtual terminal's name.
+    member _.Name = name
+    interface DesigntimeFarkle with
+        member _.Name = name
+        member _.Metadata = GrammarMetadata.Default
+
 type internal Literal = Literal of string
 with
     interface DesigntimeFarkle with
@@ -37,12 +53,12 @@ with
             // when an empty literal string is created.
             | Literal x when String.IsNullOrEmpty(x) -> "Empty String"
             | Literal x -> x
-        member __.Metadata = GrammarMetadata.Default
+        member _.Metadata = GrammarMetadata.Default
 
 /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
 /// that represents a new line.</summary>
 type internal NewLine = NewLine
 with
     interface DesigntimeFarkle with
-        member __.Name = "NewLine"
-        member __.Metadata = GrammarMetadata.Default
+        member _.Name = "NewLine"
+        member _.Metadata = GrammarMetadata.Default

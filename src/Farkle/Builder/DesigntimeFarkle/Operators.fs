@@ -32,6 +32,9 @@ module DesigntimeFarkleOperators =
     /// but not returning anything.
     let terminalU name regex = Terminal.Create(name, regex)
 
+    /// An alias for the `Terminal.Virtual` function.
+    let virtualTerminal name = Terminal.Virtual name
+
     /// An alias for the `Terminal.Literal` function.
     let literal str = Terminal.Literal str
 

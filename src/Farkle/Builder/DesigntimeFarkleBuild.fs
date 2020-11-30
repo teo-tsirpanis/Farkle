@@ -42,6 +42,7 @@ type private Symbol =
     | Nonterminal of AbstractNonterminal
     | LineGroup of AbstractLineGroup
     | BlockGroup of AbstractBlockGroup
+    | VirtualTerminal of VirtualTerminal
     | Literal of string
     | NewLine
 
@@ -52,6 +53,7 @@ module private Symbol =
         | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
         | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
         | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
+        | :? VirtualTerminal as vt -> Symbol.VirtualTerminal vt
         | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
         | :? NewLine -> Symbol.NewLine
         | :? DesigntimeFarkleWrapper as x -> create x.InnerDesigntimeFarkle
@@ -93,6 +95,7 @@ module DesigntimeFarkleBuild =
             | false -> StringComparer.OrdinalIgnoreCase
             |> Dictionary
         let terminalMap = Dictionary()
+        let virtualTerminalMap = Dictionary()
         let transformers = ResizeArray()
         let nonterminals = ImmutableArray.CreateBuilder()
         let nonterminalMap = Dictionary()
@@ -147,6 +150,14 @@ module DesigntimeFarkleBuild =
             | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
                 LALRSymbol.Terminal terminalMap.[term]
             | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal
+            | Symbol.VirtualTerminal vt when virtualTerminalMap.ContainsKey(vt) ->
+                LALRSymbol.Terminal virtualTerminalMap.[vt]
+            | Symbol.VirtualTerminal vt ->
+                let symbol = newTerminal dfName
+                virtualTerminalMap.Add(vt, symbol)
+                // The post-processor will never see a virtual terminal anyway.
+                addTerminal symbol TransformerData.Null
+                LALRSymbol.Terminal symbol
             | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
                 LALRSymbol.Terminal literalMap.[lit]
             | Symbol.Literal lit ->

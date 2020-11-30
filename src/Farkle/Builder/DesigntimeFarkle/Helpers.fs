@@ -29,10 +29,16 @@ type Terminal =
     static member Create(name, regex) =
         nullCheck "name" name
         {new AbstractTerminal with
-            member __.Name = name
-            member __.Metadata = GrammarMetadata.Default
-            member __.Regex = regex
-            member __.Transformer = TransformerData.Null} :> DesigntimeFarkle
+            member _.Name = name
+            member _.Metadata = GrammarMetadata.Default
+            member _.Regex = regex
+            member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
+    /// <summary>Creates a virtual terminal. This method is
+    /// intended for use in advanced scenarios.</summary>
+    /// <param name="name">The virtual terminal's name</param>
+    /// <seealso cref="Farkle.Builder.VirtualTerminal"/>
+    static member Virtual name =
+        VirtualTerminal name :> DesigntimeFarkle
     /// <summary>Creates a terminal that recognizes a literal string.</summary>
     /// <param name="str">The string literal this terminal will recognize.</param>
     /// <remarks>It does not return anything.</remarks>

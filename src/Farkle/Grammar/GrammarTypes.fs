@@ -328,6 +328,25 @@ with
     member x.LALRStates = x._LALRStates
     /// The grammar's DFA state table.
     member x.DFAStates = x._DFAStates
+    /// <summary>Finds a <see cref="Terminal"/> with a specific name.</summary>
+    /// <param name="name">The terminal's name.</param>
+    /// <exception cref="ArgumentOutOfRangeException">No
+    /// terminal named <paramref name="name"/> exists.</exception>
+    /// <exception cref="InvalidOperationException">Many
+    /// terminals named <paramref name="name"/> exist.</exception>
+    /// <remarks>This method is useful for those that write custom
+    /// <see cref="Farkle.Parser.Tokenizer"/>. It executes in linear
+    /// time. For this reason, it is advised to be called once per terminal name.</remarks>
+    member x.GetTerminalByName name =
+        x.Symbols.Terminals
+        |> Seq.filter (fun (Terminal(_, termName)) -> name = termName)
+        |> List.ofSeq
+        |> function
+        | [term] -> term
+        | [] ->
+            raise (ArgumentOutOfRangeException("name", name, "No terminal with such name was found."))
+        | _ ->
+            invalidOp (sprintf "Many terminals named %s exist" name)
     interface IGrammarProvider with
         member _.IsBuildSuccessful = true
         member x.GetGrammar() = x

@@ -56,6 +56,7 @@
     <Compile Include="Builder/PrecompilerInterface.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />
     <Compile Include="Parser/Tokenizer.fs" />
+    <Compile Include="Parser/TokenizerFactory.fs" />
     <Compile Include="Parser/LALRParser.fs" />
     <Compile Include="RuntimeFarkle.fs" />
     <Compile Include="Builder/RegexGrammar.fs" />

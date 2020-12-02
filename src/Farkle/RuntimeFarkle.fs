@@ -52,12 +52,14 @@ type FarkleError =
 type RuntimeFarkle<'TResult> = internal {
     Grammar: Result<Grammar,BuildError>
     PostProcessor: PostProcessor<'TResult>
+    TokenizerFactory: TokenizerFactory
 }
 with
     static member internal CreateMaybe postProcessor grammarMaybe =
         {
             Grammar = grammarMaybe
             PostProcessor = postProcessor
+            TokenizerFactory = TokenizerFactory.Default
         }
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// <see cref="Grammar"/> and <see cref="PostProcessor{TResult}"/>.</summary>
@@ -113,6 +115,42 @@ with
         match this.Grammar with
         | Ok grammar -> grammar
         | Error msg -> msg |> string |> invalidOp
+    /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
+    /// <param name="charStream">The character stream to parse.</param>
+    /// <param name="tokenizer">An optional custom <see cref="Tokenizer"/>.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    member this.Parse(input: CharStream) =
+        let mkError msg = msg |> FarkleError.ParseError |> Error
+        match this.Grammar with
+        | Ok grammar ->
+            let tokenizer = this.TokenizerFactory.CreateTokenizer grammar
+            try
+                LALRParser.parse grammar this.PostProcessor tokenizer input |> Ok
+            with
+            | :? ParserException as e -> mkError e.Error
+            | :? ParserApplicationException as e ->
+                ParserError(input.CurrentPosition, ParseErrorType.UserError e.Message)
+                |> mkError
+        | Error x -> Error <| FarkleError.BuildError x
+    /// <summary>Changes the <see cref="TokenizerFactory"/> of this runtime Farkle.</summary>
+    /// <param name="tokenizerFactory">The new tokenizer factory</param>
+    /// <returns>A new runtime Farkle that will parse text with the tokenizer
+    /// <paramref name="tokenizerFactory"/> will create.</returns>
+    /// <remarks>A new tokenizer will be created with each parse operation.</remarks>
+    member this.ChangeTokenizer tokenizerFactory =
+        {this with TokenizerFactory = tokenizerFactory}
+    /// <summary>Changes the <see cref="Tokenizer"/> type this runtime Farkle will use.</summary>
+    /// <typeparam name="TTokenizer">The type of the new tokenizer. It must have
+    /// a public constructor that accepts a <see cref="Grammar"/></typeparam>
+    /// <returns>A new runtime Farkle that will parse text with
+    /// tokenizers of type <typeparamref name="TTokenizer"/>.</returns>
+    /// <exception cref="MissingMethodEsception"><typeparamref name="TTokenizer"/>
+    /// does not have a public constructor that accepts a <see cref="Grammar"/>.</exception>
+    /// <remarks>A new tokenizer will be created with each parse operation.</remarks>
+    member this.ChangeTokenizer<'TTokenizer when 'TTokenizer :> Tokenizer>() =
+        this.ChangeTokenizer(TokenizerFactoryOfType typeof<'TTokenizer>)
     interface IGrammarProvider with
         member this.IsBuildSuccessful = this.IsBuildSuccessful
         member this.GetGrammar() = this.GetGrammar()
@@ -126,7 +164,14 @@ module RuntimeFarkle =
     let changePostProcessor pp rf = {
         Grammar = rf.Grammar
         PostProcessor = pp
+        TokenizerFactory = rf.TokenizerFactory
     }
+
+    /// Changes the tokenizer that will be used by this runtime Farkle.
+    /// This function accepts a function that takes a `Grammar` and returns a `Tokenizer`.
+    let changeTokenizer fTokenizer (rf: RuntimeFarkle<'TResult>) =
+        rf.ChangeTokenizer
+            {new TokenizerFactory() with member _.CreateTokenizer g = fTokenizer g}
 
     /// Changes the post-processor of a runtime Farkle to a
     /// dummy one suitable for syntax-checking, not parsing.
@@ -187,20 +232,8 @@ module RuntimeFarkle =
         PrecompilerInterface.prepareU df asm
 
     /// Parses and post-processes a `CharStream`.
-    [<CompiledName("ParseChars")>]
-    let parseChars (rf: RuntimeFarkle<'TResult>) input =
-        let mkError msg = msg |> FarkleError.ParseError |> Error
-        match rf.Grammar with
-        | Ok grammar ->
-            let tokenizer = DefaultTokenizer grammar
-            try
-                LALRParser.parse grammar rf.PostProcessor tokenizer input |> Ok
-            with
-            | :? ParserException as e -> mkError e.Error
-            | :? ParserApplicationException as e ->
-                ParserError(input.CurrentPosition, ParseErrorType.UserError e.Message)
-                |> mkError
-        | Error x -> Error <| FarkleError.BuildError x
+    [<CompiledName("ParseChars"); MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let parseChars (rf: RuntimeFarkle<'TResult>) input = rf.Parse(input)
 
     [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
@@ -252,13 +285,6 @@ open RuntimeFarkle
 #nowarn "44"
 
 type RuntimeFarkle<'TResult> with
-    /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
-    /// <param name="charStream">The character stream to parse.</param>
-    /// <returns>An F# result type containing either the
-    /// post-processed return type, or a type describing
-    /// what did wrong and where.</returns>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse charStream = parseChars this charStream
     /// <summary>Parses and post-processes a string.</summary>
     /// <param name="charStream">The string to parse.</param>
     /// <returns>An F# result type containing either the

@@ -6,6 +6,7 @@
 module internal Farkle.Builder.PostProcessorCreator
 
 open Farkle
+open Farkle.Grammar
 
 [<RequiresExplicitTypeArguments>]
 let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserData []) =
@@ -13,8 +14,8 @@ let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserD
     let fusers = fusers |> Array.map (fun x -> x.BoxedDelegate)
     {
         new PostProcessor<'T> with
-            member _.Transform(term, context, data) =
-                transformers.[int term.Index].Invoke(context, data)
+            member _.Transform(Terminal(idx, _), context, data) =
+                transformers.[int idx].Invoke(context, data)
             member _.Fuse(prod, members) =
                 fusers.[int prod.Index].Invoke(members)
     }

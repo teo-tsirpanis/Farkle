@@ -9,12 +9,20 @@ module internal Farkle.Grammar.EGTFile.EGTNeoWriter
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open Farkle.Grammar.EGTFile.EGTHeaders
+open System
 open System.Collections.Immutable
 
 [<AutoOpen>]
 module private Implementation =
 
     type IndexMap = ImmutableDictionary<uint32, uint32>
+
+    let getProperty<'TSymbol,'TReturnType> name =
+        typeof<'TSymbol>
+            .GetProperty(name)
+            .GetGetMethod()
+            .CreateDelegate(typeof<Func<'TSymbol,'TReturnType>>)
+        :?> Func<'TSymbol,'TReturnType>
 
     let writeProperties (w: EGTWriter) (props: ImmutableDictionary<_,_>) =
 
@@ -25,23 +33,29 @@ module private Implementation =
 
         w.FinishPendingRecord()
 
-    let inline writeLALRSymbols (w: EGTWriter) header (symbols: ImmutableArray<_>) =
+    let writeLALRSymbols (fIndex: Func<_,_>) (fName: Func<_,_>) (w: EGTWriter) header (symbols: ImmutableArray<_>) =
         let dict = ImmutableDictionary.CreateBuilder()
 
         w.WriteString header
         for i = 0 to symbols.Length - 1 do
             let sym = symbols.[i]
-            dict.[(^Symbol: (member Index: uint32) sym)] <- uint32 i
-            w.WriteString (^Symbol: (member Name: string) sym)
+            dict.[fIndex.Invoke sym] <- uint32 i
+            w.WriteString (fName.Invoke sym)
 
         w.FinishPendingRecord()
         dict.ToImmutable()
 
+    let fTerminalIndex = getProperty "Index"
+    let fTerminalName = getProperty "Name"
+
     let writeTerminals w (terms: ImmutableArray<Terminal>) =
-        writeLALRSymbols w terminalsHeader terms
+        writeLALRSymbols fTerminalIndex fTerminalName w terminalsHeader terms
+
+    let fNonterminalIndex = getProperty "Index"
+    let fNonterminalName = getProperty "Name"
 
     let writeNonterminals w (terms: ImmutableArray<Nonterminal>) =
-        writeLALRSymbols w nonterminalsHeader terms
+        writeLALRSymbols fNonterminalIndex fNonterminalName w nonterminalsHeader terms
 
     let writeNoiseSymbols (w: EGTWriter) (noises: ImmutableArray<_>) =
         w.WriteString noiseSymbolsHeader
@@ -113,9 +127,9 @@ module private Implementation =
             prod.Handle
             |> Seq.iter (
                 function
-                | LALRSymbol.Terminal term ->
+                | LALRSymbol.Terminal(Terminal(idx, _)) ->
                     w.WriteByte 'T'B
-                    w.WriteUInt32 terminalMap.[term.Index]
+                    w.WriteUInt32 terminalMap.[idx]
                 | LALRSymbol.Nonterminal nont ->
                     w.WriteByte 'N'B
                     w.WriteUInt32 nonterminalMap.[nont.Index])
@@ -150,8 +164,8 @@ module private Implementation =
 
             w.WriteInt s.Actions.Count
             s.Actions
-            |> Seq.iter (fun (KeyValue(term, action)) ->
-                w.WriteUInt32 terminalMap.[term.Index]
+            |> Seq.iter (fun (KeyValue(Terminal(idx, _), action)) ->
+                w.WriteUInt32 terminalMap.[idx]
                 writeLALRAction action w)
 
             w.WriteInt s.GotoActions.Count
@@ -179,9 +193,9 @@ module private Implementation =
             | None ->
                 w.WriteEmpty()
                 w.WriteEmpty()
-            | Some (Choice1Of4 term) ->
+            | Some (Choice1Of4(Terminal(idx, _))) ->
                 w.WriteByte 'T'B
-                w.WriteUInt32 terminalMap.[term.Index]
+                w.WriteUInt32 terminalMap.[idx]
             | Some (Choice2Of4 noise) ->
                 w.WriteByte 'N'B
                 indexOf "Noise symbol" noiseSymbols noise |> w.WriteUInt32

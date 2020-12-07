@@ -215,8 +215,8 @@ module DesigntimeFarkleBuild =
             match getLALRSymbol df with
             // Our grammar is made of only one terminal.
             // We will create a production which will be made of just that.
-            | LALRSymbol.Terminal term as t ->
-                let root = Nonterminal(uint32 nonterminals.Count, term.Name)
+            | LALRSymbol.Terminal (Terminal(_, name)) as t ->
+                let root = Nonterminal(uint32 nonterminals.Count, name)
                 nonterminals.Add(root)
                 productions.Add {
                     Index = uint32 productions.Count

@@ -29,26 +29,25 @@ type EndingMode =
 
 [<CustomComparison; CustomEquality>]
 /// A symbol which is produced through a DFA, and is significant for the grammar.
-type Terminal = Terminal of index: uint32 * name: string
+/// Terminals with the same index are considered equal.
+type Terminal = Terminal of Index: uint32 * Name: string
 with
-    /// The terminal's index. Terminals with the same index are considered equal.
-    member x.Index = match x with | Terminal (idx, _) -> idx
-    /// The symbol's name.
-    member x.Name = match x with | Terminal (_, name) -> name
+    member private x.index = match x with | Terminal (idx, _) -> idx
+    member private x.name = match x with | Terminal (_, name) -> name
     interface IEquatable<Terminal> with
-        member x.Equals x' = x.Index = x'.Index
+        member x.Equals x' = x.index = x'.index
     interface IComparable<Terminal> with
-        member x.CompareTo x' = compare x.Index x'.Index
+        member x.CompareTo x' = compare x.index x'.index
     interface IComparable with
-        member x.CompareTo x' = compare x.Index (x' :?> Terminal).Index
+        member x.CompareTo x' = compare x.index (x' :?> Terminal).index
     override x.Equals(x') =
         obj.ReferenceEquals(x, x') ||
         match x' with
-        | :? Terminal as x' -> x.Index = x'.Index
+        | :? Terminal as x' -> x.index = x'.index
         | _ -> false
-    override x.GetHashCode() = x.Index.GetHashCode()
+    override x.GetHashCode() = x.index.GetHashCode()
     override x.ToString() =
-        let name = x.Name
+        let name = x.name
         // The symbol's name should be quoted if...
         let shouldAddQuotes =
             // (this line ensures the next will not die; terminals with an empty name do not make sense)

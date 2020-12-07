@@ -14,6 +14,7 @@ open FsCheck
 open SimpleMaths
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Linq
 
 // A major difference between Farkle and GOLD Parser is the way they number stuff.
 // GOLD Parser numbers terminals based on the order they appear in the GML file.
@@ -58,11 +59,11 @@ let checkLALRStateTableEquivalence (productionMap: ImmutableDictionary<_, _>) (f
             let goldState = goldStates.[int lalrStates.[uint32 i]]
 
             Expect.hasLength farkleState.Actions goldState.Actions.Count "There are not the same number of LALR actions"
-            let actionsJoined = query {
-                for aFarkle in farkleState.Actions do
-                join aGold in goldState.Actions on (aFarkle.Key.Name = aGold.Key.Name)
-                select (aFarkle.Value, aGold.Value)
-            }
+            let actionsJoined =
+                farkleState.Actions.Join(
+                    goldState.Actions,
+                    (fun (KeyValue(Terminal(_, name), _)) -> name), (fun (KeyValue(Terminal(_, name), _)) -> name),
+                    fun (KeyValue(_, farkleAction)) (KeyValue(_, goldAction)) -> farkleAction, goldAction)
             Expect.hasLength actionsJoined goldState.Actions.Count "Some terminals do not have a matching LALR action"
             actionsJoined |> Seq.iter (fun (aFrakle, aGold) -> checkActionEquivalence aFrakle aGold)
 

@@ -84,8 +84,8 @@ module private OptimizedOperations =
         lalr
         |> Seq.iter (fun {Index = stateIndex; Actions = actions} ->
             actions
-            |> Seq.iter (fun (KeyValue(term, action)) ->
-                arr.[int stateIndex].[int term.Index] <- Some action))
+            |> Seq.iter (fun (KeyValue(Terminal(idx, _), action)) ->
+                arr.[int stateIndex].[int idx] <- Some action))
         arr
 
     let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =

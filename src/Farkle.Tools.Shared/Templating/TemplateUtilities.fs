@@ -83,7 +83,7 @@ module Utilities =
             else
                 handle
                 |> Seq.choose (function
-                    | LALRSymbol.Terminal term -> Some <| toIdentifier term.Name case separator
+                    | LALRSymbol.Terminal (Terminal(_, name)) -> Some <| toIdentifier name case separator
                     // We might want to include even the nonterminals in
                     // the name, when names collide, but only then.
                     | LALRSymbol.Nonterminal nont when printFull -> Some <| toIdentifier nont.Name case separator
@@ -117,7 +117,7 @@ module Utilities =
 
     let doFmt fShouldPrintFullProduction (x: obj) case separator =
         match x with
-        | :? Terminal as x -> toIdentifier x.Name case separator
+        | :? Terminal as x -> match x with Terminal(_, name) -> toIdentifier name case separator
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 

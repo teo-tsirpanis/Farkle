@@ -31,7 +31,9 @@ The library comes with comprehensible documentation.
 
 * A __JSON parser__ powered by Farkle and written in both [C#][json-csharp] and [F#][json-fsharp].
 
-* A __mathematical expression parser__ powered by Farkle and written in [F#][simplemaths], also showcasing some more advanced features.
+* A __mathematical expression parser__ powered by Farkle and written in [F#][simple-maths], also showcasing some more advanced features.
+
+* A simple indent-based language parser that supports virtual terminals written in [F#][indent-based]. The most advanced example; it explains how to write a custom tokenizer.
 
 ## Contributing and copyright
 
@@ -44,7 +46,8 @@ redistribution for both commercial and non-commercial purposes. For more informa
   [scriban]: https://github.com/lunet-io/Scriban
   [json-csharp]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.CSharp/JSON.cs
   [json-fsharp]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/JSON.fs
-  [simplemaths]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/SimpleMaths.fs
+  [simple-maths]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/SimpleMaths.fs
+  [indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs
   [gh]: https://github.com/teo-tsirpanis/Farkle
   [issues]: https://github.com/teo-tsirpanis/Farkle/issues
   [license]: https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt

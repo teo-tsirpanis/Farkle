@@ -1,3 +1,6 @@
+#### 6.0.0
+* Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
+
 #### 6.0.0-alpha.3 - 25-11-2020
 * __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0, .NET Standard 2.1 and .NET 5.
 * __Breaking change:__ Logging parser events is no longer supported. The logging function was removed from the signatures of parser APIs.
@@ -10,7 +13,7 @@
 * __Minor breaking change:__ The `Transformers` and `Fusers` properties were removed from the `Farkle.Builder.GrammarDefinition` type.
 * Farkle will now optimize precompilable designtime Farkles using dynamic code generation. This feature is only supported on .NET Standard 2.1 if the runtime supports dynamic code compilation.
 * An API for the `CharStream` type was published.
-* [An API for getting precompiled grammars](https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-precompilerinterface.html) was published.
+* [An API for getting precompiled grammars](https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-precompiledgrammar.html) was published.
 * The tokenizer can be extended by user code. TODO: write documentation
 * The runtime Farkle's extension methods became regular methods.
 * Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.

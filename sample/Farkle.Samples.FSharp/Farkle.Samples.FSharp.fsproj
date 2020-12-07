@@ -16,6 +16,7 @@
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
+    <Compile Include="IndentBased.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />

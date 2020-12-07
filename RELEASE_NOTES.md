@@ -1,4 +1,5 @@
 #### 6.0.0
+* __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 
 #### 6.0.0-alpha.3 - 25-11-2020

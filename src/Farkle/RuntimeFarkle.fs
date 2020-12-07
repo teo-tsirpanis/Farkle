@@ -68,22 +68,6 @@ with
         |> Ok
         |> RuntimeFarkle<_>.CreateMaybe postProcessor
 
-    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// EGT file and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member Create(fileName, postProcessor) =
-        fileName
-        |> EGT.ofFile
-        |> Ok
-        |> RuntimeFarkle<_>.CreateMaybe postProcessor
-
-    /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
-    /// EGT file encoded in Base64 and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member CreateFromBase64String(str, postProcessor) =
-        str
-        |> EGT.ofBase64String
-        |> Ok
-        |> RuntimeFarkle<_>.CreateMaybe postProcessor
-
     /// Returns whether building was successful.
     /// If loaded from an EGT file, it will always return true.
     member this.IsBuildSuccessful =
@@ -160,7 +144,6 @@ with
 module RuntimeFarkle =
 
     /// Changes the post-processor of a `RuntimeFarkle`.
-    [<CompiledName("ChangePostProcessor")>]
     let changePostProcessor pp rf = {
         Grammar = rf.Grammar
         PostProcessor = pp
@@ -178,32 +161,14 @@ module RuntimeFarkle =
     let syntaxCheck rf = changePostProcessor PostProcessors.syntaxCheck rf
 
     /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
-    [<CompiledName("Create")>]
     let create postProcessor (grammar: Grammar) =
         RuntimeFarkle<_>.Create(grammar, postProcessor)
-
-    /// Creates a `RuntimeFarkle` from the given
-    /// post-processor, and the .egt file at the given path.
-    /// In case the grammar file fails to be read,
-    /// an exception will be raised.
-    [<CompiledName("CreateFromFile")>]
-    let ofEGTFile postProcessor (fileName: string) =
-        RuntimeFarkle<_>.Create(fileName, postProcessor)
-
-    /// Creates a `RuntimeFarkle` from the given post-processor,
-    /// and the given Base64 representation of an .egt file.
-    /// In case the grammar file fails to be read,
-    /// an exception will be raised.
-    [<CompiledName("CreateFromBase64String")>]
-    let ofBase64String postProcessor x =
-        RuntimeFarkle<_>.CreateFromBase64String(x, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle&lt;'T&gt;`.
     /// In case there is a problem with the grammar,
     /// the `RuntimeFarkle` will fail every time it is used.
     /// If the designtime Farkle is marked for precompilation and a suitable
     /// precompiled grammar is found, building it again will be avoided.
-    [<CompiledName("Build")>]
     let build df =
         let theFabledGrammar = PrecompilerInterface.getGrammarOrBuild df
         let theTriumphantPostProcessor = DesigntimeFarkleBuild.buildPostProcessorOnly df
@@ -211,13 +176,12 @@ module RuntimeFarkle =
 
     /// Creates a syntax-checking `RuntimeFarkle`
     /// from an untyped `DesigntimeFarkle`.
-    [<CompiledName("BuildUntyped")>]
     let buildUntyped df =
         df
         |> PrecompilerInterface.getGrammarOrBuild
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
-    [<CompiledName("MarkForPrecompile"); MethodImpl(MethodImplOptions.NoInlining)>]
+    [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// Marks the given designtime as available to have its grammar
     /// precompiled ahead of time. See more, including usage restrictions
     /// on https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
@@ -225,24 +189,22 @@ module RuntimeFarkle =
         let asm = Assembly.GetCallingAssembly()
         PrecompilerInterface.prepare df asm
 
-    [<CompiledName("MarkForPrecompileU"); MethodImpl(MethodImplOptions.NoInlining)>]
+    [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// The untyped edition of `markForPrecompile`.
     let markForPrecompileU df =
         let asm = Assembly.GetCallingAssembly()
         PrecompilerInterface.prepareU df asm
 
     /// Parses and post-processes a `CharStream`.
-    [<CompiledName("ParseChars"); MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     let parseChars (rf: RuntimeFarkle<'TResult>) input = rf.Parse(input)
 
-    [<CompiledName("ParseMemory")>]
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
     let parseMemory rf (input: ReadOnlyMemory<_>) =
         use cs = new CharStream(input)
         parseChars rf cs
 
     /// Parses and post-processes a string.
-    [<CompiledName("ParseString")>]
     let parseString rf (inputString: string) =
         use cs = new CharStream(inputString)
         parseChars rf cs
@@ -250,8 +212,7 @@ module RuntimeFarkle =
     /// Parses and post-processes a .NET `Stream` with the
     /// given character encoding, which may be lazily read.
     /// Better use `parseTextReader` instead.
-    [<CompiledName("ParseStream"); Obsolete("Streams are supposed to \
-contain binary data; not text. Use parseTextReader instead.")>]
+    [<Obsolete("Streams are supposed to contain binary data; not text. Use parseTextReader instead.")>]
     let parseStream rf doLazyLoad (encoding: Encoding) (inputStream: Stream) =
         let encoding = if isNull encoding then Encoding.UTF8 else encoding
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
@@ -262,19 +223,17 @@ contain binary data; not text. Use parseTextReader instead.")>]
         parseChars rf cs
 
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
-    [<CompiledName("ParseTextReader")>]
     let parseTextReader rf (textReader: TextReader) =
         use cs = new CharStream(textReader, true)
         parseChars rf cs
 
     /// Parses and post-processes a file at the given path.
-    [<CompiledName("ParseFile")>]
     let parseFile rf inputFile =
         use s = File.OpenText(inputFile)
         parseTextReader rf s
 
     /// Parses and post-processes a string.
-    [<CompiledName("Parse"); Obsolete("Use parseString.")>]
+    [<Obsolete("Use parseString.")>]
     let parse rf x = parseString rf x
 
     let internal syntaxCheckerObj =

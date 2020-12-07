@@ -47,6 +47,7 @@ module LALRParser =
         use objBuffer = new ObjectBuffer()
         let oops = OptimizedOperations.Create grammar
         let lalrStates = grammar.LALRStates
+
         let rec impl (token: Token) currentState stack =
             let (|LALRState|) x = lalrStates.[int x]
             let nextAction =
@@ -57,20 +58,17 @@ module LALRParser =
             match nextAction with
             | Some LALRAction.Accept -> stack |> List.head |> snd
             | Some(LALRAction.Shift (LALRState nextState)) ->
-                if not token.IsEOF then
-                    let nextToken = tokenizer.GetNextToken(pp, input)
-                    // We can't use <| because it prevents optimization into a loop.
-                    // See https://github.com/dotnet/fsharp/issues/6984 for details.
-                    impl nextToken nextState ((nextState, token.Data) :: stack)
-                else
+                if token.IsEOF then
                     failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
+                let nextToken = tokenizer.GetNextToken(pp, input)
+                impl nextToken nextState ((nextState, token.Data) :: stack)
             | Some(LALRAction.Reduce productionToReduce) ->
                 let handleLength = productionToReduce.Handle.Length
-                let stack' = List.skip handleLength stack
-                /// The stack cannot be empty; we gave it one element in the beginning.
-                let nextState = fst stack'.Head
-                match oops.LALRGoto productionToReduce.Head nextState with
-                | Some nextState ->
+                let newStack = List.skip handleLength stack
+                // The stack cannot be empty; we gave it one element in the beginning.
+                let gofromState, _ = newStack.Head
+                match oops.LALRGoto productionToReduce.Head gofromState with
+                | Some gotoState ->
                     let resultObj =
                         let tokens = objBuffer.GetBufferFromStack(handleLength, stack)
                         try
@@ -78,8 +76,8 @@ module LALRParser =
                         with
                         | :? ParserApplicationException -> reraise()
                         | e -> PostProcessorException(productionToReduce, e) |> raise
-                    impl token nextState ((nextState, resultObj) :: stack')
-                | None -> failwithf "Error in state %d: GOTO was not found for production %O." nextState.Index productionToReduce
+                    impl token gotoState ((gotoState, resultObj) :: newStack)
+                | None -> failwithf "Error in state %d: GOTO was not found for production %O." gofromState.Index productionToReduce
             | None ->
                 let expectedSymbols =
                     currentState.Actions.Keys
@@ -93,5 +91,6 @@ module LALRParser =
                         ExpectedSymbol.EndOfInput
                 let syntaxError = ParseErrorType.SyntaxError(expectedSymbols, foundToken)
                 ParserError(token.Position, syntaxError) |> ParserException |> raise
+
         let firstToken = tokenizer.GetNextToken(pp, input)
         impl firstToken lalrStates.[0] [lalrStates.[0], null] :?> 'TResult

@@ -10,6 +10,7 @@ open Farkle.Grammar
 open Farkle.IO
 open Farkle.Parser
 open System
+open System.Collections.Generic
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -21,21 +22,18 @@ open System.Text
 type FarkleError =
     /// There was a parsing error.
     | ParseError of ParserError
-    /// There had been an error while building the grammar .
-    | BuildError of BuildError
+    /// There had been errors while building the grammar.
+    | BuildError of BuildError list
     override x.ToString() =
         match x with
         | ParseError x -> x.ToString()
-        | BuildError x ->
-            let sb = StringBuilder("Error while building the grammar:")
-            let msg = x.ToString()
-            // We will add a line break before the error message if it is multiline.
-            if msg.Contains(Environment.NewLine) then
-                Environment.NewLine
-            else
-                " "
-            |> sb.Append |> ignore
-            sb.Append(msg) |> ignore
+        | BuildError xs ->
+            let sb = StringBuilder("Building the grammar failed:")
+            match xs with
+            | [x] -> sb.Append(' ').Append(x) |> ignore
+            | xs ->
+                for x in xs do
+                    sb.AppendLine().Append(x) |> ignore
             sb.ToString()
 
 /// <summary>A reusable parser and post-processor,
@@ -50,7 +48,7 @@ type FarkleError =
 /// after being wrapped in a <see cref="PostProcessorException"/>.</para></remarks>
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<'TResult> = internal {
-    Grammar: Result<Grammar,BuildError>
+    Grammar: Result<Grammar,BuildError list>
     PostProcessor: PostProcessor<'TResult>
     TokenizerFactory: TokenizerFactory
 }
@@ -75,12 +73,12 @@ with
         | Ok _ -> true
         | Error _ -> false
 
-    /// Returns a domain-specific error object that
-    /// describes what had gone wrong while building,
-    /// or raises an exception if building had been successful.
-    member this.GetBuildError() =
+    /// Returns a list of `BuildError` objects that
+    /// describe what had gone wrong while building, or returns
+    /// an empty list if building had been successful.
+    member this.GetBuildErrors() =
         match this.Grammar with
-        | Ok _ -> invalidOp "Building the grammar did not fail."
+        | Ok _ -> []
         | Error msg -> msg
 
     /// Returns a user-friendly error message that

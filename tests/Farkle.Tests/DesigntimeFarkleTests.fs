@@ -31,7 +31,7 @@ let tests = testList "Designtime Farkle tests" [
     test "A nonterminal with no productions gives an error" {
         let nt = nonterminal "Vacuous"
         let result = nt |> DesigntimeFarkleBuild.build |> fst
-        let expectedError = "Vacuous" |> Set.singleton |> BuildError.EmptyNonterminals |> Error
+        let expectedError = Error [BuildError.EmptyNonterminal "Vacuous"]
         Expect.equal result expectedError "A nonterminal with no productions does not give an error"
     }
 
@@ -50,9 +50,7 @@ let tests = testList "Designtime Farkle tests" [
         ]
         let result = nt |> DesigntimeFarkleBuild.build |> fst
         let expectedError =
-            (Nonterminal(0u, "Superfluous"), ImmutableArray.Empty.Add(LALRSymbol.Terminal <| Terminal(0u, "a")))
-            |> Set.singleton
-            |> BuildError.DuplicateProductions
+            [BuildError.DuplicateProduction(Nonterminal(0u, nt.Name), ImmutableArray.Create(LALRSymbol.Terminal <| Terminal(0u, term.Name)))]
             |> Error
         Expect.equal result expectedError "A nonterminal with duplicate productions does not give an error"
     }
@@ -79,7 +77,7 @@ let tests = testList "Designtime Farkle tests" [
             let term = terminal "Nullable" (T(fun _ _ -> ())) (Regex.chars Number |> Regex.atLeast 0)
             "S" ||= [!% term =% ()]
         let grammar = DesigntimeFarkleBuild.build designtime |> fst
-        Expect.equal grammar (Error (BuildError.NullableSymbol (Choice1Of4 <| Terminal(0u, "Nullable"))))
+        Expect.equal grammar (Error [BuildError.NullableSymbol (Choice1Of4 <| Terminal(0u, "Nullable"))])
             "A grammar with a nullable symbol was accepted"
     }
 

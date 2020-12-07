@@ -72,13 +72,13 @@ type BuildError =
     /// be marked as indistinguishable instead.
     | NullableSymbol of DFASymbol
     /// An LALR conflict did occur.
-    | LALRConflict of LALRConflict Set
-    /// Some nonterminals have no productions.
-    | EmptyNonterminals of string Set
-    /// Some productions are defined twice.
-    | DuplicateProductions of (Nonterminal * ImmutableArray<LALRSymbol>) Set
+    | LALRConflict of LALRConflict
+    /// A nonterminal has no productions.
+    | EmptyNonterminal of string
+    /// A production is defined twice.
+    | DuplicateProduction of Nonterminal * ImmutableArray<LALRSymbol>
     /// An error occurred while parsing a regular expression.
-    | RegexParseError of (DFASymbol * ParserError) list
+    | RegexParseError of DFASymbol * ParserError
     /// The grammar has more symbols than the supported limit.
     | SymbolLimitExceeded
     /// The maximum number of terminals and nonterminals
@@ -100,24 +100,15 @@ type BuildError =
 The conflict is caused when two or more terminal definitions can accept the same text." symbols
         | NullableSymbol x ->
             sprintf "The symbol %s can contain zero characters." <| DFASymbol.toString x
-        | LALRConflict xs -> xs |> Seq.map string |> String.concat Environment.NewLine
-        | EmptyNonterminals xs ->
-            xs
-            |> Seq.map string
-            |> String.concat ", "
-            |> sprintf "Nonterminals %s are empty. \
-If you want to define a nonterminal with an empty production, you can use \
-the production builder called 'empty' (or 'ProductionBuilder.Empty' in C#)."
-        | DuplicateProductions xs ->
-            xs
-            |> Seq.map Production.Format
-            |> String.concat ", "
-            |> sprintf "Productions %s are defined twice."
-        | RegexParseError xs ->
-            xs
-            |> Seq.map (fun (sym, err) ->
-                sprintf "Error while parsing the regex of %s: %O" (DFASymbol.toString sym) err)
-            |> String.concat Environment.NewLine
+        | LALRConflict xs -> xs.ToString()
+        | EmptyNonterminal xs ->
+            sprintf "Nonterminal <%s> has no productions. \
+If you want to define a nonterminal with an empty production you can use \
+the production builder called 'empty' (or 'ProductionBuilder.Empty' in C#)." xs
+        | DuplicateProduction (head, handle) ->
+            sprintf "Production %s is defined more than once." (Production.Format(head, handle))
+        | RegexParseError (sym, err) ->
+            sprintf "Error while parsing the regex of %s: %O" (DFASymbol.toString sym) err
         | SymbolLimitExceeded ->
             sprintf "A grammar built by Farkle cannot have \
 more than %d terminals or more than %d nonterminals."

@@ -280,9 +280,11 @@ let buildProductionsToLALRStates startSymbol terminals nonterminals productions 
 
     let conflicts = ResizeArray()
     let resolveConflict stateIndex term x1 x2 =
-        LALRConflict.Create stateIndex term x1 x2 |> conflicts.Add
+        LALRConflict.Create stateIndex term x1 x2
+        |> BuildError.LALRConflict
+        |> conflicts.Add
         x1
     match createLALRStates fGetAllProductions firstSets resolveConflict s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
-    | _ -> conflicts |> set |> BuildError.LALRConflict |> Error
+    | _ -> conflicts |> List.ofSeq |> Error

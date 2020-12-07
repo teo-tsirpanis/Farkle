@@ -188,7 +188,7 @@ let internal createRegexBuild caseSensitive regexes =
                 match regex with
                 | Ok x -> createTree x
                 | Error x ->
-                    regexParseErrors.Add(acceptSymbol, x)
+                    regexParseErrors.Add(BuildError.RegexParseError(acceptSymbol, x))
                     Alt []
         match createTree regex with
         // If the symbol's regex's root is an Alt, we assign
@@ -233,7 +233,7 @@ let internal createRegexBuild caseSensitive regexes =
     if regexParseErrors.Count = 0 then
         Ok (theTree, leaves.ToImmutable() |> RegexBuildLeaves)
     else
-        regexParseErrors |> List.ofSeq |> BuildError.RegexParseError |> Error
+        regexParseErrors |> List.ofSeq |> Error
 
 let internal calculateFollowPos leafCount regex =
     let followPos = Array.replicate leafCount BitSet.Empty

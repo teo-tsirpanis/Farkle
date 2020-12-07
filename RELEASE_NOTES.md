@@ -1,6 +1,8 @@
 #### 6.0.0
 * __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
+* __Breaking change:__ The `RuntimeFarkle.GetBuildError` method was replaced by `GetBuildErrors`, which returns a list of build errors.
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
+* Build error reporting is improved. More build errors will be reported at the same time (without waiting for one to be fixed to show the next).
 
 #### 6.0.0-alpha.3 - 25-11-2020
 * __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0, .NET Standard 2.1 and .NET 5.

@@ -67,7 +67,11 @@ let designtime =
 // Tokenizers are generally stateless; a brand-new tokenizer will
 // be created for each time Farkle parses IndentCode text.
 type IndentCodeTokenizer(grammar) =
-    inherit Tokenizer(grammar)
+    // The recommended way to define custom tokenizer classes is to
+    // inherit the DefaultTokenizer. It allows us to defer to Farkle's
+    // tokenizer whenever we need it; it's a good practice to do only
+    // what you must in your tokenizer and let Farkle handle the rest.
+    inherit DefaultTokenizer(grammar)
 
     // This stack holds the indentation levels of each block.
     let indentLevels = Stack()
@@ -187,8 +191,6 @@ type IndentCodeTokenizer(grammar) =
             else
                 // If we are not at the beginning of a line we defer to
                 // Farkle's tokenizer to process the rest of the line.
-                // As you see, it's a good practive to do only what you
-                // must in your tokenizer and let Farkle handle the rest.
                 base.GetNextToken(transformer, input)
         else
             // If we are at the end of the file we have

@@ -71,15 +71,11 @@ type ParseErrorType =
         | SyntaxError (expected, actual) ->
             let expected = expected |> Seq.map string |> String.concat ", "
             sprintf "Found %O while expecting one of the following tokens: %s." actual expected
-        | UnexpectedGroupEnd ge -> sprintf "'%s' was encountered outside of any group." ge.Name
+        | UnexpectedGroupEnd(GroupEnd name) -> sprintf "'%s' was encountered outside of any group." name
         | UnexpectedEndOfInputInGroup g -> sprintf "Unexpected end of input while being inside '%s'." g.Name
         | UserError x -> x
 
-/// A log message that contains the position it was encountered.
-type ParserError = ParserError of Position * ParseErrorType
+/// A parse error. It contains the position it was encountered and its type.
+type ParserError = ParserError of Position: Position * ErrorType: ParseErrorType
     with
-        /// The position this parser error occured.
-        member x.Position = let (ParserError(pos, _)) = x in pos
-        /// The type of this parser error.
-        member x.ErrorType = let (ParserError(_, errorType)) = x in errorType
-        override x.ToString() = let (ParserError(pos, m)) = x in sprintf "%O %O" pos m
+        override x.ToString() = match x with ParserError(pos, m) -> sprintf "%O %O" pos m

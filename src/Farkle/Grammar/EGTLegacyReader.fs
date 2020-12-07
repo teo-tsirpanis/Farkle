@@ -58,7 +58,7 @@ module internal EGTLegacyReader =
         let wantGroupEnd x =
             match x with
             | AnyTerminal(Terminal(_, name)) when name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> None
-            | AnyNoise x when x.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> None
+            | AnyNoise(Noise name) when name.Equals("NewLine", StringComparison.OrdinalIgnoreCase) -> None
             | AnyGroupEnd x -> Some x
             | x -> invalidEGTf "A group ended with %A which is not a NewLine. \
 This error is unexpected. Please report it on GitHub." x

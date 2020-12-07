@@ -88,25 +88,21 @@ with
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
 /// An example of a noise symbol would be a source code comment.
-type Noise = Noise of name: string
+type Noise = Noise of Name: string
 with
-    /// The symbol's name.
-    member x.Name = match x with | Noise name -> name
-    override x.ToString() = sprintf "(%s)" x.Name
+    override x.ToString() = match x with Noise name -> sprintf "(%s)" name
 
 /// A symbol signifying the end of a group.
 type GroupEnd = GroupEnd of name: string
 with
     /// The symbol's name.
     member x.Name = match x with | GroupEnd name -> name
-    override x.ToString() = sprintf "(%s)" x.Name
+    override x.ToString() = match x with GroupEnd name -> sprintf "(%s)" name
 
 /// A symbol signifying the start of a group.
-type GroupStart = GroupStart of name: string * groupIndex: uint32
+type GroupStart = GroupStart of Name: string * GroupIndex: uint32
 with
-    /// The symbol's name.
-    member x.Name = match x with | GroupStart (name, _) -> name
-    override x.ToString() = sprintf "(%s)" x.Name
+    override x.ToString() = match x with GroupStart(name, _) -> sprintf "(%s)" name
 
 /// A symbol that can be yielded by the DFA.
 type DFASymbol = Choice<Terminal, Noise, GroupStart, GroupEnd>

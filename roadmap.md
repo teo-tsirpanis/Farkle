@@ -21,9 +21,9 @@ Each feature is grouped by release, and is assigned an estimated difficulty and 
 * [Documentation generator](https://github.com/teo-tsirpanis/Farkle/issues/12) ✴️
 * [Operator precedence and associativity](https://github.com/teo-tsirpanis/Farkle/issues/10) 💠
     * Needs documentation; the calculator sample and the quick start guide will have to be rewritten
-* Virtual Terminals 🔺
+* ~~Virtual Terminals 🔺~~ Done, took one week
     * An example of using them (together with the `CharStream` API) needs to be written
-* Better dynamically generated post-processors 🔺
+* ~~Better dynamically generated post-processors 🔺~~ Done in time
 * A .NET Framework-based precompiler 💠
     * Trying it again will be a stretch goal for this release.
     * `Farkle.Tools.MSBuild.Tests` will have to build on both editions of MSBuild.

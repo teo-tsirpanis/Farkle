@@ -12,10 +12,13 @@ open System.Runtime.CompilerServices
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
 type Position = {
     /// The position's line.
+    /// Numbering starts from 1.
     Line: uint64
     /// The position's column.
+    /// Numbering starts from 1.
     Column: uint64
     /// The position's character index.
+    /// Numbering starts from 0.
     Index: uint64
 }
 with

@@ -30,9 +30,9 @@ type Token(position, symbol, data) =
     static member CreateEOF position = Token(position, eofTerminal, eofSentinel)
     override x.ToString() =
         if x.IsEOF then
-            sprintf "(%O) (EOF)" position
+            sprintf "%O (EOF)" position
         else
-            sprintf "(%O) %O: \"%O\"" position symbol data
+            sprintf "%O %O: \"%O\"" position symbol data
 
 [<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.

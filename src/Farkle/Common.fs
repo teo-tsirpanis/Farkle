@@ -70,6 +70,17 @@ module internal Result =
         | Ok _, (Error _ as xs) -> xs
         | Error x, Error xs -> Error <| x :: xs) xs (Ok [])
 
+    /// Returns a `Result` that is successful if both given results
+    /// are successful, and is failed if at least one of them is failed.
+    /// In the former case the returned result will carry its parameters'
+    /// values, and in the latter it will carry their combined errors.
+    let combine x1 x2 =
+        match x1, x2 with
+        | Ok x1, Ok x2 -> Ok(x1, x2)
+        | Ok _, Error x
+        | Error x, Ok _ -> Error x
+        | Error x1, Error x2 -> Error(x1 @ x2)
+
     /// Returns the value of a `Result` or raises an exception.
     let returnOrFail result = tee id (failwithf "%O") result
 

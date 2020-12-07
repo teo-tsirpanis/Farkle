@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle.Common
 open Farkle.Grammar
 open Farkle.Monads.Either
 open System
@@ -335,14 +336,6 @@ module DesigntimeFarkleBuild =
             yield BuildError.SymbolLimitExceeded
     }
 
-    /// Performs some checks on the generated LALR and DFA tables.
-    let private aPosterioriConsistencyCheck grammar (lalr: ImmutableArray<_>) (dfa: ImmutableArray<_>) =
-        ignore grammar
-        ignore lalr
-        match dfa.[0].AcceptSymbol with
-        | Some x -> [BuildError.NullableSymbol x]
-        | None -> []
-
     /// This value contains the name and version of that
     /// amazing piece of software that created this grammar.
     let private generatedWithLoveBy =
@@ -367,24 +360,28 @@ module DesigntimeFarkleBuild =
         | [] -> Ok ()
         | xs -> Error xs
 
+    let buildDFAAndCheckForNullableSymbol caseSensitive symbols =
+        DFABuild.buildRegexesToDFA true caseSensitive symbols
+        |> Result.bind (fun x ->
+            match x.[0].AcceptSymbol with
+            | Some x -> Error [BuildError.NullableSymbol x]
+            | None -> Ok x)
+
     /// Creates a `Grammar` from a `GrammarDefinition`.
     [<CompiledName("BuildGrammarOnly")>]
     let buildGrammarOnly grammarDef = either {
         do! aPrioriConsistencyCheck grammarDef |> failIfNotEmpty
 
-        let! myDarlingLALRStateTable =
-            LALRBuild.buildProductionsToLALRStates
-                grammarDef.StartSymbol
-                grammarDef.Symbols.Terminals
-                grammarDef.Symbols.Nonterminals
-                grammarDef.Productions
-        let! mySweetDFAStateTable =
-            DFABuild.buildRegexesToDFA
-                true
-                grammarDef.Metadata.CaseSensitive
-                grammarDef.DFASymbols
-
-        do! aPosterioriConsistencyCheck grammarDef myDarlingLALRStateTable mySweetDFAStateTable |> failIfNotEmpty
+        let! myDarlingLALRStateTable, mySweetDFAStateTable =
+            Result.combine
+                (LALRBuild.buildProductionsToLALRStates
+                    grammarDef.StartSymbol
+                    grammarDef.Symbols.Terminals
+                    grammarDef.Symbols.Nonterminals
+                    grammarDef.Productions)
+                (buildDFAAndCheckForNullableSymbol
+                    grammarDef.Metadata.CaseSensitive
+                    grammarDef.DFASymbols)
 
         return {
             _Properties =

@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -15,7 +15,7 @@ type Comment =
     | LineComment of string
     /// A block comment. It starts when the first literal is encountered,
     /// and ends when when the second literal is encountered.
-    | BlockComment of blockStart: string * blockEnd: string
+    | BlockComment of BlockStart: string * BlockEnd: string
 
 /// The information about a grammar that cannot be expressed
 /// by its terminals and nonterminals.

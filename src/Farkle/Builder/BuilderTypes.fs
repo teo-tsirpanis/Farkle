@@ -15,9 +15,9 @@ open System.Collections.Immutable
 /// The type of an LALR conflict.
 type LALRConflictType =
     /// A Shift-Reduce conflict
-    | ShiftReduce of uint32 * Production
+    | ShiftReduce of StateToShiftTo: uint32 * ProductionToReduce: Production
     /// A Reduce-Reduce conflict
-    | ReduceReduce of Production * Production
+    | ReduceReduce of Production1: Production * Production2: Production
 with
     /// Creates an `LALRConflictType` from the given conflicted `LALRAction`s.
     /// An exception is raised if the actions are neither both "reduce" nor a "shift" and a "reduce".
@@ -66,19 +66,19 @@ with
 /// An error the builder encountered.
 type BuildError =
     /// Some symbols cannot be distinguished from each other.
-    | IndistinguishableSymbols of DFASymbol Set
+    | IndistinguishableSymbols of Symbols: DFASymbol Set
     /// A symbol can contain zero characters.
     /// If many symbols are nullable, they will
     /// be marked as indistinguishable instead.
-    | NullableSymbol of DFASymbol
+    | NullableSymbol of Symbol: DFASymbol
     /// An LALR conflict did occur.
-    | LALRConflict of LALRConflict
+    | LALRConflict of Conflict: LALRConflict
     /// A nonterminal has no productions.
-    | EmptyNonterminal of string
+    | EmptyNonterminal of Name: string
     /// A production is defined twice.
-    | DuplicateProduction of Nonterminal * ImmutableArray<LALRSymbol>
+    | DuplicateProduction of Head: Nonterminal * Handle: ImmutableArray<LALRSymbol>
     /// An error occurred while parsing a regular expression.
-    | RegexParseError of DFASymbol * ParserError
+    | RegexParseError of Symbol: DFASymbol * Error: ParserError
     /// The grammar has more symbols than the supported limit.
     | SymbolLimitExceeded
     /// The maximum number of terminals and nonterminals

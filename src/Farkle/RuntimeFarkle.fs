@@ -10,7 +10,6 @@ open Farkle.Grammar
 open Farkle.IO
 open Farkle.Parser
 open System
-open System.Collections.Generic
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -21,9 +20,9 @@ open System.Text
 [<RequireQualifiedAccess>]
 type FarkleError =
     /// There was a parsing error.
-    | ParseError of ParserError
+    | ParseError of Error: ParserError
     /// There had been errors while building the grammar.
-    | BuildError of BuildError list
+    | BuildError of Errors: BuildError list
     override x.ToString() =
         match x with
         | ParseError x -> x.ToString()

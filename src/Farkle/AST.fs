@@ -11,8 +11,8 @@ open System.Text
 /// A domain-ignorant Abstract Syntax Tree that describes the output of a parser.
 [<RequireQualifiedAccess>]
 type AST =
-    | Content of Terminal * Position * string
-    | Nonterminal of Production * AST list
+    | Content of Terminal: Terminal * Position: Position * Content: string
+    | Nonterminal of Production: Production * Members: AST list
     override x.ToString() =
         match x with
         | Content (x, _, _) -> x.ToString()

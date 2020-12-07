@@ -230,9 +230,9 @@ with
 [<RequireQualifiedAccess>]
 type LALRAction =
     /// This action indicates the parser to shift to the specified `LALRState`.
-    | Shift of uint32
+    | Shift of StateIndex: uint32
     /// This action indicates the parser to reduce a `Production`.
-    | Reduce of Production
+    | Reduce of Production: Production
     /// When the parser encounters this action for a given symbol,
     /// the input text is accepted as correct and parsing ends.
     | Accept

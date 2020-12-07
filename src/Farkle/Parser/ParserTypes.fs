@@ -46,7 +46,7 @@ type ExpectedSymbol =
         | Terminal x -> x.ToString()
         | EndOfInput -> "(EOF)"
 
-/// An error the parser encountered.
+/// The type of an error the parser encountered.
 [<RequireQualifiedAccess>]
 type ParseErrorType =
     /// Unexpected end of input.
@@ -54,14 +54,14 @@ type ParseErrorType =
     /// A character was not recognized.
     | LexicalError of char
     /// A symbol was read, while some others were expected.
-    | SyntaxError of expected: ExpectedSymbol Set * actual: ExpectedSymbol
+    | SyntaxError of Expected: ExpectedSymbol Set * Actual: ExpectedSymbol
     /// A group did end, but outside of any group.
-    | UnexpectedGroupEnd of GroupEnd
+    | UnexpectedGroupEnd of Symbol: GroupEnd
     /// Unexpected end of input while being inside a group.
-    | UnexpectedEndOfInputInGroup of Group
+    | UnexpectedEndOfInputInGroup of Group: Group
     /// A custom error was raised by calling the `error` function
     /// or by throwing a `ParserApplicationException`.
-    | UserError of string
+    | UserError of Message: string
     override x.ToString() =
         match x with
         | UnexpectedEndOfInput -> "Unexpected end of input."

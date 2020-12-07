@@ -169,9 +169,9 @@ module RuntimeFarkle =
 
     /// Changes the tokenizer that will be used by this runtime Farkle.
     /// This function accepts a function that takes a `Grammar` and returns a `Tokenizer`.
-    let changeTokenizer fTokenizer (rf: RuntimeFarkle<'TResult>) =
+    let changeTokenizer (fTokenizer: _ -> #Tokenizer) (rf: RuntimeFarkle<'TResult>) =
         rf.ChangeTokenizer
-            {new TokenizerFactory() with member _.CreateTokenizer g = fTokenizer g}
+            {new TokenizerFactory() with member _.CreateTokenizer g = fTokenizer g :> _}
 
     /// Changes the post-processor of a runtime Farkle to a
     /// dummy one suitable for syntax-checking, not parsing.

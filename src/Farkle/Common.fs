@@ -49,7 +49,6 @@ with
         | _ -> x._Value.ToString()
 
 /// Functions to work with the `FSharp.Core.Result` type.
-[<AutoOpen>]
 module internal Result =
 
     let tee fOk fError =
@@ -73,14 +72,6 @@ module internal Result =
 
     /// Returns the value of a `Result` or raises an exception.
     let returnOrFail result = tee id (failwithf "%O") result
-
-    /// Returns if the given `Result` succeeded.
-    let isOk x = match x with | Ok _ -> true | Error _ -> false
-
-    /// Returns if the given `Result` failed.
-    let isError x = match x with | Ok _ -> false | Error _ -> true
-
-    let ofOption = function Some x -> Ok x | None -> Error ()
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal List =

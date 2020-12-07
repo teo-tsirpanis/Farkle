@@ -6,11 +6,9 @@
 namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
-open Farkle
 open Farkle.Builder
-open Farkle.Common
+open Farkle.Common.Result
 open Farkle.Grammar
-open System
 open System.IO
 
 type GrammarReaderBenchmark() =

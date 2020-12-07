@@ -347,7 +347,7 @@ let internal makeDFA
 
     statesList
     |> Seq.map toDFAState
-    |> collect
+    |> Result.collect
     |> Result.map ImmutableArray.CreateRange
 
 /// Builds a DFA that recognizes the given `Regex`es, each

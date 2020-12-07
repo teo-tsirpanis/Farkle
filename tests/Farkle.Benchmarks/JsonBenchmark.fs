@@ -9,7 +9,7 @@ open BenchmarkDotNet.Attributes
 open Chiron
 open Farkle
 open Farkle.Builder
-open Farkle.Common
+open Farkle.Common.Result
 open Farkle.JSON
 open System.IO
 

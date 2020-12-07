@@ -147,9 +147,11 @@ type CharStream private(source: CharStreamSource) =
     /// open when the character stream gets disposed.</param>
     /// <param name="bufferSize">The size of the stream's
     /// internal character buffer. It has a default value.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="bufferSize"/> is negative or zero</exception>
     new(reader, [<Optional>] leaveOpen, [<Optional; DefaultParameterValue(256)>] bufferSize: int) =
         if bufferSize <= 0 then
-            invalidArg "bufferSize" "The buffer size cannot be negative or zero."
+            raise (ArgumentOutOfRangeException("bufferSize", bufferSize, "The buffer size cannot be negative or zero."))
         new CharStream(new DynamicBlockSource(reader, leaveOpen, bufferSize))
     member internal _.CurrentIndex = currentPosition.Index
     /// The starting position of the last token that was generated.

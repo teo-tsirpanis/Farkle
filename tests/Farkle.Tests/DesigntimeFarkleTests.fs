@@ -155,8 +155,9 @@ let tests = testList "Designtime Farkle tests" [
             |> RuntimeFarkle.build
 
         let grammar = runtime.GetGrammar()
+        let (Nonterminal(_, startSymbolName)) = grammar.StartSymbol
 
-        Expect.equal grammar.StartSymbol.Name "Integer" "Renaming a designtime Farkle had no effect"
+        Expect.equal startSymbolName "Integer" "Renaming a designtime Farkle had no effect"
     }
 
     test "Many block groups can be ended by the same symbol" {

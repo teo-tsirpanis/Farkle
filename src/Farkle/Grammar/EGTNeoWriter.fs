@@ -75,8 +75,8 @@ module private Implementation =
         | -1 -> failwithf "%s %O not found" message x
         | idx -> uint32 idx
 
-    let writeStartSymbol w (nonterminalMap: IndexMap) (startSymbol: Nonterminal) =
-        nonterminalMap.[startSymbol.Index]
+    let writeStartSymbol w (nonterminalMap: IndexMap) (Nonterminal(idx, _)) =
+        nonterminalMap.[idx]
         |> Entry.UInt32
         |> writeSingleValued w startSymbolHeader
 
@@ -120,9 +120,9 @@ module private Implementation =
         w.WriteInt productions.Length
 
         for i = 0 to productions.Length - 1 do
-            let prod = productions.[i]
+            let {Head = Nonterminal(headIdx, _)} as prod = productions.[i]
 
-            w.WriteUInt32 nonterminalMap.[prod.Head.Index]
+            w.WriteUInt32 nonterminalMap.[headIdx]
             w.WriteInt prod.Handle.Length
             prod.Handle
             |> Seq.iter (
@@ -130,9 +130,9 @@ module private Implementation =
                 | LALRSymbol.Terminal(Terminal(idx, _)) ->
                     w.WriteByte 'T'B
                     w.WriteUInt32 terminalMap.[idx]
-                | LALRSymbol.Nonterminal nont ->
+                | LALRSymbol.Nonterminal(Nonterminal(idx, _)) ->
                     w.WriteByte 'N'B
-                    w.WriteUInt32 nonterminalMap.[nont.Index])
+                    w.WriteUInt32 nonterminalMap.[idx])
 
         w.FinishPendingRecord()
 
@@ -170,8 +170,8 @@ module private Implementation =
 
             w.WriteInt s.GotoActions.Count
             s.GotoActions
-            |> Seq.iter (fun (KeyValue(nont, idx)) ->
-                w.WriteUInt32 nonterminalMap.[nont.Index]
+            |> Seq.iter (fun (KeyValue(Nonterminal(nontIdx, _), idx)) ->
+                w.WriteUInt32 nonterminalMap.[nontIdx]
                 w.WriteUInt32 idx)
 
         w.FinishPendingRecord()

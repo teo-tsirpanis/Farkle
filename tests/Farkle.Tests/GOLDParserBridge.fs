@@ -13,8 +13,9 @@ open System.Diagnostics
 open System.IO
 
 let private createGML (x: GrammarDefinition) =
+    let (Nonterminal(_, startSymbolName)) = x.StartSymbol
     [
-        yield sprintf "\"Start Symbol\" = <%s>" x.StartSymbol.Name
+        yield sprintf "\"Start Symbol\" = <%s>" startSymbolName
         yield! x.Productions |> Seq.map string
     ]
     |> String.concat Environment.NewLine

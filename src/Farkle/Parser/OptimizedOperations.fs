@@ -98,8 +98,8 @@ module private OptimizedOperations =
         |> Seq.iter (fun {Index = stateIndex; GotoActions = actions} ->
             let stateIndex = int stateIndex
             actions
-            |> Seq.iter (fun (KeyValue(nont, idx)) ->
-                arr.[stateIndex].[int nont.Index] <- lalrOptions.[int idx]))
+            |> Seq.iter (fun (KeyValue(Nonterminal(nontIdx, _), idx)) ->
+                arr.[stateIndex].[int nontIdx] <- lalrOptions.[int idx]))
         arr
 
 /// An object that provides optimized functions for some common operations on Grammars.

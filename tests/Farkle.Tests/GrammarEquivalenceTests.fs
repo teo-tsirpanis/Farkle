@@ -68,11 +68,11 @@ let checkLALRStateTableEquivalence (productionMap: ImmutableDictionary<_, _>) (f
             actionsJoined |> Seq.iter (fun (aFrakle, aGold) -> checkActionEquivalence aFrakle aGold)
 
             Expect.hasLength farkleState.GotoActions goldState.GotoActions.Count "There are not the same number of LALR GOTO actions"
-            let gotoJoined = query {
-                for gFarkle in farkleState.GotoActions do
-                join gGold in goldState.GotoActions on (gFarkle.Key.Name = gGold.Key.Name)
-                select (gFarkle.Key, gFarkle.Value, gGold.Value)
-            }
+            let gotoJoined =
+                farkleState.GotoActions.Join(
+                    goldState.GotoActions,
+                    (fun (KeyValue(Nonterminal(_, name), _)) -> name), (fun (KeyValue(Nonterminal(_, name), _)) -> name),
+                    fun (KeyValue(nont, farkleAction)) (KeyValue(_, goldAction)) -> nont, farkleAction, goldAction)
             Expect.hasLength gotoJoined goldState.GotoActions.Count "Some nonterminals have no matching LALR GOTO action"
             gotoJoined |> Seq.iter (fun (nont, gFarkle, gGold) -> checkGotoEquivalence nont gFarkle gGold)
 
@@ -89,10 +89,10 @@ let createProductionMap (farkleProductions: ImmutableArray<_>) (goldProductions:
     let goldProductions = HashSet(goldProductions)
     Expect.hasLength farkleProductions goldProductions.Count "The two grammars don't have the same number of productions"
     for i = 0 to farkleProductions.Length - 1 do
-        let farkleProduction = farkleProductions.[i]
+        let {Head = Nonterminal(_, farkleProdHeadName)} as farkleProduction = farkleProductions.[i]
         goldProductions
-        |> Seq.tryFind (fun p ->
-            p.Head.Name = farkleProduction.Head.Name
+        |> Seq.tryFind (fun ({Head = Nonterminal(_, headName)} as p) ->
+            headName = farkleProdHeadName
             && string p = string farkleProduction)
         |> function
         | Some goldProduction ->

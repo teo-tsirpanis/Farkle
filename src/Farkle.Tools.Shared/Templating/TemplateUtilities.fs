@@ -74,8 +74,8 @@ module Utilities =
             | CamelCase -> sb.[0] <- Char.ToLowerInvariant sb.[0]
         sb.ToString()
 
-    let formatProduction printFull {Head = head; Handle = handle} case separator =
-        let headFormatted = toIdentifier head.Name case separator
+    let formatProduction printFull {Head = Nonterminal(_, headName); Handle = handle} case separator =
+        let headFormatted = toIdentifier headName case separator
         let handleFormatted =
             if handle.IsEmpty then
                 // GOLD Parser doesn't do that, but specifying "Empty" increases readability.
@@ -86,7 +86,7 @@ module Utilities =
                     | LALRSymbol.Terminal (Terminal(_, name)) -> Some <| toIdentifier name case separator
                     // We might want to include even the nonterminals in
                     // the name, when names collide, but only then.
-                    | LALRSymbol.Nonterminal nont when printFull -> Some <| toIdentifier nont.Name case separator
+                    | LALRSymbol.Nonterminal (Nonterminal(_, name)) when printFull -> Some <| toIdentifier name case separator
                     | LALRSymbol.Nonterminal _ -> None)
                 |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator

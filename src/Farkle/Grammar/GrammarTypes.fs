@@ -65,26 +65,26 @@ with
             name
 
 [<CustomComparison; CustomEquality>]
-/// A symbol which is produced by a concatenation of other `Terminal`s and `Nonterminal`s, as the LALR parser dictates.
-type Nonterminal = Nonterminal of index: uint32 * name: string
+/// A symbol which is produced by a concatenation of other `Terminal`s
+/// and `Nonterminal`s, as the LALR parser dictates. Nonterminals with
+/// the same index are considered equal.
+type Nonterminal = Nonterminal of Index: uint32 * Name: string
 with
-    /// The nonterminal's index. Nonterminals with the same index are considered equal.
-    member x.Index = match x with | Nonterminal (idx, _) -> idx
-    /// The nonterminal's name.
-    member x.Name = match x with | Nonterminal (_, name) -> name
+    member x.index = match x with | Nonterminal (idx, _) -> idx
+    member x.name = match x with | Nonterminal (_, name) -> name
     interface IEquatable<Nonterminal> with
-        member x.Equals x' = x.Index = x'.Index
+        member x.Equals x' = x.index = x'.index
     interface IComparable<Nonterminal> with
-        member x.CompareTo x' = compare x.Index x'.Index
+        member x.CompareTo x' = compare x.index x'.index
     interface IComparable with
-        member x.CompareTo x' = compare x.Index (x' :?> Nonterminal).Index
+        member x.CompareTo x' = compare x.index (x' :?> Nonterminal).index
     override x.Equals x' =
         obj.ReferenceEquals(x, x') ||
         match x' with
-        | :? Nonterminal as x' -> x.Index = x'.Index
+        | :? Nonterminal as x' -> x.index = x'.index
         | _ -> false
-    override x.GetHashCode() = x.Index.GetHashCode()
-    override x.ToString() = sprintf "<%s>" x.Name
+    override x.GetHashCode() = x.index.GetHashCode()
+    override x.ToString() = sprintf "<%s>" x.name
 
 /// A symbol which is produced through a DFA, but is not significant for the grammar and is discarded.
 /// An example of a noise symbol would be a source code comment.

@@ -132,7 +132,7 @@ type Group = {
     Start: GroupStart
     /// The symbol that represents the group's end.
     /// None (or null in C#) means that the group is ended by a new line.
-    End: GroupEnd option
+    [<Nullable(2uy, 1uy)>] End: GroupEnd option
     /// The way the group advances.
     AdvanceMode: AdvanceMode
     /// The way the group ends.
@@ -169,12 +169,12 @@ type DFAState = {
     /// next state, using a custom data structure. A character
     /// can be set to explicitly fail, prohibiting the use of
     /// `AnythingElse`.
-    Edges: RangeMap<char, uint32 option>
+    [<Nullable(1uy, 2uy)>] Edges: RangeMap<char, uint32 option>
     /// Whether this state accepts a symbol or not.
-    AcceptSymbol: DFASymbol option
+    [<Nullable(2uy, 1uy)>] AcceptSymbol: DFASymbol option
     /// The state to maybe go to (or fail) in
     /// case the character had no matching edge.
-    AnythingElse: uint32 option
+    [<Nullable(2uy)>] AnythingElse: uint32 option
 }
 
 [<RequireQualifiedAccess>]
@@ -252,7 +252,7 @@ type LALRState = {
     /// depending on the next `Terminal` encountered.
     Actions: ImmutableDictionary<Terminal, LALRAction>
     /// The available `LALRAction` to be taken if input ends.
-    EOFAction: LALRAction option
+    [<Nullable(2uy, 1uy)>] EOFAction: LALRAction option
     /// The available GOTO actions of the state. These actions
     /// are used when a production is reduced and the parser
     /// jumps to the state that represents the shifted nonterminal.

@@ -8,6 +8,7 @@ namespace Farkle
 open Farkle
 open Farkle.Grammar
 open System
+open System.Runtime.CompilerServices
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
@@ -15,13 +16,13 @@ open System
 /// will return from a grammar.</typeparam>
 type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
-    abstract Fuse: Production * ReadOnlySpan<obj> -> obj
+    abstract Fuse: Production * ReadOnlySpan<obj> -> [<Nullable(2uy)>] obj
     inherit ITransformer<Terminal>
 
 /// Some reusable `PostProcessor`s.
 module PostProcessors =
 
-    [<CompiledName("SyntaxChecker")>]
+    [<CompiledName("SyntaxChecker"); Nullable(1uy, 2uy)>]
     /// This post-processor does not return anything meaningful to its consumer.
     /// It is useful for checking the syntax of a string with respect to a grammar.
     let syntaxCheck =

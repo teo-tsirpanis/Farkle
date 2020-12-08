@@ -155,7 +155,7 @@ module RuntimeFarkle =
 
     /// Changes the post-processor of a runtime Farkle to a
     /// dummy one suitable for syntax-checking, not parsing.
-    let syntaxCheck rf = changePostProcessor PostProcessors.syntaxCheck rf
+    let syntaxCheck rf : [<Nullable(1uy, 2uy)>] _ = changePostProcessor PostProcessors.syntaxCheck rf
 
     /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
     let create postProcessor (grammar: Grammar) =
@@ -210,7 +210,7 @@ module RuntimeFarkle =
     /// given character encoding, which may be lazily read.
     /// Better use `parseTextReader` instead.
     [<Obsolete("Streams are supposed to contain binary data; not text. Use parseTextReader instead.")>]
-    let parseStream rf doLazyLoad (encoding: Encoding) (inputStream: Stream) =
+    let parseStream rf doLazyLoad ([<Nullable(2uy)>] encoding: Encoding) (inputStream: Stream) =
         let encoding = if isNull encoding then Encoding.UTF8 else encoding
         use sr = new StreamReader(inputStream, encoding, true, 4096, true)
         use cs =
@@ -266,7 +266,7 @@ type RuntimeFarkle<'TResult> with
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     [<Obsolete("Streams are supposed to contain binary \
 data; not text. Parse a TextReader instead.")>]
-    member this.Parse(stream, [<Optional>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
+    member this.Parse(stream, [<Optional; Nullable(2uy)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
         parseStream this doLazyLoad encoding stream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="charStream">The string to parse.</param>
@@ -285,5 +285,5 @@ data; not text. Parse a TextReader instead.")>]
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
     /// a dummy one that is useful for syntax-checking, not parsing.</summary>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.SyntaxCheck() =
+    member this.SyntaxCheck() : [<Nullable(1uy, 2uy)>] _ =
         changePostProcessor syntaxCheckerObj this

@@ -8,6 +8,7 @@ namespace Farkle
 open Farkle
 open System
 open System.Collections.Generic
+open System.Runtime.CompilerServices
 
 /// <summary>A type that is passed to the transformers and
 /// provides additional information about the terminal being transformed.</summary>
@@ -34,4 +35,4 @@ type ITransformerContext =
 /// The bridge between a character stream and the post-processor API.
 type ITransformer<'sym> =
     /// <summary>Converts a terminal into an arbitrary object.</summary>
-    abstract Transform: 'sym * ITransformerContext * ReadOnlySpan<char> -> obj
+    abstract Transform: 'sym * ITransformerContext * ReadOnlySpan<char> -> [<Nullable(2uy)>] obj

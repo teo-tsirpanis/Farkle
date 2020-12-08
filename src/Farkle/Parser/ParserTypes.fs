@@ -7,11 +7,12 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Grammar
+open System.Runtime.CompilerServices
 
 /// A token is an instance of a `Terminal`.
 /// Tokens carry post-processed terminals,
 /// as well as their position in the text.
-type Token(position, symbol, data) =
+type Token(position, symbol, [<Nullable(2uy)>] data) =
     static let eofTerminal =
         // "EOF!" in ASCII.
         Terminal(0x454F4621u, "EOF")
@@ -21,7 +22,7 @@ type Token(position, symbol, data) =
     /// The `Terminal` whose instance is this token.
     member _.Symbol: Terminal = symbol
     /// The object the `PostProcessor` created for this token.
-    member _.Data: obj = data
+    [<Nullable(2uy)>] member _.Data: obj = data
     /// Whether the token signifies that input ended.
     /// When this property is set to true, the `Token.Symbol`
     /// and `Token.Data` properties have undefined values.

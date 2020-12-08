@@ -8,6 +8,7 @@ namespace Farkle.Builder
 open Farkle
 open Farkle.Common
 open System.Collections.Generic
+open System.Runtime.CompilerServices
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.
@@ -197,7 +198,7 @@ module DesigntimeFarkle =
     /// This is the recommended way to apply metadata to untyped designtime Farkles.
     /// The object they will return is typically null, but it should not be taken for granted.
     /// After the metadata have been set, it is better to upcast back to an untyped one.
-    let cast (df: DesigntimeFarkle) =
+    let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
         match df with
         | :? DesigntimeFarkle<obj> as dfObj -> dfObj
         | _ -> upcast {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = df.Metadata}

@@ -36,7 +36,7 @@ type DesigntimeFarkleExtensions =
     /// into a <see cref="DesigntimeFarkle{Object}"/></summary>
     /// <remarks>Useful for setting metadata to untyped designtime Farkles.
     /// The object <paramref name="df"/> will return is undefined.</remarks>
-    static member Cast df = DesigntimeFarkle.cast df
+    static member Cast df: [<Nullable(1uy, 2uy)>] _ = DesigntimeFarkle.cast df
     [<Extension>]
     /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.</summary>
     /// <remarks>Useful for diagnostic purposes.</remarks>
@@ -153,10 +153,9 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TResult}"/>
     /// that might recognize the given one, or not. In the latter
-    /// case, it returns the default value of the result type (null,
-    /// zero, you got the idea).</summary>
+    /// case, it returns the default value of the result type.</summary>
     /// <seealso cref="Nullable"/>
-    static member Optional(df: DesigntimeFarkle<'TResult>) =
+    static member Optional<[<Nullable(2uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) : [<Nullable(1uy, 2uy)>] DesigntimeFarkle<'TResult> =
         Nonterminal.Create(sprintf "%s Maybe" df.Name,
             df.Extended().AsIs(),
             ProductionBuilder.Empty.FinishConstant(Unchecked.defaultof<'TResult>))
@@ -165,4 +164,4 @@ type DesigntimeFarkleExtensions =
     static member Nullable(df: DesigntimeFarkle<'TResult>) =
         Nonterminal.Create(sprintf "%s Maybe" df.Name,
             df.Extended().Finish(Nullable.op_Implicit),
-            ProductionBuilder.Empty.FinishConstant(Unchecked.defaultof<'TResult Nullable>))
+            ProductionBuilder.Empty.FinishConstant(Nullable()))

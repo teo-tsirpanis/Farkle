@@ -7,6 +7,7 @@ namespace Farkle.Builder
 
 open Farkle
 open System
+open System.Runtime.CompilerServices
 
 [<CompiledName("Transformer`1")>]
 /// <summary>A delegate that transforms the content
@@ -20,7 +21,7 @@ open System
 /// <para>A .NET delegate was used because read-only
 /// spans are incompatible with F# functions.</para>
 /// </remarks>
-type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
+type T<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
 
 [<CompiledName("Fuser`1")>]
 /// <summary>A delegate that fuses the many members
@@ -32,7 +33,7 @@ type T<[<CovariantOut>] 'T> = delegate of context: ITransformerContext * data: R
 /// <para>A .NET delegate was used because read-only
 /// spans are incompatible with F# functions.</para>
 /// </remarks>
-type F<[<CovariantOut>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
+type F<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
 
 type IRawDelegateProvider =
     abstract IsNull: bool

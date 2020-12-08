@@ -60,7 +60,7 @@ module private OptimizedOperations =
             let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
             for j = 0 to ASCIIUpperBound do
                 arr.[i].[j] <- anythingElse
-            let chars = 
+            let chars =
                 dfa.[i].Edges
                 |> rangeMapToSeq
                 |> Seq.takeWhile (fun x -> isASCII x.Key)

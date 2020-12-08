@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -31,7 +31,7 @@ type TokenizerFactory() =
 [<Sealed>]
 type internal TokenizerFactoryOfType(tokenizerType: Type) =
     inherit TokenizerFactory()
-    // We can't make it a singleton because 
+    // We can't make it a singleton because
     // of potential unloadability problems.
     let ctor = tokenizerType.GetConstructor([|typeof<Grammar>|])
     do

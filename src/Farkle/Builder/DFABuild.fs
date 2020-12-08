@@ -239,14 +239,14 @@ let internal calculateFollowPos leafCount regex =
     let followPos = Array.replicate leafCount BitSet.Empty
     let rec impl x =
         match x.Tree with
-        | Alt xs -> List.iter impl xs
+        | Alt xs -> for x in xs do impl x
         | Concat ([], _) -> ()
         | Concat (xs, firstPoses) ->
             (xs, firstPoses) ||> List.iter2Safe (fun x firstPosOfTheRest ->
                 let lastPosOfThisOne = x.LastPos
                 for idx in lastPosOfThisOne do
                     followPos.[idx] <- BitSet.Union(&followPos.[idx], &firstPosOfTheRest))
-            List.iter impl xs
+            for x in xs do impl x
         | Star x ->
             let lastPos = x.LastPos
             let firstPos = x.FirstPos
@@ -296,8 +296,9 @@ let internal makeDFA
         let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
         let SAllButChars = S.Name |> Seq.map leaves.AllButCharacters |> Set.unionMany
 
-        SAllButChars |> Set.iter (fun a -> S.Edges.[a] <- None)
-        SChars |> Set.iter (fun a ->
+        for a in SAllButChars do
+            S.Edges.[a] <- None
+        for a in SChars do
             let U =
                 S.Name
                 |> Seq.filter (leaves.Characters >> Set.contains a)
@@ -307,7 +308,7 @@ let internal makeDFA
             // Any previous `None` set by the all-but characters will be overwritten,
             // because a concrete character takes precedence.
             // That's why we don't use `Dictionary.Add`.
-            S.Edges.[a] <- Some UIdx)
+            S.Edges.[a] <- Some UIdx
 
         S.Name
         |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)

@@ -62,19 +62,23 @@ let checkLALRStateTableEquivalence (productionMap: ImmutableDictionary<_, _>) (f
             let actionsJoined =
                 farkleState.Actions.Join(
                     goldState.Actions,
-                    (fun (KeyValue(Terminal(_, name), _)) -> name), (fun (KeyValue(Terminal(_, name), _)) -> name),
+                    (fun (KeyValue(Terminal(_, name), _)) -> name),
+                    (fun (KeyValue(Terminal(_, name), _)) -> name),
                     fun (KeyValue(_, farkleAction)) (KeyValue(_, goldAction)) -> farkleAction, goldAction)
             Expect.hasLength actionsJoined goldState.Actions.Count "Some terminals do not have a matching LALR action"
-            actionsJoined |> Seq.iter (fun (aFrakle, aGold) -> checkActionEquivalence aFrakle aGold)
+            for aFarkle, aGold in actionsJoined do
+                checkActionEquivalence aFarkle aGold
 
             Expect.hasLength farkleState.GotoActions goldState.GotoActions.Count "There are not the same number of LALR GOTO actions"
             let gotoJoined =
                 farkleState.GotoActions.Join(
                     goldState.GotoActions,
-                    (fun (KeyValue(Nonterminal(_, name), _)) -> name), (fun (KeyValue(Nonterminal(_, name), _)) -> name),
+                    (fun (KeyValue(Nonterminal(_, name), _)) -> name),
+                    (fun (KeyValue(Nonterminal(_, name), _)) -> name),
                     fun (KeyValue(nont, farkleAction)) (KeyValue(_, goldAction)) -> nont, farkleAction, goldAction)
             Expect.hasLength gotoJoined goldState.GotoActions.Count "Some nonterminals have no matching LALR GOTO action"
-            gotoJoined |> Seq.iter (fun (nont, gFarkle, gGold) -> checkGotoEquivalence nont gFarkle gGold)
+            for nont, gotoFarkle, gotoGold in gotoJoined do
+                checkGotoEquivalence nont gotoFarkle gotoGold
 
             match farkleState.EOFAction, goldState.EOFAction with
             | Some aFarkle, Some aGold -> checkActionEquivalence aFarkle aGold

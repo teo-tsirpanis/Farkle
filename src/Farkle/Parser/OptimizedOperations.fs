@@ -56,16 +56,16 @@ module private OptimizedOperations =
     /// ASCII character that was encountered.
     let buildDFAArray (dfa: ImmutableArray<DFAState>) =
         let arr = createJaggedArray2D dfa.Length (ASCIIUpperBound + 1)
-        dfa
-        |> Seq.iteri (fun i state ->
+        for i = 0 to dfa.Length - 1 do
             let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
             for j = 0 to ASCIIUpperBound do
                 arr.[i].[j] <- anythingElse
-            state.Edges
-            |> rangeMapToSeq
-            |> Seq.takeWhile (fun x -> isASCII x.Key)
-            |> Seq.iter (fun x ->
-                arr.[i].[int x.Key] <- DFAStateTag.FromOption x.Value))
+            let chars = 
+                dfa.[i].Edges
+                |> rangeMapToSeq
+                |> Seq.takeWhile (fun x -> isASCII x.Key)
+            for KeyValue(c, state) in chars do
+                arr.[i].[int c] <- DFAStateTag.FromOption state
         arr
 
     let buildDFAAnythingElseArray (dfa: ImmutableArray<DFAState>) =
@@ -81,11 +81,9 @@ module private OptimizedOperations =
             else
                 terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
         let arr = createJaggedArray2D lalr.Length (maxTerminalIndex + 1)
-        lalr
-        |> Seq.iter (fun {Index = stateIndex; Actions = actions} ->
-            actions
-            |> Seq.iter (fun (KeyValue(Terminal(idx, _), action)) ->
-                arr.[int stateIndex].[int idx] <- Some action))
+        for {Index = stateIndex; Actions = actions} in lalr do
+            for KeyValue(Terminal(idx, _), action) in actions do
+                arr.[int stateIndex].[int idx] <- Some action
         arr
 
     let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
@@ -94,12 +92,10 @@ module private OptimizedOperations =
         // No reason to allocate many options.
         let lalrOptions = lalr |> Seq.map Some |> Array.ofSeq
         let arr = createJaggedArray2D lalr.Length (maxNonterminalIndex + 1)
-        lalr
-        |> Seq.iter (fun {Index = stateIndex; GotoActions = actions} ->
+        for {Index = stateIndex; GotoActions = gotoActions} in lalr do
             let stateIndex = int stateIndex
-            actions
-            |> Seq.iter (fun (KeyValue(Nonterminal(nontIdx, _), idx)) ->
-                arr.[stateIndex].[int nontIdx] <- lalrOptions.[int idx]))
+            for KeyValue(Nonterminal(nontIdx, _), idx) in gotoActions do
+                arr.[stateIndex].[int nontIdx] <- lalrOptions.[int idx]
         arr
 
 /// An object that provides optimized functions for some common operations on Grammars.

@@ -204,9 +204,8 @@ let tests = testList "Designtime Farkle tests" [
             |> RuntimeFarkle.markForPrecompile
             |> RuntimeFarkle.build
 
-        testData
-        |> List.iter (fun (x,_,_) ->
-            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x))
+        for x, _, _ in testData do
+            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
     }
 
     test "Parser application errors are correctly handled" {

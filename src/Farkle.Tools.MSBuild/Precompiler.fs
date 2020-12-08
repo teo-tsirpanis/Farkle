@@ -85,11 +85,11 @@ let private getPrecompilableGrammars log references path =
         alc.Unload()
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
-    List.iter (fun (name, data: _ []) ->
+    for name, data: _ [] in pcdfs do
         let name = PrecompiledGrammar.GetResourceName name
         let res = EmbeddedResource(name, ManifestResourceAttributes.Public, data)
-        asm.MainModule.Resources.Add res) pcdfs
-    not pcdfs.IsEmpty
+        asm.MainModule.Resources.Add res
+    not (List.isEmpty pcdfs)
 
 let discoverAndPrecompile log references path =
     let pcdfs = getPrecompilableGrammars log references path

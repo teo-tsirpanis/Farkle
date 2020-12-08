@@ -108,9 +108,8 @@ module private Implementation =
                 | EndingMode.Closed -> 'C'B)
 
             w.WriteInt group.Nesting.Count
-            group.Nesting
-            |> Seq.sort
-            |> Seq.iter w.WriteUInt32
+            for x in Seq.sort group.Nesting do
+                w.WriteUInt32 x
 
         w.FinishPendingRecord()
 
@@ -124,15 +123,14 @@ module private Implementation =
 
             w.WriteUInt32 nonterminalMap.[headIdx]
             w.WriteInt prod.Handle.Length
-            prod.Handle
-            |> Seq.iter (
-                function
+            for sym in prod.Handle do
+                match sym with
                 | LALRSymbol.Terminal(Terminal(idx, _)) ->
                     w.WriteByte 'T'B
                     w.WriteUInt32 terminalMap.[idx]
                 | LALRSymbol.Nonterminal(Nonterminal(idx, _)) ->
                     w.WriteByte 'N'B
-                    w.WriteUInt32 nonterminalMap.[idx])
+                    w.WriteUInt32 nonterminalMap.[idx]
 
         w.FinishPendingRecord()
 
@@ -163,16 +161,14 @@ module private Implementation =
                 w.WriteEmpty()
 
             w.WriteInt s.Actions.Count
-            s.Actions
-            |> Seq.iter (fun (KeyValue(Terminal(idx, _), action)) ->
+            for KeyValue(Terminal(idx, _), action) in s.Actions do
                 w.WriteUInt32 terminalMap.[idx]
-                writeLALRAction action w)
+                writeLALRAction action w
 
             w.WriteInt s.GotoActions.Count
-            s.GotoActions
-            |> Seq.iter (fun (KeyValue(Nonterminal(nontIdx, _), idx)) ->
+            for KeyValue(Nonterminal(nontIdx, _), gotoIdx) in s.GotoActions do
                 w.WriteUInt32 nonterminalMap.[nontIdx]
-                w.WriteUInt32 idx)
+                w.WriteUInt32 gotoIdx
 
         w.FinishPendingRecord()
 

@@ -65,7 +65,8 @@ module Utilities =
             | '~' -> sb.Append "Tilde"
             | c -> sb.Append c
             |> ignore
-        String.iter processChar name
+        for c in name do
+            processChar c
         if sb.Length > 0 then
             match case with
             | UpperCase -> for i = 0 to sb.Length do sb.[i] <- Char.ToUpperInvariant sb.[i]

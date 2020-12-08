@@ -183,15 +183,14 @@ module DesigntimeFarkleBuild =
                 nonterminalMap.Add(nont, symbol)
                 nonterminals.Add(symbol)
                 nont.Freeze()
-                nont.Productions
-                |> List.iter (fun aprod ->
+                for aprod in nont.Productions do
                     let handle =
                         aprod.Members
                         |> Seq.map getLALRSymbol
                         |> ImmutableArray.CreateRange
                     let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                     productions.Add(prod)
-                    fusers.Add(aprod.Fuser))
+                    fusers.Add(aprod.Fuser)
                 LALRSymbol.Nonterminal symbol
             | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                 LALRSymbol.Terminal groupMap.[lg]
@@ -253,13 +252,13 @@ module DesigntimeFarkleBuild =
                 addGroup "Comment Block" startSymbol (Some endSymbol) EndingMode.Closed
 
         // Add miscellaneous noise symbols.
-        Seq.iter (fun (name, regex) ->
+        for name, regex in metadata.NoiseSymbols do
             let symbol = Noise name
             noiseSymbols.Add(symbol)
             addDFASymbol regex (Choice2Of4 symbol)
-        ) metadata.NoiseSymbols
         // Add explicitly created comments.
-        Seq.iter handleComment metadata.Comments
+        for comment in metadata.Comments do
+            handleComment comment
 
         // Add the comment noise symbol once and only if it is needed.
         if not metadata.Comments.IsEmpty then

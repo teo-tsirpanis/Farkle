@@ -39,8 +39,9 @@ module AST =
             sb.Append("+--") |> ignore
             match x with
             | AST.Content (_, _, data) -> sb.AppendLine(data) |> ignore
-            | AST.Nonterminal (prod, x) ->
+            | AST.Nonterminal (prod, xs) ->
                 sb.AppendLine(prod.ToString()) |> ignore
-                x |> List.iter (impl <| indent + 1)
+                for x in xs do
+                    impl (indent + 1) x
         impl 0 x
         sb.ToString()

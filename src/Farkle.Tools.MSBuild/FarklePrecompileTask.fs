@@ -35,6 +35,7 @@ type FarklePrecompileTask() =
 
     override this.Execute() =
         let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
+        let mutable gotGrammarError = false
         match grammars with
         | Ok grammars ->
             precompiledGrammars <-
@@ -45,18 +46,20 @@ type FarklePrecompileTask() =
                         Some (name, grammar)
                     | PrecompilingFailed(name, [error]) ->
                         this.LogSuppressibleError("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
+                        gotGrammarError <- true
                         None
                     | PrecompilingFailed(name, errors) ->
                         this.LogSuppressibleError("Errors while precompiling {GrammarName}.", name)
                         for error in errors do
                             this.LogSuppressibleError("{BuildError}", error)
+                        gotGrammarError <- true
                         None
                     | DiscoveringFailed(fieldName, e) ->
                         this.LogSuppressibleError(e, "Exception thrown while getting the value of field {FieldName}.", fieldName)
                         None)
 
-            if this.Log.HasLoggedErrors then
-                this.Log.LogMessage(MessageImportance.High, "You can treat grammar precompilation errors as warnings \
+            if gotGrammarError then
+                this.Log.LogMessage(MessageImportance.High, "Hint: you can treat grammar precompilation errors as warnings \
 by setting the FarkleSuppressGrammarErrors MSBuild property to true.")
 
             not this.Log.HasLoggedErrors

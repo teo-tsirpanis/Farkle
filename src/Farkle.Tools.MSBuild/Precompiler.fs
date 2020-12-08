@@ -5,8 +5,14 @@
 
 module internal Farkle.Tools.Precompiler
 
-#if !NETFRAMEWORK
 open Farkle.Builder
+
+type PrecompilerResult =
+    | Successful of grammarName: string * egtNeoData: byte[]
+    | PrecompilingFailed of grammarName: string * BuildError list
+    | DiscoveringFailed of fieldName: string * exn
+
+#if !NETFRAMEWORK
 open Farkle.Common
 open Farkle.Grammar
 open Mono.Cecil
@@ -19,9 +25,10 @@ open System.Runtime.Loader
 let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
     asm
     |> PrecompilerDiscoverer.discover
-    |> List.map (fun pcdf ->
-        let name = (pcdf :> DesigntimeFarkle).Name
-        log.Information("Precompiling {Grammar}...", name)
+    |> List.map (function
+    | Ok pcdf ->
+        let name = pcdf.Name
+        log.Information("Precompiling {GrammarName}...", name)
         let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.GrammarDefinition
         match grammar with
         | Ok grammar ->
@@ -34,11 +41,12 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
                 grammar.Productions.Length,
                 grammar.LALRStates.Length,
                 grammar.DFAStates.Length)
+
             use stream = new MemoryStream()
             EGT.toStreamNeo stream grammar
-            Ok(stream.ToArray())
-        | Error msg -> Error(string msg)
-        |> (fun x -> name, x))
+            Successful(name, stream.ToArray())
+        | Error xs -> PrecompilingFailed(name, xs)
+    | Error x -> DiscoveringFailed x)
 
 type private PrecompilerContext(path, references: AssemblyReference seq, log: ILogger) as this =
     inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
@@ -95,7 +103,7 @@ let discoverAndPrecompile log references path =
     let pcdfs = getPrecompilableGrammars log references path
 
     pcdfs
-    |> Seq.map fst
+    |> Seq.choose (function Successful(name, _) | PrecompilingFailed(name, _) -> Some name | _ -> None)
     |> Seq.countBy id
     |> Seq.map (fun (name, count) ->
         if count <> 1 then
@@ -104,7 +112,7 @@ let discoverAndPrecompile log references path =
     |> Seq.fold (||) false
     |> (function
         | true ->
-            log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function, \
+            log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function \
 or the Rename extension method.")
             Error()
         | false -> Ok pcdfs)

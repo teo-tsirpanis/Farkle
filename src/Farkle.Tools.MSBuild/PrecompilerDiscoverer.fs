@@ -43,8 +43,12 @@ let discover (asm: Assembly) =
             // so we must be precise).
             typeof<PrecompilableDesigntimeFarkle>.IsAssignableFrom fld.FieldType
             && fld.IsInitOnly)
-        |> Seq.map (fun fld -> fld.GetValue(null) :?> PrecompilableDesigntimeFarkle)
-        |> Seq.filter (fun pcdf -> pcdf.Assembly = asm)
+        |> Seq.map (fun fld ->
+            try
+                fld.GetValue(null) :?> PrecompilableDesigntimeFarkle |> Ok
+            with
+            e -> Error(fld.ToString(), e))
+        |> Seq.filter (function Ok pcdf -> pcdf.Assembly = asm | Error _ -> true)
 
     let types = ResizeArray()
     let typesToProcess = Queue(asm.GetTypes())
@@ -55,7 +59,9 @@ let discover (asm: Assembly) =
             typesToProcess.Enqueue nestedType
     types
     |> Seq.collect probeType
-    // Precompiled designtime Farkles are F# object types, which
-    // means they follow reference equality semantics.
+    // Precompilable designtime Farkles are F# object types, which
+    // means they follow reference equality semantics. If discovery
+    // fails, its exception object will surely be unique so there
+    // isn't a chance that an error misses being reported.
     |> Seq.distinct
     |> List.ofSeq

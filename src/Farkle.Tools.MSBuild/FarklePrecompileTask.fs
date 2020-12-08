@@ -27,11 +27,6 @@ type FarklePrecompileTask() =
             this.Log2.Warning<'T0,'T1>(messageTemplate, x1, x2)
         else
             this.Log2.Error(messageTemplate, x1, x2)
-    member private this.LogSuppressibleError(exn, messageTemplate, x) =
-        if this.SuppressGrammarErrors then
-            this.Log2.Warning<'T0>(exn, messageTemplate, x)
-        else
-            this.Log2.Error(exn, messageTemplate, x)
 
     override this.Execute() =
         let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
@@ -54,8 +49,9 @@ type FarklePrecompileTask() =
                             this.LogSuppressibleError("{BuildError}", error)
                         gotGrammarError <- true
                         None
-                    | DiscoveringFailed(fieldName, e) ->
-                        this.LogSuppressibleError(e, "Exception thrown while getting the value of field {FieldName}.", fieldName)
+                    | DiscoveringFailed(typeName, fieldName, e) ->
+                        this.Log2.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
+                        this.Log2.Error("{Exception}", e)
                         None)
 
             if gotGrammarError then

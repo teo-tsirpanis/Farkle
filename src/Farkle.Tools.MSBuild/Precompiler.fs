@@ -10,7 +10,7 @@ open Farkle.Builder
 type PrecompilerResult =
     | Successful of grammarName: string * egtNeoData: byte[]
     | PrecompilingFailed of grammarName: string * BuildError list
-    | DiscoveringFailed of fieldName: string * exn
+    | DiscoveringFailed of typeName: string * fieldName: string * exn
 
 #if !NETFRAMEWORK
 open Farkle.Common

@@ -23,6 +23,12 @@ let private fieldsBindingFlags =
     ||| BindingFlags.Public
     ||| BindingFlags.NonPublic
 
+let private filterTargetInvocationException (e: exn) =
+    match e with
+    | :? TargetInvocationException as tie when not (isNull tie.InnerException) ->
+        tie.InnerException
+    | e -> e
+
 /// Gets all `PrecompilableDesigntimeFarkle`s of the given assembly.
 /// To be discovered, they must reside in a static read-only field
 /// (in C#). or in an immutable let-bound value (in F#) that has been
@@ -47,7 +53,7 @@ let discover (asm: Assembly) =
             try
                 fld.GetValue(null) :?> PrecompilableDesigntimeFarkle |> Ok
             with
-            e -> Error(fld.ToString(), e))
+            e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e))
         |> Seq.filter (function Ok pcdf -> pcdf.Assembly = asm | Error _ -> true)
 
     let types = ResizeArray()

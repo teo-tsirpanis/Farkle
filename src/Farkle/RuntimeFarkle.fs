@@ -225,8 +225,8 @@ module RuntimeFarkle =
         parseChars rf cs
 
     /// Parses and post-processes a file at the given path.
-    let parseFile rf inputFile =
-        use s = File.OpenText(inputFile)
+    let parseFile rf path =
+        use s = File.OpenText(path)
         parseTextReader rf s
 
     /// Parses and post-processes a string.
@@ -273,7 +273,7 @@ data; not text. Parse a TextReader instead.")>]
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
-    /// <remarks>The text reader's content will be lazily read</remarks>
+    /// <remarks>The text reader's content will be lazily read.</remarks>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.Parse textReader = parseTextReader this textReader
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
@@ -282,6 +282,14 @@ data; not text. Parse a TextReader instead.")>]
     /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.ChangePostProcessor pp = changePostProcessor pp this
+    /// <summary>Parses and post-processes a file.</summary>
+    /// <param name="path">The path of the file to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    /// <remarks>The file's content will be lazily read.</remarks>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.ParseFile path = parseFile this path
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
     /// a dummy one that is useful for syntax-checking, not parsing.</summary>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]

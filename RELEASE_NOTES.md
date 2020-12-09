@@ -2,7 +2,8 @@
 * __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
 * __Breaking change:__ The `RuntimeFarkle.GetBuildError` method was replaced by `GetBuildErrors`, which returns a list of build errors.
 * __Breaking change:__ The members of Farkle's discriminated unions can no longer be accessed in F# using a method. For example, `let foo (x: Terminal) = printfn "%s" x.Name` becomes `let foo (Terminal(_, name)) = printfn "%s" name`. For C# users, duplicate properties like `Terminal.name` with a lowercase "n" were removed; they are replaced by their corresponding title-cased properties.
-* __Breaking change:__ The members of many of Farkle's discriminated unions got meaningful names.
+* __Breaking change:__ The members of many of Farkle's discriminated unions got meaningful names. C# code using the older names might break.
+* __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Build error reporting is improved. More build errors will be reported at the same time (without waiting for one to be fixed to show the next).

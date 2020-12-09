@@ -9,7 +9,7 @@ open System
 open System.Threading
 
 /// A reference type whose value can only be set once.
-type SetOnce< [<ComparisonConditionalOn; EqualityConditionalOn>] 'T> = private {
+type internal SetOnce< [<ComparisonConditionalOn; EqualityConditionalOn>] 'T> = private {
     mutable _IsSet: int
     mutable _Value: 'T
 }
@@ -19,7 +19,7 @@ with
     /// This method is thread-safe, in the sense that only
     /// one thread will ever be able to set a value to this object.
     member x.TrySet v =
-        if Interlocked.CompareExchange(&x._IsSet, 1, 0) = 0 then
+        if Interlocked.Exchange(&x._IsSet, 1) = 0 then
             x._Value <- v
             Thread.MemoryBarrier()
             true

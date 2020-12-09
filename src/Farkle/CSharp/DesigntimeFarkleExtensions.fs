@@ -61,7 +61,7 @@ type DesigntimeFarkleExtensions =
         // corresponding function. It would register it
         // with Farkle's own assembly otherwise.
         let asm = Reflection.Assembly.GetCallingAssembly()
-        PrecompilerInterface.prepare df asm
+        PrecompilableDesigntimeFarkle<_>(df, asm)
     [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
     /// <summary>Marks an untyped <see cref="DesigntimeFarkle{TResult}"/>
     /// as available to have its grammar precompiled ahead of time.</summary>
@@ -74,7 +74,7 @@ type DesigntimeFarkleExtensions =
         // corresponding function. It would register it
         // with Farkle's own assembly otherwise.
         let asm = Reflection.Assembly.GetCallingAssembly()
-        PrecompilerInterface.prepareU df asm
+        PrecompilableDesigntimeFarkle(df, asm)
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

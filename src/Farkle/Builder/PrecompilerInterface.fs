@@ -51,7 +51,11 @@ type PrecompiledGrammar private(asm, grammarName, resourceName) =
         assemblyCache.GetValue(asm, getAllPrecompiledGrammars)
 
 /// A kind of designtime Farkle whose grammar can be precompiled ahead of time.
-type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, asm: Assembly) =
+type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Assembly) =
+    let df =
+        match df with
+        | :? PrecompilableDesigntimeFarkle as pcdf -> pcdf.InnerDesigntimeFarkle
+        | _ -> df
     // We have to be 100% sure that the designtime Farkle's
     // name never changes because it is part of its identity.
     // All its implementations return a fixed value, but that's
@@ -64,10 +68,11 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, asm: Assembly)
     /// The `GrammarDefinition` of this designtime Farkle.
     member _.GrammarDefinition = grammarDef
     /// The assembly in which the designtime Farkle was declared.
-    member _.Assembly = asm
+    member _.Assembly = assembly
+    member private _.InnerDesigntimeFarkle = df
     /// Tries to get the `PrecompiledGrammar` object, if it exists in the assembly.
     member _.TryGetPrecompiledGrammar() =
-        match PrecompiledGrammar.GetAllFromAssembly(asm).TryGetValue(name) with
+        match PrecompiledGrammar.GetAllFromAssembly(assembly).TryGetValue(name) with
         | true, pg -> Some pg
         | false, _ -> None
     interface DesigntimeFarkle with
@@ -79,9 +84,11 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, asm: Assembly)
 
 /// The typed edition of `PrecompilableDesigntimeFarkle`.
 [<Sealed>]
-type PrecompilableDesigntimeFarkle<'T> internal(df: DesigntimeFarkle<'T>, asm) =
-    inherit PrecompilableDesigntimeFarkle(df, asm)
-    member internal _.InnerDesigntimeFarkle = df
+type PrecompilableDesigntimeFarkle<'T> internal(df: DesigntimeFarkle<'T>, assembly) =
+    inherit PrecompilableDesigntimeFarkle(
+        (match df with :? PrecompilableDesigntimeFarkle<'T> as pcdf -> pcdf.InnerDesigntimeFarkle | _ -> df),
+        assembly)
+    member private _.InnerDesigntimeFarkle = df
     interface DesigntimeFarkle<'T>
 
 /// Functions to create precompilable designtime
@@ -119,18 +126,3 @@ of Farkle. To suppress this error and build the grammar, set the '%s' AppContext
             | e ->
                 raise(newPrecompilerLoaderException e)
         | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly
-
-    /// Marks the given designtime Farkle as eligible to
-    /// be precompiled. The assembly it resides is also given.
-    let internal prepare (df: DesigntimeFarkle<'T>) asm =
-        match df with
-        | :? PrecompilableDesigntimeFarkle<'T> as pcdf ->
-            PrecompilableDesigntimeFarkle<_>(pcdf.InnerDesigntimeFarkle, asm)
-        | df -> PrecompilableDesigntimeFarkle<_>(df, asm)
-
-    /// The untyped edition of `prepare`.
-    let internal prepareU (df: DesigntimeFarkle) asm =
-        match df with
-        | :? PrecompilableDesigntimeFarkle as pcdf ->
-            PrecompilableDesigntimeFarkle((pcdf :> DesigntimeFarkleWrapper).InnerDesigntimeFarkle, asm)
-        | df -> PrecompilableDesigntimeFarkle(df, asm)

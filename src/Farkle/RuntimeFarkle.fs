@@ -184,13 +184,13 @@ module RuntimeFarkle =
     /// on https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
-        PrecompilerInterface.prepare df asm
+        PrecompilableDesigntimeFarkle<_>(df, asm)
 
     [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// The untyped edition of `markForPrecompile`.
     let markForPrecompileU df =
         let asm = Assembly.GetCallingAssembly()
-        PrecompilerInterface.prepareU df asm
+        PrecompilableDesigntimeFarkle(df, asm)
 
     /// Parses and post-processes a `CharStream`.
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]

@@ -14,7 +14,7 @@ open System.Runtime.CompilerServices
 /// provides additional information about the terminal being transformed.</summary>
 /// <remarks>It is explicitly implemented by <see cref="CharStream"/>
 /// but casting it to this type is not recommended. Using this interface
-/// outside the scope of a transformer is not supported either.</remarks>
+/// outside the scope of a transformer is not recommended either.</remarks>
 type ITransformerContext =
     /// <summary>The position of the first character of the token.</summary>
     /// <remarks>In C# this property is shown as a read-write <c>ref</c> due
@@ -32,7 +32,16 @@ type ITransformerContext =
     /// <see cref="Farkle.IO.CharStream" /> the tokens come from.</remarks>
     abstract ObjectStore: IDictionary<string,obj>
 
-/// The bridge between a character stream and the post-processor API.
-type ITransformer<'sym> =
-    /// <summary>Converts a terminal into an arbitrary object.</summary>
-    abstract Transform: 'sym * ITransformerContext * ReadOnlySpan<char> -> [<Nullable(2uy)>] obj
+/// <summary>An interface that transforms tokens from a <see cref="CharStream"/>.
+/// It is implemented by <see cref="PostProcessor{TResult}"/>s.</summary>
+/// <typeparam name="TSymbol">A type whose objects identify the kind of the token
+/// being transformed. In Farkle it is usually <see cref="Farkle.Grammar.Terminal"/>.</typeparam>
+type ITransformer<'TSymbol> =
+    /// <summary>Converts a token into an object.</summary>
+    /// <param name="symbol">An object identifying the kind of the token.</param>
+    /// <param name="context">A <see cref="ITransformerContext"/> object
+    /// that provides more information about the token.</param>
+    /// <param name="data">A read-only span of the token's characters.</param>
+    /// <returns>An object. It can be <see langword="null"/>.</returns>
+    abstract Transform: symbol: 'TSymbol * context: ITransformerContext * data: ReadOnlySpan<char>
+        -> [<Nullable(2uy)>] obj

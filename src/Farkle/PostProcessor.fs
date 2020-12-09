@@ -12,11 +12,15 @@ open System.Runtime.CompilerServices
 
 /// <summary>Post-processors convert strings of a grammar into more
 /// meaningful types for the library that uses the parser.</summary>
-/// <typeparam name="T">The type of the final object this post-processor
-/// will return from a grammar.</typeparam>
+/// <typeparam name="T">The type of the final object this
+/// post-processor will return from a grammar. This generic
+/// parameter is covariant.</typeparam>
 type PostProcessor<[<CovariantOut>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
-    abstract Fuse: Production * ReadOnlySpan<obj> -> [<Nullable(2uy)>] obj
+    /// <param name="production">The production whose members will be fused.</param>
+    /// <param name="members">A read-only span of the production's members</param>
+    /// <returns>An object. It can be <see langword="null"/>.</returns>
+    abstract Fuse: production: Production * members: ReadOnlySpan<obj> -> [<Nullable(2uy)>] obj
     inherit ITransformer<Terminal>
 
 /// Some reusable `PostProcessor`s.

@@ -16,6 +16,18 @@ open Farkle.Monads.Either
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Reflection
+
+// Taking the concept of circular references to a whole new level.
+#if NET
+[<System.Diagnostics.CodeAnalysis.DynamicDependency("DoParse", "Farkle.Builder.RegexGrammar", "Farkle")>]
+#endif
+let parseRegexString =
+    typeof<Regex>.Assembly
+        .GetType("Farkle.Builder.RegexGrammar", true)
+        .GetMethod("DoParse", BindingFlags.NonPublic ||| BindingFlags.Static)
+        .CreateDelegate(typeof<RegexParserFunction>)
+    :?> RegexParserFunction
 
 [<RequireQualifiedAccess>]
 type internal RegexLeaf =
@@ -184,8 +196,8 @@ let internal createRegexBuild caseSensitive regexes =
                     makeConcat []
                 else
                     RegexLeaf.AllButChars(fIndex(), chars) |> addLeaf
-            | Regex.RegexString (_, Lazy regex) ->
-                match regex with
+            | Regex.RegexString (holder) ->
+                match holder.GetRegex(parseRegexString) with
                 | Ok x -> createTree x
                 | Error x ->
                     regexParseErrors.Add(BuildError.RegexParseError(acceptSymbol, x))

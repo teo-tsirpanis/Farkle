@@ -7,7 +7,6 @@ namespace rec Farkle.Builder
 
 open Farkle.Parser
 open System
-open System.Reflection
 
 type internal RegexParserResult = Result<Regex, ParserError>
 
@@ -18,17 +17,23 @@ module private RegexUtils =
     let charSetFull = set [char 0 .. char UInt16.MaxValue]
     let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
     let isCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
-    // Taking the concept of circular references to a whole new level.
-    #if NET
-    [<System.Diagnostics.CodeAnalysis.DynamicDependency("DoParse", "Farkle.Builder.RegexGrammar", "Farkle")>]
-    #endif
-    let DoParse =
-        Assembly
-            .GetExecutingAssembly()
-            .GetType("Farkle.Builder.RegexGrammar", true)
-            .GetMethod("DoParse", BindingFlags.NonPublic ||| BindingFlags.Static)
-            .CreateDelegate(typeof<RegexParserFunction>)
-        :?> RegexParserFunction
+
+type internal RegexStringHolder(regex) =
+    let lockObj = obj()
+    let mutable result = ValueNone
+
+    member _.RegexString = regex
+
+    member _.GetRegex(f: RegexParserFunction) =
+        match result with
+        | ValueNone -> lock lockObj (fun () ->
+            match result with
+            | ValueNone ->
+                let x = f.Invoke regex
+                result <- ValueSome x
+                x
+            | ValueSome x -> x)
+        | ValueSome x -> x
 
 [<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 /// <summary>A regular expression that is used to specify a tokenizer symbol.</summary>
@@ -55,7 +60,7 @@ type Regex =
     | AllButChars of char Set
     /// Another Regex, but specified as a string which
     /// will be parsed when a DFA will be generated.
-    | RegexString of string * Lazy<RegexParserResult>
+    | RegexString of RegexStringHolder
     /// A regex that recognizes only the empty string.
     static member Empty = Concat []
     /// <summary>A regex that recognizes any single character
@@ -193,9 +198,7 @@ type Regex =
     /// Returns a regex specified by a string.
     /// An invalid regex string will make the building process fail.
     /// See more at https://teo-tsirpanis.github.io/Farkle/string-regexes.html
-    static member FromRegexString x =
-        let thunk = lazy(RegexUtils.DoParse.Invoke x)
-        RegexString(x, thunk)
+    static member FromRegexString x = RegexString(RegexStringHolder x)
 
 /// F#-friendly members of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.

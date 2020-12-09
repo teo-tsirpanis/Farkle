@@ -35,7 +35,7 @@ let rec formatRegex =
         x
         |> Seq.map (function | Regex.Alt _ as x -> "(" + formatRegex x + ")" | x -> formatRegex x)
         |> String.concat ""
-    | Regex.RegexString(x, _) -> "(" + x + ")"
+    | Regex.RegexString holder -> "(" + holder.RegexString + ")"
 
 let checkRegex str regex =
     let regex' =

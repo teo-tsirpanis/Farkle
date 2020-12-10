@@ -46,7 +46,7 @@ type FarkleError =
 /// <see cref="ParserApplicationException"/>) are thrown
 /// after being wrapped in a <see cref="PostProcessorException"/>.</para></remarks>
 [<NoComparison; ReferenceEquality>]
-type RuntimeFarkle<'TResult> = internal {
+type RuntimeFarkle<[<Nullable(2uy)>] 'TResult> = internal {
     Grammar: Result<Grammar,BuildError list>
     PostProcessor: PostProcessor<'TResult>
     TokenizerFactory: TokenizerFactory
@@ -154,7 +154,7 @@ module RuntimeFarkle =
             {new TokenizerFactory() with member _.CreateTokenizer g = fTokenizer g :> _}
 
     /// Changes the post-processor of a runtime Farkle to a
-    /// dummy one suitable for syntax-checking, not parsing.
+    /// dummy one suitable for syntax-checking instead of parsing.
     let syntaxCheck rf : [<Nullable(1uy, 2uy)>] _ = changePostProcessor PostProcessors.syntaxCheck rf
 
     /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
@@ -291,7 +291,7 @@ data; not text. Parse a TextReader instead.")>]
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.ParseFile path = parseFile this path
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
-    /// a dummy one that is useful for syntax-checking, not parsing.</summary>
+    /// a dummy one that is useful for syntax-checking instead of parsing.</summary>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.SyntaxCheck() : [<Nullable(1uy, 2uy)>] _ =
         changePostProcessor syntaxCheckerObj this

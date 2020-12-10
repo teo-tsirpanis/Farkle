@@ -32,15 +32,19 @@ https://opensource.org/licenses/MIT ~}}
 {{~ func gen_builder
 
         n = $0 ~}}
-[<Sealed>]
+[<Sealed; NullableContext(2uy)>]
 /// [omit]
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
-    member _.Append(df) = ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }})
-    member x.Append(literal) = x.Append(Literal literal)
+    [<NullableContext(2uy)>]
+    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ = ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }})
+    [<NullableContext(2uy)>]
+    member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
     {{~ if n != capacity ~}}
-    member _.Extend(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) = ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
+    [<NullableContext(1uy)>]
+    member _.Extend<[<Nullable(2uy)>] {{ ap }}T{{ n + 1 }}>(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) =
+        ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
     {{~ end ~}}
-    member _.Finish(f: {{delegate_signature n}}) =
+    member _.Finish([<Nullable(1uy)>] f: {{delegate_signature n}}) : [<Nullable(1uy)>] _ =
         {{~ # By explicitly declaring the variables the closure will not capture `members`.
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}
@@ -67,9 +71,9 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         Production<{{ ap }}TOutput>(members, fuserData)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
-    member _.AsIs() = Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1)
+    member _.AsIs() : [<Nullable(1uy)>] _ = Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1)
     {{~ end ~}}
-    member x.FinishFSharp(f: {{ func_signature n }}): Production<{{ ap }}TOutput> =
+    member x.FinishFSharp([<Nullable(1uy)>] f: {{ func_signature n }}): [<Nullable(1uy)>] Production<{{ ap }}TOutput> =
         {{~ if n == 1 ~}}
         x.Finish(Delegate.ofInvokeMethod f)
         {{~ else if n <= 5 ~}}
@@ -85,12 +89,14 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
 
 {{~ end ~}}
 
-namespace Farkle.Builder
+namespace Farkle.Builder.ProductionBuilders
 
+open Farkle.Builder
 open Farkle.Collections
 open Farkle.Common
 open LanguagePrimitives.IntrinsicFunctions
 open System
+open System.Runtime.CompilerServices
 
 [<AutoOpen>]
 module private ProductionBuilderHelpers =

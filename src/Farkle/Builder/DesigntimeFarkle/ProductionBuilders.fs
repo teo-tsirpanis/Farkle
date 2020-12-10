@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle.Builder.ProductionBuilders
 open Farkle.Collections
 open System
 open System.Collections.Immutable

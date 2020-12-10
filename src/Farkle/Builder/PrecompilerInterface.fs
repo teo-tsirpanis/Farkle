@@ -84,7 +84,7 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Asse
 
 /// The typed edition of `PrecompilableDesigntimeFarkle`.
 [<Sealed>]
-type PrecompilableDesigntimeFarkle<'T> internal(df: DesigntimeFarkle<'T>, assembly) =
+type PrecompilableDesigntimeFarkle<[<Nullable(2uy)>] 'T> internal(df: DesigntimeFarkle<'T>, assembly) =
     inherit PrecompilableDesigntimeFarkle(
         (match df with :? PrecompilableDesigntimeFarkle<'T> as pcdf -> pcdf.InnerDesigntimeFarkle | _ -> df),
         assembly)

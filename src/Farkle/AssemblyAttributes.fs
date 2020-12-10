@@ -33,6 +33,10 @@ type internal NullableAttribute([<ParamArray>] __: byte[]) =
 [<AttributeUsage(enum 0x144E)>]
 type internal NullableContextAttribute(__: byte) = inherit Attribute()
 
+[<CompilerGenerated; Embedded>]
+[<AttributeUsage(AttributeTargets.Module)>]
+type internal NullablePublicOnlyAttribute(__: bool) = inherit Attribute()
+
 namespace global
 
 open System
@@ -44,5 +48,6 @@ type internal CovariantOutAttribute() =
     inherit Attribute()
 
 [<``module``:NullableContext(1uy)>]
+[<``module``:NullablePublicOnly(true)>]
 [<assembly:Extension>]
 do()

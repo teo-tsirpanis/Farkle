@@ -5,7 +5,7 @@
 
 namespace Farkle.Builder
 
-open System.Collections.Immutable
+open System.Runtime.CompilerServices
 
 [<NoComparison>]
 /// <summary>The base interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
@@ -36,7 +36,7 @@ type DesigntimeFarkle =
 /// or an exception might be thrown.</para></remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>
 /// <seealso cref="DesigntimeFarkle"/>
-type DesigntimeFarkle< [<CovariantOut>] 'T> =
+type DesigntimeFarkle< [<CovariantOut; Nullable(2uy)>] 'T> =
     inherit DesigntimeFarkle
 
 type internal DesigntimeFarkleWrapper =

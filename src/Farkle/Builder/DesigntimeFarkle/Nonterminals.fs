@@ -8,6 +8,7 @@ namespace Farkle.Builder
 open Farkle.Common
 open System
 open System.Collections.Immutable
+open System.Runtime.CompilerServices
 
 /// <summary>The base, untyped interface of <see cref="Production{T}"/>.</summary>
 /// <seealso cref="Production{T}"/>
@@ -22,7 +23,7 @@ type internal AbstractProduction =
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
 [<Sealed>]
-type Production<'T> internal(members: _ seq, fuser: FuserData) =
+type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData) =
     let members = members.ToImmutableArray()
     interface AbstractProduction with
         member _.Members = members
@@ -43,7 +44,7 @@ type internal AbstractNonterminal =
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
 /// All productions of a nonterminal have the same type parameter.</typeparam>
-type Nonterminal<'T> = internal {
+type Nonterminal<[<Nullable(2uy)>] 'T> = internal {
     _Name: string
     Productions: SetOnce<AbstractProduction list>
 }

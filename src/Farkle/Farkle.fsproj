@@ -34,9 +34,11 @@
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Exceptions.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
+    <Compile Include="Builder/OperatorPrecedence.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />
     <Compile Include="Builder/Regex.fs" />
     <Compile Include="Builder/DFABuild.fs" />
+    <Compile Include="Builder/LALRConflictResolution.fs" />
     <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
     <Compile Include="Builder/GrammarMetadata.fs" />

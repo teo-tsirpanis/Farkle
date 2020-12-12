@@ -11,6 +11,32 @@ open System
 open System.Collections
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Runtime.CompilerServices
+
+/// The reason an LALR conflict failed to be resolved.
+type LALRConflictReason =
+    /// No prececence info were specified.
+    | NoPrecedenceInfo
+    /// Precedence info were specified in only one of the two objects.
+    | PartialPrecedenceInfo
+    /// The objects were specified in different operator groups.
+    | DifferentOperatorGroup
+    /// The objects have the same precedence but were non-associative.
+    | PrecedenceWasNonAssociative
+    /// The productions have the same precedence. This
+    /// reason is specified only on Reduce-Reduce conflicts.
+    | SamePrecedence
+    /// The operator group cannot resolve Reduce-Reduce conflicts.
+    | CannotResolveReduceReduce
+    override x.ToString() =
+        match x with
+        | NoPrecedenceInfo -> "no precedence info were specified"
+        | PartialPrecedenceInfo -> "precedence info were specified in only one of the two objects"
+        | DifferentOperatorGroup -> "the objects were specified in different operator groups"
+        | PrecedenceWasNonAssociative -> "the objects had the same precedence but were non-associative"
+        | SamePrecedence -> "the productions had the same precedence"
+        | CannotResolveReduceReduce -> "the symbols' operator group cannot resolve Reduce-Reduce conflicts. \
+To enable it, pass a boolean value of true to the operator group's constructor"
 
 /// The type of an LALR conflict.
 type LALRConflictType =
@@ -44,7 +70,7 @@ type LALRConflict = {
     StateIndex: uint32
     /// The symbol upon whose encounter, the conflict happens.
     /// `None` means the conflict happens when the parser reaches the end of input.
-    Symbol: Terminal option
+    [<Nullable(2uy, 1uy)>] Symbol: Terminal option
     /// The type of the conflict.
     Type: LALRConflictType
 }

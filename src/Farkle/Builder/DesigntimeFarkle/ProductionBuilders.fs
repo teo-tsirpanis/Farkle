@@ -16,9 +16,9 @@ open System.Collections.Immutable
 ///     <para>A production builder is an object that helps to fluently construct <see cref="Production{T}"/>s
 ///     by aggregating the types of its significant members. The types of the production's
 ///     significant members are indicated by the type parameters. For example, a <c>ProductionBuilder</c> has no
-///     significant members, and a <c>ProductionBuilder&lt;int, string&gt;</c> has two significant members: an integer
+///     significant members, and a <c>ProductionBuilder{int, string}</c> has two significant members: an integer
 ///     and a string.</para>
-///     <para>Production builders have three basic methods.</para>
+///     <para>Production builders have these common methods.</para>
 ///     <para><c>Append</c> returns a production builder with the same significant members,
 ///     but the given <see cref="DesigntimeFarkle"/> at the end of it. Alternatively, it can
 ///     accept a string which will be appended to the production as a literal.</para>
@@ -26,8 +26,8 @@ open System.Collections.Immutable
 ///     whose type is determined by the given <see cref="DesigntimeFarkle{T}"/> that will
 ///     be appended to it.</para>
 ///     <para><c>Finish</c> accepts a function that converts all the builder's significant members
-///     into the eventual type of the returned <see cref="Production{T}"/>. It comes in two editions.
-///     One that takes an F# function and another one that takes a delegate.</para>
+///     into the eventual type of the returned <see cref="Production{T}"/>. It comes in two editions:
+///     one that takes an F# function and another one that takes a delegate.</para>
 /// </remarks>
 type ProductionBuilder internal(members) =
     static let empty = ProductionBuilder(ImmutableList.Empty)
@@ -43,7 +43,7 @@ type ProductionBuilder internal(members) =
                 | :? DesigntimeFarkle as df -> df
                 | :? string as s -> Literal s :> DesigntimeFarkle
                 | :? char as c -> c |> string |> Literal :> DesigntimeFarkle
-                | x -> failwith "Only designtime Farkles, strings and characters are \
+                | x -> invalidArg "members" "Only designtime Farkles, strings and characters are \
 allowed in a production builder's constructor. You provided a %O" <| x.GetType())
             |> ImmutableList.CreateRange
         ProductionBuilder(members)

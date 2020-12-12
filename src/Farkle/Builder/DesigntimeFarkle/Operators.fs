@@ -6,6 +6,7 @@
 namespace Farkle.Builder
 
 open Farkle
+open Farkle.Builder.ProductionBuilders
 open Farkle.Common
 open System.Collections.Generic
 open System.Runtime.CompilerServices
@@ -81,6 +82,9 @@ module DesigntimeFarkleOperators =
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
+
+    /// An alias for ``ProductionBuilder`1.AsIs``.
+    let asIs (pb: ProductionBuilder<'T>) = pb.AsIs()
 
     /// An alias for `ProductionBuilder.Empty`.
     let empty = ProductionBuilder.Empty
@@ -186,18 +190,24 @@ module DesigntimeFarkleOperators =
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to set metadata for designtime Farkles.
-/// Keep in mind that apart from renames, only the metadata of the _topmost_
-/// designtime Farkle matter. Any other metadata changes will be disregarded.
+/// With few exceptions, these functions will have to be applied to the topmost
+/// designtime Farkle that will get build, or they will have no effect.
+/// Designime Farkles that were applied the functions of this module must not
+/// be used with the original designimte Farkles in the same context; only
+/// one grammar symbol will be created, with undefined behavior.
 module DesigntimeFarkle =
 
-    /// Sets a custom `GrammarMetadata` object to a `DesigntimeFarkle&lt;'T&gt;`.
+    /// Sets a custom `GrammarMetadata` object to a typed designtime Farkle.
+    /// Most other functions in this module are convenience wrappers over this
+    /// function.
     let withMetadata metadata df =
         {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
 
-    /// Converts an untyped designtime Farkle to a typed one that accepts an object.
-    /// This is the recommended way to apply metadata to untyped designtime Farkles.
-    /// The object they will return is typically null, but it should not be taken for granted.
-    /// After the metadata have been set, it is better to upcast back to an untyped one.
+    /// Converts an untyped designtime Farkle to a typed one that returns an object.
+    /// This function is used to apply metadata to untyped designtime Farkles.
+    /// The object the designtime Farkle this function will return is undefined.
+    /// After the metadata have been set, it is recommended to upcast back to an
+    /// untyped one.
     let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
         match df with
         | :? DesigntimeFarkle<obj> as dfObj -> dfObj
@@ -205,8 +215,6 @@ module DesigntimeFarkle =
 
     /// Changes the name of a designtime Farkle. This function can be applied
     /// anywhere, not only to the topmost one, like with other metadata changes.
-    /// Using the same designtime Farkle with a different name will create only
-    /// one grammar symbol whose name is undefined.
     let rename newName df =
         nullCheck "newName" newName
         {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>

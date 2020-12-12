@@ -6,10 +6,31 @@
 namespace Farkle.Builder
 
 open Farkle
+open Farkle.Builder.OperatorPrecedence
 open Farkle.Builder.ProductionBuilders
 open Farkle.Common
 open System.Collections.Generic
 open System.Runtime.CompilerServices
+
+type internal DesigntimeFarkleWithOperatorGroup =
+    abstract OperatorGroup: OperatorGroup
+    inherit DesigntimeFarkleWrapper
+
+type private DesigntimeFarkleWithOperatorGroup<'T>(df: DesigntimeFarkle<'T>, opGroup) =
+    let df =
+        match df with
+        | :? DesigntimeFarkleWithOperatorGroup<'T> as df -> df.InnerDesigntimeFarkle
+        | _ -> df
+    member private _.InnerDesigntimeFarkle = df
+
+    interface DesigntimeFarkle with
+        member _.Name = df.Name
+        member _.Metadata = df.Metadata
+    interface DesigntimeFarkleWrapper with
+        member _.InnerDesigntimeFarkle = upcast df
+    interface DesigntimeFarkleWithOperatorGroup with
+        member _.OperatorGroup = opGroup
+    interface DesigntimeFarkle<'T>
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.
@@ -197,11 +218,18 @@ module DesigntimeFarkleOperators =
 /// one grammar symbol will be created, with undefined behavior.
 module DesigntimeFarkle =
 
-    /// Sets a custom `GrammarMetadata` object to a typed designtime Farkle.
+    /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
     /// Most other functions in this module are convenience wrappers over this
     /// function.
     let withMetadata metadata df =
         {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+
+    /// Sets an `OperatorGroup` object to a typed designtime Farkle.
+    /// This function can be applied in designtime Farkles that are not the
+    /// topmost ones. Applying this function many times will discard the existing
+    /// operator group.
+    let withOperatorGroup opGroup df =
+        DesigntimeFarkleWithOperatorGroup<_>(df, opGroup) :> DesigntimeFarkle<_>
 
     /// Converts an untyped designtime Farkle to a typed one that returns an object.
     /// This function is used to apply metadata to untyped designtime Farkles.

@@ -30,6 +30,9 @@ type ProductionBuilderExtensions =
 
 [<Extension; AbstractClass; Sealed>]
 /// <summary>Extension methods for the <see cref="DesigntimeFarkle{TResult}"/> type.</summary>
+/// <remarks>Most of these methods must be applied to the topmost designtime Farkle
+/// that will eventually be built. Use <see cref="Cast"/> first to use these functions
+/// on untyped designtime Farkles.</remarks>
 type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Casts a <see cref="DesigntimeFarkle"/>
@@ -75,6 +78,21 @@ type DesigntimeFarkleExtensions =
         // with Farkle's own assembly otherwise.
         let asm = Reflection.Assembly.GetCallingAssembly()
         PrecompilableDesigntimeFarkle(df, asm)
+    [<Extension>]
+    /// <summary>Sets a custom <see cref="GrammarMetadata"/>
+    /// object to a typed designtime Farkle.</summary>
+    /// <seealso cref="CaseSensitive"/>
+    /// <seealso cref="AutoWhitespace"/>
+    /// <seealso cref="AddNoiseSymbol"/>
+    /// <seealso cref="AddLineComment"/>
+    /// <seealso cref="AddBlockComment"/>
+    static member WithMetadata (df: DesigntimeFarkle<'TResult>, metadata) =
+        DesigntimeFarkle.withMetadata metadata df
+    [<Extension>]
+    /// <summary>Sets an <see cref="Farkle.Builder.OperatorPrecedence.OperatorGroup"/>
+    /// to a typed designtime Farkle. Any previous ones -if exist- are discarded.</summary>
+    static member WithOperatorGroup (df: DesigntimeFarkle<'TResult>, opGroup) =
+        DesigntimeFarkle.withOperatorGroup opGroup df
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

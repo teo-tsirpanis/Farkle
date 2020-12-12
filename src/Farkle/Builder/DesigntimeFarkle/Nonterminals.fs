@@ -19,15 +19,19 @@ type internal AbstractProduction =
     abstract Members: DesigntimeFarkle ImmutableArray
     /// The fuser to process the members of this production.
     abstract Fuser: FuserData
+    /// An object representing this production in an
+    /// `OperatorGroup`, providing contextual precedence.
+    abstract ContextualPrecedenceToken: obj
 
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
 [<Sealed>]
-type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData) =
+type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData, cpToken) =
     let members = members.ToImmutableArray()
     interface AbstractProduction with
         member _.Members = members
         member _.Fuser = fuser
+        member _.ContextualPrecedenceToken = cpToken
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>

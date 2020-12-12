@@ -107,6 +107,10 @@ module DesigntimeFarkleOperators =
     /// An alias for ``ProductionBuilder`1.AsIs``.
     let asIs (pb: ProductionBuilder<'T>) = pb.AsIs()
 
+    /// An alias for the `WithPrecedence` method of production builders.
+    let inline prec (token: obj) pb =
+        (^TBuilder : (member WithPrecedence: obj -> ^TBuilder) (pb, token))
+
     /// An alias for `ProductionBuilder.Empty`.
     let empty = ProductionBuilder.Empty
 

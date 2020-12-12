@@ -34,15 +34,16 @@ https://opensource.org/licenses/MIT ~}}
         n = $0 ~}}
 [<Sealed; NullableContext(2uy)>]
 /// [omit]
-type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}) =
+type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}, cpToken) =
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ = ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }})
+    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+        ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }}, cpToken)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
     {{~ if n != capacity ~}}
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] {{ ap }}T{{ n + 1 }}>(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) =
-        ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count)
+        ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count, cpToken)
     {{~ end ~}}
     member _.Finish([<Nullable(1uy)>] f: {{delegate_signature n}}) : [<Nullable(1uy)>] _ =
         {{~ # By explicitly declaring the variables the closure will not capture `members`.
@@ -68,10 +69,18 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<{{ ap }}TOutput>(members, fuserData)
+        Production<{{ ap }}TOutput>(members, fuserData, cpToken)
+    member _.WithPrecedence(cpToken) =
+        nullCheck "cpToken" cpToken
+        ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}, cpToken)
+    member x.WithPrecedence(cpTokenRef: outref<_>) =
+        let tok = obj()
+        cpTokenRef <- tok
+        x.WithPrecedence(tok)
     {{~ if n == 1 }}
     /// Returns a production that returns the significant member as is.
-    member _.AsIs() : [<Nullable(1uy)>] _ = Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1)
+    member _.AsIs() : [<Nullable(1uy)>] _ =
+        Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1, cpToken)
     {{~ end ~}}
     member x.FinishFSharp([<Nullable(1uy)>] f: {{ func_signature n }}): [<Nullable(1uy)>] Production<{{ ap }}TOutput> =
         {{~ if n == 1 ~}}

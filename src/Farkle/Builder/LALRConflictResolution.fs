@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -121,9 +121,45 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
         |> Seq.map (fun x -> x.ResolvesReduceReduceConflict)
         |> Array.ofSeq
 
-    override _.ResolveShiftReduceConflict (Terminal(shiftTerminalIdx, _)) {Index = reduceProductionIdx} =
-        match terminalMap.TryGetValue shiftTerminalIdx, productionMap.TryGetValue reduceProductionIdx with
-        | (true, termObj), (true, prodObj) ->
+    let hasPrecInfo =
+        let dict = Dictionary(comparer)
+        let rec impl (x: obj) idx =
+            idx < precInfoLookups.Length && (precInfoLookups.[idx].ContainsKey x || impl x (idx + 1))
+        fun (x: obj) ->
+            match dict.TryGetValue x with
+            | true, result -> result
+            | false, _ ->
+                let result = impl x 0
+                dict.Add(x, result)
+                result
+
+    let getProductionObj =
+        let dict = Dictionary(comparer)
+        fun {Index = prodIdx; Handle = handle} ->
+            // Unless the production has a contextual precedence token,
+            // it assumes the P&A of the last terminal it has.
+            // This is what (Fs)Yacc does.
+            match productionMap.TryGetValue prodIdx with
+            | true, prodObj -> ValueSome prodObj
+            | false, _ ->
+                match dict.TryGetValue prodIdx with
+                | true, prodObj -> ValueSome prodObj
+                | false, _ ->
+                    let mutable lastTerminalPrecInfo = null
+                    let mutable i = handle.Length - 1
+                    while lastTerminalPrecInfo <> null && i >= 0 do
+                        match handle.[i] with
+                        | LALRSymbol.Terminal (Terminal(termIdx, _)) when hasPrecInfo terminalMap.[termIdx] ->
+                            lastTerminalPrecInfo <- terminalMap.[termIdx]
+                        | _ -> ()
+                        i <- i - 1
+
+                    dict.Add(prodIdx, lastTerminalPrecInfo)
+                    ValueOption.ofObj lastTerminalPrecInfo
+
+    override _.ResolveShiftReduceConflict (Terminal(shiftTerminalIdx, _)) prod =
+        match terminalMap.TryGetValue shiftTerminalIdx, getProductionObj prod with
+        | (true, termObj), ValueSome prodObj ->
             match groupLookup.TryGetValue termObj, groupLookup.TryGetValue prodObj with
             | (true, termGroup), (true, prodGroup) when termGroup = prodGroup ->
                 let group = precInfoLookups.[termGroup]
@@ -144,11 +180,12 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
             | (true, _), (true, _) -> CannotChoose DifferentOperatorGroup
             | (true, _), (false, _) | (false, _), (true, _) -> CannotChoose PartialPrecedenceInfo
             | (false, _), (false, _) -> CannotChoose NoPrecedenceInfo
-        | _ -> CannotChoose NoPrecedenceInfo
+        | (true, _), ValueNone | (false, _), ValueSome _ -> CannotChoose PartialPrecedenceInfo
+        | (false, _), ValueNone -> CannotChoose NoPrecedenceInfo
 
-    override _.ResolveReduceReduceConflict {Index = prod1Idx} {Index = prod2Idx} =
-        match productionMap.TryGetValue prod1Idx, productionMap.TryGetValue prod2Idx with
-        | (true, prod1Obj), (true, prod2Obj) ->
+    override _.ResolveReduceReduceConflict prod1 prod2 =
+        match getProductionObj prod1, getProductionObj prod2 with
+        | ValueSome prod1Obj, ValueSome prod2Obj ->
             match groupLookup.TryGetValue prod1Obj, groupLookup.TryGetValue prod2Obj with
             | (true, prod1Group), (true, prod2Group) when prod1Group = prod2Group ->
                 let group = precInfoLookups.[prod1Group]
@@ -168,4 +205,5 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
             | (true, _), (true, _) -> CannotChoose DifferentOperatorGroup
             | (true, _), (false, _) | (false, _), (true, _) -> CannotChoose PartialPrecedenceInfo
             | (false, _), (false, _) -> CannotChoose NoPrecedenceInfo
-        | _ -> CannotChoose NoPrecedenceInfo
+        | ValueSome _, ValueNone | ValueNone, ValueSome _ -> CannotChoose PartialPrecedenceInfo
+        | ValueNone, ValueNone -> CannotChoose NoPrecedenceInfo

@@ -8,6 +8,7 @@ module Farkle.Builder.LALRBuild
 
 open Farkle.Grammar
 open Farkle.Builder.LALRBuildTypes
+open Farkle.Builder.LALRConflictResolution
 open System.Collections.Generic
 open System.Collections.Immutable
 
@@ -257,7 +258,7 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
 
 /// Builds an LALR parsing table from the grammar with the given
 /// starting symbol that contains the given `Production`s.
-let buildProductionsToLALRStates startSymbol terminals nonterminals productions =
+let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol terminals nonterminals productions =
     IA nonterminals
     IA productions
 
@@ -280,10 +281,25 @@ let buildProductionsToLALRStates startSymbol terminals nonterminals productions 
 
     let conflicts = ResizeArray()
     let resolveConflict stateIndex term x1 x2 =
-        LALRConflict.Create stateIndex term x1 x2
-        |> BuildError.LALRConflict
-        |> conflicts.Add
-        x1
+        match x1, x2, term with
+        | LALRAction.Shift _, LALRAction.Reduce prod, Some term ->
+            resolver.ResolveShiftReduceConflict term prod
+        | LALRAction.Reduce prod, LALRAction.Shift _, Some term ->
+            (resolver.ResolveShiftReduceConflict term prod).Invert()
+        | LALRAction.Reduce prod1, LALRAction.Reduce prod2, _ ->
+            resolver.ResolveReduceReduceConflict prod1 prod2
+        // The reason doesn't matter; an exception will be
+        // very soon thrown on an impossible conflict type.
+        | _ -> CannotChoose NoPrecedenceInfo
+        |> function
+        | ChooseOption1 -> x1
+        | ChooseOption2 -> x2
+        | CannotChoose reason ->
+            LALRConflict.Create stateIndex term x1 x2 reason
+            |> BuildError.LALRConflict
+            |> conflicts.Add
+            x1
+
     match createLALRStates fGetAllProductions firstSets resolveConflict s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable

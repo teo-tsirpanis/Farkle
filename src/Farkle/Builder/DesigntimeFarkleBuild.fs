@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder
 
+open Farkle.Builder.LALRConflictResolution
 open Farkle.Common
 open Farkle.Grammar
 open Farkle.Monads.Either
@@ -29,6 +30,8 @@ type GrammarDefinition = {
     Groups: ImmutableArray<Group>
 
     DFASymbols: (Regex * DFASymbol) list
+
+    ConflictResolver: LALRConflictResolver
 }
 
 type private PostProcessorDefinition = {
@@ -75,6 +78,14 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegex = Regex.chars ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
     let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
 
+    let rec private addOperatorGroup (set: HashSet<_>) (df: DesigntimeFarkle) =
+        match df with
+        | :? DesigntimeFarkleWithOperatorGroup as dfog ->
+            set.Add(dfog.OperatorGroup) |> ignore
+        | :? DesigntimeFarkleWrapper as dfw ->
+            addOperatorGroup set dfw.InnerDesigntimeFarkle
+        | _ -> ()
+
     let private createGrammarDefinitionEx (df: DesigntimeFarkle) =
         let mutable dfaSymbols = []
         let addDFASymbol regex sym =
@@ -105,6 +116,10 @@ module DesigntimeFarkleBuild =
         let groupMap = Dictionary<AbstractGroup,_>()
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ResizeArray()
+
+        let operatorGroups = HashSet()
+        let terminalObjects = Dictionary()
+        let productionTokens = Dictionary()
 
         let rec getLALRSymbol (df: DesigntimeFarkle) =
             let newTerminal name = Terminal(uint32 terminals.Count, name)
@@ -146,69 +161,85 @@ module DesigntimeFarkleBuild =
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
 
+            addOperatorGroup operatorGroups df
             let dfName = df.Name
-            match Symbol.create df with
-            | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
-                LALRSymbol.Terminal terminalMap.[term]
-            | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal
-            | Symbol.VirtualTerminal vt when virtualTerminalMap.ContainsKey(vt) ->
-                LALRSymbol.Terminal virtualTerminalMap.[vt]
-            | Symbol.VirtualTerminal vt ->
-                let symbol = newTerminal dfName
-                virtualTerminalMap.Add(vt, symbol)
-                // The post-processor will never see a virtual terminal anyway.
-                addTerminal symbol TransformerData.Null
-                LALRSymbol.Terminal symbol
-            | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
-                LALRSymbol.Terminal literalMap.[lit]
-            | Symbol.Literal lit ->
-                let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
-                let symbol = handleTerminal dfName term
-                literalMap.Add(lit, symbol)
-                LALRSymbol.Terminal symbol
-            | Symbol.NewLine ->
-                usesNewLine <- true
-                match newLineSymbol with
-                | Choice1Of4 nlTerminal -> nlTerminal
-                | _ ->
-                    let nlTerminal = newTerminal "NewLine"
-                    addTerminal nlTerminal TransformerData.Null
-                    newLineSymbol <- Choice1Of4 nlTerminal
-                    nlTerminal
-                |> LALRSymbol.Terminal
-            | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
-                LALRSymbol.Nonterminal nonterminalMap.[nont]
-            | Symbol.Nonterminal nont ->
-                let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
-                nonterminalMap.Add(nont, symbol)
-                nonterminals.Add(symbol)
-                nont.Freeze()
-                for aprod in nont.Productions do
-                    let handle =
-                        aprod.Members
-                        |> Seq.map getLALRSymbol
-                        |> ImmutableArray.CreateRange
-                    let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
-                    productions.Add(prod)
-                    fusers.Add(aprod.Fuser)
-                LALRSymbol.Nonterminal symbol
-            | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
-                LALRSymbol.Terminal groupMap.[lg]
-            | Symbol.LineGroup lg ->
-                // We don't know yet if the grammar is line-based, so
-                // we queue it until the entire grammar is traversed.
-                let term = newTerminal lg.Name
-                groupMap.[lg] <- term
-                addTerminalGroup lg.Name term lg.Transformer lg.GroupStart None
-                LALRSymbol.Terminal term
-            | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
-                LALRSymbol.Terminal groupMap.[bg]
-            | Symbol.BlockGroup bg ->
-                let term = newTerminal bg.Name
-                let gEnd = GroupEnd bg.GroupEnd
-                groupMap.[bg] <- term
-                addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Some gEnd)
-                LALRSymbol.Terminal term
+
+            let builderSym = Symbol.create df
+            let lalrSym =
+                match builderSym with
+                | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
+                    LALRSymbol.Terminal terminalMap.[term]
+                | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal
+                | Symbol.VirtualTerminal vt when virtualTerminalMap.ContainsKey(vt) ->
+                    LALRSymbol.Terminal virtualTerminalMap.[vt]
+                | Symbol.VirtualTerminal vt ->
+                    let symbol = newTerminal dfName
+                    virtualTerminalMap.Add(vt, symbol)
+                    // The post-processor will never see a virtual terminal anyway.
+                    addTerminal symbol TransformerData.Null
+                    LALRSymbol.Terminal symbol
+                | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
+                    LALRSymbol.Terminal literalMap.[lit]
+                | Symbol.Literal lit ->
+                    let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
+                    let symbol = handleTerminal dfName term
+                    literalMap.Add(lit, symbol)
+                    LALRSymbol.Terminal symbol
+                | Symbol.NewLine ->
+                    usesNewLine <- true
+                    match newLineSymbol with
+                    | Choice1Of4 nlTerminal -> nlTerminal
+                    | _ ->
+                        let nlTerminal = newTerminal "NewLine"
+                        addTerminal nlTerminal TransformerData.Null
+                        newLineSymbol <- Choice1Of4 nlTerminal
+                        nlTerminal
+                    |> LALRSymbol.Terminal
+                | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
+                    LALRSymbol.Nonterminal nonterminalMap.[nont]
+                | Symbol.Nonterminal nont ->
+                    let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
+                    nonterminalMap.Add(nont, symbol)
+                    nonterminals.Add(symbol)
+                    nont.Freeze()
+                    for aprod in nont.Productions do
+                        let handle =
+                            aprod.Members
+                            |> Seq.map getLALRSymbol
+                            |> ImmutableArray.CreateRange
+                        let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
+                        match aprod.ContextualPrecedenceToken with
+                        | null -> ()
+                        | cpToken -> productionTokens.Add(prod.Index, cpToken)
+                        productions.Add(prod)
+                        fusers.Add(aprod.Fuser)
+                    LALRSymbol.Nonterminal symbol
+                | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
+                    LALRSymbol.Terminal groupMap.[lg]
+                | Symbol.LineGroup lg ->
+                    // We don't know yet if the grammar is line-based, so
+                    // we queue it until the entire grammar is traversed.
+                    let term = newTerminal lg.Name
+                    groupMap.[lg] <- term
+                    addTerminalGroup lg.Name term lg.Transformer lg.GroupStart None
+                    LALRSymbol.Terminal term
+                | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
+                    LALRSymbol.Terminal groupMap.[bg]
+                | Symbol.BlockGroup bg ->
+                    let term = newTerminal bg.Name
+                    let gEnd = GroupEnd bg.GroupEnd
+                    groupMap.[bg] <- term
+                    addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Some gEnd)
+                    LALRSymbol.Terminal term
+
+            match lalrSym, builderSym with
+            | LALRSymbol.Terminal(Terminal(termIdx, _)), Symbol.Literal lit ->
+                terminalObjects.TryAdd(termIdx, box lit) |> ignore
+            | LALRSymbol.Terminal(Terminal(termIdx, _)), _ ->
+                terminalObjects.TryAdd(termIdx, box df) |> ignore
+            | _ -> ()
+
+            lalrSym
 
         let startSymbol =
             match getLALRSymbol df with
@@ -294,6 +325,9 @@ module DesigntimeFarkleBuild =
                 .Add("Case Sensitive", string metadata.CaseSensitive)
                 .Add("Start Symbol", string startSymbol)
                 .Add("Auto Whitespace", string metadata.AutoWhitespace)
+
+        let resolver =
+            PrecedenceBasedConflictResolver(operatorGroups, terminalObjects, productionTokens, metadata.CaseSensitive)
         {
             Metadata = df.Metadata
             Properties = properties
@@ -302,6 +336,7 @@ module DesigntimeFarkleBuild =
             Productions = productions.ToImmutable()
             Groups = groups.ToImmutable()
             DFASymbols = dfaSymbols
+            ConflictResolver = resolver
         },
         {
             Transformers = transformers.ToArray()
@@ -374,6 +409,7 @@ module DesigntimeFarkleBuild =
         let! myDarlingLALRStateTable, mySweetDFAStateTable =
             Result.combine
                 (LALRBuild.buildProductionsToLALRStates
+                    grammarDef.ConflictResolver
                     grammarDef.StartSymbol
                     grammarDef.Symbols.Terminals
                     grammarDef.Symbols.Nonterminals

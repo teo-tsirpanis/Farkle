@@ -73,20 +73,24 @@ type LALRConflict = {
     [<Nullable(2uy, 1uy)>] Symbol: Terminal option
     /// The type of the conflict.
     Type: LALRConflictType
+    /// The reason Farkle could not resolve the conflict.
+    Reason: LALRConflictReason
 }
 with
     /// Creates an `LALRConflict`.
-    static member Create stateIndex symbol act1 act2 = {
+    static member internal Create stateIndex symbol act1 act2 reason = {
         StateIndex = stateIndex
         Symbol = symbol
         Type = LALRConflictType.Create act1 act2
+        Reason = reason
     }
     override x.ToString() =
         let symbolAsString =
             match x.Symbol with
             | Some term -> string term
             | None -> "(EOF)"
-        sprintf "%O, while encountering the symbol %s at state %d" x.Type symbolAsString x.StateIndex
+        sprintf "%O, while encountering the symbol %s at state %d. Farkle could not \
+automatically resolve the conflict because %O" x.Type symbolAsString x.StateIndex x.Reason
 
 [<RequireQualifiedAccess>]
 /// An error the builder encountered.

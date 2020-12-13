@@ -210,7 +210,7 @@ module DesigntimeFarkleBuild =
                         let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
                         match aprod.ContextualPrecedenceToken with
                         | null -> ()
-                        | cpToken -> productionTokens.Add(prod.Index, cpToken)
+                        | cpToken -> productionTokens.Add(prod, cpToken)
                         productions.Add(prod)
                         fusers.Add(aprod.Fuser)
                     LALRSymbol.Nonterminal symbol
@@ -233,10 +233,10 @@ module DesigntimeFarkleBuild =
                     LALRSymbol.Terminal term
 
             match lalrSym, builderSym with
-            | LALRSymbol.Terminal(Terminal(termIdx, _)), Symbol.Literal lit ->
-                terminalObjects.TryAdd(termIdx, box lit) |> ignore
-            | LALRSymbol.Terminal(Terminal(termIdx, _)), _ ->
-                terminalObjects.TryAdd(termIdx, box df) |> ignore
+            | LALRSymbol.Terminal term, Symbol.Literal lit ->
+                terminalObjects.TryAdd(term, box lit) |> ignore
+            | LALRSymbol.Terminal term, _ ->
+                terminalObjects.TryAdd(term, box df) |> ignore
             | _ -> ()
 
             lalrSym

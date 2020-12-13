@@ -36,25 +36,27 @@ module private TerminalKindComparers =
 
 /// <summary>The decision a <see cref="LALRConflictResolver"/> took.</summary>
 type ConflictResolutionDecision =
-    /// The resolver chose the first option.
-    /// In Shift-Reduce conflicts it means it decided to shift.
-    /// In Reduce-Reduce conflicts it means it decided to reduce the first production.
+    /// <summary>The resolver chose the first option.</summary>
+    /// <remarks>In Shift-Reduce conflicts it means to shift.
+    /// In Reduce-Reduce conflicts it means to reduce the first production.</remarks>
     | ChooseOption1
     /// The resolver chose the second option.
-    /// In Shift-Reduce conflicts it means it decided to reduce.
-    /// In Reduce-Reduce conflicts it means it decided to reduce the second production.
+    /// <remarks>In Shift-Reduce conflicts it means to reduce.
+    /// In Reduce-Reduce conflicts it means to reduce the second production.</remarks>
     | ChooseOption2
     /// The resolver cannot choose an action. The reason is specified.
     | CannotChoose of Reason: LALRConflictReason
-    /// Inverts the decusion. Option 1 becomes Option 2 and vice versa.
-    /// Otherwise the object is returned unchanged.
-    member x.Invert() =
+    /// Inverts the decision. Option 1 becomes Option 2 and vice versa.
+    /// Otherwise the object is returned unchanged. This function allows
+    /// easily handling Reduce-Shift conflicts.
+    member internal x.Invert() =
         match x with
         | ChooseOption1 -> ChooseOption2
         | ChooseOption2 -> ChooseOption1
-        | CannotChoose _ as x -> x
+        | _ -> x
 
 type private PrecedenceInfo = {
+    GroupIndex: int
     Precedence: int
     Associativity: AssociativityType
 }
@@ -91,29 +93,19 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
         for x in operatorGroups do
             for x in x.AssociativityGroups do
                 for x in x.Symbols do
-                    #if MODERN_FRAMEWORK
                     dict.TryAdd(x, i) |> ignore
-                    #else
-                    if dict.ContainsKey(x) |> not then
-                        dict.Add(x, i)
-                    #endif
             i <- i + 1
         dict.ToImmutable()
 
     let precInfoLookups =
         operatorGroups
-        |> Seq.map (fun x ->
+        |> Seq.mapi (fun i x ->
             let dict = ImmutableDictionary.CreateBuilder(comparer)
             let mutable prec = 1
             for x in x.AssociativityGroups do
-                let precInfo = {Precedence = prec; Associativity = x.AssociativityType}
+                let precInfo = {GroupIndex = i; Precedence = prec; Associativity = x.AssociativityType}
                 for x in x.Symbols do
-                    #if MODERN_FRAMEWORK
                     dict.TryAdd(x, precInfo) |> ignore
-                    #else
-                    if dict.ContainsKey(x) |> not then
-                        dict.Add(x, precInfo)
-                    #endif
                 prec <- prec + 1
 
             dict.ToImmutable()
@@ -137,78 +129,89 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
                 dict.Add(x, result)
                 result
 
+    let getTerminalPrecInfo term =
+        // We don't need to memoize this function; it runs in constant time.
+        match terminalMap.TryGetValue term with
+        | true, termObj ->
+            match groupLookup.TryGetValue termObj with
+            | true, groupIdx -> ValueSome precInfoLookups.[groupIdx].[termObj]
+            | false, _ -> ValueNone
+        // This line does not execute under normal circumstances; the
+        // terminal map has a corresponding object for each terminal.
+        | false, _ -> ValueNone
+
     let getProductionObj =
         let dict = Dictionary(comparer)
-        fun {Index = prodIdx; Handle = handle} ->
+        fun ({Handle = handle} as prod) ->
             // Unless the production has a contextual precedence token,
             // it assumes the P&A of the last terminal it has.
             // This is what (Fs)Yacc does.
-            match productionMap.TryGetValue prodIdx with
+            match productionMap.TryGetValue prod with
             | true, prodObj -> ValueSome prodObj
             | false, _ ->
-                match dict.TryGetValue prodIdx with
+                match dict.TryGetValue prod with
                 | true, memoizedResult -> memoizedResult
                 | false, _ ->
                     let mutable lastTerminalPrecInfo = null
                     let mutable i = handle.Length - 1
                     while lastTerminalPrecInfo = null && i >= 0 do
                         match handle.[i] with
-                        | LALRSymbol.Terminal (Terminal(termIdx, _)) when hasPrecInfo terminalMap.[termIdx] ->
-                            lastTerminalPrecInfo <- terminalMap.[termIdx]
+                        | LALRSymbol.Terminal term when hasPrecInfo terminalMap.[term] ->
+                            lastTerminalPrecInfo <- terminalMap.[term]
                         | _ -> ()
                         i <- i - 1
 
                     let result = ValueOption.ofObj lastTerminalPrecInfo
-                    dict.Add(prodIdx, result)
+                    dict.Add(prod, result)
                     result
 
-    override _.ResolveShiftReduceConflict (Terminal(shiftTerminalIdx, _)) prod =
-        match terminalMap.TryGetValue shiftTerminalIdx, getProductionObj prod with
-        | (true, termObj), ValueSome prodObj ->
-            match groupLookup.TryGetValue termObj, groupLookup.TryGetValue prodObj with
-            | (true, termGroup), (true, prodGroup) when termGroup = prodGroup ->
-                let group = precInfoLookups.[termGroup]
-                // The symbols surely exist in the group.
-                let {Precedence = termPrec; Associativity = assoc} = group.[termObj]
-                let {Precedence = prodPrec} = group.[prodObj]
+    let getProductionPrecInfo prod =
+        match getProductionObj prod with
+        | ValueSome prodObj ->
+            match groupLookup.TryGetValue prodObj with
+            | true, prodIdx -> ValueSome precInfoLookups.[prodIdx].[prodObj]
+            | false, _ -> ValueNone
+        | ValueNone -> ValueNone
 
-                if termPrec > prodPrec then
-                    ChooseShift
-                elif termPrec = prodPrec then
-                    match assoc with
-                    | AssociativityType.NonAssociative -> CannotChoose PrecedenceWasNonAssociative
-                    | AssociativityType.LeftAssociative -> ChooseReduce
-                    | AssociativityType.RightAssociative -> ChooseShift
-                else
-                    ChooseReduce
+    override _.ResolveShiftReduceConflict term prod =
+        match getTerminalPrecInfo term, getProductionPrecInfo prod with
+        | ValueSome termPrecInfo, ValueSome prodPrecInfo
+            when termPrecInfo.GroupIndex = prodPrecInfo.GroupIndex ->
+            // The symbols surely exist in the group.
+            let {Precedence = termPrec; Associativity = assoc} = termPrecInfo
+            let {Precedence = prodPrec} = prodPrecInfo
 
-            | (true, _), (true, _) -> CannotChoose DifferentOperatorGroup
-            | (true, _), (false, _) | (false, _), (true, _) -> CannotChoose PartialPrecedenceInfo
-            | (false, _), (false, _) -> CannotChoose NoPrecedenceInfo
-        | (true, _), ValueNone | (false, _), ValueSome _ -> CannotChoose PartialPrecedenceInfo
-        | (false, _), ValueNone -> CannotChoose NoPrecedenceInfo
+            if termPrec > prodPrec then
+                ChooseShift
+            elif termPrec = prodPrec then
+                match assoc with
+                | AssociativityType.NonAssociative -> CannotChoose PrecedenceWasNonAssociative
+                | AssociativityType.LeftAssociative -> ChooseReduce
+                | AssociativityType.RightAssociative -> ChooseShift
+            else
+                ChooseReduce
+
+        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorGroup
+        | ValueSome _, ValueNone | ValueNone, ValueSome _ -> CannotChoose PartialPrecedenceInfo
+        | ValueNone, ValueNone -> CannotChoose NoPrecedenceInfo
 
     override _.ResolveReduceReduceConflict prod1 prod2 =
-        match getProductionObj prod1, getProductionObj prod2 with
-        | ValueSome prod1Obj, ValueSome prod2Obj ->
-            match groupLookup.TryGetValue prod1Obj, groupLookup.TryGetValue prod2Obj with
-            | (true, prod1Group), (true, prod2Group) when prod1Group = prod2Group ->
-                let group = precInfoLookups.[prod1Group]
-                if canResolveReduceReduce.[prod1Group] then
-                    let {Precedence = prod1Prec} = group.[prod1Obj]
-                    let {Precedence = prod2Prec} = group.[prod2Obj]
+        match getProductionPrecInfo prod1, getProductionPrecInfo prod2 with
+        | ValueSome prod1PrecInfo, ValueSome prod2PrecInfo
+            when prod1PrecInfo.GroupIndex = prod2PrecInfo.GroupIndex ->
+            if canResolveReduceReduce.[prod1PrecInfo.GroupIndex] then
+                let {Precedence = prod1Prec} = prod1PrecInfo
+                let {Precedence = prod2Prec} = prod2PrecInfo
 
-                    if prod1Prec < prod2Prec then
-                        ChooseReduce1
-                    elif prod1Prec = prod2Prec then
-                        CannotChoose SamePrecedence
-                    else
-                        ChooseReduce2
+                if prod1Prec > prod2Prec then
+                    ChooseReduce1
+                elif prod1Prec = prod2Prec then
+                    CannotChoose SamePrecedence
                 else
-                    CannotChoose CannotResolveReduceReduce
+                    ChooseReduce2
+            else
+                CannotChoose CannotResolveReduceReduce
 
-            | (true, _), (true, _) -> CannotChoose DifferentOperatorGroup
-            | (true, _), (false, _) | (false, _), (true, _) -> CannotChoose PartialPrecedenceInfo
-            | (false, _), (false, _) -> CannotChoose NoPrecedenceInfo
+        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorGroup
         | ValueSome _, ValueNone | ValueNone, ValueSome _ -> CannotChoose PartialPrecedenceInfo
         | ValueNone, ValueNone -> CannotChoose NoPrecedenceInfo

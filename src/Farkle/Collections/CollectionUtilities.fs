@@ -37,7 +37,7 @@ open System.Runtime.CompilerServices
 [<Extension>]
 type internal DictionaryShims =
     [<Extension>]
-    static member TryAdd(dict: Dictionary<_,_>, k, v) =
+    static member TryAdd(dict: IDictionary<_,_>, k, v) =
         if dict.ContainsKey(k) then
             false
         else

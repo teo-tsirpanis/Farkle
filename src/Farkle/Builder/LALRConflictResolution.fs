@@ -17,7 +17,11 @@ module private TerminalKindComparers =
         {new EqualityComparer<obj>() with
             member _.Equals(x1, x2) =
                 match x1, x2 with
-                | :? string as lit1, :? string as lit2 -> comparer.Compare(lit1, lit2) = 0
+                // Without parentheses, lit2 is inferred to be the tuple of (x1, x2).
+                // Code still compiles but fails at runtime because objects of different
+                // types are compared.
+                | (:? string as lit1), (:? string as lit2) ->
+                    comparer.Equals(lit1, lit2)
                 | _ -> x1.Equals(x2)
             member _.GetHashCode x =
                 match x with
@@ -143,19 +147,20 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
             | true, prodObj -> ValueSome prodObj
             | false, _ ->
                 match dict.TryGetValue prodIdx with
-                | true, prodObj -> ValueSome prodObj
+                | true, memoizedResult -> memoizedResult
                 | false, _ ->
                     let mutable lastTerminalPrecInfo = null
                     let mutable i = handle.Length - 1
-                    while lastTerminalPrecInfo <> null && i >= 0 do
+                    while lastTerminalPrecInfo = null && i >= 0 do
                         match handle.[i] with
                         | LALRSymbol.Terminal (Terminal(termIdx, _)) when hasPrecInfo terminalMap.[termIdx] ->
                             lastTerminalPrecInfo <- terminalMap.[termIdx]
                         | _ -> ()
                         i <- i - 1
 
-                    dict.Add(prodIdx, lastTerminalPrecInfo)
-                    ValueOption.ofObj lastTerminalPrecInfo
+                    let result = ValueOption.ofObj lastTerminalPrecInfo
+                    dict.Add(prodIdx, result)
+                    result
 
     override _.ResolveShiftReduceConflict (Terminal(shiftTerminalIdx, _)) prod =
         match terminalMap.TryGetValue shiftTerminalIdx, getProductionObj prod with
@@ -167,7 +172,7 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
                 let {Precedence = termPrec; Associativity = assoc} = group.[termObj]
                 let {Precedence = prodPrec} = group.[prodObj]
 
-                if termPrec < prodPrec then
+                if termPrec > prodPrec then
                     ChooseShift
                 elif termPrec = prodPrec then
                     match assoc with

@@ -7,6 +7,7 @@ module Farkle.Tests.VirtualTerminalTests
 
 open Expecto
 open Farkle
+open Farkle.Builder
 open Farkle.Parser
 open Farkle.Samples.IndentBased
 
@@ -38,5 +39,19 @@ USS Oriskany
             |> Error
 
         Expect.equal result expectedResult "Parsing failed with a different kind of error"
+    }
+
+    test "A grammar with only virtual terminals can be built" {
+        let grammar =
+            virtualTerminal "X"
+            |> DesigntimeFarkle.cast
+            |> DesigntimeFarkle.autoWhitespace false
+            :> DesigntimeFarkle
+            |> DesigntimeFarkleBuild.createGrammarDefinition
+            |> DesigntimeFarkleBuild.buildGrammarOnly
+
+        let grammar = Expect.wantOk grammar "Building had been successful"
+
+        Expect.notEqual grammar.DFAStates.Length 0 "The grammar's DFA has no states."
     }
 ]

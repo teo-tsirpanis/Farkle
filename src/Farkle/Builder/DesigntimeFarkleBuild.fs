@@ -394,7 +394,7 @@ module DesigntimeFarkleBuild =
         | [] -> Ok ()
         | xs -> Error xs
 
-    let buildDFAAndCheckForNullableSymbol caseSensitive symbols =
+    let private buildDFAAndCheckForNullableSymbol caseSensitive symbols =
         DFABuild.buildRegexesToDFA true caseSensitive symbols
         |> Result.bind (fun x ->
             match x.[0].AcceptSymbol with

@@ -1,0 +1,6 @@
+<linker>
+  <assembly fullname="Farkle">
+    <resource name="FSharpOptimizationData.Farkle" action="remove" />
+    <resource name="FSharpSignatureData.Farkle" action="remove" />
+  </assembly>
+</linker>

@@ -66,6 +66,7 @@
     <Compile Include="DebugTypeProxies.fs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ILLink.Substitutions.xml" />
     <InternalsVisibleTo Include="Farkle.Benchmarks" />
     <InternalsVisibleTo Include="Farkle.Tests" />
     <InternalsVisibleTo Include="Farkle.Tools" />

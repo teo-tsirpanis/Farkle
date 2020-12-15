@@ -12,7 +12,6 @@ open Farkle.IO
 open Farkle.JSON
 open Farkle.Parser
 open Farkle.Tests
-open SimpleMaths
 open System.IO
 
 let testParser grammarFile displayName text =
@@ -55,21 +54,13 @@ let tests = testList "Parser tests" [
             let grammar = SimpleMaths.int.GetGrammar()
             let nont idx xs = AST.Nonterminal(grammar.Productions.[idx], xs)
             let numberTerminal = Terminal(3u, "Number")
-            nont 10 [
-                nont 7 [
-                    nont 9 [
-                        nont 6 [
-                            nont 3 [
-                                nont 0 [AST.Content(numberTerminal, Position.Create 1UL 1UL 0UL, "475")]
-                            ]
-                        ]
-                    ]
-                    AST.Content(Terminal(0u, "+"), Position.Create 1UL 5UL 4UL, "+")
-                    nont 6 [
-                        nont 3 [
-                            nont 0 [AST.Content(numberTerminal, Position.Create 1UL 7UL 6UL, "724")]
-                        ]
-                    ]
+            nont 0 [
+                nont 6 [
+                    AST.Content(numberTerminal, Position.Create 1UL 1UL 1UL, "475")
+                ]
+                AST.Content(Terminal(0u, "+"), Position.Create 1UL 5UL 4UL, "+")
+                nont 6 [
+                    AST.Content(numberTerminal, Position.Create 1UL 7UL 6UL, "724")
                 ]
             ]
 

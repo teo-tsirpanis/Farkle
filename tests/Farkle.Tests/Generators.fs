@@ -15,7 +15,7 @@ open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open Farkle.IO
 open FsCheck
-open SimpleMaths.SimpleMaths
+open SimpleMaths
 open System.IO
 open System.Text
 

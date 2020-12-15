@@ -3,12 +3,11 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-// Having a midule named SimpleMaths effectively
-// hides the SimpleMaths.Definitions namespace.
-module SimpleMaths.SimpleMaths
+module SimpleMaths
 
 open Farkle
 open Farkle.Builder
+open Farkle.Builder.OperatorPrecedence
 
 type MathExpression = {
     ValueTunk: Lazy<int>
@@ -49,38 +48,34 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
         |> Regex.atLeast 1
         |> terminal "Number" (T(fun _ data -> System.Int32.Parse(data.ToString()) |> fNumber))
 
-    let expression, addExp, multExp, negateExp, value =
-        nonterminal "Expression", nonterminal "Add Exp", nonterminal "Mult Exp", nonterminal "Negate Exp", nonterminal "Value"
+    let expression = nonterminal "Expression"
 
-    expression.SetProductions(!@ addExp => id)
+    let negatePrec = obj()
 
-    addExp.SetProductions(
-        !@ addExp .>> "+" .>>. multExp => fAdd,
-        !@ addExp .>> "-" .>>. multExp => fSub,
-        !@ multExp => id
+    expression.SetProductions(
+        !@ expression .>> "+" .>>. expression => fAdd,
+        !@ expression .>> "-" .>>. expression => fSub,
+        !@ expression .>> "*" .>>. expression => fMul,
+        !@ expression .>> "/" .>>. expression => fDiv,
+        !& "-" .>>. expression |> prec negatePrec => fNeg,
+        !& "(" .>>. expression .>> ")" |> asIs,
+        !@ number |> asIs
     )
 
-    multExp.SetProductions(
-        !@ multExp .>> "*" .>>. negateExp => fMul,
-        !@ multExp .>> "/" .>>. negateExp => fDiv,
-        !@ negateExp => id
-    )
+    let opGroup =
+        OperatorGroup(
+            LeftAssociative("+", "-"),
+            LeftAssociative("*", "/"),
+            LeftAssociative(negatePrec)
+        )
 
-    negateExp.SetProductions(
-        !& "-" .>>. value => fNeg,
-        !@ value => id
-    )
-
-    value.SetProductions(
-        !@ number => id,
-        !& "(" .>>. expression .>>  ")" => id
-    )
     expression
     |> DesigntimeFarkle.addLineComment "//"
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
+    |> DesigntimeFarkle.withOperatorGroup opGroup
 
 let int =
-    makeDesigntime id (+) (-) (*) (/) (~-)
+    makeDesigntime id (+) (-) ( * ) (/) (~-)
     |> RuntimeFarkle.build
 
 let mathExpression =

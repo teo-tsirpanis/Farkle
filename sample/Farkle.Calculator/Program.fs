@@ -5,7 +5,6 @@
 
 open Farkle
 open System
-open SimpleMaths
 
 let inline prettyPrintResult x =
     match x with
@@ -15,14 +14,15 @@ let inline prettyPrintResult x =
 
 let interactive rf =
     let rec impl() =
+        eprintf "Your input: "
         let input = Console.ReadLine() |> Option.ofObj
         match input with
-            | Some x ->
-                RuntimeFarkle.parseString rf x
-                |> prettyPrintResult
-                impl()
-            | None -> ()
-    eprintfn "This is a simple mathematical expression parser powered by Farkle,"
+        | Some x ->
+            RuntimeFarkle.parseString rf x
+            |> prettyPrintResult
+            impl()
+        | None -> ()
+    eprintfn "This is a simple mathematical expression parser powered by Farkle."
     eprintfn "Written by Theodore Tsirpanis."
     eprintfn "Insert your expression and press enter."
     eprintfn "Press Control + C to exit."

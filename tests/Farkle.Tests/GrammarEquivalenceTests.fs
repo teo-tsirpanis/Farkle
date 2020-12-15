@@ -11,7 +11,6 @@ open Farkle.Builder
 open Farkle.Grammar
 open Farkle.Tests
 open FsCheck
-open SimpleMaths
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Linq
@@ -120,8 +119,7 @@ let balancedParentheses =
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =
     ([
-        "the calculator", SimpleMaths.int :> IGrammarProvider, "./SimpleMaths.egt"
-        "the F# JSON parser", JSON.FSharp.Language.runtime :> _, "./JSON.egt"
+        "the F# JSON parser", JSON.FSharp.Language.runtime :> IGrammarProvider, "./JSON.egt"
         "the C# JSON parser", JSON.CSharp.Language.Runtime :> _, "./JSON.egt"
         "the language of balanced parentheses", balancedParentheses :> _, "./balanced-parentheses.egt"
         "GOLD Meta-Language", GOLDMetaLanguage.runtime :> _, "./gml.egt"

@@ -8,6 +8,7 @@ module Farkle.Tests.RangeMapTests
 open Expecto
 open Farkle.Collections
 open Farkle.Tests
+open System.Collections.Generic
 
 let ofSeq xs = RangeMap.ofSeqEx xs
 
@@ -46,4 +47,10 @@ let tests =
             // We have to compare the sequences, not the RangeMaps, because
             // RangeMap.ofSeq might create an equivalent RangeMap with less elements.
             Expect.sequenceEqual xs xs' "The RangeMaps are different")
+
+        test "The RangeMap's constructor compacts consecutive keys with the same value" {
+            let rm = [0 .. 100] |> Seq.map(fun x -> KeyValuePair(x, true)) |> ofSeq
+            let expected = [{KeyFrom = 0; KeyTo = 100; Value = true}]
+            Expect.sequenceContainsOrder rm expected "The range map is not compacted"
+        }
     ]

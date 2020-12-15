@@ -115,6 +115,8 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
 /// Do not use it; it is subject to be removed or altered at any time.
 module RangeMap =
 
+    open LanguagePrimitives
+
     let ofGroupedRanges xs =
         xs
         |> Seq.collect (fun (keys, value) ->
@@ -131,24 +133,27 @@ module RangeMap =
     //     |> Seq.map f
     //     |> ofSeq
     let inline ofSeqEx xs =
-        if not <| Seq.isEmpty xs then
-            let xs = Seq.sortBy (fun (KeyValue(k, _)) -> k) xs
-            let (KeyValue(k, v)) = Seq.last xs
-            Seq.foldBack (fun (KeyValue(k', v')) (kFrom, kTo, v, xs) ->
-                if EqualityComparer.Default.Equals(v, v') && EqualityComparer.Default.Equals(kFrom, k + LanguagePrimitives.GenericOne) then
-                    (k', kTo, v, xs)
-                elif not (EqualityComparer.Default.Equals(kFrom, k')) then
-                    (k', k', v', (kFrom, kTo, v) :: xs)
+        let xs = Array.ofSeq xs
+        if not <| Array.isEmpty xs then
+            Array.sortInPlaceBy (fun (KeyValue(k, _)) -> k) xs
+            let (KeyValue(kLast, vLast)) = Array.last xs
+            Array.foldBack (fun (KeyValue(kCurrent, vCurrent)) (kFrom, kTo, vExisting, xs) ->
+                if EqualityComparer.Default.Equals(vExisting, vCurrent)
+                    && EqualityComparer.Default.Equals(kFrom, kCurrent + GenericOne) then
+                    (kCurrent, kTo, vExisting, xs)
+                elif not (EqualityComparer.Default.Equals(kFrom, kCurrent)) then
+                    (kCurrent, kCurrent, vCurrent, (kFrom, kTo, vExisting) :: xs)
                 else
-                    (kFrom, kTo, v, xs))
-                xs (k, k, v, [])
+                    (kFrom, kTo, vExisting, xs))
+                xs (kLast, kLast, vLast, [])
             |> (fun (kFrom, kTo, v, xs) -> (kFrom, kTo, v) :: xs)
             |> RangeMap
         else
             RangeMap.Empty
 
     [<NoDynamicInvocation>]
-    let inline toSeqEx (rm: RangeMap<'key, _>) =
-        rm
-        |> Seq.collect (fun {KeyFrom = kFrom; KeyTo = kTo; Value = v} ->
-            Seq.map (fun k -> KeyValuePair(k, v)) {kFrom .. kTo})
+    let inline toSeqEx (rm: RangeMap<'key, _>) = seq {
+        for {KeyFrom = kFrom; KeyTo = kTo; Value = v} in rm do
+            for k in {kFrom .. kTo} do
+                yield KeyValuePair(k, v)
+    }

@@ -161,7 +161,7 @@ with
 
 /// A DFA state. It defines the logic that produces tokens out of strings.
 /// It consists of edges that the tokenizer follows, depending on the character it encounters.
-[<DebuggerDisplay("{Index}")>]
+[<DebuggerDisplay("State #{Index}")>]
 type DFAState = {
     /// The index of the state in the DFA state table.
     Index: uint32
@@ -244,7 +244,9 @@ type LALRAction =
         | Reduce x -> sprintf "Reduce %O" x
         | Accept -> "Accept"
 
-/// A LALR state. Many of them define the parsing logic of a `Grammar`.
+/// A LALR state. Together, many of them define the parsing logic of a `Grammar`.
+[<DebuggerDisplay("State #{Index}")>]
+[<DebuggerTypeProxy("Farkle.DebugTypeProxies.LALRStateDebugProxy")>]
 type LALRState = {
     /// The index of the state.
     Index: uint32
@@ -258,8 +260,6 @@ type LALRState = {
     /// jumps to the state that represents the shifted nonterminal.
     GotoActions: ImmutableDictionary<Nonterminal, uint32>
 }
-with
-    override x.ToString() = string x.Index
 
 /// A type containing all symbols of a grammar, grouped by kind.
 /// Group start and end symbols can be found at the group table.

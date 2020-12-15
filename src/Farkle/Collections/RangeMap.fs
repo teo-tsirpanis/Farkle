@@ -9,28 +9,34 @@ open System
 open System.Collections
 open System.Collections.Generic
 open System.ComponentModel
+open System.Diagnostics
 open System.Runtime.CompilerServices
 
 [<Struct; IsReadOnly; CustomComparison; StructuralEquality>]
+[<DebuggerDisplay("{DebuggerDisplay,nq}")>]
 /// Α closed interval whose elements are assigned a value.
-type RangeMapElement<'key,'a when 'key :> IComparable<'key>> = {
+type RangeMapElement<'TKey, [<Nullable(2uy)>] 'a when 'TKey :> IComparable<'TKey>> = {
     /// The start of the interval.
-    KeyFrom: 'key
+    KeyFrom: 'TKey
     /// The end of the interval.
-    KeyTo: 'key
+    KeyTo: 'TKey
     /// The value that gets assigned
     /// to the elements of the interval.
     Value: 'a
 }
 with
-    interface IComparable<RangeMapElement<'key,'a>> with
+    member private x.DebuggerDisplay =
+        sprintf "[%A, %A] -> %A" x.KeyFrom x.KeyTo x.Value
+    interface IComparable<RangeMapElement<'TKey,'a>> with
         member x.CompareTo({KeyTo = k2}) = x.KeyTo.CompareTo k2
 
 /// An associative data structure that assigns ranges of keys to a value.
-type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapElement<'key,'a> []) =
-    static let empty = RangeMap Array.empty<RangeMapElement<'key,'a>>
+[<DebuggerTypeProxy("Farkle.DebugTypeProxies.RangeMapDebugProxy`2")>]
+[<DebuggerDisplay("Count: {arr.Length}")>]
+type RangeMap<'TKey, [<Nullable(0uy)>] 'TValue when 'TKey :> IComparable<'TKey>> private(arr: RangeMapElement<'TKey,'TValue> []) =
+    static let empty = RangeMap (Array.Empty<RangeMapElement<'TKey,'TValue>>())
     let consistencyCheck() =
-        let rec impl idx (k0: 'key) =
+        let rec impl idx (k0: 'TKey) =
             if idx < arr.Length then
                 match arr.[idx] with
                 | x when k0.CompareTo x.KeyFrom < 0 && x.KeyFrom.CompareTo x.KeyTo <= 0 ->
@@ -66,7 +72,7 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
     new (ranges: _ seq) =
         let ranges =
             ranges
-            |> Seq.map (fun (kFrom: 'key, kTo, v) ->
+            |> Seq.map (fun (kFrom: 'TKey, kTo, v) ->
                 if kFrom.CompareTo kTo <= 0 then
                     {KeyFrom = kFrom; KeyTo = kTo; Value = v}
                 else
@@ -100,13 +106,14 @@ type RangeMap<'key,'a when 'key :> IComparable<'key>> private(arr: RangeMapEleme
     member _.IsEmpty = Array.isEmpty arr
     /// Checks if the given element exists in this range map.
     member x.ContainsKey(k) = x.TryFind(k).IsSome
+    member x.GetEnumerator() = x.Elements.GetEnumerator()
     /// An empty range map.
     static member Empty = empty
     interface IEnumerable with
         member _.GetEnumerator() = arr.GetEnumerator()
-    interface IEnumerable<RangeMapElement<'key,'a>> with
+    interface IEnumerable<RangeMapElement<'TKey,'TValue>> with
         member _.GetEnumerator() = (arr :> _ seq).GetEnumerator()
-    interface IReadOnlyCollection<RangeMapElement<'key,'a>> with
+    interface IReadOnlyCollection<RangeMapElement<'TKey,'TValue>> with
         member _.Count = arr.Length
 
 [<CompiledName("RangeMapInternalUtils")>]
@@ -152,7 +159,7 @@ module RangeMap =
             RangeMap.Empty
 
     [<NoDynamicInvocation>]
-    let inline toSeqEx (rm: RangeMap<'key, _>) = seq {
+    let inline toSeqEx (rm: RangeMap< ^TKey, ^TValue>) = seq {
         for {KeyFrom = kFrom; KeyTo = kTo; Value = v} in rm do
             for k in {kFrom .. kTo} do
                 yield KeyValuePair(k, v)

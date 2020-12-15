@@ -120,14 +120,18 @@ let tests = testList "Designtime Farkle tests" [
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
         Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
 
-    test "Designtime Farkles, post-processors and transformer callbacks are covariant" {
-        let df = "Sbubby" ||= [!& "Eef" =% "Freef"]
+    test "Designtime Farkles, post-processors, transformers and fusers are covariant" {
+        let df = Terminals.string '"' "String"
         let t = T(fun _ x -> x.ToString())
         let tInt = T(fun _ _ -> 380)
+        let f = Builder.F(fun x -> x.ToString())
+        let fInt = Builder.F(fun _ -> 286)
         Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant"
         Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
-        Expect.isSome (tryUnbox<T<obj>> t) "Transformer callbacks are not covariant"
-        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformer callbacks on value types are covariant while they shouldn't"
+        Expect.isSome (tryUnbox<T<obj>> t) "Transformers are not covariant"
+        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformers on value types are covariant while they shouldn't"
+        Expect.isSome (tryUnbox<Builder.F<obj>> f) "Fusers are not covariant"
+        Expect.isNone (tryUnbox<Builder.F<obj>> fInt) "Fusers on value types are covariant while they shouldn't"
     }
 
     test "Farkle can properly handle line groups" {

@@ -95,10 +95,9 @@ let tests = testList "Operator precedence tests" [
         let expectedAST =
             let grammar = runtimeResolved.GetGrammar()
             let nont idx xs = AST.Nonterminal(grammar.Productions.[idx], xs)
-            nont 3 [
+            nont 1 [
                 AST.Content(grammar.GetTerminalByName "x", Position.Create 1UL 1UL 0UL, "x")
-
-                nont 2 []
+                nont 3 []
             ]
         Expect.equal (runtimeResolved.Parse "x") (Ok expectedAST) "The parsed AST is different than the expected"
     }

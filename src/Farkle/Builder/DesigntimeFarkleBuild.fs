@@ -121,7 +121,9 @@ module DesigntimeFarkleBuild =
         let terminalObjects = Dictionary()
         let productionTokens = Dictionary()
 
-        let rec getLALRSymbol (df: DesigntimeFarkle) =
+        let nonterminalsToProcess = Queue()
+
+        let getLALRSymbol (df: DesigntimeFarkle) =
             let newTerminal name = Terminal(uint32 terminals.Count, name)
 
             let addTerminal term fTransformer =
@@ -202,17 +204,7 @@ module DesigntimeFarkleBuild =
                     nonterminalMap.Add(nont, symbol)
                     nonterminals.Add(symbol)
                     nont.Freeze()
-                    for aprod in nont.Productions do
-                        let handle =
-                            aprod.Members
-                            |> Seq.map getLALRSymbol
-                            |> ImmutableArray.CreateRange
-                        let prod = {Index = uint32 productions.Count; Head = symbol; Handle = handle}
-                        match aprod.ContextualPrecedenceToken with
-                        | null -> ()
-                        | cpToken -> productionTokens.Add(prod, cpToken)
-                        productions.Add(prod)
-                        fusers.Add(aprod.Fuser)
+                    nonterminalsToProcess.Enqueue(symbol, nont)
                     LALRSymbol.Nonterminal symbol
                 | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
                     LALRSymbol.Terminal groupMap.[lg]
@@ -256,6 +248,23 @@ module DesigntimeFarkleBuild =
                 fusers.Add(fdAsIs0)
                 root
             | LALRSymbol.Nonterminal nont -> nont
+
+        while nonterminalsToProcess.Count <> 0 do
+            let grammarNont, abstractNont = nonterminalsToProcess.Dequeue()
+
+            for abstractProd in abstractNont.Productions do
+                let handle =
+                    let b = ImmutableArray.CreateBuilder(abstractProd.Members.Length)
+                    for x in abstractProd.Members do
+                        b.Add(getLALRSymbol x)
+                    b.MoveToImmutable()
+                let production =
+                    {Index = uint32 productions.Count; Head = grammarNont; Handle = handle}
+                match abstractProd.ContextualPrecedenceToken with
+                | null -> ()
+                | cpToken -> productionTokens.Add(production, cpToken)
+                productions.Add production
+                fusers.Add abstractProd.Fuser
 
         let handleComment comment =
             let newStartSymbol name = GroupStart(name, uint32 groups.Count)

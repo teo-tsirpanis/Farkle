@@ -227,4 +227,18 @@ let tests = testList "Designtime Farkle tests" [
         let error2 = mkError 4UL "Empty input"
         Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught."
     }
+
+    test "Farkle does not overflow the stack when processing a deep designtime Farkle" {
+        let depth = 1000
+        let nonterminals = Array.init depth (sprintf "N%d" >> nonterminalU)
+
+        for i = 0 to nonterminals.Length - 2 do
+            nonterminals.[i].SetProductions(!% nonterminals.[i + 1])
+        nonterminals.[nonterminals.Length - 1].SetProductions(ProductionBuilder "x")
+
+        let grammar =
+            DesigntimeFarkleBuild.createGrammarDefinition nonterminals.[0]
+            |> DesigntimeFarkleBuild.buildGrammarOnly
+        Expect.isOk grammar "Building failed"
+    }
 ]

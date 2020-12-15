@@ -7,6 +7,7 @@
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Build error reporting is improved. More build errors will be reported at the same time (without waiting for one to be fixed to show the next).
+* Fixed stack overflows when building deep designtime Farkles.
 
 #### 6.0.0-alpha.3 - 25-11-2020
 * __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0, .NET Standard 2.1 and .NET 5.

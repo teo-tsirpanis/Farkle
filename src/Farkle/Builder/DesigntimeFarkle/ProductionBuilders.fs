@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 ///     into the eventual type of the returned <see cref="Production{T}"/>. It comes in two editions:
 ///     one that takes an F# function and another one that takes a delegate.</para>
 ///     <para><c>WithPrecedence</c> accepts a unique object which will represent the production in
-///     operator groups, providing contextual precedence. An overload of this method accepts
+///     operator scopes, providing contextual precedence. An overload of this method accepts
 ///     a reference to a variable that will hold the object, which will be created by Farkle.
 ///     It allows C# programmers to use <c>out var</c> instead of creating their own object.</para>
 /// </remarks>

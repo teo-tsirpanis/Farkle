@@ -62,8 +62,8 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
         !@ number |> asIs
     )
 
-    let opGroup =
-        OperatorGroup(
+    let opScope =
+        OperatorScope(
             LeftAssociative("+", "-"),
             LeftAssociative("*", "/"),
             PrecedenceOnly(negatePrec)
@@ -72,7 +72,7 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
     expression
     |> DesigntimeFarkle.addLineComment "//"
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
-    |> DesigntimeFarkle.withOperatorGroup opGroup
+    |> DesigntimeFarkle.withOperatorScope opScope
 
 let int =
     makeDesigntime id (+) (-) ( * ) (/) (~-)

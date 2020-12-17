@@ -89,10 +89,10 @@ type DesigntimeFarkleExtensions =
     static member WithMetadata (df: DesigntimeFarkle<'TResult>, metadata) =
         DesigntimeFarkle.withMetadata metadata df
     [<Extension>]
-    /// <summary>Sets an <see cref="Farkle.Builder.OperatorPrecedence.OperatorGroup"/>
+    /// <summary>Sets an <see cref="Farkle.Builder.OperatorPrecedence.OperatorScope"/>
     /// to a typed designtime Farkle. Any previous ones -if exist- are discarded.</summary>
-    static member WithOperatorGroup (df: DesigntimeFarkle<'TResult>, opGroup) =
-        DesigntimeFarkle.withOperatorGroup opGroup df
+    static member WithOperatorScope (df: DesigntimeFarkle<'TResult>, opScope) =
+        DesigntimeFarkle.withOperatorScope opScope df
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>

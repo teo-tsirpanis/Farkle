@@ -78,12 +78,12 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegex = Regex.chars ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
     let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
 
-    let rec private addOperatorGroup (set: HashSet<_>) (df: DesigntimeFarkle) =
+    let rec private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
         match df with
-        | :? DesigntimeFarkleWithOperatorGroup as dfog ->
-            set.Add(dfog.OperatorGroup) |> ignore
+        | :? DesigntimeFarkleWithOperatorScope as dfog ->
+            set.Add(dfog.OperatorScope) |> ignore
         | :? DesigntimeFarkleWrapper as dfw ->
-            addOperatorGroup set dfw.InnerDesigntimeFarkle
+            addOperatorScope set dfw.InnerDesigntimeFarkle
         | _ -> ()
 
     let private createGrammarDefinitionEx (df: DesigntimeFarkle) =
@@ -117,7 +117,7 @@ module DesigntimeFarkleBuild =
         let productions = ImmutableArray.CreateBuilder()
         let fusers = ResizeArray()
 
-        let operatorGroups = HashSet()
+        let operatorScopes = HashSet()
         let terminalObjects = Dictionary()
         let productionTokens = Dictionary()
 
@@ -163,7 +163,7 @@ module DesigntimeFarkleBuild =
                 addDFASymbol term.Regex (Choice1Of4 symbol)
                 symbol
 
-            addOperatorGroup operatorGroups df
+            addOperatorScope operatorScopes df
             let dfName = df.Name
 
             let builderSym = Symbol.create df
@@ -336,7 +336,7 @@ module DesigntimeFarkleBuild =
                 .Add("Auto Whitespace", string metadata.AutoWhitespace)
 
         let resolver =
-            PrecedenceBasedConflictResolver(operatorGroups, terminalObjects, productionTokens, metadata.CaseSensitive)
+            PrecedenceBasedConflictResolver(operatorScopes, terminalObjects, productionTokens, metadata.CaseSensitive)
         {
             Metadata = df.Metadata
             Properties = properties

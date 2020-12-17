@@ -27,12 +27,12 @@ let tests = testList "Operator precedence tests" [
         let grammar =
             let expr = nonterminalU "Expr"
 
-            let opGroup1 = OperatorGroup(LeftAssociative("+"))
-            let opGroup2 = OperatorGroup(LeftAssociative("-"))
+            let opScope1 = OperatorScope(LeftAssociative("+"))
+            let opScope2 = OperatorScope(LeftAssociative("-"))
 
             let number =
                 Terminals.int "Number"
-                |> DesigntimeFarkle.withOperatorGroup opGroup1
+                |> DesigntimeFarkle.withOperatorScope opScope1
 
             expr.SetProductions(
                 ProductionBuilder(expr, "+", expr),
@@ -42,13 +42,13 @@ let tests = testList "Operator precedence tests" [
 
             expr
             |> DesigntimeFarkle.cast
-            |> DesigntimeFarkle.withOperatorGroup opGroup2
+            |> DesigntimeFarkle.withOperatorScope opScope2
             |> DesigntimeFarkleBuild.createGrammarDefinition
             |> DesigntimeFarkleBuild.buildGrammarOnly
 
         Expect.wantError grammar "Building had succeeded"
-        |> Flip.Expect.all "Not all conflicts could not be resolved because of different operator groups" (function
-        | BuildError.LALRConflict {Reason = DifferentOperatorGroup} -> true
+        |> Flip.Expect.all "Not all conflicts could not be resolved because of different operator scopes" (function
+        | BuildError.LALRConflict {Reason = DifferentOperatorScope} -> true
         | _ -> false)
     }
 
@@ -65,8 +65,8 @@ let tests = testList "Operator precedence tests" [
                 !& "x" .>> x2
             ]
 
-            let opGroup =
-                OperatorGroup(resolveRRConflicts,
+            let opScope =
+                OperatorScope(resolveRRConflicts,
                     NonAssociative(prec1),
                     NonAssociative(prec2)
                 )
@@ -74,7 +74,7 @@ let tests = testList "Operator precedence tests" [
             expr
             |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.autoWhitespace false
-            |> DesigntimeFarkle.withOperatorGroup opGroup
+            |> DesigntimeFarkle.withOperatorScope opScope
             :> DesigntimeFarkle
 
         let grammarNotResolved =
@@ -82,7 +82,7 @@ let tests = testList "Operator precedence tests" [
             |> DesigntimeFarkleBuild.createGrammarDefinition
             |> DesigntimeFarkleBuild.buildGrammarOnly
         Expect.wantError grammarNotResolved "Building had succeeded"
-        |> Flip.Expect.all "Not all conflicts could not be resolved because of the operator group's inability" (function
+        |> Flip.Expect.all "Not all conflicts could not be resolved because of the operator scope's inability" (function
         | BuildError.LALRConflict {Reason = CannotResolveReduceReduce; Type = ReduceReduce _} -> true
         | _ -> false)
 
@@ -112,10 +112,10 @@ let tests = testList "Operator precedence tests" [
                 !@ number |> asIs
             )
 
-            let opGroup = OperatorGroup(LeftAssociative("+"), NonAssociative("*"))
+            let opScope = OperatorScope(LeftAssociative("+"), NonAssociative("*"))
 
             expr
-            |> DesigntimeFarkle.withOperatorGroup opGroup
+            |> DesigntimeFarkle.withOperatorScope opScope
             |> RuntimeFarkle.build
 
         Expect.equal (runtime.Parse "3+4+5") (Ok 12) "Parsing failed"

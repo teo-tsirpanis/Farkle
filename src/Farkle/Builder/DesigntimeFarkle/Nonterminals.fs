@@ -20,7 +20,7 @@ type internal AbstractProduction =
     /// The fuser to process the members of this production.
     abstract Fuser: FuserData
     /// An object representing this production in an
-    /// `OperatorGroup`, providing contextual precedence.
+    /// `OperatorScope`, providing contextual precedence.
     abstract ContextualPrecedenceToken: obj
 
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>

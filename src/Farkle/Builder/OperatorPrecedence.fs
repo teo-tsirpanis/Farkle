@@ -34,9 +34,9 @@ open System
 
 // To fix this we will make another exception to the "metadata changes apply to
 // the top level designtime Farkle" rule. During building, we will gather all P&A
-// info and separate them into operator groups. Precedence between two operatos will
-// be only valid if both belong to the same group.
-// An important limitation is that an operator can belong in only one group. Allowing
+// info and separate them into operator scopes. Precedence between two operators will
+// be only comparable if both belong to the same scope.
+// An important limitation is that an operator can belong in only one scope. Allowing
 // operators to belong to more than one can result in operators having both greater and
 // smaller precedence at the same time. This limitation is also consistent with the black
 // box nature of designtime Farkles. If you are returning a nonterminal, the recieving code
@@ -57,11 +57,11 @@ open System
 // To keep the API easy to use, productions will be identified by an arbitrary object's
 // reference. After a production builder is finished, we will be able to pass this object
 // (or in C#'s case let Farkle create it and return it to us via an `out var`) to the
-// finished production. That same object will be also passed in the operator group.
+// finished production. That same object will be also passed in the operator scope.
 // Additional infrastructure will be provided in production builders, to cater for the
 // untyped API.
 
-// The conflict resolver will accept: the list of the operator groups, two read-only
+// The conflict resolver will accept: the list of the operator scopes, two read-only
 // associative arrays that get the corresponding object of a terminal or production
 // respectively, and a boolean flag indicating the grammar's case-sensitivity (for literals).
 
@@ -76,7 +76,7 @@ open System
 // impact of such feature is not known. I am afraid of Reduce-Reduce conflicts being resolved
 // inadvertently without the developer's notice. A Reduce-Reduce Conflict is generally more
 // serious than a Shift-Reduce one. Out of abundance of caution, resolving Reduce-Reduce conflicts
-// will be an opt-in behavior that can be enabled per operator group.
+// will be an opt-in behavior that can be enabled per operator scope.
 
 /// An associativity group's type. It determines the course of action in
 /// case of Shift-Reduce conflicts between symbols with the same precedence.
@@ -131,25 +131,24 @@ type PrecedenceOnly([<ParamArray>] symbols) =
     inherit AssociativityGroup(AssociativityType.PrecedenceOnly, List.ofArray symbols)
 
 /// <summary>A group of associativity groups sorted by precedence.</summary>
-/// <remarks><para>A symbol in an operator group has higher precedence than
-/// another one if it appears in an associativity group below the former
-/// symbol's associativity group.</para>
+/// <remarks><para>A symbol in an operator scope has higher precedence than
+/// another one if it appears in a group below the former symbol's group.</para>
 /// <para>If the same symbol is specified in multiple associativity groups,
 /// it will have the precedence of the earliest group in which it appeared.</para>
-/// <para>Symbols from multiple operator groups cannot be compared for precedence.</para>
-/// <para>A symbol can belong in only one operator group; if it belongs in more,
-/// the operator group to which the symbol will be assigned is undefined.</para>
-/// <para>Operator groups are used to automatically resolve Shift-Reduce conflicts.
+/// <para>Symbols from multiple operator scopes cannot be compared for precedence.</para>
+/// <para>A symbol can belong in only one operator scope; if it belongs in more,
+/// the operator scope to which the symbol will be assigned is undefined.</para>
+/// <para>Operator scopes are used to automatically resolve Shift-Reduce conflicts.
 /// Resolving Reduce-Reduce conflicts can also happen but it must be explicitly
 /// opt-in by passing a boolean argument of <see langword="true"/> in the first
-/// argument of the appropriate operator group's constructor overloads.</para></remarks>
-type OperatorGroup(resolvesReduceReduceConflicts, assocGroups: AssociativityGroup seq) =
+/// argument of the appropriate operator scope's constructor overloads.</para></remarks>
+type OperatorScope(resolvesReduceReduceConflicts, assocGroups: AssociativityGroup seq) =
     let assocGroups = List.ofSeq assocGroups
     new (resolveReduceReduceConflicts, [<ParamArray>] assocGroups) =
-        OperatorGroup(resolveReduceReduceConflicts, List.ofArray assocGroups)
-    new ([<ParamArray>] assocGroups) = OperatorGroup(false, List.ofArray assocGroups)
+        OperatorScope(resolveReduceReduceConflicts, List.ofArray assocGroups)
+    new ([<ParamArray>] assocGroups) = OperatorScope(false, List.ofArray assocGroups)
 
-    /// Whether Farkle uses this operator group to automatically resolve
+    /// Whether Farkle uses this operator scope to automatically resolve
     /// Reduce-Reduce conflicts. Because the impact of this feature is
     /// unknown, it is set to false by default. It can be changed by
     /// passing true to a constructor overload that accepts a boolean.

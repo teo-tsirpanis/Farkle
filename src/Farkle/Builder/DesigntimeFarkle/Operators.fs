@@ -12,14 +12,14 @@ open Farkle.Common
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
-type internal DesigntimeFarkleWithOperatorGroup =
-    abstract OperatorGroup: OperatorGroup
+type internal DesigntimeFarkleWithOperatorScope =
+    abstract OperatorScope: OperatorScope
     inherit DesigntimeFarkleWrapper
 
-type private DesigntimeFarkleWithOperatorGroup<'T>(df: DesigntimeFarkle<'T>, opGroup) =
+type private DesigntimeFarkleWithOperatorScope<'T>(df: DesigntimeFarkle<'T>, opScope) =
     let df =
         match df with
-        | :? DesigntimeFarkleWithOperatorGroup<'T> as df -> df.InnerDesigntimeFarkle
+        | :? DesigntimeFarkleWithOperatorScope<'T> as df -> df.InnerDesigntimeFarkle
         | _ -> df
     member private _.InnerDesigntimeFarkle = df
 
@@ -28,8 +28,8 @@ type private DesigntimeFarkleWithOperatorGroup<'T>(df: DesigntimeFarkle<'T>, opG
         member _.Metadata = df.Metadata
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = upcast df
-    interface DesigntimeFarkleWithOperatorGroup with
-        member _.OperatorGroup = opGroup
+    interface DesigntimeFarkleWithOperatorScope with
+        member _.OperatorScope = opScope
     interface DesigntimeFarkle<'T>
 
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
@@ -228,12 +228,12 @@ module DesigntimeFarkle =
     let withMetadata metadata df =
         {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
 
-    /// Sets an `OperatorGroup` object to a typed designtime Farkle.
+    /// Sets an `OperatorScope` object to a typed designtime Farkle.
     /// This function can be applied in designtime Farkles that are not the
     /// topmost ones. Applying this function many times will discard the existing
-    /// operator group.
-    let withOperatorGroup opGroup df =
-        DesigntimeFarkleWithOperatorGroup<_>(df, opGroup) :> DesigntimeFarkle<_>
+    /// operator scope.
+    let withOperatorScope opScope df =
+        DesigntimeFarkleWithOperatorScope<_>(df, opScope) :> DesigntimeFarkle<_>
 
     /// Converts an untyped designtime Farkle to a typed one that returns an object.
     /// This function is used to apply metadata to untyped designtime Farkles.

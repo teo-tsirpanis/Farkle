@@ -59,7 +59,7 @@ type ConflictResolutionDecision =
         | _ -> x
 
 type private PrecedenceInfo = {
-    GroupIndex: int
+    ScopeIndex: int
     Precedence: int
     Associativity: AssociativityType
 }
@@ -79,7 +79,7 @@ type LALRConflictResolver() =
     static member Default = defaultResolver
 
 /// A conflict resolver that uses Farkle's operator precedence infrastructure.
-type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq, terminalMap: IReadOnlyDictionary<_,_>,
+type internal PrecedenceBasedConflictResolver(operatorScopes: OperatorScope seq, terminalMap: IReadOnlyDictionary<_,_>,
         productionMap: IReadOnlyDictionary<_,_>, caseSensitive) =
     inherit LALRConflictResolver()
 
@@ -93,7 +93,7 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
     let groupLookup =
         let dict = ImmutableDictionary.CreateBuilder(comparer)
         let mutable i = 0
-        for x in operatorGroups do
+        for x in operatorScopes do
             for x in x.AssociativityGroups do
                 for x in x.Symbols do
                     dict.TryAdd(x, i) |> ignore
@@ -101,12 +101,12 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
         dict.ToImmutable()
 
     let precInfoLookups =
-        operatorGroups
+        operatorScopes
         |> Seq.mapi (fun i x ->
             let dict = ImmutableDictionary.CreateBuilder(comparer)
             let mutable prec = 1
             for x in x.AssociativityGroups do
-                let precInfo = {GroupIndex = i; Precedence = prec; Associativity = x.AssociativityType}
+                let precInfo = {ScopeIndex = i; Precedence = prec; Associativity = x.AssociativityType}
                 for x in x.Symbols do
                     dict.TryAdd(x, precInfo) |> ignore
                 prec <- prec + 1
@@ -116,7 +116,7 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
         |> Array.ofSeq
 
     let canResolveReduceReduce =
-        operatorGroups
+        operatorScopes
         |> Seq.map (fun x -> x.ResolvesReduceReduceConflict)
         |> Array.ofSeq
 
@@ -179,7 +179,7 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
     override _.ResolveShiftReduceConflict term prod =
         match getTerminalPrecInfo term, getProductionPrecInfo prod with
         | ValueSome termPrecInfo, ValueSome prodPrecInfo
-            when termPrecInfo.GroupIndex = prodPrecInfo.GroupIndex ->
+            when termPrecInfo.ScopeIndex = prodPrecInfo.ScopeIndex ->
             // The symbols surely exist in the group.
             let {Precedence = termPrec; Associativity = assoc} = termPrecInfo
             let {Precedence = prodPrec} = prodPrecInfo
@@ -195,15 +195,15 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
             else
                 ChooseReduce
 
-        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorGroup
+        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorScope
         | ValueSome _, ValueNone | ValueNone, ValueSome _ -> CannotChoose PartialPrecedenceInfo
         | ValueNone, ValueNone -> CannotChoose NoPrecedenceInfo
 
     override _.ResolveReduceReduceConflict prod1 prod2 =
         match getProductionPrecInfo prod1, getProductionPrecInfo prod2 with
         | ValueSome prod1PrecInfo, ValueSome prod2PrecInfo
-            when prod1PrecInfo.GroupIndex = prod2PrecInfo.GroupIndex ->
-            if canResolveReduceReduce.[prod1PrecInfo.GroupIndex] then
+            when prod1PrecInfo.ScopeIndex = prod2PrecInfo.ScopeIndex ->
+            if canResolveReduceReduce.[prod1PrecInfo.ScopeIndex] then
                 let {Precedence = prod1Prec} = prod1PrecInfo
                 let {Precedence = prod2Prec} = prod2PrecInfo
 
@@ -216,6 +216,6 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
             else
                 CannotChoose CannotResolveReduceReduce
 
-        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorGroup
+        | ValueSome _, ValueSome _ -> CannotChoose DifferentOperatorScope
         | ValueSome _, ValueNone | ValueNone, ValueSome _ -> CannotChoose PartialPrecedenceInfo
         | ValueNone, ValueNone -> CannotChoose NoPrecedenceInfo

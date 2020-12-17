@@ -19,25 +19,25 @@ type LALRConflictReason =
     | NoPrecedenceInfo
     /// Precedence info were specified in only one of the two objects.
     | PartialPrecedenceInfo
-    /// The objects were specified in different operator groups.
-    | DifferentOperatorGroup
+    /// The objects were specified in different operator scopes.
+    | DifferentOperatorScope
     /// The objects have the same precedence but no associativity.
     | PrecedenceOnlySpecified
     /// The productions have the same precedence. This
     /// reason is specified only on Reduce-Reduce conflicts.
     | SamePrecedence
-    /// The operator group cannot resolve Reduce-Reduce conflicts.
+    /// The operator scope cannot resolve Reduce-Reduce conflicts.
     | CannotResolveReduceReduce
     override x.ToString() =
         match x with
         | NoPrecedenceInfo -> "no precedence info were specified"
         | PartialPrecedenceInfo -> "precedence info were specified in only one of the two objects"
-        | DifferentOperatorGroup -> "the objects were specified in different operator groups"
+        | DifferentOperatorScope -> "the objects were specified in different operator scopes"
         | PrecedenceOnlySpecified -> "the objects had the same precedence but were declared in a \
 PrecedenceOnly associativity group"
         | SamePrecedence -> "the productions had the same precedence"
-        | CannotResolveReduceReduce -> "the symbols' operator group cannot resolve Reduce-Reduce conflicts. \
-To enable it, pass a boolean value of true to the operator group's constructor"
+        | CannotResolveReduceReduce -> "the symbols' operator scope cannot resolve Reduce-Reduce conflicts. \
+To enable it, pass a boolean value of true to the operator scope's constructor"
 
 /// The type of an LALR conflict.
 type LALRConflictType =

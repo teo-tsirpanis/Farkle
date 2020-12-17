@@ -21,8 +21,8 @@ type LALRConflictReason =
     | PartialPrecedenceInfo
     /// The objects were specified in different operator groups.
     | DifferentOperatorGroup
-    /// The objects have the same precedence but were non-associative.
-    | PrecedenceWasNonAssociative
+    /// The objects have the same precedence but no associativity.
+    | PrecedenceOnlySpecified
     /// The productions have the same precedence. This
     /// reason is specified only on Reduce-Reduce conflicts.
     | SamePrecedence
@@ -33,7 +33,8 @@ type LALRConflictReason =
         | NoPrecedenceInfo -> "no precedence info were specified"
         | PartialPrecedenceInfo -> "precedence info were specified in only one of the two objects"
         | DifferentOperatorGroup -> "the objects were specified in different operator groups"
-        | PrecedenceWasNonAssociative -> "the objects had the same precedence but were non-associative"
+        | PrecedenceOnlySpecified -> "the objects had the same precedence but were declared in a \
+PrecedenceOnly associativity group"
         | SamePrecedence -> "the productions had the same precedence"
         | CannotResolveReduceReduce -> "the symbols' operator group cannot resolve Reduce-Reduce conflicts. \
 To enable it, pass a boolean value of true to the operator group's constructor"

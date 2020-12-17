@@ -189,8 +189,9 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
     lookaheads
 
 /// Creates an LALR state table.
-let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
     RA itemSets
+    RA conflicts
 
     let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
     emptyLookahead.Freeze()
@@ -221,10 +222,22 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
             |> ImmutableDictionary.CreateRange
         let actions =
             let b = ImmutableDictionary.CreateBuilder()
+            let mutable hasChosenNeither = false
             let addAction term action =
                 match b.TryGetValue(term) with
+                | _ when hasChosenNeither -> ()
                 | true, existingAction ->
-                    b.[term] <- fResolveConflict index (Some term) existingAction action
+                    let sym = Some term
+                    match fResolveConflict sym existingAction action with
+                    | ChooseOption1 -> ()
+                    | ChooseOption2 -> b.[term] <- action
+                    | ChooseNeither ->
+                        b.Remove(term) |> ignore
+                        hasChosenNeither <- true
+                    | CannotChoose reason ->
+                        LALRConflict.Create index sym existingAction action reason
+                        |> BuildError.LALRConflict
+                        |> conflicts.Add
                 | false, _ -> b.Add(term, action)
             for item in itemSet.Goto do
                 match item with
@@ -240,7 +253,16 @@ let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict 
                 function
                 | [] -> None
                 | [x] -> Some x
-                | x1 :: x2 :: xs -> resolveEOFConflict (fResolveConflict index None x1 x2 :: xs)
+                | x1 :: x2 :: xs ->
+                    match fResolveConflict None x1 x2 with
+                    | ChooseOption1 -> resolveEOFConflict (x1 :: xs)
+                    | ChooseOption2 -> resolveEOFConflict (x2 :: xs)
+                    | ChooseNeither -> resolveEOFConflict xs
+                    | CannotChoose reason ->
+                        LALRConflict.Create index None x1 x2 reason
+                        |> BuildError.LALRConflict
+                        |> conflicts.Add
+                        resolveEOFConflict xs
             closedItem
             |> Seq.choose (fun item ->
                 if item.Lookahead.HasEnd then
@@ -280,7 +302,7 @@ let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol te
     let lookaheads = computeLookaheadItems fGetAllProductions firstSets kernelItems
 
     let conflicts = ResizeArray()
-    let resolveConflict stateIndex term x1 x2 =
+    let resolveConflict term x1 x2 =
         match x1, x2, term with
         | LALRAction.Shift _, LALRAction.Reduce prod, Some term ->
             resolver.ResolveShiftReduceConflict term prod
@@ -291,16 +313,8 @@ let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol te
         // The reason doesn't matter; an exception will be
         // very soon thrown on an impossible conflict type.
         | _ -> CannotChoose NoPrecedenceInfo
-        |> function
-        | ChooseOption1 -> x1
-        | ChooseOption2 -> x2
-        | CannotChoose reason ->
-            LALRConflict.Create stateIndex term x1 x2 reason
-            |> BuildError.LALRConflict
-            |> conflicts.Add
-            x1
 
-    match createLALRStates fGetAllProductions firstSets resolveConflict s' kernelItems lookaheads with
+    match createLALRStates fGetAllProductions firstSets resolveConflict conflicts s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
     | _ -> conflicts |> List.ofSeq |> Error

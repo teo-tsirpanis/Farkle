@@ -44,6 +44,9 @@ type ConflictResolutionDecision =
     /// <remarks>In Shift-Reduce conflicts it means to reduce.
     /// In Reduce-Reduce conflicts it means to reduce the second production.</remarks>
     | ChooseOption2
+    /// The resolver chose neither option.
+    /// <remarks>The parser will fail with a syntax error.</remarks>
+    | ChooseNeither
     /// The resolver cannot choose an action. The reason is specified.
     | CannotChoose of Reason: LALRConflictReason
     /// Inverts the decision. Option 1 becomes Option 2 and vice versa.
@@ -185,9 +188,10 @@ type internal PrecedenceBasedConflictResolver(operatorGroups: OperatorGroup seq,
                 ChooseShift
             elif termPrec = prodPrec then
                 match assoc with
-                | AssociativityType.NonAssociative -> CannotChoose PrecedenceWasNonAssociative
+                | AssociativityType.NonAssociative -> ChooseNeither
                 | AssociativityType.LeftAssociative -> ChooseReduce
                 | AssociativityType.RightAssociative -> ChooseShift
+                | AssociativityType.PrecedenceOnly -> CannotChoose PrecedenceOnlySpecified
             else
                 ChooseReduce
 

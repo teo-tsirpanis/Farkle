@@ -66,7 +66,7 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
         OperatorGroup(
             LeftAssociative("+", "-"),
             LeftAssociative("*", "/"),
-            LeftAssociative(negatePrec)
+            PrecedenceOnly(negatePrec)
         )
 
     expression

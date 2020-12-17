@@ -78,15 +78,23 @@ open System
 // serious than a Shift-Reduce one. Out of abundance of caution, resolving Reduce-Reduce conflicts
 // will be an opt-in behavior that can be enabled per operator group.
 
-/// An operator's associativity type.
+/// An associativity group's type. It determines the course of action in
+/// case of Shift-Reduce conflicts between symbols with the same precedence.
 [<RequireQualifiedAccess>]
 type AssociativityType =
-    /// The operator is non-associative.
+    /// The group's symbols are non-associative. Shift-Reduce
+    /// conflicts will be resolved in favor of neither, failing
+    /// with a syntax error at parse time.
     | NonAssociative
-    /// The operator is left-associative.
+    /// The group's symbols are left-associative. Shift-Reduce
+    /// conflicts will be resolved in favor of Reduce.
     | LeftAssociative
-    /// The operator is right-associative.
+    /// The group's symbols are right-associative. Shift-Reduce
+    /// conflicts will be resolved in favor of Shift.
     | RightAssociative
+    /// Thr group's symbols have no associativity; only precedence.
+    /// Shift-Reduce conflicts will not be resolved and will fail the build.
+    | PrecedenceOnly
 
 /// <summary>A group of symbols that have the same associativity and precedence.
 /// This class and its descendants accept arrays of objects that correspond
@@ -117,6 +125,10 @@ type LeftAssociative([<ParamArray>] symbols) =
 /// A shortcut for creating right-associative groups.
 type RightAssociative([<ParamArray>] symbols) =
     inherit AssociativityGroup(AssociativityType.RightAssociative, List.ofArray symbols)
+
+/// A shortcut for creating associativity groups with only precedence and no associativity between them.
+type PrecedenceOnly([<ParamArray>] symbols) =
+    inherit AssociativityGroup(AssociativityType.PrecedenceOnly, List.ofArray symbols)
 
 /// <summary>A group of associativity groups sorted by precedence.</summary>
 /// <remarks><para>A symbol in an operator group has higher precedence than

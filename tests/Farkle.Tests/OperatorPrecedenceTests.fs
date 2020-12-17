@@ -101,4 +101,24 @@ let tests = testList "Operator precedence tests" [
             ]
         Expect.equal (runtimeResolved.Parse "x") (Ok expectedAST) "The parsed AST is different than the expected"
     }
+
+    test "Non-associative operators work" {
+        let runtime =
+            let number = Terminals.int "Number"
+            let expr = nonterminal "Expr"
+            expr.SetProductions(
+                !@ expr .>> "+" .>>. expr => (+),
+                !@ expr .>> "*" .>>. expr => ( * ),
+                !@ number |> asIs
+            )
+
+            let opGroup = OperatorGroup(LeftAssociative("+"), NonAssociative("*"))
+
+            expr
+            |> DesigntimeFarkle.withOperatorGroup opGroup
+            |> RuntimeFarkle.build
+
+        Expect.equal (runtime.Parse "3+4+5") (Ok 12) "Parsing failed"
+        Expect.isError (runtime.Parse "3*4*5") "Parsing did not fail"
+    }
 ]

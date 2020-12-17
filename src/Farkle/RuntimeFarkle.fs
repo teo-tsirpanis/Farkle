@@ -98,7 +98,6 @@ with
         | Error msg -> msg |> string |> invalidOp
     /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
     /// <param name="charStream">The character stream to parse.</param>
-    /// <param name="tokenizer">An optional custom <see cref="Tokenizer"/>.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
@@ -241,15 +240,16 @@ open RuntimeFarkle
 #nowarn "44"
 
 type RuntimeFarkle<'TResult> with
-    /// <summary>Parses and post-processes a string.</summary>
-    /// <param name="charStream">The string to parse.</param>
+    /// <summary>Parses and post-processes a
+    /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
+    /// <param name="mem">The read-only memory to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.Parse mem = parseMemory this mem
-    /// <summary>Parses and post-processes a <see cref="ReadOnlyMemory{Char}"/>.</summary>
-    /// <param name="charStream">The read-only memory to parse.</param>
+    /// <summary>Parses and post-processes a string.</summary>
+    /// <param name="str">The string to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>

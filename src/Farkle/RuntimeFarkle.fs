@@ -97,7 +97,7 @@ with
         | Ok grammar -> grammar
         | Error msg -> msg |> string |> invalidOp
     /// <summary>Parses and post-processes a <see cref="Farkle.IO.CharStream"/>.</summary>
-    /// <param name="charStream">The character stream to parse.</param>
+    /// <param name="input">The character stream to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
@@ -269,7 +269,7 @@ data; not text. Parse a TextReader instead.")>]
     member this.Parse(stream, [<Optional; Nullable(2uy)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
         parseStream this doLazyLoad encoding stream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
-    /// <param name="charStream">The string to parse.</param>
+    /// <param name="textReader">The text reader to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>

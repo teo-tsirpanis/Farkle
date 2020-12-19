@@ -6,6 +6,7 @@
 module internal Farkle.Builder.PostProcessorCreator
 
 open Farkle
+open Farkle.Common
 open Farkle.Grammar
 
 [<RequiresExplicitTypeArguments>]
@@ -87,8 +88,7 @@ let private createIgnoresAccessChecksToAttribute (_mod: ModuleBuilder) =
 
 [<RequiresExplicitTypeArguments>]
 let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegateProvider> methodName argTypes fAssembly
-    fIsSpecialCase fEmitArgs delegateArgCount (targetFields: FieldInfo option [])
-    (delegates: 'TDelegate []) (ppType: TypeBuilder) =
+    fIsSpecialCase fEmitArgs (targetFields: FieldInfo option []) (delegates: 'TDelegate []) (ppType: TypeBuilder) =
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
@@ -133,11 +133,11 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
             // Merely checking the target object for null is not a good idea; the
             // runtime allows delegates of instance methods with null targets.
             let targetType =
-                match dMethod.IsStatic, dMethod.GetParameters() with
-                | false, _ -> dMethod.DeclaringType
-                | true, methParams when methParams.Length = delegateArgCount + 1 ->
-                    methParams.[0].ParameterType
-                | true, _ -> null
+                match dMethod.IsStatic with
+                | false -> dMethod.DeclaringType
+                | true when Delegate.isClosed d.RawDelegate ->
+                    dMethod.GetParameters().[0].ParameterType
+                | true -> null
             if not (isNull targetType) then
                 match targetFields.[i] with
                 | None -> ilg.Emit(OpCodes.Ldnull)
@@ -273,10 +273,10 @@ let private createDynamic<'T> (transformers: TransformerData []) (fusers: FuserD
         (fun _ ilg ->
             ilg.Emit(OpCodes.Ldarg_2)
             ilg.Emit(OpCodes.Ldarg_3))
-        2 transformerTargetFields transformers ppType
+        transformerTargetFields transformers ppType
 
     fNewAssembly typeof<ReadOnlySpanOfObjectIndexer>.Assembly
-    emitPPMethod<Grammar.Production,FuserData>
+    emitPPMethod<Production,FuserData>
         "Fuse" fuseParameters fNewAssembly
         (fun d ilg ->
             match d.Parameters with
@@ -297,7 +297,7 @@ let private createDynamic<'T> (transformers: TransformerData []) (fusers: FuserD
                     ilg.Emit(OpCodes.Call, readOnlySpanOfObjectIndexer)
                     ilg.Emit(OpCodes.Ldind_Ref)
                     ilg.Emit(OpCodes.Unbox_Any, typ))
-        1 fuserTargetFields fusers ppType
+        fuserTargetFields fusers ppType
 
     let ppTypeReal = ppType.CreateType()
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)

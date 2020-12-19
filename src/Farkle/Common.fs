@@ -119,3 +119,7 @@ module internal Delegate =
                         'TFunction
         when 'TDelegate :> Delegate and 'TFunction : not struct> (func: 'TFunction) =
         Delegate.CreateDelegate(typeof<'TDelegate>, func, "Invoke", false, true) :?> 'TDelegate
+
+    /// Returns whether the delegate is closed over its first argument.
+    let isClosed (del: Delegate) =
+        del.Method.GetParameters().Length <> del.GetType().GetMethod("Invoke").GetParameters().Length

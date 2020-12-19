@@ -70,10 +70,11 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
         Production<{{ ap }}TOutput>(members, fuserData, cpToken)
-    member _.WithPrecedence(cpToken) =
+    member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
         nullCheck "cpToken" cpToken
         ProductionBuilder<{{ type_params n }}>(members, {{ type_indices n }}, cpToken)
-    member x.WithPrecedence(cpTokenRef: outref<_>) =
+    [<NullableContext(1uy)>]
+    member x.WithPrecedence([<Nullable(1uy)>] cpTokenRef: outref<_>) : [<Nullable(1uy)>] _ =
         let tok = obj()
         cpTokenRef <- tok
         x.WithPrecedence(tok)

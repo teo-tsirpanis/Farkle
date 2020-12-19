@@ -57,17 +57,55 @@ The following table highlights the differences between the F# and C# designtime 
 |`newline`|`Terminal.NewLine`|
 |`x .>> y`|`x.Append(y)`|
 |`x .>>. y`|`x.Extend(y)`|
+|`x |> asIs`|`x.AsIs()`|
 |`x => (fun x -> MyFunc x)`|`x.Finish(x => MyFunc(x))`
 |`x =% 0`|`x.FinishConstant(0)`|
 |`RuntimeFarkle.build x`|`x.Build()`|
+
+### A complete example
+
+Let's take a look at [the calculator we made at the quick start guide](quickstart.html#Writing-more-complex-nonterminals) written in C#:
+
+``` csharp
+public static class SimpleMaths
+{
+    public static readonly DesigntimeFarkle<double> Designtime;
+    public static readonly RuntimeFarkle<double> Runtime;
+
+    static SimpleMaths()
+    {
+        var number = Terminals.Double("Number");
+
+        var expression = Nonterminal.Create<double>("Expression");
+        expression.SetProductions(
+            number.AsIs(),
+            expression.Extended().Append("+").Extend(expression).Finish((x1, x2) => x1 + x2),
+            expression.Extended().Append("-").Extend(expression).Finish((x1, x2) => x1 - x2),
+            expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
+            expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
+            "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
+            "(".Appended().Extend(expression).Append(")").AsIs());
+
+        var opScope = new OperatorScope(
+            new LeftAssociative("+", "-"),
+            new LeftAssociative("*", "/"),
+            new PrecedenceOnly(NEG));
+
+        Designtime = expression.WithOperatorScope(opScope);
+        Runtime = Designtime.Build();
+    }
+}
+```
+
+Notice how we called the `WithPrecedence` method. In F# we were passing an object to the `prec` function. In C# we let the method create and return that object to us, taking advantage of C# 7.0's `out var` construct. We can still pass an object if we want.
 
 ### Customizing designtime Farkles
 
 To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle` namespace. Let's take a look at an example:
 
 ``` csharp
-var test =
-    Terminals.Int32("Test")
+var customized =
+    SimpleMaths.Designtime
         .AddBlockComment("/*", "*/")
         .AddLineComment("//")
         .AutoWhitespace(false)

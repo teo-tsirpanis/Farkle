@@ -133,7 +133,9 @@ let justTwoNumbers = "Exp" ||= [
 (**
 Let's explain what was going here. With the `||=` operator, we define a nonterminal with its productions. In its left side goes its name, and in its right side go the productions that can produce it.
 
-See these strange symbols inside the list? They chain designtime Farkles together and signify which of them have information we care about. `!@` starts defining a production with its first member carrying significant information (the first operand). To start a production with a designtime Farkle that does not carry significant information, we can use `!%`. The `.>>` and `.>>.` operators resemble FParsec's ones. `.>>` chains a new designtime Farkle we don't care what contains, and `.>>.` chains one we do.
+See these strange symbols inside the list? They chain designtime Farkles together and signify which of them have information we care about. `!@` starts defining a production with its first member carrying significant information (the first operand). To start a production with a designtime Farkle that does not carry significant information, we can use `!%`.
+
+The `.>>` and `.>>.` operators resemble FParsec's ones. `.>>` chains a new designtime Farkle we don't care what contains, and `.>>.` chains one we do.
 
 With `.>>`, we can also chain string literals, instead of creating a terminal for each. We can also start a production with a literal using the `!&` operator.
 
@@ -147,75 +149,88 @@ You can pass an empty list in the right hand of the `||=` operator but the gramm
 
 ### Writing more complex nonterminals
 
-Now, our complete calculator grammar would look like this:
+We want our calculator to implement the following grammar [taken from Bison's documentation][bison-calculator]:
 
 ```
-// That 's the starting symbol
-<Expression> ::= <Add Exp>
+%left '-' '+'
+%left '*' '/'
+%precedence NEG
+%right '^'
 
-<Add Exp> ::= <Add Exp> '+' <Mult Exp>
-<Add Exp> ::= <Add Exp> '-' <Mult Exp>
-<Add Exp> ::= <Mult Exp>
-
-<Mult Exp> ::= <Mult Exp> '*' <Negate Exp>
-<Mult Exp> ::= <Mult Exp> '/' <Negate Exp>
-<Mult Exp> ::= <Negate Exp>
-
-<Negate Exp> ::= '-' <Value>
-<Negate Exp> ::= <Value>
-
-<Value> ::= Number
-<Value> ::= '(' <Expression> ')'
+exp:
+    NUM
+    | exp '+' exp        { $$ = $1 + $3;      }
+    | exp '-' exp        { $$ = $1 - $3;      }
+    | exp '*' exp        { $$ = $1 * $3;      }
+    | exp '/' exp        { $$ = $1 / $3;      }
+    | '-' exp  %prec NEG { $$ = -$2;          }
+    | exp '^' exp        { $$ = pow ($1, $3); }
+    | '(' exp ')'        { $$ = $2;           }
+;
 ```
 
-> __Note:__ We hardcoded associativity and operator precedence to make the grammar unambiguous. A future release will allow configuring them more intuitively.
-
-The problem with this grammar is that the definitions of all nonterminals form a circle. And designtime Farkles are immutable, like almost everything else with F#. We can solve this problem however and the solution is actually surprisingly simple. But it's better to see how it is done in code:
+And this is how to implement it in Farkle:
 *)
 
-let addExp, multExp, negateExp, value =
-    nonterminal "Add Exp", nonterminal "Mult Exp",
-    nonterminal "Negate Exp", nonterminal "Value"
+open Farkle.Builder.OperatorPrecedence
 
-let expression = "Expression" ||= [
-    !@ addExp => id
-]
+let expression =
+    let NEG = obj()
 
-addExp.SetProductions(
-    !@ addExp .>> "+" .>>. multExp => (+),
-    !@ addExp .>> "-" .>>. multExp => (-),
-    !@ multExp => id
-)
+    let expression = nonterminal "Expression"
+    expression.SetProductions(
+        !@ number |> asIs,
+        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2),
+        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2),
+        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2),
+        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
+        !& "-" .>>. expression |> prec NEG => (fun x -> -x),
+        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
+        !& "(" .>>. expression .>> ")" |> asIs
+    )
 
-multExp.SetProductions(
-    !@ multExp .>> "*" .>>. negateExp => (*),
-    !@ multExp .>> "/" .>>. negateExp => (/),
-    !@ negateExp => id
-)
+    let opScope =
+        OperatorScope(
+            LeftAssociative("+", "-"),
+            LeftAssociative("*", "/"),
+            PrecedenceOnly(NEG),
+            RightAssociative("^")
+        )
 
-negateExp.SetProductions(
-    !& "-" .>>. value => (~-),
-    !@ value => id
-)
-
-value.SetProductions(
-    !@ number => id,
-    !& "(" .>>. expression .>>  ")" => id
-)
+    DesigntimeFarkle.withOperatorScope opScope expression
 
 (**
-The magic lies within the `nonterminal` function. It creates a nonterminal with a name, but we can set its productions _later_ with the `SetProductions` method. We can only once set them, all together. Calling the method again will be ignored.
+As you see, our grammar in Farkle looks pretty similar to the one in Bison. Let's take a look at some newly introduced things:
 
-The nonterminals are of type `Nonterminal<float>`, but implement `DesigntimeFarkle<float>` which is actually an interface.
+### Defining recursive nonterminals
 
-> __Warning:__ Despite designtime Farkles being interfaces, implementing it on your code is not allowed and will throw an exception if a custom designtime Farkle implementation is somehow passed to the Farkle library.
+The `nonterminal` function is useful for recursive nonterminals. It creates a nonterminal whose productions will be set later with the `SetProductions` method. We can only once set them, all together. Calling the method again will have no effect.
+
+Our nonterminal is of type `Nonterminal<float>`, but implements `DesigntimeFarkle<float>` which is actually an interface.
+
+> __Warning:__ Despite designtime Farkles being interfaces, implementing it in your code is not allowed and will throw an exception if a custom designtime Farkle implementation is somehow passed to Farkle.
+
+### Operator Precedence
+
+We specify the operator associativity and precedence using an _operator scope_ that is made of _associativity groups_. There are four associativity group types: `LeftAssociative`, `RightAssociative`, `NonAssociative` and `PrecedenceOnly` that behave similarly to Bison's `%left`, `%right`, `%nonassoc` and `%precedence`. Their difference is best explained [at Bison's documentation][bison-assoc-types].
+
+The groups in an operator scope are sorted by precedence in ascending order. In our grammar, the `+` and `-` symbols have the lowest precedence, followed by `*` and `/`. Until now, all these operators are left-associative, meaning that `1 + 2 + 3` is interpreted as `(1 + 2) + 3`.
+
+Next in the precedence hierarchy is the unary negation. We can't define `-` again; instead we use the `prec` function to assign the unary negation's production a _contextual reflection token_, which is a dummy object that represents the production in the operator scope. This way, Farkle will recognize that `-` has higher precedence in unary negation than in subtraction. That new group is of type `PrecedenceOnly`, meaning that it doesn't specify associativity; only precedence.
+
+And at the highest priority we have the exponentiation operator, which is right associative, meaning that `2 ^ 3 ^ 4` is interpreted as `2 ^ (3 ^ 4)`.
+
+We set this operator scope to our designtime Farkle using the `DesigntimeFarkle.withOperatorScope` function. There are some more things to be careful about when using operator scopes:
+
+* Setting a second operator scope to a designtime Farkle will discard the one that was previous set.
+
+* An operator can belong in only one operator scope. Otherwise undefined behavior will occur.
 
 ## Building our grammar
 
 With our nonterminals being ready, it's time to create a runtime Farkle that can parse mathematical expressions. The builder uses the LALR algorithm to create parser tables for our parser. It also creates a special object called a _post-processor_ that will execute the transformers and fusers when it is needed.
 
 All that stuff can be done with a single line of code:
-
 *)
 
 let myMarvelousRuntimeFarkle = RuntimeFarkle.build expression
@@ -290,5 +305,7 @@ So, I hope you enjoyed this little tutorial. If you did, don't forget to give Fa
 [predefinedSets]: http://goldparser.org/doc/grammars/predefined-sets.htm
 [stringRegexes]: string-regexes.html
 [bnf]: https://en.wikipedia.org/wiki/Backus-Naur_form
+[bison-calculator]: https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
+[bison-assoc-types]: https://www.gnu.org/software/bison/manual/html_node/Using-Precedence.html
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
 *)

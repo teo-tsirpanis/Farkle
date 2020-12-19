@@ -102,7 +102,7 @@ type AssociativityType =
 /// <remarks><para>Terminals correspond to their designtime Farkle, literals
 /// correspond to their content as a string and productions correspond to
 /// the object passed or returned from the <c>WithPrecedence</c> family
-/// of functions.</para>
+/// of functions in production builders.</para>
 /// <para>Using the same terminal with multiple designtime Farkles
 /// (such as the original and a renamed one) causes undefined behavior
 /// and will most likely result in errors.</para></remarks>

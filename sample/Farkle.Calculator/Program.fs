@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 open Farkle
+open Farkle.Samples.FSharp
 open System
 
 let inline prettyPrintResult x =

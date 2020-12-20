@@ -9,7 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Parser
-open Farkle.Samples.IndentBased
+open Farkle.Samples.FSharp.IndentBased
 
 [<Tests>]
 let tests = testList "Virtual terminal tests" [

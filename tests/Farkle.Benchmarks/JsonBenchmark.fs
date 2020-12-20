@@ -10,7 +10,7 @@ open Chiron
 open Farkle
 open Farkle.Builder
 open Farkle.Common.Result
-open Farkle.JSON
+open Farkle.Samples
 open System.IO
 
 [<RankColumn>]
@@ -22,9 +22,9 @@ type JsonBenchmark() =
 
     let createTR() = new StringReader(jsonData)
 
-    let farkleRuntime = FSharp.Language.runtime
+    let farkleRuntime = FSharp.JSON.runtime
 
-    let farkleDynamicCodeRuntime = FSharp.Language.designtime.MarkForPrecompile().Build()
+    let farkleDynamicCodeRuntime = FSharp.JSON.designtime.MarkForPrecompile().Build()
 
     [<Params("small.json", "medium.json", "big.json")>]
     member val FileName = "" with get, set

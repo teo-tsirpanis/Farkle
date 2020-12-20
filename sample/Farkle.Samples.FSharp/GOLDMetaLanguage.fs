@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module GOLDMetaLanguage
+module Farkle.Samples.FSharp.GOLDMetaLanguage
 
 open Farkle
 open Farkle.Builder

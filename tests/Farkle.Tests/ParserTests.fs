@@ -9,10 +9,12 @@ open Expecto
 open Farkle
 open Farkle.Grammar
 open Farkle.IO
-open Farkle.JSON
+open Farkle.Samples
 open Farkle.Parser
 open Farkle.Tests
 open System.IO
+
+module SimpleMaths = Farkle.Samples.FSharp.SimpleMaths
 
 let testParser grammarFile displayName text =
     let testImpl streamMode fCharStream =
@@ -30,12 +32,12 @@ let testParser grammarFile displayName text =
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
 
 let dynamicCodeJSONFSharp = lazy(
-    FSharp.Language.designtime
+    FSharp.JSON.designtime
     |> RuntimeFarkle.markForPrecompile
     |> RuntimeFarkle.build)
 
 let dynamicCodeJSONCSharp = lazy(
-    CSharp.Language.Designtime
+    CSharp.JSON.Designtime
     |> RuntimeFarkle.markForPrecompile
     |> RuntimeFarkle.build)
 
@@ -77,7 +79,7 @@ let tests = testList "Parser tests" [
 
     test "Lexical errors report the correct position" {
         let jsonString = "{\"Almost True\": truffle}"
-        let result = RuntimeFarkle.parseString FSharp.Language.runtime jsonString
+        let result = RuntimeFarkle.parseString FSharp.JSON.runtime jsonString
         let error =
             ParserError(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
             |> FarkleError.ParseError
@@ -93,7 +95,7 @@ let tests = testList "Parser tests" [
     testProperty "The JSON parser works well" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
         let farkle =
-            RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString
+            RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
         let chiron =
             match Chiron.Parsing.Json.tryParse jsonAsString with
@@ -106,7 +108,7 @@ let tests = testList "Parser tests" [
     testProperty "The JSON parser produces the same results even when it uses dynamic code" (fun json ->
         let jsonAsString = Chiron.Formatting.Json.format json
         let farkleResult =
-            RuntimeFarkle.parseString FSharp.Language.runtime jsonAsString
+            RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
         let farkleFSharpDynamicCodeResult =
             RuntimeFarkle.parseString dynamicCodeJSONFSharp.Value jsonAsString
@@ -132,7 +134,7 @@ let tests = testList "Parser tests" [
     )
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
-        let result = GOLDMetaLanguage.runtime.Parse gmlSourceContent
+        let result = FSharp.GOLDMetaLanguage.runtime.Parse gmlSourceContent
         Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
     }
 ]

@@ -11,9 +11,9 @@ using Farkle.Builder;
 using static Farkle.Builder.Regex;
 
 // ReSharper disable once CheckNamespace
-namespace Farkle.JSON.CSharp
+namespace Farkle.Samples.CSharp
 {
-    public static class Language
+    public static class JSON
     {
         private static Json ToDecimal(ReadOnlySpan<char> data)
         {
@@ -32,7 +32,7 @@ namespace Farkle.JSON.CSharp
 
         public static readonly RuntimeFarkle<Json> Runtime;
 
-        static Language()
+        static JSON()
         {
             var number = Terminal.Create("Number", (position, data) => ToDecimal(data),
                 Join(

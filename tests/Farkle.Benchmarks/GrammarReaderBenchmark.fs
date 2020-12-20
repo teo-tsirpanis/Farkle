@@ -9,6 +9,7 @@ open BenchmarkDotNet.Attributes
 open Farkle.Builder
 open Farkle.Common.Result
 open Farkle.Grammar
+open Farkle.Samples.FSharp
 open System.IO
 
 type GrammarReaderBenchmark() =

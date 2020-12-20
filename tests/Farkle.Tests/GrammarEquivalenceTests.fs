@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Grammar
+open Farkle.Samples
 open Farkle.Tests
 open FsCheck
 open System.Collections.Generic
@@ -119,10 +120,10 @@ let balancedParentheses =
 [<Tests>]
 let farkleGOLDGrammarEquivalenceTests =
     ([
-        "the F# JSON parser", JSON.FSharp.Language.runtime :> IGrammarProvider, "./JSON.egt"
-        "the C# JSON parser", JSON.CSharp.Language.Runtime :> _, "./JSON.egt"
+        "the F# JSON parser", FSharp.JSON.runtime :> IGrammarProvider, "./JSON.egt"
+        "the C# JSON parser", CSharp.JSON.Runtime :> _, "./JSON.egt"
         "the language of balanced parentheses", balancedParentheses :> _, "./balanced-parentheses.egt"
-        "GOLD Meta-Language", GOLDMetaLanguage.runtime :> _, "./gml.egt"
+        "GOLD Meta-Language", FSharp.GOLDMetaLanguage.runtime :> _, "./gml.egt"
     ]
     |> List.map (fun (name, gFarkle, egt) ->
         test (sprintf "Farkle and GOLD Parser generate an equivalent LALR parser for %s" name) {

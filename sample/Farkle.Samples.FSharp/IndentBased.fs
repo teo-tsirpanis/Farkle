@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Samples.IndentBased
+module Farkle.Samples.FSharp.IndentBased
 
 open Farkle
 open Farkle.Builder

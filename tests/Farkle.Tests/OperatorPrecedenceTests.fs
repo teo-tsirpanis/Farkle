@@ -7,6 +7,7 @@ module Farkle.Tests.OperatorPrecedenceTests
 
 open Expecto
 open Farkle
+open Farkle.Samples.FSharp
 open Farkle.Builder
 open Farkle.Builder.OperatorPrecedence
 

@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using Farkle.Samples;
 using static Farkle.Builder.DesigntimeFarkleBuild;
 
 namespace Farkle.Samples.Cli
@@ -14,7 +15,7 @@ namespace Farkle.Samples.Cli
         private const int IterationCount = 1000;
         private const string JsonPath = "../../tests/resources/big.json";
         private static string _jsonData;
-        private static readonly RuntimeFarkle<object> _syntaxCheck = JSON.CSharp.Language.Runtime.SyntaxCheck();
+        private static readonly RuntimeFarkle<object> _syntaxCheck = CSharp.JSON.Runtime.SyntaxCheck();
 
         private static void Execute(Func<bool> f, string description)
         {
@@ -25,13 +26,13 @@ namespace Farkle.Samples.Cli
         }
 
         private static bool ParseFarkle<T>(this RuntimeFarkle<T> rf) => rf.Parse(_jsonData).IsOk;
-        private static bool BuildJson() => Build(JSON.CSharp.Language.Designtime).Item1.IsOk;
+        private static bool BuildJson() => Build(CSharp.JSON.Designtime).Item1.IsOk;
 
         private static bool BuildGoldMetaLanguage() =>
-            BuildGrammarOnly(CreateGrammarDefinition(GOLDMetaLanguage.designtime)).IsOk;
+            BuildGrammarOnly(CreateGrammarDefinition(FSharp.GOLDMetaLanguage.designtime)).IsOk;
 
-        private static bool ParseFarkleCSharp() => JSON.CSharp.Language.Runtime.ParseFarkle();
-        private static bool ParseFarkleFSharp() => JSON.FSharp.Language.Runtime.ParseFarkle();
+        private static bool ParseFarkleCSharp() => CSharp.JSON.Runtime.ParseFarkle();
+        private static bool ParseFarkleFSharp() => FSharp.JSON.Runtime.ParseFarkle();
         private static bool ParseFarkleSyntaxCheck() => _syntaxCheck.ParseFarkle();
         private static bool ParseChiron() => FParsec.CharParsers.run(Chiron.Parsing.jsonR.Value, _jsonData).IsSuccess;
 

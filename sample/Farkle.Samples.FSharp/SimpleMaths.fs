@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module SimpleMaths
+module Farkle.Samples.FSharp.SimpleMaths
 
 open Farkle
 open Farkle.Builder

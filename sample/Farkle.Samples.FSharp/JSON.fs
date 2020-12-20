@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.JSON.FSharp.Language
+module Farkle.Samples.FSharp.JSON
 
 open System
 open System.Globalization

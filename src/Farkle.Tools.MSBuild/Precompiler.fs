@@ -44,6 +44,12 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
 
             use stream = new MemoryStream()
             EGT.toStreamNeo stream grammar
+
+            // We will try to read the EGTneo file we just
+            // generated as a form of self-verification.
+            stream.Position <- 0L
+            EGT.ofStream stream |> ignore
+
             Successful(name, stream.ToArray())
         | Error xs -> PrecompilingFailed(name, xs)
     | Error x -> DiscoveringFailed x)

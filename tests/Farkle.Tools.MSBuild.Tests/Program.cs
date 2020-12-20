@@ -92,7 +92,7 @@ namespace Farkle.Tools.MSBuild.Tests
             var precompiledGrammarCount = PrecompiledGrammar.GetAllFromAssembly(typeof(Program).Assembly).Count;
 
             // The one we subtracted is the FaultyPrecompiled grammar which we embedded as a resource ourselves.
-            Assert(expected.Count == precompiledGrammarCount - 1,
+            Assert(expected.Count == precompiledGrammarCount,
                 $"The precompiled grammars of this assembly are {precompiledGrammarCount} instead of {expected.Count}");
             foreach (var x in expected)
             {
@@ -113,35 +113,10 @@ namespace Farkle.Tools.MSBuild.Tests
             }
         }
 
-        static void TestErrorSuppression()
-        {
-            var appContextSwitch = "Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors";
-            var df = Terminal.Literal("FaultyPrecompiled").MarkForPrecompile();
-
-            AssertThrows<PrecompilerLoaderException>(() => df.BuildUntyped(),
-                "Loading a faulty precompiled grammar did not throw an exception.");
-
-            try
-            {
-                AppContext.SetSwitch(appContextSwitch, true);
-                _ = df.BuildUntyped();
-            }
-            catch (Exception e)
-            {
-                Fail($"Loading the precompiled grammar threw an error in spite of its suppression:\n{e}.");
-            }
-            finally
-            {
-                AppContext.SetSwitch(appContextSwitch, false);
-            }
-        }
-
         static int Main()
         {
             Console.WriteLine("Testing the precompiled grammar discoverer...");
             TestDiscoverer();
-            Console.WriteLine("Testing the precompiler loader error suppression...");
-            TestErrorSuppression();
 
             return _gotError ? 1 : 0;
         }

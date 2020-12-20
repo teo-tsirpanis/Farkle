@@ -24,7 +24,7 @@
 * [An API for getting precompiled grammars](https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-precompiledgrammar.html) was published.
 * The tokenizer can be extended by user code. TODO: write documentation
 * The runtime Farkle's extension methods became regular methods.
-* Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.
+* ~~Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.~~ __Removed in Farkle 6.0.0__
 
 #### 6.0.0-alpha.2 - 23-08-2020
 * Farkle supports creating regexes from strings. See more in https://teo-tsirpanis.github.io/Farkle/string-regexes.html.

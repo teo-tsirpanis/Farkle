@@ -96,18 +96,10 @@ type PrecompilableDesigntimeFarkle<[<Nullable(2uy)>] 'T> internal(df: Designtime
 /// This module is the bridge between the RuntimeFarkle and precompiler APIs.
 module internal PrecompilerInterface =
 
-    let private suppressLoaderErrorsSwitch = "Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors"
-
-    let private shouldSuppressLoaderErrors<'a> =
-        let switchFound, switchEnabled = AppContext.TryGetSwitch suppressLoaderErrorsSwitch
-        switchFound && switchEnabled
-
-    let private newPrecompilerLoaderException =
-        let msg =
-            sprintf "Failed to load a precompiled grammar. Try rebuilding the assembly with the latest version \
-of Farkle. To suppress this error and build the grammar, set the '%s' AppContext switch to true."
-                suppressLoaderErrorsSwitch
-        fun (innerExn: exn) -> PrecompilerLoaderException(msg, innerExn)
+    let private newPrecompilerLoaderException innerExn =
+        PrecompilerLoaderException("Failed to load a precompiled grammar. Try rebuilding \
+the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the issue persists, \
+please create an issue on GitHub", innerExn)
 
     /// Tries to find a precompiled grammar for the given
     /// designtime Farkle, and returns it if found.
@@ -121,8 +113,5 @@ of Farkle. To suppress this error and build the grammar, set the '%s' AppContext
                     | None -> DFB.buildGrammarOnly pcdf.GrammarDefinition
                 grammar
             with
-            | _ when shouldSuppressLoaderErrors ->
-                DFB.buildGrammarOnly pcdf.GrammarDefinition
-            | e ->
-                raise(newPrecompilerLoaderException e)
+            | e -> raise(newPrecompilerLoaderException e)
         | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly

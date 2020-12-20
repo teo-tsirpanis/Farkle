@@ -143,20 +143,6 @@ Rider however can use the precompiler with a simple workaround. Open its setting
 
 ![The Settings window in JetBrains Rider](img/rider_msbuild_workaround.png)
 
-### If loading fails
-
-A precompiled grammar might fail to be loaded when your app uses it. The most possible reason for a precompiler loader crash is that different versions of Farkle were used in the same project, and the second most possible reason is that Farkle has a bug. If a precompiled grammar fails to be loaded, it will throw an exception.
-
-However there are cases when the underlying reasons for that loader failure cannot be fixed. That's why Farkle allows these errors to be suppressed and the grammar to be rebuilt at runtime, if the precompiled grammar failed to be loaded. It can be enabled with an `AppContext` switch like this:
-
-``` fsharp
-open System
-open Farkle
-
-AppContext.SetSwitch("Switch.Farkle.Builder.Precompiler.SuppressLoaderErrors", true)
-let runtime = RuntimeFarkle.build myFaultyDesigntimeFarkle
-```
-
 ---
 
 So I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you feel especially precompiled today, and want to hit the star button as well. I hope that all of you have an wonderful day, and to see you soon. Goodbye!

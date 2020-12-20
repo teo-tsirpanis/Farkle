@@ -28,7 +28,7 @@ type DesigntimeFarkle =
 /// <remarks><para>Designtime Farkles cannot be used to parse text but can be
 /// composed into larger designtime Farkles. To actually use them, they
 /// have to be converted to a <see cref="RuntimeFarkle{T}"/> which however
-/// is not composable. This conversion is performed by the <c>RuntimeFarkle.Build</c>
+/// is not composable. This conversion is performed by the <c>RuntimeFarkle.build</c>
 /// function or the <c>Build</c> extension method.</para>
 /// <para>This interface has no members on its own; they are
 /// inherited from <see cref="DesigntimeFarkle"/></para>

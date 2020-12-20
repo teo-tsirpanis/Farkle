@@ -67,6 +67,10 @@ The following table highlights the differences between the F# and C# designtime 
 Let's take a look at [the calculator we made at the quick start guide](quickstart.html#Writing-more-complex-nonterminals) written in C#:
 
 ``` csharp
+using System;
+using Farkle.Builder;
+using Farkle.Builder.OperatorPrecedence;
+
 public static class SimpleMaths
 {
     public static readonly DesigntimeFarkle<double> Designtime;
@@ -84,12 +88,14 @@ public static class SimpleMaths
             expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
             expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
             "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
+            expression.Extended().Append("^").Extend(expression).Finish(Math.Pow),
             "(".Appended().Extend(expression).Append(")").AsIs());
 
         var opScope = new OperatorScope(
             new LeftAssociative("+", "-"),
             new LeftAssociative("*", "/"),
-            new PrecedenceOnly(NEG));
+            new PrecedenceOnly(NEG),
+            new RightAssociative("^"));
 
         Designtime = expression.WithOperatorScope(opScope);
         Runtime = Designtime.Build();

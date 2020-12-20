@@ -9,6 +9,7 @@ open Argu
 open Farkle.Monads.Either
 open Farkle.Tools
 open Serilog
+open System.Text.Json
 
 type Arguments =
     | [<ExactlyOnce; MainCommand>] AssemblyFile of string
@@ -18,7 +19,7 @@ with
             match x with
             | AssemblyFile _ -> "The assembly file from which to look for precompiled grammars."
 
-let run (args: ParseResults<_>) = either {
+let run json (args: ParseResults<_>) = either {
     let! file =
         args.GetResult AssemblyFile
         |> assertFileExists
@@ -27,11 +28,15 @@ let run (args: ParseResults<_>) = either {
 
     let allGrammarNames = Array.ofSeq loader.Grammars.Keys
 
-    match allGrammarNames with
-    | [||] ->
-        Log.Information("No precompiled grammars were found.")
-    | _ ->
-        Log.Information("Found {GrammarCount} precompiled grammars.", allGrammarNames.Length)
-        for x in allGrammarNames do
-            Log.Information("{GrammarName}", x)
+    if json then
+        JsonSerializer.Serialize(allGrammarNames)
+        |> printfn "%s"
+    else
+        match allGrammarNames with
+        | [||] ->
+            Log.Information("No precompiled grammars were found.")
+        | _ ->
+            Log.Information("Found {GrammarCount} precompiled grammars.", allGrammarNames.Length)
+            for x in allGrammarNames do
+                Log.Information("{GrammarName}", x)
 }

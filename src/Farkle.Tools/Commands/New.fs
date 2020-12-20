@@ -13,6 +13,7 @@ open Farkle.Tools.Templating.BuiltinTemplates
 open Serilog
 open System
 open System.IO
+open System.Text.Json
 
 type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
@@ -77,22 +78,17 @@ let toCustomFile fileName =
     |> assertFileExists
     |> Result.map CustomFile
 
-let run (args: ParseResults<_>) = either {
+let run json (args: ParseResults<_>) = either {
     let! grammarFile =
         args.TryPostProcessResult(GrammarFile, assertFileExists)
         |> Option.defaultWith tryInferGrammarFile
     let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
     let ns = args.TryGetResult(Namespace)
     let! templateSource =
-        // First, see if a custom template is specified.
         args.TryPostProcessResult(TemplateFile, toCustomFile)
-        // If not,
         |> Option.defaultWith (fun () ->
-            // see if a language is specified.
             args.TryPostProcessResult(Language, Ok)
-            // If not, try to infer what it is.
             |> Option.defaultWith tryInferLanguage
-            // If we have managed to get a language, it's OK.
             |> Result.map (fun lang -> BuiltinTemplate(lang, typ)))
 
     let! generatedTemplate =
@@ -103,8 +99,13 @@ let run (args: ParseResults<_>) = either {
         |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, generatedTemplate.FileExtension))
         |> Path.GetFullPath
 
-    Log.Verbose("Creating file at {outputFile}", outputFile)
-    File.WriteAllText(outputFile, generatedTemplate.Content)
+    if json then
+        {|outputFile = outputFile; content = generatedTemplate.Content|}
+        |> JsonSerializer.Serialize
+        |> printfn "%s"
+    else
+        Log.Verbose("Creating file at {outputFile}", outputFile)
+        File.WriteAllText(outputFile, generatedTemplate.Content)
 
-    Log.Information("Template was created at {outputFile}", outputFile)
+        Log.Information("Template was created at {outputFile}", outputFile)
 }

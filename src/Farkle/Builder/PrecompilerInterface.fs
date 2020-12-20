@@ -29,10 +29,18 @@ type PrecompiledGrammar private(asm, grammarName, resourceName) =
         |> readOnlyDict
     )
 
+    static let newPrecompilerLoaderException innerExn =
+        PrecompilerLoaderException("Failed to load a precompiled grammar. Try rebuilding \
+the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the issue persists, \
+please create an issue on GitHub", innerExn)
+
     let grammarThunk = lazy(
         // The stream will definitely be not null.
         use stream = asm.GetManifestResourceStream resourceName
-        EGT.ofStream stream
+        try
+            EGT.ofStream stream
+        with
+        | e -> raise(newPrecompilerLoaderException e)
     )
 
     /// The `Assembly` that contains this precompiled grammar.
@@ -96,22 +104,14 @@ type PrecompilableDesigntimeFarkle<[<Nullable(2uy)>] 'T> internal(df: Designtime
 /// This module is the bridge between the RuntimeFarkle and precompiler APIs.
 module internal PrecompilerInterface =
 
-    let private newPrecompilerLoaderException innerExn =
-        PrecompilerLoaderException("Failed to load a precompiled grammar. Try rebuilding \
-the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the issue persists, \
-please create an issue on GitHub", innerExn)
-
     /// Tries to find a precompiled grammar for the given
     /// designtime Farkle, and returns it if found.
     let internal getGrammarOrBuild (df: DesigntimeFarkle) =
         match df with
         | :? PrecompilableDesigntimeFarkle as pcdf ->
-            try
-                let grammar =
-                    match pcdf.TryGetPrecompiledGrammar() with
-                    | Some pg -> Ok <| pg.GetGrammar()
-                    | None -> DFB.buildGrammarOnly pcdf.GrammarDefinition
-                grammar
-            with
-            | e -> raise(newPrecompilerLoaderException e)
+            let grammar =
+                match pcdf.TryGetPrecompiledGrammar() with
+                | Some pg -> Ok <| pg.GetGrammar()
+                | None -> DFB.buildGrammarOnly pcdf.GrammarDefinition
+            grammar
         | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly

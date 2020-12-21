@@ -31,11 +31,11 @@ let assertFileExists fileName =
 
 let parseScribanTemplate (log: ILogger) templateText templateFileName =
     let template = Template.Parse(templateText, templateFileName)
-    template.Messages.ForEach(fun x ->
+    for x in template.Messages do
         match x.Type with
         | ParserMessageType.Error -> log.Error("{Error}", x)
         | ParserMessageType.Warning -> log.Warning("{Warning}", x)
-        | _ -> ())
+        | _ -> ()
     if template.HasErrors then
         log.Error("Parsing {TemplateFileName} failed.", templateFileName)
         Error()

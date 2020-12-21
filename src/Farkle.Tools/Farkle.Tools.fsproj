@@ -17,6 +17,7 @@
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CompositePath.fs" />
     <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

@@ -9,16 +9,14 @@ module Farkle.Tools.Common
 open Scriban
 open Scriban.Parsing
 open Serilog
+open System
 open System.IO
 open System.Reflection
 
 /// The version of the currently executing assembly.
 let toolsVersion =
     let asm = Assembly.GetExecutingAssembly()
-    asm.GetCustomAttributes<AssemblyInformationalVersionAttribute>()
-    |> Seq.map(fun x -> x.InformationalVersion)
-    |> Seq.tryExactlyOne
-    |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())
+    asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
 
 /// Logs an error if the given filename does not exist.
 let assertFileExists fileName =

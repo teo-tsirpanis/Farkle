@@ -18,17 +18,14 @@ with
 type FarkleRoot = {
     Farkle: FarkleObject
     Grammar: Grammar
-    [<ScriptMemberIgnore>]
-    GrammarBytes: byte[]
     GrammarPath: string
     Namespace: string
 }
 with
     [<ScriptMemberIgnore>]
-    static member Create grammar grammarPath ns bytes = {
+    static member Create grammar grammarPath ns = {
         Farkle = FarkleObject.Create
         Grammar = grammar
-        GrammarBytes = bytes
         GrammarPath = grammarPath
         Namespace = ns
     }

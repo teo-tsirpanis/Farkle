@@ -5,30 +5,22 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Grammar
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban
 open Scriban.Runtime
-open Serilog
-open System
 open System.IO
 
 module TemplateEngine =
-    let renderTemplate (log: ILogger) generatedFileNamespace grammarFile templateSource = either {
+    let renderTemplate log generatedFileNamespace grammar grammarFile templateSource = either {
         let templateText, templateFileName = BuiltinTemplates.getLanguageTemplate templateSource
         let tc = TemplateContext()
         tc.StrictVariables <- true
-        let bytes = File.ReadAllBytes grammarFile
-        let grammar = EGT.ofFile grammarFile
-        log.Verbose("{grammarFile} was read successfully", grammarFile)
         let ns = generatedFileNamespace |> Option.defaultValue (Path.GetFileNameWithoutExtension(grammarFile))
-        let fr = FarkleRoot.Create grammar grammarFile ns bytes
+        let fr = FarkleRoot.Create grammar grammarFile ns
 
         let so = ScriptObject()
-        so.Import fr
-        so.Import("to_base_64", Func<_,_>(Utilities.toBase64 fr.GrammarBytes))
-        Utilities.load fr.Grammar so
+        Utilities.load fr so
         tc.PushGlobal so
 
         let! template = parseScribanTemplate log templateText templateFileName

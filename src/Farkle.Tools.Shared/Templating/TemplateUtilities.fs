@@ -6,11 +6,12 @@
 namespace Farkle.Tools.Templating
 
 open Farkle.Grammar
+open Farkle.Tools
 open Scriban.Runtime
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
-open System.Linq
+open System.IO
 open System.Text
 
 type IdentifierTypeCase =
@@ -21,11 +22,21 @@ type IdentifierTypeCase =
 
 module Utilities =
 
-    let toBase64 (grammarBytes: _ []) doPad =
-        let options =
-            if doPad then Base64FormattingOptions.InsertLineBreaks
-            else Base64FormattingOptions.None
-        Convert.ToBase64String(grammarBytes, options)
+    let toBase64 fr =
+        let bytesThunk = lazy(
+            let ext = Path.GetExtension(fr.GrammarPath).AsSpan()
+            if isGrammarExtension ext then
+                File.ReadAllBytes fr.GrammarPath
+            else
+                use stream = new MemoryStream()
+                EGT.toStreamNeo stream fr.Grammar
+                stream.ToArray()
+        )
+        fun doPad ->
+            let options =
+                if doPad then Base64FormattingOptions.InsertLineBreaks
+                else Base64FormattingOptions.None
+            Convert.ToBase64String(bytesThunk.Value, options)
 
     let toIdentifier name case (separator: string) =
         let sb = StringBuilder()
@@ -101,18 +112,19 @@ module Utilities =
             prod.Head, handle
         let dict =
             productions
-            |> Array.groupBy getFormattingElements
-            |> Seq.collect (function
+            |> Seq.groupBy getFormattingElements
+            |> Seq.collect (fun (_, terms) ->
+                match Array.ofSeq terms with
                 // This case is actually impossible, but never mind.
-                | _, [| |] -> Seq.empty
+                | [| |] -> Seq.empty
                 // If a production has a unique combination of head and
                 // terminal handles, it will also have a unique name.
-                | _, [|prod|] -> KeyValuePair(prod, false) |> Seq.singleton
+                | [|prod|] -> KeyValuePair(prod, false) |> Seq.singleton
                 // But if many productions share the same one, we will have
                 // a name collision. In this case, we want their name to include
                 // nonterminals as well. It is impossible for a collision to happen
                 // again, as that would imply that there are two identical productions.
-                | _, prods -> prods |> Seq.map (fun prod -> KeyValuePair(prod, true)))
+                | prods -> prods |> Seq.map (fun prod -> KeyValuePair(prod, true)))
             |> ImmutableDictionary.CreateRange
         fun prod -> dict.[prod]
 
@@ -122,9 +134,11 @@ module Utilities =
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 
-    let load (grammar:Grammar) (so: ScriptObject) =
+    let load (fr: FarkleRoot) (so: ScriptObject) =
         so.SetValue("upper_case", UpperCase, true)
         so.SetValue("lower_case", LowerCase, true)
         so.SetValue("pascal_case", PascalCase, true)
         so.SetValue("camel_case", CamelCase, true)
-        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction (grammar.Productions.ToArray())))
+        so.Import fr
+        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction fr.Grammar.Productions))
+        so.Import("to_base_64", Func<_,_>(toBase64 fr))

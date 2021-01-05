@@ -26,8 +26,8 @@ with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
-            | GrammarFile _ -> "The EGT grammar file to parse. \
-Otherwise, the EGT file in the current directory, if only one exists."
+            | GrammarFile _ -> "A composite path of the grammar to process. \
+Run 'farkle --explain-composite-paths' to understand their syntax."
             | Language _ -> "Specifies the language of the template to create. If there is a C# or F# project, \
 defaults to this language. If there are both, the language must be specified. If there is neither, defaults to F#."
             | Type _ -> "Specifies the type of the template to create. Currently, only a file containing the grammar \
@@ -79,9 +79,10 @@ let toCustomFile fileName =
     |> Result.map CustomFile
 
 let run json (args: ParseResults<_>) = either {
-    let! grammarFile =
-        args.TryPostProcessResult(GrammarFile, assertFileExists)
-        |> Option.defaultWith tryInferGrammarFile
+    let! grammar, grammarPath =
+        args.TryGetResult GrammarFile
+        |> CompositePath.create
+        |> CompositePath.resolve Environment.CurrentDirectory
     let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
     let ns = args.TryGetResult(Namespace)
     let! templateSource =
@@ -92,11 +93,11 @@ let run json (args: ParseResults<_>) = either {
             |> Result.map (fun lang -> BuiltinTemplate(lang, typ)))
 
     let! generatedTemplate =
-        TemplateEngine.renderTemplate Log.Logger ns grammarFile templateSource
+        TemplateEngine.renderTemplate Log.Logger ns grammar grammarPath templateSource
 
     let outputFile =
         args.TryGetResult OutputFile
-        |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarFile, generatedTemplate.FileExtension))
+        |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarPath, generatedTemplate.FileExtension))
         |> Path.GetFullPath
 
     if json then

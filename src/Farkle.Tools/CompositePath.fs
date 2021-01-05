@@ -6,6 +6,7 @@
 namespace Farkle.Tools
 
 open Farkle.Grammar
+open Farkle.Monads.Either
 open System
 open System.IO
 open Serilog
@@ -15,38 +16,45 @@ open Serilog
 /// omitted if the file has only one precompiled grammar. The file in the first path can
 /// be either an assembly or a project file. If it is ommitted, a suitable project file
 /// will be searched in the current directory.
-type CompositePath =
-    | DefaultPath
-    | FileOnly of string
-    | GrammarOnly of string
-    | FullPath of filePath: string * grammarName: string
+type CompositePath = CompositePath of filePath: string option * grammarName: string option
+with
     static member Separator = "::"
 
 module CompositePath =
 
+    let private defaultCompositePath = CompositePath(None, None)
+
+    let private checkForWhitespace (x: string) =
+        if String.IsNullOrWhiteSpace(x) then
+            None
+        else
+            Some x
+
     let create path =
         let sep = CompositePath.Separator
         match path with
-        | None -> DefaultPath
+        | None -> defaultCompositePath
         | Some path when
             String.IsNullOrWhiteSpace(path)
-            || path.AsSpan().Trim().Equals(sep.AsSpan(), StringComparison.Ordinal) -> DefaultPath
+            || path.AsSpan().Trim().Equals(sep.AsSpan(), StringComparison.Ordinal) -> defaultCompositePath
         | Some path ->
             match path.IndexOf(sep) with
-            | -1 -> FileOnly path
-            | 0 ->
-                let grammarName = path.Substring(sep.Length)
-                GrammarOnly grammarName
+            | -1 -> CompositePath(Some path, None)
             | doubleColonPos ->
-                let filePath = path.Substring(0, doubleColonPos)
-                let grammarName = path.Substring(doubleColonPos + sep.Length)
-                FullPath(filePath, grammarName)
+                let filePath =
+                    path.Substring(0, doubleColonPos)
+                    |> checkForWhitespace
+                let grammarName =
+                    path.Substring(doubleColonPos + sep.Length)
+                    |> Some
+                CompositePath(filePath, grammarName)
 
-    let private resolveGrammar grammarName (filePath: string) =
+    let private resolveGrammar grammarName (filePath: string) = either {
+        let! _ = assertFileExists filePath
         let ext = Path.GetExtension(filePath.AsSpan())
         if isProjectExtension ext then
             Log.Error("Opening projects is not currently supported")
-            Error()
+            return! Error()
         elif isAssemblyExtension ext then
             use loader = new PrecompiledAssemblyFileLoader(filePath)
             match grammarName with
@@ -54,11 +62,9 @@ module CompositePath =
                 match loader.Grammars.Count with
                 | 0 ->
                     Log.Error("The assembly of {Path} has no precompiled grammars.", filePath)
-                    Error()
+                    return! Error()
                 | 1 ->
-                    loader.Grammars.Values
-                    |> Seq.exactlyOne
-                    |> (fun x -> x.GetGrammar() |> Ok)
+                    return (Seq.exactlyOne loader.Grammars.Values).GetGrammar(), filePath
                 | _ ->
                     Log.Error("The assembly of {Path} has more than one precompiled gramamr:", filePath)
                     for x in loader.Grammars.Keys do
@@ -66,20 +72,21 @@ module CompositePath =
 
                     Log.Information("You can explicitly choose the precompiled grammar you \
     want by appending {CompositePathSuffixHint} to the input file.", "'::<grammar-name>'")
-                    Error()
+                    return! Error()
             | Some grammarName ->
                 match loader.Grammars.TryGetValue(grammarName) with
-                | true, grammar -> grammar.GetGrammar() |> Ok
+                | true, grammar -> return grammar.GetGrammar(), filePath
                 | false, _ ->
                     Log.Error("The assembly of {Path} doesn't have a precompiled grammar named {GrammarName}.", grammarName)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
-                    Error()
+                    return! Error()
         elif isGrammarExtension ext then
-            EGT.ofFile filePath |> Ok
+            return EGT.ofFile filePath, filePath
         else
             Log.Error("Unsupported file name: {FilePath}", filePath)
-            Error()
+            return! Error()
+    }
 
     let private findDefaultProject currentDir =
         Directory.EnumerateFiles(currentDir, "*.??proj", SearchOption.TopDirectoryOnly)
@@ -96,14 +103,10 @@ module CompositePath =
             Log.Error("Many project files were found in the current directory.")
             Error()
 
-    let rec resolveEx currentDir compositePath =
-        match compositePath with
-        | DefaultPath ->
-            match findDefaultProject currentDir with
-            | Ok projectFile -> resolveEx currentDir (FileOnly projectFile)
-            | Error() -> Error()
-        | FileOnly filePath -> resolveGrammar None filePath
-        | GrammarOnly _ -> resolveEx currentDir DefaultPath
-        | FullPath(filePath, grammarName) -> resolveGrammar (Some grammarName) filePath
-
-    let resolve compositePath = resolveEx Environment.CurrentDirectory compositePath
+    let rec resolve currentDir (CompositePath(filePath, grammarName)) = either {
+        let! filePath =
+            match filePath with
+            | Some x -> Ok x
+            | None -> findDefaultProject currentDir
+        return! resolveGrammar grammarName filePath
+    }

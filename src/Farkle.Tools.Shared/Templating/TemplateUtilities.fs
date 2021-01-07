@@ -14,22 +14,29 @@ open System.Collections.Immutable
 open System.IO
 open System.Text
 
-type IdentifierTypeCase =
+type private IdentifierTypeCase =
     | UpperCase
     | LowerCase
     | CamelCase
     | PascalCase
 
-module Utilities =
+type private FarkleObject = {Version: string}
 
-    let toBase64 fr =
+module internal Utilities =
+
+    let private defaultFarkleObject = {Version = toolsVersion}
+
+    let private addReadOnly (so: ScriptObject) key value =
+        so.SetValue(key, value, true)
+
+    let private toBase64 {Grammar = grammar; GrammarPath = grammarPath} =
         let bytesThunk = lazy(
-            let ext = Path.GetExtension(fr.GrammarPath).AsSpan()
+            let ext = Path.GetExtension(grammarPath).AsSpan()
             if isGrammarExtension ext then
-                File.ReadAllBytes fr.GrammarPath
+                File.ReadAllBytes grammarPath
             else
                 use stream = new MemoryStream()
-                EGT.toStreamNeo stream fr.Grammar
+                EGT.toStreamNeo stream grammar
                 stream.ToArray()
         )
         fun doPad ->
@@ -38,7 +45,7 @@ module Utilities =
                 else Base64FormattingOptions.None
             Convert.ToBase64String(bytesThunk.Value, options)
 
-    let toIdentifier name case (separator: string) =
+    let private toIdentifier name case (separator: string) =
         let sb = StringBuilder()
         let processChar c =
             match c with
@@ -86,7 +93,7 @@ module Utilities =
             | CamelCase -> sb.[0] <- Char.ToLowerInvariant sb.[0]
         sb.ToString()
 
-    let formatProduction printFull {Head = Nonterminal(_, headName); Handle = handle} case separator =
+    let private formatProduction printFull {Head = Nonterminal(_, headName); Handle = handle} case separator =
         let headFormatted = toIdentifier headName case separator
         let handleFormatted =
             if handle.IsEmpty then
@@ -103,7 +110,7 @@ module Utilities =
                 |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
-    let shouldPrintFullProduction productions =
+    let private shouldPrintFullProduction productions =
         let getFormattingElements prod =
             let handle =
                 prod.Handle
@@ -128,17 +135,29 @@ module Utilities =
             |> ImmutableDictionary.CreateRange
         fun prod -> dict.[prod]
 
-    let doFmt fShouldPrintFullProduction (x: obj) case separator =
+    let private doFmt fShouldPrintFullProduction (x: obj) case separator =
         match x with
         | :? Terminal as x -> match x with Terminal(_, name) -> toIdentifier name case separator
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
 
-    let load (fr: FarkleRoot) (so: ScriptObject) =
-        so.SetValue("upper_case", UpperCase, true)
-        so.SetValue("lower_case", LowerCase, true)
-        so.SetValue("pascal_case", PascalCase, true)
-        so.SetValue("camel_case", CamelCase, true)
-        so.Import fr
-        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction fr.Grammar.Productions))
-        so.Import("to_base_64", Func<_,_>(toBase64 fr))
+    let loadGrammar g so =
+        addReadOnly so "upper_case" UpperCase
+        addReadOnly so "lower_case" LowerCase
+        addReadOnly so "pascal_case" PascalCase
+        addReadOnly so "camel_case" CamelCase
+
+        let grammar = g.Grammar
+        addReadOnly so "gramamr" grammar
+        addReadOnly so "grammar_path" g.GrammarPath
+        so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction grammar.Productions))
+        so.Import("to_base_64", Func<_,_>(toBase64 g))
+
+    let createDefaultScriptObject templateOptions =
+        let so = ScriptObject()
+        addReadOnly so "farkle" defaultFarkleObject
+        let properties = ScriptObject()
+        for propKey, propValue in templateOptions.CustomProperties do
+            addReadOnly properties propKey propValue
+        addReadOnly so "properties" properties
+        so

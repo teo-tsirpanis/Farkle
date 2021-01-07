@@ -6,31 +6,36 @@
 namespace Farkle.Tools.Templating
 
 open Farkle.Grammar
-open Farkle.Tools.Common
 open Scriban.Runtime
 
-type FarkleObject = {
-    Version: string
-}
-with
-    static member Create = {Version = toolsVersion}
+[<RequireQualifiedAccess>]
+type Language =
+    | ``F#``
+    | ``C#``
 
-type FarkleRoot = {
-    Farkle: FarkleObject
+type GrammarTemplateInput = {
     Grammar: Grammar
     GrammarPath: string
-    Namespace: string
 }
-with
-    [<ScriptMemberIgnore>]
-    static member Create grammar grammarPath ns = {
-        Farkle = FarkleObject.Create
-        Grammar = grammar
-        GrammarPath = grammarPath
-        Namespace = ns
-    }
+
+type WebsiteOptions = unit
+
+type TemplateType =
+    | GrammarWebsite of GrammarTemplateInput * WebsiteOptions
+    | GrammarSkeleton of GrammarTemplateInput * Language * ``namespace``: string option
+    | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string
+    | LALRConflictReport
+
+type TemplateOptions = {
+    CustomProperties: (string * string) list
+}
 
 type GeneratedTemplate = {
-    FileExtension: string
+    ScriptObject: IScriptObject
     Content: string
 }
+with
+    member x.FileExtension =
+        match x.ScriptObject.TryGetValue "file_extension" with
+        | true, ext -> ext.ToString()
+        | false, _ -> ".out.txt"

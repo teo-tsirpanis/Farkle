@@ -39,7 +39,7 @@ module TemplateEngine =
             let templateText = getBuiltinTemplate resourceKey
             parseScribanTemplate log templateText templateName
         | GrammarCustomTemplate(_, path) -> either {
-            let! path = assertFileExists path
+            let! path = assertFileExistsEx log path
             let templateText = File.ReadAllText path
             return! parseScribanTemplate log templateText path
             }

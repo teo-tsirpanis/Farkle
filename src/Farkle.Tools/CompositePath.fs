@@ -7,6 +7,7 @@ namespace Farkle.Tools
 
 open Farkle.Grammar
 open Farkle.Monads.Either
+open Farkle.Tools.Templating
 open System
 open System.IO
 open Serilog
@@ -64,7 +65,7 @@ module CompositePath =
                     Log.Error("The assembly of {Path} has no precompiled grammars.", filePath)
                     return! Error()
                 | 1 ->
-                    return (Seq.exactlyOne loader.Grammars.Values).GetGrammar(), filePath
+                    return GrammarTemplateInput.Create ((Seq.exactlyOne loader.Grammars.Values).GetGrammar()) filePath
                 | _ ->
                     Log.Error("The assembly of {Path} has more than one precompiled gramamr:", filePath)
                     for x in loader.Grammars.Keys do
@@ -75,14 +76,14 @@ module CompositePath =
                     return! Error()
             | Some grammarName ->
                 match loader.Grammars.TryGetValue(grammarName) with
-                | true, grammar -> return grammar.GetGrammar(), filePath
+                | true, grammar -> return GrammarTemplateInput.Create (grammar.GetGrammar()) filePath
                 | false, _ ->
                     Log.Error("The assembly of {Path} doesn't have a precompiled grammar named {GrammarName}.", grammarName)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()
         elif isGrammarExtension ext then
-            return EGT.ofFile filePath, filePath
+            return GrammarTemplateInput.Create (EGT.ofFile filePath) filePath
         else
             Log.Error("Unsupported file name: {FilePath}", filePath)
             return! Error()

@@ -17,6 +17,9 @@ type GrammarTemplateInput = {
     Grammar: Grammar
     GrammarPath: string
 }
+with
+    static member Create grammar grammarPath =
+        {Grammar = grammar; GrammarPath = grammarPath}
 
 type WebsiteOptions = unit
 

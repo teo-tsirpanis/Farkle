@@ -9,7 +9,6 @@ open Argu
 open Farkle.Monads.Either
 open Farkle.Tools
 open Farkle.Tools.Templating
-open Farkle.Tools.Templating.BuiltinTemplates
 open Serilog
 open System
 open System.IO
@@ -17,43 +16,31 @@ open System.Text.Json
 
 type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
-    | [<Unique; AltCommandLine("-lang")>] Language of Language
-    | [<Unique>] Type of TemplateType
-    | [<Unique; AltCommandLine("-t")>] TemplateFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
+    | [<Unique>] Website
+    | [<Unique>] GrammarSkeleton
+    | [<Unique; AltCommandLine("-lang")>] Language of Language
     | [<Unique; AltCommandLine("-ns")>] Namespace of string
+    | [<Unique; AltCommandLine("-t")>] TemplateFile of string
+    | [<Unique; AltCommandLine("-prop")>] Property of string * string
 with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
             | GrammarFile _ -> "A composite path of the grammar to process. \
-Run 'farkle --explain-composite-paths' to understand their syntax."
-            | Language _ -> "Specifies the language of the template to create. If there is a C# or F# project, \
-defaults to this language. If there are both, the language must be specified. If there is neither, defaults to F#."
-            | Type _ -> "Specifies the type of the template to create. Currently, only a file containing the grammar \
-and its symbol types is allowed."
-            | TemplateFile _ -> "Specifies the template file to use, in case you want a custom one. \
-In this case, the language is completely ignored."
-            | OutputFile _ -> "Specifies where the generated output will be stored. \
-Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to 'out'."
-            | Namespace _ -> "Specifies the namespace of the generated source file. \
-It can be retrieved from the template with the 'namespace' variable."
-
-let tryInferGrammarFile() =
-    Environment.CurrentDirectory
-    |> Directory.EnumerateFiles
-    |> Seq.filter (Path.GetExtension >> (=) ".egt")
-    |> List.ofSeq
-    |> function
-    | [x] ->
-        Log.Debug("No grammar file was specified; using {GrammarFile}", x)
-        Ok x
-    | [] ->
-        Log.Error("Could not find an EGT file in {CurrentDirectory}", Environment.CurrentDirectory)
-        Error()
-    | _ ->
-        Log.Error("More than one EGT files were found in {CurrentDirectory}", Environment.CurrentDirectory)
-        Error()
+Run 'farkle --explain-composite-paths' to learn their syntax."
+            | OutputFile _ -> "Specifies where the output file will be stored. \
+Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
+            | Website -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
+            | GrammarSkeleton -> "Specifies that a skeleton source file for the grammar should be generated. \
+The source's namespace and language can be adjusted by the respective arguments."
+            | Language _ -> "Specifies the skeleton source file's language. If not specified, Farkle will \
+infer it based on the project files in the current directory; otherwise it will use F#."
+            | Namespace _ -> "Specifies the skeleton source file's namespace. \
+If not specified, the input file's name will be used."
+            | TemplateFile _ -> "Specifies a custom Scriban template file to use. It's documented in Farkle's site."
+            | Property _ -> "Specifies an additional property to be passed to your custom template \
+via the 'properties.myproperty' Scriban variable."
 
 let tryInferLanguage() =
     let hasExtension =
@@ -73,31 +60,43 @@ let tryInferLanguage() =
         Log.Debug("Neither a language was specified, nor are there any supported projcets in {CurrentDirectory}. Language is inferred to be F#", Environment.CurrentDirectory)
         Ok Language.``F#``
 
-let toCustomFile fileName =
-    fileName
-    |> assertFileExists
-    |> Result.map CustomFile
+let getTemplateType grammarInput (args: ParseResults<_>) = either {
+    match args.Contains Website, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
+    | _, false, None ->
+        return GrammarWebsite(grammarInput, ())
+    | false, true, None ->
+        let! language =
+            args.TryPostProcessResult(Language, Ok)
+            |> Option.defaultWith tryInferLanguage
+        let ns = args.TryGetResult Namespace
+        return TemplateType.GrammarSkeleton(grammarInput, language, ns)
+    | false, false, Some customTemplatePath ->
+        let! templatePath = assertFileExists customTemplatePath
+        return GrammarCustomTemplate(grammarInput, templatePath)
+    | _, true, Some _ | true, _, Some _ | true, true, _ ->
+        Log.Error("The '--website', '--grammarskeleton' and '-t' arguments cannot be used at the same time")
+        return! Error()
+}
+
+let getTemplateOptions (args: ParseResults<_>) =
+    let properties = args.GetResults Property
+    {CustomProperties = properties}
 
 let run json (args: ParseResults<_>) = either {
-    let! grammar, grammarPath =
+    let! grammarInput =
         args.TryGetResult GrammarFile
         |> CompositePath.create
         |> CompositePath.resolve Environment.CurrentDirectory
-    let typ = args.GetResult(Type, defaultValue = TemplateType.Grammar)
-    let ns = args.TryGetResult(Namespace)
-    let! templateSource =
-        args.TryPostProcessResult(TemplateFile, toCustomFile)
-        |> Option.defaultWith (fun () ->
-            args.TryPostProcessResult(Language, Ok)
-            |> Option.defaultWith tryInferLanguage
-            |> Result.map (fun lang -> BuiltinTemplate(lang, typ)))
+    let! templateType = getTemplateType grammarInput args
+    let templateOptions = getTemplateOptions args
 
-    let! generatedTemplate =
-        TemplateEngine.renderTemplate Log.Logger ns grammar grammarPath templateSource
+    let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger templateType templateOptions
 
     let outputFile =
-        args.TryGetResult OutputFile
-        |> Option.defaultWith (fun () -> Path.ChangeExtension(grammarPath, generatedTemplate.FileExtension))
+        match args.TryGetResult OutputFile with
+        | Some x -> x
+        | None ->
+            Path.ChangeExtension(grammarInput.GrammarPath, generatedTemplate.FileExtension)
         |> Path.GetFullPath
 
     if json then

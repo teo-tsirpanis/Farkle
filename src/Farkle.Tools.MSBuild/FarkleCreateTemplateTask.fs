@@ -5,9 +5,10 @@
 
 namespace Farkle.Tools.MSBuild
 
+open Farkle.Grammar
 open Farkle.Monads.Either
+open Farkle.Tools
 open Farkle.Tools.Templating
-open Farkle.Tools.Templating.BuiltinTemplates
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
 open Serilog
@@ -20,13 +21,6 @@ type FarkleCreateTemplateTask() =
     inherit Task()
 
     let hasValue x = String.IsNullOrWhiteSpace x |> not
-
-    let assertFileExists (log: ILogger) fileName =
-        if File.Exists fileName then
-            Ok fileName
-        else
-            log.Error("File {fileName} does not exist.", fileName)
-            Error()
 
     let (|EqualTo|_|) x1 x2 =
         if String.Equals(x1, x2, StringComparison.OrdinalIgnoreCase) then
@@ -65,15 +59,14 @@ type FarkleCreateTemplateTask() =
     member val GeneratedTo = null with get, set
 
     member private this.DoIt log = either {
-        let! grammarPath = assertFileExists log this.Grammar
-        let! templateSource =
+        let! grammarPath = assertFileExistsEx log this.Grammar
+        let grammar = EGT.ofFile grammarPath
+        let grammarInput = {Grammar = grammar; GrammarPath = grammarPath}
+        let! templateType =
             match hasValue this.CustomTemplate, hasValue this.Language with
             | true, _ ->
-                this.CustomTemplate
-                |> assertFileExists log
-                |> Result.map (fun x ->
-                    log.Debug("Using user-provided template at {CustomTemplatePath}", x)
-                    CustomFile x)
+                // The template engine will check whether the template file exists.
+                GrammarCustomTemplate(grammarInput, this.CustomTemplate) |> Ok
             | false, true ->
                 match this.Language with
                 | EqualTo "F#" -> Ok Language.``F#``
@@ -83,12 +76,13 @@ type FarkleCreateTemplateTask() =
                     Error()
                 |> Result.map (fun lang ->
                     log.Debug("Using built-in template for language {Language}", lang)
-                    BuiltinTemplate(lang, TemplateType.Grammar))
+                    let ns = if hasValue this.Namespace then Some this.Namespace else None
+                    GrammarSkeleton(grammarInput, lang, ns))
             | false, false ->
                 log.Error("Need to specify either a language or a custom template"); Error()
-        let ns = if hasValue this.Namespace then Some this.Namespace else None
+        let templateOptions = {CustomProperties = []}
 
-        let! generatedTemplate = TemplateEngine.renderTemplate log ns grammarPath templateSource
+        let! generatedTemplate = TemplateEngine.renderTemplate log templateType templateOptions
 
         this.GeneratedTo <-
             if hasValue this.OutputFile then

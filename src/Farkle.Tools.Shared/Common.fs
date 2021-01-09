@@ -51,6 +51,7 @@ let isGrammarExtension x =
     || equalsCI x ".egtn"
 
 let parseScribanTemplate (log: ILogger) templateText templateFileName =
+    log.Debug("Parsing {TemplateFileName}", templateFileName.ToString())
     let template = Template.Parse(templateText, templateFileName)
     for x in template.Messages do
         match x.Type with

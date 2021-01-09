@@ -8,6 +8,7 @@ namespace Farkle.Tools.Templating
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban
+open Scriban.Runtime
 open Serilog
 open System.IO
 open System.Reflection
@@ -72,8 +73,12 @@ module TemplateEngine =
 
         log.Verbose("Rendering template")
         let output = template.Render(tc)
+        let fileExtension =
+            match tc.CurrentGlobal.TryGetValue "file_extension" with
+            | true, x -> x.ToString()
+            | false, _ -> ".out.txt"
         return {
-            ScriptObject = tc.CurrentGlobal
+            FileExtension = fileExtension
             Content = output
         }
     }

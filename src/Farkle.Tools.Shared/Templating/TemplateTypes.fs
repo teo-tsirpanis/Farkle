@@ -6,7 +6,6 @@
 namespace Farkle.Tools.Templating
 
 open Farkle.Grammar
-open Scriban.Runtime
 
 [<RequireQualifiedAccess>]
 type Language =
@@ -34,11 +33,6 @@ type TemplateOptions = {
 }
 
 type GeneratedTemplate = {
-    ScriptObject: IScriptObject
+    FileExtension: string
     Content: string
 }
-with
-    member x.FileExtension =
-        match x.ScriptObject.TryGetValue "file_extension" with
-        | true, ext -> ext.ToString()
-        | false, _ -> ".out.txt"

@@ -16,7 +16,8 @@ open Serilog.Sinks.MSBuild
 open System
 open System.IO
 
-/// An MSBuild task that generates a skeleton program from a Farkle grammar and a Scriban template.
+/// An MSBuild task that generates a skeleton program
+/// from a Farkle grammar and a Scriban template.
 type FarkleCreateTemplateTask() =
     inherit Task()
 
@@ -27,6 +28,19 @@ type FarkleCreateTemplateTask() =
             Some EqualTo
         else
             None
+
+    static let getAdditionalProperties (xs: ITaskItem[]) =
+        if isNull xs || Array.isEmpty xs then
+            []
+        else
+            xs
+            |> Seq.collect (fun x ->
+                let mdNames = x.CloneCustomMetadata().Keys
+                mdNames
+                |> Seq.cast
+                |> Seq.map (fun mdName -> mdName, x.GetMetadata mdName))
+            |> Seq.distinctBy fst
+            |> List.ofSeq
 
     [<Required>]
     /// <summary>The path to the grammar file in question.</summary>
@@ -49,6 +63,11 @@ type FarkleCreateTemplateTask() =
     /// <summary>An optional custom namespace for the generated file.</summary>
     member val Namespace = null with get, set
 
+    /// Additional properties to be passed to the custom
+    /// template via the 'properties.myproperty' Scriban variable.
+    /// They are assigned by the name-value pairs of the metadata of the passed items.
+    member val AdditionalProperties = null with get, set
+
     /// <summary>The file path to write the output to.</summary>
     /// <remarks>If not specified, it defaults to the name of the grammar file,
     /// with the extension set by the template, which defaults to <c>.out</c>.</remarks>
@@ -65,7 +84,7 @@ type FarkleCreateTemplateTask() =
         let! templateType =
             match hasValue this.CustomTemplate, hasValue this.Language with
             | true, _ ->
-                let options = {AdditionalProperties = []}
+                let options = {AdditionalProperties = getAdditionalProperties this.AdditionalProperties}
                 // The template engine will check whether the template file exists.
                 GrammarCustomTemplate(grammarInput, this.CustomTemplate, options) |> Ok
             | false, true ->

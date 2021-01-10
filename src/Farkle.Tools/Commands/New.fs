@@ -51,10 +51,10 @@ let tryInferLanguage() =
         Log.Error("Cannot infer the language to use; there are both C# and F# projects in {CurrentDirectory}", Environment.CurrentDirectory)
         Error()
     | true, false ->
-        Log.Debug("No language was specified; inferred to be C#, as there are C# projects in {CurrentFirectory}", Environment.CurrentDirectory)
+        Log.Debug("No language was specified; inferred to be C#, as there are C# projects in {CurrentDirectory}", Environment.CurrentDirectory)
         Ok Language.``C#``
     | false, true ->
-        Log.Debug("No language was specified; inferred to be F#, as there are F# projects in {CurrentFirectory}", Environment.CurrentDirectory)
+        Log.Debug("No language was specified; inferred to be F#, as there are F# projects in {CurrentDirectory}", Environment.CurrentDirectory)
         Ok Language.``F#``
     | false, false ->
         Log.Debug("Neither a language was specified, nor are there any supported projcets in {CurrentDirectory}. Language is inferred to be F#", Environment.CurrentDirectory)
@@ -80,12 +80,24 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         return! Error()
 }
 
+let warnOnUnusedArguments (args: ParseResults<_>) =
+    let doWarnIfNot isUsed (arg: Quotations.Expr<_ -> _>) (argName: string) =
+        if not isUsed && args.Contains arg then
+            Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
+    let isWebsite = args.Contains Website
+    let isSkeleton = args.Contains GrammarSkeleton
+    let isCustomTemplate = args.Contains TemplateFile
+    doWarnIfNot isSkeleton <@ Language @> "-lang"
+    doWarnIfNot isSkeleton <@ Namespace @> "-ns"
+    doWarnIfNot isCustomTemplate <@ Property @> "-prop"
+
 let run json (args: ParseResults<_>) = either {
     let! grammarInput =
         args.TryGetResult GrammarFile
         |> CompositePath.create
         |> CompositePath.resolve Environment.CurrentDirectory
     let! templateType = getTemplateType grammarInput args
+    warnOnUnusedArguments args
 
     let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger templateType
 

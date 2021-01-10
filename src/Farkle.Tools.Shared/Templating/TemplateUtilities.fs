@@ -153,11 +153,7 @@ module internal Utilities =
         so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction grammar.Productions))
         so.Import("to_base_64", Func<_,_>(toBase64 g))
 
-    let createDefaultScriptObject templateOptions =
+    let createDefaultScriptObject() =
         let so = ScriptObject()
         addReadOnly so "farkle" defaultFarkleObject
-        let properties = ScriptObject()
-        for propKey, propValue in templateOptions.CustomProperties do
-            addReadOnly properties propKey propValue
-        addReadOnly so "properties" properties
         so

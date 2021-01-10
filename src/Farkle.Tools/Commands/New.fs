@@ -72,15 +72,13 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         return TemplateType.GrammarSkeleton(grammarInput, language, ns)
     | false, false, Some customTemplatePath ->
         let! templatePath = assertFileExists customTemplatePath
-        return GrammarCustomTemplate(grammarInput, templatePath)
+        let additionalProperties = args.GetResults Property
+        let options = {AdditionalProperties = additionalProperties}
+        return GrammarCustomTemplate(grammarInput, templatePath, options)
     | _, true, Some _ | true, _, Some _ | true, true, _ ->
         Log.Error("The '--website', '--grammarskeleton' and '-t' arguments cannot be used at the same time")
         return! Error()
 }
-
-let getTemplateOptions (args: ParseResults<_>) =
-    let properties = args.GetResults Property
-    {CustomProperties = properties}
 
 let run json (args: ParseResults<_>) = either {
     let! grammarInput =
@@ -88,9 +86,8 @@ let run json (args: ParseResults<_>) = either {
         |> CompositePath.create
         |> CompositePath.resolve Environment.CurrentDirectory
     let! templateType = getTemplateType grammarInput args
-    let templateOptions = getTemplateOptions args
 
-    let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger templateType templateOptions
+    let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger templateType
 
     let outputFile =
         match args.TryGetResult OutputFile with

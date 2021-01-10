@@ -20,9 +20,9 @@ open System.IO
 type FarkleCreateTemplateTask() =
     inherit Task()
 
-    let hasValue x = String.IsNullOrWhiteSpace x |> not
+    static let hasValue x = String.IsNullOrWhiteSpace x |> not
 
-    let (|EqualTo|_|) x1 x2 =
+    static let (|EqualTo|_|) x1 x2 =
         if String.Equals(x1, x2, StringComparison.OrdinalIgnoreCase) then
             Some EqualTo
         else
@@ -65,8 +65,9 @@ type FarkleCreateTemplateTask() =
         let! templateType =
             match hasValue this.CustomTemplate, hasValue this.Language with
             | true, _ ->
+                let options = {AdditionalProperties = []}
                 // The template engine will check whether the template file exists.
-                GrammarCustomTemplate(grammarInput, this.CustomTemplate) |> Ok
+                GrammarCustomTemplate(grammarInput, this.CustomTemplate, options) |> Ok
             | false, true ->
                 match this.Language with
                 | EqualTo "F#" -> Ok Language.``F#``
@@ -80,9 +81,8 @@ type FarkleCreateTemplateTask() =
                     GrammarSkeleton(grammarInput, lang, ns))
             | false, false ->
                 log.Error("Need to specify either a language or a custom template"); Error()
-        let templateOptions = {CustomProperties = []}
 
-        let! generatedTemplate = TemplateEngine.renderTemplate log templateType templateOptions
+        let! generatedTemplate = TemplateEngine.renderTemplate log templateType
 
         this.GeneratedTo <-
             if hasValue this.OutputFile then

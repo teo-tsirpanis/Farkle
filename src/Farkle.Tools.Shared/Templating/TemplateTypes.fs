@@ -22,15 +22,15 @@ with
 
 type WebsiteOptions = unit
 
+type CustomTemplateOptions = {
+    AdditionalProperties: (string * string) list
+}
+
 type TemplateType =
     | GrammarWebsite of GrammarTemplateInput * WebsiteOptions
     | GrammarSkeleton of GrammarTemplateInput * Language * ``namespace``: string option
-    | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string
+    | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string * CustomTemplateOptions
     | LALRConflictReport
-
-type TemplateOptions = {
-    CustomProperties: (string * string) list
-}
 
 type GeneratedTemplate = {
     FileExtension: string

@@ -39,7 +39,7 @@ module TemplateEngine =
             let resourceKey = sprintf "Grammar.%s" langName
             let templateText = getBuiltinTemplate resourceKey
             parseScribanTemplate log templateText templateName
-        | GrammarCustomTemplate(_, path) -> either {
+        | GrammarCustomTemplate(_, path, _) -> either {
             let! path = assertFileExistsEx log path
             let templateText = File.ReadAllText path
             return! parseScribanTemplate log templateText path
@@ -48,11 +48,11 @@ module TemplateEngine =
             log.Error("Creating LALR conflict reports is not yet supported.")
             Error()
 
-    let private createTemplateContext templateType templateOptions =
+    let private createTemplateContext templateType =
         let tc = TemplateContext()
         tc.StrictVariables <- true
 
-        let so = Utilities.createDefaultScriptObject templateOptions
+        let so = Utilities.createDefaultScriptObject()
         match templateType with
         | GrammarSkeleton(g, _, ns) ->
             Utilities.loadGrammar g so
@@ -60,16 +60,20 @@ module TemplateEngine =
                 ns
                 |> Option.defaultValue (Path.GetFileNameWithoutExtension g.GrammarPath)
             so.SetValue("namespace", ns, true)
-        | GrammarCustomTemplate(g, _) ->
+        | GrammarCustomTemplate(g, _, options) ->
             Utilities.loadGrammar g so
+            let properties = ScriptObject()
+            for propKey, propValue in options.AdditionalProperties do
+                so.SetValue(propKey, propValue, true)
+            so.SetValue("properties", properties, true)
         | GrammarWebsite _ | LALRConflictReport ->
             raise (System.NotImplementedException())
         tc.PushGlobal so
         tc
 
-    let renderTemplate log templateType templateOptions = either {
+    let renderTemplate log templateType = either {
         let! template = getTemplate log templateType
-        let tc = createTemplateContext templateType templateOptions
+        let tc = createTemplateContext templateType
 
         log.Verbose("Rendering template")
         let output = template.Render(tc)

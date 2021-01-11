@@ -17,7 +17,7 @@ open System.Text.Json
 type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
-    | [<Unique>] Website
+    | [<Unique>] Html
     | [<Unique>] GrammarSkeleton
     | [<Unique; AltCommandLine("-lang")>] Language of Language
     | [<Unique; AltCommandLine("-ns")>] Namespace of string
@@ -31,7 +31,7 @@ with
 Run 'farkle --explain-composite-paths' to learn their syntax."
             | OutputFile _ -> "Specifies where the output file will be stored. \
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
-            | Website -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
+            | Html -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
             | GrammarSkeleton -> "Specifies that a skeleton source file for the grammar should be generated. \
 The source's namespace and language can be adjusted by the respective arguments."
             | Language _ -> "Specifies the skeleton source file's language. If not specified, Farkle will \
@@ -61,9 +61,9 @@ let tryInferLanguage() =
         Ok Language.``F#``
 
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
-    match args.Contains Website, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
+    match args.Contains Html, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
     | _, false, None ->
-        return GrammarWebsite(grammarInput, ())
+        return GrammarHtml(grammarInput, ())
     | false, true, None ->
         let! language =
             args.TryPostProcessResult(Language, Ok)
@@ -76,7 +76,7 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         let options = {AdditionalProperties = additionalProperties}
         return GrammarCustomTemplate(grammarInput, templatePath, options)
     | _, true, Some _ | true, _, Some _ | true, true, _ ->
-        Log.Error("The '--website', '--grammarskeleton' and '-t' arguments cannot be used at the same time")
+        Log.Error("The '--html', '--grammarskeleton' and '-t' arguments cannot be used at the same time")
         return! Error()
 }
 
@@ -84,7 +84,7 @@ let warnOnUnusedArguments (args: ParseResults<_>) =
     let doWarnIfNot isUsed (arg: Quotations.Expr<_ -> _>) (argName: string) =
         if not isUsed && args.Contains arg then
             Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
-    let isWebsite = args.Contains Website
+    let isHtml = args.Contains Html
     let isSkeleton = args.Contains GrammarSkeleton
     let isCustomTemplate = args.Contains TemplateFile
     doWarnIfNot isSkeleton <@ Language @> "-lang"

@@ -32,8 +32,8 @@ module TemplateEngine =
 
     let private getTemplate (log: ILogger) =
         function
-        | GrammarWebsite _ ->
-            log.Error("Creating websites from grammars is not yet supported.")
+        | GrammarHtml _ ->
+            log.Error("Creating HTML pages from grammars is not yet supported.")
             Error()
         | GrammarSkeleton(_, LanguageNames(langName, templateName), _) ->
             let resourceKey = sprintf "Grammar.%s" langName
@@ -66,7 +66,7 @@ module TemplateEngine =
             for propKey, propValue in options.AdditionalProperties do
                 so.SetValue(propKey, propValue, true)
             so.SetValue("properties", properties, true)
-        | GrammarWebsite _ | LALRConflictReport ->
+        | GrammarHtml _ | LALRConflictReport ->
             raise (System.NotImplementedException())
         tc.PushGlobal so
         tc

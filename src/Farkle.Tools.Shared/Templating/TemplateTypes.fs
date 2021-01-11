@@ -20,14 +20,14 @@ with
     static member Create grammar grammarPath =
         {Grammar = grammar; GrammarPath = grammarPath}
 
-type WebsiteOptions = unit
+type HtmlOptions = unit
 
 type CustomTemplateOptions = {
     AdditionalProperties: (string * string) list
 }
 
 type TemplateType =
-    | GrammarWebsite of GrammarTemplateInput * WebsiteOptions
+    | GrammarHtml of GrammarTemplateInput * HtmlOptions
     | GrammarSkeleton of GrammarTemplateInput * Language * ``namespace``: string option
     | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string * CustomTemplateOptions
     | LALRConflictReport

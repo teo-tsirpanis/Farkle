@@ -1,0 +1,24 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT~}}
+{{~file_extension = '.html'
+grammar_name = grammar.properties["Name"]~}}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{{html.escape grammar_name}}</title>
+        <meta name="description" content="Auto-generated documentation of the {{attr_escape grammar_name}} grammar.">
+        <meta name="generator" content="Farkle version {{attr_escape farkle.tools_version}}">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{~custom_head~}}
+    </head>
+    <body>
+    {{~if grammar
+        include "Html.Grammar" grammar
+    else if lalr_states
+        include "Html.ConflictReport" lalr_states
+    else
+        "<h1 style='color:red'>Error: no page type specified.</h1>"~}}
+    </body>
+</html>

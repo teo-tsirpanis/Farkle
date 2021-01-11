@@ -1,0 +1,23 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT~}}
+<nav>
+    <a href="#properties">Properties</a>
+    <a href="#syntax">Syntax</a>
+    {{~if not grammar.groups.empty?~}}
+    <a href="#groups">Groups</a>
+    {{~end~}}
+</nav>
+<main>
+    <h1>{{html.escape grammar_name}}</h1>
+    <section id="properties">
+        <h2>Properties</h2>
+        <dl>
+            {{~for p in grammar.properties~}}
+            <dt>{{html.escape p.key}}</dt>
+            <dd>{{html.escape p.value}}</dt>
+            {{~end~}}
+        </dl>
+    </section>
+</main>

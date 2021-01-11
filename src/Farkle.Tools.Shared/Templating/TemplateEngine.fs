@@ -36,9 +36,10 @@ module TemplateEngine =
 
     let private getTemplate (log: ILogger) =
         function
-        | GrammarHtml _ ->
-            log.Error("Creating HTML pages from grammars is not yet supported.")
-            Error()
+        | GrammarHtml _ | LALRConflictReport _ ->
+            let templateText = ResourceLoader.load "Html.Root.scriban"
+            let templateName = "HTML root template"
+            parseTemplate log templateText templateName
         | GrammarSkeleton(_, LanguageNames(langName, templateName), _) ->
             let resourceKey = sprintf "GrammarSkeleton.%s.scriban" langName
             let templateText = ResourceLoader.load resourceKey
@@ -48,9 +49,6 @@ module TemplateEngine =
             let templateText = File.ReadAllText path
             return! parseTemplate log templateText path
             }
-        | LALRConflictReport ->
-            log.Error("Creating LALR conflict reports is not yet supported.")
-            Error()
 
     let private createTemplateContext templateType =
         let tc = TemplateContext()
@@ -58,6 +56,9 @@ module TemplateEngine =
 
         let so = Utilities.createDefaultScriptObject()
         match templateType with
+        | GrammarHtml(g, options) ->
+            Utilities.loadGrammar g so
+            Utilities.loadHtml options tc so
         | GrammarSkeleton(g, _, ns) ->
             Utilities.loadGrammar g so
             let ns =
@@ -70,8 +71,8 @@ module TemplateEngine =
             for propKey, propValue in options.AdditionalProperties do
                 so.SetValue(propKey, propValue, true)
             so.SetValue("properties", properties, true)
-        | GrammarHtml _ | LALRConflictReport ->
-            raise (System.NotImplementedException())
+        | LALRConflictReport ->
+            raise (System.NotImplementedException("Creating LALR conflict reports is not yet supported."))
         tc.PushGlobal so
         tc
 

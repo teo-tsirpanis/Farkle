@@ -20,7 +20,9 @@ with
     static member Create grammar grammarPath =
         {Grammar = grammar; GrammarPath = grammarPath}
 
-type HtmlOptions = unit
+type HtmlOptions = {
+    CustomHeadContent: string
+}
 
 type CustomTemplateOptions = {
     AdditionalProperties: (string * string) list

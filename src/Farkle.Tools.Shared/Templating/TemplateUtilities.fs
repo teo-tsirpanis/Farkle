@@ -7,12 +7,15 @@ namespace Farkle.Tools.Templating
 
 open Farkle.Grammar
 open Farkle.Tools
+open Scriban
 open Scriban.Runtime
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.IO
 open System.Text
+open System.Threading.Tasks
+open System.Web
 
 type private IdentifierTypeCase =
     | UpperCase
@@ -140,6 +143,24 @@ module internal Utilities =
         | :? Terminal as x -> match x with Terminal(_, name) -> toIdentifier name case separator
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
+
+    let private builtinPrefix = "builtin://"
+
+    let private htmlTemplateLoader = {new ITemplateLoader with
+        member _.GetPath(_, _, templatePath) =
+            if templatePath.StartsWith(builtinPrefix) then
+                sprintf "Html.%s.scriban" (templatePath.Substring(builtinPrefix.Length))
+            else
+                null
+        member _.Load(_, _, templatePath) =
+            ResourceLoader.load templatePath
+        member _.LoadAsync(_, _, templatePath) =
+            ResourceLoader.load templatePath |> ValueTask<_>}
+
+    let loadHtml {CustomHeadContent = head} (tc: TemplateContext) (so: ScriptObject) =
+        tc.TemplateLoader <- htmlTemplateLoader
+        addReadOnly so "custom_head" head
+        so.Import("attr_escape", Func<_,_> HttpUtility.HtmlAttributeEncode)
 
     let loadGrammar g so =
         addReadOnly so "upper_case" UpperCase

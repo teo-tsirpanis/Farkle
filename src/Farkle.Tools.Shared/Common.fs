@@ -49,17 +49,3 @@ let isGrammarExtension x =
     equalsCI x ".cgt"
     || equalsCI x ".egt"
     || equalsCI x ".egtn"
-
-let parseScribanTemplate (log: ILogger) templateText templateFileName =
-    log.Debug("Parsing {TemplateFileName}", templateFileName.ToString())
-    let template = Template.Parse(templateText, templateFileName)
-    for x in template.Messages do
-        match x.Type with
-        | ParserMessageType.Error -> log.Error("{Error}", x)
-        | ParserMessageType.Warning -> log.Warning("{Warning}", x)
-        | _ -> ()
-    if template.HasErrors then
-        log.Error("Parsing {TemplateFileName} failed.", templateFileName)
-        Error()
-    else
-        Ok template

@@ -8,6 +8,7 @@ namespace Farkle.Tools.Templating
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban
+open Scriban.Parsing
 open Scriban.Runtime
 open Serilog
 open System.IO
@@ -19,6 +20,20 @@ module TemplateEngine =
         | Language.``F#`` -> "FSharp", "F# grammar skeleton template"
         | Language.``C#`` -> "CSharp", "C# grammar skeleton template"
 
+    let private parseTemplate (log: ILogger) templateText templateFileName =
+        log.Debug("Parsing {TemplateFileName}", templateFileName.ToString())
+        let template = Template.Parse(templateText, templateFileName)
+        for x in template.Messages do
+            match x.Type with
+            | ParserMessageType.Error -> log.Error("{Error}", x)
+            | ParserMessageType.Warning -> log.Warning("{Warning}", x)
+            | _ -> ()
+        if template.HasErrors then
+            log.Error("Parsing {TemplateFileName} failed.", templateFileName)
+            Error()
+        else
+            Ok template
+
     let private getTemplate (log: ILogger) =
         function
         | GrammarHtml _ ->
@@ -27,11 +42,11 @@ module TemplateEngine =
         | GrammarSkeleton(_, LanguageNames(langName, templateName), _) ->
             let resourceKey = sprintf "GrammarSkeleton.%s.scriban" langName
             let templateText = ResourceLoader.load resourceKey
-            parseScribanTemplate log templateText templateName
+            parseTemplate log templateText templateName
         | GrammarCustomTemplate(_, path, _) -> either {
             let! path = assertFileExistsEx log path
             let templateText = File.ReadAllText path
-            return! parseScribanTemplate log templateText path
+            return! parseTemplate log templateText path
             }
         | LALRConflictReport ->
             log.Error("Creating LALR conflict reports is not yet supported.")

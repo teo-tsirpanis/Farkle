@@ -127,9 +127,9 @@ module Farkle.Builder.PredefinedSets
 
 open Implementation
 
-let generatePredefinedSets filePath = either {
+let generatePredefinedSets filePath =
     let theSets = readPredefinedSets filePath
-    let! template = parseScribanTemplate Log.Logger template "Predefined Sets F# Template"
+    let template = Template.Parse(template, "Predefined Sets F# Template")
     let so = ScriptObject()
     so.SetValue("predefined_sets", theSets, true)
     loadUtilities so
@@ -138,14 +138,13 @@ let generatePredefinedSets filePath = either {
     tc.StrictVariables <- true
     tc.PushGlobal so
 
-    return template.Render(tc)
-}
+    template.Render(tc)
 
 let run (args: ParseResults<_>) = either {
     let! inputFile = args.PostProcessResult(PredefinedSetsFile, assertFileExists)
     let outputFile = args.GetResult(OutputFile, "PredefinedSets.fs") |> Path.GetFullPath
 
-    let! generatedSource = generatePredefinedSets inputFile
+    let generatedSource = generatePredefinedSets inputFile
 
     File.WriteAllText(outputFile, generatedSource)
     Log.Information("Predefined sets generated at {OutputFile}", outputFile)

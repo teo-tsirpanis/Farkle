@@ -11,7 +11,6 @@ open Scriban
 open Scriban.Runtime
 open Serilog
 open System.IO
-open System.Reflection
 
 module TemplateEngine =
 
@@ -20,24 +19,14 @@ module TemplateEngine =
         | Language.``F#`` -> "FSharp", "F# grammar skeleton template"
         | Language.``C#`` -> "CSharp", "C# grammar skeleton template"
 
-    let private getBuiltinTemplate key =
-        let assembly = Assembly.GetExecutingAssembly()
-        let resourceName = sprintf "Farkle.BuiltinTemplate.%s" key
-        let resourceStream = assembly.GetManifestResourceStream(resourceName) |> Option.ofObj
-        match resourceStream with
-        | Some resourceStream ->
-            use sr = new StreamReader(resourceStream)
-            sr.ReadToEnd()
-        | None -> failwithf "Cannot find resource with name '%s'." resourceName
-
     let private getTemplate (log: ILogger) =
         function
         | GrammarHtml _ ->
             log.Error("Creating HTML pages from grammars is not yet supported.")
             Error()
         | GrammarSkeleton(_, LanguageNames(langName, templateName), _) ->
-            let resourceKey = sprintf "Grammar.%s" langName
-            let templateText = getBuiltinTemplate resourceKey
+            let resourceKey = sprintf "GrammarSkeleton.%s.scriban" langName
+            let templateText = ResourceLoader.load resourceKey
             parseScribanTemplate log templateText templateName
         | GrammarCustomTemplate(_, path, _) -> either {
             let! path = assertFileExistsEx log path

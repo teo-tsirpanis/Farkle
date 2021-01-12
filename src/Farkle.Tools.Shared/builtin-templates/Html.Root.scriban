@@ -15,10 +15,11 @@ grammar_name = grammar.properties["Name"]~}}
     </head>
     <body>
     {{~if grammar
-        include "Html.Grammar" grammar
+        include "builtin://Grammar"
     else if lalr_states
-        include "Html.ConflictReport" lalr_states
+        include "builtin://ConflictReport"
     else
-        "<h1 style='color:red'>Error: no page type specified.</h1>"~}}
+        "<h1 style='color:red'>Error: no page type specified.</h1>"
+    end~}}
     </body>
 </html>

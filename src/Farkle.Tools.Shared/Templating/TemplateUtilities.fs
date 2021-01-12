@@ -10,9 +10,8 @@ open Farkle.Tools
 open Scriban
 open Scriban.Runtime
 open System
-open System.Collections.Generic
-open System.Collections.Immutable
 open System.IO
+open System.Linq
 open System.Text
 open System.Threading.Tasks
 open System.Web
@@ -47,6 +46,8 @@ module internal Utilities =
                 if doPad then Base64FormattingOptions.InsertLineBreaks
                 else Base64FormattingOptions.None
             Convert.ToBase64String(bytesThunk.Value, options)
+
+    let private groupProductions (xs: _ seq) = xs.ToLookup(fun x -> x.Head)
 
     let private toIdentifier name case (separator: string) =
         let sb = StringBuilder()
@@ -120,23 +121,7 @@ module internal Utilities =
                 |> Seq.choose (function | LALRSymbol.Terminal term -> Some term | _ -> None)
                 |> Array.ofSeq
             prod.Head, handle
-        let dict =
-            productions
-            |> Seq.groupBy getFormattingElements
-            |> Seq.collect (fun (_, terms) ->
-                match Array.ofSeq terms with
-                // This case is actually impossible, but never mind.
-                | [| |] -> Seq.empty
-                // If a production has a unique combination of head and
-                // terminal handles, it will also have a unique name.
-                | [|prod|] -> KeyValuePair(prod, false) |> Seq.singleton
-                // But if many productions share the same one, we will have
-                // a name collision. In this case, we want their name to include
-                // nonterminals as well. It is impossible for a collision to happen
-                // again, as that would imply that there are two identical productions.
-                | prods -> prods |> Seq.map (fun prod -> KeyValuePair(prod, true)))
-            |> ImmutableDictionary.CreateRange
-        fun prod -> dict.[prod]
+        isElementUnique getFormattingElements productions
 
     let private doFmt fShouldPrintFullProduction (x: obj) case separator =
         match x with
@@ -161,6 +146,8 @@ module internal Utilities =
         tc.TemplateLoader <- htmlTemplateLoader
         addReadOnly so "custom_head" head
         so.Import("attr_escape", Func<_,_> HttpUtility.HtmlAttributeEncode)
+        so.Import("extract_lalr_symbol",
+            Func<_,_>(function LALRSymbol.Terminal x -> box x | LALRSymbol.Nonterminal x -> box x))
 
     let loadGrammar g so =
         addReadOnly so "upper_case" UpperCase
@@ -169,8 +156,9 @@ module internal Utilities =
         addReadOnly so "camel_case" CamelCase
 
         let grammar = g.Grammar
-        addReadOnly so "gramamr" grammar
+        addReadOnly so "grammar" grammar
         addReadOnly so "grammar_path" g.GrammarPath
+        addReadOnly so "productions_groupped" (groupProductions grammar.Productions)
         so.Import("fmt", Func<_,_,_,_> (doFmt <| shouldPrintFullProduction grammar.Productions))
         so.Import("to_base_64", Func<_,_>(toBase64 g))
 

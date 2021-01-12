@@ -4,8 +4,9 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT~}}
 <nav>
     <a href="#properties">Properties</a>
-    <a href="#syntax">Syntax</a>
-    {{~if not grammar.groups.empty?~}}
+    <a href="#terminals">Terminals</a>
+    <a href="#nonterminals">Nonterminals</a>
+    {{~if !grammar.groups.empty?~}}
     <a href="#groups">Groups</a>
     {{~end~}}
 </nav>
@@ -16,8 +17,45 @@ https://opensource.org/licenses/MIT~}}
         <dl>
             {{~for p in grammar.properties~}}
             <dt>{{html.escape p.key}}</dt>
-            <dd>{{html.escape p.value}}</dt>
+            <dd>{{html.escape p.value}}</dd>
             {{~end~}}
         </dl>
+    </section>
+    <section id="syntax">
+        <h2>Syntax</h2>
+        <section id="terminals">
+            <h3>Terminals</h3>
+            <ul>
+                {{~for term in grammar.symbols.terminals~}}
+                <li id="t{{term.index}}" class="terminal" data-name="{{attr_escape term.name}}" data-index="{{term.index}}">{{html.escape term.name}}</li>
+                {{~end~}}
+            </ul>
+        </section>
+        <section id="nonterminals">
+            <h3>Nonterminals</h3>
+            <ul>
+                {{~for group in productions_groupped
+                    nont = group.key~}}
+                <li id="n{{nont.index}}" data-name="{{attr_escape nont.name}}" data-index="{{nont.index}}">
+                    <span class="nonterminal">{{html.escape nont.name}}</span>
+                    <ul class="productions">
+                        {{~for prod in group~}}
+                        <li id="prod{{prod.index}}" data-index="{{prod.index}}">
+                            <ol class="production-handle">
+                                {{~for sym in prod.handle
+                                    symbol_type = sym.is_terminal ? "terminal" : "nonterminal"
+                                    sym_extracted = extract_lalr_symbol sym~}}
+                                <li class="{{symbol_type}}" data-symbol-id="{{sym_extracted.id}}">
+                                    <a href="#{{symbol_type[0]}}{{sym_extracted.id}}">{{html.escape sym_extracted.name}}</a>
+                                </li>
+                                {{~end~}}
+                            </ol>
+                        </li>
+                        {{~end~}}
+                    </ul>
+                </li>
+                {{~end~}}
+            </ul>
+        </section>
     </section>
 </main>

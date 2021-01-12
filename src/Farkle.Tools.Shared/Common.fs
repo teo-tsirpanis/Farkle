@@ -6,10 +6,9 @@
 [<AutoOpen>]
 module Farkle.Tools.Common
 
-open Scriban
-open Scriban.Parsing
 open Serilog
 open System
+open System.Collections.Generic
 open System.IO
 open System.Reflection
 
@@ -49,3 +48,15 @@ let isGrammarExtension x =
     equalsCI x ".cgt"
     || equalsCI x ".egt"
     || equalsCI x ".egtn"
+
+let isElementUnique fBasedOn xs =
+    let dict =
+        xs
+        |> Seq.groupBy fBasedOn
+        |> Seq.collect (fun (_, xs) ->
+            match Array.ofSeq xs with
+            | [| |] -> Seq.empty
+            | [|x|]-> Seq.singleton (x, true)
+            | xs -> xs |> Seq.map (fun x -> x, false))
+        |> readOnlyDict
+    fun x -> dict.[x]

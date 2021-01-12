@@ -63,7 +63,8 @@ let tryInferLanguage() =
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
     match args.Contains Html, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
     | _, false, None ->
-        return GrammarHtml(grammarInput, ())
+        let options = {CustomHeadContent = ""}
+        return GrammarHtml(grammarInput, options)
     | false, true, None ->
         let! language =
             args.TryPostProcessResult(Language, Ok)

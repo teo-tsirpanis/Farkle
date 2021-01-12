@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -78,7 +78,7 @@ module CompositePath =
                 match loader.Grammars.TryGetValue(grammarName) with
                 | true, grammar -> return GrammarTemplateInput.Create (grammar.GetGrammar()) filePath
                 | false, _ ->
-                    Log.Error("The assembly of {Path} doesn't have a precompiled grammar named {GrammarName}.", grammarName)
+                    Log.Error("The assembly of {Path} does not have a precompiled grammar named {GrammarName}.", filePath, grammarName)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()

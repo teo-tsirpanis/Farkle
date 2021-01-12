@@ -331,6 +331,7 @@ module DesigntimeFarkleBuild =
         }
         let properties =
             ImmutableDictionary.Empty
+                .Add("Name", df.Name)
                 .Add("Case Sensitive", string metadata.CaseSensitive)
                 .Add("Start Symbol", string startSymbol)
                 .Add("Auto Whitespace", string metadata.AutoWhitespace)

@@ -148,6 +148,12 @@ module internal Utilities =
         so.Import("attr_escape", Func<_,_> HttpUtility.HtmlAttributeEncode)
         so.Import("extract_lalr_symbol",
             Func<_,_>(function LALRSymbol.Terminal x -> box x | LALRSymbol.Nonterminal x -> box x))
+        so.Import("extract_group_container",
+            Func<_,_>(fun {ContainerSymbol = container} ->
+                match container with
+                | Choice1Of2 term -> box term, false
+                | Choice2Of2 noise -> box noise, true
+                |> (fun (sym, isNoise) -> {|symbol = sym; is_noise = isNoise|})))
 
     let loadGrammar g so =
         addReadOnly so "upper_case" UpperCase

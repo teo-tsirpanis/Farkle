@@ -1,7 +1,7 @@
 {{~## Copyright (c) 2021 Theodore Tsirpanis
 
 This software is released under the MIT License.
-https://opensource.org/licenses/MIT~}}
+https://opensource.org/licenses/MIT ~}}
 <nav>
     <a href="#properties">Properties</a>
     <a href="#terminals">Terminals</a>
@@ -45,8 +45,8 @@ https://opensource.org/licenses/MIT~}}
                                 {{~for sym in prod.handle
                                     symbol_type = sym.is_terminal ? "terminal" : "nonterminal"
                                     sym_extracted = extract_lalr_symbol sym~}}
-                                <li class="{{symbol_type}}" data-symbol-id="{{sym_extracted.id}}">
-                                    <a href="#{{symbol_type[0]}}{{sym_extracted.id}}">{{html.escape sym_extracted.name}}</a>
+                                <li class="{{symbol_type}}" data-symbol-id="{{sym_extracted.index}}">
+                                    <a href="#{{symbol_type[0]}}{{sym_extracted.index}}">{{html.escape sym_extracted.name}}</a>
                                 </li>
                                 {{~end~}}
                             </ol>
@@ -58,4 +58,16 @@ https://opensource.org/licenses/MIT~}}
             </ul>
         </section>
     </section>
+    {{~if !grammar.groups.empty?}}
+    <section id="groups">
+        <h2>Groups</h2>
+        <ul>
+            {{~for group in grammar.groups~}}
+            <li id="g{{for.index}}" data-name="{{attr_escape group.name}}">
+                {{~include "builtin://Group" group~}}
+            </li>
+            {{~end~}}
+        </ul>
+    </section>
+    {{~end~}}
 </main>

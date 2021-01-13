@@ -124,9 +124,10 @@ This error is unexpected. Please report it on GitHub." x
             let nesting =
                 let count = wantUInt16 mem 7 |> int
                 lengthMustBe mem (8 + count)
-                let span = mem.Slice(8)
-                if not span.IsEmpty then
-                    Seq.init mem.Length (wantUInt16 span >> fGroup) |> ImmutableHashSet.CreateRange
+                let nestingIndices = mem.Slice(8)
+                if not nestingIndices.IsEmpty then
+                    Seq.init nestingIndices.Length (wantUInt16 nestingIndices >> fGroup)
+                    |> ImmutableHashSet.CreateRange
                 else
                     ImmutableHashSet.Empty
             {

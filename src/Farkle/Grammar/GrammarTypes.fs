@@ -93,10 +93,8 @@ with
     override x.ToString() = match x with Noise name -> sprintf "(%s)" name
 
 /// A symbol signifying the end of a group.
-type GroupEnd = GroupEnd of name: string
+type GroupEnd = GroupEnd of Name: string
 with
-    /// The symbol's name.
-    member x.Name = match x with | GroupEnd name -> name
     override x.ToString() = match x with GroupEnd name -> sprintf "(%s)" name
 
 /// A symbol signifying the start of a group.

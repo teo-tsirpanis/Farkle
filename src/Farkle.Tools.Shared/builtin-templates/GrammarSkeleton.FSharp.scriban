@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~ file_extension = ".g.fs"; grammar_name = grammar.properties["Name"] ~}}
+{{~ file_extension = ".g.fs"; grammar_name = grammar.properties.name ~}}
 // This file was created by Farkle.Tools version {{ farkle.version }} at {{ date.to_string date.now "%g%F %R" }}.
 // It should NOT be committed to source control.
 

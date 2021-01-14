@@ -60,7 +60,7 @@ let main _ =
             elif results.Contains ``Explain-composite-paths`` then
                 printfn "Composite paths specify both a file path and a precompiled grammar name. Their format is 'file_path::grammar_name'"
                 printfn "The file name can be an assembly, an EGT file, or a project. In the latter case, the project may be built if required."
-                printfn "If the file name is omitted (i.e. the pathhas the form of '::grammar_name'), Farkle will try to find a project file in the current directory."
+                printfn "If the file name is omitted (i.e. the path has the form of '::grammar_name'), Farkle will try to find a project file in the current directory."
                 printfn "If only the file name is specified (i.e. the path has the form 'file_path'), the file's only precompiled grammar will be chosen."
                 0
             else

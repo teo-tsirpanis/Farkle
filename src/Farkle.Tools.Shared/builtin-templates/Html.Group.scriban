@@ -7,9 +7,9 @@ https://opensource.org/licenses/MIT ~}}
 <dl>
     <dt>Container Symbol</dt>
     {{~if $container.is_noise~}}
-    <dd class="group-container-noise">{{html.escape $container.symbol.name}}</dd>
+    <dd class="group-container-noise">{{html.escape $container.symbol.name}} (Noise)</dd>
     {{~else~}}
-    <dd class="group-container-terminal"><a href="#t{{$container.symbol.index}}">{{html.escape $container.symbol.name}} (Noise)</a></dd>
+    <dd class="group-container-terminal"><a href="#t{{$container.symbol.index}}">{{html.escape $container.symbol.name}}</a></dd>
     {{~end~}}
 
     <dt>Starts with</dt>

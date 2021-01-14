@@ -27,6 +27,7 @@
     <Compile Include="AST.fs" />
     <Compile Include="PostProcessor.fs" />
     <Compile Include="Grammar/EGTFile.fs" />
+    <Compile Include="Grammar/EGTReaderCommon.fs" />
     <Compile Include="Grammar/EGTLegacyReader.fs" />
     <Compile Include="Grammar/EGTNeoReader.fs" />
     <Compile Include="Grammar/EGTNeoWriter.fs" />

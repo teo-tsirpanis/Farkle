@@ -29,13 +29,13 @@ module internal ImmutableList =
     /// Adds the specified object to the end of the given immutable list.
     let inline add (xs: ImmutableList<_>) x = xs.Add x
 
-#if !MODERN_FRAMEWORK
 namespace System.Collections.Generic
 
 open System.Runtime.CompilerServices
 
 [<Extension>]
 type internal DictionaryShims =
+#if !MODERN_FRAMEWORK
     [<Extension>]
     static member TryAdd(dict: IDictionary<_,_>, k, v) =
         if dict.ContainsKey(k) then
@@ -44,3 +44,8 @@ type internal DictionaryShims =
             dict.Add(k, v)
             true
 #endif
+    [<Extension>]
+    static member GetOrDefault(dict: IReadOnlyDictionary<_,_>, k, valueDef) =
+        match dict.TryGetValue(k) with
+        | true, x -> x
+        | false, _ -> valueDef

@@ -1,6 +1,7 @@
 #### 6.0.0
 * __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
 * __Breaking change:__ The `RuntimeFarkle.GetBuildError` method was replaced by `GetBuildErrors`, which returns a list of build errors.
+* __Breaking change:__ The `Farkle.Grammar.Grammar.Properties` member now holds a strongly-typed record of informative grammar properties. Unrecognized GOLD Parser properties such as "Author", "Description" and "Version" are discarded. Existing grammar files remain compatible.
 * __Breaking change:__ The members of Farkle's discriminated unions can no longer be accessed in F# using a method. For example, `let foo (x: Terminal) = printfn "%s" x.Name` becomes `let foo (Terminal(_, name)) = printfn "%s" name`. For C# users, duplicate properties like `Terminal.name` with a lowercase "n" were removed; they are replaced by their corresponding title-cased properties.
 * __Breaking change:__ The members of many of Farkle's discriminated unions got meaningful names. C# code using the older names might break.
 * __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.

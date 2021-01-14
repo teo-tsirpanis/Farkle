@@ -9,6 +9,7 @@ open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open System
+open System.Collections.Generic
 open System.Collections.Immutable
 
 module internal EGTLegacyReader =
@@ -229,7 +230,7 @@ This error is unexpected. Please report it on GitHub." x
     let read (er: EGTReader) =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
-        let properties = ImmutableDictionary.CreateBuilder()
+        let properties = Dictionary()
         let mutable charSets = Unchecked.defaultof<_>
         let mutable fCharSet = Unchecked.defaultof<_>
         let mutable symbols = Unchecked.defaultof<_>
@@ -312,7 +313,7 @@ This error is unexpected. Please report it on GitHub." x
                 | _ -> None)
             |> Option.defaultWith invalidEGT
         {
-            _Properties = properties.ToImmutable()
+            _Properties = Common.createProperties GrammarSource.LoadedFromFile properties
             _StartSymbol = startSymbol
             _Symbols = symbols
             _Productions = productions.MoveToImmutable()

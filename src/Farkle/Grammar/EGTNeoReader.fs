@@ -15,6 +15,7 @@ open Farkle.Grammar.EGTFile
 open Farkle.Grammar.EGTFile.EGTHeaders
 open Farkle.Collections
 open System
+open System.Collections.Generic
 open System.Collections.Immutable
 
 [<AutoOpen>]
@@ -33,11 +34,11 @@ module private Implementation =
         let span = checkHeader span propertiesHeader
         let len = span.Length / 2
 
-        let b = ImmutableDictionary.CreateBuilder()
+        let b = Dictionary()
         for i = 0 to len - 1 do
             b.Add(wantString span (2 * i), wantString span (2 * i + 1))
 
-        b.ToImmutable()
+        Common.createProperties GrammarSource.LoadedFromFile b
 
     // Terminals, nonterminals and noise symbols are stored in
     // about the same format. The latter just ignore the index.

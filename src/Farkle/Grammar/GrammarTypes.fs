@@ -7,6 +7,7 @@ namespace Farkle.Grammar
 
 open Farkle.Collections
 open System
+open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
 open System.Runtime.CompilerServices
@@ -70,8 +71,8 @@ with
 /// the same index are considered equal.
 type Nonterminal = Nonterminal of Index: uint32 * Name: string
 with
-    member x.index = match x with | Nonterminal (idx, _) -> idx
-    member x.name = match x with | Nonterminal (_, name) -> name
+    member private x.index = match x with | Nonterminal (idx, _) -> idx
+    member private x.name = match x with | Nonterminal (_, name) -> name
     interface IEquatable<Nonterminal> with
         member x.Equals x' = x.index = x'.index
     interface IComparable<Nonterminal> with
@@ -270,6 +271,35 @@ type Symbols = {
     NoiseSymbols: Noise ImmutableArray
 }
 
+/// Indicates where a grammar came from.
+[<RequireQualifiedAccess>]
+type GrammarSource =
+    /// The grammar was built by Farkle using the Farkle.Builder API.
+    | Built
+    /// The grammar was loaded from a grammar file
+    /// using the Farkle.Grammar.EGT module's functions.
+    | LoadedFromFile
+    /// The grammar had been precompiled and was loaded from an assembly.
+    | Precompiled
+
+/// Stores additional information about a grammar. The members of this
+/// type are purely informative and not used by Farkle's parser in any way.
+/// They are mostly used from the templates.
+type GrammarProperties = {
+    /// The grammar's name. Usually it is the starting symbol's name.
+    Name: string
+    /// Whether the grammar was declared to be case-sensitive.
+    CaseSensitive: bool
+    /// Whether the grammar was declared to ignore whitespace characters.
+    AutoWhitespace: bool
+    /// The tool that created this grammar.
+    GeneratedBy: string
+    /// When the grammar was created.
+    GeneratedDate: DateTime
+    /// Where the grammar came from.
+    Source: GrammarSource
+}
+
 /// This interface is implemented by <see cref="Grammar"/>s and
 /// <see cref="RuntimeFarkle{TResult}"/>s and provides a uniform
 /// way to work with grammars inside runtime Farkles and grammars
@@ -291,8 +321,7 @@ type IGrammarProvider =
 
 /// A context-free grammar according to which Farkle can parse text.
 and [<NoComparison; ReferenceEquality>] Grammar = internal {
-    // This field is totally informative; it serves only the template maker.
-    _Properties: ImmutableDictionary<string,string>
+    _Properties: GrammarProperties
 
     // These fields serve the template maker again, but the information
     // they carry is redundantly stored here for his convenience.
@@ -306,8 +335,7 @@ and [<NoComparison; ReferenceEquality>] Grammar = internal {
     _DFAStates: DFAState ImmutableArray
 }
 with
-    /// Key-value pairs of strings that store informative properties about the grammar.
-    /// See the [GOLD Parser's documentation](http://www.goldparser.org/doc/egt/index.htm).
+    /// Additional information about the grammar.
     member x.Properties = x._Properties
     /// The grammar's start `Nonterminal`.
     member x.StartSymbol = x._StartSymbol

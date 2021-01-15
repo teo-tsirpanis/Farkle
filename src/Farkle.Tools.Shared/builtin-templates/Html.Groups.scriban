@@ -1,0 +1,59 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT ~}}
+<section id="groups">
+    <h2>Groups</h2>
+    <ul>
+        {{~for $group in $1~}}
+        <li id="g{{for.index}}" data-name="{{attr_escape $group.name}}">
+            {{~$container = extract_group_container $group~}}
+            <h3>{{html.escape $group.name}}</h3>
+            <dl>
+                <dt>Container Symbol</dt>
+                {{~if $container.is_noise~}}
+                <dd class="group-container-noise">{{html.escape $container.symbol.name}} (Noise)</dd>
+                {{~else~}}
+                <dd class="group-container-terminal"><a href="#t{{$container.symbol.index}}">{{html.escape $container.symbol.name}}</a></dd>
+                {{~end~}}
+
+                <dt>Starts with</dt>
+                <dd class="group-start">{{html.escape $group.start.name}}</dd>
+
+                <dt>Ends with</dt>
+                {{~if $group.end~}}
+                <dd class="group-end">{{html.escape $group.end.value.name}}</dd>
+                {{~else~}}
+                <dd class="group-end symbol-newline">New Line</dd>
+                {{~end~}}
+
+                <dt><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-advancemode.html">Advance mode</a></dt>
+                {{~if $group.advance_mode.is_character~}}
+                <dd>Character</dd>
+                {{~else~}}
+                <dd>Token</dd>
+                {{~end~}}
+
+                <dt><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-endingmode.html">Ending mode</a></dt>
+                {{~if $group.ending_mode.is_open~}}
+                <dd>Open</dd>
+                {{~else~}}
+                <dd>Closed</dd>
+                {{~end~}}
+
+                {{~if !$group.nesting.empty?~}}
+                <dt>Can be nested with</dt>
+                <dd>
+                    <ul class="group-nesting">
+                        {{~for $groupIdx in $group.nesting
+                            $g = $1[$groupIdx]~}}
+                        <li data-group-index="{{$groupIdx}}"><a href="#g{{$groupIdx}}">{{html.escape $g.name}}</a></li>
+                        {{~end~}}
+                    </ul>
+                </dd>
+                {{~end~}}
+            </dl>
+        </li>
+    {{~end~}}
+    </ul>
+</section>

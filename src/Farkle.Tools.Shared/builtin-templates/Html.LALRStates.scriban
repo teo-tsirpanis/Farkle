@@ -1,0 +1,46 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT -}}
+
+{{~func gen_action_row
+    if $0.is_shift~}}
+<td class="lalr-shift">Shift to <a href="#lalr{{$0.target}}">State {{$0.target}}</a></td>
+{{~else if $0.is_reduce~}}
+<td class="lalr-reduce">Reduce <a href="#prod{{$0.target.index}}">{{html.escape $0.target}}</a></td>
+{{~else~}}
+<td class="lalr-accept">Accept</td>
+{{~end~}}
+{{~end-}}
+
+<section id="lalr-states">
+    <h2>LALR States</h2>
+    <ol>
+        {{~for $state in $1~}}
+        <table id="lalr{{$state.index}}">
+            <caption>State {{$state.index}}</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                {{~for $action in $state.actions~}}
+                <tr>
+                    <td class="terminal">{{html.escape $action.key.name}}</td>
+                    {{~extract_lalr_action $action.value | gen_action_row~}}
+                </tr>
+                {{~end~}}
+                {{~if $state.eofaction~}}
+                <tr>
+                    <td class="terminal eof">EOF</td>
+                    {{~extract_lalr_action $state.eofaction.value | gen_action_row~}}
+                </tr>
+                {{~end~}}
+                {{~for $action in $state.goto_actions~}}
+                <tr>
+                    <td class="nonterminal"><a href="#n{{$action.key.index}}">{{html.escape $action.key.name}}</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr{{$action.value}}">State {{$action.value}}</a></td>
+                </tr>
+                {{~end~}}
+            </tbody>
+        </table>
+        {{~end~}}
+    </ol>
+</section>

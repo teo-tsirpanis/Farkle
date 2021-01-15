@@ -154,6 +154,15 @@ module internal Utilities =
                 | Choice1Of2 term -> box term, false
                 | Choice2Of2 noise -> box noise, true
                 |> (fun (sym, isNoise) -> {|symbol = sym; is_noise = isNoise|})))
+        so.Import("extract_lalr_action",
+            Func<_,_>(fun x ->
+                let so = ScriptObject()
+                match x with
+                | LALRAction.Shift x -> addReadOnly so "target" x
+                | LALRAction.Reduce x -> addReadOnly so "target" x
+                | LALRAction.Accept -> ()
+                so.Import x
+                so))
 
     let loadGrammar g so =
         addReadOnly so "upper_case" UpperCase

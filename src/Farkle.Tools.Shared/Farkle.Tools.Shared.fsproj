@@ -8,6 +8,8 @@
     <Compile Include="ResourceLoader.fs" />
     <Compile Include="PrecompiledAssemblyFileLoader.fs" />
     <Compile Include="Templating/TemplateTypes.fs" />
+    <Compile Include="Templating/GrammarFunctions.fs" />
+    <Compile Include="Templating/HtmlFunctions.fs" />
     <Compile Include="Templating/TemplateUtilities.fs" />
     <Compile Include="Templating/TemplateEngine.fs" />
     <BuiltinTemplate Include="builtin-templates/*" />

@@ -227,7 +227,7 @@ This error is unexpected. Please report it on GitHub." x
             let content = mem.Slice(1)
             content |> fRead (uint32 index) |> arr.Add
 
-    let read (er: EGTReader) =
+    let read source (er: EGTReader) =
         let mutable isTableCountsInitialized = false
         let mutable hasReadAnyGroup = false
         let properties = Dictionary()
@@ -313,7 +313,7 @@ This error is unexpected. Please report it on GitHub." x
                 | _ -> None)
             |> Option.defaultWith invalidEGT
         {
-            _Properties = Common.createProperties GrammarSource.LoadedFromFile properties
+            _Properties = Common.createProperties source properties
             _StartSymbol = startSymbol
             _Symbols = symbols
             _Productions = productions.MoveToImmutable()

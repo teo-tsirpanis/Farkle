@@ -38,7 +38,7 @@ please create an issue on GitHub", innerExn)
         // The stream will definitely be not null.
         use stream = asm.GetManifestResourceStream resourceName
         try
-            EGT.ofStream stream
+            EGT.ofStreamEx GrammarSource.Precompiled stream
         with
         | e -> raise(newPrecompilerLoaderException e)
     )

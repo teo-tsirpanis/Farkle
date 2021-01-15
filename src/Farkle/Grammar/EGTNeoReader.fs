@@ -30,7 +30,7 @@ module private Implementation =
             invalidEGTf "Invalid EGTneo section header: expected '%s', got '%s'." hdr h
             ReadOnlySpan.Empty
 
-    let readProperties span =
+    let readProperties source span =
         let span = checkHeader span propertiesHeader
         let len = span.Length / 2
 
@@ -38,7 +38,7 @@ module private Implementation =
         for i = 0 to len - 1 do
             b.Add(wantString span (2 * i), wantString span (2 * i + 1))
 
-        Common.createProperties GrammarSource.LoadedFromFile b
+        Common.createProperties source b
 
     // Terminals, nonterminals and noise symbols are stored in
     // about the same format. The latter just ignore the index.
@@ -263,9 +263,9 @@ module private Implementation =
 
         states.MoveToImmutable()
 
-let read (er: EGTReader) =
+let read source (er: EGTReader) =
     er.NextRecord()
-    let properties = readProperties er.Span
+    let properties = readProperties source er.Span
     er.NextRecord()
     let terminals = readTerminals er.Span
     er.NextRecord()

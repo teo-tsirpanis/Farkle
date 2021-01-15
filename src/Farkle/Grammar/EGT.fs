@@ -18,17 +18,22 @@ open System.IO
 /// Grammars can only be written in the EGTneo format.
 module EGT =
 
-    /// Reads a `Grammar` from a stream.
-    [<CompiledName("ReadFromStream")>]
-    let ofStream stream =
+    let internal ofStreamEx source stream =
         use er = new EGTReader(stream, true)
         match er.Header with
         | CGTHeader -> invalidEGTf "This file is a legacy GOLD Parser 1.0 file, \
 which is not supported. You should update to the last version of GOLD Parser and save \
 it as an \"Enhanced Grammar Tables (version 5.0)\"."
-        | EGTHeader -> EGTLegacyReader.read er
-        | EGTNeoHeader -> EGTNeoReader.read er
+        // A grammar can never be precompiled into a legacy EGT file
+        // but let's not ingrain such assumption to the EGT reader.
+        | EGTHeader -> EGTLegacyReader.read source er
+        | EGTNeoHeader -> EGTNeoReader.read source er
         | _ -> invalidEGT()
+
+    /// Reads a `Grammar` from a stream.
+    [<CompiledName("ReadFromStream")>]
+    let ofStream stream =
+        ofStreamEx GrammarSource.LoadedFromFile stream
 
     /// Reads a `Grammar` from a Base64-encoded string.
     [<CompiledName("ReadFromBase64String")>]

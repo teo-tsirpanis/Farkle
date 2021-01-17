@@ -7,10 +7,11 @@ grammar_name = grammar.properties.name~}}
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>{{html.escape grammar_name}}</title>
+        <meta charset="utf-8">
         <meta name="description" content="Auto-generated documentation of the {{attr_escape grammar_name}} grammar.">
         <meta name="generator" content="Farkle version {{attr_escape farkle.version}}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{html.escape grammar_name}}</title>
         {{~custom_head~}}
     </head>
     <body>

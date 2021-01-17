@@ -278,28 +278,3 @@ type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)
             buffer.Clear()
             buffer.Capacity <- 0
             w.Dispose()
-
-module internal EGTHeaders =
-
-    // For better error messages only.
-    let [<Literal>] CGTHeader = "GOLD Parser Tables/v1.0"
-
-    let [<Literal>] EGTHeader = "GOLD Parser Tables/v5.0"
-
-    // I initially wanted a more fancy header, one that was readable
-    // in both Base64 and ASCII, perhaps loaded with easter eggs. But
-    // I settled to this plain and boring header.
-    let [<Literal>] EGTNeoHeader = "Farkle Parser Tables/v6.0"
-
-    // The headers for each section of the EGTneo file.
-    // They must be present in the file in that order.
-
-    let [<Literal>] propertiesHeader = "Properties"
-    let [<Literal>] terminalsHeader = "Terminals"
-    let [<Literal>] nonterminalsHeader = "Nonterminals"
-    let [<Literal>] noiseSymbolsHeader = "Noise Symbols"
-    let [<Literal>] startSymbolHeader = "Start Symbol"
-    let [<Literal>] groupsHeader = "Groups"
-    let [<Literal>] productionsHeader = "Productions"
-    let [<Literal>] lalrHeader = "LALR"
-    let [<Literal>] dfaHeader = "DFA"

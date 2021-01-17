@@ -95,9 +95,6 @@ type GrammarFunctions(g) =
             prod.Head, handle
         isElementUnique getFormattingElements productions
 
-    static let addReadOnly (so: ScriptObject) key value =
-        so.SetValue(key, value, true)
-
     let grammar = g.Grammar
     let grammarSO =
         let so = ScriptObject()
@@ -149,10 +146,12 @@ type GrammarFunctions(g) =
         | LALRAction.Shift x -> box x
         | LALRAction.Reduce x -> box x
         | LALRAction.Accept -> null
-        |> (fun x -> so.SetValue("target", x, true))
+        |> fun x -> so.SetValue("target", x, true)
         so.Import x
         so
     static member extract_lalr_symbol x =
         match x with
         | LALRSymbol.Terminal x -> box x
         | LALRSymbol.Nonterminal x -> box x
+    static member group_dfa_edges {Edges = edges} =
+        edges.ToLookup(fun x -> x.Value).OrderBy(fun x -> x.Key)

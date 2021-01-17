@@ -1,0 +1,58 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT ~}}
+<section id="dfa-states">
+    <h2>DFA States</h2>
+    <div>
+        {{~for $state in $1~}}
+        <table id="dfa{{$state.index}}">
+            <caption>State {{$state.index}}</caption>
+            {{~if !$state.edges.empty? || $state.anything_else}}
+            <thead><th scope="col">Action</th><th scope="col">Characters</th></thead>
+            <tbody>
+                {{~for $edge in group_dfa_edges $state~}}
+                <tr>
+                    {{~if $edge.key.value
+                        $goto_state = $edge.key.value~}}
+                    <td class="dfa-goto">Go to <a href="#dfa{{$goto_state}}">State {{$goto_state}}</a></td>
+                    {{~else~}}
+                    <td class="dfa-fail">Fail</td>
+                    {{~end~}}
+                    <td class="dfa-characters">
+                        {{-for $range in $edge-}}
+                        {{-format_char_range $range-}}{{-if !for.last; ", "; end-}}
+                        {{-end-}}
+                    </td>
+                </tr>
+                {{~end~}}
+                {{~if $state.anything_else
+                    $ae_state = $state.anything_else.value~}}
+                <tr>
+                    <td class="dfa-goto">Go to <a href="#dfa{{$ae_state}}">State {{$ae_state}}</a></td>
+                    <td class="dfa-anything-else">In all other cases</td>
+                </tr>
+                {{~end~}}
+            </tbody>
+            {{~end~}}
+            {{~if $state.accept_symbol
+                $accept_symbol = $state.accept_symbol.value
+                $as_item = $accept_symbol.item~}}
+            <tfoot>
+                <td class="dfa-accept">
+                    {{~if $accept_symbol.is_choice1_of4~}}
+                    Accept <span class="terminal">{{html.escape $as_item.name}}</span>
+                    {{~else if $accept_symbol.is_choice2_of4~}}
+                    Accept <span class="noise">{{html.escape $as_item.name}}</span> (Noise)
+                    {{~else if $accept_symbol.is_choice3_of4~}}
+                    Accept <span class="group-start">{{html.escape $as_item.name}}</span> (Group Start)
+                    {{~else~}}
+                    Accept <span class="group-end">{{html.escape $as_item.name}}</span> (Group End)
+                    {{~end~}}
+                </td>
+            </tfoot>
+            {{~end~}}
+        </table>
+        {{~end~}}
+    </div>
+</section>

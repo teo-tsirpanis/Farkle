@@ -8,7 +8,7 @@ https://opensource.org/licenses/MIT ~}}
         <h3>Terminals</h3>
         <ul>
             {{~for $term in $1~}}
-            <li id="t{{$term.index}}" class="terminal" data-name="{{attr_escape $term.name}}" data-index="{{$term.index}}">{{html.escape $term.name}}</li>
+            <li id="t{{$term.index}}" class="terminal">{{html.escape $term.name}}</li>
             {{~end~}}
         </ul>
     </section>
@@ -17,16 +17,16 @@ https://opensource.org/licenses/MIT ~}}
         <ul>
             {{~for $group in $2
                 $nont = $group.key~}}
-            <li id="n{{$nont.index}}" data-name="{{attr_escape $nont.name}}" data-index="{{$nont.index}}">
+            <li id="n{{$nont.index}}">
                 <span class="nonterminal">{{html.escape $nont.name}}</span>
                 <ul class="productions">
                     {{~for $prod in $group~}}
-                    <li id="prod{{$prod.index}}" data-index="{{$prod.index}}">
+                    <li id="prod{{$prod.index}}" >
                         <ol class="production-handle">
                             {{~for $sym in $prod.handle
                                 $symbol_type = $sym.is_terminal ? "terminal" : "nonterminal"
                                 $sym_extracted = extract_lalr_symbol $sym~}}
-                            <li class="{{$symbol_type}}" data-symbol-id="{{$sym_extracted.index}}">
+                            <li>
                                 {{-if $symbol_type == "terminal"-}}
                                 {{-html.escape $sym_extracted.name-}}
                                 {{-else-}}

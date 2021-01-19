@@ -6,7 +6,7 @@ https://opensource.org/licenses/MIT ~}}
     <h2>Groups</h2>
     <ul>
         {{~for $group in $1~}}
-        <li id="g{{for.index}}" data-name="{{attr_escape $group.name}}">
+        <li id="g{{for.index}}">
             {{~$container = extract_group_container $group~}}
             <h3>{{html.escape $group.name}}</h3>
             <dl>
@@ -47,7 +47,7 @@ https://opensource.org/licenses/MIT ~}}
                     <ul class="group-nesting">
                         {{~for $groupIdx in $group.nesting
                             $g = $1[$groupIdx]~}}
-                        <li data-group-index="{{$groupIdx}}"><a href="#g{{$groupIdx}}">{{html.escape $g.name}}</a></li>
+                        <li><a href="#g{{$groupIdx}}">{{html.escape $g.name}}</a></li>
                         {{~end~}}
                     </ul>
                 </dd>

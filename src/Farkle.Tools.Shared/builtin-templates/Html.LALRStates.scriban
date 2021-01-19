@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT -}}
 
 <section id="lalr-states">
     <h2>LALR States</h2>
-    <ol>
+    <div>
         {{~for $state in $1~}}
         <table id="lalr{{$state.index}}">
             <caption>State {{$state.index}}</caption>
@@ -29,18 +29,18 @@ https://opensource.org/licenses/MIT -}}
                 {{~end~}}
                 {{~if $state.eofaction~}}
                 <tr>
-                    <td class="terminal eof">EOF</td>
+                    <td><abbr class="eof" title="End of File">EOF</abbr></td>
                     {{~extract_lalr_action $state.eofaction.value | gen_action_row~}}
                 </tr>
                 {{~end~}}
                 {{~for $action in $state.goto_actions~}}
                 <tr>
-                    <td class="nonterminal"><a href="#n{{$action.key.index}}">{{html.escape $action.key.name}}</a></td>
+                    <td><a class="nonterminal" href="#n{{$action.key.index}}">{{html.escape $action.key.name}}</a></td>
                     <td class="lalr-goto">Go to <a href="#lalr{{$action.value}}">State {{$action.value}}</a></td>
                 </tr>
                 {{~end~}}
             </tbody>
         </table>
         {{~end~}}
-    </ol>
+    </div>
 </section>

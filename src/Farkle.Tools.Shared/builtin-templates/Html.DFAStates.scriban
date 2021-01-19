@@ -8,8 +8,9 @@ https://opensource.org/licenses/MIT ~}}
         {{~for $state in $1~}}
         <table id="dfa{{$state.index}}">
             <caption>State {{$state.index}}</caption>
-            {{~if !$state.edges.empty? || $state.anything_else~}}
-            <thead><th scope="col">Action</th><th scope="col">Characters</th></thead>
+            {{~if !$state.edges.empty? || $state.anything_else
+                $has_edges = true~}}
+            <thead><tr><th scope="col">Action</th><th scope="col">Characters</th></tr></thead>
             <tbody>
                 {{~for $edge in group_dfa_edges $state~}}
                 <tr>
@@ -39,17 +40,19 @@ https://opensource.org/licenses/MIT ~}}
                 $accept_symbol = $state.accept_symbol.value
                 $as_item = $accept_symbol.item~}}
             <tfoot>
-                <td class="dfa-accept">
-                    {{~if $accept_symbol.is_choice1_of4~}}
-                    Accept <span class="terminal">{{html.escape $as_item.name}}</span>
-                    {{~else if $accept_symbol.is_choice2_of4~}}
-                    Accept <span class="noise">{{html.escape $as_item.name}}</span> (Noise)
-                    {{~else if $accept_symbol.is_choice3_of4~}}
-                    Accept <span class="group-start">{{html.escape $as_item.name}}</span> (Group Start)
-                    {{~else~}}
-                    Accept <span class="group-end">{{html.escape $as_item.name}}</span> (Group End)
-                    {{~end~}}
-                </td>
+                <tr>
+                    <td {{if $has_edges}}colspan="2" {{end}}class="dfa-accept">
+                        {{~if $accept_symbol.is_choice1_of4~}}
+                        Accept <span class="terminal">{{html.escape $as_item.name}}</span>
+                        {{~else if $accept_symbol.is_choice2_of4~}}
+                        Accept <span class="noise">{{html.escape $as_item.name}}</span> (Noise)
+                        {{~else if $accept_symbol.is_choice3_of4~}}
+                        Accept <span class="group-start">{{html.escape $as_item.name}}</span> (Group Start)
+                        {{~else~}}
+                        Accept <span class="group-end">{{html.escape $as_item.name}}</span> (Group End)
+                        {{~end~}}
+                    </td>
+                </tr>
             </tfoot>
             {{~end~}}
         </table>

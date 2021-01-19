@@ -36,7 +36,7 @@ type HtmlFunctions(options) =
                 if Char.IsControl c then
                     sb.Append("U+").Append(codePointStr)
                 else
-                    sb.Append("<span title=\"&#x").Append(codePointStr).Append("\">U+").Append(codePointStr).Append("</span>")
+                    sb.Append("<span title=\"&#x").Append(codePointStr).Append(";\">U+").Append(codePointStr).Append("</span>")
             |> ignore
         if x.KeyFrom = x.KeyTo then
             formatChar false x.KeyFrom

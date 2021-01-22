@@ -24,15 +24,21 @@ https://opensource.org/licenses/MIT ~}}
                     <li id="prod{{$prod.index}}" >
                         <ol class="production-handle">
                             {{~for $sym in $prod.handle
-                                $symbol_type = $sym.is_terminal ? "terminal" : "nonterminal"
                                 $sym_extracted = extract_lalr_symbol $sym~}}
                             <li>
-                                {{-if $symbol_type == "terminal"-}}
-                                {{-html.escape $sym_extracted.name-}}
+                                {{-if $sym.is_terminal-}}
+                                <span class="terminal">{{html.escape $sym_extracted.name}}</span>
                                 {{-else-}}
-                                <a href="#n{{$sym_extracted.index}}">{{html.escape $sym_extracted.name}}</a>
+                                <a class="nonterminal" href="#n{{$sym_extracted.index}}">{{html.escape $sym_extracted.name}}</a>
                                 {{-end-}}
                             </li>
+                            {{~end~}}
+                            {{~if $prod.handle.empty?
+                                # Writing a "Nothing" using CSS will not work because the
+                                # :empty selector is tarnation useless and cannot match
+                                # <ol>
+                                # </ol> because of the new line!~}}
+                            <li class="production-empty">Nothing</li>
                             {{~end~}}
                         </ol>
                     </li>

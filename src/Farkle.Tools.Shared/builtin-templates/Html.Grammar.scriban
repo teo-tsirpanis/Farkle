@@ -2,7 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-<nav>
+<nav class="flex-container">
     <a href="#properties">Properties</a>
     <a href="#terminals">Terminals</a>
     <a href="#nonterminals">Nonterminals</a>

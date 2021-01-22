@@ -12,10 +12,11 @@
     <Compile Include="Templating/HtmlFunctions.fs" />
     <Compile Include="Templating/TemplateUtilities.fs" />
     <Compile Include="Templating/TemplateEngine.fs" />
-    <BuiltinTemplate Include="builtin-templates/*" />
+    <BuiltinTemplate Include="builtin-templates/*.scriban" />
     <EmbeddedResource Include="@(BuiltinTemplate)">
       <LogicalName>%(FileName)%(Extension)</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="builtin-templates/Html.Style.css" LogicalName="Html.Style.scriban" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Farkle/Farkle.fsproj" />

@@ -15,7 +15,7 @@ https://opensource.org/licenses/MIT -}}
 
 <section id="lalr-states">
     <h2>LALR States</h2>
-    <div>
+    <div class="flex-container">
         {{~for $state in $1~}}
         <table id="lalr{{$state.index}}">
             <caption>State {{$state.index}}</caption>

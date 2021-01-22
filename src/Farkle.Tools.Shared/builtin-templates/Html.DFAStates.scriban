@@ -4,7 +4,7 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 <section id="dfa-states">
     <h2>DFA States</h2>
-    <div>
+    <div class="flex-container">
         {{~for $state in $1~}}
         <table id="dfa{{$state.index}}">
             <caption>State {{$state.index}}</caption>

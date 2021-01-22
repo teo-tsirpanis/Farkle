@@ -1,0 +1,122 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 1em 5%;
+}
+
+nav {
+    background-color: navy;
+    margin: auto;
+}
+
+nav>a {
+    color: white;
+    padding: 1em;
+    font-variant: small-caps;
+}
+
+nav>a:hover {
+    background-color: white;
+    color: navy;
+    text-decoration: none;
+}
+
+footer {
+    border-top: 1px solid lightgray;
+    text-align: center;
+    font-size: 0.75em;
+}
+
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover,
+a:active {
+    text-decoration: underline;
+}
+
+.terminal,
+.nonterminal,
+.dfa-characters {
+    font-family: monospace;
+}
+
+.nonterminal::before {
+    content: "<";
+}
+
+.nonterminal::after {
+    content: ">";
+}
+
+#nonterminals>ul>li>.nonterminal::after {
+    content: "> ::=";
+}
+
+.productions>li {
+    display: block;
+}
+
+.production-handle {
+    padding-left: 0;
+}
+
+.production-handle>li {
+    display: inline;
+}
+
+td {
+    border: 1px solid black;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 1em;
+    max-width: 33%;
+}
+
+.lalr-shift {
+    background-color: #eff0d1;
+}
+
+.lalr-reduce {
+    background-color: #d7c0d0;
+}
+
+.lalr-accept,
+.dfa-accept {
+    background-color: #77ba99;
+}
+
+.lalr-goto,
+.dfa-goto {
+    background-color: #14bdeb;
+}
+
+.dfa-fail {
+    background-color: #d33f49;
+}
+
+.dfa-characters {
+    background-color: lightgray;
+}
+
+.dfa-goto {
+    white-space: nowrap;
+}
+
+.dfa-accept {
+    text-align: center;
+}
+
+.eof,
+.dfa-anything-else,
+.production-empty {
+    font-style: italic;
+}

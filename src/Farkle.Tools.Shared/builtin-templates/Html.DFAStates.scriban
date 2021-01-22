@@ -8,8 +8,8 @@ https://opensource.org/licenses/MIT ~}}
         {{~for $state in $1~}}
         <table id="dfa{{$state.index}}">
             <caption>State {{$state.index}}</caption>
-            {{~if !$state.edges.empty? || $state.anything_else
-                $has_edges = true~}}
+            {{~$has_edges = !$state.edges.empty? || $state.anything_else
+                if $has_edges~}}
             <thead><tr><th scope="col">Action</th><th scope="col">Characters</th></tr></thead>
             <tbody>
                 {{~for $edge in group_dfa_edges $state~}}

@@ -134,24 +134,5 @@ type GrammarFunctions(g) =
     member x.LoadInstanceMethods(so: ScriptObject) =
         so.Import("fmt", Func<_,_,_,_> x.fmt)
         so.Import("to_base64", Func<_,_> x.to_base64)
-
-    static member extract_group_container {ContainerSymbol = container} =
-        match container with
-        | Choice1Of2 term -> box term, false
-        | Choice2Of2 noise -> box noise, true
-        |> (fun (sym, isNoise) -> {|symbol = sym; is_noise = isNoise|})
-    static member extract_lalr_action x =
-        let so = ScriptObject()
-        match x with
-        | LALRAction.Shift x -> box x
-        | LALRAction.Reduce x -> box x
-        | LALRAction.Accept -> null
-        |> fun x -> so.SetValue("target", x, true)
-        so.Import x
-        so
-    static member extract_lalr_symbol x =
-        match x with
-        | LALRSymbol.Terminal x -> box x
-        | LALRSymbol.Nonterminal x -> box x
     static member group_dfa_edges {Edges = edges} =
         edges.ToLookup(fun x -> x.Value).OrderBy(fun x -> x.Key)

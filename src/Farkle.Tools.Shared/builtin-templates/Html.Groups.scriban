@@ -7,14 +7,14 @@ https://opensource.org/licenses/MIT ~}}
     <ul>
         {{~for $group in $1~}}
         <li id="g{{for.index}}">
-            {{~$container = extract_group_container $group~}}
+            {{~$container = $group.container_symbol~}}
             <h3>{{html.escape $group.name}}</h3>
             <dl>
                 <dt>Container Symbol</dt>
-                {{~if $container.is_noise~}}
-                <dd class="group-container-noise">{{html.escape $container.symbol.name}} (Noise)</dd>
+                {{~if $container.is_choice1_of2~}}
+                <dd class="group-container-terminal"><a href="#t{{$container.item.index}}">{{html.escape $container.item.name}}</a></dd>
                 {{~else~}}
-                <dd class="group-container-terminal"><a href="#t{{$container.symbol.index}}">{{html.escape $container.symbol.name}}</a></dd>
+                <dd class="group-container-noise">{{html.escape $container.item.name}} (Noise)</dd>
                 {{~end~}}
 
                 <dt>Starts with</dt>

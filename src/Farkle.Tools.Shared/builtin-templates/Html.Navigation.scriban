@@ -1,0 +1,14 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT ~}}
+<nav class="flex-container">
+    <a href="#properties">Properties</a>
+    <a href="#terminals">Terminals</a>
+    <a href="#nonterminals">Nonterminals</a>
+    {{~if !grammar.groups.empty?~}}
+    <a href="#groups">Groups</a>
+    {{~end~}}
+    {{if !no_lalrstates}}<a href="#lalr-states">LALR States</a>{{end}}
+    {{if !no_dfastates}}<a href="#dfa-states">DFA States</a>{{end}}
+</nav>

@@ -18,6 +18,10 @@ type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
     | [<Unique>] Html
+    | [<Unique>] ``Custom-head`` of string
+    | [<Unique>] ``No-css``
+    | [<Unique>] ``No-lalr``
+    | [<Unique>] ``No-dfa``
     | [<Unique>] GrammarSkeleton
     | [<Unique; AltCommandLine("-lang")>] Language of Language
     | [<Unique; AltCommandLine("-ns")>] Namespace of string
@@ -32,6 +36,10 @@ Run 'farkle --explain-composite-paths' to learn their syntax."
             | OutputFile _ -> "Specifies where the output file will be stored. \
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
             | Html -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
+            | ``Custom-head`` _ -> "A file whose content will be appended to the resulting HTML page's head."
+            | ``No-css`` -> "Does not generate inline CSS for the resulting HTML page."
+            | ``No-lalr`` -> "Does not generate the LALR state tables in the resulting HTML page."
+            | ``No-dfa`` -> "Does not generate the DFA state tables in the resulting HTML page."
             | GrammarSkeleton -> "Specifies that a skeleton source file for the grammar should be generated. \
 The source's namespace and language can be adjusted by the respective arguments."
             | Language _ -> "Specifies the skeleton source file's language. If not specified, Farkle will \
@@ -63,7 +71,19 @@ let tryInferLanguage() =
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
     match args.Contains Html, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
     | _, false, None ->
-        let options = {CustomHeadContent = ""}
+        let! customHead = either {
+            match args.TryGetResult ``Custom-head`` with
+            | Some headFile ->
+                let! headFile = assertFileExists headFile
+                return File.ReadAllText headFile
+            | None -> return ""
+        }
+        let options = {
+            CustomHeadContent = customHead
+            NoCss = args.Contains ``No-css``
+            NoLALRStates = args.Contains ``No-lalr``
+            NoDFAStates = args.Contains ``No-dfa``
+        }
         return GrammarHtml(grammarInput, options)
     | false, true, None ->
         let! language =
@@ -85,9 +105,16 @@ let warnOnUnusedArguments (args: ParseResults<_>) =
     let doWarnIfNot isUsed (arg: Quotations.Expr<_ -> _>) (argName: string) =
         if not isUsed && args.Contains arg then
             Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
-    let isHtml = args.Contains Html
+    let doWarnIfNotOpt isUsed (arg: Quotations.Expr<_>) (argName: string) =
+        if not isUsed && args.Contains arg then
+            Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
     let isSkeleton = args.Contains GrammarSkeleton
     let isCustomTemplate = args.Contains TemplateFile
+    let isHtml = args.Contains Html || (isSkeleton = isCustomTemplate)
+    doWarnIfNot isHtml <@ ``Custom-head`` @> "--custom-head"
+    doWarnIfNotOpt isHtml <@ ``No-css`` @> "--no-css"
+    doWarnIfNotOpt isHtml <@ ``No-lalr`` @> "--no-lalr"
+    doWarnIfNotOpt isHtml <@ ``No-dfa`` @> "--no-dfa"
     doWarnIfNot isSkeleton <@ Language @> "-lang"
     doWarnIfNot isSkeleton <@ Namespace @> "-ns"
     doWarnIfNot isCustomTemplate <@ Property @> "-prop"

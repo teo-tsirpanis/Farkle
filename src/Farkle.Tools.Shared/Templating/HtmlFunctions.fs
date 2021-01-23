@@ -1,5 +1,5 @@
 // Copyright (c) 2021 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -15,6 +15,9 @@ type HtmlFunctions(options) =
     static let isAscii c = c >= char 32 && c <= char 126
 
     member _.custom_head = options.CustomHeadContent
+    member _.no_css = options.NoCss
+    member _.no_lalrstates = options.NoLALRStates
+    member _.no_dfastates = options.NoDFAStates
     static member attr_escape x = HttpUtility.HtmlAttributeEncode x
     static member format_char_range (x: RangeMapElement<char,uint option>) =
         let sb = StringBuilder()
@@ -31,7 +34,7 @@ type HtmlFunctions(options) =
             | '<' -> sb.Append "&lt;"
             | '>' -> sb.Append "&gt;"
             | c when not forceCodepoint && isAscii c -> sb.Append c
-            | c -> 
+            | c ->
                 let codePointStr = (int c).ToString("X4")
                 if Char.IsControl c then
                     sb.Append("U+").Append(codePointStr)

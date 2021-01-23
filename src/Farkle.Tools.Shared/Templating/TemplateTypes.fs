@@ -22,6 +22,9 @@ with
 
 type HtmlOptions = {
     CustomHeadContent: string
+    NoCss: bool
+    NoLALRStates: bool
+    NoDFAStates: bool
 }
 
 type CustomTemplateOptions = {

@@ -2,16 +2,7 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-<nav class="flex-container">
-    <a href="#properties">Properties</a>
-    <a href="#terminals">Terminals</a>
-    <a href="#nonterminals">Nonterminals</a>
-    {{~if !grammar.groups.empty?~}}
-    <a href="#groups">Groups</a>
-    {{~end~}}
-    <a href="#lalr-states">LALR States</a>
-    <a href="#dfa-states">DFA States</a>
-</nav>
+{{~include "builtin://Navigation"~}}
 <main>
     <h1>{{html.escape grammar_name}}</h1>
     <section id="properties">
@@ -31,6 +22,6 @@ https://opensource.org/licenses/MIT ~}}
     {{~if !grammar.groups.empty?~}}
     {{~include "builtin://Groups" grammar.groups~}}
     {{~end~}}
-    {{~include "builtin://LALRStates" grammar.lalrstates~}}
-    {{~include "builtin://DFAStates" grammar.dfastates~}}
+    {{~if !no_lalrstates; include "builtin://LALRStates" grammar.lalrstates; end~}}
+    {{~if !no_dfastates; include "builtin://DFAStates" grammar.dfastates; end~}}
 </main>

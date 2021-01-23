@@ -94,7 +94,7 @@ table {
 }
 
 .lalr-reduce {
-    background-color: #d7c0d0;
+    background-color: #ffcc80;
 }
 
 .lalr-accept,
@@ -104,7 +104,7 @@ table {
 
 .lalr-goto,
 .dfa-goto {
-    background-color: #14bdeb;
+    background-color: #58b8f3;
 }
 
 .dfa-fail {

@@ -6,27 +6,67 @@
 namespace Farkle.Tools.MSBuild
 
 open Farkle.Tools.Precompiler
+open Farkle.Tools.Templating
 open Microsoft.Build.Framework
+open Microsoft.Build.Utilities
 open Sigourney
+open System
+open System.IO
 
 /// An MSBuild task that precompiles the grammars of an assembly.
 type FarklePrecompileTask() =
     inherit MSBuildWeaver()
     let mutable precompiledGrammars = []
+    let mutable generatedDocumentationFiles = []
     /// Whether to treat grammar precompilation
     /// errors (like LALR conflicts) as warnings.
     member val SuppressGrammarErrors = false with get, set
+
+    member val GenerateDocumentation = false with get, set
+    member val DocumentationOutputPath = null with get, set
+    member val DocumentationCustomHead = "" with get, set
+    member val DocumentationNoCss = false with get, set
+    member val DocumentationNoLALRStates = false with get, set
+    member val DocumentationNoDFAStates = false with get, set
+    [<Output>]
+    member val GeneratedDocumentationFiles = Array.Empty<_>() with get, set
 
     member private this.LogSuppressibleError(messageTemplate, x1) =
         if this.SuppressGrammarErrors then
             this.Log2.Warning<'T0>(messageTemplate, x1)
         else
             this.Log2.Error(messageTemplate, x1)
+
     member private this.LogSuppressibleError(messageTemplate, x1, x2) =
         if this.SuppressGrammarErrors then
             this.Log2.Warning<'T0,'T1>(messageTemplate, x1, x2)
         else
             this.Log2.Error(messageTemplate, x1, x2)
+
+    member private this.DoGenerateDocumentation grammar =
+        let grammarInput = {Grammar = grammar; GrammarPath = this.AssemblyPath}
+        let htmlOptions = {
+            CustomHeadContent = this.DocumentationCustomHead
+            NoCss = this.DocumentationNoCss
+            NoLALRStates = this.DocumentationNoLALRStates
+            NoDFAStates = this.DocumentationNoDFAStates
+        }
+        let templateType = GrammarHtml(grammarInput, htmlOptions)
+        if String.IsNullOrWhiteSpace this.DocumentationOutputPath then
+            this.Log2.Error("The DocumentationOutputPath task parameter is not assigned.")
+        else
+            match TemplateEngine.renderTemplate this.Log2 templateType with
+            | Ok output ->
+                let grammarName = grammar.Properties.Name
+                let htmlPath =
+                    Path.Combine(this.DocumentationOutputPath, Path.ChangeExtension(grammarName, output.FileExtension))
+                    |> Path.GetFullPath
+                this.Log2.Information("Writing documentation of {GrammarName} at {DocumentationPath}...", grammarName, htmlPath)
+                File.WriteAllText(htmlPath, output.Content)
+
+                generatedDocumentationFiles <- TaskItem htmlPath :> ITaskItem :: generatedDocumentationFiles
+            | Error() ->
+                this.Log2.Error("There was an error with the documentation generator. Please report it on GitHub.")
 
     override this.Execute() =
         let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
@@ -38,6 +78,8 @@ type FarklePrecompileTask() =
                 |> List.choose (fun x ->
                     match x with
                     | Successful grammar ->
+                        if this.GenerateDocumentation then
+                            this.DoGenerateDocumentation grammar
                         Some grammar
                     | PrecompilingFailed(name, [error]) ->
                         this.LogSuppressibleError("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
@@ -53,6 +95,8 @@ type FarklePrecompileTask() =
                         this.Log2.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
                         this.Log2.Error("{Exception}", e)
                         None)
+
+            this.GeneratedDocumentationFiles <- Array.ofList generatedDocumentationFiles
 
             if gotGrammarError && not this.SuppressGrammarErrors then
                 this.Log.LogMessage(MessageImportance.High, "Hint: you can treat grammar precompilation errors \

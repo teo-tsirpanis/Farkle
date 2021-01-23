@@ -16,6 +16,14 @@
         AssemblyPath="@(IntermediateAssembly)"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
-        SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"/>
+        SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"
+        GenerateDocumentation="$(FarkleGenerateDocumentation)"
+        DocumentationOutputPath="$(OutputPath)"
+        DocumentationCustomHead="$(FarkleDocumentationCustomHead)"
+        DocumentationNoCss="$(FarkleDocumentationNoCss)"
+        DocumentationNoLALRStates="$(FarkleDocumentationNoLALRStates)"
+        DocumentationNoDFAStates="$(FarkleDocumentationNoDFAStates)">
+      <Output TaskParameter="GeneratedDocumentationFiles" ItemName="FileWrites"/>
+    </FarklePrecompileTask>
   </Target>
 </Project>

@@ -24,10 +24,6 @@ type FarklePrecompileTask() =
 
     member val GenerateDocumentation = false with get, set
     member val DocumentationOutputPath = null with get, set
-    member val DocumentationCustomHead = "" with get, set
-    member val DocumentationNoCss = false with get, set
-    member val DocumentationNoLALRStates = false with get, set
-    member val DocumentationNoDFAStates = false with get, set
     [<Output>]
     member val GeneratedDocumentationFiles = Array.Empty<_>() with get, set
 
@@ -46,10 +42,10 @@ type FarklePrecompileTask() =
     member private this.DoGenerateDocumentation grammar =
         let grammarInput = {Grammar = grammar; GrammarPath = this.AssemblyPath}
         let htmlOptions = {
-            CustomHeadContent = this.DocumentationCustomHead
-            NoCss = this.DocumentationNoCss
-            NoLALRStates = this.DocumentationNoLALRStates
-            NoDFAStates = this.DocumentationNoDFAStates
+            CustomHeadContent = ""
+            NoCss = false
+            NoLALRStates = false
+            NoDFAStates = false
         }
         let templateType = GrammarHtml(grammarInput, htmlOptions)
         if String.IsNullOrWhiteSpace this.DocumentationOutputPath then

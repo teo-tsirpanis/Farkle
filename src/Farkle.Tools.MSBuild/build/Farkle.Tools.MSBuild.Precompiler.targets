@@ -18,11 +18,7 @@
         Configuration="@(SigourneyConfiguration)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"
         GenerateDocumentation="$(FarkleGenerateDocumentation)"
-        DocumentationOutputPath="$(OutputPath)"
-        DocumentationCustomHead="$(FarkleDocumentationCustomHead)"
-        DocumentationNoCss="$(FarkleDocumentationNoCss)"
-        DocumentationNoLALRStates="$(FarkleDocumentationNoLALRStates)"
-        DocumentationNoDFAStates="$(FarkleDocumentationNoDFAStates)">
+        DocumentationOutputPath="$(OutputPath)">
       <Output TaskParameter="GeneratedDocumentationFiles" ItemName="FileWrites"/>
     </FarklePrecompileTask>
   </Target>

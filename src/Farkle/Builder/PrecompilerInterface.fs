@@ -32,7 +32,7 @@ type PrecompiledGrammar private(asm, grammarName, resourceName) =
     static let newPrecompilerLoaderException innerExn =
         PrecompilerLoaderException("Failed to load a precompiled grammar. Try rebuilding \
 the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the issue persists, \
-please create an issue on GitHub", innerExn)
+please open an issue on GitHub", innerExn)
 
     let grammarThunk = lazy(
         // The stream will definitely be not null.
@@ -49,8 +49,8 @@ please create an issue on GitHub", innerExn)
     member _.GrammarName = grammarName
     /// Gets the actual `Grammar` of this object.
     member _.GetGrammar() = grammarThunk.Value
-    static member internal GetResourceName grammarName =
-        grammarName + precompiledGrammarResourceSuffix
+    static member internal GetResourceName (grammar: Grammar) =
+        grammar.Properties.Name + precompiledGrammarResourceSuffix
     /// Gets all precompiled grammars of an assembly.
     /// This function is safe to call from multiple threads and efficient to
     /// call many times with the same assembly. The cache it internally uses

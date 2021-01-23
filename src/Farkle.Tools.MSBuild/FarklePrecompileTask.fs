@@ -37,8 +37,8 @@ type FarklePrecompileTask() =
                 grammars
                 |> List.choose (fun x ->
                     match x with
-                    | Successful (name, grammar) ->
-                        Some (name, grammar)
+                    | Successful grammar ->
+                        Some grammar
                     | PrecompilingFailed(name, [error]) ->
                         this.LogSuppressibleError("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
                         gotGrammarError <- true
@@ -54,14 +54,14 @@ type FarklePrecompileTask() =
                         this.Log2.Error("{Exception}", e)
                         None)
 
-            if gotGrammarError then
-                this.Log.LogMessage(MessageImportance.High, "Hint: you can treat grammar precompilation errors as warnings \
-by setting the FarkleSuppressGrammarErrors MSBuild property to true.")
+            if gotGrammarError && not this.SuppressGrammarErrors then
+                this.Log.LogMessage(MessageImportance.High, "Hint: you can treat grammar precompilation errors \
+as warnings by setting the FarkleSuppressGrammarErrors MSBuild property to true.")
 
             not this.Log.HasLoggedErrors
             // With our preparation completed, Sigourney will eventually call DoWeave.
             && base.Execute()
-        // There are some errors (such as duplicate grammar errors)
+        // There are some errors (such as duplicate grammar name errors)
         // that are errors no matter what the user said.
         | Error () -> false
     override _.DoWeave asm = weaveAssembly precompiledGrammars asm

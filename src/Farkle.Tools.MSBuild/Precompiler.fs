@@ -6,18 +6,19 @@
 module internal Farkle.Tools.Precompiler
 
 open Farkle.Builder
+open Farkle.Grammar
 
 type PrecompilerResult =
-    | Successful of grammarName: string * egtNeoData: byte[]
+    | Successful of Grammar
     | PrecompilingFailed of grammarName: string * BuildError list
     | DiscoveringFailed of typeName: string * fieldName: string * exn
 
 #if !NETFRAMEWORK
 open Farkle.Common
-open Farkle.Grammar
 open Mono.Cecil
 open Serilog
 open Sigourney
+open System.Diagnostics
 open System.IO
 open System.Runtime.CompilerServices
 open System.Runtime.Loader
@@ -42,15 +43,8 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
                 grammar.LALRStates.Length,
                 grammar.DFAStates.Length)
 
-            use stream = new MemoryStream()
-            EGT.toStreamNeo stream grammar
-
-            // We will try to read the EGTneo file we just
-            // generated as a form of self-verification.
-            stream.Position <- 0L
-            EGT.ofStream stream |> ignore
-
-            Successful(name, stream.ToArray())
+            Debug.Assert(grammar.Properties.Name = name, "Unexpected error: grammar name is different from the designtime Farkle name.")
+            Successful grammar
         | Error xs -> PrecompilingFailed(name, xs)
     | Error x -> DiscoveringFailed x)
 
@@ -99,9 +93,17 @@ let private getPrecompilableGrammars log references path =
         alc.Unload()
 
 let weaveAssembly pcdfs (asm: AssemblyDefinition) =
-    for name, data: _ [] in pcdfs do
-        let name = PrecompiledGrammar.GetResourceName name
-        let res = EmbeddedResource(name, ManifestResourceAttributes.Public, data)
+    for grammar in pcdfs do
+        use stream = new MemoryStream()
+        EGT.toStreamNeo stream grammar
+
+        // We will try to read the EGTneo file we just
+        // generated as a form of self-verification.
+        stream.Position <- 0L
+        EGT.ofStream stream |> ignore
+
+        let name = PrecompiledGrammar.GetResourceName grammar
+        let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
         asm.MainModule.Resources.Add res
     not (List.isEmpty pcdfs)
 
@@ -109,19 +111,23 @@ let discoverAndPrecompile log references path =
     let pcdfs = getPrecompilableGrammars log references path
 
     pcdfs
-    |> Seq.choose (function Successful(name, _) | PrecompilingFailed(name, _) -> Some name | _ -> None)
+    |> Seq.choose (
+        function
+        | Successful grammar  -> Some grammar.Properties.Name
+        | PrecompilingFailed(name, _) -> Some name
+        | _ -> None)
     |> Seq.countBy id
     |> Seq.map (fun (name, count) ->
         if count <> 1 then
             log.Error("Cannot have many precompilable designtime Farkles named {Name}", name)
         count <> 1)
     |> Seq.fold (||) false
-    |> (function
+    |> function
         | true ->
             log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function \
 or the Rename extension method.")
             Error()
-        | false -> Ok pcdfs)
+        | false -> Ok pcdfs
 #else
 let discoverAndPrecompile (log: Serilog.ILogger) _ _ =
     log.Warning("Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). \

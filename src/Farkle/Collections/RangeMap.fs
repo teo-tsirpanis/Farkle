@@ -34,7 +34,7 @@ with
 [<DebuggerTypeProxy("Farkle.DebugTypeProxies.RangeMapDebugProxy`2")>]
 [<DebuggerDisplay("Count: {arr.Length}")>]
 type RangeMap<'TKey, [<Nullable(0uy)>] 'TValue when 'TKey :> IComparable<'TKey>> private(arr: RangeMapElement<'TKey,'TValue> []) =
-    static let empty = RangeMap (Array.Empty<RangeMapElement<'TKey,'TValue>>())
+    static let empty = RangeMap (Array.Empty())
     let consistencyCheck() =
         let rec impl idx (k0: 'TKey) =
             if idx < arr.Length then

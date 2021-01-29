@@ -14,10 +14,6 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
 
-/// This interface is implemented by precompilable designtime Farkles.
-/// It indicates that dynamic code generation optimizations may be applied.
-type internal EligibleForDynamicCodeGeneration = interface end
-
 [<NoComparison; ReferenceEquality>]
 /// An object containing the symbols of a grammar,
 /// but lacking the LALR and DFA states.
@@ -382,13 +378,9 @@ module DesigntimeFarkleBuild =
         |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())
         |> sprintf "%s %s" (asm.GetName().Name)
 
-    let private shouldUseDynamicCodeGeneration (df: DesigntimeFarkle) =
-        df :? EligibleForDynamicCodeGeneration
-
     [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> df ppDef =
+    let private createPostProcessor<'TOutput> ppDef =
         PostProcessorCreator.create<'TOutput>
-            (shouldUseDynamicCodeGeneration df)
             ppDef.Transformers ppDef.Fusers
 
     let private failIfNotEmpty xs =
@@ -447,7 +439,7 @@ module DesigntimeFarkleBuild =
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
         let myLovelyGrammarDefinition, myWonderfulPostProcessorDefinition = createGrammarDefinitionEx df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> df myWonderfulPostProcessorDefinition
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulPostProcessorDefinition
         let myDearestGrammar = buildGrammarOnly myLovelyGrammarDefinition
         myDearestGrammar, myFavoritePostProcessor
 
@@ -460,4 +452,4 @@ module DesigntimeFarkleBuild =
         df
         |> createGrammarDefinitionEx
         |> snd
-        |> createPostProcessor<'TOutput> df
+        |> createPostProcessor<'TOutput>

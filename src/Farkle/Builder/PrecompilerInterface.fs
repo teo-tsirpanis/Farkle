@@ -88,7 +88,6 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Asse
         member _.Metadata = metadata
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = df
-    interface EligibleForDynamicCodeGeneration
 
 /// The typed edition of `PrecompilableDesigntimeFarkle`.
 [<Sealed>]

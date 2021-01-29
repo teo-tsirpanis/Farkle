@@ -205,11 +205,15 @@ let tests = testList "Designtime Farkle tests" [
         let runtime =
             "Test" ||=
                 List.map (fun x -> !@ (mkTerminal x) => id) testData
-            |> RuntimeFarkle.markForPrecompile
             |> RuntimeFarkle.build
 
-        for x, _, _ in testData do
-            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
+        // We will run the tests many times to ensure the dynamic post-rpocessors are created.
+        for i = 1 to 100 do
+            if i % 10 = 0 then
+                // We give some extra time for the asynchronously created dynamic post-processor to get ready.
+                Threading.Thread.Sleep(1)
+            for x, _, _ in testData do
+                Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
     }
 
     test "Parser application errors are correctly handled" {

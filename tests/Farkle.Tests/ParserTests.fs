@@ -31,21 +31,6 @@ let testParser grammarFile displayName text =
 
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
 
-let dynamicCodeJSONFSharp = lazy(
-    FSharp.JSON.designtime
-    |> RuntimeFarkle.markForPrecompile
-    |> RuntimeFarkle.build)
-
-let dynamicCodeJSONCSharp = lazy(
-    CSharp.JSON.Designtime
-    |> RuntimeFarkle.markForPrecompile
-    |> RuntimeFarkle.build)
-
-let dynamicCodeSimpleMathsCSharp = lazy(
-    CSharp.SimpleMaths.Designtime
-    |> RuntimeFarkle.markForPrecompile
-    |> RuntimeFarkle.build)
-
 [<Tests>]
 let tests = testList "Parser tests" [
     [
@@ -110,23 +95,6 @@ let tests = testList "Parser tests" [
         Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
     )
 
-    testProperty "The JSON parser produces the same results even when it uses dynamic code" (fun json ->
-        let jsonAsString = Chiron.Formatting.Json.format json
-        let farkleResult =
-            RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
-            |> Flip.Expect.wantOk "Farkle's parser failed"
-        let farkleFSharpDynamicCodeResult =
-            RuntimeFarkle.parseString dynamicCodeJSONFSharp.Value jsonAsString
-            |> Flip.Expect.wantOk "Farkle's F# dynamic code parser failed"
-        let farkleCSharpDynamicCodeResult =
-            RuntimeFarkle.parseString dynamicCodeJSONCSharp.Value jsonAsString
-            |> Flip.Expect.wantOk "Farkle's C# dynamic code parser failed"
-
-        Expect.equal farkleResult json "The JSON structure generated from Farkle's parser is different"
-        Expect.equal farkleFSharpDynamicCodeResult json "The JSON structure generated from Farkle's F# dynamic code parser is different"
-        Expect.equal farkleCSharpDynamicCodeResult json "The JSON structure generated from Farkle's C# dynamic code parser is different"
-    )
-
     testProperty "The calculator works well" (fun expr ->
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
@@ -137,13 +105,6 @@ let tests = testList "Parser tests" [
             |> Flip.Expect.wantOk "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )
-
-    testProperty "The calculator works well even even if it uses dynamic code" (fun expr ->
-        let exprAsString = SimpleMaths.renderExpression expr
-        // The dynamic post-processor generator had a problem with method
-        // groups like the one in the exponentiation operator's fuser.
-        let parsedExpr = dynamicCodeSimpleMathsCSharp.Value.Parse exprAsString
-        Expect.isOk parsedExpr "Parsing failed")
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
         let result = FSharp.GOLDMetaLanguage.runtime.Parse gmlSourceContent

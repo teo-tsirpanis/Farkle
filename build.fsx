@@ -215,8 +215,15 @@ Target.create "RunMSBuildTests" (fun _ ->
         }
     )
 
+    let resultsDirectory = Path.getDirectory msBuildTestProject
     for fx in testFrameworks do
-        dotNetRun msBuildTestProject (Some fx) DotNet.BuildConfiguration.Debug "" ""
+        msBuildTestProject
+        |> DotNet.test (fun p ->
+            {p with
+                Framework = Some fx
+                ResultsDirectory = Some resultsDirectory
+            }
+        )
 )
 
 Target.description "Runs all tests"

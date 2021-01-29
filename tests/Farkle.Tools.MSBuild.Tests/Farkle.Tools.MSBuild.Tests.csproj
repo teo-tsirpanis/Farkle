@@ -2,9 +2,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <VSTestLogger>Appveyor</VSTestLogger>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="../../src/Farkle/Farkle.fsproj" />
     <PackageReference Include="Farkle.Tools.MSBuild" Version="0.0.0-local" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
+    <PackageReference Include="Appveyor.TestLogger" Version="2.0.0" />
   </ItemGroup>
 </Project>

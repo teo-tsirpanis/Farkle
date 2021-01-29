@@ -7,6 +7,7 @@
 * __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
+* Dynamic code generation will be applied to post-processors that are frequently used, in a fashion similar to .NET's tiered compilation, regardless of whether their designtime Farkle is precompilable.
 * Build error reporting is improved. More build errors will be reported at the same time (without waiting for one to be fixed to show the next).
 * Fixed stack overflows when building deep designtime Farkles.
 
@@ -23,7 +24,7 @@
 * Farkle will now optimize precompilable designtime Farkles using dynamic code generation. This feature is only supported on .NET Standard 2.1 if the runtime supports dynamic code compilation.
 * An API for the `CharStream` type was published.
 * [An API for getting precompiled grammars](https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-precompiledgrammar.html) was published.
-* The tokenizer can be extended by user code. TODO: write documentation
+* The tokenizer can be extended by user code.
 * The runtime Farkle's extension methods became regular methods.
 * ~~Exceptions that might occur when a precompiled grammar fails to be loaded can be suppressed with an `AppContext` switch.~~ __Removed in Farkle 6.0.0__
 

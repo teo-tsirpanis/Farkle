@@ -7,7 +7,7 @@ It can be [installed from NuGet][nuget].
 ## Features
 
 * __Speed__: Farkle is fast. Its performance is a top priority and lots of time has been invested in its optimization.
-* __Language compatibility__: Farkle is usable from both C# and F#, with an intuitive API for each language.
+* __Language compatibility__: Farkle is usable from both C# and F#, with an intuitive API for each language. __It even supports C# 8.0's nullable reference types!__
 * __Fast development cycle__: Unlike parser generators, Farkle does not generate any source files. Your grammars are type-safe and created entirely from code, allowing features like IntelliSense and real-time syntax error reporting.
 * __Integration with MSBuild__: Farkle can optionally integrate with MSBuild to enable features like [ahead-of-time grammar building](the-precompiler.html) which drastically reduces startup times and catches grammar errors like LALR conflicts at compile time.
 * __Large file support__: Farkle can parse large files without entirely reading them to memory.

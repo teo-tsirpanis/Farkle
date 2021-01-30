@@ -79,7 +79,7 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Asse
     member _.Assembly = assembly
     member private _.InnerDesigntimeFarkle = df
     /// Tries to get the `PrecompiledGrammar` object, if it exists in the assembly.
-    member _.TryGetPrecompiledGrammar() =
+    member _.TryGetPrecompiledGrammar() : [<Nullable(2uy, 1uy)>] _ =
         match PrecompiledGrammar.GetAllFromAssembly(assembly).TryGetValue(name) with
         | true, pg -> Some pg
         | false, _ -> None

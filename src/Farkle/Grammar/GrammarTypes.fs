@@ -7,7 +7,6 @@ namespace Farkle.Grammar
 
 open Farkle.Collections
 open System
-open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
 open System.Runtime.CompilerServices

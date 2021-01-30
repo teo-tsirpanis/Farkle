@@ -195,7 +195,7 @@ module DesigntimeFarkleBuild =
                 | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
                     LALRSymbol.Nonterminal nonterminalMap.[nont]
                 | Symbol.Nonterminal nont ->
-                    let symbol = Nonterminal(uint32 nonterminals.Count, nont.Name)
+                    let symbol = Nonterminal(uint32 nonterminals.Count, dfName)
                     nonterminalMap.Add(nont, symbol)
                     nonterminals.Add(symbol)
                     nont.Freeze()
@@ -206,17 +206,17 @@ module DesigntimeFarkleBuild =
                 | Symbol.LineGroup lg ->
                     // We don't know yet if the grammar is line-based, so
                     // we queue it until the entire grammar is traversed.
-                    let term = newTerminal lg.Name
+                    let term = newTerminal dfName
                     groupMap.[lg] <- term
-                    addTerminalGroup lg.Name term lg.Transformer lg.GroupStart None
+                    addTerminalGroup dfName term lg.Transformer lg.GroupStart None
                     LALRSymbol.Terminal term
                 | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
                     LALRSymbol.Terminal groupMap.[bg]
                 | Symbol.BlockGroup bg ->
-                    let term = newTerminal bg.Name
+                    let term = newTerminal dfName
                     let gEnd = GroupEnd bg.GroupEnd
                     groupMap.[bg] <- term
-                    addTerminalGroup bg.Name term bg.Transformer bg.GroupStart (Some gEnd)
+                    addTerminalGroup dfName term bg.Transformer bg.GroupStart (Some gEnd)
                     LALRSymbol.Terminal term
 
             match lalrSym, builderSym with

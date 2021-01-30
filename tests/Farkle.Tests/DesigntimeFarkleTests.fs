@@ -153,15 +153,22 @@ let tests = testList "Designtime Farkle tests" [
     }
 
     test "Renaming designtime Farkles works" {
-        let runtime =
-            Terminals.int "Number"
-            |> DesigntimeFarkle.rename "Integer"
-            |> RuntimeFarkle.build
+        let doTest name (df: DesigntimeFarkle) =
+            let expectedName = sprintf "%s Renamed" df.Name
+            let (Nonterminal(_, startSymbolName)) =
+                df.Cast().Rename(expectedName).BuildUntyped().GetGrammar().StartSymbol
+            Expect.equal startSymbolName expectedName (sprintf "Renaming a %s had no effect" name)
 
-        let grammar = runtime.GetGrammar()
-        let (Nonterminal(_, startSymbolName)) = grammar.StartSymbol
-
-        Expect.equal startSymbolName "Integer" "Renaming a designtime Farkle had no effect"
+        Terminals.int "Number"
+        |> doTest "terminal"
+        "Nonterminal" ||= [!@ (Terminals.int "Number") |> asIs]
+        |> doTest "nonterminal"
+        literal "Literal"
+        |> doTest "literal"
+        Group.Line("Line Group", "//")
+        |> doTest "line group"
+        Group.Block("Block Group", "/*", "*/")
+        |> doTest "block group"
     }
 
     test "Many block groups can be ended by the same symbol" {

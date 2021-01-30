@@ -55,13 +55,19 @@ namespace Farkle.Tools.MSBuild.Tests
                 Untyped
             };
             var precompiledGrammarCount = PrecompiledGrammar.GetAllFromAssembly(Assembly.GetExecutingAssembly()).Count;
+            Assert.Equal(expected.Count, precompiledGrammarCount);
 
             foreach (var x in expected)
             {
-                var grammar = x.TryGetPrecompiledGrammar();
-                Assert.NotNull(grammar);
-                var grammarName = grammar.Value.GrammarName;
+                var precompiledGrammar = x.TryGetPrecompiledGrammar();
+                Assert.NotNull(precompiledGrammar);
+                var grammarName = precompiledGrammar!.Value.GrammarName;
                 Assert.Equal(x.Name, grammarName);
+
+                var actualGrammar = precompiledGrammar.Value.GetGrammar();
+                Assert.Equal(x.Name, actualGrammar.Properties.Name);
+                Assert.Equal(Grammar.GrammarSource.Precompiled, actualGrammar.Properties.Source);
+                DocumentationChecker.CheckDocumentation(actualGrammar);
             }
         }
     }

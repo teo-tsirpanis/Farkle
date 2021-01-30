@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Theodore Tsirpanis
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 using System;
 using Farkle.IO;
 

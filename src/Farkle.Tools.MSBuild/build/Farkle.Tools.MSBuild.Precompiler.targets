@@ -13,7 +13,7 @@
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="CheckForMSBuild16">
     <FarklePrecompileTask
-        AssemblyPath="@(IntermediateAssembly)"
+        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
         SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"

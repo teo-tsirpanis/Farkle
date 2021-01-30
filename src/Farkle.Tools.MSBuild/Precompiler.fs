@@ -48,16 +48,19 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
         | Error xs -> PrecompilingFailed(name, xs)
     | Error x -> DiscoveringFailed x)
 
-type private PrecompilerContext(path, references: AssemblyReference seq, log: ILogger) as this =
-    inherit AssemblyLoadContext(sprintf "Farkle.Tools precompiler for %s" path, true)
+type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) as this =
+    inherit AssemblyLoadContext(
+        sprintf "Farkle.Tools precompiler for %s" (Path.GetFileNameWithoutExtension path),
+        true)
     let dict =
+        log.Verbose("References:")
         references
         |> Seq.choose (fun asm ->
             if asm.IsReferenceAssembly then
                 None
             else
-                log.Verbose("Using reference from {AssemblyPath}", asm.FileName)
-                Some (asm.AssemblyName.FullName, path))
+                log.Verbose("{AssemblyName}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
+                Some (asm.AssemblyName.FullName, asm.FileName))
         |> readOnlyDict
     let asm =
         // We first read the assembly into a byte array to avoid the runtime locking the file.

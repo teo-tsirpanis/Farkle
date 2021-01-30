@@ -3,7 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+using static Chiron;
 using Farkle.Builder;
+using Farkle.Samples.FSharp;
 using System.Collections.Generic;
 using PCDF = Farkle.Builder.PrecompilableDesigntimeFarkle<int>;
 
@@ -14,7 +16,8 @@ namespace Farkle.Tools.MSBuild.Tests
         private static PCDF CreatePCDF(string name) => Terminals.Int32(name).MarkForPrecompile();
 
         // The following designtime Farkles must be discovered.
-        public static readonly PCDF Public = CreatePCDF(nameof(Public));
+        public static readonly PrecompilableDesigntimeFarkle<Json> Public =
+            JSON.designtime.Rename("JSON").MarkForPrecompile();
         internal static readonly PCDF Internal = CreatePCDF(nameof(Internal));
         private static readonly PCDF Private = CreatePCDF(nameof(Private));
 
@@ -24,13 +27,13 @@ namespace Farkle.Tools.MSBuild.Tests
         }
 
         public static readonly PCDF MarkedAgain =
-            Public.Rename(nameof(MarkedAgain)).MarkForPrecompile();
+            Internal.Rename(nameof(MarkedAgain)).MarkForPrecompile();
 
         public static readonly PrecompilableDesigntimeFarkle Untyped =
             Terminal.Literal(nameof(Untyped)).MarkForPrecompile();
 
         // And the following must not.
-        public static readonly PCDF SameReference = Public;
+        public static readonly PCDF SameReference = Internal;
         public static PCDF Mutable = CreatePCDF(nameof(Mutable));
         public readonly PCDF InstanceField = CreatePCDF(nameof(InstanceField));
         public PCDF InstanceProperty => CreatePCDF(nameof(InstanceProperty));

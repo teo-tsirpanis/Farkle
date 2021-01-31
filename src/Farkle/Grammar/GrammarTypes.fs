@@ -299,11 +299,11 @@ type GrammarProperties = {
     Source: GrammarSource
 }
 
-/// This interface is implemented by <see cref="Grammar"/>s and
+/// <summary>This interface is implemented by <see cref="Grammar"/>s and
 /// <see cref="RuntimeFarkle{TResult}"/>s and provides a uniform
 /// way to work with grammars inside runtime Farkles and grammars
 /// themselves, while accounting for potential build errors in an
-/// exception-free way.
+/// exception-free way.</summary>
 type IGrammarProvider =
     /// <summary>Whether the grammar has been successfuly built.</summary>
     /// <remarks>A <see langword="true"/> value of this property indicates

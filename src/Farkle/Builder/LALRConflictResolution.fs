@@ -40,11 +40,11 @@ type ConflictResolutionDecision =
     /// <remarks>In Shift-Reduce conflicts it means to shift.
     /// In Reduce-Reduce conflicts it means to reduce the first production.</remarks>
     | ChooseOption1
-    /// The resolver chose the second option.
+    /// <summary>The resolver chose the second option.</summary>
     /// <remarks>In Shift-Reduce conflicts it means to reduce.
     /// In Reduce-Reduce conflicts it means to reduce the second production.</remarks>
     | ChooseOption2
-    /// The resolver chose neither option.
+    /// <summary>The resolver chose neither option.</summary>
     /// <remarks>The parser will fail with a syntax error.</remarks>
     | ChooseNeither
     /// The resolver cannot choose an action. The reason is specified.

@@ -128,7 +128,7 @@ type BuildError =
         | IndistinguishableSymbols xs ->
             let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
             sprintf "Cannot distinguish between symbols: %s. \
-The conflict is caused when two or more terminal definitions can accept the same text." symbols
+The conflict is caused when two or more regular expressions can match the same text." symbols
         | NullableSymbol x ->
             sprintf "The symbol %s can contain zero characters." <| DFASymbol.toString x
         | LALRConflict xs -> xs.ToString()

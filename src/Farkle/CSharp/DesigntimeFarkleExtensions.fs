@@ -127,6 +127,7 @@ type DesigntimeFarkleExtensions =
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TCollection}"/>
     /// that recognizes many occurrences of the given
     /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
+    /// <param name="df">The designtime Farkle to recognize many times.</param>
     /// <param name="atLeastOne">Whether at least one occurrence
     /// is required. Defaults to false.</param>
     /// <typeparam name="TCollection">The type of the collection to
@@ -143,8 +144,11 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TCollection}"/>
     /// that recognizes many occurrences of the given
-    /// <see cref="DesigntimeFarkle{TResult}"/>, separated by a
+    /// <see cref="DesigntimeFarkle{TResult}"/>, separated by another
     /// <see cref="DesigntimeFarkle"/>.</summary>
+    /// <param name="df">The designtime Farkle to recognize many times.</param>
+    /// <param name="separator">The designtime Farkle that
+    /// separates instances of <paramref name="df"/>.</param>
     /// <param name="atLeastOne">Whether at least one occurrence
     /// is required. Defaults to false.</param>
     /// <typeparam name="TCollection">The type of the collection to

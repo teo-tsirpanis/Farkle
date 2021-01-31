@@ -31,7 +31,7 @@ type PrecompiledGrammar private(asm, grammarName, resourceName) =
 
     static let newPrecompilerLoaderException innerExn =
         PrecompilerLoaderException("Failed to load a precompiled grammar. Try rebuilding \
-the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the issue persists, \
+the assembly with the latest version of Farkle and Farkle.Tools.MSBuild. If the problem persists, \
 please open an issue on GitHub", innerExn)
 
     let grammarThunk = lazy(

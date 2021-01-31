@@ -17,21 +17,24 @@ open System.Runtime.CompilerServices
 /// or an exception might be thrown.</para></remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
 type DesigntimeFarkle =
-    /// The name of the starting symbol.
+    /// <summary>The designtime Farkle's name.</summary>
+    /// <remarks>A totally informative property, it matches
+    /// the corresponding grammar symbol's name. Many designtime
+    /// Farkles in a grammar can have the same name.</remarks>
     abstract Name: string
     /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
     abstract Metadata: GrammarMetadata
 
 /// <summary>An object representing a grammar symbol created by Farkle.Builder.
-/// It is usually either a terminal or a nonterminal, containing other
-/// designtime Farkles.</summary>
+/// It corresponds to either a standalone terminal or a nonterminal
+/// that contains other designtime Farkles.</summary>
 /// <remarks><para>Designtime Farkles cannot be used to parse text but can be
 /// composed into larger designtime Farkles. To actually use them, they
 /// have to be converted to a <see cref="RuntimeFarkle{T}"/> which however
-/// is not composable. This conversion is performed by the <c>RuntimeFarkle.build</c>
+/// is not composable. This one-way conversion is performed by the <c>RuntimeFarkle.build</c>
 /// function or the <c>Build</c> extension method.</para>
 /// <para>This interface has no members on its own; they are
-/// inherited from <see cref="DesigntimeFarkle"/></para>
+/// inherited from <see cref="DesigntimeFarkle"/>.</para>
 /// <para>User code must not implement this interface,
 /// or an exception might be thrown.</para></remarks>
 /// <typeparam name="T">The type of the objects this grammar generates.</typeparam>

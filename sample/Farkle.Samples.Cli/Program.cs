@@ -5,7 +5,6 @@
 
 using System;
 using System.IO;
-using Farkle.Samples;
 using static Farkle.Builder.DesigntimeFarkleBuild;
 
 namespace Farkle.Samples.Cli

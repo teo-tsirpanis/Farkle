@@ -76,7 +76,7 @@ let testArguments = "--nunit-summary TestResults.xml"
 
 let testFrameworks = ["net5.0"]
 
-let localPackagesFolder = "./tests/Farkle.Tools.MSBuild.Tests/packages/"
+let localPackagesFolder = "./tests/packages/"
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 

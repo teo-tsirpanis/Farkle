@@ -1,12 +1,12 @@
 // Copyright (c) 2021 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
 using System;
 using Farkle.IO;
 
-namespace Farkle.Samples.CSharp
+namespace Farkle.Tools.MSBuild.Tests
 {
     /// <summary>
     /// A dummy class that tests some edge-

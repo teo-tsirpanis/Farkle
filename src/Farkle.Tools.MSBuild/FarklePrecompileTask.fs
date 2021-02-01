@@ -5,10 +5,13 @@
 
 namespace Farkle.Tools.MSBuild
 
+open Farkle.Builder
+open Farkle.Grammar
 open Farkle.Tools.Precompiler
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
+open Mono.Cecil
 open Sigourney
 open System
 open System.IO
@@ -82,4 +85,18 @@ type FarklePrecompileTask() =
         // There are some errors (such as duplicate grammar name errors)
         // that are errors no matter what the user said.
         | Error () -> false
-    override _.DoWeave asm = weaveAssembly precompiledGrammars asm
+    override _.DoWeave asm =
+        use stream = new MemoryStream()
+        for grammar in precompiledGrammars do
+            EGT.toStreamNeo stream grammar
+
+            // We will try to read the EGTneo file we just
+            // generated as a form of self-verification.
+            stream.Position <- 0L
+            EGT.ofStream stream |> ignore
+
+            let name = PrecompiledGrammar.GetResourceName grammar
+            let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
+            asm.MainModule.Resources.Add res
+            stream.SetLength 0L
+        not precompiledGrammars.IsEmpty

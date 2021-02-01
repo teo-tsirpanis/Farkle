@@ -15,7 +15,6 @@ type PrecompilerResult =
 
 #if !NETFRAMEWORK
 open Farkle.Common
-open Mono.Cecil
 open Serilog
 open Sigourney
 open System.Diagnostics
@@ -94,21 +93,6 @@ let private getPrecompilableGrammars log references path =
     finally
         alc.Unload()
 
-let weaveAssembly pcdfs (asm: AssemblyDefinition) =
-    for grammar in pcdfs do
-        use stream = new MemoryStream()
-        EGT.toStreamNeo stream grammar
-
-        // We will try to read the EGTneo file we just
-        // generated as a form of self-verification.
-        stream.Position <- 0L
-        EGT.ofStream stream |> ignore
-
-        let name = PrecompiledGrammar.GetResourceName grammar
-        let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
-        asm.MainModule.Resources.Add res
-    not (List.isEmpty pcdfs)
-
 let discoverAndPrecompile log references path =
     let pcdfs = getPrecompilableGrammars log references path
 
@@ -135,6 +119,4 @@ let discoverAndPrecompile (log: Serilog.ILogger) _ _ =
     log.Error("Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). \
 See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
     Ok []
-
-let weaveAssembly _ _ = false
 #endif

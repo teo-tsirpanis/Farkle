@@ -27,7 +27,7 @@ namespace Farkle.Tools.MSBuild.Tests
         }
 
         public static readonly PCDF MarkedAgain =
-            Internal.Rename(nameof(MarkedAgain)).MarkForPrecompile();
+            Internal.InnerDesigntimeFarkle.Rename(nameof(MarkedAgain)).MarkForPrecompile();
 
         public static readonly PrecompilableDesigntimeFarkle Untyped =
             Terminal.Literal(nameof(Untyped)).MarkForPrecompile();
@@ -38,10 +38,6 @@ namespace Farkle.Tools.MSBuild.Tests
         public readonly PCDF InstanceField = CreatePCDF(nameof(InstanceField));
         public PCDF InstanceProperty => CreatePCDF(nameof(InstanceProperty));
         public static PCDF StaticProperty => CreatePCDF(nameof(StaticProperty));
-        public static readonly DesigntimeFarkle<int> Unmarked = CreatePCDF(nameof(Unmarked));
-
-        public static readonly DesigntimeFarkle UnmarkedUntyped =
-            Terminal.Literal(nameof(UnmarkedUntyped)).MarkForPrecompile();
 
         public static HashSet<PrecompilableDesigntimeFarkle> All => new ()
         {

@@ -65,6 +65,7 @@
     <Compile Include="RuntimeFarkle.fs" />
     <Compile Include="Builder/RegexGrammar.fs" />
     <Compile Include="CSharp/DesigntimeFarkleExtensions.fs" />
+    <Compile Include="CSharp/PrecompilerExtensions.fs" />
     <Compile Include="DebugTypeProxies.fs" />
   </ItemGroup>
   <ItemGroup>

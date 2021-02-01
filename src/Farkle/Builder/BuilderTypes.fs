@@ -112,6 +112,9 @@ type BuildError =
     | RegexParseError of Symbol: DFASymbol * Error: ParserError
     /// The grammar has more symbols than the supported limit.
     | SymbolLimitExceeded
+    /// A precompilable designtime Farkle was attempted to be
+    /// built with its grammar having not been precompiled.
+    | GrammarNotPrecompiled
     /// The maximum number of terminals and nonterminals
     /// a grammar built by Farkle can have.
     /// Currently set to 2^20; sixteen times more of what
@@ -144,6 +147,9 @@ the production builder called 'empty' (or 'ProductionBuilder.Empty' in C#)." xs
             sprintf "A grammar built by Farkle cannot have \
 more than %d terminals or more than %d nonterminals."
                 BuildError.SymbolLimit BuildError.SymbolLimit
+        | GrammarNotPrecompiled -> "The grammar has not been precompiled. \
+Make sure that the package Farkle.Tools.MSBuild is installed. Learn more at \
+https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"
 
 /// A commonly used set of characters.
 type PredefinedSet = private {

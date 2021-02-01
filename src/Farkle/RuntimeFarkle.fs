@@ -166,15 +166,33 @@ module RuntimeFarkle =
     /// If the designtime Farkle is marked for precompilation and a suitable
     /// precompiled grammar is found, building it again will be avoided.
     let build df =
-        let theFabledGrammar = PrecompilerInterface.getGrammarOrBuild df
-        let theTriumphantPostProcessor = DesigntimeFarkleBuild.buildPostProcessorOnly df
+        let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
     /// Creates a syntax-checking `RuntimeFarkle`
     /// from an untyped `DesigntimeFarkle`.
     let buildUntyped df =
         df
-        |> PrecompilerInterface.getGrammarOrBuild
+        |> DesigntimeFarkleBuild.createGrammarDefinition
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
+
+    /// Creates a `RuntimeFarkle` from the given typed `PrecompilableDesigntimeFarkle`.
+    /// In case the designtime Farkle has not been precompiled, the `RuntimeFarkle` will
+    /// fail every time it is used. The precompiler will run by installing the package
+    /// `Farkle.Tools.MSBuild`. Learn more at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
+    let buildPrecompiled (pcdf: PrecompilableDesigntimeFarkle<_>) =
+        let grammar = PrecompilerInterface.buildPrecompiled pcdf
+        let pp = DesigntimeFarkleBuild.buildPostProcessorOnly pcdf.InnerDesigntimeFarkle
+        RuntimeFarkle<_>.CreateMaybe pp grammar
+
+    /// Creates a syntax-checking `RuntimeFarkle` from the given untyped `PrecompilableDesigntimeFarkle`.
+    /// In case the designtime Farkle has not been precompiled, the `RuntimeFarkle` will
+    /// fail every time it is used. The precompiler will run by installing the package
+    /// `Farkle.Tools.MSBuild`. Learn more at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
+    let buildPrecompiledUntyped pcdf =
+        pcdf
+        |> PrecompilerInterface.buildPrecompiled
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
     [<MethodImpl(MethodImplOptions.NoInlining)>]

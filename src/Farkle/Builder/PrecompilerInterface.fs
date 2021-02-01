@@ -12,8 +12,9 @@ open System
 open System.Reflection
 open System.Runtime.CompilerServices
 
-module DFB = DesigntimeFarkleBuild
-
+/// This exception gets thrown when Farkle fails to load a precompiled grammar.
+/// Such exceptions indicate bugs and should they ever occur, opening an issue
+/// on GitHub would be very helpful.
 type PrecompilerLoaderException(msg, innerExn) = inherit FarkleException(msg, innerExn)
 
 /// An object that represents a precompiled grammar inside an assembly.
@@ -58,59 +59,48 @@ please open an issue on GitHub", innerExn)
     static member GetAllFromAssembly asm =
         assemblyCache.GetValue(asm, getAllPrecompiledGrammars)
 
-/// A kind of designtime Farkle whose grammar can be precompiled ahead of time.
+/// <summary>An object holding a designtime Farkle whose
+/// grammar can be precompiled ahead of time.</summary>
+/// <remarks><para>Precompilable designtime Farkles are
+/// created by the <c>RuntimeFarkle.markForPrecompile</c>
+/// function, the <c>MarkForPrecompile</c> extension method,
+/// or their untyped variations. In F# they are built using
+/// the <c>RuntimeFarkle.buildPrecompiled</c> function or
+/// its untyped variation.</para>
+/// <para>Despite their name, they lack the most fundamental
+/// property of designtime Farkles: composability. A designtime
+/// Farkle is meant to be marked for precompilation once, at the
+/// end of the grammar building process.</para></remarks>
+/// <seealso cref="PrecompilableDesigntimeFarkle{T}"/>
 type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Assembly) =
-    let df =
-        match df with
-        | :? PrecompilableDesigntimeFarkle as pcdf -> pcdf.InnerDesigntimeFarkle
-        | _ -> df
-    // We have to be 100% sure that the designtime Farkle's
-    // name never changes because it is part of its identity.
-    // All its implementations return a fixed value, but that's
-    // an informal rule.
     let name = df.Name
-    let metadata = df.Metadata
     let grammarDef = DesigntimeFarkleBuild.createGrammarDefinition df
-    /// <inheritDoc cref="DesigntimeFarkle.Name"/>
+    /// The name of the designtime Farkle held by this object.
     member _.Name = name
     /// The `GrammarDefinition` of this designtime Farkle.
     member _.GrammarDefinition = grammarDef
-    /// The assembly in which the designtime Farkle was declared.
+    /// The assembly from which this object was created.
+    /// It must match the assembly that is being compiled.
     member _.Assembly = assembly
-    member private _.InnerDesigntimeFarkle = df
+    /// The designtime Farkle held by this object.
+    member _.InnerDesigntimeFarkle = df
     /// Tries to get the `PrecompiledGrammar` object, if it exists in the assembly.
     member _.TryGetPrecompiledGrammar() : [<Nullable(2uy, 1uy)>] _ =
         match PrecompiledGrammar.GetAllFromAssembly(assembly).TryGetValue(name) with
         | true, pg -> Some pg
         | false, _ -> None
-    interface DesigntimeFarkle with
-        member _.Name = name
-        member _.Metadata = metadata
-    interface DesigntimeFarkleWrapper with
-        member _.InnerDesigntimeFarkle = df
 
-/// The typed edition of `PrecompilableDesigntimeFarkle`.
+/// <summary>The typed edition of <see cref="PrecompilableDesigntimeFarkle"/>.</summary>
+/// <seealso cref="PrecompilableDesigntimeFarkle"/>
 [<Sealed>]
 type PrecompilableDesigntimeFarkle<[<Nullable(2uy)>] 'T> internal(df: DesigntimeFarkle<'T>, assembly) =
-    inherit PrecompilableDesigntimeFarkle(
-        (match df with :? PrecompilableDesigntimeFarkle<'T> as pcdf -> pcdf.InnerDesigntimeFarkle | _ -> df),
-        assembly)
-    member private _.InnerDesigntimeFarkle = df
-    interface DesigntimeFarkle<'T>
+    inherit PrecompilableDesigntimeFarkle(df, assembly)
+    /// The typed designtime Farkle held by this object.
+    member _.InnerDesigntimeFarkle = df
 
-/// Functions to create precompilable designtime
-/// Farkles and to load precompiled grammars from them.
-/// This module is the bridge between the RuntimeFarkle and precompiler APIs.
 module internal PrecompilerInterface =
 
-    /// Tries to find a precompiled grammar for the given
-    /// designtime Farkle, and returns it if found.
-    let internal getGrammarOrBuild (df: DesigntimeFarkle) =
-        match df with
-        | :? PrecompilableDesigntimeFarkle as pcdf ->
-            let grammar =
-                match pcdf.TryGetPrecompiledGrammar() with
-                | Some pg -> Ok <| pg.GetGrammar()
-                | None -> DFB.buildGrammarOnly pcdf.GrammarDefinition
-            grammar
-        | df -> df |> DFB.createGrammarDefinition |> DFB.buildGrammarOnly
+    let buildPrecompiled (df: PrecompilableDesigntimeFarkle) =
+        match df.TryGetPrecompiledGrammar() with
+        | Some pg -> Ok <| pg.GetGrammar()
+        | None -> Error [BuildError.GrammarNotPrecompiled]

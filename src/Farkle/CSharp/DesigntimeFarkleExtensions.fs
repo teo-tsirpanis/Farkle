@@ -52,32 +52,6 @@ type DesigntimeFarkleExtensions =
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
     static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
-    [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
-    /// <summary>Marks a <see cref="DesigntimeFarkle{TResult}"/> as available to have
-    /// its grammar precompiled ahead of time.</summary>
-    /// <remarks>This function has to be directly called from
-    /// user code. See more, including usage restrictions at
-    /// <a href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"/></remarks>
-    /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompile"/>
-    static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
-        // This function must mot forward to RuntimeFarkle's
-        // corresponding function. It would register it
-        // with Farkle's own assembly otherwise.
-        let asm = Reflection.Assembly.GetCallingAssembly()
-        PrecompilableDesigntimeFarkle<_>(df, asm)
-    [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
-    /// <summary>Marks an untyped <see cref="DesigntimeFarkle{TResult}"/>
-    /// as available to have its grammar precompiled ahead of time.</summary>
-    /// <remarks>This function has to be directly called from
-    /// user code. See more, including usage restrictions at
-    /// <a href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"/></remarks>
-    /// <seealso cref="Farkle.RuntimeFarkle.MarkForPrecompileU"/>
-    static member MarkForPrecompile (df: DesigntimeFarkle) =
-        // This function must mot forward to RuntimeFarkle's
-        // corresponding function. It would register it
-        // with Farkle's own assembly otherwise.
-        let asm = Reflection.Assembly.GetCallingAssembly()
-        PrecompilableDesigntimeFarkle(df, asm)
     [<Extension>]
     /// <summary>Sets a custom <see cref="GrammarMetadata"/>
     /// object to a typed designtime Farkle.</summary>

@@ -16,7 +16,6 @@
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
-        SuppressGrammarErrors="$(FarkleSuppressGrammarErrors)"
         GenerateDocumentation="$(FarkleGenerateDocumentation)"
         DocumentationOutputPath="$(OutputPath)">
       <Output TaskParameter="GeneratedDocumentationFiles" ItemName="FileWrites"/>

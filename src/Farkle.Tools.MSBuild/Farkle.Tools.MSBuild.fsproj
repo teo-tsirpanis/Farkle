@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
     <Description>Farkle's integration with MSBuild. This package supports facilities like the precompiler and the template creator.</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>

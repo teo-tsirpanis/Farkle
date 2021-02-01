@@ -24,8 +24,7 @@ open System.Runtime.CompilerServices
 open System.Runtime.Loader
 
 let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
-    asm
-    |> PrecompilerDiscoverer.discover
+    PrecompilerDiscoverer.discover log asm
     |> List.map (function
     | Ok pcdf ->
         let name = pcdf.Name

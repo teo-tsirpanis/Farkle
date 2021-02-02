@@ -43,6 +43,7 @@ let private unescapeString (data: ReadOnlySpan<_>) =
         i <- i + 1
     sb.ToString()
 
+[<CompiledName("Designtime")>]
 let designtime =
     let escapedChar = char '\\' |> optional <&> any
     let number = Terminals.genericUnsigned<int> "Number"
@@ -133,6 +134,7 @@ let designtime =
     regex
     |> DesigntimeFarkle.caseSensitive true
 
+[<CompiledName("Runtime")>]
 let runtime = RuntimeFarkle.build designtime
 
 let internal DoParse x =

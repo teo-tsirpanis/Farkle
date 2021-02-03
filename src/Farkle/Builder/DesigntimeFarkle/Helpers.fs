@@ -7,6 +7,7 @@ namespace Farkle.Builder
 
 open Farkle.Common
 open System
+open System.Runtime.CompilerServices
 
 [<AbstractClass; Sealed>]
 /// A helper static class to create terminals.
@@ -18,7 +19,7 @@ type Terminal =
     /// the terminal's position and data to <typeparamref name="T"/>.
     /// Must not be null.</param>
     /// <param name="regex">The terminal's corresponding regular expression.</param>
-    static member Create (name, fTransform: T<'T>, regex) =
+    static member Create<[<Nullable(0uy)>] 'T>(name, fTransform: T<'T>, regex) =
         nullCheck "name" name
         nullCheck "fTransform" fTransform
         Terminal(name, regex, fTransform) :> DesigntimeFarkle<_>
@@ -60,7 +61,7 @@ type Nonterminal =
     /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
     /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
     /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
-    static member Create(name) =
+    static member Create<[<Nullable(0uy)>] 'T>(name): Nonterminal<'T> =
         nullCheck "name" name
         {
             _Name = name
@@ -69,10 +70,10 @@ type Nonterminal =
 
     /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
     /// a nonterminal with a given name and productions.</summary>
-    static member Create(name, firstProduction, [<ParamArray>] productions) =
+    static member Create<[<Nullable(0uy)>] 'T>(name, firstProduction, [<ParamArray>] productions) =
         let nont = Nonterminal.Create name
         nont.SetProductions(firstProduction, productions)
-        nont :> DesigntimeFarkle<_>
+        nont :> DesigntimeFarkle<'T>
 
     /// <inheritdoc cref="Farkle.Builder.Untyped.Nonterminal.Create" />
     static member CreateUntyped(name) = Untyped.Nonterminal.Create name
@@ -98,7 +99,7 @@ type Group =
     /// the group's position and data to <typeparamref name="T"/>. Must not be null.
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do not include the new line that end it.</param>
-    static member Line(name, groupStart, fTransform: T<'T>) =
+    static member Line<[<Nullable(0uy)>] 'T>(name, groupStart, fTransform: T<'T>) =
         LineGroup(name, groupStart, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a block group. Block groups end with a string literal.</summary>
     /// <param name="name">The group's name.</param>
@@ -110,7 +111,7 @@ type Group =
     /// the group's position and data to <typeparamref name="T"/>. Must not be null.
     /// The given position is the position where <paramref name="groupStart"/> starts
     /// and the group's data do include <paramref name="groupEnd"/>.</param>
-    static member Block(name, groupStart, groupEnd, fTransform: T<'T>) =
+    static member Block<[<Nullable(0uy)>] 'T>(name, groupStart, groupEnd, fTransform: T<'T>) =
         BlockGroup(name, groupStart, groupEnd, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a line group that does not contain any significant
     /// information for the parsing application.</summary>

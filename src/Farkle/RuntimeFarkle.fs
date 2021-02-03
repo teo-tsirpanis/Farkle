@@ -53,7 +53,7 @@ type RuntimeFarkle<[<Nullable(2uy)>] 'TResult> = internal {
     TokenizerFactory: TokenizerFactory
 }
 with
-    static member internal CreateMaybe postProcessor grammarMaybe =
+    static member internal CreateMaybe postProcessor grammarMaybe: RuntimeFarkle<'TResult> =
         {
             Grammar = grammarMaybe
             PostProcessor = postProcessor
@@ -64,7 +64,7 @@ with
     static member Create(grammar, postProcessor) =
         grammar
         |> Ok
-        |> RuntimeFarkle<_>.CreateMaybe postProcessor
+        |> RuntimeFarkle<'TResult>.CreateMaybe postProcessor
 
     /// Returns whether building was successful.
     /// If loaded from an EGT file, it will always return true.
@@ -288,7 +288,8 @@ type RuntimeFarkle<'TResult> with
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     [<Obsolete("Streams are supposed to contain binary \
 data; not text. Parse a TextReader instead.")>]
-    member this.Parse(inputStream, [<Optional; Nullable(2uy)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
+    member this.Parse(inputStream, [<Optional; Nullable(2uy)>] encoding,
+        [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
         parseStream this doLazyLoad encoding inputStream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="textReader">The text reader to parse.</param>
@@ -303,7 +304,8 @@ data; not text. Parse a TextReader instead.")>]
     /// <returns>A new runtime Farkle with ite post-
     /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.ChangePostProcessor pp = changePostProcessor pp this
+    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: PostProcessor<'TNewResult>) =
+        changePostProcessor pp this
     /// <summary>Parses and post-processes a file.</summary>
     /// <param name="path">The path of the file to parse.</param>
     /// <returns>An F# result type containing either the

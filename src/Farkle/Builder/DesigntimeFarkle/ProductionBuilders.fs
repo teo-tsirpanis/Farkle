@@ -10,7 +10,7 @@ open Farkle.Common
 open Farkle.Collections
 open System
 open System.Collections.Immutable
-open System.Runtime.InteropServices
+open System.Runtime.CompilerServices
 
 [<Sealed>]
 /// <summary>The base, untyped class of the production builders.</summary>
@@ -57,7 +57,7 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     static member Empty = empty
     member _.Append(sym) = ProductionBuilder(members.Add sym, cpToken)
     member x.Append(lit) = x.Append(Literal lit)
-    member _.Extend(df: DesigntimeFarkle<'T1>) =
+    member _.Extend<[<Nullable(0uy)>] 'T1>(df: DesigntimeFarkle<'T1>) =
         ProductionBuilder<'T1>(members.Add df, members.Count, cpToken)
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// a read-only span of all the production's members as objects.</summary>
@@ -65,15 +65,15 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     ///     <para>This method is intended to be used when finishing
     ///     a production with many significant members.</para>
     /// </remarks>
-    member _.FinishRaw(fuser: F<'TOutput>) =
+    member _.FinishRaw<[<Nullable(0uy)>] 'TOutput>(fuser: F<'TOutput>) =
         Production<'TOutput>(members, FuserData.CreateRaw fuser, cpToken)
-    member x.FinishFSharp f = x.FinishRaw(fun _ -> f())
-    member _.Finish(f: Func<'TOutput>) =
+    member x.FinishFSharp<[<Nullable(0uy)>] 'TOutput>(f: _ -> 'TOutput) = x.FinishRaw(fun _ -> f())
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
         Production<'TOutput>(members, fuserData, cpToken)
     /// <summary>Creates a <see cref="Production{T}"/> that
     /// always returns a constant value.</summary>
-    member _.FinishConstant(v: 'TOutput) =
+    member _.FinishConstant<[<Nullable(0uy)>] 'TOutput>(v: 'TOutput) =
         Production<'TOutput>(members, FuserData.CreateConstant v, cpToken)
     member _.WithPrecedence(cpToken) =
         nullCheck "cpToken" cpToken

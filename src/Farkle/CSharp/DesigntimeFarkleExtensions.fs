@@ -43,11 +43,12 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Changes the name of a <see cref="DesigntimeFarkle{TResult}"/>.</summary>
     /// <remarks>Useful for diagnostic purposes.</remarks>
-    static member Rename (df: DesigntimeFarkle<'TResult>, name) = DesigntimeFarkle.rename name df
+    static member Rename<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, name) =
+        DesigntimeFarkle.rename name df
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/>
     /// into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
-    static member Build (df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
+    static member Build<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
@@ -65,37 +66,38 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Sets an <see cref="Farkle.Builder.OperatorPrecedence.OperatorScope"/>
     /// to a typed designtime Farkle. Any previous ones -if exist- are discarded.</summary>
-    static member WithOperatorScope (df: DesigntimeFarkle<'TResult>, opScope) =
+    static member WithOperatorScope<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, opScope) =
         DesigntimeFarkle.withOperatorScope opScope df
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// is case sensitive.</summary>
-    static member CaseSensitive (df: DesigntimeFarkle<'TResult>, [<Optional; DefaultParameterValue(true)>] x) =
+    static member CaseSensitive<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, [<Optional; DefaultParameterValue(true)>] x) =
         DesigntimeFarkle.caseSensitive x df
     [<Extension>]
     /// <summary>Controls whether the given <see cref="DesigntimeFarkle{TResult}"/>
     /// would automatically ignore whitespace in input text.</summary>
-    static member AutoWhitespace (df: DesigntimeFarkle<'TResult>, x) =
+    static member AutoWhitespace<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, x) =
         DesigntimeFarkle.autoWhitespace x df
     [<Extension>]
     /// <summary>Adds a symbol specified by the given <see cref="Regex"/>
     /// that will be ignored in input text.</summary>
-    static member AddNoiseSymbol (df: DesigntimeFarkle<'TResult>, name, regex) =
+    static member AddNoiseSymbol<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, name, regex) =
         DesigntimeFarkle.addNoiseSymbol name regex df
     [<Extension>]
     /// <summary>Adds a new line comment in the given
     /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
-    static member AddLineComment (df: DesigntimeFarkle<'TResult>, commentStart) =
+    static member AddLineComment<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, commentStart) =
         DesigntimeFarkle.addLineComment commentStart df
     [<Extension>]
     /// <summary>Adds a new block comment in the given
     /// <see cref="DesigntimeFarkle{TResult}"/>.</summary>
-    static member AddBlockComment (df: DesigntimeFarkle<'TResult>, commentStart, commentEnd) =
+    static member AddBlockComment<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, commentStart, commentEnd) =
         DesigntimeFarkle.addBlockComment commentStart commentEnd df
     [<Extension>]
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TResult}"/>
     /// that transforms the output of the given one with the given delegate.</summary>
-    static member Select(df: DesigntimeFarkle<'TResult>, f): DesigntimeFarkle<'TConverted> =
+    static member Select<[<Nullable(0uy)>] 'TResult, [<Nullable(0uy)>] 'TConverted>
+        (df: DesigntimeFarkle<'TResult>, f): DesigntimeFarkle<'TConverted> =
         df |>> (FuncConvert.FromFunc<_,_> f)
     [<Extension>]
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TCollection}"/>
@@ -130,7 +132,7 @@ type DesigntimeFarkleExtensions =
     /// <see cref="System.Collections.Generic.ICollection{TResult}"/>
     /// and have a parameterless constructor.</typeparam>
     /// <seealso cref="Many"/>
-    static member SeparatedBy<'TResult, 'TCollection
+    static member SeparatedBy<[<Nullable(0uy)>] 'TResult, 'TCollection
         when 'TCollection :> ICollection<'TResult>
             and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'TResult>, separator: DesigntimeFarkle,
             [<Optional; DefaultParameterValue(false)>] atLeastOne): DesigntimeFarkle<'TCollection> =

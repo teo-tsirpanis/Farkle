@@ -5,8 +5,11 @@
 
 namespace Farkle.Monads
 
-/// [omit]
+#if MONADS_PUBLIC
+module Either =
+#else
 module internal Either =
+#endif
 
     let rec doWhile fGuard fBody =
         if fGuard() then

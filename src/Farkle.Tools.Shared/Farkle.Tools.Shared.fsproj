@@ -2,9 +2,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);MONADS_PUBLIC</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
+    <Compile Include="../Farkle/Monads.fs" />
     <Compile Include="ResourceLoader.fs" />
     <Compile Include="PrecompiledAssemblyFileLoader.fs" />
     <Compile Include="Templating/TemplateTypes.fs" />
@@ -12,6 +14,8 @@
     <Compile Include="Templating/HtmlFunctions.fs" />
     <Compile Include="Templating/TemplateUtilities.fs" />
     <Compile Include="Templating/TemplateEngine.fs" />
+  </ItemGroup>
+  <ItemGroup>
     <BuiltinTemplate Include="builtin-templates/*.scriban" />
     <EmbeddedResource Include="@(BuiltinTemplate)">
       <LogicalName>%(FileName)%(Extension)</LogicalName>

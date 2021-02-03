@@ -53,7 +53,7 @@ module private Symbol =
         | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
         | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
         | :? VirtualTerminal as vt -> Symbol.VirtualTerminal vt
-        | :? Literal as lit -> let (Literal lit) = lit in Symbol.Literal lit
+        | :? Literal as lit -> Symbol.Literal lit.Content
         | :? NewLine -> Symbol.NewLine
         | :? DesigntimeFarkleWrapper as x -> create x.InnerDesigntimeFarkle
         | _ -> invalidOp "Using a custom implementation of the \

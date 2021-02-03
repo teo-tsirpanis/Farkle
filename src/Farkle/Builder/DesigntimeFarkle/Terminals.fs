@@ -34,8 +34,8 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
 /// and the tokenizer will never extract a virtual terminal from source text.
 /// Instead, they have to be created by the developer from a custom descendant
 /// of the <see cref="Farkle.Parser.Tokenizer"/> class.</para>
-/// <para>They are useful for indentation-based languages like Python and F#.
-/// TODO: add an example in documentation.</para></remarks>
+/// <para>They are useful for indentation-based
+/// languages like Python and F#.</para></remarks>
 type internal VirtualTerminal internal(name) =
     do nullCheck "name" name
     /// The virtual terminal's name.
@@ -44,15 +44,23 @@ type internal VirtualTerminal internal(name) =
         member _.Name = name
         member _.Metadata = GrammarMetadata.Default
 
-type internal Literal = Literal of string
-with
+type internal Literal(str: string) =
+    do nullCheck "str" str
+    member _.Content = str
+    override _.Equals(x) =
+        match x with
+        | null -> false
+        | :? Literal as lit -> str.Equals(lit.Content, StringComparison.Ordinal)
+        | _ -> false
+    override _.GetHashCode() = str.GetHashCode()
     interface DesigntimeFarkle with
-        member x.Name =
-            match x with
+        member _.Name =
             // This would make error messages clearer
             // when an empty literal string is created.
-            | Literal x when String.IsNullOrEmpty(x) -> "Empty String"
-            | Literal x -> x
+            if String.IsNullOrEmpty(str) then
+                "Empty String"
+            else
+                str
         member _.Metadata = GrammarMetadata.Default
 
 /// <summary>A special kind of <see cref="DesigntimeFarkle"/>

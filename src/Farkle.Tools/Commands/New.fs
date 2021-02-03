@@ -12,6 +12,7 @@ open Farkle.Tools.Templating
 open Serilog
 open System
 open System.IO
+open System.Runtime.InteropServices
 open System.Text.Json
 
 type Arguments =
@@ -133,7 +134,17 @@ let run json (args: ParseResults<_>) = either {
         match args.TryGetResult OutputFile with
         | Some x -> x
         | None ->
-            Path.ChangeExtension(grammarInput.GrammarPath, generatedTemplate.FileExtension)
+            let grammarPath = grammarInput.GrammarPath.AsSpan()
+            let directory = Path.GetDirectoryName grammarPath
+            let mutable separatorChar = Path.DirectorySeparatorChar
+            let separator = MemoryMarshal.CreateReadOnlySpan(&separatorChar, 1)
+            let fileName =
+                if isGrammarExtension (Path.GetExtension grammarPath) then
+                    Path.GetFileNameWithoutExtension grammarPath
+                else
+                    grammarInput.Grammar.Properties.Name.AsSpan()
+            let extension = generatedTemplate.FileExtension.AsSpan()
+            String.Concat(directory, separator, fileName, extension)
         |> Path.GetFullPath
 
     if json then

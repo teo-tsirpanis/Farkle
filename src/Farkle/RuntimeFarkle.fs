@@ -6,6 +6,7 @@
 namespace Farkle
 
 open Farkle.Builder
+open Farkle.Common
 open Farkle.Grammar
 open Farkle.IO
 open Farkle.Parser
@@ -220,6 +221,7 @@ module RuntimeFarkle =
 
     /// Parses and post-processes a string.
     let parseString rf (inputString: string) =
+        nullCheck (nameof inputString) inputString
         use cs = new CharStream(inputString)
         parseChars rf cs
 
@@ -238,11 +240,13 @@ module RuntimeFarkle =
 
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
     let parseTextReader rf (textReader: TextReader) =
+        nullCheck (nameof textReader) textReader
         use cs = new CharStream(textReader, true)
         parseChars rf cs
 
     /// Parses and post-processes a file at the given path.
     let parseFile rf path =
+        nullCheck (nameof path) path
         use s = File.OpenText(path)
         parseTextReader rf s
 
@@ -260,22 +264,22 @@ open RuntimeFarkle
 type RuntimeFarkle<'TResult> with
     /// <summary>Parses and post-processes a
     /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
-    /// <param name="mem">The read-only memory to parse.</param>
+    /// <param name="input">The read-only memory to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse mem = parseMemory this mem
+    member this.Parse input = parseMemory this input
     /// <summary>Parses and post-processes a string.</summary>
-    /// <param name="str">The string to parse.</param>
+    /// <param name="inputString">The string to parse.</param>
     /// <returns>An F# result type containing either the
     /// post-processed return type, or a type describing
     /// what did wrong and where.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse str = parseString this str
+    member this.Parse inputString = parseString this inputString
     /// <summary>Parses and post-processes a
     /// <see cref="System.IO.Stream"/>.</summary>
-    /// <param name="stream">The stream to parse.</param>
+    /// <param name="inputStream">The stream to parse.</param>
     /// <param name="encoding">The character encoding of
     /// the stream's data. Defaults to UTF-8.</param>
     /// <param name="doLazyLoad">Whether to gradually read the
@@ -284,8 +288,8 @@ type RuntimeFarkle<'TResult> with
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     [<Obsolete("Streams are supposed to contain binary \
 data; not text. Parse a TextReader instead.")>]
-    member this.Parse(stream, [<Optional; Nullable(2uy)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
-        parseStream this doLazyLoad encoding stream
+    member this.Parse(inputStream, [<Optional; Nullable(2uy)>] encoding, [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
+        parseStream this doLazyLoad encoding inputStream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="textReader">The text reader to parse.</param>
     /// <returns>An F# result type containing either the

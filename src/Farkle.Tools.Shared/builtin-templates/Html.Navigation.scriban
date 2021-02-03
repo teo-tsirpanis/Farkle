@@ -2,10 +2,10 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
+{{~if no_lalrstates && no_dfastates; ret; end~}}
 <nav class="flex-container">
     <a href="#properties">Properties</a>
-    <a href="#terminals">Terminals</a>
-    <a href="#nonterminals">Nonterminals</a>
+    <a href="#syntax">Syntax</a>
     {{~if !grammar.groups.empty?~}}
     <a href="#groups">Groups</a>
     {{~end~}}

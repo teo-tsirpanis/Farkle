@@ -4,48 +4,37 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 <section id="syntax">
     <h2>Syntax</h2>
-    <section id="terminals">
-        <h3>Terminals</h3>
-        <ul>
-            {{~for $term in $1~}}
-            <li id="t{{$term.index}}" class="terminal">{{html.escape $term.name}}</li>
-            {{~end~}}
-        </ul>
-    </section>
-    <section id="nonterminals">
-        <h3>Nonterminals</h3>
-        <ul>
-            {{~for $group in $2
-                $nont = $group.key~}}
-            <li id="n{{$nont.index}}">
-                <span class="nonterminal">{{html.escape $nont.name}}</span>
-                <ul class="productions">
-                    {{~for $prod in $group~}}
-                    <li id="prod{{$prod.index}}" >
-                        <ol class="production-handle">
-                            {{~for $sym in $prod.handle
-                                $sym_extracted = $sym.item~}}
-                            <li>
-                                {{-if $sym.is_terminal-}}
-                                <span class="terminal">{{html.escape $sym_extracted.name}}</span>
-                                {{-else-}}
-                                <a class="nonterminal" href="#n{{$sym_extracted.index}}">{{html.escape $sym_extracted.name}}</a>
-                                {{-end-}}
-                            </li>
-                            {{~end~}}
-                            {{~if $prod.handle.empty?
-                                # Writing a "Nothing" using CSS will not work because the
-                                # :empty selector is tarnation useless and cannot match
-                                # <ol>
-                                # </ol> because of the new line!~}}
-                            <li class="production-empty">Nothing</li>
-                            {{~end~}}
-                        </ol>
-                    </li>
-                    {{~end~}}
-                </ul>
-            </li>
-            {{~end~}}
-        </ul>
-    </section>
+    <ul>
+        {{~for $group in $2
+            $nont = $group.key~}}
+        <li id="n{{$nont.index}}">
+            <span class="nonterminal">{{html.escape $nont.name}}</span>
+            <ul class="productions">
+                {{~for $prod in $group~}}
+                <li id="prod{{$prod.index}}" >
+                    <ol class="production-handle">
+                        {{~for $sym in $prod.handle
+                            $sym_extracted = $sym.item~}}
+                        <li>
+                            {{-if $sym.is_terminal-}}
+                            <span class="terminal">{{html.escape $sym_extracted.name}}</span>
+                            {{-else-}}
+                            <a class="nonterminal" href="#n{{$sym_extracted.index}}">{{html.escape $sym_extracted.name}}</a>
+                            {{-end-}}
+                        </li>
+                        {{~end~}}
+                        {{~if $prod.handle.empty?
+                            # Writing a "Nothing" using CSS will not work because the
+                            # :empty selector is tarnation useless and cannot match
+                            # <ol>
+                            # </ol> because of the new line!~}}
+                        <li class="production-empty">Nothing</li>
+                        {{~end~}}
+                    </ol>
+                </li>
+                {{~end~}}
+            </ul>
+        </li>
+        {{~end~}}
+    </ul>
 </section>

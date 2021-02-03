@@ -16,9 +16,9 @@
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
-        GenerateDocumentation="$(FarkleGenerateDocumentation)"
-        DocumentationOutputPath="$(OutputPath)">
-      <Output TaskParameter="GeneratedDocumentationFiles" ItemName="FileWrites"/>
+        GenerateHtml="$(FarkleGenerateHtml)"
+        HtmlOutputPath="$(OutputPath)">
+      <Output TaskParameter="GeneratedHtmlFiles" ItemName="FileWrites"/>
     </FarklePrecompileTask>
   </Target>
 </Project>

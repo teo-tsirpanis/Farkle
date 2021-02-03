@@ -10,22 +10,19 @@ using Xunit;
 
 namespace Farkle.Tools.MSBuild.Tests
 {
-    public static class DocumentationChecker
+    public static class HtmlChecker
     {
-        private static readonly string DocumentationBase = AppContext.BaseDirectory;
-
-        public static void CheckDocumentation(Grammar.Grammar grammar)
+        public static void Check(Grammar.Grammar grammar)
         {
             var grammarName = grammar.Properties.Name;
-            var documentationPath = Path.ChangeExtension(Path.Join(DocumentationBase, grammarName), ".html");
-            Assert.True(File.Exists(documentationPath), $"File '{documentationPath}' does not exist.");
+            var htmlPath = Path.ChangeExtension(Path.Join(AppContext.BaseDirectory, grammarName), ".html");
+            Assert.True(File.Exists(htmlPath), $"File '{htmlPath}' does not exist.");
 
             var doc = new HtmlDocument();
-            doc.Load(documentationPath);
+            doc.Load(htmlPath);
 
             Assert.Empty(doc.ParseErrors);
 
-            Assert.All(grammar.Symbols.Terminals, x => AssertHasId($"t{x.Index}"));
             Assert.All(grammar.Symbols.Nonterminals, x => AssertHasId($"n{x.Index}"));
             Assert.All(grammar.Productions, x => AssertHasId($"prod{x.Index}"));
             Assert.All(grammar.LALRStates, x => AssertHasId($"lalr{x.Index}"));

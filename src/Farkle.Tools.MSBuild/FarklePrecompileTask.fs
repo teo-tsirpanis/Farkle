@@ -20,14 +20,14 @@ open System.IO
 type FarklePrecompileTask() =
     inherit MSBuildWeaver()
     let mutable precompiledGrammars = []
-    let mutable generatedDocumentationFiles = []
+    let mutable generatedHtmlFiles = []
 
-    member val GenerateDocumentation = false with get, set
-    member val DocumentationOutputPath = null with get, set
+    member val GenerateHtml = false with get, set
+    member val HtmlOutputPath = null with get, set
     [<Output>]
-    member val GeneratedDocumentationFiles = Array.Empty<_>() with get, set
+    member val GeneratedHtmlFiles = Array.Empty<_>() with get, set
 
-    member private this.DoGenerateDocumentation grammar =
+    member private this.DoGenerateHtml grammar =
         let grammarInput = {Grammar = grammar; GrammarPath = this.AssemblyPath}
         let htmlOptions = {
             CustomHeadContent = ""
@@ -36,21 +36,21 @@ type FarklePrecompileTask() =
             NoDFAStates = false
         }
         let templateType = GrammarHtml(grammarInput, htmlOptions)
-        if String.IsNullOrWhiteSpace this.DocumentationOutputPath then
-            this.Log2.Error("The DocumentationOutputPath task parameter is not assigned.")
+        if String.IsNullOrWhiteSpace this.HtmlOutputPath then
+            this.Log2.Error("The HtmlOutputPath task parameter is not assigned.")
         else
             match TemplateEngine.renderTemplate this.Log2 templateType with
             | Ok output ->
                 let grammarName = grammar.Properties.Name
                 let htmlPath =
-                    Path.Combine(this.DocumentationOutputPath, Path.ChangeExtension(grammarName, output.FileExtension))
+                    Path.Combine(this.HtmlOutputPath, Path.ChangeExtension(grammarName, output.FileExtension))
                     |> Path.GetFullPath
-                this.Log2.Information("Writing documentation of {GrammarName} at {DocumentationPath}...", grammarName, htmlPath)
+                this.Log2.Information("Writing documentation of {GrammarName} at {HtmlPath}...", grammarName, htmlPath)
                 File.WriteAllText(htmlPath, output.Content)
 
-                generatedDocumentationFiles <- TaskItem htmlPath :> ITaskItem :: generatedDocumentationFiles
+                generatedHtmlFiles <- TaskItem htmlPath :> ITaskItem :: generatedHtmlFiles
             | Error() ->
-                this.Log2.Error("There was an error with the documentation generator. Please report it on GitHub.")
+                this.Log2.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
     override this.Execute() =
         let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
@@ -61,8 +61,8 @@ type FarklePrecompileTask() =
                 |> List.choose (fun x ->
                     match x with
                     | Successful grammar ->
-                        if this.GenerateDocumentation then
-                            this.DoGenerateDocumentation grammar
+                        if this.GenerateHtml then
+                            this.DoGenerateHtml grammar
                         Some grammar
                     | PrecompilingFailed(name, [error]) ->
                         this.Log2.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
@@ -77,7 +77,7 @@ type FarklePrecompileTask() =
                         this.Log2.Error("{Exception}", e)
                         None)
 
-            this.GeneratedDocumentationFiles <- Array.ofList generatedDocumentationFiles
+            this.GeneratedHtmlFiles <- Array.ofList generatedHtmlFiles
 
             not this.Log.HasLoggedErrors
             // With our preparation completed, Sigourney will eventually call DoWeave.

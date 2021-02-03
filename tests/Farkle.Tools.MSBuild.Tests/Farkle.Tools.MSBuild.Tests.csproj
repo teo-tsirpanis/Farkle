@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <VSTestLogger>Appveyor</VSTestLogger>
     <Nullable>enable</Nullable>
-    <FarkleGenerateDocumentation>true</FarkleGenerateDocumentation>
+    <FarkleGenerateHtml>true</FarkleGenerateHtml>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Farkle/Farkle.fsproj" />

@@ -18,7 +18,11 @@ type EGTFileException(msg) = inherit exn(msg)
 
 /// An entry of an EGT file.
 [<Struct; IsReadOnly; RequireQualifiedAccess>]
+#if DEBUG
 type Entry =
+#else
+type internal Entry =
+#endif
     /// [omit]
     | Empty
     /// [omit]

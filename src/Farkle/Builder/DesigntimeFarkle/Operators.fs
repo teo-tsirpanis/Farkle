@@ -9,6 +9,7 @@ open Farkle
 open Farkle.Builder.OperatorPrecedence
 open Farkle.Builder.ProductionBuilders
 open Farkle.Common
+open Farkle.Collections
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
@@ -135,31 +136,8 @@ module DesigntimeFarkleOperators =
         let name = sprintf "%s :?> %s" (dfName df) typeof<'b>.Name
         name ||= [!@ df => f]
 
-    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes many
-    /// occurrences of the given one and returns them in a list.
-    let many df =
-        let nont = nonterminalf "%s List" df |> nonterminal
-        nont.SetProductions(
-            // A left-recursive design uses the LALR stack
-            // more efficiently, but due to the nature of
-            // F#'s cons list, we will make it right recursive, as
-            // it avoids us an extra production that reverses the list.
-            !@ df .>>. nont => (fun x xs -> x :: xs),
-            empty =% []
-        )
-        nont :> DesigntimeFarkle<_>
-
-    /// Like `many1`, but requires at least one element to be present.
-    let many1 df =
-        let nont = nonterminalf "%s Non-empty List" df |> nonterminal
-        nont.SetProductions(
-            !@ df .>>. nont => (fun x xs -> x :: xs),
-            !@ df => List.singleton
-        )
-        nont :> DesigntimeFarkle<_>
-
-    /// Like `many`, but returns the result in
-    /// any type that implements `ICollection&lt;'T&gt;`.
+    /// Creates a designtime Farkle that recognizes many occurrences
+    /// of the given one and returns them in any collection type.
     let manyCollection<'T, 'TCollection
         when 'TCollection :> ICollection<'T>
         and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
@@ -172,7 +150,8 @@ module DesigntimeFarkleOperators =
 
             nont :> DesigntimeFarkle<_>
 
-    /// A combination of `many1` and `manyCollection`.
+    /// Creates a designtime Farkle that recognizes more than one occurrences
+    /// of the given one and returns them in any collection type.
     let manyCollection1<'T, 'TCollection
         when 'TCollection :> ICollection<'T>
         and 'TCollection: (new: unit -> 'TCollection)> (df: DesigntimeFarkle<'T>) =
@@ -185,22 +164,58 @@ module DesigntimeFarkleOperators =
 
             nont :> DesigntimeFarkle<_>
 
-    /// Like `sepBy`, but requires at least one element to be present.
-    let sepBy1 (sep: DesigntimeFarkle) df =
-        let nont = nonterminalf "%s Non-empty List" df |> nonterminal
+    /// Creates a designtime Farkle that recognizes many
+    /// occurrences of the given one and returns them in a list.
+    let many df =
+        let dfBuilder = manyCollection df
+        sprintf "%s List" dfBuilder.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
+
+    /// Creates a designtime Farkle that recognizes more than one
+    /// occurrences of the given one and returns them in a list.
+    let many1 df =
+        let dfBuilder = manyCollection1 df
+        sprintf "%s Non-empty List" dfBuilder.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
+
+    /// Creates a designtime Farkle that recognizes more than one occurrences
+    /// of `df` separated by `sep` and returns them in any collection type.
+    let sepByCollection1<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)>(sep: DesigntimeFarkle) (df: DesigntimeFarkle<'T>) =
+        let nont =
+            sprintf "%s Non-empty %s Separated By %s" df.Name typeof<'TCollection>.Name sep.Name |> nonterminal
         nont.SetProductions(
-            !@ df .>> sep .>>. nont => (fun x xs -> x :: xs),
-            !@ df => List.singleton
+            !@ df => (fun x -> let xs = new 'TCollection() in xs.Add x; xs),
+            !@ nont .>> sep .>>. df => (fun xs x -> (xs :> ICollection<_>).Add x; xs)
         )
         nont :> DesigntimeFarkle<_>
 
-    /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes
-    /// many occurrences of `df` separated by `sep`.
-    let sepBy (sep: DesigntimeFarkle) df =
-        nonterminalf "%s List" df
-        ||= [
-            !@ df .>> sep .>>. sepBy1 sep df => (fun x xs -> x :: xs)
-            empty =% []
+    /// Creates a designtime Farkle that recognizes many occurrences of
+    /// `df` separated by `sep` and returns them in any collection type.
+    let sepByCollection<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)>(sep: DesigntimeFarkle) (df: DesigntimeFarkle<'T>) =
+        let nont =
+            sprintf "%s %s Separated By %s" df.Name typeof<'TCollection>.Name sep.Name |> nonterminal
+        nont.SetProductions(
+            empty => (fun () -> new 'TCollection()),
+            !@ (sepByCollection1 sep df) .>> sep .>>. df => (fun xs x -> xs.Add x; xs)
+        )
+        nont :> DesigntimeFarkle<_>
+
+    /// Creates a designtime Farkle that recognizes more than one
+    /// occurrences of `df` separated by `sep` and returns them in a list.
+    let sepBy1 sep df =
+        let dfBuilder = sepByCollection1 sep df
+        sprintf "%s Non-empty List Separated By %s" df.Name sep.Name ||= [
+            (!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate
+        ]
+
+    /// Creates a designtime Farkle that recognizes many occurrences
+    /// of `df` separated by `sep` and returns them in a list.
+    let sepBy sep df =
+        let dfBuilder = sepByCollection sep df
+        sprintf "%s List Separated By %s" df.Name sep.Name ||= [
+            (!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate
         ]
 
     /// Creates a `DesigntimeFarkle&lt;'T&gt;` that recognizes `df`,

@@ -37,6 +37,11 @@ namespace Farkle.Tools.MSBuild.Tests
         public static readonly PCDF SameReference = Private;
         public static PCDF Mutable = CreatePCDF(nameof(Mutable));
         public readonly PCDF InstanceField = CreatePCDF(nameof(InstanceField));
+        public PCDF MutableInstanceField = CreatePCDF(nameof(MutableInstanceField));
+        private class NestedClass<T>
+        {
+            private static readonly PCDF NestedGeneric = CreatePCDF(nameof(NestedGeneric));
+        }
         public PCDF InstanceProperty => CreatePCDF(nameof(InstanceProperty));
         public static PCDF StaticProperty => CreatePCDF(nameof(StaticProperty));
 

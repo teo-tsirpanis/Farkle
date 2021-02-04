@@ -39,10 +39,10 @@ let discover (log: ILogger) (asm: Assembly) =
             && (
                 let mutable isEligible = true
                 if not fld.IsStatic then
-                    log.Warning("Field {Field} will not be precompiled because it is not static.", fld)
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it is not static.", fld.DeclaringType, fld.Name)
                     isEligible <- false
                 if not fld.IsInitOnly then
-                    log.Warning("Field {Field} will not be precompiled because it is not readonly.", fld)
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it is not readonly.", fld.DeclaringType, fld.Name)
                     isEligible <- false
                 isEligible
             )
@@ -58,9 +58,10 @@ let discover (log: ILogger) (asm: Assembly) =
     let typesToProcess = Queue(asm.GetTypes())
     while typesToProcess.Count <> 0 do
         let typ = typesToProcess.Dequeue()
-        types.Add typ
-        for nestedType in typ.GetNestedTypes(allBindingFlags) do
-            typesToProcess.Enqueue nestedType
+        if not typ.IsGenericType then
+            types.Add typ
+            for nestedType in typ.GetNestedTypes(allBindingFlags) do
+                typesToProcess.Enqueue nestedType
     types
     |> Seq.collect probeType
     // Precompilable designtime Farkles are F# object types, which

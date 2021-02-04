@@ -11,8 +11,6 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="PrecompilerDiscoverer.fs" />
-    <Compile Include="Precompiler.fs" />
     <Compile Include="FarkleCreateTemplateTask.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
     <None Include="build/**" Pack="true" PackagePath="build" />
@@ -20,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="5.0.0" PrivateAssets="all" />
     <PackageReference Include="Sigourney" Version="0.3.1" PrivateAssets="compile" />
+    <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
   </ItemGroup>

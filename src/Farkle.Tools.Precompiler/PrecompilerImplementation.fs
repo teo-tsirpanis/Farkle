@@ -3,20 +3,11 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Tools.Precompiler
+module internal Farkle.Tools.PrecompilerImplementation
 
 open Farkle.Builder
 open Farkle.Grammar
-
-type PrecompilerResult =
-    | Successful of Grammar
-    | PrecompilingFailed of grammarName: string * BuildError list
-    | DiscoveringFailed of typeName: string * fieldName: string * exn
-
-#if !NETFRAMEWORK
-open Farkle.Common
 open Serilog
-open Sigourney
 open System.Diagnostics
 open System.IO
 open System.Runtime.CompilerServices
@@ -51,14 +42,8 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
         sprintf "Farkle.Tools precompiler for %s" (Path.GetFileNameWithoutExtension path),
         true)
     let dict =
-        log.Verbose("References:")
         references
-        |> Seq.choose (fun asm ->
-            if asm.IsReferenceAssembly then
-                None
-            else
-                log.Verbose("{AssemblyName}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
-                Some (asm.AssemblyName.FullName, asm.FileName))
+        |> Seq.map (fun asm -> asm.AssemblyFullName, asm.FileName)
         |> readOnlyDict
     let asm =
         // We first read the assembly into a byte array to avoid the runtime locking the file.
@@ -114,9 +99,3 @@ let discoverAndPrecompile log references path =
 or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
-#else
-let discoverAndPrecompile (log: Serilog.ILogger) _ _ =
-    log.Error("Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). \
-See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
-    Ok []
-#endif

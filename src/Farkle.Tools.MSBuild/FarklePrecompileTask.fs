@@ -7,7 +7,7 @@ namespace Farkle.Tools.MSBuild
 
 open Farkle.Builder
 open Farkle.Grammar
-open Farkle.Tools.Precompiler
+open Farkle.Tools
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
@@ -52,8 +52,21 @@ type FarklePrecompileTask() =
             | Error() ->
                 this.Log2.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
+    member private this.GetAssemblyReferences() =
+        let log = this.Log2
+        log.Verbose("References:")
+        this.AssemblyReferences
+        |> Seq.choose (fun x ->
+            if x.IsReferenceAssembly then
+                None
+            else
+                log.Verbose("{AssemblyName}: {AssemblyPath}", x.AssemblyName.Name, x.FileName)
+                Some {AssemblyFullName = x.AssemblyName.FullName; FileName = x.FileName})
+        |> List.ofSeq
+
     override this.Execute() =
-        let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
+        let references = this.GetAssemblyReferences()
+        let grammars = PrecompilerClient.precompile this.Log2 references this.AssemblyPath
         match grammars with
         | Ok grammars ->
             precompiledGrammars <-

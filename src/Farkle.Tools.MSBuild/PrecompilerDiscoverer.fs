@@ -8,7 +8,6 @@ module internal Farkle.Tools.PrecompilerDiscoverer
 open Farkle.Builder
 open Serilog
 open System
-open System.Collections.Generic
 open System.Reflection
 
 [<Literal>]
@@ -54,15 +53,9 @@ let discover (log: ILogger) (asm: Assembly) =
             e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e))
         |> Seq.filter (function Ok pcdf -> pcdf.Assembly = asm | Error _ -> true)
 
-    let types = ResizeArray()
-    let typesToProcess = Queue(asm.GetTypes())
-    while typesToProcess.Count <> 0 do
-        let typ = typesToProcess.Dequeue()
-        if not typ.IsGenericType then
-            types.Add typ
-            for nestedType in typ.GetNestedTypes(allBindingFlags) do
-                typesToProcess.Enqueue nestedType
+    let types = asm.GetTypes()
     types
+    |> Seq.filter (fun typ -> not typ.IsGenericType)
     |> Seq.collect probeType
     // Precompilable designtime Farkles are F# object types, which
     // means they follow reference equality semantics. If discovery

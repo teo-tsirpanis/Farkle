@@ -4,11 +4,12 @@
 * __Breaking change:__ The `Farkle.Grammar.Grammar.Properties` member now holds a strongly-typed record of informative grammar properties. Unrecognized GOLD Parser properties such as "Author", "Description" and "Version" are discarded. Existing grammar files remain compatible.
 * __Breaking change:__ The members of Farkle's discriminated unions can no longer be accessed in F# using a method. For example, `let foo (x: Terminal) = printfn "%s" x.Name` becomes `let foo (Terminal(_, name)) = printfn "%s" name`. For C# users, duplicate properties like `Terminal.name` with a lowercase "n" were removed; they are replaced by their corresponding title-cased properties.
 * __Breaking change:__ The members of many of Farkle's discriminated unions got meaningful names. C# code using the older names might break.
+* __Breaking change:__ Removed support for generating legacy grammar skeleton files from MSBuild using the `Farkle` item.
 * __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Dynamic code generation will be applied to post-processors that are frequently used, in a fashion similar to .NET's tiered compilation, regardless of whether their designtime Farkle is precompilable.
-* Build error reporting is improved. More build errors will be reported at the same time (without waiting for one to be fixed to show the next).
+* Build error reporting is improved. More build errors will be reported at the same time, without having to fix one to show the next.
 * Fixed stack overflows when building deep designtime Farkles.
 
 #### 6.0.0-alpha.3 - 25-11-2020

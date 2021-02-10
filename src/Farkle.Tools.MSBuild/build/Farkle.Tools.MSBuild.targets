@@ -1,13 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <UsingTask
-      Condition="'$(DesignTimeBuild)' != 'true'"
-      TaskName="Farkle.Tools.MSBuild.FarkleCreateTemplateTask"
-      AssemblyFile="$(FarkleTaskAssembly)"/>
   <PropertyGroup>
-    <BuildDependsOn>FarkleGenerateTemplates;$(BuildDependsOn)</BuildDependsOn>
-    <CleanDependsOn>$(CleanDependsOn);FarkleCleanGeneratedTemplates</CleanDependsOn>
-    <_FarkleOutputExtension Condition="'$(Language)' == 'C#'">.g.cs</_FarkleOutputExtension>
-    <_FarkleOutputExtension Condition="'$(Language)' == 'F#'">.g.fs</_FarkleOutputExtension>
     <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
   </PropertyGroup>
 
@@ -16,46 +8,5 @@
       Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 16)"
       Text="Farkle.Tools.MSBuild is only supported on MSBuild 16 and above. Current version is $(MsBuildMajorVersion)."/>
   </Target>
-  <Target
-      Name="FarkleGenerateTemplates"
-      Inputs="@(Farkle)"
-      Outputs="$(MSBuildProjectDirectory)\%(Farkle.FileName)$(_FarkleOutputExtension)"
-      DependsOnTargets="CheckForMSBuild16"
-      Condition="'@(Farkle)' != '' AND '$(DesignTimeBuild)' != 'true'">
 
-    <PropertyGroup>
-      <_Output>$(MSBuildProjectDirectory)\%(Farkle.FileName)$(_FarkleOutputExtension)</_Output>
-      <_Namespace>%(Farkle.Namespace)</_Namespace>
-      <_Namespace Condition="'$(_Namespace)' == ''">$(RootNamespace)</_Namespace>
-    </PropertyGroup>
-
-    <Error
-        Condition="'$(Language)' == 'VB'" File="%(Farkle.FullPath)"
-        Text="Visual Basic is a language with poor performance characteristics, and is not natively supported by Farkle."/>
-    <Error
-        Condition="'$(Language)' != 'C#' AND '$(Language)' != 'F#'" File="%(Farkle.FullPath)"
-        Text="The language $(Language) is not natively supported by Farkle."/>
-
-    <FarkleCreateTemplateTask
-        Grammar="%(Farkle.FullPath)"
-        Language="$(Language)"
-        Namespace="$(_Namespace)"
-        OutputFile="$(_Output)"/>
-
-    <ItemGroup>
-      <_CompileFullPaths Remove="@(_CompileFullPaths)"/>
-      <_CompileFullPaths Include="@(Compile->'%(FullPath)')"/>
-    </ItemGroup>
-    <PropertyGroup>
-      <_DoCompile Condition="$(EnableDefaultItems) AND $(EnableDefaultCompileItems)">true</_DoCompile>
-      <_DoCompile Condition="'$(_DoCompile)' != 'true' OR %(_CompileFullPaths.Identity) == $(_Output)">false</_DoCompile>
-    </PropertyGroup>
-    <ItemGroup Condition="'$(_DoCompile)' == 'true'">
-      <Compile Include="$(_Output)"/>
-    </ItemGroup>
-  </Target>
-
-  <Target Name="FarkleCleanGeneratedTemplates">
-    <Delete Files="@(Farkle->'$(MSBuildProjectDirectory)\%(FileName)$(_FarkleOutputExtension)')"/>
-  </Target>
 </Project>

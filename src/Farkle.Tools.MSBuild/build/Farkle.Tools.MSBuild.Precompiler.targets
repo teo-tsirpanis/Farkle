@@ -4,15 +4,33 @@
   </PropertyGroup>
 
   <UsingTask
-      Condition="$(FarkleEnablePrecompiler) != false"
+      Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
       TaskName="Farkle.Tools.MSBuild.FarklePrecompileTask"
       AssemblyFile="$(FarkleTaskAssembly)"/>
+
+  <Target
+      Name="FailPrecompilerOnNetFramework"
+      Condition="$(MSBuildRuntimeType) != Core"
+      BeforeTargets="FarklePrecompileGrammars">
+    <PropertyGroup>
+      <_CommonPrecompilerErrorExplanation>You have to use commands from the .NET SDK, like "dotnet build". See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</_CommonPrecompilerErrorExplanation>
+    </PropertyGroup>
+    <Error
+        Condition="$(BuildingInsideVisualStudio) == true"
+        Text="Farkle's precompiler does not currently support running in Visual Studio. $(_CommonPrecompilerErrorExplanation)"/>
+    <Error
+        Condition="$(MSBuildRuntimeType) == Mono"
+        Text="Farkle's precompiler does not support running in Mono. $(_CommonPrecompilerErrorExplanation)"/>
+    <Error
+        Text="Farkle's precompiler is not supported in .NET Framework editions of MSBuild. $(_CommonPrecompilerErrorExplanation)"/>
+  </Target>
 
   <Target
       Name="FarklePrecompileGrammars"
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="CheckForMSBuild16">
     <FarklePrecompileTask
+        Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"

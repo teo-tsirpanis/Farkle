@@ -1,8 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
-    <Description>Farkle's integration with MSBuild. This package supports facilities like the precompiler and the template creator.</Description>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Description>Farkle's integration with MSBuild. This package supports the precompiler.
+
+Users of it must use .NET SDK commands like "dotnet build". Building projects that use this package, with Visual Studio or with the .NET Framework-based "msbuild" command is not supported.
+
+See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
@@ -14,7 +18,7 @@
     <Compile Include="PrecompilerDiscoverer.fs" />
     <Compile Include="Precompiler.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
-    <None Include="build/**" Pack="true" PackagePath="build" />
+    <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" Version="5.0.0" PrivateAssets="all" />

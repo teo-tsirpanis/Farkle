@@ -6,21 +6,19 @@
 module internal Farkle.Tools.Precompiler
 
 open Farkle.Builder
-open Farkle.Grammar
-
-type PrecompilerResult =
-    | Successful of Grammar
-    | PrecompilingFailed of grammarName: string * BuildError list
-    | DiscoveringFailed of typeName: string * fieldName: string * exn
-
-#if !NETFRAMEWORK
 open Farkle.Common
+open Farkle.Grammar
 open Serilog
 open Sigourney
 open System.Diagnostics
 open System.IO
 open System.Runtime.CompilerServices
 open System.Runtime.Loader
+
+type PrecompilerResult =
+    | Successful of Grammar
+    | PrecompilingFailed of grammarName: string * BuildError list
+    | DiscoveringFailed of typeName: string * fieldName: string * exn
 
 let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
     PrecompilerDiscoverer.discover log asm
@@ -114,9 +112,3 @@ let discoverAndPrecompile log references path =
 or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
-#else
-let discoverAndPrecompile (log: Serilog.ILogger) _ _ =
-    log.Error("Farkle can only precompile grammars on projects built with the .NET Core SDK (dotnet build etc). \
-See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
-    Ok []
-#endif

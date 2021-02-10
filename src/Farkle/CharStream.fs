@@ -87,7 +87,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
                 if bufferFirstCharacterIndex <> startingIndex then
                     let importantCharStart = int <| startingIndex - bufferFirstCharacterIndex
                     let importantCharLength = int <| nextReadIndex - startingIndex
-                    Array.blit buffer importantCharStart buffer 0 importantCharLength
+                    ReadOnlySpan(buffer, importantCharStart, importantCharLength).CopyTo(Span buffer)
                     bufferFirstCharacterIndex <- startingIndex
                 else
                     // Otherwise we make the buffer larger.

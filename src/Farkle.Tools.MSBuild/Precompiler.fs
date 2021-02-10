@@ -10,8 +10,10 @@ open Farkle.Common
 open Farkle.Grammar
 open Serilog
 open Sigourney
+open System
 open System.Diagnostics
 open System.IO
+open System.Reflection
 open System.Runtime.CompilerServices
 open System.Runtime.Loader
 
@@ -20,10 +22,65 @@ type PrecompilerResult =
     | PrecompilingFailed of grammarName: string * BuildError list
     | DiscoveringFailed of typeName: string * fieldName: string * exn
 
-let private dynamicDiscoverAndPrecompile asm (log: ILogger) =
-    PrecompilerDiscoverer.discover log asm
-    |> List.map (function
-    | Ok pcdf ->
+[<Literal>]
+let private allBindingFlags =
+    BindingFlags.Instance
+    ||| BindingFlags.Static
+    ||| BindingFlags.Public
+    ||| BindingFlags.NonPublic
+
+let private filterTargetInvocationException (e: exn) =
+    match e with
+    | :? TargetInvocationException as tie when not (isNull tie.InnerException) ->
+        tie.InnerException
+    | e -> e
+
+/// Gets all `PrecompilableDesigntimeFarkle`s of the given assembly.
+/// To be discovered, they must reside in a static read-only field
+/// (in C#). or in an immutable let-bound value (in F#) that has been
+/// applied the function `RuntimeFarkle.markForPrecompile`. The declared
+/// type of that field must inherit `PrecompilableDesigntimeFarkle`.
+let private discoverPrecompilableDesigntimeFarkles (log: ILogger) (asm: Assembly) =
+    let probeType (typ: Type) =
+        // F# values are properties, but are backed by a static read-only
+        // field in a cryptic "<StartupCode$_>" namespace.
+        typ.GetFields(allBindingFlags)
+        |> Seq.filter (fun fld ->
+            typeof<PrecompilableDesigntimeFarkle>.IsAssignableFrom fld.FieldType
+            && (
+                let mutable isEligible = true
+                if not fld.IsStatic then
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it is not static.",
+                        fld.DeclaringType, fld.Name)
+                    isEligible <- false
+                if not fld.IsInitOnly then
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it is not readonly.",
+                        fld.DeclaringType, fld.Name)
+                    isEligible <- false
+                isEligible
+            )
+        )
+        |> Seq.map (fun fld ->
+            try
+                fld.GetValue(null) :?> PrecompilableDesigntimeFarkle |> Ok
+            with
+            e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e))
+        |> Seq.filter (function Ok pcdf -> pcdf.Assembly = asm | Error _ -> true)
+
+    let types = asm.GetTypes()
+    types
+    |> Seq.filter (fun typ -> not typ.IsGenericType)
+    |> Seq.collect probeType
+    // Precompilable designtime Farkles are F# object types, which
+    // means they follow reference equality semantics. If discovery
+    // fails, its exception object will surely be unique so there
+    // isn't a chance that an error misses being reported.
+    |> Seq.distinct
+    |> List.ofSeq
+
+let private precompileDiscovererResult (log: ILogger) x =
+    match x with
+    | Ok (pcdf: PrecompilableDesigntimeFarkle) ->
         let name = pcdf.Name
         log.Information("Precompiling {GrammarName}...", name)
         let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.GrammarDefinition
@@ -39,10 +96,11 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
                 grammar.LALRStates.Length,
                 grammar.DFAStates.Length)
 
-            Debug.Assert(grammar.Properties.Name = name, "Unexpected error: grammar name is different from the designtime Farkle name.")
+            Debug.Assert(grammar.Properties.Name = name, "Unexpected error: grammar name \
+is different from the designtime Farkle name.")
             Successful grammar
         | Error xs -> PrecompilingFailed(name, xs)
-    | Error x -> DiscoveringFailed x)
+    | Error x -> DiscoveringFailed x
 
 type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) as this =
     inherit AssemblyLoadContext(
@@ -58,12 +116,12 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
                 log.Verbose("{AssemblyName}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
                 Some (asm.AssemblyName.FullName, asm.FileName))
         |> readOnlyDict
-    let asm =
+    let theAssembly =
         // We first read the assembly into a byte array to avoid the runtime locking the file.
         let bytes = File.ReadAllBytes path
         let m = new MemoryStream(bytes, false)
         this.LoadFromStream m
-    member _.TheAssembly = asm
+    member _.TheAssembly = theAssembly
     override this.Load(name) =
         log.Verbose("Requesting assembly {AssemblyName}", name)
         match name.Name with
@@ -79,7 +137,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
             | false, _ -> null
 
 [<MethodImpl(MethodImplOptions.NoInlining)>]
-let private getPrecompilableGrammars log references path =
+let private precompileAssemblyFromPathIsolated log references path =
     let alc = PrecompilerContext(path, references, log)
     try
         let asm = alc.TheAssembly
@@ -87,13 +145,12 @@ let private getPrecompilableGrammars log references path =
             log.Error("Cannot precompile an assembly named 'Farkle'")
             []
         else
-            dynamicDiscoverAndPrecompile asm log
+            discoverPrecompilableDesigntimeFarkles log asm
+            |> List.map (precompileDiscovererResult log)
     finally
         alc.Unload()
 
-let discoverAndPrecompile log references path =
-    let pcdfs = getPrecompilableGrammars log references path
-
+let private checkForDuplicates (log: ILogger) (pcdfs: _ list) =
     pcdfs
     |> Seq.choose (
         function
@@ -112,3 +169,7 @@ let discoverAndPrecompile log references path =
 or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
+
+let precompileAssemblyFromPath log references path =
+    let pcdfs = precompileAssemblyFromPathIsolated log references path
+    checkForDuplicates log pcdfs

@@ -53,7 +53,7 @@ type FarklePrecompileTask() =
                 this.Log2.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
     override this.Execute() =
-        let grammars = discoverAndPrecompile this.Log2 this.AssemblyReferences this.AssemblyPath
+        let grammars = precompileAssemblyFromPath this.Log2 this.AssemblyReferences this.AssemblyPath
         match grammars with
         | Ok grammars ->
             precompiledGrammars <-

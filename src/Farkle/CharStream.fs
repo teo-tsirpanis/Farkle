@@ -11,6 +11,7 @@ open Farkle.Common
 open Operators.Checked
 #endif
 open System
+open System.Buffers
 open System.Collections.Generic
 open System.Diagnostics
 open System.IO
@@ -61,17 +62,20 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
         if bufferSize <= 0 then
             raise <| ArgumentOutOfRangeException("bufferSize", bufferSize,
                 "The buffer size cannot be negative or zero.")
-    let mutable buffer = Array.zeroCreate bufferSize
+    let mutable buffer = ArrayPool.Shared.Rent bufferSize
     let mutable bufferFirstCharacterIndex = 0UL
     let mutable nextReadIndex = 0UL
     let checkDisposed() =
         if isNull buffer then
             raise <| ObjectDisposedException("Cannot use a dynamic block character stream after being disposed.")
-    let growBuffer newLength =
-        Array.Resize(&buffer, newLength)
+    let growBuffer() =
+        let newLength = buffer.Length * 2
+        let bufferNew = ArrayPool.Shared.Rent newLength
+        ReadOnlySpan(buffer).CopyTo(Span bufferNew)
+        ArrayPool.Shared.Return(buffer)
+        buffer <- bufferNew
     let getBufferContentLength() = nextReadIndex - bufferFirstCharacterIndex |> int
     let rec tryExpandPastIndex startingIndex idx =
-        checkDisposed()
         Debug.Assert(startingIndex >= bufferFirstCharacterIndex,
             "The starting index was behind the first character in the buffer.")
         Debug.Assert(idx >= startingIndex,
@@ -91,7 +95,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
                     bufferFirstCharacterIndex <- startingIndex
                 else
                     // Otherwise we make the buffer larger.
-                    growBuffer (buffer.Length * 2)
+                    growBuffer()
             let bufferContentLength = getBufferContentLength()
             // It's now time to read more characters.
             let nRead = reader.Read(buffer, bufferContentLength, buffer.Length - bufferContentLength)
@@ -101,6 +105,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
             // We will then either return or expand the buffer again.
             nRead <> 0 && tryExpandPastIndex startingIndex idx
     override _.TryExpandPastIndex(startingIndex, idx) =
+        checkDisposed()
         tryExpandPastIndex startingIndex idx
     override _.LengthSoFar =
         checkDisposed()
@@ -114,6 +119,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
         let startIndex = startIndex - bufferFirstCharacterIndex |> int
         ReadOnlySpan(buffer, startIndex, length)
     override _.Dispose() =
+        ArrayPool.Shared.Return buffer
         buffer <- null
         if not leaveOpen then
             reader.Dispose()

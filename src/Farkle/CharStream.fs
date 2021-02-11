@@ -121,7 +121,7 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
 /// A data structure that supports efficient access to a
 /// read-only sequence of characters. It is not thread-safe.
 type CharStream private(source: CharStreamSource) =
-    let objectStore = Dictionary(StringComparer.Ordinal)
+    let mutable objectStore: IDictionary<_,_> = null
     /// The index of the first element that must be retained in memory
     /// because it is going to be used to generate a token.
     let mutable startingIndex = 0UL
@@ -160,7 +160,10 @@ type CharStream private(source: CharStreamSource) =
     // https://github.com/dotnet/fsharp/issues/9997
     member _.CurrentPosition: inref<_> = &currentPosition
     /// <inheritdoc cref="ITokenizerContext.ObjectStore"/>
-    member _.ObjectStore = objectStore :> IDictionary<_,_>
+    member _.ObjectStore =
+        if isNull objectStore then
+            objectStore <- Dictionary(StringComparer.Ordinal)
+        objectStore
     /// A read-only span of characters that contains all
     /// available characters at and after the stream's current position.
     member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index

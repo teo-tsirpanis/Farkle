@@ -115,6 +115,30 @@ with
                 ParserError(input.CurrentPosition, ParseErrorType.UserError e.Message)
                 |> mkError
         | Error x -> Error <| FarkleError.BuildError x
+    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
+    /// <param name="pp">The new post-processor.</param>
+    /// <returns>A new runtime Farkle with ite post-
+    /// processor changed to <paramref name="pp"/>.</returns>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: PostProcessor<'TNewResult>) = {
+        Grammar = this.Grammar
+        TokenizerFactory = this.TokenizerFactory
+        PostProcessor = pp
+    }
+    /// <summary>Changes the runtime Farkle's returning type to
+    /// <see cref="Object"/>, without changing its post-processsor.</summary>
+    member this.Cast() : [<Nullable(1uy, 0uy)>] _ =
+        let ppOld = this.PostProcessor
+        let ppNew =
+            if typeof<'TResult>.IsValueType then
+                {new PostProcessor<obj> with
+                    member _.Transform(sym, context, data) =
+                        ppOld.Transform(sym, context, data)
+                    member _.Fuse(prod, members) =
+                        ppOld.Fuse(prod, members)}
+            else
+                unbox ppOld
+        this.ChangePostProcessor ppNew
     /// <summary>Changes the <see cref="TokenizerFactory"/> of this runtime Farkle.</summary>
     /// <param name="tokenizerFactory">The new tokenizer factory</param>
     /// <returns>A new runtime Farkle that will parse text with the tokenizer
@@ -141,11 +165,11 @@ with
 module RuntimeFarkle =
 
     /// Changes the post-processor of a `RuntimeFarkle`.
-    let changePostProcessor pp rf = {
-        Grammar = rf.Grammar
-        PostProcessor = pp
-        TokenizerFactory = rf.TokenizerFactory
-    }
+    let changePostProcessor pp (rf: RuntimeFarkle<'TResult>) = rf.ChangePostProcessor pp
+
+    /// Changes the runtime Farkle's returning type
+    /// to object, without changing its post-processor.
+    let cast (rf: RuntimeFarkle<'TResult>) = rf.Cast()
 
     /// Changes the tokenizer that will be used by this runtime Farkle.
     /// This function accepts a function that takes a `Grammar` and returns a `Tokenizer`.
@@ -299,13 +323,6 @@ data; not text. Parse a TextReader instead.")>]
     /// <remarks>The text reader's content will be lazily read.</remarks>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.Parse textReader = parseTextReader this textReader
-    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
-    /// <param name="pp">The new post-processor.</param>
-    /// <returns>A new runtime Farkle with ite post-
-    /// processor changed to <paramref name="pp"/>.</returns>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: PostProcessor<'TNewResult>) =
-        changePostProcessor pp this
     /// <summary>Parses and post-processes a file.</summary>
     /// <param name="path">The path of the file to parse.</param>
     /// <returns>An F# result type containing either the

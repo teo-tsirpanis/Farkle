@@ -8,39 +8,75 @@ namespace Farkle.Benchmarks
 open BenchmarkDotNet.Attributes
 open Chiron
 open Farkle
-open Farkle.Builder
-open Farkle.Common.Result
 open Farkle.Samples
+open FParsec
+open System
 open System.IO
+open System.Text
 
 [<RankColumn>]
 type JsonBenchmark() =
 
-    // File I/O during parsing will affect them, but the benchmarks measure
-    // parsing when not the entire file is immediately available on memory.
-    let mutable jsonData = ""
+    let mutable jsonBytes = Array.Empty()
 
-    let createTR() = new StringReader(jsonData)
+    let mutable jsonText = ""
 
-    let farkleRuntime = FSharp.JSON.runtime
+    let createTR() = new StreamReader(new MemoryStream(jsonBytes, false))
+
+    let farkleRuntime = FSharp.JSON.runtime.Cast()
+
+    let farkleRuntimeSyntaxCheck = FSharp.JSON.runtime.SyntaxCheck()
 
     [<Params("small.json", "medium.json", "big.json")>]
     member val FileName = "" with get, set
 
+    // Benchmarking syntax-checking tests the raw speed of the
+    // parsers, without the overhead of the allocated JSON objects.
+    [<Params(true, false)>]
+    member val SyntaxCheck = true with get, set
+
     [<GlobalSetup>]
     member this.GlobalSetup() =
-        jsonData <- File.ReadAllText(this.FileName)
+        jsonText <- File.ReadAllText this.FileName
+        jsonBytes <- Encoding.UTF8.GetBytes jsonText
 
     [<Benchmark>]
-    member _.Farkle() =
-        RuntimeFarkle.parseTextReader farkleRuntime (createTR())
-        |> returnOrFail
+    // Testing the other two libraries in parsing both strings and
+    // streams is not important; both are suboptimally implemented
+    // in one mode or another: FParsec copies the entire stream in
+    // memory and FsYacc first copies the string in a byte array.
+    member this.FarkleStream() =
+        let rf =
+            if this.SyntaxCheck then
+                farkleRuntimeSyntaxCheck
+            else
+                farkleRuntime
+        use tr = createTR()
+        RuntimeFarkle.parseTextReader rf tr
+
+    [<Benchmark>]
+    member this.FarkleString() =
+        let rf =
+            if this.SyntaxCheck then
+                farkleRuntimeSyntaxCheck
+            else
+                farkleRuntime
+        RuntimeFarkle.parseString rf jsonText
 
     [<Benchmark(Baseline = true)>]
     // Chiron uses FParsec underneath, which is the main competitor of Farkle.
-    // I could use the Big Data edition, but it is not branded as their main
-    // edition, and I am not going to do them any favors by allowing unsafe code.
-    member _.Chiron() = Json.parse jsonData
+    // Its more optimized "Big Data edition" only supports .NET Framework.
+    member this.Chiron() =
+        let parser =
+            if this.SyntaxCheck then
+                JsonSyntaxCheckers.Chiron.jsonParser
+            else
+                !jsonR
+        runParserOnString parser () this.FileName jsonText
 
     [<Benchmark>]
-    member _.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseTextReader (createTR())
+    member this.FsLexYacc() =
+        if this.SyntaxCheck then
+            JsonSyntaxCheckers.FsLexYacc.parseString jsonText
+        else
+            FsLexYacc.JSON.JSONParser.parseString jsonText

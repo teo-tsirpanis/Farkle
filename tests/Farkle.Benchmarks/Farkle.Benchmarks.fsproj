@@ -10,6 +10,7 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="JsonSyntaxCheckers.fs" />
     <Compile Include="*Benchmark.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**">

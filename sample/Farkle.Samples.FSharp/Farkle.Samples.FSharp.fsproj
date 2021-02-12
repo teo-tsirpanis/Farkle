@@ -6,7 +6,6 @@
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
     </FsYacc>
-    <Compile Include="Parser.fsi" />
     <Compile Include="Parser.fs" />
     <FsLex Include="Lexer.fsl">
       <OtherFlags>--unicode</OtherFlags>

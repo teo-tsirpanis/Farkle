@@ -20,7 +20,7 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.Core" Version="5.0.0" PrivateAssets="all" />
+    <PackageReference Include="FSharp.Core" Version="5.0.1" PrivateAssets="all" />
     <PackageReference Include="Sigourney" Version="0.3.1" PrivateAssets="compile" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />

@@ -223,7 +223,7 @@ module RuntimeFarkle =
     [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// Marks the given designtime as available to have its grammar
     /// precompiled ahead of time. Learn more, including usage restrictions
-    /// on https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
+    /// at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
         PrecompilableDesigntimeFarkle<_>(df, asm)

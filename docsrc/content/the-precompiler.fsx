@@ -70,11 +70,35 @@ As you see, the building methods in C# have the same name as before. The type fo
 
 A precompilable designtime Farkle will be discovered and precompiled if it is declared in a `static readonly` _field_ (not property). In F#, a let-bound value in a module is equivalent, but it must not be mutable. Also, `static let`s in class declarations will not be recognized because they are not compiled as `readonly`.
 
-This field can be of any visibility; public, internal, private, it doesn't matter. It will be detected even in nested classes or nested F# modules.
+This field can be of any visibility; public, internal, private, it doesn't matter. It will be detected even in nested classes or nested F# modules. It _cannot_ however be declared in a generic type.
 
-The precompiler will raise appropriate warnings to help you properly declare your precompilable designtime Farkles.
+In addition, the precompilable designtime Farkle must be marked in the assembly it is declared. Let's see a counterexample:
 
-All precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. You can use the `DesigntimeFarkle.rename` function or the `Rename` extension method to rename a designtime Farkle before marking it as precompilable.
+``` csharp
+// Assembly A
+public class AssemblyA {
+    public static readonly PrecompilableDesigntimeFarkle<int> Designtime;
+
+    static AssemblyA() {
+        Designtime =
+            // ...
+            .MarkForPrecompile();
+    }
+}
+
+// Assembly B
+public class AssemblyB {
+    public static readonly PrecompilableDesigntimeFarkle<int> WillNotBePrecompiled =
+        AssemblyA.Designtime;
+
+    public static readonly PrecompilableDesigntimeFarkle<int> WillBePrecompiled =
+        AssemblyA.Designtime.InnerDesigntimeFarkle.MarkForPrecompile();
+}
+```
+
+The precompiler will raise warnings to help you abide by the rules above.
+
+Furthermore, all precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. You can use the `DesigntimeFarkle.rename` function or the `Rename` extension method to rename a designtime Farkle before marking it as precompilable.
 
 Multiple field references to the same precompilable designtime Farkle do not pose a problem and will be precompiled only once.
 

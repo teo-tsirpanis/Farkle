@@ -28,6 +28,7 @@ let private allBindingFlags =
     ||| BindingFlags.Static
     ||| BindingFlags.Public
     ||| BindingFlags.NonPublic
+    ||| BindingFlags.DeclaredOnly
 
 let private filterTargetInvocationException (e: exn) =
     match e with
@@ -49,6 +50,10 @@ let private discoverPrecompilableDesigntimeFarkles (log: ILogger) (asm: Assembly
             typeof<PrecompilableDesigntimeFarkle>.IsAssignableFrom fld.FieldType
             && (
                 let mutable isEligible = true
+                if fld.DeclaringType.IsGenericType then
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it \
+is declared in a generic type.", fld.DeclaringType, fld.Name)
+                    isEligible <- false
                 if not fld.IsStatic then
                     log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it is not static.",
                         fld.DeclaringType, fld.Name)
@@ -60,16 +65,20 @@ let private discoverPrecompilableDesigntimeFarkles (log: ILogger) (asm: Assembly
                 isEligible
             )
         )
-        |> Seq.map (fun fld ->
+        |> Seq.choose (fun fld ->
             try
-                fld.GetValue(null) :?> PrecompilableDesigntimeFarkle |> Ok
+                let pcdf = fld.GetValue(null) :?> PrecompilableDesigntimeFarkle
+                if pcdf.Assembly = asm then
+                    pcdf |> Ok |> Some
+                else
+                    log.Warning("Field {FieldType:l}.{FieldName:l} will not be precompiled because it was \
+marked in a foreign assembly ({AssemblyName:l}).", fld.DeclaringType, fld.Name, pcdf.Assembly.GetName().Name)
+                    None
             with
-            e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e))
-        |> Seq.filter (function Ok pcdf -> pcdf.Assembly = asm | Error _ -> true)
+            e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e) |> Some)
 
     let types = asm.GetTypes()
     types
-    |> Seq.filter (fun typ -> not typ.IsGenericType)
     |> Seq.collect probeType
     // Precompilable designtime Farkles are F# object types, which
     // means they follow reference equality semantics. If discovery

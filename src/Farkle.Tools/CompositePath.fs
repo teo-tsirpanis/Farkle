@@ -50,24 +50,33 @@ module CompositePath =
                     |> Some
                 CompositePath(filePath, grammarName)
 
-    let private resolveGrammar grammarName (filePath: string) = either {
+    let rec private resolveGrammar projectOptions grammarName originalPath (filePath: string) = either {
         let! _ = assertFileExists filePath
         let ext = Path.GetExtension(filePath.AsSpan())
         if isProjectExtension ext then
-            Log.Error("Opening projects is not currently supported")
-            return! Error()
+            do! ProjectResolver.registerMSBuild()
+            let! assemblyPath = ProjectResolver.resolveProjectAssembly projectOptions filePath
+            if originalPath = filePath then
+                // We will recurse to follow the assembly file logic.
+                // Thanks to the originalPath parameter, any error will be attributed
+                // to the project, not its assembly, for increased user-friendliness.
+                return! resolveGrammar projectOptions grammarName filePath assemblyPath
+            else
+                // But for the very unlikely case that the project loops again, we should fail.
+                Log.Fatal("An infinite loop was detected in the composite path resolver. Please report a bug on GitHub.")
+                return! Error()
         elif isAssemblyExtension ext then
             use loader = new PrecompiledAssemblyFileLoader(filePath)
             match grammarName with
             | None ->
                 match loader.Grammars.Count with
                 | 0 ->
-                    Log.Error("The assembly of {Path} has no precompiled grammars.", filePath)
+                    Log.Error("The assembly of {Path} has no precompiled grammars.", originalPath)
                     return! Error()
                 | 1 ->
                     return GrammarTemplateInput.Create ((Seq.exactlyOne loader.Grammars.Values).GetGrammar()) filePath
                 | _ ->
-                    Log.Error("The assembly of {Path} has more than one precompiled gramamr:", filePath)
+                    Log.Error("The assembly of {Path} has more than one precompiled grammar:", originalPath)
                     for x in loader.Grammars.Keys do
                         Log.Information("{GrammarName}", x)
 
@@ -78,14 +87,14 @@ module CompositePath =
                 match loader.Grammars.TryGetValue(grammarName) with
                 | true, grammar -> return GrammarTemplateInput.Create (grammar.GetGrammar()) filePath
                 | false, _ ->
-                    Log.Error("The assembly of {Path} does not have a precompiled grammar named {GrammarName}.", filePath, grammarName)
+                    Log.Error("The assembly of {Path} does not have a precompiled grammar named {GrammarName}.", originalPath, grammarName)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()
         elif isGrammarExtension ext then
             return GrammarTemplateInput.Create (EGT.ofFile filePath) filePath
         else
-            Log.Error("Unsupported file name: {FilePath}", filePath)
+            Log.Error("Unsupported file extension: {FileExtension}", ext.ToString())
             return! Error()
     }
 
@@ -104,10 +113,10 @@ module CompositePath =
             Log.Error("Many project files were found in the current directory.")
             Error()
 
-    let rec resolve currentDir (CompositePath(filePath, grammarName)) = either {
+    let rec resolve projectOptions currentDir (CompositePath(filePath, grammarName)) = either {
         let! filePath =
             match filePath with
             | Some x -> Ok x
             | None -> findDefaultProject currentDir
-        return! resolveGrammar grammarName filePath
+        return! resolveGrammar projectOptions grammarName filePath filePath
     }

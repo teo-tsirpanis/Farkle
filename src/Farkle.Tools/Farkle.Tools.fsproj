@@ -17,6 +17,7 @@
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
     <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
@@ -25,6 +26,8 @@
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <PackageReference Include="Argu" Version="6.1.1" />
+    <PackageReference Include="Microsoft.Build" Version="16.8.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
   </ItemGroup>
 </Project>

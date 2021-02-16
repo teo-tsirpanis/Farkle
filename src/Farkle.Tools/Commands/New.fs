@@ -18,6 +18,7 @@ open System.Text.Json
 type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
+    | [<Unique; AltCommandLine("-c")>] Configuration of string
     | [<Unique>] Html
     | [<Unique>] ``Custom-head`` of string
     | [<Unique>] ``No-css``
@@ -36,6 +37,7 @@ with
 Run 'farkle --explain-composite-paths' to learn their syntax."
             | OutputFile _ -> "Specifies where the output file will be stored. \
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
+            | Configuration _ -> "Specifies the configuration the project will be evaluated with. Defaults to Debug."
             | Html -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
             | ``Custom-head`` _ -> "A file whose content will be appended to the resulting HTML page's head."
             | ``No-css`` -> "Does not generate inline CSS for the resulting HTML page."
@@ -102,7 +104,7 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         return! Error()
 }
 
-let warnOnUnusedArguments (args: ParseResults<_>) =
+let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
     let doWarnIfNot isUsed (arg: Quotations.Expr<_ -> _>) (argName: string) =
         if not isUsed && args.Contains arg then
             Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
@@ -112,6 +114,9 @@ let warnOnUnusedArguments (args: ParseResults<_>) =
     let isSkeleton = args.Contains GrammarSkeleton
     let isCustomTemplate = args.Contains TemplateFile
     let isHtml = args.Contains Html || (isSkeleton = isCustomTemplate)
+    let isProjectFile =
+        let extension = Path.GetExtension(grammarPath.AsSpan())
+        isProjectExtension extension
     doWarnIfNot isHtml <@ ``Custom-head`` @> "--custom-head"
     doWarnIfNotOpt isHtml <@ ``No-css`` @> "--no-css"
     doWarnIfNotOpt isHtml <@ ``No-lalr`` @> "--no-lalr"
@@ -119,14 +124,16 @@ let warnOnUnusedArguments (args: ParseResults<_>) =
     doWarnIfNot isSkeleton <@ Language @> "-lang"
     doWarnIfNot isSkeleton <@ Namespace @> "-ns"
     doWarnIfNot isCustomTemplate <@ Property @> "-prop"
+    doWarnIfNot isProjectFile <@ Configuration @> "-c"
 
 let run json (args: ParseResults<_>) = either {
+    let projectOptions = {ProjectResolver.Configuration = args.GetResult(Configuration, "Debug")}
     let! grammarInput =
         args.TryGetResult GrammarFile
         |> CompositePath.create
-        |> CompositePath.resolve Environment.CurrentDirectory
+        |> CompositePath.resolve projectOptions Environment.CurrentDirectory
     let! templateType = getTemplateType grammarInput args
-    warnOnUnusedArguments args
+    warnOnUnusedArguments grammarInput.GrammarPath args
 
     let! generatedTemplate = TemplateEngine.renderTemplate Log.Logger templateType
 

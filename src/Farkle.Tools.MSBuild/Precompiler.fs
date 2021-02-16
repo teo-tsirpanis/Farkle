@@ -122,7 +122,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
             if asm.IsReferenceAssembly then
                 None
             else
-                log.Verbose("{AssemblyName}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
+                log.Verbose("{AssemblyName:l}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
                 Some (asm.AssemblyName.FullName, asm.FileName))
         |> readOnlyDict
     let theAssembly =

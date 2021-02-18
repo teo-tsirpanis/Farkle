@@ -15,10 +15,8 @@ module FsLexYacc =
     open FsLexYacc.JSON.Lexer
     open FsLexYacc.JSON.Parser
 
-    // I know that not reusing the same tables object is horribly
-    // inefficient but that's exactly what FsYacc does.
-    let private syntaxCheckParserTables() =
-        let tables = tables()
+    let private syntaxCheckParserTables =
+        let tables = tables
         {tables with
             reductions = Array.replicate tables.reductions.Length (fun _ -> null)}
 
@@ -63,12 +61,12 @@ module FsLexYacc =
 
     let parseString x =
         let lexBuf = LexBuffer<_>.FromString x
-        syntaxCheckParserTables().Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
+        syntaxCheckParserTables.Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
         Unchecked.defaultof<Chiron.Json>
 
     let parseTextReader tr =
         let lexBuf = LexBuffer<_>.FromTextReader tr
-        syntaxCheckParserTables().Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
+        syntaxCheckParserTables.Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
         Unchecked.defaultof<Chiron.Json>
 
 // Because FParsec's "grammars" and "post-processors" are

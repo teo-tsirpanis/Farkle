@@ -235,8 +235,7 @@ let tests = testList "Designtime Farkle tests" [
             ParserError(Position.Create 1UL column (column - 1UL), ParseErrorType.UserError msg)
             |> FarkleError.ParseError |> Error
 
-        // TODO: Fix the positions
-        let error1 = mkError 9UL "Terminal found"
+        let error1 = mkError 8UL "Terminal found"
         Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught."
 
         let error2 = mkError 4UL "Empty input"

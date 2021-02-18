@@ -112,7 +112,11 @@ with
             with
             | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->
-                ParserError(input.CurrentPosition, ParseErrorType.UserError e.Message)
+                let pos =
+                    match e with
+                    | :? ParserApplicationExceptionWithPosition as e -> e.Position
+                    | _ -> (input :> ITransformerContext).StartPosition
+                ParserError(pos, ParseErrorType.UserError e.Message)
                 |> mkError
         | Error x -> Error <| FarkleError.BuildError x
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>

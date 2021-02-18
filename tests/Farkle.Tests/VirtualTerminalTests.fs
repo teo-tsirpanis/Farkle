@@ -33,7 +33,7 @@ USS Oriskany
         let result = runtime.Parse code
         let expectedResult =
             ParserError(
-                Position.Create 3UL 1UL 8UL,
+                Position.Create 3UL 4UL 11UL,
                 ParseErrorType.UserError "unindent does not match any outer indentation level")
             |> FarkleError.ParseError
             |> Error

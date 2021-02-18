@@ -149,10 +149,12 @@ type IndentCodeTokenizer(grammar) =
                 elif indentLevels.Count = 0 || currentIndentLevel > indentLevels.Peek() then
                     // If we are in the process of exiting a block, we can't enter a new one.
                     if exitingBlock then
-                        // The error function will throw a ParserApplicationException
-                        // which is specially handled by Farkle to return just an error
-                        // message without a stack trace. The message is borrowed from Python.
-                        error "unindent does not match any outer indentation level"
+                        // We use the FailAtOffset extension method to throw a
+                        // ParserApplicationException after the indentation. This
+                        // type of exception is specially handled by Farkle to
+                        // return just an error message without a stack trace.
+                        // The message is borrowed from Python.
+                        input.FailAtOffset(currentIndentLevel, "unindent does not match any outer indentation level")
                     // We push this line's indentation level to our stack.
                     indentLevels.Push currentIndentLevel
                     // We tell the character stream to not show us these spaces again.

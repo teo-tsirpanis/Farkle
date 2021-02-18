@@ -160,9 +160,9 @@ You can always call a non-deterministic function like `DateTime.Now` that will m
 
 ### Building from an IDE
 
-And last but not least, the precompiler will not work when running a .NET Framework-based edition of MSBuild. This includes building from Visual Studio for Windows. The recommended way to build an app that uses the precompiler is through `dotnet build` and its friends. This doesn't mean that the precompiler won't work on .NET Framework assemblies; you have to use the SDK-style project format and build with the .NET Core SDK; it will normally work.
+And last but not least, the precompiler will not work when running a .NET Framework-based edition of MSBuild. This includes building from Visual Studio for Windows. The recommended way to build an app that uses the precompiler is through `dotnet build` and its friends. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed that would solve the problem but it won't be implemented anytime soon.
 
-[A suggestion on Visual Studio][vs-suggestion] has been filed that would solve the problem. When it gets fixed, this guide will be updated.
+This doesn't mean that the precompiler won't work on .NET Framework assemblies; you have to use the SDK-style project format and build with the .NET Core SDK; it will normally work.
 
 > __Note__: Precompiling a .NET Framework assembly will load it to the .NET Core-based precompiler. While it sometimes works due to a .NET Core compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features. It might work, it might fail, who knows? And why are you still using the .NET Framework?
 

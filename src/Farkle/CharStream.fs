@@ -191,7 +191,7 @@ type CharStream private(source: CharStreamSource) =
         currentPosition.Advance span
     /// <summary>Advances the stream's current position by <paramref name="ofs"/>
     /// characters. This function invalidates the indices for the stream's
-    /// <see cref="CharacterBuffer"/> and the characters might be released
+    /// <see cref="CharacterBuffer"/> and its characters might be released
     /// from memory.</summary>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>
@@ -202,7 +202,9 @@ type CharStream private(source: CharStreamSource) =
     /// Advances the stream's current position just after the
     /// next `ofs`th character from the stream's current position.
     /// This function invalidates the indices for the stream's `CharacterBuffer`.
-    /// Optionally, the characters can be marked to be released from memory.
+    /// A call of this function with `doUnpin` set to false will not release the
+    /// characters from memory but requires but requires to be paired witha call
+    /// to CreateToken.
     member internal x.AdvancePastOffset(ofs, doUnpin) =
         currentPosition <- x.GetPositionAtOffset(ofs + 1)
         if doUnpin then

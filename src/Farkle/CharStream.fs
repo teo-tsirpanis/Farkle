@@ -128,17 +128,18 @@ type private DynamicBlockSource(reader: TextReader, leaveOpen, bufferSize) =
 /// read-only sequence of characters. It is not thread-safe.
 type CharStream private(source: CharStreamSource) =
     let mutable objectStore: IDictionary<_,_> = null
-    /// The index of the first element that must be retained in memory
-    /// because it is going to be used to generate a token.
-    let mutable startingIndex = 0UL
+    // The dynamic block source must retain the
+    // characters after this position in memory.
+    let mutable startingPosition = Position.Initial
     let mutable currentPosition = Position.Initial
-    let mutable lastTokenPosition = Position.Initial
     let checkOfsetPositive ofs =
         if ofs < 0 then
             raise(ArgumentOutOfRangeException("ofs", ofs, "The offset cannot be negative."))
     /// Converts an offset relative to the current
     /// position to an absolute character index.
     let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs
+    let updateTokenStartPosition() =
+        startingPosition <- currentPosition
     /// <summary>Creates a <see cref="CharStream"/> from a
     /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
     new(mem) = new CharStream(new StaticBlockSource(mem))
@@ -159,11 +160,9 @@ type CharStream private(source: CharStreamSource) =
         if bufferSize <= 0 then
             raise (ArgumentOutOfRangeException("bufferSize", bufferSize, "The buffer size cannot be negative or zero."))
         new CharStream(new DynamicBlockSource(reader, leaveOpen, bufferSize))
-    member internal _.CurrentIndex = currentPosition.Index
     /// The starting position of the last token that was generated.
-    member internal _.LastTokenPosition: inref<_> = &lastTokenPosition
+    member internal _.TokenStartPosition: inref<_> = &startingPosition
     /// The position of the next character the stream has to read.
-    // https://github.com/dotnet/fsharp/issues/9997
     member _.CurrentPosition: inref<_> = &currentPosition
     /// <inheritdoc cref="ITokenizerContext.ObjectStore"/>
     member _.ObjectStore =
@@ -181,7 +180,7 @@ type CharStream private(source: CharStreamSource) =
     /// <paramref name="ofs"/> is negative.</exception>
     member _.TryExpandPastOffset ofs =
         checkOfsetPositive ofs
-        source.TryExpandPastIndex(startingIndex, convertOffsetToIndex ofs)
+        source.TryExpandPastIndex(startingPosition.Index, convertOffsetToIndex ofs)
     /// <summary>Returns the position of the character at <paramref name="ofs"/>
     /// characters after the current position.</summary>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -197,6 +196,7 @@ type CharStream private(source: CharStreamSource) =
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>
     member x.AdvanceBy ofs =
+        checkOfsetPositive ofs
         if ofs <> 0 then
             x.AdvancePastOffset(ofs - 1, true)
     /// Advances the stream's current position just after the
@@ -206,27 +206,20 @@ type CharStream private(source: CharStreamSource) =
     member internal x.AdvancePastOffset(ofs, doUnpin) =
         currentPosition <- x.GetPositionAtOffset(ofs + 1)
         if doUnpin then
-            startingIndex <- currentPosition.Index
-    /// Marks the start of the next token by setting the
-    /// stream's last token position to the current one.
-    member internal _.StartNewToken() = lastTokenPosition <- currentPosition
+            updateTokenStartPosition()
     /// Creates an arbitrary object from the characters
     /// between the `CharStream`'s last token position and its current position.
     /// After that call, the characters at and before the current position
     /// might be freed from memory, so this method must not be used twice.
-    member internal x.FinishNewToken symbol (transformer: ITransformer<'TSymbol>) =
-        let idxStart = lastTokenPosition.Index
-        let idxEnd = x.CurrentIndex - 1UL
-        let length = x.CurrentIndex - idxStart |> int
-        if startingIndex <= idxStart && source.LengthSoFar > idxEnd then
-            startingIndex <- idxEnd + 1UL
-            let span = source.GetSpanForCharacters(idxStart, length)
-            transformer.Transform(symbol, x, span)
-        else
-            failwithf "Trying to read from %d to %d, from a stream that was last read at %d."
-                idxStart idxEnd startingIndex
+    member internal x.CreateToken symbol (transformer: ITransformer<'TSymbol>) =
+        let idxStart = startingPosition.Index
+        let length = currentPosition.Index - idxStart |> int
+        let span = source.GetSpanForCharacters(idxStart, length)
+        let result = transformer.Transform(symbol, x, span)
+        updateTokenStartPosition()
+        result
     interface ITransformerContext with
-        member _.StartPosition = &lastTokenPosition
+        member _.StartPosition = &startingPosition
         member _.EndPosition = &currentPosition
         member x.ObjectStore = x.ObjectStore
     interface IDisposable with

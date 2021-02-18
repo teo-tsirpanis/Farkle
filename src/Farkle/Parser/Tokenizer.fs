@@ -9,6 +9,7 @@ open Farkle
 open Farkle.Grammar
 open Farkle.IO
 open System
+open System.Diagnostics
 
 [<Struct>]
 /// A value type representing the result of a DFA tokenizer invocation.
@@ -129,23 +130,24 @@ type DefaultTokenizer(grammar: Grammar) =
             let newToken (term: Terminal) =
                 let data =
                     try
-                        input.FinishNewToken term transformer
+                        input.CreateToken term transformer
                     with
                     | :? ParserApplicationException -> reraise()
                     | e -> PostProcessorException(term, e) |> raise
-                let theHolyToken = Token(input.LastTokenPosition, term, data)
+                let theHolyToken = Token(input.TokenStartPosition, term, data)
                 theHolyToken
             let dfaResult = tokenizeDFA input
             // Input ends outside of a group.
             if dfaResult.ReachedEOF then
                 Token.CreateEOF input.CurrentPosition
             else
+                Debug.Assert(input.CurrentPosition.Index = input.TokenStartPosition.Index,
+                    "The character stream's current position and starting position are not the same.")
                 let ofs = dfaResult.LastCharacterOffset
                 match dfaResult.FoundToken, dfaResult.Symbol with
                 // We are neither inside any group, nor a new one is going to start.
                 // The easiest case. We advance the input, and return the token.
                 | true, Choice1Of4 term ->
-                    input.StartNewToken()
                     input.AdvancePastOffset(ofs, false)
                     newToken term
                 // We found noise outside of any group.
@@ -156,7 +158,6 @@ type DefaultTokenizer(grammar: Grammar) =
                 // A new group just started. We will enter the group loop function.
                 | true, Choice3Of4(GroupStart(_, tokGroupIdx)) ->
                     let g = groups.[int tokGroupIdx]
-                    input.StartNewToken()
                     let isNoiseGroup = not g.IsTerminal
                     input.AdvancePastOffset(ofs, isNoiseGroup)
                     groupLoop isNoiseGroup [g]

@@ -23,6 +23,7 @@
     <Compile Include="CharStream.fs" />
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/ListBuilder.fs" />
+    <Compile Include="Collections/StackNeo.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
     <Compile Include="AST.fs" />

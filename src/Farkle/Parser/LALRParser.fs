@@ -6,36 +6,13 @@
 namespace Farkle.Parser
 
 open Farkle
+open Farkle.Collections
 open Farkle.Grammar
 open Farkle.IO
-open System
-open System.Buffers
 open System.Runtime.CompilerServices
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
 module LALRParser =
-
-    type private ObjectBuffer() =
-        let mutable arr = ArrayPool.Shared.Rent 16
-        let ensureSized newSize =
-            if newSize > arr.Length then
-                ArrayPool.Shared.Return arr
-                arr <- ArrayPool.Shared.Rent newSize
-        member _.GetBufferFromStack(length, stack) =
-            ensureSized length
-            let mutable i = length - 1
-            let mutable stack = stack
-            // Remember: "a > b" in boolean means "a && (not b)".
-            while i >= 0 > List.isEmpty stack do
-                match stack with
-                | (_, x) :: xs ->
-                    arr.[i] <- x
-                    i <- i - 1
-                    stack <- xs
-                | [] -> ()
-            ReadOnlySpan(arr, 0, length)
-        interface IDisposable with
-            member _.Dispose() = ArrayPool.Shared.Return(arr, true)
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
     /// <param name="grammar">The grammar to use.</param>
@@ -45,11 +22,14 @@ module LALRParser =
     /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
     /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
     let parse<[<Nullable(2uy)>] 'TResult> grammar (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream): _ =
-        use objBuffer = new ObjectBuffer()
+        let objectStack = StackNeo()
+        objectStack.Push null
+        let stateStack = StackNeo()
+        stateStack.Push 0u
         let oops = OptimizedOperations.Create grammar
         let lalrStates = grammar.LALRStates
 
-        let rec impl (token: Token) currentState stack =
+        let rec impl (token: Token) currentState =
             let (|LALRState|) x = lalrStates.[int x]
             let nextAction =
                 if not token.IsEOF then
@@ -57,27 +37,32 @@ module LALRParser =
                 else
                     currentState.EOFAction
             match nextAction with
-            | Some LALRAction.Accept -> stack |> List.head |> snd
+            | Some LALRAction.Accept -> objectStack.Peek()
             | Some(LALRAction.Shift (LALRState nextState)) ->
                 if token.IsEOF then
                     failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
                 let nextToken = tokenizer.GetNextToken(pp, input)
-                impl nextToken nextState ((nextState, token.Data) :: stack)
+                objectStack.Push token.Data
+                stateStack.Push nextState.Index
+                impl nextToken nextState
             | Some(LALRAction.Reduce productionToReduce) ->
                 let handleLength = productionToReduce.Handle.Length
-                let newStack = List.skip handleLength stack
                 // The stack cannot be empty; we gave it one element in the beginning.
-                let gofromState, _ = newStack.Head
+                let (LALRState gofromState) = stateStack.Peek handleLength
                 match oops.LALRGoto productionToReduce.Head gofromState with
                 | Some gotoState ->
                     let resultObj =
-                        let tokens = objBuffer.GetBufferFromStack(handleLength, stack)
+                        let members = objectStack.PeekMany handleLength
                         try
-                            pp.Fuse(productionToReduce, tokens)
+                            pp.Fuse(productionToReduce, members)
                         with
                         | :? ParserApplicationException -> reraise()
                         | e -> PostProcessorException(productionToReduce, e) |> raise
-                    impl token gotoState ((gotoState, resultObj) :: newStack)
+                    objectStack.PopMany handleLength
+                    objectStack.Push resultObj
+                    stateStack.PopMany handleLength
+                    stateStack.Push gotoState.Index
+                    impl token gotoState
                 | None -> failwithf "Error in state %d: GOTO was not found for production %O." gofromState.Index productionToReduce
             | None ->
                 let expectedSymbols =
@@ -94,4 +79,4 @@ module LALRParser =
                 ParserError(token.Position, syntaxError) |> ParserException |> raise
 
         let firstToken = tokenizer.GetNextToken(pp, input)
-        impl firstToken lalrStates.[0] [lalrStates.[0], null] :?> 'TResult
+        impl firstToken lalrStates.[0] :?> 'TResult

@@ -27,6 +27,7 @@ open Fake.Tools.Git
 open Scriban
 open System
 open System.IO
+open System.Runtime.InteropServices
 open System.Text.RegularExpressions
 
 Target.initEnvironment()
@@ -234,7 +235,8 @@ let shouldCIBenchmark =
     | LocalBuild -> true
     | AppVeyor ->
         let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!")
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+        && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
     | _ -> true
 
 Target.description "Runs all benchmarks"

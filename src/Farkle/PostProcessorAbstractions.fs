@@ -16,15 +16,9 @@ open System.Runtime.CompilerServices
 /// but casting it to this type is not recommended. Using this interface
 /// outside the scope of a transformer is not recommended either.</remarks>
 type ITransformerContext =
-    /// <summary>The position of the first character of the token.</summary>
-    /// <remarks>In C# this property is shown as a read-write <c>ref</c> due
-    /// to compiler limitations. It will be changed to a <c>readonly ref</c>
-    /// at a future non-major release.</remarks>
+    /// The position of the first character of the token.
     abstract StartPosition: inref<Position>
-    /// <summary>The position of the last character of the token.</summary>
-    /// <remarks>In C# this property is shown as a read-write <c>ref</c> due
-    /// to compiler limitations. It will be changed to a <c>readonly ref</c>
-    /// at a future non-major release.</remarks>
+    /// The position of the last character of the token.
     abstract EndPosition: inref<Position>
     /// <summary>An associative collection of objects that
     /// can be indexed by a case-sensitive string.</summary>

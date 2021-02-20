@@ -17,6 +17,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
+open System.Runtime.CompilerServices
 
 // Taking the concept of circular references to a whole new level.
 #if NET
@@ -182,6 +183,7 @@ let internal createRegexBuild caseSensitive regexes =
 
     let createRegexBuildSingle regex acceptSymbol =
         let rec createTree regex =
+            RuntimeHelpers.EnsureSufficientExecutionStack()
             match regex with
             | Regex.Concat xs -> xs |> List.map (createTree >> makeRB) |> makeConcat
             | Regex.Alt xs -> xs |> List.map (createTree >> makeRB) |> Alt

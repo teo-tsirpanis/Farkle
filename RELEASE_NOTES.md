@@ -10,7 +10,7 @@
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Dynamic code generation will be applied to post-processors that are frequently used, in a fashion similar to .NET's tiered compilation, regardless of whether their designtime Farkle is precompilable.
 * Build error reporting is improved. More build errors will be reported at the same time, without having to fix one to show the next.
-* Fixed stack overflows when building deep designtime Farkles.
+* Stack overflows when building extremely complex designtime Farkles were either mitigated or will throw recoverable exceptions.
 
 #### 6.0.0-alpha.3 - 25-11-2020
 * __Breaking change:__ .NET Framework 4.5 is no longer supported. The library targets .NET Standard 2.0, .NET Standard 2.1 and .NET 5.

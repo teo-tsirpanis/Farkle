@@ -372,11 +372,7 @@ module DesigntimeFarkleBuild =
     /// amazing piece of software that created this grammar.
     let private generatedWithLoveBy =
         let asm = Assembly.GetExecutingAssembly()
-        asm.GetCustomAttributes<AssemblyInformationalVersionAttribute>()
-        |> Seq.tryExactlyOne
-        |> Option.map (fun x -> x.InformationalVersion)
-        |> Option.defaultWith (fun () -> asm.GetName().Version.ToString())
-        |> sprintf "%s %s" (asm.GetName().Name)
+        sprintf "%s %s" (asm.GetName().Name) (Reflection.getAssemblyInformationalVersion asm)
 
     [<RequiresExplicitTypeArguments>]
     let private createPostProcessor<'TOutput> ppDef =

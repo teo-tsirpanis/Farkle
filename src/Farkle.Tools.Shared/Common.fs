@@ -8,7 +8,6 @@ module Farkle.Tools.Common
 
 open Serilog
 open System
-open System.Collections.Generic
 open System.IO
 open System.Reflection
 

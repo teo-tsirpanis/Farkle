@@ -6,6 +6,7 @@
 namespace Farkle.Common
 
 open System
+open System.Reflection
 open System.Threading
 
 /// A reference type whose value can only be set once.
@@ -78,6 +79,14 @@ module internal Result =
 
     /// Returns the value of a `Result` or raises an exception.
     let returnOrFail result = tee id (failwithf "%O") result
+
+module internal Reflection =
+    let getAssemblyInformationalVersion (asm: Assembly) =
+        let versionString =
+            asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
+        match versionString.IndexOf('+') with
+        | -1 -> versionString
+        | plusPosition -> versionString.Substring(0, plusPosition)
 
 [<AutoOpen>]
 module internal ErrorHandling =

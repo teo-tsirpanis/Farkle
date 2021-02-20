@@ -56,11 +56,6 @@ module internal Result =
         | Ok x -> fOk x
         | Error x -> fError x
 
-    let apply f x =
-        match f with
-        | Ok f -> x |> Result.map f
-        | Error x -> Error x
-
     /// Consolidates a sequence of `Result`s into a `Result` of a list.
     /// Errors are consilidated into a list as well.
     let collect xs = Seq.foldBack (fun x xs ->
@@ -83,15 +78,6 @@ module internal Result =
 
     /// Returns the value of a `Result` or raises an exception.
     let returnOrFail result = tee id (failwithf "%O") result
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal List =
-
-    let allSome xs =
-        List.foldBack (fun x state ->
-            match x, state with
-            | Some x, Some state -> Some <| x :: state
-            | _, _ -> None) xs (Some [])
 
 [<AutoOpen>]
 module internal ErrorHandling =

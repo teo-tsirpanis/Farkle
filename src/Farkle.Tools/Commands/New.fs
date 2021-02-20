@@ -159,8 +159,8 @@ let run json (args: ParseResults<_>) = either {
         |> JsonSerializer.Serialize
         |> printfn "%s"
     else
-        Log.Verbose("Creating file at {outputFile}", outputFile)
+        Log.Verbose("Creating file at {OutputFile}", outputFile)
         File.WriteAllText(outputFile, generatedTemplate.Content)
 
-        Log.Information("Template was created at {outputFile}", outputFile)
+        Log.Information("Template was created at {OutputFile}", outputFile)
 }

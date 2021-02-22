@@ -29,5 +29,8 @@
     <PackageReference Include="Microsoft.Build" Version="16.8.0" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0-dev-00839" />
+    <!-- The following references resolve version conflicts. -->
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="runtime" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" ExcludeAssets="runtime" />
   </ItemGroup>
 </Project>

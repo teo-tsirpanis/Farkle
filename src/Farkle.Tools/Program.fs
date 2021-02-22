@@ -31,7 +31,7 @@ with
             match x with
             | Version -> "Display the program's version info."
             | ``Explain-composite-paths`` -> "Display help about the syntax of composite paths."
-            | Json -> "Encode output in JSON and print in in a single line in stdout. \
+            | Json -> "Encode output in JSON and print it in a single line in stdout. \
 No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."

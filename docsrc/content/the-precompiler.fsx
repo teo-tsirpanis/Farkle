@@ -134,6 +134,8 @@ The precompiler's behavior can be customized by the following MSBuild properties
 </PropertyGroup>
 ```
 
+The `FarkleGenerateHtml` property uses Farkle's templating engine which is described [in its own page](templates.html#Creating-HTML-Pages).
+
 Furthermore, Farkle's precompiler is based on [Sigourney], which can be globally disabled by setting the `SigourneyEnable` property to false.
 
 ## Some final notes

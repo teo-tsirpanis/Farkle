@@ -400,6 +400,9 @@ let generateDocs isRelease =
                 Template = docTemplate
                 ToolPath = toolpath})
 
+    !! "docsrc/content/*.html"
+    |> Shell.copyFiles "docs/"
+
 Target.description "Watches the documentation source folder and regenerates it on every file change"
 Target.create "KeepGeneratingDocs" (fun _ ->
     use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->

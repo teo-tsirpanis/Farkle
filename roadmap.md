@@ -18,13 +18,13 @@ Each feature is grouped by release, and is assigned an estimated difficulty and 
 
 ## Farkle 6.0.0 (January 2021)
 
-* [Documentation generator](https://github.com/teo-tsirpanis/Farkle/issues/12) ✴️
-* [Operator precedence and associativity](https://github.com/teo-tsirpanis/Farkle/issues/10) 💠
+* ~~[Documentation generator](https://github.com/teo-tsirpanis/Farkle/issues/12) ✴️~~ Done
+* ~~[Operator precedence and associativity](https://github.com/teo-tsirpanis/Farkle/issues/10) 💠~~ Done
     * Needs documentation; the calculator sample and the quick start guide will have to be rewritten
 * ~~Virtual Terminals 🔺~~ Done, took one week
     * An example of using them (together with the `CharStream` API) needs to be written
 * ~~Better dynamically generated post-processors 🔺~~ Done in time
-* A .NET Framework-based precompiler 💠
+* ~~A .NET Framework-based precompiler 💠~~ Abandoned; won't be attempted again (PRs welcome)
     * Trying it again will be a stretch goal for this release.
     * `Farkle.Tools.MSBuild.Tests` will have to build on both editions of MSBuild.
 

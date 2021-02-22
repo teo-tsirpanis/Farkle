@@ -98,7 +98,7 @@ module CompositePath =
             return! Error()
     }
 
-    let private findDefaultProject currentDir =
+    let findDefaultProject currentDir =
         Directory.EnumerateFiles(currentDir, "*.??proj", SearchOption.TopDirectoryOnly)
         |> Seq.filter(fun path -> isProjectExtension(Path.GetExtension(path.AsSpan())))
         |> List.ofSeq

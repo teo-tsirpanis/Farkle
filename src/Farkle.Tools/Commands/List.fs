@@ -14,8 +14,8 @@ open System.IO
 open System.Text.Json
 
 type Arguments =
-    | [<ExactlyOnce; MainCommand>] InputFile of string
-    | [<Unique>] Configuration of string
+    | [<Unique; MainCommand>] InputFile of string
+    | [<Unique; AltCommandLine("-c")>] Configuration of string
 with
     interface IArgParserTemplate with
         member x.Usage =
@@ -43,12 +43,16 @@ let run json (args: ParseResults<_>) = either {
     let projectOptions = {
         ProjectResolver.Configuration = args.GetResult(Configuration, "Debug")
     }
-    let! file =
-        args.GetResult InputFile
-        |> getAssemblyFile projectOptions
+    let! input =
+        match args.TryGetResult InputFile with
+        | Some input -> Ok input
+        | None -> CompositePath.findDefaultProject Environment.CurrentDirectory
+    let! resolvedAssembly =
+        getAssemblyFile projectOptions input
 
-    use loader = new PrecompiledAssemblyFileLoader(file)
-    let allGrammarNames = Array.ofSeq loader.Grammars.Keys
+    let allGrammarNames =
+        use loader = new PrecompiledAssemblyFileLoader(resolvedAssembly)
+        Array.ofSeq loader.Grammars.Keys
 
     if json then
         JsonSerializer.Serialize(allGrammarNames)

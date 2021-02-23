@@ -63,7 +63,7 @@ a:active {
     content: ">";
 }
 
-#nonterminals>ul>li>.nonterminal::after {
+#syntax>ul>li>.nonterminal::after {
     content: "> ::=";
 }
 

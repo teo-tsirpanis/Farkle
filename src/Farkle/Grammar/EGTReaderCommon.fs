@@ -12,7 +12,13 @@ module internal Common =
     open System
     open System.Collections.Generic
 
-    let internal createProperties source (x: IReadOnlyDictionary<_,_>) =
+    let validateEOFAction stateIndex action =
+        match action with
+        | Some(LALRAction.Shift _) ->
+            invalidEGTf "Error in LALR state %d: cannot shift when the end of input is encountered" stateIndex
+        | _ -> ()
+
+    let createProperties source (x: IReadOnlyDictionary<_,_>) =
         let name = x.GetOrDefault("Name", "")
         let caseSensitive =
             x.GetOrDefault("Case Sensitive", "true")

@@ -77,7 +77,7 @@ let numberStringRegex =
 (**
 The `regexString` function uses a quite familiar regex syntax. You can learn more about it [at its own documentation page][stringRegexes].
 
-Let's take a look at the `terminal` function. Its last parameter is the regex, which we passed at the beggining for convenience and its first parameter is the terminal's name; nothing unusual here. Its second parameter is called a _transformer_ and is a delegate that convert's the characters matched by our regex to an arbitrary object; in our case an integer. Its first parameter is an object of type `ITransformerContext` and is suited for advanced scenarios. Its second parameter is a `ReadOnlySpan` of characters, which were converted to a floating-point number by our transformer.
+Let's take a look at the `terminal` function. Its last parameter is the regex, which we passed at the beggining for convenience and its first parameter is the terminal's name; nothing unusual here. Its second parameter is called a _transformer_ and is a delegate that convert's the characters matched by our regex to an arbitrary object; in our case an integer. Its first parameter is an object of type [`ITransformerContext`](reference/farkle-itransformercontext.html) and is useful if you want to access the token's position or share some state between transformers. Its second parameter is a `ReadOnlySpan` of characters, which were converted to a floating-point number by our transformer.
 
 > `T` is the delegate's F# name; it was shortened to one letter for brevity.
 

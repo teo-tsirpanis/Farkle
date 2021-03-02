@@ -7,6 +7,7 @@ namespace Farkle
 
 open Farkle.Grammar
 open Farkle.Parser
+open System
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
@@ -37,17 +38,24 @@ type PostProcessorException private(msg, innerExn) =
 /// <summary>A parsing error that did not originate from
 /// the parser, but from user code during post-processing.</summary>
 /// <remarks>Exceptions of this type during post-processing
-/// will be caught and rewrapped as <see cref="ParserException"/>s.
+/// will be specially treated by the runtime Farkle API
+/// as <see cref="ParseErrorType.UserError"/>s.
 /// F# users can use the <c>error</c> or <c>errorf</c> functions
 /// in <c>Farkle.Builder</c>.</remarks>
-type ParserApplicationException(msg) = inherit FarkleException(msg)
+type ParserApplicationException private(msg, pos: Nullable<Position>) =
+    inherit FarkleException(msg)
+    /// Creates an exception with a custom error position.
+    new (msg, pos) = ParserApplicationException(msg, Nullable pos)
+    /// Creates an exception without a custom error position.
+    new (msg) = ParserApplicationException(msg, Nullable())
+    /// The optionally defined position of the error. If not set, it will
+    /// default to the starting position of the token that was being created.
+    member _.Position = &pos
 
-/// <summary>A descendant of <see cref="ParserApplicationException"/>
-/// that allows specifying the position of the error.</summary>
-/// <seealso cref="Farkle.IO.CharStreamErrorExtensions.FailAtOffset"/>
+[<Obsolete("Use ParserApplicationException's constructor that accepts a position.")>]
 type ParserApplicationExceptionWithPosition(msg, pos: Position) =
-    inherit ParserApplicationException(msg)
-    // The user-defined position of the error.
+    inherit ParserApplicationException(msg, pos)
+    // The position of the error.
     member _.Position = pos
 
 namespace Farkle.IO
@@ -59,7 +67,7 @@ open System.Runtime.CompilerServices
 /// <summary>Extension methods to the <see cref="CharStream"/>
 /// type that have to do with error reporting.</summary>
 type CharStreamErrorReportingExtensions =
-    /// <summary>Throws a <see cref="ParserApplicationExceptionWithPosition"/> at
+    /// <summary>Throws a <see cref="ParserApplicationException"/> at
     /// <paramref name="offset"/> characters after <paramref name="stream"/>'s
     /// current position.</summary>
     /// <param name="stream">The <see cref="CharStream"/> to work with.</param>
@@ -72,6 +80,6 @@ type CharStreamErrorReportingExtensions =
     #endif
     static member FailAtOffset(stream: CharStream, offset, message) =
         let pos = stream.GetPositionAtOffset offset
-        ParserApplicationExceptionWithPosition(message, pos)
+        ParserApplicationException(message, pos)
         |> raise
         |> ignore

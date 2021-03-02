@@ -113,9 +113,11 @@ with
             | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->
                 let pos =
-                    match e with
-                    | :? ParserApplicationExceptionWithPosition as e -> e.Position
-                    | _ -> (input :> ITransformerContext).StartPosition
+                    let pos = &e.Position
+                    if pos.HasValue then
+                        pos.Value
+                    else
+                        (input :> ITransformerContext).StartPosition
                 ParserError(pos, ParseErrorType.UserError e.Message)
                 |> mkError
         | Error x -> Error <| FarkleError.BuildError x

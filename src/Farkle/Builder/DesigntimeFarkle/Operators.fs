@@ -33,6 +33,69 @@ type private DesigntimeFarkleWithOperatorScope<'T>(df: DesigntimeFarkle<'T>, opS
         member _.OperatorScope = opScope
     interface DesigntimeFarkle<'T>
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+/// Functions to set metadata for designtime Farkles.
+/// With few exceptions, these functions will have to be applied to the topmost
+/// designtime Farkle that will get build, or they will have no effect.
+/// Designime Farkles that were applied the functions of this module must not
+/// be used with the original designimte Farkles in the same context; only
+/// one grammar symbol will be created, with undefined behavior.
+module DesigntimeFarkle =
+
+    /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
+    /// Most other functions in this module are convenience wrappers over this
+    /// function.
+    let withMetadata metadata df =
+        {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+
+    /// Sets an `OperatorScope` object to a typed designtime Farkle.
+    /// This function can be applied in designtime Farkles that are not the
+    /// topmost ones. Applying this function many times will discard the existing
+    /// operator scope.
+    let withOperatorScope opScope df =
+        DesigntimeFarkleWithOperatorScope<_>(df, opScope) :> DesigntimeFarkle<_>
+
+    /// Converts an untyped designtime Farkle to a typed one that returns an object.
+    /// This function is used to apply metadata to untyped designtime Farkles.
+    /// The object the designtime Farkle this function will return is undefined.
+    /// After the metadata have been set, it is recommended to upcast back to an
+    /// untyped one.
+    let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
+        match df with
+        | :? DesigntimeFarkle<obj> as dfObj -> dfObj
+        | _ -> upcast {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = df.Metadata}
+
+    /// Changes the name of a designtime Farkle. This function can be applied
+    /// anywhere, not only to the topmost one, like with other metadata changes.
+    let rename newName df =
+        nullCheck "newName" newName
+        {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>
+
+    /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
+    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
+
+    /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
+    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
+
+    /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
+    let addNoiseSymbol name regex df =
+        nullCheck "name" name
+        df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
+
+    let private addComment comment df =
+        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add comment}
+
+    /// Adds a line comment to the given `DesigntimeFarkle`.
+    let addLineComment commentStart df =
+        nullCheck "commentStart" commentStart
+        addComment (LineComment commentStart) df
+
+    /// Adds a block comment to the given `DesigntimeFarkle`.
+    let addBlockComment commentStart commentEnd df =
+        nullCheck "commentStart" commentStart
+        nullCheck "commentEnd" commentEnd
+        addComment (BlockComment(commentStart, commentEnd)) df
+
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.
 module DesigntimeFarkleOperators =
@@ -168,13 +231,13 @@ module DesigntimeFarkleOperators =
     /// occurrences of the given one and returns them in a list.
     let many df =
         let dfBuilder = manyCollection df
-        sprintf "%s List" dfBuilder.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
+        sprintf "%s List" df.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
 
     /// Creates a designtime Farkle that recognizes more than one
     /// occurrences of the given one and returns them in a list.
     let many1 df =
         let dfBuilder = manyCollection1 df
-        sprintf "%s Non-empty List" dfBuilder.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
+        sprintf "%s Non-empty List" df.Name ||= [(!@ dfBuilder).Finish ListBuilder<_>.MoveToListDelegate]
 
     /// Creates a designtime Farkle that recognizes more than one occurrences
     /// of `df` separated by `sep` and returns them in any collection type.
@@ -227,66 +290,3 @@ module DesigntimeFarkleOperators =
             !@ df => Some
             empty =% None
         ]
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-/// Functions to set metadata for designtime Farkles.
-/// With few exceptions, these functions will have to be applied to the topmost
-/// designtime Farkle that will get build, or they will have no effect.
-/// Designime Farkles that were applied the functions of this module must not
-/// be used with the original designimte Farkles in the same context; only
-/// one grammar symbol will be created, with undefined behavior.
-module DesigntimeFarkle =
-
-    /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
-    /// Most other functions in this module are convenience wrappers over this
-    /// function.
-    let withMetadata metadata df =
-        {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
-
-    /// Sets an `OperatorScope` object to a typed designtime Farkle.
-    /// This function can be applied in designtime Farkles that are not the
-    /// topmost ones. Applying this function many times will discard the existing
-    /// operator scope.
-    let withOperatorScope opScope df =
-        DesigntimeFarkleWithOperatorScope<_>(df, opScope) :> DesigntimeFarkle<_>
-
-    /// Converts an untyped designtime Farkle to a typed one that returns an object.
-    /// This function is used to apply metadata to untyped designtime Farkles.
-    /// The object the designtime Farkle this function will return is undefined.
-    /// After the metadata have been set, it is recommended to upcast back to an
-    /// untyped one.
-    let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
-        match df with
-        | :? DesigntimeFarkle<obj> as dfObj -> dfObj
-        | _ -> upcast {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = df.Metadata}
-
-    /// Changes the name of a designtime Farkle. This function can be applied
-    /// anywhere, not only to the topmost one, like with other metadata changes.
-    let rename newName df =
-        nullCheck "newName" newName
-        {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>
-
-    /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
-    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
-
-    /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
-    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
-
-    /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
-    let addNoiseSymbol name regex df =
-        nullCheck "name" name
-        df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
-
-    let private addComment comment df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add comment}
-
-    /// Adds a line comment to the given `DesigntimeFarkle`.
-    let addLineComment commentStart df =
-        nullCheck "commentStart" commentStart
-        addComment (LineComment commentStart) df
-
-    /// Adds a block comment to the given `DesigntimeFarkle`.
-    let addBlockComment commentStart commentEnd df =
-        nullCheck "commentStart" commentStart
-        nullCheck "commentEnd" commentEnd
-        addComment (BlockComment(commentStart, commentEnd)) df

@@ -132,6 +132,7 @@ type DefaultTokenizer(grammar: Grammar) =
                     try
                         input.CreateToken term transformer
                     with
+                    | :? ParserException
                     | :? ParserApplicationException -> reraise()
                     | e -> PostProcessorException(term, e) |> raise
                 let theHolyToken = Token(input.TokenStartPosition, term, data)

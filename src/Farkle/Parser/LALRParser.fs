@@ -56,6 +56,7 @@ module LALRParser =
                         try
                             pp.Fuse(productionToReduce, members)
                         with
+                        | :? ParserException
                         | :? ParserApplicationException -> reraise()
                         | e -> PostProcessorException(productionToReduce, e) |> raise
                     objectStack.PopMany handleLength

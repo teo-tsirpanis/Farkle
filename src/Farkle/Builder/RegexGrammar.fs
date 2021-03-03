@@ -122,14 +122,14 @@ let designtime =
             !& "\S" =% allButChars Whitespace
             !& "''" =% char '\''
             !@ literalString => string
-            yield! List.map (fun x -> !@ x => id) miscLiterals
-            !& "(" .>>. regex .>> ")" => id
+            yield! List.map (fun x -> !@ x |> asIs) miscLiterals
+            !& "(" .>>. regex .>> ")" |> asIs
         ]
         "Regex quantified" ||= [!@ regexItem .>>. quantifier => (|>)]
     let regexSequence = regexQuantified |> many1 |>> concat |> DesigntimeFarkle.rename "Regex sequence"
     regex.SetProductions(
         !@ regexSequence .>> "|" .>>. regex => (<|>),
-        !@ regexSequence => id
+        !@ regexSequence |> asIs
     )
     regex
     |> DesigntimeFarkle.caseSensitive true

@@ -175,9 +175,9 @@ let tests = testList "Designtime Farkle tests" [
         // It doesn't cause a DFA conflict because the
         // end symbols of the different groups are considered equal.
         let runtime =
-            "Test" ||= [
-                !% Group.Block("Group 1", "{", "}", fun _ _ -> ()) => id
-                !% Group.Block("Group 2", "[", "}", fun _ _ -> ()) => id
+            "Test" |||= [
+                !% Group.Block("Group 1", "{", "}")
+                !% Group.Block("Group 2", "[", "}")
             ]
             |> RuntimeFarkle.buildUntyped
 
@@ -211,7 +211,7 @@ let tests = testList "Designtime Farkle tests" [
             terminal name t (Regex.string name)
         let runtime =
             "Test" ||=
-                List.map (fun x -> !@ (mkTerminal x) => id) testData
+                List.map (fun x -> !@ (mkTerminal x) |> asIs) testData
             |> RuntimeFarkle.build
 
         // We will run the tests many times to ensure the dynamic post-rpocessors are created.
@@ -228,7 +228,7 @@ let tests = testList "Designtime Farkle tests" [
             Regex.string "O"
             |> terminal "Terminal" (T(fun _ _ -> error "Terminal found" |> ignore))
         let designtime =
-            "Nonterminal" ||= [!@ terminal => id; empty => (fun () -> error "Empty input")]
+            "Nonterminal" ||= [!@ terminal |> asIs; empty => (fun () -> error "Empty input")]
         let runtime = designtime.Build()
 
         let mkError column msg =

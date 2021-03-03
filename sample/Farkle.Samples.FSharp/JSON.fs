@@ -44,9 +44,9 @@ let designtime =
     let array = nonterminal "Array"
     let value = "Value" ||= [
         !@ string => String
-        !@ number => id
-        !@ object => id
-        !@ array => id
+        !@ number |> asIs
+        !@ object |> asIs
+        !@ array |> asIs
         !& "true" =% Bool true
         !& "false" =% Bool false
         !& "null" =% Null ()
@@ -71,7 +71,7 @@ let designtime =
         !@ objectElement => (Map.ofList >> Object)
         empty =% (Object Map.empty)
     ]
-    object.SetProductions(!& "{" .>>. objectOptional .>> "}" => id)
+    object.SetProductions(!& "{" .>>. objectOptional .>> "}" |> asIs)
 
     value
     |> DesigntimeFarkle.caseSensitive true

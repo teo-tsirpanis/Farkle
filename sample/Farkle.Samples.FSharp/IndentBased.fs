@@ -50,7 +50,7 @@ let designtime =
     let indentCodeBlock = nonterminal "IndentCode Block"
 
     indentCodeBody.SetProductions(
-        !@ line => id,
+        !@ line |> asIs,
         !% blockStart .>>. indentCodeBlock .>> blockEnd => Block)
     indentCodeBlock.SetProductions(
         !@ indentCodeBody .>> nl .>>. indentCodeBlock => (fun x xs -> x :: xs),
@@ -60,7 +60,7 @@ let designtime =
     // To allow stray newlines everywhere, we have to place nlOpt terminals
     // ourselves. Remember, if the newline designtime Farkle is present,
     // Farkle does NOT ignore newlines.
-    "IndentCode" ||= [!% nlOpt .>>. indentCodeBody .>> nlOpt => id]
+    "IndentCode" ||= [!% nlOpt .>>. indentCodeBody .>> nlOpt |> asIs]
 
 // And here is our tokenizer. Its constructor accepts a grammar.
 // Farkle will automatically pass the IndentCode's grammar.

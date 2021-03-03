@@ -12,7 +12,7 @@ https://opensource.org/licenses/MIT ~}}
             <dl>
                 <dt>Container Symbol</dt>
                 {{~if $container.is_choice1_of2~}}
-                <dd class="group-container-terminal"><a href="#t{{$container.item.index}}">{{html.escape $container.item.name}}</a></dd>
+                <dd class="group-container-terminal">{{html.escape $container.item.name}}</dd>
                 {{~else~}}
                 <dd class="group-container-noise">{{html.escape $container.item.name}} (Noise)</dd>
                 {{~end~}}

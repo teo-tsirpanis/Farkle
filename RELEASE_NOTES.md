@@ -1,3 +1,10 @@
+#### 6.1.0
+* Some typos were fixed in Farkle's HTML templates.
+* The `ParserApplicationExceptionWithPosition` type was deprecated in favor of a new constructor in `ParserApplicationException`.
+* The EGT file reader will throw an exception if it tries to load a grammar file that shifts on EOF in one of its LALR states (which would cause infinite loops).
+* The designtime Farkles that are returned by the `many` and `many1` operators now have the correct name.
+* Throwing a `ParserException` during post-processing will not be thrown in user code inside a `PostProcessorException`, but will be caught by the runtime Farkle API, allowing to customize the parser error message in greater detail.
+
 #### 6.0.0 - 23-02-2020
 * __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
 * __Breaking change:__ The `RuntimeFarkle.GetBuildError` method was replaced by `GetBuildErrors`, which returns a list of build errors.

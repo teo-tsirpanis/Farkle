@@ -39,8 +39,6 @@ module LALRParser =
             match nextAction with
             | Some LALRAction.Accept -> objectStack.Peek()
             | Some(LALRAction.Shift (LALRState nextState)) ->
-                if token.IsEOF then
-                    failwithf "Error in state %d: the parser cannot emit shift when EOF is encountered." currentState.Index
                 let nextToken = tokenizer.GetNextToken(pp, input)
                 objectStack.Push token.Data
                 stateStack.Push nextState.Index

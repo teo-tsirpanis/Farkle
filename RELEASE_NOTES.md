@@ -1,4 +1,4 @@
-#### 6.1.0
+#### 6.1.0 - 05-03-2021
 * Some typos were fixed in Farkle's HTML templates.
 * The `ParserApplicationExceptionWithPosition` type was deprecated in favor of a new constructor in `ParserApplicationException`.
 * The EGT file reader will throw an exception if it tries to load a grammar file that shifts on EOF in one of its LALR states (which would cause infinite loops).

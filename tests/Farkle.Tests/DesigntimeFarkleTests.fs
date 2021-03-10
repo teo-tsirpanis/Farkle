@@ -165,6 +165,8 @@ let tests = testList "Designtime Farkle tests" [
         |> doTest "nonterminal"
         literal "Literal"
         |> doTest "literal"
+        newline
+        |> doTest "newline"
         Group.Line("Line Group", "//")
         |> doTest "line group"
         Group.Block("Block Group", "/*", "*/")

@@ -66,7 +66,7 @@ module DesigntimeFarkleBuild =
     let private fdAsIs0 = FuserData.CreateAsIs 0
 
     // Memory conservation to the rescue! 👅
-    let private noiseNewLine = Noise "NewLine"
+    let private noiseNewLine = Noise newline.Name
     let private newLineRegex = Regex.chars "\r\n" <|> Regex.string "\r\n"
     let private commentSymbol = Noise "Comment"
     let private whitespaceSymbol = Noise "Whitespace"
@@ -187,7 +187,7 @@ module DesigntimeFarkleBuild =
                     match newLineSymbol with
                     | Choice1Of4 nlTerminal -> nlTerminal
                     | _ ->
-                        let nlTerminal = newTerminal "NewLine"
+                        let nlTerminal = newTerminal dfName
                         addTerminal nlTerminal TransformerData.Null
                         newLineSymbol <- Choice1Of4 nlTerminal
                         nlTerminal

@@ -87,7 +87,10 @@ with
     member this.GetBuildErrorMessage() =
         match this.Grammar with
         | Ok _ -> String.Empty
-        | Error msg -> string msg
+        | Error msg ->
+            msg
+            |> Seq.map string
+            |> String.concat Environment.NewLine
 
     /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
     /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>

@@ -80,6 +80,10 @@ let tests = testList "Regex grammar tests" [
         "0059", string "0059"
         ".{5,9}", between 5 9 any
         ".{59,}", atLeast 59 any
+        ".\{59}?", concat [any; string "{59"; char '}' |> optional]
+        "\.", char '.'
+        "\ ", char ' '
+        @"\\d", string "\d"
     ]
     |> List.map ((<||) mkTest)
 ]

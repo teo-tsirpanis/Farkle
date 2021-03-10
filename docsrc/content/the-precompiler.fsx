@@ -166,7 +166,7 @@ And last but not least, the precompiler will not work when running a .NET Framew
 
 This doesn't mean that the precompiler won't work on .NET Framework assemblies; you have to use the SDK-style project format and build with the .NET Core SDK; it will normally work.
 
-> __Note__: Precompiling a .NET Framework assembly will load it to the .NET Core-based precompiler. While it sometimes works due to a .NET Core compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features. It might work, it might fail, who knows? And why are you still using the .NET Framework?
+> __Note:__ Precompiling a .NET Framework assembly will load it to the .NET Core-based precompiler. While it sometimes works due to a .NET Core compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features. It might work, it might fail, who knows? And why are you still using the .NET Framework?
 
 Rider however _can_ use the precompiler with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET Core SDK (it typically has a `.dll` extension).
 

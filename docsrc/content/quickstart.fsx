@@ -10,7 +10,7 @@ Hello everyone. This guide will help you use Farkle. We will be using F#, but du
 
 ## How Farkle works
 
-> __Note__: This is an oversimplified, high-level description of Farkle. I will write a more technical description of it in the future.
+> __Note:__ This is an oversimplified, high-level description of Farkle. I will write a more technical description of it in the future.
 
 While parser combinator libraries like FParsec combine many small parsers into a big parser, Farkle combines simple _grammars_ (i.e. descriptions of languages) into more complex ones, and has a single, multi-purpose parser. These composable grammars are called _designtime Farkles_.
 

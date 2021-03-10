@@ -11,6 +11,7 @@ open Farkle.Builder.Regex
 open System
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Globalization
 open System.Reflection
 open System.Text
 
@@ -43,10 +44,18 @@ let private unescapeString (data: ReadOnlySpan<_>) =
         i <- i + 1
     sb.ToString()
 
+let private parseInt (x: ReadOnlySpan<_>) =
+    Int32.Parse(
+#if MODERN_FRAMEWORK
+        x,
+#else
+        x.ToString(),
+#endif
+        NumberStyles.None, NumberFormatInfo.InvariantInfo)
+
 [<CompiledName("Designtime")>]
 let designtime =
     let escapedChar = char '\\' |> optional <&> any
-    let number = Terminals.genericUnsigned<int> "Number"
     let singleChar =
         terminal "Single Character" (T(fun _ data -> char data.[0])) any
     let mkPredefinedSet name start fChars =
@@ -96,15 +105,37 @@ let designtime =
         |> terminal "Literal string" (T(fun _ data ->
             unescapeString(data.Slice(1, data.Length - 2))))
 
+    let numbers = Number |> chars |> plus
+    let quantRepeat =
+        concat [char '{'; numbers; char '}']
+        |> terminal "Repeat quantifier" (T(fun _ data ->
+            parseInt (data.Slice(1, data.Length - 2))
+            |> repeat))
+    let quantAtLeast =
+        concat [char '{'; numbers; string ",}"]
+        |> terminal "At least quantifier" (T(fun _ data ->
+            parseInt (data.Slice(1, data.Length - 3))
+            |> atLeast))
+    let quantBetween =
+        concat [char '{'; numbers; char ','; numbers; char '}']
+        |> terminal "Between quantifier" (T(fun _ data ->
+            let data = data.Slice(1, data.Length - 2)
+            let commaPos = data.IndexOf ','
+            let numFrom = parseInt (data.Slice(0, commaPos))
+            let numTo = parseInt (data.Slice(commaPos + 1))
+            if numFrom > numTo then
+                error "Numbers are out of order in the 'between' quantifier."
+            between numFrom numTo))
+
     let regex = nonterminal "Regex"
     let regexQuantified =
         let quantifier = "Quantifier" ||= [
             !& "*" =% star
             !& "+" =% plus
             !& "?" =% optional
-            !& "{" .>>. number .>> "}" => repeat
-            !& "{" .>>. number .>> "," .>> "}" => atLeast
-            !& "{" .>>. number .>> "," .>>. number .>> "}" => between
+            !@ quantRepeat |> asIs
+            !@ quantAtLeast |> asIs
+            !@ quantBetween |> asIs
         ]
         let miscLiterals = [
             singleChar

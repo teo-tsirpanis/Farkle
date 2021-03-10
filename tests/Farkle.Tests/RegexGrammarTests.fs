@@ -77,6 +77,9 @@ let tests = testList "Regex grammar tests" [
         "[^\^-|]", allButChars ['^' .. '|']
         "[\^\-|]", chars "^-|"
         ".{59}?", any |> repeat 59 |> optional
+        "0059", string "0059"
+        ".{5,9}", between 5 9 any
+        ".{59,}", atLeast 59 any
     ]
     |> List.map ((<||) mkTest)
 ]

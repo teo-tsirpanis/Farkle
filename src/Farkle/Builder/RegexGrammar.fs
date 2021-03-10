@@ -58,7 +58,7 @@ let designtime =
             | false, _ -> errorf "Cannot find a predefined set named %s." name))
     let mkCategory name start =
         string start <&> repeat 2 (chars Letter)
-        |> terminal name (T(fun _ data ->
+        |> terminal name (T(fun _ _ ->
             error "Farkle does not yet support Unicode categories."))
     let mkOneOf name start fChars =
         concat [string start; plus escapedChar; char ']']
@@ -105,7 +105,6 @@ let designtime =
             !& "{" .>>. number .>> "}" => repeat
             !& "{" .>>. number .>> "," .>> "}" => atLeast
             !& "{" .>>. number .>> "," .>>. number .>> "}" => between
-            empty =% id
         ]
         let miscLiterals = [
             singleChar
@@ -125,7 +124,12 @@ let designtime =
             yield! List.map (fun x -> !@ x |> asIs) miscLiterals
             !& "(" .>>. regex .>> ")" |> asIs
         ]
-        "Regex quantified" ||= [!@ regexItem .>>. quantifier => (|>)]
+        let regexQuantified = nonterminal "Regex quantified"
+        regexQuantified.SetProductions(
+            !@ regexItem |> asIs,
+            !@ regexQuantified .>>. quantifier => (|>)
+        )
+        regexQuantified :> DesigntimeFarkle<_>
     let regexSequence = regexQuantified |> many1 |>> concat |> DesigntimeFarkle.rename "Regex sequence"
     regex.SetProductions(
         !@ regexSequence .>> "|" .>>. regex => (<|>),

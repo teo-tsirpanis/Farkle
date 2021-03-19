@@ -286,7 +286,7 @@ with
         AnythingElse = None
     }
 
-let createRangeMap xs = RangeMap.ofSeqEx xs
+let private createRangeMap xs = RangeMap.ofSeqEx xs
 
 let internal makeDFA
     prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =

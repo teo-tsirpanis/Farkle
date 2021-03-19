@@ -1,5 +1,6 @@
 #### 6.2.0
 * __Minor breaking change:__ Whitespace inside the "between", "at least" and "exactly `n` times" regex string quantifiers is no longer allowed. Using string regexes like `\d{ 4}` will cause an error.
+* __Minor breaking change:__ A function in the `Farkle.Builder.DFABuild` module became private. It was public by accident and served no purpose for Farkle's users.
 * Fixed some bugs and added some new features in the grammar of string regexes. Take a look at [the string regex reference](string-regexes.html) for more details.
 
 #### 6.1.0 - 05-03-2021

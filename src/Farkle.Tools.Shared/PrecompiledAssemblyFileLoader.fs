@@ -12,7 +12,7 @@ open System.Reflection
 /// Loads the precompiled grammars from an assembly file.
 type PrecompiledAssemblyFileLoader(path) =
     let resolver = PathAssemblyResolver([path; typeof<obj>.Assembly.Location])
-    let loadContext = new MetadataLoadContext(resolver)
+    let loadContext = new MetadataLoadContext(resolver, typeof<obj>.Assembly.GetName().Name)
     let asm = loadContext.LoadFromAssemblyPath(path)
     let grammars = PrecompiledGrammar.GetAllFromAssembly asm
 

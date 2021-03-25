@@ -193,6 +193,8 @@ type CharStream private(source: CharStreamSource) =
     /// characters. This function invalidates the indices for the stream's
     /// <see cref="CharacterBuffer"/> and its characters might be released
     /// from memory.</summary>
+    /// <remarks>Both Windows line ending chatacters must be advanced at the same
+    /// time, otherwise the stream's current position will be incorrect.</remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>
     member x.AdvanceBy ofs =

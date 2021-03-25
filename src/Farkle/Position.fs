@@ -24,37 +24,39 @@ type Position = {
 with
     static member Create line column index =
         {Line = line; Column = column; Index = index}
-    /// Changes the line, column and character index references according to the given character.
-    static member inline private AdvanceImpl (c, line: byref<_>, column: byref<_>, index: byref<_>) =
-        index <- index + 1UL
-        match c with
-        | '\n' when column = 1UL -> ()
-        | '\r' | '\n' ->
-            line <- line + 1UL
-            column <- 1UL
-        | _ -> column <- column + 1UL
-
-    /// Returns the position of the next character if it was the given one.
+    /// Advances the position by one character and returns it.
+    /// This method does not correctly handle Windows line endings
+    /// so it is recommended to use the overload that accepts a
+    /// read-only span of characters instead.
     member x.Advance c =
-        let mutable line = x.Line
-        let mutable column = x.Column
-        let mutable index = x.Index
-        Position.AdvanceImpl(c, &line, &column, &index)
+        let struct (line, column) =
+            match c with
+            | '\r' | '\n' ->
+                x.Line + 1UL, 1UL
+            | _ ->
+                x.Line, x.Column + 1UL
+        let index = x.Index + 1UL
         Position.Create line column index
-    /// Applies `Position.Advance` successively for every character of the span.
-    // No reason to make it public; this is an implementation detail.
-    member internal x.Advance(span: ReadOnlySpan<_>) =
+    /// Advances the position by a read-only span of characters and returns it.
+    /// Both Windows line ending characters (carriage return and line feed) must
+    /// be passed in the same span, othwerise the returned position will be incorrect.
+    member x.Advance(span: ReadOnlySpan<_>) =
         if span.Length = 0 then
             x
         else
             let mutable line = x.Line
             let mutable column = x.Column
-            let mutable index = x.Index
+            let index = x.Index + uint64 span.Length
             for i = 0 to span.Length - 1 do
-                Position.AdvanceImpl(span.[i], &line, &column, &index)
+                match span.[i] with
+                | '\n' when i > 0 && span.[i - 1] = '\r' -> ()
+                | '\r' | '\n' ->
+                    line <- line + 1UL
+                    column <- 1UL
+                | _ -> column <- column + 1UL
             Position.Create line column index
 
-    /// A `Position` that points to the start.
+    /// A `Position` that points to the start of the text.
     static member Initial = {Line = 1UL; Column = 1UL; Index = 0UL}
 
     override x.ToString() =

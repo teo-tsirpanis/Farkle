@@ -1,8 +1,11 @@
 #### 6.2.0
 * __Minor breaking change:__ Whitespace inside the "between", "at least" and "exactly `n` times" regex string quantifiers is no longer allowed. Using string regexes like `\d{ 4}` will cause an error.
 * __Minor breaking change:__ A function in the `Farkle.Builder.DFABuild` module became private. It was public by accident and served no purpose for Farkle's users.
+* __Minor breaking change:__ Users that write their own tokenizers must ensure that CRLF line endings are `Advance`d at once, otherwise the character stream's position will be incorrect. The vast majority of use cases (that doesn't involve custom tokenizers) will not be affected by this change.
 * Fixed some bugs and added some new features in the grammar of string regexes. Take a look at [the string regex reference](string-regexes.html) for more details.
 * The precompiler now works when used on a project targeting a framework earlier than .NET Core 3.1.
+* The `Position.Advance` method got a new overload that accepts a `ReadOnlySpan` of characters. It is recommended over the existing one that accepts a single character because it reliably handles line endings.
+* Fixed a bug where the wrong error position was sometimes reported on text with LF line endings.
 
 #### 6.1.0 - 05-03-2021
 * Some typos were fixed in Farkle's HTML templates.

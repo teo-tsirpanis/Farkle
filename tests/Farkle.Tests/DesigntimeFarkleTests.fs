@@ -144,6 +144,19 @@ let tests = testList "Designtime Farkle tests" [
             "Farkle does not properly handle line groups that end on a new line"
     }
 
+    test "Terminals named 'Newline' cannot terminate line groups" {
+        let runtime =
+            "X" |||= [!& "newline"; !& "x1" .>> "x2"]
+            |> DesigntimeFarkle.cast
+            |> DesigntimeFarkle.addLineComment "//"
+            |> RuntimeFarkle.build
+        let testString = "// newline\nx1 x2"
+
+        let result = runtime.Parse testString
+
+        Expect.isOk result "Parsing failed"
+    }
+
     test "Farkle can properly handle block groups" {
         let runtime =
             Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())
@@ -165,12 +178,22 @@ let tests = testList "Designtime Farkle tests" [
         |> doTest "nonterminal"
         literal "Literal"
         |> doTest "literal"
-        newline
-        |> doTest "newline"
         Group.Line("Line Group", "//")
         |> doTest "line group"
         Group.Block("Block Group", "/*", "*/")
         |> doTest "block group"
+    }
+
+    test "Newlines cannot be renamed" {
+        let (Nonterminal(_, newlineRenamed)) =
+            newline.Cast().Rename("NewLine Renamed").BuildUntyped().GetGrammar().StartSymbol
+        Expect.equal newlineRenamed newline.Name "newline was renamed while it shouldn't."
+    }
+
+    test "Terminals named 'NewLine' will be automatically renamed when built" {
+        let (Nonterminal(_, newlineName)) =
+            Terminal.Literal(newline.Name).BuildUntyped().GetGrammar().StartSymbol
+        Expect.notEqual newlineName newline.Name "The terminal was not renamed."
     }
 
     test "Many block groups can be ended by the same symbol" {

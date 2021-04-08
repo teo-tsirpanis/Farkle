@@ -119,7 +119,22 @@ module DesigntimeFarkleBuild =
         let nonterminalsToProcess = Queue()
 
         let getLALRSymbol (df: DesigntimeFarkle) =
-            let newTerminal name = Terminal(uint32 terminals.Count, name)
+            let newTerminal name =
+                let namePatched =
+                    if Terminal.IsNamedNewLine name then
+                        // In Farkle's grammar domain model, groups can end by either a group end symbol,
+                        // or a newline. Newlines are considered the terminals that are case-insensitively
+                        // named "NewLine". However, another such terminal can exist and can cause unexplained
+                        // errors when put inside a line group. This problem does not exist in GOLD Parser,
+                        // nor did in Farkle's first grammar domain model, where the terminal that ended a
+                        // group was explicitly specified. Prepending an underscore to the names of terminals
+                        // that could be misrepresented as newlines is the least breaking fix, until the
+                        // domain model gets overhauled in the next major version.
+                        // TODO: Remove this temporary workaround.
+                        "_" + name
+                    else
+                        name
+                Terminal(uint32 terminals.Count, namePatched)
 
             let addTerminal term fTransformer =
                 terminals.Add term
@@ -187,7 +202,7 @@ module DesigntimeFarkleBuild =
                     match newLineSymbol with
                     | Choice1Of4 nlTerminal -> nlTerminal
                     | _ ->
-                        let nlTerminal = newTerminal dfName
+                        let nlTerminal = Terminal(uint32 terminals.Count, Terminal.NewLineName)
                         addTerminal nlTerminal TransformerData.Null
                         newLineSymbol <- Choice1Of4 nlTerminal
                         nlTerminal

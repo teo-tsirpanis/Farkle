@@ -128,6 +128,7 @@ type DefaultTokenizer(grammar: Grammar) =
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken (term: Terminal) =
+                let pos = input.TokenStartPosition
                 let data =
                     try
                         input.CreateToken term transformer
@@ -135,7 +136,7 @@ type DefaultTokenizer(grammar: Grammar) =
                     | :? ParserException
                     | :? ParserApplicationException -> reraise()
                     | e -> PostProcessorException(term, e) |> raise
-                let theHolyToken = Token(input.TokenStartPosition, term, data)
+                let theHolyToken = Token(pos, term, data)
                 theHolyToken
             let dfaResult = tokenizeDFA input
             // Input ends outside of a group.

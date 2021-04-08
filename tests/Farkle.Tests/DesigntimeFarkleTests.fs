@@ -244,6 +244,24 @@ let tests = testList "Designtime Farkle tests" [
         Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught."
     }
 
+    test "Syntax errors are reported in the right place" {
+        let runtime =
+            "X" |||= [!& "x1"; !& "x2"]
+            |> RuntimeFarkle.buildUntyped
+        let testString = "x1     x2"
+        let expectedErrorPos = Position.Create 1UL 8UL 7UL
+
+        let error =
+            runtime.Parse testString
+            |> Flip.Expect.wantError "Parsing did not fail"
+
+        match error with
+        | FarkleError.ParseError (ParserError(actualErrorPos, _)) ->
+            Expect.equal actualErrorPos expectedErrorPos "Parsing failed at a different position"
+        | _ ->
+            failtestf "Parsing failed with an unexpected error type: %A" error
+    }
+
     test "Farkle does not overflow the stack when processing a deep designtime Farkle" {
         let depth = 1000
         let nonterminals = Array.init depth (sprintf "N%d" >> nonterminalU)

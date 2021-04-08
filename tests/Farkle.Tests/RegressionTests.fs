@@ -18,8 +18,13 @@ let tests = testList "Regression tests" [
     reproduceIssue 8 {
         let rf = loadRuntimeFarkle "issue-8.egt"
         Expect.isOk (parse rf "45") "The two-digit input was not successfully parsed"
-        Expect.equal (parse rf "3")
-            (ParserError(Position.Initial.Advance '3', ParseErrorType.UnexpectedEndOfInput) |> FarkleError.ParseError |> Result.Error)
+
+        let expectedError =
+            ParserError(Position.Create 1UL 2UL 1UL, ParseErrorType.UnexpectedEndOfInput)
+            |> FarkleError.ParseError
+            |> Error
+
+        Expect.equal (parse rf "3") expectedError
             "The issue was reproduced; parsing a single-digit input was successful, while it shouldn't"
     }
 ]

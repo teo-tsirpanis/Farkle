@@ -34,6 +34,11 @@ type Terminal = Terminal of Index: uint32 * Name: string
 with
     member private x.index = match x with | Terminal (idx, _) -> idx
     member private x.name = match x with | Terminal (_, name) -> name
+    /// The name of the terminal that represents a new line.
+    static member internal NewLineName = "NewLine"
+    static member internal IsNamedNewLine name =
+        // GOLD Parser might use a different capitalization for NewLines.
+        Terminal.NewLineName.Equals(name, StringComparison.OrdinalIgnoreCase)
     interface IEquatable<Terminal> with
         member x.Equals x' = x.index = x'.index
     interface IComparable<Terminal> with
@@ -151,8 +156,7 @@ with
         match sym, x.End with
         | Choice1Of4 (Terminal(_, name)), None
         | Choice2Of4 (Noise(name)), None ->
-            // GOLD Parser might use a different capitalization for NewLines.
-            name.Equals("NewLine", StringComparison.OrdinalIgnoreCase)
+            Terminal.IsNamedNewLine name
         | Choice4Of4 ge, Some ge' -> ge = ge'
         | _ -> false
     override x.ToString() = x.Name

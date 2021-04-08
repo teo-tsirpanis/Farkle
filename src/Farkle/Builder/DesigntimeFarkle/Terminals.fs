@@ -6,6 +6,7 @@
 namespace Farkle.Builder
 
 open Farkle.Common
+open Farkle.Grammar
 open System
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
@@ -68,5 +69,5 @@ type internal Literal(str: string) =
 type internal NewLine = NewLine
 with
     interface DesigntimeFarkle with
-        member _.Name = "NewLine"
+        member _.Name = Terminal.NewLineName
         member _.Metadata = GrammarMetadata.Default

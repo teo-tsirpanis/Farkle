@@ -66,7 +66,7 @@ module DesigntimeFarkleBuild =
     let private fdAsIs0 = FuserData.CreateAsIs 0
 
     // Memory conservation to the rescue! 👅
-    let private noiseNewLine = Noise newline.Name
+    let private noiseNewLine = Noise Terminal.NewLineName
     let private newLineRegex = Regex.chars "\r\n" <|> Regex.string "\r\n"
     let private commentSymbol = Noise "Comment"
     let private whitespaceSymbol = Noise "Whitespace"

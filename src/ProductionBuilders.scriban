@@ -113,6 +113,6 @@ module private ProductionBuilderHelpers =
     let inline listAdd list (df: DesigntimeFarkle) = ImmutableList.add list df
 
 {{~ capacity = 16;
-    for i in 1..capacity reversed
+    for i in (1..capacity) reversed
         gen_builder i
     end ~}}

@@ -50,8 +50,11 @@ let unsignedIntRegex = Number |> chars |> atLeast 1
 let inline genericUnsigned< ^TInt when ^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)> name =
     terminal name
         (T (fun _ x ->
-            (^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)
-                (toCharacters x, NumberStyles.None, NumberFormatInfo.InvariantInfo))))
+            try
+                (^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)
+                    (toCharacters x, NumberStyles.None, NumberFormatInfo.InvariantInfo))
+            with
+            | e -> error e.Message))
         unsignedIntRegex
 
 [<CompiledName("SignedIntRegex")>]
@@ -68,8 +71,11 @@ let signedIntRegex = (optional <| char '-') <&> unsignedIntRegex
 let inline genericSigned< ^TInt when ^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt) and ^TInt : (static member (~-): ^TInt -> ^TInt)> name =
     terminal name
         (T (fun _ x ->
-            (^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)
-                (toCharacters x, NumberStyles.Integer, NumberFormatInfo.InvariantInfo))))
+            try
+                (^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)
+                    (toCharacters x, NumberStyles.Integer, NumberFormatInfo.InvariantInfo))
+            with
+            | e -> error e.Message))
         signedIntRegex
 
 /// Creates a designtime Farkle that parses and returns a
@@ -132,8 +138,11 @@ let inline genericReal< ^TReal when ^TReal: (static member Parse: Characters * N
             unsignedRealRegex
     terminal name
         (T (fun _ x ->
-            (^TReal: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TReal)
-                (toCharacters x, NumberStyles.Float, NumberFormatInfo.InvariantInfo))))
+            try
+                (^TReal: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TReal)
+                    (toCharacters x, NumberStyles.Float, NumberFormatInfo.InvariantInfo))
+            with
+            | e -> error e.Message))
         regex
 
 [<CompiledName("Single")>]

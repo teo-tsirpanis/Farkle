@@ -45,13 +45,16 @@ let private unescapeString (data: ReadOnlySpan<_>) =
     sb.ToString()
 
 let private parseInt (x: ReadOnlySpan<_>) =
-    Int32.Parse(
+    try
+        Int32.Parse(
 #if MODERN_FRAMEWORK
-        x,
+            x,
 #else
-        x.ToString(),
+            x.ToString(),
 #endif
-        NumberStyles.None, NumberFormatInfo.InvariantInfo)
+            NumberStyles.None, NumberFormatInfo.InvariantInfo)
+    with
+    | e -> error e.Message
 
 [<CompiledName("Designtime")>]
 let designtime =

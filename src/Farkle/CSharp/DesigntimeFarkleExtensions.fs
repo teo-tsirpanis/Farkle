@@ -48,10 +48,12 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/>
     /// into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
+    /// <seealso cref="Farkle.RuntimeFarkle.build"/>
     static member Build<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
+    /// <seealso cref="Farkle.RuntimeFarkle.buildUntyped"/>
     static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
     [<Extension>]
     /// <summary>Sets a custom <see cref="GrammarMetadata"/>

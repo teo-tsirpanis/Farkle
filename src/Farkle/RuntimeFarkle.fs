@@ -195,16 +195,15 @@ module RuntimeFarkle =
         RuntimeFarkle<_>.Create(grammar, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle&lt;'T&gt;`.
-    /// In case there is a problem with the grammar,
-    /// the `RuntimeFarkle` will fail every time it is used.
-    /// If the designtime Farkle is marked for precompilation and a suitable
-    /// precompiled grammar is found, building it again will be avoided.
+    /// In case there is a problem with the grammar, the `RuntimeFarkle` will
+    /// fail every time it is used. If the designtime Farkle is marked for
+    /// precompilation and a suitable precompiled grammar is found, it will be ignored.
     let build df =
         let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 
-    /// Creates a syntax-checking `RuntimeFarkle`
-    /// from an untyped `DesigntimeFarkle`.
+    /// Creates a syntax-checking `RuntimeFarkle` from an untyped `DesigntimeFarkle`.
+    /// No transformers or fusers from the designtime Farkle will be executed.
     let buildUntyped df =
         df
         |> DesigntimeFarkleBuild.createGrammarDefinition

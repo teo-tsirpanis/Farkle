@@ -1,5 +1,5 @@
 (*** hide ***)
-#I "../../temp/referencedocs-publish/"
+#I "../temp/referencedocs-publish/"
 #r "Farkle.dll"
 
 (**

@@ -1,6 +1,5 @@
 (*** hide ***)
-#I "../../temp/referencedocs-publish/"
-#r "System.Memory.dll"
+#I "../temp/referencedocs-publish/"
 #r "Farkle.dll"
 
 (**

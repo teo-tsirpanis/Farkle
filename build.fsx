@@ -297,6 +297,8 @@ let root isRelease =
     | true -> ""
     | false -> "--parameters root file://" + (__SOURCE_DIRECTORY__.Replace("\\", "/") + "/output/")
 
+let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
+
 let moveFileTemporarily src dest =
     File.Copy(src, dest, true)
     {new IDisposable with member _.Dispose() = File.delete dest}
@@ -310,6 +312,16 @@ let generateDocs doWatch isRelease =
 
     DotNet.exec id "fsdocs" (sprintf "%s --clean --properties FsFormatting=true %s" fsDocsCommand root)
     |> handleFailure
+
+Target.description "Prepares the reference documentation generator"
+Target.create "PrepareDocsGeneration" (fun _ ->
+    DotNet.publish (fun p ->
+        {p with
+            Framework = Some DocumentationAssemblyFramework
+            Configuration = configuration
+            OutputPath = Some referenceDocsTempPath}
+    ) farkleProject
+)
 
 Target.description "Watches the documentation source folder and regenerates it on every file change"
 Target.create "KeepGeneratingDocs" (fun _ ->
@@ -387,7 +399,7 @@ Target.create "Release" ignore
 "Clean"
     ==> "GenerateCode"
 
-["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "GenerateDocs"; "KeepGeneratingDocs"]
+["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
 "Test" <== ["RunTests"; "RunMSBuildTests"]
@@ -399,6 +411,7 @@ Target.create "Release" ignore
 [""; "Debug"]
 |> List.iter (fun x ->
     "CleanDocs"
+        ==> "PrepareDocsGeneration"
         ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
 "GenerateDocs"
@@ -406,6 +419,9 @@ Target.create "Release" ignore
 
 "GenerateDocs"
     ==> "CI"
+
+"PrepareDocsGeneration"
+    ==> "KeepGeneratingDocs"
 
 "Benchmark"
     ==> "AddBenchmarkReport"

@@ -371,12 +371,11 @@ Target.create "PublishBenchmarkReport" (fun _ ->
 
 Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
 Target.create "GitHubRelease" (fun _ ->
-    let token = Environment.environVarOrFail "farkle-github-token"
 
     Branches.tag "" nugetVersion
     Branches.pushTag "" remoteToPush.Value nugetVersion
 
-    GitHub.createClientWithToken token
+    GitHub.createClientWithToken githubToken.Value
     |> GitHub.createRelease gitOwner gitName nugetVersion
         (fun x ->
             {x with

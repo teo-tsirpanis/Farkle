@@ -292,12 +292,13 @@ Target.create "NuGetPublish" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
+let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
+let docsOutput = __SOURCE_DIRECTORY__ @@ "output"
+
 let root isRelease =
     match isRelease with
     | true -> ""
-    | false -> "--parameters root file://" + (__SOURCE_DIRECTORY__.Replace("\\", "/") + "/output/")
-
-let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
+    | false -> "--parameters root \"file://" + docsOutput.Replace("\\", "/") + "\""
 
 let moveFileTemporarily src dest =
     File.Copy(src, dest, true)
@@ -310,7 +311,8 @@ let generateDocs doWatch isRelease =
     let fsDocsCommand = if doWatch then "watch" else "build"
     let root = root isRelease
 
-    DotNet.exec id "fsdocs" (sprintf "%s --clean --properties FsFormatting=true %s" fsDocsCommand root)
+    (sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root)
+    |> DotNet.exec id "fsdocs"
     |> handleFailure
 
 Target.description "Prepares the reference documentation generator"
@@ -331,7 +333,7 @@ Target.create "KeepGeneratingDocs" (fun _ ->
 Target.description "Generates the website for the project - for release"
 Target.create "GenerateDocs" (fun _ ->
     generateDocs false true
-    !! "./docs/output/**" |> Zip.zip "docs/output" "docs.zip"
+    !! (docsOutput @@ "**") |> Zip.zip docsOutput "docs.zip"
     Trace.publish ImportData.BuildArtifact "docs.zip"
 )
 Target.description "Generates the website for the project - for local use"
@@ -345,7 +347,7 @@ Target.create "ReleaseDocs" (fun _ ->
 
     // Some files might no longer exist; better delete them all before the copy.
     !! "temp/gh-pages/**" -- "temp/gh-pages/.git/**" |> File.deleteAll
-    Shell.copyRecursive "docs" tempDocsDir true |> Trace.tracefn "Copied %A"
+    Shell.copyRecursive docsOutput tempDocsDir true |> Trace.tracefn "Copied %A"
     Staging.stageAll tempDocsDir
     Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
     Branches.push tempDocsDir

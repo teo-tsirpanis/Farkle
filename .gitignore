@@ -185,6 +185,7 @@ docs.zip
 output/
 **/BenchmarkDotNet.Artifacts/
 temp/
+tmp/
 .idea/
 *.g.[fc]s
 .ionide/

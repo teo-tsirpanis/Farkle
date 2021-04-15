@@ -147,12 +147,12 @@ let inline fCommonOptions x =
         sprintf "/p:Version=%s" nugetVersion
     ] x
 
+let handleFailure (p: ProcessResult) =
+    let exitCode = p.ExitCode
+    if exitCode <> 0 then
+        failwithf "Execution failed with error code %d" exitCode
+
 let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
-    let handleFailure (p: ProcessResult) =
-        if p.ExitCode <> 0 then
-            sprintf "Execution of project %s failed with error code %d" proj p.ExitCode
-            |> exn
-            |> raise
     let fx = fx |> Option.map (sprintf " --framework %s") |> Option.defaultValue ""
     DotNet.exec
         (fun p -> {p with WorkingDirectory = Path.getDirectory proj})
@@ -168,7 +168,7 @@ Target.create "Clean" (fun _ ->
 )
 
 Target.description "Cleans the output documentation directory"
-Target.create "CleanDocs" (fun _ -> Shell.cleanDir "docs")
+Target.create "CleanDocs" (fun _ -> Shell.cleanDir "output")
 
 // --------------------------------------------------------------------------------------
 // Build library & test project
@@ -292,140 +292,38 @@ Target.create "NuGetPublish" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-// Paths with template/source/output locations
-let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
-let content    = __SOURCE_DIRECTORY__ @@ "docsrc/content"
-let output     = __SOURCE_DIRECTORY__ @@ "docs"
-let files      = __SOURCE_DIRECTORY__ @@ "docsrc/files"
-let templates  = __SOURCE_DIRECTORY__ @@ "docsrc/tools/templates"
-let formatting = __SOURCE_DIRECTORY__ @@ "packages/formatting/FSharp.Formatting.CommandTool"
-let toolpath = formatting @@ "tools/netcoreapp3.1/any/fsformatting.dll"
-let docTemplate = "docpage.cshtml"
-
-let github_release_user = Environment.environVarOrDefault "github_release_user" gitOwner
-let githubLink = sprintf "https://github.com/%s/%s" github_release_user gitName
-
 let root isRelease =
     match isRelease with
-    | true -> "/Farkle"
-    | false -> "file://" + (__SOURCE_DIRECTORY__ @@ "docs")
-
-// Specify more information about your project
-let info =
-    [
-        "project-name", project
-        "project-author", String.concat ", " authors
-        "project-summary", summary
-        "project-github", githubLink
-        "project-nuget", "https://nuget.org/packages/Farkle"
-    ]
-
-let layoutRootsAll = System.Collections.Generic.Dictionary()
-layoutRootsAll.Add("en",[templates; formatting @@ "templates"; formatting @@ "templates/reference"])
-
-Target.description "Prepares the reference documentation generator"
-Target.create "PrepareDocsGeneration" (fun _ ->
-    DotNet.publish (fun p ->
-        {p with
-            Framework = Some DocumentationAssemblyFramework
-            Configuration = configuration
-            OutputPath = Some referenceDocsTempPath}
-    ) farkleProject
-)
-
-let generateReferenceDocs isRelease =
-    Directory.ensure (output @@ "reference")
-    let farkleBinary =
-        referenceDocsTempPath @@ sprintf "%s.dll" project
-
-    [farkleBinary]
-    |> FSFormatting.createDocsForDlls (fun args ->
-        {args with
-            OutputDirectory = output @@ "reference"
-            LayoutRoots =  layoutRootsAll.["en"]
-            ProjectParameters =  ("root", root isRelease)::info
-            SourceRepository = githubLink @@ "tree" @@ (Information.getCurrentHash())
-            ToolPath = toolpath}
-    )
-
-let copyFiles () =
-    Shell.copyRecursive files output true
-    |> Trace.logItems "Copying file: "
-    Directory.ensure (output @@ "content")
-    Shell.copyRecursive (formatting @@ "styles") (output @@ "content") true
-    |> Trace.logItems "Copying styles and scripts: "
+    | true -> ""
+    | false -> "--parameters root file://" + (__SOURCE_DIRECTORY__.Replace("\\", "/") + "/output/")
 
 let moveFileTemporarily src dest =
-    File.delete dest
-    Shell.copyFile (Path.getDirectory dest) src
-    Shell.rename dest (Path.GetDirectoryName dest @@ Path.GetFileName src)
-    {new IDisposable with member __.Dispose() = File.delete dest}
+    File.Copy(src, dest, true)
+    {new IDisposable with member _.Dispose() = File.delete dest}
 
-let generateDocs isRelease =
-    use __ = moveFileTemporarily "RELEASE_NOTES.md" "docsrc/content/release-notes.md"
-    use __ = moveFileTemporarily "LICENSE.txt" "docsrc/content/license.md"
+let generateDocs doWatch isRelease =
+    use __ = moveFileTemporarily "RELEASE_NOTES.md" "docs/release-notes.md"
+    use __ = moveFileTemporarily "LICENSE.txt" "docs/license.md"
 
-    DirectoryInfo.getSubDirectories (DirectoryInfo.ofPath templates)
-    |> Seq.iter
-        (fun d ->
-            let name = d.Name
-            if name.Length = 2 || name.Length = 3 then
-                layoutRootsAll.Add(
-                    name,
-                    [
-                        templates @@ name
-                        formatting @@ "templates"
-                        formatting @@ "templates/reference"
-                    ]
-                )
-        )
-    copyFiles ()
+    let fsDocsCommand = if doWatch then "watch" else "build"
+    let root = root isRelease
 
-    for dir in  [content] do
-        let langSpecificPath(lang, path:string) =
-            path.Split([|'/'; '\\'|], StringSplitOptions.RemoveEmptyEntries)
-            |> Array.exists(fun i -> i = lang)
-        let layoutRoots =
-            let key = layoutRootsAll.Keys |> Seq.tryFind (fun i -> langSpecificPath(i, dir))
-            match key with
-            | Some lang -> layoutRootsAll.[lang]
-            | None -> layoutRootsAll.["en"] // "en" is the default language
-
-        FSFormatting.createDocs (fun args ->
-            {args with
-                Source = content
-                OutputDirectory = output
-                LayoutRoots = layoutRoots
-                ProjectParameters  = ("root", root isRelease)::info
-                Template = docTemplate
-                ToolPath = toolpath})
-
-    !! "docsrc/content/*.html"
-    |> Shell.copyFiles "docs/"
+    DotNet.exec id "fsdocs" (sprintf "%s --clean --properties FsFormatting=true %s" fsDocsCommand root)
+    |> handleFailure
 
 Target.description "Watches the documentation source folder and regenerates it on every file change"
 Target.create "KeepGeneratingDocs" (fun _ ->
-    use __ = !! "docsrc/content/**/*.*" |> ChangeWatcher.run (fun _ ->
-        generateDocs false
-    )
-
-    Trace.traceImportant "Waiting for help edits. Press any key to stop."
-    System.Console.ReadKey() |> ignore
+    generateDocs true false
 )
 
+Target.description "Generates the website for the project - for release"
 Target.create "GenerateDocs" (fun _ ->
-    !! "./docs/**" |> Zip.zip "docs" "docs.zip"
+    generateDocs false true
+    !! "./docs/output/**" |> Zip.zip "docs/output" "docs.zip"
     Trace.publish ImportData.BuildArtifact "docs.zip"
 )
-Target.description "Generates the website for the project, except for the API documentation - for release"
-Target.create "GenerateHelp" (fun _ -> generateDocs true)
-Target.description "Generates the website for the project, except for the API documentation - for local use"
-Target.create "GenerateHelpDebug" (fun _ -> generateDocs false)
-
-Target.description "Generates the API documentation for the project - for release"
-Target.create "GenerateReferenceDocs" (fun _ -> generateReferenceDocs true)
-Target.description "Generates the API documentation for the project - for local use"
-Target.create "GenerateReferenceDocsDebug" (fun _ -> generateReferenceDocs false)
+Target.description "Generates the website for the project - for local use"
+Target.create "GenerateDocsDebug" (fun _ -> generateDocs false false)
 
 Target.description "Releases the documentation to GitHub Pages."
 Target.create "ReleaseDocs" (fun _ ->
@@ -489,7 +387,7 @@ Target.create "Release" ignore
 "Clean"
     ==> "GenerateCode"
 
-["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "GenerateDocs"; "KeepGeneratingDocs"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
 "Test" <== ["RunTests"; "RunMSBuildTests"]
@@ -501,19 +399,13 @@ Target.create "Release" ignore
 [""; "Debug"]
 |> List.iter (fun x ->
     "CleanDocs"
-        ==> "PrepareDocsGeneration"
-        ==> (sprintf "GenerateHelp%s" x)
-        ==> (sprintf "GenerateReferenceDocs%s" x) |> ignore)
+        ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
-"GenerateReferenceDocs"
-    ==> "GenerateDocs"
+"GenerateDocs"
     ==> "ReleaseDocs"
 
 "GenerateDocs"
     ==> "CI"
-
-"GenerateReferenceDocsDebug"
-    ==> "KeepGeneratingDocs"
 
 "Benchmark"
     ==> "AddBenchmarkReport"

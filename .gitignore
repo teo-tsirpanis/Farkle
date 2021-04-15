@@ -182,7 +182,7 @@ docsrc/tools/FSharp.Formatting.svclog
 
 docs.zip
 *.nupkg
-docs/
+output/
 **/BenchmarkDotNet.Artifacts/
 temp/
 .idea/
@@ -190,3 +190,4 @@ temp/
 .ionide/
 .paket/
 *.binlog
+.fsdocs/

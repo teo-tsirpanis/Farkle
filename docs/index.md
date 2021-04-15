@@ -2,7 +2,10 @@
 
 Farkle is a text parser library for .NET, featuring the best of both worlds: __LALR parser combinators__. Users define the terminals and nonterminals of their grammars, what to do when each of them is encountered, and Farkle takes care of the rest.
 
-It can be [installed from NuGet][nuget].
+The Farkle library can be <a href="https://nuget.org/packages/Farkle">installed from NuGet</a>:
+```
+dotnet add package Farkle
+```
 
 ## Features
 

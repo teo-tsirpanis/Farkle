@@ -293,7 +293,7 @@ Target.create "NuGetPublish" (fun _ ->
 // Generate the documentation
 
 let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
-let docsOutput = __SOURCE_DIRECTORY__ @@ "output"
+let docsOutput = __SOURCE_DIRECTORY__ @@ "output/"
 
 let root isRelease =
     match isRelease with

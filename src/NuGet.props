@@ -4,12 +4,12 @@
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://teo-tsirpanis.github.io/Farkle/</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docsrc/files/img/logo.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docs/img/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <PackageTags>farkle;parser;lalr;gold-parser</PackageTags>
     <PackageReleaseNotes>You can see information about the latest releases on https://github.com/teo-tsirpanis/Farkle/releases</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)/../docsrc/files/img/logo.png" Pack="true" PackagePath="" />
+    <None Include="$(MSBuildThisFileDirectory)/../docs/img/logo.png" Pack="true" PackagePath="" />
   </ItemGroup>
 </Project>

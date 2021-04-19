@@ -1,11 +1,5 @@
 version 5.257.0
 
-group Formatting
-
-  source https://api.nuget.org/v3/index.json
-
-  nuget FSharp.Formatting.CommandTool
-
 group FakeBuild
 
   source https://api.nuget.org/v3/index.json

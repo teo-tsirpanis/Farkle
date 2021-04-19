@@ -269,8 +269,3 @@ NUGET
     System.Threading.Tasks.Dataflow (5.0)
     System.Threading.Tasks.Extensions (4.5.4)
       System.Runtime.CompilerServices.Unsafe (>= 4.5.3)
-
-GROUP Formatting
-NUGET
-  remote: https://api.nuget.org/v3/index.json
-    FSharp.Formatting.CommandTool (4.1)

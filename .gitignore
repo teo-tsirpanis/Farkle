@@ -175,8 +175,8 @@ release.sh
 localpackages/
 paket-files
 *.orig
-docs/content/license.md
-docs/content/release-notes.md
+docs/license.md
+docs/release-notes.md
 .fake
 
 docs.zip

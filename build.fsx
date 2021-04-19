@@ -53,6 +53,9 @@ let solutionFile  = "./Farkle.sln"
 
 // Default target configuration
 let configuration = DotNet.BuildConfiguration.Release
+
+// Configuration when building documentation
+let documentationConfiguration = DotNet.BuildConfiguration.Debug
 let configurationAsString = sprintf "%A" configuration
 
 let sourceFilesToGenerate = [
@@ -317,11 +320,16 @@ let generateDocs doWatch isRelease =
 
 Target.description "Prepares the reference documentation generator"
 Target.create "PrepareDocsGeneration" (fun _ ->
+    DotNet.build (fun p ->
+        {p with
+            Configuration = documentationConfiguration}
+    ) farkleProject
     DotNet.publish (fun p ->
         {p with
             Framework = Some DocumentationAssemblyFramework
-            Configuration = configuration
-            OutputPath = Some referenceDocsTempPath}
+            Configuration = documentationConfiguration
+            OutputPath = Some referenceDocsTempPath
+            NoBuild = true}
     ) farkleProject
 )
 

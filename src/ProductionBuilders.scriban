@@ -33,7 +33,8 @@ https://opensource.org/licenses/MIT ~}}
 
         n = $0 ~}}
 [<Sealed; NullableContext(2uy)>]
-/// [omit]
+/// <summary>A production builder that supports {{ n }} significant member{{ if n != 1; "s"; end;}}.</summary>
+/// <exclude/>
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}, cpToken) =
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =

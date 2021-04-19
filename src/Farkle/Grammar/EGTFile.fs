@@ -16,22 +16,23 @@ open System.Runtime.InteropServices
 /// reading an EGT file goes wrong.
 type EGTFileException(msg) = inherit exn(msg)
 
-/// An entry of an EGT file.
+/// <summary>An entry of an EGT file.</summary>
+/// <exclude/>
 [<Struct; IsReadOnly; RequireQualifiedAccess>]
 #if DEBUG
 type Entry =
 #else
 type internal Entry =
 #endif
-    /// [omit]
+    /// The entry has no data.
     | Empty
-    /// [omit]
+    /// The entry has a byte.
     | Byte of byteValue: byte
-    /// [omit]
+    /// The entry has a boolean value.
     | Boolean of boolValue: bool
-    /// [omit]
+    /// The entry has an unsigned 32-bit integer.
     | UInt32 of intValue: uint32
-    /// [omit]
+    /// The entry has a string.
     | String of stringValue: string
     static member inline Int x = UInt32 <| uint32 x
 

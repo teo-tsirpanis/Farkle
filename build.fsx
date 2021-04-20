@@ -94,6 +94,8 @@ let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNe
 
 let benchmarkReportsDirectory = "./performance/"
 
+let packOutputDirectory = "./bin/"
+
 let nugetPackages = !! "./bin/*.nupkg"
 
 let releaseArtifacts = nugetPackages
@@ -271,7 +273,7 @@ Target.create "NuGetPack" (fun _ ->
                     {p.MSBuildParams with
                         Properties = ("ContinuousIntegrationBuild", "true") :: p.MSBuildParams.Properties
                     }
-                OutputPath = __SOURCE_DIRECTORY__ @@ "bin" |> Some
+                OutputPath = Some packOutputDirectory
             }
             |> fCommonOptions
         )

@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <PatchNupkgScript>$(MSBuildThisFileDirectory)patch-nuspec.ps1</PatchNupkgScript>
+  </PropertyGroup>
+</Project>

@@ -1,13 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <!-- For .NET Standard 2.0 we will create a dummy assembly with no dependencies other
-    than Sigourney. Without it, precompiling for frameworks earlier than .NET Core 3.1 will
-    silently fail because Sigourney was specified as a .NET Core 3.1-only dependency.
-    The best solution would be to specify Sigourney as a dependency on "any" framework,
-    but I guess that's not possible without a .nuspec that I prefer to avoid.
-    See also https://github.com/NuGet/Home/discussions/10667 -->
-    <TargetFrameworks>netcoreapp3.1;netstandard2.0</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <Description>Farkle's integration with MSBuild. This package supports the precompiler.
 
 Users of it must use .NET SDK commands like "dotnet build". Building projects that use this package, with Visual Studio or with the .NET Framework-based "msbuild" command is not supported.
@@ -20,7 +14,7 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETStandard'">
+  <ItemGroup>
     <Compile Include="Precompiler.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
@@ -31,7 +25,9 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
   <ItemGroup>
     <PackageReference Include="Sigourney" Version="0.3.2" PrivateAssets="compile;runtime" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
-    <PackageReference Update="Sigourney" ExcludeAssets="compile;runtime" />
-  </ItemGroup>
+  <Target Name="PatchNuGetPackage" AfterTargets="Pack">
+    <Exec
+      Condition="'%(NuGetPackOutput.Extension)' == '.nupkg'"
+      Command="pwsh $(PatchNupkgScript) &quot;%(NuGetPackOutput.FullPath)&quot; $(PackageId).nuspec" />
+  </Target>
 </Project>

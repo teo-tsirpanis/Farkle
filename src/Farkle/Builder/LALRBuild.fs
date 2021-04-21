@@ -21,7 +21,7 @@ let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 /// a nonterminal and the start symbol are required.
 let createLR0KernelItems fGetAllProductions startSymbol =
 
-    let itemSets = ResizeArray()
+    let itemSets = ImmutableArray.CreateBuilder()
     let itemSetsToProcess = Queue()
     let kernelMap = Dictionary()
 
@@ -41,24 +41,28 @@ let createLR0KernelItems fGetAllProductions startSymbol =
     |> getOrQueueItemSet
     |> ignore
 
+    let q = Queue()
+    // We could use a table of visited nonterminals, but it might cause
+    // problems when many productions of the kernel have the same head.
+    // Forget what you saw before! We must keep a table of visited items.
+    // It created problems when the same production appeared in the closure,
+    // but with different dot position. See the calculator's state #10 (#2 in GOLD Parser).
+    let visitedItems = HashSet()
     while itemSetsToProcess.Count <> 0 do
+        // Before we do anything let's clear our reused collections.
+        // The queue will already be empty.
+        visitedItems.Clear()
+
         let itemSet = itemSetsToProcess.Dequeue()
-        let q = Queue itemSet.Kernel
-        // We could use a table of visited nonterminals, but it might cause
-        // problems when many productions of the kernel have the same head.
-        // Forget what you saw before! We must keep a table of visited items.
-        // It created problems when the same production appeared in the closure,
-        // but with different dot position. See the calculator's state #10 (#2 in GOLD Parser).
-        let visitedItems = HashSet()
+        for item in itemSet.Kernel do q.Enqueue item
         while q.Count <> 0 do
             let item = q.Dequeue()
-            if visitedItems.Add item then
-                if not item.IsAtEnd then
-                    match item.CurrentSymbol with
-                    | LALRSymbol.Terminal _ -> ()
-                    | LALRSymbol.Nonterminal nont ->
-                        for prod in fGetAllProductions nont do
-                            prod |> LR0Item.Create |> q.Enqueue
+            if visitedItems.Add item && not item.IsAtEnd then
+                match item.CurrentSymbol with
+                | LALRSymbol.Terminal _ -> ()
+                | LALRSymbol.Nonterminal nont ->
+                    for prod in fGetAllProductions nont do
+                        prod |> LR0Item.Create |> q.Enqueue
         let goto =
             visitedItems
             |> Seq.filter (fun x -> not x.IsAtEnd)
@@ -69,7 +73,7 @@ let createLR0KernelItems fGetAllProductions startSymbol =
             |> ImmutableDictionary.CreateRange
         itemSets.[itemSet.Index] <- {itemSet with Goto = goto}
 
-    itemSets
+    itemSets.ToImmutable()
 
 /// Computes the FIRST set of the `Nonterminal`s
 /// of the given sequence of `Production`s.
@@ -155,7 +159,7 @@ let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
 let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
-    RA itemSets
+    IA itemSets
 
     let lookaheads = LookaheadItemsTable(firstSets.AllTerminals.Length)
     let propagate =
@@ -190,12 +194,12 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
 
 /// Creates an LALR state table.
 let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
-    RA itemSets
+    IA itemSets
     RA conflicts
 
     let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
     emptyLookahead.Freeze()
-    let states = ImmutableArray.CreateBuilder itemSets.Count
+    let states = ImmutableArray.CreateBuilder itemSets.Length
     for itemSet in itemSets do
         let index = uint32 itemSet.Index
         // The book says we have to close the kernel under LR(1) to create the

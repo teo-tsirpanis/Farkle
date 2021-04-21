@@ -22,27 +22,37 @@ let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 let createLR0KernelItems fGetAllProductions startSymbol =
 
     let itemSets = ResizeArray()
-
+    let itemSetsToProcess = Queue()
     let kernelMap = Dictionary()
 
-    let newItemSet kernel =
-        kernelMap.Add(kernel, itemSets.Count)
-        let itemSet = LR0ItemSet.Create itemSets.Count kernel
-        itemSets.Add(itemSet)
-        itemSet
+    let getOrQueueItemSet kernel =
+        match kernelMap.TryGetValue(kernel) with
+        | true, idx -> idx
+        | false, _ ->
+            kernelMap.Add(kernel, itemSets.Count)
+            let itemSet = LR0ItemSet.Create itemSets.Count kernel
+            itemSets.Add(itemSet)
+            itemSetsToProcess.Enqueue(itemSet)
+            itemSet.Index
 
-    let rec impl kernel =
-        let itemSet = newItemSet kernel
-        let q = Queue(kernel)
-        // We could use a table of visited nonterminals, but it might create problems
-        // when many productions of the kernel have the same head.
+    startSymbol
+    |> fGetAllProductions
+    |> Set.map LR0Item.Create
+    |> getOrQueueItemSet
+    |> ignore
+
+    while itemSetsToProcess.Count <> 0 do
+        let itemSet = itemSetsToProcess.Dequeue()
+        let q = Queue itemSet.Kernel
+        // We could use a table of visited nonterminals, but it might cause
+        // problems when many productions of the kernel have the same head.
         // Forget what you saw before! We must keep a table of visited items.
         // It created problems when the same production appeared in the closure,
         // but with different dot position. See the calculator's state #10 (#2 in GOLD Parser).
         let visitedItems = HashSet()
         while q.Count <> 0 do
             let item = q.Dequeue()
-            if visitedItems.Add(item) then
+            if visitedItems.Add item then
                 if not item.IsAtEnd then
                     match item.CurrentSymbol with
                     | LALRSymbol.Terminal _ -> ()
@@ -54,20 +64,10 @@ let createLR0KernelItems fGetAllProductions startSymbol =
             |> Seq.filter (fun x -> not x.IsAtEnd)
             |> Seq.groupBy (fun x -> x.CurrentSymbol)
             |> Seq.map (fun (sym, kernelItems) ->
-                // All these items are guaranteed to be kernel items; their dot is never at the beginning.
                 let kernelSet = kernelItems |> Seq.map (fun x -> x.AdvanceDot()) |> set
-                match kernelMap.TryGetValue(kernelSet) with
-                | true, idx -> KeyValuePair(sym, idx)
-                | false, _ -> KeyValuePair(sym, impl kernelSet))
+                KeyValuePair(sym, getOrQueueItemSet kernelSet))
             |> ImmutableDictionary.CreateRange
         itemSets.[itemSet.Index] <- {itemSet with Goto = goto}
-        itemSet.Index
-
-    startSymbol
-    |> fGetAllProductions
-    |> Set.map LR0Item.Create
-    |> impl
-    |> ignore
 
     itemSets
 

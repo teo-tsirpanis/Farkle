@@ -298,4 +298,15 @@ let tests = testList "Designtime Farkle tests" [
             |> DesigntimeFarkleBuild.buildGrammarOnly
         Expect.isOk grammar "Building failed"
     }
+
+    test "Farkle does not overflow the stack when processing a long designtime Farkle" {
+        let length = 1000
+        let df = "S" |||= [ProductionBuilder(Array.replicate length (box "x"))]
+
+        let grammar =
+            DesigntimeFarkleBuild.createGrammarDefinition df
+            |> DesigntimeFarkleBuild.buildGrammarOnly
+
+        Expect.isOk grammar "Building failed"
+    }
 ]

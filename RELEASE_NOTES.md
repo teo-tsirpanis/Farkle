@@ -1,16 +1,8 @@
 #### 6.2.0
 * __Minor breaking change:__ Whitespace inside the "between", "at least" and "exactly `n` times" regex string quantifiers is no longer allowed. Using string regexes like `\d{ 4}` will cause an error.
 * __Minor breaking change:__ A function in the `Farkle.Builder.DFABuild` module became private. It was public by accident and served no purpose for Farkle's users.
-*
-    __Minor breaking change:__ Users that write their own tokenizers must ensure that CRLF line endings are `Advance`d at once, otherwise the character stream's position will be incorrect.
-
-    The vast majority of use cases (those that doesn't involve custom tokenizers) will not be affected by this change.
-*
-    __Minor breaking change:__ Terminals, literals, and groups that are case-insensitively named `NewLine` will have an underscore prepended to their name when built, making them `_NewLine` for example.
-
-    This change is a temporary workaround for a design deficiency of Farkle, where these terminals could end line groups and comments. It will be thouroughly fixed in the next major version.
-
-    Because these names are only used for diagnostics and documentation generation, parser behavior will not be affected by this change. Nor will grammars read by EGT files be changed.
+* __Minor breaking change:__ Users that write their own tokenizers must ensure that CRLF line endings are `Advance`d at once, otherwise the character stream's position will be incorrect. The vast majority of use cases (those that doesn't involve custom tokenizers) will not be affected by this change.
+* __Minor breaking change:__ Terminals, literals, and groups that are case-insensitively named `NewLine` will have an underscore prepended to their name when built, making them `_NewLine` for example. This change is a temporary workaround for a design deficiency of Farkle, where these terminals could end line groups and comments. It will be thoroughly fixed in the next major version. Because these names are only used for diagnostics and documentation generation, parser behavior will not be affected by this change. Nor will grammars read by EGT files be changed.
 * Fixed some bugs and added some new features in the grammar of string regexes. Take a look at [the string regex reference](string-regexes.html) for more details.
 * The precompiler now works when used on a project targeting a framework earlier than .NET Core 3.1.
 * The `Position.Advance` method got a new overload that accepts a `ReadOnlySpan` of characters. It is recommended over the existing one that accepts a single character because it reliably handles line endings.

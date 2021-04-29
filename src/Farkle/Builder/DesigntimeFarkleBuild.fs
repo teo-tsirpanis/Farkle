@@ -70,8 +70,8 @@ module DesigntimeFarkleBuild =
     let private newLineRegex = Regex.chars "\r\n" <|> Regex.string "\r\n"
     let private commentSymbol = Noise "Comment"
     let private whitespaceSymbol = Noise "Whitespace"
-    let private whitespaceRegex = Regex.chars ['\t'; '\n'; '\r'; ' '] |> Regex.atLeast 1
-    let private whitespaceRegexNoNewline = Regex.chars ['\t'; ' '] |> Regex.atLeast 1
+    let private whitespaceRegex = Regex.chars BuilderCommon.whitespaceCharacters |> Regex.plus
+    let private whitespaceRegexNoNewline = Regex.chars BuilderCommon.whitespaceCharactersNoNewLine |> Regex.plus
 
     let rec private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
         match df with

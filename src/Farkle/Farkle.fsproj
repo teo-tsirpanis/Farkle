@@ -37,6 +37,7 @@
     <Compile Include="Parser/ParserTypes.fs" />
     <Compile Include="Exceptions.fs" />
     <Compile Include="Builder/BuilderTypes.fs" />
+    <Compile Include="Builder/BuilderCommon.fs" />
     <Compile Include="Builder/OperatorPrecedence.fs" />
     <Compile Include="Builder/PredefinedSets.fs" />
     <Compile Include="Builder/Regex.fs" />

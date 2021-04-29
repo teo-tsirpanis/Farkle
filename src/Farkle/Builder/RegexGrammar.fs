@@ -152,8 +152,8 @@ let designtime =
             !& "." =% any
             !& "\d" =% chars Number
             !& "\D" =% allButChars Number
-            !& "\s" =% chars Whitespace
-            !& "\S" =% allButChars Whitespace
+            !& "\s" =% chars BuilderCommon.whitespaceCharacters
+            !& "\S" =% allButChars BuilderCommon.whitespaceCharacters
             !& "''" =% char '\''
             !@ literalString => string
             yield! List.map (fun x -> !@ x |> asIs) miscLiterals

@@ -59,9 +59,7 @@ let private parseInt (x: ReadOnlySpan<_>) =
 [<CompiledName("Designtime")>]
 let designtime =
     let escapedChar = char '\\' |> optional <&> any
-    let singleChar =
-        terminal "Single character"
-            (T(fun _ data -> char data.[data.Length - 1])) escapedChar
+    let singleChar = terminal "Single character" (T(fun _ data -> char data.[0])) any
     let mkPredefinedSet name start fChars =
         string start <&> plus (allButChars "{}") <&> char '}'
         |> terminal name (T(fun _ data ->

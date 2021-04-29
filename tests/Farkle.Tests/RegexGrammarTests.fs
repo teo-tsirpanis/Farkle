@@ -69,6 +69,7 @@ let tests = testList "Regex grammar tests" [
         "[^^]", allButChars "^"
         "''", char '\''
         "'It''s beautiful'", string "It's beautiful"
+        "It''s beautiful", string "It'sbeautiful"
         "'[a-z]'", string "[a-z]"
         "[1'2]", chars "1'2"
         "\p{Number}", chars Number
@@ -80,10 +81,11 @@ let tests = testList "Regex grammar tests" [
         "0059", string "0059"
         ".{5,9}", between 5 9 any
         ".{59,}", atLeast 59 any
-        ".\{59}?", concat [any; string "{59"; char '}' |> optional]
-        "\.", char '.'
-        "\ ", char ' '
-        @"\\d", string "\d"
+        ".'{'59}?", concat [any; string "{59"; char '}' |> optional]
+        "'.'", char '.'
+        "[.]", char '.'
+        "' '", char ' '
+        @"'\\d'", string "\d"
     ]
     |> List.map ((<||) mkTest)
 ]

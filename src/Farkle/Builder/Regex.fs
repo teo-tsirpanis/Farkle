@@ -18,6 +18,9 @@ module private RegexUtils =
     let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
     let isCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
 
+    let regexEmpty = Regex.Concat []
+    let regexAny = Regex.AllButChars Set.empty
+
 type internal RegexStringHolder(regex) =
     let lockObj = obj()
     let mutable result = ValueNone
@@ -62,12 +65,12 @@ type Regex =
     /// will be parsed when a DFA will be generated.
     | RegexString of RegexStringHolder
     /// A regex that recognizes only the empty string.
-    static member Empty = Concat []
+    static member Empty = RegexUtils.regexEmpty
     /// <summary>A regex that recognizes any single character
     /// that was not matched by anything else.</summary>
     /// <remarks>Note that it's not the same with "any character". See more at
     /// https://teo-tsirpanis.github.io/Farkle/string-regexes.html#The-dot-regex</remarks>
-    static member Any = AllButChars Set.empty
+    static member Any = RegexUtils.regexAny
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
     member x1.And x2 =
@@ -91,7 +94,7 @@ type Regex =
             |> Seq.ofArray
             |> Seq.collect (function | Concat x -> x | x -> [x])
             |> List.ofSeq
-            |> Concat
+            |> function | [x] -> x | x -> Concat x
     /// Returns a regex that recognizes either a string of the first or the second given regex.
     member x1.Or x2 =
         match x1, x2 with
@@ -149,7 +152,7 @@ type Regex =
     /// The range is closed.
     member x.Between from upTo =
         if from > upTo then
-            invalidArg "upTo" "'upTo' must be bigger or equal to 'from'"
+            invalidArg (nameof upTo) "'upTo' must be bigger or equal to 'from'"
         Regex.Join(x.Repeat from, x.Optional().Repeat <| upTo - from)
     /// Returns a regex that recognizes at least a number of
     /// consecutive strings that are recognized by the given regex.
@@ -163,7 +166,7 @@ type Regex =
         str
         |> Seq.map Regex.Literal
         |> List.ofSeq
-        |> Concat
+        |> function | [x] -> x | x -> Concat x
     /// Returns a regex that only recognizes a single literal character.
     static member Literal c = Set.singleton c |> Chars
     /// Returns a regex that recognizes only one character

@@ -31,14 +31,11 @@ let private allPredefinedSets =
         |> Seq.map (fun x -> KeyValuePair(x.Name, x))
     ImmutableDictionary.CreateRange(StringComparer.OrdinalIgnoreCase, sets)
 
-let private unescapeString (data: ReadOnlySpan<_>) =
+let private unescapeString escapeChar (data: ReadOnlySpan<char>) =
     let sb = StringBuilder(data.Length)
     let mutable i = 0
     while i < data.Length do
-        // This trick will allow this function to work with both literal strings
-        // and character sets. Two single quotes are always reduced to one. Since
-        // multiple characters in a set don't matter, we are okay.
-        if data.[i] = '\\' || (data.[i] = '\'' && i + 1 < data.Length && data.[i + 1] = '\'') then
+        if data.[i] = escapeChar then
             i <- i + 1
         sb.Append(data.[i]) |> ignore
         i <- i + 1
@@ -74,7 +71,7 @@ let designtime =
     let mkOneOf name start fChars =
         concat [string start; plus escapedChar; char ']']
         |> terminal name (T(fun _ data ->
-            unescapeString(data.Slice(start.Length, data.Length - start.Length - 1)) |> fChars))
+            unescapeString '\\' (data.Slice(start.Length, data.Length - start.Length - 1)) |> fChars))
     let mkRange name start fChars =
         concat [string start; escapedChar; char '-'; escapedChar; char ']']
         |> terminal name (T(fun _ data ->
@@ -103,9 +100,9 @@ let designtime =
     let oneOfRange = mkRange "Character range" "[" chars
     let notOneOfRange = mkRange "All but Character range" "[^" allButChars
     let literalString =
-        concat [char '\''; plus (string "''" <|> allButChars "'"); char '\'']
+        concat [char '\''; star (string "''"); allButChars"'"; star (string "''" <|> allButChars "'"); char '\'']
         |> terminal "Literal string" (T(fun _ data ->
-            unescapeString(data.Slice(1, data.Length - 2))))
+            unescapeString '\'' (data.Slice(1, data.Length - 2))))
 
     let numbers = Number |> chars |> plus
     let quantRepeat =
@@ -153,6 +150,7 @@ let designtime =
             !& "\s" =% chars BuilderCommon.whitespaceCharacters
             !& "\S" =% allButChars BuilderCommon.whitespaceCharacters
             !& "''" =% char '\''
+            !& "\\\\" =% char '\\'
             !@ literalString => string
             yield! List.map (fun x -> !@ x |> asIs) miscLiterals
             !& "(" .>>. regex .>> ")" |> asIs

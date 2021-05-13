@@ -24,10 +24,10 @@ And in C#:
 ``` csharp
 using Farkle.Builder;
 
-var number = Regex.FromRegexString("[+-]?\d+");
+var number = Regex.FromRegexString("[+-]?\\d+");
 ```
 
-These regexes are full-blown `Regex`-typed objects. They are composable, reusable and can be used anywhere instead of constructed regexes. Despite their similarity however, the language of regex strings is not the same with the language of popular regex libraries, say PCRE. In this guide we will take a look at what is supported in regex strings and what isn't. So, are you ready? Let's do this!
+These regexes are full-blown `Regex`-typed objects. They are composable, reusable and can be used anywhere instead of constructed regexes. Despite their similarity however, the language of regex strings is not the same with the language of popular regex libraries like PCRE or .NET's own `System.Text.RegularExpressions.Regex`. In this guide we will take a look at what is supported in regex strings, what isn't and what is different. So, are you ready? Let's do this!
 
 ## Supported string regex constructs
 
@@ -42,9 +42,12 @@ In Farkle's string regexes, you can define character classes mostly in the same 
 * Decimal digits can be matched by typing `\d`. All characters except of decimal digits can be matched by typing `\D`.
 * Whitespace can be matched by typing `\s`. All characters except of whitespace can be matched by typing `\S`. Carriage return, line feed, space and horizontal tab are considered whitespace.
 * You can match any other character by typing `.`. Just be careful of [the caveats](#The-dot-regex).
-* You can match a literal sequence of characters by enclosing them into single quotes. For example `'[ADOU].'` will literally match the seven characters inside the single quotes without treating them specially. A single quote inside a literal sequence can be inserted by typing `\'`. A single quote outside of a literal sequence can be inserted by typing `''`. __Starting with Farkle 6.2.0, using this construct is no longer recommended. It might be removed in a future major release.__
+* You can match a literal sequence of characters by enclosing them into single quotes. For example `'[ADOU].'` will literally match the seven characters inside the single quotes without treating them specially. A single quote can be escaped by typing `''`.
+
+> __Note:__ Prior to Farkle 6.2.0, single quotes could be escaped with `\'`. After that version the regex parser was improved but some construct like that are no longer possible to maintain ambiguity. `\` is not anymore specially treated in literal strings.
+
 * In character sets and ranges you can escape a character with a `\`. For example, to match either left or the right brackets you have to type `[\[\]]`.
-* Starting with Farkle 6.2.0, you can similarly escape characters anywhere in a regex. For example, to match a literal dot, use `\.`.
+* The backslash character itself can be escaped with `\\`.
 
 ### Quantifiers
 
@@ -86,9 +89,9 @@ This deliberate deviation from the typical regex syntax was made due to Farkle's
 
 When using `\` in regexes, be careful with the string escaping performed by programming languages themselves. To match a decimal digit, F# allows you to write an unrecognized escape sequence like `"\d"`, but C# doesn't, failing with an error and you have to use a verbatim string like `@"\d"`.
 
-In a more complicated example, if you want to match the literal sequence of characters `\d`, the regex is `\\d`, which you would write as `"\\\\d"`, or as `@"\\d"` with a verbatim string.
+In a more complicated example, if you want to match the literal sequence of characters `\d`, the regex is either `'\d'` or `\\d`, which you would write as either `"'\\d'"` or `"\\\\d"`, or as either `@"'\d'"` or `@"\\d"` with a verbatim string.
 
-Similarly, writing `"\n"` somewhere in a regex will be ignored because it is whitespace, as we saw earlier. If you want to match the literal sequence of characters `\n`, the regex is `\\n`, which you would write as we saw in the previous paragraph. If you want to match a literal line feed character, you would either write the regex with escaping as `"\\\n"`, or with a character set as `"[\n]"`.
+Similarly, writing `"\n"` somewhere in a regex will be ignored because it is whitespace, as we saw earlier. If you want to match the literal sequence of characters `\n`, you would follow the example we saw in the previous paragraph. If you want to match an actual line feed character, you would either write it with a literal string as `"'\n'"`, or with a character set as `"[\n]"`.
 
 ### Unicode categories
 
@@ -97,6 +100,8 @@ Matching characters that belong in a Unicode category is not yet possible. Suppo
 ## How do they work
 
 Finally, let's take a look at how string regexes work. It's actually surprisingly simple. These strings are parsed and converted to constructed regexes using Farkle itself. That parsing happens when you build a designtime Farkle containing a string regex. If a syntax error occurs in a regex string, building the designtime Farkle will fail.
+
+You can parse strings into regular expressions yourself by using the objects in the [`Farkle.Builder.RegexGrammar` module](reference/farkle-builder-regexgrammar.html).
 
 ---
 

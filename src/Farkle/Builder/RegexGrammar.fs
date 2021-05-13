@@ -3,6 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+/// <summary>Parses regexes from strings. The language's syntax is exmplained
+/// <a href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">at
+/// the project's documentation</a>.</summary>
 [<RequireQualifiedAccess>]
 module Farkle.Builder.RegexGrammar
 

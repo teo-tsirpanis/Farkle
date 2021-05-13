@@ -16,7 +16,7 @@ dotnet add package Farkle
 * __Large file support__: Farkle can parse large files without entirely reading them to memory.
 * __Grammar introspection__: Farkle provides [APIs that allow your grammars to be inspected from code](reference/farkle-grammar-grammar.html).
 * __Wide framework support__: Farkle targets .NET Standard 2.0, supporting .NET Framework 4.6.1+, .NET Core 2.0+, Xamarin, UWP and Unity.
-<!-- * __Templating__: Farkle supports [creating templated text files from grammars](templating-reference.html) using [Scriban]. -->
+* __Templating__: Farkle supports [creating templated text files from grammars](templates.html) using [Scriban][scriban].
 
 [Learn more](choosing-a-parser.html) about Farkle's features, compared with other .NET parsers.
 

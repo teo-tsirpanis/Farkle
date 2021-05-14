@@ -52,7 +52,6 @@ let private addRange cFrom cTo i (xs: ResizeArray<_>) (pos: inref<Position>) (da
         |> raise
 
 let rec private parseCharSet_impl i state (xs: ResizeArray<_>) (pos: inref<_>) (data: ReadOnlySpan<_>) =
-
     if i = data.Length then
         match state with
         | Empty -> ()
@@ -81,8 +80,8 @@ let rec private parseCharSet_impl i state (xs: ResizeArray<_>) (pos: inref<_>) (
             addRange cFrom cTo i xs &pos data
             parseCharSet_impl (i + 1) Empty xs &pos data
 
-let private parseCharSet (pos: inref<_>) data =
-    parseCharSet_impl 0 Empty (ResizeArray()) &pos data
+let private parseCharSet startingPosition (pos: inref<_>) data =
+    parseCharSet_impl startingPosition Empty (ResizeArray()) &pos data
 
 let private unescapeString escapeChar (data: ReadOnlySpan<char>) =
     let sb = StringBuilder(data.Length)
@@ -130,8 +129,11 @@ let designtime =
             char ']'
         ]
         |> terminal name (T(fun ctx data ->
-            let data = data.Slice(start.Length, data.Length - start.Length - 1)
-            parseCharSet &ctx.StartPosition data |> fChars))
+            // We trim only the end of the span but instruct the parser
+            // to begin after the starting characters. We keep them on
+            // the span for accurate error position reporting.
+            let data = data.Slice(0, data.Length - 1)
+            parseCharSet start.Length &ctx.StartPosition data |> fChars))
 
     let predefinedSet = mkPredefinedSet "Predefined set" "\p{" chars
     let notPredefinedSet = mkPredefinedSet "All but Predefined set" "\P{" allButChars

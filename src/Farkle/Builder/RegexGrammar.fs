@@ -34,6 +34,56 @@ let private allPredefinedSets =
         |> Seq.map (fun x -> KeyValuePair(x.Name, x))
     ImmutableDictionary.CreateRange(StringComparer.OrdinalIgnoreCase, sets)
 
+[<Struct>]
+type private ParseCharSetState =
+    | Empty
+    | HasChar of previousCharacter: char
+    | HasDash of characterBeforeDash: char
+
+let private addRange cFrom cTo i (xs: ResizeArray<_>) (pos: inref<Position>) (data: ReadOnlySpan<_>) =
+    if cFrom <= cTo then
+        xs.AddRange {cFrom .. cTo}
+    else
+        // i stores the index of the last character or the last backslash.
+        // We need to fail at the dash, we know the dash is one place before the
+        // last character or backslash, and so we subtract one from i.
+        let errorPos = pos.Advance(data.Slice(0, i - 1))
+        ParserApplicationException("Character range is out of order.", errorPos)
+        |> raise
+
+let rec private parseCharSet_impl i state (xs: ResizeArray<_>) (pos: inref<_>) (data: ReadOnlySpan<_>) =
+
+    if i = data.Length then
+        match state with
+        | Empty -> ()
+        | HasChar x -> xs.Add x
+        | HasDash x -> xs.Add '-'; xs.Add x
+        seq xs
+    else
+        match state, data.[i] with
+        | Empty, '\\' ->
+            parseCharSet_impl (i + 2) (HasChar data.[i + 1]) xs &pos data
+        | Empty, x ->
+            parseCharSet_impl (i + 1) (HasChar x) xs &pos data
+        | HasChar c, '\\' ->
+            xs.Add c
+            parseCharSet_impl (i + 2) (HasChar data.[i + 1]) xs &pos data
+        | HasChar c, '-' ->
+            parseCharSet_impl (i + 1) (HasDash c) xs &pos data
+        | HasChar c, x ->
+            xs.Add c
+            parseCharSet_impl (i + 1) (HasChar x) xs &pos data
+        | HasDash cFrom, '\\' ->
+            let cTo = data.[i + 1]
+            addRange cFrom cTo i xs &pos data
+            parseCharSet_impl (i + 2) Empty xs &pos data
+        | HasDash cFrom, cTo ->
+            addRange cFrom cTo i xs &pos data
+            parseCharSet_impl (i + 1) Empty xs &pos data
+
+let private parseCharSet (pos: inref<_>) data =
+    parseCharSet_impl 0 Empty (ResizeArray()) &pos data
+
 let private unescapeString escapeChar (data: ReadOnlySpan<char>) =
     let sb = StringBuilder(data.Length)
     let mutable i = 0
@@ -58,7 +108,6 @@ let private parseInt (x: ReadOnlySpan<_>) =
 
 [<CompiledName("Designtime")>]
 let designtime =
-    let escapedChar = char '\\' |> optional <&> any
     let singleChar = terminal "Single character" (T(fun _ data -> char data.[0])) any
     let mkPredefinedSet name start fChars =
         string start <&> plus (allButChars "{}") <&> char '}'
@@ -71,37 +120,25 @@ let designtime =
         string start <&> repeat 2 (chars Letter)
         |> terminal name (T(fun _ _ ->
             error "Farkle does not yet support Unicode categories."))
-    let mkOneOf name start fChars =
-        concat [string start; plus escapedChar; char ']']
-        |> terminal name (T(fun _ data ->
-            unescapeString '\\' (data.Slice(start.Length, data.Length - start.Length - 1)) |> fChars))
-    let mkRange name start fChars =
-        concat [string start; escapedChar; char '-'; escapedChar; char ']']
-        |> terminal name (T(fun _ data ->
-            let idxStart =
-                start.Length +
-                match data.[start.Length] with
-                | '\\' -> 1
-                | _ -> 0
-            let idxEnd =
-                idxStart + 2 +
-                match data.[idxStart + 2] with
-                | '\\' -> 1
-                | _ -> 0
-            let cStart = data.[idxStart]
-            let cEnd = data.[idxEnd]
-            if cEnd < cStart then
-                errorf "Range [%c-%c] is out of order." cStart cEnd
-            fChars {cStart .. cEnd}))
+    let mkCharSet name start fChars =
+        concat [
+            string start
+            [
+                char '\\' <&> chars ['-'; '\\'; ']'; '^']
+                any
+            ] |> choice |> plus
+            char ']'
+        ]
+        |> terminal name (T(fun ctx data ->
+            let data = data.Slice(start.Length, data.Length - start.Length - 1)
+            parseCharSet &ctx.StartPosition data |> fChars))
 
     let predefinedSet = mkPredefinedSet "Predefined set" "\p{" chars
     let notPredefinedSet = mkPredefinedSet "All but Predefined set" "\P{" allButChars
     let category = mkCategory "Unicode category (unused)" "\p"
     let notCategory = mkCategory "All but Unicode category (unused)" "\P"
-    let oneOfCharacters = mkOneOf "Character set" "[" chars
-    let notOneOfCharacters = mkOneOf "All but character set" "[^" allButChars
-    let oneOfRange = mkRange "Character range" "[" chars
-    let notOneOfRange = mkRange "All but Character range" "[^" allButChars
+    let charSet = mkCharSet "Character set" "[" chars
+    let notCharSet = mkCharSet "All but Character set" "[^" allButChars
     let literalString =
         concat [char '\''; star (string "''"); allButChars"'"; star (string "''" <|> allButChars "'"); char '\'']
         |> terminal "Literal string" (T(fun _ data ->
@@ -143,8 +180,7 @@ let designtime =
             singleChar
             predefinedSet; notPredefinedSet
             category; notCategory
-            oneOfCharacters; notOneOfCharacters
-            oneOfRange; notOneOfRange
+            charSet; notCharSet
         ]
         let regexItem = "Regex item" ||= [
             !& "." =% any

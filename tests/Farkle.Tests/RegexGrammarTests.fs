@@ -88,6 +88,10 @@ let tests = testList "Regex grammar tests" [
         @"'\d'", string "\d"
         @"\\d", string "\d"
         "''''''", string "'''"
+        "[0-246-8]", chars "0124678"
+        "[-a]", chars "-a"
+        "[a-]", chars "a-"
+        "[]]", char ']'
     ]
     |> List.map ((<||) mkTest)
 ]

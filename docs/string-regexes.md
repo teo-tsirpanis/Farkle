@@ -38,7 +38,8 @@ In Farkle's string regexes, you can define character classes mostly in the same 
 * You can define a regex that recognizes only one character -say `A`- surprisingly simply, by typing `A`.
 * You can define a regex that recognizes only some characters -say `A`, `D`, `O` and `U`-, by typing `[ADOU]`. If you want your regex to match any character except of the four that were mentioned before, you can do that by typing `[^ADOU]`.
 * You can define a regex that recognizes all characters in a range -say between `A` and `Z`-, by typing `[A-Z]`. Similarly, you can match all characters that don't lie between `A` and `Z` by typing `[^A-Z]`.
-* You can define a regex that recognizes all characters in a predefined set -say `Katakana`- by typing `\p{Katakana}`. The predefined sets' names are the same in the `Farkle.Builder.PredefinedSets` module. Similarly you can match all characters except of Katakana by typing `\P{Katakana}`.
+* Since Farkle 6.2.0, you can combine the two previous rules and recognize multiple character sets and ranges on the same regex construct. For example you can match all valid Base64 characters (excluding the padding) by typing `[A-Za-z+/]` and you can match all characters except of those that appear in valid Base64 by typing `[^A-Za-z+/]`.
+* You can define a regex that recognizes all characters in a predefined set -say `Katakana`- by typing `\p{Katakana}`. The predefined sets' names are the same in the [`Farkle.Builder.PredefinedSets` module](reference/farkle-builder-predefinedsets.html). Similarly you can match all characters except of Katakana by typing `\P{Katakana}`.
 * Decimal digits can be matched by typing `\d`. All characters except of decimal digits can be matched by typing `\D`.
 * Whitespace can be matched by typing `\s`. All characters except of whitespace can be matched by typing `\S`. Carriage return, line feed, space and horizontal tab are considered whitespace.
 * You can match any other character by typing `.`. Just be careful of [the caveats](#The-dot-regex).
@@ -46,7 +47,7 @@ In Farkle's string regexes, you can define character classes mostly in the same 
 
 > __Note:__ Prior to Farkle 6.2.0, single quotes could be escaped with `\'`. After that version the regex parser was improved but some construct like that are no longer possible to maintain ambiguity. `\` is not anymore specially treated in literal strings.
 
-* In character sets and ranges you can escape a character with a `\`. For example, to match either left or the right brackets you have to type `[\[\]]`.
+* In character sets and ranges you have to use `\` to escape the following characters: `-\]^`. For example, to match either left or the right brackets you have to type `[\[\]]`.
 * The backslash character itself can be escaped with `\\`.
 
 ### Quantifiers

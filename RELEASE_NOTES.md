@@ -1,5 +1,5 @@
 #### 6.2.0
-* __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.
+* __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, most functions of the `Farkle.Builder.LALRBuild` module, as well as the `Farkle.Builder.IRawDelegateProvider` (which was public by mistake) became internal.
 * __Minor breaking change:__ Whitespace inside the "between", "at least" and "exactly `n` times" regex string quantifiers is no longer allowed. Using string regexes like `\d{ 4}` will cause an error.
 * __Minor breaking change:__ A function in the `Farkle.Builder.DFABuild` module became private. It was public by accident and served no purpose for Farkle's users.
 * __Minor breaking change:__ Users that write their own tokenizers must ensure that CRLF line endings are `Advance`d at once, otherwise the character stream's position will be incorrect. The vast majority of use cases (those that doesn't involve custom tokenizers) will not be affected by this change.

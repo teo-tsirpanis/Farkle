@@ -35,7 +35,7 @@ type T<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of context: ITransformerCo
 /// </remarks>
 type F<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
 
-type IRawDelegateProvider =
+type internal IRawDelegateProvider =
     abstract IsNull: bool
     abstract IsConstant: bool
     abstract RawDelegate: Delegate

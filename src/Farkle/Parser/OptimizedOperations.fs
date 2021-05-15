@@ -36,12 +36,16 @@ with
 module private OptimizedOperations =
 
     [<Literal>]
-    /// The ASCII character with the highest code point (~).
-    let ASCIIUpperBound = 127
+    /// The number of ASCII characters.
+    let ASCIICharacterCount = 128
 
     /// Checks if the given character belongs to ASCII.
     /// The first control characters are included.
-    let inline isASCII c = c <= char ASCIIUpperBound
+    let inline isASCII c = c < char ASCIICharacterCount
+
+    // We use a shared dummy array if a DFA state does not have any
+    // edges from an ASCII character, or Anything Else.
+    let private dfaStateAllErrors = Array.create ASCIICharacterCount DFAStateTag.Error
 
     let private createJaggedArray2D length1 length2 =
         let arr = Array.zeroCreate length1
@@ -55,17 +59,28 @@ module private OptimizedOperations =
     /// represents the index of the current DFA state, and the second represents the
     /// ASCII character that was encountered.
     let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-        let arr = createJaggedArray2D dfa.Length (ASCIIUpperBound + 1)
+        let arr = Array.zeroCreate dfa.Length
         for i = 0 to dfa.Length - 1 do
-            let anythingElse = DFAStateTag.FromOption dfa.[i].AnythingElse
-            for j = 0 to ASCIIUpperBound do
-                arr.[i].[j] <- anythingElse
-            let chars =
-                dfa.[i].Edges
-                |> rangeMapToSeq
-                |> Seq.takeWhile (fun x -> isASCII x.Key)
-            for KeyValue(c, state) in chars do
-                arr.[i].[int c] <- DFAStateTag.FromOption state
+            let state = dfa.[i]
+            let failsOnAllAscii =
+                state.AnythingElse.IsNone
+                && (state.Edges.Elements.IsEmpty || not (isASCII state.Edges.Elements.[0].KeyFrom))
+            arr.[i] <-
+                if failsOnAllAscii then
+                    dfaStateAllErrors
+                else
+                    let arr = Array.zeroCreate ASCIICharacterCount
+                    let anythingElse = DFAStateTag.FromOption state.AnythingElse
+                    // TODO: Use Array.Fill when .NET Standard 2.0 support is dropped.
+                    for j = 0 to arr.Length - 1 do
+                        arr.[j] <- anythingElse
+                    let chars =
+                        state.Edges
+                        |> rangeMapToSeq
+                        |> Seq.takeWhile (fun x -> isASCII x.Key)
+                    for KeyValue(c, state) in chars do
+                        arr.[int c] <- DFAStateTag.FromOption state
+                    arr
         arr
 
     let buildDFAAnythingElseArray (dfa: ImmutableArray<DFAState>) =
@@ -120,8 +135,9 @@ type internal OptimizedOperations private(grammar: Grammar) =
     static member Create grammar = cache.GetValue(grammar, cacheItemCreator)
     /// Gets the next DFA state from the given current one, when the given character is encountered.
     member _.GetNextDFAState c state =
-        if isASCII c then
-            dfaArray.[state].[int c]
+        let stateArray = dfaArray.[state]
+        if int c < stateArray.Length then
+            stateArray.[int c]
         else
             match grammar.DFAStates.[state].Edges.TryFind c with
             | ValueSome x -> DFAStateTag.FromOption x

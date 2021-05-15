@@ -15,12 +15,15 @@ open Mono.Cecil
 open Sigourney
 open System
 open System.IO
+open System.Threading
 
 /// An MSBuild task that precompiles the grammars of an assembly.
 type FarklePrecompileTask() =
     inherit MSBuildWeaver()
     let mutable precompiledGrammars = []
     let mutable generatedHtmlFiles = []
+
+    let cts = new CancellationTokenSource()
 
     member val GenerateHtml = false with get, set
     member val HtmlOutputPath = null with get, set
@@ -53,38 +56,42 @@ type FarklePrecompileTask() =
                 this.Log2.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
     override this.Execute() =
-        let grammars = precompileAssemblyFromPath this.Log2 this.AssemblyReferences this.AssemblyPath
-        match grammars with
-        | Ok grammars ->
-            precompiledGrammars <-
-                grammars
-                |> List.choose (fun x ->
-                    match x with
-                    | Successful grammar ->
-                        if this.GenerateHtml then
-                            this.DoGenerateHtml grammar
-                        Some grammar
-                    | PrecompilingFailed(name, [error]) ->
-                        this.Log2.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
-                        None
-                    | PrecompilingFailed(name, errors) ->
-                        this.Log2.Error("Errors while precompiling {GrammarName}.", name)
-                        for error in errors do
-                            this.Log2.Error("{BuildError}", error)
-                        None
-                    | DiscoveringFailed(typeName, fieldName, e) ->
-                        this.Log2.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
-                        this.Log2.Error("{Exception}", e)
-                        None)
+        try
+            let grammars = precompileAssemblyFromPath cts.Token this.Log2 this.AssemblyReferences this.AssemblyPath
+            match grammars with
+            | Ok grammars ->
+                precompiledGrammars <-
+                    grammars
+                    |> List.choose (fun x ->
+                        match x with
+                        | Successful grammar ->
+                            if this.GenerateHtml then
+                                this.DoGenerateHtml grammar
+                            Some grammar
+                        | PrecompilingFailed(name, [error]) ->
+                            this.Log2.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
+                            None
+                        | PrecompilingFailed(name, errors) ->
+                            this.Log2.Error("Errors while precompiling {GrammarName}.", name)
+                            for error in errors do
+                                this.Log2.Error("{BuildError}", error)
+                            None
+                        | DiscoveringFailed(typeName, fieldName, e) ->
+                            this.Log2.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
+                            this.Log2.Error("{Exception}", e)
+                            None)
 
-            this.GeneratedHtmlFiles <- Array.ofList generatedHtmlFiles
+                this.GeneratedHtmlFiles <- Array.ofList generatedHtmlFiles
 
-            not this.Log.HasLoggedErrors
-            // With our preparation completed, Sigourney will eventually call DoWeave.
-            && base.Execute()
-        // There are some errors (such as duplicate grammar name errors)
-        // that are errors no matter what the user said.
-        | Error () -> false
+                not cts.IsCancellationRequested
+                && not this.Log.HasLoggedErrors
+                // With our preparation completed, Sigourney will eventually call DoWeave.
+                && base.Execute()
+            // There are some errors (such as duplicate grammar name errors)
+            // that are errors no matter what the user said.
+            | Error () -> false
+        with
+        | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false
     override _.DoWeave asm =
         use stream = new MemoryStream()
         for grammar in precompiledGrammars do
@@ -100,3 +107,5 @@ type FarklePrecompileTask() =
             asm.MainModule.Resources.Add res
             stream.SetLength 0L
         not precompiledGrammars.IsEmpty
+    interface ICancelableTask with
+        member _.Cancel() = cts.Cancel()

@@ -408,7 +408,7 @@ module DesigntimeFarkleBuild =
             | None -> Ok x) result
 
     /// Creates a `Grammar` from a `GrammarDefinition`. The operation
-    /// can be cancelled, throwing an `OperationCancelledException`.
+    /// can be cancelled, throwing an `OperationCanceledException`.
     /// It also accepts a `BuildOptions` object, allowing further configuration.
     [<CompiledName("BuildGrammarOnlyEx")>]
     let buildGrammarOnlyEx ct options grammarDef = either {

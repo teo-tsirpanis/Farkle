@@ -16,7 +16,7 @@ namespace Farkle.Tools.MSBuild.Tests
     public class PrecompiledGrammarEquivalenceTests
     {
         /// <summary>
-        /// Asserts that two <see cref="Grammar.Grammar"/>s have the exact same structure.
+        /// Asserts that two <see cref="Farkle.Grammar.Grammar"/>s have the exact same structure.
         /// </summary>
         /// <remarks>
         /// This is different from the grammar equivalence test in the F# tests. Here, if

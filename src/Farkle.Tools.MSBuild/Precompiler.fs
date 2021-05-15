@@ -6,7 +6,6 @@
 module internal Farkle.Tools.Precompiler
 
 open Farkle.Builder
-open Farkle.Common
 open Farkle.Grammar
 open Serilog
 open Sigourney
@@ -87,12 +86,12 @@ marked in a foreign assembly ({AssemblyName:l}).", fld.DeclaringType, fld.Name, 
     |> Seq.distinct
     |> List.ofSeq
 
-let private precompileDiscovererResult (log: ILogger) x =
+let private precompileDiscovererResult ct (log: ILogger) x =
     match x with
     | Ok (pcdf: PrecompilableDesigntimeFarkle) ->
         let name = pcdf.Name
         log.Information("Precompiling {GrammarName}...", name)
-        let grammar = DesigntimeFarkleBuild.buildGrammarOnly pcdf.GrammarDefinition
+        let grammar = DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default pcdf.GrammarDefinition
         match grammar with
         | Ok grammar ->
             // FsLexYacc does it, so why not us?
@@ -146,7 +145,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
             | false, _ -> null
 
 [<MethodImpl(MethodImplOptions.NoInlining)>]
-let private precompileAssemblyFromPathIsolated log references path =
+let private precompileAssemblyFromPathIsolated ct log references path =
     let alc = PrecompilerContext(path, references, log)
     try
         let asm = alc.TheAssembly
@@ -155,7 +154,7 @@ let private precompileAssemblyFromPathIsolated log references path =
             []
         else
             discoverPrecompilableDesigntimeFarkles log asm
-            |> List.map (precompileDiscovererResult log)
+            |> List.map (precompileDiscovererResult ct log)
     finally
         alc.Unload()
 
@@ -179,6 +178,6 @@ or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
 
-let precompileAssemblyFromPath log references path =
-    let pcdfs = precompileAssemblyFromPathIsolated log references path
+let precompileAssemblyFromPath ct log references path =
+    let pcdfs = precompileAssemblyFromPathIsolated ct log references path
     checkForDuplicates log pcdfs

@@ -240,7 +240,7 @@ let shouldCIBenchmark =
     | LocalBuild -> true
     | AppVeyor ->
         let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
     | _ -> true
 

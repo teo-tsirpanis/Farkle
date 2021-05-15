@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -20,7 +20,7 @@ open System
 // between them? I would have to renumber all operators with precedence larger or
 // equal to 4. It's time-consuming and prone to errors. Developers would resort
 // to BASIC-era hacks of setting precedences with multiples of ten to make their
-// code resillient to such changes.
+// code resilient to such changes.
 // Another unacceptable solution is to embed P&A in the metadata of the starting
 // designtime Farkle, like comments. P&A will be encoded as a list of lists, with
 // the outer containing, in increasing order of precedence, groups of symbols with
@@ -46,7 +46,7 @@ open System
 // In fact, the operator precedence source files are higher than the designtime Farkle
 // definition files in the project. Individual symbols are identified by plain .NET objects.
 // Let's be more specific:
-// Terminals are identified by the designtime Farkle object with which they were used (using 
+// Terminals are identified by the designtime Farkle object with which they were used (using
 // the same terminal with different names will cause trouble but it was already discouraged).
 
 // Literals are identified by the string of their content. The conflict resolver needs to

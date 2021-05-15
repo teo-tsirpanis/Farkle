@@ -11,6 +11,7 @@ open Farkle.Builder.LALRBuildTypes
 open Farkle.Builder.LALRConflictResolution
 open System.Collections.Generic
 open System.Collections.Immutable
+open System.Threading
 
 // Lightweight type annotations for different types of collections.
 let inline private IA<'a> (x: ImmutableArray<'a>) = ignore x
@@ -19,7 +20,7 @@ let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
 /// a nonterminal and the start symbol are required.
-let private createLR0KernelItems fGetAllProductions startSymbol =
+let private createLR0KernelItems (ct: CancellationToken) fGetAllProductions startSymbol =
 
     let itemSets = ImmutableArray.CreateBuilder()
     let itemSetsToProcess = Queue()
@@ -49,6 +50,7 @@ let private createLR0KernelItems fGetAllProductions startSymbol =
     // but with different dot position. See the calculator's state #10 (#2 in GOLD Parser).
     let visitedItems = HashSet()
     while itemSetsToProcess.Count <> 0 do
+        ct.ThrowIfCancellationRequested()
         // Before we do anything let's clear our reused collections.
         // The queue will already be empty.
         visitedItems.Clear()
@@ -77,7 +79,7 @@ let private createLR0KernelItems fGetAllProductions startSymbol =
 
 /// Computes the FIRST set of the `Nonterminal`s
 /// of the given sequence of `Production`s.
-let private computeFirstSetMap terminals nonterminals productions =
+let private computeFirstSetMap (ct: CancellationToken) terminals nonterminals productions =
     IA<Nonterminal> nonterminals
 
     // The last nonterminal at the end is the starting one.
@@ -94,6 +96,7 @@ let private computeFirstSetMap terminals nonterminals productions =
     let mutable changed = true
 
     while changed do
+        ct.ThrowIfCancellationRequested()
         changed <- false
         for {Head = head; Handle = handle} in productions do
             let mutable i = 0
@@ -158,7 +161,7 @@ let private closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs 
     |> List.ofSeq
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
-let private computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
+let private computeLookaheadItems (ct: CancellationToken) fGetAllProductions (firstSets: FirstSets) itemSets =
     IA itemSets
 
     let lookaheads = LookaheadItemsTable(firstSets.AllTerminals.Length)
@@ -169,6 +172,7 @@ let private computeLookaheadItems fGetAllProductions (firstSets: FirstSets) item
         hashTerminalSet.Freeze()
         for itemSet in itemSets do
             for item in itemSet.Kernel do
+                ct.ThrowIfCancellationRequested()
                 let closure = closure1 fGetAllProductions firstSets [item, hashTerminalSet]
                 for {Item = closureItem; Lookahead = la} in closure do
                     if not closureItem.IsAtEnd then
@@ -187,13 +191,13 @@ let private computeLookaheadItems fGetAllProductions (firstSets: FirstSets) item
     let mutable changed = true
     while changed do
         changed <- false
-        for (kFrom, kTo) in propagate do
+        for kFrom, kTo in propagate do
             changed <- lookaheads.Union kTo kFrom || changed
     lookaheads.Freeze()
     lookaheads
 
 /// Creates an LALR state table.
-let private createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
     IA itemSets
     RA conflicts
 
@@ -201,6 +205,7 @@ let private createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveC
     emptyLookahead.Freeze()
     let states = ImmutableArray.CreateBuilder itemSets.Length
     for itemSet in itemSets do
+        ct.ThrowIfCancellationRequested()
         let index = uint32 itemSet.Index
         // The book says we have to close the kernel under LR(1) to create the
         // action table. However, we have already created the GOTO table from the LR(0)
@@ -282,9 +287,20 @@ let private createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveC
         states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
     states.MoveToImmutable()
 
-/// Builds an LALR parsing table from the grammar with the given
-/// starting symbol that contains the given `Production`s.
-let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol terminals nonterminals productions =
+/// <summary>Builds an LALR parsing table.</summary>
+/// <param name="ct">Used to cancel the operation.</param>
+/// <param name="options">Used to further configure the operation.</param>
+/// <param name="resolver">Used to resolve LALR conflicts.</param>
+/// <param name="startSymbol">The grammar's starting symbol.</param>
+/// <param name="terminals">The grammar's terminals.</param>
+/// <param name="nonterminals">The grammar's nonterminals.</param>
+/// <param name="productions">The grammar's productions.</param>
+/// <returns>An immutable array of the LALR states or a
+/// list of the errors that were encountered.</returns>
+/// <exception cref="OperationCanceledException"><paramref name="ct"/> was triggered.</exception>
+let buildProductionsToLALRStatesEx ct (options: BuildOptions)
+    (resolver: LALRConflictResolver) startSymbol terminals nonterminals productions =
+    ignore options
     IA nonterminals
     IA productions
 
@@ -301,9 +317,9 @@ let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol te
         |> ImmutableDictionary.CreateRange
     let fGetAllProductions k = nonterminalsToProductions.[k]
 
-    let kernelItems = createLR0KernelItems fGetAllProductions s'
-    let firstSets = computeFirstSetMap terminals nonterminals productions
-    let lookaheads = computeLookaheadItems fGetAllProductions firstSets kernelItems
+    let kernelItems = createLR0KernelItems ct fGetAllProductions s'
+    let firstSets = computeFirstSetMap ct terminals nonterminals productions
+    let lookaheads = computeLookaheadItems ct fGetAllProductions firstSets kernelItems
 
     let conflicts = ResizeArray()
     let resolveConflict term x1 x2 =
@@ -318,7 +334,20 @@ let buildProductionsToLALRStates (resolver: LALRConflictResolver) startSymbol te
         // very soon thrown on an impossible conflict type.
         | _ -> CannotChoose NoPrecedenceInfo
 
-    match createLALRStates fGetAllProductions firstSets resolveConflict conflicts s' kernelItems lookaheads with
+    match createLALRStates ct fGetAllProductions firstSets resolveConflict conflicts s' kernelItems lookaheads with
     | theGloriousStateTable when conflicts.Count = 0 ->
         Ok theGloriousStateTable
     | _ -> conflicts |> List.ofSeq |> Error
+
+/// <summary>Builds an LALR parsing table.</summary>
+/// <param name="resolver">Used to resolve LALR conflicts.</param>
+/// <param name="startSymbol">The grammar's starting symbol.</param>
+/// <param name="terminals">The grammar's terminals.</param>
+/// <param name="nonterminals">The grammar's nonterminals.</param>
+/// <param name="productions">The grammar's productions.</param>
+/// <returns>An immutable array of the LALR states or a
+/// list of the errors that were encountered.</returns>
+let buildProductionsToLALRStates resolver startSymbol terminals nonterminals productions =
+    buildProductionsToLALRStatesEx
+        CancellationToken.None BuildOptions.Default resolver
+        startSymbol terminals nonterminals productions

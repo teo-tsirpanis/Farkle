@@ -93,6 +93,14 @@ with
         sprintf "%O, while encountering the symbol %s at state %d. Farkle could not \
 automatically resolve the conflict because %O" x.Type symbolAsString x.StateIndex x.Reason
 
+/// Additional options to configure the building process,
+/// intended to be used by advanced scenarios. This class
+/// is currently empty; options will be added in future releases.
+type BuildOptions private() =
+    static let _default = BuildOptions()
+    /// The default options.
+    static member Default = _default
+
 [<RequireQualifiedAccess>]
 /// An error the builder encountered.
 type BuildError =

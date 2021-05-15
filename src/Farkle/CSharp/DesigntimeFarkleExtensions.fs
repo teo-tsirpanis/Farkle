@@ -34,6 +34,11 @@ type ProductionBuilderExtensions =
 /// that will eventually be built. Use <see cref="Cast"/> first to use these functions
 /// on untyped designtime Farkles.</remarks>
 type DesigntimeFarkleExtensions =
+    static member private GetOptionsOrDefault options =
+        if Object.ReferenceEquals(options, null) then
+            BuildOptions.Default
+        else
+            options
     [<Extension>]
     /// <summary>Casts a <see cref="DesigntimeFarkle"/>
     /// into a <see cref="DesigntimeFarkle{Object}"/></summary>
@@ -48,13 +53,30 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle{TResult}"/>
     /// into a <see cref="RuntimeFarkle{TResult}"/>.</summary>
+    /// <param name="df">The designtime Farkle to build.</param>
+    /// <param name="ct">Used to cancel the operation.</param>
+    /// <param name="options">Additional options to configure the process.</param>
+    /// <exception cref="OperationCanceledException"><paramref name="ct"/> was triggered.</exception>
     /// <seealso cref="Farkle.RuntimeFarkle.build"/>
-    static member Build<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) = RuntimeFarkle.build df
+    static member Build<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>, [<Optional>] ct, [<Optional; Nullable(2uy)>] options) =
+        let options = DesigntimeFarkleExtensions.GetOptionsOrDefault options
+        let grammar, pp = DesigntimeFarkleBuild.buildEx ct options df
+        RuntimeFarkle.CreateMaybe pp grammar
     [<Extension>]
     /// <summary>Builds a <see cref="DesigntimeFarkle"/> into a syntax-checking
     /// <see cref="RuntimeFarkle{System.Object}"/>.</summary>
+    /// <param name="df">The designtime Farkle to build.</param>
+    /// <param name="ct">Used to cancel the operation.</param>
+    /// <param name="options">Additional options to configure the process.</param>
+    /// <exception cref="OperationCanceledException"><paramref name="ct"/> was triggered.</exception>
     /// <seealso cref="Farkle.RuntimeFarkle.buildUntyped"/>
-    static member BuildUntyped df = RuntimeFarkle.buildUntyped(df).SyntaxCheck()
+    static member BuildUntyped(df, [<Optional>] ct, [<Optional; Nullable(2uy)>] options) =
+        let options = DesigntimeFarkleExtensions.GetOptionsOrDefault options
+        let grammar =
+            df
+            |> DesigntimeFarkleBuild.createGrammarDefinition
+            |> DesigntimeFarkleBuild.buildGrammarOnlyEx ct options
+        RuntimeFarkle.CreateMaybe RuntimeFarkle.syntaxCheckerObj grammar
     [<Extension>]
     /// <summary>Sets a custom <see cref="GrammarMetadata"/>
     /// object to a typed designtime Farkle.</summary>

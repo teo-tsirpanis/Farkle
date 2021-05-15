@@ -18,6 +18,7 @@ open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
 open System.Runtime.CompilerServices
+open System.Threading
 
 // Taking the concept of circular references to a whole new level.
 #if NET
@@ -132,7 +133,7 @@ let private makeRB tree = {
     LastPos = fLastPos tree
 }
 
-let internal createRegexBuild caseSensitive regexes =
+let internal createRegexBuild (ct: CancellationToken) caseSensitive regexes =
 
     let createConcatFirstPos xs: ConcatFirstPos =
         (BitSet.Empty, [])
@@ -183,6 +184,7 @@ let internal createRegexBuild caseSensitive regexes =
 
     let createRegexBuildSingle regex acceptSymbol =
         let rec createTree regex =
+            ct.ThrowIfCancellationRequested()
             RuntimeHelpers.EnsureSufficientExecutionStack()
             match regex with
             | Regex.Concat xs -> xs |> List.map (createTree >> makeRB) |> makeConcat
@@ -242,16 +244,18 @@ let internal createRegexBuild caseSensitive regexes =
     let theTree =
         regexes
         |> List.map (fun (regex, acceptSymbol) -> createRegexBuildSingle regex acceptSymbol)
-        |> (function | [x] -> x | x -> makeRB (Alt x))
+        |> function | [x] -> x | x -> makeRB (Alt x)
 
     if regexParseErrors.Count = 0 then
         Ok (theTree, leaves.ToImmutable() |> RegexBuildLeaves)
     else
         regexParseErrors |> List.ofSeq |> Error
 
-let internal calculateFollowPos leafCount regex =
+let internal calculateFollowPos (ct: CancellationToken) leafCount regex =
     let followPos = Array.replicate leafCount BitSet.Empty
     let rec impl x =
+        ct.ThrowIfCancellationRequested()
+        RuntimeHelpers.EnsureSufficientExecutionStack()
         match x.Tree with
         | Alt xs -> for x in xs do impl x
         | Concat ([], _) -> ()
@@ -288,8 +292,8 @@ with
 
 let private createRangeMap xs = RangeMap.ofSeqEx xs
 
-let internal makeDFA
-    prioritizeFixedLengthSymbols regex (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =
+let internal makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
+    (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =
     let states = Dictionary()
     let statesList = ResizeArray()
     let unmarkedStates = Stack()
@@ -306,6 +310,7 @@ let internal makeDFA
 
     getOrAddState regex.FirstPos |> ignore
     while unmarkedStates.Count <> 0 do
+        ct.ThrowIfCancellationRequested()
         let S = statesList.[int <| unmarkedStates.Pop()]
         let SChars = S.Name |> Seq.map leaves.Characters |> Set.unionMany
         let SAllButChars = S.Name |> Seq.map leaves.AllButCharacters |> Set.unionMany
@@ -333,6 +338,7 @@ let internal makeDFA
                 S.AnythingElse <- Some <| getOrAddState x)
 
     let toDFAState state =
+        ct.ThrowIfCancellationRequested()
         let acceptSymbols =
             state.Name
             |> Seq.choose leaves.AcceptData
@@ -365,13 +371,36 @@ let internal makeDFA
     |> Result.collect
     |> Result.map ImmutableArray.CreateRange
 
-/// Builds a DFA that recognizes the given `Regex`es, each
-/// accepting a `DFASymbol`. DFA symbols that can be
-/// derived by a regular expression without stars can be
-/// prioritized over those with them, in case of conflicts.
-/// Moreover, the resulting DFA can be case sensitive.
-let buildRegexesToDFA prioritizeFixedLengthSymbols caseSensitive regexes = either {
-    let! tree, leaves = createRegexBuild caseSensitive regexes
-    let followPos = calculateFollowPos leaves.Length tree
-    return! makeDFA prioritizeFixedLengthSymbols tree leaves followPos
+/// <summary>Builds a DFA that recignizes one of the given regexes.</summary>
+/// <param name="ct">Used to cancel the operation.</param>
+/// <param name="options">Used to further configure the operation.</param>
+/// <param name="prioritizeFixedLengthSymbols">Whether to prioritize
+/// regexes that don't have stars over those that do in case of a conflict.</param>
+/// <param name="caseSensitive">Whether the resulting DFA is case-sensitive.</param>
+/// <param name="regexes">The list of regexes, paired with the symbol they recognize.</param>
+/// <returns>An immutable array of the DFA states or a
+/// list of the errors that were encountered.</returns>
+/// <exception cref="OperationCanceledException"><paramref name="ct"/> was triggered.</exception>
+/// <exception cref="InsufficientExecutionStackException">One of the <paramref name="regexes"/>
+/// was extremely deep and complex to be handled by Farkle.</exception>
+let buildRegexesToDFAEx ct (options: BuildOptions)
+    prioritizeFixedLengthSymbols caseSensitive regexes = either {
+    ignore options
+    let! tree, leaves = createRegexBuild ct caseSensitive regexes
+    let followPos = calculateFollowPos ct leaves.Length tree
+    return! makeDFA ct prioritizeFixedLengthSymbols tree leaves followPos
 }
+
+/// <summary>Builds a DFA that recignizes one of the given regexes.</summary>
+/// <param name="prioritizeFixedLengthSymbols">Whether to prioritize
+/// regexes that don't have stars over those that do in case of a conflict.</param>
+/// <param name="caseSensitive">Whether the resulting DFA is case-sensitive.</param>
+/// <param name="regexes">The list of regexes, paired with the symbol they recognize.</param>
+/// <returns>An immutable array of the DFA states or a
+/// list of the errors that were encountered.</returns>
+/// <exception cref="InsufficientExecutionStackException">One of the <paramref name="regexes"/>
+/// was extremely deep and complex to be handled by Farkle.</exception>
+let buildRegexesToDFA prioritizeFixedLengthSymbols caseSensitive regexes =
+    buildRegexesToDFAEx
+        CancellationToken.None BuildOptions.Default
+        prioritizeFixedLengthSymbols caseSensitive regexes

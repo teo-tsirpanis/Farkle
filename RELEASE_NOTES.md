@@ -8,6 +8,7 @@
 * Farkle's string regexes got many improvements and bug fixes, bringing their syntax closer -but not a 100% match- to popular regex languages. Take a look at [the string regex reference](string-regexes.html) for more details.
 * The precompiler now works when used on a project targeting a framework earlier than .NET Core 3.1.
 * The `Position.Advance` method got a new overload that accepts a `ReadOnlySpan` of characters. It is recommended over the existing one that accepts a single character because it reliably handles line endings.
+* Building a grammar can now be cancelled by new functions introduced in `Farkle.Builder`'s `DFABuild`, `LALRBuild` and `DesigntimeFarkleBuild` modules. Additionally the `Build` and `BuildUntyped` extension methods of designtime Farkles now accept an optional cancellation token.
 * Fixed a bug where the wrong error position was sometimes reported on text with LF line endings.
 * Fixed a bug where the wrong error position was reported on syntax errors.
 

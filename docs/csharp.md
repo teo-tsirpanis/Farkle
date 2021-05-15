@@ -61,6 +61,9 @@ The following table highlights the differences between the F# and C# designtime 
 |`x => (fun x -> MyFunc x)`|`x.Finish(x => MyFunc(x))`
 |`x =% 0`|`x.FinishConstant(0)`|
 |`RuntimeFarkle.build x`|`x.Build()`|
+|`RuntimeFarkle.buildUntyped x`|`x.BuildUntyped()`|
+
+The `Build` and `BuildUntyped` extension methods accept an optional `CancellationToken` and will throw an `OperationCanceledException` if it gets triggered.
 
 ### A complete example
 
@@ -107,7 +110,7 @@ Notice how we called the `WithPrecedence` method. In F# we were passing an objec
 
 ### Customizing designtime Farkles
 
-To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle` namespace. Let's take a look at an example:
+To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle.Builder` namespace. Let's take a look at an example:
 
 ``` csharp
 var customized =

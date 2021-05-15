@@ -13,6 +13,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
+open System.Threading
 
 [<NoComparison; ReferenceEquality>]
 /// An object containing the symbols of a grammar,
@@ -81,7 +82,7 @@ module DesigntimeFarkleBuild =
             addOperatorScope set dfw.InnerDesigntimeFarkle
         | _ -> ()
 
-    let private createGrammarDefinitionEx (df: DesigntimeFarkle) =
+    let private createGrammarDefinitionEx (ct: CancellationToken) (df: DesigntimeFarkle) =
         let mutable dfaSymbols = []
         let addDFASymbol regex sym =
             dfaSymbols <- (regex, sym) :: dfaSymbols
@@ -260,6 +261,7 @@ module DesigntimeFarkleBuild =
             | LALRSymbol.Nonterminal nont -> nont
 
         while nonterminalsToProcess.Count <> 0 do
+            ct.ThrowIfCancellationRequested()
             let grammarNont, abstractNont = nonterminalsToProcess.Dequeue()
 
             for abstractProd in abstractNont.Productions do
@@ -359,7 +361,7 @@ module DesigntimeFarkleBuild =
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
     [<CompiledName("CreateGrammarDefinition")>]
     let createGrammarDefinition df =
-        createGrammarDefinitionEx df |> fst
+        createGrammarDefinitionEx CancellationToken.None df |> fst
 
     /// Performs some checks on the grammar that would cause problems later.
     let private aPrioriConsistencyCheck grammar = seq {
@@ -399,29 +401,36 @@ module DesigntimeFarkleBuild =
         | [] -> Ok ()
         | xs -> Error xs
 
-    let private buildDFAAndCheckForNullableSymbol caseSensitive symbols =
-        DFABuild.buildRegexesToDFA true caseSensitive symbols
-        |> Result.bind (fun x ->
+    let private checkForNullableSymbol result =
+        Result.bind (fun (x: ImmutableArray<DFAState>) ->
             match x.[0].AcceptSymbol with
             | Some x -> Error [BuildError.NullableSymbol x]
-            | None -> Ok x)
+            | None -> Ok x) result
 
-    /// Creates a `Grammar` from a `GrammarDefinition`.
-    [<CompiledName("BuildGrammarOnly")>]
-    let buildGrammarOnly grammarDef = either {
+    /// Creates a `Grammar` from a `GrammarDefinition`. The operation
+    /// can be cancelled, throwing an `OperationCancelledException`.
+    /// It also accepts a `BuildOptions` object, allowing further configuration.
+    [<CompiledName("BuildGrammarOnlyEx")>]
+    let buildGrammarOnlyEx ct options grammarDef = either {
         do! aPrioriConsistencyCheck grammarDef |> failIfNotEmpty
 
         let! myDarlingLALRStateTable, mySweetDFAStateTable =
             Result.combine
-                (LALRBuild.buildProductionsToLALRStates
+                (LALRBuild.buildProductionsToLALRStatesEx
+                    ct
+                    options
                     grammarDef.ConflictResolver
                     grammarDef.StartSymbol
                     grammarDef.Symbols.Terminals
                     grammarDef.Symbols.Nonterminals
                     grammarDef.Productions)
-                (buildDFAAndCheckForNullableSymbol
+                (DFABuild.buildRegexesToDFAEx
+                    ct
+                    options
+                    true
                     grammarDef.Metadata.CaseSensitive
-                    grammarDef.DFASymbols)
+                    grammarDef.DFASymbols
+                |> checkForNullableSymbol)
 
         let properties = {
             Name = let (Nonterminal(_, name)) = grammarDef.StartSymbol in name
@@ -443,16 +452,30 @@ module DesigntimeFarkleBuild =
         }
     }
 
+    /// Creates a `Grammar` from a `GrammarDefinition`.
+    [<CompiledName("BuildGrammarOnly")>]
+    let buildGrammarOnly grammarDef =
+        buildGrammarOnlyEx CancellationToken.None BuildOptions.Default grammarDef
+
+    /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
+    /// The construction of the grammar may fail. In this case, the output of the
+    /// post-processor is indeterminate. Using this function (and all others in this
+    /// module) will always build a new grammar, even if a precompiled one is available.
+    /// This function also allows the build to be cancelled and further configured.
+    [<CompiledName("BuildEx")>]
+    let buildEx ct options (df: DesigntimeFarkle<'TOutput>) =
+        let myLovelyGrammarDefinition, myWonderfulPostProcessorDefinition = createGrammarDefinitionEx ct df
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulPostProcessorDefinition
+        let myDearestGrammar = buildGrammarOnlyEx ct options myLovelyGrammarDefinition
+        myDearestGrammar, myFavoritePostProcessor
+
     /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
     /// The construction of the grammar may fail. In this case, the output of the
     /// post-processor is indeterminate. Using this function (and all others in this
     /// module) will always build a new grammar, even if a precompiled one is available.
     [<CompiledName("Build")>]
     let build (df: DesigntimeFarkle<'TOutput>) =
-        let myLovelyGrammarDefinition, myWonderfulPostProcessorDefinition = createGrammarDefinitionEx df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulPostProcessorDefinition
-        let myDearestGrammar = buildGrammarOnly myLovelyGrammarDefinition
-        myDearestGrammar, myFavoritePostProcessor
+        buildEx CancellationToken.None BuildOptions.Default df
 
     /// Creates a `PostProcessor` from the given `DesigntimeFarkle`.
     /// By not creating a grammar, some potentially expensive steps are skipped.
@@ -461,6 +484,6 @@ module DesigntimeFarkleBuild =
     [<CompiledName("BuildPostProcessorOnly")>]
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
         df
-        |> createGrammarDefinitionEx
+        |> createGrammarDefinitionEx CancellationToken.None
         |> snd
         |> createPostProcessor<'TOutput>

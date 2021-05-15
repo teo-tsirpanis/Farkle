@@ -19,7 +19,7 @@ let inline private RA<'a> (x: ResizeArray<'a>) = ignore x
 /// Creates the LR(0) kernel sets for a grammar.
 /// A function that gets the corresponding productions for
 /// a nonterminal and the start symbol are required.
-let createLR0KernelItems fGetAllProductions startSymbol =
+let private createLR0KernelItems fGetAllProductions startSymbol =
 
     let itemSets = ImmutableArray.CreateBuilder()
     let itemSetsToProcess = Queue()
@@ -77,7 +77,7 @@ let createLR0KernelItems fGetAllProductions startSymbol =
 
 /// Computes the FIRST set of the `Nonterminal`s
 /// of the given sequence of `Production`s.
-let computeFirstSetMap terminals nonterminals productions =
+let private computeFirstSetMap terminals nonterminals productions =
     IA<Nonterminal> nonterminals
 
     // The last nonterminal at the end is the starting one.
@@ -118,7 +118,7 @@ let computeFirstSetMap terminals nonterminals productions =
 /// Returns the FIRST set of the given sequence of `LALRSymbol`s.
 /// If all the symbols contain the empty symbol in their FIRST set,
 /// the terminals in `lookahead` are included in the result.
-let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
+let private getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
     let laSet = LookaheadSet(firstSets.AllTerminals.Length)
     xs
     |> Seq.fold (fun doContinue ->
@@ -137,7 +137,7 @@ let getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
 /// Computes the LR(1) CLOSURE function of a single LR(1) item, which
 /// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
 /// A function to get the FIRST set and the productions of a `Nonterminal` is required.
-let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
+let private closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
     let q = Queue(xs: _ seq)
     let results = Closure1Table(firstSets.AllTerminals.Length)
     while q.Count <> 0 do
@@ -158,7 +158,7 @@ let closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
     |> List.ofSeq
 
 /// Computes the lookahead symbols for the given `LR0ItemSet`s.
-let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
+let private computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
     IA itemSets
 
     let lookaheads = LookaheadItemsTable(firstSets.AllTerminals.Length)
@@ -193,7 +193,7 @@ let computeLookaheadItems fGetAllProductions (firstSets: FirstSets) itemSets =
     lookaheads
 
 /// Creates an LALR state table.
-let createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+let private createLALRStates fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
     IA itemSets
     RA conflicts
 

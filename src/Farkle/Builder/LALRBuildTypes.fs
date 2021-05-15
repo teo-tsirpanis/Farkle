@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Builder.LALRBuildTypes
+module internal Farkle.Builder.LALRBuildTypes
 
 open BitCollections
 open Farkle.Grammar

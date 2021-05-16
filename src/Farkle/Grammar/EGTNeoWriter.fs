@@ -9,20 +9,12 @@ module internal Farkle.Grammar.EGTFile.EGTNeoWriter
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open Farkle.Grammar.EGTFile.EGTHeaders
-open System
 open System.Collections.Immutable
 
 [<AutoOpen>]
 module private Implementation =
 
     type IndexMap = ImmutableDictionary<uint32, uint32>
-
-    let getProperty<'TSymbol,'TReturnType> name =
-        typeof<'TSymbol>
-            .GetProperty(name)
-            .GetGetMethod()
-            .CreateDelegate(typeof<Func<'TSymbol,'TReturnType>>)
-        :?> Func<'TSymbol,'TReturnType>
 
     let writeProperties (w: EGTWriter) props =
 
@@ -41,29 +33,27 @@ module private Implementation =
 
         w.FinishPendingRecord()
 
-    let writeLALRSymbols (fIndex: Func<_,_>) (fName: Func<_,_>) (w: EGTWriter) header (symbols: ImmutableArray<_>) =
+    let writeLALRSymbols fIndex fName (w: EGTWriter) header (symbols: ImmutableArray<_>): IndexMap =
         let dict = ImmutableDictionary.CreateBuilder()
 
         w.WriteString header
         for i = 0 to symbols.Length - 1 do
             let sym = symbols.[i]
-            dict.[fIndex.Invoke sym] <- uint32 i
-            w.WriteString (fName.Invoke sym)
+            dict.[fIndex sym] <- uint32 i
+            w.WriteString (fName sym)
 
         w.FinishPendingRecord()
         dict.ToImmutable()
 
-    let fTerminalIndex = getProperty "Index"
-    let fTerminalName = getProperty "Name"
+    let writeTerminals w terms =
+        writeLALRSymbols
+            (fun (Terminal(idx, _)) -> idx) (fun (Terminal(_, name)) -> name)
+            w terminalsHeader terms
 
-    let writeTerminals w (terms: ImmutableArray<Terminal>) =
-        writeLALRSymbols fTerminalIndex fTerminalName w terminalsHeader terms
-
-    let fNonterminalIndex = getProperty "Index"
-    let fNonterminalName = getProperty "Name"
-
-    let writeNonterminals w (terms: ImmutableArray<Nonterminal>) =
-        writeLALRSymbols fNonterminalIndex fNonterminalName w nonterminalsHeader terms
+    let writeNonterminals w nonterminals =
+        writeLALRSymbols
+            (fun (Nonterminal(idx, _)) -> idx) (fun (Nonterminal(_, name)) -> name)
+            w nonterminalsHeader nonterminals
 
     let writeNoiseSymbols (w: EGTWriter) (noises: ImmutableArray<_>) =
         w.WriteString noiseSymbolsHeader

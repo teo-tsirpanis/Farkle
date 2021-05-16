@@ -84,10 +84,12 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
     /// Reads a null-terminated string, encoded
     /// with the UTF-16 character set from a binary reader.
     /// Commonly used to read the header of an EGT file.
-    let readNullTerminatedString() =
-        let sr = StringBuilder()
+    let readNullTerminatedString isHeader =
+        let sr = StringBuilder(128)
         let mutable c = br.ReadUInt16()
         while c <> 0us do
+            if isHeader && sr.Length >= sr.Capacity then
+                invalidEGT()
             sr.Append(char c) |> ignore
             c <- br.ReadUInt16()
         sr.ToString()
@@ -106,7 +108,7 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
                 count
         impl 0u 0
 
-    let header = readNullTerminatedString()
+    let header = readNullTerminatedString true
 
     /// Reads an EGT file entry from a binary reader.
     let readEntry() =
@@ -115,7 +117,7 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
         | 'b'B -> Entry.Byte(br.ReadByte())
         | 'B'B -> Entry.Boolean(br.ReadByte() <> 0uy)
         | 'I'B -> Entry.Int(br.ReadUInt16())
-        | 'S'B -> Entry.String(readNullTerminatedString())
+        | 'S'B -> Entry.String(readNullTerminatedString false)
         // These two are the EGTneo entry tags.
         // They allow more compact representation.
         | 'i'B -> Entry.UInt32(read7BitEncodedUInt32())

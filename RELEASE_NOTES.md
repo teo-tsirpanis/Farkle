@@ -1,4 +1,4 @@
-#### 6.2.0
+#### 6.2.0 - 17-05-2021
 * __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.
 * __Minor breaking change:__ Whitespace inside the "between", "at least" and "exactly `n` times" regex string quantifiers is no longer allowed. Using string regexes like `\d{ 4}` will cause an error.
 * __Minor breaking change:__ The `Farkle.Builder.IRawDelegateProvider` interface and a function in the `Farkle.Builder.DFABuild` module became private. They were public by accident and served no purpose for Farkle's users.
@@ -19,7 +19,7 @@
 * The designtime Farkles that are returned by the `many` and `many1` operators now have the correct name.
 * Throwing a `ParserException` during post-processing will not be thrown in user code inside a `PostProcessorException`, but will be caught by the runtime Farkle API, allowing to customize the parser error message in greater detail.
 
-#### 6.0.0 - 23-02-2020
+#### 6.0.0 - 23-02-2021
 * __Breaking change:__ The functions `RuntimeFarkle.ofEGTFile` and `RuntimeFarkle.ofBase64String`as well as their corresponding `RuntimeFarkle` static methods  were removed. Users are advised to migrate away from GOLD Parser.
 * __Breaking change:__ The `RuntimeFarkle.GetBuildError` method was replaced by `GetBuildErrors`, which returns a list of build errors.
 * __Breaking change:__ The `Farkle.Grammar.Grammar.Properties` member now holds a strongly-typed record of informative grammar properties. Unrecognized GOLD Parser properties such as "Author", "Description" and "Version" are discarded. Existing grammar files remain compatible.

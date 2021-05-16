@@ -6,6 +6,7 @@
 /// Functions to generate LALR state tables from a grammar.
 module Farkle.Builder.LALRBuild
 
+open System
 open Farkle.Grammar
 open Farkle.Builder.LALRBuildTypes
 open Farkle.Builder.LALRConflictResolution
@@ -38,7 +39,8 @@ let private createLR0KernelItems (ct: CancellationToken) fGetAllProductions star
 
     startSymbol
     |> fGetAllProductions
-    |> Set.map LR0Item.Create
+    |> Seq.map LR0Item.Create
+    |> set
     |> getOrQueueItemSet
     |> ignore
 
@@ -121,26 +123,27 @@ let private computeFirstSetMap (ct: CancellationToken) terminals nonterminals pr
 /// Returns the FIRST set of the given sequence of `LALRSymbol`s.
 /// If all the symbols contain the empty symbol in their FIRST set,
 /// the terminals in `lookahead` are included in the result.
-let private getFirstSetOfSequence (firstSets: FirstSets) lookahead xs =
+let private getFirstSetOfSequence (firstSets: FirstSets) lookahead (xs: ReadOnlySpan<_>) =
     let laSet = LookaheadSet(firstSets.AllTerminals.Length)
-    xs
-    |> Seq.fold (fun doContinue ->
-        function
-        | LALRSymbol.Terminal term when doContinue ->
+    let mutable enumerator = xs.GetEnumerator()
+    let mutable doContinue = true
+    while enumerator.MoveNext() && doContinue do
+        match enumerator.Current with
+        | LALRSymbol.Terminal term ->
             laSet.HasTerminal term <- true
-            false
-        | LALRSymbol.Nonterminal nont when doContinue ->
+            doContinue <- false
+        | LALRSymbol.Nonterminal nont ->
             firstSets.CopyTerminalsToLookaheadSet nont laSet |> ignore
-            firstSets.HasEmpty nont
-        | _ -> false) true
-    |> function true -> laSet.UnionWith lookahead |> ignore | false -> ()
+            doContinue <- firstSets.HasEmpty nont
+    if doContinue then
+        laSet.UnionWith lookahead |> ignore
     laSet.Freeze()
     laSet
 
 /// Computes the LR(1) CLOSURE function of a single LR(1) item, which
 /// is made of the given `LR0Item` and the given set of lookahead `Terminal`s.
 /// A function to get the FIRST set and the productions of a `Nonterminal` is required.
-let private closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs =
+let private closure1 (fGetAllProductions: _ -> _ list) (firstSets: FirstSets) xs =
     let q = Queue(xs: _ seq)
     let results = Closure1Table(firstSets.AllTerminals.Length)
     while q.Count <> 0 do
@@ -150,10 +153,8 @@ let private closure1 (fGetAllProductions: _ -> _ Set) (firstSets: FirstSets) xs 
                 match item.CurrentSymbol with
                 | LALRSymbol.Terminal _ -> ()
                 | LALRSymbol.Nonterminal nont ->
-                    let first =
-                        item.Production.Handle
-                        |> Seq.skip (item.DotPosition + 1)
-                        |> getFirstSetOfSequence firstSets lookahead
+                    let handle = item.Production.Handle.AsSpan().Slice(item.DotPosition + 1)
+                    let first = getFirstSetOfSequence firstSets lookahead handle
                     for prod in fGetAllProductions nont do
                         q.Enqueue(LR0Item.Create prod, first)
     results
@@ -180,7 +181,7 @@ let private computeLookaheadItems (ct: CancellationToken) fGetAllProductions (fi
                         | true, gotoIdx ->
                             let gotoKernel = closureItem.AdvanceDot()
                             if la.HasHash then
-                                propagate.Add((item, itemSet.Index), (gotoKernel, gotoIdx))
+                                propagate.Add struct(struct(item, itemSet.Index), struct(gotoKernel, gotoIdx))
                             lookaheads.AddRange (gotoKernel, gotoIdx) la |> ignore
                         | false, _ -> ()
         propagate
@@ -313,7 +314,7 @@ let buildProductionsToLALRStatesEx ct (options: BuildOptions)
     let nonterminalsToProductions =
         productions
         |> Seq.groupBy(fun x -> x.Head)
-        |> Seq.map (fun (k, v) -> KeyValuePair(k, set v))
+        |> Seq.map (fun (k, v) -> KeyValuePair(k, List.ofSeq v))
         |> ImmutableDictionary.CreateRange
     let fGetAllProductions k = nonterminalsToProductions.[k]
 

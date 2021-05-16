@@ -5,6 +5,7 @@
 
 module internal Farkle.Builder.LALRBuildTypes
 
+open System.Runtime.InteropServices
 open BitCollections
 open Farkle.Grammar
 open System.Collections
@@ -78,9 +79,9 @@ type LookaheadSet(terminalCount) =
     /// Adds the content of another lookahead set to this one.
     /// Returns whether this lookahead set was changed by this method.
     /// Optionally, only the terminals can be added, not the special symbols.
-    member _.UnionWith (laSet: LookaheadSet, ?changeExtraSymbols) =
+    member _.UnionWith (laSet: LookaheadSet, [<Optional; DefaultParameterValue(true)>] changeExtraSymbols) =
         checkFrozen()
-        if defaultArg changeExtraSymbols true then
+        if changeExtraSymbols then
             // Instead of "not a && b", we can write a < b.
             let changed = ban.Or laSet.Bits || hasEnd < laSet.HasEnd || hasHash < laSet.HasHash
             hasEnd <- hasEnd || laSet.HasEnd
@@ -213,4 +214,4 @@ type LookaheadSetDictionary<'key when 'key: equality>(terminalCount) =
 
 type Closure1Table = LookaheadSetDictionary<LR0Item>
 
-type LookaheadItemsTable = LookaheadSetDictionary<LR0Item * int>
+type LookaheadItemsTable = LookaheadSetDictionary<struct (LR0Item * int)>

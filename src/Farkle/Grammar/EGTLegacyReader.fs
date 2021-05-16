@@ -94,13 +94,19 @@ This error is unexpected. Please report it on GitHub." x
         // This is impossible to occur in a grammar file; it only goes up to 65536.
         let defaultGroupIndex = UInt32.MaxValue
 
-        let readSymbol index mem =
+        let readSymbol (nextTerminalIndex: _ byref) (nextNonterminalIndex: _ byref) mem =
             lengthMustBe mem 2
             let name = wantString mem 0
             let kind = wantUInt16 mem 1
             match kind with
-            | 0us -> Nonterminal(index, name) |> AnyNonterminal
-            | 1us -> Terminal(index, name) |> AnyTerminal
+            | 0us ->
+                let symbol = Nonterminal(nextNonterminalIndex, name) |> AnyNonterminal
+                nextNonterminalIndex <- nextNonterminalIndex + 1u
+                symbol
+            | 1us ->
+                let symbol = Terminal(nextTerminalIndex, name) |> AnyTerminal
+                nextTerminalIndex <- nextTerminalIndex + 1u
+                symbol
             | 2us -> Noise name |> AnyNoise
             | 3us -> AnyEndOfFile
             | 4us -> GroupStart(name, defaultGroupIndex) |> AnyGroupStart
@@ -244,6 +250,8 @@ This error is unexpected. Please report it on GitHub." x
         let mutable fDFAIndex = Unchecked.defaultof<_>
         let mutable lalrStates = Unchecked.defaultof<_>
         let mutable fLALRIndex = Unchecked.defaultof<_>
+        let mutable nextTerminalIndex = 0u
+        let mutable nextNonterminalIndex = 0u
         let terminals = ImmutableArray.CreateBuilder()
         let nonterminals = ImmutableArray.CreateBuilder()
         let noiseSymbols = ImmutableArray.CreateBuilder()
@@ -278,8 +286,10 @@ This error is unexpected. Please report it on GitHub." x
             | 'c'B when isTableCountsInitialized ->
                 readAndAssignIndexed readCharSet charSets mem
             | 'S'B when isTableCountsInitialized && not hasReadAnyGroup ->
-                let index = wantUInt16 mem 0
-                let symbol = mem.Slice(1) |> readSymbol (uint32 index)
+                // The index is on the first position. We don't use that; terminals and
+                // nonterminals are indexed by Farkle to ensure they start from zero, and
+                // the other symbol types don't have an index in Farkle's domain model.
+                let symbol = readSymbol &nextTerminalIndex &nextNonterminalIndex (mem.Slice(1))
                 symbols.Add symbol
                 match symbol with
                 | AnyTerminal x -> terminals.Add x

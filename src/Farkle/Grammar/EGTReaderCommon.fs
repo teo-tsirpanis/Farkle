@@ -12,11 +12,23 @@ module internal Common =
     open System
     open System.Collections.Generic
 
-    let validateEOFAction stateIndex action =
-        match action with
-        | Some(LALRAction.Shift _) ->
-            invalidEGTf "Error in LALR state %d: cannot shift when the end of input is encountered" stateIndex
-        | _ -> ()
+    let aPosterioriConsistencyCheck (grammar: Grammar) =
+        let terminals = grammar.Symbols.Terminals
+        for i = 0 to terminals.Length - 1 do
+            let (Terminal(termIdx, _)) = terminals.[i]
+            if termIdx <> uint32 i then
+                invalidEGTf "Terminal #%d is indexed out of order. It should be in position %d." termIdx i
+        let nonterminals = grammar.Symbols.Nonterminals
+        for i = 0 to nonterminals.Length - 1 do
+            let (Nonterminal(nontIdx, _)) = nonterminals.[i]
+            if nontIdx <> uint32 i then
+                invalidEGTf "Nonterminal #%d is indexed out of order. It should be in position %d." nontIdx i
+        let lalrStates = grammar.LALRStates
+        for i = 0 to lalrStates.Length - 1 do
+            match lalrStates.[i].EOFAction with
+            | Some (LALRAction.Shift _) ->
+                invalidEGTf "Error in LALR state %d: cannot shift when the end of input is encountered" i
+            | _ -> ()
 
     let createProperties source (x: IReadOnlyDictionary<_,_>) =
         let name = x.GetOrDefault("Name", "")

@@ -212,7 +212,6 @@ This error is unexpected. Please report it on GitHub." x
                     | AnyTerminal term -> SRActions.Add(term, srAction)
                     | AnyEndOfFile when EOFAction.IsNone -> EOFAction <- Some srAction
                     | _ -> invalidEGT()
-            Common.validateEOFAction (int index) EOFAction
             for i = 0 to mem.Length / 4 - 1 do fAction i
             {
                 Index = index
@@ -323,7 +322,7 @@ This error is unexpected. Please report it on GitHub." x
                 | Some LALRAction.Accept -> Some x.Key
                 | _ -> None)
             |> Option.defaultWith invalidEGT
-        {
+        let grammar = {
             _Properties = Common.createProperties source properties
             _StartSymbol = startSymbol
             _Symbols = symbols
@@ -332,3 +331,5 @@ This error is unexpected. Please report it on GitHub." x
             _LALRStates = lalrStates
             _DFAStates = dfaStates
         }
+        Common.aPosterioriConsistencyCheck grammar
+        grammar

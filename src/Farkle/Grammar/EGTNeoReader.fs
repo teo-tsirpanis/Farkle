@@ -172,7 +172,6 @@ module private Implementation =
                 match span.[i + 0] with
                 | Entry.Empty -> None
                 | _ -> Some <| readLALRAction productions span (i + 0)
-            Common.validateEOFAction states.Count eofAction
 
             let actionCount = wantUInt32 span (i + 2) |> int
             i <- i + 3
@@ -290,7 +289,7 @@ let read source (er: EGTReader) =
         NoiseSymbols = noiseSymbols
     }
 
-    {
+    let grammar = {
         _Properties = properties
         _StartSymbol = startSymbol
         _Symbols = symbols
@@ -299,3 +298,5 @@ let read source (er: EGTReader) =
         _LALRStates = lalrStates
         _DFAStates = dfaStates
     }
+    Common.aPosterioriConsistencyCheck grammar
+    grammar

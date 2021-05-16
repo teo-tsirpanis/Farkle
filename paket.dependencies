@@ -18,4 +18,6 @@ group FakeBuild
   nuget Fake.DotNet.FsFormatting
   nuget Fake.Tools.Git
 
+  nuget Octokit = 0.48
+
   nuget Scriban

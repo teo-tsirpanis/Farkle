@@ -182,7 +182,7 @@ NUGET
     NuGet.Protocol (5.9)
       NuGet.Packaging (>= 5.9)
     NuGet.Versioning (5.9)
-    Octokit (0.50)
+    Octokit (0.48)
     Scriban (3.6)
       Microsoft.CSharp (>= 4.5)
       System.Threading.Tasks.Extensions (>= 4.5)

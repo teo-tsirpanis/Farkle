@@ -90,23 +90,16 @@ module private OptimizedOperations =
         arr
 
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
-        let maxTerminalIndex =
-            if terminals.IsEmpty then
-                0
-            else
-                terminals |> Seq.map(fun (Terminal(idx, _)) -> idx) |> Seq.max |> int
-        let arr = createJaggedArray2D lalr.Length (maxTerminalIndex + 1)
+        let arr = createJaggedArray2D lalr.Length terminals.Length
         for {Index = stateIndex; Actions = actions} in lalr do
             for KeyValue(Terminal(idx, _), action) in actions do
                 arr.[int stateIndex].[int idx] <- Some action
         arr
 
     let buildLALRGotoArray (nonterminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
-        // There is no way for a grammar to lack nonterminals.
-        let maxNonterminalIndex = nonterminals |> Seq.map(fun (Nonterminal(idx, _)) -> idx) |> Seq.max |> int
         // No reason to allocate many options.
         let lalrOptions = lalr |> Seq.map Some |> Array.ofSeq
-        let arr = createJaggedArray2D lalr.Length (maxNonterminalIndex + 1)
+        let arr = createJaggedArray2D lalr.Length nonterminals.Length
         for {Index = stateIndex; GotoActions = gotoActions} in lalr do
             let stateIndex = int stateIndex
             for KeyValue(Nonterminal(nontIdx, _), idx) in gotoActions do

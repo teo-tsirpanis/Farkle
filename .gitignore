@@ -186,7 +186,9 @@ output/
 temp/
 tmp/
 .idea/
-*.g.[fc]s
+# Temporarily unignored to simplify the Endgame's acquisition of Farkle as a submodule.
+# TODO: Ignore it again in the future.
+# *.g.[fc]s
 .ionide/
 .paket/
 *.binlog

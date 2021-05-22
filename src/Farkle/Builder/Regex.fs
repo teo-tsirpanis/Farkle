@@ -14,9 +14,7 @@ type internal RegexParserFunction = Func<string, RegexParserResult>
 
 [<RequireQualifiedAccess>]
 module private RegexUtils =
-    let charSetFull = set [char 0 .. char UInt16.MaxValue]
     let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
-    let isCharSetHalfFull(x: char Set) = x.Count > int UInt16.MaxValue / 2
 
     let regexEmpty = Regex.Concat []
     let regexAny = Regex.AllButChars Set.empty
@@ -179,8 +177,6 @@ type Regex =
             | _ -> Set.ofSeq xs
         if set.IsEmpty then
             Regex.Empty
-        elif RegexUtils.isCharSetHalfFull set then
-            AllButChars <| RegexUtils.charSetFull - set
         else
             Chars set
     /// Returns a regex that recognizes any character,
@@ -194,8 +190,6 @@ type Regex =
             | _ -> Set.ofSeq xs
         if RegexUtils.isCharSetFull set then
             Regex.Empty
-        elif RegexUtils.isCharSetHalfFull set then
-            Chars <| RegexUtils.charSetFull - set
         else
             AllButChars set
     /// Returns a regex specified by a string.

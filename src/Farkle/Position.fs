@@ -41,20 +41,25 @@ with
     /// Both Windows line ending characters (carriage return and line feed) must
     /// be passed in the same span, othwerise the returned position will be incorrect.
     member x.Advance(span: ReadOnlySpan<_>) =
-        if span.Length = 0 then
-            x
-        else
-            let mutable line = x.Line
-            let mutable column = x.Column
-            let index = x.Index + uint64 span.Length
-            for i = 0 to span.Length - 1 do
-                match span.[i] with
-                | '\n' when i > 0 && span.[i - 1] = '\r' -> ()
-                | '\r' | '\n' ->
-                    line <- line + 1UL
-                    column <- 1UL
-                | _ -> column <- column + 1UL
-            Position.Create line column index
+        let mutable span = span
+        let mutable line = x.Line
+        let mutable column = x.Column
+        let index = x.Index + uint64 span.Length
+        while not span.IsEmpty do
+            match span.IndexOfAny('\n', '\r') with
+            | -1 ->
+                column <- column + uint64 span.Length
+                span <- ReadOnlySpan.Empty
+            | nlPos ->
+                line <- line + 1UL
+                column <- 1UL
+                let nlCharactersToSkip =
+                    if nlPos < span.Length - 1 && span.[nlPos] = '\r' && span.[nlPos + 1] = '\n' then
+                        2
+                    else
+                        1
+                span <- span.Slice(nlPos + nlCharactersToSkip)
+        Position.Create line column index
 
     /// A `Position` that points to the start of the text.
     static member Initial = {Line = 1UL; Column = 1UL; Index = 0UL}

@@ -91,10 +91,11 @@ type DefaultTokenizer(grammar: Grammar) =
         // By returning unit the compiler does
         // not translate it to an FSharpTypeFunc.
         let fail msg = ParserError(input.CurrentPosition, msg) |> ParserException |> raise |> ignore
-        let rec groupLoop isNoiseGroup (groupStack: Group list) =
+        let rec groupLoop isNoiseGroup groupStack =
             match groupStack with
             | [] -> ()
-            | currentGroup :: gs ->
+            | g :: gs ->
+                let currentGroup = grammar.Groups.[int g]
                 let dfaResult = tokenizeDFA input
                 if dfaResult.ReachedEOF then
                     // Input ended but the current group can be ended by a newline.
@@ -109,9 +110,8 @@ type DefaultTokenizer(grammar: Grammar) =
                     match dfaResult.FoundToken, dfaResult.Symbol with
                     | true, Choice3Of4(GroupStart(_, tokGroupIdx))
                         when currentGroup.Nesting.Contains tokGroupIdx ->
-                            let g = groups.[int tokGroupIdx]
                             input.AdvancePastOffset(ofs, isNoiseGroup)
-                            groupLoop isNoiseGroup (g :: groupStack)
+                            groupLoop isNoiseGroup (tokGroupIdx :: groupStack)
                     // A symbol is found that ends the current group.
                     | true, sym when currentGroup.IsEndedBy sym ->
                         match currentGroup.EndingMode with
@@ -162,7 +162,7 @@ type DefaultTokenizer(grammar: Grammar) =
                     let g = groups.[int tokGroupIdx]
                     let isNoiseGroup = not g.IsTerminal
                     input.AdvancePastOffset(ofs, isNoiseGroup)
-                    groupLoop isNoiseGroup [g]
+                    groupLoop isNoiseGroup [tokGroupIdx]
                     match g.ContainerSymbol with
                     // The group is a terminal. We return it.
                     | Choice1Of2 term -> newToken term

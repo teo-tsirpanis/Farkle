@@ -120,11 +120,19 @@ type DefaultTokenizer(grammar: Grammar) =
                         groupLoop isNoiseGroup gs
                     // The existing group is continuing.
                     | foundSymbol, _ ->
-                        let ofsToAdvancePast =
-                            match currentGroup.AdvanceMode, foundSymbol with
-                            | AdvanceMode.Token, true -> ofs
-                            | AdvanceMode.Character, _ | _, false -> 0
-                        input.AdvancePastOffset(ofsToAdvancePast, isNoiseGroup)
+                        match currentGroup.AdvanceMode, foundSymbol with
+                        | AdvanceMode.Token, true -> input.AdvancePastOffset(ofs, isNoiseGroup)
+                        | AdvanceMode.Token, false -> input.AdvancePastOffset(0, isNoiseGroup)
+                        | AdvanceMode.Character, _ ->
+                            // We advance by one character to avoid getting stuck; if a decision
+                            // point immediately followed, it would have been already handled.
+                            input.AdvancePastOffset(0, isNoiseGroup)
+                            let charBuffer = input.CharacterBuffer
+                            let decisionPointIndex = oops.IndexOfCharacterGroupDecisionPoint(charBuffer, int g)
+                            if decisionPointIndex = -1 then
+                                input.AdvancePastOffset(charBuffer.Length - 1, isNoiseGroup)
+                            elif decisionPointIndex <> 0 then
+                                input.AdvancePastOffset(decisionPointIndex - 1, isNoiseGroup)
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken (term: Terminal) =

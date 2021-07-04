@@ -7,8 +7,11 @@ namespace Farkle.Parser
 
 open Farkle.Collections
 open Farkle.Grammar
+open System
 open System.Collections.Immutable
+open System.Diagnostics
 open System.Runtime.CompilerServices
+open System.Text
 
 [<Struct>]
 /// An value type representing a DFA state or its absence.
@@ -31,6 +34,20 @@ with
     member x.IsOk = x.Value >= 0
     /// Whether this `DFAStateTag` represents a failed operation.
     member x.IsError = x.Value < 0
+
+[<Struct>]
+/// Describes which characters to search for to find the
+/// next decision point of a character group. A decision
+/// point is a place in the input text where either a
+/// group can end or another nestable group can start.
+type private CharacterGroupSearchAction = {
+    /// The characters to search for.
+    SearchCharacters: string
+    /// If set to true, the tokenizer will have to search
+    /// for any of these characters in the input text. Otherwise
+    /// it will have to search for all of them in order.
+    DoIndexOfAny: bool
+}
 
 [<AutoOpen>]
 module private OptimizedOperations =
@@ -89,6 +106,37 @@ module private OptimizedOperations =
             arr.[i] <- DFAStateTag.FromOption dfa.[i].AnythingElse
         arr
 
+    let buildCharacterGroupSearchActionArray (groups: ImmutableArray<Group>) =
+        groups
+        |> Seq.map (fun group ->
+            let struct (characters, doIndexOfAny) =
+                if group.AdvanceMode = AdvanceMode.Token then
+                    // These actions only make sense in character groups. We will
+                    // skip the entire process and return a dummy action on token
+                    // groups (that are currently not possible from Farkle).
+                    null, false
+                elif group.Nesting.IsEmpty then
+                    match group.End with
+                    // If the group ends with a literal and cannot be nested we can
+                    // match the entire literal instead of only its first character.
+                    | Some (GroupEnd ge) -> ge, false
+                    | None -> "\r\n", true
+                else
+                    let sb = StringBuilder()
+                    let mutable foundNewLine = false
+                    match group.End with
+                    | Some (GroupEnd ge) -> sb.Append ge.[0] |> ignore
+                    | None ->
+                        if not foundNewLine then
+                            foundNewLine <- true
+                            sb.Append "\r\n" |> ignore
+                    for groupIdx in group.Nesting do
+                        let (GroupStart(gs, _)) = groups.[int groupIdx].Start
+                        sb.Append gs.[0] |> ignore
+                    sb.ToString(), true
+            {SearchCharacters = characters; DoIndexOfAny = doIndexOfAny})
+        |> Array.ofSeq
+
     let buildLALRActionArray (terminals: ImmutableArray<_>) (lalr: ImmutableArray<_>) =
         let arr = createJaggedArray2D lalr.Length terminals.Length
         for {Index = stateIndex; Actions = actions} in lalr do
@@ -119,6 +167,7 @@ type internal OptimizedOperations private(grammar: Grammar) =
 
     let dfaArray = buildDFAArray grammar.DFAStates
     let dfaAnythingElseArray = buildDFAAnythingElseArray grammar.DFAStates
+    let groupSearchActionArray = buildCharacterGroupSearchActionArray grammar.Groups
     let lalrActionArray = buildLALRActionArray grammar.Symbols.Terminals grammar.LALRStates
     let lalrGotoArray = buildLALRGotoArray grammar.Symbols.Nonterminals grammar.LALRStates
     /// Returns an `OptimizedOperations` object associated
@@ -135,6 +184,18 @@ type internal OptimizedOperations private(grammar: Grammar) =
             match grammar.DFAStates.[state].Edges.TryFind c with
             | ValueSome x -> DFAStateTag.FromOption x
             | ValueNone -> dfaAnythingElseArray.[state]
+    /// Returns the index of the next input character that might either end
+    /// the group the tokenizer is in or enter another one that can be nested.
+    /// If such character does not exist the method returns -1.
+    member _.IndexOfCharacterGroupDecisionPoint (inputCharacters: ReadOnlySpan<char>, groupIdx) =
+        Debug.Assert(grammar.Groups.[groupIdx].AdvanceMode = AdvanceMode.Character,
+            "IndexOfCharacterGroupDecisionPoint was called for a token group.")
+        let action = groupSearchActionArray.[groupIdx]
+        let searchCharacters = action.SearchCharacters.AsSpan()
+        if action.DoIndexOfAny then
+            inputCharacters.IndexOfAny(searchCharacters)
+        else
+            inputCharacters.IndexOf(searchCharacters)
     /// Gets the LALR action from the given state that corresponds to the given terminal.
     member _.GetLALRAction (Terminal (term, _)) {LALRState.Index = idx} =
         lalrActionArray.[int idx].[int term]

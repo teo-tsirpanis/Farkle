@@ -63,10 +63,10 @@ type DefaultTokenizer(grammar: Grammar) =
     let oops = OptimizedOperations.Create grammar
 
     // Unfortunately we can't have ref structs on inner functions yet.
-    let rec tokenizeDFA_impl (input: CharStream) ofs currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
+    let rec tokenizeDFA_impl (input: CharStream) ofs ignoreErrors currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
         if ofs = span.Length then
             if input.TryExpandPastOffset(ofs) then
-                tokenizeDFA_impl input ofs currState lastAcceptOfs lastAcceptSym input.CharacterBuffer
+                tokenizeDFA_impl input ofs ignoreErrors currState lastAcceptOfs lastAcceptSym input.CharacterBuffer
             else
                 DFAResult.Create lastAcceptSym lastAcceptOfs ofs
         else
@@ -75,14 +75,19 @@ type DefaultTokenizer(grammar: Grammar) =
             if newDFA.IsOk then
                 let newDFA = newDFA.Value
                 match dfaStates.[newDFA].AcceptSymbol with
-                | None -> tokenizeDFA_impl input (ofs + 1) newDFA lastAcceptOfs lastAcceptSym span
-                | Some _ as acceptSymbol -> tokenizeDFA_impl input (ofs + 1) newDFA ofs acceptSymbol span
+                | None -> tokenizeDFA_impl input (ofs + 1) false newDFA lastAcceptOfs lastAcceptSym span
+                | Some _ as acceptSymbol -> tokenizeDFA_impl input (ofs + 1) false newDFA ofs acceptSymbol span
+            // We can't find a symbol with errors still being ignored.
+            // We would have to advance a state at least once to be able
+            // to accept a symbol and by then errors would stop being ignored.
+            elif ignoreErrors then
+                tokenizeDFA_impl input (ofs + 1) ignoreErrors currState lastAcceptOfs lastAcceptSym span
             else
                 DFAResult.Create lastAcceptSym lastAcceptOfs ofs
 
-    let tokenizeDFA (input: CharStream) =
+    let tokenizeDFA ignoreLeadingErrors (input: CharStream) =
         if input.TryExpandPastOffset 0 then
-            tokenizeDFA_impl input 0 DFAStateTag.InitialState 0 None input.CharacterBuffer
+            tokenizeDFA_impl input 0 ignoreLeadingErrors DFAStateTag.InitialState 0 None input.CharacterBuffer
         else
             DFAResult.EOF
 
@@ -96,7 +101,22 @@ type DefaultTokenizer(grammar: Grammar) =
             | [] -> ()
             | g :: gs ->
                 let currentGroup = grammar.Groups.[int g]
-                let dfaResult = tokenizeDFA input
+                // When inside token groups, we ignore invalid characters at
+                // the beginning to avoid discarding just one and repeat the loop.
+                // We limit this optimization to those with closed ending mode because
+                // we cannot accurately determine when the final invalid characters end
+                // and the group ending starts. It would be easy because group ends are
+                // literal strings (except on line groups which are character groups)
+                // but that's an assumption we'd better not be based on.
+                let ignoreLeadingErrors =
+                    // Seriously we cannot compare two structs without boxing?
+                    // The equality operator calls an FSharp.Core intrinsic that
+                    // boxes them, and casting to IEquatable boxes the structs
+                    // instead of using constrained. At least I hope the JIT optimizes
+                    // the second case's box away.
+                    (currentGroup.AdvanceMode :> IEquatable<_>).Equals AdvanceMode.Token
+                    && (currentGroup.EndingMode :> IEquatable<_>).Equals EndingMode.Closed
+                let dfaResult = tokenizeDFA ignoreLeadingErrors input
                 if dfaResult.ReachedEOF then
                     // Input ended but the current group can be ended by a newline.
                     if currentGroup.IsEndedByNewline then
@@ -119,11 +139,10 @@ type DefaultTokenizer(grammar: Grammar) =
                         | EndingMode.Open -> ()
                         groupLoop isNoiseGroup gs
                     // The existing group is continuing.
-                    | foundSymbol, _ ->
-                        match currentGroup.AdvanceMode, foundSymbol with
-                        | AdvanceMode.Token, true -> input.AdvancePastOffset(ofs, isNoiseGroup)
-                        | AdvanceMode.Token, false -> input.AdvancePastOffset(0, isNoiseGroup)
-                        | AdvanceMode.Character, _ ->
+                    | _ ->
+                        match currentGroup.AdvanceMode with
+                        | AdvanceMode.Token -> input.AdvancePastOffset(ofs, isNoiseGroup)
+                        | AdvanceMode.Character ->
                             // We advance by one character to avoid getting stuck; if a decision
                             // point immediately followed, it would have been already handled.
                             input.AdvancePastOffset(0, isNoiseGroup)
@@ -146,7 +165,7 @@ type DefaultTokenizer(grammar: Grammar) =
                     | e -> PostProcessorException(term, e) |> raise
                 let theHolyToken = Token(pos, term, data)
                 theHolyToken
-            let dfaResult = tokenizeDFA input
+            let dfaResult = tokenizeDFA false input
             // Input ends outside of a group.
             if dfaResult.ReachedEOF then
                 Token.CreateEOF input.CurrentPosition

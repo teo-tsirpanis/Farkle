@@ -7,6 +7,7 @@ module Farkle.Tests.ParserTests
 
 open Expecto
 open Farkle
+open Farkle.Builder
 open Farkle.Grammar
 open Farkle.IO
 open Farkle.Samples
@@ -109,5 +110,20 @@ let tests = testList "Parser tests" [
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
         let result = FSharp.GOLDMetaLanguage.runtime.Parse gmlSourceContent
         Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
+    }
+
+    test "Windows line endings inside block groups are correctly handled" {
+        let rf =
+            literal "hello"
+            |> DesigntimeFarkle.cast
+            |> DesigntimeFarkle.addBlockComment "/*" "*/"
+            |> RuntimeFarkle.buildUntyped
+        let testString = "/*\r\n\r\n\r\n*/ hell"
+        let expectedResult =
+            ParserError(Position.Create 4UL 8UL (uint64 testString.Length), ParseErrorType.UnexpectedEndOfInput)
+            |> FarkleError.ParseError
+            |> Error
+        let actualResult = rf.Parse testString
+        Expect.equal actualResult expectedResult "Unexpected result"
     }
 ]

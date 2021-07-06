@@ -18,17 +18,14 @@ let tests =
             Expect.equal cs.CharacterBuffer.[0] str.[0] "Character mismatch")
 
         test "All kinds on line endings are correctly handled" {
-            use cs = new CharStream("\r\n\r\n")
+            use cs = new CharStream("\n\r\n")
             Expect.equal cs.CurrentPosition Position.Initial
                 "The character stream started at a different position"
             cs.AdvanceBy 1
             Expect.equal cs.CurrentPosition (Position.Create 2UL 1UL 1UL)
-                "The character stream is at a different position after CR"
-            cs.AdvanceBy 1
-            Expect.equal cs.CurrentPosition (Position.Create 3UL 1UL 2UL)
                 "The character stream is at a different position after LF"
             cs.AdvanceBy 2
-            Expect.equal cs.CurrentPosition (Position.Create 4UL 1UL 4UL)
+            Expect.equal cs.CurrentPosition (Position.Create 3UL 1UL 3UL)
                 "The character stream is at a different position after CRLF"
         }
     ]

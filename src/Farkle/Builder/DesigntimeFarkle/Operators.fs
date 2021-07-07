@@ -38,9 +38,15 @@ type private DesigntimeFarkleWithOperatorScope<'T>(df: DesigntimeFarkle<'T>, opS
 /// With few exceptions, these functions will have to be applied to the topmost
 /// designtime Farkle that will get build, or they will have no effect.
 /// Designime Farkles that were applied the functions of this module must not
-/// be used with the original designimte Farkles in the same context; only
+/// be used with the original designtime Farkles in the same context; only
 /// one grammar symbol will be created, with undefined behavior.
 module DesigntimeFarkle =
+
+    /// Gets the raw designtime Farkle without any wrappers it might have been under.
+    let rec internal unwrap (df: DesigntimeFarkle) =
+        match df with
+        | :? DesigntimeFarkleWrapper as dfw -> unwrap dfw.InnerDesigntimeFarkle
+        | _ -> df
 
     /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
     /// Most other functions in this module are convenience wrappers over this

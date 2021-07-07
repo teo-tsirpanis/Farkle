@@ -7,32 +7,10 @@ namespace Farkle.Builder.LALRConflictResolution
 
 open Farkle.Builder
 open Farkle.Builder.OperatorPrecedence
+open Farkle.Common
 open Farkle.Grammar
-open System
 open System.Collections.Generic
 open System.Collections.Immutable
-
-module private TerminalKindComparers =
-    let create (comparer: StringComparer) =
-        {new EqualityComparer<obj>() with
-            member _.Equals(x1, x2) =
-                match x1, x2 with
-                // Without parentheses, lit2 is inferred to be the tuple of (x1, x2).
-                // Code still compiles but fails at runtime because objects of different
-                // types are compared.
-                | (:? string as lit1), (:? string as lit2) ->
-                    comparer.Equals(lit1, lit2)
-                | _ -> x1.Equals(x2)
-            member _.GetHashCode x =
-                match x with
-                | :? string as lit -> 2 * comparer.GetHashCode(lit)
-                | _ -> 2 * x.GetHashCode() + 1}
-
-    let caseSensitive = create StringComparer.Ordinal
-
-    let caseInsensitive = create StringComparer.OrdinalIgnoreCase
-
-    let get isCaseSensitive = if isCaseSensitive then caseSensitive else caseInsensitive
 
 /// <summary>The decision a <see cref="LALRConflictResolver"/> took.</summary>
 type ConflictResolutionDecision =
@@ -88,7 +66,7 @@ type internal PrecedenceBasedConflictResolver(operatorScopes: OperatorScope seq,
     static let ChooseReduce1 = ChooseOption1
     static let ChooseReduce2 = ChooseOption2
 
-    let comparer = TerminalKindComparers.get caseSensitive
+    let comparer = FallbackStringComparers.get caseSensitive
 
     let groupLookup =
         let dict = ImmutableDictionary.CreateBuilder(comparer)

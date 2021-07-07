@@ -6,6 +6,7 @@
 namespace Farkle.Common
 
 open System
+open System.Collections.Generic
 open System.Reflection
 open System.Threading
 
@@ -118,3 +119,28 @@ module internal Delegate =
     /// Returns whether the delegate is closed over its first argument.
     let isClosed (del: Delegate) =
         del.Method.GetParameters().Length <> del.GetType().GetMethod("Invoke").GetParameters().Length
+
+/// Object comparers that compare strings in a specific way if both
+/// objects are strings. Otherwise they use the default comparer.
+module internal FallbackStringComparers =
+    let private create (comparer: StringComparer) =
+        {new EqualityComparer<obj>() with
+            member _.Equals(x1, x2) =
+                match x1, x2 with
+                // Without parentheses, lit2 is inferred to be the tuple of (x1, x2).
+                // Code still compiles but fails at runtime because objects of different
+                // types are compared.
+                | (:? string as lit1), (:? string as lit2) ->
+                    comparer.Equals(lit1, lit2)
+                | _ -> EqualityComparer.Default.Equals(x1, x2)
+            member _.GetHashCode x =
+                match x with
+                | null -> 0
+                | :? string as lit -> 2 * comparer.GetHashCode(lit)
+                | _ -> 2 * x.GetHashCode() + 1}
+
+    let caseSensitive = create StringComparer.Ordinal
+
+    let caseInsensitive = create StringComparer.OrdinalIgnoreCase
+
+    let get isCaseSensitive = if isCaseSensitive then caseSensitive else caseInsensitive

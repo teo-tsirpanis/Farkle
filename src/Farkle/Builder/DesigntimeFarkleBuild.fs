@@ -30,41 +30,9 @@ type GrammarDefinition = {
     ConflictResolver: LALRConflictResolver
 }
 
-type private PostProcessorDefinition = {
-    Transformers: TransformerData []
-    Fusers: FuserData []
-}
-
-[<RequireQualifiedAccess>]
-/// A strongly-typed representation of a `DesigntimeFarkle`.
-type private Symbol =
-    | Terminal of AbstractTerminal
-    | Nonterminal of AbstractNonterminal
-    | LineGroup of AbstractLineGroup
-    | BlockGroup of AbstractBlockGroup
-    | VirtualTerminal of VirtualTerminal
-    | Literal of string
-    | NewLine
-
-module private Symbol =
-    let rec create (x: DesigntimeFarkle): Symbol =
-        match x with
-        | :? AbstractTerminal as term -> Symbol.Terminal term
-        | :? AbstractNonterminal as nont -> Symbol.Nonterminal nont
-        | :? AbstractLineGroup as lg -> Symbol.LineGroup lg
-        | :? AbstractBlockGroup as bg -> Symbol.BlockGroup bg
-        | :? VirtualTerminal as vt -> Symbol.VirtualTerminal vt
-        | :? Literal as lit -> Symbol.Literal lit.Content
-        | :? NewLine -> Symbol.NewLine
-        | :? DesigntimeFarkleWrapper as x -> create x.InnerDesigntimeFarkle
-        | _ -> invalidOp "Using a custom implementation of the \
-DesigntimeFarkle interface is not allowed."
-
 /// Functions to create `Grammar`s
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
-
-    let private fdAsIs0 = FuserData.CreateAsIs 0
 
     // Memory conservation to the rescue! 👅
     let private noiseNewLine = Noise Terminal.NewLineName
@@ -74,15 +42,7 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegex = Regex.chars BuilderCommon.whitespaceCharacters |> Regex.plus
     let private whitespaceRegexNoNewline = Regex.chars BuilderCommon.whitespaceCharactersNoNewLine |> Regex.plus
 
-    let rec private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
-        match df with
-        | :? DesigntimeFarkleWithOperatorScope as dfog ->
-            set.Add(dfog.OperatorScope) |> ignore
-        | :? DesigntimeFarkleWrapper as dfw ->
-            addOperatorScope set dfw.InnerDesigntimeFarkle
-        | _ -> ()
-
-    let private createGrammarDefinitionEx (ct: CancellationToken) (df: DesigntimeFarkle) =
+    let private createGrammarDefinitionEx (dfDef: DesigntimeFarkleDefinition) =
         let mutable dfaSymbols = []
         let addDFASymbol regex sym =
             dfaSymbols <- (regex, sym) :: dfaSymbols
@@ -95,53 +55,31 @@ module DesigntimeFarkleBuild =
         // a noise symbol. It can be also set to a terminal,
         // if they are needed by a production.
         let mutable newLineSymbol = Choice2Of4 noiseNewLine
-        let metadata = df.Metadata
-        let terminals = ImmutableArray.CreateBuilder()
-        let literalMap =
-            match metadata.CaseSensitive with
-            | true -> StringComparer.Ordinal
-            | false -> StringComparer.OrdinalIgnoreCase
-            |> Dictionary
-        let terminalMap = Dictionary()
-        let virtualTerminalMap = Dictionary()
-        let transformers = ResizeArray()
-        let nonterminals = ImmutableArray.CreateBuilder()
-        let nonterminalMap = Dictionary()
-        let noiseSymbols = ImmutableArray.CreateBuilder()
+        let metadata = dfDef.Metadata
+        let lalrSymbolMap =
+            Dictionary(dfDef.TerminalEquivalents.Count + dfDef.Nonterminals.Count,
+                FallbackStringComparers.get metadata.CaseSensitive)
         let groups = ImmutableArray.CreateBuilder()
-        let groupMap = Dictionary<AbstractGroup,_>()
-        let productions = ImmutableArray.CreateBuilder()
-        let fusers = ResizeArray()
 
-        let operatorScopes = HashSet()
-        let terminalObjects = Dictionary()
-        let productionTokens = Dictionary()
+        let terminalOperatorKeys = Dictionary()
+        let productionOperatorKeys = Dictionary()
 
-        let nonterminalsToProcess = Queue()
+        let terminals =
+            let b = ImmutableArray.CreateBuilder(dfDef.TerminalEquivalents.Count)
+            let newTerminal name = Terminal(uint32 b.Count, name)
 
-        let getLALRSymbol (df: DesigntimeFarkle) =
-            let newTerminal name =
-                let namePatched =
-                    if Terminal.IsNamedNewLine name then
-                        // In Farkle's grammar domain model, groups can end by either a group end symbol,
-                        // or a newline. Newlines are considered the terminals that are case-insensitively
-                        // named "NewLine". However, another such terminal can exist and can cause unexplained
-                        // errors when put inside a line group. This problem does not exist in GOLD Parser,
-                        // nor did in Farkle's first grammar domain model, where the terminal that ended a
-                        // group was explicitly specified. Prepending an underscore to the names of terminals
-                        // that could be misrepresented as newlines is the least breaking fix, until the
-                        // domain model gets overhauled in the next major version.
-                        // TODO: Remove this temporary workaround.
-                        "_" + name
-                    else
-                        name
-                Terminal(uint32 terminals.Count, namePatched)
+            let addTerminal term (identity: obj) =
+                b.Add term
+                lalrSymbolMap.Add(identity, LALRSymbol.Terminal term)
 
-            let addTerminal term fTransformer =
-                terminals.Add term
-                transformers.Add fTransformer
+            let handleTerminal name (identity: obj) regex =
+                let symbol = newTerminal name
+                addTerminal symbol identity
+                addDFASymbol regex (Choice1Of4 symbol)
+                symbol
 
-            let addTerminalGroup name term transformer gStart gEnd =
+            let addTerminalGroup name (identity: obj) gStart gEnd =
+                let term = newTerminal name
                 let container = Choice1Of2 term
                 let gStart' = GroupStart(gStart, uint32 groups.Count)
                 addDFASymbol (Regex.string gStart) (Choice3Of4 gStart')
@@ -162,123 +100,64 @@ module DesigntimeFarkleBuild =
                         | None -> EndingMode.Open
                     Nesting = ImmutableHashSet.Empty
                 }
-                addTerminal term transformer
+                addTerminal term identity
+                term
 
-            let handleTerminal dfName (term: AbstractTerminal) =
-                let symbol = newTerminal dfName
-                terminalMap.Add(term, symbol)
-                // For every addition to the terminals,
-                // a corresponding one will be made to the transformers.
-                // This way, the indices of the terminals and their transformers will match.
-                addTerminal symbol term.Transformer
-                addDFASymbol term.Regex (Choice1Of4 symbol)
-                symbol
+            // We don't have to worry about diplicates, they are handled by DesigntimeFarkleAnalyze.
+            for TerminalEquivalentInfo(name, opKey, te) in dfDef.TerminalEquivalents do
+                let symbol =
+                    match te with
+                    | TerminalEquivalent.Terminal term -> handleTerminal name term term.Regex
+                    | TerminalEquivalent.Literal lit -> handleTerminal name lit (Regex.string lit)
+                    | TerminalEquivalent.NewLine ->
+                        usesNewLine <- true
+                        let symbol = Terminal(uint32 b.Count, Terminal.NewLineName)
+                        addTerminal symbol NewLine
+                        newLineSymbol <- Choice1Of4 symbol
+                        symbol
+                    | TerminalEquivalent.LineGroup lg ->
+                        addTerminalGroup name lg lg.GroupStart None
+                    | TerminalEquivalent.BlockGroup bg ->
+                        let gEnd = GroupEnd bg.GroupEnd
+                        addTerminalGroup name bg bg.GroupStart (Some gEnd)
+                    | TerminalEquivalent.VirtualTerminal vt ->
+                        let symbol = newTerminal name
+                        addTerminal symbol vt
+                        symbol
+                terminalOperatorKeys.TryAdd(symbol, opKey) |> ignore
 
-            addOperatorScope operatorScopes df
-            let dfName = df.Name
+            b.MoveToImmutable()
 
-            let builderSym = Symbol.create df
-            let lalrSym =
-                match builderSym with
-                | Symbol.Terminal term when terminalMap.ContainsKey(term) ->
-                    LALRSymbol.Terminal terminalMap.[term]
-                | Symbol.Terminal term -> handleTerminal dfName term |> LALRSymbol.Terminal
-                | Symbol.VirtualTerminal vt when virtualTerminalMap.ContainsKey(vt) ->
-                    LALRSymbol.Terminal virtualTerminalMap.[vt]
-                | Symbol.VirtualTerminal vt ->
-                    let symbol = newTerminal dfName
-                    virtualTerminalMap.Add(vt, symbol)
-                    // The post-processor will never see a virtual terminal anyway.
-                    addTerminal symbol TransformerData.Null
-                    LALRSymbol.Terminal symbol
-                | Symbol.Literal lit when literalMap.ContainsKey(lit) ->
-                    LALRSymbol.Terminal literalMap.[lit]
-                | Symbol.Literal lit ->
-                    let term = Terminal.Create(lit, (Regex.string lit)) :?> AbstractTerminal
-                    let symbol = handleTerminal dfName term
-                    literalMap.Add(lit, symbol)
-                    LALRSymbol.Terminal symbol
-                | Symbol.NewLine ->
-                    usesNewLine <- true
-                    match newLineSymbol with
-                    | Choice1Of4 nlTerminal -> nlTerminal
-                    | _ ->
-                        let nlTerminal = Terminal(uint32 terminals.Count, Terminal.NewLineName)
-                        addTerminal nlTerminal TransformerData.Null
-                        newLineSymbol <- Choice1Of4 nlTerminal
-                        nlTerminal
-                    |> LALRSymbol.Terminal
-                | Symbol.Nonterminal nont when nonterminalMap.ContainsKey(nont) ->
-                    LALRSymbol.Nonterminal nonterminalMap.[nont]
-                | Symbol.Nonterminal nont ->
-                    let symbol = Nonterminal(uint32 nonterminals.Count, dfName)
-                    nonterminalMap.Add(nont, symbol)
-                    nonterminals.Add(symbol)
-                    nont.Freeze()
-                    nonterminalsToProcess.Enqueue(symbol, nont)
-                    LALRSymbol.Nonterminal symbol
-                | Symbol.LineGroup lg when groupMap.ContainsKey lg ->
-                    LALRSymbol.Terminal groupMap.[lg]
-                | Symbol.LineGroup lg ->
-                    // We don't know yet if the grammar is line-based, so
-                    // we queue it until the entire grammar is traversed.
-                    let term = newTerminal dfName
-                    groupMap.[lg] <- term
-                    addTerminalGroup dfName term lg.Transformer lg.GroupStart None
-                    LALRSymbol.Terminal term
-                | Symbol.BlockGroup bg when groupMap.ContainsKey bg ->
-                    LALRSymbol.Terminal groupMap.[bg]
-                | Symbol.BlockGroup bg ->
-                    let term = newTerminal dfName
-                    let gEnd = GroupEnd bg.GroupEnd
-                    groupMap.[bg] <- term
-                    addTerminalGroup dfName term bg.Transformer bg.GroupStart (Some gEnd)
-                    LALRSymbol.Terminal term
+        let struct(nonterminals, nonterminalMap) =
+            let b = ImmutableArray.CreateBuilder(dfDef.Nonterminals.Count)
+            let nonterminalMap = Dictionary(dfDef.Nonterminals.Count)
+            for NamedNonterminal(name, nont) in dfDef.Nonterminals do
+                let symbol = Nonterminal(uint32 b.Count, name)
+                b.Add(symbol)
+                lalrSymbolMap.Add(nont, LALRSymbol.Nonterminal symbol)
+                nonterminalMap.Add(nont, symbol)
+            b.MoveToImmutable(), nonterminalMap
 
-            match lalrSym, builderSym with
-            | LALRSymbol.Terminal term, Symbol.Literal lit ->
-                terminalObjects.TryAdd(term, box lit) |> ignore
-            | LALRSymbol.Terminal term, _ ->
-                terminalObjects.TryAdd(term, box df) |> ignore
-            | _ -> ()
-
-            lalrSym
-
-        let startSymbol =
-            match getLALRSymbol df with
-            // Our grammar is made of only one terminal.
-            // We will create a production which will be made of just that.
-            | LALRSymbol.Terminal (Terminal(_, name)) as t ->
-                let root = Nonterminal(uint32 nonterminals.Count, name)
-                nonterminals.Add(root)
-                productions.Add {
-                    Index = uint32 productions.Count
-                    Head = root
-                    Handle = ImmutableArray.Create(t)
-                }
-                fusers.Add(fdAsIs0)
-                root
-            | LALRSymbol.Nonterminal nont -> nont
-
-        while nonterminalsToProcess.Count <> 0 do
-            ct.ThrowIfCancellationRequested()
-            let grammarNont, abstractNont = nonterminalsToProcess.Dequeue()
-
-            for abstractProd in abstractNont.Productions do
+        let productions =
+            let b = ImmutableArray.CreateBuilder(dfDef.Productions.Count)
+            for head, abstractProd in dfDef.Productions do
                 let handle =
                     let b = ImmutableArray.CreateBuilder(abstractProd.Members.Length)
                     for x in abstractProd.Members do
-                        b.Add(getLALRSymbol x)
+                        b.Add lalrSymbolMap.[DesigntimeFarkle.getIdentityObject x]
                     b.MoveToImmutable()
                 let production =
-                    {Index = uint32 productions.Count; Head = grammarNont; Handle = handle}
+                    {Index = uint32 b.Count; Head = nonterminalMap.[head]; Handle = handle}
                 match abstractProd.ContextualPrecedenceToken with
                 | null -> ()
-                | cpToken -> productionTokens.Add(production, cpToken)
-                productions.Add production
-                fusers.Add abstractProd.Fuser
+                | cpToken -> productionOperatorKeys.Add(production, cpToken)
+                b.Add production
+            b.MoveToImmutable()
 
-        let handleComment comment =
+        let startSymbol = nonterminals.[0]
+
+        // Add explicitly created comments.
+        for comment in metadata.Comments do
             let newStartSymbol name = GroupStart(name, uint32 groups.Count)
             let addGroup name gStart gEnd em =
                 groups.Add {
@@ -303,65 +182,62 @@ module DesigntimeFarkleBuild =
                 addDFASymbol (Regex.string cEnd) (Choice4Of4 endSymbol)
                 addGroup "Comment Block" startSymbol (Some endSymbol) EndingMode.Closed
 
-        // Add miscellaneous noise symbols.
-        for name, regex in metadata.NoiseSymbols do
-            let symbol = Noise name
-            noiseSymbols.Add(symbol)
-            addDFASymbol regex (Choice2Of4 symbol)
-        // Add explicitly created comments.
-        for comment in metadata.Comments do
-            handleComment comment
+        let noiseSymbols =
+            let b = ImmutableArray.CreateBuilder()
+            // Add miscellaneous noise symbols.
+            for name, regex in metadata.NoiseSymbols do
+                let symbol = Noise name
+                b.Add(symbol)
+                addDFASymbol regex (Choice2Of4 symbol)
 
-        // Add the comment noise symbol once and only if it is needed.
-        if not metadata.Comments.IsEmpty then
-            noiseSymbols.Add(commentSymbol)
+            // Add the comment noise symbol once and only if it is needed.
+            if not metadata.Comments.IsEmpty then
+                b.Add(commentSymbol)
 
-        // Add whitespace as noise, only if it is enabled.
-        // If it is, we have to be careful not to consider
-        // newlines as whitespace if we are on a line-based grammar.
-        if metadata.AutoWhitespace then
-            noiseSymbols.Add(whitespaceSymbol)
-            let whitespaceRegex =
-                if usesNewLine then
-                    whitespaceRegexNoNewline
-                else
-                    whitespaceRegex
-            addDFASymbol whitespaceRegex (Choice2Of4 whitespaceSymbol)
+            // Add whitespace as noise, only if it is enabled.
+            // If it is, we have to be careful not to consider
+            // newlines as whitespace if we are on a line-based grammar.
+            if metadata.AutoWhitespace then
+                b.Add(whitespaceSymbol)
+                let whitespaceRegex =
+                    if usesNewLine then
+                        whitespaceRegexNoNewline
+                    else
+                        whitespaceRegex
+                addDFASymbol whitespaceRegex (Choice2Of4 whitespaceSymbol)
 
-        // And finally, add the newline symbol to the DFA and to the noise symbols.
-        // If it was a terminal, it is already included in the terminals.
-        if usesNewLine then
-            match newLineSymbol with
-            | Choice2Of4 x -> noiseSymbols.Add(x)
-            | _ -> ()
-            addDFASymbol newLineRegex newLineSymbol
+            // And finally, add the newline symbol to the DFA and to the noise symbols.
+            // If it was a terminal, it is already included in the terminals.
+            if usesNewLine then
+                match newLineSymbol with
+                | Choice2Of4 x -> b.Add(x)
+                | _ -> ()
+                addDFASymbol newLineRegex newLineSymbol
+            b.ToImmutable()
 
         let symbols = {
-            Terminals = terminals.ToImmutable()
-            Nonterminals = nonterminals.ToImmutable()
-            NoiseSymbols = noiseSymbols.ToImmutable()
+            Terminals = terminals
+            Nonterminals = nonterminals
+            NoiseSymbols = noiseSymbols
         }
 
         let resolver =
-            PrecedenceBasedConflictResolver(operatorScopes, terminalObjects, productionTokens, metadata.CaseSensitive)
+            PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalOperatorKeys, productionOperatorKeys, metadata.CaseSensitive)
         {
-            Metadata = df.Metadata
+            Metadata = dfDef.Metadata
             StartSymbol = startSymbol
             Symbols = symbols
-            Productions = productions.ToImmutable()
+            Productions = productions
             Groups = groups.ToImmutable()
             DFASymbols = dfaSymbols
             ConflictResolver = resolver
-        },
-        {
-            Transformers = transformers.ToArray()
-            Fusers = fusers.ToArray()
         }
 
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.
     [<CompiledName("CreateGrammarDefinition")>]
     let createGrammarDefinition df =
-        createGrammarDefinitionEx CancellationToken.None df |> fst
+        DesigntimeFarkleAnalyze.analyze CancellationToken.None df
+        |> createGrammarDefinitionEx
 
     /// Performs some checks on the grammar that would cause problems later.
     let private aPrioriConsistencyCheck grammar = seq {
@@ -390,11 +266,6 @@ module DesigntimeFarkleBuild =
     let private generatedWithLoveBy =
         let asm = Assembly.GetExecutingAssembly()
         sprintf "%s %s" (asm.GetName().Name) (Reflection.getAssemblyInformationalVersion asm)
-
-    [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> ppDef =
-        PostProcessorCreator.create<'TOutput>
-            ppDef.Transformers ppDef.Fusers
 
     let private failIfNotEmpty xs =
         match List.ofSeq xs with
@@ -457,6 +328,29 @@ module DesigntimeFarkleBuild =
     let buildGrammarOnly grammarDef =
         buildGrammarOnlyEx CancellationToken.None BuildOptions.Default grammarDef
 
+    [<RequiresExplicitTypeArguments>]
+    let private createPostProcessor<'TOutput> dfDef =
+        let transformers =
+            let arr = Array.zeroCreate dfDef.TerminalEquivalents.Count
+            for i = 0 to arr.Length - 1 do
+                arr.[i] <-
+                    let (TerminalEquivalentInfo(_, _, te)) = dfDef.TerminalEquivalents.[i]
+                    match te with
+                    | TerminalEquivalent.Terminal term -> term.Transformer
+                    | TerminalEquivalent.LineGroup lg -> lg.Transformer
+                    | TerminalEquivalent.BlockGroup bg -> bg.Transformer
+                    | TerminalEquivalent.Literal _
+                    | TerminalEquivalent.NewLine
+                    | TerminalEquivalent.VirtualTerminal _ -> TransformerData.Null
+            arr
+        let fusers =
+            let arr = Array.zeroCreate dfDef.Productions.Count
+            for i = 0 to arr.Length - 1 do
+                let _, prod = dfDef.Productions.[i]
+                arr.[i] <- prod.Fuser
+            arr
+        PostProcessorCreator.create<'TOutput> transformers fusers
+
     /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
     /// The construction of the grammar may fail. In this case, the output of the
     /// post-processor is indeterminate. Using this function (and all others in this
@@ -464,8 +358,9 @@ module DesigntimeFarkleBuild =
     /// This function also allows the build to be cancelled and further configured.
     [<CompiledName("BuildEx")>]
     let buildEx ct options (df: DesigntimeFarkle<'TOutput>) =
-        let myLovelyGrammarDefinition, myWonderfulPostProcessorDefinition = createGrammarDefinitionEx ct df
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulPostProcessorDefinition
+        let myWonderfulDesigntimeFarkleDefinition = DesigntimeFarkleAnalyze.analyze ct df
+        let myLovelyGrammarDefinition = createGrammarDefinitionEx myWonderfulDesigntimeFarkleDefinition
+        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulDesigntimeFarkleDefinition
         let myDearestGrammar = buildGrammarOnlyEx ct options myLovelyGrammarDefinition
         myDearestGrammar, myFavoritePostProcessor
 
@@ -484,6 +379,5 @@ module DesigntimeFarkleBuild =
     [<CompiledName("BuildPostProcessorOnly")>]
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
         df
-        |> createGrammarDefinitionEx CancellationToken.None
-        |> snd
+        |> DesigntimeFarkleAnalyze.analyze CancellationToken.None
         |> createPostProcessor<'TOutput>

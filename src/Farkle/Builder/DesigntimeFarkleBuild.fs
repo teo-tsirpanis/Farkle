@@ -42,7 +42,7 @@ module DesigntimeFarkleBuild =
     let private whitespaceRegex = Regex.chars BuilderCommon.whitespaceCharacters |> Regex.plus
     let private whitespaceRegexNoNewline = Regex.chars BuilderCommon.whitespaceCharactersNoNewLine |> Regex.plus
 
-    let private createGrammarDefinitionEx (dfDef: DesigntimeFarkleDefinition) =
+    let internal createGrammarDefinitionEx (dfDef: DesigntimeFarkleDefinition) =
         let mutable dfaSymbols = []
         let addDFASymbol regex sym =
             dfaSymbols <- (regex, sym) :: dfaSymbols
@@ -329,7 +329,7 @@ module DesigntimeFarkleBuild =
         buildGrammarOnlyEx CancellationToken.None BuildOptions.Default grammarDef
 
     [<RequiresExplicitTypeArguments>]
-    let private createPostProcessor<'TOutput> dfDef =
+    let internal createPostProcessor<'TOutput> dfDef =
         let transformers =
             let arr = Array.zeroCreate dfDef.TerminalEquivalents.Count
             for i = 0 to arr.Length - 1 do

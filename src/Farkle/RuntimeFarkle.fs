@@ -214,9 +214,9 @@ module RuntimeFarkle =
     /// In case the designtime Farkle has not been precompiled, the `RuntimeFarkle` will
     /// fail every time it is used. The precompiler will run by installing the package
     /// `Farkle.Tools.MSBuild`. Learn more at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
-    let buildPrecompiled (pcdf: PrecompilableDesigntimeFarkle<_>) =
+    let buildPrecompiled (pcdf: PrecompilableDesigntimeFarkle<'a>) =
         let grammar = PrecompilerInterface.buildPrecompiled pcdf
-        let pp = DesigntimeFarkleBuild.buildPostProcessorOnly pcdf.InnerDesigntimeFarkle
+        let pp = pcdf.CreatePostProcessor<'a>()
         RuntimeFarkle<_>.CreateMaybe pp grammar
 
     /// Creates a syntax-checking `RuntimeFarkle` from the given untyped `PrecompilableDesigntimeFarkle`.

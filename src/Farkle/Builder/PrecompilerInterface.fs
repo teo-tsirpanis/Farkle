@@ -11,6 +11,7 @@ open Farkle.Grammar
 open System
 open System.Reflection
 open System.Runtime.CompilerServices
+open System.Threading
 
 /// This exception gets thrown when Farkle fails to load a precompiled grammar.
 /// Such exceptions indicate bugs and should they ever occur, opening an issue
@@ -74,11 +75,18 @@ please open an issue on GitHub", innerExn)
 /// <seealso cref="PrecompilableDesigntimeFarkle{T}"/>
 type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Assembly) =
     let name = df.Name
-    let grammarDef = DesigntimeFarkleBuild.createGrammarDefinition df
+    let dfDef = DesigntimeFarkleAnalyze.analyze CancellationToken.None df
     /// The name of the designtime Farkle held by this object.
     member _.Name = name
+    /// Creates a `GrammarDefinition` from this precompiled designtime Farkle.
+    member _.CreateGrammarDefinition() = DesigntimeFarkleBuild.createGrammarDefinitionEx dfDef
+    [<RequiresExplicitTypeArguments>]
+    member internal _.CreatePostProcessor<'TOutput>() =
+        DesigntimeFarkleBuild.createPostProcessor<'TOutput> dfDef
     /// The `GrammarDefinition` of this designtime Farkle.
-    member _.GrammarDefinition = grammarDef
+    /// Deprecated, use `CreateGrammarDefinition` instead.
+    [<Obsolete("Call CreateGrammarDefinition() instead.")>]
+    member x.GrammarDefinition = x.CreateGrammarDefinition()
     /// The assembly from which this object was created.
     /// It must match the assembly that is being compiled.
     member _.Assembly = assembly

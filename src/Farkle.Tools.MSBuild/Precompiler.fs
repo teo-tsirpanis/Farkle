@@ -91,7 +91,9 @@ let private precompileDiscovererResult ct (log: ILogger) x =
     | Ok (pcdf: PrecompilableDesigntimeFarkle) ->
         let name = pcdf.Name
         log.Information("Precompiling {GrammarName}...", name)
-        let grammar = DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default pcdf.GrammarDefinition
+        let grammar =
+            pcdf.CreateGrammarDefinition()
+            |> DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default
         match grammar with
         | Ok grammar ->
             // FsLexYacc does it, so why not us?

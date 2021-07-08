@@ -48,6 +48,13 @@ module DesigntimeFarkle =
         | :? DesigntimeFarkleWrapper as dfw -> unwrap dfw.InnerDesigntimeFarkle
         | _ -> df
 
+    /// Gets an object representing the given designtime
+    /// Farkle that can be used for equality checks.
+    let internal getIdentityObject df =
+        match unwrap df with
+        | :? Literal as lit -> box lit.Content
+        | dfUnwrapped -> box dfUnwrapped
+
     /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
     /// Most other functions in this module are convenience wrappers over this
     /// function.

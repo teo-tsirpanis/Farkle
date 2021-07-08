@@ -7,16 +7,11 @@ namespace Farkle.Builder
 
 open Farkle.Builder.OperatorPrecedence
 open Farkle.Common
+open Farkle.Grammar
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
 open System.Threading
-
-[<Struct>]
-// Gives a name to an object.
-// Because designtime Farkles may have their names changed
-// when unwrapped, this type preserves their intended names.
-type internal Named<'T> = Named of name: string * 'T
 
 [<RequireQualifiedAccess>]
 // A strongly-typed representation of all kinds of
@@ -28,6 +23,34 @@ type internal TerminalEquivalent =
     | LineGroup of AbstractLineGroup
     | BlockGroup of AbstractBlockGroup
     | VirtualTerminal of VirtualTerminal
+
+// Contains a terminal equivalent's original name, operator scope key
+// (which is the original designtime Farkle or the string literal),
+// and the unwrapped TerminalEquivalent object, for which the above information is lost.
+[<Struct>]
+type internal TerminalEquivalentInfo = TerminalEquivalentInfo of name: string * operatorKey: obj * TerminalEquivalent
+with
+    static member Create name operatorKey te =
+        let namePatched =
+            match te with
+            | TerminalEquivalent.NewLine -> Terminal.NewLineName
+            // In Farkle's grammar domain model, groups can end by either a group end symbol,
+            // or a newline. Newlines are considered the terminals that are case-insensitively
+            // named "NewLine". However, another such terminal can exist and can cause unexplained
+            // errors when put inside a line group. This problem does not exist in GOLD Parser,
+            // nor did in Farkle's first grammar domain model, where the terminal that ended a
+            // group was explicitly specified. Prepending an underscore to the names of terminals
+            // that could be misrepresented as newlines is the least breaking fix, until the
+            // domain model gets overhauled in the next major version.
+            // TODO: Remove this temporary workaround.
+            | _ when Terminal.IsNamedNewLine name -> "_" + name
+            | _ -> name
+        TerminalEquivalentInfo(namePatched, operatorKey, te)
+
+// Like above, because designtime Farkles may have ther names changed
+// when unwrapped, this type holds a nonterminal and its original name.
+[<Struct>]
+type internal NamedNonterminal = NamedNonterminal of name: string * AbstractNonterminal
 
 [<NoComparison; ReferenceEquality>]
 // The contents of a designtime Farkle in a least processed form.
@@ -42,15 +65,14 @@ type internal TerminalEquivalent =
 // stuff like the conflict resolver can also be trimmed.
 type internal DesigntimeFarkleDefinition = {
     Metadata: GrammarMetadata
-    TerminalEquivalents: TerminalEquivalent Named ResizeArray
+    TerminalEquivalents: TerminalEquivalentInfo ResizeArray
     // The first nonterminal is the starting one.
-    Nonterminals: AbstractNonterminal Named ResizeArray
-    Productions: AbstractProduction ResizeArray
+    Nonterminals: NamedNonterminal ResizeArray
+    Productions: (AbstractNonterminal * AbstractProduction) ResizeArray
     OperatorScopes: OperatorScope HashSet
 }
 
-[<CompiledName("DesigntimeFarkleAnalyze")>]
-module internal DesigntimeFarkle =
+module internal DesigntimeFarkleAnalyze =
 
     // These two types are used when a designtime Farkle made of only one terminal
     // (say x) is going to be built. They create a grammar with a start symbol S -> x.
@@ -61,8 +83,7 @@ module internal DesigntimeFarkle =
             member _.ContextualPrecedenceToken = null
             member _.Fuser = fuserDataPickFirst
             member _.Members = members
-    type private PlaceholderNonterminal(df: DesigntimeFarkle) =
-        let name = df.Name
+    type private PlaceholderNonterminal(df, name) =
         let prod = PlaceholderProduction df :> AbstractProduction
         let productions = [prod]
         member _.SingleProduction = prod
@@ -97,16 +118,15 @@ module internal DesigntimeFarkle =
                 if visited.Add nont then
                     addOperatorScope operatorScopes df
                     nont.Freeze()
-                    nonterminals.Add(Named(name, nont))
+                    nonterminals.Add(NamedNonterminal(name, nont))
                     nonterminalsToProcess.Enqueue(nont)
             | dfUnwrapped ->
-                let isFirstTimeVisit =
-                    match dfUnwrapped with
-                    | :? Literal as lit -> box lit.Content
-                    | _ -> box dfUnwrapped
-                    |> visited.Add
-                if isFirstTimeVisit then
+                if visited.Add (DesigntimeFarkle.getIdentityObject dfUnwrapped) then
                     addOperatorScope operatorScopes df
+                    let operatorKey =
+                        match dfUnwrapped with
+                        | :? Literal as lit -> box lit.Content
+                        | _ -> box df
                     let te =
                         match dfUnwrapped with
                         | :? AbstractTerminal as term -> TerminalEquivalent.Terminal term
@@ -116,21 +136,22 @@ module internal DesigntimeFarkle =
                         | :? AbstractBlockGroup as bg -> TerminalEquivalent.BlockGroup bg
                         | :? VirtualTerminal as vt -> TerminalEquivalent.VirtualTerminal vt
                         | _ -> invalidOp "Using a custom implementation of the DesigntimeFarkle interface is not allowed."
-                    terminalEquivalents.Add(Named(name, te))
+                    terminalEquivalents.Add(TerminalEquivalentInfo.Create name operatorKey te)
 
         visit df
         while nonterminalsToProcess.Count <> 0 do
             ct.ThrowIfCancellationRequested()
             let nont = nonterminalsToProcess.Dequeue()
             for prod in nont.Productions do
-                productions.Add prod
+                productions.Add(nont, prod)
                 for x in prod.Members do visit x
 
         if nonterminals.Count = 0 then
             Debug.Assert(terminalEquivalents.Count = 1 && productions.Count = 0)
-            let nont = PlaceholderNonterminal df
-            nonterminals.Add(Named(df.Name, nont :> _))
-            productions.Add nont.SingleProduction
+            let (TerminalEquivalentInfo(name, _, _)) = terminalEquivalents.[0]
+            let nont = PlaceholderNonterminal(df, name)
+            nonterminals.Add(NamedNonterminal(name, nont))
+            productions.Add(nont :> _, nont.SingleProduction)
 
         {
             Metadata = df.Metadata

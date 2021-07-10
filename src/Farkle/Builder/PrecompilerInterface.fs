@@ -56,7 +56,7 @@ please open an issue on GitHub", innerExn)
     /// Gets all precompiled grammars of an assembly.
     /// This function is safe to call from multiple threads and efficient to
     /// call many times with the same assembly. The cache it internally uses
-    /// does not prevent the assembly from getting unloaded.
+    /// does not prevent the assembly from being unloaded.
     static member GetAllFromAssembly asm =
         assemblyCache.GetValue(asm, getAllPrecompiledGrammars)
 
@@ -82,7 +82,7 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Asse
     member _.CreateGrammarDefinition() = DesigntimeFarkleBuild.createGrammarDefinitionEx dfDef
     [<RequiresExplicitTypeArguments>]
     member internal _.CreatePostProcessor<'TOutput>() =
-        DesigntimeFarkleBuild.createPostProcessor<'TOutput> dfDef
+        PostProcessorCreator.create<'TOutput> dfDef
     /// The `GrammarDefinition` of this designtime Farkle.
     /// Deprecated, use `CreateGrammarDefinition` instead.
     [<Obsolete("Call CreateGrammarDefinition() instead.")>]

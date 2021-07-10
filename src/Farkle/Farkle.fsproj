@@ -58,8 +58,8 @@
     <Compile Include="Builder/DesigntimeFarkle/Operators.fs" />
     <Compile Include="Builder/Terminals.fs" />
     <Compile Include="Builder/DynamicPostProcessor.fs" />
-    <Compile Include="Builder/PostProcessorCreator.fs" />
     <Compile Include="Builder/DesigntimeFarkleAnalyze.fs" />
+    <Compile Include="Builder/PostProcessorCreator.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />
     <Compile Include="Builder/PrecompilerInterface.fs" />
     <Compile Include="Parser/OptimizedOperations.fs" />

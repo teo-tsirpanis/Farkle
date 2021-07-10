@@ -59,7 +59,26 @@ type private TieredPostProcessor<'T>(transformers, fusers) =
 #endif
 
 [<RequiresExplicitTypeArguments>]
-let create<'T> transformers fusers =
+let internal create<'T> dfDef =
+    let transformers =
+        let arr = Array.zeroCreate dfDef.TerminalEquivalents.Count
+        for i = 0 to arr.Length - 1 do
+            arr.[i] <-
+                let (TerminalEquivalentInfo(_, _, te)) = dfDef.TerminalEquivalents.[i]
+                match te with
+                | TerminalEquivalent.Terminal term -> term.Transformer
+                | TerminalEquivalent.LineGroup lg -> lg.Transformer
+                | TerminalEquivalent.BlockGroup bg -> bg.Transformer
+                | TerminalEquivalent.Literal _
+                | TerminalEquivalent.NewLine
+                | TerminalEquivalent.VirtualTerminal _ -> TransformerData.Null
+        arr
+    let fusers =
+        let arr = Array.zeroCreate dfDef.Productions.Count
+        for i = 0 to arr.Length - 1 do
+            let _, prod = dfDef.Productions.[i]
+            arr.[i] <- prod.Fuser
+        arr
     #if MODERN_FRAMEWORK
     if RuntimeFeature.IsDynamicCodeCompiled then
         TieredPostProcessor<'T>(transformers, fusers) :> PostProcessor<_>

@@ -328,29 +328,6 @@ module DesigntimeFarkleBuild =
     let buildGrammarOnly grammarDef =
         buildGrammarOnlyEx CancellationToken.None BuildOptions.Default grammarDef
 
-    [<RequiresExplicitTypeArguments>]
-    let internal createPostProcessor<'TOutput> dfDef =
-        let transformers =
-            let arr = Array.zeroCreate dfDef.TerminalEquivalents.Count
-            for i = 0 to arr.Length - 1 do
-                arr.[i] <-
-                    let (TerminalEquivalentInfo(_, _, te)) = dfDef.TerminalEquivalents.[i]
-                    match te with
-                    | TerminalEquivalent.Terminal term -> term.Transformer
-                    | TerminalEquivalent.LineGroup lg -> lg.Transformer
-                    | TerminalEquivalent.BlockGroup bg -> bg.Transformer
-                    | TerminalEquivalent.Literal _
-                    | TerminalEquivalent.NewLine
-                    | TerminalEquivalent.VirtualTerminal _ -> TransformerData.Null
-            arr
-        let fusers =
-            let arr = Array.zeroCreate dfDef.Productions.Count
-            for i = 0 to arr.Length - 1 do
-                let _, prod = dfDef.Productions.[i]
-                arr.[i] <- prod.Fuser
-            arr
-        PostProcessorCreator.create<'TOutput> transformers fusers
-
     /// Creates a `Grammar` and a `PostProcessor` from a typed `DesigntimeFarkle`.
     /// The construction of the grammar may fail. In this case, the output of the
     /// post-processor is indeterminate. Using this function (and all others in this
@@ -360,7 +337,7 @@ module DesigntimeFarkleBuild =
     let buildEx ct options (df: DesigntimeFarkle<'TOutput>) =
         let myWonderfulDesigntimeFarkleDefinition = DesigntimeFarkleAnalyze.analyze ct df
         let myLovelyGrammarDefinition = createGrammarDefinitionEx myWonderfulDesigntimeFarkleDefinition
-        let myFavoritePostProcessor = createPostProcessor<'TOutput> myWonderfulDesigntimeFarkleDefinition
+        let myFavoritePostProcessor = PostProcessorCreator.create<'TOutput> myWonderfulDesigntimeFarkleDefinition
         let myDearestGrammar = buildGrammarOnlyEx ct options myLovelyGrammarDefinition
         myDearestGrammar, myFavoritePostProcessor
 
@@ -380,4 +357,4 @@ module DesigntimeFarkleBuild =
     let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
         df
         |> DesigntimeFarkleAnalyze.analyze CancellationToken.None
-        |> createPostProcessor<'TOutput>
+        |> PostProcessorCreator.create<'TOutput>

@@ -13,6 +13,12 @@ open System.Collections.Immutable
 open System.Diagnostics
 open System.Threading
 
+[<Struct>]
+// Gives a name to an object.
+// Because designtime Farkles may have their names changed
+// when unwrapped, this type preserves their intended names.
+type internal Named<'T> = Named of name: string * 'T
+
 [<RequireQualifiedAccess>]
 // A strongly-typed representation of all kinds of
 // designtime Farkles that will lead to terminals.
@@ -23,17 +29,10 @@ type internal TerminalEquivalent =
     | LineGroup of AbstractLineGroup
     | BlockGroup of AbstractBlockGroup
     | VirtualTerminal of VirtualTerminal
-
-// Contains a terminal equivalent's original name, operator scope key
-// (which is the original designtime Farkle or the string literal),
-// and the unwrapped TerminalEquivalent object, for which the above information is lost.
-[<Struct>]
-type internal TerminalEquivalentInfo = TerminalEquivalentInfo of name: string * operatorKey: obj * TerminalEquivalent
-with
-    static member Create name operatorKey te =
+    member x.CreateNamed(name) =
         let namePatched =
-            match te with
-            | TerminalEquivalent.NewLine -> Terminal.NewLineName
+            match x with
+            | NewLine -> Terminal.NewLineName
             // In Farkle's grammar domain model, groups can end by either a group end symbol,
             // or a newline. Newlines are considered the terminals that are case-insensitively
             // named "NewLine". However, another such terminal can exist and can cause unexplained
@@ -45,12 +44,16 @@ with
             // TODO: Remove this temporary workaround.
             | _ when Terminal.IsNamedNewLine name -> "_" + name
             | _ -> name
-        TerminalEquivalentInfo(namePatched, operatorKey, te)
-
-// Like above, because designtime Farkles may have ther names changed
-// when unwrapped, this type holds a nonterminal and its original name.
-[<Struct>]
-type internal NamedNonterminal = NamedNonterminal of name: string * AbstractNonterminal
+        Named(namePatched, x)
+    // An object representing this terminal equivalent for equality comparisons.
+    member x.IdentityObject =
+        match x with
+        | Terminal term -> box term
+        | Literal lit -> box lit
+        | NewLine -> box Terminal.NewLine
+        | LineGroup lg -> box lg
+        | BlockGroup bg -> box bg
+        | VirtualTerminal vt -> box vt
 
 [<NoComparison; ReferenceEquality>]
 // The contents of a designtime Farkle in a least processed form.
@@ -58,16 +61,16 @@ type internal NamedNonterminal = NamedNonterminal of name: string * AbstractNont
 // Why does this type exist? Good question. In the past, DesigntimeFarkleBuild
 // was a big and complex module, partly because it was doing two things at
 // the same time: traverse the graph of designtime Farkles, and convert
-// the builder types to grammar files. From now on, code in this type bothers
+// the builder types to grammar types. From now on, code in this type bothers
 // only with the former, and DFB only with the latter. And this has another advantage,
 // creating post-processors is cheaper because less unnecessary things are done,
 // which is important for the startup speed of precompiled grammars, for which
 // stuff like the conflict resolver can also be trimmed.
 type internal DesigntimeFarkleDefinition = {
     Metadata: GrammarMetadata
-    TerminalEquivalents: TerminalEquivalentInfo ResizeArray
+    TerminalEquivalents: TerminalEquivalent Named ResizeArray
     // The first nonterminal is the starting one.
-    Nonterminals: NamedNonterminal ResizeArray
+    Nonterminals: AbstractNonterminal Named ResizeArray
     Productions: (AbstractNonterminal * AbstractProduction) ResizeArray
     OperatorScopes: OperatorScope HashSet
 }
@@ -118,15 +121,11 @@ module internal DesigntimeFarkleAnalyze =
                 if visited.Add nont then
                     addOperatorScope operatorScopes df
                     nont.Freeze()
-                    nonterminals.Add(NamedNonterminal(name, nont))
+                    nonterminals.Add(Named(name, nont))
                     nonterminalsToProcess.Enqueue(nont)
             | dfUnwrapped ->
                 if visited.Add (DesigntimeFarkle.getIdentityObject dfUnwrapped) then
                     addOperatorScope operatorScopes df
-                    let operatorKey =
-                        match dfUnwrapped with
-                        | :? Literal as lit -> box lit.Content
-                        | _ -> box df
                     let te =
                         match dfUnwrapped with
                         | :? AbstractTerminal as term -> TerminalEquivalent.Terminal term
@@ -136,7 +135,7 @@ module internal DesigntimeFarkleAnalyze =
                         | :? AbstractBlockGroup as bg -> TerminalEquivalent.BlockGroup bg
                         | :? VirtualTerminal as vt -> TerminalEquivalent.VirtualTerminal vt
                         | _ -> invalidOp "Using a custom implementation of the DesigntimeFarkle interface is not allowed."
-                    terminalEquivalents.Add(TerminalEquivalentInfo.Create name operatorKey te)
+                    terminalEquivalents.Add(te.CreateNamed name)
 
         visit df
         while nonterminalsToProcess.Count <> 0 do
@@ -148,9 +147,9 @@ module internal DesigntimeFarkleAnalyze =
 
         if nonterminals.Count = 0 then
             Debug.Assert(terminalEquivalents.Count = 1 && productions.Count = 0)
-            let (TerminalEquivalentInfo(name, _, _)) = terminalEquivalents.[0]
+            let (Named(name, _)) = terminalEquivalents.[0]
             let nont = PlaceholderNonterminal(df, name)
-            nonterminals.Add(NamedNonterminal(name, nont))
+            nonterminals.Add(Named(name, nont :> _))
             productions.Add(nont :> _, nont.SingleProduction)
 
         {

@@ -99,13 +99,13 @@ type AssociativityType =
 /// <summary>A group of symbols that have the same associativity and precedence.
 /// This class and its descendants accept arrays of objects that correspond
 /// to symbols.</summary>
-/// <remarks><para>Terminals correspond to their designtime Farkle, literals
-/// correspond to their content as a string and productions correspond to
-/// the object passed or returned from the <c>WithPrecedence</c> family
-/// of functions in production builders.</para>
-/// <para>Using the same terminal with multiple designtime Farkles
-/// (such as the original and a renamed one) causes undefined behavior
-/// and will most likely result in errors.</para></remarks>
+/// <remarks><para>Terminals and things that will turn into terminals correspond
+/// to their designtime Farkle. Literals also correspond to their content as a
+/// string and productions correspond to the object passed or returned from the
+/// <c>WithPrecedence</c> family of functions in production builders.</para>
+/// <para>Prior to Farkle 6.3.0, using the same terminal with multiple
+/// designtime Farkles (such as the original and a renamed one) would
+/// cause undefined behavior.</para></remarks>
 type AssociativityGroup(assocType: AssociativityType, symbols: obj seq) =
     let symbols = List.ofSeq symbols
     new (assocType, [<ParamArray>] symbols) = AssociativityGroup(assocType, List.ofArray symbols)

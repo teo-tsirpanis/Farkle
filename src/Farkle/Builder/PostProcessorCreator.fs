@@ -64,7 +64,7 @@ let internal create<'T> dfDef =
         let arr = Array.zeroCreate dfDef.TerminalEquivalents.Count
         for i = 0 to arr.Length - 1 do
             arr.[i] <-
-                let (TerminalEquivalentInfo(_, _, te)) = dfDef.TerminalEquivalents.[i]
+                let (Named(_, te)) = dfDef.TerminalEquivalents.[i]
                 match te with
                 | TerminalEquivalent.Terminal term -> term.Transformer
                 | TerminalEquivalent.LineGroup lg -> lg.Transformer

@@ -1,5 +1,6 @@
 #### 6.3.0
 * __Minor breaking change:__ Text with legacy CR line endings is no longer supported. Since this version, they will no longer be recognized as line endings by position tracking. When Farkle's next major version gets released, they will cause lexical errors.
+* Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.
 
 #### 6.2.0 - 17-05-2021
 * __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.

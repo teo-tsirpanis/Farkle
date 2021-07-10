@@ -58,15 +58,13 @@ type LALRConflictResolver() =
 
 /// A conflict resolver that uses Farkle's operator precedence infrastructure.
 type internal PrecedenceBasedConflictResolver(operatorScopes: OperatorScope seq, terminalMap: IReadOnlyDictionary<_,_>,
-        productionMap: IReadOnlyDictionary<_,_>, caseSensitive) =
+        productionMap: IReadOnlyDictionary<_,_>, comparer: EqualityComparer<obj>) =
     inherit LALRConflictResolver()
 
     static let ChooseShift = ChooseOption1
     static let ChooseReduce = ChooseOption2
     static let ChooseReduce1 = ChooseOption1
     static let ChooseReduce2 = ChooseOption2
-
-    let comparer = FallbackStringComparers.get caseSensitive
 
     let groupLookup =
         let dict = ImmutableDictionary.CreateBuilder(comparer)
@@ -153,6 +151,10 @@ type internal PrecedenceBasedConflictResolver(operatorScopes: OperatorScope seq,
             | true, prodIdx -> ValueSome precInfoLookups.[prodIdx].[prodObj]
             | false, _ -> ValueNone
         | ValueNone -> ValueNone
+
+    new (operatorScopes, terminalMap, productionMap, caseSensitive) =
+        let comparer = FallbackStringComparers.get caseSensitive
+        PrecedenceBasedConflictResolver(operatorScopes, terminalMap, productionMap, comparer)
 
     override _.ResolveShiftReduceConflict term prod =
         match getTerminalPrecInfo term, getProductionPrecInfo prod with

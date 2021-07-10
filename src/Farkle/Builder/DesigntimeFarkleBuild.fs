@@ -30,6 +30,27 @@ type GrammarDefinition = {
     ConflictResolver: LALRConflictResolver
 }
 
+// Compares objects for equality. Designtime Farkles are considered
+// equal if they reference the same symbol regardless of any metadata
+// changes. A designtime Farkle literal is considered equal to a string
+// if the literal's string is equal.
+[<Sealed>]
+type private OperatorKeyComparer private(innerComparer: IEqualityComparer<obj>) =
+    inherit EqualityComparer<obj>()
+    static let getKey (x: obj) =
+        match x with
+        | :? DesigntimeFarkle as df -> DesigntimeFarkle.getIdentityObject df
+        | _ -> x
+    static let caseSensitive = FallbackStringComparers.caseSensitive |> OperatorKeyComparer
+    static let caseInsensitive = FallbackStringComparers.caseInsensitive |> OperatorKeyComparer
+    static member Get isCaseSensitive =
+        if isCaseSensitive then
+            caseSensitive
+        else
+            caseInsensitive
+    override _.Equals(x1, x2) = innerComparer.Equals(getKey x1, getKey x2)
+    override _.GetHashCode x = x |> getKey |> innerComparer.GetHashCode
+
 /// Functions to create `Grammar`s
 /// and `PostProcessor`s from `DesigntimeFarkle`s.
 module DesigntimeFarkleBuild =
@@ -104,7 +125,7 @@ module DesigntimeFarkleBuild =
                 term
 
             // We don't have to worry about diplicates, they are handled by DesigntimeFarkleAnalyze.
-            for TerminalEquivalentInfo(name, opKey, te) in dfDef.TerminalEquivalents do
+            for Named(name, te) in dfDef.TerminalEquivalents do
                 let symbol =
                     match te with
                     | TerminalEquivalent.Terminal term -> handleTerminal name term term.Regex
@@ -124,14 +145,13 @@ module DesigntimeFarkleBuild =
                         let symbol = newTerminal name
                         addTerminal symbol vt
                         symbol
-                terminalOperatorKeys.TryAdd(symbol, opKey) |> ignore
-
+                terminalOperatorKeys.TryAdd(symbol, te.IdentityObject) |> ignore
             b.MoveToImmutable()
 
         let struct(nonterminals, nonterminalMap) =
             let b = ImmutableArray.CreateBuilder(dfDef.Nonterminals.Count)
             let nonterminalMap = Dictionary(dfDef.Nonterminals.Count)
-            for NamedNonterminal(name, nont) in dfDef.Nonterminals do
+            for Named(name, nont) in dfDef.Nonterminals do
                 let symbol = Nonterminal(uint32 b.Count, name)
                 b.Add(symbol)
                 lalrSymbolMap.Add(nont, LALRSymbol.Nonterminal symbol)
@@ -221,8 +241,9 @@ module DesigntimeFarkleBuild =
             NoiseSymbols = noiseSymbols
         }
 
+        let resolverComparer = OperatorKeyComparer.Get metadata.CaseSensitive
         let resolver =
-            PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalOperatorKeys, productionOperatorKeys, metadata.CaseSensitive)
+            PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalOperatorKeys, productionOperatorKeys, resolverComparer)
         {
             Metadata = dfDef.Metadata
             StartSymbol = startSymbol

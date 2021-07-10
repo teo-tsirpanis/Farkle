@@ -113,7 +113,8 @@ let tests = testList "Operator precedence tests" [
                 !@ number |> asIs
             )
 
-            let opScope = OperatorScope(LeftAssociative("+"), NonAssociative("*"))
+            // Both the string literal and the designtime Farkle literal should be recognized as equals.
+            let opScope = OperatorScope(LeftAssociative("+"), NonAssociative(literal "*"))
 
             expr
             |> DesigntimeFarkle.withOperatorScope opScope

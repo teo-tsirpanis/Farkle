@@ -24,8 +24,7 @@ open System.Threading
 [<AbstractClass; Sealed>]
 type private ReadOnlySpanOfObjectIndexer =
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    static member GetItem(span: byref<ReadOnlySpan<obj>>, idx) =
-        &span.[idx]
+    static member GetItem(span: byref<ReadOnlySpan<obj>>, idx) = &span.[idx]
 
 [<Literal>]
 let private fldPrivateReadonly = FieldAttributes.Private ||| FieldAttributes.InitOnly
@@ -177,7 +176,7 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
     ilg.Emit(OpCodes.Throw)
 
 let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGenerator)
-    (targets: obj[]) (argIdx: int16) namePrefix =
+    (targets: obj[]) (argIdx: int) namePrefix =
     let fields = Array.zeroCreate targets.Length
     let fieldDigitCount =
         targets.Length |> float |> Math.Log10 |> Math.Ceiling |> int
@@ -187,12 +186,12 @@ let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGe
         match targets.[i] with
         | null -> ()
         | target ->
-            // By prepending zeroes, the debugger vill show the fields in order.
+            // By prepending zeroes, the debugger will show the fields in order.
             let fieldName = sprintf "_%sTarget%0*d" namePrefix fieldDigitCount i
             let fieldType =
                 match target.GetType() with
                 // We will store value-typed targets in their boxed form.
-                // It will keep the transformers
+                // It will match the delegates' existing behavior.
                 | x when x.IsValueType -> typeof<obj>
                 | x -> x
             let field = typeBuilder.DefineField(fieldName, fieldType, fldPrivateReadonly) :> FieldInfo
@@ -247,8 +246,8 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
     let transformerTargetFields, fuserTargetFields =
         let ctor = ppType.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, ppCtorParameters)
         let ilg = ctor.GetILGenerator()
-        let transformerTargetFields = createDelegateTargetFields ppType ilg transformerTargets 1s "transformer"
-        let fuserTargetFields = createDelegateTargetFields ppType ilg fuserTargets 2s "fuser"
+        let transformerTargetFields = createDelegateTargetFields ppType ilg transformerTargets 1 "transformer"
+        let fuserTargetFields = createDelegateTargetFields ppType ilg fuserTargets 2 "fuser"
 
         ilg.Emit(OpCodes.Ret)
 
@@ -287,6 +286,9 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
         fuserTargetFields fusers ppType
 
     let ppTypeReal = ppType.CreateType()
+    for meth in ppTypeReal.GetMethods() do
+        RuntimeHelpers.PrepareMethod(meth.MethodHandle)
+
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)
     ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> PostProcessor<'T>
 #endif

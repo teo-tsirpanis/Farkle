@@ -79,9 +79,11 @@ let internal create<'T> dfDef =
             let _, prod = dfDef.Productions.[i]
             arr.[i] <- prod.Fuser
         arr
+    begin
     #if MODERN_FRAMEWORK
     if RuntimeFeature.IsDynamicCodeCompiled then
         TieredPostProcessor<'T>(transformers, fusers) :> PostProcessor<_>
     else
     #endif
         createDefault<'T> transformers fusers
+    end

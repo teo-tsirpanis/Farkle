@@ -23,6 +23,12 @@ type PostProcessor<[<CovariantOut; Nullable(2uy)>] 'T> =
     abstract Fuse: production: Production * members: ReadOnlySpan<obj> -> [<Nullable(2uy)>] obj
     inherit ITransformer<Terminal>
 
+/// To be implemented by Farkle's post-processors that are
+/// interested in more detailed events about their use.
+type internal PostProcessorEventListener =
+    /// Notifies the post-processor that a parsing operation has started.
+    abstract ParsingStarted: unit -> unit
+
 /// Some reusable `PostProcessor`s.
 module PostProcessors =
 

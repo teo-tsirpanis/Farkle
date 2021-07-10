@@ -30,32 +30,32 @@ let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserD
 // Inspired by .NET's tiered compilation and by a similar
 // trick Microsoft.Extensions.DependencyInjection does.
 type private TieredPostProcessor<'T>(transformers, fusers) =
-    [<VolatileField>]
     let mutable ppImplementation = createDefault<'T> transformers fusers
-    let mutable invokeCount = 0
+    let mutable invokeCount = 1
+    let mutable hasSwitchedToDynamic = 0
     [<Literal>]
-    static let invocationThreshold = 30
+    static let invocationThreshold = 3
     static let fSwitchToDynamic =
         WaitCallback(fun x -> (x :?> TieredPostProcessor<'T>).SwitchToDynamic())
     member private _.SwitchToDynamic() =
-        try
-            let dynamicPP = DynamicPostProcessor.create<'T> transformers fusers
-            ppImplementation <- dynamicPP
-        with _ ->
+        if Interlocked.Exchange(&hasSwitchedToDynamic, 1) = 0 then
+            try
+                let dynamicPP = DynamicPostProcessor.create<'T> transformers fusers
+                Volatile.Write(&ppImplementation, dynamicPP)
+            with _ ->
 #if DEBUG
-            reraise()
+                reraise()
 #endif
-            ()
-    member private this.CheckInvocationCount() =
-        if Interlocked.Increment(&invokeCount) = invocationThreshold then
-            ThreadPool.UnsafeQueueUserWorkItem(fSwitchToDynamic, this) |> ignore
+                ()
     interface PostProcessor<'T> with
-        member this.Transform(symbol, context, data) =
-            this.CheckInvocationCount()
+        member _.Transform(symbol, context, data) =
             ppImplementation.Transform(symbol, context, data)
-        member this.Fuse(prod, members) =
-            this.CheckInvocationCount()
+        member _.Fuse(prod, members) =
             ppImplementation.Fuse(prod, members)
+    interface PostProcessorEventListener with
+        member this.ParsingStarted() =
+            if Interlocked.Increment(&invokeCount) = invocationThreshold then
+                ThreadPool.UnsafeQueueUserWorkItem(fSwitchToDynamic, this) |> ignore
 #endif
 
 [<RequiresExplicitTypeArguments>]

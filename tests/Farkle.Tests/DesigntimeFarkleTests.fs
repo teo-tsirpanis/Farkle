@@ -187,13 +187,13 @@ let tests = testList "Designtime Farkle tests" [
     test "Newlines cannot be renamed" {
         let (Nonterminal(_, newlineRenamed)) =
             newline.Cast().Rename("NewLine Renamed").BuildUntyped().GetGrammar().StartSymbol
-        Expect.equal newlineRenamed newline.Name "newline was renamed while it shouldn't."
+        Expect.equal newlineRenamed newline.Name "newline was renamed while it shouldn't"
     }
 
     test "Terminals named 'NewLine' will be automatically renamed when built" {
         let (Nonterminal(_, newlineName)) =
             Terminal.Literal(newline.Name).BuildUntyped().GetGrammar().StartSymbol
-        Expect.notEqual newlineName newline.Name "The terminal was not renamed."
+        Expect.notEqual newlineName newline.Name "The terminal was not renamed"
     }
 
     test "Many block groups can be ended by the same symbol" {
@@ -261,10 +261,10 @@ let tests = testList "Designtime Farkle tests" [
             |> FarkleError.ParseError |> Error
 
         let error1 = mkError 8UL "Terminal found"
-        Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught."
+        Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught"
 
         let error2 = mkError 4UL "Empty input"
-        Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught."
+        Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught"
     }
 
     test "Syntax errors are reported in the right place" {

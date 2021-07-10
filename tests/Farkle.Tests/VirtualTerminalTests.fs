@@ -52,6 +52,6 @@ USS Oriskany
 
         let grammar = Expect.wantOk grammar "Building had been successful"
 
-        Expect.notEqual grammar.DFAStates.Length 0 "The grammar's DFA has no states."
+        Expect.notEqual grammar.DFAStates.Length 0 "The grammar's DFA has no states"
     }
 ]

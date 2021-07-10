@@ -138,7 +138,7 @@ let farkleGOLDGrammarEquivalenceTests =
             let farkleGrammar =
                 gDef
                 |> DesigntimeFarkleBuild.buildGrammarOnly
-                |> Flip.Expect.wantOk "A faulty grammar was supposed to be filtered away."
+                |> Flip.Expect.wantOk "A faulty grammar was supposed to be filtered away"
             let goldGrammar = GOLDParserBridge.buildUsingGOLDParser gDef
 
             checkParserEquivalence farkleGrammar goldGrammar

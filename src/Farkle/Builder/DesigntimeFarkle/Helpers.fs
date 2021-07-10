@@ -52,7 +52,8 @@ type Terminal =
     /// newline characters. If used anywhere in a grammar, it indicates that it
     /// is line-based, which means that newline characters are not noise.
     /// Newline characters are considered the character sequences
-    /// <c>\r</c>, <c>\n</c>, or <c>\r\n</c>.</remarks>
+    /// <c>\r</c> (deprecated and will be removed in a future release),
+    /// <c>\n</c>, or <c>\r\n</c>.</remarks>
     static member NewLine = NewLine :> DesigntimeFarkle
 
 [<AbstractClass; Sealed>]

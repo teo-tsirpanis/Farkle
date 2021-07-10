@@ -86,12 +86,12 @@ module internal DesigntimeFarkleAnalyze =
             member _.ContextualPrecedenceToken = null
             member _.Fuser = fuserDataPickFirst
             member _.Members = members
-    type private PlaceholderNonterminal(df, name) =
+    type private PlaceholderNonterminal(df) =
         let prod = PlaceholderProduction df :> AbstractProduction
         let productions = [prod]
         member _.SingleProduction = prod
         interface DesigntimeFarkle with
-            member _.Name = name
+            member _.Name = df.Name
             member _.Metadata = GrammarMetadata.Default
         interface AbstractNonterminal with
             member _.Freeze() = ()
@@ -148,7 +148,7 @@ module internal DesigntimeFarkleAnalyze =
         if nonterminals.Count = 0 then
             Debug.Assert(terminalEquivalents.Count = 1 && productions.Count = 0)
             let (Named(name, _)) = terminalEquivalents.[0]
-            let nont = PlaceholderNonterminal(df, name)
+            let nont = PlaceholderNonterminal(df)
             nonterminals.Add(Named(name, nont :> _))
             productions.Add(nont :> _, nont.SingleProduction)
 

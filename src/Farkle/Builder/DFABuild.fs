@@ -164,15 +164,23 @@ let internal createRegexBuild (ct: CancellationToken) caseSensitive regexes =
 
     let regexParseErrors = ResizeArray()
 
+    let cachedDesensitivizedCharacterSets = Dictionary(HashIdentity.Reference)
+
     let desensitivizeCase chars =
         if caseSensitive then
             chars
         else
-            seq {
-                for c in chars do
-                    yield Char.ToLowerInvariant(c)
-                    yield Char.ToUpperInvariant(c)
-            } |> set
+            match cachedDesensitivizedCharacterSets.TryGetValue(chars) with
+            | true, x -> x
+            | false, _ ->
+                let x =
+                    seq {
+                        for c in chars do
+                            yield Char.ToLowerInvariant(c)
+                            yield Char.ToUpperInvariant(c)
+                    } |> set
+                cachedDesensitivizedCharacterSets.[chars] <- x
+                x
 
     /// Returns whether the given `RegexBuildTree` contains a `Star` node.
     let rec isVariableLength =

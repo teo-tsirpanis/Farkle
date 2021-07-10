@@ -37,6 +37,7 @@ with
 type LR0ItemSet = {
     Index: int
     Kernel: LR0Item list
+    // TODO: stop being in love with ImmutableDictionary.
     Goto: ImmutableDictionary<LALRSymbol, int>
 }
 with

@@ -24,6 +24,7 @@ open System.Diagnostics.CodeAnalysis
 [<DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, "Farkle.Builder.PredefinedSets", "Farkle")>]
 #endif
 let private allPredefinedSets =
+    let dict = Dictionary(StringComparer.OrdinalIgnoreCase)
     let sets =
         Assembly
             .GetExecutingAssembly()
@@ -31,8 +32,9 @@ let private allPredefinedSets =
             .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
         |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
         |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
-        |> Seq.map (fun x -> KeyValuePair(x.Name, x))
-    ImmutableDictionary.CreateRange(StringComparer.OrdinalIgnoreCase, sets)
+        |> Seq.map (fun x -> (x.Name, x))
+        |> Seq.iter (dict.Add)
+    dict
 
 [<Struct>]
 type private ParseCharSetState =

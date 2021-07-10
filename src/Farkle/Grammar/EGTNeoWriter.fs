@@ -9,12 +9,13 @@ module internal Farkle.Grammar.EGTFile.EGTNeoWriter
 open Farkle.Grammar
 open Farkle.Grammar.EGTFile
 open Farkle.Grammar.EGTFile.EGTHeaders
+open System.Collections.Generic
 open System.Collections.Immutable
 
 [<AutoOpen>]
 module private Implementation =
 
-    type IndexMap = ImmutableDictionary<uint32, uint32>
+    type IndexMap = Dictionary<uint32, uint32>
 
     let writeProperties (w: EGTWriter) props =
 
@@ -34,7 +35,7 @@ module private Implementation =
         w.FinishPendingRecord()
 
     let writeLALRSymbols fIndex fName (w: EGTWriter) header (symbols: ImmutableArray<_>): IndexMap =
-        let dict = ImmutableDictionary.CreateBuilder()
+        let dict = Dictionary()
 
         w.WriteString header
         for i = 0 to symbols.Length - 1 do
@@ -43,7 +44,7 @@ module private Implementation =
             w.WriteString (fName sym)
 
         w.FinishPendingRecord()
-        dict.ToImmutable()
+        dict
 
     let writeTerminals w terms =
         writeLALRSymbols

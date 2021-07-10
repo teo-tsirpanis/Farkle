@@ -67,27 +67,26 @@ type internal PrecedenceBasedConflictResolver(operatorScopes: OperatorScope seq,
     static let ChooseReduce2 = ChooseOption2
 
     let groupLookup =
-        let dict = ImmutableDictionary.CreateBuilder(comparer)
+        let dict = Dictionary(comparer)
         let mutable i = 0
         for x in operatorScopes do
             for x in x.AssociativityGroups do
                 for x in x.Symbols do
                     dict.TryAdd(x, i) |> ignore
             i <- i + 1
-        dict.ToImmutable()
+        dict
 
     let precInfoLookups =
         operatorScopes
         |> Seq.mapi (fun i x ->
-            let dict = ImmutableDictionary.CreateBuilder(comparer)
+            let dict = Dictionary(comparer)
             let mutable prec = 1
             for x in x.AssociativityGroups do
                 let precInfo = {ScopeIndex = i; Precedence = prec; Associativity = x.AssociativityType}
                 for x in x.Symbols do
                     dict.TryAdd(x, precInfo) |> ignore
                 prec <- prec + 1
-
-            dict.ToImmutable()
+            dict
         )
         |> Array.ofSeq
 

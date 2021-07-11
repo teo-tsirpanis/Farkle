@@ -9,6 +9,7 @@ open Farkle
 open Farkle.Builder
 open Farkle.Grammar
 open System
+open System.ComponentModel
 open System.Reflection
 open System.Runtime.CompilerServices
 open System.Threading
@@ -51,7 +52,10 @@ please open an issue on GitHub", innerExn)
     member _.GrammarName = grammarName
     /// Gets the actual `Grammar` of this object.
     member _.GetGrammar() = grammarThunk.Value
-    static member internal GetResourceName (grammar: Grammar) =
+    /// Gets the resource name this grammar would have if it were precompiled.
+    /// This API is not supposed to be used from user code.
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member GetResourceName (grammar: Grammar) =
         grammar.Properties.Name + precompiledGrammarResourceSuffix
     /// Gets all precompiled grammars of an assembly.
     /// This function is safe to call from multiple threads and efficient to

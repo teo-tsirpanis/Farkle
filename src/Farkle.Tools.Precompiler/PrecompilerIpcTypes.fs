@@ -3,9 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-// Contains types to be serialized and transmitted between
-// the .NET Framework task and the precompiler worker.
-namespace Farkle.Tools.Precompiler.IpcTypes
+// Contains types to be serialized and transmitted between the .NET
+// Framework MSBuild precompiler task and the .NET Core worker process.
+namespace Farkle.Tools.PrecompilerIpcTypes
 
 open Microsoft.Build.Framework
 open System
@@ -22,7 +22,8 @@ type MessageSeverity =
     | MessageNormal = 3
     | MessageLow = 4
 
-type LogMessage = {
+/// An easily serializable representation of an MSBuild log event.
+type LogEvent = {
     Severity: MessageSeverity
     Subcategory: string
     Code: string
@@ -37,6 +38,7 @@ type LogMessage = {
     EventTimestamp: DateTime
 }
 with
+    /// Logs this event to an MSBuild build engine.
     member x.LogTo(engine: IBuildEngine) =
         match x.Severity with
         | MessageSeverity.Error ->
@@ -56,5 +58,5 @@ with
 
 type Output = {
     Success: bool
-    Messages: LogMessage []
+    Messages: LogEvent []
 }

@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Precompiler.fs" />
-    <Compile Include="IpcTypes.fs" />
+    <Compile Include="Precompiler.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <Compile Include="PrecompilerIpcTypes.fs" />
+    <Compile Include="LogSinkBuildMachine.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />

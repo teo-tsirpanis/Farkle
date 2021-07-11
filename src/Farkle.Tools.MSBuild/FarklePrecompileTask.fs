@@ -5,13 +5,11 @@
 
 namespace Farkle.Tools.MSBuild
 
-open Farkle.Builder
 open Farkle.Grammar
 open Farkle.Tools.Precompiler
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
-open Mono.Cecil
 open Sigourney
 open System
 open System.IO
@@ -60,26 +58,10 @@ type FarklePrecompileTask() =
             let grammars = precompileAssemblyFromPath cts.Token this.Log2 this.AssemblyReferences this.AssemblyPath
             match grammars with
             | Ok grammars ->
-                precompiledGrammars <-
-                    grammars
-                    |> List.choose (fun x ->
-                        match x with
-                        | Successful grammar ->
-                            if this.GenerateHtml then
-                                this.DoGenerateHtml grammar
-                            Some grammar
-                        | PrecompilingFailed(name, [error]) ->
-                            this.Log2.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
-                            None
-                        | PrecompilingFailed(name, errors) ->
-                            this.Log2.Error("Errors while precompiling {GrammarName}.", name)
-                            for error in errors do
-                                this.Log2.Error("{BuildError}", error)
-                            None
-                        | DiscoveringFailed(typeName, fieldName, e) ->
-                            this.Log2.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
-                            this.Log2.Error("{Exception}", e)
-                            None)
+                precompiledGrammars <- grammars
+                if this.GenerateHtml then
+                    for x in grammars do
+                        this.DoGenerateHtml x
 
                 this.GeneratedHtmlFiles <- Array.ofList generatedHtmlFiles
 
@@ -92,20 +74,6 @@ type FarklePrecompileTask() =
             | Error () -> false
         with
         | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false
-    override _.DoWeave asm =
-        use stream = new MemoryStream()
-        for grammar in precompiledGrammars do
-            EGT.toStreamNeo stream grammar
-
-            // We will try to read the EGTneo file we just
-            // generated as a form of self-verification.
-            stream.Position <- 0L
-            EGT.ofStream stream |> ignore
-
-            let name = PrecompiledGrammar.GetResourceName grammar
-            let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
-            asm.MainModule.Resources.Add res
-            stream.SetLength 0L
-        not precompiledGrammars.IsEmpty
+    override _.DoWeave asm = weaveGrammars asm precompiledGrammars
     interface ICancelableTask with
         member _.Cancel() = cts.Cancel()

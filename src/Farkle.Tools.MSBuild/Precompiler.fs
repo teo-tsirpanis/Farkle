@@ -15,6 +15,9 @@ open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
 open System.Runtime.Loader
+// It has to be put in the end because
+// ManifestResourceAttributes is hidden by System.Reflection.
+open Mono.Cecil
 
 type PrecompilerResult =
     | Successful of Grammar
@@ -183,3 +186,35 @@ or the Rename extension method.")
 let precompileAssemblyFromPath ct log references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path
     checkForDuplicates log pcdfs
+    |> Result.map (List.choose (fun x ->
+        match x with
+        | Successful grammar ->
+            Some grammar
+        | PrecompilingFailed(name, [error]) ->
+            log.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
+            None
+        | PrecompilingFailed(name, errors) ->
+            log.Error("Errors while precompiling {GrammarName}.", name)
+            for error in errors do
+                log.Error("{BuildError}", error)
+            None
+        | DiscoveringFailed(typeName, fieldName, e) ->
+            log.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
+            log.Error("{Exception}", e)
+            None))
+
+let weaveGrammars (asm: AssemblyDefinition) (precompiledGrammars: _ list) =
+    use stream = new MemoryStream()
+    for grammar in precompiledGrammars do
+        EGT.toStreamNeo stream grammar
+
+        // We will try to read the EGTneo file we just
+        // generated as a form of self-verification.
+        stream.Position <- 0L
+        EGT.ofStream stream |> ignore
+
+        let name = PrecompiledGrammar.GetResourceName grammar
+        let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
+        asm.MainModule.Resources.Add res
+        stream.SetLength 0L
+    not precompiledGrammars.IsEmpty

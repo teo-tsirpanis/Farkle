@@ -15,6 +15,9 @@ type ProjectResolverOptions = {
     Configuration: string
 }
 
+let cannotFindMSBuildMessage =
+    "Could not find a compatible MSBuild installation. Make sure that the .NET Core SDK is installed."
+
 let registerMSBuild() =
     try
         let instance = MSBuildLocator.RegisterDefaults()
@@ -22,7 +25,7 @@ let registerMSBuild() =
         Ok()
     with
     | :? InvalidOperationException ->
-        Log.Error("Could not find an MSBuild installation. Make sure that the .NET Core SDK is installed.")
+        Log.Error(cannotFindMSBuildMessage)
         Error()
 
 let preferDll x =

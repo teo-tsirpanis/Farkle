@@ -40,7 +40,13 @@ No files will be created and only errors will be logged by default."
 For internal use only."
 
 [<EntryPoint>]
-let main _ =
+let main argv =
+    // The precompiler worker is a special case, it does not use the regular
+    // logging mechanism and reports catastrophic exceptions to stderr.
+    // That's why it is given its time to shine at the very beginning,
+    // even outside Argu.
+    PrecompilerWorker.runIfRequested argv
+
     let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
     let json = results.Contains Json

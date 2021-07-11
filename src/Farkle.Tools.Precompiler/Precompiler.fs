@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Tools.Precompiler
+module Farkle.Tools.Precompiler
 
 open Farkle.Builder
 open Farkle.Grammar

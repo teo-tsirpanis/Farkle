@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Farkle.Tools.MSBuild\Precompiler.fs" Link="Precompiler.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Farkle\Farkle.fsproj" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="Sigourney" Version="0.3.2" ExcludeAssets="build" />
+  </ItemGroup>
+</Project>

@@ -15,12 +15,12 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Precompiler.fs" />
     <Compile Include="FarklePrecompileTask.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
     <PackageReference Include="FSharp.Core" Version="5.0.1" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Sigourney" Version="0.3.2" PrivateAssets="compile;runtime" />

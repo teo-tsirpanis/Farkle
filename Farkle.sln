@@ -36,7 +36,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Shared", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Farkle.Tools.MSBuild.Tests", "tests\Farkle.Tools.MSBuild.Tests\Farkle.Tools.MSBuild.Tests.csproj", "{3754FCA2-56E4-4577-A1EE-0ABAF777FEA7}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Precompiler.OutOfProcess", "src\Farkle.Tools.Precompiler.OutOfProcess\Farkle.Tools.Precompiler.OutOfProcess.fsproj", "{7F8558C4-6609-444A-A471-BD222E8C7928}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Precompiler", "src\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj", "{7F8558C4-6609-444A-A471-BD222E8C7928}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

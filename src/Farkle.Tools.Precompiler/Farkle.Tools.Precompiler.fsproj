@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RollForward>Major</RollForward>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Farkle.Tools.MSBuild\Precompiler.fs" Link="Precompiler.fs" />
-    <Compile Include="Program.fs" />
+    <Compile Include="Precompiler.fs" />
+    <Compile Include="IpcTypes.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />

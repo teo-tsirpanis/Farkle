@@ -10,6 +10,8 @@ namespace Farkle.Tools.PrecompilerIpcTypes
 open Microsoft.Build.Framework
 open System
 
+// The JSON serializer needs this attribute.
+[<CLIMutable>]
 type Input = {
     References: string[]
     AssemblyPath: string
@@ -23,6 +25,7 @@ type MessageSeverity =
     | MessageLow = 4
 
 /// An easily serializable representation of an MSBuild log event.
+[<CLIMutable>]
 type LogEvent = {
     Severity: MessageSeverity
     Subcategory: string
@@ -56,6 +59,7 @@ with
             let eventArgs = BuildMessageEventArgs(x.Subcategory, x.Code, x.File, x.LineNumber, x.ColumnNumber, x.EndLineNumber, x.EndColumnNumber, x.Message, x.HelpKeyword, x.SenderName, importance, x.EventTimestamp)
             engine.LogMessageEvent eventArgs
 
+[<CLIMutable>]
 type Output = {
     Success: bool
     Messages: LogEvent []

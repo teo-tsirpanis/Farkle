@@ -28,7 +28,7 @@ let private doIt input =
 
         match result with
         | Ok grammars ->
-            Weaver.Weave(input.AssemblyPath, input.AssemblyPath,
+            Weaver.Weave(input.AssemblyPath, null,
                 (fun asm -> Precompiler.weaveGrammars asm grammars), logger, null, "Farkle.Tools.Precompiler")
             true
         | Error () -> false

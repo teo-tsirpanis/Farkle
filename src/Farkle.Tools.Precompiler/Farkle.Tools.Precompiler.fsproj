@@ -5,7 +5,6 @@
   <ItemGroup>
     <Compile Include="Precompiler.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <Compile Include="PrecompilerIpcTypes.fs" />
-    <Compile Include="LogSinkBuildMachine.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />

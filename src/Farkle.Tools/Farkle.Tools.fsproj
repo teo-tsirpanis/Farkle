@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -19,6 +19,7 @@
   <ItemGroup>
     <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
+    <Compile Include="LogSinkBuildMachine.fs" />
     <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

@@ -15,7 +15,7 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FarklePrecompileTask.fs" />
+    <Compile Include="FarklePrecompileInProcess.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
     <PackageReference Include="FSharp.Core" Version="5.0.1" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />

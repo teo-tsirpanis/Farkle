@@ -3,7 +3,7 @@
     <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Precompiler.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <Compile Include="PrecompilerInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <Compile Include="PrecompilerIpcTypes.fs" />
   </ItemGroup>
   <ItemGroup>

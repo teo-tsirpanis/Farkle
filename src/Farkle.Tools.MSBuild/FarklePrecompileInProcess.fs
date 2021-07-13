@@ -6,7 +6,7 @@
 namespace Farkle.Tools.MSBuild
 
 open Farkle.Grammar
-open Farkle.Tools.Precompiler
+open Farkle.Tools.PrecompilerInProcess
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
@@ -15,8 +15,10 @@ open System
 open System.IO
 open System.Threading
 
-/// An MSBuild task that precompiles the grammars of an assembly.
-type FarklePrecompileTask() =
+/// An MSBuild task that precompiles the grammars
+/// of an assembly from the same MSBuild process.
+/// Can only run from .NET Core editions of MSBuild.
+type FarklePrecompileInProcess() =
     inherit MSBuildWeaver()
     let mutable precompiledGrammars = []
     let mutable generatedHtmlFiles = []

@@ -5,7 +5,7 @@
 
   <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
-      TaskName="Farkle.Tools.MSBuild.FarklePrecompileTask"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompileInProcess"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <Target
@@ -29,7 +29,7 @@
       Name="FarklePrecompileGrammars"
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="CheckForMSBuild16">
-    <FarklePrecompileTask
+    <FarklePrecompileInProcess
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         WeaverName="Farkle.Tools.Precompiler"
@@ -37,6 +37,6 @@
         GenerateHtml="$(FarkleGenerateHtml)"
         HtmlOutputPath="$(OutputPath)">
       <Output TaskParameter="GeneratedHtmlFiles" ItemName="FileWrites"/>
-    </FarklePrecompileTask>
+    </FarklePrecompileInProcess>
   </Target>
 </Project>

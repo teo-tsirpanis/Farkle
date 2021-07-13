@@ -24,12 +24,12 @@ let private doIt input =
     let success =
         let loggingHelper = TaskLoggingHelper(buildMachine, "FarklePrecompileTask")
         use logger = LoggerConfiguration().MinimumLevel.Verbose().WriteTo.MSBuild(loggingHelper).CreateLogger()
-        let result = Precompiler.precompileAssemblyFromPath CancellationToken.None logger references input.AssemblyPath
+        let result = PrecompilerInProcess.precompileAssemblyFromPath CancellationToken.None logger references input.AssemblyPath
 
         match result with
         | Ok grammars ->
             Weaver.Weave(input.AssemblyPath, null,
-                (fun asm -> Precompiler.weaveGrammars asm grammars), logger, null, "Farkle.Tools.Precompiler")
+                (fun asm -> PrecompilerInProcess.weaveGrammars asm grammars), logger, null, "Farkle.Tools.Precompiler")
             true
         | Error () -> false
 

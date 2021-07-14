@@ -12,8 +12,6 @@ open Microsoft.Build.Utilities
 open Serilog
 open Sigourney
 open System
-open System.IO
-open System.Text.Json
 open System.Threading
 
 let private doIt input =
@@ -23,13 +21,17 @@ let private doIt input =
 
     let success =
         let loggingHelper = TaskLoggingHelper(buildMachine, "FarklePrecompileTask")
-        use logger = LoggerConfiguration().MinimumLevel.Verbose().WriteTo.MSBuild(loggingHelper).CreateLogger()
+        use logger =
+            LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.MSBuild(loggingHelper)
+                .CreateLogger()
         let result = PrecompilerInProcess.precompileAssemblyFromPath CancellationToken.None logger references input.AssemblyPath
 
         match result with
         | Ok grammars ->
-            Weaver.Weave(input.AssemblyPath, null,
-                (fun asm -> PrecompilerInProcess.weaveGrammars asm grammars), logger, null, "Farkle.Tools.Precompiler")
+            let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)
+            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, "Farkle.Tools.Precompiler")
             true
         | Error () -> false
 
@@ -52,11 +54,11 @@ let private run (argv: ReadOnlySpan<string>) =
             if argv.Length = 2 then
                 argv.[0], argv.[1]
             else
-                printfn "Usage: dotnet tool run farkle <input file> <output file>"
+                printfn "Usage: dotnet tool run farkle -- precompiler-worker <input file> <output file>"
                 exit 1
-        let input = JsonSerializer.Deserialize<PrecompilerWorkerInput>(ReadOnlySpan(File.ReadAllBytes(inputFile)))
+        let input = PrecompilerCommon.readFromJsonFile<PrecompilerWorkerInput> inputFile
         let output = doIt input
-        File.WriteAllBytes(outputFile, JsonSerializer.SerializeToUtf8Bytes(output))
+        PrecompilerCommon.writeToJsonFile outputFile output
         0
     with
     e ->

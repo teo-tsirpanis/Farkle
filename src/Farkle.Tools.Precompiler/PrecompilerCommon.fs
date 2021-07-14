@@ -68,3 +68,22 @@ type PrecompilerWorkerOutput = {
     Success: bool
     Messages: LogEvent []
 }
+
+module PrecompilerCommon =
+
+    let private defaultSerializerOptions =
+        let x = JsonSerializerOptions()
+        // This is not a web app, the JSON files will be used for IPC and not be
+        // rendered in HTML. This relaxed escaping makes the files smaller and more readable.
+        x.Encoder <- JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        x
+
+    [<RequiresExplicitTypeArguments>]
+    let readFromJsonFile<'a> path =
+        let utf8Bytes = File.ReadAllBytes path
+        JsonSerializer.Deserialize<'a>(ReadOnlySpan utf8Bytes)
+
+    let writeToJsonFile path x =
+        use stream = File.OpenWrite path
+        use jw = new Utf8JsonWriter(stream)
+        JsonSerializer.Serialize(jw, x, defaultSerializerOptions)

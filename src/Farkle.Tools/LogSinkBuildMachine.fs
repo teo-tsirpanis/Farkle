@@ -1,6 +1,6 @@
 namespace Farkle.Tools
 
-open Farkle.Tools.PrecompilerIpcTypes
+open Farkle.Tools.Precompiler
 open Microsoft.Build.Framework
 open System
 
@@ -27,17 +27,17 @@ type LogSinkBuildMachine() =
     member _.GetEventsToArray() = events.ToArray()
     interface IBuildEngine with
         member _.LogErrorEvent ev =
-            addEvent MessageSeverity.Error ev.Subcategory ev.Code ev.File ev.LineNumber ev.ColumnNumber
+            addEvent LogEventSeverity.Error ev.Subcategory ev.Code ev.File ev.LineNumber ev.ColumnNumber
                 ev.EndLineNumber ev.EndColumnNumber ev.Message ev.HelpKeyword ev.SenderName ev.Timestamp
         member _.LogWarningEvent ev =
-            addEvent MessageSeverity.Warning ev.Subcategory ev.Code ev.File ev.LineNumber ev.ColumnNumber
+            addEvent LogEventSeverity.Warning ev.Subcategory ev.Code ev.File ev.LineNumber ev.ColumnNumber
                 ev.EndLineNumber ev.EndColumnNumber ev.Message ev.HelpKeyword ev.SenderName ev.Timestamp
         member _.LogMessageEvent ev =
             let severity =
                 match ev.Importance with
-                | MessageImportance.High -> MessageSeverity.MessageHigh
-                | MessageImportance.Normal -> MessageSeverity.MessageNormal
-                | _ -> MessageSeverity.MessageLow
+                | MessageImportance.High -> LogEventSeverity.MessageHigh
+                | MessageImportance.Normal -> LogEventSeverity.MessageNormal
+                | _ -> LogEventSeverity.MessageLow
             addEvent severity ev.Subcategory ev.Code ev.File ev.LineNumber ev.ColumnNumber
                 ev.EndLineNumber ev.EndColumnNumber ev.Message ev.HelpKeyword ev.SenderName ev.Timestamp
         member _.LogCustomEvent _ =

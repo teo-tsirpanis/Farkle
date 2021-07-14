@@ -6,7 +6,7 @@
 module Farkle.Tools.Commands.PrecompilerWorker
 
 open Farkle.Tools
-open Farkle.Tools.PrecompilerIpcTypes
+open Farkle.Tools.Precompiler
 open Microsoft.Build.Locator
 open Microsoft.Build.Utilities
 open Serilog
@@ -54,7 +54,7 @@ let private run (argv: ReadOnlySpan<string>) =
             else
                 printfn "Usage: dotnet tool run farkle <input file> <output file>"
                 exit 1
-        let input = JsonSerializer.Deserialize<Input>(ReadOnlySpan(File.ReadAllBytes(inputFile)))
+        let input = JsonSerializer.Deserialize<PrecompilerWorkerInput>(ReadOnlySpan(File.ReadAllBytes(inputFile)))
         let output = doIt input
         File.WriteAllBytes(outputFile, JsonSerializer.SerializeToUtf8Bytes(output))
         0

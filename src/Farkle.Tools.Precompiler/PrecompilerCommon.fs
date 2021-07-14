@@ -3,21 +3,24 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-// Contains types to be serialized and transmitted between the .NET
-// Framework MSBuild precompiler task and the .NET Core worker process.
-namespace Farkle.Tools.PrecompilerIpcTypes
+namespace Farkle.Tools.Precompiler
 
+open System.IO
 open Microsoft.Build.Framework
 open System
+open System.Text.Encodings.Web
+open System.Text.Json
 
 // The JSON serializer needs this attribute.
 [<CLIMutable>]
-type Input = {
+/// The input to the precompiler worker process.
+type PrecompilerWorkerInput = {
     References: string[]
     AssemblyPath: string
 }
 
-type MessageSeverity =
+/// Maps to MSBuild's error, warning and message types.
+type LogEventSeverity =
     | Error = 0
     | Warning = 1
     | MessageHigh = 2
@@ -27,7 +30,7 @@ type MessageSeverity =
 /// An easily serializable representation of an MSBuild log event.
 [<CLIMutable>]
 type LogEvent = {
-    Severity: MessageSeverity
+    Severity: LogEventSeverity
     Subcategory: string
     Code: string
     File: string
@@ -44,23 +47,24 @@ with
     /// Logs this event to an MSBuild build engine.
     member x.LogTo(engine: IBuildEngine) =
         match x.Severity with
-        | MessageSeverity.Error ->
+        | LogEventSeverity.Error ->
             let eventArgs = BuildErrorEventArgs(x.Subcategory, x.Code, x.File, x.LineNumber, x.ColumnNumber, x.EndLineNumber, x.EndColumnNumber, x.Message, x.HelpKeyword, x.SenderName, x.EventTimestamp)
             engine.LogErrorEvent eventArgs
-        | MessageSeverity.Warning ->
+        | LogEventSeverity.Warning ->
             let eventArgs = BuildWarningEventArgs(x.Subcategory, x.Code, x.File, x.LineNumber, x.ColumnNumber, x.EndLineNumber, x.EndColumnNumber, x.Message, x.HelpKeyword, x.SenderName, x.EventTimestamp)
             engine.LogWarningEvent eventArgs
         | _ ->
             let importance =
                 match x.Severity with
-                | MessageSeverity.MessageHigh -> MessageImportance.High
-                | MessageSeverity.MessageNormal -> MessageImportance.Normal
+                | LogEventSeverity.MessageHigh -> MessageImportance.High
+                | LogEventSeverity.MessageNormal -> MessageImportance.Normal
                 | _ -> MessageImportance.Low
             let eventArgs = BuildMessageEventArgs(x.Subcategory, x.Code, x.File, x.LineNumber, x.ColumnNumber, x.EndLineNumber, x.EndColumnNumber, x.Message, x.HelpKeyword, x.SenderName, importance, x.EventTimestamp)
             engine.LogMessageEvent eventArgs
 
 [<CLIMutable>]
-type Output = {
+/// The output of the precompiler worker process.
+type PrecompilerWorkerOutput = {
     Success: bool
     Messages: LogEvent []
 }

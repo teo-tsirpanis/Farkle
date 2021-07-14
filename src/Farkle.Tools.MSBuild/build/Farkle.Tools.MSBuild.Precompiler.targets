@@ -32,7 +32,6 @@
     <FarklePrecompileInProcess
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
-        WeaverName="Farkle.Tools.Precompiler"
         Configuration="@(SigourneyConfiguration)"
         GenerateHtml="$(FarkleGenerateHtml)"
         HtmlOutputPath="$(OutputPath)">

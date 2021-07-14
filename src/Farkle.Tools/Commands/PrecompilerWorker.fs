@@ -31,7 +31,7 @@ let private doIt input =
         match result with
         | Ok grammars ->
             let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)
-            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, "Farkle.Tools.Precompiler")
+            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, PrecompilerCommon.weaverName)
             true
         | Error () -> false
 

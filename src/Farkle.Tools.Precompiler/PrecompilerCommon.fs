@@ -71,6 +71,9 @@ type PrecompilerWorkerOutput = {
 
 module PrecompilerCommon =
 
+    /// The name of the precompiler weaver, for the purposes of Sigourney.
+    let weaverName = "Farkle.Tools.Precompiler"
+
     let private defaultSerializerOptions =
         let x = JsonSerializerOptions()
         // This is not a web app, the JSON files will be used for IPC and not be

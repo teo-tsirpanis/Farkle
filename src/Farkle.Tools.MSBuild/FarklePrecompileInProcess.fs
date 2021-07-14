@@ -6,6 +6,7 @@
 namespace Farkle.Tools.MSBuild
 
 open Farkle.Grammar
+open Farkle.Tools.Precompiler
 open Farkle.Tools.PrecompilerInProcess
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
@@ -18,8 +19,10 @@ open System.Threading
 /// An MSBuild task that precompiles the grammars
 /// of an assembly from the same MSBuild process.
 /// Can only run from .NET Core editions of MSBuild.
-type FarklePrecompileInProcess() =
+type FarklePrecompileInProcess() as this =
     inherit MSBuildWeaver()
+    do this.WeaverName <- PrecompilerCommon.weaverName
+
     let mutable precompiledGrammars = []
     let mutable generatedHtmlFiles = []
 
@@ -71,8 +74,6 @@ type FarklePrecompileInProcess() =
                 && not this.Log.HasLoggedErrors
                 // With our preparation completed, Sigourney will eventually call DoWeave.
                 && base.Execute()
-            // There are some errors (such as duplicate grammar name errors)
-            // that are errors no matter what the user said.
             | Error () -> false
         with
         | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false

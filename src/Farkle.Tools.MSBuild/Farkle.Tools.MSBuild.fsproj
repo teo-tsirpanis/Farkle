@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
@@ -24,7 +24,7 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" Version="5.0.1" PrivateAssets="all" />
-    <PackageReference Include="MedallionShell" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" Version="1.6.2" PrivateAssets="all" />
+    <PackageReference Include="MedallionShell" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" Version="1.6.2" PrivateAssets="all" Publish="true" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.3.1" PrivateAssets="all" />
     <PackageReference Include="Sigourney" Version="0.3.2" PrivateAssets="compile;runtime" />
   </ItemGroup>

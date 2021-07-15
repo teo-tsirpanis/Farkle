@@ -8,9 +8,15 @@
       TaskName="Farkle.Tools.MSBuild.FarklePrecompileInProcess"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) != Core"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompileIpc"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
+
+  <!--TODO: Find better error messages.-->
   <Target
       Name="FailPrecompilerOnNetFramework"
-      Condition="$(MSBuildRuntimeType) != Core"
+      Condition="false AND $(MSBuildRuntimeType) != Core"
       BeforeTargets="FarklePrecompileGrammars">
     <PropertyGroup>
       <_CommonPrecompilerErrorExplanation>You have to use commands from the .NET SDK, like "dotnet build". See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</_CommonPrecompilerErrorExplanation>
@@ -37,5 +43,11 @@
         HtmlOutputPath="$(OutputPath)">
       <Output TaskParameter="GeneratedHtmlFiles" ItemName="FileWrites"/>
     </FarklePrecompileInProcess>
+
+    <FarklePrecompileIpc
+        Condition="$(MSBuildRuntimeType) != Core"
+        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+        Configuration="@(SigourneyConfiguration)"
+        CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"/>
   </Target>
 </Project>

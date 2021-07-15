@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;netstandard2.0</TargetFrameworks>
     <Description>Farkle's integration with MSBuild. This package supports the precompiler.
 
 Users of it must use .NET SDK commands like "dotnet build". Building projects that use this package, with Visual Studio or with the .NET Framework-based "msbuild" command is not supported.
@@ -28,9 +28,4 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.3.1" PrivateAssets="all" />
     <PackageReference Include="Sigourney" Version="0.3.2" PrivateAssets="compile;runtime" />
   </ItemGroup>
-  <Target Name="PatchNuGetPackage" AfterTargets="Pack">
-    <Exec
-      Condition="'%(NuGetPackOutput.Extension)' == '.nupkg'"
-      Command="pwsh $(PatchNupkgScript) &quot;%(NuGetPackOutput.FullPath)&quot; $(PackageId).nuspec" />
-  </Target>
 </Project>

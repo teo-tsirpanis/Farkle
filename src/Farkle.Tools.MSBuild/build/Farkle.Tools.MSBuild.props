@@ -8,6 +8,6 @@
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netcoreapp3.1/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildRuntimeType) != Core">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net472/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netstandard2.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
 </Project>

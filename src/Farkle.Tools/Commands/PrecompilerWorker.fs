@@ -15,7 +15,7 @@ open System
 open System.Threading
 
 let private doIt input =
-    let buildMachine = LogSinkBuildMachine()
+    let buildMachine = LogSinkBuildMachine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
 
     let references = input.References |> Array.map AssemblyReference
 

@@ -15,6 +15,9 @@ open System.Text.Json
 [<CLIMutable>]
 /// The input to the precompiler worker process.
 type PrecompilerWorkerInput = {
+    TaskLineNumber: int
+    TaskColumnNumber: int
+    TaskProjectFile: string
     References: string[]
     AssemblyPath: string
 }

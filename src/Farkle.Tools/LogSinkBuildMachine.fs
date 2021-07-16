@@ -5,7 +5,7 @@ open Microsoft.Build.Framework
 open System
 
 /// An IBuildEngine implementation that just stores log events in memory.
-type LogSinkBuildMachine() =
+type LogSinkBuildMachine(taskLineNumber, taskColumnNumber, taskProjectFile) =
     let events = ResizeArray()
     let addEvent severity subcategory code file lineNumber columnNumber
         endLineNumber endColumnNumber message helpKeyword senderName eventTimestamp =
@@ -44,7 +44,7 @@ type LogSinkBuildMachine() =
             NotSupportedException "Logging custom events is not supported."
             |> raise
         member _.ContinueOnError = false
-        member _.LineNumberOfTaskNode = 0
-        member _.ColumnNumberOfTaskNode = 0
-        member _.ProjectFileOfTaskNode = "<undefined>"
+        member _.LineNumberOfTaskNode = taskLineNumber
+        member _.ColumnNumberOfTaskNode = taskColumnNumber
+        member _.ProjectFileOfTaskNode = taskProjectFile
         member _.BuildProjectFile(_, _, _, _) = false

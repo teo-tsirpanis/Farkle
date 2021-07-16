@@ -26,7 +26,10 @@ type FarklePrecompileIpc() =
             .CreateDelegate(typeof<Func<ITaskItem[], WeaverConfig>>)
         :?> Func<ITaskItem[], WeaverConfig>
 
-    static let createInput asmPath (config: WeaverConfig) = {
+    static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) = {
+        TaskLineNumber = buildEngine.LineNumberOfTaskNode
+        TaskColumnNumber = buildEngine.ColumnNumberOfTaskNode
+        TaskProjectFile = buildEngine.ProjectFileOfTaskNode
         AssemblyPath = asmPath
         References = config.References.Select(fun x -> x.FileName).ToArray()
     }
@@ -66,7 +69,7 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
         if isNull weaverConfig then
             this.Log.LogError("Error while getting Farkle's precompiler's configuration. Please open an issue on GitHub.")
             return! Error()
-        let workerInput = createInput this.AssemblyPath weaverConfig
+        let workerInput = createInput this.BuildEngine this.AssemblyPath weaverConfig
         let inputPath = Path.GetTempFileName()
         let outputPath = Path.ChangeExtension(inputPath, ".output.json")
 

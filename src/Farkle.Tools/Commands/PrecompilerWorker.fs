@@ -48,13 +48,13 @@ let private run (argv: ReadOnlySpan<string>) =
             MSBuildLocator.RegisterDefaults() |> ignore
         with
         | :? InvalidOperationException ->
-            printfn "%s" ProjectResolver.cannotFindMSBuildMessage
+            eprintfn "%s" ProjectResolver.cannotFindMSBuildMessage
             exit 1
         let inputFile, outputFile =
             if argv.Length = 2 then
                 argv.[0], argv.[1]
             else
-                printfn "Usage: dotnet tool run farkle -- precompiler-worker <input file> <output file>"
+                eprintfn "Usage: dotnet tool run farkle -- precompiler-worker <input file> <output file>"
                 exit 1
         let input = PrecompilerCommon.readFromJsonFile<PrecompilerWorkerInput> inputFile
         let output = doIt input
@@ -62,7 +62,7 @@ let private run (argv: ReadOnlySpan<string>) =
         0
     with
     e ->
-        printfn "Unhandled exception while running the precompiler worker.\n%O" e
+        eprintfn "Unhandled exception while running the precompiler worker.\n%O" e
         1
 
 let runIfRequested argv =

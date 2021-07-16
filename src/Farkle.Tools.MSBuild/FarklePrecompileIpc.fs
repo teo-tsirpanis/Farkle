@@ -44,8 +44,8 @@ type FarklePrecompileIpc() =
             if String.IsNullOrWhiteSpace this.CustomWorkerPath then
                 [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"; inputPath; outputPath|]
             else
-                this.Log.LogMessage(MessageImportance.Normal, "Using custom worker at '{0}'", this.CustomWorkerPath)
-                [|this.CustomWorkerPath; inputPath; outputPath|]
+                this.Log.LogMessage(MessageImportance.Normal, "Using custom precompiler worker at '{0}'", this.CustomWorkerPath)
+                [|this.CustomWorkerPath; "precompiler-worker"; inputPath; outputPath|]
         this.Log.LogMessage(MessageImportance.Normal, "Running the precompiler \
 worker on input file at {0} and output file at {1}", inputPath, outputPath)
 
@@ -55,8 +55,10 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
         if commandResult.ExitCode = 0 then
             Ok()
         else
-            this.Log.LogError("Error while running the precompiler worker, exited with error code {0}:")
-            this.Log.LogError(commandResult.StandardOutput)
+            this.Log.LogError("The precompiler worker exited with error code {0}.", commandResult.ExitCode)
+            let workerStderr = commandResult.StandardError
+            if not (String.IsNullOrWhiteSpace workerStderr) then
+                this.Log.LogError(workerStderr.Trim())
             Error()
 
     member private this.ExecuteImpl() = either {
@@ -84,6 +86,8 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
         match this.ExecuteImpl() with
         | Ok success -> success
         | Error () ->
-            this.Log.LogMessage(MessageImportance.High, "Consider reporting the problem on GitHub. \
+            this.Log.LogMessage(MessageImportance.High, "Make sure that a matching version of the package \
+Farkle.Tools is installed.")
+            this.Log.LogMessage(MessageImportance.High, "Otherwise consider reporting the problem on GitHub. \
 In the meantime, try building your project with the .NET SDK.")
             false

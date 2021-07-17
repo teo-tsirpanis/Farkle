@@ -7,6 +7,7 @@ module Farkle.Tools.Commands.PrecompilerWorker
 
 open Farkle.Tools
 open Farkle.Tools.Precompiler
+open Farkle.Tools.Precompiler.PrecompilerCommon
 open Microsoft.Build.Locator
 open Microsoft.Build.Utilities
 open Serilog
@@ -31,7 +32,7 @@ let private doIt input =
         match result with
         | Ok grammars ->
             let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)
-            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, PrecompilerCommon.weaverName)
+            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, weaverName)
             true
         | Error () -> false
 
@@ -42,7 +43,7 @@ let private doIt input =
 
 /// Returns zero on success or handled errors, and one on unhandled errors.
 /// In the latter case the stdout will contain more information about the error.
-let private run (argv: ReadOnlySpan<string>) =
+let private run argv =
     try
         try
             MSBuildLocator.RegisterDefaults() |> ignore
@@ -50,20 +51,19 @@ let private run (argv: ReadOnlySpan<string>) =
         | :? InvalidOperationException ->
             eprintfn "%s" ProjectResolver.cannotFindMSBuildMessage
             exit 1
-        let inputFile, outputFile =
-            if argv.Length = 2 then
-                argv.[0], argv.[1]
-            else
-                eprintfn "Usage: dotnet tool run farkle -- precompiler-worker <input file> <output file>"
+        let protocolVersion, inputFile, outputFile =
+            match argv with
+            | [|_verb; x1; x2; x3|] -> x1, x2, x3
+            | _ ->
+                eprintfn "Usage: dotnet tool run farkle -- precompiler-worker %s <input file> <output file>" ipcProtocolVersion
                 exit 1
-        let input = PrecompilerCommon.readFromJsonFile<PrecompilerWorkerInput> inputFile
+        let input = readFromJsonFile<PrecompilerWorkerInput> inputFile
 
-        if input.Version <> PrecompilerWorkerInput.CurrentVersion then
-            eprintfn "Precompiler worker protocol mismatch; got %d but expected %d."
-                input.Version PrecompilerWorkerInput.CurrentVersion
+        if protocolVersion <> ipcProtocolVersion then
+            eprintfn "Precompiler worker protocol mismatch; got %s but expected %s." protocolVersion ipcProtocolVersion
         let output = doIt input
 
-        PrecompilerCommon.writeToJsonFile outputFile output
+        writeToJsonFile outputFile output
         0
     with
     e ->
@@ -72,4 +72,4 @@ let private run (argv: ReadOnlySpan<string>) =
 
 let runIfRequested argv =
     if Array.length argv >= 1 && argv.[0] = "precompiler-worker" then
-        run (Span.op_Implicit(argv.AsSpan(1))) |> exit
+        run argv |> exit

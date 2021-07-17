@@ -15,16 +15,12 @@ open System.Text.Json
 [<CLIMutable>]
 /// The input to the precompiler worker process.
 type PrecompilerWorkerInput = {
-    Version: int
     TaskLineNumber: int
     TaskColumnNumber: int
     TaskProjectFile: string
     References: string[]
     AssemblyPath: string
 }
-with
-    // To be incremented when the input format changes.
-    static member CurrentVersion = 1
 
 /// Maps to MSBuild's error, warning and message types.
 type LogEventSeverity =
@@ -77,6 +73,9 @@ type PrecompilerWorkerOutput = {
 }
 
 module PrecompilerCommon =
+
+    /// To be incremented when the IPC protocol changes.
+    let ipcProtocolVersion = "1.0"
 
     /// The name of the precompiler weaver, for the purposes of Sigourney.
     let weaverName = "Farkle.Tools.Precompiler"

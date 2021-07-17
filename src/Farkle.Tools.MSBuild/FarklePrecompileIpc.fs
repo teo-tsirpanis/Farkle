@@ -27,7 +27,6 @@ type FarklePrecompileIpc() =
         :?> Func<ITaskItem[], WeaverConfig>
 
     static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) = {
-        Version = PrecompilerWorkerInput.CurrentVersion
         TaskLineNumber = buildEngine.LineNumberOfTaskNode
         TaskColumnNumber = buildEngine.ColumnNumberOfTaskNode
         TaskProjectFile = buildEngine.ProjectFileOfTaskNode
@@ -46,10 +45,10 @@ type FarklePrecompileIpc() =
     member private this.RunWorkerProcess inputPath outputPath =
         let commandArgs =
             if String.IsNullOrWhiteSpace this.CustomWorkerPath then
-                [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"; inputPath; outputPath|]
+                [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"; PrecompilerCommon.ipcProtocolVersion; inputPath; outputPath|]
             else
                 this.Log.LogMessage(MessageImportance.Normal, "Using custom precompiler worker at '{0}'", this.CustomWorkerPath)
-                [|this.CustomWorkerPath; "precompiler-worker"; inputPath; outputPath|]
+                [|this.CustomWorkerPath; "precompiler-worker"; PrecompilerCommon.ipcProtocolVersion; inputPath; outputPath|]
         this.Log.LogMessage(MessageImportance.Normal, "Running the precompiler \
 worker on input file at {0} and output file at {1}", inputPath, outputPath)
 

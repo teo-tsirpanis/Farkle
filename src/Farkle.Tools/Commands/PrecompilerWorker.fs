@@ -57,7 +57,12 @@ let private run (argv: ReadOnlySpan<string>) =
                 eprintfn "Usage: dotnet tool run farkle -- precompiler-worker <input file> <output file>"
                 exit 1
         let input = PrecompilerCommon.readFromJsonFile<PrecompilerWorkerInput> inputFile
+
+        if input.Version <> PrecompilerWorkerInput.CurrentVersion then
+            eprintfn "Precompiler worker protocol mismatch; got %d but expected %d."
+                input.Version PrecompilerWorkerInput.CurrentVersion
         let output = doIt input
+
         PrecompilerCommon.writeToJsonFile outputFile output
         0
     with

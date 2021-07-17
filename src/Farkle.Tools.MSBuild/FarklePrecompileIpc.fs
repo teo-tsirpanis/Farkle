@@ -27,6 +27,7 @@ type FarklePrecompileIpc() =
         :?> Func<ITaskItem[], WeaverConfig>
 
     static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) = {
+        Version = PrecompilerWorkerInput.CurrentVersion
         TaskLineNumber = buildEngine.LineNumberOfTaskNode
         TaskColumnNumber = buildEngine.ColumnNumberOfTaskNode
         TaskProjectFile = buildEngine.ProjectFileOfTaskNode

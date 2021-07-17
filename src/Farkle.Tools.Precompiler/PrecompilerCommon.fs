@@ -15,12 +15,16 @@ open System.Text.Json
 [<CLIMutable>]
 /// The input to the precompiler worker process.
 type PrecompilerWorkerInput = {
+    Version: int
     TaskLineNumber: int
     TaskColumnNumber: int
     TaskProjectFile: string
     References: string[]
     AssemblyPath: string
 }
+with
+    // To be incremented when the input format changes.
+    static member CurrentVersion = 1
 
 /// Maps to MSBuild's error, warning and message types.
 type LogEventSeverity =

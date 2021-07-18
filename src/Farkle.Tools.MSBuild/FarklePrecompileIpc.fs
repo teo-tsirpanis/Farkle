@@ -6,7 +6,6 @@
 namespace Farkle.Tools.MSBuild
 
 open System.IO
-open System.Reflection
 open Farkle.Monads.Either
 open Farkle.Tools.Precompiler
 open Medallion.Shell
@@ -18,13 +17,6 @@ open System.Linq
 
 type FarklePrecompileIpc() =
     inherit Task()
-
-    static let createWeaverConfig =
-        // TODO: Make WeaverConfig.TryCreate public.
-        typeof<WeaverConfig>
-            .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
-            .CreateDelegate(typeof<Func<ITaskItem[], WeaverConfig>>)
-        :?> Func<ITaskItem[], WeaverConfig>
 
     static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) = {
         TaskLineNumber = buildEngine.LineNumberOfTaskNode
@@ -65,7 +57,7 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
             Error()
 
     member private this.ExecuteImpl() = either {
-        let weaverConfig = createWeaverConfig.Invoke this.Configuration
+        let weaverConfig = WeaverConfig.TryCreateFromSigourneyConfiguration this.Configuration
         if isNull weaverConfig then
             this.Log.LogError("Error while getting Farkle's precompiler's configuration. Please open an issue on GitHub.")
             return! Error()

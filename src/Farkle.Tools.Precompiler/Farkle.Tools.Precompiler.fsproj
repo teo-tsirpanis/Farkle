@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <PackageReference Include="Serilog" Version="2.10.0" />
-    <PackageReference Include="Sigourney" Version="0.3.2" ExcludeAssets="build" />
+    <PackageReference Include="Sigourney" Version="0.3.3" ExcludeAssets="build" />
     <!-- .NET Core supplies its own version of the packages below. -->
     <PackageReference Include="System.Text.Json" Version="4.7.2" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
     <!-- S.T.E.W version 4.7.1 has a security vulnerability. -->

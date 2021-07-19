@@ -68,6 +68,8 @@ let sourceProjects = !! "./src/**/*.??proj"
 
 let farkleProject = "./src/Farkle/Farkle.fsproj"
 
+let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
+
 let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
 
 // The project to be tested
@@ -77,8 +79,6 @@ let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuil
 
 // Additional command line arguments passed to Expecto.
 let testArguments = "--nunit-summary TestResults.xml"
-
-let testFrameworks = ["net5.0"]
 
 let localPackagesFolder = "./tests/packages/"
 
@@ -165,6 +165,10 @@ let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
         (sprintf "--project %s%s -c %A %s -- %s" (Path.GetFileName proj) fx config buildArgs args)
     |> handleFailure
 
+let dotNetClean proj =
+    DotNet.exec (fun x -> {x with Verbosity = Some DotNet.Verbosity.Minimal}) "clean" proj
+    |> handleFailure
+
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
 Target.description "Cleans the output directories"
@@ -209,8 +213,8 @@ Target.create "RunTests" (fun _ ->
     Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")
 )
 
-Target.description "Runs the MSBuild integration tests"
-Target.create "RunMSBuildTests" (fun _ ->
+Target.description "Prepares the MSBuild integration tests"
+Target.create "PrepareMSBuildTests" (fun _ ->
     Shell.cleanDir localPackagesFolder
     Directory.ensure localPackagesFolder
     farkleToolsMSBuildProject
@@ -220,16 +224,44 @@ Target.create "RunMSBuildTests" (fun _ ->
             MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
         }
     )
+)
 
-    let resultsDirectory = Path.getDirectory msBuildTestProject
-    for fx in testFrameworks do
-        msBuildTestProject
-        |> DotNet.test (fun p ->
-            {p with
-                Framework = Some fx
-                ResultsDirectory = Some resultsDirectory
-            }
-        )
+Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
+Target.create "RunMSBuildTestsNetFramework" (fun _ ->
+    DotNet.build id farkleToolsProject
+
+    let testProjectDirectory = Path.getDirectory msBuildTestProject
+    let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/netcoreapp3.1/Farkle.Tools.dll"
+    // dotNetClean msBuildTestProject
+    msBuildTestProject
+    |> MSBuild.build (fun x ->
+        {x with
+            DoRestore = true
+            Properties = ("FarkleCustomPrecompilerWorkerPath", customWorkerPath) :: x.Properties
+            Targets = ["Build"]
+            Verbosity = Some MSBuildVerbosity.Minimal
+        }
+    )
+    
+    msBuildTestProject
+    |> DotNet.test (fun p ->
+        {p with
+            NoBuild = true
+            ResultsDirectory = Some testProjectDirectory
+        }
+    )
+)
+
+Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
+Target.create "RunMSBuildTestsNetCore" (fun _ ->
+    let testProjectDirectory = Path.getDirectory msBuildTestProject
+    // dotNetClean msBuildTestProject
+    msBuildTestProject
+    |> DotNet.test (fun p ->
+        {p with
+            ResultsDirectory = Some testProjectDirectory
+        }
+    )
 )
 
 Target.description "Runs all tests"
@@ -410,10 +442,16 @@ Target.create "Release" ignore
 "Clean"
     ==> "GenerateCode"
 
-["RunTests"; "RunMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+["RunTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
 |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
-"Test" <== ["RunTests"; "RunMSBuildTests"]
+["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
+|> List.iter (fun target -> "PrepareMSBuildTests" ==> target |> ignore)
+
+"Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
+
+"RunMSBuildTestsNetFramework"
+    =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 
 "Test"
     ==> "NuGetPack"

@@ -9,7 +9,7 @@ using Farkle.IO;
 
 namespace Farkle.Tools.MSBuild.Tests
 {
-    [ExcludeFromCodeCoverage(Justification = "Methods of this class just need to be compiled without errors.")]
+    [ExcludeFromCodeCoverage]
     public static class CSharpInteropTests
     {
         /// <summary>See https://github.com/dotnet/fsharp/issues/9997.</summary>

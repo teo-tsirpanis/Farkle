@@ -10,9 +10,13 @@
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Sigourney" Version="0.3.3" ExcludeAssets="build" />
-    <!-- .NET Core supplies its own version of the packages below. -->
-    <PackageReference Include="System.Text.Json" Version="4.7.2" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-    <!-- S.T.E.W version 4.7.1 has a security vulnerability. -->
-    <PackageReference Include="System.Text.Encodings.Web" Version="4.7.2" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <!-- .NET Core supplies its own version of the packages below.
+    We also use specifically 4.7.0 because MSBuild bundles this
+    version and the .NET Framework complains even for 4.7.3
+    (and on .NET Framework) task dependencies are not isolated.
+    Furthermore, System.Text.Encodings.Web 4.7.0 has a security
+    vulnerability that cannot be patched because MSBuild has the
+    old version and I'm not gonna risk making it cry. -->
+    <PackageReference Include="System.Text.Json" Version="4.7.0" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 </Project>

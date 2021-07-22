@@ -13,6 +13,11 @@
       TaskName="Farkle.Tools.MSBuild.FarklePrecompileIpc"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+      TaskName="Farkle.Tools.MSBuild.FarkleGenerateHtml"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
+
   <!--TODO: Find better error messages.-->
   <Target
       Name="FailPrecompilerOnNetFramework"
@@ -38,16 +43,23 @@
     <FarklePrecompileInProcess
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
-        Configuration="@(SigourneyConfiguration)"
-        GenerateHtml="$(FarkleGenerateHtml)"
-        HtmlOutputPath="$(OutputPath)">
-      <Output TaskParameter="GeneratedHtmlFiles" ItemName="FileWrites"/>
-    </FarklePrecompileInProcess>
+        Configuration="@(SigourneyConfiguration)"/>
 
     <FarklePrecompileIpc
         Condition="$(MSBuildRuntimeType) != Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
         CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"/>
+  </Target>
+
+  <Target
+    Name="FarkleCreateHTML"
+    Condition="$(FarkleGenerateHtml) == true"
+    AfterTargets="FarklePrecompileGrammars">
+    <FarkleGenerateHtml
+      AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+      OutputDirectory="$(OutputPath)">
+      <Output TaskParameter="GeneratedFiles" ItemName="FileWrites"/>
+    </FarkleGenerateHtml>
   </Target>
 </Project>

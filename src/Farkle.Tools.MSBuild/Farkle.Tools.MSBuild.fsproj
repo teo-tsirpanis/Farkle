@@ -17,6 +17,7 @@ See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building
   <ItemGroup>
     <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <Compile Include="FarklePrecompileIpc.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <Compile Include="FarkleGenerateHtml.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
   <ItemGroup>

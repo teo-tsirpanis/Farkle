@@ -37,7 +37,7 @@
   </Target>
 
   <Target
-      Name="FarklePrecompileGrammars"
+      Name="FarkleRunPrecompiler"
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="CheckForMSBuild16">
     <FarklePrecompileInProcess
@@ -55,7 +55,7 @@
   <Target
     Name="FarkleCreateHTML"
     Condition="$(FarkleGenerateHtml) == true"
-    AfterTargets="FarklePrecompileGrammars">
+    AfterTargets="FarkleRunPrecompiler">
     <FarkleGenerateHtml
       AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
       OutputDirectory="$(OutputPath)">

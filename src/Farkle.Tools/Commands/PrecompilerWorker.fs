@@ -41,7 +41,8 @@ let private doIt input =
         Messages = buildMachine.GetEventsToArray()
     }
 
-/// Returns zero on success or handled errors, and one on unhandled errors.
+/// Returns zero on success or handled errors, one on unhandled errors
+/// and two on invalid command line arguments.
 /// In the latter case the stdout will contain more information about the error.
 let private run argv =
     try
@@ -56,7 +57,7 @@ let private run argv =
             | [|_verb; x1; x2; x3|] -> x1, x2, x3
             | _ ->
                 eprintfn "Usage: dotnet tool run farkle -- precompiler-worker %s <input file> <output file>" ipcProtocolVersion
-                exit 1
+                exit 2
         let input = readFromJsonFile<PrecompilerWorkerInput> inputFile
 
         if protocolVersion <> ipcProtocolVersion then

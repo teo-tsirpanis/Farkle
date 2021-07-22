@@ -34,6 +34,19 @@ type FarklePrecompileIpc() =
 
     member val CustomWorkerPath = "" with get, set
 
+    member private this.CheckPrecompilerWorkerExists() =
+        if String.IsNullOrWhiteSpace this.CustomWorkerPath then
+            let command = Command.Run("dotnet", [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"|])
+            let toolFound = command.Result.ExitCode = 2
+            if not toolFound then
+                this.Log.LogError("The .NET tool Farkle.Tools is not installed or cannot be found.")
+            toolFound
+        else
+            let customWorkerExists = File.Exists this.CustomWorkerPath
+            if not customWorkerExists then
+                this.Log.LogError("The custom precompiler worker at '{0}' was not found.", this.CustomWorkerPath)
+            customWorkerExists
+
     member private this.RunWorkerProcess inputPath outputPath =
         let commandArgs =
             if String.IsNullOrWhiteSpace this.CustomWorkerPath then
@@ -78,11 +91,14 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
     }
 
     override this.Execute() =
-        match this.ExecuteImpl() with
-        | Ok success -> success
-        | Error () ->
-            this.Log.LogMessage(MessageImportance.High, "Make sure that a matching version of the package \
+        if this.CheckPrecompilerWorkerExists() then
+            match this.ExecuteImpl() with
+            | Ok success -> success
+            | Error () ->
+                this.Log.LogMessage(MessageImportance.High, "Make sure that a matching version of the package \
 Farkle.Tools is installed.")
-            this.Log.LogMessage(MessageImportance.High, "Otherwise consider reporting the problem on GitHub. \
+                this.Log.LogMessage(MessageImportance.High, "Otherwise consider reporting the problem on GitHub. \
 In the meantime, try building your project with the .NET SDK.")
-            false
+                false
+        else
+           false

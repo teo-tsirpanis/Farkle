@@ -6,7 +6,6 @@
 using static Chiron;
 using Farkle.Builder;
 using Farkle.Samples.FSharp;
-using System.Collections.Generic;
 using PCDF = Farkle.Builder.PrecompilableDesigntimeFarkle<int>;
 
 namespace Farkle.Tools.MSBuild.Tests
@@ -45,7 +44,7 @@ namespace Farkle.Tools.MSBuild.Tests
         public PCDF InstanceProperty => CreatePCDF(nameof(InstanceProperty));
         public static PCDF StaticProperty => CreatePCDF(nameof(StaticProperty));
 
-        public static HashSet<PrecompilableDesigntimeFarkle> All => new ()
+        public static PrecompilableDesigntimeFarkle [] All => new []
         {
             PublicJSON,
             InternalRegex,

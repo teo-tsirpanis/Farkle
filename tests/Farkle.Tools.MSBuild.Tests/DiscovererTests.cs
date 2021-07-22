@@ -16,9 +16,9 @@ namespace Farkle.Tools.MSBuild.Tests
         [Fact]
         public void Discovered_Grammar_Count_Is_Correct()
         {
-            var expected = PrecompilableGrammars.All;
+            var expected = PrecompilableGrammars.All.Length;
             var precompiledGrammarCount = PrecompiledGrammar.GetAllFromAssembly(Assembly.GetExecutingAssembly()).Count;
-            Assert.Equal(expected.Count, precompiledGrammarCount);
+            Assert.Equal(expected, precompiledGrammarCount);
         }
 
         [Theory]

@@ -5,7 +5,6 @@
 
 using Farkle.Builder;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
@@ -30,15 +29,15 @@ namespace Farkle.Tools.MSBuild.Tests
                     var allPrecompiled =
                         asm.GetType(typeof(PrecompilableGrammars).FullName!, true)
                             ?.GetProperty(nameof(PrecompilableGrammars.All))
-                            ?.GetValue(null) as HashSet<PrecompilableDesigntimeFarkle>;
+                            ?.GetValue(null) as PrecompilableDesigntimeFarkle [];
                     // With Assert.NotNull the compiler would not
                     // shut up about allPrecompiled maybe being null.
                     if (allPrecompiled == null)
                         throw new ArgumentNullException(nameof(allPrecompiled));
 
-                    Assert.Equal(PrecompilableGrammars.All.Count, allPrecompiled.Count);
+                    Assert.Equal(PrecompilableGrammars.All.Length, allPrecompiled.Length);
                     Assert.All(allPrecompiled, pcdf => Assert.Same(asm, pcdf.Assembly));
-                    Assert.Equal(PrecompilableGrammars.All.Count, PrecompiledGrammar.GetAllFromAssembly(asm).Count);
+                    Assert.Equal(PrecompilableGrammars.All.Length, PrecompiledGrammar.GetAllFromAssembly(asm).Count);
                     return new WeakReference(allPrecompiled.First());
                 }
                 finally

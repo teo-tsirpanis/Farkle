@@ -1,7 +1,4 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <FarkleSuppressGrammarErrors Condition="'$(FarkleSuppressGrammarErrors)' == ''">false</FarkleSuppressGrammarErrors>
-  </PropertyGroup>
 
   <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
@@ -53,9 +50,9 @@
   </Target>
 
   <Target
-    Name="FarkleCreateHTML"
-    Condition="$(FarkleGenerateHtml) == true"
-    AfterTargets="FarkleRunPrecompiler">
+    Name="FarkleRunHtmlGenerator"
+    Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+    AfterTargets="SigourneyEntryPoint">
     <FarkleGenerateHtml
       AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
       OutputDirectory="$(OutputPath)">

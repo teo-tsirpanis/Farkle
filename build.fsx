@@ -165,9 +165,9 @@ let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
         (sprintf "--project %s%s -c %A %s -- %s" (Path.GetFileName proj) fx config buildArgs args)
     |> handleFailure
 
-let dotNetClean proj =
-    DotNet.exec (fun x -> {x with Verbosity = Some DotNet.Verbosity.Minimal}) "clean" proj
-    |> handleFailure
+let cleanBinObj directory =
+    directory @@ "bin" |> Shell.deleteDir
+    directory @@ "obj" |> Shell.deleteDir
 
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
@@ -232,7 +232,8 @@ Target.create "RunMSBuildTestsNetFramework" (fun _ ->
 
     let testProjectDirectory = Path.getDirectory msBuildTestProject
     let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/netcoreapp3.1/Farkle.Tools.dll"
-    // dotNetClean msBuildTestProject
+    // dotnet clean sometimes fails; this is faster and cleans only this project.
+    cleanBinObj testProjectDirectory
     msBuildTestProject
     |> MSBuild.build (fun x ->
         {x with
@@ -242,7 +243,7 @@ Target.create "RunMSBuildTestsNetFramework" (fun _ ->
             Verbosity = Some MSBuildVerbosity.Minimal
         }
     )
-    
+
     msBuildTestProject
     |> DotNet.test (fun p ->
         {p with
@@ -255,7 +256,7 @@ Target.create "RunMSBuildTestsNetFramework" (fun _ ->
 Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
 Target.create "RunMSBuildTestsNetCore" (fun _ ->
     let testProjectDirectory = Path.getDirectory msBuildTestProject
-    // dotNetClean msBuildTestProject
+    cleanBinObj testProjectDirectory
     msBuildTestProject
     |> DotNet.test (fun p ->
         {p with

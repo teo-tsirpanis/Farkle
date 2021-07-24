@@ -1,5 +1,5 @@
 // Copyright (c) 2021 Theodore Tsirpanis
-// 
+//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -52,21 +52,19 @@ let private run argv =
         | :? InvalidOperationException ->
             eprintfn "%s" ProjectResolver.cannotFindMSBuildMessage
             exit 1
-        let inputFile, outputFile =
-            match argv with
-            | [|_verb; version; _; _|] when version <> ipcProtocolVersion ->
-                eprintfn "Precompiler worker protocol mismatch."
-                exit 1
-            | [|_verb; _; x1; x2|] -> x1, x2
-            | _ ->
-                eprintfn "Usage: dotnet tool run farkle -- precompiler-worker %s <input file> <output file>" ipcProtocolVersion
-                exit 2
-        let input = readFromJsonFile<PrecompilerWorkerInput> inputFile
 
-        let output = doIt input
-
-        writeToJsonFile outputFile output
-        0
+        match argv with
+        | [|_verb; version; _; _|] when version <> ipcProtocolVersion ->
+            eprintfn "Precompiler worker protocol mismatch."
+            1
+        | [|_verb; _; inputFile; outputFile|] ->
+            let input = readFromJsonFile<PrecompilerWorkerInput> inputFile
+            let output = doIt input
+            writeToJsonFile outputFile output
+            0
+        | _ ->
+            eprintfn "Usage: dotnet tool run farkle -- precompiler-worker %s <input file> <output file>" ipcProtocolVersion
+            2
     with
     e ->
         eprintfn "Unhandled exception while running the precompiler worker.\n%O" e

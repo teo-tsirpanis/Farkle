@@ -76,7 +76,7 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
             this.Log.LogError("Error while getting Farkle's precompiler's configuration. Please open an issue on GitHub.")
             return! Error()
         let workerInput = createInput this.BuildEngine this.AssemblyPath weaverConfig
-        let inputPath = Path.GetTempFileName()
+        let inputPath = Path.ChangeExtension(Path.GetTempFileName(), ".json")
         let outputPath = Path.ChangeExtension(inputPath, ".output.json")
 
         PrecompilerCommon.writeToJsonFile inputPath workerInput

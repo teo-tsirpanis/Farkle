@@ -6,7 +6,6 @@
 namespace Farkle.Tools.MSBuild
 
 open Farkle.Tools.Precompiler
-open Farkle.Tools.PrecompilerInProcess
 open Microsoft.Build.Framework
 open Sigourney
 open System
@@ -25,7 +24,9 @@ type FarklePrecompileInProcess() as this =
 
     override this.Execute() =
         try
-            let grammars = precompileAssemblyFromPath cts.Token this.Log2 this.AssemblyReferences this.AssemblyPath
+            let grammars =
+                PrecompilerInProcess.precompileAssemblyFromPath
+                    cts.Token this.Log2 this.AssemblyReferences this.AssemblyPath
             match grammars with
             | Ok grammars ->
                 precompiledGrammars <- grammars
@@ -37,6 +38,6 @@ type FarklePrecompileInProcess() as this =
             | Error () -> false
         with
         | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false
-    override _.DoWeave asm = weaveGrammars asm precompiledGrammars
+    override _.DoWeave asm = PrecompilerInProcess.weaveGrammars asm precompiledGrammars
     interface ICancelableTask with
         member _.Cancel() = cts.Cancel()

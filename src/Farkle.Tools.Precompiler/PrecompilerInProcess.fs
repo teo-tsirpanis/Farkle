@@ -6,7 +6,7 @@
 /// Farkle's in-process precompiler.
 /// Only supports running on .NET Core and .NET. That does not mean
 /// it only supports precompiling assemblies targeting these frameworks.
-module Farkle.Tools.PrecompilerInProcess
+module Farkle.Tools.Precompiler.PrecompilerInProcess
 
 open Farkle.Builder
 open Farkle.Grammar

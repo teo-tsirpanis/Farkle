@@ -52,16 +52,17 @@ let private run argv =
         | :? InvalidOperationException ->
             eprintfn "%s" ProjectResolver.cannotFindMSBuildMessage
             exit 1
-        let protocolVersion, inputFile, outputFile =
+        let inputFile, outputFile =
             match argv with
-            | [|_verb; x1; x2; x3|] -> x1, x2, x3
+            | [|_verb; version; _; _|] when version <> ipcProtocolVersion ->
+                eprintfn "Precompiler worker protocol mismatch."
+                exit 1
+            | [|_verb; _; x1; x2|] -> x1, x2
             | _ ->
                 eprintfn "Usage: dotnet tool run farkle -- precompiler-worker %s <input file> <output file>" ipcProtocolVersion
                 exit 2
         let input = readFromJsonFile<PrecompilerWorkerInput> inputFile
 
-        if protocolVersion <> ipcProtocolVersion then
-            eprintfn "Precompiler worker protocol mismatch; got %s but expected %s." protocolVersion ipcProtocolVersion
         let output = doIt input
 
         writeToJsonFile outputFile output

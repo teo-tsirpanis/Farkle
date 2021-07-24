@@ -39,7 +39,8 @@ type FarklePrecompileIpc() =
             let command = Command.Run("dotnet", [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"|])
             let toolFound = command.Result.ExitCode = 2
             if not toolFound then
-                this.Log.LogError("The .NET tool Farkle.Tools is not installed or cannot be found.")
+                this.Log.LogError("The .NET tool Farkle.Tools is not installed or cannot be found. \
+It is required when the precompiler runs outside of the modern .NET SDK.")
             toolFound
         else
             let customWorkerExists = File.Exists this.CustomWorkerPath
@@ -95,10 +96,10 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
             match this.ExecuteImpl() with
             | Ok success -> success
             | Error () ->
-                this.Log.LogMessage(MessageImportance.High, "Make sure that a matching version of the package \
-Farkle.Tools is installed.")
-                this.Log.LogMessage(MessageImportance.High, "Otherwise consider reporting the problem on GitHub. \
-In the meantime, try building your project with the .NET SDK.")
+                this.Log.LogError("Make sure that a matching version of \
+Farkle.Tools is installed. If the problem persists, consider reporting it on GitHub. \
+In the meantime, try building your project with the modern .NET SDK on which the precompiler is more stable. \
+You can learn more at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
                 false
         else
            false

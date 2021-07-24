@@ -18,19 +18,17 @@
   <!--TODO: Find better error messages.-->
   <Target
       Name="FailPrecompilerOnNetFramework"
-      Condition="false AND $(MSBuildRuntimeType) != Core"
-      BeforeTargets="FarklePrecompileGrammars">
+      Condition="$(MSBuildRuntimeType) != Core AND $(BuildingInsideVisualStudio) != true"
+      BeforeTargets="FarkleRunPrecompiler">
     <PropertyGroup>
-      <_CommonPrecompilerErrorExplanation>You have to use commands from the .NET SDK, like "dotnet build". See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</_CommonPrecompilerErrorExplanation>
+      <_RiderWarning2>You can learn how to enable it in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</_RiderWarning2>
     </PropertyGroup>
-    <Error
-        Condition="$(BuildingInsideVisualStudio) == true"
-        Text="Farkle's precompiler does not currently support running in Visual Studio. $(_CommonPrecompilerErrorExplanation)"/>
-    <Error
-        Condition="$(MSBuildRuntimeType) == Mono"
-        Text="Farkle's precompiler does not support running in Mono. $(_CommonPrecompilerErrorExplanation)"/>
-    <Error
-        Text="Farkle's precompiler is not supported in .NET Framework editions of MSBuild. $(_CommonPrecompilerErrorExplanation)"/>
+    <Warning
+        Condition="$(BuildingByReSharper) == true"
+        Text="Farkle's precompiler works best on Rider when using an MSBuild installation from the .NET SDK. $(_RiderWarning2)"/>
+    <Warning
+        Condition="$(BuildingByReSharper) != true"
+        Text="Farkle's precompiler works best when using modern .NET SDK commands, like 'dotnet build' or 'dotnet msbuild' instead of 'msbuild'."/>
   </Target>
 
   <Target

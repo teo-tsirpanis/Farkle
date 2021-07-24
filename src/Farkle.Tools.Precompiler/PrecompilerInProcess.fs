@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 /// Farkle's in-process precompiler.
-/// Only supports running on .NET Core and .NET 5+. That does not mean
+/// Only supports running on .NET Core and .NET. That does not mean
 /// it only supports precompiling assemblies targeting these frameworks.
 module Farkle.Tools.PrecompilerInProcess
 

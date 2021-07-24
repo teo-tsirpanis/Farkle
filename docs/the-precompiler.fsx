@@ -5,11 +5,11 @@
 (**
 # Farkle's precompiler
 
-Every time an app using Farkle starts, it generates the parser tables for its grammars. This process takes some time, and it take even more, if the app does not reuse the runtime Farkles it creates.
+Every time an app using Farkle starts, it builds the parser tables for its grammars. This process takes some time and it will take even more if the app does not reuse the runtime Farkles it creates.
 
-Most apps need to parse a static grammar whose specification never changes between program executions. For example, a compiler or a JSON parsing library will parse text from the same language every time you use them. Farkle would spend time generating these parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a REST API server parsing lots of input strings, but for a compiler that parses only one file, building that grammar every time it is executed would impose an unnecessary overhead, maybe more than the time spent for the rest of the program, if the grammar is big.
+Most apps need to parse a static grammar whose specification never changes between program executions. For example, a compiler or a JSON parsing library will parse text from the same language every time you use them. Farkle would spend time building these parsing tables that do not depend on user input and will always be the same. It wouldn't hurt a program like a web app parsing lots of input strings, but for a compiler that parses only one file per invocation, building that grammar every time the program runs would impose an unnecessary overhead, maybe more than the time spent for the rest of the program if the grammar is big.
 
-What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's developemnt lifecycle?
+What is more, Farkle does not report any grammar error (such as an LALR conflict) until it's too late: text was attempted to be parsed with a faulty grammar. Wouldn't it be better if these errors were caught earlier in the app's development lifecycle?
 
 One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of Farkle's grammars being objects defined in code. Instead of building them every time, the grammar's parser tables are built _ahead of time_ and stored in the program's assembly when it gets compiled. When that program is executed, instead of building the parser tables, it loads the precompiled grammar from the assembly, which is orders of magnitude faster.
 
@@ -98,9 +98,9 @@ public class AssemblyB {
 
 The precompiler will raise warnings to help you abide by the rules above.
 
-Furthermore, all precompilable designtime Farkles within an assembly must have different names, or an error will be raised during precompiling. You can use the `DesigntimeFarkle.rename` function or the `Rename` extension method to rename a designtime Farkle before marking it as precompilable.
+All precompilable designtime Farkles within an assembly must have different names, or an error will be raised. You can use the `DesigntimeFarkle.rename` function or the `Rename` extension method to rename a designtime Farkle before marking it as precompilable.
 
-Multiple field references to the same precompilable designtime Farkle do not pose a problem and will be precompiled only once.
+Multiple fields referencing the same precompilable designtime Farkle do not pose a problem and will be precompiled only once.
 
 ### Preparing your project
 
@@ -108,8 +108,9 @@ With your designtime Farkles being ready to be precompiled, it's time to prepare
 
 ``` xml
 <ItemGroup>
-    <PackageReference Include="Farkle" Version="6.*" />
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="6.*" PrivateAssets="all" />
+    <!-- The example's version numbers might be outdated. -->
+    <PackageReference Include="Farkle" Version="6.3.0" />
+    <PackageReference Include="Farkle.Tools.MSBuild" Version="6.3.0" PrivateAssets="all" />
 </ItemGroup>
 ```
 
@@ -162,15 +163,23 @@ You can always call a non-deterministic function like `DateTime.Now` that will m
 
 ### Building from an IDE
 
-And last but not least, the precompiler will not work when running a .NET Framework-based edition of MSBuild. This includes building from Visual Studio for Windows. The recommended way to build an app that uses the precompiler is through `dotnet build` and its friends. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed that would solve the problem but it won't be implemented anytime soon.
+And last but not least, until version 6.3.0, the precompiler would not work when building an app on a .NET Framework edition of MSBuild, such as Visual Studio for Windows or the `msbuild` command.
 
-This doesn't mean that the precompiler won't work on .NET Framework assemblies; you have to use the SDK-style project format and build with the .NET Core SDK; it will normally work.
+.NET Core and .NET (these terms are used interchangeably) have APIs that allow the precompiler to dynamically load an assembly, get its precompilable grammars, and unload it. To do the same thing on .NET Framework was extremely hard, which is why Farkle runs the precompiler on an external process, known as _precompiler worker_. To setup the precompiler worker, install the .NET tool `Farkle.Tools` with the following command:
 
-> __Note:__ Precompiling a .NET Framework assembly will load it to the .NET Core-based precompiler. While it sometimes works due to a .NET Core compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features. It might work, it might fail, who knows? And why are you still using the .NET Framework?
+```
+dotnet tool install Farkle.Tools
+```
 
-Rider however _can_ use the precompiler with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET Core SDK (it typically has a `.dll` extension).
+The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Otherwise errors are very likely to occur.
+
+The recommended way to build an app that uses the precompiler is through .NET SDK commands like `dotnet build`, `dotnet run` and `dotnet msbuild`. It is faster, more stable and more supported. Visual Studio for Windows cannot run MSBuild on .NET. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed but Microsoft responded that it won't be implemented anytime soon. Readers of this guide that are affected are encouraged to upvote the above suggestion. When not using Visual Studio for Windows, Farkle will raise a warning suggesting you to move to the .NET SDK.
+
+Rider however can use the .NET edition of MSBuild with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET SDK (it typically has a `.dll` extension).
 
 ![The Settings window in JetBrains Rider](img/rider_msbuild_workaround.png)
+
+The fact that the precompiler runs on .NET Core doesn't mean that it won't work on projects targeting the .NET Framework. Precompiling a .NET Framework assembly will still load it to the .NET Core-based precompiler. While it sometimes works due to a compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features like ASP.NET Web Forms. In such scenarios you are recommended to move your Farkle-specific code to a separate library targeting .NET Standard.
 
 ---
 

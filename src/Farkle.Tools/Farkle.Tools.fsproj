@@ -8,12 +8,9 @@
     <ToolCommandName>farkle</ToolCommandName>
     <Title>The Farkle Command Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>
-    <Description>This package contains a command-line tool that makes development with Farkle easier and more automatic.
+    <Description>Farkle's command line helper tool. It can list the precompiled grammars of an assembly and create templated text like HTML pages from them.
 
-      Specifically, it is a modern replacement for the GOLD Parser's "Create Skeleton Program", powered by the Scriban templating engine.
-
-      After you install it as a CLI tool, pass the "--help" argument to learn how it works.
-    </Description>
+Installing this tool is also required when building a project that uses the precompiler from Visual Studio for Windows, or with the classic "msbuild" command.</Description>
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>

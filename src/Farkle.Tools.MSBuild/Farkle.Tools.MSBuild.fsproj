@@ -2,11 +2,9 @@
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;netstandard2.0</TargetFrameworks>
-    <Description>Farkle's integration with MSBuild. This package supports the precompiler.
+    <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.
 
-Users of it must use .NET SDK commands like "dotnet build". Building projects that use this package, with Visual Studio or with the .NET Framework-based "msbuild" command is not supported.
-
-See more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description>
+Building projects that use the precompiler with Visual Studio for Windows or with the .NET Framework-based "msbuild" command also requires a matching version of https://nuget.org/packages/Farkle.Tools to be installed. Learn more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>

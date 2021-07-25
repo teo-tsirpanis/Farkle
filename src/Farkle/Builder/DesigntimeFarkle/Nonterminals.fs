@@ -44,35 +44,32 @@ type internal AbstractNonterminal =
     /// The productions of the nonterminal.
     abstract Productions: AbstractProduction list
 
-[<NoComparison; ReferenceEquality>]
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
 /// All productions of a nonterminal have the same type parameter.</typeparam>
-type Nonterminal<[<Nullable(2uy)>] 'T> = internal {
-    _Name: string
-    Productions: SetOnce<AbstractProduction list>
-}
-with
+type Nonterminal<[<Nullable(2uy)>] 'T> private(name, productions: SetOnce<AbstractProduction list>) =
+    do nullCheck (nameof name) name
+    internal new(name) = Nonterminal<'T>(name, SetOnce<_>.Create())
     /// The nonterminal's name.
-    member x.Name = x._Name
+    member _.Name = name
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must only be called once, and before
     /// building a designtime Farkle containing this one.
     /// Subsequent calls (and these after building) are ignored.</remarks>
-    member x.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
+    member _.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
         prods
         |> Seq.map (fun x -> x :> AbstractProduction)
         |> List.ofSeq
         |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
-        |> x.Productions.TrySet
+        |> productions.TrySet
         |> ignore
     interface AbstractNonterminal with
         // If they are already set, nothing will happen.
         // If they haven't been set, they will be permanently
         // set to a broken state.
-        member x.Freeze() = x.Productions.TrySet [] |> ignore
-        member x.Productions = x.Productions.ValueOrDefault []
+        member _.Freeze() = productions.TrySet [] |> ignore
+        member _.Productions = productions.ValueOrDefault []
     interface DesigntimeFarkle with
-        member x.Name = x._Name
-        member __.Metadata = GrammarMetadata.Default
+        member _.Name = name
+        member _.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>

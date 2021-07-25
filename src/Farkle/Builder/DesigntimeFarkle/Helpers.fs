@@ -63,11 +63,7 @@ type Nonterminal =
     /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
     /// <remarks>If the productions are not set, an error will be raised on building.</remarks>
     static member Create<[<Nullable(0uy)>] 'T>(name): Nonterminal<'T> =
-        nullCheck "name" name
-        {
-            _Name = name
-            Productions = SetOnce<_>.Create()
-        }
+        Nonterminal<'T> name
 
     /// <summary>Creates a <see cref="DesigntimeFarkle{T}"/> that represents
     /// a nonterminal with a given name and productions.</summary>

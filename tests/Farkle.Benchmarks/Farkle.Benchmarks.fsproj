@@ -7,7 +7,7 @@
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JsonSyntaxCheckers.fs" />

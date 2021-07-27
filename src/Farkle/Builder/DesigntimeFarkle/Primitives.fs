@@ -16,6 +16,10 @@ open System.Runtime.CompilerServices
 /// <para>User code must not implement this interface,
 /// or an exception might be thrown.</para></remarks>
 /// <seealso cref="DesigntimeFarkle{T}"/>
+// A valid designtime farkle must either be/implement one of the fundamental
+// designtime Farkle classes/interfaces, or implement DesigntimeFarkleWrapper.
+// Because all these are internal, implementing a valid designtime Farkle outside
+// this library is impossible.
 type DesigntimeFarkle =
     /// <summary>The designtime Farkle's name.</summary>
     /// <remarks>A totally informative property, it matches
@@ -42,24 +46,31 @@ type DesigntimeFarkle =
 type DesigntimeFarkle< [<CovariantOut; Nullable(2uy)>] 'T> =
     inherit DesigntimeFarkle
 
+/// This interface must be implemented by designtime Farkle types that
+/// are publicly exposed as a descendant of the DesigntimeFarkle interface.
+/// In other words these types include all typed designtime Farkles and typed and untyped nonterminals.
+type internal IExposedAsDesigntimeFarkleChild =
+    /// Creates a new designtime Farkle with the following name and metadata.
+    /// The user-visible type of the returned designtime Farkle must not
+    /// change, i.e. if this objectimplements a typed designtime Farkle, the
+    /// resulting type must implement a typed designtime Farkle of the same type.
+    abstract WithMetadataSameType: name: string -> metadata: GrammarMetadata -> DesigntimeFarkle
+
 type internal DesigntimeFarkleWrapper =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
     inherit DesigntimeFarkle
 
-[<NoComparison; ReferenceEquality>]
-type internal DesigntimeFarkleWrapper<'T> = {
-    InnerDesigntimeFarkle: DesigntimeFarkle
-    Name: string
-    Metadata: GrammarMetadata
-}
-with
+type internal DesigntimeFarkleWrapper<'T>(name, metadata, inner) =
     static member Create (df: DesigntimeFarkle<'T>) =
         match df with
         | :? DesigntimeFarkleWrapper<'T> as dfw -> dfw
-        | _ -> {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = GrammarMetadata.Default}
+        | _ -> failwith ""
     interface DesigntimeFarkle with
-        member x.Name = x.Name
-        member x.Metadata = x.Metadata
+        member _.Name = name
+        member _.Metadata = metadata
     interface DesigntimeFarkleWrapper with
-        member x.InnerDesigntimeFarkle = x.InnerDesigntimeFarkle
+        member _.InnerDesigntimeFarkle = inner
     interface DesigntimeFarkle<'T>
+    interface IExposedAsDesigntimeFarkleChild with
+        member _.WithMetadataSameType name metadata =
+            DesigntimeFarkleWrapper<'T>(name, metadata, inner) :> _

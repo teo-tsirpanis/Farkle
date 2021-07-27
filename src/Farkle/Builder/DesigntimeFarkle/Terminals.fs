@@ -21,6 +21,8 @@ type internal AbstractTerminal =
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
 type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
+    do nullCheck (nameof name) name
+    do nullCheck (nameof fTransform) fTransform
     let tData = TransformerData.Create fTransform
     interface AbstractTerminal with
         member _.Regex = regex
@@ -29,6 +31,9 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
         member _.Name = name
         member _.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
+    interface IExposedAsDesigntimeFarkleChild with
+        member x.WithMetadataSameType name metadata =
+            DesigntimeFarkleWrapper<'T>(name, metadata, x) :> _
 
 /// <summary>A terminal that is not backed by the tokenizer.</summary>
 /// <remarks><para>Virtual terminals don't have a regex associated with them

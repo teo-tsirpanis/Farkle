@@ -14,3 +14,7 @@ let whitespaceCharacters = set ['\t'; '\n'; '\r'; ' ']
 /// but without those it considers to be newlines.
 /// It is made of exactly the horizontal tab and the space.
 let whitespaceCharactersNoNewLine = set ['\t'; ' ']
+
+/// Throws the exception for when a custom implementation of
+/// the designtime Farkle interface was detected, which is prohibited.
+let throwCustomDesigntimeFarkle() = invalidOp "Using a custom implementation of the DesigntimeFarkle interface is not allowed."

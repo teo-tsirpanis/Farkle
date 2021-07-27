@@ -134,7 +134,7 @@ module internal DesigntimeFarkleAnalyze =
                         | :? AbstractLineGroup as lg -> TerminalEquivalent.LineGroup lg
                         | :? AbstractBlockGroup as bg -> TerminalEquivalent.BlockGroup bg
                         | :? VirtualTerminal as vt -> TerminalEquivalent.VirtualTerminal vt
-                        | _ -> invalidOp "Using a custom implementation of the DesigntimeFarkle interface is not allowed."
+                        | _ -> BuilderCommon.throwCustomDesigntimeFarkle()
                     terminalEquivalents.Add(te.CreateNamed name)
 
         visit df

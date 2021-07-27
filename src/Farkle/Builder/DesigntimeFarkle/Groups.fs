@@ -30,6 +30,9 @@ type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
         member _.GroupStart = groupStart
         member _.Transformer = tData
     interface DesigntimeFarkle<'T>
+    interface IExposedAsDesigntimeFarkleChild with
+        member x.WithMetadataSameType name metadata =
+            DesigntimeFarkleWrapper<'T>(name, metadata, x) :> _
 
 /// The base, untyped interface of line groups.
 /// A line group starts with a literal and ends when the line changes.

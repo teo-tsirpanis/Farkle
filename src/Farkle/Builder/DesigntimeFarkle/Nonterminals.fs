@@ -47,16 +47,29 @@ type internal AbstractNonterminal =
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
 /// All productions of a nonterminal have the same type parameter.</typeparam>
-type Nonterminal<[<Nullable(2uy)>] 'T> private(name, productions: SetOnce<AbstractProduction list>) =
+/// <remarks>User code must not inherit from this class,
+/// or an exception might be thrown.</remarks>
+[<AbstractClass>]
+type Nonterminal<[<Nullable(2uy)>] 'T> internal(name, metadata) =
     do nullCheck (nameof name) name
-    internal new(name) = Nonterminal<'T>(name, SetOnce<_>.Create())
     /// The nonterminal's name.
     member _.Name = name
     /// <summary>Sets the nonterminal's productions.</summary>
     /// <remarks>This method must only be called once, and before
-    /// building a designtime Farkle containing this one.
-    /// Subsequent calls (and these after building) are ignored.</remarks>
-    member _.SetProductions(firstProd: Production<'T>, [<ParamArray>] prods: Production<'T> []) =
+    /// building a designtime Farkle containing this nonterminal.
+    /// Subsequent calls, and these after building are ignored.</remarks>
+    abstract SetProductions: firstProd: Production<'T> * [<ParamArray>] prods: Production<'T> [] -> unit
+    interface DesigntimeFarkle with
+        member _.Name = name
+        member _.Metadata = metadata
+    interface DesigntimeFarkle<'T>
+
+[<Sealed>]
+type internal NonterminalReal<'T> internal(name) =
+    inherit Nonterminal<'T>(name, GrammarMetadata.Default)
+
+    let productions = SetOnce<AbstractProduction list>.Create()
+    override _.SetProductions(firstProd, prods) =
         prods
         |> Seq.map (fun x -> x :> AbstractProduction)
         |> List.ofSeq
@@ -69,7 +82,16 @@ type Nonterminal<[<Nullable(2uy)>] 'T> private(name, productions: SetOnce<Abstra
         // set to a broken state.
         member _.Freeze() = productions.TrySet [] |> ignore
         member _.Productions = productions.ValueOrDefault []
-    interface DesigntimeFarkle with
-        member _.Name = name
-        member _.Metadata = GrammarMetadata.Default
-    interface DesigntimeFarkle<'T>
+    interface IExposedAsDesigntimeFarkleChild with
+        member x.WithMetadataSameType name metadata =
+            NonterminalWrapper<'T>(name, metadata, x) :> _
+
+and [<Sealed>] private NonterminalWrapper<'T> internal(name, metadata, nontReal: NonterminalReal<'T>) =
+    inherit Nonterminal<'T>(name, metadata)
+    override _.SetProductions(firstProd, prods) =
+        nontReal.SetProductions(firstProd, prods)
+    interface DesigntimeFarkleWrapper with
+        member _.InnerDesigntimeFarkle = nontReal :> _
+    interface IExposedAsDesigntimeFarkleChild with
+        member _.WithMetadataSameType name metadata =
+            NonterminalWrapper<'T>(name, metadata, nontReal) :> _

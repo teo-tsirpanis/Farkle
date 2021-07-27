@@ -55,11 +55,20 @@ module DesigntimeFarkle =
         | :? Literal as lit -> box lit.Content
         | dfUnwrapped -> box dfUnwrapped
 
+    let private withMetadataEx<'T when 'T :> DesigntimeFarkle> name metadata (df: 'T) : 'T =
+        match box df with
+        | :? IExposedAsDesigntimeFarkleChild as x -> x.WithMetadataSameType name metadata |> unbox
+        | _ when typeof<'T> = typeof<DesigntimeFarkle> ->
+            {new DesigntimeFarkleWrapper with
+                member _.Name = name
+                member _.Metadata = metadata
+                member _.InnerDesigntimeFarkle = unwrap df} |> unbox
+        | _ -> BuilderCommon.throwCustomDesigntimeFarkle()
+
     /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
     /// Most other functions in this module are convenience wrappers over this
     /// function.
-    let withMetadata metadata df =
-        {DesigntimeFarkleWrapper.Create df with Metadata = metadata} :> DesigntimeFarkle<_>
+    let withMetadata metadata df = df |> withMetadataEx df.Name metadata
 
     /// Sets an `OperatorScope` object to a typed designtime Farkle.
     /// This function can be applied in designtime Farkles that are not the
@@ -76,13 +85,13 @@ module DesigntimeFarkle =
     let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
         match df with
         | :? DesigntimeFarkle<obj> as dfObj -> dfObj
-        | _ -> upcast {InnerDesigntimeFarkle = df; Name = df.Name; Metadata = df.Metadata}
+        | _ -> DesigntimeFarkleWrapper<obj>(df.Name, df.Metadata, df) :> _
 
     /// Changes the name of a designtime Farkle. This function can be applied
     /// anywhere, not only to the topmost one, like with other metadata changes.
     let rename newName df =
-        nullCheck "newName" newName
-        {DesigntimeFarkleWrapper.Create df with Name = newName} :> DesigntimeFarkle<_>
+        nullCheck (nameof newName) newName
+        df |> withMetadataEx newName df.Metadata
 
     /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
     let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}

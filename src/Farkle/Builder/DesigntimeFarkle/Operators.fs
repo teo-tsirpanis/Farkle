@@ -13,26 +13,6 @@ open Farkle.Collections
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
-type internal DesigntimeFarkleWithOperatorScope =
-    abstract OperatorScope: OperatorScope
-    inherit DesigntimeFarkleWrapper
-
-type private DesigntimeFarkleWithOperatorScope<'T>(df: DesigntimeFarkle<'T>, opScope) =
-    let df =
-        match df with
-        | :? DesigntimeFarkleWithOperatorScope<'T> as df -> df.InnerDesigntimeFarkle
-        | _ -> df
-    member private _.InnerDesigntimeFarkle = df
-
-    interface DesigntimeFarkle with
-        member _.Name = df.Name
-        member _.Metadata = df.Metadata
-    interface DesigntimeFarkleWrapper with
-        member _.InnerDesigntimeFarkle = upcast df
-    interface DesigntimeFarkleWithOperatorScope with
-        member _.OperatorScope = opScope
-    interface DesigntimeFarkle<'T>
-
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to set metadata for designtime Farkles.
 /// With few exceptions, these functions will have to be applied to the topmost
@@ -75,7 +55,7 @@ module DesigntimeFarkle =
     /// topmost ones. Applying this function many times will discard the existing
     /// operator scope.
     let withOperatorScope opScope df =
-        DesigntimeFarkleWithOperatorScope<_>(df, opScope) :> DesigntimeFarkle<_>
+        df |> withMetadata {df.Metadata with OperatorScope = opScope}
 
     /// Converts an untyped designtime Farkle to a typed one that returns an object.
     /// This function is used to apply metadata to untyped designtime Farkles.

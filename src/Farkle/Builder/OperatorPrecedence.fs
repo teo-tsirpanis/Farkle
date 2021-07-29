@@ -143,14 +143,17 @@ type PrecedenceOnly([<ParamArray>] symbols) =
 /// opt-in by passing a boolean argument of <see langword="true"/> in the first
 /// argument of the appropriate operator scope's constructor overloads.</para></remarks>
 type OperatorScope(resolvesReduceReduceConflicts, assocGroups: AssociativityGroup seq) =
+    static let empty = OperatorScope(false, [])
     let assocGroups = List.ofSeq assocGroups
-    new (resolveReduceReduceConflicts, [<ParamArray>] assocGroups) =
+    new (resolveReduceReduceConflicts, [<ParamArray>] assocGroups: AssociativityGroup[]) =
         OperatorScope(resolveReduceReduceConflicts, List.ofArray assocGroups)
-    new ([<ParamArray>] assocGroups) = OperatorScope(false, List.ofArray assocGroups)
+    new ([<ParamArray>] assocGroups: AssociativityGroup[]) = OperatorScope(false, List.ofArray assocGroups)
 
     /// Whether Farkle uses this operator scope to automatically resolve
     /// Reduce-Reduce conflicts. Because the impact of this feature is
     /// unknown, it is set to false by default. It can be changed by
     /// passing true to a constructor overload that accepts a boolean.
     member _.ResolvesReduceReduceConflict = resolvesReduceReduceConflicts
+    /// An operator scope that does not contain any associativity groups.
+    static member Empty = empty
     member internal _.AssociativityGroups = assocGroups

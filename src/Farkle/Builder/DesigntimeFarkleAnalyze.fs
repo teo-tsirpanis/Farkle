@@ -97,13 +97,10 @@ module internal DesigntimeFarkleAnalyze =
             member _.Freeze() = ()
             member _.Productions = productions
 
-    let rec private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
-        match df with
-        | :? DesigntimeFarkleWithOperatorScope as dfog ->
-            set.Add(dfog.OperatorScope) |> ignore
-        | :? DesigntimeFarkleWrapper as dfw ->
-            addOperatorScope set dfw.InnerDesigntimeFarkle
-        | _ -> ()
+    let private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
+        let scope = df.Metadata.OperatorScope
+        if scope <> OperatorScope.Empty && not (obj.ReferenceEquals(scope, null)) then
+            set.Add(scope) |> ignore
 
     let analyze (ct: CancellationToken) (df: DesigntimeFarkle) =
         let terminalEquivalents = ResizeArray()

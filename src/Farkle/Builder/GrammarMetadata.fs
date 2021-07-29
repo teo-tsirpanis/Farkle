@@ -5,6 +5,7 @@
 
 namespace rec Farkle.Builder
 
+open Farkle.Builder.OperatorPrecedence
 open System.Collections.Immutable
 
 /// A type of source code comment. As everybody might know,
@@ -17,8 +18,12 @@ type Comment =
     /// and ends when when the second literal is encountered.
     | BlockComment of BlockStart: string * BlockEnd: string
 
-/// The information about a grammar that cannot be expressed
-/// by its terminals and nonterminals.
+/// <summary>Additional information about a grammar to be built.</summary> 
+/// <remarks>Each <see cref="DesigntimeFarkle"/> has one, but the metadata object that
+/// will be taken into consideration when building will be the one belonging
+/// to the topmost designtime Farkle, on which a build function was called.
+/// An exception is made for the operator scopes, which are found in all
+/// designtime Farkles of a grammar.</remarks>
 type GrammarMetadata = {
     /// Whether the grammar is case sensitive.
     CaseSensitive: bool
@@ -31,6 +36,13 @@ type GrammarMetadata = {
     /// Any other symbols definable by a regular expression that will
     /// be discarded if they appear anywhere outside of any terminal.
     NoiseSymbols: (string * Regex) ImmutableList
+    /// <summary>An <see cref="OperatorScope"/> to assist
+    /// the conflict resolution when building the grammar.</summary>
+    /// <remarks>This property will be considered when set in
+    /// any designtime Farkle of a grammar; not only the
+    /// topmost one.</remarks>
+    /// <seealso cref="OperatorScope.Empty"/>
+    OperatorScope: OperatorScope
 }
 with
     /// The default metadata of a grammar.
@@ -48,6 +60,7 @@ module private GrammarMetadata =
         AutoWhitespace = true
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
+        OperatorScope = OperatorScope.Empty
     }
 
     let strict = {

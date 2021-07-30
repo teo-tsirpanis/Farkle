@@ -13,6 +13,7 @@ open Farkle.Parser
 open FsCheck
 open System
 open System.Collections.Immutable
+open System.Reflection
 
 type TestClass = TestClass of string
 with
@@ -194,6 +195,19 @@ let tests = testList "Designtime Farkle tests" [
         let (Nonterminal(_, newlineName)) =
             Terminal.Literal(newline.Name).BuildUntyped().GetGrammar().StartSymbol
         Expect.notEqual newlineName newline.Name "The terminal was not renamed"
+    }
+
+    test "Typed designtime Farkles and nonterminals implement the IExposedAsDesigntimeFarkleChild interface" {
+        let typesOfInterest = [typedefof<DesigntimeFarkle<_>>; typedefof<Nonterminal<_>>; typeof<Untyped.Nonterminal>]
+
+        typeof<DesigntimeFarkle>.Assembly.GetTypes()
+        |> Seq.filter (fun t -> typeof<DesigntimeFarkle>.IsAssignableFrom t)
+        |> Seq.filter (fun t ->
+            typesOfInterest
+            |> List.exists (fun toi -> toi <> t && toi.IsAssignableFrom t))
+        |> Flip.Expect.all
+            "Not all required interfaces implement IExposedAsDesigntimeFarkleChild"
+            (fun t -> typeof<IExposedAsDesigntimeFarkleChild>.IsAssignableFrom t)
     }
 
     test "Many block groups can be ended by the same symbol" {

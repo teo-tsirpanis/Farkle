@@ -148,9 +148,8 @@ let tests = testList "Designtime Farkle tests" [
     test "Terminals named 'Newline' cannot terminate line groups" {
         let runtime =
             "X" |||= [!& "newline"; !& "x1" .>> "x2"]
-            |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.addLineComment "//"
-            |> RuntimeFarkle.build
+            |> RuntimeFarkle.buildUntyped
         let testString = "// newline\nx1 x2"
 
         let result = runtime.Parse testString
@@ -170,7 +169,7 @@ let tests = testList "Designtime Farkle tests" [
         let doTest name (df: DesigntimeFarkle) =
             let expectedName = sprintf "%s Renamed" df.Name
             let (Nonterminal(_, startSymbolName)) =
-                df.Cast().Rename(expectedName).BuildUntyped().GetGrammar().StartSymbol
+                df.Rename(expectedName).BuildUntyped().GetGrammar().StartSymbol
             Expect.equal startSymbolName expectedName (sprintf "Renaming a %s had no effect" name)
 
         Terminals.int "Number"
@@ -187,7 +186,7 @@ let tests = testList "Designtime Farkle tests" [
 
     test "Newlines cannot be renamed" {
         let (Nonterminal(_, newlineRenamed)) =
-            newline.Cast().Rename("NewLine Renamed").BuildUntyped().GetGrammar().StartSymbol
+            newline.Rename("NewLine Renamed").BuildUntyped().GetGrammar().StartSymbol
         Expect.equal newlineRenamed newline.Name "newline was renamed while it shouldn't"
     }
 

@@ -44,9 +44,7 @@ USS Oriskany
     test "A grammar with only virtual terminals can be built" {
         let grammar =
             virtualTerminal "X"
-            |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.autoWhitespace false
-            :> DesigntimeFarkle
             |> DesigntimeFarkleBuild.createGrammarDefinition
             |> DesigntimeFarkleBuild.buildGrammarOnly
 

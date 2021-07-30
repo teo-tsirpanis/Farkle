@@ -115,7 +115,6 @@ let tests = testList "Parser tests" [
     test "Windows line endings inside block groups are correctly handled" {
         let rf =
             literal "hello"
-            |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.addBlockComment "/*" "*/"
             |> RuntimeFarkle.buildUntyped
         let testString = "/*\r\n\r\n\r\n*/ hell"

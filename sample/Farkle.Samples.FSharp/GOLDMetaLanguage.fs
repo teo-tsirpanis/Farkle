@@ -166,9 +166,7 @@ let designtime =
     content.SetProductions(!% content .>> definition, !% definition)
 
     "Grammar" |||= [!% nlOpt .>> content]
-    |> DesigntimeFarkle.cast
     |> DesigntimeFarkle.addBlockComment "!*" "*!"
     |> DesigntimeFarkle.addLineComment "!"
-    :> DesigntimeFarkle
 
 let runtime = RuntimeFarkle.buildUntyped designtime

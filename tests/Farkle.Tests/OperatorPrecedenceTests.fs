@@ -42,7 +42,6 @@ let tests = testList "Operator precedence tests" [
             )
 
             expr
-            |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.withOperatorScope opScope2
             |> DesigntimeFarkleBuild.createGrammarDefinition
             |> DesigntimeFarkleBuild.buildGrammarOnly
@@ -73,10 +72,8 @@ let tests = testList "Operator precedence tests" [
                 )
 
             expr
-            |> DesigntimeFarkle.cast
             |> DesigntimeFarkle.autoWhitespace false
             |> DesigntimeFarkle.withOperatorScope opScope
-            :> DesigntimeFarkle
 
         let grammarNotResolved =
             mkGrammar false

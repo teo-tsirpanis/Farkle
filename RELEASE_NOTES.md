@@ -1,6 +1,8 @@
 #### 6.3.0
 * __Minor breaking change:__ Text with legacy CR line endings is no longer supported. Since this version, they will no longer be recognized as line endings by position tracking. When Farkle's next major version gets released, they will cause lexical errors.
+* __Minor breaking change:__ The `Farkle.Builder.GrammarMetadata` type has an additional field of type `Farkle.Builder.OperatorPrecedence.OperatorScope`. User code that does not directly set metadata to designtime Farkles is not affected.
 * The precompiler now works on Visual Studio for Windows. In this case only, it requires to install the .NET tool `Farkle.Tools`.
+* Any type of designtime Farkle can now be renamed or set metadata like case sensitivity, comments or operator scopes, without using the `DesigntimeFarkle.cast` function. There were some binary breaking changes but none is source breaking.
 * Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.
 
 #### 6.2.0 - 17-05-2021
@@ -33,6 +35,7 @@
 * __Breaking change:__ Removed support for generating legacy grammar skeleton files from MSBuild using the `Farkle` item.
 * __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
+* Farkle's builder supports defining operator precedence and associativity to resolve conflicts. The quick start guide was updated.
 * Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Dynamic code generation will be applied to post-processors that are frequently used, in a fashion similar to .NET's tiered compilation, regardless of whether their designtime Farkle is precompilable.
 * Build error reporting is improved. More build errors will be reported at the same time, without having to fix one to show the next.
@@ -157,14 +160,12 @@
 #### 3.1.0-alpha003 - 10-10-2018
 * The `GOLDParser` API was replaced in favor of the `RuntimeFarkle` type. This means that the parsing and post-processing operations are unified.
 * The code became cleaner and faster yet again, with a notable optimization in the tokenizer.
-* This release coincided with the author's birthday. 🎂
 
 #### 3.1.0-alpha002 - 14-09-2018
 * The EGT file reader was replaced with a newer one which is significantly more performant.
 * The `GOLDParser` class was removed in favor of the new module with the same name.
 
 #### 3.1.0-alpha001 - 06-09-2018
-* The versioning scheme changed. Even (and zero) minor and patch versions signify stable releases, while odd ones signify unstable releases. For example, this is an unstable release.
 * The functions for the `RuntimeFarkle` type are in their own module.
 * The reader for GOLD Parser EGT files is now based on a BinaryReader, and is faster and more lightweight.
 * The parser directly generates Abstract Syntax trees, eliminating the need to convert them from reductions, a very hard-to-use type.

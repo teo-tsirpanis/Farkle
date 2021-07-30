@@ -16,7 +16,7 @@ The comparison between Farkle, [FParsec] and [FsLexYacc] is outlined in the foll
 |Lexer|Less decoupled|No|More decoupled|
 |Lexing algorithm|DFAs|N/A|DFAs|
 |Left recursion support|Yes|No|Yes|
-|Operator precedence support|Planned|Yes|Yes|
+|Operator precedence support|Yes|Yes|Yes|
 |Whitespace/Comment handling|Easy|Harder|Hard|
 |Parsing speed|Good|Good|Subpar|
 |MSBuild integration|Optional|N/A|Required|
@@ -53,7 +53,7 @@ In Farkle the tokenizer and the parser are separate but using them separately to
 
 FParsec and FsYacc support operator precedence and associativity to more intuitively write grammars (and automatically resolve LALR conflicts in the latter case). The former does it [via a special type][FParsec-operators], and the latter has direct support in the grammar definition files.
 
-Farkle does not yet support operator precedence but will add it in a future release. Until then, productions will have to be written in a way that does not produce LALR conflicts.
+Farkle added support for operator precedence and associativity in version 6.0.0, through objects named _operator scopes_. [The quick start guide has been updated](quickstart.html#Operator-Precedence) to talk about them.
 
 ### Whitespace/comment handling
 
@@ -69,7 +69,7 @@ This is quite the controversial topic. Farkle was made with performance in mind,
 
 On such a big file, Farkle was shown to be faster than the other two libraries, but on very small JSON files, FParsec was winning. FsLexYacc was in both cases the slowest of the three.
 
-> __Note:__ FParsec comes in another flavor called "Big Data Edition" which uses unsafe code for increased performance. The performance of that alternative edition was not taken into account because it would be unfair towards the other two libraries that don't use unsafe code.
+> __Note:__ FParsec comes in another flavor called "Big Data Edition" which uses unsafe code for increased performance. The performance of that alternative edition was not taken into account because it only targets the .NET Framework.
 
 > __Disclaimer:__ The performance of a parsing library is a subjective value that depends on the hardware it is running, the way the application uses the library and lots of other things. Parsing JSON files is just a narrow measurement. If you are writing a parser for a performance-sensitive app, you should profile it yourself and only trust your numbers.
 
@@ -93,7 +93,7 @@ Since FParsec is just a library and does not require tooling support, C# users c
 
 Another tough topic. FParsec and FsLexYacc are mature projects, used in various applications for a long time, and their feature set seems stabilized. Owing to their longevity, they have a community around them. Even Microsoft is using them in some of its products: FParsec in [the parser][QSharp-parser] for the Q# programming language and FsLexYacc in [the parser][FSharp-parser] [and lexer][FSharp-lexer] for F# itself.
 
-Farkle on the other hand is relatively new. It started being developed in 2017 and was not a standalone parsing library until version 5.1.0 was released in January 2020. It is still actively developed, with lots of big features slated to arrive. It also means that Farkle's API is still unstable, with minor breaking changes even in minor releases. Its development is a one-man show but other developers are more than welcome to contribute.
+Farkle on the other hand is relatively new. It started being developed in 2017 and did not become a standalone parsing library until version 5.1.0 was released in January 2020. It is still actively developed, with lots of big features slated to arrive. It also means that Farkle's API is still unstable, with minor breaking changes even in minor releases. Its development is a one-man show but other developers are more than welcome to contribute.
 
 ## Some C\# parsing projects
 

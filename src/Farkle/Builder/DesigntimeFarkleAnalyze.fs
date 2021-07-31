@@ -94,8 +94,7 @@ module internal DesigntimeFarkleAnalyze =
             member _.Name = df.Name
             member _.Metadata = GrammarMetadata.Default
         interface AbstractNonterminal with
-            member _.Freeze() = ()
-            member _.Productions = productions
+            member _.FreezeAndGetProductions() = productions
 
     let private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
         let scope = df.Metadata.OperatorScope
@@ -117,7 +116,6 @@ module internal DesigntimeFarkleAnalyze =
             | :? AbstractNonterminal as nont ->
                 if visited.Add nont then
                     addOperatorScope operatorScopes df
-                    nont.Freeze()
                     nonterminals.Add(Named(name, nont))
                     nonterminalsToProcess.Enqueue(nont)
             | dfUnwrapped ->
@@ -138,7 +136,7 @@ module internal DesigntimeFarkleAnalyze =
         while nonterminalsToProcess.Count <> 0 do
             ct.ThrowIfCancellationRequested()
             let nont = nonterminalsToProcess.Dequeue()
-            for prod in nont.Productions do
+            for prod in nont.FreezeAndGetProductions() do
                 productions.Add(nont, prod)
                 for x in prod.Members do visit x
 

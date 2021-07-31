@@ -10,45 +10,22 @@ open System.Collections.Generic
 open System.Reflection
 open System.Threading
 
-/// A reference type whose value can only be set once.
-type internal SetOnce< [<ComparisonConditionalOn; EqualityConditionalOn>] 'T> = private {
-    mutable _IsSet: int
-    mutable _Value: 'T
+/// Can be set only once even when called concurrently.
+/// This type is a mutable value type. It must be passed
+/// by reference and not stored in a readonly field or
+/// non-mutable let-bound value.
+[<Struct>]
+type internal Latch = private {
+    mutable IsSet: int
 }
 with
-    /// Tries to set this `SetOnce`'s value to an object.
-    /// Returns whether the value was changed.
-    /// This method is thread-safe, in the sense that only
-    /// one thread will ever be able to set a value to this object.
-    member x.TrySet v =
-        if Interlocked.Exchange(&x._IsSet, 1) = 0 then
-            x._Value <- v
-            Thread.MemoryBarrier()
-            true
-        else
-            false
-    /// Returns whether this `SetOnce` has a value set.
-    member x.IsSet = x._IsSet <> 0
-    /// Returns the `SetOnce`'s value - if it is set - or the given object otherwise.
-    member x.ValueOrDefault(def) =
-        match x._IsSet with
-        | 0 -> def
-        | _ -> x._Value
-    /// Creates a `SetOnce` object whose value can be set at a later time.
-    /// (try to guess how many times)
-    static member Create() = {
-        _IsSet = 0
-        _Value = Unchecked.defaultof<_>
-    }
-    /// Creates a `SetOnce` object whose value is already set and cannot be changed.
-    static member Create x = {
-        _IsSet = 1
-        _Value = x
-    }
-    override x.ToString() =
-        match x._IsSet with
-        | 0 -> "(not set)"
-        | _ -> x._Value.ToString()
+    /// Creates a latch with the given initial state.
+    static member Create isSet = {IsSet = if isSet then 1 else 0}
+    /// Tries to set the latch. This function will return true
+    /// only once and on one thread per instance.
+    member x.TrySet() = Interlocked.Exchange(&x.IsSet, 1) = 0
+    /// Sets the latch without caring whether it actually succeeded.
+    member x.Set() = x.TrySet() |> ignore
 
 /// Functions to work with the `FSharp.Core.Result` type.
 module internal Result =

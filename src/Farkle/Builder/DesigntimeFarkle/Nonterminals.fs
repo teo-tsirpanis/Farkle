@@ -37,12 +37,9 @@ type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData,
 /// <seealso cref="Nonterminal{T}"/>
 type internal AbstractNonterminal =
     inherit DesigntimeFarkle
-    /// Makes the nonterminal's productions immutable.
-    /// This function was introduced to add more determinism
-    /// to the limited mutability allowed in nonterminals.
-    abstract Freeze: unit -> unit
-    /// The productions of the nonterminal.
-    abstract Productions: AbstractProduction list
+    /// Gets the productions of the nonterminal.
+    /// After this call they cannot be changed by any means.
+    abstract FreezeAndGetProductions: unit -> AbstractProduction list
 
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
@@ -68,20 +65,23 @@ type Nonterminal<[<Nullable(2uy)>] 'T> internal(name, metadata) =
 type internal NonterminalReal<'T> internal(name) =
     inherit Nonterminal<'T>(name, GrammarMetadata.Default)
 
-    let productions = SetOnce<AbstractProduction list>.Create()
+    let mutable latch = Latch.Create false
+    let mutable productions = []
+
     override _.SetProductions(firstProd, prods) =
-        prods
-        |> Seq.map (fun x -> x :> AbstractProduction)
-        |> List.ofSeq
-        |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
-        |> productions.TrySet
-        |> ignore
+        if latch.TrySet() then
+            productions <-
+                prods
+                |> Seq.map (fun x -> x :> AbstractProduction)
+                |> List.ofSeq
+                |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
     interface AbstractNonterminal with
         // If they are already set, nothing will happen.
         // If they haven't been set, they will be permanently
         // set to a broken state.
-        member _.Freeze() = productions.TrySet [] |> ignore
-        member _.Productions = productions.ValueOrDefault []
+        member _.FreezeAndGetProductions() =
+            latch.Set()
+            productions
     interface IExposedAsDesigntimeFarkleChild with
         member x.WithMetadataSameType name metadata =
             NonterminalWrapper<'T>(name, metadata, x) :> _

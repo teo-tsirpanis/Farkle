@@ -13,7 +13,6 @@ open Farkle.Parser
 open FsCheck
 open System
 open System.Collections.Immutable
-open System.Reflection
 
 type TestClass = TestClass of string
 with
@@ -131,8 +130,30 @@ let tests = testList "Designtime Farkle tests" [
         Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
         Expect.isSome (tryUnbox<T<obj>> t) "Transformers are not covariant"
         Expect.isNone (tryUnbox<T<obj>> tInt) "Transformers on value types are covariant while they shouldn't"
-        Expect.isSome (tryUnbox<Builder.F<obj>> f) "Fusers are not covariant"
-        Expect.isNone (tryUnbox<Builder.F<obj>> fInt) "Fusers on value types are covariant while they shouldn't"
+        Expect.isSome (tryUnbox<F<obj>> f) "Fusers are not covariant"
+        Expect.isNone (tryUnbox<F<obj>> fInt) "Fusers on value types are covariant while they shouldn't"
+    }
+
+    test "The productions of typed nonterminals can only be set once." {
+        let nont = nonterminal "N"
+        nont.SetProductions(empty =% 0)
+        // This call should be ignored. If not, building will fail.
+        nont.SetProductions(empty =% 0, empty =% 1)
+        nont
+        |> DesigntimeFarkleBuild.createGrammarDefinition
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> Flip.Expect.isOk "SetProductions can be set more than once."
+    }
+
+    test "The productions of untyped nonterminals can only be set once." {
+        let nont = nonterminalU "N"
+        nont.SetProductions(empty)
+        // This call should be ignored. If not, building will fail.
+        nont.SetProductions(empty, empty)
+        nont
+        |> DesigntimeFarkleBuild.createGrammarDefinition
+        |> DesigntimeFarkleBuild.buildGrammarOnly
+        |> Flip.Expect.isOk "SetProductions can be set more than once."
     }
 
     test "Farkle can properly handle line groups" {

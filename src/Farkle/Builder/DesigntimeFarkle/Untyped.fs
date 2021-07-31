@@ -48,17 +48,20 @@ type Nonterminal internal(name, metadata) =
 and [<Sealed>] internal NonterminalReal(name: string) =
     inherit Nonterminal(name, GrammarMetadata.Default)
 
-    let productions = SetOnce<AbstractProduction list>.Create()
+    let mutable latch = Latch.Create false
+    let mutable productions = []
+
     override _.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
-        prods
-        |> Seq.cast<AbstractProduction>
-        |> List.ofSeq
-        |> (fun prods -> firstProd :> AbstractProduction :: prods)
-        |> productions.TrySet
-        |> ignore
+        if latch.TrySet() then
+            productions <-
+                prods
+                |> Seq.cast<AbstractProduction>
+                |> List.ofSeq
+                |> (fun prods -> firstProd :> AbstractProduction :: prods)
     interface AbstractNonterminal with
-        member _.Freeze() = productions.TrySet [] |> ignore
-        member _.Productions = productions.ValueOrDefault []
+        member _.FreezeAndGetProductions() =
+            latch.Set()
+            productions
     interface IExposedAsDesigntimeFarkleChild with
         member x.WithMetadataSameType name metadata =
             NonterminalWrapper(name, metadata, x) :> _

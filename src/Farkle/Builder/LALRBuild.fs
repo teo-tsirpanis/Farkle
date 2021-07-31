@@ -198,13 +198,14 @@ let private computeLookaheadItems (ct: CancellationToken) fGetAllProductions (fi
     lookaheads
 
 /// Creates an LALR state table.
-let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSets: FirstSets) fResolveConflict conflicts startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
+let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSets: FirstSets) fResolveConflict errors startSymbol itemSets (lookaheadTables: LookaheadItemsTable) =
     IA itemSets
-    RA conflicts
+    RA errors
 
     let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
     emptyLookahead.Freeze()
     let states = ImmutableArray.CreateBuilder itemSets.Length
+    let statesConflicted = ImmutableArray.CreateBuilder itemSets.Length
     for itemSet in itemSets do
         ct.ThrowIfCancellationRequested()
         let index = uint32 itemSet.Index
@@ -230,8 +231,9 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                 | _ -> None
             )
             |> ImmutableDictionary.CreateRange
-        let actions =
+        let struct(actions, actionsConflicted) =
             let b = ImmutableDictionary.CreateBuilder()
+            let bConflicted = ImmutableDictionary.CreateBuilder()
             let mutable hasChosenNeither = false
             let addAction term action =
                 match b.TryGetValue(term) with
@@ -247,32 +249,41 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                     | CannotChoose reason ->
                         LALRConflict.Create index sym existingAction action reason
                         |> BuildError.LALRConflict
-                        |> conflicts.Add
+                        |> errors.Add
                 | false, _ -> b.Add(term, action)
+            let addActionConflicted k v =
+                match bConflicted.TryGetValue(k) with
+                | true, vs -> bConflicted.[k] <- v :: vs
+                | false, _ -> bConflicted.[k] <- [v]
             for item in itemSet.Goto do
                 match item with
                 | KeyValue(LALRSymbol.Terminal term, stateToShiftTo) ->
-                    addAction term (LALRAction.Shift(uint32 stateToShiftTo))
+                    let action = LALRAction.Shift(uint32 stateToShiftTo)
+                    addAction term action
+                    addActionConflicted term action
                 | _ -> ()
             for item in closedItem do
                 for idx in item.Lookahead do
-                    addAction firstSets.AllTerminals.[idx] (LALRAction.Reduce item.Item.Production)
-            b.ToImmutable()
-        let eofAction =
-            let rec resolveEOFConflict =
-                function
-                | [] -> None
-                | [x] -> Some x
-                | x1 :: x2 :: xs ->
-                    match fResolveConflict None x1 x2 with
-                    | ChooseOption1 -> resolveEOFConflict (x1 :: xs)
-                    | ChooseOption2 -> resolveEOFConflict (x2 :: xs)
-                    | ChooseNeither -> resolveEOFConflict xs
-                    | CannotChoose reason ->
-                        LALRConflict.Create index None x1 x2 reason
-                        |> BuildError.LALRConflict
-                        |> conflicts.Add
-                        resolveEOFConflict xs
+                    let term = firstSets.AllTerminals.[idx]
+                    let action = LALRAction.Reduce item.Item.Production
+                    addAction term action
+                    addActionConflicted term action
+            b.ToImmutable(), bConflicted.ToImmutable()
+        let rec resolveEOFConflict =
+            function
+            | [] -> None
+            | [x] -> Some x
+            | x1 :: x2 :: xs ->
+                match fResolveConflict None x1 x2 with
+                | ChooseOption1 -> resolveEOFConflict (x1 :: xs)
+                | ChooseOption2 -> resolveEOFConflict (x2 :: xs)
+                | ChooseNeither -> resolveEOFConflict xs
+                | CannotChoose reason ->
+                    LALRConflict.Create index None x1 x2 reason
+                    |> BuildError.LALRConflict
+                    |> errors.Add
+                    resolveEOFConflict xs
+        let eofActions =
             closedItem
             |> Seq.choose (fun item ->
                 if item.Lookahead.HasEnd then
@@ -280,12 +291,20 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                 else
                     None)
             |> List.ofSeq
+        let resolvedEofAction =
+            eofActions
             |> resolveEOFConflict
             |> Option.map (function
                 // Essentially, reducing <S'> -> <S> means accepting.
                 | LALRAction.Reduce {Head = head} when head = startSymbol -> LALRAction.Accept
                 | action -> action)
-        states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = eofAction}
+        states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = resolvedEofAction}
+        statesConflicted.Add {Index = index; Actions = actionsConflicted; GotoActions = gotoActions; EOFActions = eofActions}
+
+    if errors.Count <> 0 then
+        statesConflicted.MoveToImmutable()
+        |> BuildError.LALRConflictReport
+        |> errors.Add
     states.MoveToImmutable()
 
 /// <summary>Builds an LALR parsing table.</summary>
@@ -322,7 +341,7 @@ let buildProductionsToLALRStatesEx ct (options: BuildOptions)
     let firstSets = computeFirstSetMap ct terminals nonterminals productions
     let lookaheads = computeLookaheadItems ct fGetAllProductions firstSets kernelItems
 
-    let conflicts = ResizeArray()
+    let errors = ResizeArray()
     let resolveConflict term x1 x2 =
         match x1, x2, term with
         | LALRAction.Shift _, LALRAction.Reduce prod, Some term ->
@@ -335,10 +354,10 @@ let buildProductionsToLALRStatesEx ct (options: BuildOptions)
         // very soon thrown on an impossible conflict type.
         | _ -> CannotChoose NoPrecedenceInfo
 
-    match createLALRStates ct fGetAllProductions firstSets resolveConflict conflicts s' kernelItems lookaheads with
-    | theGloriousStateTable when conflicts.Count = 0 ->
+    match createLALRStates ct fGetAllProductions firstSets resolveConflict errors s' kernelItems lookaheads with
+    | theGloriousStateTable when errors.Count = 0 ->
         Ok theGloriousStateTable
-    | _ -> conflicts |> List.ofSeq |> Error
+    | _ -> errors |> List.ofSeq |> Error
 
 /// <summary>Builds an LALR parsing table.</summary>
 /// <param name="resolver">Used to resolve LALR conflicts.</param>

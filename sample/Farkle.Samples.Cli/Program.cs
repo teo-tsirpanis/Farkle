@@ -13,7 +13,7 @@ namespace Farkle.Samples.Cli
     {
         private const int IterationCount = 1000;
         private const string JsonPath = "../../tests/resources/big.json";
-        private static readonly string _jsonData = File.ReadAllText(JsonPath);
+        private static string _jsonData;
         private static readonly RuntimeFarkle<object> _syntaxCheck = CSharp.JSON.Runtime.SyntaxCheck();
 
         private static void Execute(Func<bool> f, string description)
@@ -37,6 +37,7 @@ namespace Farkle.Samples.Cli
 
         private static void Prepare()
         {
+            _jsonData = File.ReadAllText(JsonPath);
             Console.WriteLine("Warming the JIT up...");
             for (int i = 0; i < 30; i++)
                 if (!(BuildJson() && BuildGoldMetaLanguage() && ParseFarkleCSharp() && ParseFarkleFSharp() &&
@@ -49,9 +50,13 @@ namespace Farkle.Samples.Cli
         internal static void Main()
         {
             Console.WriteLine("This program was made to help profiling Farkle.");
-            var syntaxCheckRuntime = CSharp.JSON.Runtime.SyntaxCheck();
-            var data = File.ReadAllText(JsonPath);
-            for (int i = 0; i < 10_000; i++) syntaxCheckRuntime.Parse(data);
+            Prepare();
+            Execute(ParseFarkleCSharp, "Farkle C#");
+            Execute(ParseFarkleFSharp, "Farkle F#");
+            Execute(ParseFarkleSyntaxCheck, "Farkle Syntax Check");
+            Execute(BuildJson, "Farkle Build JSON");
+            Execute(BuildGoldMetaLanguage, "Farkle Build GOLD Meta-Language");
+            Execute(ParseChiron, "Chiron");
         }
     }
 }

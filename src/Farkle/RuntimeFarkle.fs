@@ -29,6 +29,10 @@ type FarkleError =
         | ParseError x -> x.ToString()
         | BuildError xs ->
             let sb = StringBuilder("Building the grammar failed:")
+            let xs =
+                // BuildError.LALRConflictReport is not reported
+                // because the LALRConflict errors are sufficient.
+                List.filter (function | BuildError.LALRConflictReport _ -> false | _ -> true) xs
             match xs with
             | [x] -> sb.Append(' ').Append(x) |> ignore
             | xs ->

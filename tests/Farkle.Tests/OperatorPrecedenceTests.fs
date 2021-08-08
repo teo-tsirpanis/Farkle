@@ -48,6 +48,7 @@ let tests = testList "Operator precedence tests" [
 
         Expect.wantError grammar "Building had succeeded"
         |> Flip.Expect.all "Not all conflicts could not be resolved because of different operator scopes" (function
+        | BuildError.LALRConflictReport _
         | BuildError.LALRConflict {Reason = DifferentOperatorScope} -> true
         | _ -> false)
     }
@@ -81,6 +82,7 @@ let tests = testList "Operator precedence tests" [
             |> DesigntimeFarkleBuild.buildGrammarOnly
         Expect.wantError grammarNotResolved "Building had succeeded"
         |> Flip.Expect.all "Not all conflicts could not be resolved because of the operator scope's inability" (function
+        | BuildError.LALRConflictReport _
         | BuildError.LALRConflict {Reason = CannotResolveReduceReduce; Type = ReduceReduce _} -> true
         | _ -> false)
 

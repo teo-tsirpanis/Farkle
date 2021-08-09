@@ -86,6 +86,7 @@ td {
 table {
     border-collapse: collapse;
     margin: 1em;
+    height: min-content;
     max-width: 33%;
 }
 

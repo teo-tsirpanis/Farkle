@@ -253,7 +253,10 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                 | false, _ -> b.Add(term, action)
             let addActionConflicted k v =
                 match bConflicted.TryGetValue(k) with
-                | true, vs -> bConflicted.[k] <- v :: vs
+                // Yes, we append a list, but it will happen very
+                // rarely; only on a conflict, and that list will
+                // even more rarely have more than 1-2 elements.
+                | true, vs -> bConflicted.[k] <- vs @ [v]
                 | false, _ -> bConflicted.[k] <- [v]
             for item in itemSet.Goto do
                 match item with

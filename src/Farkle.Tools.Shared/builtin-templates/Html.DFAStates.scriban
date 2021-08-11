@@ -31,7 +31,7 @@ https://opensource.org/licenses/MIT ~}}
                     $ae_state = $state.anything_else.value~}}
                 <tr>
                     <td class="dfa-goto">Go to <a href="#dfa{{$ae_state}}">State {{$ae_state}}</a></td>
-                    <td class="dfa-anything-else">In all other cases</td>
+                    <td class="dfa-anything-else">{{if $state.edges.empty?}}Always{{else}}In all other cases{{end}}</td>
                 </tr>
                 {{~end~}}
             </tbody>

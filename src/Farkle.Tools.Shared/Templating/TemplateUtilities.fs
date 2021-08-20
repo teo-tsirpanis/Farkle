@@ -28,18 +28,23 @@ module internal Utilities =
         member _.LoadAsync(_, _, templatePath) =
             ResourceLoader.load templatePath |> System.Threading.Tasks.ValueTask<_>}
 
-
     let loadHtml options (tc: TemplateContext) (so: ScriptObject) =
         tc.TemplateLoader <- htmlTemplateLoader
         let functions = HtmlFunctions options
         so.Import functions
         so.Import typeof<HtmlFunctions>
 
-    let loadGrammar g (so: ScriptObject) =
+    let loadGrammar g so =
         let functions = GrammarFunctions g
         functions.LoadInstanceMethods so
         so.Import functions
         so.Import typeof<GrammarFunctions>
+        
+    let loadConflictReport grammarDef errors so =
+        let functions = ConflictReportFunctions(grammarDef, errors)
+        functions.LoadInstanceMethods so
+        so.Import functions
+        so.Import typeof<ConflictReportFunctions>
 
     let createDefaultScriptObject() =
         let so = ScriptObject()

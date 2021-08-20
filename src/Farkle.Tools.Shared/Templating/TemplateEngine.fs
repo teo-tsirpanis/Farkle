@@ -71,8 +71,9 @@ module TemplateEngine =
             for propKey, propValue in options.AdditionalProperties do
                 so.SetValue(propKey, propValue, true)
             so.SetValue("properties", properties, true)
-        | LALRConflictReport ->
-            raise (System.NotImplementedException("Creating LALR conflict reports is not yet supported."))
+        | LALRConflictReport(grammarDef, errors) ->
+            Utilities.loadConflictReport grammarDef errors so
+            Utilities.loadHtml HtmlOptions.Default tc so
         tc.PushGlobal so
         tc
 

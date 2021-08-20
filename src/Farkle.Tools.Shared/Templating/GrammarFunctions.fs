@@ -5,6 +5,7 @@
 
 namespace Farkle.Tools.Templating
 
+open Farkle.Builder
 open Farkle.Grammar
 open Farkle.Tools
 open Scriban.Runtime
@@ -21,7 +22,7 @@ type IdentifierTypeCase =
     | PascalCase
 
 [<AbstractClass>]
-type GrammarFunctionsBase(grammarObj: obj) =
+type GrammarFunctionsBase(grammarObj: obj, productions: _ ImmutableArray) =
 
     static let toIdentifier name case (separator: string) =
         let sb = StringBuilder()
@@ -108,12 +109,11 @@ type GrammarFunctionsBase(grammarObj: obj) =
         | "DFAStates" -> true
         | _ -> false)
 
-    let productions, grammarSO =
+    let grammarSO =
         let so = ScriptObject()
         so.Import(grammarObj, filter = grammarMemberFilter)
-        let productions = so.["productions"] :?> Production ImmutableArray
         so.SetValue("productions_groupped", productions.ToLookup(fun x -> x.Head), true)
-        productions, so
+        so
 
     let fShouldPrintFullProduction = shouldPrintFullProduction productions
     static member upper_case = UpperCase
@@ -130,13 +130,13 @@ type GrammarFunctionsBase(grammarObj: obj) =
         | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
     static member group_dfa_edges {Edges = edges} =
         edges.ToLookup(fun x -> x.Value).OrderBy(fun x -> x.Key)
-    abstract has_errors: bool
+    abstract is_conflict_report: bool
     abstract LoadInstanceMethods: ScriptObject -> unit
     default x.LoadInstanceMethods so =
         so.Import("fmt", Func<_,_,_,_> x.fmt)
 
 type GrammarFunctions(g) =
-    inherit GrammarFunctionsBase(g.Grammar)
+    inherit GrammarFunctionsBase(g.Grammar, g.Grammar.Productions)
 
     let grammar = g.Grammar
     let bytesThunk = lazy(
@@ -154,7 +154,18 @@ type GrammarFunctions(g) =
         let options = if doPad then Base64FormattingOptions.InsertLineBreaks else Base64FormattingOptions.None
         Convert.ToBase64String(bytesThunk.Value, options)
 
-    override _.has_errors = false
+    override _.is_conflict_report = false
     override x.LoadInstanceMethods so =
         base.LoadInstanceMethods so
         so.Import("to_base64", Func<_,_> x.to_base64)
+
+type ConflictReportFunctions(grammarDef: GrammarDefinition, conflictReport: LALRConflictState ImmutableArray) as this =
+    inherit GrammarFunctionsBase(grammarDef, grammarDef.Productions)
+
+    do this.Grammar.SetValue("lalr_states", conflictReport, true)
+
+    static member is_conflicted (x: LALRConflictState) =
+        x.Actions.Values |> Seq.exists (function | _ :: _ :: _ -> true | _ -> false)
+        || match x.EOFActions with | _ :: _ :: _ -> true | _ -> false
+
+    override _.is_conflict_report = true

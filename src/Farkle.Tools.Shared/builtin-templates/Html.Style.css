@@ -90,6 +90,10 @@ table {
     max-width: 33%;
 }
 
+.conflicted-action {
+    font-weight: 700;
+}
+
 .lalr-shift {
     background-color: #eff0d1;
 }

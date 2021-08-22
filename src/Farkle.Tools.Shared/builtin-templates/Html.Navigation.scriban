@@ -4,7 +4,9 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 {{~if no_lalrstates && no_dfastates; ret; end~}}
 <nav class="flex-container">
+    {{~if !is_conflict_report~}}
     <a href="#properties">Properties</a>
+    {{~end~}}
     <a href="#syntax">Syntax</a>
     {{~if !grammar.groups.empty?~}}
     <a href="#groups">Groups</a>

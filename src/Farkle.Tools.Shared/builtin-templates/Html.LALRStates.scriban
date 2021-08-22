@@ -4,10 +4,13 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT -}}
 
 {{~func gen_action_row
+    if $1
+        $conflicted = " conflicted-action"
+    end
     if $0.is_shift~}}
-<td class="lalr-shift">Shift to <a href="#lalr{{$0.state_index}}">State {{$0.state_index}}</a></td>
+<td class="lalr-shift{{conflicted}}">Shift to <a href="#lalr{{$0.state_index}}">State {{$0.state_index}}</a></td>
 {{~else if $0.is_reduce~}}
-<td class="lalr-reduce">Reduce <a href="#prod{{$0.production.index}}">{{html.escape $0.production}}</a></td>
+<td class="lalr-reduce{{conflicted}}">Reduce <a href="#prod{{$0.production.index}}">{{html.escape $0.production}}</a></td>
 {{~else~}}
 <td class="lalr-accept">Accept</td>
 {{~end~}}
@@ -15,23 +18,55 @@ https://opensource.org/licenses/MIT -}}
 
 <section id="lalr-states">
     <h2>LALR States</h2>
+    {{~if is_conflict_report~}}
+    <p><span class="conflicted-state">Conflicted states</span> and <span class="conflicted-action">conflicted actions</span> are highlighted.</p>
+    {{~end~}}
     <div class="flex-container">
         {{~for $state in $1~}}
-        <table id="lalr{{$state.index}}">
-            <caption>State {{$state.index}}</caption>
+        {{~$is_state_conflicted = is_conflict_report && is_conflicted $state~}}
+        <table id="lalr{{$state.index}}"{{if $is_state_conflicted}} class="conflicted-state"{{end}}>
+            <caption>State {{$state.index}}{{if is_state_conflicted " (has conflicts)" end}}</caption>
             <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
             <tbody>
                 {{~for $action in $state.actions~}}
+                    {{~if !is_state_conflicted~}}
                 <tr>
                     <td class="terminal">{{html.escape $action.key.name}}</td>
                     {{~gen_action_row $action.value~}}
                 </tr>
+                    {{~else
+                        $actions = $action.value
+                        $actions_size = $actions.size~}}
+                <tr>
+                    <td rowspan="{{$actions_size}}" class="terminal">{{html.escape $action.key.name}}</td>
+                    {{~gen_action_row $actions[0] ($actions_size != 1)}}
+                </tr>
+                        {{~for $i in 1..<$actions_size~}}
+                <tr>
+                    {{~gen_action_row $actions[i] ($actions_size != 1)~}}
+                </tr>
+                        {{~end~}}
+                    {{~end~}}
                 {{~end~}}
-                {{~if $state.eofaction~}}
+                {{~if !$is_state_conflicted~}}
+                    {{~if $state.eofaction~}}
                 <tr>
                     <td><abbr class="eof" title="End of File">EOF</abbr></td>
                     {{~gen_action_row $state.eofaction.value~}}
                 </tr>
+                    {{~end~}}
+                {{~else if !$state.eofactions.empty?
+                    $eofactions = $state.eofactions
+                    $actions_size = $eofactions.size~}}
+                <tr>
+                    <td rowspan="{{$actions_size}}"><abbr class="eof" title="End of File">EOF</abbr></td>
+                    {{~gen_action_row $eofactions[0] ($actions_size != 1)~}}
+                </tr>
+                    {{~for $i in 1..<$actions_size~}}
+                <tr>
+                    {{~gen_action_row $eofactions[i] ($actions_size != 1)~}}
+                </tr>
+                    {{~end~}}
                 {{~end~}}
                 {{~for $action in $state.goto_actions~}}
                 <tr>

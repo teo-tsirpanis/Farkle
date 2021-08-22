@@ -1,0 +1,26 @@
+{{~## Copyright (c) 2021 Theodore Tsirpanis
+
+This software is released under the MIT License.
+https://opensource.org/licenses/MIT ~}}
+{{~include "builtin://Navigation"~}}
+{{~$conflicted_state_indices = []
+for $state in $grammar.lalrstates
+    if is_conflicted $state
+        array.add $conflicted_state_indices $state.index
+    end
+end~}}
+<main>
+    <h1>Conflict report for {{html.escape grammar_name}}</h1>
+    <p>Farkle could not precompile this grammar because there were {{$conflicted_state_indices.size}} LALR states with conflicts. These states are:</p>
+    <ul>
+        {{~for $state_index in $grammar.lalrstates~}}
+        <li><a href="#lalr{$state_index}"> State {{$state_index}}</a></li>
+        {{~end~}}
+    </ul>
+    <p>Besides conflicts, there also might have been other types of errors but are not listed here.</p>
+    {{~include "builtin://Syntax" grammar.symbols.terminals grammar.productions_groupped~}}
+    {{~if !grammar.groups.empty?~}}
+    {{~include "builtin://Groups" grammar.groups~}}
+    {{~end~}}
+    {{~include "builtin://LALRStates" grammar.lalrstates~}}
+</main>

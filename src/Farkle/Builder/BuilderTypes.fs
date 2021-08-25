@@ -33,8 +33,11 @@ type BuildError =
     | LALRConflict of Conflict: LALRConflict
     /// There were LALR conflicts.
     /// This error type comes after the specific conflict
-    /// error messages and contains the conflicted LALR states.
-    /// It is not displayed when a `FarkleError` is converted to a string.
+    /// error messages and contains the grammar's LALR states,
+    /// including the conflicting actions. It is not displayed
+    /// when a `FarkleError` is converted to a string, but is
+    /// used by the precompiler to create an HTML report when
+    /// a precompiled grammar has conflicts.
     | LALRConflictReport of States: LALRConflictState ImmutableArray
     /// A nonterminal has no productions.
     | EmptyNonterminal of Name: string

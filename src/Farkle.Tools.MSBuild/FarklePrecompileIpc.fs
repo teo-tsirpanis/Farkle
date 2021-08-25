@@ -18,12 +18,13 @@ open System.Linq
 type FarklePrecompileIpc() =
     inherit Task()
 
-    static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) = {
+    static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) skipConflictReport = {
         TaskLineNumber = buildEngine.LineNumberOfTaskNode
         TaskColumnNumber = buildEngine.ColumnNumberOfTaskNode
         TaskProjectFile = buildEngine.ProjectFileOfTaskNode
         AssemblyPath = asmPath
         References = config.References.Select(fun x -> x.FileName).ToArray()
+        SkipConflictReport = skipConflictReport
     }
 
     [<Required>]
@@ -33,6 +34,8 @@ type FarklePrecompileIpc() =
     member val Configuration = Array.Empty() with get, set
 
     member val CustomWorkerPath = "" with get, set
+
+    member val SkipConflictReport = false with get, set
 
     member private this.CheckPrecompilerWorkerExists() =
         if String.IsNullOrWhiteSpace this.CustomWorkerPath then
@@ -102,4 +105,4 @@ In the meantime, try building your project with the modern .NET SDK on which the
 You can learn more at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE")
                 false
         else
-           false
+            false

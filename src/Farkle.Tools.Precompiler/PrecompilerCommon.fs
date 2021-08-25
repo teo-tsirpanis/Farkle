@@ -20,6 +20,7 @@ type PrecompilerWorkerInput = {
     TaskProjectFile: string
     References: string[]
     AssemblyPath: string
+    SkipConflictReport: bool
 }
 
 /// Maps to MSBuild's error, warning and message types.

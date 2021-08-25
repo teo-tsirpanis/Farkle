@@ -27,7 +27,12 @@ type FarklePrecompileInProcess() as this =
     let cts = new CancellationTokenSource()
 
     member private this.DoCreateConflictReport numConflicts grammarDef report =
-        TemplateEngine.createConflictReport this.Log2 conflictReportOutDir numConflicts grammarDef report
+        if this.SkipConflictReport then
+            false
+        else
+            TemplateEngine.createConflictReport this.Log2 conflictReportOutDir numConflicts grammarDef report
+
+    member val SkipConflictReport = false with get, set
 
     override this.Execute() =
         try

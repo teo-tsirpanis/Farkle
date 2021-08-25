@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project TreatAsLocalProperty="_RiderWarning2;_SkipConflictReport">
 
   <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
@@ -35,16 +35,22 @@
       Name="FarkleRunPrecompiler"
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="CheckForMSBuild16">
+    <PropertyGroup>
+      <_SkipConflictReport Condition="$(FarkleGenerateConflictReport) == false">true</_SkipConflictReport>
+    </PropertyGroup>
+
     <FarklePrecompileInProcess
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
-        Configuration="@(SigourneyConfiguration)"/>
+        Configuration="@(SigourneyConfiguration)"
+        SkipConflictReport="$(_SkipConflictReport)"/>
 
     <FarklePrecompileIpc
         Condition="$(MSBuildRuntimeType) != Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
-        CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"/>
+        CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"
+        SkipConflictReport="$(_SkipConflictReport)"/>
   </Target>
 
   <Target

@@ -22,11 +22,14 @@ type FarklePrecompileInProcess() as this =
 
     let cts = new CancellationTokenSource()
 
+    member private this.DoCreateConflictReport numConflicts grammarDef report =
+        false
+
     override this.Execute() =
         try
             let grammars =
                 PrecompilerInProcess.precompileAssemblyFromPath
-                    cts.Token this.Log2 this.AssemblyReferences this.AssemblyPath
+                    cts.Token this.Log2 this.DoCreateConflictReport this.AssemblyReferences this.AssemblyPath
             match grammars with
             | Ok grammars ->
                 precompiledGrammars <- grammars

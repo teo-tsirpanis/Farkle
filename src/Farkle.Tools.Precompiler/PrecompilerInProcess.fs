@@ -24,7 +24,7 @@ open Mono.Cecil
 
 type PrecompilerResult =
     | Successful of Grammar
-    | PrecompilingFailed of grammarName: string * BuildError list
+    | PrecompilingFailed of grammarName: string * GrammarDefinition * BuildError list
     | DiscoveringFailed of typeName: string * fieldName: string * exn
 
 [<Literal>]
@@ -97,9 +97,8 @@ let private precompileDiscovererResult ct (log: ILogger) x =
     | Ok (pcdf: PrecompilableDesigntimeFarkle) ->
         let name = pcdf.Name
         log.Information("Precompiling {GrammarName}...", name)
-        let grammar =
-            pcdf.CreateGrammarDefinition()
-            |> DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default
+        let grammarDef = pcdf.CreateGrammarDefinition()
+        let grammar = DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default grammarDef
         match grammar with
         | Ok grammar ->
             // FsLexYacc does it, so why not us?
@@ -115,7 +114,7 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
             Debug.Assert(grammar.Properties.Name = name, "Unexpected error: grammar name \
 is different from the designtime Farkle name.")
             Successful grammar
-        | Error xs -> PrecompilingFailed(name, xs)
+        | Error xs -> PrecompilingFailed(name, grammarDef, xs)
     | Error x -> DiscoveringFailed x
 
 type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) as this =
@@ -171,7 +170,7 @@ let private checkForDuplicates (log: ILogger) (pcdfs: _ list) =
     |> Seq.choose (
         function
         | Successful grammar  -> Some grammar.Properties.Name
-        | PrecompilingFailed(name, _) -> Some name
+        | PrecompilingFailed(name, _, _) -> Some name
         | _ -> None)
     |> Seq.countBy id
     |> Seq.map (fun (name, count) ->
@@ -186,20 +185,50 @@ or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
 
-let precompileAssemblyFromPath ct log references path =
+let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name grammarDef errors =
+    match errors with
+    // A single build error can never represent a conflict because there must
+    // be at least two, one error for each conflict and another for the report.
+    // This means we don't have to bother with any filtering.
+    | [error] ->
+        log.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
+    | errors ->
+        log.Error<string>("Errors while precompiling {GrammarName}.", name)
+
+        // At most one conflict report can appear among the build errors.
+        let conflictReport =
+            errors
+            |> List.tryPick (function BuildError.LALRConflictReport report -> Some report | _ -> None)
+        let hasCreatedReport =
+            match conflictReport with
+            | Some report ->
+                let conflictCount =
+                    errors
+                    |> Seq.filter (function BuildError.LALRConflict _ -> true | _ -> false)
+                    |> Seq.length
+                fCreateConflictReport conflictCount grammarDef report
+            | None -> false
+
+        errors
+        |> Seq.filter (function
+        | BuildError.LALRConflictReport _ -> false
+        // We display individual LALR conflicts as messages only when we do not create a report.
+        | BuildError.LALRConflict _ -> not hasCreatedReport
+        | _ -> true)
+        |> Seq.iter (fun error -> log.Error("{BuildError}", error))
+
+        if hasCreatedReport then
+            log.Information("Instead of creating an HTML report, the individual LALR conflicts can be shown as errors by setting the 'FarkleCreateConflictReport' MSbuild property to false.")
+
+let precompileAssemblyFromPath ct log fCreateConflictReport references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path
     checkForDuplicates log pcdfs
     |> Result.map (List.choose (fun x ->
         match x with
         | Successful grammar ->
             Some grammar
-        | PrecompilingFailed(name, [error]) ->
-            log.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
-            None
-        | PrecompilingFailed(name, errors) ->
-            log.Error("Errors while precompiling {GrammarName}.", name)
-            for error in errors do
-                log.Error("{BuildError}", error)
+        | PrecompilingFailed(name, grammarDef, errors) ->
+            handlePrecompilerErrors log fCreateConflictReport name grammarDef errors
             None
         | DiscoveringFailed(typeName, fieldName, e) ->
             log.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)

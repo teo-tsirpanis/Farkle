@@ -15,6 +15,8 @@ open Sigourney
 open System
 open System.Threading
 
+let doCreateConflictReport _ _ _ = false
+
 let private doIt input =
     let buildMachine = LogSinkBuildMachine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
 
@@ -27,7 +29,9 @@ let private doIt input =
                 .MinimumLevel.Verbose()
                 .WriteTo.MSBuild(loggingHelper)
                 .CreateLogger()
-        let result = PrecompilerInProcess.precompileAssemblyFromPath CancellationToken.None logger references input.AssemblyPath
+        let result =
+            PrecompilerInProcess.precompileAssemblyFromPath
+                CancellationToken.None logger doCreateConflictReport references input.AssemblyPath
 
         match result with
         | Ok grammars ->

@@ -8,14 +8,14 @@ module Farkle.Tools.Commands.PrecompilerWorker
 open Farkle.Tools
 open Farkle.Tools.Precompiler
 open Farkle.Tools.Precompiler.PrecompilerCommon
+open Farkle.Tools.Templating
 open Microsoft.Build.Locator
 open Microsoft.Build.Utilities
 open Serilog
 open Sigourney
 open System
+open System.IO
 open System.Threading
-
-let doCreateConflictReport _ _ _ = false
 
 let private doIt input =
     let buildMachine = LogSinkBuildMachine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
@@ -29,9 +29,11 @@ let private doIt input =
                 .MinimumLevel.Verbose()
                 .WriteTo.MSBuild(loggingHelper)
                 .CreateLogger()
+        let outputDir = Path.GetDirectoryName input.AssemblyPath
+        let fCreateConflictReport = TemplateEngine.createConflictReport logger outputDir
         let result =
             PrecompilerInProcess.precompileAssemblyFromPath
-                CancellationToken.None logger doCreateConflictReport references input.AssemblyPath
+                CancellationToken.None logger fCreateConflictReport references input.AssemblyPath
 
         match result with
         | Ok grammars ->

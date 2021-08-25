@@ -6,9 +6,11 @@
 namespace Farkle.Tools.MSBuild
 
 open Farkle.Tools.Precompiler
+open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Sigourney
 open System
+open System.IO
 open System.Threading
 
 /// An MSBuild task that precompiles the grammars
@@ -20,10 +22,12 @@ type FarklePrecompileInProcess() as this =
 
     let mutable precompiledGrammars = []
 
+    let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
+
     let cts = new CancellationTokenSource()
 
     member private this.DoCreateConflictReport numConflicts grammarDef report =
-        false
+        TemplateEngine.createConflictReport this.Log2 conflictReportOutDir numConflicts grammarDef report
 
     override this.Execute() =
         try

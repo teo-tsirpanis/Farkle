@@ -5,6 +5,7 @@
 
 namespace Farkle.Tools.Templating
 
+open Farkle.Grammar
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban
@@ -92,3 +93,20 @@ module TemplateEngine =
             Content = output
         }
     }
+
+    let createConflictReport log outputDir numConflicts grammarDef report =
+        let templateType = LALRConflictReport(grammarDef, report)
+        let (Nonterminal(_, grammarName)) = grammarDef.StartSymbol
+        match renderTemplate log templateType with
+        | Ok gt ->
+            let fileName = grammarName + gt.FileExtension
+            let path = sprintf "%s%c%s" outputDir Path.DirectorySeparatorChar fileName
+            match numConflicts with
+            | 1 ->
+                log.Error("There was one LALR conflict in the grammar.")
+            | _ ->
+                log.Error("There were {NumConflicts} LALR conflicts in the grammar.", numConflicts)
+            File.WriteAllText(path, gt.Content)
+            Log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}", path)
+            true
+        | _ -> false

@@ -8,6 +8,7 @@ module internal Farkle.Builder.PostProcessorCreator
 open Farkle
 open Farkle.Grammar
 #if MODERN_FRAMEWORK
+open System
 open System.Runtime.CompilerServices
 open System.Threading
 #endif
@@ -35,8 +36,7 @@ type private TieredPostProcessor<'T>(transformers, fusers) =
     let mutable hasSwitchedToDynamic = 0
     [<Literal>]
     static let invocationThreshold = 3
-    static let fSwitchToDynamic =
-        WaitCallback(fun x -> (x :?> TieredPostProcessor<'T>).SwitchToDynamic())
+    static let fSwitchToDynamic = Action<TieredPostProcessor<'T>>(fun x -> x.SwitchToDynamic())
     member private _.SwitchToDynamic() =
         if Interlocked.Exchange(&hasSwitchedToDynamic, 1) = 0 then
             try
@@ -55,7 +55,7 @@ type private TieredPostProcessor<'T>(transformers, fusers) =
     interface PostProcessorEventListener with
         member this.ParsingStarted() =
             if Interlocked.Increment(&invokeCount) = invocationThreshold then
-                ThreadPool.UnsafeQueueUserWorkItem(fSwitchToDynamic, this) |> ignore
+                ThreadPool.QueueUserWorkItem(fSwitchToDynamic, this, false) |> ignore
 #endif
 
 [<RequiresExplicitTypeArguments>]

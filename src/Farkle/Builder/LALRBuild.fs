@@ -286,6 +286,11 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                     |> BuildError.LALRConflict
                     |> errors.Add
                     resolveEOFConflict xs
+        let reduceStartSymbolToAccept =
+            function
+            // Essentially, reducing <S'> -> <S> means accepting.
+            | LALRAction.Reduce {Head = head} when head = startSymbol -> LALRAction.Accept
+            | action -> action
         let eofActions =
             closedItem
             |> Seq.choose (fun item ->
@@ -297,12 +302,12 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
         let resolvedEofAction =
             eofActions
             |> resolveEOFConflict
-            |> Option.map (function
-                // Essentially, reducing <S'> -> <S> means accepting.
-                | LALRAction.Reduce {Head = head} when head = startSymbol -> LALRAction.Accept
-                | action -> action)
+            |> Option.map reduceStartSymbolToAccept
+        // TODO: Investigate whether we can refactor the LALR
+        // conflict representation to convert to Accept earlier.
+        let eofActionsConflicted = List.map reduceStartSymbolToAccept eofActions
         states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = resolvedEofAction}
-        statesConflicted.Add {Index = index; Actions = actionsConflicted; GotoActions = gotoActions; EOFActions = eofActions}
+        statesConflicted.Add {Index = index; Actions = actionsConflicted; GotoActions = gotoActions; EOFActions = eofActionsConflicted}
 
     if errors.Count <> 0 then
         statesConflicted.MoveToImmutable()

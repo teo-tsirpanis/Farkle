@@ -11,7 +11,7 @@ grammar_name = grammar.start_symbol.name~}}
         <meta name="description" content="Auto-generated documentation of the {{attr_escape grammar_name}} grammar.">
         <meta name="generator" content="Farkle version {{attr_escape farkle.version}}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{if is_conflict_report}}LALR conflict report for {{end}}{{html.escape grammar_name}}</title>
+        <title>{{html.escape grammar_name}}{{if is_conflict_report; " - Conflict Report"; end}}</title>
         {{~if !no_css~}}
         <style>
         {{~include "builtin://Style"~}}

@@ -102,7 +102,7 @@ module TemplateEngine =
         let (Nonterminal(_, grammarName)) = grammarDef.StartSymbol
         match renderTemplate log templateType with
         | Ok gt ->
-            let fileName = grammarName + gt.FileExtension
+            let fileName = sanitizeUnsafeFileName log grammarName + gt.FileExtension
             let path = sprintf "%s%c%s" outputDir Path.DirectorySeparatorChar fileName
             match numConflicts with
             | 1 ->

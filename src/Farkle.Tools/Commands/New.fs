@@ -149,7 +149,7 @@ let run json (args: ParseResults<_>) = either {
                 if isGrammarExtension (Path.GetExtension grammarPath) then
                     Path.GetFileNameWithoutExtension grammarPath
                 else
-                    grammarInput.Grammar.Properties.Name.AsSpan()
+                    (sanitizeUnsafeFileName Log.Logger grammarInput.Grammar.Properties.Name).AsSpan()
             let extension = generatedTemplate.FileExtension.AsSpan()
             String.Concat(directory, separator, fileName, extension)
         |> Path.GetFullPath

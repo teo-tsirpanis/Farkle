@@ -41,7 +41,7 @@ type FarkleGenerateHtml() =
         let templateType = GrammarHtml(grammarInput, htmlOptions)
         match TemplateEngine.renderTemplate log templateType with
         | Ok output ->
-            let grammarName = grammar.Properties.Name
+            let grammarName = sanitizeUnsafeFileName log grammar.Properties.Name
             let htmlPath =
                 Path.Combine(this.OutputDirectory, Path.ChangeExtension(grammarName, output.FileExtension))
                 |> Path.GetFullPath

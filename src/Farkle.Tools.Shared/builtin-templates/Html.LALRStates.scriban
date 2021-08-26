@@ -31,26 +31,26 @@ https://opensource.org/licenses/MIT -}}
             <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
             <tbody>
                 {{~for $action in $state.actions~}}
-                    {{~if !$is_state_conflicted~}}
+                    {{~if !is_conflict_report~}}
                 <tr>
                     <td class="terminal">{{html.escape $action.key.name}}</td>
                     {{~gen_action_row $action.value~}}
                 </tr>
                     {{~else~}}
                         {{~$actions = $action.value~}}
-                        {{~$actions_size = $actions.size~}}
+                        {{~$actions_size = array.size $actions~}}
                 <tr>
-                    <td rowspan="{{$actions_size}}" class="terminal">{{html.escape $action.key.name}}</td>
+                    <td {{if $actions_size != 1}}rowspan="{{$actions_size}}" {{end}}class="terminal">{{html.escape $action.key.name}}</td>
                     {{~gen_action_row $actions[0] ($actions_size != 1)}}
                 </tr>
                         {{~for $i in 1..<$actions_size~}}
                 <tr>
-                    {{~gen_action_row $actions[i] ($actions_size != 1)~}}
+                    {{~gen_action_row $actions[$i] ($actions_size != 1)~}}
                 </tr>
                         {{~end~}}
                     {{~end~}}
                 {{~end~}}
-                {{~if !$is_state_conflicted~}}
+                {{~if !is_conflict_report~}}
                     {{~if $state.eofaction~}}
                 <tr>
                     <td><abbr class="eof" title="End of File">EOF</abbr></td>
@@ -59,14 +59,14 @@ https://opensource.org/licenses/MIT -}}
                     {{~end~}}
                 {{~else if !$state.eofactions.empty?~}}
                     {{~$eofactions = $state.eofactions~}}
-                    {{~$actions_size = $eofactions.size~}}
+                    {{~$actions_size = array.size $eofactions~}}
                 <tr>
-                    <td rowspan="{{$actions_size}}"><abbr class="eof" title="End of File">EOF</abbr></td>
+                    <td {{if $actions_size != 1}}rowspan="{{$actions_size}}"{{end}}><abbr class="eof" title="End of File">EOF</abbr></td>
                     {{~gen_action_row $eofactions[0] ($actions_size != 1)~}}
                 </tr>
                     {{~for $i in 1..<$actions_size~}}
                 <tr>
-                    {{~gen_action_row $eofactions[i] ($actions_size != 1)~}}
+                    {{~gen_action_row $eofactions[$i] ($actions_size != 1)~}}
                 </tr>
                     {{~end~}}
                 {{~end~}}

@@ -43,14 +43,20 @@
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
-        SkipConflictReport="$(_SkipConflictReport)"/>
+        SkipConflictReport="$(_SkipConflictReport)">
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
+    </FarklePrecompileInProcess>
 
     <FarklePrecompileIpc
         Condition="$(MSBuildRuntimeType) != Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
         CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"
-        SkipConflictReport="$(_SkipConflictReport)"/>
+        SkipConflictReport="$(_SkipConflictReport)">
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
+    </FarklePrecompileIpc>
   </Target>
 
   <Target

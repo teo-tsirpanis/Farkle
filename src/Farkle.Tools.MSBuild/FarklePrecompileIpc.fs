@@ -37,6 +37,9 @@ type FarklePrecompileIpc() =
 
     member val SkipConflictReport = false with get, set
 
+    [<Output>]
+    member val GeneratedConflictReports = Array.Empty() with get, set
+
     member private this.CheckPrecompilerWorkerExists() =
         if String.IsNullOrWhiteSpace this.CustomWorkerPath then
             let command = Command.Run("dotnet", [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"|])
@@ -86,6 +89,10 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
         PrecompilerCommon.writeToJsonFile inputPath workerInput
         do! this.RunWorkerProcess inputPath outputPath
         let workerOutput = PrecompilerCommon.readFromJsonFile<PrecompilerWorkerOutput> outputPath
+
+        this.GeneratedConflictReports <-
+            workerOutput.GeneratedConflictReports
+            |> Array.map (fun x -> TaskItem(x) :> ITaskItem)
 
         this.Log.LogMessage(MessageImportance.Low, "Beginning precompiler worker logs")
         for ev in workerOutput.Messages do

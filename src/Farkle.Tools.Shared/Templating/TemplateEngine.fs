@@ -94,7 +94,7 @@ module TemplateEngine =
         }
     }
 
-    let createConflictReport log outputDir numConflicts grammarDef report =
+    let private createConflictReportImpl log outputDir numConflicts grammarDef report =
         let templateType = LALRConflictReport(grammarDef, report)
         let (Nonterminal(_, grammarName)) = grammarDef.StartSymbol
         match renderTemplate log templateType with
@@ -108,5 +108,18 @@ module TemplateEngine =
                 log.Error("There were {NumConflicts} LALR conflicts in the grammar.", numConflicts)
             File.WriteAllText(path, gt.Content)
             Log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}", path)
-            true
-        | _ -> false
+            Some path
+        | _ -> None
+
+
+    let createConflictReport doSkip (generatedConflictReports: _ ResizeArray) log outputDir =
+        if doSkip then
+            fun _ _ _ -> false
+        else
+            fun numConflicts grammarDef report ->
+                createConflictReportImpl log outputDir numConflicts grammarDef report
+                |> function
+                | Some path ->
+                    generatedConflictReports.Add path
+                    true
+                | None -> false

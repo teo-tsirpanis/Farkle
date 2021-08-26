@@ -71,6 +71,7 @@ with
 type PrecompilerWorkerOutput = {
     Success: bool
     Messages: LogEvent []
+    GeneratedConflictReports: string []
 }
 
 module PrecompilerCommon =

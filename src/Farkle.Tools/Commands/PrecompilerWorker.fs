@@ -19,8 +19,8 @@ open System.Threading
 
 let private doIt input =
     let buildMachine = LogSinkBuildMachine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
-
     let references = input.References |> Array.map AssemblyReference
+    let generatedConflictReports = ResizeArray()
 
     let success =
         let loggingHelper = TaskLoggingHelper(buildMachine, "FarklePrecompileTask")
@@ -30,11 +30,9 @@ let private doIt input =
                 .WriteTo.MSBuild(loggingHelper)
                 .CreateLogger()
         let outputDir = Path.GetDirectoryName input.AssemblyPath
-        let fCreateConflictReport numConflicts grammarDef report =
-            if input.SkipConflictReport then
-                false
-            else
-                TemplateEngine.createConflictReport logger outputDir numConflicts grammarDef report
+        let fCreateConflictReport =
+            TemplateEngine.createConflictReport
+                input.SkipConflictReport generatedConflictReports logger outputDir
         let result =
             PrecompilerInProcess.precompileAssemblyFromPath
                 CancellationToken.None logger fCreateConflictReport references input.AssemblyPath
@@ -49,6 +47,7 @@ let private doIt input =
     {
         Success = success
         Messages = buildMachine.GetEventsToArray()
+        GeneratedConflictReports = generatedConflictReports.ToArray()
     }
 
 /// Returns zero on success or handled errors, one on unhandled errors

@@ -8,6 +8,7 @@ namespace Farkle.Tools.MSBuild
 open Farkle.Tools.Precompiler
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
+open Microsoft.Build.Utilities
 open Sigourney
 open System
 open System.IO
@@ -26,19 +27,26 @@ type FarklePrecompileInProcess() as this =
 
     let cts = new CancellationTokenSource()
 
-    member private this.DoCreateConflictReport numConflicts grammarDef report =
-        if this.SkipConflictReport then
-            false
-        else
-            TemplateEngine.createConflictReport this.Log2 conflictReportOutDir numConflicts grammarDef report
-
     member val SkipConflictReport = false with get, set
+
+    [<Output>]
+    member val GeneratedConflictReports = Array.Empty() with get, set
 
     override this.Execute() =
         try
+            let generatedConflictReports = ResizeArray()
+            let fCreateConflictReport =
+                TemplateEngine.createConflictReport
+                    this.SkipConflictReport generatedConflictReports this.Log2 conflictReportOutDir
             let grammars =
                 PrecompilerInProcess.precompileAssemblyFromPath
-                    cts.Token this.Log2 this.DoCreateConflictReport this.AssemblyReferences this.AssemblyPath
+                    cts.Token this.Log2 fCreateConflictReport this.AssemblyReferences this.AssemblyPath
+
+            this.GeneratedConflictReports <-
+                generatedConflictReports
+                |> Seq.map (fun x -> TaskItem x :> ITaskItem)
+                |> Array.ofSeq
+
             match grammars with
             | Ok grammars ->
                 precompiledGrammars <- grammars

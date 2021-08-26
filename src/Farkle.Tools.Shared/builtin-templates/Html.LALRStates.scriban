@@ -4,11 +4,11 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT -}}
 
 {{~func gen_action_row
-    $conflicted = $1 ? " conflicted-action" : ""
+    $conflicting = $1 ? " conflicting-action" : ""
     if $0.is_shift~}}
-<td class="lalr-shift{{$conflicted}}">Shift to <a href="#lalr{{$0.state_index}}">State {{$0.state_index}}</a></td>
+<td class="lalr-shift{{$conflicting}}">Shift to <a href="#lalr{{$0.state_index}}">State {{$0.state_index}}</a></td>
 {{~else if $0.is_reduce~}}
-<td class="lalr-reduce{{$conflicted}}">Reduce <a href="#prod{{$0.production.index}}">{{html.escape $0.production}}</a></td>
+<td class="lalr-reduce{{$conflicting}}">Reduce <a href="#prod{{$0.production.index}}">{{html.escape $0.production}}</a></td>
 {{~else~}}
 <td class="lalr-accept">Accept</td>
 {{~end~}}
@@ -17,13 +17,13 @@ https://opensource.org/licenses/MIT -}}
 <section id="lalr-states">
     <h2>LALR States</h2>
     {{~if is_conflict_report~}}
-    <p><span class="conflicted-state">States with conflicts</span> and <span class="conflicted-action">conflicted actions</span> are highlighted.</p>
+    <p><span class="conflicting-state">States with conflicts</span> and <span class="conflicting-action">conflicting actions</span> are highlighted.</p>
     {{~end~}}
     <div class="flex-container">
         {{~for $state in $1~}}
-        {{~$is_state_conflicted = is_conflict_report && is_conflicted $state~}}
-        <table id="lalr{{$state.index}}"{{if $is_state_conflicted}} class="conflicted-state"{{end}}>
-            <caption>State {{$state.index}}{{if $is_state_conflicted; " (has conflicts)"; end}}</caption>
+        {{~$is_state_conflicting = is_conflict_report && is_conflicting $state~}}
+        <table id="lalr{{$state.index}}"{{if $is_state_conflicting}} class="conflicting-state"{{end}}>
+            <caption>State {{$state.index}}{{if $is_state_conflicting; " (has conflicts)"; end}}</caption>
             <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
             <tbody>
                 {{~for $action in $state.actions~}}

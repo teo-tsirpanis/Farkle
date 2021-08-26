@@ -3,13 +3,13 @@
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 {{~include "builtin://Navigation"~}}
-{{~$conflicted_state_indices = grammar.lalr_states | array.filter @is_conflicted | array.map "index"~}}
+{{~$conflicting_state_indices = grammar.lalr_states | array.filter @is_conflicting | array.map "index"~}}
 <main>
     <h1>Conflict report for {{html.escape grammar_name}}</h1>
     {{~# Reminder: ".size" is only for Scriban native arrays.~}}
-    <p>Farkle could not precompile this grammar because there were {{$conflicted_state_indices.size}} LALR states with conflicts. These states are:</p>
+    <p>Farkle could not precompile this grammar because there were {{$conflicting_state_indices.size}} LALR states with conflicts. These states are:</p>
     <ul>
-        {{~for $state_index in $conflicted_state_indices~}}
+        {{~for $state_index in $conflicting_state_indices~}}
         <li><a href="#lalr{{$state_index}}"> State {{$state_index}}</a></li>
         {{~end~}}
     </ul>

@@ -205,7 +205,7 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
     let emptyLookahead = LookaheadSet(firstSets.AllTerminals.Length)
     emptyLookahead.Freeze()
     let states = ImmutableArray.CreateBuilder itemSets.Length
-    let statesConflicted = ImmutableArray.CreateBuilder itemSets.Length
+    let statesConflicting = ImmutableArray.CreateBuilder itemSets.Length
     for itemSet in itemSets do
         ct.ThrowIfCancellationRequested()
         let index = uint32 itemSet.Index
@@ -231,9 +231,9 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                 | _ -> None
             )
             |> ImmutableDictionary.CreateRange
-        let struct(actions, actionsConflicted) =
+        let struct(actions, actionsConflicting) =
             let b = ImmutableDictionary.CreateBuilder()
-            let bConflicted = ImmutableDictionary.CreateBuilder()
+            let bConflicting = ImmutableDictionary.CreateBuilder()
             let mutable hasChosenNeither = false
             let addAction term action =
                 match b.TryGetValue(term) with
@@ -251,27 +251,27 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
                         |> BuildError.LALRConflict
                         |> errors.Add
                 | false, _ -> b.Add(term, action)
-            let addActionConflicted k v =
-                match bConflicted.TryGetValue(k) with
+            let addActionConflicting k v =
+                match bConflicting.TryGetValue(k) with
                 // Yes, we append a list, but it will happen very
                 // rarely; only on a conflict, and that list will
                 // even more rarely have more than 1-2 elements.
-                | true, vs -> bConflicted.[k] <- vs @ [v]
-                | false, _ -> bConflicted.[k] <- [v]
+                | true, vs -> bConflicting.[k] <- vs @ [v]
+                | false, _ -> bConflicting.[k] <- [v]
             for item in itemSet.Goto do
                 match item with
                 | KeyValue(LALRSymbol.Terminal term, stateToShiftTo) ->
                     let action = LALRAction.Shift(uint32 stateToShiftTo)
                     addAction term action
-                    addActionConflicted term action
+                    addActionConflicting term action
                 | _ -> ()
             for item in closedItem do
                 for idx in item.Lookahead do
                     let term = firstSets.AllTerminals.[idx]
                     let action = LALRAction.Reduce item.Item.Production
                     addAction term action
-                    addActionConflicted term action
-            b.ToImmutable(), bConflicted.ToImmutable()
+                    addActionConflicting term action
+            b.ToImmutable(), bConflicting.ToImmutable()
         let rec resolveEOFConflict =
             function
             | [] -> None
@@ -305,12 +305,12 @@ let private createLALRStates (ct: CancellationToken) fGetAllProductions (firstSe
             |> Option.map reduceStartSymbolToAccept
         // TODO: Investigate whether we can refactor the LALR
         // conflict representation to convert to Accept earlier.
-        let eofActionsConflicted = List.map reduceStartSymbolToAccept eofActions
+        let eofActionsConflicting = List.map reduceStartSymbolToAccept eofActions
         states.Add {Index = index; Actions = actions; GotoActions = gotoActions; EOFAction = resolvedEofAction}
-        statesConflicted.Add {Index = index; Actions = actionsConflicted; GotoActions = gotoActions; EOFActions = eofActionsConflicted}
+        statesConflicting.Add {Index = index; Actions = actionsConflicting; GotoActions = gotoActions; EOFActions = eofActionsConflicting}
 
     if errors.Count <> 0 then
-        statesConflicted.MoveToImmutable()
+        statesConflicting.MoveToImmutable()
         |> BuildError.LALRConflictReport
         |> errors.Add
     states.MoveToImmutable()

@@ -164,7 +164,7 @@ type ConflictReportFunctions(grammarDef: GrammarDefinition, conflictReport: LALR
 
     do this.Grammar.SetValue("lalr_states", conflictReport, true)
 
-    static member is_conflicted (x: LALRConflictState) =
+    static member is_conflicting (x: LALRConflictState) =
         x.Actions.Values |> Seq.exists (function | _ :: _ :: _ -> true | _ -> false)
         || match x.EOFActions with | _ :: _ :: _ -> true | _ -> false
 

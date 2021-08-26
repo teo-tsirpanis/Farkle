@@ -98,11 +98,11 @@ table {
     max-width: 33%;
 }
 
-.conflicted-state {
+.conflicting-state {
     outline: dashed red;
 }
 
-.conflicted-action {
+.conflicting-action {
     font-weight: 700;
 }
 

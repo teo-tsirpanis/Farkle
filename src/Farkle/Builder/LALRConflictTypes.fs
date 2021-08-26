@@ -42,7 +42,7 @@ type LALRConflictType =
     /// A Reduce-Reduce conflict
     | ReduceReduce of Production1: Production * Production2: Production
 with
-    /// Creates an `LALRConflictType` from the given conflicted `LALRAction`s.
+    /// Creates an `LALRConflictType` from the given conflicting `LALRAction`s.
     /// An exception is raised if the actions are neither both "reduce" nor a "shift" and a "reduce".
     static member Create act1 act2 =
         match act1, act2 with

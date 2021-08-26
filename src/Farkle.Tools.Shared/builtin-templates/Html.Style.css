@@ -8,6 +8,10 @@ nav {
     margin: auto;
 }
 
+.conflict-report nav {
+    background-color: firebrick;
+}
+
 nav>a {
     color: white;
     padding: 1em;
@@ -18,6 +22,10 @@ nav>a:hover {
     background-color: white;
     color: navy;
     text-decoration: none;
+}
+
+.conflict-report nav>a:hover {
+    color: firebrick;
 }
 
 footer {
@@ -88,6 +96,10 @@ table {
     margin: 1em;
     height: min-content;
     max-width: 33%;
+}
+
+.conflicted-state {
+    outline: dashed red;
 }
 
 .conflicted-action {

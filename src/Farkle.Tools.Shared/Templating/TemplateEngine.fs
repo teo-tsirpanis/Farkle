@@ -51,6 +51,9 @@ module TemplateEngine =
             return! parseTemplate log templateText path
             }
 
+    let private conflictReportHtmlOptions =
+        {CustomHeadContent = ""; NoCss = false; NoLALRStates = false; NoDFAStates = true}
+
     let private createTemplateContext templateType =
         let tc = TemplateContext()
         tc.StrictVariables <- true
@@ -74,7 +77,7 @@ module TemplateEngine =
             so.SetValue("properties", properties, true)
         | LALRConflictReport(grammarDef, errors) ->
             Utilities.loadConflictReport grammarDef errors so
-            Utilities.loadHtml HtmlOptions.Default tc so
+            Utilities.loadHtml conflictReportHtmlOptions tc so
         tc.PushGlobal so
         tc
 
@@ -107,10 +110,9 @@ module TemplateEngine =
             | _ ->
                 log.Error("There were {NumConflicts} LALR conflicts in the grammar.", numConflicts)
             File.WriteAllText(path, gt.Content)
-            Log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}", path)
+            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}", path)
             Some path
         | _ -> None
-
 
     let createConflictReport doSkip (generatedConflictReports: _ ResizeArray) log outputDir =
         if doSkip then

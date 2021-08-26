@@ -23,8 +23,6 @@ type FarklePrecompileInProcess() as this =
 
     let mutable precompiledGrammars = []
 
-    let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
-
     let cts = new CancellationTokenSource()
 
     member val SkipConflictReport = false with get, set
@@ -35,6 +33,7 @@ type FarklePrecompileInProcess() as this =
     override this.Execute() =
         try
             let generatedConflictReports = ResizeArray()
+            let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
             let fCreateConflictReport =
                 TemplateEngine.createConflictReport
                     this.SkipConflictReport generatedConflictReports this.Log2 conflictReportOutDir

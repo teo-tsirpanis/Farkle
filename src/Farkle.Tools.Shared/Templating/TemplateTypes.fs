@@ -28,9 +28,6 @@ type HtmlOptions = {
     NoLALRStates: bool
     NoDFAStates: bool
 }
-with
-    static member Default =
-        {CustomHeadContent = ""; NoCss = true; NoLALRStates = false; NoDFAStates = true}
 
 type CustomTemplateOptions = {
     AdditionalProperties: (string * string) list

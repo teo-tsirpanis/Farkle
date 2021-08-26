@@ -241,6 +241,7 @@ Target.create "RunMSBuildTestsNetFramework" (fun _ ->
             Properties = ("FarkleCustomPrecompilerWorkerPath", customWorkerPath) :: x.Properties
             Targets = ["Build"]
             Verbosity = Some MSBuildVerbosity.Minimal
+            NodeReuse = false
         }
     )
 

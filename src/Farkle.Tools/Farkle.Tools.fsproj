@@ -16,7 +16,7 @@ Installing this tool is also required when building a project that uses the prec
   <ItemGroup>
     <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
-    <Compile Include="LogSinkBuildMachine.fs" />
+    <Compile Include="LogSinkBuildEngine.fs" />
     <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

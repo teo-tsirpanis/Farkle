@@ -14,7 +14,7 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <Compile Include="FarklePrecompileIpc.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <Compile Include="FarklePrecompileOutOfProcess.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
     <Compile Include="FarkleGenerateHtml.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>

@@ -15,7 +15,7 @@ open Sigourney
 open System
 open System.Linq
 
-type FarklePrecompileIpc() =
+type FarklePrecompileOutOfProcess() =
     inherit Task()
 
     static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) skipConflictReport = {

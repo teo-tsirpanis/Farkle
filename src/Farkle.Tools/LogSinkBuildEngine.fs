@@ -10,7 +10,7 @@ open Microsoft.Build.Framework
 open System
 
 /// An IBuildEngine implementation that just stores log events in memory.
-type LogSinkBuildMachine(taskLineNumber, taskColumnNumber, taskProjectFile) =
+type LogSinkBuildEngine(taskLineNumber, taskColumnNumber, taskProjectFile) =
     let events = ResizeArray()
     let addEvent severity subcategory code file lineNumber columnNumber
         endLineNumber endColumnNumber message helpKeyword senderName eventTimestamp =

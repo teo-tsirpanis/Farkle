@@ -7,7 +7,7 @@
 
   <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) != Core"
-      TaskName="Farkle.Tools.MSBuild.FarklePrecompileIpc"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompileOutOfProcess"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <UsingTask
@@ -15,7 +15,6 @@
       TaskName="Farkle.Tools.MSBuild.FarkleGenerateHtml"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
-  <!--TODO: Find better error messages.-->
   <Target
       Name="FailPrecompilerOnNetFramework"
       Condition="$(MSBuildRuntimeType) != Core AND $(BuildingInsideVisualStudio) != true"
@@ -48,7 +47,7 @@
       <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
     </FarklePrecompileInProcess>
 
-    <FarklePrecompileIpc
+    <FarklePrecompileOutOfProcess
         Condition="$(MSBuildRuntimeType) != Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
@@ -56,7 +55,7 @@
         SkipConflictReport="$(_SkipConflictReport)">
       <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
       <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
-    </FarklePrecompileIpc>
+    </FarklePrecompileOutOfProcess>
   </Target>
 
   <Target

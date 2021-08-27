@@ -18,12 +18,12 @@ open System.IO
 open System.Threading
 
 let private doIt input =
-    let buildMachine = LogSinkBuildMachine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
+    let buildEngine = LogSinkBuildEngine(input.TaskLineNumber, input.TaskColumnNumber, input.TaskProjectFile)
     let references = input.References |> Array.map AssemblyReference
     let generatedConflictReports = ResizeArray()
 
     let success =
-        let loggingHelper = TaskLoggingHelper(buildMachine, "FarklePrecompileTask")
+        let loggingHelper = TaskLoggingHelper(buildEngine, "FarklePrecompileTask")
         use logger =
             LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -46,7 +46,7 @@ let private doIt input =
 
     {
         Success = success
-        Messages = buildMachine.GetEventsToArray()
+        Messages = buildEngine.GetEventsToArray()
         GeneratedConflictReports = generatedConflictReports.ToArray()
     }
 

@@ -60,7 +60,7 @@ let resolveProjectAssembly options (projectPath: string) =
     | null ->
         if options.TargetFramework.IsNone && hasProperty project "TargetFrameworks" then
             Log.Error("The project targets multiple frameworks. Please select one using the \
-{{LongOption}} or {{ShortOption}} command-line options.", "--framework", "-f")
+{LongOption} or {ShortOption} command-line options.", "--framework", "-f")
         else
             Log.Error("The project seems to not have been restored or built. Make sure that it is, \
 try performing a clean build, and report a bug on GitHub if the problem persists.")

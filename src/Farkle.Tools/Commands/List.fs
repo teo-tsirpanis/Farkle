@@ -16,12 +16,14 @@ open System.Text.Json
 type Arguments =
     | [<Unique; MainCommand>] InputFile of string
     | [<Unique; AltCommandLine("-c")>] Configuration of string
+    | [<Unique; AltCommandLine("-f")>] Framework of string
 with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
             | InputFile _ -> "The assembly or project file from which to look for precompiled grammars."
-            | Configuration _ -> "The configuration the project will be evaluated with. Defaults to Debug."
+            | Configuration _ -> "The configuration the project will be evaluated with. The default for most projects is Debug."
+            | Framework _ -> "The target framework of the project."
 
 let private getAssemblyFile projectOptions (file: string) = either {
     let ext = Path.GetExtension(file.AsSpan())
@@ -41,7 +43,8 @@ let private getAssemblyFile projectOptions (file: string) = either {
 
 let run json (args: ParseResults<_>) = either {
     let projectOptions = {
-        ProjectResolver.Configuration = args.GetResult(Configuration, "Debug")
+        ProjectResolver.Configuration = args.TryGetResult Configuration
+        ProjectResolver.TargetFramework = args.TryGetResult Framework
     }
     let! input =
         match args.TryGetResult InputFile with

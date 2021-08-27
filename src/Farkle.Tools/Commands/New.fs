@@ -19,6 +19,7 @@ type Arguments =
     | [<Unique; MainCommand>] GrammarFile of string
     | [<Unique; AltCommandLine("-o")>] OutputFile of string
     | [<Unique; AltCommandLine("-c")>] Configuration of string
+    | [<Unique; AltCommandLine("-f")>] Framework of string
     | [<Unique>] Html
     | [<Unique>] ``Custom-head`` of string
     | [<Unique>] ``No-css``
@@ -37,7 +38,8 @@ with
 Run 'farkle --explain-composite-paths' to learn their syntax."
             | OutputFile _ -> "Specifies where the output file will be stored. \
 Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
-            | Configuration _ -> "Specifies the configuration the project will be evaluated with. Defaults to Debug."
+            | Configuration _ -> "The configuration the project will be evaluated with. The default for most projects is Debug."
+            | Framework _ -> "The target framework of the project."
             | Html -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
             | ``Custom-head`` _ -> "A file whose content will be appended to the resulting HTML page's head."
             | ``No-css`` -> "Does not generate inline CSS for the resulting HTML page."
@@ -127,7 +129,10 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
     doWarnIfNot isProjectFile <@ Configuration @> "-c"
 
 let run json (args: ParseResults<_>) = either {
-    let projectOptions = {ProjectResolver.Configuration = args.GetResult(Configuration, "Debug")}
+    let projectOptions = {
+        ProjectResolver.Configuration = args.TryGetResult Configuration
+        ProjectResolver.TargetFramework = args.TryGetResult Framework
+    }
     let! grammarInput =
         args.TryGetResult GrammarFile
         |> CompositePath.create

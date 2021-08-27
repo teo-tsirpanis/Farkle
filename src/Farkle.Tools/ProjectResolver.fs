@@ -6,13 +6,15 @@
 module Farkle.Tools.ProjectResolver
 
 open System
+open System.Collections.Generic
 open System.IO
 open Microsoft.Build.Evaluation
 open Microsoft.Build.Locator
 open Serilog
 
 type ProjectResolverOptions = {
-    Configuration: string
+    Configuration: string option
+    TargetFramework: string option
 }
 
 let cannotFindMSBuildMessage =
@@ -28,7 +30,7 @@ let registerMSBuild() =
         Log.Error(cannotFindMSBuildMessage)
         Error()
 
-let preferDll x =
+let private preferDll x =
     Log.Debug<_>("Project resolved to assembly {AssemblyPath}", x)
     let dllPath = Path.ChangeExtension(x, ".dll")
     if dllPath <> x && File.Exists dllPath then
@@ -37,11 +39,30 @@ let preferDll x =
     else
         x
 
+let private getGlobalProperties options =
+    let dict = Dictionary()
+    match options.Configuration with
+    | Some x -> dict.["Configuration"] <- x
+    | None -> ()
+    match options.TargetFramework with
+    | Some x -> dict.["TargetFramework"] <- x
+    | None -> ()
+    dict :> IDictionary<_,_>
+    
+let private hasProperty (project: Project) propName =
+    project.GetProperty propName
+    |> isNull
+    |> not
+
 let resolveProjectAssembly options (projectPath: string) =
-    let project = Project(projectPath, dict ["Configuration", options.Configuration], null)
+    let project = Project(projectPath, getGlobalProperties options, null)
     match project.GetProperty "TargetPath" with
     | null ->
-        Log.Error("The project seems to not have been restored or built. Make sure that it is, \
+        if options.TargetFramework.IsNone && hasProperty project "TargetFrameworks" then
+            Log.Error("The project targets multiple frameworks. Please select one using the \
+{{LongOption}} or {{ShortOption}} command-line options.", "--framework", "-f")
+        else
+            Log.Error("The project seems to not have been restored or built. Make sure that it is, \
 try performing a clean build, and report a bug on GitHub if the problem persists.")
         Error()
     | prop ->

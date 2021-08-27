@@ -116,7 +116,7 @@ module CompositePath =
     let rec resolve projectOptions currentDir (CompositePath(filePath, grammarName)) = either {
         let! filePath =
             match filePath with
-            | Some x -> Ok x
+            | Some x -> Path.GetFullPath(x, currentDir) |> Ok
             | None -> findDefaultProject currentDir
         return! resolveGrammar projectOptions grammarName filePath filePath
     }

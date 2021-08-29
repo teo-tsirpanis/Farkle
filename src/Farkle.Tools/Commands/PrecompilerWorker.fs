@@ -37,6 +37,9 @@ let private doIt input =
             PrecompilerInProcess.precompileAssemblyFromPath
                 CancellationToken.None logger fCreateConflictReport references input.AssemblyPath
 
+        if generatedConflictReports.Count <> 0 then
+            logger.Information(conflictReportHint)
+
         match result with
         | Ok grammars ->
             let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)

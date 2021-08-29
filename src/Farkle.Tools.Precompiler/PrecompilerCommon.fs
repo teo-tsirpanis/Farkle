@@ -82,6 +82,10 @@ module PrecompilerCommon =
     /// The name of the precompiler weaver, for the purposes of Sigourney.
     let weaverName = "Farkle.Tools.Precompiler"
 
+    /// An log message to be shown to hint how to dsable conflict reports.
+    let conflictReportHint = "Instead of creating an HTML report, the individual LALR conflicts \
+can be shown as errors by setting the 'FarkleGenerateConflictReport' MSbuild property to false."
+
     let private defaultSerializerOptions =
         let x = JsonSerializerOptions()
         // This is not a web app, the JSON files will be used for IPC and not be

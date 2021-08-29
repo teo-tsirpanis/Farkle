@@ -217,9 +217,6 @@ let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name gr
         | _ -> true)
         |> Seq.iter (fun error -> log.Error("{BuildError}", error))
 
-        if hasCreatedReport then
-            log.Information("Instead of creating an HTML report, the individual LALR conflicts can be shown as errors by setting the 'FarkleGenerateConflictReport' MSbuild property to false.")
-
 let precompileAssemblyFromPath ct log fCreateConflictReport references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path
     checkForDuplicates log pcdfs

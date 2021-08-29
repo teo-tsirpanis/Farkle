@@ -46,6 +46,9 @@ type FarklePrecompileInProcess() as this =
                 |> Seq.map (fun x -> TaskItem x :> ITaskItem)
                 |> Array.ofSeq
 
+            if this.GeneratedConflictReports.Length <> 0 then
+                this.Log2.Information(PrecompilerCommon.conflictReportHint)
+
             match grammars with
             | Ok grammars ->
                 precompiledGrammars <- grammars

@@ -186,36 +186,28 @@ or the Rename extension method.")
         | false -> Ok pcdfs
 
 let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name grammarDef errors =
-    match errors with
-    // A single build error can never represent a conflict because there must
-    // be at least two, one error for each conflict and another for the report.
-    // This means we don't have to bother with any filtering.
-    | [error] ->
-        log.Error("Error while precompiling {GrammarName}: {ErrorMessage}", name, error)
-    | errors ->
-        log.Error<string>("Errors while precompiling {GrammarName}.", name)
-
-        // At most one conflict report can appear among the build errors.
-        let conflictReport =
-            errors
-            |> List.tryPick (function BuildError.LALRConflictReport report -> Some report | _ -> None)
-        let hasCreatedReport =
-            match conflictReport with
-            | Some report ->
-                let conflictCount =
-                    errors
-                    |> Seq.filter (function BuildError.LALRConflict _ -> true | _ -> false)
-                    |> Seq.length
-                fCreateConflictReport conflictCount grammarDef report
-            | None -> false
-
+    log.Error<string>("Precompiling {GrammarName} failed.", name)
+    // At most one conflict report can appear among the build errors.
+    let conflictReport =
         errors
-        |> Seq.filter (function
-        | BuildError.LALRConflictReport _ -> false
-        // We display individual LALR conflicts as messages only when we do not create a report.
-        | BuildError.LALRConflict _ -> not hasCreatedReport
-        | _ -> true)
-        |> Seq.iter (fun error -> log.Error("{BuildError}", error))
+        |> List.tryPick (function BuildError.LALRConflictReport report -> Some report | _ -> None)
+    let hasCreatedReport =
+        match conflictReport with
+        | Some report ->
+            let conflictCount =
+                errors
+                |> Seq.filter (function BuildError.LALRConflict _ -> true | _ -> false)
+                |> Seq.length
+            fCreateConflictReport conflictCount grammarDef report
+        | None -> false
+
+    errors
+    |> Seq.filter (function
+    | BuildError.LALRConflictReport _ -> false
+    // We display individual LALR conflicts as messages only when we do not create a report.
+    | BuildError.LALRConflict _ -> not hasCreatedReport
+    | _ -> true)
+    |> Seq.iter (fun error -> log.Error("{BuildError}", error))
 
 let precompileAssemblyFromPath ct log fCreateConflictReport references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path

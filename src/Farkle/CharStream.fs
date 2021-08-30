@@ -199,16 +199,15 @@ type CharStream private(source: CharStreamSource) =
     /// <paramref name="ofs"/> is negative.</exception>
     member x.AdvanceBy ofs =
         checkOfsetPositive ofs
-        if ofs <> 0 then
-            x.AdvancePastOffset(ofs - 1, true)
+        x.AdvanceBy(count, true)
     /// Advances the stream's current position just after the
     /// next `ofs`th character from the stream's current position.
     /// This function invalidates the indices for the stream's `CharacterBuffer`.
     /// A call of this function with `doUnpin` set to false will not release the
     /// characters from memory but requires but requires to be paired witha call
     /// to CreateToken.
-    member internal x.AdvancePastOffset(ofs, doUnpin) =
-        currentPosition <- x.GetPositionAtOffset(ofs + 1)
+    member internal x.AdvanceBy(count, doUnpin) =
+        currentPosition <- x.GetPositionAtOffset(count)
         if doUnpin then
             updateTokenStartPosition()
     /// Creates an arbitrary object from the characters

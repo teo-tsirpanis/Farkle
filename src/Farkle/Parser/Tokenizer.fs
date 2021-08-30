@@ -13,28 +13,29 @@ open System.Diagnostics
 
 [<Struct>]
 /// A value type representing the result of a DFA tokenizer invocation.
-type private DFAResult private(symbol: DFASymbol, offset: int) =
+type private DFAResult private(symbol: DFASymbol, count: int) =
     static let eof = DFAResult(Unchecked.defaultof<_>, -1)
     /// Creates a `DFAResult` from the last accepted symbol
     /// (if exists), the offset of the last accepted character,
     /// and the offset of the last character the tokenizer is currently.
     static member Create symbolMaybe lastAcceptOfs ofs =
         match symbolMaybe with
-        | Some sym -> DFAResult(sym, lastAcceptOfs)
-        | None -> DFAResult(Unchecked.defaultof<_>, ofs)
+        // We accept offsets but store a count; we convert by adding one.
+        | Some sym -> DFAResult(sym, lastAcceptOfs + 1)
+        | None -> DFAResult(Unchecked.defaultof<_>, ofs + 1)
     /// A `DFAResult` signifying that input ended.
     static member EOF = eof
     /// Whether this `DFAResult` signifies that a new token was found.
-    member _.FoundToken = not(obj.ReferenceEquals(symbol, Unchecked.defaultof<_>))
+    member _.FoundToken = not(obj.ReferenceEquals(symbol, null))
     /// The symbol of the token that was found. Before using
     /// this property, check that `FoundToken` is true.
     member _.Symbol = symbol
     /// Whether this `DFAResult` signifies that input ended.
-    member _.ReachedEOF = offset = -1
+    member _.ReachedEOF = count = -1
+    /// How many characters the DFA tokenizer saw before succeeding or failing.
+    member _.CharacterCount = count
     /// The offset of the last character the DFA tokenizer reached.
-    /// By "offset" we mean how many characters after the character
-    /// stream's current position it is.
-    member _.LastCharacterOffset = offset
+    member _.LastCharacterOffset = count - 1
 
 [<AbstractClass>]
 /// <summary>A class that breaks down the characters of a
@@ -125,33 +126,33 @@ type DefaultTokenizer(grammar: Grammar) =
                     else
                         fail <| ParseErrorType.UnexpectedEndOfInputInGroup currentGroup
                 else
-                    let ofs = dfaResult.LastCharacterOffset
+                    let charCount = dfaResult.CharacterCount
                     // A new group begins that is allowed to nest into this one.
                     match dfaResult.FoundToken, dfaResult.Symbol with
                     | true, Choice3Of4(GroupStart(_, tokGroupIdx))
                         when currentGroup.Nesting.Contains tokGroupIdx ->
-                            input.AdvancePastOffset(ofs, isNoiseGroup)
+                            input.AdvanceBy(charCount, isNoiseGroup)
                             groupLoop isNoiseGroup (tokGroupIdx :: groupStack)
                     // A symbol is found that ends the current group.
                     | true, sym when currentGroup.IsEndedBy sym ->
                         match currentGroup.EndingMode with
-                        | EndingMode.Closed -> input.AdvancePastOffset(ofs, isNoiseGroup)
+                        | EndingMode.Closed -> input.AdvanceBy(charCount, isNoiseGroup)
                         | EndingMode.Open -> ()
                         groupLoop isNoiseGroup gs
                     // The existing group is continuing.
                     | _ ->
                         match currentGroup.AdvanceMode with
-                        | AdvanceMode.Token -> input.AdvancePastOffset(ofs, isNoiseGroup)
+                        | AdvanceMode.Token -> input.AdvanceBy(charCount, isNoiseGroup)
                         | AdvanceMode.Character ->
                             // We advance by one character to avoid getting stuck; if a decision
                             // point immediately followed, it would have been already handled.
-                            input.AdvancePastOffset(0, isNoiseGroup)
+                            input.AdvanceBy(1, isNoiseGroup)
                             let charBuffer = input.CharacterBuffer
                             let decisionPointIndex = oops.IndexOfCharacterGroupDecisionPoint(charBuffer, int g)
                             if decisionPointIndex = -1 then
-                                input.AdvancePastOffset(charBuffer.Length - 1, isNoiseGroup)
+                                input.AdvanceBy(charBuffer.Length, isNoiseGroup)
                             elif decisionPointIndex <> 0 then
-                                input.AdvancePastOffset(decisionPointIndex - 1, isNoiseGroup)
+                                input.AdvanceBy(decisionPointIndex, isNoiseGroup)
                         groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken (term: Terminal) =
@@ -172,43 +173,45 @@ type DefaultTokenizer(grammar: Grammar) =
             else
                 Debug.Assert(input.CurrentPosition.Index = input.TokenStartPosition.Index,
                     "The character stream's current position and starting position are not the same.")
-                let ofs = dfaResult.LastCharacterOffset
-                match dfaResult.FoundToken, dfaResult.Symbol with
-                // We are neither inside any group, nor a new one is going to start.
-                // The easiest case. We advance the input, and return the token.
-                | true, Choice1Of4 term ->
-                    input.AdvancePastOffset(ofs, false)
-                    newToken term
-                // We found noise outside of any group.
-                // We discard it, unpin its characters, and proceed.
-                | true, Choice2Of4 _noise ->
-                    input.AdvancePastOffset(ofs, true)
-                    tokenLoop()
-                // A new group just started. We will enter the group loop function.
-                | true, Choice3Of4(GroupStart(_, tokGroupIdx)) ->
-                    let g = groups.[int tokGroupIdx]
-                    let isNoiseGroup = not g.IsTerminal
-                    input.AdvancePastOffset(ofs, isNoiseGroup)
-                    groupLoop isNoiseGroup [tokGroupIdx]
-                    match g.ContainerSymbol with
-                    // The group is a terminal. We return it.
-                    | Choice1Of2 term -> newToken term
-                    // The group had been noise all along. We discard it and move on.
-                    | Choice2Of2 _ -> tokenLoop()
-                // A group end symbol is encountered but outside of any group.
-                | true, Choice4Of4 groupEnd ->
-                    fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
-                    // This line will not be executed.
-                    Token.CreateEOF input.CurrentPosition
+                if dfaResult.FoundToken then
+                    let charCount = dfaResult.CharacterCount
+                    match dfaResult.Symbol with
+                    // We are neither inside any group, nor a new one is going to start.
+                    // The easiest case. We advance the input, and return the token.
+                    | Choice1Of4 term ->
+                        input.AdvanceBy(charCount, false)
+                        newToken term
+                    // We found noise outside of any group.
+                    // We discard it, unpin its characters, and proceed.
+                    | Choice2Of4 _noise ->
+                        input.AdvanceBy(charCount, true)
+                        tokenLoop()
+                    // A new group just started. We will enter the group loop function.
+                    | Choice3Of4(GroupStart(_, tokGroupIdx)) ->
+                        let g = groups.[int tokGroupIdx]
+                        let isNoiseGroup = not g.IsTerminal
+                        input.AdvanceBy(charCount, isNoiseGroup)
+                        groupLoop isNoiseGroup [tokGroupIdx]
+                        match g.ContainerSymbol with
+                        // The group is a terminal. We return it.
+                        | Choice1Of2 term -> newToken term
+                        // The group had been noise all along. We discard it and move on.
+                        | Choice2Of2 _ -> tokenLoop()
+                    // A group end symbol is encountered but outside of any group.
+                    | Choice4Of4 groupEnd ->
+                        fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
+                        // This line will not be executed.
+                        Token.CreateEOF input.CurrentPosition
                 // We found an unrecognized symbol while being outside a group. This is an error.
-                | false, _ ->
-                    let errorPos = input.GetPositionAtOffset ofs
+                else
+                    let errorOffset = dfaResult.LastCharacterOffset
+                    let errorPos = input.GetPositionAtOffset errorOffset
                     let errorType =
                         let span = input.CharacterBuffer
-                        if ofs = span.Length then
+                        if errorOffset = span.Length then
                             ParseErrorType.UnexpectedEndOfInput
                         else
-                            ParseErrorType.LexicalError span.[ofs]
+                            ParseErrorType.LexicalError span.[errorOffset]
                     ParserError(errorPos, errorType)
                     |> ParserException
                     |> raise

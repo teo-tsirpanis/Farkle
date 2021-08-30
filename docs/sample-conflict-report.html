@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en" class="conflict-report">
+    <head>
+        <meta charset="utf-8">
+        <meta name="description" content="Auto-generated documentation of the Expression Conflicting grammar.">
+        <meta name="generator" content="Farkle version 0.0.0-local">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Expression Conflicting - Conflict Report</title>
+        <style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 1em 5%;
+}
+
+nav {
+    background-color: navy;
+    margin: auto;
+}
+
+.conflict-report nav {
+    background-color: firebrick;
+}
+
+nav>a {
+    color: white;
+    padding: 1em;
+    font-variant: small-caps;
+}
+
+nav>a:hover {
+    background-color: white;
+    color: navy;
+    text-decoration: none;
+}
+
+.conflict-report nav>a:hover {
+    color: firebrick;
+}
+
+footer {
+    border-top: 1px solid lightgray;
+    text-align: center;
+    font-size: 0.75em;
+}
+
+.flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover,
+a:active {
+    text-decoration: underline;
+}
+
+.terminal,
+.eof,
+.nonterminal,
+.dfa-characters {
+    font-family: monospace;
+}
+
+.eof,
+.dfa-anything-else,
+.production-empty,
+.special-char {
+    font-style: italic;
+}
+
+.nonterminal::before {
+    content: "<";
+}
+
+.nonterminal::after {
+    content: ">";
+}
+
+#syntax>ul>li>.nonterminal::after {
+    content: "> ::=";
+}
+
+.productions>li {
+    display: block;
+}
+
+.production-handle {
+    padding-left: 0;
+}
+
+.production-handle>li {
+    display: inline;
+}
+
+td {
+    border: 1px solid black;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 1em;
+    height: min-content;
+    max-width: 33%;
+}
+
+.conflicting-state {
+    outline: dashed red;
+}
+
+.conflicting-action {
+    font-weight: 700;
+}
+
+.lalr-shift {
+    background-color: #eff0d1;
+}
+
+.lalr-reduce {
+    background-color: #ffcc80;
+}
+
+.lalr-accept,
+.dfa-accept {
+    background-color: #77ba99;
+}
+
+.lalr-goto,
+.dfa-goto {
+    background-color: #58b8f3;
+}
+
+.dfa-fail {
+    background-color: #d33f49;
+}
+
+.dfa-characters {
+    background-color: lightgray;
+}
+
+.dfa-goto {
+    white-space: nowrap;
+}
+
+.dfa-accept {
+    text-align: center;
+}        </style>
+    </head>
+    <body>
+<nav class="flex-container">
+    <a href="#syntax">Syntax</a>
+    <a href="#lalr-states">LALR States</a>
+    
+</nav>
+<main>
+    <h1>Conflict report for Expression Conflicting</h1>
+    <p>Farkle could not precompile this grammar because there were 5 LALR states with conflicts. These states are:</p>
+    <ul>
+        <li><a href="#lalr10"> State 10</a></li>
+        <li><a href="#lalr11"> State 11</a></li>
+        <li><a href="#lalr12"> State 12</a></li>
+        <li><a href="#lalr13"> State 13</a></li>
+        <li><a href="#lalr14"> State 14</a></li>
+    </ul>
+    <p>Besides conflicts, there also might have been other kinds of errors that are not listed here.</p>
+<section id="syntax">
+    <h2>Syntax</h2>
+    <ul>
+        <li id="n0">
+            <span class="nonterminal">Expression Conflicting</span>
+            <ul class="productions">
+                <li id="prod0" >
+                    <ol class="production-handle">
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">+</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                    </ol>
+                </li>
+                <li id="prod1" >
+                    <ol class="production-handle">
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">-</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                    </ol>
+                </li>
+                <li id="prod2" >
+                    <ol class="production-handle">
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">*</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                    </ol>
+                </li>
+                <li id="prod3" >
+                    <ol class="production-handle">
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">/</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                    </ol>
+                </li>
+                <li id="prod4" >
+                    <ol class="production-handle">
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">^</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                    </ol>
+                </li>
+                <li id="prod5" >
+                    <ol class="production-handle">
+                        <li><span class="terminal">(</span></li>
+                        <li><a class="nonterminal" href="#n0">Expression Conflicting</a></li>
+                        <li><span class="terminal">)</span></li>
+                    </ol>
+                </li>
+                <li id="prod6" >
+                    <ol class="production-handle">
+                        <li><span class="terminal">Number</span></li>
+                    </ol>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</section>
+<section id="lalr-states">
+    <h2>LALR States</h2>
+    <p><span class="conflicting-state">States with conflicts</span> and <span class="conflicting-action">conflicting actions</span> are highlighted.</p>
+    <div class="flex-container">
+        <table id="lalr0">
+            <caption>State 0</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr1">State 1</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr1">
+            <caption>State 1</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">+</td>
+<td class="lalr-shift">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">-</td>
+<td class="lalr-shift">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">*</td>
+<td class="lalr-shift">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">/</td>
+<td class="lalr-shift">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">^</td>
+<td class="lalr-shift">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-accept">Accept</td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr2">
+            <caption>State 2</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr9">State 9</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr3">
+            <caption>State 3</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">+</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">-</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">*</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">/</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">^</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod6">&lt;Expression Conflicting&gt; ::= Number</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr4">
+            <caption>State 4</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr10">State 10</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr5">
+            <caption>State 5</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr11">State 11</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr6">
+            <caption>State 6</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr12">State 12</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr7">
+            <caption>State 7</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr13">State 13</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr8">
+            <caption>State 8</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">(</td>
+<td class="lalr-shift">Shift to <a href="#lalr2">State 2</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">Number</td>
+<td class="lalr-shift">Shift to <a href="#lalr3">State 3</a></td>
+
+                </tr>
+                <tr>
+                    <td><a class="nonterminal" href="#n0">Expression Conflicting</a></td>
+                    <td class="lalr-goto">Go to <a href="#lalr14">State 14</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr9">
+            <caption>State 9</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">+</td>
+<td class="lalr-shift">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">-</td>
+<td class="lalr-shift">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">*</td>
+<td class="lalr-shift">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">/</td>
+<td class="lalr-shift">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">^</td>
+<td class="lalr-shift">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-shift">Shift to <a href="#lalr15">State 15</a></td>
+
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr10" class="conflicting-state">
+            <caption>State 10 (has conflicts)</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td rowspan="2" class="terminal">+</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">-</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">*</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">/</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">^</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod0">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;+&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr11" class="conflicting-state">
+            <caption>State 11 (has conflicts)</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td rowspan="2" class="terminal">+</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">-</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">*</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">/</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">^</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod1">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;-&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr12" class="conflicting-state">
+            <caption>State 12 (has conflicts)</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td rowspan="2" class="terminal">+</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">-</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">*</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">/</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">^</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod2">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;*&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr13" class="conflicting-state">
+            <caption>State 13 (has conflicts)</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td rowspan="2" class="terminal">+</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">-</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">*</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">/</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">^</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod3">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;/&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr14" class="conflicting-state">
+            <caption>State 14 (has conflicts)</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td rowspan="2" class="terminal">+</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr4">State 4</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">-</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr5">State 5</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">*</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr6">State 6</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">/</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr7">State 7</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td rowspan="2" class="terminal">^</td>
+<td class="lalr-shift conflicting-action">Shift to <a href="#lalr8">State 8</a></td>
+
+                </tr>
+                <tr>
+<td class="lalr-reduce conflicting-action">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod4">&lt;Expression Conflicting&gt; ::= &lt;Expression Conflicting&gt; &#39;^&#39; &lt;Expression Conflicting&gt;</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <table id="lalr15">
+            <caption>State 15</caption>
+            <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="terminal">+</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">-</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">*</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">/</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">^</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td class="terminal">)</td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+
+                </tr>
+                <tr>
+                    <td ><abbr class="eof" title="End of File">EOF</abbr></td>
+<td class="lalr-reduce">Reduce <a href="#prod5">&lt;Expression Conflicting&gt; ::= &#39;(&#39; &lt;Expression Conflicting&gt; &#39;)&#39;</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</main>
+    <footer>
+        <p>This page was automatically generated by <a href="https://teo-tsirpanis.github.io/Farkle">
+        <abbr title="FArkle Recognizes Known Languages Easily">Farkle</abbr> version
+        0.0.0-local</a> on <time>2021-08-29 20:58</time>.</p>
+    </footer>
+    </body>
+</html>

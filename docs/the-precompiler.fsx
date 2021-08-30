@@ -120,6 +120,14 @@ If you build your program now, you should get a message that your designtime Far
 
 __If you have marked your designtime Farkles as precompiled, using the precompiler is mandatory.__ Parsing will always eventually fail if you build a precompilable designtime Farkle without having used the precompiler.
 
+## Conflict reports
+
+Since Farkle 6.3.0, if a grammar you were going to precompile has LALR conflicts, Farkle will not display each of them as build errors, but will generate an HTML report containing all the parser's states, including their conflicting actions. You can take a look at [a sample conflict report](sample-conflict-report.html) for [the quick start guide's](quickstart.html) mathematical expression grammar, if we had not added operator precedence and associativity.
+
+This feature is enabled by default and is expected to make diagnosing grammars with conflicts much easier. However if you want for some reason to disable conflict reports, you can see how to do it on the next section.
+
+The conflict reports are stored in a temporary location and will be cleaned by MSBuild rebuilding or cleaning the project. Their paths are written to the `@(FarkleGeneratedConflictReports)` item, which can be used by a custom MSBuild target to do things like copy them elsewhere or upload them as CI artifacts. Such targets need to run after `FarkleRunPrecompiler`.
+
 ## Customizing the precompiler
 
 The precompiler's behavior can be customized by the following MSBuild properties you can set in your project file:
@@ -132,6 +140,9 @@ The precompiler's behavior can be customized by the following MSBuild properties
     <!-- If set to true, Farkle will generate an HTML page
     describing each precompiled grammar. Defaults to false. -->
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
+    <!-- If set to false, Farkle will not generate an HTML report if any
+    grammar has conflicts but display each of them as build errors. -->
+    <FarkleGenerateConflictReports>false</FarkleGenerateConflictReports>
 </PropertyGroup>
 ```
 

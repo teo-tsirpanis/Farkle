@@ -1,6 +1,7 @@
 #### 6.3.0
 * __Minor breaking change:__ Text with legacy CR line endings is no longer supported. Since this version, they will no longer be recognized as line endings by position tracking. When Farkle's next major version gets released, they will cause lexical errors.
 * __Minor breaking change:__ The `Farkle.Builder.GrammarMetadata` type has an additional field of type `Farkle.Builder.OperatorPrecedence.OperatorScope`. User code that does not directly set metadata to designtime Farkles is not affected.
+* The precompiler will now generate an HTML report if a grammar has LALR conflicts.
 * The precompiler now works on Visual Studio for Windows. In this case only, it requires to install the .NET tool `Farkle.Tools`.
 * Any type of designtime Farkle can now be renamed or set metadata like case sensitivity, comments or operator scopes, without using the `DesigntimeFarkle.cast` function. There were some binary breaking changes but none is source breaking.
 * Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.

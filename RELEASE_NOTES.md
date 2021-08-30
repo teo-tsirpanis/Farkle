@@ -5,6 +5,7 @@
 * The precompiler now works on Visual Studio for Windows. In this case only, it requires to install the .NET tool `Farkle.Tools`.
 * Any type of designtime Farkle can now be renamed or set metadata like case sensitivity, comments or operator scopes, without using the `DesigntimeFarkle.cast` function. There were some binary breaking changes but none is source breaking.
 * Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.
+* Fixed a bug on the `new` CLI tool command where the `--prop` option could not be specified more than once.
 
 #### 6.2.0 - 17-05-2021
 * __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.

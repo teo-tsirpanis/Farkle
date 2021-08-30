@@ -29,7 +29,7 @@ type Arguments =
     | [<Unique; AltCommandLine("-lang")>] Language of Language
     | [<Unique; AltCommandLine("-ns")>] Namespace of string
     | [<Unique; AltCommandLine("-t")>] TemplateFile of string
-    | [<Unique; AltCommandLine("-prop")>] Property of string * string
+    | [<AltCommandLine("-prop")>] Property of string * string
 with
     interface IArgParserTemplate with
         member x.Usage =

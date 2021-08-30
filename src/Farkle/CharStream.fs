@@ -132,9 +132,10 @@ type CharStream private(source: CharStreamSource) =
     // characters after this position in memory.
     let mutable startingPosition = Position.Initial
     let mutable currentPosition = Position.Initial
-    let checkOfsetPositive ofs =
-        if ofs < 0 then
-            raise(ArgumentOutOfRangeException("ofs", ofs, "The offset cannot be negative."))
+    static let throwCountNegative (count: int) =
+        raise(ArgumentOutOfRangeException(nameof count, count, "The count cannot be negative")) |> ignore
+    static let throwOffsetNegative (ofs: int) =
+        raise(ArgumentOutOfRangeException(nameof ofs, ofs, "The offset cannot be negative."))
     /// Converts an offset relative to the current
     /// position to an absolute character index.
     let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs
@@ -179,26 +180,29 @@ type CharStream private(source: CharStreamSource) =
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>
     member _.TryExpandPastOffset ofs =
-        checkOfsetPositive ofs
+        if ofs < 0 then
+            throwOffsetNegative ofs
         source.TryExpandPastIndex(startingPosition.Index, convertOffsetToIndex ofs)
     /// <summary>Returns the position of the character at <paramref name="ofs"/>
     /// characters after the current position.</summary>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="ofs"/> is negative.</exception>
     member _.GetPositionAtOffset ofs =
-        checkOfsetPositive ofs
+        if ofs < 0 then
+            throwOffsetNegative ofs
         let span = source.GetSpanForCharacters(currentPosition.Index, ofs)
         currentPosition.Advance span
-    /// <summary>Advances the stream's current position by <paramref name="ofs"/>
+    /// <summary>Advances the stream's current position by <paramref name="count"/>
     /// characters. This function invalidates the indices for the stream's
-    /// <see cref="CharacterBuffer"/> and its characters might be released
-    /// from memory.</summary>
+    /// <see cref="CharacterBuffer"/> and the characters that were advanced
+    /// might later be released from memory.</summary>
     /// <remarks>Both Windows line ending chatacters must be advanced at the same
     /// time, otherwise the stream's current position will be incorrect.</remarks>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// <paramref name="ofs"/> is negative.</exception>
-    member x.AdvanceBy ofs =
-        checkOfsetPositive ofs
+    /// <paramref name="count"/> is negative.</exception>
+    member x.AdvanceBy count =
+        if count < 0 then
+            throwCountNegative count
         x.AdvanceBy(count, true)
     /// Advances the stream's current position just after the
     /// next `ofs`th character from the stream's current position.

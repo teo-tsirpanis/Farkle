@@ -45,7 +45,7 @@ type FarkleGenerateHtml() =
             let htmlPath =
                 Path.Combine(this.OutputDirectory, Path.ChangeExtension(grammarName, output.FileExtension))
                 |> Path.GetFullPath
-            log.Information("Writing documentation of {GrammarName} at {HtmlPath}...", grammarName, htmlPath)
+            log.Information("Writing documentation of {GrammarName:l} at {HtmlPath}...", grammarName, htmlPath)
             File.WriteAllText(htmlPath, output.Content)
 
             generatedHtmlFiles.Add(TaskItem htmlPath)

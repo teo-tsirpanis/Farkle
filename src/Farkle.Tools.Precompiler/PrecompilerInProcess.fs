@@ -96,13 +96,13 @@ let private precompileDiscovererResult ct (log: ILogger) x =
     match x with
     | Ok (pcdf: PrecompilableDesigntimeFarkle) ->
         let name = pcdf.Name
-        log.Information("Precompiling {GrammarName}...", name)
+        log.Information("Precompiling {GrammarName:l}...", name)
         let grammarDef = pcdf.CreateGrammarDefinition()
         let grammar = DesigntimeFarkleBuild.buildGrammarOnlyEx ct BuildOptions.Default grammarDef
         match grammar with
         | Ok grammar ->
             // FsLexYacc does it, so why not us?
-            log.Information("{Grammar} was successfully precompiled: {Terminals} terminals, {Nonterminals} \
+            log.Information("{GrammarName:l} was successfully precompiled: {Terminals} terminals, {Nonterminals} \
 nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} DFA states",
                 name,
                 grammar.Symbols.Terminals.Length,
@@ -157,7 +157,7 @@ let private precompileAssemblyFromPathIsolated ct log references path =
     try
         let asm = alc.TheAssembly
         if asm.GetName().Name = typeof<DesigntimeFarkle>.Assembly.GetName().Name then
-            log.Error("Cannot precompile an assembly named 'Farkle'")
+            log.Error("Cannot precompile an assembly named 'Farkle'.")
             []
         else
             discoverPrecompilableDesigntimeFarkles log asm
@@ -175,7 +175,7 @@ let private checkForDuplicates (log: ILogger) (pcdfs: _ list) =
     |> Seq.countBy id
     |> Seq.map (fun (name, count) ->
         if count <> 1 then
-            log.Error("Cannot have many precompilable designtime Farkles named {Name}", name)
+            log.Error("Cannot have many precompilable designtime Farkles named {Name:l}.", name)
         count <> 1)
     |> Seq.fold (||) false
     |> function
@@ -186,7 +186,7 @@ or the Rename extension method.")
         | false -> Ok pcdfs
 
 let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name grammarDef errors =
-    log.Error<string>("Precompiling {GrammarName} failed.", name)
+    log.Error<string>("Precompiling {GrammarName:l} failed.", name)
     // At most one conflict report can appear among the build errors.
     let conflictReport =
         errors
@@ -207,7 +207,7 @@ let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name gr
     // We display individual LALR conflicts as messages only when we do not create a report.
     | BuildError.LALRConflict _ -> not hasCreatedReport
     | _ -> true)
-    |> Seq.iter (fun error -> log.Error("{BuildError}", error))
+    |> Seq.iter (fun error -> log.Error("{BuildError:l}", error))
 
 let precompileAssemblyFromPath ct log fCreateConflictReport references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path
@@ -220,8 +220,8 @@ let precompileAssemblyFromPath ct log fCreateConflictReport references path =
             handlePrecompilerErrors log fCreateConflictReport name grammarDef errors
             None
         | DiscoveringFailed(typeName, fieldName, e) ->
-            log.Error("Exception thrown while getting the value of field {FieldName} in type {TypeName}.", fieldName, typeName)
-            log.Error("{Exception}", e)
+            log.Error("Exception thrown while getting the value of field {TypeName:l}.{FieldName:l}:", typeName, fieldName)
+            log.Error("{Exception:l}", e)
             None))
 
 let weaveGrammars (asm: AssemblyDefinition) (precompiledGrammars: _ list) =

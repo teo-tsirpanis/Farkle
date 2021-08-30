@@ -34,25 +34,25 @@ with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
-            | GrammarFile _ -> "A composite path of the grammar to process. \
-Run 'farkle --explain-composite-paths' to learn their syntax."
-            | OutputFile _ -> "Specifies where the output file will be stored. \
-Defaults to the grammar's name and extension, with a suffix set by the template, which defaults to '.out.txt'."
+            | GrammarFile _ -> "A composite path of the file to process. It can be a grammar, a .NET assembly or \
+a .NET SDK project. Run 'farkle --explain-composite-paths' to learn their syntax."
+            | OutputFile _ -> "The path the output file will be stored. \
+Defaults to the input file's name, with an extension set by the template, which defaults to '.out.txt'."
             | Configuration _ -> "The configuration the project will be evaluated with. The default for most projects is Debug."
-            | Framework _ -> "The target framework of the project."
-            | Html -> "Specifies that an HTML web page describing the grammar should be generated. This is the default."
+            | Framework _ -> "The target framework of the project. Useful if it uses multi-targeting."
+            | Html -> "Generate an HTML web page describing the grammar. This is the default."
             | ``Custom-head`` _ -> "A file whose content will be appended to the resulting HTML page's head."
-            | ``No-css`` -> "Does not generate inline CSS for the resulting HTML page."
-            | ``No-lalr`` -> "Does not generate the LALR state tables in the resulting HTML page."
-            | ``No-dfa`` -> "Does not generate the DFA state tables in the resulting HTML page."
-            | GrammarSkeleton -> "Specifies that a skeleton source file for the grammar should be generated. \
+            | ``No-css`` -> "Do not generate inline CSS for the resulting HTML page."
+            | ``No-lalr`` -> "Do not generate the LALR state tables in the resulting HTML page."
+            | ``No-dfa`` -> "Do not generate the DFA state tables in the resulting HTML page."
+            | GrammarSkeleton -> "Generate a skeleton source file for the grammar in either C# or F#. \
 The source's namespace and language can be adjusted by the respective arguments."
-            | Language _ -> "Specifies the skeleton source file's language. If not specified, Farkle will \
+            | Language _ -> "The skeleton source file's language. If not specified, Farkle will \
 infer it based on the project files in the current directory; otherwise it will use F#."
-            | Namespace _ -> "Specifies the skeleton source file's namespace. \
+            | Namespace _ -> "The skeleton source file's namespace. \
 If not specified, the input file's name will be used."
-            | TemplateFile _ -> "Specifies a custom Scriban template file to use. It's documented in Farkle's site."
-            | Property _ -> "Specifies an additional property to be passed to your custom template \
+            | TemplateFile _ -> "Generate a file using this custom Scriban template. See more in https://teo-tsirpanis.github.io/Farkle/templating.html."
+            | Property _ -> "Additional properties to be passed to your custom template \
 via the 'properties.myproperty' Scriban variable."
 
 let tryInferLanguage() =
@@ -102,7 +102,8 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         let options = {AdditionalProperties = additionalProperties}
         return GrammarCustomTemplate(grammarInput, templatePath, options)
     | _, true, Some _ | true, _, Some _ | true, true, _ ->
-        Log.Error("The '--html', '--grammarskeleton' and '-t' arguments cannot be used at the same time")
+        Log.Error("The {Html}, {GrammarSkeleton} and {T} arguments cannot be used at the same time",
+            "--html", "--grammarskeleton", "-t")
         return! Error()
 }
 

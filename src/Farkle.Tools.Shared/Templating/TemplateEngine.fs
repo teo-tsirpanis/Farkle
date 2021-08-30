@@ -26,8 +26,8 @@ module TemplateEngine =
         let template = Template.Parse(templateText, templateFileName)
         for x in template.Messages do
             match x.Type with
-            | ParserMessageType.Error -> log.Error("{Error}", x)
-            | ParserMessageType.Warning -> log.Warning("{Warning}", x)
+            | ParserMessageType.Error -> log.Error("{Error:l}", x)
+            | ParserMessageType.Warning -> log.Warning("{Warning:l}", x)
             | _ -> ()
         if template.HasErrors then
             log.Error("Parsing {TemplateFileName} failed.", templateFileName)
@@ -110,7 +110,7 @@ module TemplateEngine =
             | _ ->
                 log.Error("There were {NumConflicts} LALR conflicts in the grammar.", numConflicts)
             File.WriteAllText(path, gt.Content)
-            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}", path)
+            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}.", path)
             Some path
         | _ -> None
 

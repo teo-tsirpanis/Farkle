@@ -61,7 +61,7 @@ let main argv =
     try
         try
             if results.Contains Version then
-                Log.Information("Version: {toolsVersion}", toolsVersion)
+                Log.Information("Version: {toolsVersion:l}", toolsVersion)
                 0
             elif results.Contains ``Explain-composite-paths`` then
                 printfn "Composite paths specify both a file path and a precompiled grammar name. Their format is 'file_path::grammar_name'"

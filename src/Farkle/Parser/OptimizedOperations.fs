@@ -13,7 +13,7 @@ open System.Diagnostics
 open System.Runtime.CompilerServices
 open System.Text
 
-[<Struct>]
+[<Struct; IsReadOnly>]
 /// An value type representing a DFA state or its absence.
 /// It is returned from optimized operations.
 type internal DFAStateTag = private DFAStateTag of int
@@ -35,6 +35,68 @@ with
     /// Whether this `DFAStateTag` represents a failed operation.
     member x.IsError = x.Value < 0
 
+[<Struct; IsReadOnly>]
+/// An efficient representation of a DFA.
+// It stores each of the edges' items (starting and ending character,
+// as well as the state to go to) to a separate array, increasing compactness
+// and locality, at the expense of non-constant time and random memory access.
+// Speaking of random memory access, it mostly happens at the edgeEnds array;
+// other arrays are accessed only once or twice per operation.
+// TODO: do the same with the LALR states. It was not prioritized; the DFA is slower.
+type private OptimizedDFA private(stateStarts: int ImmutableArray, edgeStarts: char ImmutableArray, edgeEnds: char ImmutableArray, edgeTransitions: DFAStateTag ImmutableArray, anythingElse: DFAStateTag ImmutableArray) =
+
+    // Adapted from .NET's binary search function.
+    static let rec binarySearch lo hi k (xs: char ImmutableArray) =
+        if lo <= hi then
+            let median = int ((uint32 hi + uint32 lo) >>> 1)
+            match xs.[median].CompareTo k with
+            | 0 -> median
+            | x when x < 0 -> binarySearch (median + 1) hi k xs
+            | _ -> binarySearch lo (median - 1) k xs
+        else
+            ~~~ lo
+
+    static member Create (grammar: Grammar) =
+        let dfaStates = grammar.DFAStates
+        let totalEdges =
+            dfaStates
+            |> Seq.sumBy (fun x -> x.Edges.Elements.Length)
+        let stateStarts = ImmutableArray.CreateBuilder dfaStates.Length
+        let edgeStarts = ImmutableArray.CreateBuilder totalEdges
+        let edgeEnds = ImmutableArray.CreateBuilder totalEdges
+        let edgeTransitions = ImmutableArray.CreateBuilder totalEdges
+        let anythingElse = ImmutableArray.CreateBuilder dfaStates.Length
+
+        for state in dfaStates.AsSpan() do
+            stateStarts.Add edgeStarts.Count
+            state.AnythingElse |> DFAStateTag.FromOption |> anythingElse.Add
+            let edges = state.Edges.Elements
+            for edge in edges do
+                edgeStarts.Add edge.KeyFrom
+                edgeEnds.Add edge.KeyTo
+                edge.Value |> DFAStateTag.FromOption |> edgeTransitions.Add
+
+        OptimizedDFA(stateStarts.MoveToImmutable(), edgeStarts.MoveToImmutable(), edgeEnds.MoveToImmutable(), edgeTransitions.MoveToImmutable(), anythingElse.MoveToImmutable())
+
+    member _.GetNextDFAState c state =
+        let lo = stateStarts.[state]
+        let hi =
+            if state < stateStarts.Length - 1 then
+                stateStarts.[state + 1] - 1
+            else
+                edgeStarts.Length - 1
+        if lo <= hi then
+            let idx =
+                match binarySearch lo hi c edgeEnds with
+                | x when x >= 0 -> x
+                | x -> Math.Min(~~~x, hi)
+            if edgeStarts.[idx] <= c && c <= edgeEnds.[idx] then
+                edgeTransitions.[idx]
+            else
+                anythingElse.[state]
+        else
+            anythingElse.[state]
+
 [<Struct>]
 /// Describes which characters to search for to find the
 /// next decision point of a character group. A decision
@@ -52,58 +114,10 @@ type private CharacterGroupSearchAction = {
 [<AutoOpen>]
 module private OptimizedOperations =
 
-    [<Literal>]
-    /// The number of ASCII characters.
-    let ASCIICharacterCount = 128
-
-    /// Checks if the given character belongs to ASCII.
-    /// The first control characters are included.
-    let inline isASCII c = c < char ASCIICharacterCount
-
-    // We use a shared dummy array if a DFA state does not have any
-    // edges from an ASCII character, or Anything Else.
-    let private dfaStateAllErrors = Array.create ASCIICharacterCount DFAStateTag.Error
-
     let private createJaggedArray2D length1 length2 =
         let arr = Array.zeroCreate length1
         for i = 0 to length1 - 1 do
             arr.[i] <- Array.zeroCreate length2
-        arr
-
-    let private rangeMapToSeq xs = RangeMap.toSeqEx xs
-
-    /// Creates a two-dimensional array of DFA state indices, whose first dimension
-    /// represents the index of the current DFA state, and the second represents the
-    /// ASCII character that was encountered.
-    let buildDFAArray (dfa: ImmutableArray<DFAState>) =
-        let arr = Array.zeroCreate dfa.Length
-        for i = 0 to dfa.Length - 1 do
-            let state = dfa.[i]
-            let failsOnAllAscii =
-                state.AnythingElse.IsNone
-                && (state.Edges.Elements.IsEmpty || not (isASCII state.Edges.Elements.[0].KeyFrom))
-            arr.[i] <-
-                if failsOnAllAscii then
-                    dfaStateAllErrors
-                else
-                    let arr = Array.zeroCreate ASCIICharacterCount
-                    let anythingElse = DFAStateTag.FromOption state.AnythingElse
-                    // TODO: Use Array.Fill when .NET Standard 2.0 support is dropped.
-                    for j = 0 to arr.Length - 1 do
-                        arr.[j] <- anythingElse
-                    let chars =
-                        state.Edges
-                        |> rangeMapToSeq
-                        |> Seq.takeWhile (fun x -> isASCII x.Key)
-                    for KeyValue(c, state) in chars do
-                        arr.[int c] <- DFAStateTag.FromOption state
-                    arr
-        arr
-
-    let buildDFAAnythingElseArray (dfa: ImmutableArray<DFAState>) =
-        let arr = Array.zeroCreate dfa.Length
-        for i = 0 to arr.Length - 1 do
-            arr.[i] <- DFAStateTag.FromOption dfa.[i].AnythingElse
         arr
 
     let buildCharacterGroupSearchActionArray (groups: ImmutableArray<Group>) =
@@ -157,6 +171,7 @@ module private OptimizedOperations =
 /// An object that provides optimized functions for some common operations on Grammars.
 /// These functions require some memory-intensive
 /// pre-processing, which is performed only once per grammar.
+[<Sealed>]
 type internal OptimizedOperations private(grammar: Grammar) =
     // I love this type. It surprisingly simply allows
     // for some very efficient decoupled object caches.
@@ -165,8 +180,7 @@ type internal OptimizedOperations private(grammar: Grammar) =
     static let cache = ConditionalWeakTable()
     static let cacheItemCreator = ConditionalWeakTable.CreateValueCallback OptimizedOperations
 
-    let dfaArray = buildDFAArray grammar.DFAStates
-    let dfaAnythingElseArray = buildDFAAnythingElseArray grammar.DFAStates
+    let optimizedDfa = OptimizedDFA.Create grammar
     let groupSearchActionArray = buildCharacterGroupSearchActionArray grammar.Groups
     let lalrActionArray = buildLALRActionArray grammar.Symbols.Terminals grammar.LALRStates
     let lalrGotoArray = buildLALRGotoArray grammar.Symbols.Nonterminals grammar.LALRStates
@@ -176,14 +190,7 @@ type internal OptimizedOperations private(grammar: Grammar) =
     /// same instance which is collected with the grammar.
     static member Create grammar = cache.GetValue(grammar, cacheItemCreator)
     /// Gets the next DFA state from the given current one, when the given character is encountered.
-    member _.GetNextDFAState c state =
-        let stateArray = dfaArray.[state]
-        if int c < stateArray.Length then
-            stateArray.[int c]
-        else
-            match grammar.DFAStates.[state].Edges.TryFind c with
-            | ValueSome x -> DFAStateTag.FromOption x
-            | ValueNone -> dfaAnythingElseArray.[state]
+    member _.GetNextDFAState c state = optimizedDfa.GetNextDFAState c state
     /// Returns the index of the next input character that might either end
     /// the group the tokenizer is in or enter another one that can be nested.
     /// If such character does not exist the method returns -1.

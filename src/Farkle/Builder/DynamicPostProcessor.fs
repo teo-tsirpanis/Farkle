@@ -78,6 +78,11 @@ let private emitPPMethod<'TSymbol, 'TDelegate when 'TDelegate :> IRawDelegatePro
 
     // Interface implementation methods have to be virtual.
     let method = ppType.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Virtual, typeof<obj>, argTypes)
+
+    // 512 is AggressiveOptimization.
+    MethodImplAttributes.IL ||| MethodImplAttributes.Managed ||| enum 512
+    |> method.SetImplementationFlags
+
     let ilg = method.GetILGenerator()
 
     // int index;

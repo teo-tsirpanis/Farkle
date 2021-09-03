@@ -29,10 +29,10 @@ type ParserException(error: ParserError) =
 type PostProcessorException private(msg, innerExn) =
     inherit FarkleException(msg, innerExn)
     new (term: Terminal, innerExn) =
-        let message = sprintf "Exception while transforming terminal %O" term
+        let message = sprintf "Exception while transforming terminal %O." term
         PostProcessorException(message, innerExn)
     new (prod: Production, innerExn) =
-        let message = sprintf "Exception while fusing production %O" prod
+        let message = sprintf "Exception while fusing production %O." prod
         PostProcessorException(message, innerExn)
 
 /// <summary>A parsing error that did not originate from

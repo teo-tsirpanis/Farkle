@@ -23,7 +23,7 @@ let cannotFindMSBuildMessage =
 let registerMSBuild() =
     try
         let instance = MSBuildLocator.RegisterDefaults()
-        Log.Debug("Using MSBuild installation from {MSBuildPath}", instance.MSBuildPath)
+        Log.Debug("Using MSBuild installation from {MSBuildPath:l}.", instance.MSBuildPath)
         Ok()
     with
     | :? InvalidOperationException ->
@@ -31,10 +31,10 @@ let registerMSBuild() =
         Error()
 
 let private preferDll x =
-    Log.Debug<_>("Project resolved to assembly {AssemblyPath}", x)
+    Log.Debug<_>("Project resolved to assembly {AssemblyPath:l}.", x)
     let dllPath = Path.ChangeExtension(x, ".dll")
     if dllPath <> x && File.Exists dllPath then
-        Log.Debug("Preferred the dll file in the same directory")
+        Log.Debug("Preferred the dll file in the same directory.")
         dllPath
     else
         x

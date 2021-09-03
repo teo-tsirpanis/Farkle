@@ -27,7 +27,7 @@ module internal Common =
         for i = 0 to lalrStates.Length - 1 do
             match lalrStates.[i].EOFAction with
             | Some (LALRAction.Shift _) ->
-                invalidEGTf "Error in LALR state %d: cannot shift when the end of input is encountered" i
+                invalidEGTf "Error in LALR state %d: cannot shift when the end of input is encountered." i
             | _ -> ()
 
     let createProperties source (x: IReadOnlyDictionary<_,_>) =

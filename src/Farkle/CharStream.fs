@@ -133,7 +133,7 @@ type CharStream private(source: CharStreamSource) =
     let mutable startingPosition = Position.Initial
     let mutable currentPosition = Position.Initial
     static let throwCountNegative (count: int) =
-        raise(ArgumentOutOfRangeException(nameof count, count, "The count cannot be negative")) |> ignore
+        raise(ArgumentOutOfRangeException(nameof count, count, "The count cannot be negative.")) |> ignore
     static let throwOffsetNegative (ofs: int) =
         raise(ArgumentOutOfRangeException(nameof ofs, ofs, "The offset cannot be negative."))
     /// Converts an offset relative to the current

@@ -35,7 +35,7 @@ with
 No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
-            | List _ -> "List all precompiled grammars of an assembly"
+            | List _ -> "List all precompiled grammars of an assembly."
             | GeneratePredefinedSets _ -> "Generate an F# source file with GOLD Parser's predefined sets. \
 For internal use only."
 
@@ -47,7 +47,7 @@ let main argv =
     // even outside Argu.
     PrecompilerWorker.runIfRequested argv
 
-    let parser = ArgumentParser.Create("farkle", "Help was requested", errorHandler = FarkleCLIExiter())
+    let parser = ArgumentParser.Create("farkle", "Help was requested.", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
     let json = results.Contains Json
     let verbosity =
@@ -64,7 +64,7 @@ let main argv =
                 Log.Information("Version: {toolsVersion:l}", toolsVersion)
                 0
             elif results.Contains ``Explain-composite-paths`` then
-                printfn "Composite paths specify both a file path and a precompiled grammar name. Their format is 'file_path::grammar_name'"
+                printfn "Composite paths specify both a file path and a precompiled grammar name. Their format is 'file_path::grammar_name'."
                 printfn "The file name can be an assembly, an EGT file, or a project. In the latter case, the project may be built if required."
                 printfn "If the file name is omitted (i.e. the path has the form of '::grammar_name'), Farkle will try to find a project file in the current directory."
                 printfn "If only the file name is specified (i.e. the path has the form 'file_path'), the file's only precompiled grammar will be chosen."
@@ -78,7 +78,7 @@ let main argv =
                 |> function | Ok () -> 0 | Error () -> 1
         with
         | ex ->
-            Log.Fatal(ex, "Exception occured")
+            Log.Fatal(ex, "Exception occured.")
             1
     finally
         Log.CloseAndFlush()

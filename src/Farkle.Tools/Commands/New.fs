@@ -61,16 +61,16 @@ let tryInferLanguage() =
         fun ext -> files |> Array.exists (fun path -> Path.GetExtension(path) = ext)
     match hasExtension ".csproj", hasExtension ".fsproj" with
     | true, true ->
-        Log.Error("Cannot infer the language to use; there are both C# and F# projects in {CurrentDirectory}", Environment.CurrentDirectory)
+        Log.Error("Cannot infer the language to use; there are both C# and F# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
         Error()
     | true, false ->
-        Log.Debug("No language was specified; inferred to be C#, as there are C# projects in {CurrentDirectory}", Environment.CurrentDirectory)
+        Log.Debug("No language was specified; inferred to be C#, as there are C# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
         Ok Language.``C#``
     | false, true ->
-        Log.Debug("No language was specified; inferred to be F#, as there are F# projects in {CurrentDirectory}", Environment.CurrentDirectory)
+        Log.Debug("No language was specified; inferred to be F#, as there are F# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
         Ok Language.``F#``
     | false, false ->
-        Log.Debug("Neither a language was specified, nor are there any supported projcets in {CurrentDirectory}. Language is inferred to be F#", Environment.CurrentDirectory)
+        Log.Debug("Neither a language was specified, nor are there any supported projcets in {CurrentDirectory:l}. Language is inferred to be F#.", Environment.CurrentDirectory)
         Ok Language.``F#``
 
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
@@ -102,7 +102,7 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         let options = {AdditionalProperties = additionalProperties}
         return GrammarCustomTemplate(grammarInput, templatePath, options)
     | _, true, Some _ | true, _, Some _ | true, true, _ ->
-        Log.Error("The {Html}, {GrammarSkeleton} and {T} arguments cannot be used at the same time",
+        Log.Error("The {Html:l}, {GrammarSkeleton:l} and {T:l} arguments cannot be used at the same time.",
             "--html", "--grammarskeleton", "-t")
         return! Error()
 }
@@ -165,8 +165,8 @@ let run json (args: ParseResults<_>) = either {
         |> JsonSerializer.Serialize
         |> printfn "%s"
     else
-        Log.Verbose("Creating file at {OutputFile}", outputFile)
+        Log.Verbose("Creating file at {OutputFile:l}.", outputFile)
         File.WriteAllText(outputFile, generatedTemplate.Content)
 
-        Log.Information("Template was created at {OutputFile}", outputFile)
+        Log.Information("Template was created at {OutputFile:l}.", outputFile)
 }

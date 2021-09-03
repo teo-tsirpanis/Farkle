@@ -42,7 +42,7 @@ module internal EGTReaderUtilities =
 
     /// Raises an exception indicating that something
     /// went wrong with reading an EGT file.
-    let invalidEGT() = raise <| EGTFileException "Invalid EGT file"
+    let invalidEGT() = raise <| EGTFileException "Invalid EGT file."
 
     /// Like `invalidEGT`, but allows specifying a formatted message.
     let invalidEGTf fmt = Printf.ksprintf (EGTFileException >> raise) fmt
@@ -51,13 +51,13 @@ module internal EGTReaderUtilities =
     /// length is different than the expected.
     let lengthMustBe (m: ReadOnlySpan<_>) expectedLength =
         if m.Length <> expectedLength then
-            invalidEGTf "Length must have been %d but was %d" expectedLength m.Length
+            invalidEGTf "Length must have been %d but was %d." expectedLength m.Length
 
     /// Raises an error if a read-only span's
     /// length is less than the expected.
     let lengthMustBeAtLeast (m: ReadOnlySpan<_>) expectedLength =
         if m.Length < expectedLength then
-            invalidEGTf "Length must have been at least %d but was %d" expectedLength m.Length
+            invalidEGTf "Length must have been at least %d but was %d." expectedLength m.Length
 
     // This is a reminiscent of an older era when I used to use a custom monad to parse a simple binary file.
     // It should remind us to keep things simple. Hold "F" to pay your respect but remember not to commit anything in the repository.
@@ -67,12 +67,12 @@ module internal EGTReaderUtilities =
     let wantByte (x: ReadOnlySpan<_>) idx =
         match x.[idx] with | Entry.Byte x -> x | _ -> invalidEGTf "Invalid entry, expecting Byte."
     let wantBoolean (x: ReadOnlySpan<_>) idx =
-        match x.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean"
+        match x.[idx] with | Entry.Boolean x -> x | _ -> invalidEGTf "Invalid entry, expecting Boolean."
     let wantUInt32 (x: ReadOnlySpan<_>) idx =
         match x.[idx] with | Entry.UInt32 x -> x | _ -> invalidEGTf "Invalid entry, expecting Integer."
     let wantChar x idx = wantUInt32 x idx |> char
     let wantString (x: ReadOnlySpan<_>) idx =
-        match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String"
+        match x.[idx] with | Entry.String x -> x | _ -> invalidEGTf "Invalid entry, expecting String."
 
 /// A class that reads EGT files from a stream.
 type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leaveOpen) =
@@ -134,7 +134,7 @@ type internal EGTReader(stream, [<Optional; DefaultParameterValue(false)>] leave
                 br.ReadUInt16() |> int
             | 'm'B ->
                 read7BitEncodedUInt32() |> int
-            | x -> invalidEGTf "Invalid record code, read %x" x
+            | x -> invalidEGTf "Invalid record code, read %x." x
         if Array.length buffer < entryCount then
             ArrayPool.Shared.Return(buffer, true)
             buffer <- ArrayPool.Shared.Rent(max (buffer.Length * 2) entryCount)

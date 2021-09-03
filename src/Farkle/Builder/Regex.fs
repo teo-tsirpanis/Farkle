@@ -150,7 +150,7 @@ type Regex =
     /// The range is closed.
     member x.Between from upTo =
         if from > upTo then
-            invalidArg (nameof upTo) "'upTo' must be bigger or equal to 'from'"
+            invalidArg (nameof upTo) "'upTo' must be bigger or equal to 'from'."
         Regex.Join(x.Repeat from, x.Optional().Repeat <| upTo - from)
     /// Returns a regex that recognizes at least a number of
     /// consecutive strings that are recognized by the given regex.

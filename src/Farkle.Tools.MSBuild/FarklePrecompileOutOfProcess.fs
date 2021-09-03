@@ -59,10 +59,10 @@ It is required when the precompiler runs outside of the modern .NET SDK.")
             if String.IsNullOrWhiteSpace this.CustomWorkerPath then
                 [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"; PrecompilerCommon.ipcProtocolVersion; inputPath; outputPath|]
             else
-                this.Log.LogMessage(MessageImportance.Normal, "Using custom precompiler worker at '{0}'", this.CustomWorkerPath)
+                this.Log.LogMessage(MessageImportance.Normal, "Using custom precompiler worker at {0}.", this.CustomWorkerPath)
                 [|"exec"; this.CustomWorkerPath; "precompiler-worker"; PrecompilerCommon.ipcProtocolVersion; inputPath; outputPath|]
         this.Log.LogMessage(MessageImportance.Normal, "Running the precompiler \
-worker on input file at {0} and output file at {1}", inputPath, outputPath)
+worker on input file at {0} and output file at {1}.", inputPath, outputPath)
 
         let command = Command.Run("dotnet", unbox commandArgs)
 
@@ -94,10 +94,10 @@ worker on input file at {0} and output file at {1}", inputPath, outputPath)
             workerOutput.GeneratedConflictReports
             |> Array.map (fun x -> TaskItem(x) :> ITaskItem)
 
-        this.Log.LogMessage(MessageImportance.Low, "Beginning precompiler worker logs")
+        this.Log.LogMessage(MessageImportance.Low, "Beginning precompiler worker logs.")
         for ev in workerOutput.Messages do
             ev.LogTo this.BuildEngine
-        this.Log.LogMessage(MessageImportance.Low, "Ending precompiler worker logs")
+        this.Log.LogMessage(MessageImportance.Low, "Ending precompiler worker logs.")
 
         return workerOutput.Success
     }

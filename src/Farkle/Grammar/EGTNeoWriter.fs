@@ -71,7 +71,7 @@ module private Implementation =
 
     let indexOf message (xs: ImmutableArray<_>) x =
         match xs.IndexOf x with
-        | -1 -> failwithf "%s %O not found" message x
+        | -1 -> failwithf "%s %O not found." message x
         | idx -> uint32 idx
 
     let writeStartSymbol w (nonterminalMap: IndexMap) (Nonterminal(idx, _)) =

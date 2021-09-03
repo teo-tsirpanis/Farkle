@@ -138,7 +138,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
         this.LoadFromStream m
     member _.TheAssembly = theAssembly
     override this.Load(name) =
-        log.Verbose("Requesting assembly {AssemblyName}", name)
+        log.Verbose("Requesting assembly {AssemblyName:l}.", name)
         match name.Name with
         | "Farkle" -> typeof<DesigntimeFarkle>.Assembly
         | "FSharp.Core" -> typeof<FuncConvert>.Assembly
@@ -147,7 +147,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
         | _ ->
             match dict.TryGetValue name.FullName with
             | true, path ->
-                log.Verbose("Loading assembly from {AssemblyPath}", path)
+                log.Verbose("Loading assembly from {AssemblyPath:l}.", path)
                 this.LoadFromAssemblyPath path
             | false, _ -> null
 

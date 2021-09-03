@@ -79,7 +79,7 @@ let private run argv =
             2
     with
     e ->
-        eprintfn "Unhandled exception while running the precompiler worker.\n%O" e
+        eprintfn "Unhandled exception while running the precompiler worker:\n%O" e
         1
 
 let runIfRequested argv =

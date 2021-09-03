@@ -23,7 +23,7 @@ with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
-            | PredefinedSetsFile _ -> "The file 'sets.dat' which is bundled with the GOLD Parser Builder"
+            | PredefinedSetsFile _ -> "The file 'sets.dat' which is bundled with the GOLD Parser Builder."
             | OutputFile _ -> "The path to write the generated F# source file with the predefined sets. \
 Defaults to 'PredefinedSets.fs'."
 
@@ -51,14 +51,14 @@ module private Implementation =
 
     let headerCheck x =
         if x <> "GOLD Character Sets" then
-            EGTFileException "Invalid GOLD Parser sets file"
+            EGTFileException "Invalid GOLD Parser sets file."
             |> raise
 
     let createPredefinedSet (span: ReadOnlySpan<_>) =
         lengthMustBeAtLeast span 4
         let name = wantString span 0
         let comment = wantString span 2
-        Log.Debug("Read character set with name {Name}, category {Category} and comment {Comment}", name, comment)
+        Log.Debug("Read character set with name {Name}, category {Category} and comment {Comment}.", name, comment)
         let count = wantUInt32 span 3 |> int
         lengthMustBe span (4 + 2 * count)
         let mem = span.Slice(4)
@@ -147,5 +147,5 @@ let run (args: ParseResults<_>) = either {
     let generatedSource = generatePredefinedSets inputFile
 
     File.WriteAllText(outputFile, generatedSource)
-    Log.Information("Predefined sets generated at {OutputFile}", outputFile)
+    Log.Information("Predefined sets generated at {OutputFile:l}.", outputFile)
 }

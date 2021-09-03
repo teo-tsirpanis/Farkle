@@ -37,7 +37,7 @@ let private getAssemblyFile projectOptions (file: string) = either {
         Log.Error("There is no point in listing the precompiled grammars of a grammar file.")
         return! Error()
     else
-        Log.Error("Unsupported file extension: {FileExtension}", ext.ToString())
+        Log.Error("Unsupported file extension {FileExtension:l}.", ext.ToString())
         return! Error()
 }
 

@@ -141,7 +141,7 @@ module private Implementation =
                     match wantByte span (2 * i + 0) with
                     | 'T'B -> LALRSymbol.Terminal terminals.[idx]
                     | 'N'B -> LALRSymbol.Nonterminal nonterminals.[idx]
-                    | x -> invalidEGTf "Cannot retrieve production handle tag. Got %x" x
+                    | x -> invalidEGTf "Cannot retrieve production handle tag. Got %x." x
                     |> handle.Add
                 handle.MoveToImmutable()
 
@@ -159,7 +159,7 @@ module private Implementation =
         | 'S'B, Entry.UInt32 x -> LALRAction.Shift x
         | 'R'B, Entry.UInt32 x -> LALRAction.Reduce productions.[int x]
         | 'A'B, _ -> LALRAction.Accept
-        | x, e -> invalidEGTf "Invalid LALR action entries. Got %x and %A" x e
+        | x, e -> invalidEGTf "Invalid LALR action entries. Got %x and %A." x e
 
     let readLALRStates (terminals: ImmutableArray<_>) (nonterminals: ImmutableArray<_>) productions span =
         let span = checkHeader span lalrHeader
@@ -212,7 +212,7 @@ module private Implementation =
         match span.[idx] with
         | Entry.Empty -> None
         | Entry.UInt32 x -> Some x
-        | e -> invalidEGTf "Invalid state index. Expected Empty or UInt32, got %A" e
+        | e -> invalidEGTf "Invalid state index. Expected Empty or UInt32, got %A." e
 
     let readDFAStates (terminals: ImmutableArray<_>) (noiseSymbols: ImmutableArray<_>)
         (groups: ImmutableArray<_>) span =
@@ -235,9 +235,9 @@ module private Implementation =
                         match groups.[idx].End with
                         | Some ge -> Choice4Of4 ge
                         | None -> invalidEGT()
-                    | x -> invalidEGTf "Invalid DFA accept symbol tag. Got %x" x
+                    | x -> invalidEGTf "Invalid DFA accept symbol tag. Got %x." x
                     |> Some
-                | x -> invalidEGTf "Invalid DFA accept symbol entry. Expected Empty or Byte, got %A" x
+                | x -> invalidEGTf "Invalid DFA accept symbol entry. Expected Empty or Byte, got %A." x
 
             let anythingElse = readUInt32Maybe span (i + 2)
             let edgeCount = wantUInt32 span (i + 3) |> int

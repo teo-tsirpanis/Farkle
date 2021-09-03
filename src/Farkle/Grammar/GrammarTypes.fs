@@ -370,8 +370,8 @@ with
         | [] ->
             raise (ArgumentOutOfRangeException("name", name, "No terminal with such name was found."))
         | _ ->
-            invalidOp (sprintf "Many terminals named %s exist" name)
+            invalidOp (sprintf "Many terminals named %s exist." name)
     interface IGrammarProvider with
         member _.IsBuildSuccessful = true
         member x.GetGrammar() = x
-        member x.GetBuildErrorMessage() = ""
+        member _.GetBuildErrorMessage() = ""

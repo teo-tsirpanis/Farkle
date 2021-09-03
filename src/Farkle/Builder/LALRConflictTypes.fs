@@ -51,7 +51,7 @@ with
             ShiftReduce(state, prod)
         | LALRAction.Reduce prod1, LALRAction.Reduce prod2 ->
             ReduceReduce(prod1, prod2)
-        | _ -> failwithf "A conflict between %A and %A is impossible" act1 act2
+        | _ -> failwithf "A conflict between %A and %A is impossible." act1 act2
     override x.ToString() =
         match x with
         | ShiftReduce (idx, prod) ->
@@ -87,7 +87,7 @@ with
             | Some term -> string term
             | None -> "(EOF)"
         sprintf "%O, while encountering the symbol %s at state %d. Farkle could not \
-automatically resolve the conflict because %O" x.Type symbolAsString x.StateIndex x.Reason
+automatically resolve the conflict because %O." x.Type symbolAsString x.StateIndex x.Reason
 
 /// An LALR state that might have a conflict. Its API is
 /// almost identical to `Farkle.Grammar.LALRState` type,

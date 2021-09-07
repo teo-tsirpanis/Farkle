@@ -176,6 +176,9 @@ let internal createRegexBuild (ct: CancellationToken) caseSensitive regexes =
                 let x =
                     seq {
                         for c in chars do
+                            // Some very few characters -called titlecase letters-, are neither the lowercase
+                            // nor the uppercase of themselves. We include the character itself to cover them.
+                            yield c
                             yield Char.ToLowerInvariant(c)
                             yield Char.ToUpperInvariant(c)
                     } |> set

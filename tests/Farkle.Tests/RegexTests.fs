@@ -78,4 +78,17 @@ let tests = testList "Regex tests" [
             |> DFABuild.buildRegexesToDFA false true
             |> Flip.Expect.wantOk "Generating a DFA for a literal string failed"
         Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")
+
+    test "Titlecase letters are correctly handled when building a case-insensitive DFA" {
+        let term = Terminal(0u, "A") |> Choice1Of4
+        let regex = Regex.char 'ǅ'
+        let dfa =
+            DFABuild.buildRegexesToDFA true false [regex, term]
+            |> Flip.Expect.wantOk "Generating the DFA failed"
+        
+        "Ǆǅǆ"
+        |> String.iter (fun c ->
+            dfa.[0].Edges.ContainsKey c
+            |> Flip.Expect.isTrue (sprintf "%c is not recognized" c))
+    }
 ]

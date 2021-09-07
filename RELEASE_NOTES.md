@@ -7,6 +7,7 @@
 * Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.
 * Fixed a bug on the `new` CLI tool command where the `--prop` option could not be specified more than once.
 * Fixed a bug where the `new` CLI tool command could not be used on projects or assemblies.
+* Fixed a bug where titlecase letters were not excluded when building case-insensitive grammars.
 
 #### 6.2.0 - 17-05-2021
 * __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.

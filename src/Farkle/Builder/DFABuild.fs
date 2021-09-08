@@ -303,7 +303,7 @@ with
 
 let private createRangeMap xs = RangeMap.ofSeqEx xs
 
-let internal makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
+let private makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
     (leaves: RegexBuildLeaves) (followPos: ImmutableArray<BitSet>) =
     let states = Dictionary()
     let statesList = ResizeArray()
@@ -340,13 +340,15 @@ let internal makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
             // That's why we don't use `Dictionary.Add`.
             S.Edges.[a] <- Some UIdx
 
-        S.Name
-        |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)
-        |> Seq.map (fun p -> followPos.[p])
-        |> BitSet.UnionMany
-        |> (fun x ->
-            if not x.IsEmpty then
-                S.AnythingElse <- Some <| getOrAddState x)
+        // An Anything Else edge wouldn't make sense if the state has an edge for all 65536 possible characters.
+        if S.Edges.Count <> 65536 then
+            S.Name
+            |> Seq.filter (fun x -> leaves.[x]._IsAllButChars)
+            |> Seq.map (fun p -> followPos.[p])
+            |> BitSet.UnionMany
+            |> (fun x ->
+                if not x.IsEmpty then
+                    S.AnythingElse <- Some <| getOrAddState x)
 
     let toDFAState state =
         ct.ThrowIfCancellationRequested()

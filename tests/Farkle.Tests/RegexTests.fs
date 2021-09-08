@@ -10,6 +10,7 @@ open Farkle.Builder
 open Farkle.Grammar
 open Farkle.Tests
 open FsCheck
+open System
 
 let terminal idx = Choice1Of4 <| Terminal(uint32 idx, string idx)
 
@@ -90,5 +91,18 @@ let tests = testList "Regex tests" [
         |> String.iter (fun c ->
             dfa.[0].Edges.ContainsKey c
             |> Flip.Expect.isTrue (sprintf "%c is not recognized" c))
+    }
+
+    test "Anything Else edges are removed from a DFA when there is an edge for every character" {
+        let term1 = Terminal(0u, "A") |> Choice1Of4
+        let regex1 = Regex.chars [Char.MinValue .. Char.MaxValue]
+        let term2 = Terminal(1u, "B") |> Choice1Of4
+        let regex2 = Regex.allButChars "a"
+
+        let dfa =
+            DFABuild.buildRegexesToDFA true true [regex1, term1; regex2, term2]
+            |> Flip.Expect.wantOk "Generating the DFA failed"
+        Expect.equal dfa.Length 2 "The DFA did not have two states"
+        Expect.isNone dfa.[0].AnythingElse "The unreachable Anything Else edge was not removed"
     }
 ]

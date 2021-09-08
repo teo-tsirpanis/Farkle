@@ -23,9 +23,18 @@ type PrecompilerLoaderException(msg, innerExn) = inherit FarkleException(msg, in
 type PrecompiledGrammar private(asm, grammarName, resourceName) =
     static let precompiledGrammarResourceSuffix = ".precompiled.egtn"
     static let assemblyCache = ConditionalWeakTable()
+    static let isValidResourceLocation x =
+        // We want to accept only embedded resources. These get Embedded | ContainedInManifestFile always
+        // (checked in both MetadataLoadContext and the CoreCLR). But let's be more flexible with the flags.
+        // We want the resource to be embedded, and don't want it to be in another assembly.
+        x &&& (ResourceLocation.ContainedInAnotherAssembly ||| ResourceLocation.Embedded) = ResourceLocation.Embedded
     static let getAllPrecompiledGrammars = ConditionalWeakTable.CreateValueCallback<Assembly,_>(fun asm ->
         asm.GetManifestResourceNames()
-        |> Seq.filter (fun name -> name.EndsWith(precompiledGrammarResourceSuffix, StringComparison.Ordinal))
+        |> Seq.filter (fun name ->
+            name.EndsWith(precompiledGrammarResourceSuffix, StringComparison.Ordinal)
+            && (
+                let mri = asm.GetManifestResourceInfo(name)
+                not (isNull mri) && isValidResourceLocation mri.ResourceLocation))
         |> Seq.map (fun name ->
             let grammarName = name.Substring(0, name.Length - precompiledGrammarResourceSuffix.Length)
             grammarName, PrecompiledGrammar(asm, grammarName, name))

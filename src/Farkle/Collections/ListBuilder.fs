@@ -10,6 +10,7 @@ open System.Collections
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
+[<Sealed>]
 type private MutableListWrapper<'T> private() =
     [<DefaultValue>] val mutable head: 'T
     [<DefaultValue>] val mutable tail: 'T list
@@ -18,6 +19,7 @@ type private MutableListWrapper<'T> private() =
 // Minimally implements the ICollection interface just to be usable
 // by the manyCollection builder operator. Implementation based on
 // https://github.com/krauthaufen/DawnSharp/blob/master/src/Armadillo/Tools/ListBuilder.fs.
+[<Sealed>]
 type internal ListBuilder<'T>() =
     static let unsafeSetTail (x: 'T list) (tail: 'T list) =
         if obj.ReferenceEquals(x, ([]: 'T list)) then

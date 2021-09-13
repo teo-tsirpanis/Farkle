@@ -28,10 +28,9 @@ with
 let private getAssemblyFile projectOptions (file: string) = either {
     let ext = Path.GetExtension(file.AsSpan())
     if isAssemblyExtension ext then
-        return! assertFileExists file
+        return file
     elif isProjectExtension ext then
         do! ProjectResolver.registerMSBuild()
-        let! file = assertFileExists file
         return! ProjectResolver.resolveProjectAssembly projectOptions file
     elif isGrammarExtension ext then
         Log.Error("There is no point in listing the precompiled grammars of a grammar file.")

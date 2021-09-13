@@ -9,6 +9,7 @@ open Farkle.Tools.Commands
 open Serilog
 open Serilog.Events
 open System
+open System.IO
 
 type FarkleCLIExiter() =
     interface IExiter with
@@ -77,6 +78,9 @@ let main argv =
                 | Version _ | Json | Verbosity _ | ``Explain-composite-paths`` -> Ok ()
                 |> function | Ok () -> 0 | Error () -> 1
         with
+        | :? FileNotFoundException as e ->
+            Log.Error("File {FileName:l} does not exist.", e.FileName)
+            1
         | ex ->
             Log.Fatal(ex, "Exception occured.")
             1

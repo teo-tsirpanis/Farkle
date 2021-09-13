@@ -51,7 +51,6 @@ module CompositePath =
                 CompositePath(filePath, grammarName)
 
     let rec private resolveGrammar projectOptions grammarName originalPath (filePath: string) = either {
-        let! _ = assertFileExists filePath
         let ext = Path.GetExtension(filePath.AsSpan())
         if isProjectExtension ext then
             do! ProjectResolver.registerMSBuild()

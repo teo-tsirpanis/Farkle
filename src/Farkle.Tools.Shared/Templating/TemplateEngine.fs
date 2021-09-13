@@ -45,11 +45,9 @@ module TemplateEngine =
             let resourceKey = sprintf "GrammarSkeleton.%s.scriban" langName
             let templateText = ResourceLoader.load resourceKey
             parseTemplate log templateText templateName
-        | GrammarCustomTemplate(_, path, _) -> either {
-            let! path = assertFileExistsEx log path
+        | GrammarCustomTemplate(_, path, _) ->
             let templateText = File.ReadAllText path
-            return! parseTemplate log templateText path
-            }
+            parseTemplate log templateText path
 
     let private conflictReportHtmlOptions =
         {CustomHeadContent = ""; NoCss = false; NoLALRStates = false; NoDFAStates = true}

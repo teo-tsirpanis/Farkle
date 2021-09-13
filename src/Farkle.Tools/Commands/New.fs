@@ -76,13 +76,10 @@ let tryInferLanguage() =
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
     match args.Contains Html, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
     | _, false, None ->
-        let! customHead = either {
+        let customHead =
             match args.TryGetResult ``Custom-head`` with
-            | Some headFile ->
-                let! headFile = assertFileExists headFile
-                return File.ReadAllText headFile
-            | None -> return ""
-        }
+            | Some headFile -> File.ReadAllText headFile
+            | None -> ""
         let options = {
             CustomHeadContent = customHead
             NoCss = args.Contains ``No-css``
@@ -97,10 +94,9 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         let ns = args.TryGetResult Namespace
         return TemplateType.GrammarSkeleton(grammarInput, language, ns)
     | false, false, Some customTemplatePath ->
-        let! templatePath = assertFileExists customTemplatePath
         let additionalProperties = args.GetResults Property
         let options = {AdditionalProperties = additionalProperties}
-        return GrammarCustomTemplate(grammarInput, templatePath, options)
+        return GrammarCustomTemplate(grammarInput, customTemplatePath, options)
     | _, true, Some _ | true, _, Some _ | true, true, _ ->
         Log.Error("The {Html:l}, {GrammarSkeleton:l} and {T:l} arguments cannot be used at the same time.",
             "--html", "--grammarskeleton", "-t")

@@ -140,12 +140,12 @@ let generatePredefinedSets filePath =
 
     template.Render(tc)
 
-let run (args: ParseResults<_>) = either {
-    let! inputFile = args.PostProcessResult(PredefinedSetsFile, assertFileExists)
+let run (args: ParseResults<_>) =
+    let inputFile = args.GetResult(PredefinedSetsFile)
     let outputFile = args.GetResult(OutputFile, "PredefinedSets.fs") |> Path.GetFullPath
 
     let generatedSource = generatePredefinedSets inputFile
 
     File.WriteAllText(outputFile, generatedSource)
     Log.Information("Predefined sets generated at {OutputFile:l}.", outputFile)
-}
+    Ok()

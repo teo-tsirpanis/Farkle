@@ -17,18 +17,6 @@ let toolsVersion =
     let asm = Assembly.GetExecutingAssembly()
     asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion
 
-/// Logs an error if the given filename does not exist.
-let assertFileExistsEx (log: ILogger) fileName =
-    let fileName = Path.GetFullPath fileName
-    if File.Exists fileName then
-        Ok fileName
-    else
-        log.Error("File {fileName} does not exist.", fileName)
-        Error()
-
-let assertFileExists fileName =
-    assertFileExistsEx Log.Logger fileName
-
 let private equalsCI (x1: ReadOnlySpan<_>) (x2: string) =
     x1.Equals(x2.AsSpan(), StringComparison.OrdinalIgnoreCase)
 

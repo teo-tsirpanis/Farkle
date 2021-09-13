@@ -263,7 +263,7 @@ module DesigntimeFarkleOperators =
             sprintf "%s %s Separated By %s" df.Name typeof<'TCollection>.Name sep.Name |> nonterminal
         nont.SetProductions(
             empty => (fun () -> new 'TCollection()),
-            !@ (sepByCollection1 sep df) .>> sep .>>. df => (fun xs x -> xs.Add x; xs)
+            !@ (sepByCollection1 sep df) |> asIs
         )
         nont :> DesigntimeFarkle<_>
 

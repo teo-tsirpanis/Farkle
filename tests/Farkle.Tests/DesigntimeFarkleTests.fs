@@ -253,6 +253,40 @@ let tests = testList "Designtime Farkle tests" [
         Expect.isOk (runtime.Parse "{test}") "Parsing a test string failed"
     }
 
+    test "The many(1) operators work" {
+        let mkRuntime atLeastOne =
+            literal "x"
+            |> DesigntimeFarkle.cast
+            |> if atLeastOne then many1 else many
+            |> RuntimeFarkle.buildUntyped
+        let runtime = mkRuntime false
+        let runtime1 = mkRuntime true
+
+        [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
+        |> List.iter (fun x ->
+            let s = String.replicate x "x"
+            Expect.isOk (runtime.Parse s) (sprintf "Parsing %A with many failed" s)
+            if x <> 0 then
+                Expect.isOk (runtime1.Parse s) (sprintf "Parsing %A with many1 failed" s))
+    }
+
+    test "The sepBy(1) operators work" {
+        let mkRuntime atLeastOne =
+            literal "x"
+            |> DesigntimeFarkle.cast
+            |> (if atLeastOne then sepBy1 else sepBy) (literal ",")
+            |> RuntimeFarkle.buildUntyped
+        let runtime = mkRuntime false
+        let runtime1 = mkRuntime true
+
+        [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
+        |> List.iter (fun x ->
+            let s = Seq.replicate x "x" |> String.concat ","
+            Expect.isOk (runtime.Parse s) (sprintf "Parsing %A with sepBy failed" s)
+            if x <> 0 then
+                Expect.isOk (runtime1.Parse s) (sprintf "Parsing %A with sepBy1 failed" s))
+    }
+
     test "The dynamic post-processor works with various kinds of delegates" {
         let magic = Guid.NewGuid().ToString()
         let testClass = magic |> TestClass |> box
@@ -273,7 +307,7 @@ let tests = testList "Designtime Farkle tests" [
                 List.map (fun x -> !@ (mkTerminal x) |> asIs) testData
             |> RuntimeFarkle.build
 
-        // We will run the tests many times to ensure the dynamic post-rpocessors are created.
+        // We will run the tests many times to ensure the dynamic post-processors are created.
         for i = 1 to 100 do
             if i % 10 = 0 then
                 // We give some extra time for the asynchronously created dynamic post-processor to get ready.

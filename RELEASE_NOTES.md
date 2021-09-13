@@ -8,6 +8,7 @@
 * Fixed a bug on the `new` CLI tool command where the `--prop` option could not be specified more than once.
 * Fixed a bug where the `new` CLI tool command could not be used on projects or assemblies.
 * Fixed a bug where titlecase letters were not excluded when building case-insensitive grammars.
+* Fixed a bug where the `sepBy` operator could not match exactly one item.
 
 #### 6.2.0 - 17-05-2021
 * __Breaking change:__ The `Farkle.Builder.LALRBuildTypes` module, as well as most functions of the `Farkle.Builder.LALRBuild` module became internal.

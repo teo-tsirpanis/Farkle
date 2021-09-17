@@ -6,6 +6,8 @@
 /// Constants shared on many places in Farkle's builder.
 module internal Farkle.Builder.BuilderCommon
 
+open Farkle.Grammar
+
 /// The set of characters Farkle considers to be whitespace by default.
 /// It is made of exactly the horizontal tab, the line feed, the carriage return and the space.
 let whitespaceCharacters = set ['\t'; '\n'; '\r'; ' ']
@@ -18,3 +20,9 @@ let whitespaceCharactersNoNewLine = set ['\t'; ' ']
 /// Throws the exception for when a custom implementation of
 /// the designtime Farkle interface was detected, which is prohibited.
 let throwCustomDesigntimeFarkle() = invalidOp "Using a custom implementation of the DesigntimeFarkle interface is not allowed."
+
+let precompiledGrammarResourceSuffix = ".precompiled.egtn"
+
+/// Gets the resource name this grammar would have if it were precompiled.
+let getPrecompiledGrammarResourceName (grammar: Grammar) =
+    grammar.Properties.Name + precompiledGrammarResourceSuffix

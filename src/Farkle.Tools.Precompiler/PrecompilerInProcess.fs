@@ -234,7 +234,7 @@ let weaveGrammars (asm: AssemblyDefinition) (precompiledGrammars: _ list) =
         stream.Position <- 0L
         EGT.ofStream stream |> ignore
 
-        let name = PrecompiledGrammar.GetResourceName grammar
+        let name = BuilderCommon.getPrecompiledGrammarResourceName grammar
         let res = EmbeddedResource(name, ManifestResourceAttributes.Public, stream.ToArray())
         asm.MainModule.Resources.Add res
         stream.SetLength 0L

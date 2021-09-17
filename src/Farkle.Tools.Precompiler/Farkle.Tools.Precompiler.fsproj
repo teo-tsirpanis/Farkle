@@ -4,7 +4,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PrecompilerCommon.fs" />
-    <Compile Include="PrecompilerInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+    <Compile Include="..\Farkle\Builder\BuilderCommon.fs" />
+    <Compile Include="PrecompilerInProcess.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />

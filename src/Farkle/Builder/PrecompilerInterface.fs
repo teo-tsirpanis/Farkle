@@ -9,7 +9,6 @@ open Farkle
 open Farkle.Builder
 open Farkle.Grammar
 open System
-open System.ComponentModel
 open System.Reflection
 open System.Runtime.CompilerServices
 open System.Threading
@@ -21,7 +20,7 @@ type PrecompilerLoaderException(msg, innerExn) = inherit FarkleException(msg, in
 
 /// An object that represents a precompiled grammar inside an assembly.
 type PrecompiledGrammar private(asm, grammarName, resourceName) =
-    static let precompiledGrammarResourceSuffix = ".precompiled.egtn"
+    static let precompiledGrammarResourceSuffix = BuilderCommon.precompiledGrammarResourceSuffix
     static let assemblyCache = ConditionalWeakTable()
     static let isValidResourceLocation x =
         // We want to accept only embedded resources. These get Embedded | ContainedInManifestFile always
@@ -61,11 +60,6 @@ please open an issue on GitHub", innerExn)
     member _.GrammarName = grammarName
     /// Gets the actual `Grammar` of this object.
     member _.GetGrammar() = grammarThunk.Value
-    /// Gets the resource name this grammar would have if it were precompiled.
-    /// This API is not supposed to be used from user code.
-    [<EditorBrowsable(EditorBrowsableState.Never)>]
-    static member GetResourceName (grammar: Grammar) =
-        grammar.Properties.Name + precompiledGrammarResourceSuffix
     /// Gets all precompiled grammars of an assembly.
     /// This function is safe to call from multiple threads and efficient to
     /// call many times with the same assembly. The cache it internally uses

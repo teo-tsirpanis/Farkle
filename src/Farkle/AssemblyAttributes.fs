@@ -40,6 +40,7 @@ type internal NullablePublicOnlyAttribute(__: bool) = inherit Attribute()
 namespace global
 
 open System
+open System.Reflection
 open System.Runtime.CompilerServices
 
 /// This attribute is used by Covarsky.
@@ -50,4 +51,5 @@ type internal CovariantOutAttribute() =
 [<``module``:NullableContext(1uy)>]
 [<``module``:NullablePublicOnly(true)>]
 [<assembly:Extension>]
+[<assembly:AssemblyMetadata("IsTrimmable", "true")>]
 do()

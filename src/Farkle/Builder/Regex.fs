@@ -14,7 +14,7 @@ type internal RegexParserFunction = Func<string, RegexParserResult>
 
 [<RequireQualifiedAccess>]
 module private RegexUtils =
-    let isCharSetFull(x: char Set) = x.Count = int UInt16.MaxValue
+    let isCharSetFull(x: char Set) = x.Count = 65536
 
     let regexEmpty = Regex.Concat []
     let regexAny = Regex.AllButChars Set.empty

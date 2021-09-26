@@ -102,6 +102,7 @@ type RangeMap<'TKey, [<Nullable(0uy)>] 'TValue when 'TKey :> IComparable<'TKey>>
                 ValueNone
     /// A read-only span containing the elements of the range map.
     member _.Elements = ReadOnlySpan(arr)
+    member internal _.ElementsArray = arr
     /// Whether this range map is empty.
     member _.IsEmpty = Array.isEmpty arr
     /// Checks if the given element exists in this range map.

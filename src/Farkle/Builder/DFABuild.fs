@@ -350,7 +350,8 @@ let private makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
                 if not x.IsEmpty then
                     S.AnythingElse <- Some <| getOrAddState x)
 
-    let toDFAState state =
+    let conflictingSymbols = ResizeArray()
+    let toDFAState i state =
         ct.ThrowIfCancellationRequested()
         let acceptSymbols =
             state.Name
@@ -363,26 +364,39 @@ let private makeDFA (ct: CancellationToken) prioritizeFixedLengthSymbols regex
         let edges = createRangeMap state.Edges
         let rec getAcceptSymbol xs =
             match xs with
-            | [] -> Ok None
-            | [sym, _] -> Ok <| Some sym
+            | [] -> None
+            | [sym, _] -> Some sym
             | ((sym1, _) as first) :: (sym2, _) :: xs when sym1 = sym2 ->
                 getAcceptSymbol (first :: xs)
-            | (sym, pri1) :: (_, pri2) :: _ when pri1 < pri2 && prioritizeFixedLengthSymbols ->
-                Ok <| Some sym
+            | (sym, pri1) :: (_, pri2) :: _ when prioritizeFixedLengthSymbols && pri1 < pri2 ->
+                Some sym
             | _ ->
-                acceptSymbols
-                |> Seq.map fst
-                |> set
-                |> BuildError.IndistinguishableSymbols
-                |> Error
-        getAcceptSymbol acceptSymbols
-        |> Result.map (fun ac ->
-            {Index = state.Index; AcceptSymbol = ac; Edges = edges; AnythingElse = state.AnythingElse})
+                // By the time we reach this point, some of the symbols might have been disregarded due to priority.
+                // We do not report all of them; they would make error messages lengthier. What we do is lie that there
+                // is no accept symbol for this state, but note it to report the error and find a word leading to it.
+                let symbolSet = acceptSymbols |> Seq.map fst |> set
+                conflictingSymbols.Add struct(symbolSet, i)
+                None
+        {
+            Index = state.Index
+            AcceptSymbol = getAcceptSymbol acceptSymbols
+            Edges = edges
+            AnythingElse = state.AnythingElse
+        }
 
-    statesList
-    |> Seq.map toDFAState
-    |> Result.collect
-    |> Result.map ImmutableArray.CreateRange
+    let dfa =
+        statesList
+        |> Seq.mapi toDFAState
+        |> ImmutableArray.CreateRange
+    match conflictingSymbols.Count with
+    | 0 -> Ok dfa
+    | _ ->
+        let fGetString = DFAWordGenerator.generateWordLeadingToState dfa
+        conflictingSymbols
+        |> Seq.map (fun struct(symbols, stateIndex) ->
+            BuildError.IndistinguishableSymbols2(symbols, fGetString stateIndex))
+        |> List.ofSeq
+        |> Error
 
 /// <summary>Builds a DFA that recignizes one of the given regexes.</summary>
 /// <param name="ct">Used to cancel the operation.</param>

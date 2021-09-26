@@ -24,7 +24,11 @@ type BuildOptions private() =
 /// An error the builder encountered.
 type BuildError =
     /// Some symbols cannot be distinguished from each other.
+    /// Superseded by `IndistinguishableSymbols2`.
     | IndistinguishableSymbols of Symbols: DFASymbol Set
+    /// Some symbols cannot be distinguished from each other.
+    /// Also provides an example string that all symbols match.
+    | IndistinguishableSymbols2 of Symbols: DFASymbol Set * ExampleWord: string
     /// A symbol can contain zero characters.
     /// If many symbols are nullable, they will
     /// be marked as indistinguishable instead.
@@ -67,6 +71,16 @@ type BuildError =
             let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
             sprintf "Cannot distinguish between symbols: %s. \
 The conflict is caused when two or more regular expressions can match the same text." symbols
+        | IndistinguishableSymbols2 (xs, exampleWord) ->
+            let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
+            let pronoun = if xs.Count = 2 then "Both" else "All"
+            let exampleWordEscaped =
+                if exampleWord = "" then
+                    "the empty string"
+                else
+                    "'" + exampleWord + "'"
+            sprintf "Cannot distinguish between symbols: %s. The regexes of %s can match %s for example."
+                symbols pronoun exampleWordEscaped
         | NullableSymbol x ->
             sprintf "The symbol %s can contain zero characters." <| DFASymbol.toString x
         | LALRConflict xs -> xs.ToString()

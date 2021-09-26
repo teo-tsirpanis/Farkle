@@ -26,6 +26,7 @@
     <Compile Include="Collections/StackNeo.fs" />
     <Compile Include="Collections/RangeMap.fs" />
     <Compile Include="Grammar/GrammarTypes.fs" />
+    <Compile Include="Grammar/DFAWordGenerator.fs" />
     <Compile Include="AST.fs" />
     <Compile Include="PostProcessor.fs" />
     <Compile Include="Grammar/EGTFile.fs" />

@@ -3,7 +3,8 @@
 * __Minor breaking change:__ The `Farkle.Builder.GrammarMetadata` type has an additional field of type `Farkle.Builder.OperatorPrecedence.OperatorScope`. User code that does not directly set metadata to designtime Farkles is not affected.
 * The precompiler will now generate an HTML report if a grammar has LALR conflicts.
 * The precompiler now works on Visual Studio for Windows. In this case only, it requires to install the .NET tool `Farkle.Tools`.
-* Any type of designtime Farkle can now be renamed or set metadata like case sensitivity, comments or operator scopes, without using the `DesigntimeFarkle.cast` function. There were some binary breaking changes but none is source breaking.
+* When building a grammar, if Farkle cannot distinguish between two symbols, it will now include an example word that made it indecisive in the error message. A new build error type named `IndistinguishableSymbols2` was introduced.
+* Any type of designtime Farkle can now be renamed or set metadata like case sensitivity, comments or operator scopes, without using the `DesigntimeFarkle.cast` function. There were some __binary breaking changes__ but none is source breaking.
 * Operator scopes will now correctly recognize multiple representations of the same designtime Farkle, such as an original terminal and a renamed one, or a string, and a designtime Farkle created with the `literal` operator that got passed the same string.
 * Fixed a bug on the `new` CLI tool command where the `--prop` option could not be specified more than once.
 * Fixed a bug where the `new` CLI tool command could not be used on projects or assemblies.

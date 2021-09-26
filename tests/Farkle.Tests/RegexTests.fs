@@ -86,7 +86,7 @@ let tests = testList "Regex tests" [
         let dfa =
             DFABuild.buildRegexesToDFA true false [regex, term]
             |> Flip.Expect.wantOk "Generating the DFA failed"
-        
+
         "Ǆǅǆ"
         |> String.iter (fun c ->
             dfa.[0].Edges.ContainsKey c
@@ -104,5 +104,28 @@ let tests = testList "Regex tests" [
             |> Flip.Expect.wantOk "Generating the DFA failed"
         Expect.equal dfa.Length 2 "The DFA did not have two states"
         Expect.isNone dfa.[0].AnythingElse "The unreachable Anything Else edge was not removed"
+    }
+
+    test "DFA conflict messages come with a correct example word" {
+        let impl regex1 regex2 exampleWord =
+            let term1 = Terminal(0u, "A") |> Choice1Of4
+            let term2 = Terminal(1u, "B") |> Choice1Of4
+            let dfaErrors =
+                DFABuild.buildRegexesToDFA false true [Regex.regexString regex1, term1; Regex.regexString regex2, term2]
+                |> Flip.Expect.wantError (sprintf "The regexes %s and %s do not conflict" regex1 regex2)
+            let expectedErrors =
+                [BuildError.IndistinguishableSymbols2(set [term1; term2], exampleWord)]
+            Expect.sequenceEqual dfaErrors expectedErrors "The DFA did not contain the expected error"
+
+        [
+            ".\d", ".[0-5]", "a0"
+            "[^\u0000-\uFFFE]", "[^a]", "\uFFFF"
+            // We will prefer "o" out of these characters despite others
+            // being before it. By before, we mean in smaller than it.
+            "[^\u0000 \t\uD859o]", ".", "o"
+            // Here however, we have no preferences and will pick NUL; the
+            "[^\u0000 \t\uD859]", ".", "\u0000"
+        ]
+        |> List.iter ((<|||) impl)
     }
 ]

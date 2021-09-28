@@ -73,7 +73,7 @@ type BuildError =
 The conflict is caused when two or more regular expressions can match the same text." symbols
         | IndistinguishableSymbols2 (xs, exampleWord) ->
             let symbols = xs |> Seq.map DFASymbol.toString |> String.concat ", "
-            let pronoun = if xs.Count = 2 then "Both" else "All"
+            let pronoun = if xs.Count = 2 then "both" else "all"
             let exampleWordEscaped =
                 if exampleWord = "" then
                     "the empty string"

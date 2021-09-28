@@ -46,6 +46,10 @@ module internal DFAWordGenerator =
             | None ->
                 // We can't fail this one; Anything Else edges are removed on complete states.
                 List.head gaps
+            |> fun c ->
+                if state.Edges.ContainsKey c then
+                    failwith "Could not find a character to cross an Anything Else edge. Please report it on GitHub."
+                c
 
     // Uses a breadth-first search algorithm to calculate for each DFA
     // state, the state that goes back to the initial one with the least

@@ -135,7 +135,7 @@ type CharStream private(source: CharStreamSource) =
     static let throwCountNegative (count: int) =
         raise(ArgumentOutOfRangeException(nameof count, count, "The count cannot be negative.")) |> ignore
     static let throwOffsetNegative (ofs: int) =
-        raise(ArgumentOutOfRangeException(nameof ofs, ofs, "The offset cannot be negative."))
+        raise(ArgumentOutOfRangeException(nameof ofs, ofs, "The offset cannot be negative.")) |> ignore
     /// Converts an offset relative to the current
     /// position to an absolute character index.
     let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs

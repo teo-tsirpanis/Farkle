@@ -45,12 +45,11 @@ module DesigntimeFarkle =
                 member _.InnerDesigntimeFarkle = unwrap df} |> unbox
         | _ -> BuilderCommon.throwCustomDesigntimeFarkle()
 
-    /// Sets a `GrammarMetadata` object to a typed designtime Farkle.
-    /// Most other functions in this module are convenience wrappers over this
-    /// function.
+    /// Sets a `GrammarMetadata` object to a designtime Farkle. Most
+    /// other functions in this module are convenience wrappers over this function.
     let withMetadata metadata df = df |> withMetadataEx df.Name metadata
 
-    /// Sets an `OperatorScope` object to a typed designtime Farkle.
+    /// Sets an `OperatorScope` object to a designtime Farkle.
     /// This function can be applied in designtime Farkles that are not the
     /// topmost ones. Applying this function many times will discard the existing
     /// operator scope.
@@ -58,10 +57,8 @@ module DesigntimeFarkle =
         df |> withMetadata {df.Metadata with OperatorScope = opScope}
 
     /// Converts an untyped designtime Farkle to a typed one that returns an object.
-    /// This function is used to apply metadata to untyped designtime Farkles.
     /// The object the designtime Farkle this function will return is undefined.
-    /// After the metadata have been set, it is recommended to upcast back to an
-    /// untyped one.
+    /// This function is no longer useful for applying metadata to untyped designtime Farkles.
     let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
         match df with
         | :? DesigntimeFarkle<obj> as dfObj -> dfObj

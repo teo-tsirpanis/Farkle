@@ -65,9 +65,9 @@ Farkle ignores whitespace by default with an option to disable. __In fact, autom
 
 ### Parsing speed
 
-This is quite the controversial topic. Farkle was made with performance in mind, lots of time has been invested to increase it, and it's getting faster with each release. [Its performance is compared][Farkle-benchmarks] against the other two libraries by parsing a 74KB JSON file with Chiron (which uses FParsec), Farkle and FsLexYacc.
+This is quite the controversial topic. Farkle was made with performance in mind, lots of time has been invested to increase it, and it's getting faster with each release. [Its performance is benchmarked][Farkle-benchmarks] against the other two libraries by parsing JSON files of various sizes (185 bytes, 3.72 KB and 73.3 KB) with [Chiron] (which uses FParsec), Farkle and FsLexYacc. In all three cases, Farkle was shown to be faster and allocating less memory than the other two libraries.
 
-On such a big file, Farkle was shown to be faster than the other two libraries, but on very small JSON files, FParsec was winning. FsLexYacc was in both cases the slowest of the three.
+Still, Farkle's performance is not a finished business and more improvements are planned for future releases.
 
 > __Note:__ FParsec comes in another flavor called "Big Data Edition" which uses unsafe code for increased performance. The performance of that alternative edition was not taken into account because it only targets the .NET Framework.
 
@@ -85,7 +85,7 @@ Farkle integrates with MSBuild [to generate the parsing tables for a grammar ahe
 
 While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them [to fluently support C# for creating grammars](csharp.html).
 
-It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing.
+It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing, given the tool's exclusive focus on F#.
 
 Since FParsec is just a library and does not require tooling support, C# users can theoretically write an FParsec parser but the sheer amount of F# custom operators and idiomatisms it uses would definitely result in very unreadable code.
 
@@ -106,6 +106,12 @@ To further convince the indecisive C# users to use Farkle, we will also take a b
 [Sprache] is a parser combinator library, just like FParsec. It creatively uses the LINQ query expression syntax to easily define parsers.
 
 The problem with Sprache is that it is slow. Sprache's performance was going to be benchmarked against the three other libraries but the code was not committed because it was significantly slower than all of them.
+
+### Pidgin
+
+[Pidgin] is another parser combinator library written in C#, advertising more features than Sprache. It is focused on performance as well, and unpublished benchmarks showed that it's _faster_ than Farkle. A disadvantage of it is that its latest and not-yet-released version will only target .NET 5 or higher.
+
+If you develop a project on a modern framework and want a pure parser combinator library go ahead, Pidgin is a fine choice.
 
 ### Irony
 
@@ -137,7 +143,7 @@ A parsing library or parser generator like the ones we described above is not a 
 
 * __There is already one:__ If you are going to parse a well-known and popular file format and a library that parses it already exists, chances are that using this library is better than writing your own parser and would provide better performance and facilities suited for that format. You wouldn't write a parser for JSON, XML, HTML, C# or F#, would you? Farkle's codebase has a JSON parser for benchmarking (two identical ones actually, written in C# and F#) but will not be published to NuGet. `Newtonsoft.Json` and `System.Text.Json` are much faster JSON parsers than Farkle's and have much more features to warrant another JSON parser being released.
 
-* __Custom binary files:__ This is a bit controversial, as some parser combinator libraries support parsing binary files, but the guide's recommendation is to write your own binary file parser using framework classes like `Stream` or `BinaryReader` for increased performance, which is the main reason to use binary files in the first place.
+* __Custom binary files:__ This is a bit controversial, as some parser combinator libraries support parsing binary files, but the guide's recommendation is to write your own binary file parser using framework classes like `Stream`, `BinaryReader` or pipelines for increased performance, which is the main reason to use binary files in the first place.
 
 ---
 
@@ -147,10 +153,12 @@ So I hope you enjoyed this little comparison. If you did, don't forget to give F
 [FsLexYacc]: https://fsprojects.github.io/FsLexYacc/
 [FParsec-operators]: https://www.quanttec.com/fparsec/reference/operatorprecedenceparser.html
 [Farkle-benchmarks]: https://github.com/teo-tsirpanis/Farkle/tree/master/performance
+[Chiron]: https://github.com/xyncro/chiron
 [QSharp-parser]: https://github.com/microsoft/qsharp-compiler/tree/master/src/QsCompiler/TextProcessor
 [FSharp-parser]: https://github.com/dotnet/fsharp/blob/main/src/fsharp/pars.fsy
 [FSharp-lexer]: https://github.com/dotnet/fsharp/blob/main/src/fsharp/lex.fsl
 [Sprache]: https://github.com/sprache/Sprache
+[Pidgin]: https://github.com/benjamin-hodgson/Pidgin
 [Irony]: https://github.com/IronyProject/Irony
 [ANTLR]: https://github.com/antlr/antlr4/tree/master/runtime/CSharp
 [gold]: http://www.goldparser.org/

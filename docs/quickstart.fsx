@@ -9,23 +9,23 @@ Hello everyone. This guide will help you use Farkle. We will be using F#, but du
 
 ## How Farkle works
 
-> __Note:__ This is an oversimplified, high-level description of Farkle. I will write a more technical description of it in the future.
+While parser combinator libraries like FParsec combine many small parsers into a big parser, Farkle combines simple _grammars_ (i.e. descriptions of languages) into more complex ones, and has a single, multi-purpose parser. These composable grammars are called _designtime Farkles_ and implement the `Farkle.Builder.DesigntimeFarkle` interface.
 
-While parser combinator libraries like FParsec combine many small parsers into a big parser, Farkle combines simple _grammars_ (i.e. descriptions of languages) into more complex ones, and has a single, multi-purpose parser. These composable grammars are called _designtime Farkles_.
+Also, as with FParsec, a designtime Farkle can "return" something. In this case it also implements the `DesigntimeFarkle<TResult>` interface. For our calculator, our designtime Farkles will return a number, which is the numerical result of our mathematical expression.
 
-Also, as with FParsec, a designtime Farkle can "return" something. To accomplish this, there is a special object called a _post-processor_. Post-processors create a domain-specific type from the input text. For our calculator, we will automatically create a post-processor that returns a number, which is the numerical result of our mathematical expression.
+> __Warning:__ Despite designtime Farkles being interfaces, implementing it in your code is not allowed and will throw an exception if a custom designtime Farkle implementation is somehow passed to Farkle.
 
-To be able to use a designtime Farkle, we will first feed it to a component called the _builder_. The builder will check the grammar for errors, create parsing tables with the LALR algorithm, and give us another special object called a _runtime Farkle_. Runtime Farkles contain a grammar and a post-processor. With a runtime Farkle, we can parse text to our heart's desires.
+To be able to use a designtime Farkle, we will first give it to a component called the _builder_. The builder will check the grammar for errors, create the necessary structures for the parser, and give us another special object called a _runtime Farkle_. With a runtime Farkle, we can parse text to our heart's desires, but in contrast with a designtime Farkle, we cannot compose it.
 
-10: By the way, Farkle means: "FArkle Recognizes Known Languages Easily".
+10: By the way, Farkle means "FArkle Recognizes Known Languages Easily".
 
-20: And "FArkle" means: (GOTO 10).
+20: And "FArkle" means (GOTO 10).
 
 30: I guess you can't read this line.
 
 ## Designing our grammar
 
-We want to design a grammar that represents a mathematical expressions on floating-point numbers. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
+We want to design a grammar that represents mathematical expressions on floating-point numbers. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
 
 A similar grammar but on the integers, can be found [here][calculator]
 
@@ -44,7 +44,7 @@ For those that don't know, a context-free grammar is made of _terminals_, _nonte
 
 We don't have to explicitly write a terminal for the mathematical symbols. They are just symbols that can have only one value and do not contain any meaningful information other than their presence. Farkle calls these types of symbols _literals_ and treats them specially to reduce boilerplate.
 
-So we are now left with one terminal to implement; the terminal for our decimal numbers. In Farkle, terminals are made of a regular expression that specifies the text that corresponds to this terminal, and a delegate called _transformer_ that converts the text to an arbitrary object.
+So we are now left with one terminal to define; the terminal for our decimal numbers. In Farkle, terminals are made of a regular expression that specifies the text that can match to this terminal, and a delegate called _transformer_ that converts the text to an arbitrary object.
 
 There are three ways to create this terminal, starting from the simplest:
 
@@ -76,13 +76,21 @@ let numberStringRegex =
 (**
 The `regexString` function uses a quite familiar regex syntax. You can learn more about it [at its own documentation page][stringRegexes].
 
-Let's take a look at the `terminal` function. Its last parameter is the regex, which we passed at the beggining for convenience and its first parameter is the terminal's name; nothing unusual here. Its second parameter is called a _transformer_ and is a delegate that convert's the characters matched by our regex to an arbitrary object; in our case an integer. Its first parameter is an object of type [`ITransformerContext`](reference/farkle-itransformercontext.html) and is useful if you want to access the token's position or share some state between transformers. Its second parameter is a `ReadOnlySpan` of characters, which were converted to a floating-point number by our transformer.
+Let's take a look at the `terminal` function. Its last parameter is the regex, which we passed at the beggining for convenience and its first parameter is the terminal's name; nothing unusual here. Its second parameter is called a _transformer_ and is a delegate that converts the characters matched by our regex to an arbitrary object; in our case an integer.
 
-> `T` is the delegate's F# name; it was shortened to one letter for brevity.
+#### Writing a transformer
+
+The transformer's first parameter is an object of type [`ITransformerContext`](reference/farkle-itransformercontext.html) and is useful if you want to access the token's position or share some state between transformers, and its second parameter is a `ReadOnlySpan` of the characters matched by our regex, which will be converted to a floating-point number by our transformer.
+
+`T` is the delegate's F# name. Because you have to specify it due to the language's limitations it was shortened to one letter for brevity.
+
+You can view transformers as little parsers that always parse well-formatted text. In our example, the transformer for `Number` does not usually have to worry about exceptions from invalid input since the regex we specified guarantees the kind of input it expects. There are exceptions to this, like the user passing an extremely high integer. Such inputs will cause an exception to be raised. The built-in terminals the `Farkle.Builder.Terminals` module provides will handle the exception a little more gracefully but still fail the parsing.
+
+Speaking of graceful errors, you can raise errors in your transformer by calling the `error` function, or the `errorf` function if you want formatted strings. If you are using C# or want to customize the exact position of the error, you can directly throw a `Farkle.ParserApplicationException`. They will be caught by the parser and can be uniformly handled like Farkle's own errors, as we will see later.
 
 ---
 
-For the most advanced users, Farkle allows you to construct a regex from code. Directly constructing a regex from code is rarely useful for the average user of Farkle, but might come in handy when for example the regex's structure is not known at compile time, or it is very complex.
+For the most advanced use cases, Farkle allows you to construct a regex from code. Directly constructing a regex from code is rarely useful for the average user of Farkle, but might come in handy when for example the regex's structure is not known at compile time, or it is complex enough to merit some code reuse.
 *)
 
 open Farkle.Builder.Regex
@@ -90,6 +98,8 @@ open Farkle.Builder.Regex
 let numberConstructedRegex =
     // Regexes are composable!
     let atLeastOneNumber = chars PredefinedSets.Number |> atLeast 1
+    // You can freely mix string regexes and constructed regexes.
+    // let atLeastOneNumber = regexString @"\d+"
     concat [
         atLeastOneNumber
         optional <| (char '.' <&> atLeastOneNumber)
@@ -102,7 +112,7 @@ let numberConstructedRegex =
 (**
 You can learn more about the functions above [at the documentation](reference/farkle-builder-regexmodule.html). More character sets of the `Farkle.Builder.PredefinedSets` module can also be found [at the documentation](reference/farkle-builder-predefinedsets.html)
 
-> __Note:__ The regexes' type is `Farkle.Builder.Regex`. They are totally unrelated to `System.Text.RegularExpressions.Regex`. We can't convert between these two types, or directly match text against Farkle's regexes.
+> __Note:__ The regexes' type is `Farkle.Builder.Regex`. They are totally unrelated to .NET's `System.Text.RegularExpressions.Regex`. We can't convert between these two types, or directly match text against Farkle's regexes.
 
 The terminal we created is of type `DesigntimeFarkle<float>`. This means that we can use it to parse floating-point numbers from text, but we want to create something bigger than that. As we are going to see, we can compose designtime Farkles into bigger ones, using nonterminals.
 
@@ -112,7 +122,7 @@ The terminal we created is of type `DesigntimeFarkle<float>`. This means that we
 
 Because the calculator's nonterminals are a bit complicated, we have to take a brief interlude and tell how to create simpler ones.
 
-Say we want to make a very simple calculator that can either add or subtract two numbers together. And let's say that an empty string would result to zero. This is the grammar of our calculator in [Backus-Naur Form][bnf] (don't worry if you can't understand it):
+Say we want to make a very simple calculator that can either add or subtract two numbers together. And let's say that an empty string would result to zero. This is the grammar of our calculator in [Backus-Naur Form][bnf]:
 
 ```
 <Exp> ::= Number + Number
@@ -120,7 +130,9 @@ Say we want to make a very simple calculator that can either add or subtract two
 <Exp> ::= <>
 ```
 
-Writing this in Farkle is actually surprisingly simple:
+For those that don't understand the snippet above, we define a nonterminal named `Exp`, that has three productions associated with it, meaning an `Exp` can be made in three ways: either by taking a sequence of the `Number` terminal, either the `+` or the `-` terminal, and another `Number` terminal, or by no symbols at all.
+
+Writing the same thing in Farkle is actually surprisingly simple:
 *)
 
 let justTwoNumbers = "Exp" ||= [
@@ -140,7 +152,7 @@ With `.>>`, we can also chain string literals, instead of creating a terminal fo
 
 The `=>` operator finishes the creation of a production with a function that combines its members that we marked as significant. Such functions are called _fusers_. In the first production we added the numbers and in the second we subtracted them. So, depending on the expression we entered, `_justTwoNumbers` would return either the sum, or the difference of them. Obviously, all productions of a nonterminal have to return the same type.
 
-In the third case, we defined an empty production using `empty` (what a coincidence!) We used `empty =% 0.` as a shortcut instead of writing `empty => (fun () -> 0.)`.
+In the third case, we defined an empty production using `empty` (what a coincidence!) We used `empty =% 0.0` as a shortcut instead of writing `empty => (fun () -> 0.0)`.
 
 An unfinished production is called a _production builder_. You can mark up to 16 significant members in a production builder.
 
@@ -185,6 +197,7 @@ let expression =
         !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
         !& "-" .>>. expression |> prec NEG => (fun x -> -x),
         !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
+        // We use |> asIs instead of => (fun x -> x).
         !& "(" .>>. expression .>> ")" |> asIs
     )
 
@@ -205,9 +218,7 @@ As you see, our grammar in Farkle looks pretty similar to the one in Bison. Let'
 
 The `nonterminal` function is useful for recursive nonterminals. It creates a nonterminal whose productions will be set later with the `SetProductions` method. We can only once set them, all together. Calling the method again will have no effect.
 
-Our nonterminal is of type `Nonterminal<float>`, but implements `DesigntimeFarkle<float>` which is actually an interface.
-
-> __Warning:__ Despite designtime Farkles being interfaces, implementing it in your code is not allowed and will throw an exception if a custom designtime Farkle implementation is somehow passed to Farkle.
+Our nonterminal is of type `Nonterminal<float>`, but implements the `DesigntimeFarkle<float>` interface.
 
 ### Operator Precedence
 
@@ -227,7 +238,7 @@ We set this operator scope to our designtime Farkle using the `DesigntimeFarkle.
 
 ## Building our grammar
 
-With our nonterminals being ready, it's time to create a runtime Farkle that can parse mathematical expressions. The builder uses the LALR algorithm to create parser tables for our parser. It also creates a special object called a _post-processor_ that will execute the transformers and fusers when it is needed.
+With our nonterminals being ready, it's time to create a runtime Farkle that can parse mathematical expressions. The builder will create tables for the parser using the LALR algorithm, and a Deterministic Finite Automaton (DFA) for the tokenizer. It also creates a special object called a _post-processor_ that is responsible for executing the transformers and fusers.
 
 All that stuff can be done with a single line of code:
 *)
@@ -289,7 +300,7 @@ let _customized =
     // Whether to ignore whitespace between terminals; true by default.
     |> DesigntimeFarkle.autoWhitespace false
     // Adds an arbitrary symbol that will be ignored by Farkle.
-    // It needs a regex and a terminal
+    // It needs a regex, and a name for diagnostics purposes.
     |> DesigntimeFarkle.addNoiseSymbol "Letters" (chars AllLetters)
 
 (**

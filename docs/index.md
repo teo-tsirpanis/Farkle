@@ -15,7 +15,7 @@ dotnet add package Farkle
 * __Integration with MSBuild__: Farkle can optionally integrate with MSBuild to enable features like [ahead-of-time grammar building](the-precompiler.html) which drastically reduces startup times and catches grammar errors like LALR conflicts at compile time.
 * __Large file support__: Farkle can parse large files without entirely reading them to memory.
 * __Grammar introspection__: Farkle provides [APIs that allow your grammars to be inspected from code](reference/farkle-grammar-grammar.html).
-* __Wide framework support__: Farkle targets .NET Standard 2.0, supporting .NET Framework 4.6.1+, .NET Core 2.0+, Xamarin, UWP and Unity.
+* __Wide framework support__: Farkle targets .NET Standard 2.0 at minimum, supporting .NET Framework 4.6.1+, .NET Core 2.0+, Xamarin, UWP and Unity.
 * __Templating__: Farkle supports [creating templated text files from grammars](templates.html) using [Scriban][scriban].
 
 [Learn more](choosing-a-parser.html) about Farkle's features, compared with other .NET parsers.

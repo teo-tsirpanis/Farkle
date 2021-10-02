@@ -64,13 +64,17 @@ let sourceFilesToGenerate = [
 
 let DocumentationAssemblyFramework = "netstandard2.0"
 
-let sourceProjects = !! "./src/**/*.??proj"
-
 let farkleProject = "./src/Farkle/Farkle.fsproj"
 
 let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
 
 let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
+
+let sourceProjects = [
+    farkleProject
+    farkleToolsProject
+    farkleToolsMSBuildProject
+]
 
 // The project to be tested
 let testProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"

@@ -226,8 +226,8 @@ type CharStream private(source: CharStreamSource) =
         updateTokenStartPosition()
         result
     interface ITransformerContext with
-        member _.StartPosition = &startingPosition
-        member _.EndPosition = &currentPosition
+        member _.StartPosition = startingPosition
+        member _.EndPosition = currentPosition
         member x.ObjectStore = x.ObjectStore
     interface IDisposable with
         member _.Dispose() = (source :> IDisposable).Dispose()

@@ -13,7 +13,6 @@ open Farkle
 open Farkle.Builder.Regex
 open System
 open System.Collections.Generic
-open System.Collections.Immutable
 open System.Globalization
 open System.Reflection
 open System.Text
@@ -25,15 +24,14 @@ open System.Diagnostics.CodeAnalysis
 #endif
 let private allPredefinedSets =
     let dict = Dictionary(StringComparer.OrdinalIgnoreCase)
-    let sets =
-        Assembly
-            .GetExecutingAssembly()
-            .GetType("Farkle.Builder.PredefinedSets")
-            .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
-        |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
-        |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
-        |> Seq.map (fun x -> (x.Name, x))
-        |> Seq.iter (dict.Add)
+    Assembly
+        .GetExecutingAssembly()
+        .GetType("Farkle.Builder.PredefinedSets")
+        .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
+    |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
+    |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
+    |> Seq.map (fun x -> (x.Name, x))
+    |> Seq.iter dict.Add
     dict
 
 [<Struct>]
@@ -82,7 +80,7 @@ let rec private parseCharSet_impl i state (xs: ResizeArray<_>) (pos: inref<_>) (
             addRange cFrom cTo i xs &pos data
             parseCharSet_impl (i + 1) Empty xs &pos data
 
-let private parseCharSet startingPosition (pos: inref<_>) data =
+let private parseCharSet startingPosition pos data =
     parseCharSet_impl startingPosition Empty (ResizeArray()) &pos data
 
 let private unescapeString escapeChar (data: ReadOnlySpan<char>) =
@@ -135,7 +133,7 @@ let designtime =
             // to begin after the starting characters. We keep them on
             // the span for accurate error position reporting.
             let data = data.Slice(0, data.Length - 1)
-            parseCharSet start.Length &ctx.StartPosition data |> fChars))
+            parseCharSet start.Length ctx.StartPosition data |> fChars))
 
     let predefinedSet = mkPredefinedSet "Predefined set" "\p{" chars
     let notPredefinedSet = mkPredefinedSet "All but Predefined set" "\P{" allButChars

@@ -210,6 +210,7 @@ let designtime =
         !@ regexSequence |> asIs
     )
     regex
+    :> DesigntimeFarkle<_>
     |> DesigntimeFarkle.caseSensitive true
 
 [<CompiledName("Runtime")>]

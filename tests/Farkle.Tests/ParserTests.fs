@@ -49,11 +49,11 @@ let tests = testList "Parser tests" [
             let numberTerminal = Terminal(3u, "Number")
             nont 0 [
                 nont 6 [
-                    AST.Content(numberTerminal, Position.Create 1UL 1UL 1UL, "475")
+                    AST.Content(numberTerminal, Position.Create1 1 1, "475")
                 ]
-                AST.Content(Terminal(0u, "+"), Position.Create 1UL 5UL 4UL, "+")
+                AST.Content(Terminal(0u, "+"), Position.Create1 1 5, "+")
                 nont 6 [
-                    AST.Content(numberTerminal, Position.Create 1UL 7UL 6UL, "724")
+                    AST.Content(numberTerminal, Position.Create1 1 7, "724")
                 ]
             ]
 
@@ -72,7 +72,7 @@ let tests = testList "Parser tests" [
         let jsonString = "{\"Almost True\": truffle}"
         let result = RuntimeFarkle.parseString FSharp.JSON.runtime jsonString
         let error =
-            ParserError(Position.Create 1UL 20UL 19UL, ParseErrorType.LexicalError 'f')
+            ParserError(Position.Create1 1 20, ParseErrorType.LexicalError 'f')
             |> FarkleError.ParseError
             |> Result.Error
         Expect.equal result error "The wrong position was reported on a lexical error"
@@ -119,7 +119,7 @@ let tests = testList "Parser tests" [
             |> RuntimeFarkle.buildUntyped
         let testString = "/*\r\n\r\n\r\n*/ hell"
         let expectedResult =
-            ParserError(Position.Create 4UL 8UL (uint64 testString.Length), ParseErrorType.UnexpectedEndOfInput)
+            ParserError(Position.Create1 4 8, ParseErrorType.UnexpectedEndOfInput)
             |> FarkleError.ParseError
             |> Error
         let actualResult = rf.Parse testString

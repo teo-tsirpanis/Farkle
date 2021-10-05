@@ -22,10 +22,10 @@ let tests =
             Expect.equal cs.CurrentPosition Position.Initial
                 "The character stream started at a different position"
             cs.AdvanceBy 1
-            Expect.equal cs.CurrentPosition (Position.Create 2UL 1UL 1UL)
+            Expect.equal cs.CurrentPosition (Position.Create1 2 1)
                 "The character stream is at a different position after LF"
             cs.AdvanceBy 2
-            Expect.equal cs.CurrentPosition (Position.Create 3UL 1UL 3UL)
+            Expect.equal cs.CurrentPosition (Position.Create1 3 1)
                 "The character stream is at a different position after CRLF"
         }
     ]

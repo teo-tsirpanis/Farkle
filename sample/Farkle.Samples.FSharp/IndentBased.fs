@@ -119,7 +119,7 @@ type IndentCodeTokenizer(grammar) =
         if input.TryExpandPastOffset 0 then
             // Checking for the indentation makes sense only
             // when we are at the start of a line.
-            if input.CurrentPosition.Column = 1UL then
+            if input.CurrentPosition.Column = 1 then
                 let nextLine = getNextLine input
                 let nextLineTrimmed = nextLine.TrimStart(' ')
                 // We find the indentation level we are by calculating

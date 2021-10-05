@@ -325,13 +325,13 @@ let tests = testList "Designtime Farkle tests" [
         let runtime = designtime.Build()
 
         let mkError column msg =
-            ParserError(Position.Create 1UL column (column - 1UL), ParseErrorType.UserError msg)
+            ParserError(Position.Create1 1 column, ParseErrorType.UserError msg)
             |> FarkleError.ParseError |> Error
 
-        let error1 = mkError 8UL "Terminal found"
+        let error1 = mkError 8 "Terminal found"
         Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught"
 
-        let error2 = mkError 4UL "Empty input"
+        let error2 = mkError 4 "Empty input"
         Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught"
     }
 
@@ -340,7 +340,7 @@ let tests = testList "Designtime Farkle tests" [
             "X" |||= [!& "x1"; !& "x2"]
             |> RuntimeFarkle.buildUntyped
         let testString = "x1     x2"
-        let expectedErrorPos = Position.Create 1UL 8UL 7UL
+        let expectedErrorPos = Position.Create1 1 8
 
         let error =
             runtime.Parse testString

@@ -131,16 +131,19 @@ type CharStream private(source: CharStreamSource) =
     // The dynamic block source must retain the
     // characters after this position in memory.
     let mutable startingPosition = Position.Initial
-    let mutable currentPosition = Position.Initial
+    let mutable startingIndex = 0UL
+    let mutable currentPosition = PositionTracker()
+    let mutable currentIndex = 0UL
     static let throwCountNegative (count: int) =
         raise(ArgumentOutOfRangeException(nameof count, count, "The count cannot be negative.")) |> ignore
     static let throwOffsetNegative (ofs: int) =
         raise(ArgumentOutOfRangeException(nameof ofs, ofs, "The offset cannot be negative.")) |> ignore
     /// Converts an offset relative to the current
     /// position to an absolute character index.
-    let convertOffsetToIndex ofs = currentPosition.Index + uint64 ofs
+    let convertOffsetToIndex ofs = currentIndex + uint64 ofs
     let updateTokenStartPosition() =
-        startingPosition <- currentPosition
+        startingPosition <- currentPosition.Position
+        startingIndex <- currentIndex
     /// <summary>Creates a <see cref="CharStream"/> from a
     /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
     new(mem) = new CharStream(new StaticBlockSource(mem))
@@ -164,7 +167,7 @@ type CharStream private(source: CharStreamSource) =
     /// The starting position of the last token that was generated.
     member internal _.TokenStartPosition: inref<_> = &startingPosition
     /// The position of the next character the stream has to read.
-    member _.CurrentPosition: inref<_> = &currentPosition
+    member _.CurrentPosition = currentPosition.Position
     /// <inheritdoc cref="ITokenizerContext.ObjectStore"/>
     member _.ObjectStore =
         if isNull objectStore then
@@ -172,7 +175,7 @@ type CharStream private(source: CharStreamSource) =
         objectStore
     /// A read-only span of characters that contains all
     /// available characters at and after the stream's current position.
-    member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentPosition.Index
+    member _.CharacterBuffer = source.GetAllCharactersAfterIndex currentIndex
     /// <summary>Tries to load the <paramref name="ofs"/>th character after the stream's
     /// current position. If it does not exist, returns false. This function invalidates
     /// the stream's <see cref="CharacterBuffer"/> but keeps the indices of the new buffer
@@ -182,7 +185,7 @@ type CharStream private(source: CharStreamSource) =
     member _.TryExpandPastOffset ofs =
         if ofs < 0 then
             throwOffsetNegative ofs
-        source.TryExpandPastIndex(startingPosition.Index, convertOffsetToIndex ofs)
+        source.TryExpandPastIndex(startingIndex, convertOffsetToIndex ofs)
     /// <summary>Returns the position of the character at <paramref name="ofs"/>
     /// characters after the current position.</summary>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -190,8 +193,8 @@ type CharStream private(source: CharStreamSource) =
     member _.GetPositionAtOffset ofs =
         if ofs < 0 then
             throwOffsetNegative ofs
-        let span = source.GetSpanForCharacters(currentPosition.Index, ofs)
-        currentPosition.Advance span
+        let span = source.GetSpanForCharacters(currentIndex, ofs)
+        currentPosition.GetPositionAfter span
     /// <summary>Advances the stream's current position by <paramref name="count"/>
     /// characters. This function invalidates the indices for the stream's
     /// <see cref="CharacterBuffer"/> and the characters that were advanced
@@ -211,7 +214,9 @@ type CharStream private(source: CharStreamSource) =
     /// characters from memory but requires but requires to be paired witha call
     /// to CreateToken.
     member internal x.AdvanceBy(count, doUnpin) =
-        currentPosition <- x.GetPositionAtOffset(count)
+        let span = source.GetSpanForCharacters(currentIndex, count)
+        currentPosition.Advance(span)
+        currentIndex <- currentIndex + uint64 count
         if doUnpin then
             updateTokenStartPosition()
     /// Creates an arbitrary object from the characters
@@ -219,15 +224,19 @@ type CharStream private(source: CharStreamSource) =
     /// After that call, the characters at and before the current position
     /// might be freed from memory, so this method must not be used twice.
     member internal x.CreateToken symbol (transformer: ITransformer<'TSymbol>) =
-        let idxStart = startingPosition.Index
-        let length = currentPosition.Index - idxStart |> int
-        let span = source.GetSpanForCharacters(idxStart, length)
+        let length = currentIndex - startingIndex |> int
+        let span = source.GetSpanForCharacters(startingIndex, length)
         let result = transformer.Transform(symbol, x, span)
         updateTokenStartPosition()
         result
+    #if DEBUG
+    member internal _.TokenizerAfterDFAInvariant() =
+        Debug.Assert((currentIndex = startingIndex),
+            "The character stream's current position and starting position are not the same.")
+    #endif
     interface ITransformerContext with
         member _.StartPosition = startingPosition
-        member _.EndPosition = currentPosition
+        member _.EndPosition = currentPosition.Position
         member x.ObjectStore = x.ObjectStore
     interface IDisposable with
         member _.Dispose() = (source :> IDisposable).Dispose()

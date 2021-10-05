@@ -20,7 +20,7 @@ let tests = testList "Regression tests" [
         Expect.isOk (parse rf "45") "The two-digit input was not successfully parsed"
 
         let expectedError =
-            ParserError(Position.Create 1UL 2UL 1UL, ParseErrorType.UnexpectedEndOfInput)
+            ParserError(Position.Create1 1 2, ParseErrorType.UnexpectedEndOfInput)
             |> FarkleError.ParseError
             |> Error
 

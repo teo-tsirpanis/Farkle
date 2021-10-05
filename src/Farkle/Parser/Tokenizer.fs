@@ -9,7 +9,6 @@ open Farkle
 open Farkle.Grammar
 open Farkle.IO
 open System
-open System.Diagnostics
 
 [<Struct>]
 /// A value type representing the result of a DFA tokenizer invocation.
@@ -171,8 +170,9 @@ type DefaultTokenizer(grammar: Grammar) =
             if dfaResult.ReachedEOF then
                 Token.CreateEOF input.CurrentPosition
             else
-                Debug.Assert(input.CurrentPosition.Index = input.TokenStartPosition.Index,
-                    "The character stream's current position and starting position are not the same.")
+                #if DEBUG
+                input.TokenizerAfterDFAInvariant()
+                #endif
                 if dfaResult.FoundToken then
                     let charCount = dfaResult.CharacterCount
                     match dfaResult.Symbol with

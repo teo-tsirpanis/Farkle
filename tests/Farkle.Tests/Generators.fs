@@ -23,9 +23,8 @@ let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
 let positionGen =
     Arb.generate
-    |> Gen.three
-    |> Gen.filter (fun (line, col, idx) -> line <> 0UL && col <> 0UL && line - 1UL + col - 1UL <= idx)
-    |> Gen.map (fun (line, col, idx) -> {Line = line; Column = col; Index = idx})
+    |> Gen.two
+    |> Gen.map (fun (line, col) -> Position.Create0 line col)
 
 let egtEntryGen =
     [

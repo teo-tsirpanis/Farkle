@@ -11,7 +11,6 @@
     <!-- For a totally unexplained reason, disabling
     tailcalls really boosted performance. -->
     <Tailcalls>false</Tailcalls>
-    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     <ModernFramework Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'netstandard2.1'">true</ModernFramework>
     <DefineConstants Condition="$(ModernFramework) == true">MODERN_FRAMEWORK;$(DefineConstants)</DefineConstants>
   </PropertyGroup>
@@ -86,7 +85,7 @@
     <PackageReference Include="Covarsky" Version="1.4.2" PrivateAssets="All" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="BitCollections" Version="1.0.1" />
-    <PackageReference Include="FSharp.Core" Version="6.0.0" />
+    <PackageReference Include="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
   <ItemGroup Condition="$(ModernFramework) != true">
     <PackageReference Include="System.Buffers" Version="4.5.1" />

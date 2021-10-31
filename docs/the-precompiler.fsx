@@ -13,7 +13,7 @@ What is more, Farkle does not report any grammar error (such as an LALR conflict
 
 One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of Farkle's grammars being objects defined in code. Instead of building them every time, the grammar's parser tables are built _ahead of time_ and stored in the program's assembly when it gets compiled. When that program is executed, instead of building the parser tables, it loads the precompiled grammar from the assembly, which is orders of magnitude faster.
 
-> [__Using the precompiler with Visual Studio for Windows is not currently supported.__](#Building-from-an-IDE)
+> [__Using the precompiler with Visual Studio for Windows requires extra steps.__](#Building-from-an-IDE)
 
 ## How to use it
 
@@ -68,7 +68,7 @@ As you see, the building methods in C# have the same name as before. The type fo
 
 ### The rules
 
-A precompilable designtime Farkle will be discovered and precompiled if it is declared in a `static readonly` _field_ (not property). In F#, a let-bound value in a module is equivalent, but it must not be mutable. Also, `static let`s in class declarations will not be recognized because they are not compiled as `readonly`.
+A precompilable designtime Farkle will be discovered and precompiled if it is declared in a `static readonly` _field_. In C# static properties with a getter are equivalent, as is in F# a let-bound value in a module, but it must not be mutable. Also, `static let`s in class declarations will not be recognized because they are not compiled as `readonly`.
 
 This field can be of any visibility; public, internal, private, it doesn't matter. It will be detected even in nested classes or nested F# modules. It _cannot_ however be declared in a generic type.
 
@@ -183,6 +183,12 @@ dotnet tool install Farkle.Tools
 ```
 
 The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Otherwise errors are very likely to occur.
+
+The following limitations apply when using the precompiler worker:
+
+* The project must target a framework compatible with .NET Core 3.1. For example building a .NET 5 project that uses the precompiler worker is not supported.
+* The .NET Core 3.1 SDK must be installed, even if a newer version of the SDK is used for the rest of the project.
+* `Farkle.Tools` must be installed as a .NET _local tool_. Farkle will not see it if it is installed as a .NET global tool.
 
 The recommended way to build an app that uses the precompiler is through .NET SDK commands like `dotnet build`, `dotnet run` and `dotnet msbuild`. It is faster, more stable and more supported. Visual Studio for Windows cannot run MSBuild on .NET. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed but Microsoft responded that it won't be implemented anytime soon. Readers of this guide that are affected are encouraged to upvote the above suggestion. When not using Visual Studio for Windows, Farkle will raise a warning suggesting you to move to the .NET SDK.
 

@@ -1,3 +1,6 @@
+#### 6.3.2 - 31-10-2021
+* Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows.
+
 #### 6.3.1 - 17-10-2021
 * __Minor breaking change:__ `Farkle.Builder.RegexGrammar.designtime`'s type became a regular `DesigntimeFarkle<Regex>`, after being changed to a `Nonterminal<Regex>` in Farkle 6.3.0 by mistake. This change is unlikely to affect any regular user of Farkle.
 * Fixed a bug where Farkle's assembly was not shrunk enough when trimmed.

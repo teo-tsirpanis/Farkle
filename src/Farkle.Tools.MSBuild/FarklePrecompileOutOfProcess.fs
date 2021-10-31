@@ -42,7 +42,7 @@ type FarklePrecompileOutOfProcess() =
 
     member private this.CheckPrecompilerWorkerExists() =
         if String.IsNullOrWhiteSpace this.CustomWorkerPath then
-            let command = Command.Run("dotnet", [|"tool"; "run"; "farkle"; "--"; "precompiler-worker"|])
+            let command = Command.Run("dotnet", "tool", "run", "farkle", "--", "precompiler-worker")
             let toolFound = command.Result.ExitCode = 2
             if not toolFound then
                 this.Log.LogError("The .NET tool Farkle.Tools is not installed or cannot be found. \

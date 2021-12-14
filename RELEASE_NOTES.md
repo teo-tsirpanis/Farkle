@@ -1,3 +1,10 @@
+#### 6.3.2 - 31-10-2021
+* Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows.
+
+#### 6.3.1 - 17-10-2021
+* __Minor breaking change:__ `Farkle.Builder.RegexGrammar.designtime`'s type became a regular `DesigntimeFarkle<Regex>`, after being changed to a `Nonterminal<Regex>` in Farkle 6.3.0 by mistake. This change is unlikely to affect any regular user of Farkle.
+* Fixed a bug where Farkle's assembly was not shrunk enough when trimmed.
+
 #### 6.3.0 - 02-10-2021
 * __Minor breaking change:__ Text with legacy CR line endings is no longer supported. Since this version, they will no longer be recognized as line endings by position tracking. When Farkle's next major version gets released, they will cause lexical errors.
 * __Minor breaking change:__ The `Farkle.Builder.GrammarMetadata` type has an additional field of type `Farkle.Builder.OperatorPrecedence.OperatorScope`. User code that does not directly set metadata to designtime Farkles is not affected.

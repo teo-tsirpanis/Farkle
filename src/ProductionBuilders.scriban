@@ -39,12 +39,25 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<{{ type_params n }}>(listAdd members df, {{type_indices n }}, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    {{~# https://github.com/ionide/ionide-vscode-fsharp/issues/1203~}}
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<{{ type_params n }}>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<{{ type_params n }}>, literal: string) =
+        x.Append(literal)
     {{~ if n != capacity ~}}
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] {{ ap }}T{{ n + 1 }}>(df: DesigntimeFarkle<{{ ap }}T{{ n + 1 }}>) =
         ProductionBuilder<{{ type_params n + 1 }}>(listAdd members df, {{type_indices n }}, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<{{ type_params n }}>, df) =
+        x.Extend(df)
     {{~ end ~}}
     member _.Finish([<Nullable(1uy)>] f: {{delegate_signature n}}) : [<Nullable(1uy)>] _ =
         {{~ # By explicitly declaring the variables the closure will not capture `members`.
@@ -97,6 +110,10 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         x.Finish(fun {{ func_call_arguments }} ->
             f {{ func_call_arguments}})
         {{~ end ~}}
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<{{ type_params n }}>, f) =
+        x.FinishFSharp(f)
 
 {{~ end ~}}
 
@@ -107,6 +124,7 @@ open Farkle.Collections
 open Farkle.Common
 open LanguagePrimitives.IntrinsicFunctions
 open System
+open System.ComponentModel
 open System.Runtime.CompilerServices
 
 [<AutoOpen>]

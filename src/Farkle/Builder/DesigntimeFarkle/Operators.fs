@@ -151,19 +151,6 @@ module DesigntimeFarkleOperators =
         | [] -> nonterminalU name :> DesigntimeFarkle
         | (x: ProductionBuilder) :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)
 
-    /// The `Append` method of production builders as an operator.
-    // https://github.com/ionide/ionide-vscode-fsharp/issues/1203
-    let inline op_DotGreaterGreater pb df =
-        (^TBuilder : (member Append: ^TDesigntimeFarkle -> ^TBuilder) (pb, df))
-
-    /// The `Extend` method of production builders as an operator.
-    let inline op_DotGreaterGreaterDot pb df =
-        (^TBuilder : (member Extend: DesigntimeFarkle<'T> -> ^TBuilderResult) (pb, df))
-
-    /// The `Finish` method of production builders as an operator.
-    let inline (=>) pb f =
-        (^TBuilder : (member FinishFSharp: ^TFunction -> Production<'T>) (pb, f))
-
     /// `ProductionBuilder.FinishConstant` as an operator.
     let (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)
 

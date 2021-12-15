@@ -36,9 +36,9 @@ let tests = testList "Operator precedence tests" [
                 |> DesigntimeFarkle.withOperatorScope opScope1
 
             expr.SetProductions(
-                ProductionBuilder(expr, "+", expr),
-                ProductionBuilder(expr, "-", expr),
-                ProductionBuilder(number)
+                !% expr .>> "+" .>> expr,
+                !% expr .>> "-" .>> expr,
+                !% number
             )
 
             expr

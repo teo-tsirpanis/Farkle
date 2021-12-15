@@ -55,6 +55,8 @@ As you might have seen, the terminal is of type `DesigntimeFarkle`, without a ge
 
 > If you don't remember how to use an API from C#, [this guide](csharp.html) can help you.
 
+### Defining untyped nonterminals
+
 The nonterminals use a slightly different approach. Let's see how we would write the nonterminal that recognizes the balanced parentheses:
 
 __F#:__
@@ -62,7 +64,7 @@ __F#:__
 let S = nonterminalU "S"
 
 S.SetProductions(
-    ProductionBuilder(S, "(", S, ")"),
+    !% S .>> "(" .>> S .>> ")",
     empty
 )
 ```
@@ -77,11 +79,15 @@ S.SetProductions(
 );
 ```
 
-Let's take a closer look. The `ProductionBuilder`'s constructor accepts a variable amount of objects (or none, but this is essentially the empty one). You can pass designtime Farkles to be used in the resulting production as they are, or strings or characters to be used as literals. To avoid boxing, it's better to not pass characters at all, but not prohibited. If you pass any other type, an exception will be thrown. `S` is of type `Farkle.Builder.Untyped.Nonterminal`, which implements only the untyped `DesigntimeFarkle` interface.
+For F# we use the `nonterminalU` function to define an untyped nonterminal, and after that we set its productions, just like the typed nonterminals. We use the familiar production builders syntax to do it but with some changes: we always chain the members of the production with the `.>>` operator since none of its members are significant, and we don't finish the production builder in the end with `=>` or `=%`. `S` is of type `Farkle.Builder.Untyped.Nonterminal`, which implements only the untyped `DesigntimeFarkle` interface.
 
-In F#, instead of the last fourth line, we could have used the much terser `!% S .>> "(" .>> S .>> ")"`, but unfortunately, it wouldn't work due to [a nasty and totally unexplained compiler bug][issue-7917]. This guide will be updated when the bug gets fixed.
+For C# we could use production builders without extending or finishing them like in F#, but there is another shorter way. We use the `ProductionBuilder`'s constructor which accepts a variable amount of objects (or none, but this is essentially the empty one). You can pass designtime Farkles to be used in the resulting production as they are, or strings or characters to be used as literals. To avoid boxing, it's better to not pass characters at all, but not prohibited. If you pass any other type, an exception will be thrown.
 
-Let's take a look at a different example. consider this F# designtime Farkle:
+In earlier versions of Farkle we could not reliably use the production builder syntax due to a compiler limitation. If you are getting weird syntax errors about type mismatches, use the `ProductionBuilder`'s constructor instead.
+
+---
+
+To show how to define non-recursive productions, let's take a look at a different example. Consider this F# designtime Farkle:
 
 ``` fsharp
 let number = Terminals.uint32 "Number"
@@ -89,24 +95,26 @@ let number = Terminals.uint32 "Number"
 let adder = "Add" ||= [!@ number .>> "+" .>>. number => (+)]
 ```
 
-It does exactly what you think it does. Gets a string of the form `X + Y`, and returns an unsigned integer containing their sum.
+It does exactly what you think it does. It gets a string of the form `X + Y`, and returns an unsigned integer containing their sum.
 
 A grammar that recognizes the same language without returning anything can be defined like this:
 
 ``` fsharp
 let number = Terminals.uint32 "Number"
 
-let adder = "Add" |||= [ProductionBuilder(number, "+", number)]
+let adder = "Add" |||= [!% number .>> "+" .>> number]
 ```
 
-The difference above is in the operator in the last line. In C# we can do the same thing like that:
+There are four differences in the untyped terminal. We use the `|||=` operator instead of `||=`, `!%` instead of `!@`, `.>>` instead of `.>>.` and omit finishing the production builder with `=>`. In C# we can do the same thing with the `ProductionBuilder` like that:
 
 ``` csharp
 DesigntimeFarkle<uint> Number = Terminals.UInt32("Number");
 DesigntimeFarkle Adder = Nonterminal.CreateUntyped("Adder", new ProductionBuilder(Number, "+", Number))
 ```
 
-Let's take a look now at how to actually use these untyped designtime Farkles. It's actually surprisingly simple, and can be done this way:
+### Building untyped designtime Farkles
+
+Building these untyped designtime Farkles is actually surprisingly simple and can be done this way:
 
 __F#:__
 ``` fsharp
@@ -120,7 +128,7 @@ __C#:__
 RuntimeFarkle<object> AdderRuntime = Adder.BuildUntyped();
 ```
 
-`buildUntyped` creates a `RuntimeFarkle` that does not return anything meaningful, and succeeds if the input text is valid.
+`buildUntyped` creates a `RuntimeFarkle` that does not return anything meaningful, and succeeds if the input text is valid. On F# it returns a unit and on C# an object that is always `null`.
 
 ## Syntax checking
 
@@ -159,9 +167,8 @@ Changing the post-processor is extremely cheap; no new grammar objects are creat
 
 ---
 
-Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference/index.html), as well as while you code.
+Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference/index.html), as well as while you code thanks to IntelliSense.
 
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
-[issue-7917]: https://github.com/dotnet/fsharp/issues/7917
 [covariance]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/

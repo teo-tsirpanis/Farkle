@@ -9,6 +9,7 @@ open Farkle.Collections
 open Farkle.Common
 open LanguagePrimitives.IntrinsicFunctions
 open System
+open System.ComponentModel
 open System.Runtime.CompilerServices
 
 [<AutoOpen>]
@@ -22,8 +23,16 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, idx16, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>, literal: string) =
+        x.Append(literal)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -94,6 +103,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11 -> 'T12 -> 'T13 -> 'T14 -> 'T15 -> 'T16-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 15 significant members.</summary>
@@ -102,11 +115,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T16>(df: DesigntimeFarkle<'T16>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -174,6 +199,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11 -> 'T12 -> 'T13 -> 'T14 -> 'T15-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 14 significant members.</summary>
@@ -182,11 +211,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T15>(df: DesigntimeFarkle<'T15>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -251,6 +292,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11 -> 'T12 -> 'T13 -> 'T14-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 13 significant members.</summary>
@@ -259,11 +304,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T14>(df: DesigntimeFarkle<'T14>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -325,6 +382,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11 -> 'T12 -> 'T13-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 12 significant members.</summary>
@@ -333,11 +394,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T13>(df: DesigntimeFarkle<'T13>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -396,6 +469,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11 -> 'T12-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 11 significant members.</summary>
@@ -404,11 +481,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T12>(df: DesigntimeFarkle<'T12>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -464,6 +553,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10 -> 'T11-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 10 significant members.</summary>
@@ -472,11 +565,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T11>(df: DesigntimeFarkle<'T11>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -529,6 +634,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9 -> 'T10-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9 x10)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 9 significant members.</summary>
@@ -537,11 +646,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T10>(df: DesigntimeFarkle<'T10>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -591,6 +712,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8 -> 'T9-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 x9 ->
             f x1 x2 x3 x4 x5 x6 x7 x8 x9)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 8 significant members.</summary>
@@ -599,11 +724,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T9>(df: DesigntimeFarkle<'T9>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -650,6 +787,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7 -> 'T8-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 x8 ->
             f x1 x2 x3 x4 x5 x6 x7 x8)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 7 significant members.</summary>
@@ -658,11 +799,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T8>(df: DesigntimeFarkle<'T8>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -706,6 +859,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6 -> 'T7-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 x7 ->
             f x1 x2 x3 x4 x5 x6 x7)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 6 significant members.</summary>
@@ -714,11 +871,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T7>(df: DesigntimeFarkle<'T7>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -759,6 +928,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1 -> 'T2 -> 'T3 -> 'T4 -> 'T5 -> 'T6-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(fun x1 x2 x3 x4 x5 x6 ->
             f x1 x2 x3 x4 x5 x6)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 5 significant members.</summary>
@@ -767,11 +940,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>(listAdd members df, idx1, idx2, idx3, idx4, idx5, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T6>(df: DesigntimeFarkle<'T6>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>(listAdd members df, idx1, idx2, idx3, idx4, idx5, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -811,6 +996,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
             OptimizedClosures.FSharpFunc<'T1, 'T2, 'T3, 'T4, 'T5, _>.Adapt(f)
             |> Delegate.ofInvokeMethod
         x.Finish(fOptimized)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 4 significant members.</summary>
@@ -819,11 +1008,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4>(listAdd members df, idx1, idx2, idx3, idx4, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T5>(df: DesigntimeFarkle<'T5>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>(listAdd members df, idx1, idx2, idx3, idx4, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -860,6 +1061,10 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
             OptimizedClosures.FSharpFunc<'T1, 'T2, 'T3, 'T4, _>.Adapt(f)
             |> Delegate.ofInvokeMethod
         x.Finish(fOptimized)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 3 significant members.</summary>
@@ -868,11 +1073,23 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2, 'T3>(listAdd members df, idx1, idx2, idx3, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2, 'T3>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T4>(df: DesigntimeFarkle<'T4>) =
         ProductionBuilder<'T1, 'T2, 'T3, 'T4>(listAdd members df, idx1, idx2, idx3, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2, 'T3>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -906,6 +1123,10 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
             OptimizedClosures.FSharpFunc<'T1, 'T2, 'T3, _>.Adapt(f)
             |> Delegate.ofInvokeMethod
         x.Finish(fOptimized)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 2 significant members.</summary>
@@ -914,11 +1135,23 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1, 'T2>(listAdd members df, idx1, idx2, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1, 'T2>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T3>(df: DesigntimeFarkle<'T3>) =
         ProductionBuilder<'T1, 'T2, 'T3>(listAdd members df, idx1, idx2, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1, 'T2>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
@@ -949,6 +1182,10 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
             OptimizedClosures.FSharpFunc<'T1, 'T2, _>.Adapt(f)
             |> Delegate.ofInvokeMethod
         x.Finish(fOptimized)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1, 'T2>, f) =
+        x.FinishFSharp(f)
 
 [<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder that supports 1 significant member.</summary>
@@ -957,11 +1194,23 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     [<NullableContext(2uy)>]
     member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
         ProductionBuilder<'T1>(listAdd members df, idx1, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1>, df: DesigntimeFarkle) =
+        x.Append(df)
     [<NullableContext(2uy)>]
     member x.Append([<Nullable(1uy)>] literal) : [<Nullable(1uy)>] _ = x.Append(Literal literal)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder<'T1>, literal: string) =
+        x.Append(literal)
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T2>(df: DesigntimeFarkle<'T2>) =
         ProductionBuilder<'T1, 'T2>(listAdd members df, idx1, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder<'T1>, df) =
+        x.Extend(df)
     member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let parameters =
@@ -990,4 +1239,8 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
         Production<'T1>(members, FuserData.CreateAsIs idx1, cpToken)
     member x.FinishFSharp([<Nullable(1uy)>] f: 'T1-> 'TOutput): [<Nullable(1uy)>] Production<'TOutput> =
         x.Finish(Delegate.ofInvokeMethod f)
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder<'T1>, f) =
+        x.FinishFSharp(f)
 

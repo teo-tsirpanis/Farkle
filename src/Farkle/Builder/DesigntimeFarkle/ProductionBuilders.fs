@@ -50,8 +50,8 @@ type ProductionBuilder internal(members, cpToken) =
                 | :? DesigntimeFarkle as df -> df
                 | :? string as s -> Literal s :> DesigntimeFarkle
                 | :? char as c -> c |> string |> Literal :> DesigntimeFarkle
-                | x -> invalidArg "members" "Only designtime Farkles, strings and characters are \
-allowed in a production builder's constructor. You provided a %O" <| x.GetType())
+                | x -> invalidArg "members" <| sprintf "Only designtime Farkles, strings and characters are \
+allowed in a production builder's constructor. You provided a %O" (x.GetType()))
             |> ImmutableList.CreateRange
         ProductionBuilder(members, null)
     /// A production builder with no members.

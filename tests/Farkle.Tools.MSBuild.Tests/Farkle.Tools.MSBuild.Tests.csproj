@@ -4,7 +4,7 @@
     <!-- We target the same framework as Farkle.Tools.
     There were problems with the roll-forward while testing
     with a local precompiler worker. -->
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <VSTestLogger>Appveyor</VSTestLogger>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
     <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.
 
 Building projects that use the precompiler with Visual Studio for Windows or with the .NET Framework-based "msbuild" command also requires a matching version of https://nuget.org/packages/Farkle.Tools to be installed. Learn more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description>
@@ -22,7 +22,7 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" Version="5.0.1" PrivateAssets="all" />
+    <PackageReference Include="FSharp.Core" Version="6.0.1" PrivateAssets="all" />
     <PackageReference Include="MedallionShell" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" Version="1.6.2" PrivateAssets="all" Publish="true" />
     <PackageReference Include="Sigourney" Version="0.4.1" PrivateAssets="all" Publish="true" />
     <PackageReference Include="Sigourney.Build" Version="0.4.1" />

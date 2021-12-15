@@ -18,7 +18,7 @@ namespace Farkle.Samples.CSharp
         private static Json ToDecimal(ReadOnlySpan<char> data)
         {
             var data2 =
-#if NETCOREAPP3_1
+#if NETCOREAPP
                 data;
 #else
                 data.ToString();

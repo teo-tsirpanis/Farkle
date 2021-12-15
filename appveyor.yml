@@ -1,6 +1,6 @@
 version: 6.3.2.{build}
 image:
-  - Visual Studio 2019
+  - Visual Studio 2022
   - Ubuntu2004
 nuget:
   disable_publish_on_pr: true

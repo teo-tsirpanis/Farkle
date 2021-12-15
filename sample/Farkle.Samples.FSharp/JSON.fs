@@ -13,7 +13,7 @@ open Farkle.Builder
 
 let toDecimal (x: ReadOnlySpan<char>) =
     Decimal.Parse(
-    #if NETCOREAPP3_1
+    #if NETCOREAPP
         x,
     #else
         x.ToString(),

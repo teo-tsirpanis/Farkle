@@ -12,17 +12,18 @@ open System.Runtime.CompilerServices
 /// A token is an instance of a `Terminal`.
 /// Tokens carry post-processed terminals,
 /// as well as their position in the text.
-type Token(position, symbol, [<Nullable(2uy)>] data) =
+[<Struct>]
+type Token(position: Position, symbol: Terminal, [<Nullable(2uy)>] data: obj) =
     static let eofTerminal =
         // "EOF!" in ASCII.
         Terminal(0x454F4621u, "EOF")
     static let eofSentinel = obj()
     /// The `Position` of the token in the input string.
-    member _.Position: Position = position
+    member _.Position = position
     /// The `Terminal` whose instance is this token.
-    member _.Symbol: Terminal = symbol
+    member _.Symbol = symbol
     /// The object the `PostProcessor` created for this token.
-    [<Nullable(2uy)>] member _.Data: obj = data
+    [<Nullable(2uy)>] member _.Data = data
     /// Whether the token signifies that input ended.
     /// When this property is set to true, the `Token.Symbol`
     /// and `Token.Data` properties have undefined values.

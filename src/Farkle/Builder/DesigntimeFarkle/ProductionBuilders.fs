@@ -9,6 +9,7 @@ open Farkle.Builder.ProductionBuilders
 open Farkle.Common
 open Farkle.Collections
 open System
+open System.ComponentModel
 open System.Collections.Immutable
 open System.Runtime.CompilerServices
 
@@ -56,9 +57,21 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     /// A production builder with no members.
     static member Empty = empty
     member _.Append(sym) = ProductionBuilder(members.Add sym, cpToken)
+    /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder, df: DesigntimeFarkle) =
+        x.Append(df)
     member x.Append(lit) = x.Append(Literal lit)
+    /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>) (x: ProductionBuilder, literal: string) =
+        x.Append(literal)
     member _.Extend<[<Nullable(0uy)>] 'T1>(df: DesigntimeFarkle<'T1>) =
         ProductionBuilder<'T1>(members.Add df, members.Count, cpToken)
+    /// <summary>The <c>Extend</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (.>>.) (x: ProductionBuilder, df) =
+        x.Extend(df)
     /// <summary>Like <c>Finish</c>, but the given function accepts
     /// a read-only span of all the production's members as objects.</summary>
     /// <remarks>
@@ -68,6 +81,10 @@ allowed in a production builder's constructor. You provided a %O" <| x.GetType()
     member _.FinishRaw<[<Nullable(0uy)>] 'TOutput>(fuser: F<'TOutput>) =
         Production<'TOutput>(members, FuserData.CreateRaw fuser, cpToken)
     member x.FinishFSharp<[<Nullable(0uy)>] 'TOutput>(f: _ -> 'TOutput) = x.FinishRaw(fun _ -> f())
+    /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
+    [<EditorBrowsable(EditorBrowsableState.Never)>]
+    static member inline (=>) (x: ProductionBuilder, f) =
+        x.FinishFSharp(f)
     member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
         Production<'TOutput>(members, fuserData, cpToken)

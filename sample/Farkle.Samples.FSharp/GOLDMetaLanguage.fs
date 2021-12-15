@@ -81,8 +81,8 @@ let designtime =
 
         let parameterBody = nonterminalU "Parameter Body"
         parameterBody.SetProductions(
-            ProductionBuilder(parameterBody, nlOpt, "|", parameterItems),
-            ProductionBuilder(parameterItems))
+            !% parameterBody .>> nlOpt .>> "|" .>> parameterItems,
+            !% parameterItems)
         "Parameter"
         |||= [!% parameterName .>> nlOpt .>> "=" .>> parameterBody .>> nl]
 
@@ -94,9 +94,9 @@ let designtime =
 
         let setExp = nonterminalU "Set Exp"
         setExp.SetProductions(
-            ProductionBuilder(setExp, nlOpt, "+", setItem),
-            ProductionBuilder(setExp, nlOpt, "-", setItem),
-            ProductionBuilder(setItem))
+            !% setExp .>> nlOpt .>> "+" .>> setItem,
+            !% setExp .>> nlOpt .>> "-" .>> setItem,
+            !% setItem)
 
         "Set Decl"
         |||= [!% setName .>> nlOpt .>> "=" .>> setExp .>> nl]
@@ -122,13 +122,13 @@ let designtime =
             !% regExpItem)
         // No newlines allowed
         regExp2.SetProductions(
-            ProductionBuilder(regExp2, "|", regExpSeq),
-            ProductionBuilder(regExpSeq))
+            !% regExp2 .>> "|" .>> regExpSeq,
+            !% regExpSeq)
 
         let regExp = nonterminalU "Reg Exp"
         regExp.SetProductions(
-            ProductionBuilder(regExp, nlOpt, "|", regExpSeq),
-            ProductionBuilder(regExpSeq))
+            !% regExp .>> nlOpt .>> "|" .>> regExpSeq,
+            !% regExpSeq)
 
         let terminalName = nonterminalU "Terminal Name"
         terminalName.SetProductions(
@@ -148,11 +148,9 @@ let designtime =
         handle.SetProductions(!% handle .>> symbol, empty)
 
         let handles = nonterminalU "Handles"
-        // Cannot use the production builder operators due to
-        // https://github.com/dotnet/fsharp/issues/7917
         handles.SetProductions(
-            ProductionBuilder(handles, nlOpt, "|", handle),
-            ProductionBuilder(handle))
+            !% handles .>> nlOpt .>> "|" .>> handle,
+            !% handle)
 
         "Rule Decl"
         |||= [!%_nonterminal .>> nlOpt .>> "::=" .>> handles .>> nl]

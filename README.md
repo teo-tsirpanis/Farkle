@@ -1,6 +1,7 @@
 ![Licensed under the MIT License](https://img.shields.io/github/license/teo-tsirpanis/farkle.svg)
 [![NuGet](https://img.shields.io/nuget/v/Farkle.svg)](https://nuget.org/packages/Farkle)
 [![.NET Build Status](https://img.shields.io/appveyor/ci/teo-tsirpanis/farkle/master.svg)](https://ci.appveyor.com/project/teo-tsirpanis/farkle)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5005/badge)](https://bestpractices.coreinfrastructure.org/projects/5005)
 
 # Farkle
 

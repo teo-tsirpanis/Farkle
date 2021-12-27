@@ -165,6 +165,12 @@ Changing the post-processor is extremely cheap; no new grammar objects are creat
 
 > Actually, the post-processor used in both the F# and the C# example is the same object too. Post-processors are [covariant][covariance] like designtime Farkles, because they are interfaces. Runtime Farkles on the other hand are classes and therefore not variant at all.
 
+## Custom tokenizers
+
+Farkle's default tokenizer is relatively simple. It splits the input text into tokens, without any regard for these tokens' location. There are some more complex grammars however that need a smarter tokenizer, for example indentation-based languages like F# and Python. Using Farkle's standard facilities is not enough to determine when a block begins or ends.
+
+For these advanced cases, Farkle provides a way to write additional tokenizing logic on top of the default tokenizer. There is [an extensively commented sample][indent-based] where we write a parser for a simple indentation-based language. Our indentation level detection logic only kicks in when we are at the beginning of a line, and we defer to Farkle's default tokenizer to take care of the rest.
+
 ---
 
 Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, [they are well-documented in this site](reference/index.html), as well as while you code thanks to IntelliSense.
@@ -172,3 +178,4 @@ Farkle has more APIs for various little features that would make this document t
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
 [covariance]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/
+[indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs

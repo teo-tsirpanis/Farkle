@@ -36,6 +36,8 @@ The library comes with comprehensible documentation.
 
 * A __mathematical expression parser__ powered by Farkle and written in [F#][simple-maths], also showcasing some more advanced features.
 
+* I used Farkle to write [a linear programming problem parser for a university assignment](https://github.com/teo-tsirpanis/uom/tree/master/s4/linear-and-network-programming/LinearProgrammingProblemParser). The code is extensively commented in Greek.
+
 * A simple indent-based language parser that supports virtual terminals written in [F#][indent-based]. The most advanced example; it explains how to write a custom tokenizer.
 
 ## Contributing and copyright

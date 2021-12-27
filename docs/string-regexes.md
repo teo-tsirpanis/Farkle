@@ -3,7 +3,7 @@
 In Farkle, terminals are defined by regular expressions or _regexes_. Defining a non-trivial regex used to take several lines of code like this example of a number with an optional sign at the beginning:
 
 ``` fsharp
-open Farkle.Builder
+open Farkle.Builder.Regex
 
 let number = concat [
     chars "+-" |> optional
@@ -16,7 +16,7 @@ Not anymore. Starting with Farkle 6, a regex can be defined much more simply and
 ``` fsharp
 open Farkle.Builder
 
-let number = regexString "[+-]?\d+"
+let number = Regex.regexString "[+-]?\d+"
 ```
 
 And in C#:
@@ -82,7 +82,7 @@ But the regex above would match strings like `""foo"`. The reason to this is act
 
 ### Whitespace
 
-In Farkle's string regexes, you can have arbitrary whitespace everywhere except of literal strings and character sets and ranges. This means that `f o o ( bar ) ?` is equivalent to `foo(bar)?`. If you want to match a literal space you can escape the space (`\ `) or use a character set (`[ ]`).
+In Farkle's string regexes, you can have arbitrary whitespace everywhere except of literal strings and character sets and ranges. This means that `f o o ( bar ) ?` is equivalent to `foo(bar)?`. If you want to match a literal space you can escape the space (`' '`) or use a character set (`[ ]`).
 
 This deliberate deviation from the typical regex syntax was made due to Farkle's philosophy that whitespace is automatically handled by default, and allows you to write big regexes in a more clean and less compact way.
 
@@ -96,7 +96,7 @@ Similarly, writing `"\n"` somewhere in a regex will be ignored because it is whi
 
 ### Unicode categories
 
-Matching characters that belong in a Unicode category is not yet possible. Support _might_ be added in a future version of Farkle if there is demand for it.
+Matching characters that belong in a Unicode category is not yet possible. Support might be added in a future version of Farkle if there is demand for it.
 
 ## How do they work
 

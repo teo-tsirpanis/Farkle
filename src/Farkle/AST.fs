@@ -5,7 +5,7 @@
 
 namespace Farkle
 
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Text
 
 /// A domain-ignorant Abstract Syntax Tree that describes the output of a parser.

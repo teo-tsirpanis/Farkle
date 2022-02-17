@@ -11,8 +11,8 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Collections
-open Farkle.Grammar
-open Farkle.Grammar.EGTFile
+open Farkle.Grammars
+open Farkle.Grammars.EGTFile
 open Farkle.IO
 open FsCheck
 open Farkle.Samples.FSharp.SimpleMaths

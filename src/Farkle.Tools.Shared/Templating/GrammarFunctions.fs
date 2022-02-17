@@ -6,7 +6,7 @@
 namespace Farkle.Tools.Templating
 
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Tools
 open Scriban.Runtime
 open System

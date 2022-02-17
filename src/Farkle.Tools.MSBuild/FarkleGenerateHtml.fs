@@ -5,7 +5,7 @@
 
 namespace Farkle.Tools.MSBuild
 
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Tools
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework

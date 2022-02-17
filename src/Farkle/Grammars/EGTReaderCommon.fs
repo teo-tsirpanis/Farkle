@@ -3,12 +3,12 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.EGTFile
+namespace Farkle.Grammars.EGTFile
 
 /// Functions used both by the legacy EGT and the EGTneo reader.
 module internal Common =
 
-    open Farkle.Grammar
+    open Farkle.Grammars
     open System
     open System.Collections.Generic
 

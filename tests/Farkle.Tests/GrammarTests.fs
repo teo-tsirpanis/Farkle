@@ -6,7 +6,7 @@
 module Farkle.Tests.GrammarTests
 
 open Expecto
-open Farkle.Grammar
+open Farkle.Grammars
 
 [<Tests>]
 let tests =

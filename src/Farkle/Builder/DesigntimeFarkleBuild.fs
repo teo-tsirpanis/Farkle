@@ -7,7 +7,7 @@ namespace Farkle.Builder
 
 open Farkle.Builder.LALRConflictResolution
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Monads.Either
 open System
 open System.Collections.Generic

@@ -5,7 +5,7 @@
 
 namespace Farkle.Parser
 
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 open System.Runtime.CompilerServices
 
@@ -36,6 +36,6 @@ type internal TokenizerFactoryOfType(tokenizerType: Type) =
     let ctor = tokenizerType.GetConstructor([|typeof<Grammar>|])
     do
         if isNull ctor then
-            raise (MissingMethodException(tokenizerType.FullName, ".ctor(Farkle.Grammar)"))
+            raise (MissingMethodException(tokenizerType.FullName, ".ctor(Farkle.Grammars)"))
     override _.CreateTokenizer grammar =
         ctor.Invoke([|grammar|]) :?> _

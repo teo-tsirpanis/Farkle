@@ -6,7 +6,7 @@
 module Farkle.Tools.Commands.GeneratePredefinedSets
 
 open Argu
-open Farkle.Grammar.EGTFile
+open Farkle.Grammars.EGTFile
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban

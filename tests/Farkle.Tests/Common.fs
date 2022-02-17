@@ -8,7 +8,7 @@ module Farkle.Tests.Common
 
 open Farkle
 open Farkle.Collections
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Collections.Immutable
 open System.IO
 open System.Reflection

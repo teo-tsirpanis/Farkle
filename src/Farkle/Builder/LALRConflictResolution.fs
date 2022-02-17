@@ -8,7 +8,7 @@ namespace Farkle.Builder.LALRConflictResolution
 open Farkle.Builder
 open Farkle.Builder.OperatorPrecedence
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Collections.Generic
 open System.Collections.Immutable
 

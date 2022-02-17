@@ -6,7 +6,7 @@
 namespace Farkle.Builder
 
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>

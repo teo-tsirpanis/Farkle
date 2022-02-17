@@ -6,7 +6,7 @@
 namespace Farkle.DebugTypeProxies
 
 open Farkle.Collections
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 open System.Diagnostics
 

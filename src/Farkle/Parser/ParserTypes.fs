@@ -6,7 +6,7 @@
 namespace Farkle.Parser
 
 open Farkle
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Runtime.CompilerServices
 
 /// A token is an instance of a `Terminal`.

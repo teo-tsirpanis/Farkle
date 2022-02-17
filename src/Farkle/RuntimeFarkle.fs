@@ -7,7 +7,7 @@ namespace Farkle
 
 open Farkle.Builder
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.IO
 open Farkle.Parser
 open System
@@ -96,7 +96,7 @@ with
             |> Seq.map string
             |> String.concat Environment.NewLine
 
-    /// <summary>Gets the <see cref="Farkle.Grammar.Grammar"/>
+    /// <summary>Gets the <see cref="Farkle.Grammars.Grammar"/>
     /// behind the <see cref="RuntimeFarkle{TResult}"/>.</summary>
     /// <exception cref="InvalidOperationException">Building the grammar
     /// had failed. The exception's message contains further details.</exception>

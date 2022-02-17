@@ -8,11 +8,11 @@
 // encodes strings in UTF-8 and small integers in only one byte. Furthermore,
 // because they are more tightly coupled with Farkle's domain model and because
 // the order the records appear is defined, they are significantly easier to parse.
-module internal Farkle.Grammar.EGTFile.EGTNeoReader
+module internal Farkle.Grammars.EGTFile.EGTNeoReader
 
-open Farkle.Grammar
-open Farkle.Grammar.EGTFile
-open Farkle.Grammar.EGTFile.EGTHeaders
+open Farkle.Grammars
+open Farkle.Grammars.EGTFile
+open Farkle.Grammars.EGTFile.EGTHeaders
 open Farkle.Collections
 open System
 open System.Collections.Generic

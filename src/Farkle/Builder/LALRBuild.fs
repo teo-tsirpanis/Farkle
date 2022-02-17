@@ -7,7 +7,7 @@
 module Farkle.Builder.LALRBuild
 
 open System
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Builder.LALRBuildTypes
 open Farkle.Builder.LALRConflictResolution
 open System.Collections.Generic

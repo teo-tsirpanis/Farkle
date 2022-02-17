@@ -7,7 +7,7 @@ module Farkle.Tests.RegexTests
 
 open Expecto
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Tests
 open FsCheck
 open System

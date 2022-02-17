@@ -8,7 +8,7 @@ module internal Farkle.Builder.DynamicPostProcessor
 #if MODERN_FRAMEWORK
 open Farkle
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 open System.Collections.Generic
 #if NET
@@ -45,7 +45,7 @@ let private justStringCtorParameters = [|typeof<string>|]
 let private ppCtorParameters = Array.replicate 2 typeof<obj[]>
 
 let private transformParameters =
-    typeof<ITransformer<Grammar.Terminal>>.GetMethod("Transform").GetParameters()
+    typeof<ITransformer<Grammars.Terminal>>.GetMethod("Transform").GetParameters()
     |> getParameterTypes
 
 let private fuseParameters =
@@ -235,7 +235,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
                 asmBuilder.SetCustomAttribute(CustomAttributeBuilder(ctorIgnoreAccessChecksTo, [|name|]))
 
     let ppType = mainModule.DefineType("DynamicCodePostProcessor", TypeAttributes.Sealed)
-    ppType.AddInterfaceImplementation(typeof<ITransformer<Grammar.Terminal>>)
+    ppType.AddInterfaceImplementation(typeof<ITransformer<Grammars.Terminal>>)
     ppType.AddInterfaceImplementation(typeof<PostProcessor<'T>>)
 
     let transformerTargets =
@@ -258,7 +258,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
 
         transformerTargetFields, fuserTargetFields
 
-    emitPPMethod<Grammar.Terminal,TransformerData>
+    emitPPMethod<Grammars.Terminal,TransformerData>
         "Transform" transformParameters fNewAssembly
         (fun _ _ -> false)
         (fun _ ilg ->

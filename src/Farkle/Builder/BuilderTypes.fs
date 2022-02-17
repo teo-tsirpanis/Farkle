@@ -5,7 +5,7 @@
 
 namespace Farkle.Builder
 
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Parser
 open System
 open System.Collections

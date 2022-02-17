@@ -6,7 +6,7 @@
 module internal Farkle.Builder.PostProcessorCreator
 
 open Farkle
-open Farkle.Grammar
+open Farkle.Grammars
 #if MODERN_FRAMEWORK
 open System
 open System.Runtime.CompilerServices

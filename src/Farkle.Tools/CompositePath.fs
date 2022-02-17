@@ -5,7 +5,7 @@
 
 namespace Farkle.Tools
 
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Monads.Either
 open Farkle.Tools.Templating
 open System

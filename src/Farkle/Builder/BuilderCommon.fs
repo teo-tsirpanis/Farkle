@@ -6,7 +6,7 @@
 /// Constants shared on many places in Farkle's builder.
 module internal Farkle.Builder.BuilderCommon
 
-open Farkle.Grammar
+open Farkle.Grammars
 
 /// The set of characters Farkle considers to be whitespace by default.
 /// It is made of exactly the horizontal tab, the line feed, the carriage return and the space.

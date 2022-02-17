@@ -8,7 +8,7 @@ module Farkle.Tests.DesigntimeFarkleTests
 open Expecto
 open Farkle
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Parser
 open FsCheck
 open System

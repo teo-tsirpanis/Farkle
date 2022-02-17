@@ -7,7 +7,7 @@ module Farkle.Tests.GOLDParserBridge
 
 open Expecto
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 open System.Diagnostics
 open System.IO

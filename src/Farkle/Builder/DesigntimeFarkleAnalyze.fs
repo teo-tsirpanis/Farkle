@@ -7,7 +7,7 @@ namespace Farkle.Builder
 
 open Farkle.Builder.OperatorPrecedence
 open Farkle.Common
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Diagnostics
@@ -57,7 +57,7 @@ type internal TerminalEquivalent =
 
 [<NoComparison; ReferenceEquality>]
 // The contents of a designtime Farkle in a least processed form.
-// This type must not contain any types from the Farkle.Grammar namespace.
+// This type must not contain any types from the Farkle.Grammars namespace.
 // Why does this type exist? Good question. In the past, DesigntimeFarkleBuild
 // was a big and complex module, partly because it was doing two things at
 // the same time: traverse the graph of designtime Farkles, and convert

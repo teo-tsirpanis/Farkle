@@ -8,7 +8,7 @@ module Farkle.Tests.GrammarEquivalenceTests
 open Expecto
 open Farkle
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Samples
 open Farkle.Tests
 open FsCheck

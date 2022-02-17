@@ -7,7 +7,7 @@ module internal Farkle.Builder.LALRBuildTypes
 
 open System.Runtime.InteropServices
 open BitCollections
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Collections
 open System.Collections.Generic
 open System.Collections.Immutable

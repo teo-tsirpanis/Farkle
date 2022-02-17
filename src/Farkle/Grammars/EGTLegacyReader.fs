@@ -3,11 +3,11 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar.EGTFile
+namespace Farkle.Grammars.EGTFile
 
 open Farkle.Collections
-open Farkle.Grammar
-open Farkle.Grammar.EGTFile
+open Farkle.Grammars
+open Farkle.Grammars.EGTFile
 open System
 open System.Collections.Generic
 open System.Collections.Immutable

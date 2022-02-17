@@ -9,7 +9,7 @@
 module Farkle.Tools.Precompiler.PrecompilerInProcess
 
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open Serilog
 open Sigourney
 open System

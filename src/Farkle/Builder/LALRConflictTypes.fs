@@ -5,7 +5,7 @@
 
 namespace Farkle.Builder
 
-open Farkle.Grammar
+open Farkle.Grammars
 open System.Collections.Immutable
 open System.Runtime.CompilerServices
 
@@ -90,7 +90,7 @@ with
 automatically resolve the conflict because %O." x.Type symbolAsString x.StateIndex x.Reason
 
 /// An LALR state that might have a conflict. Its API is
-/// almost identical to `Farkle.Grammar.LALRState` type,
+/// almost identical to `Farkle.Grammars.LALRState` type,
 /// except that for each terminal or end of input there
 /// can be many possible actions.
 type LALRConflictState = {

@@ -7,7 +7,7 @@ namespace Farkle.Builder
 
 open Farkle
 open Farkle.Builder
-open Farkle.Grammar
+open Farkle.Grammars
 open System
 open System.Reflection
 open System.Runtime.CompilerServices

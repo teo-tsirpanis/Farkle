@@ -5,7 +5,7 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban

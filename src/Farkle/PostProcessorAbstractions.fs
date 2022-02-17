@@ -29,7 +29,7 @@ type ITransformerContext =
 /// <summary>An interface that transforms tokens from a <see cref="CharStream"/>.
 /// It is implemented by <see cref="PostProcessor{TResult}"/>s.</summary>
 /// <typeparam name="TSymbol">A type whose objects identify the kind of the token
-/// being transformed. In Farkle it is usually <see cref="Farkle.Grammar.Terminal"/>.</typeparam>
+/// being transformed. In Farkle it is usually <see cref="Farkle.Grammars.Terminal"/>.</typeparam>
 type ITransformer<'TSymbol> =
     /// <summary>Converts a token into an object.</summary>
     /// <param name="symbol">An object identifying the kind of the token.</param>

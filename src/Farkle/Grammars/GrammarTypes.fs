@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-namespace Farkle.Grammar
+namespace Farkle.Grammars
 
 open Farkle.Collections
 open System
@@ -280,7 +280,7 @@ type GrammarSource =
     /// The grammar was built by Farkle using the Farkle.Builder API.
     | Built
     /// The grammar was loaded from a grammar file
-    /// using the Farkle.Grammar.EGT module's functions.
+    /// using the Farkle.Grammars.EGT module's functions.
     | LoadedFromFile
     /// The grammar had been precompiled and was loaded from an assembly.
     | Precompiled

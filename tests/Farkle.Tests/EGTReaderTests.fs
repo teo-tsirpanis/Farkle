@@ -7,8 +7,8 @@ module Farkle.Tests.EGTReaderTests
 
 open Expecto
 open Farkle.Tests
-open Farkle.Grammar
-open Farkle.Grammar.EGTFile
+open Farkle.Grammars
+open Farkle.Grammars.EGTFile
 open System
 open System.IO
 

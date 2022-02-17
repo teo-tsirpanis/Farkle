@@ -9,7 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Regex
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Tests
 
 let seqToString x =

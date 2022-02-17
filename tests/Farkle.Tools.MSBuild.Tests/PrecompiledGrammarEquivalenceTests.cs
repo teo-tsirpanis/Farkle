@@ -4,7 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 using Farkle.Builder;
-using Farkle.Grammar;
+using Farkle.Grammars;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -16,7 +16,7 @@ namespace Farkle.Tools.MSBuild.Tests
     public class PrecompiledGrammarEquivalenceTests
     {
         /// <summary>
-        /// Asserts that two <see cref="Farkle.Grammar.Grammar"/>s have the exact same structure.
+        /// Asserts that two <see cref="Farkle.Grammars.Grammar"/>s have the exact same structure.
         /// </summary>
         /// <remarks>
         /// This is different from the grammar equivalence test in the F# tests. Here, if

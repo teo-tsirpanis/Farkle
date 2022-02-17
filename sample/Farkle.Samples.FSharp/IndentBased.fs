@@ -85,7 +85,7 @@ type IndentCodeTokenizer(grammar) =
 
     // These two fields hold our virtual terminals. They have
     // nothing to do with the virtual terminals we declared above;
-    // they were designtime Farkles and this one is a Farkle.Grammar.Terminal.
+    // they were designtime Farkles and this one is a Farkle.Grammars.Terminal.
     // Caching them instead of calling Grammar.GetTerminalByName
     // is a good practice for performance and clarity reasons.
     let blockStart = grammar.GetTerminalByName "Block Start"

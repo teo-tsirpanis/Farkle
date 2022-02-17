@@ -7,7 +7,7 @@ namespace Farkle.Parser
 
 open Farkle
 open Farkle.Collections
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.IO
 open System.Runtime.CompilerServices
 

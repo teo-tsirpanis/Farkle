@@ -4,11 +4,11 @@
 // https://opensource.org/licenses/MIT
 
 /// Functions to write a grammar to EGTneo files.
-module internal Farkle.Grammar.EGTFile.EGTNeoWriter
+module internal Farkle.Grammars.EGTFile.EGTNeoWriter
 
-open Farkle.Grammar
-open Farkle.Grammar.EGTFile
-open Farkle.Grammar.EGTFile.EGTHeaders
+open Farkle.Grammars
+open Farkle.Grammars.EGTFile
+open Farkle.Grammars.EGTFile.EGTHeaders
 open System.Collections.Generic
 open System.Collections.Immutable
 

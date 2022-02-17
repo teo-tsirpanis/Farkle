@@ -8,7 +8,7 @@ namespace Farkle.Benchmarks
 open BenchmarkDotNet.Attributes
 open Farkle.Builder
 open Farkle.Common.Result
-open Farkle.Grammar
+open Farkle.Grammars
 open Farkle.Samples.FSharp
 open System.IO
 

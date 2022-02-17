@@ -32,7 +32,7 @@ namespace Farkle.Tools.MSBuild.Tests
 
             var actualGrammar = precompiledGrammar.Value.GetGrammar();
             Assert.Equal(pcdf.Name, actualGrammar.Properties.Name);
-            Assert.Equal(Grammar.GrammarSource.Precompiled, actualGrammar.Properties.Source);
+            Assert.Equal(Grammars.GrammarSource.Precompiled, actualGrammar.Properties.Source);
             HtmlChecker.Check(actualGrammar);
         }
 

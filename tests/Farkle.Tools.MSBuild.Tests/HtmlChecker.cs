@@ -12,7 +12,7 @@ namespace Farkle.Tools.MSBuild.Tests
 {
     public static class HtmlChecker
     {
-        public static void Check(Grammar.Grammar grammar)
+        public static void Check(Grammars.Grammar grammar)
         {
             var grammarName = grammar.Properties.Name;
             var htmlPath = Path.ChangeExtension(Path.Join(AppContext.BaseDirectory, grammarName), ".html");

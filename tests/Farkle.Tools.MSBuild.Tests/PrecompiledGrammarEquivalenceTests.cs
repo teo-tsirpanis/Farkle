@@ -23,7 +23,7 @@ namespace Farkle.Tools.MSBuild.Tests
         /// two grammars have two states swapped by each other, the grammars would not be
         /// considered equivalent.
         /// </remarks>
-        private static void AssertStrictEquivalence(Grammar.Grammar expected, Grammar.Grammar actual)
+        private static void AssertStrictEquivalence(Grammars.Grammar expected, Grammars.Grammar actual)
         {
             static void AssertEqualSequence<T>(IEnumerable<T> expected, IEnumerable<T> actual) =>
                 Assert.Equal(expected, actual);

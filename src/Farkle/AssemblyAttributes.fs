@@ -51,5 +51,9 @@ type internal CovariantOutAttribute() =
 [<``module``:NullableContext(1uy)>]
 [<``module``:NullablePublicOnly(true)>]
 [<assembly:Extension>]
+#if NET
 [<assembly:AssemblyMetadata("IsTrimmable", "true")>]
+#else
+[<assembly:AssemblyMetadata("IsTrimmable", "false")>]
+#endif
 do()

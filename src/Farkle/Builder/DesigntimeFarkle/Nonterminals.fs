@@ -47,7 +47,7 @@ type internal AbstractNonterminal =
 /// <remarks>User code must not inherit from this class,
 /// or an exception might be thrown.</remarks>
 [<AbstractClass>]
-type Nonterminal<[<Nullable(2uy)>] 'T> internal(name, metadata) =
+type Nonterminal<[<Nullable(2uy)>] 'T> internal(name) =
     do nullCheck (nameof name) name
     /// The nonterminal's name.
     member _.Name = name
@@ -58,12 +58,11 @@ type Nonterminal<[<Nullable(2uy)>] 'T> internal(name, metadata) =
     abstract SetProductions: firstProd: Production<'T> * [<ParamArray>] prods: Production<'T> [] -> unit
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = metadata
     interface DesigntimeFarkle<'T>
 
 [<Sealed>]
 type internal NonterminalReal<'T> internal(name) =
-    inherit Nonterminal<'T>(name, GrammarMetadata.Default)
+    inherit Nonterminal<'T>(name)
 
     let mutable latch = Latch.Create false
     let mutable productions = []
@@ -87,11 +86,12 @@ type internal NonterminalReal<'T> internal(name) =
             NonterminalWrapper<'T>(name, metadata, x) :> _
 
 and [<Sealed>] private NonterminalWrapper<'T> internal(name, metadata, nontReal: NonterminalReal<'T>) =
-    inherit Nonterminal<'T>(name, metadata)
+    inherit Nonterminal<'T>(name)
     override _.SetProductions(firstProd, prods) =
         nontReal.SetProductions(firstProd, prods)
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = nontReal :> _
+        member _.Metadata = metadata
     interface IExposedAsDesigntimeFarkleChild with
         member _.WithMetadataSameType name metadata =
             NonterminalWrapper<'T>(name, metadata, nontReal) :> _

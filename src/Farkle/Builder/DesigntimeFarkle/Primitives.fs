@@ -26,8 +26,6 @@ type DesigntimeFarkle =
     /// the corresponding grammar symbol's name. Many designtime
     /// Farkles in a grammar can have the same name.</remarks>
     abstract Name: string
-    /// <summary>The associated <see cref="GrammarMetadata"/> object.</summary>
-    abstract Metadata: GrammarMetadata
 
 /// <summary>An object representing a grammar symbol created by Farkle.Builder.
 /// It corresponds to either a standalone terminal or a nonterminal
@@ -58,6 +56,7 @@ type internal IExposedAsDesigntimeFarkleChild =
 
 type internal DesigntimeFarkleWrapper =
     abstract InnerDesigntimeFarkle: DesigntimeFarkle
+    abstract Metadata: GrammarMetadata
     inherit DesigntimeFarkle
 
 type internal DesigntimeFarkleWrapper<'T>(name, metadata, inner) =
@@ -67,9 +66,9 @@ type internal DesigntimeFarkleWrapper<'T>(name, metadata, inner) =
         | _ -> failwith ""
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = metadata
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = inner
+        member _.Metadata = metadata
     interface DesigntimeFarkle<'T>
     interface IExposedAsDesigntimeFarkleChild with
         member _.WithMetadataSameType name metadata =

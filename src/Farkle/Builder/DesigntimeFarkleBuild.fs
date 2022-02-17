@@ -19,7 +19,7 @@ open System.Threading
 /// An object containing the symbols of a grammar,
 /// but lacking the LALR and DFA states.
 type GrammarDefinition = {
-    Metadata: GrammarMetadata
+    Properties: GrammarProperties
     StartSymbol: Nonterminal
     Symbols: Symbols
     Productions: ImmutableArray<Production>
@@ -62,6 +62,13 @@ module DesigntimeFarkleBuild =
     let private whitespaceSymbol = Noise "Whitespace"
     let private whitespaceRegex = Regex.chars BuilderCommon.whitespaceCharacters |> Regex.plus
     let private whitespaceRegexNoNewline = Regex.chars BuilderCommon.whitespaceCharactersNoNewLine |> Regex.plus
+
+    /// This value contains the name and version of that
+    /// amazing piece of software that created this grammar.
+    // TODO: Consider deleting it; it's unnecessary.
+    let private generatedWithLoveBy =
+        let asm = Assembly.GetExecutingAssembly()
+        sprintf "%s %s" (asm.GetName().Name) (Reflection.getAssemblyInformationalVersion asm)
 
     let internal createGrammarDefinitionEx (dfDef: DesigntimeFarkleDefinition) =
         let mutable dfaSymbols = []
@@ -244,8 +251,18 @@ module DesigntimeFarkleBuild =
         let resolverComparer = OperatorKeyComparer.Get metadata.CaseSensitive
         let resolver =
             PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalOperatorKeys, productionOperatorKeys, resolverComparer)
+
+        let properties = {
+            Name = let (Nonterminal(_, name)) = startSymbol in name
+            CaseSensitive = metadata.CaseSensitive
+            AutoWhitespace = metadata.AutoWhitespace
+            GeneratedBy = generatedWithLoveBy
+            GeneratedDate = DateTime.Now
+            Source = GrammarSource.Built
+        }
+
         {
-            Metadata = dfDef.Metadata
+            Properties = properties
             StartSymbol = startSymbol
             Symbols = symbols
             Productions = productions
@@ -282,12 +299,6 @@ module DesigntimeFarkleBuild =
             yield BuildError.SymbolLimitExceeded
     }
 
-    /// This value contains the name and version of that
-    /// amazing piece of software that created this grammar.
-    let private generatedWithLoveBy =
-        let asm = Assembly.GetExecutingAssembly()
-        sprintf "%s %s" (asm.GetName().Name) (Reflection.getAssemblyInformationalVersion asm)
-
     let private failIfNotEmpty xs =
         match List.ofSeq xs with
         | [] -> Ok ()
@@ -320,21 +331,12 @@ module DesigntimeFarkleBuild =
                     ct
                     options
                     true
-                    grammarDef.Metadata.CaseSensitive
+                    grammarDef.Properties.CaseSensitive
                     grammarDef.DFASymbols
                 |> checkForNullableSymbol)
 
-        let properties = {
-            Name = let (Nonterminal(_, name)) = grammarDef.StartSymbol in name
-            CaseSensitive = grammarDef.Metadata.CaseSensitive
-            AutoWhitespace = grammarDef.Metadata.AutoWhitespace
-            GeneratedBy = generatedWithLoveBy
-            GeneratedDate = DateTime.Now
-            Source = GrammarSource.Built
-        }
-
         return {
-            _Properties = properties
+            _Properties = grammarDef.Properties
             _StartSymbol = grammarDef.StartSymbol
             _Symbols = grammarDef.Symbols
             _Productions = grammarDef.Productions

@@ -92,35 +92,38 @@ module internal DesigntimeFarkleAnalyze =
         member _.SingleProduction = prod
         interface DesigntimeFarkle with
             member _.Name = df.Name
-            member _.Metadata = GrammarMetadata.Default
         interface AbstractNonterminal with
             member _.FreezeAndGetProductions() = productions
 
-    let private addOperatorScope (set: HashSet<_>) (df: DesigntimeFarkle) =
-        let scope = df.Metadata.OperatorScope
-        if scope <> OperatorScope.Empty && not (obj.ReferenceEquals(scope, null)) then
-            set.Add(scope) |> ignore
-
     let analyze (ct: CancellationToken) (df: DesigntimeFarkle) =
+        let metadata = DesigntimeFarkle.getMetadata df
         let terminalEquivalents = ResizeArray()
         let nonterminals = ResizeArray()
         let productions = ResizeArray()
         let operatorScopes = HashSet()
 
-        let visited = HashSet(FallbackStringComparers.get df.Metadata.CaseSensitive)
+        let visited = HashSet(FallbackStringComparers.get metadata.CaseSensitive)
         let nonterminalsToProcess = Queue()
+
+        let considerLocalMetadata (df: DesigntimeFarkle) =
+            match df with
+            | :? DesigntimeFarkleWrapper as dfw ->
+                let scope = dfw.Metadata.OperatorScope
+                if scope <> OperatorScope.Empty && not (obj.ReferenceEquals(scope, null)) then
+                    operatorScopes.Add(scope) |> ignore
+            | _ -> ()
 
         let visit (df: DesigntimeFarkle) =
             let name = df.Name
             match DesigntimeFarkle.unwrap df with
             | :? AbstractNonterminal as nont ->
                 if visited.Add nont then
-                    addOperatorScope operatorScopes df
+                    considerLocalMetadata df
                     nonterminals.Add(Named(name, nont))
                     nonterminalsToProcess.Enqueue(nont)
             | dfUnwrapped ->
                 if visited.Add (DesigntimeFarkle.getIdentityObject dfUnwrapped) then
-                    addOperatorScope operatorScopes df
+                    considerLocalMetadata df
                     let te =
                         match dfUnwrapped with
                         | :? AbstractTerminal as term -> TerminalEquivalent.Terminal term
@@ -148,7 +151,7 @@ module internal DesigntimeFarkleAnalyze =
             productions.Add(nont :> _, nont.SingleProduction)
 
         {
-            Metadata = df.Metadata
+            Metadata = metadata
             TerminalEquivalents = terminalEquivalents
             Nonterminals = nonterminals
             Productions = productions

@@ -29,7 +29,6 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
         member _.Transformer = tData
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = GrammarMetadata.Default
     interface DesigntimeFarkle<'T>
     interface IExposedAsDesigntimeFarkleChild with
         member x.WithMetadataSameType name metadata =
@@ -48,7 +47,6 @@ type internal VirtualTerminal internal(name) =
     member _.Name = name
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = GrammarMetadata.Default
 
 type internal Literal(str: string) =
     do nullCheck "str" str
@@ -67,7 +65,6 @@ type internal Literal(str: string) =
                 "Empty String"
             else
                 str
-        member _.Metadata = GrammarMetadata.Default
 
 /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
 /// that represents a new line.</summary>
@@ -75,4 +72,3 @@ type internal NewLine = NewLine
 with
     interface DesigntimeFarkle with
         member _.Name = Terminal.NewLineName
-        member _.Metadata = GrammarMetadata.Default

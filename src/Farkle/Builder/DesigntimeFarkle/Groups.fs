@@ -25,7 +25,6 @@ type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
     let tData = TransformerData.Create fTransform
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = GrammarMetadata.Default
     interface AbstractGroup with
         member _.GroupStart = groupStart
         member _.Transformer = tData

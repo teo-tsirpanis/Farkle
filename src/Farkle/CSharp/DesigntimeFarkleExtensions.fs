@@ -77,17 +77,6 @@ type DesigntimeFarkleExtensions =
             |> DesigntimeFarkleBuild.buildGrammarOnlyEx ct options
         RuntimeFarkle.CreateMaybe RuntimeFarkle.syntaxCheckerObj grammar
     [<Extension>]
-    /// <summary>Sets a custom <see cref="GrammarMetadata"/>
-    /// object to a <see cref="DesigntimeFarkle"/>.</summary>
-    /// <seealso cref="WithOperatorScope"/>
-    /// <seealso cref="CaseSensitive"/>
-    /// <seealso cref="AutoWhitespace"/>
-    /// <seealso cref="AddNoiseSymbol"/>
-    /// <seealso cref="AddLineComment"/>
-    /// <seealso cref="AddBlockComment"/>
-    static member WithMetadata<'T when 'T :> DesigntimeFarkle>(df: 'T, metadata) =
-        DesigntimeFarkle.withMetadata metadata df
-    [<Extension>]
     /// <summary>Sets an <see cref="Farkle.Builder.OperatorPrecedence.OperatorScope"/>
     /// to a <see cref="DesigntimeFarkle"/>. Any previous ones -if exist- are discarded.</summary>
     static member WithOperatorScope<'T when 'T :> DesigntimeFarkle>(df: 'T, opScope) =

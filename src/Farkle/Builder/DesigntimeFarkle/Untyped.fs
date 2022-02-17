@@ -18,7 +18,7 @@ open System
 /// <para>User code must not inherit from this class,
 /// or an exception might be thrown.</para></remarks>
 [<AbstractClass>]
-type Nonterminal internal(name, metadata) =
+type Nonterminal internal(name) =
     do nullCheck (nameof name) name
     /// The nonterminal's name.
     member _.Name = name
@@ -43,10 +43,9 @@ type Nonterminal internal(name, metadata) =
         nont :> DesigntimeFarkle
     interface DesigntimeFarkle with
         member _.Name = name
-        member _.Metadata = metadata
 
 and [<Sealed>] internal NonterminalReal(name: string) =
-    inherit Nonterminal(name, GrammarMetadata.Default)
+    inherit Nonterminal(name)
 
     let mutable latch = Latch.Create false
     let mutable productions = []
@@ -67,11 +66,12 @@ and [<Sealed>] internal NonterminalReal(name: string) =
             NonterminalWrapper(name, metadata, x) :> _
 
 and [<Sealed>] private NonterminalWrapper internal(name, metadata, nontReal: NonterminalReal) =
-    inherit Nonterminal(name, metadata)
+    inherit Nonterminal(name)
     override _.SetProductions(firstProd, prods) =
         nontReal.SetProductions(firstProd, prods)
     interface DesigntimeFarkleWrapper with
         member _.InnerDesigntimeFarkle = nontReal :> _
+        member _.Metadata = metadata
     interface IExposedAsDesigntimeFarkleChild with
         member _.WithMetadataSameType name metadata =
             NonterminalWrapper(name, metadata, nontReal) :> _

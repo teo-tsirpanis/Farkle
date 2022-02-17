@@ -10,7 +10,7 @@ open System.Collections.Immutable
 
 /// A type of source code comment. As everybody might know,
 /// comments are the text fragments that are ignored by the parser.
-type Comment =
+type internal Comment =
     /// A line comment. It starts when the given literal is encountered,
     /// and ends when the line ends.
     | LineComment of string
@@ -24,7 +24,7 @@ type Comment =
 /// to the topmost designtime Farkle, on which a build function was called.
 /// An exception is made for the operator scopes, which are found in all
 /// designtime Farkles of a grammar.</remarks>
-type GrammarMetadata = {
+type internal GrammarMetadata = {
     /// Whether the grammar is case sensitive.
     CaseSensitive: bool
     /// Whether to discard any whitespace characters encountered

@@ -35,6 +35,11 @@ module DesigntimeFarkle =
         | :? Literal as lit -> box lit.Content
         | dfUnwrapped -> box dfUnwrapped
 
+    let internal getMetadata (df: DesigntimeFarkle) =
+        match df with
+        | :? DesigntimeFarkleWrapper as dfw -> dfw.Metadata
+        | _ -> GrammarMetadata.Default
+
     let private withMetadataEx<'T when 'T :> DesigntimeFarkle> name metadata (df: 'T) : 'T =
         match box df with
         | :? IExposedAsDesigntimeFarkleChild as x -> x.WithMetadataSameType name metadata |> unbox
@@ -47,14 +52,14 @@ module DesigntimeFarkle =
 
     /// Sets a `GrammarMetadata` object to a designtime Farkle. Most
     /// other functions in this module are convenience wrappers over this function.
-    let withMetadata metadata df = df |> withMetadataEx df.Name metadata
+    let private withMetadata metadata df = df |> withMetadataEx df.Name metadata
 
     /// Sets an `OperatorScope` object to a designtime Farkle.
     /// This function can be applied in designtime Farkles that are not the
     /// topmost ones. Applying this function many times will discard the existing
     /// operator scope.
     let withOperatorScope opScope df =
-        df |> withMetadata {df.Metadata with OperatorScope = opScope}
+        df |> withMetadata {getMetadata df with OperatorScope = opScope}
 
     /// Converts an untyped designtime Farkle to a typed one that returns an object.
     /// The object the designtime Farkle this function will return is undefined.
@@ -62,27 +67,29 @@ module DesigntimeFarkle =
     let cast (df: DesigntimeFarkle): [<Nullable(1uy, 2uy)>] _ =
         match df with
         | :? DesigntimeFarkle<obj> as dfObj -> dfObj
-        | _ -> DesigntimeFarkleWrapper<obj>(df.Name, df.Metadata, df) :> _
+        | _ -> DesigntimeFarkleWrapper<obj>(df.Name, getMetadata df, df) :> _
 
     /// Changes the name of a designtime Farkle. This function can be applied
     /// anywhere, not only to the topmost one, like with other metadata changes.
     let rename newName df =
         nullCheck (nameof newName) newName
-        df |> withMetadataEx newName df.Metadata
+        df |> withMetadataEx newName (getMetadata df)
 
     /// Sets the `CaseSensitive` field of a `DesigntimeFarkle`'s metadata.
-    let caseSensitive flag df = df |> withMetadata {df.Metadata with CaseSensitive = flag}
+    let caseSensitive flag df = df |> withMetadata {getMetadata df with CaseSensitive = flag}
 
     /// Sets the `AutoWhitespace` field of a `DesigntimeFarkle`'s metadata.
-    let autoWhitespace flag df = df |> withMetadata {df.Metadata with AutoWhitespace = flag}
+    let autoWhitespace flag df = df |> withMetadata {getMetadata df with AutoWhitespace = flag}
 
     /// Adds a name-`Regex` pair of noise symbols to the given `DesigntimeFarkle`.
     let addNoiseSymbol name regex df =
         nullCheck "name" name
-        df |> withMetadata {df.Metadata with NoiseSymbols = df.Metadata.NoiseSymbols.Add(name, regex)}
+        let metadata = getMetadata df
+        df |> withMetadata {metadata with NoiseSymbols = metadata.NoiseSymbols.Add(name, regex)}
 
     let private addComment comment df =
-        df |> withMetadata {df.Metadata with Comments = df.Metadata.Comments.Add comment}
+        let metadata = getMetadata df
+        df |> withMetadata {metadata with Comments = metadata.Comments.Add comment}
 
     /// Adds a line comment to the given `DesigntimeFarkle`.
     let addLineComment commentStart df =

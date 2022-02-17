@@ -31,7 +31,6 @@ type Terminal =
         nullCheck "name" name
         {new AbstractTerminal with
             member _.Name = name
-            member _.Metadata = GrammarMetadata.Default
             member _.Regex = regex
             member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
     /// <summary>Creates a virtual terminal. This method is
@@ -120,7 +119,6 @@ type Group =
         nullCheck "groupStart" groupStart
         {new AbstractLineGroup with
             member _.Name = name
-            member _.Metadata = GrammarMetadata.Default
             member _.GroupStart = groupStart
             member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
     /// <summary>Creates a line group that does not contain any significant
@@ -136,7 +134,6 @@ type Group =
         nullCheck "groupEnd" groupEnd
         {new AbstractBlockGroup with
             member _.Name = name
-            member _.Metadata = GrammarMetadata.Default
             member _.GroupStart = groupStart
             member _.GroupEnd = groupEnd
             member _.Transformer = TransformerData.Null} :> DesigntimeFarkle

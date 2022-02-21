@@ -1,4 +1,5 @@
 <Project>
+  <Import Project="versions.props" />
   <PropertyGroup>
     <PatchNupkgScript>$(MSBuildThisFileDirectory)patch-nuspec.ps1</PatchNupkgScript>
   </PropertyGroup>

@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="Chiron" Version="6.3.1" />
+    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
     <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>

@@ -4,6 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="Chiron" Version="6.3.1" />
+    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
   </ItemGroup>
 </Project>

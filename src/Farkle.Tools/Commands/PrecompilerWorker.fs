@@ -53,7 +53,7 @@ let private doIt input =
 
 /// Returns zero on success or handled errors, one on unhandled errors
 /// and two on invalid command line arguments.
-/// In the latter case the stdout will contain more information about the error.
+/// In the latter case stdout will contain more information about the error.
 let private run argv =
     try
         try

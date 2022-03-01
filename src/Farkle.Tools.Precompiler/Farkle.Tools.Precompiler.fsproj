@@ -16,7 +16,7 @@
     <!-- .NET Core supplies its own version of the packages below.
     We also use specifically 4.7.0 because MSBuild bundles this
     version and the .NET Framework complains even for 4.7.3
-    (and on .NET Framework) task dependencies are not isolated.
+    (and on .NET Framework task dependencies are not isolated).
     Furthermore, System.Text.Encodings.Web 4.7.0 has a security
     vulnerability that cannot be patched because MSBuild has the
     old version and I'm not gonna risk making it cry. -->

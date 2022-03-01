@@ -141,8 +141,14 @@ The precompiler's behavior can be customized by the following MSBuild properties
     describing each precompiled grammar. Defaults to false. -->
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
     <!-- If set to false, Farkle will not generate an HTML report if any
-    grammar has conflicts but display each of them as build errors. -->
+    grammar has conflicts but display each of them as build errors.
+    Obsolete since Farkle 6.4.0. -->
     <FarkleGenerateConflictReports>false</FarkleGenerateConflictReports>
+    <!-- New in Farkle 6.4.0, can allow both detailed build errors and
+    conflict reports to be emitted when the precompiler encounters conflicts.
+    Allowed values are: Both, ErrorsOnly, ReportOnly. If present,
+    FarkleGenerateConflictReports will be ignored. -->
+    <FarklePrecompilerErrorMode>Both</FarklePrecompilerErrorMode>
 </PropertyGroup>
 ```
 

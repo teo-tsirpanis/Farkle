@@ -18,13 +18,13 @@ open System.Linq
 type FarklePrecompileOutOfProcess() =
     inherit Task()
 
-    static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) skipConflictReport = {
+    static let createInput (buildEngine: IBuildEngine) asmPath (config: WeaverConfig) errorMode = {
         TaskLineNumber = buildEngine.LineNumberOfTaskNode
         TaskColumnNumber = buildEngine.ColumnNumberOfTaskNode
         TaskProjectFile = buildEngine.ProjectFileOfTaskNode
         AssemblyPath = asmPath
         References = config.References.Select(fun x -> x.FileName).ToArray()
-        SkipConflictReport = skipConflictReport
+        ErrorMode = errorMode
     }
 
     [<Required>]
@@ -36,6 +36,8 @@ type FarklePrecompileOutOfProcess() =
     member val CustomWorkerPath = "" with get, set
 
     member val SkipConflictReport = false with get, set
+
+    member val ErrorMode = "" with get, set
 
     [<Output>]
     member val GeneratedConflictReports = Array.Empty() with get, set
@@ -81,8 +83,10 @@ worker on input file at {0} and output file at {1}.", inputPath, outputPath)
         if isNull weaverConfig then
             this.Log.LogError("Error while getting Farkle's precompiler's configuration. Please open an issue on GitHub.")
             return! Error()
+        let errorMode = PrecompilerCommon.getErrorMode this.Log this.SkipConflictReport this.ErrorMode
+
         let workerInput: PrecompilerWorkerInput =
-            createInput this.BuildEngine this.AssemblyPath weaverConfig this.SkipConflictReport
+            createInput this.BuildEngine this.AssemblyPath weaverConfig errorMode
         let inputPath = Path.ChangeExtension(Path.GetTempFileName(), ".json")
         let outputPath = Path.ChangeExtension(inputPath, ".output.json")
 

@@ -95,31 +95,23 @@ module TemplateEngine =
         }
     }
 
-    let private createConflictReportImpl log outputDir numConflicts grammarDef report =
+    let private createConflictReportImpl log outputDir grammarDef report =
         let templateType = LALRConflictReport(grammarDef, report)
         let (Nonterminal(_, grammarName)) = grammarDef.StartSymbol
         match renderTemplate log templateType with
         | Ok gt ->
             let fileName = sanitizeUnsafeFileName log grammarName + gt.FileExtension
             let path = sprintf "%s%c%s" outputDir Path.DirectorySeparatorChar fileName
-            match numConflicts with
-            | 1 ->
-                log.Error("There was one LALR conflict in the grammar.")
-            | _ ->
-                log.Error("There were {NumConflicts} LALR conflicts in the grammar.", numConflicts)
             File.WriteAllText(path, gt.Content)
             log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}.", path)
             Some path
-        | _ -> None
+        | _ ->
+            log.Error("Internal error: failed to render the conflict report. Please open a GitHub issue.")
+            None
 
-    let createConflictReport doSkip (generatedConflictReports: _ ResizeArray) log outputDir =
-        if doSkip then
-            fun _ _ _ -> false
-        else
-            fun numConflicts grammarDef report ->
-                createConflictReportImpl log outputDir numConflicts grammarDef report
-                |> function
-                | Some path ->
-                    generatedConflictReports.Add path
-                    true
-                | None -> false
+    let createConflictReport (generatedConflictReports: _ ResizeArray) log outputDir grammarDef report =
+        createConflictReportImpl log outputDir grammarDef report
+        |> function
+        | Some path ->
+            generatedConflictReports.Add path
+        | None -> ()

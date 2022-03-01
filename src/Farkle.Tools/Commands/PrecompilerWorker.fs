@@ -30,12 +30,10 @@ let private doIt input =
                 .WriteTo.MSBuild(loggingHelper)
                 .CreateLogger()
         let outputDir = Path.GetDirectoryName input.AssemblyPath
-        let fCreateConflictReport =
-            TemplateEngine.createConflictReport
-                input.SkipConflictReport generatedConflictReports logger outputDir
+        let fCreateConflictReport = TemplateEngine.createConflictReport generatedConflictReports logger outputDir
         let result =
             PrecompilerInProcess.precompileAssemblyFromPath
-                CancellationToken.None logger fCreateConflictReport references input.AssemblyPath
+                CancellationToken.None logger fCreateConflictReport input.ErrorMode references input.AssemblyPath
 
         if generatedConflictReports.Count <> 0 then
             logger.Information(conflictReportHint)

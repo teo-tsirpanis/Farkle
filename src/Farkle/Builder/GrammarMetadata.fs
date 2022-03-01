@@ -18,7 +18,7 @@ type internal Comment =
     /// and ends when when the second literal is encountered.
     | BlockComment of BlockStart: string * BlockEnd: string
 
-/// <summary>Additional information about a grammar to be built.</summary> 
+/// <summary>Additional information about a grammar to be built.</summary>
 /// <remarks>Each <see cref="DesigntimeFarkle"/> has one, but the metadata object that
 /// will be taken into consideration when building will be the one belonging
 /// to the topmost designtime Farkle, on which a build function was called.

@@ -48,7 +48,7 @@ let private getGlobalProperties options =
     | Some x -> dict.["TargetFramework"] <- x
     | None -> ()
     dict :> IDictionary<_,_>
-    
+
 let private hasProperty (project: Project) propName =
     project.GetProperty propName
     |> isNull

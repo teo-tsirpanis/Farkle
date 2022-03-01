@@ -39,7 +39,7 @@ module internal Utilities =
         functions.LoadInstanceMethods so
         so.Import functions
         so.Import typeof<GrammarFunctions>
-        
+
     let loadConflictReport grammarDef errors so =
         let functions = ConflictReportFunctions(grammarDef, errors)
         functions.LoadInstanceMethods so

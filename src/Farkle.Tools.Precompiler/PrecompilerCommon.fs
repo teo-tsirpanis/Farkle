@@ -10,17 +10,29 @@ open Microsoft.Build.Framework
 open System
 open System.Text.Encodings.Web
 open System.Text.Json
+open Microsoft.Build.Utilities
 
+/// What to do if the precompiler encounters an error with the grammar.
+/// The "errors" this type controls are only LALR conflicts at the moment
+/// but could be expanded in the future (not planned).
+type ErrorMode =
+    /// Create an HTML report and just mention it in MSBuild. This is the default.
+    | ReportOnly = 0
+    /// Display each error individually through MSBuild.
+    | ErrorsOnly = 1
+    // Do both.
+    | Both = 2
+
+/// The input to the precompiler worker process.
 // The JSON serializer needs this attribute.
 [<CLIMutable>]
-/// The input to the precompiler worker process.
 type PrecompilerWorkerInput = {
     TaskLineNumber: int
     TaskColumnNumber: int
     TaskProjectFile: string
     References: string[]
     AssemblyPath: string
-    SkipConflictReport: bool
+    ErrorMode: ErrorMode
 }
 
 /// Maps to MSBuild's error, warning and message types.
@@ -66,8 +78,8 @@ with
             let eventArgs = BuildMessageEventArgs(x.Subcategory, x.Code, x.File, x.LineNumber, x.ColumnNumber, x.EndLineNumber, x.EndColumnNumber, x.Message, x.HelpKeyword, x.SenderName, importance, x.EventTimestamp)
             engine.LogMessageEvent eventArgs
 
-[<CLIMutable>]
 /// The output of the precompiler worker process.
+[<CLIMutable>]
 type PrecompilerWorkerOutput = {
     Success: bool
     Messages: LogEvent []
@@ -77,14 +89,42 @@ type PrecompilerWorkerOutput = {
 module PrecompilerCommon =
 
     /// To be incremented when the IPC protocol changes.
-    let ipcProtocolVersion = "1.0"
+    // 1.0: Initial version
+    // 1.1: Replaced SkipConflictReport with ErrorMode
+    let ipcProtocolVersion = "1.1"
 
     /// The name of the precompiler weaver, for the purposes of Sigourney.
     let weaverName = "Farkle.Tools.Precompiler"
 
     /// An log message to be shown to hint how to dsable conflict reports.
     let conflictReportHint = "Instead of creating an HTML report, the individual LALR conflicts \
-can be shown as errors by setting the 'FarkleGenerateConflictReport' MSbuild property to false."
+can be shown as errors by setting the 'FarklePrecompilerErrorMode' MSbuild property to 'Both' or 'ErrorsOnly'."
+
+    let private tryParseErrorMode (x: string) =
+        match Enum.TryParse<ErrorMode>(x, true) with
+        | true, errorMode ->
+#if NET
+            if Enum.IsDefined errorMode then
+#else
+            if Enum.IsDefined(typeof<ErrorMode>, errorMode) then
+#endif
+                errorMode
+                |> ValueSome
+            else
+                ValueNone
+        | _ -> ValueNone
+
+    let getErrorMode (log: TaskLoggingHelper) skipConflictReport errorMode =
+        let fromSkipConflictReport =
+            if skipConflictReport then ErrorMode.ErrorsOnly else ErrorMode.ReportOnly
+        if String.IsNullOrWhiteSpace(errorMode) then
+            fromSkipConflictReport
+        else
+            match tryParseErrorMode errorMode with
+            | ValueSome x -> x
+            | ValueNone ->
+                log.LogWarning("Could not recognize the value of FarklePrecompilerErrorMode, defaulting to ReportOnly.")
+                ErrorMode.ReportOnly
 
     let private defaultSerializerOptions =
         let x = JsonSerializerOptions()

@@ -185,31 +185,39 @@ or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
 
-let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport name grammarDef errors =
+let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport (errorMode: ErrorMode) name errors =
     log.Error<string>("Precompiling {GrammarName:l} failed.", name)
     // At most one conflict report can appear among the build errors.
     let conflictReport =
         errors
         |> List.tryPick (function BuildError.LALRConflictReport report -> Some report | _ -> None)
-    let hasCreatedReport =
-        match conflictReport with
-        | Some report ->
-            let conflictCount =
-                errors
-                |> Seq.filter (function BuildError.LALRConflict _ -> true | _ -> false)
-                |> Seq.length
-            fCreateConflictReport conflictCount grammarDef report
-        | None -> false
+
+    let doEmitReport = errorMode <> ErrorMode.ErrorsOnly
+    let doEmitConflictErrors = errorMode <> ErrorMode.ReportOnly
 
     errors
     |> Seq.filter (function
     | BuildError.LALRConflictReport _ -> false
-    // We display individual LALR conflicts as messages only when we do not create a report.
-    | BuildError.LALRConflict _ -> not hasCreatedReport
+    | BuildError.LALRConflict _ -> doEmitConflictErrors
     | _ -> true)
     |> Seq.iter (fun error -> log.Error("{BuildError:l}", error))
 
-let precompileAssemblyFromPath ct log fCreateConflictReport references path =
+    match conflictReport with
+    | Some report when doEmitReport ->
+        if not doEmitConflictErrors then
+            let conflictCount =
+                errors
+                |> Seq.filter (function BuildError.LALRConflict _ -> true | _ -> false)
+                |> Seq.length
+            match conflictCount with
+            | 1 ->
+                log.Error("There was one LALR conflict in the grammar.")
+            | _ ->
+                log.Error("There were {NumConflicts} LALR conflicts in the grammar.", conflictCount)
+        fCreateConflictReport report
+    | _ -> ()
+
+let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references path =
     let pcdfs = precompileAssemblyFromPathIsolated ct log references path
     checkForDuplicates log pcdfs
     |> Result.map (List.choose (fun x ->
@@ -217,7 +225,7 @@ let precompileAssemblyFromPath ct log fCreateConflictReport references path =
         | Successful grammar ->
             Some grammar
         | PrecompilingFailed(name, grammarDef, errors) ->
-            handlePrecompilerErrors log fCreateConflictReport name grammarDef errors
+            handlePrecompilerErrors log (fCreateConflictReport grammarDef) errorMode name errors
             None
         | DiscoveringFailed(typeName, fieldName, e) ->
             log.Error("Exception thrown while getting the value of field {TypeName:l}.{FieldName:l}:", typeName, fieldName)

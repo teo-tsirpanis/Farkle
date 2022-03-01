@@ -27,6 +27,8 @@ type FarklePrecompileInProcess() as this =
 
     member val SkipConflictReport = false with get, set
 
+    member val ErrorMode = "" with get, set
+
     [<Output>]
     member val GeneratedConflictReports = Array.Empty() with get, set
 
@@ -34,12 +36,14 @@ type FarklePrecompileInProcess() as this =
         try
             let generatedConflictReports = ResizeArray()
             let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
+            let errorMode = PrecompilerCommon.getErrorMode this.Log this.SkipConflictReport this.ErrorMode
+
             let fCreateConflictReport =
                 TemplateEngine.createConflictReport
-                    this.SkipConflictReport generatedConflictReports this.Log2 conflictReportOutDir
+                    generatedConflictReports this.Log2 conflictReportOutDir
             let grammars =
                 PrecompilerInProcess.precompileAssemblyFromPath
-                    cts.Token this.Log2 fCreateConflictReport this.AssemblyReferences this.AssemblyPath
+                    cts.Token this.Log2 fCreateConflictReport errorMode this.AssemblyReferences this.AssemblyPath
 
             this.GeneratedConflictReports <-
                 generatedConflictReports

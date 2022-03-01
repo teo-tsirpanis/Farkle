@@ -496,7 +496,6 @@ Target.create "Release" ignore
 
 "CheckForReleaseCredentials"
     ==> "GitHubRelease"
-
-"Release" <== ["GitHubRelease"; "ReleaseDocs"]
+    ==> "Release"
 
 Target.runOrDefault "NuGetPack"

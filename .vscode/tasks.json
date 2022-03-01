@@ -11,6 +11,7 @@
         {"label": "📦PACK📦", "command": "pwsh", "args": ["./build.ps1", "target", "NuGetPack"], "problemMatcher": []},
         {"label": "⏱BENCHMARK⏱", "command": "pwsh", "args": ["./build.ps1", "target", "Benchmark"], "problemMatcher": []},
         {"label": "📜DOCS📜", "command": "pwsh", "args": ["./build.ps1", "target", "GenerateDocsDebug"], "problemMatcher": []},
-        {"label": "🚀RELEASE🚀", "presentation": {"reveal": "always", "focus": false, "panel": "new", "showReuseMessage": false, "clear": true}, "command": "pwsh", "args": ["./build.ps1", "target", "Release"], "problemMatcher": []}
+        {"label": "🚀RELEASE🚀", "presentation": {"reveal": "always", "focus": false, "panel": "new", "showReuseMessage": false, "clear": true}, "command": "pwsh", "args": ["./build.ps1", "target", "Release"], "problemMatcher": []},
+        {"label": "📝RELEASE DOCS📝", "presentation": {"reveal": "always", "focus": false, "panel": "new", "showReuseMessage": false, "clear": true}, "command": "pwsh", "args": ["./build.ps1", "target", "ReleaseDocs"], "problemMatcher": []}
     ]
 }

@@ -103,7 +103,7 @@ worker on input file at {0} and output file at {1}.", inputPath, outputPath)
             ev.LogTo this.BuildEngine
         this.Log.LogMessage(MessageImportance.Low, "Ending precompiler worker logs.")
 
-        return workerOutput.Success
+        return not this.Log.HasLoggedErrors
     }
 
     override this.Execute() =

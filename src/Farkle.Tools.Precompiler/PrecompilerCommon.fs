@@ -81,7 +81,6 @@ with
 /// The output of the precompiler worker process.
 [<CLIMutable>]
 type PrecompilerWorkerOutput = {
-    Success: bool
     Messages: LogEvent []
     GeneratedConflictReports: string []
 }
@@ -90,7 +89,8 @@ module PrecompilerCommon =
 
     /// To be incremented when the IPC protocol changes.
     // 1.0: Initial version
-    // 1.1: Replaced SkipConflictReport with ErrorMode
+    // 1.1: Replaced Input.SkipConflictReport with ErrorMode.
+    //      Removed Output.Success; very misleading.
     let ipcProtocolVersion = "1.1"
 
     /// The name of the precompiler weaver, for the purposes of Sigourney.

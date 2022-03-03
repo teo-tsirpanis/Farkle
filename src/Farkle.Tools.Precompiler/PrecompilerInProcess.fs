@@ -117,7 +117,7 @@ is different from the designtime Farkle name.")
         | Error xs -> PrecompilingFailed(name, grammarDef, xs)
     | Error x -> DiscoveringFailed x
 
-type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) as this =
+type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) =
     inherit AssemblyLoadContext(
         sprintf "Farkle.Tools precompiler for %s" (Path.GetFileNameWithoutExtension path),
         true)
@@ -131,12 +131,11 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
                 log.Verbose("{AssemblyName:l}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
                 Some (asm.AssemblyName.FullName, asm.FileName))
         |> readOnlyDict
-    let theAssembly =
-        // We first read the assembly into a byte array to avoid the runtime locking the file.
+    // We first read the assembly in memory to avoid the runtime locking the file.
+    member this.LoadFromAssemblyPathInMemory path =
         let bytes = File.ReadAllBytes path
         let m = new MemoryStream(bytes, false)
         this.LoadFromStream m
-    member _.TheAssembly = theAssembly
     override this.Load(name) =
         log.Verbose("Requesting assembly {AssemblyName:l}.", name)
         match name.Name with
@@ -155,7 +154,7 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
 let private precompileAssemblyFromPathIsolated ct log references path =
     let alc = PrecompilerContext(path, references, log)
     try
-        let asm = alc.TheAssembly
+        let asm = alc.LoadFromAssemblyPathInMemory path
         if asm.GetName().Name = typeof<DesigntimeFarkle>.Assembly.GetName().Name then
             log.Error("Cannot precompile an assembly named 'Farkle'.")
             []

@@ -182,24 +182,23 @@ let private precompileAssemblyFromPathIsolated ct log references path =
         alc.Unload()
 
 let private checkForDuplicates (log: ILogger) (pcdfs: _ list) =
-    pcdfs
-    |> Seq.choose (
-        function
-        | Successful grammar  -> Some grammar.Properties.Name
-        | PrecompilingFailed(name, _, _) -> Some name
-        | _ -> None)
-    |> Seq.countBy id
-    |> Seq.map (fun (name, count) ->
-        if count <> 1 then
-            log.Error("Cannot have many precompilable designtime Farkles named {Name:l}.", name)
-        count <> 1)
-    |> Seq.fold (||) false
-    |> function
-        | true ->
-            log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function \
+    let foundDuplicates =
+        pcdfs
+        |> Seq.choose (
+            function
+            | Successful grammar  -> Some grammar.Properties.Name
+            | PrecompilingFailed(name, _, _) -> Some name
+            | _ -> None)
+        |> Seq.countBy id
+        |> Seq.map (fun (name, count) ->
+            if count <> 1 then
+                log.Error("Cannot have many precompilable designtime Farkles named {Name:l}.", name)
+            count <> 1)
+        |> Seq.fold (||) false
+    
+    if foundDuplicates then
+        log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function \
 or the Rename extension method.")
-            Error()
-        | false -> Ok pcdfs
 
 let private handleGrammarErrors (log: ILogger) fCreateConflictReport (errorMode: ErrorMode) name errors =
     log.Error<string>("Precompiling {GrammarName:l} failed.", name)
@@ -234,10 +233,12 @@ let private handleGrammarErrors (log: ILogger) fCreateConflictReport (errorMode:
     | _ -> ()
 
 let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references path =
-    let pcdfs, alcWeakReference = precompileAssemblyFromPathIsolated ct log references path
+    let results, alcWeakReference = precompileAssemblyFromPathIsolated ct log references path
     ensureWeakReferenceIsCollected log alcWeakReference 5u
-    checkForDuplicates log pcdfs
-    |> Result.map (List.choose (fun x ->
+
+    checkForDuplicates log results
+    results
+    |> List.choose (fun x ->
         match x with
         | Successful grammar ->
             Some grammar
@@ -247,7 +248,7 @@ let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references
         | DiscoveringFailed(typeName, fieldName, e) ->
             log.Error("Exception thrown while getting the value of field {TypeName:l}.{FieldName:l}:", typeName, fieldName)
             log.Error("{Exception:l}", e)
-            None))
+            None)
 
 let weaveGrammars (asm: AssemblyDefinition) (precompiledGrammars: _ list) =
     use stream = new MemoryStream()

@@ -53,15 +53,12 @@ type FarklePrecompileInProcess() as this =
             if this.GeneratedConflictReports.Length <> 0 then
                 this.Log2.Information(PrecompilerCommon.conflictReportHint)
 
-            match grammars with
-            | Ok grammars ->
-                precompiledGrammars <- grammars
+            precompiledGrammars <- grammars
 
-                not cts.IsCancellationRequested
-                && not this.Log.HasLoggedErrors
-                // With our preparation completed, Sigourney will eventually call DoWeave.
-                && base.Execute()
-            | Error () -> false
+            not cts.IsCancellationRequested
+            && not this.Log.HasLoggedErrors
+            // With our preparation completed, Sigourney will eventually call DoWeave.
+            && base.Execute()
         with
         | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false
     override _.DoWeave asm = PrecompilerInProcess.weaveGrammars asm precompiledGrammars

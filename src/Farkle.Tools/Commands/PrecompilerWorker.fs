@@ -30,7 +30,7 @@ let private doIt input =
             .CreateLogger()
     let outputDir = Path.GetDirectoryName input.AssemblyPath
     let fCreateConflictReport = TemplateEngine.createConflictReport generatedConflictReports logger outputDir
-    let result =
+    let results =
         PrecompilerInProcess.precompileAssemblyFromPath
             CancellationToken.None logger fCreateConflictReport input.ErrorMode references input.AssemblyPath
 
@@ -38,11 +38,8 @@ let private doIt input =
         logger.Information(conflictReportHint)
 
     if not loggingHelper.HasLoggedErrors then
-        match result with
-        | Ok grammars ->
-            let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)
-            Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, weaverName)
-        | Error () -> ()
+        let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm results)
+        Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, weaverName)
 
     {
         Messages = buildEngine.GetEventsToArray()

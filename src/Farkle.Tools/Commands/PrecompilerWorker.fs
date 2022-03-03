@@ -22,31 +22,29 @@ let private doIt input =
     let references = input.References |> Array.map AssemblyReference
     let generatedConflictReports = ResizeArray()
 
-    let success =
-        let loggingHelper = TaskLoggingHelper(buildEngine, "FarklePrecompileTask")
-        use logger =
-            LoggerConfiguration()
-                .MinimumLevel.Verbose()
-                .WriteTo.MSBuild(loggingHelper)
-                .CreateLogger()
-        let outputDir = Path.GetDirectoryName input.AssemblyPath
-        let fCreateConflictReport = TemplateEngine.createConflictReport generatedConflictReports logger outputDir
-        let result =
-            PrecompilerInProcess.precompileAssemblyFromPath
-                CancellationToken.None logger fCreateConflictReport input.ErrorMode references input.AssemblyPath
+    let loggingHelper = TaskLoggingHelper(buildEngine, "FarklePrecompileTask")
+    use logger =
+        LoggerConfiguration()
+            .MinimumLevel.Verbose()
+            .WriteTo.MSBuild(loggingHelper)
+            .CreateLogger()
+    let outputDir = Path.GetDirectoryName input.AssemblyPath
+    let fCreateConflictReport = TemplateEngine.createConflictReport generatedConflictReports logger outputDir
+    let result =
+        PrecompilerInProcess.precompileAssemblyFromPath
+            CancellationToken.None logger fCreateConflictReport input.ErrorMode references input.AssemblyPath
 
-        if generatedConflictReports.Count <> 0 then
-            logger.Information(conflictReportHint)
+    if generatedConflictReports.Count <> 0 then
+        logger.Information(conflictReportHint)
 
+    if not loggingHelper.HasLoggedErrors then
         match result with
         | Ok grammars ->
             let fWeave = Func<_,_>(fun asm -> PrecompilerInProcess.weaveGrammars asm grammars)
             Weaver.Weave(input.AssemblyPath, null, fWeave, logger, null, weaverName)
-            true
-        | Error () -> false
+        | Error () -> ()
 
     {
-        Success = success
         Messages = buildEngine.GetEventsToArray()
         GeneratedConflictReports = generatedConflictReports.ToArray()
     }

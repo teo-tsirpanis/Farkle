@@ -1,3 +1,5 @@
+#### 7.0.0-preview.1
+
 #### 6.3.2 - 31-10-2021
 * Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows.
 

@@ -151,9 +151,24 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
                 this.LoadFromAssemblyPath path
             | false, _ -> null
 
+let rec private ensureWeakReferenceIsCollected (log: ILogger) (wr: WeakReference) numberOfTries =
+    let rec impl remainingTries =
+        match remainingTries, wr.IsAlive with
+        | _, false ->
+            log.Debug<_>("Assembly unloaded after {NumberOfCollections} garbage collections.", numberOfTries - remainingTries)
+        | 0u, true ->
+            log.Warning("The precompiler could not unload the assembly after {NumberOfCollections} garbage collections. \
+You can learn how to fix this in https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability", numberOfTries)
+        | _, true ->
+            GC.Collect()
+            GC.WaitForPendingFinalizers()
+            impl (remainingTries - 1u)
+    impl numberOfTries
+
 [<MethodImpl(MethodImplOptions.NoInlining)>]
 let private precompileAssemblyFromPathIsolated ct log references path =
     let alc = PrecompilerContext(path, references, log)
+    let wr = WeakReference(alc)
     try
         let asm = alc.TheAssembly
         if asm.GetName().Name = typeof<DesigntimeFarkle>.Assembly.GetName().Name then
@@ -162,6 +177,7 @@ let private precompileAssemblyFromPathIsolated ct log references path =
         else
             discoverPrecompilableDesigntimeFarkles log asm
             |> List.map (precompileDiscovererResult ct log)
+        , wr
     finally
         alc.Unload()
 
@@ -185,7 +201,7 @@ or the Rename extension method.")
             Error()
         | false -> Ok pcdfs
 
-let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport (errorMode: ErrorMode) name errors =
+let private handleGrammarErrors (log: ILogger) fCreateConflictReport (errorMode: ErrorMode) name errors =
     log.Error<string>("Precompiling {GrammarName:l} failed.", name)
     // At most one conflict report can appear among the build errors.
     let conflictReport =
@@ -218,14 +234,15 @@ let private handlePrecompilerErrors (log: ILogger) fCreateConflictReport (errorM
     | _ -> ()
 
 let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references path =
-    let pcdfs = precompileAssemblyFromPathIsolated ct log references path
+    let pcdfs, alcWeakReference = precompileAssemblyFromPathIsolated ct log references path
+    ensureWeakReferenceIsCollected log alcWeakReference 5u
     checkForDuplicates log pcdfs
     |> Result.map (List.choose (fun x ->
         match x with
         | Successful grammar ->
             Some grammar
         | PrecompilingFailed(name, grammarDef, errors) ->
-            handlePrecompilerErrors log (fCreateConflictReport grammarDef) errorMode name errors
+            handleGrammarErrors log (fCreateConflictReport grammarDef) errorMode name errors
             None
         | DiscoveringFailed(typeName, fieldName, e) ->
             log.Error("Exception thrown while getting the value of field {TypeName:l}.{FieldName:l}:", typeName, fieldName)

@@ -12,6 +12,7 @@ open Farkle.Tools.Templating
 open Microsoft.Build.Locator
 open Microsoft.Build.Utilities
 open Serilog
+open Serilog.Sinks.MSBuild
 open Sigourney
 open System
 open System.IO
@@ -23,11 +24,15 @@ let private doIt input =
     let generatedConflictReports = ResizeArray()
 
     let loggingHelper = TaskLoggingHelper(buildEngine, "FarklePrecompileTask")
-    use logger =
+    use loggerObj =
         LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.MSBuild(loggingHelper)
             .CreateLogger()
+    // Sigourney's Serilog logger automatically includes this.
+    let logger =
+        loggerObj
+            .ForContext(MSBuildProperties.File, input.AssemblyPath)
     let outputDir = Path.GetDirectoryName input.AssemblyPath
     let fCreateConflictReport = TemplateEngine.createConflictReport generatedConflictReports logger outputDir
     let results =

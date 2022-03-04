@@ -156,8 +156,9 @@ let rec private ensureWeakReferenceIsCollected (log: ILogger) (wr: WeakReference
         | _, false ->
             log.Debug<_>("Assembly unloaded after {NumberOfCollections} garbage collections.", numberOfTries - remainingTries)
         | 0u, true ->
-            log.Warning("The precompiler could not unload the assembly after {NumberOfCollections} garbage collections. \
-You can learn how to fix this in https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability", numberOfTries)
+            log.Warning("The precompiler could not unload the assembly. This indicates a subtle bug in your code around \
+the assembly's precompilable designtime Farkles and might lead to files and resources being held for longer than needed. \
+You can learn how to diagnose it in https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability")
         | _, true ->
             GC.Collect()
             GC.WaitForPendingFinalizers()

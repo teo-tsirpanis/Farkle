@@ -48,7 +48,8 @@ type FarklePrecompileOutOfProcess() =
             let toolFound = command.Result.ExitCode = 2
             if not toolFound then
                 this.Log.LogError("The .NET tool Farkle.Tools is not installed or cannot be found. \
-It is required when the precompiler runs outside of the modern .NET SDK.")
+It is required to be installed locally when the precompiler runs outside of the modern .NET SDK. If you have \
+already installed it, make sure that you have ran the 'dotnet tool restore' command before the build.")
             toolFound
         else
             let customWorkerExists = File.Exists this.CustomWorkerPath

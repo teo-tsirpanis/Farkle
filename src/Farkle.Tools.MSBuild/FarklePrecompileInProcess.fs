@@ -36,7 +36,7 @@ type FarklePrecompileInProcess() as this =
         try
             let generatedConflictReports = ResizeArray()
             let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
-            let errorMode = PrecompilerCommon.getErrorMode this.Log this.SkipConflictReport this.ErrorMode
+            let errorMode = PrecompilerCommon.getErrorMode this.Log2.Warning this.SkipConflictReport this.ErrorMode
 
             let fCreateConflictReport =
                 TemplateEngine.createConflictReport

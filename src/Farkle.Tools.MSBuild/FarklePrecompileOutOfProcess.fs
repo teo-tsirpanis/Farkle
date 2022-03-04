@@ -84,7 +84,10 @@ worker on input file at {0} and output file at {1}.", inputPath, outputPath)
         if isNull weaverConfig then
             this.Log.LogError("Error while getting Farkle's precompiler's configuration. Please open an issue on GitHub.")
             return! Error()
-        let errorMode = PrecompilerCommon.getErrorMode this.Log this.SkipConflictReport this.ErrorMode
+        let errorMode =
+            PrecompilerCommon.getErrorMode
+                (fun message -> this.Log.LogWarning(null, null, null, this.AssemblyPath, 0, 0, 0, 0, message, Array.Empty()))
+                this.SkipConflictReport this.ErrorMode
 
         let workerInput: PrecompilerWorkerInput =
             createInput this.BuildEngine this.AssemblyPath weaverConfig errorMode

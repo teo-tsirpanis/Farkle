@@ -5,12 +5,11 @@
 
 namespace Farkle.Tools.Precompiler
 
-open System.IO
 open Microsoft.Build.Framework
 open System
+open System.IO
 open System.Text.Encodings.Web
 open System.Text.Json
-open Microsoft.Build.Utilities
 
 /// What to do if the precompiler encounters an error with the grammar.
 /// The "errors" this type controls are only LALR conflicts at the moment
@@ -114,7 +113,7 @@ can be shown as errors by setting the 'FarklePrecompilerErrorMode' MSbuild prope
                 ValueNone
         | _ -> ValueNone
 
-    let getErrorMode (log: TaskLoggingHelper) skipConflictReport errorMode =
+    let getErrorMode fWarn skipConflictReport errorMode =
         let fromSkipConflictReport =
             if skipConflictReport then ErrorMode.ErrorsOnly else ErrorMode.ReportOnly
         if String.IsNullOrWhiteSpace(errorMode) then
@@ -123,7 +122,7 @@ can be shown as errors by setting the 'FarklePrecompilerErrorMode' MSbuild prope
             match tryParseErrorMode errorMode with
             | ValueSome x -> x
             | ValueNone ->
-                log.LogWarning("Could not recognize the value of FarklePrecompilerErrorMode, defaulting to ReportOnly.")
+                fWarn "Could not recognize the value of FarklePrecompilerErrorMode, defaulting to ReportOnly."
                 ErrorMode.ReportOnly
 
     let private defaultSerializerOptions =

@@ -9,7 +9,6 @@ open Farkle.Common
 open Farkle.Grammars
 open System
 open System.Diagnostics
-open System.Threading
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>
@@ -37,14 +36,11 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
     do nullCheck (nameof name) name
     do nullCheck (nameof fTransform) fTransform
     let tData = TransformerData.Create fTransform
-    let mutable identityKey: TerminalIdentityObject = null
+    let mutable identityKey = TerminalIdentityObject name
     interface AbstractTerminal with
         member _.Regex = regex
         member _.Transformer = tData
-        member _.IdentityObject =
-            match identityKey with
-            | null -> Interlocked.CompareExchange(&identityKey, TerminalIdentityObject(name), null)
-            | x -> x
+        member _.IdentityObject = identityKey
     interface DesigntimeFarkle with
         member _.Name = name
     interface DesigntimeFarkle<'T>

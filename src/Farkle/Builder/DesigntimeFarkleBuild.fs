@@ -136,10 +136,12 @@ module DesigntimeFarkleBuild =
 
             // We don't have to worry about diplicates, they are handled by DesigntimeFarkleAnalyze.
             for Named(name, te) in dfDef.TerminalEquivalents do
+                let identity = te.IdentityObject
+                
                 let symbol =
                     match te with
-                    | TerminalEquivalent.Terminal term -> handleTerminal name term term.Regex
-                    | TerminalEquivalent.Literal lit -> handleTerminal name lit (Regex.string lit)
+                    | TerminalEquivalent.Terminal term -> handleTerminal name identity term.Regex
+                    | TerminalEquivalent.Literal lit -> handleTerminal name identity (Regex.string lit)
                     | TerminalEquivalent.NewLine ->
                         usesNewLine <- true
                         let symbol = Terminal(uint32 b.Count, Terminal.NewLineName)
@@ -147,15 +149,15 @@ module DesigntimeFarkleBuild =
                         newLineSymbol <- Choice1Of4 symbol
                         symbol
                     | TerminalEquivalent.LineGroup lg ->
-                        addTerminalGroup name lg lg.GroupStart None
+                        addTerminalGroup name identity lg.GroupStart None
                     | TerminalEquivalent.BlockGroup bg ->
                         let gEnd = GroupEnd bg.GroupEnd
-                        addTerminalGroup name bg bg.GroupStart (Some gEnd)
-                    | TerminalEquivalent.VirtualTerminal vt ->
+                        addTerminalGroup name identity bg.GroupStart (Some gEnd)
+                    | TerminalEquivalent.VirtualTerminal _ ->
                         let symbol = newTerminal name
-                        addTerminal symbol vt
+                        addTerminal symbol identity
                         symbol
-                
+
                 match operatorKeys with
                 | Some (terminalKeys, _) ->
                     terminalKeys.TryAdd(symbol, te.IdentityObject) |> ignore

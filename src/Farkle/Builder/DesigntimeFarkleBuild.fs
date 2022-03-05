@@ -89,8 +89,11 @@ module DesigntimeFarkleBuild =
                 FallbackStringComparers.get metadata.CaseSensitive)
         let groups = ImmutableArray.CreateBuilder()
 
-        let terminalOperatorKeys = Dictionary()
-        let productionOperatorKeys = Dictionary()
+        let operatorKeys =
+            // We won't create a smart conflict resolver if there are not any operator scopes.
+            match dfDef.OperatorScopes.Count with
+            | 0 -> None
+            | _ -> Some(Dictionary(), Dictionary())
 
         let terminals =
             let b = ImmutableArray.CreateBuilder(dfDef.TerminalEquivalents.Count)
@@ -152,7 +155,11 @@ module DesigntimeFarkleBuild =
                         let symbol = newTerminal name
                         addTerminal symbol vt
                         symbol
-                terminalOperatorKeys.TryAdd(symbol, te.IdentityObject) |> ignore
+                
+                match operatorKeys with
+                | Some (terminalKeys, _) ->
+                    terminalKeys.TryAdd(symbol, te.IdentityObject) |> ignore
+                | None -> ()
             b.MoveToImmutable()
 
         let struct(nonterminals, nonterminalMap) =
@@ -175,9 +182,9 @@ module DesigntimeFarkleBuild =
                     b.MoveToImmutable()
                 let production =
                     {Index = uint32 b.Count; Head = nonterminalMap.[head]; Handle = handle}
-                match abstractProd.ContextualPrecedenceToken with
-                | null -> ()
-                | cpToken -> productionOperatorKeys.Add(production, cpToken)
+                match abstractProd.ContextualPrecedenceToken, operatorKeys with
+                | null, _ | _, None -> ()
+                | cpToken, Some(_, productionKeys) -> productionKeys.Add(production, cpToken)
                 b.Add production
             b.MoveToImmutable()
 
@@ -248,9 +255,12 @@ module DesigntimeFarkleBuild =
             NoiseSymbols = noiseSymbols
         }
 
-        let resolverComparer = OperatorKeyComparer.Get metadata.CaseSensitive
-        let resolver =
-            PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalOperatorKeys, productionOperatorKeys, resolverComparer)
+        let conflictResolver =
+            match operatorKeys with
+            | None -> LALRConflictResolver.Default
+            | Some (terminalKeys, productionKeys) ->
+                let resolverComparer = OperatorKeyComparer.Get metadata.CaseSensitive
+                PrecedenceBasedConflictResolver(dfDef.OperatorScopes, terminalKeys, productionKeys, resolverComparer)
 
         let properties = {
             Name = let (Nonterminal(_, name)) = startSymbol in name
@@ -268,7 +278,7 @@ module DesigntimeFarkleBuild =
             Productions = productions
             Groups = groups.ToImmutable()
             DFASymbols = dfaSymbols
-            ConflictResolver = resolver
+            ConflictResolver = conflictResolver
         }
 
     /// Creates a `GrammarDefinition` from an untyped `DesigntimeFarkle`.

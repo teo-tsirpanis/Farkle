@@ -20,8 +20,8 @@ type BuildOptions private() =
     /// The default options.
     static member Default = _default
 
-[<RequireQualifiedAccess>]
 /// An error the builder encountered.
+[<RequireQualifiedAccess>]
 type BuildError =
     /// Some symbols cannot be distinguished from each other.
     /// Superseded by `IndistinguishableSymbols2`.

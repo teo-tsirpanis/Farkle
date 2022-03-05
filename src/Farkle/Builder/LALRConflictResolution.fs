@@ -10,7 +10,6 @@ open Farkle.Builder.OperatorPrecedence
 open Farkle.Common
 open Farkle.Grammar
 open System.Collections.Generic
-open System.Collections.Immutable
 
 /// <summary>The decision a <see cref="LALRConflictResolver"/> took.</summary>
 type ConflictResolutionDecision =

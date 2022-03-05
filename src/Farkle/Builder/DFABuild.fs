@@ -9,7 +9,6 @@
 module Farkle.Builder.DFABuild
 
 open BitCollections
-open Farkle.Common
 open Farkle.Collections
 open Farkle.Grammar
 open Farkle.Monads.Either

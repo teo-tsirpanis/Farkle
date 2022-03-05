@@ -12,9 +12,9 @@ open System.ComponentModel
 open System.Diagnostics
 open System.Runtime.CompilerServices
 
+/// Α closed interval whose elements are assigned a value.
 [<Struct; IsReadOnly; CustomComparison; StructuralEquality>]
 [<DebuggerDisplay("{DebuggerDisplay,nq}")>]
-/// Α closed interval whose elements are assigned a value.
 type RangeMapElement<'TKey, [<Nullable(2uy)>] 'a when 'TKey :> IComparable<'TKey>> = {
     /// The start of the interval.
     KeyFrom: 'TKey
@@ -117,10 +117,10 @@ type RangeMap<'TKey, [<Nullable(0uy)>] 'TValue when 'TKey :> IComparable<'TKey>>
     interface IReadOnlyCollection<RangeMapElement<'TKey,'TValue>> with
         member _.Count = arr.Length
 
-[<CompiledName("RangeMapInternalUtils")>]
-[<EditorBrowsable(EditorBrowsableState.Never)>]
 /// This module is public due to compiler limitations.
 /// Do not use it; it is subject to be removed or altered at any time.
+[<CompiledName("RangeMapInternalUtils")>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 module RangeMap =
 
     open LanguagePrimitives
@@ -131,7 +131,6 @@ module RangeMap =
             Seq.map (fun (kFrom, kTo) -> kFrom, kTo, value) keys)
         |> RangeMap
 
-    [<NoDynamicInvocation>]
     /// Creates a `RangeMap` from a sequence of key-value pairs.
     /// The keys can be of any type that can has the notion of "one" and equality checking.
     // This function can be used from F# like this:
@@ -140,6 +139,7 @@ module RangeMap =
     //     mySequence
     //     |> Seq.map f
     //     |> ofSeq
+    [<NoDynamicInvocation>]
     let inline ofSeqEx xs =
         let xs = Array.ofSeq xs
         if not <| Array.isEmpty xs then

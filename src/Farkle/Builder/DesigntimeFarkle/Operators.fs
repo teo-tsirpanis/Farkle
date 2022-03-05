@@ -13,13 +13,13 @@ open Farkle.Collections
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Functions to set metadata for designtime Farkles.
 /// With few exceptions, these functions will have to be applied to the topmost
 /// designtime Farkle that will get build, or they will have no effect.
 /// Designime Farkles that were applied the functions of this module must not
 /// be used with the original designtime Farkles in the same context; only
 /// one grammar symbol will be created, with undefined behavior.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module DesigntimeFarkle =
 
     /// Gets the raw designtime Farkle without any wrappers it might have been under.
@@ -95,8 +95,8 @@ module DesigntimeFarkle =
         nullCheck "commentEnd" commentEnd
         addComment (BlockComment(commentStart, commentEnd)) df
 
-[<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 /// F# operators to easily work with designtime Farkles and production builders.
+[<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 module DesigntimeFarkleOperators =
 
     /// Raises an error that happened during the parsing process.

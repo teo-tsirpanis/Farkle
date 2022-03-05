@@ -13,7 +13,6 @@ open System.ComponentModel
 open System.Collections.Immutable
 open System.Runtime.CompilerServices
 
-[<Sealed>]
 /// <summary>The base, untyped class of the production builders.</summary>
 /// <remarks>
 ///     <para>A production builder is an object that helps to fluently construct <see cref="Production{T}"/>s
@@ -36,6 +35,7 @@ open System.Runtime.CompilerServices
 ///     a reference to a variable that will hold the object, which will be created by Farkle.
 ///     It allows C# programmers to use <c>out var</c> instead of creating their own object.</para>
 /// </remarks>
+[<Sealed>]
 type ProductionBuilder internal(members, cpToken) =
     static let empty = ProductionBuilder(ImmutableList.Empty, null)
     /// Creates a production builder whose members are the given objects.

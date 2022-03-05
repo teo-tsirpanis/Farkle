@@ -282,7 +282,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
             if d.IsRaw then
                 ilg.Emit(OpCodes.Ldarg_2)
             else
-                for (idx, typ) in d.Parameters do
+                for idx, typ in d.Parameters do
                     ilg.Emit(OpCodes.Ldarga_S, 2uy)
                     ilg.Emit(OpCodes.Ldc_I4, idx)
                     ilg.Emit(OpCodes.Call, readOnlySpanOfObjectIndexer)

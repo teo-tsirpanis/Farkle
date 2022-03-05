@@ -3,7 +3,6 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-[<RequireQualifiedAccess>]
 /// <summary>Some designtime Farkles that
 /// are commonly used in many grammars.</summary>
 /// <remarks>
@@ -13,6 +12,7 @@
 /// Creating and using many designtime Farkles
 /// of the same or similar kind
 /// will almost certainly lead to an error.</remarks>
+[<RequireQualifiedAccess>]
 module Farkle.Builder.Terminals
 
 open System.ComponentModel
@@ -37,16 +37,16 @@ module Internal =
 
 open Internal
 
-[<CompiledName("UnsignedIntRegex")>]
 /// A `Regex` that recognizes a series of decimal digits.
 /// Leading zeros are accepted.
 // Seriously though, why not? Looking at you, JSON!
+[<CompiledName("UnsignedIntRegex")>]
 let unsignedIntRegex = Number |> chars |> atLeast 1
 
-[<CompiledName("FSharpOnlyGenericUnsigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 /// Creates a designtimeFarkle that parses an unsigned decimal integer
 /// into the desired number type. No bounds checking is performed.
 /// Using this function from a language other than F# will throw an exception.
+[<CompiledName("FSharpOnlyGenericUnsigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 let inline genericUnsigned< ^TInt when ^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt)> name =
     terminal name
         (T (fun _ x ->
@@ -57,17 +57,17 @@ let inline genericUnsigned< ^TInt when ^TInt: (static member Parse: Characters *
             | e -> error e.Message))
         unsignedIntRegex
 
-[<CompiledName("SignedIntRegex")>]
 /// A `Regex` that recognizes a series of decimal digits
 /// that might be prefixed with a minus sign "-".
 /// Leading zeros are accepted.
+[<CompiledName("SignedIntRegex")>]
 let signedIntRegex = (optional <| char '-') <&> unsignedIntRegex
 
-[<CompiledName("FSharpOnlyGenericSigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 /// Creates a designtime Farkle that parses a signed decimal integer
 /// into the desired number type. No bounds checking is performed.
 /// The type parameter must support the unary negation operator.
 /// Using this function from a language other than F# will throw an exception.
+[<CompiledName("FSharpOnlyGenericSigned"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 let inline genericSigned< ^TInt when ^TInt: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TInt) and ^TInt : (static member (~-): ^TInt -> ^TInt)> name =
     terminal name
         (T (fun _ x ->
@@ -83,27 +83,27 @@ let inline genericSigned< ^TInt when ^TInt: (static member Parse: Characters * N
 [<CompiledName("Int32")>]
 let int name = genericSigned<int> name
 
-[<CompiledName("Int64")>]
 /// Creates a designtime Farkle that parses and returns a
 /// signed 64-bit signed integer. No bounds checking is performed.
+[<CompiledName("Int64")>]
 let int64 name = genericSigned<int64> name
 
-[<CompiledName("UInt32")>]
 /// Creates a designtime Farkle that parses and returns a
 /// signed 32-bit unsigned integer. No bounds checking is performed.
+[<CompiledName("UInt32")>]
 let uint32 name = genericUnsigned<uint32> name
 
-[<CompiledName("UInt64")>]
 /// Creates a designtime Farkle that parses and returns a
 /// signed 64-bit unsigned integer. No bounds checking is performed.
+[<CompiledName("UInt64")>]
 let uint64 name = genericUnsigned<uint64> name
 
-[<CompiledName("UnsignedRealRegex")>]
 /// A `Regex` that recognizes an unsigned real number.
 /// The number is expected to be written in scientific
 /// notation, with the decimal point symbol being the dot.
 /// Numbers before or after the dot are optional, but they
 /// must exist in at least one of the two places.
+[<CompiledName("UnsignedRealRegex")>]
 let unsignedRealRegex =
     let numberStar = chars Number |> star
     let atLeastOneNumber = chars Number <&> numberStar
@@ -121,15 +121,15 @@ let unsignedRealRegex =
         |> optional
     ]
 
-[<CompiledName("SignedRealRegex")>]
 /// Like `unsignedRealRegex`, but with an optional
 /// sign in the beginning being allowed.
+[<CompiledName("SignedRealRegex")>]
 let signedRealRegex = (optional <| char '-') <&> unsignedRealRegex
 
-[<CompiledName("FSharpOnlyGenericReal"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 /// Creates a designtime Farkle that parses a real number
 /// into the desired number type. No bounds checking is performed.
 /// Using this function from a language other than F# will throw an exception.
+[<CompiledName("FSharpOnlyGenericReal"); RequiresExplicitTypeArguments; NoDynamicInvocation>]
 let inline genericReal< ^TReal when ^TReal: (static member Parse: Characters * NumberStyles * IFormatProvider -> ^TReal)> allowSign name =
     let regex =
         if allowSign then
@@ -145,27 +145,27 @@ let inline genericReal< ^TReal when ^TReal: (static member Parse: Characters * N
             | e -> error e.Message))
         regex
 
-[<CompiledName("Single")>]
 /// Creates a designtime Farkle that parses and returns
 /// a signed single-precision floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot. Special values
 /// such as NaN or infinity are not recognized.
+[<CompiledName("Single")>]
 let float32 name = genericReal<float32> true name
 
-[<CompiledName("Double")>]
 /// Creates a designtime Farkle that parses and returns
 /// a signed double-precision floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot. Special values
 /// such as NaN or infinity are not recognized.
+[<CompiledName("Double")>]
 let float name = genericReal<float> true name
 
-[<CompiledName("Decimal")>]
 /// Creates a designtime Farkle that parses and returns
 /// a signed decimal floating-point number. The number
 /// is expected to be written in scientific notation, with
 /// the decimal point symbol being the dot.
+[<CompiledName("Decimal")>]
 let decimal name = genericReal<decimal> true name
 
 let private stringTransformer = T (fun _ span ->
@@ -226,7 +226,6 @@ let private stringTransformer = T (fun _ span ->
 
     sb.ToString())
 
-[<CompiledName("StringEx")>]
 /// <summary>Creates a designtime Farkle that can recognize a C-like
 /// string. It supports escaping with a backslash "\\".</summary>
 /// <param name="escapeChars">A sequence of valid escape characters after the backslash.
@@ -240,6 +239,7 @@ let private stringTransformer = T (fun _ span ->
 /// <param name="delim">The character that marks the start and the end of the string.
 /// In most programming languages, it is either a single or a double quote.</param>
 /// <param name="name">The name of the resulting designtime Farkle.</param>
+[<CompiledName("StringEx")>]
 let stringEx escapeChars allowEscapeUnicode multiline delim name =
     let escapeChars =
         if allowEscapeUnicode then
@@ -269,6 +269,6 @@ let stringEx escapeChars allowEscapeUnicode multiline delim name =
         ]
     terminal name stringTransformer regex
 
-[<CompiledName("String")>]
 /// Creates a designtime Farkle that can recognize a single-line, C-like string.
+[<CompiledName("String")>]
 let string delim name = stringEx "abfnrtv" true false delim name

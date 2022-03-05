@@ -16,8 +16,8 @@ type internal AbstractGroup =
     /// The transformer to process the characters of this group.
     abstract Transformer: TransformerData
 
-[<AbstractClass>]
 /// The typed implementation of the `AbstractGroup` interface.
+[<AbstractClass>]
 type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
     do nullCheck "name" name
     do nullCheck "groupStart" groupStart
@@ -39,8 +39,8 @@ type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
 type internal AbstractLineGroup =
     inherit AbstractGroup
 
-[<Sealed; NoComparison>]
 /// The typed implementation of the `AbstractLineGroup` interface.
+[<Sealed; NoComparison>]
 type internal LineGroup<'T>(name, groupStart, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
     interface AbstractLineGroup
@@ -52,8 +52,8 @@ type internal AbstractBlockGroup =
     /// The sequence of characters that specifies the end of the group.
     abstract GroupEnd: string
 
-[<Sealed; NoComparison>]
 /// The typed implementation of the `AbstractBlockGroup` interface.
+[<Sealed; NoComparison>]
 type internal BlockGroup<'T>(name, groupStart, groupEnd, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
     do nullCheck "groupEnd" groupEnd

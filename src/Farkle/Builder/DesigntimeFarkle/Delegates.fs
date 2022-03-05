@@ -9,7 +9,6 @@ open Farkle
 open System
 open System.Runtime.CompilerServices
 
-[<CompiledName("Transformer`1")>]
 /// <summary>A delegate that transforms the content
 /// of a terminal to an arbitrary object.</summary>
 /// <param name="context">An <see cref="ITransformerContext"/>
@@ -21,9 +20,9 @@ open System.Runtime.CompilerServices
 /// <para>A .NET delegate was used because read-only
 /// spans are incompatible with F# functions.</para>
 /// </remarks>
+[<CompiledName("Transformer`1")>]
 type T<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of context: ITransformerContext * data: ReadOnlySpan<char> -> 'T
 
-[<CompiledName("Fuser`1")>]
 /// <summary>A delegate that fuses the many members
 /// of a production into one arbitrary object.</summary>
 /// <param name="members">A read-only span of the production's members.</param>
@@ -33,6 +32,7 @@ type T<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of context: ITransformerCo
 /// <para>A .NET delegate was used because read-only
 /// spans are incompatible with F# functions.</para>
 /// </remarks>
+[<CompiledName("Fuser`1")>]
 type F<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
 
 type internal IRawDelegateProvider =

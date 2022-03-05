@@ -103,7 +103,7 @@ module TemplateEngine =
             let fileName = sanitizeUnsafeFileName log grammarName + gt.FileExtension
             let path = sprintf "%s%c%s" outputDir Path.DirectorySeparatorChar fileName
             File.WriteAllText(path, gt.Content)
-            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath}.", path)
+            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath:l}.", path)
             Some path
         | _ ->
             log.Error("Internal error: failed to render the conflict report. Please open a GitHub issue.")

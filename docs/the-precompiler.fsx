@@ -188,7 +188,7 @@ And last but not least, until version 6.3.0, the precompiler would not work when
 dotnet tool install Farkle.Tools
 ```
 
-The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project.
+The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Since Farkle 6.4.0, you will be warned if they differ.
 
 The following limitations apply when using the precompiler worker:
 

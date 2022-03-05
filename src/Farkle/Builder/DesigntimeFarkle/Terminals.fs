@@ -26,12 +26,13 @@ type internal AbstractTerminal =
 // Terminals are stored in the conflict resolver as identity keys.
 // Using the typed terminal itself as a key is not a good idea because
 // the transformer might inhibit unloadability. So we use this dummy object.
-[<AllowNullLiteral; DebuggerDisplay("{Name,nq}")>]
+[<AllowNullLiteral; DebuggerDisplay("{Name,nq}"); Sealed>]
 type internal TerminalIdentityObject(name: string) =
     member _.Name = name
 
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
+[<Sealed>]
 type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
     do nullCheck (nameof name) name
     do nullCheck (nameof fTransform) fTransform
@@ -55,6 +56,7 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
 /// of the <see cref="Farkle.Parser.Tokenizer"/> class.</para>
 /// <para>They are useful for indentation-based
 /// languages like Python and F#.</para></remarks>
+[<Sealed>]
 type internal VirtualTerminal internal(name) =
     do nullCheck "name" name
     /// The virtual terminal's name.
@@ -62,6 +64,7 @@ type internal VirtualTerminal internal(name) =
     interface DesigntimeFarkle with
         member _.Name = name
 
+[<Sealed>]
 type internal Literal(str: string) =
     do nullCheck "str" str
     member _.Content = str

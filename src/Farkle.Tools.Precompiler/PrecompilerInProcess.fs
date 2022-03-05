@@ -131,11 +131,23 @@ type private PrecompilerContext(path: string, references: AssemblyReference seq,
                 log.Verbose("{AssemblyName:l}: {AssemblyPath}", asm.AssemblyName.Name, asm.FileName)
                 Some (asm.AssemblyName.FullName, asm.FileName))
         |> readOnlyDict
-    // We first read the assembly in memory to avoid the runtime locking the file.
     member this.LoadFromAssemblyPathInMemory path =
-        let bytes = File.ReadAllBytes path
-        let m = new MemoryStream(bytes, false)
-        this.LoadFromStream m
+        let symbolsPath = Path.ChangeExtension(path, ".pdb")
+        use assemblyFile = File.OpenRead path
+        use symbolsFile =
+            try
+                log.Debug("Reading symbols from {SymbolsPath}", symbolsPath)
+                File.OpenRead symbolsPath :> Stream
+            with
+            | :? FileNotFoundException ->
+                log.Debug("Symbols not found")
+                Stream.Null
+            | e ->
+                Log.Debug(e, "Loading symbols failed")
+                Stream.Null
+        // The stream overload reads the assemblies in memory before loading them.
+        // We do that to avoid the runtime locking the file.
+        this.LoadFromStream(assemblyFile, symbolsFile)
     override this.Load(name) =
         log.Verbose("Requesting assembly {AssemblyName:l}.", name)
         match name.Name with
@@ -160,6 +172,7 @@ let rec private ensureWeakReferenceIsCollected (log: ILogger) (wr: WeakReference
 the assembly's precompilable designtime Farkles and might lead to files and resources being held for longer than needed. \
 You can learn how to diagnose it in https://docs.microsoft.com/en-us/dotnet/standard/assembly/unloadability")
         | _, true ->
+            log.Verbose("Running full GC")
             GC.Collect()
             GC.WaitForPendingFinalizers()
             impl (remainingTries - 1u)

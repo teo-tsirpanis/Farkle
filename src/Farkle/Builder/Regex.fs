@@ -36,10 +36,10 @@ type internal RegexStringHolder(regex) =
             | ValueSome x -> x)
         | ValueSome x -> x
 
-[<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 /// <summary>A regular expression that is used to specify a tokenizer symbol.</summary>
 /// <remarks>Checking two regular expressions for equality does not mean that they
 /// recognize the same symbols, but that their internal structure is the same.</remarks>
+[<RequireQualifiedAccess; NoComparison; StructuralEquality>]
 type Regex =
     internal
     /// These regexes sorted as one after the other.
@@ -239,8 +239,8 @@ module Regex =
 
     let regexString x = Regex.FromRegexString x
 
+/// F# operators to easily create `Regex`es.
 [<AutoOpen>]
-/// F# operators to easily manipulate `Regex`es.
 module RegexOperators =
 
     /// `Regex.And` as an operator.

@@ -9,8 +9,8 @@ open Farkle.Common
 open System
 open System.Runtime.CompilerServices
 
-[<AbstractClass; Sealed>]
 /// A helper static class to create terminals.
+[<AbstractClass; Sealed>]
 type Terminal =
     /// <summary>Creates a terminal that contains significant
     /// information of type <typeparamref name="T"/>.</summary>
@@ -58,8 +58,8 @@ type Terminal =
     /// <c>\n</c>, or <c>\r\n</c>.</remarks>
     static member NewLine = NewLine :> DesigntimeFarkle
 
-[<AbstractClass; Sealed>]
 /// A helper static class to create nonterminals.
+[<AbstractClass; Sealed>]
 type Nonterminal =
     /// <summary>Creates a <see cref="Nonterminal{T}"/> whose productions must be
     /// later set with <see cref="SetProductions"/>. Useful for recursive productions.</summary>
@@ -81,14 +81,14 @@ type Nonterminal =
     static member CreateUntyped(name, firstProd, prods) =
         Untyped.Nonterminal.Create(name, firstProd, prods)
 
-[<AbstractClass; Sealed>]
-/// A helper static class to create groups. In Farkle (and GOLD parser),
-/// groups are used to define lexical elements that start and
+/// A helper static class to create groups.
+/// Groups are used to define lexical elements that start and
 /// end with specified literals, and contain arbitrary characters.
 /// Groups are a tokenizer's construct, and their content is
 /// considered to be a terminal by the parser.
 /// Comments are essentially groups, but this class
 /// creates groups that have significant content.
+[<AbstractClass; Sealed>]
 type Group =
     /// <summary>Creates a line group. As the name says, it ends with a new line.</summary>
     /// <param name="name">The group's name.</param>

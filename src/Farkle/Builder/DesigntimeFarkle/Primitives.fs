@@ -7,7 +7,6 @@ namespace Farkle.Builder
 
 open System.Runtime.CompilerServices
 
-[<NoComparison>]
 /// <summary>The base interface of <see cref="DesigntimeFarkle{T}"/>.</summary>
 /// <remarks><para>In contrast with its typed descendant, untyped designtime
 /// Farkles do not return any value. They typically represent literal symbols
@@ -20,6 +19,7 @@ open System.Runtime.CompilerServices
 // designtime Farkle classes/interfaces, or implement DesigntimeFarkleWrapper.
 // Because all these are internal, implementing a valid designtime Farkle outside
 // this library is impossible.
+[<NoComparison>]
 type DesigntimeFarkle =
     /// <summary>The designtime Farkle's name.</summary>
     /// <remarks>A totally informative property, it matches

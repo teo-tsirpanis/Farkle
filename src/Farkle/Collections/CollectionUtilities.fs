@@ -7,8 +7,8 @@ namespace Farkle.Collections
 
 open System.Collections.Immutable
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 /// Some extra functions on lists.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal List =
 
     /// Similar to `List.iter2`, but does not throw

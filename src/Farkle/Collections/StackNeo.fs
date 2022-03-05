@@ -24,9 +24,9 @@ type internal StackNeo<'T>() =
     /// The number of elements on the stack.
     member _.Count = size
 
-    [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
     /// All the stack's items. The last item of
     /// the span is the most recent item pushed.
+    [<DebuggerBrowsable(DebuggerBrowsableState.RootHidden)>]
     member _.AllItems = ReadOnlySpan(items, 0, size)
 
     /// Pushes an item to the stack.

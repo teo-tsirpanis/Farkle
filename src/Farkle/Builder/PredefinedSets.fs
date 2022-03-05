@@ -2,8 +2,8 @@
 // To generate it yourself, grab the 'sets.dat' file from the GOLD Parser Builder
 // and run 'farkle gnerate-predefined-sets' lo learn more.
 
-[<AutoOpen>]
 /// Some common character sets that were imported from GOLD Parser.
+[<AutoOpen>]
 module Farkle.Builder.PredefinedSets
 
     /// Horizontal Tab

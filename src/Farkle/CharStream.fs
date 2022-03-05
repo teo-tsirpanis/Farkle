@@ -43,9 +43,9 @@ type private CharStreamSource() =
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
-[<Sealed>]
 /// A source of a `CharStream` that stores
 /// the characters in one contiguous area of memory.
+[<Sealed>]
 type private StaticBlockSource(mem: ReadOnlyMemory<_>) =
     inherit CharStreamSource()
     let length = uint64 mem.Length

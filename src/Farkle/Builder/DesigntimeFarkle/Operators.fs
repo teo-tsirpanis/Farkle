@@ -6,7 +6,6 @@
 namespace Farkle.Builder
 
 open Farkle
-open Farkle.Builder.OperatorPrecedence
 open Farkle.Builder.ProductionBuilders
 open Farkle.Common
 open Farkle.Collections
@@ -32,6 +31,7 @@ module DesigntimeFarkle =
     /// Farkle that can be used for equality checks.
     let internal getIdentityObject df =
         match unwrap df with
+        | :? AbstractTerminal as term -> term.IdentityObject
         | :? Literal as lit -> box lit.Content
         | dfUnwrapped -> box dfUnwrapped
 

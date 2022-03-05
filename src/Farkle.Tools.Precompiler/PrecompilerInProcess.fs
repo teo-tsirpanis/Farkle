@@ -25,7 +25,7 @@ open Mono.Cecil
 type PrecompilerResult =
     | Successful of Grammar
     | PrecompilingFailed of grammarName: string * GrammarDefinition * BuildError list
-    | DiscoveringFailed of typeName: string * fieldName: string * exn
+    | DiscoveringFailed of typeName: string * fieldName: string * exceptionDetails: string
 
 [<Literal>]
 let private allBindingFlags =
@@ -80,7 +80,11 @@ is declared in a generic type.", fld.DeclaringType, fld.Name)
 marked in a foreign assembly ({AssemblyName:l}).", fld.DeclaringType, fld.Name, pcdf.Assembly.GetName().Name)
                     None
             with
-            e -> Error(fld.DeclaringType.FullName, fld.Name, filterTargetInvocationException e) |> Some)
+            e ->
+                let exceptionDetails = (filterTargetInvocationException e).ToString()
+                PrecompilerResult.DiscoveringFailed(fld.DeclaringType.FullName, fld.Name, exceptionDetails)
+                |> Error
+                |> Some)
 
     let types = asm.GetTypes()
     types
@@ -115,7 +119,7 @@ nonterminals, {Productions} productions, {LALRStates} LALR states, {DFAStates} D
 is different from the designtime Farkle name.")
             Successful grammar
         | Error xs -> PrecompilingFailed(name, grammarDef, xs)
-    | Error x -> DiscoveringFailed x
+    | Error x -> x
 
 type private PrecompilerContext(path: string, references: AssemblyReference seq, log: ILogger) =
     inherit AssemblyLoadContext(

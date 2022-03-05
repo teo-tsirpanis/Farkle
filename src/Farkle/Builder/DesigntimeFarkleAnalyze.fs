@@ -48,7 +48,7 @@ type internal TerminalEquivalent =
     // An object representing this terminal equivalent for equality comparisons.
     member x.IdentityObject =
         match x with
-        | Terminal term -> box term
+        | Terminal term -> term.IdentityObject
         | Literal lit -> box lit
         | NewLine -> box Terminal.NewLine
         | LineGroup lg -> box lg

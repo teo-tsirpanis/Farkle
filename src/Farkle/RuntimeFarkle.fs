@@ -232,16 +232,16 @@ module RuntimeFarkle =
         |> PrecompilerInterface.buildPrecompiled
         |> RuntimeFarkle<_>.CreateMaybe PostProcessors.syntaxCheck
 
-    [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// Marks the given designtime as available to have its grammar
     /// precompiled ahead of time. Learn more, including usage restrictions
     /// at https://teo-tsirpanis.github.io/Farkle/the-precompiler.html
+    [<MethodImpl(MethodImplOptions.NoInlining)>]
     let markForPrecompile df =
         let asm = Assembly.GetCallingAssembly()
         PrecompilableDesigntimeFarkle<_>(df, asm)
 
-    [<MethodImpl(MethodImplOptions.NoInlining)>]
     /// The untyped edition of `markForPrecompile`.
+    [<MethodImpl(MethodImplOptions.NoInlining)>]
     let markForPrecompileU df =
         let asm = Assembly.GetCallingAssembly()
         PrecompilableDesigntimeFarkle(df, asm)

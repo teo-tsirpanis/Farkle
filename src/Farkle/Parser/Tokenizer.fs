@@ -10,8 +10,8 @@ open Farkle.Grammars
 open Farkle.IO
 open System
 
-[<Struct>]
 /// A value type representing the result of a DFA tokenizer invocation.
+[<Struct>]
 type private DFAResult private(symbol: DFASymbol, count: int) =
     static let eof = DFAResult(Unchecked.defaultof<_>, -1)
     /// Creates a `DFAResult` from the last accepted symbol
@@ -36,13 +36,13 @@ type private DFAResult private(symbol: DFASymbol, count: int) =
     /// The offset of the last character the DFA tokenizer reached.
     member _.LastCharacterOffset = count - 1
 
-[<AbstractClass>]
 /// <summary>A class that breaks down the characters of a
 /// <see cref="CharStream"/> into <see cref="Token"/>s.</summary>
 /// <remarks>User code can inherit this class and implement additional
 /// tokenizer logic by overriding the <see cref="GetNextToken"/>
 /// method.</remarks>
 /// <seealso cref="DefaultTokenizer"/>
+[<AbstractClass>]
 type Tokenizer() =
     /// <summary>Gets the next <see cref="Token"/>
     /// from a <see cref="CharStream"/>.</summary>

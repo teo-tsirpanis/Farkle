@@ -17,6 +17,10 @@ open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
 
+/// The bridge between the CharStream and post-processor APIs.
+type internal ITransformerHandler =
+    abstract Transform: ITransformerContext * ReadOnlySpan<char> -> obj
+
 /// The source a `CharStream` reads characters from.
 [<AbstractClass>]
 type private CharStreamSource() =
@@ -223,10 +227,10 @@ type CharStream private(source: CharStreamSource) =
     /// between the `CharStream`'s last token position and its current position.
     /// After that call, the characters at and before the current position
     /// might be freed from memory, so this method must not be used twice.
-    member internal x.CreateToken symbol (transformer: ITransformer<'TSymbol>) =
+    member internal x.CreateToken (transformer: #ITransformerHandler) =
         let length = currentIndex - startingIndex |> int
         let span = source.GetSpanForCharacters(startingIndex, length)
-        let result = transformer.Transform(symbol, x, span)
+        let result = transformer.Transform(x, span)
         updateTokenStartPosition()
         result
     #if DEBUG

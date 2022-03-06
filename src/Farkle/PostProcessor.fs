@@ -10,18 +10,34 @@ open Farkle.Grammars
 open System
 open System.Runtime.CompilerServices
 
-/// <summary>Post-processors convert strings of a grammar into more
-/// meaningful types for the library that uses the parser.</summary>
-/// <typeparam name="T">The type of the final object this
-/// post-processor will return from a grammar. This generic
-/// parameter is covariant.</typeparam>
-type IPostProcessor<[<CovariantOut; Nullable(2uy)>] 'T> =
+/// <summary>The base interface implemented by <see cref="T:Farkle.IPostProcessor`1"/>.
+/// Custom post-processors should not directly implement this interface.</summary>
+/// <seealso cref="T:Farkle.IPostProcessor`1"/>
+type IPostProcessor =
+    /// <summary>Converts a token into an object.</summary>
+    /// <param name="symbol">An object identifying the kind of the token.</param>
+    /// <param name="context">A <see cref="ITransformerContext"/> object
+    /// that provides more information about the token.</param>
+    /// <param name="data">A read-only span of the token's characters.</param>
+    /// <returns>An object. It can be <see langword="null"/>.</returns>
+    abstract Transform: symbol: Terminal * context: ITransformerContext * data: ReadOnlySpan<char>
+        -> [<Nullable(2uy)>] obj
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     /// <param name="production">The production whose members will be fused.</param>
     /// <param name="members">A read-only span of the production's members</param>
     /// <returns>An object. It can be <see langword="null"/>.</returns>
     abstract Fuse: production: Production * members: ReadOnlySpan<obj> -> [<Nullable(2uy)>] obj
-    inherit ITransformer<Terminal>
+
+/// <summary>Post-processors convert strings of a grammar into more
+/// meaningful types for the library that uses the parser.</summary>
+/// <remarks>The type's actual implementation is in the base
+/// <see cref="T:Farkle.IPostProcessor"/> interface.</remarks>
+/// <typeparam name="T">The type of the final object this
+/// post-processor will return from a grammar. This generic
+/// parameter is covariant.</typeparam>
+/// <seealso cref="T:Farkle.IPostProcessor"/>
+type IPostProcessor<[<CovariantOut; Nullable(2uy)>] 'T> =
+    inherit IPostProcessor
 
 /// To be implemented by Farkle's post-processors that are
 /// interested in more detailed events about their use.

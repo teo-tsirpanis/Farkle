@@ -36,6 +36,11 @@ type private DFAResult private(symbol: DFASymbol, count: int) =
     /// The offset of the last character the DFA tokenizer reached.
     member _.LastCharacterOffset = count - 1
 
+[<Struct>]
+type private DefaultTransformerHandler(term: Terminal, postProcessor: IPostProcessor) =
+    interface ITransformerHandler with
+        member _.Transform(context, data) = postProcessor.Transform(term, context, data)
+
 /// <summary>A class that breaks down the characters of a
 /// <see cref="CharStream"/> into <see cref="Token"/>s.</summary>
 /// <remarks>User code can inherit this class and implement additional
@@ -46,10 +51,10 @@ type private DFAResult private(symbol: DFASymbol, count: int) =
 type Tokenizer() =
     /// <summary>Gets the next <see cref="Token"/>
     /// from a <see cref="CharStream"/>.</summary>
-    /// <param name="transformer">This parameter is used for the
-    /// post-processor. It should be passed to the base method if called.</param>
+    /// <param name="postProcessor">The tokenizer's post-processor.
+    /// It should be passed to the base method if called.</param>
     /// <param name="input">The <see cref="CharStream"/> whose characters will be processed.</param>
-    abstract GetNextToken: transformer: ITransformer<Terminal> * input: CharStream -> Token
+    abstract GetNextToken: postProcessor: IPostProcessor * input: CharStream -> Token
 
 /// <summary>Farkle's default tokenizer, powered by a DFA.</summary>
 /// <remarks>Custom tokenizers are recommended to inherit
@@ -158,7 +163,8 @@ type DefaultTokenizer(grammar: Grammar) =
                 let pos = input.TokenStartPosition
                 let data =
                     try
-                        input.CreateToken term transformer
+                        DefaultTransformerHandler(term, transformer)
+                        |> input.CreateToken
                     with
                     | :? ParserException
                     | :? ParserApplicationException -> reraise()

@@ -19,7 +19,7 @@
     <Compile Include="Common.fs" />
     <Compile Include="Position.fs" />
     <Compile Include="Monads.fs" />
-    <Compile Include="PostProcessorAbstractions.fs" />
+    <Compile Include="ITransformerContext.fs" />
     <Compile Include="CharStream.fs" />
     <Compile Include="Collections/CollectionUtilities.fs" />
     <Compile Include="Collections/ListBuilder.fs" />

@@ -45,11 +45,11 @@ let private justStringCtorParameters = [|typeof<string>|]
 let private ppCtorParameters = Array.replicate 2 typeof<obj[]>
 
 let private transformParameters =
-    typeof<ITransformer<Grammars.Terminal>>.GetMethod("Transform").GetParameters()
+    typeof<IPostProcessor>.GetMethod("Transform").GetParameters()
     |> getParameterTypes
 
 let private fuseParameters =
-    typeof<IPostProcessor<obj>>.GetMethod("Fuse").GetParameters()
+    typeof<IPostProcessor>.GetMethod("Fuse").GetParameters()
     |> getParameterTypes
 
 #if NET
@@ -235,7 +235,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
                 asmBuilder.SetCustomAttribute(CustomAttributeBuilder(ctorIgnoreAccessChecksTo, [|name|]))
 
     let ppType = mainModule.DefineType("DynamicCodePostProcessor", TypeAttributes.Sealed)
-    ppType.AddInterfaceImplementation(typeof<ITransformer<Grammars.Terminal>>)
+    ppType.AddInterfaceImplementation(typeof<IPostProcessor>)
     ppType.AddInterfaceImplementation(typeof<IPostProcessor<'T>>)
 
     let transformerTargets =

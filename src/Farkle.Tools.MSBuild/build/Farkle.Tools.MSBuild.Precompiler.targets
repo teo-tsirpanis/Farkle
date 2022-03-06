@@ -29,7 +29,7 @@
         Condition="$(BuildingByReSharper) != true"
         Text="Farkle's precompiler works best when using modern .NET SDK commands, like 'dotnet build' or 'dotnet msbuild' instead of 'msbuild'."/>
   </Target>
-  
+
   <Target
     Name="FarkleWarnPackageVersionMismatch"
     Condition="$(FarkleCheckPackageVersionMismatch) != false"
@@ -38,7 +38,7 @@
       <_FarkleVersion Condition="'%(PackageReference.Identity)' == 'Farkle'">%(PackageReference.Version)</_FarkleVersion>
       <_FarkleToolsMSBuildVersion Condition="'%(PackageReference.Identity)' == 'Farkle.Tools.MSBuild'">%(PackageReference.Version)</_FarkleToolsMSBuildVersion>
     </PropertyGroup>
-    
+
     <Warning
         Condition="'$(_FarkleVersion)' != '' AND '$(_FarkleToolsMSBuildVersion)' != '' AND $(_FarkleVersion) != $(_FarkleToolsMSBuildVersion)"
         Text="The versions of the Farkle ($(_FarkleVersion)) and Farkle.Tools.MSBuild ($(_FarkleToolsMSBuildVersion)) packages must be the same, or unexpected bugs might occur."/>

@@ -137,7 +137,7 @@ module DesigntimeFarkleBuild =
             // We don't have to worry about diplicates, they are handled by DesigntimeFarkleAnalyze.
             for Named(name, te) in dfDef.TerminalEquivalents do
                 let identity = te.IdentityObject
-                
+
                 let symbol =
                     match te with
                     | TerminalEquivalent.Terminal term -> handleTerminal name identity term.Regex

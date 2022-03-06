@@ -212,7 +212,7 @@ let private checkForDuplicates (log: ILogger) (pcdfs: _ list) =
                 log.Error("Cannot have many precompilable designtime Farkles named {Name:l}.", name)
             count <> 1)
         |> Seq.fold (||) false
-    
+
     if foundDuplicates then
         log.Information("You can rename a designtime Farkle with the DesigntimeFarkle.rename function \
 or the Rename extension method.")

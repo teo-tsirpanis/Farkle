@@ -13,12 +13,11 @@ module internal List =
 
     /// Similar to `List.iter2`, but does not throw
     /// an exception when the list lengths are different.
-    let iter2Safe action list1 list2 =
-        let action = OptimizedClosures.FSharpFunc<_,_,_>.Adapt action
+    let inline iter2Safe ([<InlineIfLambda>] action) list1 list2 =
         let rec impl list1 list2 =
             match list1, list2 with
             | x1 :: x1s, x2 :: x2s ->
-                action.Invoke(x1, x2)
+                action x1 x2
                 impl x1s x2s
             | _, _ -> ()
         impl list1 list2

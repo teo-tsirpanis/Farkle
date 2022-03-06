@@ -47,8 +47,8 @@
     <Compile Include="Builder/LALRConflictResolution.fs" />
     <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
-    <Compile Include="Builder/GrammarMetadata.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Delegates.fs" />
+    <Compile Include="Builder/GrammarMetadata.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Primitives.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Terminals.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Nonterminals.fs" />

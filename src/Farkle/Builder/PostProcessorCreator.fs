@@ -7,11 +7,6 @@ module internal Farkle.Builder.PostProcessorCreator
 
 open Farkle
 open Farkle.Grammars
-#if MODERN_FRAMEWORK
-open System
-open System.Runtime.CompilerServices
-open System.Threading
-#endif
 
 [<RequiresExplicitTypeArguments>]
 let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserData []) =
@@ -24,39 +19,6 @@ let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserD
             member _.Fuse(prod, members) =
                 fusers.[int prod.Index].Invoke(members)
     }
-
-#if MODERN_FRAMEWORK
-/// A post-processor that starts using dynamic code on
-/// supported platforms after being called certain times.
-// Inspired by .NET's tiered compilation and by a similar
-// trick Microsoft.Extensions.DependencyInjection does.
-type private TieredPostProcessor<'T>(transformers, fusers) =
-    let mutable ppImplementation = createDefault<'T> transformers fusers
-    let mutable invokeCount = 1
-    let mutable hasSwitchedToDynamic = 0
-    [<Literal>]
-    static let invocationThreshold = 3
-    static let fSwitchToDynamic = Action<TieredPostProcessor<'T>>(fun x -> x.SwitchToDynamic())
-    member private _.SwitchToDynamic() =
-        if Interlocked.Exchange(&hasSwitchedToDynamic, 1) = 0 then
-            try
-                let dynamicPP = DynamicPostProcessor.create<'T> transformers fusers
-                Volatile.Write(&ppImplementation, dynamicPP)
-            with _ ->
-#if DEBUG
-                reraise()
-#endif
-                ()
-    interface IPostProcessor<'T> with
-        member _.Transform(symbol, context, data) =
-            ppImplementation.Transform(symbol, context, data)
-        member _.Fuse(prod, members) =
-            ppImplementation.Fuse(prod, members)
-    interface PostProcessorEventListener with
-        member this.ParsingStarted() =
-            if Interlocked.Increment(&invokeCount) = invocationThreshold then
-                ThreadPool.QueueUserWorkItem(fSwitchToDynamic, this, false) |> ignore
-#endif
 
 [<RequiresExplicitTypeArguments>]
 let internal create<'T> dfDef =
@@ -79,11 +41,9 @@ let internal create<'T> dfDef =
             let _, prod = dfDef.Productions.[i]
             arr.[i] <- prod.Fuser
         arr
-    begin
-    #if MODERN_FRAMEWORK
-    if RuntimeFeature.IsDynamicCodeCompiled then
-        TieredPostProcessor<'T>(transformers, fusers) :> IPostProcessor<_>
-    else
-    #endif
+
+    let ppFactory = dfDef.Metadata.PostProcessorFactory
+    if ppFactory.IsNull then
         createDefault<'T> transformers fusers
-    end
+    else
+        ppFactory.ValueUnchecked.CreatePostProcessor(transformers, fusers, typeof<'T>) :?> _

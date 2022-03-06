@@ -3,10 +3,11 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module internal Farkle.Builder.DynamicPostProcessor
+module internal Farkle.Builder.CodeGen.DynamicPostProcessor
 
 #if MODERN_FRAMEWORK
 open Farkle
+open Farkle.Builder
 open Farkle.Common
 open Farkle.Grammars
 open System
@@ -213,8 +214,7 @@ let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGe
 
     fields
 
-[<RequiresExplicitTypeArguments>]
-let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
+let create (transformers: TransformerData []) (fusers: FuserData []) ppGenericParam =
     // I am not sure of the effects of name collisions in dynamic assemblies but we will
     // nevertheless name each generated assembly with a different name. A GUID would have
     // been an easier solution but it is long and has special characters.
@@ -236,7 +236,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
 
     let ppType = mainModule.DefineType("DynamicCodePostProcessor", TypeAttributes.Sealed)
     ppType.AddInterfaceImplementation(typeof<IPostProcessor>)
-    ppType.AddInterfaceImplementation(typeof<IPostProcessor<'T>>)
+    ppType.AddInterfaceImplementation(typedefof<IPostProcessor<_>>.MakeGenericType([|ppGenericParam|]))
 
     let transformerTargets =
         transformers
@@ -295,5 +295,9 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
         RuntimeHelpers.PrepareMethod(meth.MethodHandle)
 
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)
-    ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> IPostProcessor<'T>
+    ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> IPostProcessor
+
+let factory = {new IPostProcessorFactory with
+    member _.CreatePostProcessor(transformers, fusers, ppGenericParam) =
+        create transformers fusers ppGenericParam}
 #endif

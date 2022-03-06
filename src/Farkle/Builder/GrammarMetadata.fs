@@ -5,8 +5,14 @@
 
 namespace rec Farkle.Builder
 
+open Farkle
+open Farkle.Common
 open Farkle.Builder.OperatorPrecedence
+open System
 open System.Collections.Immutable
+#if NET
+open System.Diagnostics.CodeAnalysis
+#endif
 
 /// A type of source code comment. As everybody might know,
 /// comments are the text fragments that are ignored by the parser.
@@ -17,6 +23,14 @@ type internal Comment =
     /// A block comment. It starts when the first literal is encountered,
     /// and ends when when the second literal is encountered.
     | BlockComment of BlockStart: string * BlockEnd: string
+
+type internal IPostProcessorFactory =
+    abstract CreatePostProcessor: transformerData: TransformerData[] * fuserData: FuserData[] *
+#if NET
+        // We tell the trimmer not to remove the type and don't care about any of its members.
+        [<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)>]
+#endif
+        ppGenericParam: Type -> IPostProcessor
 
 /// <summary>Additional information about a grammar to be built.</summary>
 /// <remarks>Each <see cref="DesigntimeFarkle"/> has one, but the metadata object that
@@ -43,6 +57,9 @@ type internal GrammarMetadata = {
     /// topmost one.</remarks>
     /// <seealso cref="OperatorScope.Empty"/>
     OperatorScope: OperatorScope
+    /// An optional post-procecssor factory that will be used during building
+    /// if specified. This design allows CodeGen to be trimmed away if unused.
+    PostProcessorFactory: IPostProcessorFactory MaybeNull
 }
 with
     /// The default metadata of a grammar.
@@ -61,6 +78,7 @@ module private GrammarMetadata =
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
         OperatorScope = OperatorScope.Empty
+        PostProcessorFactory = MaybeNull.nullValue
     }
 
     let strict = {

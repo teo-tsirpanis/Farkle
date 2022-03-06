@@ -29,9 +29,10 @@ let private allPredefinedSets =
         .GetType("Farkle.Builder.PredefinedSets")
         .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
     |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
-    |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
-    |> Seq.map (fun x -> (x.Name, x))
-    |> Seq.iter dict.Add
+    |> Seq.iter (fun prop ->
+        let set = prop.GetValue(null) :?> PredefinedSet
+        dict.Add(set.Name, set)
+        dict.Add(prop.Name, set))
     dict
 
 [<Struct>]

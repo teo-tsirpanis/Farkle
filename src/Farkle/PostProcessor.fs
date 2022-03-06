@@ -50,6 +50,8 @@ module PostProcessors =
             member _.Transform (_, _, _) = null
             member _.Fuse (_, _) = null}
 
+    let internal syntaxCheckObj = unbox<IPostProcessor<obj>> syntaxCheck
+
     /// This post-processor creates a domain-ignorant `AST`.
     [<CompiledName("AST")>]
     let ast =

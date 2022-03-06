@@ -132,6 +132,47 @@ with
                 ParserError(pos, ParseErrorType.UserError e.Message)
                 |> mkError
         | Error x -> Error <| FarkleError.BuildError x
+    /// <summary>Parses and post-processes a
+    /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
+    /// <param name="input">The read-only memory to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    member this.Parse(input: ReadOnlyMemory<char>) =
+        use cs = new CharStream(input)
+        this.Parse cs
+    /// <summary>Parses and post-processes a string.</summary>
+    /// <param name="input">The string to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    member this.Parse(input: string) =
+        nullCheck (nameof input) input
+        use cs = new CharStream(input)
+        this.Parse cs
+    /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
+    /// <param name="textReader">The text reader to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    /// <remarks>The text reader's content will be lazily read.</remarks>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.Parse(textReader: TextReader) =
+        nullCheck (nameof textReader) textReader
+        use cs = new CharStream(textReader)
+        this.Parse cs
+    /// <summary>Parses and post-processes a file.</summary>
+    /// <param name="path">The path of the file to parse.</param>
+    /// <returns>An F# result type containing either the
+    /// post-processed return type, or a type describing
+    /// what did wrong and where.</returns>
+    /// <remarks>The file's content will be lazily read.</remarks>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.ParseFile path =
+        nullCheck (nameof path) path
+        use file = File.OpenText(path)
+        use cs = new CharStream(file)
+        this.Parse cs
     /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle.</summary>
     /// <param name="pp">The new post-processor.</param>
     /// <returns>A new runtime Farkle with ite post-
@@ -142,6 +183,11 @@ with
         TokenizerFactory = this.TokenizerFactory
         PostProcessor = pp
     }
+    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
+    /// a dummy one that is useful for syntax-checking instead of parsing.</summary>
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    member this.SyntaxCheck() : [<Nullable(1uy, 2uy)>] _ =
+        this.ChangePostProcessor PostProcessors.syntaxCheckObj
     /// <summary>Changes the runtime Farkle's returning type to
     /// <see cref="Object"/>, without changing its post-processsor.</summary>
     member this.Cast() : [<Nullable(1uy, 0uy)>] RuntimeFarkle<obj> =
@@ -248,71 +294,23 @@ module RuntimeFarkle =
         PrecompilableDesigntimeFarkle(df, asm)
 
     /// Parses and post-processes a `CharStream`.
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    let parseChars (rf: RuntimeFarkle<'TResult>) input = rf.Parse(input)
+    let parseChars (rf: RuntimeFarkle<'TResult>) (input: CharStream) = rf.Parse(input)
 
     /// Parses and post-processes a `ReadOnlyMemory` of characters.
-    let parseMemory rf (input: ReadOnlyMemory<_>) =
-        use cs = new CharStream(input)
-        parseChars rf cs
+    let parseMemory (rf: RuntimeFarkle<'TResult>) (input: ReadOnlyMemory<_>) =
+        rf.Parse input
 
     /// Parses and post-processes a string.
-    let parseString rf (inputString: string) =
-        nullCheck (nameof inputString) inputString
-        use cs = new CharStream(inputString)
-        parseChars rf cs
+    let parseString (rf: RuntimeFarkle<'TResult>) (input: string) =
+        rf.Parse input
 
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
-    let parseTextReader rf (textReader: TextReader) =
-        nullCheck (nameof textReader) textReader
-        use cs = new CharStream(textReader, true)
-        parseChars rf cs
+    let parseTextReader (rf: RuntimeFarkle<'TResult>) (textReader: TextReader) =
+        rf.Parse textReader
 
     /// Parses and post-processes a file at the given path.
-    let parseFile rf path =
-        nullCheck (nameof path) path
-        use s = File.OpenText(path)
-        parseTextReader rf s
+    let parseFile (rf: RuntimeFarkle<'TResult>) path =
+        rf.ParseFile path
 
     let internal syntaxCheckerObj =
         unbox<IPostProcessor<obj>> PostProcessors.syntaxCheck
-
-open RuntimeFarkle
-
-type RuntimeFarkle<'TResult> with
-    /// <summary>Parses and post-processes a
-    /// <see cref="ReadOnlyMemory{Char}"/>.</summary>
-    /// <param name="input">The read-only memory to parse.</param>
-    /// <returns>An F# result type containing either the
-    /// post-processed return type, or a type describing
-    /// what did wrong and where.</returns>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse input = parseMemory this input
-    /// <summary>Parses and post-processes a string.</summary>
-    /// <param name="inputString">The string to parse.</param>
-    /// <returns>An F# result type containing either the
-    /// post-processed return type, or a type describing
-    /// what did wrong and where.</returns>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse inputString = parseString this inputString
-    /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
-    /// <param name="textReader">The text reader to parse.</param>
-    /// <returns>An F# result type containing either the
-    /// post-processed return type, or a type describing
-    /// what did wrong and where.</returns>
-    /// <remarks>The text reader's content will be lazily read.</remarks>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.Parse textReader = parseTextReader this textReader
-    /// <summary>Parses and post-processes a file.</summary>
-    /// <param name="path">The path of the file to parse.</param>
-    /// <returns>An F# result type containing either the
-    /// post-processed return type, or a type describing
-    /// what did wrong and where.</returns>
-    /// <remarks>The file's content will be lazily read.</remarks>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.ParseFile path = parseFile this path
-    /// <summary>Changes the <see cref="PostProcessor"/> of this runtime Farkle to
-    /// a dummy one that is useful for syntax-checking instead of parsing.</summary>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.SyntaxCheck() : [<Nullable(1uy, 2uy)>] _ =
-        changePostProcessor syntaxCheckerObj this

@@ -111,9 +111,9 @@ type IndentCodeTokenizer(grammar) =
         | newLineIdx -> buffer.Slice(0, newLineIdx)
 
     // The GetNextToken method is where our tokenizer does the real work.
-    // It takes the terminals' transformer (usually not used by custom
+    // It takes the post-processor (usually not used by custom
     // tokenizers), and the character stream containing our input.
-    override this.GetNextToken(transformer, input) =
+    override this.GetNextToken(postProcessor, input) =
         // By calling TryExpandPastOffset with a value
         // of 0 we check whether input ended or not.
         if input.TryExpandPastOffset 0 then
@@ -132,7 +132,7 @@ type IndentCodeTokenizer(grammar) =
                     // We defer to Farkle's tokenizer to get the next token.
                     // It will ignore any spaces at the beginning. Even on
                     // line-based grammars, Farkle ignores new lines.
-                    let token = base.GetNextToken(transformer, input)
+                    let token = base.GetNextToken(postProcessor, input)
                     // But if Farkle's tokenizer reports that input ended, we have
                     // to give our own tokenizer a second chance to see the EOF
                     // and start issuing Block Ends. Such scenario will only occur
@@ -140,7 +140,7 @@ type IndentCodeTokenizer(grammar) =
                     // that input ended, and return EOF. Also, don't worry about the
                     // recursive method call; it won't be recursively called again.
                     if token.IsEOF then
-                        this.GetNextToken(transformer, input)
+                        this.GetNextToken(postProcessor, input)
                     else
                         token
                 // If we are outside of any block or our indentation
@@ -170,7 +170,7 @@ type IndentCodeTokenizer(grammar) =
                     exitingBlock <- false
                     // We have nothing else to do and defer to
                     // Farkle's tokenizer to get our line token.
-                    base.GetNextToken(transformer, input)
+                    base.GetNextToken(postProcessor, input)
                 // And if our indentation level is smaller than our
                 // block's, it means that we are exiting that block.
                 else
@@ -193,7 +193,7 @@ type IndentCodeTokenizer(grammar) =
             else
                 // If we are not at the beginning of a line we defer to
                 // Farkle's tokenizer to process the rest of the line.
-                base.GetNextToken(transformer, input)
+                base.GetNextToken(postProcessor, input)
         else
             // If we are at the end of the file we have
             // to end all blocks we are currently into.
@@ -205,7 +205,7 @@ type IndentCodeTokenizer(grammar) =
             | false, _ ->
                 // Once the indent level stack is empty, we defer to Farkle's
                 // tokenizer for one last time to officialy state that input ended.
-                base.GetNextToken(transformer, input)
+                base.GetNextToken(postProcessor, input)
 
 // We build our designtime Farkle almost as usual.
 let runtime =

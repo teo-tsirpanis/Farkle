@@ -53,19 +53,21 @@ type FarkleError =
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<[<Nullable(2uy)>] 'TResult> = internal {
     Grammar: Result<Grammar,BuildError list>
-    PostProcessor: IPostProcessor<'TResult>
+    PostProcessor: IPostProcessor
     TokenizerFactory: TokenizerFactory
 }
 with
-    static member internal CreateMaybe postProcessor grammarMaybe: RuntimeFarkle<'TResult> =
+    static member internal CreateMaybeUntyped postProcessor grammarMaybe: RuntimeFarkle<'TResult> =
         {
             Grammar = grammarMaybe
             PostProcessor = postProcessor
             TokenizerFactory = TokenizerFactory.Default
         }
+    static member inline internal CreateMaybe (postProcessor: IPostProcessor<'TResult>) grammarMaybe =
+        RuntimeFarkle<'TResult>.CreateMaybeUntyped postProcessor grammarMaybe
     /// <summary>Creates a <see cref="RuntimeFarkle{TResult}"/> from the given
     /// <see cref="Grammar"/> and <see cref="PostProcessor{TResult}"/>.</summary>
-    static member Create(grammar, postProcessor) =
+    static member Create(grammar, postProcessor: IPostProcessor<'TResult>) =
         grammar
         |> Ok
         |> RuntimeFarkle<'TResult>.CreateMaybe postProcessor
@@ -115,7 +117,9 @@ with
         | Ok grammar ->
             let tokenizer = this.TokenizerFactory.CreateTokenizer grammar
             try
-                LALRParser.parse grammar this.PostProcessor tokenizer input |> Ok
+                LALRParser.parse grammar this.PostProcessor tokenizer input
+                :?> 'TResult
+                |> Ok
             with
             | :? ParserException as e -> mkError e.Error
             | :? ParserApplicationException as e ->
@@ -133,25 +137,22 @@ with
     /// <returns>A new runtime Farkle with ite post-
     /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: IPostProcessor<'TNewResult>) = {
+    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: IPostProcessor<'TNewResult>) : RuntimeFarkle<'TNewResult> = {
         Grammar = this.Grammar
         TokenizerFactory = this.TokenizerFactory
         PostProcessor = pp
     }
     /// <summary>Changes the runtime Farkle's returning type to
     /// <see cref="Object"/>, without changing its post-processsor.</summary>
-    member this.Cast() : [<Nullable(1uy, 0uy)>] _ =
-        let ppOld = this.PostProcessor
-        let ppNew =
-            if typeof<'TResult>.IsValueType then
-                {new IPostProcessor<obj> with
-                    member _.Transform(sym, context, data) =
-                        ppOld.Transform(sym, context, data)
-                    member _.Fuse(prod, members) =
-                        ppOld.Fuse(prod, members)}
-            else
-                unbox ppOld
-        this.ChangePostProcessor ppNew
+    member this.Cast() : [<Nullable(1uy, 0uy)>] RuntimeFarkle<obj> =
+        if typeof<'TResult> = typeof<obj> then
+            unbox this
+        else
+            {
+                Grammar = this.Grammar
+                TokenizerFactory = this.TokenizerFactory
+                PostProcessor = this.PostProcessor
+            }
     /// <summary>Changes the <see cref="TokenizerFactory"/> of this runtime Farkle.</summary>
     /// <param name="tokenizerFactory">The new tokenizer factory</param>
     /// <returns>A new runtime Farkle that will parse text with the tokenizer
@@ -196,13 +197,13 @@ module RuntimeFarkle =
 
     /// Creates a `RuntimeFarkle` from the given grammar and post-processor.
     let create postProcessor (grammar: Grammar) =
-        RuntimeFarkle<_>.Create(grammar, postProcessor)
+        RuntimeFarkle<'TResult>.Create(grammar, postProcessor)
 
     /// Creates a `RuntimeFarkle` from the given `DesigntimeFarkle&lt;'T&gt;`.
     /// In case there is a problem with the grammar, the `RuntimeFarkle` will
     /// fail every time it is used. If the designtime Farkle is marked for
     /// precompilation and a suitable precompiled grammar is found, it will be ignored.
-    let build df =
+    let build (df: DesigntimeFarkle<'TResult>) =
         let theFabledGrammar, theTriumphantPostProcessor = DesigntimeFarkleBuild.build df
         RuntimeFarkle<_>.CreateMaybe theTriumphantPostProcessor theFabledGrammar
 

@@ -9,10 +9,9 @@ open Farkle
 open Farkle.Collections
 open Farkle.Grammars
 open Farkle.IO
-open System.Runtime.CompilerServices
 
 /// Functions to syntactically parse a series of tokens using the LALR algorithm.
-module LALRParser =
+module internal LALRParser =
 
     /// <summary>Parses and post-processes tokens with the LALR(1) algorithm.</summary>
     /// <param name="grammar">The grammar to use.</param>
@@ -21,7 +20,7 @@ module LALRParser =
     /// <param name="input">The <see cref="CharStream"/> whose characters are to be parsed.</param>
     /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
     /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
-    let parse<[<Nullable(2uy)>] 'TResult> grammar (pp: IPostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream): _ =
+    let parse grammar (pp: IPostProcessor) (tokenizer: Tokenizer) (input: CharStream) =
         let objectStack = StackNeo()
         objectStack.Push null
         let stateStack = StackNeo()
@@ -81,4 +80,4 @@ module LALRParser =
         | :? PostProcessorEventListener as ppel -> ppel.ParsingStarted()
         | _ -> ()
         let firstToken = tokenizer.GetNextToken(pp, input)
-        impl firstToken lalrStates.[0] :?> 'TResult
+        impl firstToken lalrStates.[0]

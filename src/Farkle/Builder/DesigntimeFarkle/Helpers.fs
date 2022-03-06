@@ -29,7 +29,7 @@ type Terminal =
     /// <param name="regex">The terminal's corresponding regular expression.</param>
     static member Create(name, regex) =
         nullCheck "name" name
-        {new AbstractTerminal with
+        {new ITerminal with
             member _.Name = name
             member _.Regex = regex
             member _.Transformer = TransformerData.Null
@@ -120,7 +120,7 @@ type Group =
     static member Line(name, groupStart) =
         nullCheck "name" name
         nullCheck "groupStart" groupStart
-        {new AbstractLineGroup with
+        {new ILineGroup with
             member _.Name = name
             member _.GroupStart = groupStart
             member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
@@ -135,7 +135,7 @@ type Group =
         nullCheck "name" name
         nullCheck "groupStart" groupStart
         nullCheck "groupEnd" groupEnd
-        {new AbstractBlockGroup with
+        {new IBlockGroup with
             member _.Name = name
             member _.GroupStart = groupStart
             member _.GroupEnd = groupEnd

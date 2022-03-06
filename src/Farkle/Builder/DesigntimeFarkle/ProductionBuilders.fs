@@ -120,7 +120,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
         let tok = box x
         cpTokenRef <- tok
         x.WithPrecedence(tok)
-    interface AbstractProduction with
+    interface IProduction with
         member _.Members = members.ToImmutableArray()
         member _.Fuser = FuserData.Null
         member _.ContextualPrecedenceToken = cpToken

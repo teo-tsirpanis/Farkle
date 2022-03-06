@@ -54,10 +54,10 @@ and [<Sealed>] internal NonterminalReal(name: string) =
         if latch.TrySet() then
             productions <-
                 prods
-                |> Seq.cast<AbstractProduction>
+                |> Seq.cast<IProduction>
                 |> List.ofSeq
-                |> (fun prods -> firstProd :> AbstractProduction :: prods)
-    interface AbstractNonterminal with
+                |> (fun prods -> firstProd :> IProduction :: prods)
+    interface INonterminal with
         member _.FreezeAndGetProductions() =
             latch.Set()
             productions

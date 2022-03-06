@@ -12,7 +12,7 @@ open System.Diagnostics
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>
-type internal AbstractTerminal =
+type internal ITerminal =
     inherit DesigntimeFarkle
     /// <summary>The <see cref="Regex"/> that defines this terminal.</summary>
     abstract Regex: Regex
@@ -38,7 +38,7 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
     do nullCheck (nameof fTransform) fTransform
     let tData = TransformerData.Create fTransform
     let mutable identityKey = TerminalIdentityObject name
-    interface AbstractTerminal with
+    interface ITerminal with
         member _.Regex = regex
         member _.Transformer = tData
         member _.IdentityObject = identityKey

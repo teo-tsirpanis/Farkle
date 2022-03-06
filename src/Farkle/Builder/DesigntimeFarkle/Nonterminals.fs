@@ -14,7 +14,7 @@ open System.Runtime.CompilerServices
 /// <seealso cref="Production{T}"/>
 // This type's naming differs from the other interfaces, because there is
 // an module that must be called `Production` (so that it has a C#-friendly name).
-type internal AbstractProduction =
+type internal IProduction =
     /// The members of the production.
     abstract Members: DesigntimeFarkle ImmutableArray
     /// The fuser to process the members of this production.
@@ -28,18 +28,18 @@ type internal AbstractProduction =
 [<Sealed>]
 type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData, cpToken) =
     let members = members.ToImmutableArray()
-    interface AbstractProduction with
+    interface IProduction with
         member _.Members = members
         member _.Fuser = fuser
         member _.ContextualPrecedenceToken = cpToken
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
-type internal AbstractNonterminal =
+type internal INonterminal =
     inherit DesigntimeFarkle
     /// Gets the productions of the nonterminal.
     /// After this call they cannot be changed by any means.
-    abstract FreezeAndGetProductions: unit -> AbstractProduction list
+    abstract FreezeAndGetProductions: unit -> IProduction list
 
 /// <summary>A nonterminal symbol. It is made of <see cref="Production{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this nonterminal generates.
@@ -71,10 +71,10 @@ type internal NonterminalReal<'T> internal(name) =
         if latch.TrySet() then
             productions <-
                 prods
-                |> Seq.map (fun x -> x :> AbstractProduction)
+                |> Seq.map (fun x -> x :> IProduction)
                 |> List.ofSeq
-                |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
-    interface AbstractNonterminal with
+                |> (fun prods -> (firstProd :> IProduction) :: prods)
+    interface INonterminal with
         // If they are already set, nothing will happen.
         // If they haven't been set, they will be permanently
         // set to a broken state.

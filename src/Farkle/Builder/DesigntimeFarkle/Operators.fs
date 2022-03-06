@@ -31,7 +31,7 @@ module DesigntimeFarkle =
     /// Farkle that can be used for equality checks.
     let internal getIdentityObject df =
         match unwrap df with
-        | :? AbstractTerminal as term -> term.IdentityObject
+        | :? ITerminal as term -> term.IdentityObject
         | :? Literal as lit -> box lit.Content
         | dfUnwrapped -> box dfUnwrapped
 

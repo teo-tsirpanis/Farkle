@@ -8,7 +8,7 @@ namespace Farkle.Builder
 open Farkle.Common
 
 /// The base interface of groups.
-type internal AbstractGroup =
+type internal IGroup =
     inherit DesigntimeFarkle
     /// The sequence of characters that
     /// specifies the beginning of the group.
@@ -16,7 +16,7 @@ type internal AbstractGroup =
     /// The transformer to process the characters of this group.
     abstract Transformer: TransformerData
 
-/// The typed implementation of the `AbstractGroup` interface.
+/// The typed implementation of the `IGroup` interface.
 [<AbstractClass>]
 type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
     do nullCheck "name" name
@@ -25,7 +25,7 @@ type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
     let tData = TransformerData.Create fTransform
     interface DesigntimeFarkle with
         member _.Name = name
-    interface AbstractGroup with
+    interface IGroup with
         member _.GroupStart = groupStart
         member _.Transformer = tData
     interface DesigntimeFarkle<'T>
@@ -35,26 +35,26 @@ type internal Group<'T>(name, groupStart, fTransform: T<'T>) =
 
 /// The base, untyped interface of line groups.
 /// A line group starts with a literal and ends when the line changes.
-type internal AbstractLineGroup =
-    inherit AbstractGroup
+type internal ILineGroup =
+    inherit IGroup
 
-/// The typed implementation of the `AbstractLineGroup` interface.
+/// The typed implementation of the `ILineGroup` interface.
 [<Sealed; NoComparison>]
 type internal LineGroup<'T>(name, groupStart, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
-    interface AbstractLineGroup
+    interface ILineGroup
 
 /// The base, untyped interface of block groups.
 /// A block group starts and ends with a literal.
-type internal AbstractBlockGroup =
-    inherit AbstractGroup
+type internal IBlockGroup =
+    inherit IGroup
     /// The sequence of characters that specifies the end of the group.
     abstract GroupEnd: string
 
-/// The typed implementation of the `AbstractBlockGroup` interface.
+/// The typed implementation of the `IBlockGroup` interface.
 [<Sealed; NoComparison>]
 type internal BlockGroup<'T>(name, groupStart, groupEnd, transformer) =
     inherit Group<'T>(name, groupStart, transformer)
     do nullCheck "groupEnd" groupEnd
-    interface AbstractBlockGroup with
+    interface IBlockGroup with
         member _.GroupEnd = groupEnd

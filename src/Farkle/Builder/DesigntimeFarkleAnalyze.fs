@@ -23,11 +23,11 @@ type internal Named<'T> = Named of name: string * 'T
 // A strongly-typed representation of all kinds of
 // designtime Farkles that will lead to terminals.
 type internal TerminalEquivalent =
-    | Terminal of AbstractTerminal
+    | Terminal of ITerminal
     | Literal of string
     | NewLine
-    | LineGroup of AbstractLineGroup
-    | BlockGroup of AbstractBlockGroup
+    | LineGroup of ILineGroup
+    | BlockGroup of IBlockGroup
     | VirtualTerminal of VirtualTerminal
     member x.CreateNamed(name) =
         let namePatched =
@@ -70,8 +70,8 @@ type internal DesigntimeFarkleDefinition = {
     Metadata: GrammarMetadata
     TerminalEquivalents: TerminalEquivalent Named ResizeArray
     // The first nonterminal is the starting one.
-    Nonterminals: AbstractNonterminal Named ResizeArray
-    Productions: (AbstractNonterminal * AbstractProduction) ResizeArray
+    Nonterminals: INonterminal Named ResizeArray
+    Productions: (INonterminal * IProduction) ResizeArray
     OperatorScopes: OperatorScope HashSet
 }
 
@@ -82,17 +82,17 @@ module internal DesigntimeFarkleAnalyze =
     type private PlaceholderProduction(df) =
         static let fuserDataPickFirst = FuserData.CreateAsIs 0
         let members = ImmutableArray.Create(DesigntimeFarkle.unwrap df)
-        interface AbstractProduction with
+        interface IProduction with
             member _.ContextualPrecedenceToken = null
             member _.Fuser = fuserDataPickFirst
             member _.Members = members
     type private PlaceholderNonterminal(df) =
-        let prod = PlaceholderProduction df :> AbstractProduction
+        let prod = PlaceholderProduction df :> IProduction
         let productions = [prod]
         member _.SingleProduction = prod
         interface DesigntimeFarkle with
             member _.Name = df.Name
-        interface AbstractNonterminal with
+        interface INonterminal with
             member _.FreezeAndGetProductions() = productions
 
     let analyze (ct: CancellationToken) (df: DesigntimeFarkle) =
@@ -116,7 +116,7 @@ module internal DesigntimeFarkleAnalyze =
         let visit (df: DesigntimeFarkle) =
             let name = df.Name
             match DesigntimeFarkle.unwrap df with
-            | :? AbstractNonterminal as nont ->
+            | :? INonterminal as nont ->
                 if visited.Add nont then
                     considerLocalMetadata df
                     nonterminals.Add(Named(name, nont))
@@ -126,11 +126,11 @@ module internal DesigntimeFarkleAnalyze =
                     considerLocalMetadata df
                     let te =
                         match dfUnwrapped with
-                        | :? AbstractTerminal as term -> TerminalEquivalent.Terminal term
+                        | :? ITerminal as term -> TerminalEquivalent.Terminal term
                         | :? Literal as lit -> TerminalEquivalent.Literal lit.Content
                         | :? NewLine -> TerminalEquivalent.NewLine
-                        | :? AbstractLineGroup as lg -> TerminalEquivalent.LineGroup lg
-                        | :? AbstractBlockGroup as bg -> TerminalEquivalent.BlockGroup bg
+                        | :? ILineGroup as lg -> TerminalEquivalent.LineGroup lg
+                        | :? IBlockGroup as bg -> TerminalEquivalent.BlockGroup bg
                         | :? VirtualTerminal as vt -> TerminalEquivalent.VirtualTerminal vt
                         | _ -> BuilderCommon.throwCustomDesigntimeFarkle()
                     terminalEquivalents.Add(te.CreateNamed name)

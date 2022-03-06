@@ -56,16 +56,23 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
         ProductionBuilder(members, null)
     /// A production builder with no members.
     static member Empty = empty
+    /// Creates a production builder from this one with the given untyped
+    /// designtime Farkle added to the end as a not significant member.
     member _.Append(sym) = ProductionBuilder(members.Add sym, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
     static member inline (.>>) (x: ProductionBuilder, df: DesigntimeFarkle) =
         x.Append(df)
+    /// Creates a production builder from this one with
+    /// the given string added to the end as a literal.
     member x.Append(lit) = x.Append(Literal lit)
     /// <summary>The <c>Append(string)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
     static member inline (.>>) (x: ProductionBuilder, literal: string) =
         x.Append(literal)
+    /// Creates a production builder from this one with the given typed
+    /// designtime Farkle added to the end as a significant member.
+    /// Up to sixteen significant members can be added to a production builder.
     member _.Extend<[<Nullable(0uy)>] 'T1>(df: DesigntimeFarkle<'T1>) =
         ProductionBuilder<'T1>(members.Add df, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
@@ -80,11 +87,15 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// </remarks>
     member _.FinishRaw<[<Nullable(0uy)>] 'TOutput>(fuser: F<'TOutput>) =
         Production<'TOutput>(members, FuserData.CreateRaw fuser, cpToken)
+    /// Finishes the production's construction and returns it.
+    /// This method accepts an F# function that returns the production's output.
     member x.FinishFSharp<[<Nullable(0uy)>] 'TOutput>(f: _ -> 'TOutput) = x.FinishRaw(fun _ -> f())
     /// <summary>The <c>FinishFSharp</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
     static member inline (=>) (x: ProductionBuilder, f) =
         x.FinishFSharp(f)
+    /// Finishes the production's construction and returns it.
+    /// This method accepts a delegate that returns the production's output.
     member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
         Production<'TOutput>(members, fuserData, cpToken)
@@ -92,12 +103,22 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// always returns a constant value.</summary>
     member _.FinishConstant<[<Nullable(0uy)>] 'TOutput>(v: 'TOutput) =
         Production<'TOutput>(members, FuserData.CreateConstant v, cpToken)
+    /// <summary>Returns a production builder with the given contextual precedence token.</summary>
+    /// <param name="cpToken">An object that identifies the production
+    /// when defining operator precedence and associativity.</param>
+    /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
+    /// is <see langword="null"/>.</exception>
     member _.WithPrecedence(cpToken) =
         nullCheck "cpToken" cpToken
         ProductionBuilder(members, cpToken)
-    member x.WithPrecedence(cpToken: outref<_>) =
+    /// <summary>Returns a production builder with a unique contextual precedence token
+    /// assigned to it, which is also returned by reference.</summary>
+    /// <param name="cpTokenRef">The reference that will be assigned a newly created object
+    /// which will serve as the production's contextual precedence token.</param>
+    /// <remarks>This method allows a simpler experience for C# users.</remarks>
+    member x.WithPrecedence(cpTokenRef: outref<_>) =
         let tok = box x
-        cpToken <- tok
+        cpTokenRef <- tok
         x.WithPrecedence(tok)
     interface AbstractProduction with
         member _.Members = members.ToImmutableArray()

@@ -23,12 +23,6 @@ module internal List =
             | _, _ -> ()
         impl list1 list2
 
-/// Some extra functions regarding the `ImmutableList` type
-module internal ImmutableList =
-
-    /// Adds the specified object to the end of the given immutable list.
-    let inline add (xs: ImmutableList<_>) x = xs.Add x
-
 namespace System.Collections.Generic
 
 open System.Runtime.CompilerServices

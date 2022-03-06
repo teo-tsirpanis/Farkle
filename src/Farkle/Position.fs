@@ -41,7 +41,7 @@ type Position private(line0: int, column0: int) =
     /// A `Position` that points to the start of the text.
     static member Initial = Unchecked.defaultof<Position>
 
-[<Struct>]
+[<Struct; NoComparison; NoEquality>]
 // Holds a position that can be advanced according to given characters.
 // This is a mutable struct to properly support CR line endings.
 // A problem of it is that it won't detect them in the end of input

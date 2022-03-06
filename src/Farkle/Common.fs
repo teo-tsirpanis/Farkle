@@ -8,6 +8,7 @@ namespace Farkle.Common
 open System
 open System.Collections.Generic
 open System.Reflection
+open System.Runtime.CompilerServices
 open System.Threading
 
 /// Can be set only once even when called concurrently.
@@ -70,9 +71,32 @@ module internal Reflection =
 module internal ErrorHandling =
 
     /// Raises an exception if `x` is null.
-    let inline nullCheck argName x =
-        if isNull x then
+    let inline nullCheck<'T when 'T: not struct> argName (x: 'T) =
+        if obj.ReferenceEquals(x, null) then
             nullArg argName
+
+/// Safely contains reference types that might be null, even if the language disallows them.
+[<Struct; IsReadOnly>]
+type internal MaybeNull<'T when 'T: not struct>(value: 'T) =
+    /// Whether the contained value is null.
+    member _.IsNull = obj.ReferenceEquals(value, null)
+    /// The contained value. Throws an exception if the value is null.
+    member this.Value =
+        if this.IsNull then
+            raise (NullReferenceException("The MaybeNull value was null."))
+        value
+    /// The contained value. Returns null if the value is null.
+    /// Should be paired with a call to IsNull to prevent run-time errors.
+    member _.ValueUnchecked = value
+
+/// Utilities for the MaybeNull type, to avoid specifying generic parameters.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal MaybeNull =
+    /// Creates a MaybeNull object.
+    let create x = MaybeNull<_> x
+
+    /// A MaybeNull object that definitely contains null.
+    let nullValue<'T when 'T : not struct> = Unchecked.defaultof<MaybeNull<'T>>
 
 module internal Delegate =
 

@@ -47,7 +47,10 @@
     <Compile Include="Builder/LALRConflictResolution.fs" />
     <Compile Include="Builder/LALRBuildTypes.fs" />
     <Compile Include="Builder/LALRBuild.fs" />
-    <Compile Include="Builder/DesigntimeFarkle/Delegates.fs" />
+    <Compile Include="Builder/Delegates.fs" />
+    <Compile Include="Builder/CodeGen/CodeGenTypes.fs" Condition="$(ModernFramework) == true" />
+    <Compile Include="Builder/CodeGen/DynamicPostProcessor.fs" Condition="$(ModernFramework) == true" />
+    <Compile Include="Builder/CodeGen/DynamicCodeGenInterface.fs" Condition="$(ModernFramework) == true" />
     <Compile Include="Builder/GrammarMetadata.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Primitives.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Terminals.fs" />
@@ -59,7 +62,6 @@
     <Compile Include="Builder/DesigntimeFarkle/Helpers.fs" />
     <Compile Include="Builder/DesigntimeFarkle/Operators.fs" />
     <Compile Include="Builder/Terminals.fs" />
-    <Compile Include="Builder/DynamicPostProcessor.fs" />
     <Compile Include="Builder/DesigntimeFarkleAnalyze.fs" />
     <Compile Include="Builder/PostProcessorCreator.fs" />
     <Compile Include="Builder/DesigntimeFarkleBuild.fs" />

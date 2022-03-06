@@ -24,14 +24,6 @@ type internal Comment =
     /// and ends when when the second literal is encountered.
     | BlockComment of BlockStart: string * BlockEnd: string
 
-type internal IPostProcessorFactory =
-    abstract CreatePostProcessor: transformerData: TransformerData[] * fuserData: FuserData[] *
-#if NET
-        // We tell the trimmer not to remove the type and don't care about any of its members.
-        [<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.None)>]
-#endif
-        ppGenericParam: Type -> IPostProcessor
-
 /// <summary>Additional information about a grammar to be built.</summary>
 /// <remarks>Each <see cref="DesigntimeFarkle"/> has one, but the metadata object that
 /// will be taken into consideration when building will be the one belonging
@@ -57,9 +49,11 @@ type internal GrammarMetadata = {
     /// topmost one.</remarks>
     /// <seealso cref="OperatorScope.Empty"/>
     OperatorScope: OperatorScope
+#if MODERN_FRAMEWORK
     /// An optional post-procecssor factory that will be used during building
     /// if specified. This design allows CodeGen to be trimmed away if unused.
-    PostProcessorFactory: IPostProcessorFactory MaybeNull
+    CodeGenInterface: CodeGen.IDynamicCodeGenInterface MaybeNull
+#endif
 }
 with
     /// The default metadata of a grammar.
@@ -78,7 +72,9 @@ module private GrammarMetadata =
         NoiseSymbols = ImmutableList.Empty
         Comments = ImmutableList.Empty
         OperatorScope = OperatorScope.Empty
-        PostProcessorFactory = MaybeNull.nullValue
+#if MODERN_FRAMEWORK
+        CodeGenInterface = MaybeNull.nullValue
+#endif
     }
 
     let strict = {

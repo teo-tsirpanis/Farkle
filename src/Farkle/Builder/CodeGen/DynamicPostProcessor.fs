@@ -5,7 +5,6 @@
 
 module internal Farkle.Builder.CodeGen.DynamicPostProcessor
 
-#if MODERN_FRAMEWORK
 open Farkle
 open Farkle.Builder
 open Farkle.Common
@@ -30,7 +29,7 @@ type private ReadOnlySpanOfObjectIndexer =
 [<Literal>]
 let private fldPrivateReadonly = FieldAttributes.Private ||| FieldAttributes.InitOnly
 
-let mutable generatedPostProcessorIndex = 0L
+let mutable private generatedPostProcessorIndex = 0L
 
 let private getParameterTypes (xs: ParameterInfo []) =
     xs |> Array.map (fun p -> p.ParameterType)
@@ -296,8 +295,3 @@ let create (transformers: TransformerData []) (fusers: FuserData []) ppGenericPa
 
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)
     ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> IPostProcessor
-
-let factory = {new IPostProcessorFactory with
-    member _.CreatePostProcessor(transformers, fusers, ppGenericParam) =
-        create transformers fusers ppGenericParam}
-#endif

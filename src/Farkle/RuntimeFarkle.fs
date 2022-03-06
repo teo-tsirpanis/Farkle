@@ -14,7 +14,6 @@ open System
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
-open System.Runtime.InteropServices
 open System.Text
 
 /// A type signifying an error during the parsing process.

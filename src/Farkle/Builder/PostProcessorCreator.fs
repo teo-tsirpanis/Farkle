@@ -45,9 +45,13 @@ let private createDefault<'T> dfDef =
 
 [<RequiresExplicitTypeArguments>]
 let internal create<'T> dfDef =
-    let ppFactory = dfDef.Metadata.PostProcessorFactory
-    if ppFactory.IsNull then
+#if MODERN_FRAMEWORK
+    let codeGenInterface = dfDef.Metadata.CodeGenInterface
+    if codeGenInterface.IsNull then
         createDefault<'T> dfDef
     else
         let struct(transformerData, fuserData) = extractPostProcessorData id id dfDef
-        ppFactory.ValueUnchecked.CreatePostProcessor(transformerData, fuserData, typeof<'T>) :?> _
+        codeGenInterface.ValueUnchecked.CreatePostProcessor(transformerData, fuserData, typeof<'T>) :?> _
+#else
+    createDefault<'T> dfDef
+#endif

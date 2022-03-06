@@ -32,7 +32,8 @@ let private allPredefinedSets =
     |> Seq.iter (fun prop ->
         let set = prop.GetValue(null) :?> PredefinedSet
         dict.Add(set.Name, set)
-        dict.Add(prop.Name, set))
+        if set.Name <> prop.Name then
+            dict.Add(prop.Name, set))
     dict
 
 [<Struct>]

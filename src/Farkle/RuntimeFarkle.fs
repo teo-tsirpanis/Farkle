@@ -262,19 +262,6 @@ module RuntimeFarkle =
         use cs = new CharStream(inputString)
         parseChars rf cs
 
-    /// Parses and post-processes a .NET `Stream` with the
-    /// given character encoding, which may be lazily read.
-    /// Better use `parseTextReader` instead.
-    [<Obsolete("Streams are supposed to contain binary data; not text. Use parseTextReader instead.")>]
-    let parseStream rf doLazyLoad ([<Nullable(2uy)>] encoding: Encoding) (inputStream: Stream) =
-        let encoding = if isNull encoding then Encoding.UTF8 else encoding
-        use sr = new StreamReader(inputStream, encoding, true, 4096, true)
-        use cs =
-            match doLazyLoad with
-            | true -> new CharStream(sr)
-            | false -> new CharStream(sr.ReadToEnd())
-        parseChars rf cs
-
     /// Parses and post-processes a .NET `TextReader`. Its content is lazily read.
     let parseTextReader rf (textReader: TextReader) =
         nullCheck (nameof textReader) textReader
@@ -287,16 +274,10 @@ module RuntimeFarkle =
         use s = File.OpenText(path)
         parseTextReader rf s
 
-    /// Parses and post-processes a string.
-    [<Obsolete("Use parseString.")>]
-    let parse rf x = parseString rf x
-
     let internal syntaxCheckerObj =
         unbox<IPostProcessor<obj>> PostProcessors.syntaxCheck
 
 open RuntimeFarkle
-
-#nowarn "44"
 
 type RuntimeFarkle<'TResult> with
     /// <summary>Parses and post-processes a
@@ -314,20 +295,6 @@ type RuntimeFarkle<'TResult> with
     /// what did wrong and where.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
     member this.Parse inputString = parseString this inputString
-    /// <summary>Parses and post-processes a
-    /// <see cref="System.IO.Stream"/>.</summary>
-    /// <param name="inputStream">The stream to parse.</param>
-    /// <param name="encoding">The character encoding of
-    /// the stream's data. Defaults to UTF-8.</param>
-    /// <param name="doLazyLoad">Whether to gradually read the
-    /// input instead of reading its entirety in memory.
-    /// Defaults to <see langword="true"/>.</param>
-    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    [<Obsolete("Streams are supposed to contain binary \
-data; not text. Parse a TextReader instead.")>]
-    member this.Parse(inputStream, [<Optional; Nullable(2uy)>] encoding,
-        [<Optional; DefaultParameterValue(true)>] doLazyLoad) =
-        parseStream this doLazyLoad encoding inputStream
     /// <summary>Parses and post-processes a <see cref="System.IO.TextReader"/>.</summary>
     /// <param name="textReader">The text reader to parse.</param>
     /// <returns>An F# result type containing either the

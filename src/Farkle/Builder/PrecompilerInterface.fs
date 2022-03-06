@@ -90,10 +90,6 @@ type PrecompilableDesigntimeFarkle internal(df: DesigntimeFarkle, assembly: Asse
     [<RequiresExplicitTypeArguments>]
     member internal _.CreatePostProcessor<'TOutput>() =
         PostProcessorCreator.create<'TOutput> dfDef
-    /// The `GrammarDefinition` of this designtime Farkle.
-    /// Deprecated, use `CreateGrammarDefinition` instead.
-    [<Obsolete("Call CreateGrammarDefinition() instead.")>]
-    member x.GrammarDefinition = x.CreateGrammarDefinition()
     /// The assembly from which this object was created.
     /// It must match the assembly that is being compiled.
     member _.Assembly = assembly

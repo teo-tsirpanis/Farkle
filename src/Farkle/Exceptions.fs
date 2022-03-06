@@ -52,12 +52,6 @@ type ParserApplicationException private(msg, pos: Nullable<Position>) =
     /// default to the starting position of the token that was being created.
     member _.Position = &pos
 
-[<Obsolete("Use ParserApplicationException's constructor that accepts a position.")>]
-type ParserApplicationExceptionWithPosition(msg, pos: Position) =
-    inherit ParserApplicationException(msg, pos)
-    // The position of the error.
-    member _.Position = pos
-
 namespace Farkle.IO
 
 open Farkle

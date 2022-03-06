@@ -32,16 +32,16 @@ type internal PostProcessorEventListener =
 /// Some reusable `PostProcessor`s.
 module PostProcessors =
 
-    [<CompiledName("SyntaxChecker"); Nullable(1uy, 2uy)>]
     /// This post-processor does not return anything meaningful to its consumer.
     /// It is useful for checking the syntax of a string with respect to a grammar.
+    [<CompiledName("SyntaxChecker"); Nullable(1uy, 2uy)>]
     let syntaxCheck =
         {new PostProcessor<unit> with
             member _.Transform (_, _, _) = null
             member _.Fuse (_, _) = null}
 
-    [<CompiledName("AST")>]
     /// This post-processor creates a domain-ignorant `AST`.
+    [<CompiledName("AST")>]
     let ast =
         {new PostProcessor<AST> with
             member _.Transform (sym, context, data) =

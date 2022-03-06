@@ -23,4 +23,5 @@ type ITransformerContext =
     /// can be indexed by a case-sensitive string.</summary>
     /// <remarks>The content of the object store is scoped to the
     /// <see cref="Farkle.IO.CharStream" /> the tokens come from.</remarks>
-    abstract ObjectStore: IDictionary<string,obj>
+    [<Nullable(1uy, 1uy, 2uy)>]
+    abstract ObjectStore: [<Nullable(1uy, 1uy, 2uy)>] IDictionary<string,obj>

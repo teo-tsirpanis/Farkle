@@ -16,7 +16,7 @@ open System.Diagnostics.CodeAnalysis
 /// in a way that allows it to be trimmed if not used.
 type internal IDynamicCodeGenInterface =
     /// <summary>Creates a dynamically generated
-    /// <see cref="T:Farkle.ITransformer`1/> instance.</summary>
+    /// <see cref="T:Farkle.ITransformer`1"/> instance.</summary>
     /// <param name="transformerData">The post-processor's transformer data.</param>
     /// <param name="fuserData">The post-processor's fuser data.</param>
     /// <param name="ppGenericParam">The returned instance's result type.</param>

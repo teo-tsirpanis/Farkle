@@ -21,7 +21,7 @@ module LALRParser =
     /// <param name="input">The <see cref="CharStream"/> whose characters are to be parsed.</param>
     /// <exception cref="FarkleException">An error did happen. Apart from <see cref="PostProcessorException"/>,
     /// subclasses of this exception class are caught by the runtime Farkle API.</exception>
-    let parse<[<Nullable(2uy)>] 'TResult> grammar (pp: PostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream): _ =
+    let parse<[<Nullable(2uy)>] 'TResult> grammar (pp: IPostProcessor<'TResult>) (tokenizer: Tokenizer) (input: CharStream): _ =
         let objectStack = StackNeo()
         objectStack.Push null
         let stateStack = StackNeo()

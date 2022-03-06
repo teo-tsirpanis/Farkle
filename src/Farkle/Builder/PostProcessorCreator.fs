@@ -18,7 +18,7 @@ let private createDefault<'T> (transformers: TransformerData []) (fusers: FuserD
     let transformers = transformers |> Array.map (fun x -> x.BoxedDelegate)
     let fusers = fusers |> Array.map (fun x -> x.BoxedDelegate)
     {
-        new PostProcessor<'T> with
+        new IPostProcessor<'T> with
             member _.Transform(Terminal(idx, _), context, data) =
                 transformers.[int idx].Invoke(context, data)
             member _.Fuse(prod, members) =
@@ -47,7 +47,7 @@ type private TieredPostProcessor<'T>(transformers, fusers) =
                 reraise()
 #endif
                 ()
-    interface PostProcessor<'T> with
+    interface IPostProcessor<'T> with
         member _.Transform(symbol, context, data) =
             ppImplementation.Transform(symbol, context, data)
         member _.Fuse(prod, members) =
@@ -82,7 +82,7 @@ let internal create<'T> dfDef =
     begin
     #if MODERN_FRAMEWORK
     if RuntimeFeature.IsDynamicCodeCompiled then
-        TieredPostProcessor<'T>(transformers, fusers) :> PostProcessor<_>
+        TieredPostProcessor<'T>(transformers, fusers) :> IPostProcessor<_>
     else
     #endif
         createDefault<'T> transformers fusers

@@ -53,7 +53,7 @@ type FarkleError =
 [<NoComparison; ReferenceEquality>]
 type RuntimeFarkle<[<Nullable(2uy)>] 'TResult> = internal {
     Grammar: Result<Grammar,BuildError list>
-    PostProcessor: PostProcessor<'TResult>
+    PostProcessor: IPostProcessor<'TResult>
     TokenizerFactory: TokenizerFactory
 }
 with
@@ -133,7 +133,7 @@ with
     /// <returns>A new runtime Farkle with ite post-
     /// processor changed to <paramref name="pp"/>.</returns>
     [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
-    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: PostProcessor<'TNewResult>) = {
+    member this.ChangePostProcessor<[<Nullable(0uy)>] 'TNewResult>(pp: IPostProcessor<'TNewResult>) = {
         Grammar = this.Grammar
         TokenizerFactory = this.TokenizerFactory
         PostProcessor = pp
@@ -144,7 +144,7 @@ with
         let ppOld = this.PostProcessor
         let ppNew =
             if typeof<'TResult>.IsValueType then
-                {new PostProcessor<obj> with
+                {new IPostProcessor<obj> with
                     member _.Transform(sym, context, data) =
                         ppOld.Transform(sym, context, data)
                     member _.Fuse(prod, members) =
@@ -291,7 +291,7 @@ module RuntimeFarkle =
     let parse rf x = parseString rf x
 
     let internal syntaxCheckerObj =
-        unbox<PostProcessor<obj>> PostProcessors.syntaxCheck
+        unbox<IPostProcessor<obj>> PostProcessors.syntaxCheck
 
 open RuntimeFarkle
 

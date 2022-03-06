@@ -127,7 +127,7 @@ let tests = testList "Designtime Farkle tests" [
         let f = Builder.F(fun x -> x.ToString())
         let fInt = Builder.F(fun _ -> 286)
         Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant"
-        Expect.isSome (tryUnbox<PostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
+        Expect.isSome (tryUnbox<IPostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
         Expect.isSome (tryUnbox<T<obj>> t) "Transformers are not covariant"
         Expect.isNone (tryUnbox<T<obj>> tInt) "Transformers on value types are covariant while they shouldn't"
         Expect.isSome (tryUnbox<F<obj>> f) "Fusers are not covariant"

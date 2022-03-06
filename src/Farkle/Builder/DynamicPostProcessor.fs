@@ -49,7 +49,7 @@ let private transformParameters =
     |> getParameterTypes
 
 let private fuseParameters =
-    typeof<PostProcessor<obj>>.GetMethod("Fuse").GetParameters()
+    typeof<IPostProcessor<obj>>.GetMethod("Fuse").GetParameters()
     |> getParameterTypes
 
 #if NET
@@ -236,7 +236,7 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
 
     let ppType = mainModule.DefineType("DynamicCodePostProcessor", TypeAttributes.Sealed)
     ppType.AddInterfaceImplementation(typeof<ITransformer<Grammars.Terminal>>)
-    ppType.AddInterfaceImplementation(typeof<PostProcessor<'T>>)
+    ppType.AddInterfaceImplementation(typeof<IPostProcessor<'T>>)
 
     let transformerTargets =
         transformers
@@ -295,5 +295,5 @@ let create<'T> (transformers: TransformerData []) (fusers: FuserData []) =
         RuntimeHelpers.PrepareMethod(meth.MethodHandle)
 
     let ppCtorReal = ppTypeReal.GetConstructor(ppCtorParameters)
-    ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> PostProcessor<'T>
+    ppCtorReal.Invoke([|transformerTargets; fuserTargets|]) :?> IPostProcessor<'T>
 #endif

@@ -15,7 +15,7 @@ open System.Runtime.CompilerServices
 /// <typeparam name="T">The type of the final object this
 /// post-processor will return from a grammar. This generic
 /// parameter is covariant.</typeparam>
-type PostProcessor<[<CovariantOut; Nullable(2uy)>] 'T> =
+type IPostProcessor<[<CovariantOut; Nullable(2uy)>] 'T> =
     /// <summary>Fuses the many members of a <see cref="Production"/> into one arbitrary object.</summary>
     /// <param name="production">The production whose members will be fused.</param>
     /// <param name="members">A read-only span of the production's members</param>
@@ -36,14 +36,14 @@ module PostProcessors =
     /// It is useful for checking the syntax of a string with respect to a grammar.
     [<CompiledName("SyntaxChecker"); Nullable(1uy, 2uy)>]
     let syntaxCheck =
-        {new PostProcessor<unit> with
+        {new IPostProcessor<unit> with
             member _.Transform (_, _, _) = null
             member _.Fuse (_, _) = null}
 
     /// This post-processor creates a domain-ignorant `AST`.
     [<CompiledName("AST")>]
     let ast =
-        {new PostProcessor<AST> with
+        {new IPostProcessor<AST> with
             member _.Transform (sym, context, data) =
                 AST.Content(sym, context.StartPosition, data.ToString()) |> box
             member _.Fuse (prod, members) =

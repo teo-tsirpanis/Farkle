@@ -106,6 +106,30 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     static member AddBlockComment<'T when 'T :> DesigntimeFarkle>(df: 'T, commentStart, commentEnd) =
         DesigntimeFarkle.addBlockComment commentStart commentEnd df
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it may use dynamic code generation to optimize parsing.</summary>
+    /// <remarks>This function has no effect on Farkle's .NET Standard 2.0
+    /// edition or when the runtime does not support compiled dynamic code.</remarks>
+    [<Extension>]
+    static member UseDynamicCodeGen<'T when 'T :> DesigntimeFarkle>(df: 'T) =
+        DesigntimeFarkle.useDynamicCodeGen df
+#if MODERN_FRAMEWORK
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it must use dynamic code generation to optimize parsing.</summary>
+    /// <remarks>This function is intended for testing purposes. It is unavailable on Farkle's
+    /// .NET Standard 2.0 edition and might cause failures when used on a runtime that does not
+    /// support dynamic code.</remarks>
+    [<Extension>]
+    static member ForceDynamicCodeGen<'T when 'T :> DesigntimeFarkle>(df: 'T) =
+        DesigntimeFarkle.forceDynamicCodeGen df
+#endif
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it will not use dynamic code generation to optimize parsing, undoing the
+    /// effect of <see cref="M:Farkle.Builder.DesigntimeFarkleExtensions.UseDynamicCodeGen"/>
+    /// and <see cref="M:Farkle.Builder.DesigntimeFarkleExtensions.ForceDynamicCodeGen"/>.</summary>
+    [<Extension>]
+    static member DisableDynamicCodeGen<'T when 'T :> DesigntimeFarkle>(df: 'T) =
+        DesigntimeFarkle.disableDynamicCodeGen df
     /// <summary>Creates a new <see cref="DesigntimeFarkle{TResult}"/>
     /// that transforms the output of the given one with the given delegate.</summary>
     [<Extension>]

@@ -7,6 +7,9 @@ namespace Farkle.Builder
 
 open Farkle
 open Farkle.Builder.ProductionBuilders
+#if MODERN_FRAMEWORK
+open Farkle.Builder.CodeGen
+#endif
 open Farkle.Common
 open Farkle.Collections
 open System.Collections.Generic
@@ -102,6 +105,43 @@ module DesigntimeFarkle =
         nullCheck "commentEnd" commentEnd
         addComment (BlockComment(commentStart, commentEnd)) df
 
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it may use dynamic code generation to optimize parsing.</summary>
+    /// <remarks>This function has no effect on Farkle's .NET Standard 2.0
+    /// edition or when the runtime does not support compiled dynamic code.</remarks>
+    let useDynamicCodeGen<'T when 'T :> DesigntimeFarkle> (df: 'T) =
+#if MODERN_FRAMEWORK
+        if RuntimeFeature.IsDynamicCodeCompiled then
+            let metadata = getMetadata df
+            df |> withMetadata {metadata with CodeGenInterface = MaybeNull DynamicCodeGenInterface.instance}
+        else
+#endif
+            df
+
+#if MODERN_FRAMEWORK
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it must use dynamic code generation to optimize parsing.</summary>
+    /// <remarks>This function is intended for testing purposes. It is unavailable on Farkle's
+    /// .NET Standard 2.0 edition and might cause failures when used on a runtime that does not
+    /// support dynamic code.</remarks>
+    let forceDynamicCodeGen df =
+        let metadata = getMetadata df
+        df |> withMetadata {metadata with CodeGenInterface = MaybeNull DynamicCodeGenInterface.instance}
+#endif
+
+    /// <summary>Indicates that when the given <see cref="T:Farkle.Builder.DesigntimeFarkle"/>
+    /// gets built, it will not use dynamic code generation to optimize parsing, undoing the
+    /// effect of <see cref="M:Farkle.Builder.DesigntimeFarkleModule.enableDynamicCodeGen"/>
+    /// and <see cref="M:Farkle.Builder.DesigntimeFarkleModule.forceDynamicCodeGen"/>.</summary>
+    let disableDynamicCodeGen<'T when 'T :> DesigntimeFarkle> (df: 'T) =
+#if MODERN_FRAMEWORK
+        if RuntimeFeature.IsDynamicCodeCompiled then
+            let metadata = getMetadata df
+            df |> withMetadata {metadata with CodeGenInterface = MaybeNull.nullValue}
+        else
+#endif
+            df
+
 /// F# operators to easily work with designtime Farkles and production builders.
 [<AutoOpen; CompiledName("FSharpDesigntimeFarkleOperators")>]
 module DesigntimeFarkleOperators =
@@ -156,7 +196,7 @@ module DesigntimeFarkleOperators =
     let (|||=) name members =
         match members with
         | [] -> nonterminalU name :> DesigntimeFarkle
-        | (x: ProductionBuilder) :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)
+        | x: ProductionBuilder :: xs -> Nonterminal.CreateUntyped(name, x, Array.ofList xs)
 
     /// `ProductionBuilder.FinishConstant` as an operator.
     let (=%) (pb: ProductionBuilder) (x: 'T) = pb.FinishConstant(x)

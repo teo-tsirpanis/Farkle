@@ -305,15 +305,11 @@ let tests = testList "Designtime Farkle tests" [
         let runtime =
             "Test" ||=
                 List.map (fun x -> !@ (mkTerminal x) |> asIs) testData
+            |> DesigntimeFarkle.forceDynamicCodeGen
             |> RuntimeFarkle.build
 
-        // We will run the tests many times to ensure the dynamic post-processors are created.
-        for i = 1 to 100 do
-            if i % 10 = 0 then
-                // We give some extra time for the asynchronously created dynamic post-processor to get ready.
-                Threading.Thread.Sleep(1)
-            for x, _, _ in testData do
-                Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
+        for x, _, _ in testData do
+            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
     }
 
     test "Parser application errors are correctly handled" {

@@ -73,7 +73,7 @@ namespace Farkle.Samples.CSharp
                 ProductionBuilder.Empty.FinishConstant(Json.NewObject(MapModule.Empty<string, Json>())));
             jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsIs());
 
-            Designtime = value.CaseSensitive();
+            Designtime = value.CaseSensitive().UseDynamicCodeGen();
             Runtime = Designtime.Build();
         }
     }

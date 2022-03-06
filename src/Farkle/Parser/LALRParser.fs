@@ -76,8 +76,5 @@ module internal LALRParser =
                 let syntaxError = ParseErrorType.SyntaxError(expectedSymbols, foundToken)
                 ParserError(token.Position, syntaxError) |> ParserException |> raise
 
-        match pp with
-        | :? PostProcessorEventListener as ppel -> ppel.ParsingStarted()
-        | _ -> ()
         let firstToken = tokenizer.GetNextToken(pp, input)
         impl firstToken lalrStates.[0]

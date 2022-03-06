@@ -25,15 +25,16 @@ open System.Diagnostics.CodeAnalysis
 #endif
 let private allPredefinedSets =
     let dict = Dictionary(StringComparer.OrdinalIgnoreCase)
-    let sets =
-        Assembly
-            .GetExecutingAssembly()
-            .GetType("Farkle.Builder.PredefinedSets")
-            .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
-        |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
-        |> Seq.map (fun prop -> prop.GetValue(null) :?> PredefinedSet)
-        |> Seq.map (fun x -> (x.Name, x))
-        |> Seq.iter (dict.Add)
+    Assembly
+        .GetExecutingAssembly()
+        .GetType("Farkle.Builder.PredefinedSets")
+        .GetProperties(BindingFlags.Public ||| BindingFlags.Static)
+    |> Seq.filter (fun prop -> prop.PropertyType = typeof<PredefinedSet>)
+    |> Seq.iter (fun prop ->
+        let set = prop.GetValue(null) :?> PredefinedSet
+        dict.Add(set.Name, set)
+        if set.Name <> prop.Name then
+            dict.Add(prop.Name, set))
     dict
 
 [<Struct>]

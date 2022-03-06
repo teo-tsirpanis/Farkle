@@ -18,7 +18,8 @@ open Microsoft.FSharp.Core.CompilerServices
 type internal ListBuilder<'T>() =
     let mutable builder = ListCollector<'T>()
     static let moveToListFunc = Func<ListBuilder<'T>,_>(fun xs -> xs.MoveToList())
-    member this.MoveToList() = builder.Close()
+    member _.Add x = builder.Add x
+    member _.MoveToList() = builder.Close()
     static member MoveToListDelegate = moveToListFunc
     interface IEnumerable with
         member _.GetEnumerator() = raise (NotImplementedException())
@@ -27,7 +28,7 @@ type internal ListBuilder<'T>() =
     interface ICollection<'T> with
         member _.Count = raise (NotImplementedException())
         member _.IsReadOnly = false
-        member _.Add x = builder.Add x
+        member this.Add x = this.Add x
         member _.Clear() = builder <- Unchecked.defaultof<_>
         member _.Contains _ = raise (NotImplementedException())
         member _.CopyTo(_, _) = raise (NotImplementedException())

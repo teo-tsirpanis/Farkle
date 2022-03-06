@@ -14,9 +14,7 @@ let tests = testList "List builder tests" [
     testProperty "List builders can recreate a list" (fun (xs: int list) ->
         let lb = ListBuilder()
         for x in xs do
-            (lb :> ICollection<_>).Add x
-        Expect.sequenceEqual lb xs "The list builder's contents are different"
+            lb.Add x
         let xsNew = lb.MoveToList()
-        Expect.sequenceEqual xsNew xs "The generated list's is different"
-        Expect.isEmpty lb "The list builder was not cleared after the list was created")
+        Expect.sequenceEqual xsNew xs "The generated lists are different")
 ]

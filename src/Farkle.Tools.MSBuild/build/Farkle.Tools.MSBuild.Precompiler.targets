@@ -47,7 +47,7 @@
   <Target
       Name="FarkleRunPrecompiler"
       Condition="$(FarkleEnablePrecompiler) != false"
-      DependsOnTargets="CheckForMSBuild16">
+      DependsOnTargets="FarkleCheckSupportedMSBuildVersion">
     <PropertyGroup>
       <_SkipConflictReport Condition="$(FarkleGenerateConflictReport) == false">true</_SkipConflictReport>
     </PropertyGroup>

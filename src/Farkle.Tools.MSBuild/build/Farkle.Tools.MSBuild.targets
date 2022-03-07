@@ -1,12 +1,11 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project TreatAsLocalProperty="MSBuildMajorVersion">
   <PropertyGroup>
     <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
   </PropertyGroup>
 
-  <Target Name="CheckForMSBuild16">
+  <Target Name="FarkleCheckSupportedMSBuildVersion">
     <Error
-      Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 16)"
-      Text="Farkle.Tools.MSBuild is only supported on MSBuild 16 and above. Current version is $(MsBuildMajorVersion)."/>
+      Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 17)"
+      Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 6 SDK."/>
   </Target>
-
 </Project>

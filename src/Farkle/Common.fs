@@ -60,6 +60,17 @@ module internal Result =
     let returnOrFail result = tee id (failwithf "%O") result
 
 module internal Reflection =
+
+    [<RequiresExplicitTypeArguments>]
+    let inline isReferenceOrContainsReferences<'T> =
+#if MODERN_FRAMEWORK
+        RuntimeHelpers.IsReferenceOrContainsReferences<'T>()
+#else
+        // On .NET Standard it might return false positives but that's fine.
+        // We will use this value only for optimizations.
+        not typeof<'T>.IsPrimitive
+#endif
+
     let getAssemblyInformationalVersion (asm: Assembly) =
         let versionString =
             asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion

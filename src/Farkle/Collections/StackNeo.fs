@@ -68,7 +68,11 @@ type internal StackNeo<'T>() =
     member _.PopMany itemsToPop =
         if uint32 itemsToPop > uint32 size then
             throwPopMany itemsToPop
-        size <- size - itemsToPop
+        let newSize = size - itemsToPop
+        // Allow any popped references to be garbage collected.
+        if Reflection.isReferenceOrContainsReferences<'T> then
+            Span(items, newSize, itemsToPop).Clear()
+        size <- newSize
 
     /// Gets the topmost item from the stack.
     member _.Peek() =

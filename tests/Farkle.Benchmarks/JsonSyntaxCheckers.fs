@@ -136,6 +136,6 @@ module Chiron =
     let private arrayP =
         beginArrayP .>> skipSepBy jsonP valueSeparatorP .>> endArrayP
 
-    jsonR := wspP >>. choice [arrayP; boolP; nullP; numberP; objectP; stringP]
+    jsonR.Value <- wspP >>. choice [arrayP; boolP; nullP; numberP; objectP; stringP]
 
     let jsonParser = preturn (Chiron.Json.Null ()) .>> jsonP

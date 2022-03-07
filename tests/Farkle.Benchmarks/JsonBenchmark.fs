@@ -71,7 +71,7 @@ type JsonBenchmark() =
             if this.SyntaxCheck then
                 JsonSyntaxCheckers.Chiron.jsonParser
             else
-                !jsonR
+                jsonR.Value
         runParserOnString parser () this.FileName jsonText
 
     [<Benchmark>]

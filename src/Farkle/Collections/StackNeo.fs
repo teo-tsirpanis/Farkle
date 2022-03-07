@@ -5,8 +5,34 @@
 
 namespace Farkle.Collections
 
+open Farkle.Common
 open System
 open System.Diagnostics
+
+[<AutoOpen>]
+module private StackNeoThrowHelpers =
+
+    let throwEmptyStack() =
+        invalidOp "The stack is empty."
+        |> ignore
+
+    let throwPopMany (itemsToPop: int) =
+        ArgumentOutOfRangeException(nameof itemsToPop, itemsToPop,
+            "Invalid number of items to pop.")
+        |> raise
+        |> ignore
+
+    let throwPeek (indexFromTheEnd: int) =
+        ArgumentOutOfRangeException(nameof indexFromTheEnd, indexFromTheEnd,
+            "Cannot peek at the item at this index.")
+        |> raise
+        |> ignore
+
+    let throwPeekMany (numberOfItems: int) =
+        ArgumentOutOfRangeException(nameof numberOfItems, numberOfItems,
+            "Cannot peek this number of items.")
+        |> raise
+        |> ignore
 
 /// A stack type that supports efficiently popping and peeking many items at once.
 [<DebuggerDisplay("Count = {Count}")>]
@@ -40,41 +66,25 @@ type internal StackNeo<'T>() =
     /// If more items than those on the stack are requested
     /// to be popped, the stack will become empty.
     member _.PopMany itemsToPop =
-        if itemsToPop >= 0 then
-            size <- Math.Max(size - itemsToPop, 0)
-        else
-            ArgumentOutOfRangeException(nameof itemsToPop, itemsToPop,
-                "Cannot pop a negative amount of items from the stack.")
-            |> raise
+        if uint32 itemsToPop > uint32 size then
+            throwPopMany itemsToPop
+        size <- size - itemsToPop
 
     /// Gets the topmost item from the stack.
     member _.Peek() =
-        if size <> 0 then
-            items.[size - 1]
-        else
-            invalidOp "The stack is empty."
+        if size = 0 then
+            throwEmptyStack()
+        items.[size - 1]
 
     /// Gets the `index`th item from the top of the stack.
     member _.Peek indexFromTheEnd =
-        if indexFromTheEnd >= 0 && indexFromTheEnd < size then
-            items.[size - 1 - indexFromTheEnd]
-        else
-            ArgumentOutOfRangeException(nameof indexFromTheEnd, indexFromTheEnd,
-                "There are not enough items on the stack.")
-            |> raise
+        if uint32 indexFromTheEnd >= uint32 size then
+            throwPeek indexFromTheEnd
+        items.[size - 1 - indexFromTheEnd]
 
     /// Gets the top items from the stack, ordered by
     /// the time they were added in ascending order.
-    member _.PeekMany itemsToGet =
-        let count =
-#if MODERN_FRAMEWORK
-            Math.Clamp(itemsToGet, 0, size)
-#else
-            if itemsToGet < 0 then
-                0
-            elif itemsToGet > size then
-                size
-            else
-                itemsToGet
-#endif
-        ReadOnlySpan(items, size - count, count)
+    member _.PeekMany numberOfItems =
+        if uint32 numberOfItems > uint32 size then
+            throwPeekMany numberOfItems
+        ReadOnlySpan(items, size - numberOfItems, numberOfItems)

@@ -11,7 +11,7 @@ open Farkle.IO
 open System
 
 /// A value type representing the result of a DFA tokenizer invocation.
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 type private DFAResult private(symbol: DFASymbol, count: int) =
     static let eof = DFAResult(Unchecked.defaultof<_>, -1)
     /// Creates a `DFAResult` from the last accepted symbol
@@ -36,7 +36,7 @@ type private DFAResult private(symbol: DFASymbol, count: int) =
     /// The offset of the last character the DFA tokenizer reached.
     member _.LastCharacterOffset = count - 1
 
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 type private DefaultTransformerHandler(term: Terminal, postProcessor: IPostProcessor) =
     interface ITransformerHandler with
         member _.Transform(context, data) = postProcessor.Transform(term, context, data)

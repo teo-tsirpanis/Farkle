@@ -21,7 +21,7 @@ open System.Threading
 /// This type is a mutable value type. It must be passed
 /// by reference and not stored in a readonly field or
 /// non-mutable let-bound value.
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 type internal Latch = private {
     mutable IsSet: int
 }

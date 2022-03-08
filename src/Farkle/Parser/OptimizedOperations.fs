@@ -13,7 +13,7 @@ open System.Diagnostics
 open System.Runtime.CompilerServices
 open System.Text
 
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 /// An value type representing a DFA state or its absence.
 /// It is returned from optimized operations.
 type internal DFAStateTag = private DFAStateTag of int
@@ -35,7 +35,7 @@ with
     /// Whether this `DFAStateTag` represents a failed operation.
     member x.IsError = x.Value < 0
 
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 /// Describes which characters to search for to find the
 /// next decision point of a character group. A decision
 /// point is a place in the input text where either a

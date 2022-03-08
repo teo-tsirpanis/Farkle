@@ -36,7 +36,7 @@ let private allPredefinedSets =
             dict.Add(prop.Name, set))
     dict
 
-[<Struct>]
+[<Struct; NoEquality; NoComparison>]
 type private ParseCharSetState =
     | Empty
     | HasChar of previousCharacter: char

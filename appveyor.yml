@@ -1,4 +1,4 @@
-version: 6.3.2.{build}
+version: 6.4.0.{build}
 image:
   - Visual Studio 2022
   - Ubuntu2004

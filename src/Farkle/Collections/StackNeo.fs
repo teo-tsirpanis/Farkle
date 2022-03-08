@@ -82,6 +82,19 @@ type internal StackNeo<'T> =
         this.items.[size] <- x
         this.size <- size + 1
 
+    member this.Pop() =
+        let size = this.size
+        if size = 0 then
+            throwEmptyStack()
+
+        let resultRef = &this.items.[size - 1]
+        this.size <- size - 1
+
+        let result = resultRef
+        if Reflection.isReferenceOrContainsReferences<'T> then
+            resultRef <- Unchecked.defaultof<_>
+        result
+
     /// Pops a specified amount of items from the stack.
     /// If more items than those on the stack are requested
     /// to be popped, the stack will become empty.

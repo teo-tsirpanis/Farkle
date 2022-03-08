@@ -6,6 +6,8 @@
 namespace Farkle.Parser
 
 open Farkle
+open Farkle.Collections
+open Farkle.Common
 open Farkle.Grammars
 open Farkle.IO
 open System
@@ -67,6 +69,12 @@ type DefaultTokenizer(grammar: Grammar) =
     let groups = grammar.Groups
     let oops = OptimizedOperations.Create grammar
 
+    static let fail (input: CharStream) msg =
+        ParserError(input.CurrentPosition, msg)
+        |> ParserException
+        |> raise
+        |> ignore
+
     // Unfortunately we can't have ref structs on inner functions yet.
     let rec tokenizeDFA_impl (input: CharStream) ofs ignoreErrors currState lastAcceptOfs lastAcceptSym (span: ReadOnlySpan<_>) =
         if ofs = span.Length then
@@ -96,68 +104,76 @@ type DefaultTokenizer(grammar: Grammar) =
         else
             DFAResult.EOF
 
+    let rec groupLoop_impl (input: CharStream) isNoiseGroup (groupStack: uint32 StackNeo byref) =
+        if groupStack.Count <> 0 then
+            let g = groupStack.Peek()
+            let currentGroup = grammar.Groups.[int g]
+            // When inside token groups, we ignore invalid characters at
+            // the beginning to avoid discarding just one and repeat the loop.
+            // We limit this optimization to those with closed ending mode because
+            // we cannot accurately determine when the final invalid characters end
+            // and the group ending starts. It would be easy because group ends are
+            // literal strings (except on line groups which are character groups)
+            // but that's an assumption we'd better not be based on.
+            let ignoreLeadingErrors =
+                // Seriously we cannot compare two structs without boxing?
+                // The equality operator calls an FSharp.Core intrinsic that
+                // boxes them, and casting to IEquatable boxes the structs
+                // instead of using constrained. At least I hope the JIT optimizes
+                // the second case's box away.
+                (currentGroup.AdvanceMode :> IEquatable<_>).Equals AdvanceMode.Token
+                && (currentGroup.EndingMode :> IEquatable<_>).Equals EndingMode.Closed
+            let dfaResult = tokenizeDFA ignoreLeadingErrors input
+            if dfaResult.ReachedEOF then
+                // Input ended but the current group can be ended by a newline.
+                if currentGroup.IsEndedByNewline then
+                    groupStack.Pop() |> ignore
+                    groupLoop_impl input isNoiseGroup &groupStack
+                // Input ended unexpectedly.
+                else
+                    fail input <| ParseErrorType.UnexpectedEndOfInputInGroup currentGroup
+            else
+                let charCount = dfaResult.CharacterCount
+                // A new group begins that is allowed to nest into this one.
+                match dfaResult.FoundToken, dfaResult.Symbol with
+                | true, Choice3Of4(GroupStart(_, tokGroupIdx))
+                    when currentGroup.Nesting.Contains tokGroupIdx ->
+                        input.AdvanceBy(charCount, isNoiseGroup)
+                        groupStack.Push tokGroupIdx
+                        groupLoop_impl input isNoiseGroup &groupStack
+                // A symbol is found that ends the current group.
+                | true, sym when currentGroup.IsEndedBy sym ->
+                    match currentGroup.EndingMode with
+                    | EndingMode.Closed -> input.AdvanceBy(charCount, isNoiseGroup)
+                    | EndingMode.Open -> ()
+                    groupStack.Pop() |> ignore
+                    groupLoop_impl input isNoiseGroup &groupStack
+                // The existing group is continuing.
+                | _ ->
+                    match currentGroup.AdvanceMode with
+                    | AdvanceMode.Token -> input.AdvanceBy(charCount, isNoiseGroup)
+                    | AdvanceMode.Character ->
+                        // We advance by one character to avoid getting stuck; if a decision
+                        // point immediately followed, it would have been already handled.
+                        input.AdvanceBy(1, isNoiseGroup)
+                        let charBuffer = input.CharacterBuffer
+                        let decisionPointIndex = oops.IndexOfCharacterGroupDecisionPoint(charBuffer, int g)
+                        if decisionPointIndex = -1 then
+                            input.AdvanceBy(charBuffer.Length, isNoiseGroup)
+                        elif decisionPointIndex <> 0 then
+                            input.AdvanceBy(decisionPointIndex, isNoiseGroup)
+                    groupLoop_impl input isNoiseGroup &groupStack
+
+    let groupLoop input isNoiseSymbol initialGroup =
+        let mutable groupStack = StackNeo(Stack.allocSpan 4)
+        groupStack.Push initialGroup
+        try
+            groupLoop_impl input isNoiseSymbol &groupStack
+        finally
+            groupStack.Dispose()
+
     /// <inheritdoc/>
     override _.GetNextToken(transformer, input) =
-        // By returning unit the compiler does
-        // not translate it to an FSharpTypeFunc.
-        let fail msg = ParserError(input.CurrentPosition, msg) |> ParserException |> raise |> ignore
-        let rec groupLoop isNoiseGroup groupStack =
-            match groupStack with
-            | [] -> ()
-            | g :: gs ->
-                let currentGroup = grammar.Groups.[int g]
-                // When inside token groups, we ignore invalid characters at
-                // the beginning to avoid discarding just one and repeat the loop.
-                // We limit this optimization to those with closed ending mode because
-                // we cannot accurately determine when the final invalid characters end
-                // and the group ending starts. It would be easy because group ends are
-                // literal strings (except on line groups which are character groups)
-                // but that's an assumption we'd better not be based on.
-                let ignoreLeadingErrors =
-                    // Seriously we cannot compare two structs without boxing?
-                    // The equality operator calls an FSharp.Core intrinsic that
-                    // boxes them, and casting to IEquatable boxes the structs
-                    // instead of using constrained. At least I hope the JIT optimizes
-                    // the second case's box away.
-                    (currentGroup.AdvanceMode :> IEquatable<_>).Equals AdvanceMode.Token
-                    && (currentGroup.EndingMode :> IEquatable<_>).Equals EndingMode.Closed
-                let dfaResult = tokenizeDFA ignoreLeadingErrors input
-                if dfaResult.ReachedEOF then
-                    // Input ended but the current group can be ended by a newline.
-                    if currentGroup.IsEndedByNewline then
-                        groupLoop isNoiseGroup gs
-                    // Input ended unexpectedly.
-                    else
-                        fail <| ParseErrorType.UnexpectedEndOfInputInGroup currentGroup
-                else
-                    let charCount = dfaResult.CharacterCount
-                    // A new group begins that is allowed to nest into this one.
-                    match dfaResult.FoundToken, dfaResult.Symbol with
-                    | true, Choice3Of4(GroupStart(_, tokGroupIdx))
-                        when currentGroup.Nesting.Contains tokGroupIdx ->
-                            input.AdvanceBy(charCount, isNoiseGroup)
-                            groupLoop isNoiseGroup (tokGroupIdx :: groupStack)
-                    // A symbol is found that ends the current group.
-                    | true, sym when currentGroup.IsEndedBy sym ->
-                        match currentGroup.EndingMode with
-                        | EndingMode.Closed -> input.AdvanceBy(charCount, isNoiseGroup)
-                        | EndingMode.Open -> ()
-                        groupLoop isNoiseGroup gs
-                    // The existing group is continuing.
-                    | _ ->
-                        match currentGroup.AdvanceMode with
-                        | AdvanceMode.Token -> input.AdvanceBy(charCount, isNoiseGroup)
-                        | AdvanceMode.Character ->
-                            // We advance by one character to avoid getting stuck; if a decision
-                            // point immediately followed, it would have been already handled.
-                            input.AdvanceBy(1, isNoiseGroup)
-                            let charBuffer = input.CharacterBuffer
-                            let decisionPointIndex = oops.IndexOfCharacterGroupDecisionPoint(charBuffer, int g)
-                            if decisionPointIndex = -1 then
-                                input.AdvanceBy(charBuffer.Length, isNoiseGroup)
-                            elif decisionPointIndex <> 0 then
-                                input.AdvanceBy(decisionPointIndex, isNoiseGroup)
-                        groupLoop isNoiseGroup groupStack
         let rec tokenLoop() =
             let newToken (term: Terminal) =
                 let pos = input.TokenStartPosition
@@ -197,7 +213,7 @@ type DefaultTokenizer(grammar: Grammar) =
                         let g = groups.[int tokGroupIdx]
                         let isNoiseGroup = not g.IsTerminal
                         input.AdvanceBy(charCount, isNoiseGroup)
-                        groupLoop isNoiseGroup [tokGroupIdx]
+                        groupLoop input isNoiseGroup tokGroupIdx
                         match g.ContainerSymbol with
                         // The group is a terminal. We return it.
                         | Choice1Of2 term -> newToken term
@@ -205,7 +221,7 @@ type DefaultTokenizer(grammar: Grammar) =
                         | Choice2Of2 _ -> tokenLoop()
                     // A group end symbol is encountered but outside of any group.
                     | Choice4Of4 groupEnd ->
-                        fail <| ParseErrorType.UnexpectedGroupEnd groupEnd
+                        fail input <| ParseErrorType.UnexpectedGroupEnd groupEnd
                         // This line will not be executed.
                         Token.CreateEOF input.CurrentPosition
                 // We found an unrecognized symbol while being outside a group. This is an error.

@@ -16,6 +16,9 @@ open System
 #if NETSTANDARD2_0
 [<AttributeUsage(AttributeTargets.All, Inherited = false)>]
 type internal IsReadOnlyAttribute() = inherit Attribute()
+
+[<AttributeUsage(AttributeTargets.Struct, Inherited = false)>]
+type internal IsByRefLikeAttribute() = inherit Attribute()
 #endif
 
 // The nullability annotation metadata syntax is documented in

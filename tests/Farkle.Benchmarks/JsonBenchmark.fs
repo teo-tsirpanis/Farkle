@@ -14,7 +14,7 @@ open System
 open System.IO
 open System.Text
 
-[<RankColumn>]
+[<RankColumn; MemoryDiagnoser>]
 type JsonBenchmark() =
 
     let mutable jsonBytes = Array.Empty()

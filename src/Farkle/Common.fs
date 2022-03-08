@@ -5,11 +5,17 @@
 
 namespace Farkle.Common
 
+open Microsoft.FSharp.NativeInterop
 open System
 open System.Collections.Generic
 open System.Reflection
 open System.Runtime.CompilerServices
+#if MODERN_FRAMEWORK
+open System.Runtime.InteropServices
+#endif
 open System.Threading
+
+#nowarn "9"
 
 /// Can be set only once even when called concurrently.
 /// This type is a mutable value type. It must be passed
@@ -91,13 +97,15 @@ module internal ErrorHandling =
 type internal MaybeNull<'T when 'T: not struct>(value: 'T) =
     /// Whether the contained value is null.
     member _.IsNull = obj.ReferenceEquals(value, null)
+    /// Whether the contained value is not null.
+    member _.HasValue = obj.ReferenceEquals(value, null) |> not
     /// The contained value. Throws an exception if the value is null.
     member this.Value =
         if this.IsNull then
             raise (NullReferenceException("The MaybeNull value was null."))
         value
     /// The contained value. Returns null if the value is null.
-    /// Should be paired with a call to IsNull to prevent run-time errors.
+    /// Should be paired with a call to IsNull or HasValue to prevent run-time errors.
     member _.ValueUnchecked = value
 
 /// Utilities for the MaybeNull type, to avoid specifying generic parameters.
@@ -156,3 +164,25 @@ module internal FallbackStringComparers =
     let caseInsensitive = create StringComparer.OrdinalIgnoreCase
 
     let get isCaseSensitive = if isCaseSensitive then caseSensitive else caseInsensitive
+
+module internal Stack =
+
+    [<NoDynamicInvocation>]
+    let inline allocSpan<'T when 'T: unmanaged> size =
+        let ptr = NativePtr.stackalloc<'T> size
+        Span<'T>(NativePtr.toVoidPtr ptr, size)
+
+#if MODERN_FRAMEWORK
+    [<Struct; StructLayout(LayoutKind.Sequential); NoEquality; NoComparison>]
+    type Four<'T> =
+        val mutable Item1: 'T
+        val mutable Item2: 'T
+        val mutable Item3: 'T
+        val mutable Item4: 'T
+
+    type SixtyFour<'T> = 'T Four Four Four
+
+    [<MethodImpl(MethodImplOptions.AggressiveInlining)>]
+    let inline createSixtyFourSpan(sixtyFour: 'T SixtyFour byref) =
+        MemoryMarshal.CreateSpan(&sixtyFour.Item1.Item1.Item1, 64)
+#endif

@@ -114,7 +114,7 @@ With your designtime Farkles being ready to be precompiled, it's time to prepare
 </ItemGroup>
 ```
 
-> __Important:__ The packages `Farkle` and `Farkle.Tools.MSBuild` must be at the same version.
+> __Important:__ The packages `Farkle` and `Farkle.Tools.MSBuild` must be at the same version. You will get a warning since Farkle 6.4.0 if they are not.
 
 If you build your program now, you should get a message that your designtime Farkles' grammars got precompiled. Hooray! Your app's startup time will be now much faster.
 
@@ -188,13 +188,9 @@ And last but not least, until version 6.3.0, the precompiler would not work when
 dotnet tool install Farkle.Tools
 ```
 
-The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Since Farkle 6.4.0, you will be warned if they differ.
+The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Otherwise errors are very likely to occur. The tool must also be installed _locally_, otherwise Farkle will not see it.
 
-The following limitations apply when using the precompiler worker:
-
-* The project must target a framework compatible with .NET Core 3.1. For example building a .NET 5 project that uses the precompiler worker is not supported.
-* The .NET Core 3.1 SDK must be installed, even if a newer version of the SDK is used for the rest of the project.
-* `Farkle.Tools` must be installed as a .NET _local tool_. Farkle will not see it if it is installed as a .NET global tool.
+Due to limitations arising from the precompiler worker's out-of-process execution model, it can only precompile assemblies compatible with `Farkle.Tools.MSBuild`'s supported framework. This framework is generally the latest LTS version of .NET (.NET 6 since Farkle 6.4.0, .NET Core 3.1 prior to that). For example, when .NET 7 gets released, the precompiler worker will not be able to precompile assemblies targeting it, until the release of .NET 8. In addition, the corresponding .NET SDK version must be installed, even if a newer version of the SDK is used for the rest of the project.
 
 The recommended way to build an app that uses the precompiler is through .NET SDK commands like `dotnet build`, `dotnet run` and `dotnet msbuild`. It is faster, more stable and more supported. Visual Studio for Windows cannot run MSBuild on .NET. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed but Microsoft responded that it won't be implemented anytime soon. Readers of this guide that are affected are encouraged to upvote the above suggestion. When not using Visual Studio for Windows, Farkle will raise a warning suggesting you to move to the .NET SDK.
 

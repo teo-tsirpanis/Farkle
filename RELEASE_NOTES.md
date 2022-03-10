@@ -1,5 +1,13 @@
 #### 7.0.0-preview.1
 
+#### 6.4.0 - 11-03-2022
+* __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.
+* Farkle supports precompiling .NET 6 assemblies from Visual Studio.
+* Fixed random compiler errors when using the F# production builder operators `.>>` and `.>>.`.
+* The precompiler supports writing both a conflict report and detailed MSBuild errors via the `FarklePrecompilerErrorMode` property. Its allowed values are `ReportOnly` (default), `ErrorsOnly` and `Both`.
+* String regexes support specifying predefined sets by their property name as well. For example, until now you could match all characters in the `Greek Extended` character set by specifying `\p{Greek Extended}`. From now on, `\p{GreekExtended}` will work too.
+* Various bug fixes, particularly in the precompiler.
+
 #### 6.3.2 - 31-10-2021
 * Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows.
 

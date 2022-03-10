@@ -89,7 +89,7 @@ worker on input file at {0} and output file at {1}.", inputPath, outputPath)
                 (fun message -> this.Log.LogWarning(null, null, null, this.AssemblyPath, 0, 0, 0, 0, message, Array.Empty()))
                 this.SkipConflictReport this.ErrorMode
 
-        let workerInput: PrecompilerWorkerInput =
+        let workerInput =
             createInput this.BuildEngine this.AssemblyPath weaverConfig errorMode
         let inputPath = Path.ChangeExtension(Path.GetTempFileName(), ".json")
         let outputPath = Path.ChangeExtension(inputPath, ".output.json")
@@ -107,7 +107,12 @@ worker on input file at {0} and output file at {1}.", inputPath, outputPath)
             ev.LogTo this.BuildEngine
         this.Log.LogMessage(MessageImportance.Low, "Ending precompiler worker logs.")
 
-        return not this.Log.HasLoggedErrors
+        // We can't use this.Log.HasLoggedErrors, because we don't use it to log the errors. 
+        let workerHasErrors =
+            workerOutput.Messages
+            |> Array.exists (fun x -> x.Severity = LogEventSeverity.Error)
+
+        return not workerHasErrors
     }
 
     override this.Execute() =

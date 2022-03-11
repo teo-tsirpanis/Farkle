@@ -149,6 +149,11 @@ Target.create "CheckForReleaseCredentials" (fun _ ->
     githubToken.Value |> ignore
     nugetKey.Value |> ignore)
 
+Target.description "Checks whether the release notes entry has a date"
+Target.create "CheckForReleaseNotesDate" (fun _ ->
+    if releaseInfo.Date.IsNone then
+        failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion)
+
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
@@ -495,6 +500,7 @@ Target.create "Release" ignore
 "Benchmark" =?> ("CI", shouldCIBenchmark)
 
 "CheckForReleaseCredentials"
+    ==> "CheckForReleaseNotesDate"
     ==> "GitHubRelease"
     ==> "Release"
 

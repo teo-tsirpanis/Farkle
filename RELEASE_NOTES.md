@@ -1,4 +1,4 @@
-#### 6.4.0
+#### 6.4.0 - 11-03-2022
 * __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.
 * Farkle supports precompiling .NET 6 assemblies from Visual Studio.
 * Fixed random compiler errors when using the F# production builder operators `.>>` and `.>>.`.

@@ -8,7 +8,6 @@ namespace Farkle.Builder
 open Farkle.Common
 open Farkle.Grammars
 open System
-open System.Diagnostics
 
 /// <summary>The base, untyped interface of <see cref="Terminal{T}"/>.</summary>
 /// <seealso cref="Terminal{T}"/>
@@ -18,17 +17,6 @@ type internal ITerminal =
     abstract Regex: Regex
     /// The transformer to process the characters of this terminal.
     abstract Transformer: TransformerData
-    /// A proxy object that represents a terminal's identity.
-    /// Two terminals are considered the same if and only if
-    /// their identity objects are the same.
-    abstract IdentityObject: obj
-
-// Terminals are stored in the conflict resolver as identity keys.
-// Using the typed terminal itself as a key is not a good idea because
-// the transformer might inhibit unloadability. So we use this dummy object.
-[<AllowNullLiteral; DebuggerDisplay("{Name,nq}"); Sealed>]
-type internal TerminalIdentityObject(name: string) =
-    member _.Name = name
 
 /// <summary>A terminal symbol.</summary>
 /// <typeparam name="T">The type of the objects this terminal generates.</typeparam>
@@ -37,11 +25,9 @@ type internal Terminal<'T>(name, regex, fTransform: T<'T>) =
     do nullCheck (nameof name) name
     do nullCheck (nameof fTransform) fTransform
     let tData = TransformerData.Create fTransform
-    let mutable identityKey = TerminalIdentityObject name
     interface ITerminal with
         member _.Regex = regex
         member _.Transformer = tData
-        member _.IdentityObject = identityKey
     interface DesigntimeFarkle with
         member _.Name = name
     interface DesigntimeFarkle<'T>

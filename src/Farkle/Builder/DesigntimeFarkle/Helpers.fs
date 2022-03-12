@@ -32,10 +32,7 @@ type Terminal =
         {new ITerminal with
             member _.Name = name
             member _.Regex = regex
-            member _.Transformer = TransformerData.Null
-            // This type does not have a transformer and won't
-            // inhibit unloadability in the precompiler.
-            member x.IdentityObject = x} :> DesigntimeFarkle
+            member _.Transformer = TransformerData.Null} :> DesigntimeFarkle
     /// <summary>Creates a virtual terminal. This method is
     /// intended for use in advanced scenarios.</summary>
     /// <param name="name">The virtual terminal's name</param>

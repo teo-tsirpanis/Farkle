@@ -182,7 +182,6 @@ You can learn how to diagnose it in https://docs.microsoft.com/en-us/dotnet/stan
             impl (remainingTries - 1u)
     impl numberOfTries
 
-[<MethodImpl(MethodImplOptions.NoInlining)>]
 let private precompileAssemblyFromPathIsolated ct log references path =
     let alc = PrecompilerContext(path, references, log)
     let wr = WeakReference(alc)
@@ -249,11 +248,12 @@ let private handleGrammarErrors (log: ILogger) fCreateConflictReport (errorMode:
         fCreateConflictReport report
     | _ -> ()
 
-let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references path =
+[<MethodImpl(MethodImplOptions.NoInlining)>]
+let private precompileAssemblyFromPathImpl ct log fCreateConflictReport errorMode references path =
     let results, alcWeakReference = precompileAssemblyFromPathIsolated ct log references path
-    ensureWeakReferenceIsCollected log alcWeakReference 5u
 
     checkForDuplicates log results
+
     results
     |> List.choose (fun x ->
         match x with
@@ -265,7 +265,15 @@ let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references
         | DiscoveringFailed(typeName, fieldName, e) ->
             log.Error("Exception thrown while getting the value of field {TypeName:l}.{FieldName:l}:", typeName, fieldName)
             log.Error("{Exception:l}", e)
-            None)
+            None), alcWeakReference
+
+
+let precompileAssemblyFromPath ct log fCreateConflictReport errorMode references path =
+    let grammars, alcWeakReference =
+        precompileAssemblyFromPathImpl ct log fCreateConflictReport errorMode references path
+    ensureWeakReferenceIsCollected log alcWeakReference 5u
+
+    grammars
 
 let weaveGrammars (asm: AssemblyDefinition) (precompiledGrammars: _ list) =
     use stream = new MemoryStream()

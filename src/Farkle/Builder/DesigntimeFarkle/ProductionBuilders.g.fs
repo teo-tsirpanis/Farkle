@@ -17,9 +17,9 @@ open System.Runtime.CompilerServices
 module private ProductionBuilderHelpers =
     let inline listAdd (list: ImmutableList<_>) (df: DesigntimeFarkle) = list.Add df
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 16 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, idx16, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -130,9 +130,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 15 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -250,9 +250,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 14 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -367,9 +367,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 13 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -481,9 +481,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 12 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -592,9 +592,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 11 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -700,9 +700,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 10 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -805,9 +805,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 9 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -907,9 +907,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 8 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1006,9 +1006,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 7 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1102,9 +1102,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 6 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx2, idx3, idx4, idx5, idx6, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1195,9 +1195,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 5 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, idx3, idx4, idx5, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1287,9 +1287,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 4 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, idx4, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1376,9 +1376,9 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3, 'T4>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 3 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1462,9 +1462,9 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2, 'T3>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 2 significant members.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
@@ -1545,9 +1545,9 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     static member inline (=>) (x: ProductionBuilder<'T1, 'T2>, f) =
         x.FinishFSharp(f)
 
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with 1 significant member.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.

@@ -36,6 +36,7 @@ module DesigntimeFarkle =
         | dfUnwrapped -> box dfUnwrapped
 
     let private withMetadataEx<'T when 'T :> DesigntimeFarkle> name metadata (df: 'T) : 'T =
+        nullCheck (nameof df) (box df)
         match box df with
         | :? IExposedAsDesigntimeFarkleChild as x -> x.WithMetadataSameType name metadata |> unbox
         | _ when typeof<'T> = typeof<DesigntimeFarkle> ->

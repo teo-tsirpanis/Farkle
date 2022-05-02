@@ -7,7 +7,6 @@ namespace Farkle.Builder
 
 open Farkle.Builder.ProductionBuilders
 open Farkle.Common
-open Farkle.Collections
 open System
 open System.ComponentModel
 open System.Collections.Immutable
@@ -58,7 +57,9 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     static member Empty = empty
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
-    member _.Append(sym) = ProductionBuilder(members.Add sym, cpToken)
+    member _.Append(sym: DesigntimeFarkle) =
+        nullCheck (nameof sym) sym
+        ProductionBuilder(members.Add sym, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
     static member inline (.>>) (x: ProductionBuilder, df: DesigntimeFarkle) =
@@ -74,6 +75,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// designtime Farkle added to the end as a significant member.
     /// Up to sixteen significant members can be added to a production builder.
     member _.Extend<[<Nullable(0uy)>] 'T1>(df: DesigntimeFarkle<'T1>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1>(members.Add df, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -86,6 +88,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     ///     a production with many significant members.</para>
     /// </remarks>
     member _.FinishRaw<[<Nullable(0uy)>] 'TOutput>(fuser: F<'TOutput>) =
+        nullCheck (nameof fuser) fuser
         Production<'TOutput>(members, FuserData.CreateRaw fuser, cpToken)
     /// Finishes the production's construction and returns it.
     /// This method accepts an F# function that returns the production's output.
@@ -97,6 +100,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// Finishes the production's construction and returns it.
     /// This method accepts a delegate that returns the production's output.
     member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
+        nullCheck (nameof f) f
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
         Production<'TOutput>(members, fuserData, cpToken)
     /// <summary>Creates a <see cref="Production{T}"/> that

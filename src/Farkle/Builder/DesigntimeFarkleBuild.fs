@@ -13,6 +13,7 @@ open System
 open System.Collections.Generic
 open System.Collections.Immutable
 open System.Reflection
+open System.Runtime.CompilerServices
 open System.Threading
 
 /// An object containing the symbols of a grammar,
@@ -369,7 +370,7 @@ module DesigntimeFarkleBuild =
     /// module) will always build a new grammar, even if a precompiled one is available.
     /// This function also allows the build to be cancelled and further configured.
     [<CompiledName("BuildEx")>]
-    let buildEx ct options (df: DesigntimeFarkle<'TOutput>) =
+    let buildEx<[<Nullable(0uy)>] 'TOutput> ct options (df: DesigntimeFarkle<'TOutput>) =
         let myWonderfulDesigntimeFarkleDefinition = DesigntimeFarkleAnalyze.analyze ct df
         let myLovelyGrammarDefinition = createGrammarDefinitionEx myWonderfulDesigntimeFarkleDefinition
         let myFavoritePostProcessor = PostProcessorCreator.create<'TOutput> myWonderfulDesigntimeFarkleDefinition
@@ -381,7 +382,7 @@ module DesigntimeFarkleBuild =
     /// post-processor is indeterminate. Using this function (and all others in this
     /// module) will always build a new grammar, even if a precompiled one is available.
     [<CompiledName("Build")>]
-    let build (df: DesigntimeFarkle<'TOutput>) =
+    let build<[<Nullable(0uy)>] 'TOutput>(df: DesigntimeFarkle<'TOutput>) =
         buildEx CancellationToken.None BuildOptions.Default df
 
     /// Creates a `PostProcessor` from the given `DesigntimeFarkle`.
@@ -389,7 +390,7 @@ module DesigntimeFarkleBuild =
     /// This function is useful only for some very limited scenarios, such as
     /// having many designtime Farkles with an identical grammar but different post-processors.
     [<CompiledName("BuildPostProcessorOnly")>]
-    let buildPostProcessorOnly (df: DesigntimeFarkle<'TOutput>) =
+    let buildPostProcessorOnly<[<Nullable(0uy)>] 'TOutput>(df: DesigntimeFarkle<'TOutput>) =
         df
         |> DesigntimeFarkleAnalyze.analyze CancellationToken.None
         |> PostProcessorCreator.create<'TOutput>

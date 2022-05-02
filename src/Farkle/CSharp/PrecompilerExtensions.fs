@@ -20,7 +20,7 @@ type PrecompilerExtensions =
     /// <a href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html"/></remarks>
     /// <seealso cref="Farkle.RuntimeFarkle.markForPrecompile"/>
     [<Extension; MethodImpl(MethodImplOptions.NoInlining)>]
-    static member MarkForPrecompile (df: DesigntimeFarkle<'TResult>) =
+    static member MarkForPrecompile<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) =
         // This function must mot forward to RuntimeFarkle's
         // corresponding function. It would register it
         // with Farkle's own assembly otherwise.
@@ -44,7 +44,7 @@ type PrecompilerExtensions =
     /// <remarks>If the designtime Farkle is not precompiled the resulting
     /// runtime Farkle will fail every time it is used.</remarks>
     [<Extension>]
-    static member Build (df: PrecompilableDesigntimeFarkle<'TResult>) =
+    static member Build<[<Nullable(0uy)>] 'TResult>(df: PrecompilableDesigntimeFarkle<'TResult>) =
         RuntimeFarkle.buildPrecompiled df
     [<Extension>]
     static member BuildUntyped df =

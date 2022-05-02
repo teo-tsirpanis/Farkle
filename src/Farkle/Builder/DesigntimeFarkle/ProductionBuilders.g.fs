@@ -42,7 +42,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -165,7 +165,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -285,7 +285,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -402,7 +402,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -516,7 +516,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -627,7 +627,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -735,7 +735,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -840,7 +840,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -942,7 +942,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1041,7 +1041,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1137,7 +1137,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1230,7 +1230,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1322,7 +1322,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1411,7 +1411,7 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1497,7 +1497,7 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'T2, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let idx2 = idx2
         let parameters =
@@ -1580,7 +1580,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// This method accepts a delegate that accepts the production's
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: Func<'T1, 'TOutput>) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'TOutput>) : [<Nullable(1uy)>] _ =
         let idx1 = idx1
         let parameters =
             [

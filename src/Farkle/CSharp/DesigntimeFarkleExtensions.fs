@@ -20,13 +20,14 @@ type ProductionBuilderExtensions =
     [<Extension>]
     static member Appended(df) = !% df
     [<Extension>]
-    static member Extended(df) = !@ df
+    static member Extended<[<Nullable(0uy)>] 'T>(df: DesigntimeFarkle<'T>) = !@ df
     [<Extension>]
-    static member Finish(df, f) = (!@ df).Finish(f)
+    static member Finish<[<Nullable(0uy)>] 'T, [<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'T>, f: Func<'T, 'TResult>) =
+        (!@ df).Finish(f)
     [<Extension>]
-    static member FinishConstant(str, constant) = !& str =% constant
+    static member FinishConstant<[<Nullable(0uy)>] 'T>(str, constant: 'T) = !& str =% constant
     [<Extension>]
-    static member AsIs(df) = (!@ df).AsIs()
+    static member AsIs<[<Nullable(0uy)>] 'T>(df: DesigntimeFarkle<'T>) = (!@ df).AsIs()
 
 /// <summary>Extension methods for <see cref="DesigntimeFarkle"/>s.</summary>
 /// <remarks>Most of these methods must be applied to the topmost designtime Farkle
@@ -187,11 +188,11 @@ type DesigntimeFarkleExtensions =
     [<Extension>]
     static member Optional<[<Nullable(2uy)>] 'TResult>(df: DesigntimeFarkle<'TResult>) : [<Nullable(1uy, 2uy)>] DesigntimeFarkle<'TResult> =
         Nonterminal.Create(sprintf "%s Maybe" df.Name,
-            df.Extended().AsIs(),
+            !@ df |> asIs,
             ProductionBuilder.Empty.FinishConstant(Unchecked.defaultof<'TResult>))
     /// <seealso cref="Optional"/>
     [<Extension>]
     static member Nullable(df: DesigntimeFarkle<'TResult>) =
         Nonterminal.Create(sprintf "%s Maybe" df.Name,
-            df.Extended().Finish(Nullable.op_Implicit),
+            !@ df => Nullable.op_Implicit,
             ProductionBuilder.Empty.FinishConstant(Nullable()))

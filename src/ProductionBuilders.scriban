@@ -70,7 +70,7 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
     /// This method accepts a delegate that accepts the production{{ ap }}s
     /// significant members and returns the production{{ ap }}s output.
     [<NullableContext(1uy)>]
-    member _.Finish([<Nullable(1uy)>] f: {{delegate_signature n}}) : [<Nullable(1uy)>] _ =
+    member _.Finish<[<Nullable(0uy)>] {{ap}}TOutput>([<Nullable(1uy)>] f: {{delegate_signature n}}) : [<Nullable(1uy)>] _ =
         {{~ # By explicitly declaring the variables the closure will not capture `members`.
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}

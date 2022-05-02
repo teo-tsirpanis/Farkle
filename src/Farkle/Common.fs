@@ -70,8 +70,8 @@ module internal Reflection =
 module internal ErrorHandling =
 
     /// Raises an exception if `x` is null.
-    let inline nullCheck argName x =
-        if isNull x then
+    let inline nullCheck<'T when 'T: not struct> argName (x: 'T) =
+        if obj.ReferenceEquals(x, null) then
             nullArg argName
 
 module internal Delegate =

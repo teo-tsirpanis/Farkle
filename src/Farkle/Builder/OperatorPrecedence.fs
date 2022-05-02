@@ -47,8 +47,7 @@ open System
 // In fact, the operator precedence source files are higher than the designtime Farkle
 // definition files in the project. Individual symbols are identified by plain .NET objects.
 // Let's be more specific:
-// Terminals are identified by the designtime Farkle object with which they were used (using
-// the same terminal with different names will cause trouble but it was already discouraged).
+// Terminals are identified by their underlying ITerminal object.
 
 // Literals are identified by the string of their content. The conflict resolver needs to
 // know whether the grammar is case-sensitive to properly compare them.

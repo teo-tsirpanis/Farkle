@@ -33,9 +33,9 @@ https://opensource.org/licenses/MIT ~}}
 {{~ func gen_builder
 
         n = $0 ~}}
-[<Sealed; NullableContext(2uy)>]
 /// <summary>A production builder with {{ n }} significant member{{ if n != 1; "s"; end;}}.</summary>
 /// <seealso cref="T:Farkle.Builder.ProductionBuilder"/>
+[<Sealed; NullableContext(2uy)>]
 type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n }}, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.

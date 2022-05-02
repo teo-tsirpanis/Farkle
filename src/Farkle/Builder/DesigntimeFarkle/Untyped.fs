@@ -51,6 +51,11 @@ and [<Sealed>] internal NonterminalReal(name: string) =
     let mutable productions = []
 
     override _.SetProductions(firstProd: ProductionBuilder, [<ParamArray>] prods: ProductionBuilder []) =
+        nullCheck (nameof firstProd) firstProd
+        nullCheck (nameof prods) prods
+        for i = 0 to prods.Length - 1 do
+            if (obj.ReferenceEquals(prods[i], null)) then
+                sprintf "prods[%d]" i |> nullArg
         if latch.TrySet() then
             productions <-
                 prods

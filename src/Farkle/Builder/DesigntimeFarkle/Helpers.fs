@@ -22,6 +22,7 @@ type Terminal =
     static member Create<[<Nullable(0uy)>] 'T>(name, fTransform: T<'T>, regex) =
         nullCheck "name" name
         nullCheck "fTransform" fTransform
+        nullCheck (nameof regex) regex
         Terminal(name, regex, fTransform) :> DesigntimeFarkle<_>
     /// <summary>Creates a terminal that does not contain any significant
     /// information for the parsing application.</summary>
@@ -29,6 +30,7 @@ type Terminal =
     /// <param name="regex">The terminal's corresponding regular expression.</param>
     static member Create(name, regex) =
         nullCheck "name" name
+        nullCheck (nameof regex) regex
         {new ITerminal with
             member _.Name = name
             member _.Regex = regex
@@ -43,7 +45,6 @@ type Terminal =
     /// <param name="str">The string literal this terminal will recognize.</param>
     /// <remarks>It does not return anything.</remarks>
     static member Literal(str) =
-        nullCheck "str" str
         Literal str :> DesigntimeFarkle
     /// <summary>A special kind of <see cref="DesigntimeFarkle"/>
     /// that represents a new line.</summary>

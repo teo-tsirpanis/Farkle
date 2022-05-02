@@ -24,7 +24,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, idx16, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -43,6 +44,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -107,7 +109,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, idx16, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -137,7 +139,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -156,6 +159,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T16>(df: DesigntimeFarkle<'T16>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'T16>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -166,6 +170,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -227,7 +232,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, idx15, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -257,7 +262,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -276,6 +282,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T15>(df: DesigntimeFarkle<'T15>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'T15>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -286,6 +293,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -344,7 +352,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, idx14, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -374,7 +382,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -393,6 +402,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T14>(df: DesigntimeFarkle<'T14>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'T14>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -403,6 +413,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -458,7 +469,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, idx13, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -488,7 +499,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -507,6 +519,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T13>(df: DesigntimeFarkle<'T13>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'T13>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -517,6 +530,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -569,7 +583,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, idx12, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -599,7 +613,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -618,6 +633,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T12>(df: DesigntimeFarkle<'T12>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'T12>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -628,6 +644,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -677,7 +694,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, idx11, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -707,7 +724,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -726,6 +744,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T11>(df: DesigntimeFarkle<'T11>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -736,6 +755,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -782,7 +802,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, idx10, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -812,7 +832,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -831,6 +852,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T10>(df: DesigntimeFarkle<'T10>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -841,6 +863,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -884,7 +907,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, idx9, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -914,7 +937,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -933,6 +957,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T9>(df: DesigntimeFarkle<'T9>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -943,6 +968,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -983,7 +1009,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1013,7 +1039,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1032,6 +1059,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T8>(df: DesigntimeFarkle<'T8>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, idx7, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1042,6 +1070,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1079,7 +1108,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>(members, idx1, idx2, idx3, idx4, idx5, idx6, idx7, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1109,7 +1138,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1128,6 +1158,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T7>(df: DesigntimeFarkle<'T7>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>(listAdd members df, idx1, idx2, idx3, idx4, idx5, idx6, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1138,6 +1169,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1172,7 +1204,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>(members, idx1, idx2, idx3, idx4, idx5, idx6, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1202,7 +1234,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>(listAdd members df, idx1, idx2, idx3, idx4, idx5, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1221,6 +1254,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T6>(df: DesigntimeFarkle<'T6>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>(listAdd members df, idx1, idx2, idx3, idx4, idx5, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1231,6 +1265,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'T5, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1262,7 +1297,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>(members, idx1, idx2, idx3, idx4, idx5, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1294,7 +1329,8 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4>(listAdd members df, idx1, idx2, idx3, idx4, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1313,6 +1349,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T5>(df: DesigntimeFarkle<'T5>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5>(listAdd members df, idx1, idx2, idx3, idx4, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1323,6 +1360,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'T4, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1351,7 +1389,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3, 'T4>(members, idx1, idx2, idx3, idx4, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1383,7 +1421,8 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3>(listAdd members df, idx1, idx2, idx3, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1402,6 +1441,7 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T4>(df: DesigntimeFarkle<'T4>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3, 'T4>(listAdd members df, idx1, idx2, idx3, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1412,6 +1452,7 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'T3, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let idx3 = idx3
@@ -1437,7 +1478,7 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2, 'T3>(members, idx1, idx2, idx3, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1469,7 +1510,8 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2>(listAdd members df, idx1, idx2, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1488,6 +1530,7 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T3>(df: DesigntimeFarkle<'T3>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2, 'T3>(listAdd members df, idx1, idx2, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1498,6 +1541,7 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'T2, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let idx2 = idx2
         let parameters =
@@ -1520,7 +1564,7 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1, 'T2>(members, idx1, idx2, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>
@@ -1552,7 +1596,8 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// Creates a production builder from this one with the given untyped
     /// designtime Farkle added to the end as a not significant member.
     [<NullableContext(2uy)>]
-    member _.Append([<Nullable(1uy)>] df) : [<Nullable(1uy)>] _ =
+    member _.Append([<Nullable(1uy)>] df: DesigntimeFarkle) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1>(listAdd members df, idx1, cpToken)
     /// <summary>The <c>Append(DesigntimeFarkle)</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1571,6 +1616,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// Up to sixteen significant members can be added to a production builder.
     [<NullableContext(1uy)>]
     member _.Extend<[<Nullable(2uy)>] 'T2>(df: DesigntimeFarkle<'T2>) =
+        nullCheck (nameof df) df
         ProductionBuilder<'T1, 'T2>(listAdd members df, idx1, members.Count, cpToken)
     /// <summary>The <c>Extend</c> method as an F# operator.</summary>
     [<EditorBrowsable(EditorBrowsableState.Never)>]
@@ -1581,6 +1627,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// significant members and returns the production's output.
     [<NullableContext(1uy)>]
     member _.Finish<[<Nullable(0uy)>] 'TOutput>([<Nullable(1uy)>] f: Func<'T1, 'TOutput>) : [<Nullable(1uy)>] _ =
+        nullCheck (nameof f) f
         let idx1 = idx1
         let parameters =
             [
@@ -1600,7 +1647,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
     /// <exception cref="T:System.ArgumentNullException"><paramref name="cpToken"/>
     /// is <see langword="null"/>.</exception>
     member _.WithPrecedence([<Nullable(1uy)>] cpToken) : [<Nullable(1uy)>] _ =
-        nullCheck "cpToken" cpToken
+        nullCheck (nameof cpToken) cpToken
         ProductionBuilder<'T1>(members, idx1, cpToken)
     /// <summary>Returns a production builder with a unique contextual precedence
     /// token assigned to it, which is also returned by reference.</summary>

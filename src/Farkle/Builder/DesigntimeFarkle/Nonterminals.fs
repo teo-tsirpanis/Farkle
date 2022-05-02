@@ -68,6 +68,11 @@ type internal NonterminalReal<'T> internal(name) =
     let mutable productions = []
 
     override _.SetProductions(firstProd, prods) =
+        nullCheck (nameof firstProd) firstProd
+        nullCheck (nameof prods) prods
+        for i = 0 to prods.Length - 1 do
+            if (obj.ReferenceEquals(prods[i], null)) then
+                sprintf "prods[%d]" i |> nullArg
         if latch.TrySet() then
             productions <-
                 prods

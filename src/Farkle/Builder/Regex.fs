@@ -5,6 +5,7 @@
 
 namespace rec Farkle.Builder
 
+open Farkle.Common
 open Farkle.Parser
 open System
 
@@ -72,6 +73,7 @@ type Regex =
     /// Concatenates two regexes into a new one that recognizes
     /// a string of the first one, and then a string of the second.
     member x1.And x2 =
+        nullCheck (nameof x2) x2
         match x1, x2 with
         | Concat [], x
         | x, Concat [] -> x
@@ -84,6 +86,10 @@ type Regex =
     /// <see cref="And"/> for many regexes.</remarks>
     /// <seealso cref="And"/>
     static member Join([<ParamArray>] regexes) =
+        nullCheck (nameof regexes) regexes
+        for i = 0 to Array.length regexes - 1 do
+            if obj.ReferenceEquals(regexes[i], null) then
+                sprintf "regexes[%d]" i |> nullArg
         match Array.length regexes with
         | 0 -> Regex.Empty
         | 1 -> regexes.[0]
@@ -111,6 +117,10 @@ type Regex =
     /// <see cref="Or"/> for many regexes.</remarks>
     /// <seealso cref="Or"/>
     static member Choice([<ParamArray>] regexes) =
+        nullCheck (nameof regexes) regexes
+        for i = 0 to Array.length regexes - 1 do
+            if obj.ReferenceEquals(regexes[i], null) then
+                sprintf "regexes[%d]" i |> nullArg
         match Array.length regexes with
         | 0 -> Regex.Empty
         | 1 -> regexes.[0]
@@ -161,6 +171,7 @@ type Regex =
             Regex.Join(x.Repeat num, x.ZeroOrMore())
     /// Returns a regex that only recognizes a literal string.
     static member Literal (str: string) =
+        nullCheck (nameof str) str
         str
         |> Seq.map Regex.Literal
         |> List.ofSeq
@@ -170,6 +181,7 @@ type Regex =
     /// Returns a regex that recognizes only one character
     /// of these on the given sequence of characters.
     static member OneOf (xs: _ seq) =
+        nullCheck (nameof xs) xs
         let set =
             match xs with
             | :? Set<char> as x -> x
@@ -183,6 +195,7 @@ type Regex =
     /// except of these on the given sequence.
     /// An empty sequence is equivalent to `Regex.Any`.
     static member NotOneOf (xs: _ seq) =
+        nullCheck (nameof xs) xs
         let set =
             match xs with
             | :? Set<char> as x -> x
@@ -195,7 +208,9 @@ type Regex =
     /// Returns a regex specified by a string.
     /// An invalid regex string will make the building process fail.
     /// See more at https://teo-tsirpanis.github.io/Farkle/string-regexes.html
-    static member FromRegexString x = RegexString(RegexStringHolder x)
+    static member FromRegexString x =
+        nullCheck (nameof x) x
+        RegexString(RegexStringHolder x)
 
 /// F#-friendly members of the `Regex` class.
 /// Please consult the members of the `Regex` class for documentation.

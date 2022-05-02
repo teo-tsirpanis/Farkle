@@ -5,6 +5,7 @@
 
 namespace Farkle.Builder.OperatorPrecedence
 
+open Farkle.Common
 open System
 
 // Let write some design notes about how Farkle implements operator precedence
@@ -107,8 +108,14 @@ type AssociativityType =
 /// designtime Farkles (such as the original and a renamed one) would
 /// cause undefined behavior.</para></remarks>
 type AssociativityGroup(assocType: AssociativityType, symbols: obj seq) =
+    do
+        nullCheck (nameof assocType) assocType
+        nullCheck (nameof symbols) symbols
     let symbols = List.ofSeq symbols
-    new (assocType, [<ParamArray>] symbols) = AssociativityGroup(assocType, List.ofArray symbols)
+    do List.iteri (fun i x -> if obj.ReferenceEquals(x, null) then sprintf "symbols[%d]" i |> nullArg) symbols
+    new (assocType, [<ParamArray>] symbols) =
+        nullCheck (nameof symbols) symbols
+        AssociativityGroup(assocType, List.ofArray symbols)
 
     /// The group's symbols' associativity.
     member _.AssociativityType = assocType
@@ -144,7 +151,9 @@ type PrecedenceOnly([<ParamArray>] symbols) =
 /// argument of the appropriate operator scope's constructor overloads.</para></remarks>
 type OperatorScope(resolvesReduceReduceConflicts, assocGroups: AssociativityGroup seq) =
     static let empty = OperatorScope(false, [])
+    do nullCheck (nameof assocGroups) assocGroups
     let assocGroups = List.ofSeq assocGroups
+    do List.iteri (fun i x -> if obj.ReferenceEquals(x, null) then sprintf "assocGroups[%d]" i |> nullArg) assocGroups
     new (resolveReduceReduceConflicts, [<ParamArray>] assocGroups: AssociativityGroup[]) =
         OperatorScope(resolveReduceReduceConflicts, List.ofArray assocGroups)
     new ([<ParamArray>] assocGroups: AssociativityGroup[]) = OperatorScope(false, List.ofArray assocGroups)

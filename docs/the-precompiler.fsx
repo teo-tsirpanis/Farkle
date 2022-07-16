@@ -170,13 +170,51 @@ let composable = precompilableDesigntime.InnerDesigntimeFarkle
 (**
 ### Beware of code execution
 
-Farkle's precompiler executes part of your project's code; the necessary static constructors to create your precompilable designtime Farkles. This code can do literally anything, but it is your responsibility to keep it short and without adverse side-effects. Similarly, it is your responsibility to not build untrusted projects that use the precompiler. Consuming 3rd-party libraries with precompiled grammars however will not execute arbitrary code on build.
+Farkle's precompiler executes part of your project's code; the necessary static constructors to create your precompilable designtime Farkles. This code can do literally anything, but it is your responsibility to keep it short and without adverse side-effects. Similarly, it is your responsibility to not build untrusted projects that use the precompiler. Consuming 3rd-party libraries with precompiled grammars however will not execute arbitrary code.
 
 ### Beware of non-determinism
 
 Farkle's precompiler was made for grammars that are fixed, which is the reason it only works on static readonly fields: once you created it in your code, you cannot change it. Otherwise, what good would the precompiler be?
 
 You can always call a non-deterministic function like `DateTime.Now` that will make your designtime Farkle parse integers in the hexadecimal format in your birthday, and in the decimal format in all other days. If you build your app on your birthday, it will produce bizarre results on all the other days, and if you build it on a day other than your birthday, it will work every time, except on your birthday (the worst birthday present). __Just don't do it.__ Farkle cannot be made to detect such things, and you are not getting any smarter by doing it.
+
+### Using the precompiler in AOT environments
+
+The `markForPrecompile` family of functions use the `Assembly.GetCallingAssembly()` method to determine the assembly the precompiled grammar is in, but this function is not supported in AOT environments.
+
+Farkle 6.5.0 introduced overloads to the `MarkForPrecompile` extension method that allow manually specifying the assembly. Here's how to use them in both languages:
+*)
+
+type Dummy = class end
+
+let designtime = literal "foo"
+
+// We get the assembly of a dummy type we defined. We could have also called Assembly.GetExecutingAssembly().
+// The extension methods are the same in both C# and F#; there are no equivalent curried functions.
+let worksInAot = designtime.MarkForPrecompile(typeof<Dummy>.Assembly)
+
+(**
+
+``` csharp
+using Farkle;
+using Farkle.Builder;
+
+public class MyLanguage {
+    public static readonly PrecompilableDesigntimeFarkle<int> Designtime;
+    public static readonly RuntimeFarkle<int> Runtime;
+
+    static MyLanguage() {
+        Designtime =
+            Nonterminal.Create("My complicated language",
+                beginning.Extended().Extend(middle).Extend(end).Finish((b, m, e) => b + m + e))
+            .AddLineComment("//")
+            .AddBlockComment("/*", "*/")
+            .MarkForPrecompile(typeof(MyLanguage).Assembly);
+
+        Runtime = Designtime.Build();
+    }
+}
+```
 
 ### Building from an IDE
 

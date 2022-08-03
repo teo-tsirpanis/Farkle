@@ -11,25 +11,25 @@ open System.Collections.Immutable
 open System.Diagnostics
 open System.Runtime.CompilerServices
 
-[<Struct; IsReadOnly; RequireQualifiedAccess>]
 /// A type indicating how a group advances.
+[<Struct; IsReadOnly; RequireQualifiedAccess>]
 type AdvanceMode =
     /// The group advances by one token at a time.
     | Token
     /// The group advances by one character at a time.
     | Character
 
-[<Struct; IsReadOnly; RequireQualifiedAccess>]
 /// A type indicating how the ending symbol of a group is handled.
+[<Struct; IsReadOnly; RequireQualifiedAccess>]
 type EndingMode =
     /// The ending symbol is preserved on the input queue.
     | Open
     /// The ending symbol is consumed.
     | Closed
 
-[<CustomComparison; CustomEquality>]
 /// A symbol which is produced through a DFA, and is significant for the grammar.
 /// Terminals with the same index are considered equal.
+[<CustomComparison; CustomEquality>]
 type Terminal = Terminal of Index: uint32 * Name: string
 with
     member private x.index = match x with | Terminal (idx, _) -> idx
@@ -69,10 +69,10 @@ with
         else
             name
 
-[<CustomComparison; CustomEquality>]
 /// A symbol which is produced by a concatenation of other `Terminal`s
 /// and `Nonterminal`s, as the LALR parser dictates. Nonterminals with
 /// the same index are considered equal.
+[<CustomComparison; CustomEquality>]
 type Nonterminal = Nonterminal of Index: uint32 * Name: string
 with
     member private x.index = match x with | Nonterminal (idx, _) -> idx
@@ -179,8 +179,8 @@ type DFAState = {
     [<Nullable(2uy)>] AnythingElse: uint32 option
 }
 
-[<RequireQualifiedAccess>]
 /// A symbol that is relevant to the LALR parser.
+[<RequireQualifiedAccess>]
 type LALRSymbol =
     /// The symbol is a terminal.
     | Terminal of Terminal
@@ -192,8 +192,8 @@ type LALRSymbol =
             | Terminal term -> string term
             | Nonterminal nont -> string nont
 
-[<CustomEquality; CustomComparison>]
 /// A sequence of `Terminal`s and `Nonterminal`s that can produce a specific `Nonterminal`.
+[<CustomEquality; CustomComparison>]
 type Production = {
     /// The index of the production. Productions
     /// with the same index are considered equal.

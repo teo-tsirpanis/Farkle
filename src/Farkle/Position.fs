@@ -8,12 +8,12 @@ namespace Farkle
 open System
 open System.Runtime.CompilerServices
 
-[<Struct; IsReadOnly>]
 /// A point in 2D space with integer coordinates,
 /// suitable for the position of a character in a text.
 // The coordinates' representation is zero-based (the struct's
 // default value is the initial position), but are exposed as
 // one-based for compatibility and usability.
+[<Struct; IsReadOnly>]
 type Position private(line0: int, column0: int) =
     static let rec advanceImpl line column (span: ReadOnlySpan<_>) =
         match span.IndexOfAny('\n', '\r') with

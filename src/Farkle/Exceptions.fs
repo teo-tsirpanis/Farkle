@@ -57,9 +57,9 @@ namespace Farkle.IO
 open Farkle
 open System.Runtime.CompilerServices
 
-[<AbstractClass; Sealed; Extension>]
 /// <summary>Extension methods to the <see cref="CharStream"/>
 /// type that have to do with error reporting.</summary>
+[<AbstractClass; Sealed; Extension>]
 type CharStreamErrorReportingExtensions =
     /// <summary>Throws a <see cref="ParserApplicationException"/> at
     /// <paramref name="offset"/> characters after <paramref name="stream"/>'s

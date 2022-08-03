@@ -77,7 +77,7 @@ type Nonterminal =
     static member CreateUntyped(name) = Untyped.Nonterminal.Create name
 
     /// <inheritdoc cref="Farkle.Builder.Untyped.Nonterminal.Create" />
-    static member CreateUntyped(name, firstProd, prods) =
+    static member CreateUntyped(name, firstProd, [<ParamArray>] prods) =
         Untyped.Nonterminal.Create(name, firstProd, prods)
 
 /// A helper static class to create groups.

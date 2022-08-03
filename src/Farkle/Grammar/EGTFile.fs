@@ -36,8 +36,8 @@ type internal Entry =
     | String of stringValue: string
     static member inline Int x = UInt32 <| uint32 x
 
-[<AutoOpen>]
 /// Functions to help EGT file readers.
+[<AutoOpen>]
 module internal EGTReaderUtilities =
 
     /// Raises an exception indicating that something

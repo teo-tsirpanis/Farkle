@@ -35,8 +35,8 @@ type Token(position, symbol, [<Nullable(2uy)>] data) =
         else
             sprintf "%O %O: \"%O\"" position symbol data
 
-[<RequireQualifiedAccess>]
 /// A symbol that was expected at the location of a syntax error.
+[<RequireQualifiedAccess>]
 type ExpectedSymbol =
     /// A terminal was expected.
     | Terminal of Terminal

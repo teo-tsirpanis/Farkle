@@ -13,9 +13,9 @@ open System.Diagnostics
 open System.Runtime.CompilerServices
 open System.Text
 
-[<Struct>]
 /// An value type representing a DFA state or its absence.
 /// It is returned from optimized operations.
+[<Struct>]
 type internal DFAStateTag = private DFAStateTag of int
 with
     /// Creates a successful `DFAStateTag`.
@@ -35,11 +35,11 @@ with
     /// Whether this `DFAStateTag` represents a failed operation.
     member x.IsError = x.Value < 0
 
-[<Struct>]
 /// Describes which characters to search for to find the
 /// next decision point of a character group. A decision
 /// point is a place in the input text where either a
 /// group can end or another nestable group can start.
+[<Struct>]
 type private CharacterGroupSearchAction = {
     /// The characters to search for.
     SearchCharacters: string
@@ -52,8 +52,8 @@ type private CharacterGroupSearchAction = {
 [<AutoOpen>]
 module private OptimizedOperations =
 
-    [<Literal>]
     /// The number of ASCII characters.
+    [<Literal>]
     let ASCIICharacterCount = 128
 
     /// Checks if the given character belongs to ASCII.

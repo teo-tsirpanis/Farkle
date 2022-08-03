@@ -8,8 +8,8 @@ namespace Farkle
 open System
 open System.Runtime.CompilerServices
 
-[<Struct; IsReadOnly>]
 /// A point in 2D space with integer coordinates, suitable for the position of a character in a text.
+[<Struct; IsReadOnly>]
 type Position = {
     /// The position's line.
     /// Numbering starts from 1.

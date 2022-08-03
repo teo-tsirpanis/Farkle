@@ -1,3 +1,11 @@
+#### 6.5.0
+* Added an overload of the `MarkForPrecompile` extension method that enables the precompiler to be used in AOT environments. See https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Using-the-precompiler-in-AOT-environments for more details.
+* Frequently used post-processors will no longer be optimized using dynamic code generation, because of concerns about the code generator's robustness. Performance might slightly regress. A more robust code generation system might be introduced in a future version of Farkle.
+* More methods in the builder check their arguments for `null` and throw `ArgumentNullException`s.
+* Some documentation was fixed.
+* The nullability annotations for some generic methods in the builder was fixed.
+* Added `params` in the array parameter overload of `Nonterminal.CreateUntyped` that takes a name and a series of production builders.
+
 #### 6.4.0 - 11-03-2022
 * __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.
 * Farkle supports precompiling .NET 6 assemblies from Visual Studio.

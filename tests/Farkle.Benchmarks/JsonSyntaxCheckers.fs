@@ -7,6 +7,8 @@
 // of the box like Farkle. Their implementation will be placed here.
 namespace Farkle.Benchmarks.JsonSyntaxCheckers
 
+open System.Text.Json.Nodes
+
 // Thankfully FsLexYacc does not require rewriting a complete
 // grammar; only its "post-processor" needs to be rewritten.
 module FsLexYacc =
@@ -20,8 +22,8 @@ module FsLexYacc =
         {tables with
             reductions = Array.replicate tables.reductions.Length (fun _ -> null)}
 
-    let private floatToken = FLOAT (Chiron.Json.Number 0m)
-    let private stringToken = STRING ""
+    let private floatToken = FLOAT null
+    let private stringToken = STRING null
 
     // The "transformer" needs to be rewritten to ensure it does not allocate.
     let rec private syntaxCheckLexerRead lexbuf =
@@ -62,12 +64,12 @@ module FsLexYacc =
     let parseString x =
         let lexBuf = LexBuffer<_>.FromString x
         syntaxCheckParserTables.Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
-        Unchecked.defaultof<Chiron.Json>
+        null: JsonNode
 
     let parseTextReader tr =
         let lexBuf = LexBuffer<_>.FromTextReader tr
         syntaxCheckParserTables.Interpret(syntaxCheckLexerRead, lexBuf, 0) |> ignore
-        Unchecked.defaultof<Chiron.Json>
+        null: JsonNode
 
 // Because FParsec's "grammars" and "post-processors" are
 // tightly coupled, the entire parser has to be rewritten

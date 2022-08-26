@@ -3,19 +3,18 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-using static Chiron;
-using Microsoft.FSharp.Collections;
-using System;
-using System.Globalization;
 using Farkle.Builder;
 using static Farkle.Builder.Regex;
+using System;
+using System.Globalization;
+using System.Text.Json.Nodes;
 
 // ReSharper disable once CheckNamespace
 namespace Farkle.Samples.CSharp
 {
     public static class JSON
     {
-        private static Json ToDecimal(ReadOnlySpan<char> data)
+        private static JsonNode? ToDecimal(ReadOnlySpan<char> data)
         {
             var data2 =
 #if NETCOREAPP
@@ -25,16 +24,16 @@ namespace Farkle.Samples.CSharp
 #endif
             var num =
                 decimal.Parse(data2, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
-            return Json.NewNumber(num);
+            return JsonValue.Create(num);
         }
 
-        public static readonly DesigntimeFarkle<Json> Designtime;
+        public static readonly DesigntimeFarkle<JsonNode?> Designtime;
 
-        public static readonly RuntimeFarkle<Json> Runtime;
+        public static readonly RuntimeFarkle<JsonNode?> Runtime;
 
         static JSON()
         {
-            var number = Terminal.Create("Number", (position, data) => ToDecimal(data),
+            var number = Terminal.Create("Number", (_, data) => ToDecimal(data),
                 Join(
                     Literal('-').Optional(),
                     Literal('0').Or(OneOf("123456789").And(OneOf(PredefinedSets.Number).ZeroOrMore())),
@@ -44,33 +43,53 @@ namespace Farkle.Samples.CSharp
                         OneOf("+-").Optional(),
                         OneOf(PredefinedSets.Number).AtLeast(1)).Optional()));
             var jsonString = Terminals.StringEx("/bfnrt", true, false, '"', "String");
-            var jsonObject = Nonterminal.Create<Json>("Object");
-            var jsonArray = Nonterminal.Create<Json>("Array");
+            var jsonObject = Nonterminal.Create<JsonObject>("Object");
+            var jsonArray = Nonterminal.Create<JsonArray>("Array");
             var value = Nonterminal.Create("Value",
-                jsonString.Finish(Json.NewString),
+                jsonString.Finish(x => (JsonNode?)JsonValue.Create(x)),
                 number.AsIs(),
-                jsonObject.AsIs(),
-                jsonArray.AsIs(),
-                "true".FinishConstant(Json.NewBool(true)),
-                "false".FinishConstant(Json.NewBool(false)),
-                "null".FinishConstant(Json.NewNull(null)));
-            var arrayReversed = Nonterminal.Create<FSharpList<Json>>("Array Reversed");
-            arrayReversed.SetProductions(
-                arrayReversed.Extended().Append(",").Extend(value).Finish((xs, x) => FSharpList<Json>.Cons(x, xs)),
-                value.Finish(ListModule.Singleton));
-            var arrayOptional = Nonterminal.Create("Array Optional",
-                arrayReversed.Finish(ListModule.Reverse),
-                ProductionBuilder.Empty.FinishConstant(FSharpList<Json>.Empty));
-            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").Finish(Json.NewArray));
+                jsonObject.Finish(x => (JsonNode?)x),
+                jsonArray.Finish(x => (JsonNode?)x),
+                "true".Finish<JsonNode?>(() => JsonValue.Create(true)),
+                "false".Finish<JsonNode?>(() => JsonValue.Create(false)),
+                "null".FinishConstant<JsonNode?>(null));
 
-            var objectElement = Nonterminal.Create<FSharpList<Tuple<string, Json>>>("Object Element");
+            var arrayReversed = Nonterminal.Create<JsonArray>("Array Reversed");
+            arrayReversed.SetProductions(
+                arrayReversed.Extended().Append(",").Extend(value).Finish((xs, x) =>
+                {
+                    xs.Add(x);
+                    return xs;
+                }),
+                value.Finish(x =>
+                {
+                    var xs = new JsonArray();
+                    xs.Add(x);
+                    return xs;
+                }));
+            var arrayOptional = Nonterminal.Create("Array Optional",
+                arrayReversed.AsIs(),
+                ProductionBuilder.Empty.Finish(() => new JsonArray()));
+            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").AsIs());
+
+            var objectElement = Nonterminal.Create<JsonObject>("Object Element");
             objectElement.SetProductions(
                 objectElement.Extended().Append(",").Extend(jsonString).Append(":").Extend(value)
-                    .Finish((xs, k, v) => FSharpList<Tuple<string, Json>>.Cons(Tuple.Create(k, v), xs)),
-                jsonString.Extended().Append(":").Extend(value).Finish((k, v) =>ListModule.Singleton(Tuple.Create(k, v))));
+                    .Finish((xs, k, v) =>
+                    {
+                        xs.Add(k, v);
+                        return xs;
+                    }),
+                jsonString.Extended().Append(":").Extend(value)
+                    .Finish((k, v) =>
+                    {
+                        var xs = new JsonObject();
+                        xs.Add(k, v);
+                        return xs;
+                    }));
             var objectOptional = Nonterminal.Create("Object Optional",
-                objectElement.Finish(x => Json.NewObject(MapModule.OfList(x))),
-                ProductionBuilder.Empty.FinishConstant(Json.NewObject(MapModule.Empty<string, Json>())));
+                objectElement.AsIs(),
+                ProductionBuilder.Empty.Finish(() => new JsonObject()));
             jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsIs());
 
             Designtime = value.CaseSensitive().UseDynamicCodeGen();

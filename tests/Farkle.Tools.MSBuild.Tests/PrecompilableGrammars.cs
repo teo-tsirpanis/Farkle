@@ -3,10 +3,10 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-using static Chiron;
 using Farkle.Builder;
 using Farkle.Samples.FSharp;
 using PCDF = Farkle.Builder.PrecompilableDesigntimeFarkle<int>;
+using System.Text.Json.Nodes;
 
 namespace Farkle.Tools.MSBuild.Tests
 {
@@ -15,7 +15,7 @@ namespace Farkle.Tools.MSBuild.Tests
         private static PCDF CreatePCDF(string name) => Terminals.Int32(name).MarkForPrecompile();
 
         // The following designtime Farkles must be discovered.
-        public static readonly PrecompilableDesigntimeFarkle<Json> PublicJSON =
+        public static readonly PrecompilableDesigntimeFarkle<JsonNode?> PublicJSON =
             JSON.designtime.Rename("JSON").MarkForPrecompile();
         internal static readonly PrecompilableDesigntimeFarkle<Regex> InternalRegex =
             RegexGrammar.Designtime.MarkForPrecompile();

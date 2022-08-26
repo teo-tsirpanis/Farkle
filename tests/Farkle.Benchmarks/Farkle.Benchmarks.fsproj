@@ -4,12 +4,25 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="FParsec" Version="1.1.1" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
+    <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
+    <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>
   <ItemGroup>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Parser.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <Compile Include="Lexer.fs" />
+    <Compile Include="FsLexYacc.fs" />
+    <Compile Include="..\..\sample\Farkle.Samples.FSharp\GOLDMetaLanguage.fs" />
+    <Compile Include="..\..\sample\Farkle.Samples.FSharp\JSON.fs" />
     <Compile Include="JsonSyntaxCheckers.fs" />
     <Compile Include="*Benchmark.fs" />
     <Compile Include="Program.fs" />

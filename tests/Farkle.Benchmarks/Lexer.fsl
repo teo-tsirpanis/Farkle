@@ -3,9 +3,9 @@
 
 module FsLexYacc.JSON.Lexer
 
-open Chiron
 open FSharp.Text.Lexing
 open FsLexYacc.JSON.Parser
+open System.Text.Json.Nodes
 
 exception SyntaxError of string
 
@@ -27,7 +27,7 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline  { newline lexbuf; read lexbuf }
-  | float    { FLOAT (lexeme lexbuf |> decimal |> Number) }
+  | float    { FLOAT (lexeme lexbuf |> decimal |> JsonValue.Create) }
   | "true"   { TRUE }
   | "false"  { FALSE }
   | "null"   { NULL }

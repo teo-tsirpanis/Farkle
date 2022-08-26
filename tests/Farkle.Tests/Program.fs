@@ -3,7 +3,6 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-open Chiron
 open Expecto
 open Farkle.Tests
 open FsCheck
@@ -20,7 +19,7 @@ let main argv =
         printfn "Generating JSON file of complexity %d..." size
         let jsonContents =
             Gen.eval size seed JsonGen
-            |> Json.formatWith JsonFormattingOptions.Compact
+            |> function null -> "null" | x -> x.ToJsonString()
         System.IO.File.WriteAllText(jsonOutputPath, jsonContents)
         printfn "Done."
         0

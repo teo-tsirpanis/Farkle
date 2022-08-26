@@ -1,0 +1,44 @@
+//This parser has been written with help of "Real world OCaml" book By Yaron Minsky, Anil Madhavapeddy, Jason Hickey (chapter 15)
+%{
+open System.Text.Json.Nodes
+%}
+
+%start value
+
+%token <JsonValue> FLOAT
+%token <string> STRING
+%token TRUE
+%token FALSE
+%token NULL
+%token LEFT_BRACE
+%token RIGHT_BRACE
+%token LEFT_BRACK
+%token RIGHT_BRACK
+%token COLON
+%token COMMA
+%token EOF
+%type <JsonNode> value
+
+%%
+
+value:
+  | LEFT_BRACE object_fields RIGHT_BRACE { $2 :> _ }
+  | LEFT_BRACK array_decl RIGHT_BRACK { $2 :> _ }
+  | STRING { JsonValue.Create $1 :> _ }
+  | FLOAT { $1 :> _ }
+  | TRUE { JsonValue.Create true :> _ }
+  | FALSE { JsonValue.Create false :> _ }
+  | NULL { null }
+
+object_fields:
+  | { JsonObject() }
+  | STRING COLON value { let xs = JsonObject() in xs.Add($1,$3); xs }
+  | object_fields COMMA STRING COLON value { $1.Add($3, $5); $1 }
+
+array_decl:
+  | { JsonArray() }
+  | array_values { $1 }
+
+array_values:
+  | value { let xs = JsonArray() in xs.Add $1; xs }
+  | array_values COMMA value { $1.Add $3; $1 }

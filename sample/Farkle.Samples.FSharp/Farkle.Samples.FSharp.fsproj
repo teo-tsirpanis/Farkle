@@ -3,15 +3,6 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <FsYacc Include="Parser.fsy">
-      <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
-    </FsYacc>
-    <Compile Include="Parser.fs" />
-    <FsLex Include="Lexer.fsl">
-      <OtherFlags>--unicode</OtherFlags>
-    </FsLex>
-    <Compile Include="Lexer.fs" />
-    <Compile Include="FsLexYacc.fs" />
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
@@ -19,8 +10,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
-    <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
-    <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>
 </Project>

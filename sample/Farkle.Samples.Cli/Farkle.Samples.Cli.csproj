@@ -8,5 +8,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
+    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
   </ItemGroup>
 </Project>

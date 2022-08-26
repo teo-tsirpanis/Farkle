@@ -7,7 +7,7 @@ module Farkle.Samples.FSharp.JSON
 
 open System
 open System.Globalization
-open Chiron
+open System.Text.Json.Nodes
 open Farkle
 open Farkle.Builder
 
@@ -19,7 +19,8 @@ let toDecimal (x: ReadOnlySpan<char>) =
         x.ToString(),
     #endif
         NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture)
-        |> Json.Number
+        |> JsonValue.Create
+        :> JsonNode
 
 open Regex
 
@@ -37,41 +38,42 @@ let designtime =
             optional <| (char '.' <&> (chars Number |> atLeast 1))
             [chars "eE"; chars "+-" |> optional; chars Number |> atLeast 1]
             |> concat
-            |> optional]
+            |> optional
+        ]
         |> terminal "Number" (T(fun _ data -> toDecimal data))
     let string = Terminals.stringEx "/bfnrt" true false '"' "String"
     let object = nonterminal "Object"
     let array = nonterminal "Array"
     let value = "Value" ||= [
-        !@ string => String
+        !@ string => (fun str -> JsonValue.Create str :> JsonNode)
         !@ number |> asIs
         !@ object |> asIs
         !@ array |> asIs
-        !& "true" =% Bool true
-        !& "false" =% Bool false
-        !& "null" =% Null ()
+        !& "true" => (fun () -> JsonValue.Create true :> JsonNode)
+        !& "false" => (fun () -> JsonValue.Create false :> JsonNode)
+        !& "null" =% null
     ]
-    let arrayReversed = nonterminal "Array Reversed"
+    let arrayReversed: Nonterminal<JsonArray> = nonterminal "Array Reversed"
     arrayReversed.SetProductions(
-        !@ arrayReversed .>> "," .>>. value => (fun xs x -> x :: xs),
-        !@ value => List.singleton
+        !@ arrayReversed .>> "," .>>. value => (fun xs x -> xs.Add x; xs),
+        !@ value => (fun x -> let xs = JsonArray() in xs.Add(x); xs)
     )
     let arrayOptional = "Array Optional" ||= [
-        !@ arrayReversed => List.rev
-        empty =% []
+        !@ arrayReversed |> asIs
+        empty => (fun () -> JsonArray())
     ]
-    array.SetProductions(!& "[" .>>. arrayOptional .>> "]" => Array)
+    array.SetProductions(!& "[" .>>. arrayOptional .>> "]" => (fun x -> x :> JsonNode))
 
-    let objectElement = nonterminal "Object Element"
+    let objectElement: Nonterminal<JsonObject> = nonterminal "Object Element"
     objectElement.SetProductions(
-        !@ objectElement .>> "," .>>. string .>> ":" .>>. value => (fun xs k v -> (k, v) :: xs),
-        !@ string .>> ":" .>>. value => (fun k v -> [k, v])
+        !@ objectElement .>> "," .>>. string .>> ":" .>>. value => (fun xs k v -> xs.Add(k, v); xs),
+        !@ string .>> ":" .>>. value => (fun k v -> let obj = JsonObject() in obj.Add(k, v); obj)
     )
     let objectOptional = "Object Optional" ||= [
-        !@ objectElement => (Map.ofList >> Object)
-        empty =% (Object Map.empty)
+        !@ objectElement |> asIs
+        empty => (fun () -> JsonObject())
     ]
-    object.SetProductions(!& "{" .>>. objectOptional .>> "}" |> asIs)
+    object.SetProductions(!& "{" .>>. objectOptional .>> "}" => (fun x -> x :> JsonNode))
 
     value
     |> DesigntimeFarkle.caseSensitive true

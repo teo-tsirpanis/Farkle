@@ -14,6 +14,7 @@ open Farkle.Samples
 open Farkle.Parser
 open Farkle.Tests
 open System.IO
+open System.Text.Json.Nodes
 
 module SimpleMaths = Farkle.Samples.FSharp.SimpleMaths
 
@@ -84,16 +85,19 @@ let tests = testList "Parser tests" [
     }
 
     testProperty "The JSON parser works well" (fun json ->
-        let jsonAsString = Chiron.Formatting.Json.format json
-        let farkle =
+        let formatJson (json: JsonNode) = match json with null -> "null" | _ -> json.ToJsonString()
+        
+        let jsonAsString = formatJson json
+        let farkleFSharp =
             RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
-        let chiron =
-            match Chiron.Parsing.Json.tryParse jsonAsString with
-            | Choice1Of2 x -> x
-            | Choice2Of2 x -> failtestf "The Chiron parser failed: %s" x
-        Expect.equal farkle json "The JSON structure generated from the Farkle parser is different"
-        Expect.equal chiron json "The JSON structure generated from the Chiron parser is different"
+            |> formatJson
+        Expect.equal farkleFSharp jsonAsString "The JSON generated from the Farkle F# parser is different"
+        let farkleCSharp =
+            RuntimeFarkle.parseString CSharp.JSON.Runtime jsonAsString
+            |> Flip.Expect.wantOk "Farkle's parser failed"
+            |> formatJson
+        Expect.equal farkleCSharp jsonAsString "The JSON generated from the Farkle C# parser is different"
     )
 
     testProperty "The calculator works well" (fun expr ->

@@ -6,7 +6,6 @@
 [<AutoOpen>]
 module Farkle.Tests.Generators
 
-open Chiron
 open Expecto
 open Farkle
 open Farkle.Builder
@@ -16,8 +15,10 @@ open Farkle.Grammars.EGTFile
 open Farkle.IO
 open FsCheck
 open Farkle.Samples.FSharp.SimpleMaths
+open System.Collections.Generic
 open System.IO
 open System.Text
+open System.Text.Json.Nodes
 
 let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
@@ -86,15 +87,23 @@ let regexGen =
 let JsonGen =
     let leaves =
         Gen.oneof [
-            Arb.generate |> Gen.map Bool
-            Gen.constant <| Null ()
-            Arb.generate |> Gen.map Json.Number
-            Arb.generate |> Gen.map (fun (NonNull str) -> String str)
+            Arb.generate |> Gen.map JsonValue.Create<bool>
+            Gen.constant <| null
+            Arb.generate |> Gen.map JsonValue.Create<decimal>
+            Arb.generate |> Gen.map (fun (NonNull str) -> JsonValue.Create<string> str)
         ]
+        |> Gen.map (fun x -> x :> JsonNode)
     let branches items =
         Gen.oneof [
-            items |> Gen.nonEmptyListOf |> Gen.map Array
-            Gen.zip nonEmptyString items |> Gen.nonEmptyListOf |> Gen.map (Map.ofList >> Object)
+            items
+            |> Gen.arrayOf
+            |> Gen.map (fun x -> JsonArray x :> JsonNode)
+
+            Gen.zip nonEmptyString items
+            |> Gen.map KeyValuePair.Create
+            |> Gen.listOf
+            |> Gen.map (List.distinctBy (fun x -> x.Key))
+            |> Gen.map (fun xs -> JsonObject xs :> JsonNode)
         ]
     let rec impl size =
         if size <= 0 then

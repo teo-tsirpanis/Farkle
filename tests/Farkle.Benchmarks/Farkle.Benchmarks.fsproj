@@ -11,6 +11,7 @@
     <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\Farkle\Common.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
     </FsYacc>

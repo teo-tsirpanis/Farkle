@@ -78,7 +78,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ILLink.Substitutions.xml" LogicalName="ILLink.Substitutions.xml" />
-    <InternalsVisibleTo Include="Farkle.Benchmarks" />
     <InternalsVisibleTo Include="Farkle.Tests" />
     <InternalsVisibleTo Include="Farkle.Tools" />
     <InternalsVisibleTo Include="Farkle.Tools.MSBuild" />

@@ -193,7 +193,7 @@ let private createDelegateTargetFields (typeBuilder: TypeBuilder) (ctorIlg: ILGe
                 match target.GetType() with
                 // We will store value-typed targets in their boxed form.
                 // It will match the delegates' existing behavior.
-                | x when x.IsValueType -> typeof<obj>
+                | x when x.IsValueType || not x.IsPublic -> typeof<obj>
                 | x -> x
             let field = typeBuilder.DefineField(fieldName, fieldType, fldPrivateReadonly) :> FieldInfo
 

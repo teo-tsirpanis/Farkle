@@ -22,10 +22,18 @@ type ProductionBuilderExtensions =
     [<Extension>]
     static member Extended<[<Nullable(0uy)>] 'T>(df: DesigntimeFarkle<'T>) = !@ df
     [<Extension>]
+    static member Finish<[<Nullable(0uy)>] 'TResult>(str, f: Func<'TResult>) =
+        (!& str).Finish(f)
+    [<Extension>]
+    static member Finish<[<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle, f: Func<'TResult>) =
+        (!% df).Finish(f)
+    [<Extension>]
     static member Finish<[<Nullable(0uy)>] 'T, [<Nullable(0uy)>] 'TResult>(df: DesigntimeFarkle<'T>, f: Func<'T, 'TResult>) =
         (!@ df).Finish(f)
     [<Extension>]
     static member FinishConstant<[<Nullable(0uy)>] 'T>(str, constant: 'T) = !& str =% constant
+    [<Extension>]
+    static member FinishConstant<[<Nullable(0uy)>] 'T>(df, constant: 'T) = !% df =% constant
     [<Extension>]
     static member AsIs<[<Nullable(0uy)>] 'T>(df: DesigntimeFarkle<'T>) = (!@ df).AsIs()
 

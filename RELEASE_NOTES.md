@@ -5,6 +5,7 @@
 * Some documentation was fixed.
 * The nullability annotations for some generic methods in the builder was fixed.
 * Added `params` in the array parameter overload of `Nonterminal.CreateUntyped` that takes a name and a series of production builders.
+* The color of the goto cells in the HTML tables was changed to a brighter shade of blue whose contrast is compliant with WCAG 2 AA.
 
 #### 6.4.0 - 11-03-2022
 * __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.

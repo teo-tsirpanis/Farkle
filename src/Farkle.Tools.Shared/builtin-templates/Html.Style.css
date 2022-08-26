@@ -121,7 +121,7 @@ table {
 
 .lalr-goto,
 .dfa-goto {
-    background-color: #58b8f3;
+    background-color: #5cc1ff;
 }
 
 .dfa-fail {

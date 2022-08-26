@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,7 +7,6 @@
     <PackageReference Include="FParsec" Version="1.1.1" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
-    <PackageReference Include="Chiron" Version="$(ChironVersion)" />
     <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>
@@ -21,9 +20,9 @@
     </FsLex>
     <Compile Include="Lexer.fs" />
     <Compile Include="FsLexYacc.fs" />
+    <Compile Include="FParsec.fs" />
     <Compile Include="..\..\sample\Farkle.Samples.FSharp\GOLDMetaLanguage.fs" />
     <Compile Include="..\..\sample\Farkle.Samples.FSharp\JSON.fs" />
-    <Compile Include="JsonSyntaxCheckers.fs" />
     <Compile Include="*Benchmark.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**">

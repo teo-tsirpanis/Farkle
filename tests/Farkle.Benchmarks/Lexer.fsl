@@ -27,11 +27,11 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline  { newline lexbuf; read lexbuf }
-  | float    { FLOAT (lexeme lexbuf |> decimal |> JsonValue.Create) }
+  | float    { FLOAT }
   | "true"   { TRUE }
   | "false"  { FALSE }
   | "null"   { NULL }
-  | '"'      { read_string "" false lexbuf }
+  | '"'      { read_string false lexbuf }
   | '{'      { LEFT_BRACE }
   | '}'      { RIGHT_BRACE }
   | '['      { LEFT_BRACK }
@@ -42,9 +42,9 @@ rule read =
   | _ { failwithf "SyntaxError: Unexpected char: '%s' Line: %d Column: %d" (lexeme lexbuf) (lexbuf.StartPos.Line+1) lexbuf.StartPos.Column }
 
 
-and read_string str ignorequote =
+and read_string ignorequote =
   parse
-  | '"'           { if ignorequote  then (read_string (str+"\\\"") false lexbuf) else STRING (str) }
-  | '\\'          { read_string str true lexbuf }
-  | [^ '"' '\\']+ { read_string (str+(lexeme lexbuf)) false lexbuf }
+  | '"'           { if ignorequote then (read_string false lexbuf) else STRING }
+  | '\\'          { read_string true lexbuf }
+  | [^ '"' '\\']+ { read_string false lexbuf }
   | eof           { failwith "String is not terminated" }

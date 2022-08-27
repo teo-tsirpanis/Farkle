@@ -143,12 +143,11 @@ let run json (args: ParseResults<_>) = either {
         match args.TryGetResult OutputFile with
         | Some x -> Path.GetFullPath x
         | None ->
-            // CompositePath.resolve ensures that this is an absolute path.
-            let grammarPath = grammarInput.GrammarPath.AsSpan()
-            let directory = Path.GetDirectoryName grammarPath
+            let directory = Environment.CurrentDirectory.AsSpan()
             let mutable separatorChar = Path.DirectorySeparatorChar
             let separator = MemoryMarshal.CreateReadOnlySpan(&separatorChar, 1)
             let fileName =
+                let grammarPath = grammarInput.GrammarPath.AsSpan()
                 if isGrammarExtension (Path.GetExtension grammarPath) then
                     Path.GetFileNameWithoutExtension grammarPath
                 else

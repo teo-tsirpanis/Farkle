@@ -1,8 +1,9 @@
 <Project>
   <PropertyGroup>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
-    <FSharpCoreversion>6.0.3</FSharpCoreversion>
+    <FSharpCoreversion>6.0.5</FSharpCoreversion>
     <SigourneyVersion>0.4.1</SigourneyVersion>
     <ChironVersion>6.3.1</ChironVersion>
+    <SerilogVersion>2.11.0</SerilogVersion>
   </PropertyGroup>
 </Project>

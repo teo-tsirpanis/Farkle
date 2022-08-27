@@ -25,12 +25,9 @@ Installing this tool is also required when building a project that uses the prec
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" />
     <PackageReference Include="Argu" Version="6.1.1" />
-    <PackageReference Include="Microsoft.Build" Version="16.8.0" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Build" Version="17.3.1" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.5.3" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
     <PackageReference Include="Serilog.Sinks.MSBuild" Version="1.4.0" />
-    <!-- The following references resolve version conflicts. -->
-    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="runtime" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" ExcludeAssets="runtime" />
   </ItemGroup>
 </Project>

@@ -21,7 +21,7 @@
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="Expecto" Version="9.0.2" />
-    <PackageReference Include="Expecto.FsCheck" Version="9.0.2" />
+    <PackageReference Include="Expecto" Version="9.0.4" />
+    <PackageReference Include="Expecto.FsCheck" Version="9.0.4" />
   </ItemGroup>
 </Project>

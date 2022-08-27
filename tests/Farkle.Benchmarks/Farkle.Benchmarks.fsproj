@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageReference Include="FParsec" Version="1.1.1" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.0" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
     <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
   </ItemGroup>

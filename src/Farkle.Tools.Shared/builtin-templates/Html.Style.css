@@ -128,10 +128,6 @@ table {
     background-color: #d33f49;
 }
 
-.dfa-characters {
-    background-color: lightgray;
-}
-
 .dfa-goto {
     white-space: nowrap;
 }

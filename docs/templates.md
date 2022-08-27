@@ -15,7 +15,7 @@ dotnet tool install -g Farkle.Tools
 The CLI tool can work with grammars from three kinds of files:
 
 * GOLD Parser 5.0 Enhanced Grammar Tables files with the `.egt` extension.
-* .NET assemblies with [__precompiled__](the-precompiler.html) grammars. These assemblies can target any framework and their dependencies don't have to be present. Because precompiled grammars are stored in the assembly's embedded resources, no code from them is executed.
+* .NET assemblies with [precompiled](the-precompiler.html) grammars. These assemblies can target any framework and their dependencies don't have to be present. Because precompiled grammars are stored in the assembly's embedded resources, no code from them is executed.
 * .NET projects with precompiled grammars. The projects must have already been built; Farkle does not do it by itself at the moment.
 
 If we don't explicitly specify an input, the CLI tool will try to find a project in the current directory. If only one is found, it will be used. Otherwise the tool will fail with an error.

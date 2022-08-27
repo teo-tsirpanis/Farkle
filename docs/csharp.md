@@ -31,9 +31,9 @@ let regex2 = concat [
 using Farkle.Builder;
 using static Farkle.Builder.Regex;
 
-var regex1 = FromRegexString("Hello+' '?World!*");
+Regex regex1 = FromRegexString("Hello+' '?World!*");
 
-var regex2 = Join(
+Regex regex2 = Join(
     Literal("Hell"),
     Literal('o').AtLeast(1),
     Literal(' ').Optional(),
@@ -63,6 +63,19 @@ The following table highlights the differences between the F# and C# designtime 
 |`RuntimeFarkle.build x`|`x.Build()`|
 |`RuntimeFarkle.buildUntyped x`|`x.BuildUntyped()`|
 
+If you want to define productions with a single member, you can omit the calls to `Appended()` or `Extended()` as follows:
+
+|F#|C#|C# but shorter|
+|--|--|--------------|
+|`!& str => fun () -> v`|`str.Appended().Finish(() => v)`|`str.Finish(() => v)`\*|
+|`!% x => fun () -> v`|`x.Appended().Finish(() => v)`|`x.Finish(() => v)`\*|
+|`!@ x => f`|`x.Extended().Finish(f)`|`x.Finish(f)`|
+|`!& str =% v`|`str.Appended().FinishConstant(v)`|`str.FinishConstant(v)`|
+|`!% x =% v`|`x.Appended().FinishConstant(v)`|`x.FinishConstant(v)`\*|
+|`!@ x |> asIs`|`x.Extended().AsIs()`|`x.AsIs()`|
+
+> Methods with an asterisk (\*) were introduced in Farkle 6.5.0.
+
 The `Build` and `BuildUntyped` extension methods accept an optional `CancellationToken` and will throw an `OperationCanceledException` if it gets triggered.
 
 ### A complete example
@@ -81,20 +94,20 @@ public static class SimpleMaths
 
     static SimpleMaths()
     {
-        var number = Terminals.Double("Number");
+        DesigntimeFarkle<double> number = Terminals.Double("Number");
 
-        var expression = Nonterminal.Create<double>("Expression");
+        DesigntimeFarkle<double> expression = Nonterminal.Create<double>("Expression");
         expression.SetProductions(
             number.AsIs(),
             expression.Extended().Append("+").Extend(expression).Finish((x1, x2) => x1 + x2),
             expression.Extended().Append("-").Extend(expression).Finish((x1, x2) => x1 - x2),
             expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
             expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
-            "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
+            "-".Appended().Extend(expression).WithPrecedence(out object NEG).Finish(x => -x),
             expression.Extended().Append("^").Extend(expression).Finish(Math.Pow),
             "(".Appended().Extend(expression).Append(")").AsIs());
 
-        var opScope = new OperatorScope(
+        OperatorScope opScope = new OperatorScope(
             new LeftAssociative("+", "-"),
             new LeftAssociative("*", "/"),
             new PrecedenceOnly(NEG),
@@ -106,14 +119,14 @@ public static class SimpleMaths
 }
 ```
 
-Notice how we called the `WithPrecedence` method. In F# we were passing an object to the `prec` function. In C# we let the method create and return that object to us, taking advantage of C# 7.0's `out var` construct. We can still pass an object if we want.
+Notice how we called the `WithPrecedence` method. In F# we were passing an object to the `prec` function. In C# we let the method create and return that object to us, taking advantage of C# 7.0's `out` variable declarations. We can still pass an object if we want.
 
 ### Customizing designtime Farkles
 
 To customize things like the case-sensitivity of designtime Farkles, there are some extension methods for them that reside in the `Farkle.Builder` namespace. Let's take a look at an example:
 
 ``` csharp
-var customized =
+RuntimeFarkle<double> customized =
     SimpleMaths.Designtime
         .AddBlockComment("/*", "*/")
         .AddLineComment("//")
@@ -128,10 +141,12 @@ var customized =
 To parse text, there are some extension methods for runtime Farkles that reside in the `Farkle` namespace. These functions return an F# result type that can nevertheless be used from C# like this:
 
 ``` csharp
-var designtime = /*...*/;
-var runtime = designtime.Build();
+using Microsoft.FSharp.Core;
+
+DesigntimeFarkle<double> designtime = /*...*/;
+RuntimeFarkle<double> runtime = designtime.Build();
 // Parsing strings.
-var result = runtime.Parse("foobar");
+FSharpResult<double, FarkleError> result = runtime.Parse("foobar");
 
 if (result.IsOk)
     Console.WriteLine("Success. Result: {0}", result.OkValue);
@@ -141,7 +156,7 @@ else
 // Parsing ReadOnlyMemories
 runtime.Parse("foobar".AsMemory());
 // Parsing TextReaders
-using (var f = File.OpenText("foobar.txt"))
+using (TextReader f = File.OpenText("foobar.txt"))
 {
     runtime.Parse(f);
 }

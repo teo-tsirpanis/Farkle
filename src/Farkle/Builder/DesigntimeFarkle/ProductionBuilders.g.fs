@@ -102,7 +102,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -225,7 +225,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -345,7 +345,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -462,7 +462,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -576,7 +576,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -687,7 +687,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -795,7 +795,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -900,7 +900,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1002,7 +1002,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1101,7 +1101,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1197,7 +1197,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1290,7 +1290,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1382,7 +1382,7 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1471,7 +1471,7 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1557,7 +1557,7 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1640,7 +1640,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1662,7 +1662,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
 
     /// Returns a production that returns its significant member without changing it.
     member _.AsIs() : [<Nullable(1uy)>] _ =
-        Production<'T1>(members, FuserData.CreateAsIs idx1, cpToken)
+        ProductionConcrete<'T1>(members, FuserData.CreateAsIs idx1, cpToken) :> Production<_>
     /// Finishes the production's construction and returns it.
     /// This method accepts an F# function that accepts the production's
     /// significant members and returns the production's output.

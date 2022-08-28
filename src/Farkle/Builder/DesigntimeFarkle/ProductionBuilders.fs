@@ -89,7 +89,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// </remarks>
     member _.FinishRaw<[<Nullable(0uy)>] 'TOutput>(fuser: F<'TOutput>) =
         nullCheck (nameof fuser) fuser
-        Production<'TOutput>(members, FuserData.CreateRaw fuser, cpToken)
+        ProductionConcrete<'TOutput>(members, FuserData.CreateRaw fuser, cpToken) :> Production<_>
     /// Finishes the production's construction and returns it.
     /// This method accepts an F# function that returns the production's output.
     member x.FinishFSharp<[<Nullable(0uy)>] 'TOutput>(f: _ -> 'TOutput) = x.FinishRaw(fun _ -> f())
@@ -102,11 +102,11 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
         nullCheck (nameof f) f
         let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Creates a <see cref="Production{T}"/> that
     /// always returns a constant value.</summary>
     member _.FinishConstant<[<Nullable(0uy)>] 'TOutput>(v: 'TOutput) =
-        Production<'TOutput>(members, FuserData.CreateConstant v, cpToken)
+        ProductionConcrete<'TOutput>(members, FuserData.CreateConstant v, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>

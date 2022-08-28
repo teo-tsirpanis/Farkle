@@ -9,6 +9,7 @@
 * C# users can now define single-member productions by directly calling `Finish(Constant)` without calling `Appended()` or `Extending()`. Previously only some combinations were supported (`Finish` on typed designtime Farkles and `FinishConstant` on literals), but now all can be used.
 * The HTML DFA States tables were restyled to make them consistent with the LALR States tables. In particular the columns were swapped and the dark grey background of the character cells was removed.
 * The `farkle new` command will place the output in the current directory instead of the input grammar's or assembly's directory, if not given an output path by the user.
+* The `Production<T>` type became a covariant interface, fixing issue #26. Because it used to be a sealed class with no members, it is not expected to be a breaking change. User code is not allowed to implement it.
 
 #### 6.4.0 - 11-03-2022
 * __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.

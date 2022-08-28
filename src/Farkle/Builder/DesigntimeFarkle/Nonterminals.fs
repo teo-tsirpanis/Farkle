@@ -25,13 +25,25 @@ type internal AbstractProduction =
 
 /// <summary>A production. Productions are parts of <see cref="Nonterminal{T}"/>s.</summary>
 /// <typeparam name="T">The type of the objects this production generates.</typeparam>
+/// <remarks>User code must not implement this interface, or an exception might be thrown.</remarks>
+type Production<[<Nullable(2uy); CovariantOut>] 'T> = interface end
+
 [<Sealed>]
-type Production<[<Nullable(2uy)>] 'T> internal(members: _ seq, fuser: FuserData, cpToken) =
+type internal ProductionConcrete<[<Nullable(2uy)>] 'T>(members: _ seq, fuser: FuserData, cpToken) =
     let members = members.ToImmutableArray()
     interface AbstractProduction with
         member _.Members = members
         member _.Fuser = fuser
         member _.ContextualPrecedenceToken = cpToken
+    interface Production<'T>
+
+module internal ProductionUtils =
+    let getBaseInterface (prod: Production<_>) =
+        match prod with
+        | :? AbstractProduction as x -> x
+        | _ ->
+            NotSupportedException "Using a custom implementation of the Production<T> interface is not allowed."
+            |> raise
 
 /// <summary>The base, untyped interface of <see cref="Nonterminal{T}"/>.</summary>
 /// <seealso cref="Nonterminal{T}"/>
@@ -77,9 +89,9 @@ type internal NonterminalReal<'T> internal(name) =
         if latch.TrySet() then
             productions <-
                 prods
-                |> Seq.map (fun x -> x :> AbstractProduction)
+                |> Seq.map ProductionUtils.getBaseInterface
                 |> List.ofSeq
-                |> (fun prods -> (firstProd :> AbstractProduction) :: prods)
+                |> (fun prods -> (ProductionUtils.getBaseInterface firstProd) :: prods)
     interface AbstractNonterminal with
         // If they are already set, nothing will happen.
         // If they haven't been set, they will be permanently

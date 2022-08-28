@@ -83,26 +83,26 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11]),
-                    (UnboxFast arr.[idx12]),
-                    (UnboxFast arr.[idx13]),
-                    (UnboxFast arr.[idx14]),
-                    (UnboxFast arr.[idx15]),
-                    (UnboxFast arr.[idx16])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11]),
+                    (UnboxFast arr[idx12]),
+                    (UnboxFast arr[idx13]),
+                    (UnboxFast arr[idx14]),
+                    (UnboxFast arr[idx15]),
+                    (UnboxFast arr[idx16])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -207,25 +207,25 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11]),
-                    (UnboxFast arr.[idx12]),
-                    (UnboxFast arr.[idx13]),
-                    (UnboxFast arr.[idx14]),
-                    (UnboxFast arr.[idx15])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11]),
+                    (UnboxFast arr[idx12]),
+                    (UnboxFast arr[idx13]),
+                    (UnboxFast arr[idx14]),
+                    (UnboxFast arr[idx15])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -328,24 +328,24 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11]),
-                    (UnboxFast arr.[idx12]),
-                    (UnboxFast arr.[idx13]),
-                    (UnboxFast arr.[idx14])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11]),
+                    (UnboxFast arr[idx12]),
+                    (UnboxFast arr[idx13]),
+                    (UnboxFast arr[idx14])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -446,23 +446,23 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11]),
-                    (UnboxFast arr.[idx12]),
-                    (UnboxFast arr.[idx13])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11]),
+                    (UnboxFast arr[idx12]),
+                    (UnboxFast arr[idx13])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -561,22 +561,22 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11, 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11]),
-                    (UnboxFast arr.[idx12])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11]),
+                    (UnboxFast arr[idx12])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -673,21 +673,21 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10, 'T11> 
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10]),
-                    (UnboxFast arr.[idx11])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10]),
+                    (UnboxFast arr[idx11])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -782,20 +782,20 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9, 'T10> intern
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9]),
-                    (UnboxFast arr.[idx10])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9]),
+                    (UnboxFast arr[idx10])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -888,19 +888,19 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8, 'T9> internal(mem
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8]),
-                    (UnboxFast arr.[idx9])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8]),
+                    (UnboxFast arr[idx9])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -991,18 +991,18 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> internal(members,
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7]),
-                    (UnboxFast arr.[idx8])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7]),
+                    (UnboxFast arr[idx8])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1091,17 +1091,17 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> internal(members, idx1
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6]),
-                    (UnboxFast arr.[idx7])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6]),
+                    (UnboxFast arr[idx7])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1188,16 +1188,16 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> internal(members, idx1, idx
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5]),
-                    (UnboxFast arr.[idx6])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5]),
+                    (UnboxFast arr[idx6])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1282,15 +1282,15 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4, 'T5> internal(members, idx1, idx2, id
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4]),
-                    (UnboxFast arr.[idx5])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4]),
+                    (UnboxFast arr[idx5])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1375,14 +1375,14 @@ type ProductionBuilder<'T1, 'T2, 'T3, 'T4> internal(members, idx1, idx2, idx3, i
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3]),
-                    (UnboxFast arr.[idx4])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3]),
+                    (UnboxFast arr[idx4])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1465,13 +1465,13 @@ type ProductionBuilder<'T1, 'T2, 'T3> internal(members, idx1, idx2, idx3, cpToke
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2]),
-                    (UnboxFast arr.[idx3])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2]),
+                    (UnboxFast arr[idx3])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1552,12 +1552,12 @@ type ProductionBuilder<'T1, 'T2> internal(members, idx1, idx2, cpToken) =
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1]),
-                    (UnboxFast arr.[idx2])
+                    (UnboxFast arr[idx1]),
+                    (UnboxFast arr[idx2])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1636,11 +1636,11 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
-                    (UnboxFast arr.[idx1])
+                    (UnboxFast arr[idx1])
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<'TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -1662,7 +1662,7 @@ type ProductionBuilder<'T1> internal(members, idx1, cpToken) =
 
     /// Returns a production that returns its significant member without changing it.
     member _.AsIs() : [<Nullable(1uy)>] _ =
-        Production<'T1>(members, FuserData.CreateAsIs idx1, cpToken)
+        ProductionConcrete<'T1>(members, FuserData.CreateAsIs idx1, cpToken) :> Production<_>
     /// Finishes the production's construction and returns it.
     /// This method accepts an F# function that accepts the production's
     /// significant members and returns the production's output.

@@ -120,13 +120,15 @@ let tests = testList "Designtime Farkle tests" [
         let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
         Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
 
-    test "Designtime Farkles, post-processors, transformers and fusers are covariant" {
+    test "Designtime Farkles, productions, post-processors, transformers and fusers are covariant" {
         let df = Terminals.string '"' "String"
+        let prod = !& "x" =% ""
         let t = T(fun _ x -> x.ToString())
         let tInt = T(fun _ _ -> 380)
         let f = Builder.F(fun x -> x.ToString())
         let fInt = Builder.F(fun _ -> 286)
         Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant"
+        Expect.isSome (tryUnbox<Production<obj>> prod) "Productions are not covariant"
         Expect.isSome (tryUnbox<IPostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
         Expect.isSome (tryUnbox<T<obj>> t) "Transformers are not covariant"
         Expect.isNone (tryUnbox<T<obj>> tInt) "Transformers on value types are covariant while they shouldn't"

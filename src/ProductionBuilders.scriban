@@ -92,12 +92,12 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
                     # They want to make sure that unboxing an F# non-nullable type
                     # is never unboxed from null. But that would pose problems for those
                     # that might use Unchecked.defaultof, and an exception will already be thrown.~}}
-                    (UnboxFast arr.[idx{{ i }}]){{ if !for.last }},{{ end }}
+                    (UnboxFast arr[idx{{ i }}]){{ if !for.last }},{{ end }}
                     {{~ end ~}}
                 )
             )
         let fuserData = FuserData.Create(f, fBoxed, parameters)
-        Production<{{ ap }}TOutput>(members, fuserData, cpToken)
+        ProductionConcrete<{{ ap }}TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production
     /// when defining operator precedence and associativity.</param>
@@ -119,7 +119,7 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
     {{~ if n == 1 }}
     /// Returns a production that returns its significant member without changing it.
     member _.AsIs() : [<Nullable(1uy)>] _ =
-        Production<{{ ap }}T1>(members, FuserData.CreateAsIs idx1, cpToken)
+        ProductionConcrete<{{ ap }}T1>(members, FuserData.CreateAsIs idx1, cpToken) :> Production<_>
     {{~ end ~}}
     /// Finishes the production{{ ap }}s construction and returns it.
     /// This method accepts an F# function that accepts the production{{ ap }}s

@@ -11,6 +11,9 @@ open Farkle.Grammar
 open Farkle.IO
 open Farkle.Parser
 open System
+#if NET
+open System.Diagnostics.CodeAnalysis
+#endif
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -167,7 +170,11 @@ with
     /// <exception cref="MissingMethodEsception"><typeparamref name="TTokenizer"/>
     /// does not have a public constructor that accepts a <see cref="Grammar"/>.</exception>
     /// <remarks>A new tokenizer will be created with each parse operation.</remarks>
-    member this.ChangeTokenizer<'TTokenizer when 'TTokenizer :> Tokenizer>() =
+    member this.ChangeTokenizer<
+#if NET
+        [<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)>]
+#endif
+        'TTokenizer when 'TTokenizer :> Tokenizer>() =
         this.ChangeTokenizer(TokenizerFactoryOfType typeof<'TTokenizer>)
     interface IGrammarProvider with
         member this.IsBuildSuccessful = this.IsBuildSuccessful

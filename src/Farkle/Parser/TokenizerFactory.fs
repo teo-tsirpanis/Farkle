@@ -7,6 +7,9 @@ namespace Farkle.Parser
 
 open Farkle.Grammar
 open System
+#if NET
+open System.Diagnostics.CodeAnalysis
+#endif
 open System.Runtime.CompilerServices
 
 /// <summary>A class that creates <see cref="Tokenizer"/>s.</summary>
@@ -29,7 +32,11 @@ type TokenizerFactory() =
     static member internal Default = defaultFactory
 
 [<Sealed>]
-type internal TokenizerFactoryOfType(tokenizerType: Type) =
+type internal TokenizerFactoryOfType(
+#if NET
+    [<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)>]
+#endif
+    tokenizerType: Type) =
     inherit TokenizerFactory()
     // We can't make it a singleton because
     // of potential unloadability problems.

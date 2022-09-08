@@ -78,12 +78,18 @@ module internal Delegate =
 
     #if NET
     open System.Diagnostics.CodeAnalysis
+    open System.Runtime.CompilerServices
     #endif
 
     /// Creates a delegate from an arbitrary
     /// object's `Invoke` method. Useful turning
     /// optimized closures to delegates without
     /// an extra level of indirection.
+#if NET
+    [<UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode", Justification = "The function's public methods are kept by DynamicallyAccessedMembers.")>]
+    // The compiler randomly decides to inline it and causes trim warnings to other methods.
+    [<MethodImpl(MethodImplOptions.NoInlining)>]
+#endif
     let ofInvokeMethod<'TDelegate,
                         #if NET
                         // We have to tell the IL Linker to spare the Invoke method.

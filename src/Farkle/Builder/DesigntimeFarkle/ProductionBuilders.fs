@@ -101,7 +101,7 @@ allowed in a production builder's constructor. You provided a %O" (x.GetType()))
     /// This method accepts a delegate that returns the production's output.
     member _.Finish<[<Nullable(0uy)>] 'TOutput>(f: Func<'TOutput>) =
         nullCheck (nameof f) f
-        let fuserData = FuserData.Create(f, F(fun _ -> f.Invoke()), [])
+        let fuserData = FuserData.Create(F(fun _ -> f.Invoke()))
         ProductionConcrete<'TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Creates a <see cref="Production{T}"/> that
     /// always returns a constant value.</summary>

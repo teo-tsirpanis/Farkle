@@ -35,21 +35,11 @@ type T<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of context: ITransformerCo
 [<CompiledName("Fuser`1")>]
 type F<[<CovariantOut; Nullable(2uy)>] 'T> = delegate of members: ReadOnlySpan<obj> -> 'T
 
-type internal IRawDelegateProvider =
-    abstract IsNull: bool
-    abstract IsConstant: bool
-    abstract RawDelegate: Delegate
-    abstract ReturnType: Type
-
-type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, returnType) =
+type internal TransformerData private(boxedDelegate) =
     static let tdNull =
         let tNull = T(fun _ _ -> null: obj)
-        TransformerData(tNull, tNull, typeof<obj>)
-    // This is used by the dynamic code generator.
-    member _.RawDelegate = rawDelegate
-    // And this is used by the static post-processor.
+        TransformerData(tNull)
     member _.BoxedDelegate = boxedDelegate
-    member _.ReturnType = returnType
     static member Null = tdNull
     static member Create (t: T<'T>) =
         let tBoxed =
@@ -58,46 +48,26 @@ type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, retu
                 T(fun context data -> t.Invoke(context, data) |> box)
             else
                 unbox t
-        TransformerData(t, tBoxed, typeof<'T>)
-    interface IRawDelegateProvider with
-        member x.IsNull = x = tdNull
-        member _.IsConstant = false
-        member _.RawDelegate = rawDelegate
-        member _.ReturnType = returnType
+        TransformerData(tBoxed)
 
-type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType, parameters: (int * Type) list, constant) =
-    static let typedefofFuser = typedefof<F<_>>
-    // Fusers returning null will be special-cased anyway.
-    // There's no reason to model them as constants.
+type internal FuserData private(boxedDelegate) =
     static let fdNull =
         let fNull = F(fun _ -> null: obj)
-        FuserData(fNull, fNull, typeof<obj>, [], ValueNone)
-    static let fAsIs = Func<obj,obj>(fun x -> x)
+        FuserData(fNull)
     static let boxF (f: F<'T>) =
         if typeof<'T>.IsValueType then
             F(fun data -> f.Invoke data |> box)
         else
             unbox f
-    member _.RawDelegate = rawDelegate
     member _.BoxedDelegate = boxedDelegate
-    member _.ReturnType = returnType
-    member _.Parameters = parameters
-    member _.Constant = constant
-    member _.IsAsIs = rawDelegate = upcast fAsIs
-    member _.IsRaw = Type.op_Equality(rawDelegate.GetType(), typedefofFuser.MakeGenericType(returnType))
     static member Null = fdNull
-    static member Create (fRaw, f: F<'T>, parameters) =
-        FuserData(fRaw, boxF f, typeof<'T>, parameters, ValueNone)
+    static member Create (f: F<'T>) =
+        FuserData(boxF f)
     static member CreateRaw (f: F<'T>) =
-        FuserData(f, boxF f, typeof<'T>, [], ValueNone)
+        FuserData(boxF f)
     static member CreateAsIs idx =
-        FuserData.Create(fAsIs, F(fun x -> x.[idx]), [idx, typeof<obj>])
+        FuserData(F(fun x -> x[idx]))
     static member CreateConstant (x: 'T) =
         let xBoxed = box x
         let fBoxed = F(fun _ -> xBoxed)
-        FuserData(fBoxed, fBoxed, typeof<'T>, [], ValueSome xBoxed)
-    interface IRawDelegateProvider with
-        member x.IsNull = x = fdNull
-        member _.IsConstant = constant.IsSome
-        member _.RawDelegate = rawDelegate
-        member _.ReturnType = returnType
+        FuserData(fBoxed)

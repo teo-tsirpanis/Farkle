@@ -78,12 +78,6 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
         for i in 1..n ~}}
         let idx{{ i }} = idx{{ i }}
         {{~ end ~}}
-        let parameters =
-            [
-                {{~ for i in 1..n ~}}
-                idx{{ i }}, typeof<{{ ap }}T{{ i }}>
-                {{~ end ~}}
-            ]
         let fBoxed =
             F(fun arr ->
                 f.Invoke(
@@ -92,11 +86,11 @@ type ProductionBuilder<{{ type_params n }}> internal(members, {{ type_indices n 
                     # They want to make sure that unboxing an F# non-nullable type
                     # is never unboxed from null. But that would pose problems for those
                     # that might use Unchecked.defaultof, and an exception will already be thrown.~}}
-                    (UnboxFast arr.[idx{{ i }}]){{ if !for.last }},{{ end }}
+                    (UnboxFast arr[idx{{ i }}]){{ if !for.last }},{{ end }}
                     {{~ end ~}}
                 )
             )
-        let fuserData = FuserData.Create(f, fBoxed, parameters)
+        let fuserData = FuserData.Create(fBoxed)
         ProductionConcrete<{{ ap }}TOutput>(members, fuserData, cpToken) :> Production<_>
     /// <summary>Returns a production builder with the given contextual precedence token.</summary>
     /// <param name="cpToken">An object that identifies the production

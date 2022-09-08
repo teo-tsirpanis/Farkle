@@ -1,15 +1,16 @@
-#### 6.5.0
+#### 6.5.0 - 09-09-2022
 * Added an overload of the `MarkForPrecompile` extension method that enables the precompiler to be used in AOT environments. See https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Using-the-precompiler-in-AOT-environments for more details.
 * Frequently used post-processors will no longer be optimized using dynamic code generation, because of concerns about the code generator's robustness. Performance might slightly regress. A more robust code generation system might be introduced in a future version of Farkle.
 * More methods in the builder check their arguments for `null` and throw `ArgumentNullException`s.
 * Some documentation was fixed.
-* The nullability annotations for some generic methods in the builder was fixed.
+* The nullability annotations for some generic methods in the builder were fixed.
 * Added `params` in the array parameter overload of `Nonterminal.CreateUntyped` that takes a name and a series of production builders.
 * The color of the goto cells in the HTML tables was changed to a brighter shade of blue whose contrast is compliant with WCAG 2 AA.
 * C# users can now define single-member productions by directly calling `Finish(Constant)` without calling `Appended()` or `Extending()`. Previously only some combinations were supported (`Finish` on typed designtime Farkles and `FinishConstant` on literals), but now all can be used.
 * The HTML DFA States tables were restyled to make them consistent with the LALR States tables. In particular the columns were swapped and the dark grey background of the character cells was removed.
 * The `farkle new` command will place the output in the current directory instead of the input grammar's or assembly's directory, if not given an output path by the user.
 * The `Production<T>` type became a covariant interface, fixing issue #26. Because it used to be a sealed class with no members, it is not expected to be a breaking change. User code is not allowed to implement it.
+* Trimming warnings were reduced. A couple of them remain and might appear when building grammars without the precompiler, but they pose no risk, removing them was non-trivial.
 
 #### 6.4.0 - 11-03-2022
 * __Breaking change:__ `Farkle.Tools.MSBuild` require MSBuild 17, which comes with Visual Studio 2022 and the .NET 6 SDK.

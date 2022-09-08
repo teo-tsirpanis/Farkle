@@ -34,6 +34,7 @@ type internal Entry =
     | UInt32 of intValue: uint32
     /// The entry has a string.
     | String of stringValue: string
+    [<NoDynamicInvocation>]
     static member inline Int x = UInt32 <| uint32 x
 
 /// Functions to help EGT file readers.
@@ -249,6 +250,7 @@ type internal EGTWriter(stream, header, [<Optional; DefaultParameterValue(false)
     member x.WriteUInt32 i = x.WriteEntry(Entry.UInt32 i)
     /// Appends an entry with any integer to the next record.
     /// That integer must fit in an unsigned 32-bit integer.
+    [<NoDynamicInvocation>]
     member inline x.WriteInt i = x.WriteEntry(Entry.Int i)
     /// Appends an entry with a string to the next record.
     member x.WriteString s = x.WriteEntry(Entry.String s)

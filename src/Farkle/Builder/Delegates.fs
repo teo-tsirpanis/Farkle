@@ -66,7 +66,6 @@ type internal TransformerData private(rawDelegate: Delegate, boxedDelegate, retu
         member _.ReturnType = returnType
 
 type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType, parameters: (int * Type) list, constant) =
-    static let typedefofFuser = typedefof<F<_>>
     // Fusers returning null will be special-cased anyway.
     // There's no reason to model them as constants.
     static let fdNull =
@@ -84,7 +83,9 @@ type internal FuserData private(rawDelegate: Delegate, boxedDelegate, returnType
     member _.Parameters = parameters
     member _.Constant = constant
     member _.IsAsIs = rawDelegate = upcast fAsIs
-    member _.IsRaw = Type.op_Equality(rawDelegate.GetType(), typedefofFuser.MakeGenericType(returnType))
+    member _.IsRaw =
+        let t = rawDelegate.GetType()
+        t.IsGenericType && t.GetGenericTypeDefinition().Equals(typedefof<F<_>>)
     static member Null = fdNull
     static member Create (fRaw, f: F<'T>, parameters) =
         FuserData(fRaw, boxF f, typeof<'T>, parameters, ValueNone)

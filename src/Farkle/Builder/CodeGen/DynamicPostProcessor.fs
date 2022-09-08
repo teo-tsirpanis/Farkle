@@ -34,9 +34,6 @@ let mutable private generatedPostProcessorIndex = 0L
 let private getParameterTypes (xs: ParameterInfo []) =
     xs |> Array.map (fun p -> p.ParameterType)
 
-#if NET
-[<DynamicDependency(".ctor(System.String)", typeof<ArgumentOutOfRangeException>)>]
-#endif
 let private argOutOfRangeCtor =
     typeof<ArgumentOutOfRangeException>.GetConstructor([|typeof<string>|])
 
@@ -52,15 +49,9 @@ let private fuseParameters =
     typeof<IPostProcessor>.GetMethod("Fuse").GetParameters()
     |> getParameterTypes
 
-#if NET
-[<DynamicDependency("Format(System.String, System.Object)", typeof<string>)>]
-#endif
 let private stringFormatMethodOneObj =
     typeof<string>.GetMethod("Format", [|typeof<string>; typeof<obj>|])
 
-#if NET
-[<DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof<ReadOnlySpanOfObjectIndexer>)>]
-#endif
 let private readOnlySpanOfObjectIndexer =
     // Type.GetType("System.ReadOnlySpan`1").MakeGenericType(typeof<obj>).GetProperty("Item").GetGetMethod()
     typeof<ReadOnlySpanOfObjectIndexer>.GetMethod("GetItem", BindingFlags.NonPublic ||| BindingFlags.Static)

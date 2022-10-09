@@ -2,7 +2,7 @@
 
 ## How to build
 
-* Install .NET Core SDK, version 3.1
+* Install .NET 6 SDK
 * Install PowerShell
 * `build.ps1`
 
@@ -11,9 +11,18 @@ There are Visual Studio Code tasks to make your life easier.
 ## Code style
 
 * 4 spaces indentation
-* __No__ trailing spaces
+* No trailing whitespace
 * One trailing newline
 * Prefer to put types in namespaces, not modules (even internal ones).
+
+## What to contribute
+
+__Farkle is undergoing a complete rewrite. Until it completes, community contributions to files under `src/Farkle` will not be accepted.__ You can contribute instead to:
+
+* Documentation
+* Tests
+* Samples
+* The CLI tool
 
 ## Breaking changes policy
 

@@ -61,13 +61,13 @@ The table stream begins with a header:
 |`int32_t[N]`|__RowCounts__|The number of rows each table has. Each value MUST be greater than zero.|
 |`int8_t[N]`|__RowSizes__|The size of each table's row in bytes. Each value MUST be greater than zero.|
 |`uint8_t`|__HeapSizes__|A bit vector indicating the sizes of the heaps referenced by the tables.|
-|`uint8_t[(6*N + 1) mod 8]`|__Padding__|A sequence of zero to seven zeroes to make the header's size a multiple of eight bytes.|
+|`uint8_t[(5*N + 1) mod 8]`|__Padding__|A sequence of zero to seven zeroes to make the header's size a multiple of eight bytes.|
 
 > Because some fields have a variable size, the Offset column was omitted from the table.
 
 > [ECMA-335][ecma] does not have a field equivalent to __RowSizes__. It was added in this specification to allow adding new tables without causing a breaking change.
 
-The following table indicates the meaning of each bit of the __HeapSizes__ field:
+The following table indicates the meaning of each bit of the __HeapSizes__ field. If a bit is set, indices to its corresponding heap have a size of two bytes. Otherwise, they have a size of four bytes.
 
 |Bit|Description|
 |---|-----------|
@@ -75,7 +75,7 @@ The following table indicates the meaning of each bit of the __HeapSizes__ field
 |1|The Blob heap is either absent or its size is less than or equal to 2<sup>16</sup> bytes long.|
 |2-7|Reserved. Writers MUST set them to zero and readers SHOULD ignore them.|
 
-Immediately after the header come the tables. Each table contains one or more rows, which are structures of constant size and is identified by a number from zero to sixty three, corresponding to a bit in the __TablesPresent__ field. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table.
+Immediately after the header come the tables. Each table is identified by a number from zero to sixty three corresponding to a bit in the __TablesPresent__ field, and contains one or more rows, which are structures of constant size. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table.
 
 The supported table types are listed in the next section.
 

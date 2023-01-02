@@ -77,7 +77,7 @@ The following table indicates the meaning of each bit of the __HeapSizes__ field
 
 Immediately after the header come the tables. Each table is identified by a number from zero to sixty three corresponding to a bit in the __TablesPresent__ field, and contains one or more rows, which are structures of constant size. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table.
 
-Each table row is stored as the concatenation of its columns. A row can be:
+Each table row is stored as the concatenation of its columns and indexed starting from one. A column can be:
 
 * An integer of fixed length.
 * An index to the String or Blob heaps. Its length depends on the corresponding bit in the __HeapSizes__ field.
@@ -85,6 +85,19 @@ Each table row is stored as the concatenation of its columns. A row can be:
 * A coded index to one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is two bytes if all possible tables have a row count less than or equal to 2<sup>16 - log2(n)</sup>, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
 The supported table types are listed in the next section.
+
+## Coded Indices
+
+The following coded indices are defined:
+
+### _ProductionMember_: 1 bit to encode tag
+
+|Table|Tag|
+|-----|---|
+|_TokenSymbol_|0|
+|_Nonterminal_|1|
+
+If a _ProductionMember_-coded index points to a token symbol, its `Terminal` flag MUST be set.
 
 ## Tables
 
@@ -172,6 +185,43 @@ The following rules apply to the _Group_ table:
 The _GroupNesting_ table contains the following column:
 
 * __Group__ (an index to the _Group_ table): The group that can be nested inside another group.
+
+### Nonterminal table
+
+The _Nonterminal_ table contains the following columns:
+
+* __Name__ (an index to the String heap): The name of the nonterminal.
+* __Flags__ (a two-byte bit vector): Characteristics of the nonterminal.
+* __FirstProduction__ (an index to the _Production_ table): The index to the first production of this nonterminal. This production list ends before the __FirstProduction__ value of the next nonterminal, or at the end of the _Production_ table if this is the last nonterminal.
+
+The following bit values are defined for the __Flags__ column:
+
+|Bit|Name|Description|
+|---|----|-----------|
+|0|`Generated`|The nonterminal was not explicitly defined by the grammar author.|
+
+The following rules apply to the _Nonterminal_ table:
+
+* A nonterminal's __FirstProduction__ column MUST be greater or equal than the __FirstProduction__ column of the previous nonterminal.
+* If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
+> Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
+
+### Production table
+
+The _Production_ table contains the following column:
+
+* __FirstMember__ (an index to the _ProductionMember_ table): The index to the first member of this production. This member list ends before the __FirstMember__ value of the next production, or at the end of the _ProductionMember_ table if this is the last production.
+
+The following rules apply to the _Production_ table:
+
+* A production's __FirstMember__ column MUST be greater or equal than the __FirstMember__ column of the previous production.
+* If the last production does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
+
+### ProductionMember table
+
+The _ProductionMember_ table contains the following columns:
+
+* __Member__ (a _ProductionMember_-coded index): The member of the production.
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

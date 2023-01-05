@@ -99,6 +99,13 @@ The following coded indices are defined:
 
 If a _ProductionMember_-coded index points to a token symbol, its `Terminal` flag MUST be set.
 
+### _Symbol_: 1 bit to encode tag
+
+|Table|Tag|
+|-----|---|
+|_TokenSymbol_|0|
+|_Nonterminal_|1|
+
 ## Tables
 
 The specification defines the following tables, identified by the bit index of the tables stream header's __TablesPresent__ field.
@@ -145,13 +152,14 @@ The following bit values are defined for the __Flags__ column:
 |1|`GroupStart`|The token symbol appears in the __Start__ column of the _Group_ table.|
 |2|`Noise`|The token symbol can be skipped by parsers if encountered in an unexpected place in the input.|
 |3|`Hidden`|The token symbol should not be displayed by parsers in the expected tokens list in case of a syntax error.|
-|4|`HasSpecialName`|The token symbol appears in the __TokenSymbol__ column of the _SpecialName_ table.|
+|4|`HasSpecialName`|The token symbol appears in the __Symbol__ column of the _SpecialName_ table.|
 |5|`Generated`|The token symbol was not explicitly defined by the grammar author.|
 
 The following rules apply to the _TokenSymbol_ table:
 
 * A token symbol with the `Terminal` flag set MUST NOT appear in the Token Symbol table after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
+* A token symbol with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
 
 ### Group table
 
@@ -199,12 +207,14 @@ The following bit values are defined for the __Flags__ column:
 |Bit|Name|Description|
 |---|----|-----------|
 |0|`Generated`|The nonterminal was not explicitly defined by the grammar author.|
+|1|`HasSpecialName`|The nonterminal appears in the __Symbol__ column of the _SpecialName_ table.|
 
 The following rules apply to the _Nonterminal_ table:
 
 * A nonterminal's __FirstProduction__ column MUST be greater or equal than the __FirstProduction__ column of the previous nonterminal.
 * If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
 > Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
+* A nonterminal with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
 
 ### Production table
 
@@ -222,6 +232,45 @@ The following rules apply to the _Production_ table:
 The _ProductionMember_ table contains the following columns:
 
 * __Member__ (a _ProductionMember_-coded index): The member of the production.
+
+### StateMachine table
+
+The _StateMachine_ table contains the following columns:
+
+* __Kind__ (an eight-byte signed integer): The kind of the state machine.
+* __Data__ (an index to the Blob heap): The data of the state machine.
+
+The following values are defined for the __Kind__ column:
+
+|Value|Description|
+|-----|-----------|
+|< 0|Reserved for third-party implementations.|
+|0|Deterministic Finite Automaton (DFA) on 16-bit character ranges.|
+|1|LR(1) state machine.|
+|2|Deterministic Finite Automaton (DFA) on 16-bit character ranges with conflicts.|
+|3|Generalized LR(1) (GLR) state machine.|
+|_anything else_|Reserved for future use by the Farkle project.|
+
+The following rules apply to the _StateMachine_ table:
+
+* The __Kind__ column MUST NOT contain duplicate values.
+
+The format of the blob pointed to by the __Data__ column depends on the value of the __Kind__ column and is specified in following sections.
+
+### SpecialName table
+
+The _SpecialName_ table contains the following columns:
+
+* __Symbol__ (a _Symbol_-coded index): The symbol that has a special name.
+* __Name__ (an index to the String heap): The special name of the symbol.
+
+The following rules apply to the _SpecialName_ table:
+
+* The __Symbol__ column MUST NOT contain duplicate values.
+* The __Symbol__ column MUST point to a token symbol or nonterminal that has the `HasSpecialName` flag set.
+* The __Name__ column MUST NOT contain duplicate values.
+
+> The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since in Farkle symbols can be renamed and many can have the same name within a grammar, the special name provides a stable way to identify them (it sticks to the symbol's original name and duplicate names would cause build failures).
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

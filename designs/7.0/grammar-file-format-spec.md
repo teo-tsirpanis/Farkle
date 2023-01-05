@@ -67,13 +67,12 @@ The table stream begins with a header:
 
 > [ECMA-335][ecma] does not have a field equivalent to __RowSizes__. It was added in this specification to allow adding new tables without causing a breaking change.
 
-The following table indicates the meaning of each bit of the __HeapSizes__ field. If a bit is set, indices to its corresponding heap have a size of two bytes. Otherwise, they have a size of four bytes.
+The following bit values are defined for the __HeapSizes__ field. If a bit is set, indices to its corresponding heap have a size of two bytes. Otherwise, they have a size of four bytes.
 
 |Bit|Description|
 |---|-----------|
 |0|The String heap is either absent or its size is less than or equal to 2<sup>16</sup> bytes long.|
 |1|The Blob heap is either absent or its size is less than or equal to 2<sup>16</sup> bytes long.|
-|2-7|Reserved. Writers MUST set them to zero and readers SHOULD ignore them.|
 
 Immediately after the header come the tables. Each table is identified by a number from zero to sixty three corresponding to a bit in the __TablesPresent__ field, and contains one or more rows, which are structures of constant size. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table.
 
@@ -84,7 +83,7 @@ Each table row is stored as the concatenation of its columns and indexed startin
 * An index to another table. Its length is two bytes if the table's row count is less than or equal to 2<sup>16</sup>, and four bytes otherwise.
 * A coded index to one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is two bytes if all possible tables have a row count less than or equal to 2<sup>16 - log2(n)</sup>, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
-The supported table types are listed in the next section.
+The supported table types are listed in following sections.
 
 ## Coded Indices
 

@@ -255,14 +255,19 @@ The following values are defined for the __Kind__ column:
 |-----|-----------|
 |< 0|Reserved for third-party implementations.|
 |0|Deterministic Finite Automaton (DFA) on 16-bit character ranges.|
-|1|LR(1) state machine.|
-|2|Deterministic Finite Automaton (DFA) on 16-bit character ranges with conflicts.|
-|3|Generalized LR(1) (GLR) state machine.|
+|1|Deterministic Finite Automaton (DFA) on 16-bit character ranges with conflicts.|
+|2|Deterministic Finite Automaton (DFA) default transitions on 16-bit character ranges.|
+|3|LR(1) state machine.|
+|4|Generalized LR(1) (GLR(1)) state machine.|
 |_anything else_|Reserved for future use by the Farkle project.|
+
+> Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
 
 The following rules apply to the _StateMachine_ table:
 
 * The __Kind__ column MUST NOT contain duplicate values.
+* If both state machines of __Kind__ 0 and 1, or 3 and 4 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
+* If a state machine of __Kind__ 2 exists, a state machine of __Kind__ 0 or 1 MUST also exist.
 
 The format of the blob pointed to by the __Data__ column depends on the value of the __Kind__ column and is specified in following sections.
 
@@ -280,6 +285,59 @@ The following rules apply to the _SpecialName_ table:
 * The __Name__ column MUST NOT contain duplicate values.
 
 > The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since in Farkle symbols can be renamed and many can have the same name within a grammar, the special name provides a stable way to identify them (it sticks to the symbol's original name and duplicate names would cause build failures).
+
+## State machines
+
+### Deterministic Finite Automaton (DFA) on character ranges
+
+A DFA's representation consists of the following data:
+
+|Type|Field|Description|
+|----|-----|-----------|
+|`uint32_t`|`stateCount`|The number of states in the DFA.|
+|`uint32_t`|`edgeCount`|The number of edges in the DFA.|
+|`edge_t[stateCount]`|`firstEdge`|The zero-based index to the first edge of each state.|
+|`char_t[edgeCount]`|`rangeFrom`|The starting character of each edge's range, inclusive.|
+|`char_t[edgeCount]`|`rangeTo`|The ending character of each edge's range, inclusive.|
+|`state_t[edgeCount]`|`edgeTarget`|The one-based index to target state of each edge, or zero if following the edge would stop the tokenizer.|
+|`token_symbol_t[stateCount]`|`accept`|An index to the _TokenSymbol_ table that points to the token symbol that will get accepted at each state, or zero if the state is not an accept state.|
+
+The type `edge_t` is the smallest of one, two or four bytes that can hold the value of the `edgeCount` field minus one.
+
+The type `char_t` can be any unsigned integer type.
+
+The type `state_t` is the smallest of one, two or four bytes that can hold the value of the `stateCount` field.
+
+The type `token_symbol_t` is the type used to encode indices to the _TokenSymbol_ table.
+
+The DFA's initial state is always the first one.
+
+A state's edges end when the next state's edges begin, or at the end of the edges if this is the last state.
+
+For each state, its edges' ranges MUST be disjoint and sorted in ascending order.
+
+An edge with its `edgeTarget` field set to zero indicates that traversing this edge will stop the tokenization process. When this happens the tokenizer will return a token at the last accepted state, or fail if such state does not exist.
+
+> The previous EGTneo format was encoding group start accept symbols by specifying their group index, to avoid traversing the group table. Here we go back to GOLD Parser's approach and encode the group's start _symbol_ instead. This decreases performance but thanks to the `GroupStart` flag we can perform the lookup only if a group is about to start.
+
+### Deterministic Finite Automaton (DFA) on character ranges with conflicts
+
+A DFA has conflicts when at least one of its states has more than one accept symbol. It is represented as a regular DFA with the following changes:
+
+* A field of type `uint32_t` called `acceptCount` is added after the `edgeCount` field.
+* A field of type `accept_t[stateCount]` called `firstAccept` is added before the `accept` field. It contains the zero-based index to the first accept symbol of each state.
+    * The type `accept_t` is the smallest of one, two or four bytes that can hold the value of the `acceptCount` field plus one.
+* The `accept` field's type is changed to `token_symbol_t[acceptCount]`.
+
+A state's accept symbols end when the next state's accept symbols begin, or at the end of the accept symbols if this is the last state.
+
+### Deterministic Finite Automaton (DFA) default transitions
+
+To reduce the size of a DFA, we can factor out the most common transitions of a state and only specify the rest of them.
+
+This state machine contains `stateCount` entries of type `state_t` that specify the default transition for each state. The default transition of a state will be taken if the current input character is not matched by any edge. If it is zero, the tokenization process stops.
+
+If all states have a failing default transition, this state machine SHOULD be omitted to save space.
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

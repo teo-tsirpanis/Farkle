@@ -45,11 +45,21 @@ This specification defines three stream types. After their name, the value of th
 
 ### String heap (`"#Strings"`)
 
-The string heap is defined exactly as the #Strings heap in section II.24.2.3 of [ECMA-335][ecma]. A string heap MAY be absent from a grammar file; in this case all indices to the string heap in the file MUST be zero.
+The string heap contains a sequence of zero-terminated UTF-8 strings. Indices to the heap point to the first byte of a string. The first string is always empty. A string heap MAY be absent from a grammar file; in this case all indices to the string heap in the file MUST be zero. A string heap MUST NOT contain duplicate strings.
 
 ### Blob heap (`"#Blob\0\0\0"`)
 
-The blob heap is defined exactly as the #Blob heap in section II.24.2.4 of [ECMA-335][ecma]. A blob heap MAY be absent from a grammar file; in this case all indices to the blob heap in the file MUST be zero.
+The blob heap contains a sequence of length-prefixed byte sequences (blobs). Indices to the heap point to the first byte of the blob's length. The first blob is always empty.
+
+The length of a blob is stored as a variable-length unsigned integer:
+
+* If the first one byte of the blob is 0&zwnj;_bbbbbbb_<sub>2</sub>, then the rest of the 'blob' contains the _bbbbbbb_<sub>2</sub> bytes of actual data.
+* If the first two bytes of the blob are 10&zwnj;_bbbbbb_<sub>2</sub> and _x_, then the rest of the 'blob' contains the (_bbbbbb_<sub>2</sub> << 8 + _x_) bytes of actual data.
+* If the first four bytes of the blob are 110&zwnj;_bbbbb_<sub>2</sub>, _x_, _y_, and _z_, then the rest of the 'blob' contains the (_bbbbb_<sub>2</sub> << 24 + _x_ << 16 + _y_ << 8 + _z_) bytes of actual data.
+
+> The rules for encoding the length are adopted from [ECMA-335][ecma].
+
+The blob heap MAY contain unreachable data (for purposes like alignment).
 
 ### Table stream (`"#~\0\0\0\0\0\0"`)
 

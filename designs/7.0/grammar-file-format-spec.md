@@ -18,14 +18,16 @@ A grammar file starts with the following data:
 |Offset|Type|Field|Description|
 |------|----|-----|-----------|
 |0|`uint8_t[8]`|__Magic__|Identifies the file type. Must be `46 61 72 6B 6C 65 00 00` in hexadecimal (`"Farkle\0\0"` in ASCII).|
-|8|`uint16_t`|__MajorVersion__|The file's major version. Currently set to `7`. To be incremented on changes incompatible with earlier versions.|
-|10|`uint16_t`|__MinorVersion__|The file's minor version. Currently set to `0`. To be incremented on changes compatible with earlier versions.|
+|8|`uint16_t`|__MajorVersion__|The file's major version. Currently set to `7`.|
+|10|`uint16_t`|__MinorVersion__|The file's minor version. Currently set to `0`.|
 |12|`uint32_t`|__StreamCount__|The number of stream definitions that immediately follow this header.|
 
 * If the first eight bits of the file are different than the __Magic__ field's expected value, readers MUST NOT read past them and MUST report an error.
     > Note that the magic code ends with two zeroes. It will prevent [GOLD Parser][gold] grammar file readers from continuing reading it.
 * If the value of the __MajorVersion__ field is larger than the expected one or smaller than `7`, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
     * When and if a file version after 7 gets specified, if the version of the file is smaller than the latest the reader supports, it MAY keep compatibility with the older format, or report an error.
+
+A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
 
 ### Stream Definition
 
@@ -394,6 +396,27 @@ The specific algorithm used to build this state machine (Canonical LR(1), LALR(1
 ### LR(1) state machine with conflicts
 
 An LR(1) state machine has conflicts when for at least one terminal and state, there is more than one possible action. It is represented as a regular LR(1) state machine with the only difference being that for each state, duplicate values of the `actionTerminal` field are allowed.
+
+## Extensibility
+
+### Extensibility by third parties
+
+Third parties MAY extend to the grammar file format, through the following mechanisms only:
+
+* Streams whose first byte of the __Identifier__ field is not `0x23`.
+* State machines whose __Kind__ is a negative number.
+
+Third parties MUST NOT diverge from this specification in any other way (including but not limited to custom tables or flag values).
+
+### Unknown data
+
+Readers SHOULD expose an API that indicates whether a grammar file contains data unknown to them. Its value MUST be true if the grammar file has one of the following and false otherwise:
+
+* A __MinorVersion__ field that is greater than the latest __MinorVersion__ field the reader knows.
+* A stream whose __Identifier__ field is not known to the reader.
+* A state machine whose __Kind__ is not known to the reader.
+* A table whose kind is not specified in this specification.
+* A set bit in a table row's __Flags__ column that is not specified in this specification.
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

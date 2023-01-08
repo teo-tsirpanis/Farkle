@@ -6,6 +6,7 @@ This document describes the binary format of Farkle 7's grammars. It is heavily 
 
 * The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119].
 * Numbers are stored in little-endian format.
+* The total size of a grammar file MUST NOT exceed 2<sup>31</sup> - 1 bytes.
 
 ## Abstract file structure
 
@@ -172,6 +173,7 @@ The following bit values are defined for the __Flags__ column:
 
 The following rules apply to the _TokenSymbol_ table:
 
+* The _TokenSymbol_ table MUST NOT contain more than 2<sup>20</sup> - 1 rows.
 * A token symbol with the `Terminal` flag set MUST NOT appear after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
 * A token symbol with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
@@ -226,6 +228,7 @@ The following bit values are defined for the __Flags__ column:
 
 The following rules apply to the _Nonterminal_ table:
 
+* The _Nonterminal_ table MUST NOT contain more than 2<sup>20</sup> - 1 rows.
 * A nonterminal's __FirstProduction__ column MUST be greater or equal than the __FirstProduction__ column of the previous nonterminal.
 * If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
 > Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.

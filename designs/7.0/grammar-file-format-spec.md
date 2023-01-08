@@ -90,8 +90,8 @@ Each table row is stored as the concatenation of its columns and indexed startin
 
 * An integer of fixed length.
 * An index to the String or Blob heaps. Its length depends on the corresponding bit in the __HeapSizes__ field.
-* An index to another table. Its length is two bytes if the table's row count is less than or equal to 2<sup>16</sup>, and four bytes otherwise.
-* A coded index to one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is two bytes if all possible tables have a row count less than or equal to 2<sup>16 - log2(n)</sup>, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
+* An index to another table. Its length is one or two bytes if the table's row count is less than 2<sup>8</sup> or 2<sup>16</sup> respectively, and four bytes otherwise.
+* A coded index to one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
 The supported table types are listed in following sections.
 

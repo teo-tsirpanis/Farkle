@@ -1,6 +1,6 @@
 # Farkle 7's grammar file format specification
 
-This file describes the binary format of Farkle 7's grammars. It is heavily inspired by the Common Language Infrastructure metadata format described in [ECMA-335][ecma].
+This document describes the binary format of Farkle 7's grammars. It is heavily inspired by the Common Language Infrastructure metadata format described in [ECMA-335][ecma].
 
 ## Ground rules
 
@@ -166,7 +166,7 @@ The following bit values are defined for the __Flags__ column:
 
 The following rules apply to the _TokenSymbol_ table:
 
-* A token symbol with the `Terminal` flag set MUST NOT appear in the Token Symbol table after a token symbol without the `Terminal` flag set.
+* A token symbol with the `Terminal` flag set MUST NOT appear after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
 * A token symbol with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
 
@@ -175,7 +175,7 @@ The following rules apply to the _TokenSymbol_ table:
 The _Group_ table contains the following columns:
 
 * __Name__ (an index to the String heap): The name of the group.
-* __Container__ (an index to the _Group_ table): The token symbol that corresponds to this group.
+* __Container__ (an index to the _TokenSymbol_ table): The token symbol that corresponds to this group.
 * __Flags__ (a two-byte bit vector): Characteristics of the group.
 * __Start__ (an index to the _TokenSymbol_ table): The token symbol that starts the group.
 * __End__ (an index to the _TokenSymbol_ table): The token symbol that ends the group.

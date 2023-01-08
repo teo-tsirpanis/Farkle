@@ -339,6 +339,58 @@ This state machine contains `stateCount` entries of type `state_t` that specify 
 
 If all states have a failing default transition, this state machine SHOULD be omitted to save space.
 
+### LR(1) state machine
+
+An LR(1) state machine's representation consists of the following data:
+
+|Type|Field|Description|
+|----|-----|-----------|
+|`uint32_t`|`stateCount`|The number of states in the state machine.|
+|`uint32_t`|`actionCount`|The number of actions in the state machine.|
+|`uint32_t`|`gotoCount`|The number of GOTO actions in the state machine.|
+|`action_index_t[stateCount]`|`firstActionList`|The zero-based index to the first action of each state.|
+|`token_symbol_t[actionCount]`|`actionTerminal`|An index to the _TokenSymbol_ table that specifies the terminal that triggers each action.|
+|`lr_action_t[actionCount]`|`action`|The type of each action.|
+|`eof_action_t[stateCount]`|`eofAction`|The type of the action to take if input ends while being on each state.|
+|`goto_t[stateCount]`|`firstGoto`|The zero-based index to the first GOTO action of each state.|
+|`nonterminal_t[gotoCount]`|`gotoNonterminal`|An index to the _Nonterminal_ table that points to the nonterminal that triggers each GOTO action.|
+|`state_t[gotoCount]`|`gotoState`|The zero-based index to the target state of each GOTO action.|
+
+The type `action_index_t` is the smallest of one, two or four bytes that can hold the value of the `actionCount` field minus one.
+
+The type `token_symbol_t` is the type used to encode indices to the _TokenSymbol_ table.
+
+The type `lr_action_t` describes the type of an action (shift or reduce). It is encoded as follows and its size is the smallest of one, two or four bytes that can encode all valid values for this grammar:
+
+* A shift action to state `s` is encoded as `s`.
+*
+    A reduce action to the production with the index `p` is encoded as `-p`.
+    > Remember that table row indices are one-based, so the first production has an index of `1`.
+
+The type `eof_action_t` describes the type of the action (reduce, accept, error) to take when input ends while being on a state. It is encoded as follows and its size is the smallest of one, two or four bytes that can hold the number of productions in the grammar plus one:
+
+* An error action is encoded as `0`.
+* An accept action is encoded as `1`.
+* A reduce action to the production with the index `p` is encoded as `p + 1`.
+
+The type `state_t` is the smallest of one, two or four bytes that can hold the value of the `stateCount` field minus one.
+
+The type `goto_t` is the smallest of one, two or four bytes that can hold the value of the `gotoCount` field minus one.
+
+The LR(1) state machine's initial state is always the first one.
+
+A state's actions end when the next state's actions begin, or at the end of the actions if this is the last state. The same applies to GOTO actions.
+
+For each state, its `actionTerminal` and `gotoNonterminal` fields MUST be unique and sorted in ascending order.
+
+The token symbol pointed by the `actionTerminal` field MUST have the `Terminal` flag set.
+
+The specific algorithm used to build this state machine (Canonical LR(1), LALR(1) or something else) is unspecified.
+
+### LR(1) state machine with conflicts
+
+An LR(1) state machine has conflicts when for at least one terminal and state, there is more than one possible action. It is represented as a regular LR(1) state machine with the only difference being that for each state, duplicate values of the `actionTerminal` field are allowed.
+
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119
 [gold]: http://goldparser.org

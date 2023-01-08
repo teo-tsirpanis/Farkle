@@ -51,13 +51,11 @@ The string heap contains a sequence of zero-terminated UTF-8 strings. Indices to
 
 The blob heap contains a sequence of length-prefixed byte sequences (blobs). Indices to the heap point to the first byte of the blob's length. The first blob is always empty.
 
-The length of a blob is stored as a variable-length unsigned integer:
+The length of a blob is stored as a variable-length unsigned integer (adopted from [ECMA-335][ecma]):
 
 * If the first one byte of the blob is 0&zwnj;_bbbbbbb_<sub>2</sub>, then the rest of the 'blob' contains the _bbbbbbb_<sub>2</sub> bytes of actual data.
 * If the first two bytes of the blob are 10&zwnj;_bbbbbb_<sub>2</sub> and _x_, then the rest of the 'blob' contains the (_bbbbbb_<sub>2</sub> << 8 + _x_) bytes of actual data.
 * If the first four bytes of the blob are 110&zwnj;_bbbbb_<sub>2</sub>, _x_, _y_, and _z_, then the rest of the 'blob' contains the (_bbbbb_<sub>2</sub> << 24 + _x_ << 16 + _y_ << 8 + _z_) bytes of actual data.
-
-> The rules for encoding the length are adopted from [ECMA-335][ecma].
 
 The blob heap MAY contain unreachable data (for purposes like alignment).
 
@@ -140,11 +138,17 @@ The _Grammar_ table contains the following columns:
 
 * __Name__ (an index to the String heap): The name of the grammar.
 * __StartSymbol__ (an index to the _Nonterminal_ table): The starting nonterminal of the grammar.
-* __Flags__ (a two-byte bit vector): Characteristics of the grammar. Reserved; writers MUST set it to zero and readers SHOULD ignore it.
+* __Flags__ (a two-byte bit vector): Characteristics of the grammar.
+
+The following bit values are defined for the __Flags__ column:
+
+|Bit|Name|Description|
+|---|----|-----------|
+|0|`Unparsable`|The grammar has flaws that make it unsuitable for parsing.|
+
+> Note that the absence of the `Unparsable` flag does not guarantee that the grammar can be parsed. Another way for a grammar to be unparsable is if it lacks a necessary state machine. But if we have say a grammar with a production that has no members, we can emit an unusable state machine for diagnostics purposes, but set the flag.
 
 A grammar file MUST contain a _Grammar_ table with exactly one row.
-
-Information stored in the _Grammar_ table are for informative purposes only and intended to be used by consumers like templating systems and not parsers.
 
 ### _TokenSymbol_ table
 

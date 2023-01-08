@@ -38,7 +38,7 @@ A different than expected __MajorVersion__ field indicates that the file cannot 
 |8|`int32_t`|__Offset__|The byte offset from where the stream starts, starting from the start of this file.|
 |12|`int32_t`|__Length__|The length of the stream in bytes.|
 
-* Values of the __Identifier__ field whose first byte is equal to `23` in hexadecimal (`#` in ASCII) are reserved by implementations of the Farkle project. Third-party implementations MUST NOT define custom streams with such __Identifier__&zwnj;s.
+* Values of the __Identifier__ field whose first byte is equal to `0x23` (`#` in ASCII) are reserved by implementations of the Farkle project. Third-party implementations MUST NOT define custom streams with such __Identifier__&zwnj;s.
 * Each stream definition MUST be unique based on its __Identifier__ field.
 * The __Offset__ and __Length__ fields MUST NOT be less than zero.
 

@@ -178,4 +178,4 @@ Farkle has more APIs for various little features that would make this document t
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
 [covariance]: https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/
-[indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs
+[indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs

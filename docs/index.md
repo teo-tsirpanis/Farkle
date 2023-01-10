@@ -49,10 +49,10 @@ redistribution for both commercial and non-commercial purposes. For more informa
 
   [nuget]: https://nuget.org/packages/Farkle
   [scriban]: https://github.com/lunet-io/Scriban
-  [json-csharp]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.CSharp/JSON.cs
-  [json-fsharp]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/JSON.fs
-  [simple-maths]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/SimpleMaths.fs
-  [indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs
+  [json-csharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.CSharp/JSON.cs
+  [json-fsharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/JSON.fs
+  [simple-maths]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/SimpleMaths.fs
+  [indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs
   [gh]: https://github.com/teo-tsirpanis/Farkle
   [issues]: https://github.com/teo-tsirpanis/Farkle/issues
-  [license]: https://github.com/teo-tsirpanis/Farkle/blob/master/LICENSE.txt
+  [license]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/LICENSE.txt

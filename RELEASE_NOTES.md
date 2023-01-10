@@ -73,7 +73,7 @@
 * __Breaking change:__ The `Farkle.Common.SetOnce` type became internal.
 * Farkle's types and methods support [C# 8.0's Nullable Reference Types](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#nullable-reference-types).
 * Farkle's builder supports defining operator precedence and associativity to resolve conflicts. The quick start guide was updated.
-* Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/master/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
+* Farkle supports virtual terminals -terminals that are not backed by the default tokenizer's DFA but created by custom tokenizers-, allowing for scenarios like indent-based grammars. [An F# sample of an indent-based grammar](https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs) was published.
 * Dynamic code generation will be applied to post-processors that are frequently used, in a fashion similar to .NET's tiered compilation, regardless of whether their designtime Farkle is precompilable.
 * Build error reporting is improved. More build errors will be reported at the same time, without having to fix one to show the next.
 * Stack overflows when building extremely complex designtime Farkles were either mitigated or will throw recoverable exceptions.
@@ -162,7 +162,7 @@
 #### 5.0.0-rc.5 - 22-07-2019
 * Fixed a bug which sometimes made Farkle.Tools.MSBuild unusable for C# users.
 * Added a new MSBuild item metadata called `OutputDirectorySuffix` which is useful for generating templates in a different directory than the EGT file.
-* Add a new benchmark which compares a Farkle-made JSON parser to [Chiron](https://xyncro.tech/chiron/), which is powered by [FParsec](https://www.quanttec.com/fparsec/). You can see the results of the benchmarks [over here](https://github.com/teo-tsirpanis/Farkle/tree/master/performance).
+* Add a new benchmark which compares a Farkle-made JSON parser to [Chiron](https://xyncro.tech/chiron/), which is powered by [FParsec](https://www.quanttec.com/fparsec/). You can see the results of the benchmarks [over here](https://github.com/teo-tsirpanis/Farkle/tree/mainstream/performance).
 
 #### 5.0.0-rc.4 - 18-07-2019
 * Fixed a bug which made Farkle.Tools.MSBuild unusable.

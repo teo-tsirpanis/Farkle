@@ -92,5 +92,5 @@ So, I hope you enjoyed this little guide. If you did, don't forget to give Farkl
 [gold-skeleton]: http://www.goldparser.org/doc/builder-cmd/goldprog.htm
 [scriban]: https://github.com/scriban/scriban
 [scriban-doc]: https://github.com/scriban/scriban/blob/master/doc/language.md
-[builtin-templates]: https://github.com/teo-tsirpanis/Farkle/tree/master/src/Farkle.Tools.Shared/builtin-templates
+[builtin-templates]: https://github.com/teo-tsirpanis/Farkle/tree/mainstream/src/Farkle.Tools.Shared/builtin-templates
 [farkle-tools-nuget]: https://nuget.org/packages/Farkle.Tools

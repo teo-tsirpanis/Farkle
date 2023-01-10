@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "Ionide.ionide-fsharp",
-        "Ionide.ionide-paket",
         "ms-dotnettools.csharp",
         "ymotongpoo.licenser"
     ]

@@ -103,9 +103,9 @@ let gitHome = sprintf "%s/%s" "https://github.com" gitOwner
 let gitName = "Farkle"
 
 // Read additional information from the release notes document
-let releaseInfo = ReleaseNotes.load "./RELEASE_NOTES.md"
+let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
 
-let releaseNotes =
+let releaseNotes() =
     let lines s = seq {
         use sr = new StringReader(if isNull s then "" else s)
         let mutable s = ""
@@ -122,23 +122,28 @@ let releaseNotes =
             AppVeyor.Environment.RepoBranch
         :: AppVeyor.Environment.RepoCommitMessage
         :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
-    | _ -> releaseInfo.Notes
+    | _ -> releaseInfo.Value.Notes
 
 let nugetVersion =
+    let nugetVersion = releaseInfo.Value.NugetVersion
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
-    | _ -> releaseInfo.NugetVersion
+    AppVeyor -> sprintf "%s-ci.%s" nugetVersion AppVeyor.Environment.BuildNumber
+    | _ -> nugetVersion
 
-BuildServer.install [AppVeyor.Installer]
+let getSecret name =
+    let secret = Environment.environVarOrFail name
+    TraceSecrets.register $"<{name}>" secret
+    secret
 
-let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
-let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
+let githubToken = lazy(getSecret "farkle-github-token")
+let nugetKey = lazy(getSecret "NUGET_KEY")
 
 let checkForReleaseCredentials _ =
     githubToken.Value |> ignore
     nugetKey.Value |> ignore
 
 let checkForReleaseNotesDate _ =
+    let releaseInfo = releaseInfo.Value
     if releaseInfo.Date.IsNone then
         failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion
 
@@ -251,12 +256,12 @@ let runMSBuildTestsNetCore _ =
         }
     )
 
-let shouldCIBenchmark =
+let shouldCIBenchmark() =
     match BuildServer.buildServer with
     | LocalBuild -> true
     | AppVeyor ->
         let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        OperatingSystem.IsWindows()
         && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
     | _ -> true
 
@@ -388,8 +393,8 @@ let githubRelease _ =
         (fun x ->
             {x with
                 Name = sprintf "Version %s" nugetVersion
-                Prerelease = releaseInfo.SemVer.PreRelease.IsSome
-                Body = releaseNotes |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
+                Prerelease = releaseInfo.Value.SemVer.PreRelease.IsSome
+                Body = releaseNotes() |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
     |> GitHub.uploadFiles releaseArtifacts
     |> GitHub.publishDraft
     |> Async.RunSynchronously
@@ -398,6 +403,12 @@ let githubRelease _ =
 // Run all targets by default. Invoke 'build target <Target>' to override
 
 let initTargets() =
+    BuildServer.install [ AppVeyor.Installer ]
+    
+    let (==>!) x y = x ==> y |> ignore
+    let (=?>!) x y = x =?> y |> ignore
+    let (?=>!) x y = x ?=> y |> ignore
+
     Target.description "Fails the build if the appropriate environment variables for the release do not exist"
     Target.create "CheckForReleaseCredentials" checkForReleaseCredentials
     Target.description "Checks whether the release notes entry has a date"
@@ -450,7 +461,7 @@ and uploads them as artifacts, along with the benchmark report."
     Target.create "Release" ignore
 
     "Clean"
-        ==> "GenerateCode"
+        ==>! "GenerateCode"
 
     ["RunTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
     |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
@@ -461,11 +472,11 @@ and uploads them as artifacts, along with the benchmark report."
     "Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
 
     "RunMSBuildTestsNetFramework"
-        =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        =?>! ("Test", OperatingSystem.IsWindows())
 
     "Test"
         ==> "NuGetPack"
-        ==> "CI"
+        ==>! "CI"
 
     [""; "Debug"]
     |> List.iter (fun x ->
@@ -474,35 +485,34 @@ and uploads them as artifacts, along with the benchmark report."
             ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
     "GenerateDocs"
-        ==> "ReleaseDocs"
+        ==>! "ReleaseDocs"
 
     "GenerateDocs"
-        ==> "CI"
+        ==>! "CI"
 
     "PrepareDocsGeneration"
-        ==> "KeepGeneratingDocs"
+        ==>! "KeepGeneratingDocs"
 
     "Benchmark"
         ==> "AddBenchmarkReport"
-        ==> "PublishBenchmarkReport"
+        ==>! "PublishBenchmarkReport"
 
     // I want a clean repo when the packages are going to be built.
     "NuGetPublish"
-        ?=> "AddBenchmarkReport"
+        ?=>! "AddBenchmarkReport"
 
     "Clean"
         ==> "NuGetPack"
         ==> "NuGetPublish"
-        ==> "GitHubRelease"
+        ==>! "GitHubRelease"
 
     "CI" <== ["NuGetPack"; "GenerateDocs"]
-    "Benchmark" =?> ("CI", shouldCIBenchmark)
+    "Benchmark" =?>! ("CI", shouldCIBenchmark())
 
     "CheckForReleaseCredentials"
         ==> "CheckForReleaseNotesDate"
         ==> "GitHubRelease"
-        ==> "Release"
-        |> ignore
+        ==>! "Release"
 
 [<EntryPoint>]
 let main argv =

@@ -7,14 +7,6 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "paket: groupref FakeBuild //"
-#nowarn "3180" // Mutable locals allocated as reference cells.
-
-#if !FAKE
-// Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
-#load "./.fake/build.fsx/intellisense_lazy.fsx"
-#endif
-
 open Fake.Api
 open Fake.BuildServer
 open Fake.Core
@@ -29,8 +21,6 @@ open System
 open System.IO
 open System.Runtime.InteropServices
 open System.Text.RegularExpressions
-
-Target.initEnvironment()
 
 // Information about the project are used
 //  - for version and project name in generated AssemblyInfo file
@@ -144,15 +134,13 @@ BuildServer.install [AppVeyor.Installer]
 let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
 let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
 
-Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-Target.create "CheckForReleaseCredentials" (fun _ ->
+let checkForReleaseCredentials _ =
     githubToken.Value |> ignore
-    nugetKey.Value |> ignore)
+    nugetKey.Value |> ignore
 
-Target.description "Checks whether the release notes entry has a date"
-Target.create "CheckForReleaseNotesDate" (fun _ ->
+let checkForReleaseNotesDate _ =
     if releaseInfo.Date.IsNone then
-        failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion)
+        failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion
 
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
@@ -180,19 +168,16 @@ let cleanBinObj directory =
 
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
-Target.description "Cleans the output directories"
-Target.create "Clean" (fun _ ->
+let clean _ =
     Shell.cleanDirs ["bin"; "temp"]
-)
 
-Target.description "Cleans the output documentation directory"
-Target.create "CleanDocs" (fun _ -> Shell.cleanDir "output")
+let cleanDocs _ =
+    Shell.cleanDir "output"
 
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-Target.description "Generates some required source code files"
-Target.create "GenerateCode" (fun _ ->
+let generateCode _ =
     sourceFilesToGenerate
     |> List.iter (fun (src, dest) ->
         File.checkExists src
@@ -214,16 +199,12 @@ Target.create "GenerateCode" (fun _ ->
             let generatedSource = template.Render(tc)
             File.WriteAllText(dest, generatedSource)
     )
-)
 
-Target.description "Runs the unit tests"
-Target.create "RunTests" (fun _ ->
+let runTests _ =
     dotNetRun testProject None DotNet.BuildConfiguration.Debug "" testArguments
     Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory testProject @@ "TestResults.xml")
-)
 
-Target.description "Prepares the MSBuild integration tests"
-Target.create "PrepareMSBuildTests" (fun _ ->
+let prepareMSBuildTests _ =
     Shell.cleanDir localPackagesFolder
     Directory.ensure localPackagesFolder
     farkleToolsMSBuildProject
@@ -233,10 +214,8 @@ Target.create "PrepareMSBuildTests" (fun _ ->
             MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
         }
     )
-)
 
-Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
-Target.create "RunMSBuildTestsNetFramework" (fun _ ->
+let runMSBuildTestsNetFramework _ =
     DotNet.build id farkleToolsProject
 
     let testProjectDirectory = Path.getDirectory msBuildTestProject
@@ -261,10 +240,8 @@ Target.create "RunMSBuildTestsNetFramework" (fun _ ->
             ResultsDirectory = Some testProjectDirectory
         }
     )
-)
 
-Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
-Target.create "RunMSBuildTestsNetCore" (fun _ ->
+let runMSBuildTestsNetCore _ =
     let testProjectDirectory = Path.getDirectory msBuildTestProject
     cleanBinObj testProjectDirectory
     msBuildTestProject
@@ -273,10 +250,6 @@ Target.create "RunMSBuildTestsNetCore" (fun _ ->
             ResultsDirectory = Some testProjectDirectory
         }
     )
-)
-
-Target.description "Runs all tests"
-Target.create "Test" ignore
 
 let shouldCIBenchmark =
     match BuildServer.buildServer with
@@ -287,13 +260,11 @@ let shouldCIBenchmark =
         && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
     | _ -> true
 
-Target.description "Runs all benchmarks"
-Target.create "Benchmark" (fun _ ->
+let benchmark _ =
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
-    Seq.iter pushArtifact benchmarkReports)
+    Seq.iter pushArtifact benchmarkReports
 
-Target.description "Adds the benchmark results to the appropriate folder"
-Target.create "AddBenchmarkReport" (fun _ ->
+let addBenchmarkReport _ =
     let reportFileName x = benchmarkReportsDirectory @@ (sprintf "%s.%s.md" x nugetVersion)
     Directory.ensure benchmarkReportsDirectory
     Trace.logItems "Benchmark reports: " benchmarkReports
@@ -303,10 +274,8 @@ Target.create "AddBenchmarkReport" (fun _ ->
         Shell.copyFile newFn x
         File.applyReplace (String.replace ";" ",") newFn
     )
-)
 
-Target.description "Builds the NuGet packages"
-Target.create "NuGetPack" (fun _ ->
+let nugetPack _ =
     sourceProjects
     |> Seq.iter (
         DotNet.pack (fun p ->
@@ -322,10 +291,8 @@ Target.create "NuGetPack" (fun _ ->
         )
     )
     Seq.iter pushArtifact nugetPackages
-)
 
-Target.description "Publishes the NuGet packages"
-Target.create "NuGetPublish" (fun _ ->
+let nugetPublish _ =
     Seq.iter (DotNet.nugetPush (fun p ->
         {p with
             PushParams =
@@ -335,7 +302,6 @@ Target.create "NuGetPublish" (fun _ ->
                 }
         }
     )) nugetPackages
-)
 
 // --------------------------------------------------------------------------------------
 // Generate the documentation
@@ -363,8 +329,7 @@ let generateDocs doWatch isRelease =
     |> DotNet.exec id "fsdocs"
     |> handleFailure
 
-Target.description "Prepares the reference documentation generator"
-Target.create "PrepareDocsGeneration" (fun _ ->
+let prepareDocsGeneration _ =
     DotNet.build (fun p ->
         {p with
             Configuration = documentationConfiguration}
@@ -376,24 +341,19 @@ Target.create "PrepareDocsGeneration" (fun _ ->
             OutputPath = Some referenceDocsTempPath
             NoBuild = true}
     ) farkleProject
-)
 
-Target.description "Watches the documentation source folder and regenerates it on every file change"
-Target.create "KeepGeneratingDocs" (fun _ ->
+let keepGeneratingDocs _ =
     generateDocs true false
-)
 
-Target.description "Generates the website for the project - for release"
-Target.create "GenerateDocs" (fun _ ->
+let generateDocsRelease _ =
     generateDocs false true
     !! (docsOutput @@ "**") |> Zip.zip docsOutput "docs.zip"
     Trace.publish ImportData.BuildArtifact "docs.zip"
-)
-Target.description "Generates the website for the project - for local use"
-Target.create "GenerateDocsDebug" (fun _ -> generateDocs false false)
 
-Target.description "Releases the documentation to GitHub Pages."
-Target.create "ReleaseDocs" (fun _ ->
+let generateDocsDebug _ =
+    generateDocs false false
+
+let releaseDocs _ =
     let tempDocsDir = "temp/gh-pages"
     Shell.cleanDir tempDocsDir
     Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
@@ -404,7 +364,6 @@ Target.create "ReleaseDocs" (fun _ ->
     Staging.stageAll tempDocsDir
     Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
     Branches.push tempDocsDir
-)
 
 // --------------------------------------------------------------------------------------
 // Release Scripts
@@ -415,16 +374,12 @@ let remoteToPush = lazy (
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
-Target.description "Publishes the benchmark report."
-Target.create "PublishBenchmarkReport" (fun _ ->
+let publishBenchmarkReport _ =
     !! "performance/**" |> Seq.iter (Staging.stageFile "" >> ignore)
     Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
     Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
-)
 
-Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
-Target.create "GitHubRelease" (fun _ ->
-
+let githubRelease _ =
     Branches.tag "" nugetVersion
     Branches.pushTag "" remoteToPush.Value nugetVersion
 
@@ -438,70 +393,124 @@ Target.create "GitHubRelease" (fun _ ->
     |> GitHub.uploadFiles releaseArtifacts
     |> GitHub.publishDraft
     |> Async.RunSynchronously
-)
-
-Target.description "The CI generates the documentation, the NuGet packages, \
-and uploads them as artifacts, along with the benchmark report."
-Target.create "CI" ignore
-
-Target.description "Publishes the documentation and makes a GitHub release"
-Target.create "Release" ignore
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override
 
-"Clean"
-    ==> "GenerateCode"
+let initTargets() =
+    Target.description "Fails the build if the appropriate environment variables for the release do not exist"
+    Target.create "CheckForReleaseCredentials" checkForReleaseCredentials
+    Target.description "Checks whether the release notes entry has a date"
+    Target.create "CheckForReleaseNotesDate" checkForReleaseNotesDate
+    Target.description "Cleans the output directories"
+    Target.create "Clean" clean
+    Target.description "Cleans the output documentation directory"
+    Target.create "CleanDocs" cleanDocs
+    Target.description "Generates some required source code files"
+    Target.create "GenerateCode" generateCode
+    Target.description "Runs the unit tests"
+    Target.create "RunTests" runTests
+    Target.description "Prepares the MSBuild integration tests"
+    Target.create "PrepareMSBuildTests" prepareMSBuildTests
+    Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
+    Target.create "RunMSBuildTestsNetFramework" runMSBuildTestsNetFramework
+    Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
+    Target.create "RunMSBuildTestsNetCore" runMSBuildTestsNetCore
+    Target.description "Runs all tests"
+    Target.create "Test" ignore
 
-["RunTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
-|> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
+    Target.description "Runs all benchmarks"
+    Target.create "Benchmark" benchmark
+    Target.description "Adds the benchmark results to the appropriate folder"
+    Target.create "AddBenchmarkReport" addBenchmarkReport
+    Target.description "Builds the NuGet packages"
+    Target.create "NuGetPack" nugetPack
+    Target.description "Publishes the NuGet packages"
+    Target.create "NuGetPublish" nugetPublish
+    Target.description "Prepares the reference documentation generator"
+    Target.create "PrepareDocsGeneration" prepareDocsGeneration
+    Target.description "Watches the documentation source folder and regenerates it on every file change"
+    Target.create "KeepGeneratingDocs" keepGeneratingDocs
+    Target.description "Generates the website for the project - for release"
+    Target.create "GenerateDocs" generateDocsRelease
+    Target.description "Generates the website for the project - for local use"
+    Target.create "GenerateDocsDebug" generateDocsDebug
+    Target.description "Releases the documentation to GitHub Pages."
+    Target.create "ReleaseDocs" releaseDocs
+    Target.description "Publishes the benchmark report."
+    Target.create "PublishBenchmarkReport" publishBenchmarkReport
+    Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
+    Target.create "GitHubRelease" githubRelease
 
-["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
-|> List.iter (fun target -> "PrepareMSBuildTests" ==> target |> ignore)
+    Target.description "The CI generates the documentation, the NuGet packages, \
+and uploads them as artifacts, along with the benchmark report."
+    Target.create "CI" ignore
 
-"Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
+    Target.description "Publishes the documentation and makes a GitHub release"
+    Target.create "Release" ignore
 
-"RunMSBuildTestsNetFramework"
-    =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    "Clean"
+        ==> "GenerateCode"
 
-"Test"
-    ==> "NuGetPack"
-    ==> "CI"
+    ["RunTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+    |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
 
-[""; "Debug"]
-|> List.iter (fun x ->
-    "CleanDocs"
-        ==> "PrepareDocsGeneration"
-        ==> (sprintf "GenerateDocs%s" x) |> ignore)
+    ["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
+    |> List.iter (fun target -> "PrepareMSBuildTests" ==> target |> ignore)
 
-"GenerateDocs"
-    ==> "ReleaseDocs"
+    "Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
 
-"GenerateDocs"
-    ==> "CI"
+    "RunMSBuildTestsNetFramework"
+        =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 
-"PrepareDocsGeneration"
-    ==> "KeepGeneratingDocs"
+    "Test"
+        ==> "NuGetPack"
+        ==> "CI"
 
-"Benchmark"
-    ==> "AddBenchmarkReport"
-    ==> "PublishBenchmarkReport"
+    [""; "Debug"]
+    |> List.iter (fun x ->
+        "CleanDocs"
+            ==> "PrepareDocsGeneration"
+            ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
-// I want a clean repo when the packages are going to be built.
-"NuGetPublish"
-    ?=> "AddBenchmarkReport"
+    "GenerateDocs"
+        ==> "ReleaseDocs"
 
-"Clean"
-    ==> "NuGetPack"
-    ==> "NuGetPublish"
-    ==> "GitHubRelease"
+    "GenerateDocs"
+        ==> "CI"
 
-"CI" <== ["NuGetPack"; "GenerateDocs"]
-"Benchmark" =?> ("CI", shouldCIBenchmark)
+    "PrepareDocsGeneration"
+        ==> "KeepGeneratingDocs"
 
-"CheckForReleaseCredentials"
-    ==> "CheckForReleaseNotesDate"
-    ==> "GitHubRelease"
-    ==> "Release"
+    "Benchmark"
+        ==> "AddBenchmarkReport"
+        ==> "PublishBenchmarkReport"
 
-Target.runOrDefault "NuGetPack"
+    // I want a clean repo when the packages are going to be built.
+    "NuGetPublish"
+        ?=> "AddBenchmarkReport"
+
+    "Clean"
+        ==> "NuGetPack"
+        ==> "NuGetPublish"
+        ==> "GitHubRelease"
+
+    "CI" <== ["NuGetPack"; "GenerateDocs"]
+    "Benchmark" =?> ("CI", shouldCIBenchmark)
+
+    "CheckForReleaseCredentials"
+        ==> "CheckForReleaseNotesDate"
+        ==> "GitHubRelease"
+        ==> "Release"
+        |> ignore
+
+[<EntryPoint>]
+let main argv =
+    argv
+    |> Array.toList
+    |> Context.FakeExecutionContext.Create false "build.fsx"
+    |> Context.RuntimeContext.Fake
+    |> Context.setExecutionContext
+    initTargets()
+    Target.runOrDefaultWithArguments "NuGetPack"
+    0

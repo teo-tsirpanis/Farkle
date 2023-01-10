@@ -40,6 +40,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Precompiler", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FarkleNeo", "src\FarkleNeo\FarkleNeo.csproj", "{7FD2D2CC-8CE9-4BC3-A551-2F39AFD0923E}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Build", "eng\Farkle.Build.fsproj", "{AD3A92E8-8A73-4119-8814-2E0710268C8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +100,10 @@ Global
 		{7FD2D2CC-8CE9-4BC3-A551-2F39AFD0923E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FD2D2CC-8CE9-4BC3-A551-2F39AFD0923E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FD2D2CC-8CE9-4BC3-A551-2F39AFD0923E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD3A92E8-8A73-4119-8814-2E0710268C8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD3A92E8-8A73-4119-8814-2E0710268C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD3A92E8-8A73-4119-8814-2E0710268C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD3A92E8-8A73-4119-8814-2E0710268C8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

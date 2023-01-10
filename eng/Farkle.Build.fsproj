@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="build.fs" />
+    <PackageReference Include="Fake.Api.GitHub" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.BuildServer.AppVeyor" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.Core.ReleaseNotes" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.Core.Target" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.Core.UserInput" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.IO.FileSystem" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.IO.Zip" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.DotNet.Cli" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.DotNet.FsFormatting" Version="6.0.0-beta001" />
+    <PackageReference Include="Fake.Tools.Git" Version="6.0.0-beta001" />
+    <PackageReference Include="Scriban" Version="5.5.2" />
+  </ItemGroup>
+</Project>

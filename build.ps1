@@ -4,4 +4,4 @@ dotnet tool restore
 Test-ExitCode
 dotnet paket restore
 Test-ExitCode
-dotnet tool run fake run ./build.fsx @args
+dotnet run --project eng/Farkle.Build.fsproj -- @args

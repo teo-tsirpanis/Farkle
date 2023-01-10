@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - mainstream
+      - release/*
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v3
+      - name: Run build script
+        shell: pwsh
+        run: ./build.ps1 target CI; exit $LASTEXITCODE

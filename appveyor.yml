@@ -1,8 +1,0 @@
-version: 7.0.0.{build}
-image:
-  - Visual Studio 2022
-  - Ubuntu2004
-nuget:
-  disable_publish_on_pr: true
-build_script:
-  - pwsh: ./build.ps1 target CI; exit $LASTEXITCODE

@@ -19,8 +19,12 @@
     <BuiltinTemplate Include="builtin-templates/*.scriban" />
     <EmbeddedResource Include="@(BuiltinTemplate)">
       <LogicalName>%(FileName)%(Extension)</LogicalName>
+      <!-- Apparently "root" is a culture name in ICU and when MSBuild started consulting it
+      instead of its hardcoded culture list, it put Html.Root.scriban in a satellite assembly.
+      We are preventing it. -->
+      <WithCulture>false</WithCulture>
     </EmbeddedResource>
-    <EmbeddedResource Include="builtin-templates/Html.Style.css" LogicalName="Html.Style.scriban" />
+    <EmbeddedResource Include="builtin-templates/Html.Style.css" LogicalName="Html.Style.scriban" WithCulture="false" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Farkle/Farkle.fsproj" />

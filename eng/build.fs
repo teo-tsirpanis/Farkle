@@ -105,6 +105,8 @@ let gitName = "Farkle"
 // Read additional information from the release notes document
 let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
 
+let lastCommitMessage = lazy (CommitMessage.getCommitMessage Environment.CurrentDirectory)
+
 let releaseNotes() =
     let lines s = seq {
         use sr = new StringReader(if isNull s then "" else s)
@@ -115,19 +117,18 @@ let releaseNotes() =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | AppVeyor ->
+    | GitHubActions ->
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
-            AppVeyor.Environment.RepoCommit
-            AppVeyor.Environment.RepoName
-            AppVeyor.Environment.RepoBranch
-        :: AppVeyor.Environment.RepoCommitMessage
-        :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
+            GitHubActions.Environment.Sha
+            GitHubActions.Environment.Repository
+            GitHubActions.Environment.Ref
+        :: (lastCommitMessage.Value |> lines |> List.ofSeq)
     | _ -> releaseInfo.Value.Notes
 
 let nugetVersion =
     let nugetVersion = releaseInfo.Value.NugetVersion
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci.%s" nugetVersion AppVeyor.Environment.BuildNumber
+    | GitHubActions -> sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
     | _ -> nugetVersion
 
 let getSecret name =
@@ -255,15 +256,6 @@ let runMSBuildTestsNetCore _ =
             ResultsDirectory = Some testProjectDirectory
         }
     )
-
-let shouldCIBenchmark() =
-    match BuildServer.buildServer with
-    | LocalBuild -> true
-    | AppVeyor ->
-        let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        OperatingSystem.IsWindows()
-        && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
-    | _ -> true
 
 let benchmark _ =
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
@@ -403,8 +395,8 @@ let githubRelease _ =
 // Run all targets by default. Invoke 'build target <Target>' to override
 
 let initTargets() =
-    BuildServer.install [ AppVeyor.Installer ]
-    
+    BuildServer.install [ GitHubActions.Installer ]
+
     let (==>!) x y = x ==> y |> ignore
     let (=?>!) x y = x =?> y |> ignore
     let (?=>!) x y = x ?=> y |> ignore
@@ -453,10 +445,6 @@ let initTargets() =
     Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
     Target.create "GitHubRelease" githubRelease
 
-    Target.description "The CI generates the documentation, the NuGet packages, \
-and uploads them as artifacts, along with the benchmark report."
-    Target.create "CI" ignore
-
     Target.description "Publishes the documentation and makes a GitHub release"
     Target.create "Release" ignore
 
@@ -464,31 +452,27 @@ and uploads them as artifacts, along with the benchmark report."
         ==>! "GenerateCode"
 
     ["RunTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
-    |> List.iter (fun target -> "GenerateCode" ==> target |> ignore)
+    |> List.iter (fun target -> "GenerateCode" ==>! target)
 
     ["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
-    |> List.iter (fun target -> "PrepareMSBuildTests" ==> target |> ignore)
+    |> List.iter (fun target -> "PrepareMSBuildTests" ==>! target)
 
     "Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
 
     "RunMSBuildTestsNetFramework"
         =?>! ("Test", OperatingSystem.IsWindows())
 
-    "Test"
-        ==> "NuGetPack"
-        ==>! "CI"
+    // We used to have "Test" ==>! "NuGetPack".
+    // This dependency will be expressed higher at the GitHub Actions level.
 
     [""; "Debug"]
     |> List.iter (fun x ->
         "CleanDocs"
             ==> "PrepareDocsGeneration"
-            ==> (sprintf "GenerateDocs%s" x) |> ignore)
+            ==>! (sprintf "GenerateDocs%s" x))
 
     "GenerateDocs"
         ==>! "ReleaseDocs"
-
-    "GenerateDocs"
-        ==>! "CI"
 
     "PrepareDocsGeneration"
         ==>! "KeepGeneratingDocs"
@@ -505,9 +489,6 @@ and uploads them as artifacts, along with the benchmark report."
         ==> "NuGetPack"
         ==> "NuGetPublish"
         ==>! "GitHubRelease"
-
-    "CI" <== ["NuGetPack"; "GenerateDocs"]
-    "Benchmark" =?>! ("CI", shouldCIBenchmark())
 
     "CheckForReleaseCredentials"
         ==> "CheckForReleaseNotesDate"

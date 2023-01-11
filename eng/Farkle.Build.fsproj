@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="build.fs" />
     <PackageReference Include="Fake.Api.GitHub" Version="5.23.1" />
-    <PackageReference Include="Fake.BuildServer.AppVeyor" Version="5.23.1" />
+    <PackageReference Include="Fake.BuildServer.GitHubActions" Version="5.23.1" />
     <PackageReference Include="Fake.Core.ReleaseNotes" Version="5.23.1" />
     <PackageReference Include="Fake.Core.Target" Version="5.23.1" />
     <PackageReference Include="Fake.Core.UserInput" Version="5.23.1" />

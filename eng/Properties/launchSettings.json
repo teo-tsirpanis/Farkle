@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Farkle.Build": {
+      "commandName": "Project",
+      "workingDirectory": "../"
+    }
+  }
+}

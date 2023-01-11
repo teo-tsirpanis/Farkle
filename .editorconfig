@@ -14,6 +14,10 @@ indent_size = 2
 [*.yml]
 indent_size = 2
 
+[*.json]
+# Some JSON files are edited by tools and do not have a trailing newline.
+insert_final_newline = unset
+
 [*.{cs,vb}]
 
 file_header_template = Copyright © Theodore Tsirpanis and Contributors.\nSPDX-License-Identifier: MIT

@@ -22,11 +22,11 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" Version="$(FSharpCoreVersion)" PrivateAssets="all" Publish="true" />
-    <PackageReference Include="Sigourney" Version="$(SigourneyVersion)" PrivateAssets="all" Publish="true" />
-    <PackageReference Include="Sigourney.Build" Version="$(SigourneyVersion)" />
+    <PackageReference Include="FSharp.Core" PrivateAssets="all" Publish="true" />
+    <PackageReference Include="Sigourney" PrivateAssets="all" Publish="true" />
+    <PackageReference Include="Sigourney.Build" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="MedallionShell" Version="1.6.2" PrivateAssets="all" Publish="true" />
+    <PackageReference Include="MedallionShell" PrivateAssets="all" Publish="true" />
   </ItemGroup>
 </Project>

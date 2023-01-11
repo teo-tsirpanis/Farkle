@@ -83,16 +83,15 @@
     <InternalsVisibleTo Include="Farkle.Tools.MSBuild" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Covarsky" Version="1.4.2" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="BitCollections" Version="1.0.1" />
-    <PackageReference Include="FSharp.Core" Version="$(FSharpCoreVersion)" />
+    <PackageReference Include="Covarsky" PrivateAssets="All" />
+    <PackageReference Include="BitCollections" />
+    <PackageReference Include="FSharp.Core" />
   </ItemGroup>
   <ItemGroup Condition="$(ModernFramework) != true">
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
 </Project>

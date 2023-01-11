@@ -5,16 +5,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="build.fs" />
-    <PackageReference Include="Fake.Api.GitHub" Version="5.23.1" />
-    <PackageReference Include="Fake.BuildServer.GitHubActions" Version="5.23.1" />
-    <PackageReference Include="Fake.Core.ReleaseNotes" Version="5.23.1" />
-    <PackageReference Include="Fake.Core.Target" Version="5.23.1" />
-    <PackageReference Include="Fake.Core.UserInput" Version="5.23.1" />
-    <PackageReference Include="Fake.IO.FileSystem" Version="5.23.1" />
-    <PackageReference Include="Fake.IO.Zip" Version="5.23.1" />
-    <PackageReference Include="Fake.DotNet.Cli" Version="5.23.1" />
-    <PackageReference Include="Fake.DotNet.FsFormatting" Version="5.23.1" />
-    <PackageReference Include="Fake.Tools.Git" Version="5.23.1" />
-    <PackageReference Include="Scriban" Version="5.5.2" />
+    <PackageReference Include="Fake.Api.GitHub" />
+    <PackageReference Include="Fake.BuildServer.GitHubActions" />
+    <PackageReference Include="Fake.Core.ReleaseNotes" />
+    <PackageReference Include="Fake.Core.Target" />
+    <PackageReference Include="Fake.Core.UserInput" />
+    <PackageReference Include="Fake.IO.FileSystem" />
+    <PackageReference Include="Fake.IO.Zip" />
+    <PackageReference Include="Fake.DotNet.Cli" />
+    <PackageReference Include="Fake.DotNet.FsFormatting" />
+    <PackageReference Include="Fake.Tools.Git" />
+    <PackageReference Include="Scriban" VersionOverride="5.5.2" />
   </ItemGroup>
 </Project>

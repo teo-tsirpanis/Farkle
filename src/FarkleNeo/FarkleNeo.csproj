@@ -9,14 +9,14 @@
     <RootNamespace>Farkle</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" Version="$(FSharpCoreVersion)" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
+    <PackageReference Include="FSharp.Core" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramweork)' == 'netstandard2.0'">
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Buffers"  />
+    <PackageReference Include="System.Memory"  />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
 </Project>

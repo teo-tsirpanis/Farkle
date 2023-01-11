@@ -4,11 +4,11 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="FParsec" Version="1.1.1" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-    <PackageReference Include="FsLexYacc" Version="10.2.0" PrivateAssets="all" />
-    <PackageReference Include="FsLexYacc.Runtime" Version="10.2.0" />
+    <PackageReference Include="FParsec" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="FsLexYacc" PrivateAssets="all" />
+    <PackageReference Include="FsLexYacc.Runtime" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\src\Farkle\Common.fs" />

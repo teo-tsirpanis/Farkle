@@ -13,11 +13,11 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Farkle/Farkle.fsproj" />
     <ProjectReference Include="../../sample/Farkle.Samples.FSharp/Farkle.Samples.FSharp.fsproj" />
-    <PackageReference Include="Farkle.Tools.MSBuild" Version="0.0.0-local" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
-    <PackageReference Include="xunit" Version="2.4.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
-    <PackageReference Include="Appveyor.TestLogger" Version="2.0.0" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.45" />
+    <PackageReference Include="Farkle.Tools.MSBuild" VersionOverride="0.0.0-local" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Appveyor.TestLogger" />
+    <PackageReference Include="HtmlAgilityPack" />
   </ItemGroup>
 </Project>

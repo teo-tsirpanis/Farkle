@@ -1,10 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- We target the same framework as Farkle.Tools.
-    There were problems with the roll-forward while testing
-    with a local precompiler worker. -->
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <VSTestLogger>Appveyor</VSTestLogger>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>

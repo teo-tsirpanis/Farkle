@@ -80,8 +80,7 @@ let tests = testList "Regex tests" [
             |> Flip.Expect.wantOk "Generating a DFA for a literal string failed"
         Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")
 
-    // It fails on Windows when using NLS (including the AppVeyor CI which uses Windows Server).
-    ptest "Titlecase letters are correctly handled when building a case-insensitive DFA" {
+    test "Titlecase letters are correctly handled when building a case-insensitive DFA" {
         let term = Terminal(0u, "A") |> Choice1Of4
         let regex = Regex.char 'ǅ'
         let dfa =

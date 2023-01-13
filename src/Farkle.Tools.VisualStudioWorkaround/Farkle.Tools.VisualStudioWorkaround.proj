@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.Build.NoTargets">
+  <Import Project="../NuGet.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <PackageId>Farkle.Tools.VisualStudioWorkaround</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Enables using Farkle's precompiler from Visual Studio when targeting any .NET version.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial version.</PackageReleaseNotes>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <None Include="Farkle.Tools.VisualStudioWorkaround.targets" Pack="true" PackagePath="build" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" />
+  </ItemGroup>
+</Project>

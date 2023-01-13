@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
-    <VSTestLogger>Appveyor</VSTestLogger>
+    <VSTestLogger Condition="'$(GITHUB_ACTIONS)' != ''">GitHubActions</VSTestLogger>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
@@ -14,7 +14,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <PackageReference Include="Appveyor.TestLogger" />
+    <PackageReference Include="GitHubActionsTestLogger" />
     <PackageReference Include="HtmlAgilityPack" />
   </ItemGroup>
 </Project>

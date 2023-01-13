@@ -12,6 +12,10 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
+  <PropertyGroup Condition="$(BuildLocalPackages) == true">
+    <PackageId>Local.Farkle.Tools.MSBuild</PackageId>
+    <Version>0.0.0-local</Version>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <Compile Include="FarklePrecompileOutOfProcess.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />

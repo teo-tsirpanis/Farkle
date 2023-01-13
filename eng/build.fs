@@ -213,11 +213,12 @@ let runTests _ =
 let prepareMSBuildTests _ =
     Shell.cleanDir localPackagesFolder
     Directory.ensure localPackagesFolder
+    let properties = ["BuildLocalPackages", "true"]
     farkleToolsMSBuildProject
     |> DotNet.pack (fun p ->
         {p with
             OutputPath = Some localPackagesFolder
-            MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
+            MSBuildParams = {p.MSBuildParams with Properties = properties @ p.MSBuildParams.Properties}
         }
     )
 
@@ -228,11 +229,12 @@ let runMSBuildTestsNetFramework _ =
     let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/net6.0/Farkle.Tools.dll"
     // dotnet clean sometimes fails; this is faster and cleans only this project.
     cleanBinObj testProjectDirectory
+    let properties = ["FarkleCustomPrecompilerWorkerPath", customWorkerPath; "TestLocalPackages", "true"]
     msBuildTestProject
     |> MSBuild.build (fun x ->
         {x with
             DoRestore = true
-            Properties = ("FarkleCustomPrecompilerWorkerPath", customWorkerPath) :: x.Properties
+            Properties = properties @ x.Properties
             Targets = ["Build"]
             Verbosity = Some MSBuildVerbosity.Minimal
             NodeReuse = false

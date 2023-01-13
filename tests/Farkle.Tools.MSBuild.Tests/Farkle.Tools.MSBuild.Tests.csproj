@@ -7,10 +7,14 @@
     <LangVersion>latest</LangVersion>
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
   </PropertyGroup>
+  <PropertyGroup Condition="$(TestLocalPackages) == true">
+    <LocalPackagePrefix>Local.</LocalPackagePrefix>
+    <LocalPackageVersionOverride>[0.0.0-local]</LocalPackageVersionOverride>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Farkle/Farkle.fsproj" />
     <ProjectReference Include="../../sample/Farkle.Samples.FSharp/Farkle.Samples.FSharp.fsproj" />
-    <PackageReference Include="Farkle.Tools.MSBuild" VersionOverride="0.0.0-local" />
+    <PackageReference Include="$(LocalPackagePrefix)Farkle.Tools.MSBuild" VersionOverride="$(LocalPackageVersionOverride)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />

@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "Farkle.sln",
+    "projects": [
+      "eng\\Farkle.Build.fsproj",
+      "src\\FarkleNeo\\FarkleNeo.csproj",
+      "tests\\Farkle.Tests.CSharp\\Farkle.Tests.CSharp.csproj"
+    ]
+  }
+}

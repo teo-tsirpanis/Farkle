@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <VSTestLogger Condition="'$(GITHUB_ACTIONS)' != ''">GitHubActions</VSTestLogger>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="GitHubActionsTestLogger" />
+  </ItemGroup>
+</Project>

@@ -9,6 +9,10 @@ namespace Farkle;
 internal static class ThrowHelpers
 {
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowEndOfStreamException(string? message = null) =>
+        throw new EndOfStreamException(message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

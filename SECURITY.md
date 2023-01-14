@@ -2,8 +2,8 @@
 
 ## Supported Versions
 
-Only the latest non-preview and the latest preview (if exists) releases are supported.
+Only the latest non-preview and the latest preview (if exists) versions are supported.
 
 ## Reporting a Vulnerability
 
-Please send an email to security at my surname dot gr. I will try to respond as quickly as possible.
+Please report the vulnerability in https://github.com/teo-tsirpanis/Farkle/security/advisories/new.

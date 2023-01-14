@@ -1,0 +1,36 @@
+name: Legacy CI
+
+on:
+  push:
+    branches:
+      - mainstream
+      - release/*
+    paths-ignore:
+      - 'src/FarkleNeo/**'
+      - 'tests/Farkle.Tests.CSharp/**'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - 'src/FarkleNeo/**'
+      - 'tests/Farkle.Tests.CSharp/**'
+  schedule:
+    - cron: '18 14 * * 4'
+
+permissions: read-all
+
+jobs:
+  test:
+    name: 'Test the legacy F# codebase'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v3
+      - name: Restore .NET local tools
+        run: dotnet tool restore
+      - name: Run tests
+        run: dotnet run --project eng/Farkle.Build.fsproj -- -t TestLegacy

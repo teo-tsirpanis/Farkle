@@ -5,7 +5,10 @@ namespace Farkle.Grammars;
 
 internal static class GrammarConstants
 {
-    public const ulong HeaderMagic = 0x0000656C6B726146; // "Farkle\0\0'
+    public const ulong HeaderMagic = 0x0000656C6B726146; // "Farkle\0\0"
+    public const ulong StringHeapIdentifier = 0x73676E6972745323; // "#Strings"
+    public const ulong BlobHeapIdentifier = 0x000000646F6C4223; // "#Blob\0\0\0"
+    public const ulong TableStreamIdentifier = 0x0000000000007E23; // "#~\0\0\0\0\0\0"
 
     public const ushort VersionMajor = 7;
     public const ushort VersionMinor = 0;

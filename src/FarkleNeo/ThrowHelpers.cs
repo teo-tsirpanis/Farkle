@@ -13,6 +13,10 @@ internal static class ThrowHelpers
         throw new EndOfStreamException(message);
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowInvalidDataException(string? message = null) =>
+        throw new InvalidDataException(message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

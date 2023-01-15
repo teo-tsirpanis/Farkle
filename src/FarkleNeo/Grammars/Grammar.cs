@@ -11,7 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 public abstract class Grammar
 {
-    private static (ushort VersionMajor, ushort VersionMinor, uint StreamCount) ReadHeader(ref BufferReader reader)
+    internal static GrammarHeader ReadHeader(ref BufferReader reader)
     {
         if (reader.PeekUInt64() == HeaderMagic)
         {
@@ -21,31 +21,30 @@ public abstract class Grammar
 
             if (versionMajor is > VersionMajor or < MinSupportedVersionMajor)
             {
-                ThrowHelpers.ThrowNotSupportedException($"Unsupported grammar format version.");
+                return GrammarHeader.CreateFarkle(versionMajor, versionMinor, 0);
             }
 
             uint streamCount = reader.ReadUInt32();
-            return (versionMajor, versionMinor, streamCount);
+            return GrammarHeader.CreateFarkle(versionMajor, versionMinor, streamCount);
         }
 
         ReadOnlySpan<byte> buffer = reader.Buffer;
 
-        if (buffer.SequenceEqual(EgtNeoHeader))
+        if (buffer.StartsWith(EgtNeoHeader))
         {
-            ThrowHelpers.ThrowNotSupportedException("Reading grammar files in the EGTneo format produced by Farkle 6 is not supported.");
+            return GrammarHeader.EgtNeo;
         }
 
-        if (buffer.SequenceEqual(Egt5Header))
+        if (buffer.StartsWith(Egt5Header))
         {
-            // TODO: Add support.
-            ThrowHelpers.ThrowNotSupportedException("Reading Enhanced Grammar Tables produced by GOLD Parser 5.x is not supported.");
+            return GrammarHeader.Egt5;
         }
 
-        if (buffer.SequenceEqual(CgtHeader))
+        if (buffer.StartsWith(CgtHeader))
         {
-            ThrowHelpers.ThrowNotSupportedException("Reading Compiled Grammar Tables produced by earlier GOLD Parser versions is not supported.");
+            return GrammarHeader.Cgt;
         }
 
-        return default;
+        return GrammarHeader.Unknown;
     }
 }

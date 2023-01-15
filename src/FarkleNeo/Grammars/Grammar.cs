@@ -28,7 +28,7 @@ public abstract class Grammar
             return GrammarHeader.CreateFarkle(versionMajor, versionMinor, streamCount);
         }
 
-        ReadOnlySpan<byte> buffer = reader.Buffer;
+        ReadOnlySpan<byte> buffer = reader.RemainingBuffer;
 
         if (buffer.StartsWith(EgtNeoHeader))
         {

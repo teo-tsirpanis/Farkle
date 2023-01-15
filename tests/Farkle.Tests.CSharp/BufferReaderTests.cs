@@ -20,18 +20,18 @@ public class BufferReaderTests
     {
         var br = new BufferReader(stackalloc byte[16]);
         Assert.That(br.ReadBytes(10).Length, Is.EqualTo(10));
-        Assert.That(br.Buffer.Length, Is.EqualTo(6));
+        Assert.That(br.RemainingBuffer.Length, Is.EqualTo(6));
         Assert.That(br.ReadBytes(10).Length, Is.EqualTo(6));
-        Assert.That(br.Buffer.IsEmpty);
+        Assert.That(br.RemainingBuffer.IsEmpty);
     }
 
     [Test]
     public void TestAdvanceBy()
     {
         var br = new BufferReader(stackalloc byte[16]);
-        Assert.That(br.Buffer.Length, Is.EqualTo(16));
+        Assert.That(br.RemainingBuffer.Length, Is.EqualTo(16));
         br.AdvanceBy(10);
-        Assert.That(br.Buffer.Length, Is.EqualTo(6));
+        Assert.That(br.RemainingBuffer.Length, Is.EqualTo(6));
 
         bool threw = false;
         try

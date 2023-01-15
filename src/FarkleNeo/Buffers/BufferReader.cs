@@ -10,7 +10,9 @@ internal ref struct BufferReader
 {
     private readonly ReadOnlySpan<byte> _buffer;
 
-    public readonly ReadOnlySpan<byte> Buffer => _buffer[Position..];
+    public readonly ReadOnlySpan<byte> OriginalBuffer => _buffer;
+
+    public readonly ReadOnlySpan<byte> RemainingBuffer => _buffer[Position..];
 
     public int Position { get; private set; }
 

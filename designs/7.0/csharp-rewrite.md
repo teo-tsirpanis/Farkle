@@ -21,13 +21,11 @@ However it hasn't been all rosy. The use of F# brought several drawbacks, that c
 
 ## Towards clarification[^clarify]
 
-To solve all the above problems, Farkle 7 will be rewritten to C#. We will start with a new C# project called `FarkleNeo`, and when it gets feature-complete, it will be renamed to `Farkle` and the F# Farkle project will be removed. After that the next components to be rewritten will be the precompiler, the CLI tool, the templating engine and the MSBuild integration. `Farkle.Tests` will not be rewritten; F# is a great language to write tests.
-
-Besides the advantages listed above, another advantage is that this language change will help with Farkle's big refactoring. We will need to implement only the new grammar, parser and precompiler APIs without worrying about existing code being broken in between.
+To solve all the above problems, Farkle 7 will be rewritten to C#. Besides the advantages listed above, another advantage is that this language change will help with Farkle's big refactoring. We will need to implement only the new grammar, parser and precompiler APIs without worrying about existing code being broken in between.
 
 ### Commitment to supporting F#
 
-These changes will not undermine the priority to provide a first-class F# API for Farkle. The library will just move from an F# library with an additional C# API, to a C# library with an additional F# API. The most likely way to deliver it is by depending on `FSharp.Core` and adding attributes that enable things like currying, and overloads that take `FSharpFunc` in addition to delegates. This will not allow completely removing the dependency to `FSharp.Core`, but since the library will be used only as part of the F# API surface, a much bigger part of it will be able to be trimmed away in C# programs. I have submitted pull requests in `dotnet/fsharp` to help with it.
+These changes will not undermine the priority to provide a first-class F# API for Farkle. The library will just move from an F# library with an additional C# API, to a C# library with an additional F# API. The most likely way to deliver it is by depending on `FSharp.Core` and adding attributes that enable things like currying, and overloads that take `FSharpFunc` in addition to delegates. This will not allow completely removing the dependency to `FSharp.Core`, but since the library will be used only as part of the F# API surface, a much bigger part of it will be able to be trimmed away in C# programs. I have submitted pull requests in `dotnet/fsharp` to improve `FSharp.Core`'s trimmability.
 
 ### Disadvantages
 
@@ -35,5 +33,16 @@ Let's talk about the disadvantages:
 
 * __Increased codebase size.__ Since C# is more verbose than F#, Farkle's codebase is expected to be increased; by how much it is unknown. This is acceptable; for a project like Farkle keeping the codebase small is of less priority.
 * __Inability to use SRTPs.__ [Statically Resolved Type Parameters](https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/generics/statically-resolved-type-parameters) are F#'s generics on steroids that are resolved at compile time and support constraints on members with a specific signature. There is no easy way to write methods with SRTPs from C#. Farkle uses SRTPs in two places; the `prec` operator, and the `Terminals.generic(Real|Signed|Unsigned)` family of functions. Converting `prec` is easy; we can make it a regular generic function and have production builders implement an interface, but the generic numerical terminal factory methods will have to be implemented with static abstract functions, making them available only on .NET 7+, but compatible with C# as well.
+
+### The process
+
+During the rewrite to C#, we don't want to throw away the existing F# codebase, and we want to ensure it does not break. The rewriting process will be as follows:
+
+* A new C# project with the name `FarkleNeo` will be created, that will contain the code of the new Farkle. It will have its own C# test suite.
+* The existing F# code and tests will run in a separate CI workflow that will be skipped if only the new C# code is changed.
+* Once `FarkleNeo` is feature-complete, it will be renamed to `Farkle`, the F# Farkle project will be removed, and the rest of the F# projects will migrate to the new Farkle.
+    * My original plan was to not release a preview until all features are complete, but maybe we can release a preview without the precompiler.
+* After we implement the new precompiler (not sure of the language), we will migrate the MSBuild integration tests.
+* At a later time we can rewrite the CLI tool, the precompiler (if we already didn't), and the templating engine to F#. `Farkle.Tests` will not be rewritten.
 
 [^clarify]: Just like how converting code to Rust is called "oxidizing", I propose converting code to C# be called "clarifying" (because you can "see the code sharp").

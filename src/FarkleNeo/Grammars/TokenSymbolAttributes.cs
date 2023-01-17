@@ -1,0 +1,40 @@
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
+namespace Farkle.Grammars;
+
+/// <summary>
+/// Characteristics of a token symbol.
+/// </summary>
+[Flags]
+public enum TokenSymbolAttributes : uint
+{
+    /// <summary>
+    /// No attributes are defined.
+    /// </summary>
+    None = 0,
+    /// <summary>
+    /// The token symbol can exist in the right-hand side of a production.
+    /// </summary>
+    Terminal = 1 << 0,
+    /// <summary>
+    /// The token symbol can start a group.
+    /// </summary>
+    GroupStart = 1 << 1,
+    /// <summary>
+    /// The token symbol can be skipped by parsers if encountered in an unexpected place in the input.
+    /// </summary>
+    Noise = 1 << 2,
+    /// <summary>
+    /// The token symbol should not be displayed by parsers in the expected tokens list in case of a syntax error.
+    /// </summary>
+    Hidden = 1 << 3,
+    /// <summary>
+    /// The token symbol has a special name associated with it.
+    /// </summary>
+    HasSpecialName = 1 << 4,
+    /// <summary>
+    /// The token symbol was not explicitly defined by the grammar author.
+    /// </summary>
+    Generated = 1 << 5
+}

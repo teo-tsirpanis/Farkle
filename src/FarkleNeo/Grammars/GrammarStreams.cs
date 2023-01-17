@@ -22,7 +22,7 @@ internal readonly struct GrammarStreams
             ulong identifier = br.ReadUInt64();
             int offset = br.ReadInt32();
             int length = br.ReadInt32();
-            // Taken from the BCL. 32-bit platforms use an implementation 64-bit arithmetic; let's not add both right now.
+            // Taken from the BCL. 32-bit platforms use an implementation without 64-bit arithmetic; let's not add both right now.
             if ((uint)offset + (ulong)(uint)length > (uint)fileLength)
             {
                 ThrowHelpers.ThrowInvalidDataException("Invalid stream bounds.");

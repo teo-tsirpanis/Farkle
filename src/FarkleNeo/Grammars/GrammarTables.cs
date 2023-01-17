@@ -193,7 +193,7 @@ internal readonly struct GrammarTables
         }
 
         Debug.Assert(i == tableCount - 1);
-        if (tableStreamLength <= currentTableBase)
+        if (tableStreamLength != currentTableBase)
         {
             ThrowHelpers.ThrowInvalidDataException("Too small table stream.");
         }

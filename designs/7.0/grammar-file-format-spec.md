@@ -85,7 +85,7 @@ The following bit values are defined for the __HeapSizes__ field. If a bit is se
 |0|The String heap is either absent or its size is less than or equal to 2<sup>16</sup> bytes long.|
 |1|The Blob heap is either absent or its size is less than or equal to 2<sup>16</sup> bytes long.|
 
-Immediately after the header come the tables. Each table is identified by a number from zero to sixty three corresponding to a bit in the __TablesPresent__ field, and contains one or more rows, which are structures of constant size. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table.
+Immediately after the header come the tables. Each table is identified by a number from zero to sixty three corresponding to a bit in the __TablesPresent__ field, and contains one or more rows, which are structures of constant size. The tables are ordered by this number in ascending order. Using the __RowCounts__ and __RowSizes__ fields, readers can easily calculate the position and size of each table. After the tables, the table stream MUST NOT contain additional data.
 
 Each table row is stored as the concatenation of its columns and indexed starting from one. A column can be:
 

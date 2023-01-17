@@ -64,6 +64,10 @@ internal readonly struct GrammarTables
 
     public byte StringHeapIndexSize => (byte)((_heapSizes & HeapSizes.StringHeapSmall) != 0 ? 2 : 4);
 
+    public const int MaxRowCount = 0xFF_FFFF; // 2^24 - 1
+
+    public const int MaxSymbolRowCount = 0xF_FFFF; // 2^20 - 1
+
     private static byte GetIndexSize(int rowCount) => rowCount switch
     {
         < 0xFF => 1,
@@ -128,6 +132,16 @@ internal readonly struct GrammarTables
             int currentTable = BitOperationsCompat.TrailingZeroCount(remainingTables);
 
             int rowCount = grammarFile.ReadInt32(rowCountsBase + i * sizeof(int));
+            int rowLimit = ((TableKind)currentTable) switch
+            {
+                TableKind.Grammar => 1,
+                TableKind.TokenSymbol or TableKind.Nonterminal => MaxSymbolRowCount,
+                _ => MaxRowCount
+            };
+            if ((uint)rowCount > rowLimit)
+            {
+                ThrowHelpers.ThrowInvalidDataException("Table has too many rows.");
+            }
             byte rowSize = grammarFile[rowSizesBase + i];
             switch ((TableKind)currentTable)
             {

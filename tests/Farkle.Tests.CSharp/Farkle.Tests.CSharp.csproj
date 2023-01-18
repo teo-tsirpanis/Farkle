@@ -12,6 +12,8 @@
     <Content Include="../resources/**" LinkBase="resources" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="FsCheck.NUnit" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />

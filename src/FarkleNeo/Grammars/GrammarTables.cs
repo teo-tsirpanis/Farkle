@@ -237,7 +237,7 @@ internal readonly struct GrammarTables
     [Flags]
     private enum HeapSizes : byte
     {
-        StringHeapSmall = 0,
-        BlobHeapSmall = 1
+        StringHeapSmall = 1,
+        BlobHeapSmall = 2
     }
 }

@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 
 namespace Farkle.Buffers;
 
-// TODO: Write unit tests.
 internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposable
 {
     private const int DefaultSegmentCapacity =

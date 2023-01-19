@@ -11,7 +11,12 @@ namespace Farkle.Buffers;
 // TODO: Write unit tests.
 internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposable
 {
-    private const int DefaultSegmentCapacity = 4096;
+    private const int DefaultSegmentCapacity =
+#if DEBUG
+        1;
+#else
+        4096;
+#endif
 
     private const int InitialSegmentArraySize = 2;
 

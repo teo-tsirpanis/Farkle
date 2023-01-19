@@ -23,4 +23,8 @@ internal static class ThrowHelpers
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowNotSupportedException(string? message = null) =>
         throw new NotSupportedException(message);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowOutOfMemoryException(string? message = null) =>
+        throw new OutOfMemoryException(message);
 }

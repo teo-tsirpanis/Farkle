@@ -26,23 +26,16 @@ public class BufferReaderTests
     }
 
     [Test]
-    public void TestAdvanceBy()
+    public unsafe void TestAdvanceBy()
     {
         var br = new BufferReader(stackalloc byte[16]);
         Assert.That(br.RemainingBuffer.Length, Is.EqualTo(16));
         br.AdvanceBy(10);
-        Assert.That(br.RemainingBuffer.Length, Is.EqualTo(6));
-
-        bool threw = false;
-        try
+        BufferReader* ptr = &br;
+        Assert.Multiple(() =>
         {
-            br.AdvanceBy(10);
-        }
-        catch (Exception e)
-        {
-            Assert.That(e, Is.InstanceOf<EndOfStreamException>());
-            threw = true;
-        }
-        Assert.That(threw);
+            Assert.That(ptr->RemainingBuffer.Length, Is.EqualTo(6));
+            Assert.That(() => ptr->AdvanceBy(10), Throws.InstanceOf<EndOfStreamException>());
+        });
     }
 }

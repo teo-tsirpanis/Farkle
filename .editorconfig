@@ -6,6 +6,7 @@ end_of_line = crlf
 indent_size = 4
 indent_style = space
 insert_final_newline = true
+tab_width = 4
 trim_trailing_whitespace = true
 
 [*.{{*proj,props,targets},nuspec,config}]
@@ -143,3 +144,6 @@ dotnet_style_qualification_for_field = false:silent
 dotnet_style_qualification_for_property = false:silent
 dotnet_style_qualification_for_method = false:silent
 dotnet_style_qualification_for_event = false:silent
+
+# CS8500: This takes the address of, gets the size of, or declares a pointer to a managed type
+dotnet_diagnostic.CS8500.severity = none

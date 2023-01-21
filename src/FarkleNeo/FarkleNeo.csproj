@@ -14,6 +14,7 @@
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" />
+    <Using Include="Farkle.Compatibility" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramweork)' == 'netstandard2.0'">
     <PackageReference Include="System.Buffers" />

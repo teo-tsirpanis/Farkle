@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace System;
+namespace Farkle.Compatibility;
 
 // TODO: Redirect to ArgumentOutOfRangeException once we target .NET 8.
 internal static class ArgumentOutOfRangeExceptionCompat
@@ -14,6 +14,7 @@ internal static class ArgumentOutOfRangeExceptionCompat
     private static void ThrowNegative<T>(T value, string? paramName) =>
         throw new ArgumentOutOfRangeException(paramName, value, "Value must be non-negative.");
 
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowIfNegative(int value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (value < 0)

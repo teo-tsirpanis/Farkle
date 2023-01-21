@@ -7,6 +7,8 @@ global using BitOperationsCompat = System.Numerics.BitOperations;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+namespace Farkle.Compatibility;
+
 // Taken from the BCL. Licensed under the MIT license.
 internal static class BitOperationsCompat
 {

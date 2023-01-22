@@ -17,7 +17,7 @@
     <PackageReference Include="FSharp.Core" />
     <Using Include="Farkle.Compatibility" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramweork)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />
   </ItemGroup>

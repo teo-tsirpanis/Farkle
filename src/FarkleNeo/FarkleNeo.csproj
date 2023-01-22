@@ -15,13 +15,12 @@
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="System.Collections.Immutable" />
     <Using Include="Farkle.Compatibility" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
 </Project>

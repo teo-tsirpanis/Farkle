@@ -25,6 +25,10 @@ internal static class ThrowHelpers
         throw new InvalidDataException(message, innerException);
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowKeyNotFoundException(string? message = null) =>
+        throw new KeyNotFoundException(message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

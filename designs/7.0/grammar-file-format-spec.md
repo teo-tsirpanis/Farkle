@@ -48,7 +48,7 @@ This specification defines three stream types. After their name, the value of th
 
 ### String heap (`"#Strings"`)
 
-The string heap contains a sequence of zero-terminated UTF-8 strings. Indices to the heap point to the first byte of a string. The first string is always empty. A string heap MAY be absent from a grammar file; in this case all indices to the string heap in the file MUST be zero. A string heap MUST NOT contain duplicate strings.
+The string heap contains a sequence of zero-terminated UTF-8 strings. Indices to the heap point to the first byte of a string. The first string is always empty. A string heap MAY be absent from a grammar file; in this case all indices to the string heap in the file MUST be zero. A string heap MUST NOT contain duplicate strings. Indices to the string heap MUST NOT point to the middle of a string.
 
 ### Blob heap (`"#Blob\0\0\0"`)
 

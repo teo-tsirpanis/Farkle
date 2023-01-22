@@ -1,6 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 #if NETCOREAPP
 global using BitOperationsCompat = System.Numerics.BitOperations;
 #else
@@ -9,7 +12,6 @@ using System.Runtime.InteropServices;
 
 namespace Farkle.Compatibility;
 
-// Taken from the BCL. Licensed under the MIT license.
 internal static class BitOperationsCompat
 {
     public static int PopCount(ulong value)

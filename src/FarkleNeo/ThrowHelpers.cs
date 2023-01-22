@@ -9,12 +9,20 @@ namespace Farkle;
 internal static class ThrowHelpers
 {
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowArgumentException(string? parameterName, string? message = null, Exception? innerException = null)
+        => throw new ArgumentException(parameterName, message, innerException);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowArgumentOutOfRangeException(string? parameterName, string? message = null)
+        => throw new ArgumentOutOfRangeException(parameterName, message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowEndOfStreamException(string? message = null) =>
         throw new EndOfStreamException(message);
 
     [DoesNotReturn, StackTraceHidden]
-    public static void ThrowInvalidDataException(string? message = null) =>
-        throw new InvalidDataException(message);
+    public static void ThrowInvalidDataException(string? message = null, Exception? innerException = null) =>
+        throw new InvalidDataException(message, innerException);
 
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>

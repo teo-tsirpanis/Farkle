@@ -12,6 +12,7 @@ namespace Farkle.Collections
     /// <summary>
     /// Efficiently stores key-value pairs where the key is of variable size.
     /// </summary>
+    [DebuggerDisplay("Count = {Count}")]
     internal sealed class SpanDictionary<TKey, TValue> where TKey : struct, IEquatable<TKey>
     {
 #if NET6_0_OR_GREATER

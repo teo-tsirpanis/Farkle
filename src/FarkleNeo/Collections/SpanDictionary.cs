@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Farkle.Collections
@@ -12,12 +14,11 @@ namespace Farkle.Collections
     /// </summary>
     internal sealed class SpanDictionary<TKey, TValue> where TKey : struct, IEquatable<TKey>
     {
-        // I feared I'd have to create a full-featured reimplementation of Dictionary, but then thought
-        // that adding just an extra level of indirection avoids most of the work, with better performance
-        // than what System.Reflection.Metadata does for its blob heap.
-        // PERF: We still go through quite some hoops to access our data. I don't think it will pose a
-        // bottleneck, and I really hope so.
-        private readonly Dictionary<int, List<KeyValuePair<ImmutableArray<TKey>, TValue>>> _dictionary = new();
+#if NET6_0_OR_GREATER
+        private readonly Dictionary<int, (ImmutableArray<TKey> Key, TValue Value)> _dictionary = new();
+#else
+        private readonly Dictionary<int, StrongBox<(ImmutableArray<TKey> Key, TValue Value)>> _dictionary = new();
+#endif
 
         private static int GetHashCode(ReadOnlySpan<TKey> key)
         {
@@ -37,98 +38,99 @@ namespace Farkle.Collections
             return hashCode.ToHashCode();
         }
 
-        private static int FindInList(List<KeyValuePair<ImmutableArray<TKey>, TValue>> list, ReadOnlySpan<TKey> key)
-        {
-            int i = 0;
+        // A simple LCG. Constants taken from
+        // https://github.com/imneme/pcg-c/blob/83252d9c23df9c82ecb42210afed61a7b42402d7/include/pcg_variants.h#L276-L284
+        private static int GetNextDictionaryKey(int dictionaryKey) =>
+            (int)((uint)dictionaryKey * 747796405 + 2891336453);
 
+        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(int dictionaryKey, [UnscopedRef] out bool exists)
+        {
 #if NET6_0_OR_GREATER
-            foreach (ref var kvp in CollectionsMarshal.AsSpan(list))
+            return ref CollectionsMarshal.GetValueRefOrAddDefault(_dictionary, dictionaryKey, out exists);
 #else
-            foreach (var kvp in list)
-#endif
+            if (!(exists = _dictionary.TryGetValue(dictionaryKey, out var entry)))
             {
-                if (kvp.Key.AsSpan().SequenceEqual(key))
+                entry = _dictionary[dictionaryKey] = new();
+            }
+            return ref entry.Value;
+#endif
+        }
+
+        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(ReadOnlySpan<TKey> key, [UnscopedRef] out bool exists)
+        {
+            int dictionaryKey = GetHashCode(key);
+            while (true)
+            {
+                ref var entry = ref GetValueRefOrAddDefault(dictionaryKey, out exists);
+                if (!exists || entry.Key.AsSpan().SequenceEqual(key))
                 {
-                    return i;
+                    return ref entry;
                 }
-                i++;
+                dictionaryKey = GetNextDictionaryKey(dictionaryKey);
             }
-
-            return -1;
         }
 
-        private List<KeyValuePair<ImmutableArray<TKey>, TValue>> GetOrCreateList(int hashCode)
+        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrNullRef(ReadOnlySpan<TKey> key)
         {
-#if NET6_0_OR_GREATER
-            ref var list = ref CollectionsMarshal.GetValueRefOrAddDefault(_dictionary, hashCode, out _);
-            // Collisions are unlikely across the full 32-bit range, so allocate a list with only one element,
-            // instead of the default four.
-            list ??= new(capacity: 1);
-            return list;
-#else
-            if (_dictionary.TryGetValue(hashCode, out var list))
+            int dictionaryKey = GetHashCode(key);
+            while (true)
             {
-                return list;
-            }
-            list = new(capacity: 1);
-            _dictionary.Add(hashCode, list);
-            return list;
+                ref var entry =
+#if NET6_0_OR_GREATER
+                    ref CollectionsMarshal.GetValueRefOrNullRef(_dictionary, dictionaryKey);
+#else
+                    ref _dictionary.TryGetValue(dictionaryKey, out var strongBox) ? ref strongBox.Value : ref Unsafe.NullRef<(ImmutableArray<TKey>, TValue)>();
 #endif
+                if (Unsafe.IsNullRef(ref entry) || entry.Key.AsSpan().SequenceEqual(key))
+                {
+                    return ref entry;
+                }
+                dictionaryKey = GetNextDictionaryKey(dictionaryKey);
+            }
         }
 
-        public int Count { get; private set; }
+        public int Count => _dictionary.Count;
 
         public TValue this[ReadOnlySpan<TKey> key]
         {
             get
             {
-                if (!TryGetValue(key, out TValue? value))
+                ref var entry = ref GetValueRefOrNullRef(key);
+                if (Unsafe.IsNullRef(ref entry))
                 {
-                    ThrowHelpers.ThrowKeyNotFoundException("Key not found.");
+                    ThrowHelpers.ThrowKeyNotFoundException();
                 }
-                return value;
+                return entry.Value;
             }
             set
             {
-                int hashCode = GetHashCode(key);
-                var list = GetOrCreateList(hashCode);
-                switch (FindInList(list, key))
+                ref var entry = ref GetValueRefOrAddDefault(key, out bool exists);
+                if (!exists)
                 {
-                    case < 0:
-                        list.Add(new(key.ToImmutableArray(), value));
-                        Count++;
-                        break;
-                    case int idx:
-                        list[idx] = new(list[idx].Key, value);
-                        break;
+                    Debug.Assert(entry.Key.IsDefault);
+                    entry.Key = key.ToImmutableArray();
                 }
+                entry.Value = value;
             }
         }
 
         public void Add(ReadOnlySpan<TKey> key, TValue value)
         {
-            int hashCode = GetHashCode(key);
-            var list = GetOrCreateList(hashCode);
-            if (FindInList(list, key) >= 0)
+            ref var entry = ref GetValueRefOrAddDefault(key, out bool exists);
+            if (exists)
             {
                 ThrowHelpers.ThrowArgumentException(nameof(key), "An element with the same key already exists in the dictionary.");
             }
-
-            list.Add(new(key.ToImmutableArray(), value));
-            Count++;
+            entry = (key.ToImmutableArray(), value);
         }
 
         public bool TryGetValue(ReadOnlySpan<TKey> key, [MaybeNullWhen(false)] out TValue value)
         {
-            int hashCode = GetHashCode(key);
-            if (_dictionary.TryGetValue(hashCode, out var list))
+            ref var entry = ref GetValueRefOrNullRef(key);
+            if (!Unsafe.IsNullRef(ref entry))
             {
-                int idx = FindInList(list, key);
-                if (idx >= 0)
-                {
-                    value = list[idx].Value;
-                    return true;
-                }
+                value = entry.Value;
+                return true;
             }
             value = default;
             return false;

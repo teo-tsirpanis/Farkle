@@ -75,7 +75,7 @@ namespace Farkle.Collections
             int dictionaryKey = GetHashCode(key);
             while (true)
             {
-                ref var entry =
+                ref (ImmutableArray<TKey> Key, TValue Value) entry =
 #if NET6_0_OR_GREATER
                     ref CollectionsMarshal.GetValueRefOrNullRef(_dictionary, dictionaryKey);
 #else

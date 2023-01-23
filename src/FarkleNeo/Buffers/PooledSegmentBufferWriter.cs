@@ -35,7 +35,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
     private ref Segment AllocateNewSegment(int sizeHint)
     {
         Debug.Assert(_segments is not (null or []));
-        if (_activeSegmentIndex == _segments.Length - 1)
+        if (_activeSegmentIndex == _segments!.Length - 1)
         {
             Array.Resize(ref _segments, _segments.Length * 2);
         }
@@ -143,7 +143,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
         int writtenElements = 0;
         for (int i = 0; i <= _activeSegmentIndex; i++)
         {
-            ReadOnlySpan<T> buffer = segments[i].WrittenSpan;
+            ReadOnlySpan<T> buffer = segments![i].WrittenSpan;
             buffer.CopyTo(result.AsSpan(writtenElements));
             writtenElements += buffer.Length;
         }
@@ -183,7 +183,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
             get
             {
                 Debug.Assert(Buffer is not null);
-                return Buffer.Length - WrittenCount;
+                return Buffer!.Length - WrittenCount;
             }
         }
 

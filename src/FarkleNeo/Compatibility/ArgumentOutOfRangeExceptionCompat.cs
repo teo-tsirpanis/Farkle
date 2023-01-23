@@ -14,7 +14,7 @@ internal static class ArgumentOutOfRangeExceptionCompat
     private static void ThrowNegative<T>(T value, string? paramName) =>
         throw new ArgumentOutOfRangeException(paramName, value, "Value must be non-negative.");
 
-    [DoesNotReturn, StackTraceHidden]
+    [StackTraceHidden]
     public static void ThrowIfNegative(int value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (value < 0)

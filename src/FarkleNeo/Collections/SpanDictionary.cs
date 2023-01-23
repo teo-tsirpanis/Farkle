@@ -22,6 +22,21 @@ namespace Farkle.Collections
 
         private static int GetHashCode(ReadOnlySpan<TKey> key)
         {
+#if DEBUG
+            // We will weaken the hash algorithm in debug mode to test for collisions.
+            // We use sbyte instead of byte because the latter has actual uses and it might
+            // affect performance; sbyte is not expected to be used.
+            if (typeof(TKey) == typeof(sbyte))
+            {
+                var keyBytes = MemoryMarshal.Cast<TKey, sbyte>(key);
+                int sum = 0;
+                foreach (sbyte x in keyBytes)
+                {
+                    sum += x;
+                }
+                return HashCode.Combine(sum);
+            }
+#endif
             HashCode hashCode = new();
             // Type.IsPrimitive is not a JIT intrinsic; explicitly check for common types before.
             if (typeof(TKey) == typeof(byte) || typeof(TKey) == typeof(char) || typeof(TKey).IsPrimitive)

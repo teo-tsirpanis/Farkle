@@ -37,4 +37,19 @@ public class SpanDictionaryTests
         void Test(ReadOnlySpan<byte> key, int expectedValue) =>
             Assert.That(dict[key], Is.EqualTo(expectedValue));
     }
+
+    [Test]
+    public void TestCollisions()
+    {
+        var dict = new SpanDictionary<sbyte, int>();
+        // In debug mode these keys will have the same hash code.
+        dict.Add(new sbyte[] { 1, 2 }, 1);
+        dict.Add(new sbyte[] { 2, 1 }, 2);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(dict[new sbyte[] { 1, 2 }], Is.EqualTo(1));
+            Assert.That(dict[new sbyte[] { 2, 1 }], Is.EqualTo(2));
+        });
+    }
 }

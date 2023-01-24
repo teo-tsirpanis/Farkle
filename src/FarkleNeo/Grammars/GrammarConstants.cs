@@ -10,6 +10,8 @@ internal static class GrammarConstants
     public const ulong BlobHeapIdentifier = 0x000000646F6C4223; // "#Blob\0\0\0"
     public const ulong TableStreamIdentifier = 0x0000000000007E23; // "#~\0\0\0\0\0\0"
 
+    public const uint MaxHeapSize = (1 << 29) - 1;
+
     public const ushort VersionMajor = 7;
     public const ushort VersionMinor = 0;
 

@@ -56,9 +56,9 @@ internal struct StringHeapBuilder
             return default;
         }
 
-        if (stringLength > int.MaxValue - LengthSoFar)
+        if (stringLength > GrammarConstants.MaxHeapSize - LengthSoFar)
         {
-            ThrowHelpers.ThrowOutOfMemoryException();
+            ThrowHelpers.ThrowOutOfMemoryException($"String heap cannot exceed {GrammarConstants.MaxHeapSize} bytes in size.");
         }
 
         index = new((uint)LengthSoFar);

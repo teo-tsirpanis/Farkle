@@ -101,4 +101,13 @@ internal class StringHeapTests
         builder.WriteTo(bw);
         Assert.That(bw.WrittenCount, Is.Zero);
     }
+
+    [Test]
+    public void TestHeapSizeExceeded()
+    {
+        StringHeapBuilder builder = new();
+        // Warning, this might crash the debugger.
+        var hugeString = new string('O', 0x1FFFFFFF);
+        Assert.That(() => builder.Add(hugeString), Throws.InstanceOf<OutOfMemoryException>());
+    }
 }

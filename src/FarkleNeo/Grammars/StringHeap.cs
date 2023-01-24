@@ -28,6 +28,11 @@ internal readonly struct StringHeap
                 ThrowHelpers.ThrowInvalidDataException("String heap does not end with null byte.");
             }
 
+            if ((uint)stringHeapLength > GrammarConstants.MaxHeapSize)
+            {
+                ThrowHelpers.ThrowInvalidDataException("String heap is too large.");
+            }
+
             // It would be nice if Encoding.GetCharCount reported errors;
             // we could validate that the string heap's content is valid UTF-8.
             // We still could do it efficiently with a dummy IBufferWriter.

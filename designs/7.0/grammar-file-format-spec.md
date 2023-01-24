@@ -50,6 +50,8 @@ This specification defines three stream types. After their name, the value of th
 
 The string heap contains a sequence of zero-terminated UTF-8 strings. Indices to the heap point to the first byte of a string. The first string is always empty. A string heap MAY be absent from a grammar file; in this case all indices to the string heap in the file MUST be zero. A string heap MUST NOT contain duplicate strings. Indices to the string heap MUST NOT point to the middle of a string.
 
+The total size of the string heap MUST NOT exceed 2<sup>29</sup> - 1 bytes.
+
 ### Blob heap (`"#Blob\0\0\0"`)
 
 The blob heap contains a sequence of length-prefixed byte sequences (blobs). Indices to the heap point to the first byte of the blob's length. The first blob is always empty.
@@ -61,6 +63,8 @@ The length of a blob is stored as a variable-length unsigned integer (adopted fr
 * If the first four bytes of the blob are 110&zwnj;_bbbbb_<sub>2</sub>, _x_, _y_, and _z_, then the rest of the 'blob' contains the (_bbbbb_<sub>2</sub> << 24 + _x_ << 16 + _y_ << 8 + _z_) bytes of actual data.
 
 The blob heap MAY contain unreachable data (for purposes like alignment).
+
+The total size of the blob heap MUST NOT exceed 2<sup>29</sup> - 1 bytes.
 
 ### Table stream (`"#~\0\0\0\0\0\0"`)
 

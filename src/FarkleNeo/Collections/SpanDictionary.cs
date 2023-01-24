@@ -59,10 +59,14 @@ namespace Farkle.Collections
         private static int GetNextDictionaryKey(int dictionaryKey) =>
             (int)((uint)dictionaryKey * 747796405 + 2891336453);
 
-        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(int dictionaryKey, [UnscopedRef] out bool exists)
+        private unsafe ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(int dictionaryKey, out bool exists)
         {
 #if NET6_0_OR_GREATER
+#pragma warning disable CS9088 // This returns a parameter by reference but it is scoped to the current method
+            // In .NET 6 the assembly of GetValueRefOrAddDefault was compiled with earlier ref safety rules
+            // and caused an error, which was turned into a warning because of unsafe and was suppressed.
             return ref CollectionsMarshal.GetValueRefOrAddDefault(_dictionary, dictionaryKey, out exists);
+#pragma warning restore CS9088 // This returns a parameter by reference but it is scoped to the current method
 #else
             if (!(exists = _dictionary.TryGetValue(dictionaryKey, out var entry)))
             {
@@ -72,7 +76,7 @@ namespace Farkle.Collections
 #endif
         }
 
-        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(ReadOnlySpan<TKey> key, [UnscopedRef] out bool exists)
+        private ref (ImmutableArray<TKey> Key, TValue Value) GetValueRefOrAddDefault(ReadOnlySpan<TKey> key, out bool exists)
         {
             int dictionaryKey = GetHashCode(key);
             while (true)

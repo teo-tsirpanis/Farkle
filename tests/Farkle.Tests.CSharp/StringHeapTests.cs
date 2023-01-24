@@ -3,6 +3,11 @@
 
 using Farkle.Buffers;
 using Farkle.Grammars;
+#if NET
+using NUnit.Framework.Constraints;
+using System.Runtime.CompilerServices;
+using System.Text;
+#endif
 
 namespace Farkle.Tests.CSharp;
 
@@ -103,11 +108,30 @@ internal class StringHeapTests
     }
 
     [Test]
-    public void TestHeapSizeExceeded()
+    public unsafe void TestHeapSizeReached([Values(true, false)] bool reachExactly)
     {
+#if NET
         StringHeapBuilder builder = new();
         // Warning, this might crash the debugger.
-        var hugeString = new string('O', 0x1FFFFFFF);
-        Assert.That(() => builder.Add(hugeString), Throws.InstanceOf<OutOfMemoryException>());
+        string hugeString = string.Create(0x0FFFFFFF, reachExactly, static (buffer, reachExactly) =>
+        {
+            buffer.Fill('\u039f');
+            if (reachExactly)
+            {
+                buffer[^1] = 'O';
+            }
+        });
+
+        // The max size of the string heap, minus the leading and trailing nulls.
+        const int MaxSingleStringLength = (int)GrammarConstants.MaxHeapSize - 2;
+        Assert.Multiple(() =>
+        {
+            IConstraint stringLengthConstraint = reachExactly ? Is.EqualTo(MaxSingleStringLength) : Is.GreaterThan(MaxSingleStringLength);
+            Assert.That(Encoding.UTF8.GetByteCount(hugeString), stringLengthConstraint);
+            Assert.That(() => builder.Add(hugeString), Throws.InstanceOf<OutOfMemoryException>());
+        });
+#else
+        Assert.Ignore("Skipped on .NET Framework because of poor performance.");
+#endif
     }
 }

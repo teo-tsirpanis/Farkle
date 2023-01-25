@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - mainstream
-      - release/*
     paths-ignore:
       - 'src/FarkleNeo/**'
       - 'tests/Farkle.Tests.CSharp/**'

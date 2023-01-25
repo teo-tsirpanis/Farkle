@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
-    <RollForward>Major</RollForward>
+    <RollForward>LatestMajor</RollForward>
     <ToolCommandName>farkle</ToolCommandName>
     <Title>The Farkle Command Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>

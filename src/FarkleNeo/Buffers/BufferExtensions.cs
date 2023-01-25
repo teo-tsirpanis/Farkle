@@ -15,6 +15,25 @@ internal static class BufferExtensions
     public static ulong ReadUInt64(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
 
+    public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)
+    {
+        switch ((uint)value)
+        {
+            case <= 0x7F:
+                buffer.Write(value);
+                break;
+            case <= 0x3FFF:
+                buffer.Write(BinaryPrimitives.ReverseEndianness((ushort)value | 0x8000));
+                break;
+            case <= 0x1FFFFFFF:
+                buffer.Write(BinaryPrimitives.ReverseEndianness((uint)value | 0xC0000000));
+                break;
+            default:
+                ThrowHelpers.ThrowBlobTooBig(value);
+                break;
+        }
+    }
+
     public static void Write(this IBufferWriter<byte> buffer, byte value)
     {
         buffer.GetSpan()[0] = value;

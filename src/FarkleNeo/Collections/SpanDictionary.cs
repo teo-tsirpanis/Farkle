@@ -155,5 +155,20 @@ namespace Farkle.Collections
             value = default;
             return false;
         }
+
+        public TValue GetOrAdd(ReadOnlySpan<TKey> key, TValue value, out bool exists, out ImmutableArray<TKey> immutableKey)
+        {
+            ref var entry = ref GetValueRefOrAddDefault(key, out exists);
+            if (!exists)
+            {
+                entry.Key = immutableKey = key.ToImmutableArray();
+                entry.Value = value;
+            }
+            else
+            {
+                immutableKey = entry.Key;
+            }
+            return entry.Value;
+        }
     }
 }

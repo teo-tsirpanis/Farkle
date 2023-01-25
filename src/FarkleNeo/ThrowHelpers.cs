@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Farkle;
 
@@ -15,6 +16,10 @@ internal static class ThrowHelpers
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowArgumentOutOfRangeException(string? parameterName, string? message = null)
         => throw new ArgumentOutOfRangeException(parameterName, message);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static int ThrowBlobTooBig(int length, [CallerArgumentExpression(nameof(length))] string? parameterName = null) =>
+        throw new ArgumentOutOfRangeException(parameterName, length, "Blob cannot be larger than 2^29 bytes");
 
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowEndOfStreamException(string? message = null) =>

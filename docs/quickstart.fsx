@@ -1,6 +1,5 @@
 (*** hide ***)
-#I "../temp/referencedocs-publish/"
-#r "Farkle.dll"
+#r "nuget: Farkle, 6.5.1"
 
 (**
 # Quick Start: Creating a calculator

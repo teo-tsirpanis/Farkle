@@ -1,6 +1,5 @@
 (*** hide ***)
-#I "../temp/referencedocs-publish/"
-#r "Farkle.dll"
+#r "nuget: Farkle, 6.5.1"
 
 (**
 # Farkle's precompiler
@@ -28,8 +27,9 @@ open Farkle
 open Farkle.Builder
 
 let precompilableDesigntime =
+    let int = Terminals.int "Integer"
     "My complicated language"
-    ||= [!@ beginning .>>. middle .>>. ``end`` => (fun b m e -> b + m + e)]
+    ||= [!@ int .>> "+" .>>. int => (fun x y -> x + y)]
     |> DesigntimeFarkle.addLineComment "//"
     |> DesigntimeFarkle.addBlockComment "/*" "*/"
     |> RuntimeFarkle.markForPrecompile

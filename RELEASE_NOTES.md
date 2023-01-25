@@ -1,3 +1,6 @@
+#### 6.5.1 - 25-01-2023
+* Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows, when targeting frameworks greater than .NET 6.
+
 #### 6.5.0 - 09-09-2022
 * Added an overload of the `MarkForPrecompile` extension method that enables the precompiler to be used in AOT environments. See https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Using-the-precompiler-in-AOT-environments for more details.
 * Frequently used post-processors will no longer be optimized using dynamic code generation, because of concerns about the code generator's robustness. Performance might slightly regress. A more robust code generation system might be introduced in a future version of Farkle.

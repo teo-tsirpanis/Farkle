@@ -228,8 +228,6 @@ dotnet tool install Farkle.Tools
 
 The version of `Farkle.Tools` must be the same with the packages `Farkle` and `Farkle.Tools.MSBuild` you use in your project. Otherwise errors are very likely to occur. The tool must also be installed _locally_, otherwise Farkle will not see it.
 
-Due to limitations arising from the precompiler worker's out-of-process execution model, it can only precompile assemblies compatible with `Farkle.Tools.MSBuild`'s supported framework. This framework is generally the latest LTS version of .NET (.NET 6 since Farkle 6.4.0, .NET Core 3.1 prior to that). For example, when .NET 7 gets released, the precompiler worker will not be able to precompile assemblies targeting it, until the release of .NET 8. In addition, the corresponding .NET SDK version must be installed, even if a newer version of the SDK is used for the rest of the project.
-
 The recommended way to build an app that uses the precompiler is through .NET SDK commands like `dotnet build`, `dotnet run` and `dotnet msbuild`. It is faster, more stable and more supported. Visual Studio for Windows cannot run MSBuild on .NET. [A suggestion on Visual Studio Developer Community][vs-suggestion] has been filed but Microsoft responded that it won't be implemented anytime soon. Readers of this guide that are affected are encouraged to upvote the above suggestion. When not using Visual Studio for Windows, Farkle will raise a warning suggesting you to move to the .NET SDK.
 
 Rider however can use the .NET edition of MSBuild with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET SDK (it typically has a `.dll` extension).

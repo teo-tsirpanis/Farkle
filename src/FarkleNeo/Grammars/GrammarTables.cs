@@ -104,7 +104,7 @@ internal readonly struct GrammarTables
             + tableCount * (sizeof(int) + sizeof(byte))
             // HeapSizes
             + sizeof(byte);
-        int tableHeaderSize = Align(tableHeaderSizeUnaligned, sizeof(ulong));
+        int tableHeaderSize = BitArithmetic.Align(tableHeaderSizeUnaligned, sizeof(ulong));
         if (tableStreamLength < tableHeaderSize)
         {
             ThrowHelpers.ThrowInvalidDataException("Table boundaries are missing.");
@@ -230,9 +230,6 @@ internal readonly struct GrammarTables
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
     }
-
-    private static int Align(int offset, int alignment) =>
-        (offset + alignment - 1) & ~(alignment - 1);
 
     [Flags]
     private enum HeapSizes : byte

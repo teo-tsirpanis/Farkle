@@ -12,6 +12,7 @@ open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
+open Fake.DotNet.FSFormatting
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
@@ -307,11 +308,6 @@ let nugetPublish _ =
 
 let docsOutput = Path.GetFullPath "_site/"
 
-let root isRelease =
-    match isRelease with
-    | true -> ""
-    | false -> "--parameters root \"file://" + docsOutput.Replace("\\", "/") + "\""
-
 let moveFileTemporarily src dest =
     File.Copy(src, dest, true)
     {new IDisposable with member _.Dispose() = File.delete dest}
@@ -323,12 +319,26 @@ let generateDocs doWatch isRelease =
     use __ = moveFileTemporarily "RELEASE_NOTES.md" "docs/release-notes.md"
     use __ = moveFileTemporarily "LICENSE.txt" "docs/license.md"
 
-    let fsDocsCommand = if doWatch then "watch" else "build"
-    let root = root isRelease
+    let arguments = [
+        if doWatch then "watch" else "build"
+        "--clean"
+        "--projects"
+        Path.GetFullPath farkleProject
+        "--output"
+        docsOutput
+        "--properties"
+        "FsFormatting=true"
+        if not isRelease then
+            "--parameters"
+            "root"
+            "file://" + docsOutput.Replace("\\", "/")
+    ]
 
-    (sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root)
-    |> DotNet.exec id "fsdocs"
-    |> handleFailure
+    CreateProcess.fromRawCommand "fsdocs" arguments
+    |> CreateProcess.withToolType (ToolType.CreateLocalTool())
+    |> CreateProcess.ensureExitCode
+    |> Proc.run
+    |> ignore
 
 let prepareDocsGeneration _ =
     DotNet.build (fun p ->

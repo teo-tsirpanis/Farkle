@@ -179,9 +179,8 @@ docs/license.md
 docs/release-notes.md
 .fake
 
-docs.zip
 *.nupkg
-output/
+_site
 **/BenchmarkDotNet.Artifacts/
 temp/
 tmp/

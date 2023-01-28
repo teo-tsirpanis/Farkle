@@ -16,6 +16,7 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
+open FSharp.Formatting.ApiDocs
 open Scriban
 open System
 open System.IO
@@ -178,9 +179,6 @@ let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.get
 let clean _ =
     Shell.cleanDirs ["bin"; "temp"]
 
-let cleanDocs _ =
-    Shell.cleanDir "output"
-
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
@@ -308,8 +306,7 @@ let nugetPublish _ =
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
-let docsOutput = __SOURCE_DIRECTORY__ @@ "output/"
+let docsOutput = Path.GetFullPath "_site/"
 
 let root isRelease =
     match isRelease with
@@ -319,6 +316,9 @@ let root isRelease =
 let moveFileTemporarily src dest =
     File.Copy(src, dest, true)
     {new IDisposable with member _.Dispose() = File.delete dest}
+
+let cleanDocs _ =
+    Shell.cleanDir docsOutput
 
 let generateDocs doWatch isRelease =
     use __ = moveFileTemporarily "RELEASE_NOTES.md" "docs/release-notes.md"
@@ -336,36 +336,15 @@ let prepareDocsGeneration _ =
         {p with
             Configuration = documentationConfiguration}
     ) farkleProject
-    DotNet.publish (fun p ->
-        {p with
-            Framework = Some DocumentationAssemblyFramework
-            Configuration = documentationConfiguration
-            OutputPath = Some referenceDocsTempPath
-            NoBuild = true}
-    ) farkleProject
 
 let keepGeneratingDocs _ =
     generateDocs true false
 
 let generateDocsRelease _ =
     generateDocs false true
-    !! (docsOutput @@ "**") |> Zip.zip docsOutput "docs.zip"
-    Trace.publish ImportData.BuildArtifact "docs.zip"
 
 let generateDocsDebug _ =
     generateDocs false false
-
-let releaseDocs _ =
-    let tempDocsDir = "temp/gh-pages"
-    Shell.cleanDir tempDocsDir
-    Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
-
-    // Some files might no longer exist; better delete them all before the copy.
-    !! "temp/gh-pages/**" -- "temp/gh-pages/.git/**" |> File.deleteAll
-    Shell.copyRecursive docsOutput tempDocsDir true |> Trace.tracefn "Copied %A"
-    Staging.stageAll tempDocsDir
-    Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
-    Branches.push tempDocsDir
 
 // --------------------------------------------------------------------------------------
 // Release Scripts
@@ -448,8 +427,6 @@ let initTargets() =
     Target.create "GenerateDocs" generateDocsRelease
     Target.description "Generates the website for the project - for local use"
     Target.create "GenerateDocsDebug" generateDocsDebug
-    Target.description "Releases the documentation to GitHub Pages."
-    Target.create "ReleaseDocs" releaseDocs
     Target.description "Publishes the benchmark report."
     Target.create "PublishBenchmarkReport" publishBenchmarkReport
     Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
@@ -482,9 +459,6 @@ let initTargets() =
         "CleanDocs"
             ==> "PrepareDocsGeneration"
             ==>! (sprintf "GenerateDocs%s" x))
-
-    "GenerateDocs"
-        ==>! "ReleaseDocs"
 
     "PrepareDocsGeneration"
         ==>! "KeepGeneratingDocs"

@@ -1,0 +1,38 @@
+name: Publish documentation
+
+on:
+  push:
+    branches:
+      - mainstream
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v3
+      - name: Restore .NET local tools
+        run: dotnet tool restore
+      - name: Build documentation
+        run: dotnet run --project eng/Farkle.Build.fsproj -- -t GenerateDocs
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: docs/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

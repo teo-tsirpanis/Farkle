@@ -21,7 +21,7 @@ jobs:
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: docs/_site
+          path: _site
 
   deploy:
     needs: build

@@ -16,7 +16,6 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
-open FSharp.Formatting.ApiDocs
 open Scriban
 open System
 open System.IO

@@ -306,6 +306,8 @@ let nugetPublish _ =
 // Generate the documentation
 
 let docsOutput = Path.GetFullPath "_site/"
+let farkle6Repo = "temp/farkle6"
+let farkle6DocsProject = farkle6Repo @@ farkleProject
 
 let moveFileTemporarily src dest =
     File.Copy(src, dest, true)
@@ -322,10 +324,11 @@ let generateDocs doWatch isRelease =
         if doWatch then "watch" else "build"
         "--clean"
         "--projects"
-        Path.GetFullPath farkleProject
+        Path.GetFullPath farkle6DocsProject
         "--output"
         docsOutput
         "--properties"
+        $"TargetFramework={DocumentationAssemblyFramework}"
         if not isRelease then
             "--parameters"
             "root"
@@ -339,10 +342,19 @@ let generateDocs doWatch isRelease =
     |> ignore
 
 let prepareDocsGeneration _ =
+    Git.Repository.cloneSingleBranch "." "https://github.com/teo-tsirpanis/Farkle.git" "release/6.0" farkle6Repo
     DotNet.build (fun p ->
         {p with
-            Configuration = documentationConfiguration}
-    ) farkleProject
+            Configuration = documentationConfiguration
+            Framework = Some DocumentationAssemblyFramework
+            MSBuildParams =
+                {p.MSBuildParams with
+                    // The 6.x branch does not use central package management and because
+                    // it is cloned inside the new code, it inherits it. We disable it.
+                    Properties = ("ManagePackageVersionsCentrally", "false") :: p.MSBuildParams.Properties
+                }
+        }
+    ) farkle6DocsProject
 
 let keepGeneratingDocs _ =
     generateDocs true false

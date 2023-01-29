@@ -17,7 +17,7 @@ There are Visual Studio Code tasks to make your life easier.
 
 ## What to contribute
 
-__Farkle is undergoing a complete rewrite. Until it completes, community contributions to files under `src/Farkle` will not be accepted.__ You can contribute instead to:
+__Farkle is undergoing a complete rewrite. Until it completes, community contributions to files under `src/Farkle` or `src/FarkleNeo` will not be accepted.__ You can contribute instead to:
 
 * Documentation
 * Tests

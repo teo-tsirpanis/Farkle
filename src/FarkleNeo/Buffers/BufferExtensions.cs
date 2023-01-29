@@ -20,8 +20,38 @@ internal static class BufferExtensions
     }
 
     // PERF: Skip bounds checks since we already do them, or confirm the JIT has eliminated them.
+    public static int ReadBlobLength(this ReadOnlySpan<byte> buffer, int index, out int bytesRead)
+    {
+        uint first = buffer[index];
+        if (first <= 0x7F)
+        {
+            bytesRead = 1;
+            return (int)first;
+        }
+        if ((first & 0xC0) == 0x80)
+        {
+            bytesRead = 2;
+            return BinaryPrimitives.ReverseEndianness(buffer.ReadUInt16(index)) & 0x3FFF;
+        }
+        if ((first & 0xE0) == 0xC0)
+        {
+            bytesRead = 4;
+            return (int)(BinaryPrimitives.ReverseEndianness(buffer.ReadUInt32(index)) & 0x1FFFFFFF);
+        }
+
+        ThrowHelpers.ThrowInvalidDataException("Invalid blob length");
+        bytesRead = 0;
+        return 0;
+    }
+
     public static int ReadInt32(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadInt32LittleEndian(buffer[index..]);
+
+    public static ushort ReadUInt16(this ReadOnlySpan<byte> buffer, int index) =>
+        BinaryPrimitives.ReadUInt16LittleEndian(buffer[index..]);
+
+    public static uint ReadUInt32(this ReadOnlySpan<byte> buffer, int index) =>
+        BinaryPrimitives.ReadUInt32LittleEndian(buffer[index..]);
 
     public static ulong ReadUInt64(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
@@ -49,6 +79,18 @@ internal static class BufferExtensions
     {
         buffer.GetSpan()[0] = value;
         buffer.Advance(sizeof(byte));
+    }
+
+    public static void Write(this IBufferWriter<byte> buffer, byte value, int count)
+    {
+        while (count > 0)
+        {
+            Span<byte> span = buffer.GetSpan();
+            int batchCount = Math.Min(count, span.Length);
+            span[..batchCount].Fill(value);
+            buffer.Advance(batchCount);
+            count -= batchCount;
+        }
     }
 
     public static void Write(this IBufferWriter<byte> buffer, int value)

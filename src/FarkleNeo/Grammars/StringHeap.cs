@@ -17,13 +17,12 @@ internal readonly struct StringHeap
         Debug.Assert(stringHeapLength >= 0);
         if (stringHeapLength != 0)
         {
-            ReadOnlySpan<byte> stringHeap = grammarFile.Slice(stringHeapOffset, stringHeapLength);
-            if (stringHeap[0] != 0)
+            if (grammarFile[stringHeapOffset] != 0)
             {
                 ThrowHelpers.ThrowInvalidDataException("String heap does not start with null byte.");
             }
 
-            if (stringHeap[^1] != 0)
+            if (grammarFile[stringHeapOffset + stringHeapLength - 1] != 0)
             {
                 ThrowHelpers.ThrowInvalidDataException("String heap does not end with null byte.");
             }
@@ -54,16 +53,15 @@ internal readonly struct StringHeap
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Handle points outside the string heap.");
         }
 
-        ReadOnlySpan<byte> stringHeap = grammarFile.Slice(Offset, Length);
         int stringStart = (int)handle.Value;
-        if (stringHeap[stringStart - 1] != 0)
+        if (grammarFile[Offset + stringStart - 1] != 0)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Handle cannot point to the middle of a string.");
         }
 
-        int stringLength = stringHeap[stringStart..].IndexOf((byte)0);
+        int stringLength = grammarFile[(Offset + stringStart)..].IndexOf((byte)0);
         Debug.Assert(stringLength >= 0);
-        ReadOnlySpan<byte> stringContent = stringHeap.Slice(stringStart, stringLength);
+        ReadOnlySpan<byte> stringContent = grammarFile.Slice(Offset + stringStart, stringLength);
         return Encoding.UTF8.GetString(stringContent);
     }
 

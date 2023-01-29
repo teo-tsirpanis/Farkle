@@ -12,7 +12,6 @@ open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
-open Fake.DotNet.FSFormatting
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
@@ -327,7 +326,6 @@ let generateDocs doWatch isRelease =
         "--output"
         docsOutput
         "--properties"
-        "FsFormatting=true"
         if not isRelease then
             "--parameters"
             "root"

@@ -8,6 +8,17 @@ namespace Farkle.Buffers;
 
 internal static class BufferExtensions
 {
+    public static bool IsOutOfBounds(int offset, int length, int fileLength)
+    {
+        // https://github.com/dotnet/runtime/blob/ae6a73f82ff572004d739083751026d0b82663f3/src/libraries/System.Private.CoreLib/src/System/Span.cs#L416-L428
+        if (IntPtr.Size == 8)
+        {
+            return (uint)offset + (ulong)(uint)length > (uint)fileLength;
+        }
+
+        return (uint)offset > (uint)fileLength || (uint)length > (uint)(fileLength - offset);
+    }
+
     // PERF: Skip bounds checks since we already do them, or confirm the JIT has eliminated them.
     public static int ReadInt32(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadInt32LittleEndian(buffer[index..]);

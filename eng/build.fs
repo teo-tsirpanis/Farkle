@@ -15,7 +15,7 @@ open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
-open Fake.Tools.Git
+open Fake.Tools
 open Scriban
 open System
 open System.IO
@@ -106,7 +106,7 @@ let gitName = "Farkle"
 // Read additional information from the release notes document
 let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
 
-let lastCommitMessage = lazy (CommitMessage.getCommitMessage Environment.CurrentDirectory)
+let lastCommitMessage = lazy (Git.CommitMessage.getCommitMessage Environment.CurrentDirectory)
 
 let releaseNotes() =
     let lines s = seq {
@@ -357,19 +357,19 @@ let generateDocsDebug _ =
 // Release Scripts
 
 let remoteToPush = lazy (
-    CommandHelper.getGitResult "" "remote -v"
+    Git.CommandHelper.getGitResult "" "remote -v"
     |> Seq.filter (String.endsWith "(push)")
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
 let publishBenchmarkReport _ =
-    !! "performance/**" |> Seq.iter (Staging.stageFile "" >> ignore)
-    Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
-    Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
+    !! "performance/**" |> Seq.iter (Git.Staging.stageFile "" >> ignore)
+    Git.Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
+    Git.Branches.pushBranch "" remoteToPush.Value (Git.Information.getBranchName "")
 
 let githubRelease _ =
-    Branches.tag "" nugetVersion
-    Branches.pushTag "" remoteToPush.Value nugetVersion
+    Git.Branches.tag "" nugetVersion
+    Git.Branches.pushTag "" remoteToPush.Value nugetVersion
 
     GitHub.createClientWithToken githubToken.Value
     |> GitHub.createRelease gitOwner gitName nugetVersion

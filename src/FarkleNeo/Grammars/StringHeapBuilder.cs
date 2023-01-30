@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Collections;
 using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -11,38 +13,42 @@ namespace Farkle.Grammars;
 internal struct StringHeapBuilder
 {
     private List<string>? _strings;
-    private Dictionary<string, StringHandle>? _stringIndices;
+    private StringDictionary<StringHandle>? _stringHandles;
 
     public int LengthSoFar { get; private set; }
 
-    [MemberNotNull(nameof(_strings), nameof(_stringIndices))]
+    [MemberNotNull(nameof(_strings), nameof(_stringHandles))]
     private void Initialize()
     {
-        _strings ??= new List<string>() { "" };
-        _stringIndices ??= new Dictionary<string, StringHandle>() { { "", default } };
+        _strings ??= new () { "" };
+        _stringHandles ??= new ();
         if (LengthSoFar == 0)
         {
             LengthSoFar = 1;
         }
     }
 
-    public StringHandle Add(string str)
+    public StringHandle Add(string str) => Add(str.AsSpan());
+
+    public StringHandle Add(ReadOnlySpan<char> str)
     {
-        if (str is "")
+        if (str.IsEmpty)
         {
             return default;
         }
 
-        if (str.Contains('\0'))
+        if (str.IndexOf('\0') != -1)
         {
             ThrowHelpers.ThrowArgumentException(nameof(str), "String cannot contain null characters.");
         }
 
         Initialize();
 
-        if (_stringIndices.TryGetValue(str, out var index))
+        // We will lookup twice in the dictionary; this way we
+        // avoid counting the bytes if the string exists.
+        if (_stringHandles.TryGetValue(str, out var handle))
         {
-            return index;
+            return handle;
         }
 
         int stringLength;
@@ -61,11 +67,13 @@ internal struct StringHeapBuilder
             ThrowHelpers.ThrowOutOfMemoryException($"String heap cannot exceed {GrammarConstants.MaxHeapSize} bytes in size.");
         }
 
-        index = new((uint)LengthSoFar);
+        handle = new((uint)LengthSoFar);
+        handle = _stringHandles.GetOrAdd(str, handle, out bool exists, out string strObj);
+        Debug.Assert(!exists);
+
         LengthSoFar += stringLength;
-        _strings.Add(str);
-        _stringIndices.Add(str, index);
-        return index;
+        _strings.Add(strObj);
+        return handle;
     }
 
     public void WriteTo(IBufferWriter<byte> writer)

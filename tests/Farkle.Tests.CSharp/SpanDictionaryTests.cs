@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Collections;
+using System.Collections.Immutable;
 
 namespace Farkle.Tests.CSharp;
 
@@ -10,7 +11,7 @@ public class SpanDictionaryTests
     [Test]
     public void Test()
     {
-        var dict = new SpanDictionary<byte, int>();
+        var dict = new BlobDictionary<int>();
         dict.Add(""u8, -1);
         dict["aaa"u8] = 137;
         dict["bbb"u8] = 184;
@@ -41,15 +42,24 @@ public class SpanDictionaryTests
     [Test]
     public void TestCollisions()
     {
-        var dict = new SpanDictionary<sbyte, int>();
+        var dict = new CollidingBlobDictionary<int>();
         // In debug mode these keys will have the same hash code.
-        dict.Add(new sbyte[] { 1, 2 }, 1);
-        dict.Add(new sbyte[] { 2, 1 }, 2);
+        dict.Add("ab"u8, 1);
+        dict.Add("ba"u8, 2);
 
         Assert.Multiple(() =>
         {
-            Assert.That(dict[new sbyte[] { 1, 2 }], Is.EqualTo(1));
-            Assert.That(dict[new sbyte[] { 2, 1 }], Is.EqualTo(2));
+            Assert.That(dict["ab"u8], Is.EqualTo(1));
+            Assert.That(dict["ba"u8], Is.EqualTo(2));
         });
+    }
+
+    private sealed class CollidingBlobDictionary<TValue> : SpanDictionaryBase<byte, ImmutableArray<byte>, TValue>
+    {
+        protected override ImmutableArray<byte> ToContainer(ReadOnlySpan<byte> key) => key.ToImmutableArray();
+
+        protected override int GetHashCode(ReadOnlySpan<byte> key) => 0;
+
+        protected override ReadOnlySpan<byte> AsSpan(ImmutableArray<byte> container) => container.AsSpan();
     }
 }

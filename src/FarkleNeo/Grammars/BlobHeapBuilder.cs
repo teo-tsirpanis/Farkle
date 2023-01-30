@@ -13,7 +13,7 @@ namespace Farkle.Grammars;
 internal struct BlobHeapBuilder
 {
     private List<ImmutableArray<byte>>? _blobs;
-    private SpanDictionary<byte, BlobHandle>? _blobHandles;
+    private BlobDictionary<BlobHandle>? _blobHandles;
 
     public int LengthSoFar { get; private set; }
 

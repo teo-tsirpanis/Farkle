@@ -11,36 +11,39 @@ namespace Farkle.Grammars;
 /// </summary>
 public abstract class Grammar
 {
-    internal static GrammarHeader ReadHeader(ref BufferReader reader)
-    {
-        if (reader.PeekUInt64() == HeaderMagic)
-        {
-            reader.AdvanceBy(sizeof(ulong));
-            ushort versionMajor = reader.ReadUInt16();
-            ushort versionMinor = reader.ReadUInt16();
+    /// <summary>
+    /// The size of the version-independent part of a Farkle grammar header.
+    /// </summary>
+    private const int VersionIndependentHeaderSize = sizeof(ulong) + 2 * sizeof(ushort);
 
-            if (versionMajor is > VersionMajor or < MinSupportedVersionMajor)
+    internal static GrammarHeader ReadHeader(ReadOnlySpan<byte> grammarFile)
+    {
+        if (grammarFile.Length >= VersionIndependentHeaderSize && grammarFile.ReadUInt64(0) == HeaderMagic)
+        {
+            ushort versionMajor = grammarFile.ReadUInt16(sizeof(ulong));
+            ushort versionMinor = grammarFile.ReadUInt16(sizeof(ulong) + sizeof(ushort));
+
+            if (versionMajor is > VersionMajor or < MinSupportedVersionMajor
+                || grammarFile.Length < VersionIndependentHeaderSize + sizeof(uint))
             {
                 return GrammarHeader.CreateFarkle(versionMajor, versionMinor, 0);
             }
 
-            uint streamCount = reader.ReadUInt32();
+            uint streamCount = grammarFile.ReadUInt32(VersionIndependentHeaderSize);
             return GrammarHeader.CreateFarkle(versionMajor, versionMinor, streamCount);
         }
 
-        ReadOnlySpan<byte> buffer = reader.RemainingBuffer;
-
-        if (buffer.StartsWith(EgtNeoHeader))
+        if (grammarFile.StartsWith(EgtNeoHeader))
         {
             return GrammarHeader.EgtNeo;
         }
 
-        if (buffer.StartsWith(Egt5Header))
+        if (grammarFile.StartsWith(Egt5Header))
         {
             return GrammarHeader.Egt5;
         }
 
-        if (buffer.StartsWith(CgtHeader))
+        if (grammarFile.StartsWith(CgtHeader))
         {
             return GrammarHeader.Cgt;
         }

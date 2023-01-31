@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Buffers;
 using Farkle.Grammars;
 
 namespace Farkle.Tests.CSharp;
@@ -14,8 +13,7 @@ internal class GrammarTests
     public void TestInvalidFiles(string fileName, GrammarFileType fileType)
     {
         var buffer = File.ReadAllBytes(TestUtilities.GetResourceFile(fileName));
-        var br = new BufferReader(buffer);
-        var header = Grammar.ReadHeader(ref br);
+        var header = Grammar.ReadHeader(buffer);
         Assert.Multiple(() =>
         {
             Assert.That(header.IsSupported, Is.False);

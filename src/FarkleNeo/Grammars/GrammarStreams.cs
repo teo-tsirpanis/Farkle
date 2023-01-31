@@ -11,18 +11,40 @@ internal readonly struct GrammarStreams
     public readonly int BlobHeapOffset, BlobHeapLength;
     public readonly int TableStreamOffset, TableStreamLength;
 
-    public GrammarStreams(ref BufferReader br, uint streamCount, out bool hasUnknownStreams)
+    private const int StreamDefinitionsOffset =
+        // Magic
+        sizeof(ulong)
+        // MajorVersion
+        + sizeof(ushort)
+        // MinorVersion
+        + sizeof(ushort)
+        // StreamCount
+        + sizeof(int);
+
+    private const int StreamDefinitionSize =
+        // Identifier
+        sizeof(ulong)
+        // Offset
+        + sizeof(int)
+        // Length
+        + sizeof(int);
+
+    public GrammarStreams(ReadOnlySpan<byte> grammarFile, uint streamCount, out bool hasUnknownStreams)
     {
-        int fileLength = br.OriginalBuffer.Length;
         bool seenStringHeap = false, seenBlobHeap = false, seenTableStream = false;
         hasUnknownStreams = false;
 
-        for (uint i = 0; i < streamCount; i++)
+        if ((uint)grammarFile.Length < StreamDefinitionsOffset + streamCount * StreamDefinitionSize)
         {
-            ulong identifier = br.ReadUInt64();
-            int offset = br.ReadInt32();
-            int length = br.ReadInt32();
-            if (BufferExtensions.IsOutOfBounds(offset, length, fileLength))
+            ThrowHelpers.ThrowInvalidDataException("Grammar header is too small.");
+        }
+
+        for (int i = 0; i < (int)streamCount; i++)
+        {
+            ulong identifier = grammarFile.ReadUInt64(StreamDefinitionsOffset + StreamDefinitionSize * i + 0);
+            int offset = grammarFile.ReadInt32(StreamDefinitionsOffset + StreamDefinitionSize * i + sizeof(ulong));
+            int length = grammarFile.ReadInt32(StreamDefinitionsOffset + StreamDefinitionSize * i + sizeof(ulong) + sizeof(int));
+            if (BufferExtensions.IsOutOfBounds(offset, length, grammarFile.Length))
             {
                 ThrowHelpers.ThrowInvalidDataException("Invalid stream bounds.");
             }
@@ -38,8 +60,8 @@ internal readonly struct GrammarStreams
                     AssignStream(identifier, offset, length, ref TableStreamOffset, ref TableStreamLength, ref seenTableStream);
                     break;
                 default:
-                    // We could have detected duplicate unknown streams to fully conform
-                    // with the spec, but let's not, we don't care about them. We do however check their bounds.
+                    // We could have detected duplicate unknown streams to fully conform with the spec,
+                    // but let's not, we don't care about them. We do however check their bounds.
                     hasUnknownStreams = true;
                     break;
             }

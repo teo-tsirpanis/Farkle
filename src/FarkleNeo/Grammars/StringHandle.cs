@@ -13,7 +13,7 @@ public readonly struct StringHandle : IEquatable<StringHandle>
     internal StringHandle(uint value) => Value = value;
 
     /// <summary>
-    /// Whether this <see cref="StringHandle"/> points to the empty blob.
+    /// Whether this <see cref="StringHandle"/> points to the empty string.
     /// </summary>
     public bool IsNil => Value == 0;
 

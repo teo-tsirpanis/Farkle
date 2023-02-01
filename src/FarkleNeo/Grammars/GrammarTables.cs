@@ -82,6 +82,12 @@ internal readonly struct GrammarTables
         _ => 4
     };
 
+    private StringHandle ReadStringHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(grammarFile.ReadUIntVariableSize(index, StringHeapIndexSize));
+
+    private BlobHandle ReadBlobHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(grammarFile.ReadUIntVariableSize(index, BlobHeapIndexSize));
+
     public GrammarTables(ReadOnlySpan<byte> grammarFile, int tableStreamOffset, int tableStreamLength, out bool hasUnknownTables) : this()
     {
         if (tableStreamLength < sizeof(ulong))

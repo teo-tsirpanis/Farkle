@@ -3,6 +3,7 @@
 
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Diagnostics;
 
 namespace Farkle.Buffers;
 
@@ -55,6 +56,20 @@ internal static class BufferExtensions
 
     public static ulong ReadUInt64(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
+
+    public static uint ReadUIntVariableSize(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
+    {
+        switch (dataSize)
+        {
+            case 1:
+                return buffer[index];
+            case 2:
+                return buffer.ReadUInt16(index);
+            default:
+                Debug.Assert(dataSize == 4);
+                return buffer.ReadUInt32(index);
+        }
+    }
 
     public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)
     {

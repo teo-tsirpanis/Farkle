@@ -27,7 +27,7 @@ public readonly struct BlobHandle : IEquatable<BlobHandle>
     public override int GetHashCode() => Value.GetHashCode();
 
     /// <summary>
-    /// Checks if two <see cref="BlobHandle"/>s are pointing to the same string.
+    /// Checks if two <see cref="BlobHandle"/>s are pointing to the same blob.
     /// </summary>
     /// <param name="left">The first handle.</param>
     /// <param name="right">The second handle.</param>
@@ -38,7 +38,7 @@ public readonly struct BlobHandle : IEquatable<BlobHandle>
     public static bool operator ==(BlobHandle left, BlobHandle right) => left.Equals(right);
 
     /// <summary>
-    /// Checks if two <see cref="BlobHandle"/>s are not pointing to the same string.
+    /// Checks if two <see cref="BlobHandle"/>s are not pointing to the same blob.
     /// </summary>
     /// <param name="left">The first handle.</param>
     /// <param name="right">The second handle.</param>

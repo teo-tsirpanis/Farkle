@@ -51,6 +51,21 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     /// </summary>
     public bool IsNil => Value == 0;
 
+    /// <summary>
+    /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="TokenSymbolHandle"/>.
+    /// </summary>
+    public bool IsTokenSymbol => Kind == TableKind.TokenSymbol;
+
+    /// <summary>
+    /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="NonterminalHandle"/>.
+    /// </summary>
+    public bool IsNonterminal => Kind == TableKind.Nonterminal;
+
+    /// <summary>
+    /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="ProductionHandle"/>.
+    /// </summary>
+    public bool IsProduction => Kind == TableKind.Production;
+
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is EntityHandle handle && Equals(handle);
 

@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Farkle.Grammars;
 
 namespace Farkle;
 
@@ -24,6 +25,10 @@ internal static class ThrowHelpers
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowEndOfStreamException(string? message = null) =>
         throw new EndOfStreamException(message);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowEntityHandleMismatch(TableKind expected, TableKind actual) =>
+        throw new InvalidCastException($"Expected {expected} but got {actual}.");
 
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidDataException(string? message = null, Exception? innerException = null) =>

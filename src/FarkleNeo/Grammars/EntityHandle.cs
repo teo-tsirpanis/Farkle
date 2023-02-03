@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents an reference to a table row of a <see cref="Grammar"/>.
+/// Points to a table row of a <see cref="Grammar"/>.
 /// </summary>
 public readonly struct EntityHandle : IEquatable<EntityHandle>
 {

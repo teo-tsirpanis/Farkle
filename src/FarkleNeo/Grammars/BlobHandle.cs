@@ -4,7 +4,7 @@
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a reference to a blob of bytes in a <see cref="Grammar"/>.
+/// Points to a blob of bytes in a <see cref="Grammar"/>.
 /// </summary>
 public readonly struct BlobHandle : IEquatable<BlobHandle>
 {

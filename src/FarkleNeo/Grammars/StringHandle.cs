@@ -4,7 +4,7 @@
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a reference to a string in a <see cref="Grammar"/>.
+/// Points to a string in a <see cref="Grammar"/>.
 /// </summary>
 public readonly struct StringHandle : IEquatable<StringHandle>
 {

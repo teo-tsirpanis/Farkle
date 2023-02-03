@@ -62,6 +62,10 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator ProductionHandle(EntityHandle handle)
     {
+        if (handle.IsNil)
+        {
+            return default;
+        }
         handle.TypeCheck(TableKind.Production);
         return new(handle.Value);
     }

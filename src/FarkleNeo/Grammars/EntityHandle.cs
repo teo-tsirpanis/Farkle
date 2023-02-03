@@ -25,7 +25,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     internal EntityHandle(uint value, TableKind kind)
     {
         Debug.Assert(value <= ValueMask);
-        _valueAndKind = (value & ValueMask) | ((uint)kind << ValueSize);
+        _valueAndKind = value == 0 ? 0 : (value & ValueMask) | ((uint)kind << ValueSize);
     }
 
     internal int GetTableIndex()

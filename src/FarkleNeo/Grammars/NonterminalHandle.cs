@@ -62,6 +62,10 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator NonterminalHandle(EntityHandle handle)
     {
+        if (handle.IsNil)
+        {
+            return default;
+        }
         handle.TypeCheck(TableKind.Nonterminal);
         return new(handle.Value);
     }

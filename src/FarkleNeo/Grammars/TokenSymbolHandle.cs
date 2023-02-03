@@ -62,6 +62,10 @@ public readonly struct TokenSymbolHandle : IEquatable<TokenSymbolHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator TokenSymbolHandle(EntityHandle handle)
     {
+        if (handle.IsNil)
+        {
+            return default;
+        }
         handle.TypeCheck(TableKind.TokenSymbol);
         return new(handle.Value);
     }

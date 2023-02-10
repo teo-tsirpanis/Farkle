@@ -3,6 +3,7 @@
 
 using Farkle.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Farkle.Grammars;
@@ -132,6 +133,8 @@ internal readonly struct GrammarTables
         int stateMachineBase = 0;
         int specialNameBase = 0;
 
+        byte grammarTableRowSize = 0;
+
         _heapSizes = (HeapSizes)grammarFile[tableStreamOffset + tableHeaderSizeUnaligned - 1];
         while (remainingTables != 0)
         {
@@ -151,6 +154,9 @@ internal readonly struct GrammarTables
             byte rowSize = grammarFile[rowSizesBase + i];
             switch ((TableKind)currentTable)
             {
+                case TableKind.Grammar:
+                    grammarTableRowSize = rowSize;
+                    break;
                 case TableKind.TokenSymbol:
                     tokenSymbolBase = currentTableBase;
                     TokenSymbolRowCount = rowCount;
@@ -205,15 +211,26 @@ internal readonly struct GrammarTables
         }
 
         int tokenSymbolIndexSize = GetIndexSize(TokenSymbolRowCount);
+        int groupNestingIndexSize = GetIndexSize(GroupNestingRowCount);
         int nonterminalIndexSize = GetIndexSize(NonterminalRowCount);
+        int productionIndexSize = GetIndexSize(ProductionRowCount);
+        int productionMemberIndexSize = GetIndexSize(ProductionMemberRowCount);
 
+        int productionMemberCodedIndexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
+
+        ValidateRowCount(TableKind.Grammar, grammarTableRowSize,
+            StringHeapIndexSize + nonterminalIndexSize + sizeof(ushort));
         GrammarNameOffset = grammarBase + 0;
         GrammarStartSymbolOffset = GrammarNameOffset + StringHeapIndexSize;
         GrammarFlagsOffset = GrammarStartSymbolOffset + nonterminalIndexSize;
 
+        ValidateRowCount(TableKind.TokenSymbol, TokenSymbolRowSize,
+            StringHeapIndexSize + sizeof(ushort));
         TokenSymbolNameBase = tokenSymbolBase + 0;
         TokenSymbolFlagsBase = TokenSymbolNameBase + StringHeapIndexSize;
 
+        ValidateRowCount(TableKind.Group, GroupRowSize,
+            StringHeapIndexSize + tokenSymbolIndexSize + sizeof(ushort) + tokenSymbolIndexSize + tokenSymbolIndexSize + groupNestingIndexSize);
         GroupNameBase = groupBase + 0;
         GroupContainerBase = GroupNameBase + StringHeapIndexSize;
         GroupFlagsBase = GroupContainerBase + tokenSymbolIndexSize;
@@ -221,21 +238,45 @@ internal readonly struct GrammarTables
         GroupEndBase = GroupStartBase + tokenSymbolIndexSize;
         GroupFirstNestingBase = GroupEndBase + tokenSymbolIndexSize;
 
+        ValidateRowCount(TableKind.GroupNesting, GroupNestingRowSize,
+            groupNestingIndexSize);
         GroupNestingGroupBase = groupNestingBase + 0;
 
+        ValidateRowCount(TableKind.Nonterminal, NonterminalRowSize,
+            StringHeapIndexSize + sizeof(ushort) + productionIndexSize);
         NonterminalNameBase = nonterminalBase + 0;
         NonterminalFlagsBase = NonterminalNameBase + StringHeapIndexSize;
         NonterminalFirstProductionBase = NonterminalFlagsBase + sizeof(ushort);
 
+        ValidateRowCount(TableKind.Production, ProductionRowSize,
+            productionMemberIndexSize);
         ProductionFirstMemberBase = productionBase + 0;
 
+        ValidateRowCount(TableKind.ProductionMember, ProductionMemberRowSize,
+            productionMemberCodedIndexSize);
         ProductionMemberMemberBase = productionMemberBase + 0;
 
+        ValidateRowCount(TableKind.StateMachine, StateMachineRowSize,
+            sizeof(ulong) + BlobHeapIndexSize);
         StateMachineKindBase = stateMachineBase + 0;
         StateMachineDataBase = StateMachineKindBase + sizeof(ulong);
 
+        ValidateRowCount(TableKind.SpecialName, SpecialNameRowSize,
+            StringHeapIndexSize + productionMemberCodedIndexSize);
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
+    }
+
+    private static void ValidateRowCount(TableKind table, byte actual, int expected)
+    {
+        if (actual != expected)
+        {
+            Throw(table);
+        }
+
+        [DoesNotReturn, StackTraceHidden]
+        static void Throw(TableKind table) =>
+            ThrowHelpers.ThrowInvalidDataException($"Invalid row size for {table} table.");
     }
 
     [Flags]

@@ -205,10 +205,11 @@ internal readonly struct GrammarTables
         }
 
         int tokenSymbolIndexSize = GetIndexSize(TokenSymbolRowCount);
+        int nonterminalIndexSize = GetIndexSize(NonterminalRowCount);
 
         GrammarNameOffset = grammarBase + 0;
         GrammarStartSymbolOffset = GrammarNameOffset + StringHeapIndexSize;
-        GrammarFlagsOffset = GrammarStartSymbolOffset + sizeof(ushort);
+        GrammarFlagsOffset = GrammarStartSymbolOffset + nonterminalIndexSize;
 
         TokenSymbolNameBase = tokenSymbolBase + 0;
         TokenSymbolFlagsBase = TokenSymbolNameBase + StringHeapIndexSize;

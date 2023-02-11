@@ -76,7 +76,7 @@ The table stream begins with a header:
 |`int32_t[N]`|__RowCounts__|The number of rows each table has. Each value MUST be greater than zero.|
 |`int8_t[N]`|__RowSizes__|The size of each table's row in bytes. Each value MUST be greater than zero.|
 |`uint8_t`|__HeapSizes__|A bit vector indicating the sizes of the heaps referenced by the tables.|
-|`uint8_t[(5*N + 1) mod 8]`|__Padding__|A sequence of zero to seven zeroes to make the header's size a multiple of eight bytes.|
+|`uint8_t[(3*N + 7) mod 8]`|__Padding__|A sequence of zero to seven zeroes to make the header's size a multiple of eight bytes.|
 
 > Because some fields have a variable size, the Offset column was omitted from the table.
 
@@ -95,10 +95,12 @@ Each table row is stored as the concatenation of its columns and indexed startin
 
 * An integer of fixed length.
 * An index to the String or Blob heaps. Its length depends on the corresponding bit in the __HeapSizes__ field.
-* An index to another table. Its length is one or two bytes if the table's row count is less than 2<sup>8</sup> or 2<sup>16</sup> respectively, and four bytes otherwise.
-* A coded index to one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
+* An index to the row of another table. Its length is one or two bytes if the table's row count is less than 2<sup>8</sup> or 2<sup>16</sup> respectively, and four bytes otherwise.
+* A coded index to the row of one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
 A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specification states a lower limit.
+
+Table and coded indices of value zero point to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
 
 The supported table types are listed in following sections.
 
@@ -208,8 +210,11 @@ The following rules apply to the _Group_ table:
 
 * The token symbol pointed by the __Start__ column MUST have the `GroupStart` flag set.
 * The token symbols pointed by the __End__ and __Container__ columns MUST NOT have the `GroupStart` flag set.
-* A group's __FirstNesting__ column MUST be greater or equal than the __FirstNesting__ column of the previous group.
+* A group's __FirstNesting__ column MUST be greater than the __FirstNesting__ column of the previous group, unless the `HasNesting` flag is not set, where these two values MUST be equal.
+* The value of the __FirstNesting__ column of the first group MUST be equal to one.
 * If the last group does not have any nested groups, its __FirstNesting__ column MUST be equal to the number of rows in the _GroupNesting_ table plus one.
+
+> Before accessing the nesting of a group, readers MUST ensure that the group can actually be nested. It is possible for the __FirstNesting__ column to point to a non-existent row if no groups can be nested.
 
 ### GroupNesting table
 
@@ -236,9 +241,12 @@ The following rules apply to the _Nonterminal_ table:
 
 * The _Nonterminal_ table MUST NOT contain more than 2<sup>20</sup> - 1 rows.
 * A nonterminal's __FirstProduction__ column MUST be greater or equal than the __FirstProduction__ column of the previous nonterminal.
+* The value of the __FirstProduction__ column of the first nonterminal MUST be equal to one.
 * If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
 > Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 * A nonterminal with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
+
+> Before accessing the productions of a nonterminal, readers MUST ensure that the nonterminal actually has productions. Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 
 ### Production table
 
@@ -249,7 +257,10 @@ The _Production_ table contains the following column:
 The following rules apply to the _Production_ table:
 
 * A production's __FirstMember__ column MUST be greater or equal than the __FirstMember__ column of the previous production.
+* The value of the __FirstMember__ column of the first production MUST be equal to one.
 * If the last production does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
+
+> Before accessing the members of a production, readers MUST ensure that it actually has members.
 
 ### ProductionMember table
 

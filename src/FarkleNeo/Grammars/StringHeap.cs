@@ -41,16 +41,16 @@ internal readonly struct StringHeap
         Length = stringHeapLength;
     }
 
-    public string GetString(ReadOnlySpan<byte> grammarFile, StringHandle handle)
+    public (int Offset, int Length) GetStringAbsoluteBounds(ReadOnlySpan<byte> grammarFile, StringHandle handle)
     {
         if (handle.IsNil)
         {
-            return string.Empty;
+            return (0, 0);
         }
 
         if (handle.Value >= (uint)Length)
         {
-            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Handle points outside the string heap.");
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Handle cannot point outside the string heap.");
         }
 
         int stringStart = (int)handle.Value;
@@ -61,8 +61,13 @@ internal readonly struct StringHeap
 
         int stringLength = grammarFile[(Offset + stringStart)..].IndexOf((byte)0);
         Debug.Assert(stringLength >= 0);
-        ReadOnlySpan<byte> stringContent = grammarFile.Slice(Offset + stringStart, stringLength);
-        return Encoding.UTF8.GetString(stringContent);
+        return (Offset + stringStart, stringLength);
+    }
+
+    public string GetString(ReadOnlySpan<byte> grammarFile, StringHandle handle)
+    {
+        (int offset, int length) = GetStringAbsoluteBounds(grammarFile, handle);
+        return Encoding.UTF8.GetString(grammarFile.Slice(offset, length));
     }
 
     public StringHandle LookupString(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<char> chars)
@@ -82,7 +87,7 @@ internal readonly struct StringHeap
         try
         {
             scoped Span<byte> buffer;
-            int maxByteCount = Utf8EncodingStrict.Instance.GetMaxByteCount(chars.Length);
+            int maxByteCount = Encoding.UTF8.GetMaxByteCount(chars.Length);
             if (maxByteCount < StackAllocationSize - 2)
             {
                 buffer = stackalloc byte[StackAllocationSize];
@@ -95,7 +100,7 @@ internal readonly struct StringHeap
             int writtenBytes;
             try
             {
-                writtenBytes = Utf8EncodingStrict.Instance.GetBytes(chars, buffer[1..^1]);
+                writtenBytes = Encoding.UTF8.GetBytes(chars, buffer[1..^1]);
             }
             catch (EncoderFallbackException)
             {

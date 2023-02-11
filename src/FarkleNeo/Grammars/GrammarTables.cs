@@ -83,11 +83,62 @@ internal readonly struct GrammarTables
         _ => 4
     };
 
+    private static int GetTableCellOffset(int columnBase, int rowCount, byte rowSize, uint index)
+    {
+        // Remember, indices are one-based.
+        if (index == 0)
+        {
+            ThrowHelpers.ThrowArgumentNullException(null);
+        }
+
+        if (index > (uint)rowCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(null);
+        }
+
+        return columnBase + rowSize * ((int)index - 1);
+    }
+
+    private static uint ReadTableIndex(ReadOnlySpan<byte> grammarFile, int index, int rowCount) =>
+        grammarFile.ReadUIntVariableSize(index, GetIndexSize(rowCount));
+
     private StringHandle ReadStringHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(index, StringHeapIndexSize));
 
     private BlobHandle ReadBlobHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(index, BlobHeapIndexSize));
+
+    private TokenSymbolHandle ReadTokenSymbolHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadTableIndex(grammarFile, index, TokenSymbolRowCount));
+
+    private NonterminalHandle ReadNonterminalHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadTableIndex(grammarFile, index, NonterminalRowCount));
+
+    private ProductionHandle ReadProductionHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadTableIndex(grammarFile, index, ProductionRowCount));
+
+    // These table kinds won't be exposed to users and don't need their own handle type.
+    private uint ReadGroupHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        ReadTableIndex(grammarFile, index, GroupRowCount);
+
+    private uint ReadGroupNestingHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        ReadTableIndex(grammarFile, index, GroupNestingRowCount);
+
+    private uint ReadProductionMemberHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        ReadTableIndex(grammarFile, index, ProductionMemberRowCount);
+
+    private EntityHandle ReadSymbolHandle(ReadOnlySpan<byte> grammarFile, int index)
+    {
+        byte indexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
+        uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
+
+        // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.
+        ReadOnlySpan<TableKind> tableKinds = new TableKind[] { TableKind.TokenSymbol, TableKind.Nonterminal };
+        TableKind kind = tableKinds[(int)codedIndex & 1];
+
+        uint indexValue = codedIndex >> 1;
+        return new(indexValue, kind);
+    }
 
     public GrammarTables(ReadOnlySpan<byte> grammarFile, int tableStreamOffset, int tableStreamLength, out bool hasUnknownTables) : this()
     {
@@ -141,7 +192,7 @@ internal readonly struct GrammarTables
             int currentTable = BitOperationsCompat.TrailingZeroCount(remainingTables);
 
             int rowCount = grammarFile.ReadInt32(rowCountsBase + i * sizeof(int));
-            int rowLimit = ((TableKind)currentTable) switch
+            int rowLimit = (TableKind)currentTable switch
             {
                 TableKind.Grammar => 1,
                 TableKind.TokenSymbol or TableKind.Nonterminal => MaxSymbolRowCount,
@@ -266,6 +317,71 @@ internal readonly struct GrammarTables
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
     }
+
+    public StringHandle GetGrammarName(ReadOnlySpan<byte> grammarFile) =>
+        ReadStringHandle(grammarFile, GrammarNameOffset);
+
+    public NonterminalHandle GetGrammarStartSymbol(ReadOnlySpan<byte> grammarFile) =>
+        ReadNonterminalHandle(grammarFile, GrammarStartSymbolOffset);
+
+    public GrammarAttributes GetGrammarFlags(ReadOnlySpan<byte> grammarFile) =>
+        (GrammarAttributes)grammarFile.ReadUInt16(GrammarFlagsOffset);
+
+    public StringHandle GetTokenSymbolName(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
+        ReadStringHandle(grammarFile, GetTableCellOffset(TokenSymbolNameBase, TokenSymbolRowCount, TokenSymbolRowSize, index.Value));
+
+    public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
+        (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index.Value));
+
+    public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadStringHandle(grammarFile, GetTableCellOffset(GroupNameBase, GroupRowCount, GroupRowSize, index));
+
+    public TokenSymbolHandle GetGroupContainer(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadTokenSymbolHandle(grammarFile, GetTableCellOffset(GroupContainerBase, GroupRowCount, GroupRowSize, index));
+
+    public GroupAttributes GetGroupFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
+        (GroupAttributes)grammarFile.ReadUInt16(GetTableCellOffset(GroupFlagsBase, GroupRowCount, GroupRowSize, index));
+
+    public TokenSymbolHandle GetGroupStart(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadTokenSymbolHandle(grammarFile, GetTableCellOffset(GroupStartBase, GroupRowCount, GroupRowSize, index));
+
+    public TokenSymbolHandle GetGroupEnd(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadTokenSymbolHandle(grammarFile, GetTableCellOffset(GroupEndBase, GroupRowCount, GroupRowSize, index));
+
+    public uint GetGroupFirstNesting(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadGroupNestingHandle(grammarFile, GetTableCellOffset(GroupFirstNestingBase, GroupRowCount, GroupRowSize, index));
+
+    public uint GetGroupNestingGroup(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadGroupHandle(grammarFile, GetTableCellOffset(GroupNestingGroupBase, GroupNestingRowCount, GroupNestingRowSize, index));
+
+    public StringHandle GetNonterminalName(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadStringHandle(grammarFile, GetTableCellOffset(NonterminalNameBase, NonterminalRowCount, NonterminalRowSize, index));
+
+    public NonterminalAttributes GetNonterminalFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
+        (NonterminalAttributes)grammarFile.ReadUInt16(GetTableCellOffset(NonterminalFlagsBase, NonterminalRowCount, NonterminalRowSize, index));
+
+    public ProductionHandle GetNonterminalFirstProduction(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadProductionHandle(grammarFile, GetTableCellOffset(NonterminalFirstProductionBase, NonterminalRowCount, NonterminalRowSize, index));
+
+    public uint GetProductionFirstMember(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadProductionMemberHandle(grammarFile, GetTableCellOffset(ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, index));
+
+    public EntityHandle GetProductionMemberMember(ReadOnlySpan<byte> grammarFile, uint index) =>
+        // The Symbol and ProductionMember coded indices have the same representation
+        // and their only difference is that the latter requires the token symbol to be a terminal.
+        ReadSymbolHandle(grammarFile, GetTableCellOffset(ProductionMemberMemberBase, ProductionMemberRowCount, ProductionMemberRowSize, index));
+
+    public ulong GetStateMachineKind(ReadOnlySpan<byte> grammarFile, uint index) =>
+        grammarFile.ReadUInt64(GetTableCellOffset(StateMachineKindBase, StateMachineRowCount, StateMachineRowSize, index));
+
+    public BlobHandle GetStateMachineData(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadBlobHandle(grammarFile, GetTableCellOffset(StateMachineDataBase, StateMachineRowCount, StateMachineRowSize, index));
+
+    public StringHandle GetSpecialNameName(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadStringHandle(grammarFile, GetTableCellOffset(SpecialNameNameBase, SpecialNameRowCount, SpecialNameRowSize, index));
+
+    public EntityHandle GetSpecialNameSymbol(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadSymbolHandle(grammarFile, GetTableCellOffset(SpecialNameSymbolBase, SpecialNameRowCount, SpecialNameRowSize, index));
 
     private static void ValidateRowCount(TableKind table, byte actual, int expected)
     {

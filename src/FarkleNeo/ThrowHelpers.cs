@@ -15,6 +15,10 @@ internal static class ThrowHelpers
         => throw new ArgumentException(parameterName, message, innerException);
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowArgumentNullException(string? parameterName, string? message = null)
+        => throw new ArgumentNullException(parameterName, message);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowArgumentOutOfRangeException(string? parameterName, string? message = null)
         => throw new ArgumentOutOfRangeException(parameterName, message);
 

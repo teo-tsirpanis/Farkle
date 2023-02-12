@@ -10,7 +10,8 @@ internal static class EncodingCompat
 {
     public static unsafe int GetByteCount(this Encoding encoding, ReadOnlySpan<char> chars)
     {
-        fixed (char* charsPtr = &MemoryMarshal.GetReference(chars))
+        char dummy = '\0';
+        fixed (char* charsPtr = &(!chars.IsEmpty ? ref MemoryMarshal.GetReference(chars) : ref dummy))
         {
             return encoding.GetByteCount(charsPtr, chars.Length);
         }
@@ -18,9 +19,11 @@ internal static class EncodingCompat
 
     public static unsafe int GetBytes(this Encoding encoding, ReadOnlySpan<char> chars, Span<byte> bytes)
     {
-        fixed (char* charsPtr = &MemoryMarshal.GetReference(chars))
+        byte dummyByte = 0;
+        char dummyChar = '\0';
+        fixed (char* charsPtr = &(!chars.IsEmpty ? ref MemoryMarshal.GetReference(chars) : ref dummyChar))
         {
-            fixed (byte* bytesPtr = &MemoryMarshal.GetReference(bytes))
+            fixed (byte* bytesPtr = &(!bytes.IsEmpty ? ref MemoryMarshal.GetReference(bytes) : ref dummyByte))
             {
                 return encoding.GetBytes(charsPtr, chars.Length, bytesPtr, bytes.Length);
             }
@@ -29,7 +32,8 @@ internal static class EncodingCompat
 
     public static unsafe string GetString(this Encoding encoding, ReadOnlySpan<byte> bytes)
     {
-        fixed (byte* ptr = &MemoryMarshal.GetReference(bytes))
+        byte dummy = 0;
+        fixed (byte* ptr = &(!bytes.IsEmpty ? ref MemoryMarshal.GetReference(bytes) : ref dummy))
         {
             return encoding.GetString(ptr, bytes.Length);
         }

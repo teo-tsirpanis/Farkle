@@ -59,11 +59,11 @@ internal readonly struct GrammarTables
     public readonly byte SpecialNameRowSize;
     public readonly int SpecialNameNameBase, SpecialNameSymbolBase;
 
-    private readonly HeapSizes _heapSizes;
+    private readonly GrammarHeapSizes _heapSizes;
 
-    public byte BlobHeapIndexSize => (byte)((_heapSizes & HeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
+    public byte BlobHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
 
-    public byte StringHeapIndexSize => (byte)((_heapSizes & HeapSizes.StringHeapSmall) != 0 ? 2 : 4);
+    public byte StringHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
 
     public const int MaxRowCount = 0xFF_FFFF; // 2^24 - 1
 
@@ -186,7 +186,7 @@ internal readonly struct GrammarTables
 
         byte grammarTableRowSize = 0;
 
-        _heapSizes = (HeapSizes)grammarFile[tableStreamOffset + tableHeaderSizeUnaligned - 1];
+        _heapSizes = (GrammarHeapSizes)grammarFile[tableStreamOffset + tableHeaderSizeUnaligned - 1];
         while (remainingTables != 0)
         {
             int currentTable = BitOperationsCompat.TrailingZeroCount(remainingTables);
@@ -393,12 +393,5 @@ internal readonly struct GrammarTables
         [DoesNotReturn, StackTraceHidden]
         static void Throw(TableKind table) =>
             ThrowHelpers.ThrowInvalidDataException($"Invalid row size for {table} table.");
-    }
-
-    [Flags]
-    private enum HeapSizes : byte
-    {
-        StringHeapSmall = 1,
-        BlobHeapSmall = 2
     }
 }

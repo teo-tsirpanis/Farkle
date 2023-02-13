@@ -15,7 +15,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
 
     internal readonly uint _valueAndKind;
 
-    internal uint Value => _valueAndKind & ValueMask;
+    internal uint TableIndex => _valueAndKind & ValueMask;
 
     /// <summary>
     /// The <see cref="TableKind"/> of this handle.
@@ -26,16 +26,6 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     {
         Debug.Assert(value <= ValueMask);
         _valueAndKind = value == 0 ? 0 : (value & ValueMask) | ((uint)kind << ValueSize);
-    }
-
-    internal int GetTableIndex()
-    {
-        int value = (int)Value;
-        if (value <= 0)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Invalid table index.");
-        }
-        return value;
     }
 
     internal void TypeCheck(TableKind expectedKind)
@@ -49,7 +39,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     /// <summary>
     /// Whether this <see cref="EntityHandle"/> has a valid value.
     /// </summary>
-    public bool IsNil => Value == 0;
+    public bool HasValue => TableIndex == 0;
 
     /// <summary>
     /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="TokenSymbolHandle"/>.

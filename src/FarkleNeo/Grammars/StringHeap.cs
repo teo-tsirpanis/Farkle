@@ -43,7 +43,7 @@ internal readonly struct StringHeap
 
     public (int Offset, int Length) GetStringAbsoluteBounds(ReadOnlySpan<byte> grammarFile, StringHandle handle)
     {
-        if (handle.IsNil)
+        if (handle.IsEmpty)
         {
             return (0, 0);
         }

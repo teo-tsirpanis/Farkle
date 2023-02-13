@@ -43,6 +43,10 @@ internal static class ThrowHelpers
         throw new KeyNotFoundException(message);
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowHandleHasNoValue() =>
+        throw new InvalidOperationException("Handle has no value.");
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

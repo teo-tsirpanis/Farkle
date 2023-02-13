@@ -28,7 +28,7 @@ internal readonly struct BlobHeap
 
     public (int Offset, int Length) GetBlobAbsoluteBounds(ReadOnlySpan<byte> grammarFile, BlobHandle handle)
     {
-        if (handle.IsNil)
+        if (handle.IsEmpty)
         {
             return (0, 0);
         }

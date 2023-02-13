@@ -328,10 +328,10 @@ internal readonly struct GrammarTables
         (GrammarAttributes)grammarFile.ReadUInt16(GrammarFlagsOffset);
 
     public StringHandle GetTokenSymbolName(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
-        ReadStringHandle(grammarFile, GetTableCellOffset(TokenSymbolNameBase, TokenSymbolRowCount, TokenSymbolRowSize, index.Value));
+        ReadStringHandle(grammarFile, GetTableCellOffset(TokenSymbolNameBase, TokenSymbolRowCount, TokenSymbolRowSize, index.TableIndex));
 
     public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
-        (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index.Value));
+        (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index.TableIndex));
 
     public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(GroupNameBase, GroupRowCount, GroupRowSize, index));

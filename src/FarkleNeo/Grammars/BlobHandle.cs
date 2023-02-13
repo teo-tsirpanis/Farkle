@@ -15,7 +15,7 @@ public readonly struct BlobHandle : IEquatable<BlobHandle>
     /// <summary>
     /// Whether this <see cref="BlobHandle"/> points to the empty blob.
     /// </summary>
-    public bool IsNil => Value == 0;
+    public bool IsEmpty => Value == 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is BlobHandle handle && Equals(handle);

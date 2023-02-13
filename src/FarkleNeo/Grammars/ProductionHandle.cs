@@ -8,22 +8,44 @@ namespace Farkle.Grammars;
 /// </summary>
 public readonly struct ProductionHandle : IEquatable<ProductionHandle>
 {
-    internal uint Value { get; }
-    internal ProductionHandle(uint value) => Value = value;
+    internal uint TableIndex { get; }
+    internal ProductionHandle(uint tableIndex) => TableIndex = tableIndex;
+
+    /// <summary>
+    /// Gets the production's index in the grammar.
+    /// </summary>
+    /// <remarks>
+    /// The first production has a value of zero.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The production's
+    /// <see cref="HasValue"/> property is false.</exception>
+    /// <seealso cref="HasValue"/>
+    public int Value
+    {
+        get
+        {
+            if (TableIndex == 0)
+            {
+                ThrowHelpers.ThrowHandleHasNoValue();
+            }
+            return (int)TableIndex - 1;
+        }
+    }
 
     /// <summary>
     /// Whether this <see cref="ProductionHandle"/> has a valid value.
     /// </summary>
-    public bool IsNil => Value == 0;
+    /// <seealso cref="Value"/>
+    public bool HasValue => TableIndex == 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is ProductionHandle handle && Equals(handle);
 
     /// <inheritdoc/>
-    public bool Equals(ProductionHandle other) => Value == other.Value;
+    public bool Equals(ProductionHandle other) => TableIndex == other.TableIndex;
 
     /// <inheritdoc/>
-    public override int GetHashCode() => Value.GetHashCode();
+    public override int GetHashCode() => TableIndex.GetHashCode();
 
     /// <summary>
     /// Checks if two <see cref="ProductionHandle"/>s are pointing to the same row.
@@ -52,7 +74,7 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     /// </summary>
     /// <param name="handle">The <see cref="ProductionHandle"/> to convert.</param>
     public static implicit operator EntityHandle(ProductionHandle handle) =>
-        new(handle.Value, TableKind.Production);
+        new(handle.TableIndex, TableKind.Production);
 
     /// <summary>
     /// Casts an <see cref="EntityHandle"/> to a <see cref="ProductionHandle"/>.
@@ -62,11 +84,11 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator ProductionHandle(EntityHandle handle)
     {
-        if (handle.IsNil)
+        if (handle.HasValue)
         {
             return default;
         }
         handle.TypeCheck(TableKind.Production);
-        return new(handle.Value);
+        return new(handle.TableIndex);
     }
 }

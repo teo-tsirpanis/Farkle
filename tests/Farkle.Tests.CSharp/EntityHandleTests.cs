@@ -60,6 +60,9 @@ internal class EntityHandleTests
         ProductionHandle productionHandle = default;
         Assert.Multiple(() =>
         {
+            Assert.That(() => tokenSymbolHandle.Value, Throws.InstanceOf<InvalidOperationException>());
+            Assert.That(() => nonterminalHandle.Value, Throws.InstanceOf<InvalidOperationException>());
+            Assert.That(() => productionHandle.Value, Throws.InstanceOf<InvalidOperationException>());
             Assert.That((EntityHandle)tokenSymbolHandle, Is.EqualTo(default(EntityHandle)));
             Assert.That((EntityHandle)nonterminalHandle, Is.EqualTo(default(EntityHandle)));
             Assert.That((EntityHandle)productionHandle, Is.EqualTo(default(EntityHandle)));

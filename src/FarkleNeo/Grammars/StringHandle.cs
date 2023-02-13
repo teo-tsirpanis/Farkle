@@ -15,7 +15,7 @@ public readonly struct StringHandle : IEquatable<StringHandle>
     /// <summary>
     /// Whether this <see cref="StringHandle"/> points to the empty string.
     /// </summary>
-    public bool IsNil => Value == 0;
+    public bool IsEmpty => Value == 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is StringHandle handle && Equals(handle);

@@ -41,12 +41,12 @@ internal struct GrammarTablesBuilder
     {
         if (handle.IsTokenSymbol)
         {
-            return (handle.Value << 1) | 0;
+            return (handle.TableIndex << 1) | 0;
         }
         else
         {
             Debug.Assert(handle.IsNonterminal);
-            return (handle.Value << 1) | 1;
+            return (handle.TableIndex << 1) | 1;
         }
     }
 
@@ -86,7 +86,7 @@ internal struct GrammarTablesBuilder
             ThrowHelpers.ThrowInvalidOperationException("Cannot set grammar info more than once.");
         }
 
-        ValidateHandle(startSymbol.Value, _nonterminals, nameof(startSymbol));
+        ValidateHandle(startSymbol.TableIndex, _nonterminals, nameof(startSymbol));
 
         _grammarName = name;
         _grammarStartSymbol = startSymbol;
@@ -122,9 +122,9 @@ internal struct GrammarTablesBuilder
     public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
     {
         ValidateRowCount(_groups, TableKind.Group);
-        ValidateHandle(container.Value, _groups, nameof(container));
-        ValidateHandle(start.Value, _groups, nameof(start));
-        ValidateHandle(end.Value, _groups, nameof(end));
+        ValidateHandle(container.TableIndex, _groups, nameof(container));
+        ValidateHandle(start.TableIndex, _groups, nameof(start));
+        ValidateHandle(end.TableIndex, _groups, nameof(end));
         ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(nestingCount);
 
         var groups = _groups ??= new();
@@ -192,8 +192,8 @@ internal struct GrammarTablesBuilder
         if (member.IsTokenSymbol)
         {
             var tokenSymbol = (TokenSymbolHandle)member;
-            ValidateHandle(tokenSymbol.Value, _tokenSymbols, nameof(member));
-            if ((_tokenSymbols[(int)tokenSymbol.Value - 1].Flags & TokenSymbolAttributes.Terminal) == 0)
+            ValidateHandle(tokenSymbol.TableIndex, _tokenSymbols, nameof(member));
+            if ((_tokenSymbols[(int)tokenSymbol.TableIndex - 1].Flags & TokenSymbolAttributes.Terminal) == 0)
             {
                 ThrowHelpers.ThrowArgumentException(nameof(member), "Token symbols must have the Terminal flag set.");
             }
@@ -201,7 +201,7 @@ internal struct GrammarTablesBuilder
         else if (member.IsNonterminal)
         {
             var nonterminal = (NonterminalHandle)member;
-            ValidateHandle(nonterminal.Value, _nonterminals, nameof(member));
+            ValidateHandle(nonterminal.TableIndex, _nonterminals, nameof(member));
         }
         else
         {
@@ -235,12 +235,12 @@ internal struct GrammarTablesBuilder
         if (symbol.IsTokenSymbol)
         {
             var tokenSymbol = (TokenSymbolHandle)symbol;
-            ValidateHandle(tokenSymbol.Value, _tokenSymbols, nameof(symbol));
+            ValidateHandle(tokenSymbol.TableIndex, _tokenSymbols, nameof(symbol));
         }
         else if (symbol.IsNonterminal)
         {
             var nonterminal = (NonterminalHandle)symbol;
-            ValidateHandle(nonterminal.Value, _nonterminals, nameof(symbol));
+            ValidateHandle(nonterminal.TableIndex, _nonterminals, nameof(symbol));
         }
         else
         {
@@ -329,7 +329,7 @@ internal struct GrammarTablesBuilder
 
         {
             WriteStringHandle(_grammarName);
-            writer.WriteVariableSize(_grammarStartSymbol.Value, nonterminalIndexSize);
+            writer.WriteVariableSize(_grammarStartSymbol.TableIndex, nonterminalIndexSize);
             writer.Write((ushort)_grammarFlags);
         }
 
@@ -348,10 +348,10 @@ internal struct GrammarTablesBuilder
             foreach (var row in _groups)
             {
                 WriteStringHandle(row.Name);
-                writer.WriteVariableSize(row.Container.Value, tokenSymbolIndexSize);
+                writer.WriteVariableSize(row.Container.TableIndex, tokenSymbolIndexSize);
                 writer.Write((ushort)row.Flags);
-                writer.WriteVariableSize(row.Start.Value, tokenSymbolIndexSize);
-                writer.WriteVariableSize(row.End.Value, tokenSymbolIndexSize);
+                writer.WriteVariableSize(row.Start.TableIndex, tokenSymbolIndexSize);
+                writer.WriteVariableSize(row.End.TableIndex, tokenSymbolIndexSize);
                 writer.WriteVariableSize(firstNesting, groupNestingIndexSize);
                 firstNesting += (uint)row.NestingCount;
             }

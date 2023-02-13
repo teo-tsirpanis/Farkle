@@ -25,7 +25,7 @@ internal class StringHeapTests
         {
             Assert.That(() => builder.Add("Hello\0"), Throws.ArgumentException);
             Assert.That(builder.Add("aaa"), Is.EqualTo(aaaHandle));
-            Assert.That(emptyHandle.IsNil);
+            Assert.That(emptyHandle.IsEmpty);
             Assert.That(bbbHandle, Is.Not.EqualTo(aaaHandle));
             Assert.That(cccHandle, Is.Not.EqualTo(aaaHandle));
         });
@@ -49,11 +49,11 @@ internal class StringHeapTests
             Assert.That(() => heap.GetString(actualHeap, new StringHandle(aaaHandle.Value + 1)), Throws.InstanceOf<ArgumentOutOfRangeException>());
             Assert.That(() => heap.GetString(actualHeap, new StringHandle(184)), Throws.InstanceOf<ArgumentOutOfRangeException>());
 
-            Assert.That(heap.LookupString(actualHeap, "".AsSpan()).IsNil);
+            Assert.That(heap.LookupString(actualHeap, "".AsSpan()).IsEmpty);
             Assert.That(heap.LookupString(actualHeap, "aaa".AsSpan()), Is.EqualTo(aaaHandle));
             Assert.That(heap.LookupString(actualHeap, "bbb".AsSpan()), Is.EqualTo(bbbHandle));
             Assert.That(heap.LookupString(actualHeap, "ccc".AsSpan()), Is.EqualTo(cccHandle));
-            Assert.That(heap.LookupString(actualHeap, "ddd".AsSpan()).IsNil);
+            Assert.That(heap.LookupString(actualHeap, "ddd".AsSpan()).IsEmpty);
         });
     }
 

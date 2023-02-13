@@ -8,22 +8,44 @@ namespace Farkle.Grammars;
 /// </summary>
 public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
 {
-    internal uint Value { get; }
-    internal NonterminalHandle(uint value) => Value = value;
+    internal uint TableIndex { get; }
+    internal NonterminalHandle(uint tableIndex) => TableIndex = tableIndex;
+
+    /// <summary>
+    /// Gets the nonterminal's index in the grammar.
+    /// </summary>
+    /// <remarks>
+    /// The first nonterminal has a value of zero.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">The nonterminal's
+    /// <see cref="HasValue"/> property is false.</exception>
+    /// <seealso cref="HasValue"/>
+    public int Value
+    {
+        get
+        {
+            if (TableIndex == 0)
+            {
+                ThrowHelpers.ThrowHandleHasNoValue();
+            }
+            return (int)TableIndex - 1;
+        }
+    }
 
     /// <summary>
     /// Whether this <see cref="NonterminalHandle"/> has a valid value.
     /// </summary>
-    public bool IsNil => Value == 0;
+    /// <seealso cref="Value"/>
+    public bool HasValue => TableIndex == 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is NonterminalHandle handle && Equals(handle);
 
     /// <inheritdoc/>
-    public bool Equals(NonterminalHandle other) => Value == other.Value;
+    public bool Equals(NonterminalHandle other) => TableIndex == other.TableIndex;
 
     /// <inheritdoc/>
-    public override int GetHashCode() => Value.GetHashCode();
+    public override int GetHashCode() => TableIndex.GetHashCode();
 
     /// <summary>
     /// Checks if two <see cref="NonterminalHandle"/>s are pointing to the same row.
@@ -52,7 +74,7 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// </summary>
     /// <param name="handle">The <see cref="NonterminalHandle"/> to convert.</param>
     public static implicit operator EntityHandle(NonterminalHandle handle) =>
-        new(handle.Value, TableKind.Nonterminal);
+        new(handle.TableIndex, TableKind.Nonterminal);
 
     /// <summary>
     /// Casts an <see cref="EntityHandle"/> to a <see cref="NonterminalHandle"/>.
@@ -62,11 +84,11 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator NonterminalHandle(EntityHandle handle)
     {
-        if (handle.IsNil)
+        if (handle.HasValue)
         {
             return default;
         }
         handle.TypeCheck(TableKind.Nonterminal);
-        return new(handle.Value);
+        return new(handle.TableIndex);
     }
 }

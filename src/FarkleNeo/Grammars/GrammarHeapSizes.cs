@@ -3,7 +3,6 @@
 
 namespace Farkle.Grammars;
 
-
 [Flags]
 internal enum GrammarHeapSizes : byte
 {

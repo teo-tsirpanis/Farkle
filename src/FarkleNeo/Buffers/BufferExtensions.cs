@@ -108,6 +108,12 @@ internal static class BufferExtensions
         }
     }
 
+    public static void Write(this IBufferWriter<byte> buffer, ushort value)
+    {
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.GetSpan(sizeof(ushort)), value);
+        buffer.Advance(sizeof(ushort));
+    }
+
     public static void Write(this IBufferWriter<byte> buffer, int value)
     {
         BinaryPrimitives.WriteInt32LittleEndian(buffer.GetSpan(sizeof(int)), value);
@@ -118,5 +124,24 @@ internal static class BufferExtensions
     {
         BinaryPrimitives.WriteUInt64LittleEndian(buffer.GetSpan(sizeof(ulong)), value);
         buffer.Advance(sizeof(ulong));
+    }
+
+    public static void WriteVariableSize(this IBufferWriter<byte> buffer, uint value, byte dataSize)
+    {
+        switch (dataSize)
+        {
+            case 1:
+                Debug.Assert(value <= byte.MaxValue);
+                buffer.Write((byte)value);
+                break;
+            case 2:
+                Debug.Assert(value <= ushort.MaxValue);
+                buffer.Write((ushort)value);
+                break;
+            default:
+                Debug.Assert(dataSize == 4);
+                buffer.Write(value);
+                break;
+        }
     }
 }

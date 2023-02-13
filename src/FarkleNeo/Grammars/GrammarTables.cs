@@ -69,14 +69,14 @@ internal readonly struct GrammarTables
 
     public const int MaxSymbolRowCount = 0xF_FFFF; // 2^20 - 1
 
-    private static byte GetIndexSize(int rowCount) => rowCount switch
+    public static byte GetIndexSize(int rowCount) => rowCount switch
     {
         < 0xFF => 1,
         < 0xFFFF => 2,
         _ => 4
     };
 
-    private static byte GetBinaryCodedIndexSize(int row1Count, int row2Count) => (row1Count | row2Count) switch
+    public static byte GetBinaryCodedIndexSize(int row1Count, int row2Count) => (row1Count | row2Count) switch
     {
         < 0x7F => 1,
         < 0x7FF => 2,

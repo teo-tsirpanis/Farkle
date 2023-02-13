@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Buffers;
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -35,11 +37,33 @@ internal struct GrammarTablesBuilder
     private HashSet<StringHandle>? _presentSpecialNames;
     private List<SpecialNameRow>? _specialNames;
 
+    private static uint EncodeSymbolCodedIndex(EntityHandle handle)
+    {
+        if (handle.IsTokenSymbol)
+        {
+            return (handle.Value << 1) | 0;
+        }
+        else
+        {
+            Debug.Assert(handle.IsNonterminal);
+            return (handle.Value << 1) | 1;
+        }
+    }
+
     private static void ValidateHandle<T>(uint handle, [NotNull] List<T>? list, string parameterName)
     {
         if (list is null || handle > (uint)list.Count)
         {
             ThrowHelpers.ThrowArgumentException(parameterName, "Invalid handle.");
+        }
+    }
+
+    private static void ValidateRequiredRowCount<T>(List<T>? list, int requiredCount, string message)
+    {
+        int count = list is null ? 0 : list.Count;
+        if (count != requiredCount)
+        {
+            ThrowHelpers.ThrowInvalidOperationException(message);
         }
     }
 
@@ -229,6 +253,187 @@ internal struct GrammarTablesBuilder
         }
 
         (_specialNames ??= new()).Add(new() { Name = name, Symbol = symbol });
+    }
+
+    private readonly TableKinds PresentTables =>
+        TableKinds.Grammar
+        | (_tokenSymbols is { Count: > 0 } ? TableKinds.TokenSymbol : 0)
+        | (_groups is { Count: > 0 } ? TableKinds.Group : 0)
+        | (_groupNestingGroups is { Count: > 0 } ? TableKinds.GroupNesting : 0)
+        | (_nonterminals is { Count: > 0 } ? TableKinds.Nonterminal : 0)
+        | (_productionMemberCounts is { Count: > 0 } ? TableKinds.Production : 0)
+        | (_productionMemberMembers is { Count: > 0 } ? TableKinds.ProductionMember : 0)
+        | (_stateMachines is { Count: > 0 } ? TableKinds.StateMachine : 0)
+        | (_specialNames is { Count: > 0 } ? TableKinds.SpecialName : 0);
+
+    public readonly void WriteTo(IBufferWriter<byte> writer, GrammarHeapSizes heapSizes)
+    {
+        if (!_isGrammarRowSet)
+        {
+            ThrowHelpers.ThrowInvalidOperationException("Grammar info have not been set.");
+        }
+        ValidateRequiredRowCount(_groupNestingGroups, _requiredGroupNestings, "Not enough group nestings have been added.");
+        ValidateRequiredRowCount(_productionMemberCounts, _requiredProductions, "Not enough productions have been added.");
+        ValidateRequiredRowCount(_productionMemberMembers, _requiredProductionMembers, "Not enough production members have been added.");
+
+        const int grammarRows = 1;
+        int tokenSymbolRows = _tokenSymbols?.Count ?? 0;
+        int groupRows = _groups?.Count ?? 0;
+        int groupNestingRows = _groupNestingGroups?.Count ?? 0;
+        int nonterminalRows = _nonterminals?.Count ?? 0;
+        int productionRows = _productionMemberCounts?.Count ?? 0;
+        int productionMemberRows = _productionMemberMembers?.Count ?? 0;
+        int stateMachineRows = _stateMachines?.Count ?? 0;
+        int specialNameRows = _specialNames?.Count ?? 0;
+
+        byte blobHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
+        byte stringHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
+
+        byte tokenSymbolIndexSize = GrammarTables.GetIndexSize(tokenSymbolRows);
+        byte groupIndexSize = GrammarTables.GetIndexSize(groupRows);
+        byte groupNestingIndexSize = GrammarTables.GetIndexSize(groupNestingRows);
+        byte nonterminalIndexSize = GrammarTables.GetIndexSize(nonterminalRows);
+        byte productionIndexSize = GrammarTables.GetIndexSize(productionRows);
+        byte productionMemberIndexSize = GrammarTables.GetIndexSize(productionMemberRows);
+
+        byte symbolCodedIndexSize = GrammarTables.GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
+
+        TableKinds presentTables = PresentTables;
+        int presentTableCount = BitOperationsCompat.PopCount((ulong)presentTables);
+
+        writer.Write((ulong)presentTables);
+
+        WriteRowCount(grammarRows);
+        WriteRowCount(tokenSymbolRows);
+        WriteRowCount(groupRows);
+        WriteRowCount(groupNestingRows);
+        WriteRowCount(nonterminalRows);
+        WriteRowCount(productionRows);
+        WriteRowCount(productionMemberRows);
+        WriteRowCount(stateMachineRows);
+        WriteRowCount(specialNameRows);
+
+        WriteRowSize(grammarRows, stringHeapIndexSize + nonterminalIndexSize + sizeof(ushort));
+        WriteRowSize(tokenSymbolRows, stringHeapIndexSize + sizeof(uint));
+        WriteRowSize(groupRows, stringHeapIndexSize + 3 * tokenSymbolIndexSize + sizeof(ushort) + groupNestingIndexSize);
+        WriteRowSize(groupNestingRows, groupIndexSize);
+        WriteRowSize(nonterminalRows, stringHeapIndexSize + sizeof(ushort) + productionIndexSize);
+        WriteRowSize(productionRows, productionMemberIndexSize);
+        WriteRowSize(productionMemberRows, symbolCodedIndexSize);
+        WriteRowSize(stateMachineRows, sizeof(ulong) + blobHeapIndexSize);
+        WriteRowSize(specialNameRows, stringHeapIndexSize + symbolCodedIndexSize);
+
+        writer.Write((byte)heapSizes);
+        // Pad to 8 bytes.
+        writer.Write(0, (3 * presentTableCount + 7) % 8);
+
+        {
+            WriteStringHandle(_grammarName);
+            writer.WriteVariableSize(_grammarStartSymbol.Value, nonterminalIndexSize);
+            writer.Write((ushort)_grammarFlags);
+        }
+
+        if (_tokenSymbols is not null)
+        {
+            foreach (var row in _tokenSymbols)
+            {
+                WriteStringHandle(row.Name);
+                writer.Write((uint)row.Flags);
+            }
+        }
+
+        if (_groups is not null)
+        {
+            uint firstNesting = 1;
+            foreach (var row in _groups)
+            {
+                WriteStringHandle(row.Name);
+                writer.WriteVariableSize(row.Container.Value, tokenSymbolIndexSize);
+                writer.Write((ushort)row.Flags);
+                writer.WriteVariableSize(row.Start.Value, tokenSymbolIndexSize);
+                writer.WriteVariableSize(row.End.Value, tokenSymbolIndexSize);
+                writer.WriteVariableSize(firstNesting, groupNestingIndexSize);
+                firstNesting += (uint)row.NestingCount;
+            }
+        }
+
+        if (_groupNestingGroups is not null)
+        {
+            foreach (uint group in _groupNestingGroups)
+            {
+                writer.WriteVariableSize(group, groupIndexSize);
+            }
+        }
+
+        if (_nonterminals is not null)
+        {
+            uint firstProduction = 1;
+            foreach (var row in _nonterminals)
+            {
+                WriteStringHandle(row.Name);
+                writer.Write((ushort)row.Flags);
+                writer.WriteVariableSize(firstProduction, productionIndexSize);
+                firstProduction += (uint)row.ProductionCount;
+            }
+        }
+
+        if (_productionMemberCounts is not null)
+        {
+            uint firstMember = 1;
+            foreach (int memberCount in _productionMemberCounts)
+            {
+                writer.WriteVariableSize(firstMember, productionMemberIndexSize);
+                firstMember += (uint)memberCount;
+            }
+        }
+
+        if (_productionMemberMembers is not null)
+        {
+            foreach (EntityHandle symbol in _productionMemberMembers)
+            {
+                writer.WriteVariableSize(EncodeSymbolCodedIndex(symbol), symbolCodedIndexSize);
+            }
+        }
+
+        if (_stateMachines is not null)
+        {
+            foreach (var row in _stateMachines)
+            {
+                writer.Write(row.Kind);
+                writer.WriteVariableSize(row.Data.Value, blobHeapIndexSize);
+            }
+        }
+
+        if (_specialNames is not null)
+        {
+            foreach (var row in _specialNames)
+            {
+                WriteStringHandle(row.Name);
+                writer.WriteVariableSize(EncodeSymbolCodedIndex(row.Symbol), symbolCodedIndexSize);
+            }
+        }
+
+        void WriteRowCount(int count)
+        {
+            if (count != 0)
+            {
+                writer.Write(count);
+            }
+        }
+
+        void WriteRowSize(int rowCount, int rowSize)
+        {
+            if (rowCount != 0)
+            {
+                Debug.Assert((uint)rowSize <= byte.MaxValue);
+                writer.Write(rowSize);
+            }
+        }
+
+        void WriteStringHandle(StringHandle handle)
+        {
+            writer.WriteVariableSize(handle.Value, stringHeapIndexSize);
+        }
     }
 
     private readonly struct TokenSymbolRow

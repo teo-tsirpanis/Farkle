@@ -367,8 +367,6 @@ internal readonly struct GrammarTables
         ReadProductionMemberHandle(grammarFile, GetTableCellOffset(ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, index));
 
     public EntityHandle GetProductionMemberMember(ReadOnlySpan<byte> grammarFile, uint index) =>
-        // The Symbol and ProductionMember coded indices have the same representation
-        // and their only difference is that the latter requires the token symbol to be a terminal.
         ReadSymbolHandle(grammarFile, GetTableCellOffset(ProductionMemberMemberBase, ProductionMemberRowCount, ProductionMemberRowSize, index));
 
     public ulong GetStateMachineKind(ReadOnlySpan<byte> grammarFile, uint index) =>

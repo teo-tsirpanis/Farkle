@@ -108,15 +108,6 @@ The supported table types are listed in following sections.
 
 The following coded indices are defined:
 
-### _ProductionMember_: 1 bit to encode tag
-
-|Table|Tag|
-|-----|---|
-|_TokenSymbol_|0|
-|_Nonterminal_|1|
-
-If a _ProductionMember_-coded index points to a token symbol, its `Terminal` flag MUST be set.
-
 ### _Symbol_: 1 bit to encode tag
 
 |Table|Tag|
@@ -266,7 +257,9 @@ The following rules apply to the _Production_ table:
 
 The _ProductionMember_ table contains the following columns:
 
-* __Member__ (a _ProductionMember_-coded index): The member of the production.
+* __Member__ (a _Symbol_-coded index): The member of the production.
+
+If the __Member__ column points to a token symbol, its `Terminal` flag MUST be set.
 
 ### StateMachine table
 

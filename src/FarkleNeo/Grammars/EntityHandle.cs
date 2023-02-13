@@ -26,6 +26,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     {
         Debug.Assert(value <= ValueMask);
         _valueAndKind = value == 0 ? 0 : (value & ValueMask) | ((uint)kind << ValueSize);
+        Debug.Assert(HasValue || IsTokenSymbol || IsNonterminal || IsProduction, "Cannot export this type of handle.");
     }
 
     internal void TypeCheck(TableKind expectedKind)

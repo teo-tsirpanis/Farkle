@@ -85,11 +85,7 @@ internal readonly struct GrammarTables
 
     private static int GetTableCellOffset(int columnBase, int rowCount, byte rowSize, uint index)
     {
-        // Remember, indices are one-based.
-        if (index == 0)
-        {
-            ThrowHelpers.ThrowArgumentNullException(null);
-        }
+        Debug.Assert(index != 0);
 
         if (index > (uint)rowCount)
         {
@@ -327,11 +323,11 @@ internal readonly struct GrammarTables
     public GrammarAttributes GetGrammarFlags(ReadOnlySpan<byte> grammarFile) =>
         (GrammarAttributes)grammarFile.ReadUInt16(GrammarFlagsOffset);
 
-    public StringHandle GetTokenSymbolName(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
-        ReadStringHandle(grammarFile, GetTableCellOffset(TokenSymbolNameBase, TokenSymbolRowCount, TokenSymbolRowSize, index.TableIndex));
+    public StringHandle GetTokenSymbolName(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadStringHandle(grammarFile, GetTableCellOffset(TokenSymbolNameBase, TokenSymbolRowCount, TokenSymbolRowSize, index));
 
-    public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, TokenSymbolHandle index) =>
-        (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index.TableIndex));
+    public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
+        (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index));
 
     public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(GroupNameBase, GroupRowCount, GroupRowSize, index));

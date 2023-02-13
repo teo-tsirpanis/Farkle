@@ -20,15 +20,15 @@ internal struct GrammarTablesBuilder
 
     private List<GroupRow>? _groups;
 
-    private List<uint>? _groupNestingGroups;
+    private List<GroupNestingRow>? _groupNestings;
     private int _requiredGroupNestings;
 
     private List<NonterminalRow>? _nonterminals;
 
-    private List<int>? _productionMemberCounts;
+    private List<ProductionRow>? _productions;
     private int _requiredProductions;
 
-    private List<EntityHandle>? _productionMemberMembers;
+    private List<ProductionMemberRow>? _productionMembers;
     private int _requiredProductionMembers;
 
     private HashSet<ulong>? _presentStateMachines;
@@ -131,7 +131,7 @@ internal struct GrammarTablesBuilder
         groups.Add(new() { Name = name, Container = container, Flags = flags, Start = start, End = end, NestingCount = nestingCount });
         if (nestingCount > 0)
         {
-            _groupNestingGroups ??= new();
+            _groupNestings ??= new();
         }
         _requiredGroupNestings += nestingCount;
         return (uint)groups.Count;
@@ -139,16 +139,16 @@ internal struct GrammarTablesBuilder
 
     public void AddGroupNesting(uint group)
     {
-        ValidateRowCount(_groupNestingGroups, TableKind.GroupNesting);
+        ValidateRowCount(_groupNestings, TableKind.GroupNesting);
         ValidateHandle(group, _groups, nameof(group));
 
-        var groupNestingGroups = _groupNestingGroups;
+        var groupNestingGroups = _groupNestings;
         if (groupNestingGroups is not { Count: int count } || count >= _requiredGroupNestings)
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot add more group nestings, please add a group first.");
         }
 
-        groupNestingGroups.Add(group);
+        groupNestingGroups.Add(new() { Group = group });
     }
 
     public NonterminalHandle AddNonterminal(StringHandle name, NonterminalAttributes flags, int productionCount)
@@ -160,7 +160,7 @@ internal struct GrammarTablesBuilder
         nonterminals.Add(new() { Name = name, Flags = flags, ProductionCount = productionCount });
         if (productionCount > 0)
         {
-            _productionMemberCounts ??= new();
+            _productions ??= new();
         }
         _requiredProductions += productionCount;
         return new((uint)nonterminals.Count);
@@ -168,27 +168,27 @@ internal struct GrammarTablesBuilder
 
     public ProductionHandle AddProduction(int memberCount)
     {
-        ValidateRowCount(_productionMemberCounts, TableKind.Production);
+        ValidateRowCount(_productions, TableKind.Production);
         ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(memberCount);
 
-        var productionMemberCounts = _productionMemberCounts;
-        if (productionMemberCounts is not { Count: int count } || count >= _requiredProductions)
+        var productions = _productions;
+        if (productions is not { Count: int count } || count >= _requiredProductions)
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot add more productions; please add a nonterminal first.");
         }
 
-        productionMemberCounts.Add(memberCount);
+        productions.Add(new() { MemberCount = memberCount });
         if (memberCount > 0)
         {
-            _productionMemberMembers ??= new();
+            _productionMembers ??= new();
         }
         _requiredProductionMembers += memberCount;
-        return new((uint)productionMemberCounts.Count);
+        return new((uint)productions.Count);
     }
 
     public void AddProductionMember(EntityHandle member)
     {
-        ValidateRowCount(_productionMemberMembers, TableKind.ProductionMember);
+        ValidateRowCount(_productionMembers, TableKind.ProductionMember);
         if (member.IsTokenSymbol)
         {
             var tokenSymbol = (TokenSymbolHandle)member;
@@ -208,13 +208,13 @@ internal struct GrammarTablesBuilder
             ThrowHelpers.ThrowArgumentException(nameof(member), "A production member must be a token symbol or nonterminal.");
         }
 
-        var productionMemberCounts = _productionMemberMembers;
-        if (productionMemberCounts is not { Count: int count } || count >= _requiredProductionMembers)
+        var productionMembers = _productionMembers;
+        if (productionMembers is not { Count: int count } || count >= _requiredProductionMembers)
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot add more production members; please add a production first.");
         }
 
-        productionMemberCounts.Add(member);
+        productionMembers.Add(new() { Member = member });
     }
 
     public void AddStateMachine(ulong kind, BlobHandle data)
@@ -259,10 +259,10 @@ internal struct GrammarTablesBuilder
         TableKinds.Grammar
         | (_tokenSymbols is { Count: > 0 } ? TableKinds.TokenSymbol : 0)
         | (_groups is { Count: > 0 } ? TableKinds.Group : 0)
-        | (_groupNestingGroups is { Count: > 0 } ? TableKinds.GroupNesting : 0)
+        | (_groupNestings is { Count: > 0 } ? TableKinds.GroupNesting : 0)
         | (_nonterminals is { Count: > 0 } ? TableKinds.Nonterminal : 0)
-        | (_productionMemberCounts is { Count: > 0 } ? TableKinds.Production : 0)
-        | (_productionMemberMembers is { Count: > 0 } ? TableKinds.ProductionMember : 0)
+        | (_productions is { Count: > 0 } ? TableKinds.Production : 0)
+        | (_productionMembers is { Count: > 0 } ? TableKinds.ProductionMember : 0)
         | (_stateMachines is { Count: > 0 } ? TableKinds.StateMachine : 0)
         | (_specialNames is { Count: > 0 } ? TableKinds.SpecialName : 0);
 
@@ -272,17 +272,17 @@ internal struct GrammarTablesBuilder
         {
             ThrowHelpers.ThrowInvalidOperationException("Grammar info have not been set.");
         }
-        ValidateRequiredRowCount(_groupNestingGroups, _requiredGroupNestings, "Not enough group nestings have been added.");
-        ValidateRequiredRowCount(_productionMemberCounts, _requiredProductions, "Not enough productions have been added.");
-        ValidateRequiredRowCount(_productionMemberMembers, _requiredProductionMembers, "Not enough production members have been added.");
+        ValidateRequiredRowCount(_groupNestings, _requiredGroupNestings, "Not enough group nestings have been added.");
+        ValidateRequiredRowCount(_productions, _requiredProductions, "Not enough productions have been added.");
+        ValidateRequiredRowCount(_productionMembers, _requiredProductionMembers, "Not enough production members have been added.");
 
         const int grammarRows = 1;
         int tokenSymbolRows = _tokenSymbols?.Count ?? 0;
         int groupRows = _groups?.Count ?? 0;
-        int groupNestingRows = _groupNestingGroups?.Count ?? 0;
+        int groupNestingRows = _groupNestings?.Count ?? 0;
         int nonterminalRows = _nonterminals?.Count ?? 0;
-        int productionRows = _productionMemberCounts?.Count ?? 0;
-        int productionMemberRows = _productionMemberMembers?.Count ?? 0;
+        int productionRows = _productions?.Count ?? 0;
+        int productionMemberRows = _productionMembers?.Count ?? 0;
         int stateMachineRows = _stateMachines?.Count ?? 0;
         int specialNameRows = _specialNames?.Count ?? 0;
 
@@ -357,11 +357,11 @@ internal struct GrammarTablesBuilder
             }
         }
 
-        if (_groupNestingGroups is not null)
+        if (_groupNestings is not null)
         {
-            foreach (uint group in _groupNestingGroups)
+            foreach (var row in _groupNestings)
             {
-                writer.WriteVariableSize(group, groupIndexSize);
+                writer.WriteVariableSize(row.Group, groupIndexSize);
             }
         }
 
@@ -377,21 +377,21 @@ internal struct GrammarTablesBuilder
             }
         }
 
-        if (_productionMemberCounts is not null)
+        if (_productions is not null)
         {
             uint firstMember = 1;
-            foreach (int memberCount in _productionMemberCounts)
+            foreach (var row in _productions)
             {
                 writer.WriteVariableSize(firstMember, productionMemberIndexSize);
-                firstMember += (uint)memberCount;
+                firstMember += (uint)row.MemberCount;
             }
         }
 
-        if (_productionMemberMembers is not null)
+        if (_productionMembers is not null)
         {
-            foreach (EntityHandle symbol in _productionMemberMembers)
+            foreach (var row in _productionMembers)
             {
-                writer.WriteVariableSize(EncodeSymbolCodedIndex(symbol), symbolCodedIndexSize);
+                writer.WriteVariableSize(EncodeSymbolCodedIndex(row.Member), symbolCodedIndexSize);
             }
         }
 
@@ -452,11 +452,26 @@ internal struct GrammarTablesBuilder
         public required int NestingCount { get; init; }
     }
 
+    private readonly struct GroupNestingRow
+    {
+        public required uint Group { get; init; }
+    }
+
     private readonly struct NonterminalRow
     {
         public required StringHandle Name { get; init; }
         public required NonterminalAttributes Flags { get; init; }
         public required int ProductionCount { get; init; }
+    }
+
+    private readonly struct ProductionRow
+    {
+        public required int MemberCount { get; init; }
+    }
+
+    private readonly struct ProductionMemberRow
+    {
+        public required EntityHandle Member { get; init; }
     }
 
     private readonly struct StateMachineRow

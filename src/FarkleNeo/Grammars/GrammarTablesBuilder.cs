@@ -426,7 +426,7 @@ internal struct GrammarTablesBuilder
             if (rowCount != 0)
             {
                 Debug.Assert((uint)rowSize <= byte.MaxValue);
-                writer.Write(rowSize);
+                writer.Write((byte)rowSize);
             }
         }
 

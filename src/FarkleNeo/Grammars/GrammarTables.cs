@@ -194,11 +194,19 @@ internal readonly struct GrammarTables
                 TableKind.TokenSymbol or TableKind.Nonterminal => MaxSymbolRowCount,
                 _ => MaxRowCount
             };
+            byte rowSize = grammarFile[rowSizesBase + i];
             if ((uint)rowCount > rowLimit)
             {
                 ThrowHelpers.ThrowInvalidDataException("Table has too many rows.");
             }
-            byte rowSize = grammarFile[rowSizesBase + i];
+            if (rowCount == 0)
+            {
+                ThrowHelpers.ThrowInvalidDataException("Table row count cannot be zero.");
+            }
+            if (rowSize== 0)
+            {
+                ThrowHelpers.ThrowInvalidDataException("Table row size cannot be zero.");
+            }
             switch ((TableKind)currentTable)
             {
                 case TableKind.Grammar:
@@ -251,7 +259,7 @@ internal readonly struct GrammarTables
             i++;
         }
 
-        Debug.Assert(i == tableCount - 1);
+        Debug.Assert(i == tableCount);
         if (tableStreamLength != currentTableBase)
         {
             ThrowHelpers.ThrowInvalidDataException("Too small table stream.");
@@ -379,7 +387,8 @@ internal readonly struct GrammarTables
 
     private static void ValidateRowCount(TableKind table, byte actual, int expected)
     {
-        if (actual != expected)
+        // A value of zero indicates that the table was not present.
+        if (actual != 0 && actual != expected)
         {
             Throw(table);
         }

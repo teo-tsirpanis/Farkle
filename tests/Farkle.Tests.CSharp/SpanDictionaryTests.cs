@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Farkle.Tests.CSharp;
 
-public class SpanDictionaryTests
+internal class SpanDictionaryTests
 {
     [Test]
     public void Test()

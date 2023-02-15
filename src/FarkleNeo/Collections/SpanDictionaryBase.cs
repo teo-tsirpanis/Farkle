@@ -155,5 +155,16 @@ namespace Farkle.Collections
             }
             return entry.Value;
         }
+
+        public TValue GetOrAdd(TContainer key, TValue value, out bool exists)
+        {
+            ref var entry = ref GetValueRefOrAddDefault(AsSpan(key), out exists);
+            if (!exists)
+            {
+                entry.Key = key;
+                entry.Value = value;
+            }
+            return entry.Value;
+        }
     }
 }

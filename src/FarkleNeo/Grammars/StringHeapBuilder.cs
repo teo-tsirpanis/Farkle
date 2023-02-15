@@ -20,19 +20,17 @@ internal struct StringHeapBuilder
     [MemberNotNull(nameof(_strings), nameof(_stringHandles))]
     private void Initialize()
     {
-        _strings ??= new () { "" };
-        _stringHandles ??= new ();
+        _strings ??= new() { "" };
+        _stringHandles ??= new();
         if (LengthSoFar == 0)
         {
             LengthSoFar = 1;
         }
     }
 
-    public StringHandle Add(string str) => Add(str.AsSpan());
-
-    public StringHandle Add(ReadOnlySpan<char> str)
+    public StringHandle Add(string str)
     {
-        if (str.IsEmpty)
+        if (string.IsNullOrEmpty(str))
         {
             return default;
         }
@@ -46,7 +44,7 @@ internal struct StringHeapBuilder
 
         // We will lookup twice in the dictionary; this way we
         // avoid counting the bytes if the string exists.
-        if (_stringHandles.TryGetValue(str, out var handle))
+        if (_stringHandles.TryGetValue(str.AsSpan(), out var handle))
         {
             return handle;
         }
@@ -68,11 +66,11 @@ internal struct StringHeapBuilder
         }
 
         handle = new((uint)LengthSoFar);
-        handle = _stringHandles.GetOrAdd(str, handle, out bool exists, out string strObj);
+        handle = _stringHandles.GetOrAdd(str, handle, out bool exists);
         Debug.Assert(!exists);
 
         LengthSoFar += stringLength;
-        _strings.Add(strObj);
+        _strings.Add(str);
         return handle;
     }
 

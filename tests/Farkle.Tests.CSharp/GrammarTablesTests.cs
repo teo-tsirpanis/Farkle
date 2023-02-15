@@ -44,4 +44,25 @@ internal class GrammarTablesTests
             Assert.That(tables.GetGrammarFlags(expectedData), Is.EqualTo(GrammarAttributes.None));
         });
     }
+
+    [Test]
+    public void TestTokenSymbolTable()
+    {
+        var builder = new GrammarTablesBuilder();
+
+        builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal);
+        // A terminal can't start a group.
+        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal | TokenSymbolAttributes.GroupStart), Throws.ArgumentException);
+        builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
+        // Terminals must be together at the beginning.
+        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal), Throws.InvalidOperationException);
+
+        for (int i = 0; i < 0xF_FFFD; i++)
+        {
+            builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
+        }
+
+        // We can add up to 2^20 - 1 token symbols.
+        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None), Throws.InvalidOperationException);
+    }
 }

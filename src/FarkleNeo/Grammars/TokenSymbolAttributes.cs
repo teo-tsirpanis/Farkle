@@ -30,11 +30,7 @@ public enum TokenSymbolAttributes : uint
     /// </summary>
     Hidden = 1 << 3,
     /// <summary>
-    /// The token symbol has a special name associated with it.
-    /// </summary>
-    HasSpecialName = 1 << 4,
-    /// <summary>
     /// The token symbol was not explicitly defined by the grammar author.
     /// </summary>
-    Generated = 1 << 5
+    Generated = 1 << 4
 }

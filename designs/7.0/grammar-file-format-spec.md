@@ -167,15 +167,13 @@ The following bit values are defined for the __Flags__ column:
 |1|`GroupStart`|The token symbol appears in the __Start__ column of the _Group_ table.|
 |2|`Noise`|The token symbol can be skipped by parsers if encountered in an unexpected place in the input.|
 |3|`Hidden`|The token symbol should not be displayed by parsers in the expected tokens list in case of a syntax error.|
-|4|`HasSpecialName`|The token symbol appears in the __Symbol__ column of the _SpecialName_ table.|
-|5|`Generated`|The token symbol was not explicitly defined by the grammar author.|
+|4|`Generated`|The token symbol was not explicitly defined by the grammar author.|
 
 The following rules apply to the _TokenSymbol_ table:
 
 * The _TokenSymbol_ table MUST NOT contain more than 2<sup>20</sup> - 1 rows.
 * A token symbol with the `Terminal` flag set MUST NOT appear after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
-* A token symbol with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
 
 ### Group table
 
@@ -226,7 +224,6 @@ The following bit values are defined for the __Flags__ column:
 |Bit|Name|Description|
 |---|----|-----------|
 |0|`Generated`|The nonterminal was not explicitly defined by the grammar author.|
-|1|`HasSpecialName`|The nonterminal appears in the __Symbol__ column of the _SpecialName_ table.|
 
 The following rules apply to the _Nonterminal_ table:
 
@@ -235,7 +232,6 @@ The following rules apply to the _Nonterminal_ table:
 * The value of the __FirstProduction__ column of the first nonterminal MUST be equal to one.
 * If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
 > Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
-* A nonterminal with the `HasSpecialName` flag set MUST have a corresponding row in the _SpecialName_ table.
 
 > Before accessing the productions of a nonterminal, readers MUST ensure that the nonterminal actually has productions. Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 
@@ -300,7 +296,6 @@ The _SpecialName_ table contains the following columns:
 The following rules apply to the _SpecialName_ table:
 
 * The __Symbol__ column MUST NOT contain duplicate values.
-* The __Symbol__ column MUST point to a token symbol or nonterminal that has the `HasSpecialName` flag set.
 * The __Name__ column MUST NOT contain duplicate values.
 
 > The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since in Farkle symbols can be renamed and many can have the same name within a grammar, the special name provides a stable way to identify them (it sticks to the symbol's original name and duplicate names would cause build failures).

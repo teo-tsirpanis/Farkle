@@ -76,10 +76,10 @@ internal static class BufferExtensions
         switch ((uint)value)
         {
             case <= 0x7F:
-                buffer.Write(value);
+                buffer.Write((byte)value);
                 break;
             case <= 0x3FFF:
-                buffer.Write(BinaryPrimitives.ReverseEndianness((ushort)value | 0x8000));
+                buffer.Write(BinaryPrimitives.ReverseEndianness((ushort)(value | 0x8000)));
                 break;
             case <= 0x1FFFFFFF:
                 buffer.Write(BinaryPrimitives.ReverseEndianness((uint)value | 0xC0000000));
@@ -118,6 +118,12 @@ internal static class BufferExtensions
     {
         BinaryPrimitives.WriteInt32LittleEndian(buffer.GetSpan(sizeof(int)), value);
         buffer.Advance(sizeof(int));
+    }
+
+    public static void Write(this IBufferWriter<byte> buffer, uint value)
+    {
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.GetSpan(sizeof(uint)), value);
+        buffer.Advance(sizeof(uint));
     }
 
     public static void Write(this IBufferWriter<byte> buffer, ulong value)

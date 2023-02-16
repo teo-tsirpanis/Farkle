@@ -19,6 +19,7 @@ internal struct GrammarTablesBuilder
     private bool _rejectTerminals;
 
     private List<GroupRow>? _groups;
+    private HashSet<TokenSymbolHandle>? _pendingGroupStarts;
 
     private List<GroupNestingRow>? _groupNestings;
     private int _requiredGroupNestings;
@@ -116,7 +117,13 @@ internal struct GrammarTablesBuilder
 
         var tokenSymbols = _tokenSymbols ??= new();
         tokenSymbols.Add(new() { Name = name, Flags = flags });
-        return new((uint)tokenSymbols.Count);
+        TokenSymbolHandle handle = new((uint)tokenSymbols.Count);
+
+        if ((flags & TokenSymbolAttributes.GroupStart) != 0)
+        {
+            (_pendingGroupStarts ??= new()).Add(handle);
+        }
+        return handle;
     }
 
     public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
@@ -124,9 +131,18 @@ internal struct GrammarTablesBuilder
         ValidateRowCount(_groups, TableKind.Group);
         ValidateHandle(container.TableIndex, _groups, nameof(container));
         ValidateHandle(start.TableIndex, _groups, nameof(start));
+        if (_pendingGroupStarts is null || !_pendingGroupStarts.Contains(start))
+        {
+            ThrowHelpers.ThrowArgumentException(nameof(start), "Cannot start group with this token symbol, either it has been used to start another group or its GroupStart flag is not set.");
+        }
         ValidateHandle(end.TableIndex, _groups, nameof(end));
         ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(nestingCount);
+        if (nestingCount > 0 != ((flags & GroupAttributes.HasNesting) == 0))
+        {
+            ThrowHelpers.ThrowArgumentException(nameof(nestingCount), "Groups can have a positive nesting count if and only if they have the HasNesting flag set.");
+        }
 
+        _pendingGroupStarts.Remove(start);
         var groups = _groups ??= new();
         groups.Add(new() { Name = name, Container = container, Flags = flags, Start = start, End = end, NestingCount = nestingCount });
         if (nestingCount > 0)

@@ -190,7 +190,7 @@ The following bit values are defined for the __Flags__ column:
 
 |Bit|Name|Description|
 |---|----|-----------|
-|0|`HasNesting`|The group has a non-empty list of groups that can be nested inside it.|
+|0|`HasNesting`|The group has a non-empty list of groups that can be nested inside it. __TODO: Decide if we want to keep it.__|
 |1|`EndsOnEndOfInput`|The group can also end when the end of the input is reached, without encountering the token symbol specified in the __End__ column.|
 |2|`AdvanceByCharacter`|When inside this group, the parser should read the input without invoking the regular tokenizer.|
 |3|`KeepEndToken`|When the group ends, the parser should keep the token that ended the group in the input stream.|
@@ -198,6 +198,7 @@ The following bit values are defined for the __Flags__ column:
 The following rules apply to the _Group_ table:
 
 * The token symbol pointed by the __Start__ column MUST have the `GroupStart` flag set.
+* The __Start__ column MUST NOT contain duplicate values.
 * The token symbols pointed by the __End__ and __Container__ columns MUST NOT have the `GroupStart` flag set.
 * A group's __FirstNesting__ column MUST be greater than the __FirstNesting__ column of the previous group, unless the `HasNesting` flag is not set, where these two values MUST be equal.
 * The value of the __FirstNesting__ column of the first group MUST be equal to one.

@@ -13,7 +13,7 @@ internal class GrammarTests
     public void TestInvalidFiles(string fileName, GrammarFileType fileType)
     {
         var buffer = File.ReadAllBytes(TestUtilities.GetResourceFile(fileName));
-        var header = Grammar.ReadHeader(buffer);
+        var header = GrammarHeader.Read(buffer);
         Assert.Multiple(() =>
         {
             Assert.That(header.IsSupported, Is.False);

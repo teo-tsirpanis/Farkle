@@ -19,6 +19,7 @@ public abstract class Grammar
     private readonly StringHeap _stringHeap;
     private readonly BlobHeap _blobHeap;
     private readonly GrammarTables _grammarTables;
+    private readonly GrammarStateMachines _stateMachines;
 
     private protected abstract ReadOnlySpan<byte> GrammarFile { get; }
 
@@ -56,6 +57,7 @@ public abstract class Grammar
         _stringHeap = new StringHeap(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
         _blobHeap = new BlobHeap(streams.BlobHeapOffset, streams.BlobHeapLength);
         _grammarTables = new GrammarTables(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
+        _stateMachines = new GrammarStateMachines(grammarFile, in _blobHeap, in _grammarTables, out _);
     }
 
     /// <summary>

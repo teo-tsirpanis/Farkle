@@ -19,7 +19,7 @@ public abstract class Grammar
     private readonly StringHeap _stringHeap;
     private readonly BlobHeap _blobHeap;
     private readonly GrammarTables _grammarTables;
-    private readonly GrammarStateMachines _stateMachines;
+    private readonly GrammarDfa _dfa;
 
     private protected abstract ReadOnlySpan<byte> GrammarFile { get; }
 
@@ -54,10 +54,13 @@ public abstract class Grammar
 
         GrammarStreams streams = new(grammarFile, header.StreamCount, out _);
 
-        _stringHeap = new StringHeap(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
-        _blobHeap = new BlobHeap(streams.BlobHeapOffset, streams.BlobHeapLength);
-        _grammarTables = new GrammarTables(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
-        _stateMachines = new GrammarStateMachines(grammarFile, in _blobHeap, in _grammarTables, out _);
+        _stringHeap = new(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
+        _blobHeap = new(streams.BlobHeapOffset, streams.BlobHeapLength);
+        _grammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
+
+        GrammarStateMachines stateMachines = new(grammarFile, in _blobHeap, in _grammarTables, out _);
+        _dfa = GrammarDfa.Create<char>(grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
+            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength, _grammarTables.TokenSymbolRowCount);
     }
 
     /// <summary>

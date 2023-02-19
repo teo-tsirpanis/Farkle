@@ -14,19 +14,15 @@ public enum GroupAttributes : ushort
     /// </summary>
     None = 0,
     /// <summary>
-    /// The group has a non-empty nesting list.
-    /// </summary>
-    HasNesting = 1 << 0,
-    /// <summary>
     /// The group can also end when the end of input is reached, without encountering its end symbol.
     /// </summary>
-    EndsOnEndOfInput = 1 << 1,
+    EndsOnEndOfInput = 1 << 0,
     /// <summary>
     /// When inside the group, the parser should read the input without invoking the regular tokenizer.
     /// </summary>
-    AdvanceByCharacter = 1 << 2,
+    AdvanceByCharacter = 1 << 1,
     /// <summary>
     /// When the group ends, the parser should keep the token that ended the group in the input stream.
     /// </summary>
-    KeepEndToken = 1 << 3
+    KeepEndToken = 1 << 2
 }

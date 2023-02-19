@@ -20,6 +20,9 @@ public enum TokenSymbolAttributes : uint
     /// <summary>
     /// The token symbol can start a group.
     /// </summary>
+    // Unlike other flags in earlier iterations of the grammar format that were removed,
+    // this flag must stay. Checking if a token symbol starts a group is pretty expensive
+    // and happens on every token. We can skip this check with this flag.
     GroupStart = 1 << 1,
     /// <summary>
     /// The token symbol can be skipped by parsers if encountered in an unexpected place in the input.

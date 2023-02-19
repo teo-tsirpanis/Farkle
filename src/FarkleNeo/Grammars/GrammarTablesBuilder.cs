@@ -137,10 +137,6 @@ internal struct GrammarTablesBuilder
         }
         ValidateHandle(end.TableIndex, _groups, nameof(end));
         ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(nestingCount);
-        if (nestingCount > 0 != ((flags & GroupAttributes.HasNesting) == 0))
-        {
-            ThrowHelpers.ThrowArgumentException(nameof(nestingCount), "Groups can have a positive nesting count if and only if they have the HasNesting flag set.");
-        }
 
         _pendingGroupStarts.Remove(start);
         var groups = _groups ??= new();

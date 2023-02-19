@@ -400,9 +400,9 @@ The token symbol pointed by the `actionTerminal` field MUST have the `Terminal` 
 
 The specific algorithm used to build this state machine (Canonical LR(1), LALR(1) or something else) is unspecified.
 
-### LR(1) state machine with conflicts
+### GLR(1) state machine
 
-An LR(1) state machine has conflicts when for at least one terminal and state, there is more than one possible action. It is represented as a regular LR(1) state machine with the only difference being that for each state, duplicate values of the `actionTerminal` field are allowed.
+A GLR(1) state machine has at least one terminal and state where there is more than one possible action. It is represented as a regular LR(1) state machine with the only difference being that for each state, duplicate values of the `actionTerminal` field are allowed.
 
 ## Extensibility
 

@@ -375,7 +375,10 @@ The type `token_symbol_t` is the type used to encode indices to the _TokenSymbol
 
 The type `lr_action_t` describes the type of an action (shift or reduce). It is encoded as follows and its size is the smallest of one, two or four bytes that can encode all valid values for this grammar:
 
-* A shift action to state `s` is encoded as `s`.
+*
+    An error action is encoded as `0`.
+    > Typically such actions are not encoded in the grammar.
+* A shift action to state `s` is encoded as `s + 1`.
 *
     A reduce action to the production with the index `p` is encoded as `-p`.
     > Remember that table row indices are one-based, so the first production has an index of `1`.

@@ -16,12 +16,12 @@ namespace Farkle.Grammars;
 /// </remarks>
 public abstract class Grammar
 {
-    private readonly StringHeap _stringHeap;
-    private readonly BlobHeap _blobHeap;
-    private readonly GrammarTables _grammarTables;
-    private readonly GrammarDfa _dfa;
+    internal readonly StringHeap StringHeap;
+    internal readonly BlobHeap BlobHeap;
+    internal readonly GrammarTables GrammarTables;
+    internal readonly GrammarDfa Dfa;
 
-    private protected abstract ReadOnlySpan<byte> GrammarFile { get; }
+    internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
     /// <summary>
     /// The length of the grammar's data in bytes.
@@ -54,13 +54,13 @@ public abstract class Grammar
 
         GrammarStreams streams = new(grammarFile, header.StreamCount, out _);
 
-        _stringHeap = new(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
-        _blobHeap = new(streams.BlobHeapOffset, streams.BlobHeapLength);
-        _grammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
+        StringHeap = new(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
+        BlobHeap = new(streams.BlobHeapOffset, streams.BlobHeapLength);
+        GrammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
 
-        GrammarStateMachines stateMachines = new(grammarFile, in _blobHeap, in _grammarTables, out _);
-        _dfa = GrammarDfa.Create<char>(grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
-            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength, _grammarTables.TokenSymbolRowCount);
+        GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
+        Dfa = GrammarDfa.Create<char>(grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
+            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength, GrammarTables.TokenSymbolRowCount);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public abstract class Grammar
     {
         private readonly ImmutableArray<byte> _grammarFile;
 
-        private protected override ReadOnlySpan<byte> GrammarFile =>
+        internal override ReadOnlySpan<byte> GrammarFile =>
             _grammarFile.AsSpan();
 
         public ManagedMemoryGrammar(ReadOnlySpan<byte> grammarFile) : base(grammarFile)

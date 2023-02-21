@@ -20,6 +20,7 @@ public abstract class Grammar
     internal readonly BlobHeap BlobHeap;
     internal readonly GrammarTables GrammarTables;
     internal readonly GrammarDfa Dfa;
+    internal readonly int TerminalCount;
 
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
@@ -27,6 +28,17 @@ public abstract class Grammar
     /// The length of the grammar's data in bytes.
     /// </summary>
     public int DataLength => GrammarFile.Length;
+
+    /// <summary>
+    /// A collection of this <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
+    /// that have the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
+    /// </summary>
+    public TokenSymbolCollection Terminals => new(this, TerminalCount);
+
+    /// <summary>
+    /// A collection of this <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s.
+    /// </summary>
+    public TokenSymbolCollection TokenSymbols => new(this, GrammarTables.TokenSymbolRowCount);
 
     private static void ValidateHeader(GrammarHeader header)
     {
@@ -61,6 +73,24 @@ public abstract class Grammar
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
         Dfa = GrammarDfa.Create<char>(grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
             stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength, GrammarTables.TokenSymbolRowCount);
+
+        bool rejectTerminals = false;
+        for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)
+        {
+            TokenSymbolAttributes flags = GrammarTables.GetTokenSymbolFlags(grammarFile, (uint)i);
+            if ((flags & TokenSymbolAttributes.Terminal) != 0)
+            {
+                if (rejectTerminals)
+                {
+                    ThrowHelpers.ThrowInvalidDataException("Terminals must come before other token symbols.");
+                }
+                TerminalCount++;
+            }
+            else
+            {
+                rejectTerminals = true;
+            }
+        }
     }
 
     /// <summary>
@@ -74,6 +104,40 @@ public abstract class Grammar
     {
         return new ManagedMemoryGrammar(grammarData);
     }
+
+    /// <summary>
+    /// Returns the string pointed by the given <see cref="StringHandle"/>.
+    /// </summary>
+    /// <param name="handle">The string handle to retrieve the string from.</param>
+    public string GetString(StringHandle handle) => StringHeap.GetString(GrammarFile, handle);
+
+    /// <summary>
+    /// Gets the <see cref="TokenSymbol"/> pointed by the given <see cref="TokenSymbolHandle"/>.
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <returns></returns>
+    public TokenSymbol GetTokenSymbol(TokenSymbolHandle handle)
+    {
+        if (!handle.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(handle));
+        }
+
+        if (handle.Value >= GrammarTables.TokenSymbolRowCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle));
+        }
+
+        return new(this, handle);
+    }
+
+    /// <summary>
+    /// Checks whether the given <see cref="TokenSymbolHandle"/> points to a
+    /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
+    /// </summary>
+    /// <param name="handle">The token symbol handle to check;</param>
+    /// <returns></returns>
+    public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
 
     /// <summary>
     /// Copies the grammar's data into a new array.

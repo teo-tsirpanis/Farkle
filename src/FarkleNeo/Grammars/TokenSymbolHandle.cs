@@ -4,8 +4,14 @@
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Points to a row of the <c>TokenSymbol</c> table of a <see cref="Grammar"/>.
+/// Points to a <see cref="TokenSymbol"/> of a <see cref="Grammar"/>.
 /// </summary>
+/// <remarks>
+/// Using <see cref="TokenSymbolHandle"/> over <see cref="TokenSymbol"/> has the advantage of
+/// not requiring a <see cref="Grammar"/>, at the expense of the inability to access information
+/// about the token symbol.
+/// </remarks>
+/// <seealso cref="Grammar.GetTokenSymbol"/>
 public readonly struct TokenSymbolHandle : IEquatable<TokenSymbolHandle>
 {
     internal uint TableIndex { get; }

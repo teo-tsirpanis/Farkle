@@ -8,6 +8,8 @@ namespace Farkle.Grammars;
 /// <summary>
 /// Contains <see cref="TokenSymbol"/>s of a <see cref="Grammar"/>.
 /// </summary>
+/// <seealso cref="Grammar.Terminals"/>
+/// <seealso cref="Grammar.TokenSymbols"/>
 public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
 {
     private readonly Grammar _grammar;

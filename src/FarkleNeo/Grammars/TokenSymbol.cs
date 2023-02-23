@@ -9,6 +9,8 @@ namespace Farkle.Grammars;
 /// <remarks>
 /// Token symbols are produced by tokenizers, usually powered by a DFA.
 /// </remarks>
+/// <seealso cref="Grammar.Terminals"/>
+/// <seealso cref="Grammar.TokenSymbols"/>
 public readonly struct TokenSymbol
 {
     private readonly Grammar _grammar;

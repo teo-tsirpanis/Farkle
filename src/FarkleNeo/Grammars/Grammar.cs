@@ -40,6 +40,11 @@ public abstract class Grammar
     /// </summary>
     public TokenSymbolCollection TokenSymbols => new(this, GrammarTables.TokenSymbolRowCount);
 
+    /// <summary>
+    /// A collection of this <see cref="Grammar"/>'s <see cref="Group"/>s.
+    /// </summary>
+    public GroupCollection Groups => new(this);
+
     private static void ValidateHeader(GrammarHeader header)
     {
         if (header.IsSupported)

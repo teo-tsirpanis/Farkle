@@ -124,8 +124,11 @@ public abstract class Grammar
     /// <summary>
     /// Gets the <see cref="TokenSymbol"/> pointed by the given <see cref="TokenSymbolHandle"/>.
     /// </summary>
-    /// <param name="handle"></param>
-    /// <returns></returns>
+    /// <param name="handle">A handle to the token symbol.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
+    /// <see cref="TokenSymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
+    /// points to a token symbol that does not exist.</exception>
     public TokenSymbol GetTokenSymbol(TokenSymbolHandle handle)
     {
         if (!handle.HasValue)
@@ -146,7 +149,6 @@ public abstract class Grammar
     /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
     /// <param name="handle">The token symbol handle to check;</param>
-    /// <returns></returns>
     public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
 
     /// <summary>

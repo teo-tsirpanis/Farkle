@@ -6,7 +6,7 @@ using System.Collections;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the <see cref="Group"/>s that can be nested inside a<see cref="Group"/>.
+/// Contains the <see cref="Group"/>s that can be nested inside a <see cref="Group"/>.
 /// </summary>
 /// <seealso cref="Group.Nesting"/>
 public readonly struct GroupNestingCollection : IReadOnlyCollection<Group>

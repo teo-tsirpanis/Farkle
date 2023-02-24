@@ -39,26 +39,12 @@ public readonly struct Group
     /// <summary>
     /// A <see cref="StringHandle"/> to the <see cref="Group"/>'s name.
     /// </summary>
-    public StringHandle NameHandle
+    public StringHandle Name
     {
         get
         {
             AssertHasValue();
             return _grammar.GrammarTables.GetGroupName(_grammar.GrammarFile, _tableIndex);
-        }
-    }
-
-    /// <summary>
-    /// The <see cref="Group"/>'s name.
-    /// </summary>
-    public string Name
-    {
-        get
-        {
-            AssertHasValue();
-            ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
-            StringHandle handle = _grammar.GrammarTables.GetGroupName(_grammar.GrammarFile, _tableIndex);
-            return _grammar.StringHeap.GetString(grammarFile, handle);
         }
     }
 

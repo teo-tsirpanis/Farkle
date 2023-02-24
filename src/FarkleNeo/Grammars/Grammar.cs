@@ -30,6 +30,11 @@ public abstract class Grammar
     public int DataLength => GrammarFile.Length;
 
     /// <summary>
+    /// General information about this <see cref="Grammar"/>.
+    /// </summary>
+    public GrammarInfo GrammarInfo => new(this);
+
+    /// <summary>
     /// A collection of this <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
     /// that have the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>

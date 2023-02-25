@@ -4,8 +4,13 @@
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Points to a row of the <c>Nonterminal</c> table of a <see cref="Grammar"/>.
+/// Points to a <see cref="Nonterminal"/> of a <see cref="Grammar"/>.
 /// </summary>
+/// <remarks>
+/// <para>This type is lightweight, storing just a number without a <see cref="Grammar"/> object and can be
+/// of use when parsing. To get any information about the nonterminal you have to pass it to the
+/// <see cref="Grammar.GetNonterminal"/> method.</para>
+/// </remarks>
 public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
 {
     internal uint TableIndex { get; }

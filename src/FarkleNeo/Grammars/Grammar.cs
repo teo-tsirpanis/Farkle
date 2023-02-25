@@ -50,6 +50,16 @@ public abstract class Grammar
     /// </summary>
     public GroupCollection Groups => new(this);
 
+    /// <summary>
+    /// A collection of this <see cref="Grammar"/>'s <see cref="Nonterminal"/>s.
+    /// </summary>
+    public NonterminalCollection Nonterminals => new(this);
+
+    /// <summary>
+    /// A collection of this <see cref="Grammar"/>'s <see cref="Production"/>s.
+    /// </summary>
+    public ProductionCollection Productions => new(this, 1, GrammarTables.ProductionRowCount);
+
     private static void ValidateHeader(GrammarHeader header)
     {
         if (header.IsSupported)
@@ -137,6 +147,52 @@ public abstract class Grammar
         }
 
         if (handle.Value >= GrammarTables.TokenSymbolRowCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle));
+        }
+
+        return new(this, handle);
+    }
+
+    /// <summary>
+    /// Gets the <see cref="Nonterminal"/> pointed by the given <see cref="NonterminalHandle"/>.
+    /// </summary>
+    /// <param name="handle">A handle to the nonterminal.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
+    /// <see cref="NonterminalHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
+    /// points to a nonterminal that does not exist.</exception>
+    public Nonterminal GetNonterminal(NonterminalHandle handle)
+    {
+        if (!handle.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(handle));
+        }
+
+        if (handle.Value >= GrammarTables.NonterminalRowCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle));
+        }
+
+        return new(this, handle);
+    }
+
+    /// <summary>
+    /// Gets the <see cref="Production"/> pointed by the given <see cref="ProductionHandle"/>.
+    /// </summary>
+    /// <param name="handle">A handle to the production.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
+    /// <see cref="TokenSymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
+    /// points to a production that does not exist.</exception>
+    public Production GetProduction(ProductionHandle handle)
+    {
+        if (!handle.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(handle));
+        }
+
+        if (handle.Value >= GrammarTables.ProductionRowCount)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle));
         }

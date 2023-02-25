@@ -35,28 +35,28 @@ public abstract class Grammar
     public GrammarInfo GrammarInfo => new(this);
 
     /// <summary>
-    /// A collection of this <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
+    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
     /// that have the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
     public TokenSymbolCollection Terminals => new(this, TerminalCount);
 
     /// <summary>
-    /// A collection of this <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s.
     /// </summary>
     public TokenSymbolCollection TokenSymbols => new(this, GrammarTables.TokenSymbolRowCount);
 
     /// <summary>
-    /// A collection of this <see cref="Grammar"/>'s <see cref="Group"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="Group"/>s.
     /// </summary>
     public GroupCollection Groups => new(this);
 
     /// <summary>
-    /// A collection of this <see cref="Grammar"/>'s <see cref="Nonterminal"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="Nonterminal"/>s.
     /// </summary>
     public NonterminalCollection Nonterminals => new(this);
 
     /// <summary>
-    /// A collection of this <see cref="Grammar"/>'s <see cref="Production"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="Production"/>s.
     /// </summary>
     public ProductionCollection Productions => new(this, 1, GrammarTables.ProductionRowCount);
 

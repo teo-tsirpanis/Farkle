@@ -48,7 +48,7 @@ public readonly struct Nonterminal
     }
 
     /// <summary>
-    /// A <see cref="StringHandle"/> to the <see cref="Nonterminal"/>'s name.
+    /// A <see cref="StringHandle"/> pointing to the <see cref="Nonterminal"/>'s name.
     /// </summary>
     public StringHandle Name
     {

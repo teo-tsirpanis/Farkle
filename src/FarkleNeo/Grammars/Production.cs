@@ -51,7 +51,7 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// Gets a <see cref="NonterminalHandle"/> to this <see cref="Production"/>'s head.
+    /// Gets a <see cref="NonterminalHandle"/> pointing to the <see cref="Production"/>'s head.
     /// </summary>
     /// <remarks>
     /// This method's implementation has a non-constant time complexity, relative to the

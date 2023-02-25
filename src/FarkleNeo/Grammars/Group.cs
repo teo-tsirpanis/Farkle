@@ -37,7 +37,7 @@ public readonly struct Group
     }
 
     /// <summary>
-    /// A <see cref="StringHandle"/> to the <see cref="Group"/>'s name.
+    /// A <see cref="StringHandle"/> pointing to the <see cref="Group"/>'s name.
     /// </summary>
     public StringHandle Name
     {
@@ -49,7 +49,7 @@ public readonly struct Group
     }
 
     /// <summary>
-    /// A <see cref="TokenSymbolHandle"/> pointing to the token symbol that represents this <see cref="Group"/>'s content.
+    /// A <see cref="TokenSymbolHandle"/> pointing to the token symbol that represents the <see cref="Group"/>'s content.
     /// </summary>
     public TokenSymbolHandle Container
     {
@@ -63,7 +63,7 @@ public readonly struct Group
     /// <summary>
     /// The <see cref="Group"/>'s <see cref="GroupAttributes"/>.
     /// </summary>
-    public GroupAttributes Flags
+    public GroupAttributes Attributes
     {
         get
         {

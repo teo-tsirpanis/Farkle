@@ -17,7 +17,7 @@ public readonly struct GrammarInfo
     }
 
     /// <summary>
-    /// A <see cref="StringHandle"/> to the grammar's name.
+    /// A <see cref="StringHandle"/> pointing to the grammar's name.
     /// </summary>
     public StringHandle Name => _grammar.GrammarTables.GetGrammarName(_grammar.GrammarFile);
 

@@ -27,7 +27,7 @@ public readonly struct TokenSymbol
     }
 
     /// <summary>
-    /// A <see cref="StringHandle"/> to the <see cref="TokenSymbol"/>'s name.
+    /// A <see cref="StringHandle"/> pointing to the <see cref="TokenSymbol"/>'s name.
     /// </summary>
     public StringHandle Name
     {

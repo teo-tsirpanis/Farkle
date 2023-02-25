@@ -78,15 +78,17 @@ internal readonly struct GrammarDfa
     /// Searches for the next DFA state.
     /// </summary>
     /// <param name="grammarFile">The grammar's data.</param>
-    /// <param name="state">The current state.</param>
+    /// <param name="state">The current state, starting from 1.</param>
     /// <param name="c">The character to advance with.</param>
-    /// <returns>The index of the next state, or -1 if such state does not exist.</returns>
+    /// <returns>The index of the next state, or 0 if such state does not exist.</returns>
     public int NextState(ReadOnlySpan<byte> grammarFile, int state, char c)
     {
-        if ((uint)state < (uint)StateCount)
+        state--;
+        if ((uint)state >= (uint)StateCount)
         {
-            return -1;
+            return 0;
         }
+
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int edgeLength = (state != StateCount - 1 ? ReadFirstEdge(grammarFile, state + 1) : EdgeCount) - edgeOffset;
 

@@ -34,14 +34,14 @@ public readonly struct ProductionCollection : IReadOnlyCollection<EntityHandle>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Used to enumerate a <see cref="ProductionMemberCollection"/>.
+    /// Used to enumerate a <see cref="ProductionCollection"/>.
     /// </summary>
     public struct Enumerator : IEnumerator<EntityHandle>
     {
-        private readonly ProductionMemberCollection _collection;
+        private readonly ProductionCollection _collection;
         private int _currentIndex = -1;
 
-        internal Enumerator(ProductionMemberCollection collection)
+        internal Enumerator(ProductionCollection collection)
         {
             _collection = collection;
         }

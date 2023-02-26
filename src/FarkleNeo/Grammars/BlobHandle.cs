@@ -6,7 +6,7 @@ namespace Farkle.Grammars;
 /// <summary>
 /// Points to a blob of bytes in a <see cref="Grammar"/>.
 /// </summary>
-public readonly struct BlobHandle : IEquatable<BlobHandle>
+internal readonly struct BlobHandle : IEquatable<BlobHandle>
 {
     internal uint Value { get; }
 

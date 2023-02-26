@@ -19,7 +19,7 @@ public abstract class Grammar
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
     internal readonly GrammarTables GrammarTables;
-    internal readonly GrammarDfa Dfa;
+    internal readonly Dfa<char> Dfa;
     internal readonly int TerminalCount;
 
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
@@ -91,8 +91,8 @@ public abstract class Grammar
         GrammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
 
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
-        Dfa = GrammarDfa.Create<char>(grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
-            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength, GrammarTables.TokenSymbolRowCount);
+        Dfa = StateMachineUtilities.CreateDfa<char>(this, grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
+            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength);
 
         bool rejectTerminals = false;
         for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)

@@ -4,124 +4,170 @@
 using Farkle.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars;
 
-[StructLayout(LayoutKind.Auto)]
-internal readonly struct GrammarDfa
+internal unsafe sealed class GrammarDfa<TChar, TState, TEdge, TTokenSymbol> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    public readonly int StateCount, EdgeCount;
+    private readonly Grammar _grammar;
 
-    public readonly byte EdgeIndexSize, StateIndexSize, TokenSymbolIndexSize;
+    private readonly bool _hasDefaultTransitions;
 
-    public readonly bool HasDefaultTransitions;
+    private readonly int _edgeCount, _firstEdgeBase, _rangeFromBase, _rangeToBase, _edgeTargetBase, _acceptBase, _defaultTransitionBase;
 
-    public readonly int FirstEdgeBase, RangeFromBase, RangeToBase, EdgeTargetBase, AcceptBase, DefaultTransitionBase;
+    public override int Count { get; }
 
-    private GrammarDfa(ReadOnlySpan<byte> grammarFile, int elementSize, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength, int tokenSymbolCount) : this()
+    public override bool HasConflicts => false;
+
+    public GrammarDfa(Grammar grammar, int stateCount, int edgeCount, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength)
     {
-        if (dfaLength < sizeof(uint) * 2)
-        {
-            ThrowInvalidDfaDataSize();
-        }
+        _grammar = grammar;
 
-        StateCount = (int)grammarFile.ReadUInt32(dfaOffset);
-        EdgeCount = (int)grammarFile.ReadUInt32(dfaOffset + sizeof(uint));
-        EdgeIndexSize = GrammarTables.GetIndexSize(EdgeCount);
-        StateIndexSize = GrammarTables.GetIndexSize(StateCount);
-        TokenSymbolIndexSize = GrammarTables.GetIndexSize(tokenSymbolCount);
+        Count = stateCount;
+        _edgeCount = edgeCount;
+        Debug.Assert(GrammarTables.GetIndexSize(Count) == sizeof(TState));
+        Debug.Assert(GrammarTables.GetIndexSize(Count) == sizeof(TEdge));
 
         int expectedSize =
             sizeof(uint) * 2
-            + StateCount * EdgeIndexSize
-            + EdgeCount * elementSize * 2 +
-            +EdgeCount * StateIndexSize
-            + StateCount * TokenSymbolIndexSize;
+            + Count * sizeof(TEdge)
+            + _edgeCount * sizeof(TChar) * 2
+            + _edgeCount * sizeof(TState)
+            + Count * sizeof(TTokenSymbol);
 
         if (dfaLength != expectedSize)
         {
             ThrowInvalidDfaDataSize();
         }
 
-        FirstEdgeBase = dfaOffset + sizeof(uint) * 2;
-        RangeFromBase = FirstEdgeBase + StateCount * EdgeIndexSize;
-        RangeToBase = RangeFromBase + EdgeCount * elementSize;
-        EdgeTargetBase = RangeToBase + EdgeCount * elementSize;
-        AcceptBase = EdgeTargetBase + EdgeCount * StateIndexSize;
+        _firstEdgeBase = dfaOffset + sizeof(uint) * 2;
+        _rangeFromBase = _firstEdgeBase + Count * sizeof(TEdge);
+        _rangeToBase = _rangeFromBase + _edgeCount * sizeof(TChar);
+        _edgeTargetBase = _rangeToBase + _edgeCount * sizeof(TChar);
+        _acceptBase = _edgeTargetBase + _edgeCount * sizeof(TState);
 
         if (dfaDefaultTransitionsLength > 0)
         {
-            if (dfaDefaultTransitionsLength != StateCount * StateIndexSize)
+            if (dfaDefaultTransitionsLength != Count * sizeof(TState))
             {
                 ThrowInvalidDfaDataSize();
             }
 
-            HasDefaultTransitions = true;
-            DefaultTransitionBase = dfaDefaultTransitionsOffset;
+            _hasDefaultTransitions = true;
+            _defaultTransitionBase = dfaDefaultTransitionsOffset;
         }
-    }
-
-    public static unsafe GrammarDfa Create<TChar>(ReadOnlySpan<byte> grammarFile, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength, int tokenSymbolCount)
-        where TChar : unmanaged
-    {
-        return new(grammarFile, sizeof(TChar), dfaOffset, dfaLength, dfaDefaultTransitionsOffset, dfaDefaultTransitionsLength, tokenSymbolCount);
     }
 
     private int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize(FirstEdgeBase + state * EdgeIndexSize, EdgeIndexSize);
+        (int)grammarFile.ReadUIntVariableSize<TEdge>(_firstEdgeBase + state * sizeof(TEdge));
 
-    private int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
-        (int)grammarFile.ReadUIntVariableSize(@base, StateIndexSize);
+    private static int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
+        (int)grammarFile.ReadUIntVariableSize<TState>(@base) - 1;
 
-    /// <summary>
-    /// Searches for the next DFA state.
-    /// </summary>
-    /// <param name="grammarFile">The grammar's data.</param>
-    /// <param name="state">The current state, starting from 1.</param>
-    /// <param name="c">The character to advance with.</param>
-    /// <returns>The index of the next state, or 0 if such state does not exist.</returns>
-    public int NextState(ReadOnlySpan<byte> grammarFile, int state, char c)
+    public override int NextState(int state, TChar c)
     {
-        state--;
-        if ((uint)state >= (uint)StateCount)
-        {
-            return 0;
-        }
+        ValidateStateIndex(state);
+
+        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
 
         int edgeOffset = ReadFirstEdge(grammarFile, state);
-        int edgeLength = (state != StateCount - 1 ? ReadFirstEdge(grammarFile, state + 1) : EdgeCount) - edgeOffset;
+        int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
 
         if (edgeLength != 0)
         {
-            int edge = BufferBinarySearch.SearchChar(grammarFile, RangeToBase + edgeOffset * sizeof(char), edgeLength, c);
+            int edge = StateMachineUtilities.BufferBinarySearch(grammarFile, _rangeToBase + edgeOffset * sizeof(TChar), edgeLength, c);
 
             if (edge < 0)
             {
                 edge = Math.Min(~edge, edgeLength - 1);
             }
 
-            char cFrom = (char)grammarFile.ReadUInt16(RangeFromBase + (edgeOffset + edge) * sizeof(char));
-            char cTo = (char)grammarFile.ReadUInt16(RangeToBase + (edgeOffset + edge) * sizeof(char));
+            TChar cFrom = StateMachineUtilities.ReadChar<TChar>(grammarFile, _rangeFromBase + (edgeOffset + edge) * sizeof(char));
+            TChar cTo = StateMachineUtilities.ReadChar<TChar>(grammarFile, _rangeToBase + (edgeOffset + edge) * sizeof(char));
 
-            if (cFrom <= c && c <= cTo)
+            if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {
-                return ReadState(grammarFile, EdgeTargetBase + (edgeOffset + edge) * StateIndexSize);
+                return ReadState(grammarFile, _edgeTargetBase + (edgeOffset + edge) * sizeof(TState));
             }
         }
 
-        if (HasDefaultTransitions)
+        if (_hasDefaultTransitions)
         {
-            return grammarFile.ReadUInt16(DefaultTransitionBase + state * StateIndexSize);
+            return ReadState(grammarFile, _defaultTransitionBase + state * sizeof(TState));
         }
 
-        return 0;
+        return -1;
     }
 
-    public TokenSymbolHandle GetAcceptSymbol(ReadOnlySpan<byte> grammarFile, int state)
+    internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)
     {
-        Debug.Assert((uint)state < (uint)StateCount);
-        return new(grammarFile.ReadUIntVariableSize(AcceptBase + state * TokenSymbolIndexSize, TokenSymbolIndexSize));
+        ValidateStateIndex(state);
+
+        if (GetSingleAcceptSymbol(state).HasValue)
+        {
+            return (state, 1);
+        }
+
+        return (0, 0);
+    }
+
+    internal override TokenSymbolHandle GetAcceptSymbol(int index) => GetSingleAcceptSymbol(index);
+
+    internal override int GetDefaultTransition(int state)
+    {
+        ValidateStateIndex(state);
+
+        if (_defaultTransitionBase == 0)
+        {
+            return -1;
+        }
+
+        return ReadState(_grammar.GrammarFile, _defaultTransitionBase + state * sizeof(TState));
+    }
+
+    internal override (int Offset, int Count) GetEdgeBounds(int state)
+    {
+        ValidateStateIndex(state);
+
+        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+
+        int edgeOffset = ReadFirstEdge(grammarFile, state);
+        int nextEdgeOffset = state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount;
+
+        return (edgeOffset, nextEdgeOffset - edgeOffset);
+    }
+
+    internal override DfaEdge<TChar> GetEdge(int index)
+    {
+        if((uint)index >= (uint)_edgeCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
+        }
+
+        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+
+        TChar cFrom = StateMachineUtilities.ReadChar<TChar>(grammarFile, _rangeFromBase + index * sizeof(char));
+        TChar cTo = StateMachineUtilities.ReadChar<TChar>(grammarFile, _rangeToBase + index * sizeof(char));
+        int target = ReadState(grammarFile, _edgeTargetBase + index * sizeof(TState));
+
+        return new(cFrom, cTo, target);
+    }
+
+    internal override TokenSymbolHandle GetSingleAcceptSymbol(int state)
+    {
+        ValidateStateIndex(state);
+        return new(_grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(_acceptBase + state * sizeof(TTokenSymbol)));
+    }
+
+    internal override bool StateHasConflicts(int state) => false;
+
+    private void ValidateStateIndex(int state, [CallerArgumentExpression(nameof(state))] string? paramName = null)
+    {
+        if ((uint)state >= (uint)Count)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(paramName);
+        }
     }
 
     [DoesNotReturn, StackTraceHidden]

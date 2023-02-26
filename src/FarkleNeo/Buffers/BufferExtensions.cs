@@ -71,6 +71,24 @@ internal static class BufferExtensions
         }
     }
 
+    public static uint ReadUIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
+    {
+        if (typeof(T) == typeof(byte))
+        {
+            return buffer[index];
+        }
+        if (typeof(T) == typeof(ushort))
+        {
+            return buffer.ReadUInt16(index);
+        }
+        if (typeof(T) == typeof(uint))
+        {
+            return buffer.ReadUInt32(index);
+        }
+
+        throw new NotSupportedException("Unsupported type.");
+    }
+
     public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)
     {
         switch ((uint)value)

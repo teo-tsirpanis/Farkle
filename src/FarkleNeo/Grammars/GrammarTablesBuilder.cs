@@ -38,6 +38,8 @@ internal struct GrammarTablesBuilder
     private HashSet<StringHandle>? _presentSpecialNames;
     private List<SpecialNameRow>? _specialNames;
 
+    public int TokenSymbolRowCount => _tokenSymbols?.Count ?? 0;
+
     private static uint EncodeSymbolCodedIndex(EntityHandle handle)
     {
         if (handle.IsTokenSymbol)

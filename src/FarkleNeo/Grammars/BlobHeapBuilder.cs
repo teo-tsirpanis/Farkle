@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using Farkle.Collections;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -39,6 +40,23 @@ internal struct BlobHeapBuilder
             <= 0x1FFFFFF => 4,
             _ => ThrowHelpers.ThrowBlobTooBig(length, parameterName)
         };
+
+    public BlobHandle Add(PooledSegmentBufferWriter<byte> blob)
+    {
+        if (blob.TryGetWrittenSpan(out var span))
+        {
+            return Add(span);
+        }
+
+        int blobLength = checked((int)blob.WrittenCount);
+
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(blobLength);
+        bool copied = blob.TryCopyTo(buffer);
+        Debug.Assert(copied);
+        BlobHandle handle = Add(buffer.AsSpan(blobLength));
+        ArrayPool<byte>.Shared.Return(buffer);
+        return handle;
+    }
 
     public BlobHandle Add(ReadOnlySpan<byte> blob)
     {

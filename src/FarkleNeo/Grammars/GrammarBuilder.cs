@@ -36,6 +36,9 @@ internal sealed class GrammarBuilder
         return _stringHeapBuilder.Add(str);
     }
 
+    public BlobHandle GetOrAddBlob(PooledSegmentBufferWriter<byte> blob) =>
+        _blobHeapBuilder.Add(blob);
+
     public BlobHandle GetOrAddBlob(ReadOnlySpan<byte> blob) =>
         _blobHeapBuilder.Add(blob);
 
@@ -82,6 +85,22 @@ internal sealed class GrammarBuilder
     {
         ValidateTableIndex(member.TableIndex, nameof(member));
         _tablesBuilder.AddProductionMember(member);
+    }
+
+    public void AddStateMachine(DfaBuilder<char> dfa)
+    {
+        using var buffer = new PooledSegmentBufferWriter<byte>();
+
+        dfa.WriteDfaData(buffer, _tablesBuilder.TokenSymbolRowCount);
+        ulong dfaDataKind = dfa.HasConflicts ? GrammarConstants.DfaOnCharWithConflictsKind : GrammarConstants.DfaOnCharKind;
+        AddStateMachine(dfaDataKind, GetOrAddBlob(buffer));
+
+        if (dfa.HasDefaultTransitions)
+        {
+            buffer.Clear();
+            dfa.WriteDefaultTransitions(buffer);
+            AddStateMachine(GrammarConstants.DfaOnCharDefaultTransitionsKind, GetOrAddBlob(buffer));
+        }
     }
 
     public void AddStateMachine(ulong kind, BlobHandle data)

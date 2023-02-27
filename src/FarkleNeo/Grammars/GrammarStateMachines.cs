@@ -6,7 +6,7 @@ namespace Farkle.Grammars;
 internal readonly struct GrammarStateMachines
 {
     public readonly int DfaOffset, DfaLength;
-    public readonly int DfaDefaultTransitionOffset, DfaDefaultTransitionLength;
+    public readonly int DfaDefaultTransitionsOffset, DfaDefaultTransitionsLength;
     public readonly int DfaWithConflictsOffset, DfaWithConflictsLength;
 
     public readonly int Lr1Offset, Lr1Length;
@@ -23,10 +23,10 @@ internal readonly struct GrammarStateMachines
                     (DfaOffset, DfaLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.DfaOnCharWithConflictsKind:
-                    (DfaDefaultTransitionOffset, DfaDefaultTransitionLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    (DfaWithConflictsOffset, DfaWithConflictsLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.DfaOnCharDefaultTransitionsKind:
-                    (DfaWithConflictsOffset, DfaWithConflictsLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    (DfaDefaultTransitionsOffset, DfaDefaultTransitionsLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.Lr1Kind:
                     (Lr1Offset, Lr1Length) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));

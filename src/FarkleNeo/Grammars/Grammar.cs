@@ -92,7 +92,7 @@ public abstract class Grammar
 
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
         Dfa = StateMachineUtilities.CreateDfa<char>(this, grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
-            stateMachines.DfaDefaultTransitionOffset, stateMachines.DfaDefaultTransitionLength);
+            stateMachines.DfaDefaultTransitionsOffset, stateMachines.DfaDefaultTransitionsLength);
 
         bool rejectTerminals = false;
         for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)

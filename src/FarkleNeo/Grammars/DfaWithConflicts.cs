@@ -20,7 +20,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         _acceptCount = acceptCount;
     }
 
-    public static DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol, TAccept> Create(Grammar grammar, int stateCount, int edgeCount, int acceptCount, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength)
+    public static DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol, TAccept> Create(Grammar grammar, int stateCount, int edgeCount, int acceptCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
     {
         int expectedSize =
             sizeof(uint) * 3
@@ -30,21 +30,21 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
             + stateCount * sizeof(TAccept)
             + acceptCount * sizeof(TTokenSymbol);
 
-        if (dfaLength != expectedSize)
+        if (dfa.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int firstEdgeBase = dfaOffset + sizeof(uint) * 3;
+        int firstEdgeBase = dfa.Offset + sizeof(uint) * 3;
         int rangeFromBase = firstEdgeBase + stateCount * sizeof(TEdge);
         int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
         int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
         int firstAcceptBase = edgeTargetBase + edgeCount * sizeof(TState);
         int acceptBase = firstAcceptBase + stateCount * sizeof(TAccept);
 
-        if (dfaDefaultTransitionsLength > 0)
+        if (dfaDefaultTransitions.Length > 0)
         {
-            if (dfaDefaultTransitionsLength != stateCount * sizeof(TState))
+            if (dfaDefaultTransitions.Length != stateCount * sizeof(TState))
             {
                 ThrowHelpers.ThrowInvalidDfaDataSize();
             }
@@ -56,7 +56,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
             RangeFromBase = rangeFromBase,
             RangeToBase = rangeToBase,
             EdgeTargetBase = edgeTargetBase,
-            DefaultTransitionBase = dfaDefaultTransitionsOffset,
+            DefaultTransitionBase = dfaDefaultTransitions.Offset,
             FirstAcceptBase = firstAcceptBase,
             AcceptBase = acceptBase
         };

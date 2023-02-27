@@ -39,7 +39,7 @@ internal class StringHeapTests
 
         Assert.That(actualHeap, Is.EqualTo("\0aaa\0bbb\0ccc\0"u8.ToArray()));
 
-        var heap = new StringHeap(actualHeap, 0, actualHeap.Length);
+        var heap = new StringHeap(actualHeap, new(0, actualHeap.Length));
         Assert.Multiple(() =>
         {
             Assert.That(heap.GetString(actualHeap, default), Is.Empty);
@@ -60,7 +60,7 @@ internal class StringHeapTests
     [Test]
     public void TestEmptyHeap()
     {
-        var heap = new StringHeap(default, 0, 0);
+        var heap = new StringHeap(default, GrammarFileSection.Empty);
         Assert.Multiple(() =>
         {
             Assert.That(heap.GetString(default, default), Is.EqualTo(""));
@@ -93,7 +93,7 @@ internal class StringHeapTests
         static unsafe void Test(ReadOnlySpan<byte> heap)
         {
             ReadOnlySpan<byte>* heapPtr = &heap;
-            Assert.That(() => new StringHeap(*heapPtr, 0, heapPtr->Length), Throws.InstanceOf<InvalidDataException>());
+            Assert.That(() => new StringHeap(*heapPtr, new(0, heapPtr->Length)), Throws.InstanceOf<InvalidDataException>());
         }
     }
 

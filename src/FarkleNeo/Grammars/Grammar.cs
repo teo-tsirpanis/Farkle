@@ -90,9 +90,9 @@ public abstract class Grammar
 
         GrammarStreams streams = new(grammarFile, header.StreamCount, out _);
 
-        StringHeap = new(grammarFile, streams.StringHeapOffset, streams.StringHeapLength);
-        BlobHeap = new(streams.BlobHeapOffset, streams.BlobHeapLength);
-        GrammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
+        StringHeap = new(grammarFile, streams.StringHeap);
+        BlobHeap = new(streams.BlobHeap);
+        GrammarTables = new(grammarFile, streams.TableStream, out _);
 
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
         DfaOnChar = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);

@@ -136,14 +136,14 @@ internal readonly struct GrammarTables
         return new(indexValue, kind);
     }
 
-    public GrammarTables(ReadOnlySpan<byte> grammarFile, int tableStreamOffset, int tableStreamLength, out bool hasUnknownTables) : this()
+    public GrammarTables(ReadOnlySpan<byte> grammarFile, GrammarFileSection section, out bool hasUnknownTables) : this()
     {
-        if (tableStreamLength < sizeof(ulong))
+        if (section.Length < sizeof(ulong))
         {
             ThrowHelpers.ThrowInvalidDataException("Too small table stream header.");
         }
 
-        TableKinds presentTables = (TableKinds)grammarFile.ReadUInt64(tableStreamOffset);
+        TableKinds presentTables = (TableKinds)grammarFile.ReadUInt64(section.Offset);
         hasUnknownTables = (presentTables & ~TableKinds.All) != 0;
         if ((presentTables & TableKinds.Grammar) == 0)
         {
@@ -159,14 +159,14 @@ internal readonly struct GrammarTables
             // HeapSizes
             + sizeof(byte);
         int tableHeaderSize = BitArithmetic.Align(tableHeaderSizeUnaligned, sizeof(ulong));
-        if (tableStreamLength < tableHeaderSize)
+        if (section.Length < tableHeaderSize)
         {
             ThrowHelpers.ThrowInvalidDataException("Table boundaries are missing.");
         }
 
-        int rowCountsBase = tableStreamOffset + sizeof(ulong);
+        int rowCountsBase = section.Offset + sizeof(ulong);
         int rowSizesBase = rowCountsBase + tableCount * sizeof(int);
-        int currentTableBase = tableStreamOffset + tableHeaderSize;
+        int currentTableBase = section.Offset + tableHeaderSize;
         ulong remainingTables = (ulong)presentTables;
         int i = 0;
 
@@ -182,7 +182,7 @@ internal readonly struct GrammarTables
 
         byte grammarTableRowSize = 0;
 
-        _heapSizes = (GrammarHeapSizes)grammarFile[tableStreamOffset + tableHeaderSizeUnaligned - 1];
+        _heapSizes = (GrammarHeapSizes)grammarFile[section.Offset + tableHeaderSizeUnaligned - 1];
         while (remainingTables != 0)
         {
             int currentTable = BitOperationsCompat.TrailingZeroCount(remainingTables);
@@ -260,7 +260,7 @@ internal readonly struct GrammarTables
         }
 
         Debug.Assert(i == tableCount);
-        if (tableStreamLength != currentTableBase)
+        if (section.Length != currentTableBase)
         {
             ThrowHelpers.ThrowInvalidDataException("Too small table stream.");
         }

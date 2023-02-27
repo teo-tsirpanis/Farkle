@@ -7,9 +7,7 @@ namespace Farkle.Grammars;
 
 internal readonly struct GrammarStreams
 {
-    public readonly int StringHeapOffset, StringHeapLength;
-    public readonly int BlobHeapOffset, BlobHeapLength;
-    public readonly int TableStreamOffset, TableStreamLength;
+    public readonly GrammarFileSection StringHeap, BlobHeap, TableStream;
 
     private const int StreamDefinitionsOffset =
         // Magic
@@ -48,16 +46,17 @@ internal readonly struct GrammarStreams
             {
                 ThrowHelpers.ThrowInvalidDataException("Invalid stream bounds.");
             }
+            GrammarFileSection section = new GrammarFileSection(offset, length);
             switch (identifier)
             {
                 case GrammarConstants.StringHeapIdentifier:
-                    AssignStream(identifier, offset, length, ref StringHeapOffset, ref StringHeapLength, ref seenStringHeap);
+                    AssignStream(identifier, section, ref StringHeap, ref seenStringHeap);
                     break;
                 case GrammarConstants.BlobHeapIdentifier:
-                    AssignStream(identifier, offset, length, ref BlobHeapOffset, ref BlobHeapLength, ref seenBlobHeap);
+                    AssignStream(identifier, section, ref BlobHeap, ref seenBlobHeap);
                     break;
                 case GrammarConstants.TableStreamIdentifier:
-                    AssignStream(identifier, offset, length, ref TableStreamOffset, ref TableStreamLength, ref seenTableStream);
+                    AssignStream(identifier, section, ref TableStream, ref seenTableStream);
                     break;
                 default:
                     // We could have detected duplicate unknown streams to fully conform with the spec,
@@ -71,15 +70,14 @@ internal readonly struct GrammarStreams
             ThrowHelpers.ThrowInvalidDataException("Missing table stream.");
     }
 
-    private static void AssignStream(ulong identifier, int offset, int length, ref int offsetAddress, ref int lengthAddress, ref bool seen)
+    private static void AssignStream(ulong identifier, GrammarFileSection section, ref GrammarFileSection sectionAddress, ref bool seen)
     {
         if (seen)
         {
             ThrowDuplicateStream(identifier);
         }
         seen = true;
-        offsetAddress = offset;
-        lengthAddress = length;
+        sectionAddress = section;
 
         static void ThrowDuplicateStream(ulong identifier) =>
             ThrowHelpers.ThrowInvalidDataException($"Duplicate stream {identifier:X8}.");

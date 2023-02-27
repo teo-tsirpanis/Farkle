@@ -35,7 +35,7 @@ internal class GrammarTablesTests
 
         Assert.That(writer.ToArray(), Is.EqualTo(expectedData));
 
-        var tables = new GrammarTables(expectedData, 0, expectedData.Length, out bool hasUnknownTables);
+        var tables = new GrammarTables(expectedData, new(0, expectedData.Length), out bool hasUnknownTables);
         Assert.Multiple(() =>
         {
             Assert.That(hasUnknownTables, Is.False);

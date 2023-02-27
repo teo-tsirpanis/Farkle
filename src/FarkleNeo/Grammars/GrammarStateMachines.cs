@@ -5,12 +5,9 @@ namespace Farkle.Grammars;
 
 internal readonly struct GrammarStateMachines
 {
-    public readonly int DfaOffset, DfaLength;
-    public readonly int DfaDefaultTransitionsOffset, DfaDefaultTransitionsLength;
-    public readonly int DfaWithConflictsOffset, DfaWithConflictsLength;
+    public readonly GrammarFileSection Dfa, DfaDefaultTransitions, DfaWithConflicts;
 
-    public readonly int Lr1Offset, Lr1Length;
-    public readonly int Glr1Offset, Glr1Length;
+    public readonly GrammarFileSection Lr1, Glr1;
 
     public GrammarStateMachines(ReadOnlySpan<byte> grammarFile, in BlobHeap blobHeap, in GrammarTables tables, out bool hasUnknownStateMachines) : this()
     {
@@ -20,19 +17,19 @@ internal readonly struct GrammarStateMachines
             switch (tables.GetStateMachineKind(grammarFile, i))
             {
                 case GrammarConstants.DfaOnCharKind:
-                    (DfaOffset, DfaLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    Dfa = blobHeap.GetBlobSection(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.DfaOnCharWithConflictsKind:
-                    (DfaWithConflictsOffset, DfaWithConflictsLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    DfaWithConflicts = blobHeap.GetBlobSection(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.DfaOnCharDefaultTransitionsKind:
-                    (DfaDefaultTransitionsOffset, DfaDefaultTransitionsLength) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    DfaDefaultTransitions = blobHeap.GetBlobSection(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.Lr1Kind:
-                    (Lr1Offset, Lr1Length) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    Lr1 = blobHeap.GetBlobSection(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 case GrammarConstants.Glr1Kind:
-                    (Glr1Offset, Glr1Length) = blobHeap.GetBlobAbsoluteBounds(grammarFile, tables.GetStateMachineData(grammarFile, i));
+                    Glr1 = blobHeap.GetBlobSection(grammarFile, tables.GetStateMachineData(grammarFile, i));
                     break;
                 default:
                     hasUnknownStateMachines = true;

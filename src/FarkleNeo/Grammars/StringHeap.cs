@@ -11,23 +11,23 @@ internal readonly struct StringHeap
 {
     private readonly int Offset, Length;
 
-    public StringHeap(ReadOnlySpan<byte> grammarFile, int stringHeapOffset, int stringHeapLength)
+    public StringHeap(ReadOnlySpan<byte> grammarFile, GrammarFileSection section)
     {
-        Debug.Assert(stringHeapOffset >= 0);
-        Debug.Assert(stringHeapLength >= 0);
-        if (stringHeapLength != 0)
+        Offset = section.Offset;
+        Length = section.Length;
+        if (Length != 0)
         {
-            if (grammarFile[stringHeapOffset] != 0)
+            if (grammarFile[Offset] != 0)
             {
                 ThrowHelpers.ThrowInvalidDataException("String heap does not start with null byte.");
             }
 
-            if (grammarFile[stringHeapOffset + stringHeapLength - 1] != 0)
+            if (grammarFile[Offset + Length - 1] != 0)
             {
                 ThrowHelpers.ThrowInvalidDataException("String heap does not end with null byte.");
             }
 
-            if ((uint)stringHeapLength > GrammarConstants.MaxHeapSize)
+            if ((uint)Length > GrammarConstants.MaxHeapSize)
             {
                 ThrowHelpers.ThrowInvalidDataException("String heap is too large.");
             }
@@ -36,16 +36,13 @@ internal readonly struct StringHeap
             // we could validate that the string heap's content is valid UTF-8.
             // We still could do it efficiently with a dummy IBufferWriter.
         }
-
-        Offset = stringHeapOffset;
-        Length = stringHeapLength;
     }
 
-    public (int Offset, int Length) GetStringAbsoluteBounds(ReadOnlySpan<byte> grammarFile, StringHandle handle)
+    public GrammarFileSection GetStringSection(ReadOnlySpan<byte> grammarFile, StringHandle handle)
     {
         if (handle.IsEmpty)
         {
-            return (0, 0);
+            return GrammarFileSection.Empty;
         }
 
         if (handle.Value >= (uint)Length)
@@ -61,13 +58,13 @@ internal readonly struct StringHeap
 
         int stringLength = grammarFile[(Offset + stringStart)..].IndexOf((byte)0);
         Debug.Assert(stringLength >= 0);
-        return (Offset + stringStart, stringLength);
+        return new GrammarFileSection(Offset + stringStart, stringLength);
     }
 
     public string GetString(ReadOnlySpan<byte> grammarFile, StringHandle handle)
     {
-        (int offset, int length) = GetStringAbsoluteBounds(grammarFile, handle);
-        return Encoding.UTF8.GetString(grammarFile.Slice(offset, length));
+        GrammarFileSection section = GetStringSection(grammarFile, handle);
+        return Encoding.UTF8.GetString(grammarFile.Slice(section.Offset, section.Length));
     }
 
     public StringHandle LookupString(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<char> chars)

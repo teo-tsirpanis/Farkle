@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -10,27 +9,22 @@ internal readonly struct BlobHeap
 {
     private readonly int Offset, Length;
 
-    public BlobHeap(int blobHeapOffset, int blobHeapLength)
+    public BlobHeap(GrammarFileSection section)
     {
-        Debug.Assert(blobHeapOffset >= 0);
-        Debug.Assert(blobHeapLength >= 0);
-        if (blobHeapLength != 0)
+        if ((uint)section.Length is not 0 and > GrammarConstants.MaxHeapSize)
         {
-            if ((uint)blobHeapLength > GrammarConstants.MaxHeapSize)
-            {
-                ThrowHelpers.ThrowInvalidDataException("Blob heap is too large.");
-            }
+            ThrowHelpers.ThrowInvalidDataException("Blob heap is too large.");
         }
 
-        Offset = blobHeapOffset;
-        Length = blobHeapLength;
+        Offset = section.Offset;
+        Length = section.Length;
     }
 
-    public (int Offset, int Length) GetBlobAbsoluteBounds(ReadOnlySpan<byte> grammarFile, BlobHandle handle)
+    public GrammarFileSection GetBlobSection(ReadOnlySpan<byte> grammarFile, BlobHandle handle)
     {
         if (handle.IsEmpty)
         {
-            return (0, 0);
+            return GrammarFileSection.Empty;
         }
 
         if (handle.Value >= (uint)Length)
@@ -46,6 +40,6 @@ internal readonly struct BlobHeap
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Invalid handle.");
         }
 
-        return (Offset + blobContentStart, blobLength);
+        return new GrammarFileSection(Offset + blobContentStart, blobLength);
     }
 }

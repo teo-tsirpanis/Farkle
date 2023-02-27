@@ -13,7 +13,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
     public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount) : base(grammar, stateCount, edgeCount) { }
 
-    public static DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> Create(Grammar grammar, int stateCount, int edgeCount, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength)
+    public static DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> Create(Grammar grammar, int stateCount, int edgeCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
     {
         int expectedSize =
             sizeof(uint) * 2
@@ -22,20 +22,20 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
             + edgeCount * sizeof(TState)
             + stateCount * sizeof(TTokenSymbol);
 
-        if (dfaLength != expectedSize)
+        if (dfa.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int firstEdgeBase = dfaOffset + sizeof(uint) * 2;
+        int firstEdgeBase = dfa.Offset + sizeof(uint) * 2;
         int rangeFromBase = firstEdgeBase + stateCount * sizeof(TEdge);
         int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
         int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
         int acceptBase = edgeTargetBase + edgeCount * sizeof(TState);
 
-        if (dfaDefaultTransitionsLength > 0)
+        if (dfaDefaultTransitions.Length > 0)
         {
-            if (dfaDefaultTransitionsLength != stateCount * sizeof(TState))
+            if (dfaDefaultTransitions.Length != stateCount * sizeof(TState))
             {
                 ThrowHelpers.ThrowInvalidDfaDataSize();
             }
@@ -47,7 +47,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
             RangeFromBase = rangeFromBase,
             RangeToBase = rangeToBase,
             EdgeTargetBase = edgeTargetBase,
-            DefaultTransitionBase = dfaDefaultTransitionsOffset,
+            DefaultTransitionBase = dfaDefaultTransitions.Offset,
             AcceptBase = acceptBase
         };
     }

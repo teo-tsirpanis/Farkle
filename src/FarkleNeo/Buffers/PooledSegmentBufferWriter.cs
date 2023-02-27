@@ -137,18 +137,42 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
             ThrowHelpers.ThrowOutOfMemoryException();
         }
 
+        T[] result = new T[length];
+        bool copied = TryCopyTo(result);
+        Debug.Assert(copied);
+        return result;
+    }
+
+    public bool TryCopyTo(Span<T> span)
+    {
+        if (WrittenCount > span.Length)
+        {
+            return false;
+        }
+
         Segment[]? segments = _segments;
         Debug.Assert(segments is not null);
-        T[] result = new T[length];
         int writtenElements = 0;
         for (int i = 0; i <= _activeSegmentIndex; i++)
         {
             ReadOnlySpan<T> buffer = segments![i].WrittenSpan;
-            buffer.CopyTo(result.AsSpan(writtenElements));
+            buffer.CopyTo(span.Slice(writtenElements));
             writtenElements += buffer.Length;
         }
-        Debug.Assert(writtenElements == result.Length);
-        return result;
+        Debug.Assert(writtenElements == span.Length);
+        return true;
+    }
+
+    public bool TryGetWrittenSpan(out Span<T> span)
+    {
+        if (_activeSegmentIndex == 0 && _segments is { Length: >= 1 } segments)
+        {
+            span = segments[0].WrittenSpan;
+            return true;
+        }
+
+        span = default;
+        return false;
     }
 
     public void WriteTo<TBufferWriter>(ref TBufferWriter bufferWriter) where TBufferWriter : IBufferWriter<T>

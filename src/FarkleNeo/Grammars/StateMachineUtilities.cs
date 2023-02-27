@@ -48,7 +48,7 @@ internal static class StateMachineUtilities
         return ~low;
     }
 
-    private static Dfa<TChar> CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength) where TChar : unmanaged, IComparable<TChar>
+    private static Dfa<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength) where TChar : unmanaged, IComparable<TChar>
     {
         if (dfaLength < sizeof(uint) * 2)
         {
@@ -57,6 +57,11 @@ internal static class StateMachineUtilities
 
         int stateCount = (int)grammarFile.ReadUInt32(dfaOffset);
         int edgeCount = (int)grammarFile.ReadUInt32(dfaOffset + sizeof(uint));
+
+        if (stateCount == 0)
+        {
+            return null;
+        }
 
         return stateCount switch
         {
@@ -83,7 +88,7 @@ internal static class StateMachineUtilities
             DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol>.Create(grammar, stateCount, edgeCount, dfaOffset, dfaLength, dfaDefaultTransitionsOffset, dfaDefaultTransitionsLength);
     }
 
-    private static Dfa<TChar> CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength) where TChar : unmanaged, IComparable<TChar>
+    private static Dfa<TChar>? CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, int dfaOffset, int dfaLength, int dfaDefaultTransitionsOffset, int dfaDefaultTransitionsLength) where TChar : unmanaged, IComparable<TChar>
     {
         if (dfaLength < sizeof(uint) * 3)
         {
@@ -93,6 +98,11 @@ internal static class StateMachineUtilities
         int stateCount = (int)grammarFile.ReadUInt32(dfaOffset);
         int edgeCount = (int)grammarFile.ReadUInt32(dfaOffset + sizeof(uint));
         int acceptCount = (int)grammarFile.ReadUInt32(dfaOffset + sizeof(uint) * 2);
+
+        if (stateCount == 0)
+        {
+            return null;
+        }
 
         return stateCount switch
         {

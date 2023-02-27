@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars;
@@ -21,6 +22,16 @@ internal static class StateMachineUtilities
 
         ThrowUnsupportedDfaCharacter();
         return default;
+    }
+
+    public static void WriteChar<TChar>(this IBufferWriter<byte> writer, TChar c) where TChar : unmanaged
+    {
+        if (typeof(TChar) == typeof(char))
+        {
+            writer.Write((char)(object)c);
+        }
+
+        ThrowUnsupportedDfaCharacter();
     }
 
     public static unsafe int BufferBinarySearch<TChar>(ReadOnlySpan<byte> buffer, int @base, int length, TChar item) where TChar : unmanaged, IComparable<TChar>
@@ -138,14 +149,14 @@ internal static class StateMachineUtilities
 
     public static Dfa<char>? GetGrammarStateMachines(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines stateMachines)
     {
-        if (!stateMachines.Dfa.IsEmpty)
+        if (!stateMachines.DfaOnChar.IsEmpty)
         {
-            return CreateDfa<char>(grammar, grammarFile, stateMachines.Dfa, stateMachines.DfaDefaultTransitions);
+            return CreateDfa<char>(grammar, grammarFile, stateMachines.DfaOnChar, stateMachines.DfaOnCharDefaultTransitions);
         }
 
-        if (!stateMachines.DfaWithConflicts.IsEmpty)
+        if (!stateMachines.DfaOnCharWithConflicts.IsEmpty)
         {
-            return CreateDfaWithConflicts<char>(grammar, grammarFile, stateMachines.DfaWithConflicts, stateMachines.DfaDefaultTransitions);
+            return CreateDfaWithConflicts<char>(grammar, grammarFile, stateMachines.DfaOnCharWithConflicts, stateMachines.DfaOnCharDefaultTransitions);
         }
 
         return null;

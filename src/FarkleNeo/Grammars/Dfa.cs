@@ -29,11 +29,23 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal abstract (int Offset, int Count) GetEdgeBounds(int state);
 
-    internal abstract TokenSymbolHandle GetSingleAcceptSymbol(int state);
+    internal virtual TokenSymbolHandle GetSingleAcceptSymbol(int state)
+    {
+        switch (GetAcceptSymbolBounds(state))
+        {
+            case (int offset, 1):
+                return GetAcceptSymbol(offset);
+            case (_, 0):
+                return default;
+            default:
+                ThrowHelpers.ThrowInvalidOperationException("The DFA state has more than one accept symbol.");
+                return default;
+        }
+    }
 
     internal abstract DfaEdge<TChar> GetEdge(int index);
 
-    internal abstract bool StateHasConflicts(int state);
+    internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 
     /// <summary>
     /// The number of the <see cref="Dfa{TChar}"/>'s initial state.

@@ -19,7 +19,6 @@ public abstract class Grammar
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
     internal readonly GrammarTables GrammarTables;
-    internal readonly Dfa<char> Dfa;
     internal readonly int TerminalCount;
 
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
@@ -60,6 +59,11 @@ public abstract class Grammar
     /// </summary>
     public ProductionCollection Productions => new(this, 1, GrammarTables.ProductionRowCount);
 
+    /// <summary>
+    /// The <see cref="Grammar"/>'s <see cref="Dfa{T}"/> on <see cref="char"/>, if it exists.
+    /// </summary>
+    public Dfa<char>? DfaOnChar { get; }
+
     private static void ValidateHeader(GrammarHeader header)
     {
         if (header.IsSupported)
@@ -91,8 +95,7 @@ public abstract class Grammar
         GrammarTables = new(grammarFile, streams.TableStreamOffset, streams.TableStreamLength, out _);
 
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
-        Dfa = StateMachineUtilities.CreateDfa<char>(this, grammarFile, stateMachines.DfaOffset, stateMachines.DfaLength,
-            stateMachines.DfaDefaultTransitionsOffset, stateMachines.DfaDefaultTransitionsLength);
+        DfaOnChar = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
         bool rejectTerminals = false;
         for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)

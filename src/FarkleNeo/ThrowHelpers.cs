@@ -47,6 +47,10 @@ internal static class ThrowHelpers
         throw new InvalidOperationException("Handle has no value.");
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowInvalidDfaDataSize() =>
+        throw new InvalidOperationException("Invalid DFA data size.");
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

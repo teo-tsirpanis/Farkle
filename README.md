@@ -2,6 +2,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Farkle.svg)](https://nuget.org/packages/Farkle)
 [![CI](https://github.com/teo-tsirpanis/Farkle/actions/workflows/ci.yml/badge.svg)](https://github.com/teo-tsirpanis/Farkle/actions/workflows/ci.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5005/badge)](https://bestpractices.coreinfrastructure.org/projects/5005)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/teo-tsirpanis/Farkle/badge)](https://api.securityscorecards.dev/projects/github.com/teo-tsirpanis/Farkle)
 [![Discord Server](https://badgen.net/discord/members/mYzXu5Zt8J)](https://discord.gg/mYzXu5Zt8J)
 
 # Farkle

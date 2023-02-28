@@ -1,4 +1,5 @@
 name: SonarCloud
+permissions: read-all
 on:
   push:
     branches:

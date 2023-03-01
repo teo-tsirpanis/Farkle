@@ -361,7 +361,7 @@ An LR(1) state machine's representation consists of the following data:
 |`uint32_t`|`stateCount`|The number of states in the state machine.|
 |`uint32_t`|`actionCount`|The number of actions in the state machine.|
 |`uint32_t`|`gotoCount`|The number of GOTO actions in the state machine.|
-|`action_index_t[stateCount]`|`firstActionList`|The zero-based index to the first action of each state.|
+|`action_index_t[stateCount]`|`firstAction`|The zero-based index to the first action of each state.|
 |`token_symbol_t[actionCount]`|`actionTerminal`|An index to the _TokenSymbol_ table that specifies the terminal that triggers each action.|
 |`lr_action_t[actionCount]`|`action`|The type of each action.|
 |`eof_action_t[stateCount]`|`eofAction`|The type of the action to take if input ends while being on each state.|
@@ -405,7 +405,13 @@ The specific algorithm used to build this state machine (Canonical LR(1), LALR(1
 
 ### GLR(1) state machine
 
-A GLR(1) state machine has at least one terminal and state where there is more than one possible action. It is represented as a regular LR(1) state machine with the only difference being that for each state, duplicate values of the `actionTerminal` field are allowed.
+A GLR(1) state machine has at least one terminal and state where there is more than one possible action. It is represented as a regular LR(1) state machine with the following changes:
+
+* A field of type `uint32_t` called `eofActionCount` is added after the `gotoCount` field.
+* A field of type `eof_action_index_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the zero-based index to the first EOF action of each state.
+    * The type `eof_action_index_t` is the smallest of one, two or four bytes that can hold the value of the `eofActionCount` field plus one.
+* The `eofAction` field's type is changed to `eof_action_t[eofActionCount]`.
+* For each state, duplicate values of the `actionTerminal` field are allowed.
 
 ## Extensibility
 

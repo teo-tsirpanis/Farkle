@@ -13,13 +13,16 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
     private int _currentState;
     private bool _isFinished;
 
+    private readonly int[] _firstEdges;
     // We use a tuple instead of DfaEdge to avoid writing our own comparer.
     private readonly List<(TChar KeyFrom, TChar KeyTo, int TargetState)> _edges = new();
-    private readonly int[] _firstEdges;
     private readonly int[] _defaultTransitions;
 
     private readonly int[] _firstAccepts;
     private readonly List<TokenSymbolHandle> _accepts = new();
+    private readonly HashSet<TokenSymbolHandle> _acceptsOfState = new();
+
+    private uint _maxTokenSymbol;
 
     public bool HasConflicts { get; private set; }
 
@@ -48,11 +51,19 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         {
             return;
         }
+        if (!_acceptsOfState.Add(handle))
+        {
+            return;
+        }
 
         _accepts.Add(handle);
         if (_accepts.Count - _firstAccepts[_currentState] > 1)
         {
             HasConflicts = true;
+        }
+        if (handle.TableIndex > _maxTokenSymbol)
+        {
+            _maxTokenSymbol = handle.TableIndex;
         }
     }
 
@@ -154,6 +165,7 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         _currentState++;
         _firstEdges[_currentState] = _edges.Count;
         _firstAccepts[_currentState] = _accepts.Count;
+        _acceptsOfState.Clear();
     }
 
     public void SetDefaultTransition(int targetState)
@@ -175,21 +187,13 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         }
     }
 
-    private void ValidateTokenSymbolCount(int tokenSymbolCount)
-    {
-        foreach (TokenSymbolHandle handle in _accepts)
-        {
-            if (handle.TableIndex > (uint)tokenSymbolCount)
-            {
-                ThrowHelpers.ThrowInvalidOperationException("Invalid token symbol handle.");
-            }
-        }
-    }
-
     public void WriteDfaData(IBufferWriter<byte> writer, int tokenSymbolCount)
     {
         EnsureFinished();
-        ValidateTokenSymbolCount(tokenSymbolCount);
+        if (_maxTokenSymbol > (uint)tokenSymbolCount)
+        {
+            ThrowHelpers.ThrowInvalidOperationException("Cannot encode DFA; an invalid accept symbol has been written to it.");
+        }
 
         writer.Write(StateCount);
         writer.Write(_edges.Count);

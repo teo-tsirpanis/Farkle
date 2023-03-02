@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Collections.Immutable;
 

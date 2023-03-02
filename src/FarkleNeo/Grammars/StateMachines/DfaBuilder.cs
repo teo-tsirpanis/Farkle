@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
 {

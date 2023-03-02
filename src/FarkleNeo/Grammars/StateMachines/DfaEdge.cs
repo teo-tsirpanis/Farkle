@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Maps a range of characters to a target DFA state.

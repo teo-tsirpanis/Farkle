@@ -3,7 +3,7 @@
 
 using Farkle.Buffers;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> : DfaImplementationBase<TChar, TState, TEdge> where TChar : unmanaged, IComparable<TChar>
 {

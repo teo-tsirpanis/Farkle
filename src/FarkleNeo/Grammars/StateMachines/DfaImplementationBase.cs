@@ -5,7 +5,7 @@ using Farkle.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {

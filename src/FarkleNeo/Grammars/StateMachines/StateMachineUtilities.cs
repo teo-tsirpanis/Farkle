@@ -5,7 +5,7 @@ using Farkle.Buffers;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {

@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Specifies what an LR parser will do if it encounters a terminal.

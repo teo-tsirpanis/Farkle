@@ -3,7 +3,7 @@
 
 using System.Collections;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Represents a deterministic finite automaton (DFA) stored in a <see cref="Grammar"/>.

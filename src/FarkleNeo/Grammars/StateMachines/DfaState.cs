@@ -3,7 +3,7 @@
 
 using System.Collections;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Represents a state of a <see cref="Dfa{TChar}"/>.

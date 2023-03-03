@@ -20,7 +20,9 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
 
     private readonly int[] _firstAccepts;
     private readonly List<TokenSymbolHandle> _accepts = new();
+#if DEBUG
     private readonly HashSet<TokenSymbolHandle> _acceptsOfState = new();
+#endif
 
     private uint _maxTokenSymbol;
 
@@ -51,10 +53,12 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         {
             return;
         }
+#if DEBUG
         if (!_acceptsOfState.Add(handle))
         {
             return;
         }
+#endif
 
         _accepts.Add(handle);
         if (_accepts.Count - _firstAccepts[_currentState] > 1)
@@ -165,7 +169,9 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         _currentState++;
         _firstEdges[_currentState] = _edges.Count;
         _firstAccepts[_currentState] = _accepts.Count;
+#if DEBUG
         _acceptsOfState.Clear();
+#endif
     }
 
     public void SetDefaultTransition(int targetState)

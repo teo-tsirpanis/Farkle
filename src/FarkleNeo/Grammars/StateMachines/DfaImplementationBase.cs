@@ -23,15 +23,12 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
     public required int DefaultTransitionBase { get; init; }
 
-    public sealed override int Count { get; }
-
-    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount)
+    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
         Debug.Assert(GrammarTables.GetIndexSize(stateCount) == sizeof(TState));
         Debug.Assert(GrammarTables.GetIndexSize(edgeCount) == sizeof(TEdge));
 
         _grammar = grammar;
-        Count = stateCount;
         _edgeCount = edgeCount;
     }
 

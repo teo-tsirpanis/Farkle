@@ -13,9 +13,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
 
     internal required int AcceptBase { get; init; }
 
-    public override bool HasConflicts => true;
-
-    public DfaWithConflicts(Grammar grammar, int stateCount, int edgeCount, int acceptCount) : base(grammar, stateCount, edgeCount)
+    public DfaWithConflicts(Grammar grammar, int stateCount, int edgeCount, int acceptCount) : base(grammar, stateCount, edgeCount, true)
     {
         _acceptCount = acceptCount;
     }

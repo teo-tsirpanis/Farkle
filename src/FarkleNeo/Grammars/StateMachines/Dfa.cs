@@ -19,7 +19,11 @@ namespace Farkle.Grammars.StateMachines;
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
 public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 {
-    internal Dfa() { }
+    internal Dfa(int stateCount, bool hasConflicts)
+    {
+        Count = stateCount;
+        HasConflicts = hasConflicts;
+    }
 
     internal abstract (int Offset, int Count) GetAcceptSymbolBounds(int state);
 
@@ -55,7 +59,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     /// <summary>
     /// The number of states in the <see cref="Dfa{TChar}"/>.
     /// </summary>
-    public abstract int Count { get; }
+    public int Count { get; }
 
     /// <summary>
     /// Whether there might be at least one state in the <see cref="Dfa{TChar}"/> with
@@ -67,7 +71,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     /// and this property to have a value of <see langword="true"/>, but a value of <see langword="false"/>
     /// guarantees that it doesn't have conflicts. Farkle does not treat such DFAs as suitable for parsing.</para>
     /// </remarks>
-    public abstract bool HasConflicts { get; }
+    public bool HasConflicts { get; }
 
     /// <summary>
     /// Gets the <see cref="DfaState{TChar}"/> of the <see cref="Dfa{TChar}"/> with the specific index.

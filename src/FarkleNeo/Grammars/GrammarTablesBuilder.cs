@@ -38,7 +38,13 @@ internal struct GrammarTablesBuilder
     private HashSet<StringHandle>? _presentSpecialNames;
     private List<SpecialNameRow>? _specialNames;
 
-    public int TokenSymbolRowCount => _tokenSymbols?.Count ?? 0;
+    public readonly int TokenSymbolRowCount => _tokenSymbols?.Count ?? 0;
+
+    public int TerminalCount { readonly get; private set; }
+
+    public readonly int NonterminalCount => _nonterminals?.Count ?? 0;
+
+    public readonly int ProductionCount => _productions?.Count ?? 0;
 
     private static uint EncodeSymbolCodedIndex(EntityHandle handle)
     {
@@ -111,6 +117,8 @@ internal struct GrammarTablesBuilder
             {
                 ThrowHelpers.ThrowArgumentException(nameof(flags), "A terminal cannot start a group.");
             }
+
+            TerminalCount++;
         }
         else
         {

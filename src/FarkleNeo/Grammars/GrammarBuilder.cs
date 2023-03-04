@@ -104,6 +104,15 @@ internal sealed class GrammarBuilder
         }
     }
 
+    public void AddStateMachine(LrBuilder lr)
+    {
+        using var buffer = new PooledSegmentBufferWriter<byte>();
+
+        lr.WriteData(buffer, _tablesBuilder.TokenSymbolRowCount, _tablesBuilder.TerminalCount, _tablesBuilder.ProductionCount, _tablesBuilder.NonterminalCount);
+        ulong kind = lr.HasConflicts ? GrammarConstants.Lr1Kind : GrammarConstants.Glr1Kind;
+        AddStateMachine(kind, GetOrAddBlob(buffer));
+    }
+
     public void AddStateMachine(ulong kind, BlobHandle data)
     {
         _blobHeapBuilder.ValidateHandle(data);

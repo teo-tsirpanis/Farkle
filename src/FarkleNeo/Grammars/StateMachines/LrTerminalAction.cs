@@ -8,9 +8,16 @@ namespace Farkle.Grammars.StateMachines;
 /// </summary>
 public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
 {
-    private readonly int _value;
+    internal int Value { get; }
 
-    private LrTerminalAction(int value) => _value = value;
+    internal static byte GetEncodedSize(int stateCount, int productionCount) => (stateCount, productionCount) switch
+    {
+        (<= sbyte.MaxValue - 1, <= -sbyte.MinValue) => 1,
+        (<= short.MaxValue - 1, <= -short.MinValue) => 2,
+        _ => 4
+    };
+
+    internal LrTerminalAction(int value) => Value = value;
 
     /// <summary>
     /// An <see cref="LrTerminalAction"/> that will cause a syntax error.
@@ -54,19 +61,19 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     /// Whether this <see cref="LrTerminalAction"/> will cause a syntax error.
     /// </summary>
     /// <seealso cref="Error"/>
-    public bool IsError => _value == 0;
+    public bool IsError => Value == 0;
 
     /// <summary>
     /// Whether this <see cref="LrTerminalAction"/> will shift to another state.
     /// </summary>
     /// <seealso cref="CreateShift"/>
-    public bool IsShift => _value > 0;
+    public bool IsShift => Value > 0;
 
     /// <summary>
     /// Whether this <see cref="LrTerminalAction"/> will reduce a production.
     /// </summary>
     /// <seealso cref="CreateReduce"/>
-    public bool IsReduce => _value < 0;
+    public bool IsReduce => Value < 0;
 
     /// <summary>
     /// The state this <see cref="LrTerminalAction"/> will shift to.
@@ -81,7 +88,7 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
             {
                 ThrowHelpers.ThrowInvalidOperationException("This action is not a shift.");
             }
-            return _value - 1;
+            return Value - 1;
         }
     }
 
@@ -98,7 +105,7 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
             {
                 ThrowHelpers.ThrowInvalidOperationException("This action is not a reduction.");
             }
-            return new((uint)-_value);
+            return new((uint)-Value);
         }
     }
 
@@ -106,10 +113,10 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     public override bool Equals(object? other) => other is LrTerminalAction x && Equals(x);
 
     /// <inheritdoc/>
-    public bool Equals(LrTerminalAction other) => _value == other._value;
+    public bool Equals(LrTerminalAction other) => Value == other.Value;
 
     /// <inheritdoc/>
-    public override int GetHashCode() => _value;
+    public override int GetHashCode() => Value;
 
     /// <inheritdoc/>
     public override string ToString()

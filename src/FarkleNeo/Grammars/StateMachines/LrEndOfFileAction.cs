@@ -8,9 +8,16 @@ namespace Farkle.Grammars.StateMachines;
 /// </summary>
 public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
 {
-    private readonly int _value;
+    internal int Value { get; }
 
-    private LrEndOfFileAction(int value) => _value = value;
+    internal static byte GetEncodedSize(int productionCount) => productionCount switch
+    {
+        <= byte.MaxValue - 1 => 1,
+        <= ushort.MaxValue - 1 => 2,
+        _ => 4
+    };
+
+    internal LrEndOfFileAction(int value) => Value = value;
 
     /// <summary>
     /// An <see cref="LrEndOfFileAction"/> that will cause a syntax error.
@@ -44,19 +51,19 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
     /// Whether this <see cref="LrEndOfFileAction"/> will cause a syntax error.
     /// </summary>
     /// <seealso cref="Error"/>
-    public bool IsError => _value == 0;
+    public bool IsError => Value == 0;
 
     /// <summary>
     /// Whether this <see cref="LrEndOfFileAction"/> will cause the input to be accepted.
     /// </summary>
     /// <seealso cref="Accept"/>
-    public bool IsAccept => _value == 1;
+    public bool IsAccept => Value == 1;
 
     /// <summary>
     /// Whether this <see cref="LrEndOfFileAction"/> will reduce a production.
     /// </summary>
     /// <seealso cref="CreateReduce"/>
-    public bool IsReduce => _value > 1;
+    public bool IsReduce => Value > 1;
 
     /// <summary>
     /// The production this <see cref="LrEndOfFileAction"/> will reduce.
@@ -71,7 +78,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
             {
                 ThrowHelpers.ThrowInvalidOperationException("This action is not a reduction.");
             }
-            return new((uint)(_value - 1));
+            return new((uint)(Value - 1));
         }
     }
 
@@ -79,10 +86,10 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
     public override bool Equals(object? other) => other is LrEndOfFileAction x && Equals(x);
 
     /// <inheritdoc/>
-    public bool Equals(LrEndOfFileAction other) => _value == other._value;
+    public bool Equals(LrEndOfFileAction other) => Value == other.Value;
 
     /// <inheritdoc/>
-    public override int GetHashCode() => _value;
+    public override int GetHashCode() => Value;
 
     /// <inheritdoc/>
     public override string ToString()

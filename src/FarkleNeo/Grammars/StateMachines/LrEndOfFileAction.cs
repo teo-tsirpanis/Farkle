@@ -37,7 +37,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(production));
         }
-        return new(-(int)production.TableIndex);
+        return new((int)production.TableIndex + 1);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
             {
                 ThrowHelpers.ThrowInvalidOperationException("This action is not a reduction.");
             }
-            return new((uint)-_value);
+            return new((uint)(_value - 1));
         }
     }
 

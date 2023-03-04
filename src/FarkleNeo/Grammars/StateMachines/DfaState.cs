@@ -19,7 +19,7 @@ public readonly struct DfaState<TChar>
     private readonly Dfa<TChar> _dfa;
 
     /// <summary>
-    /// The index of this state, starting from 0.
+    /// The index of this <see cref="DfaState{TChar}"/>, starting from 0.
     /// </summary>
     public int StateIndex { get; }
 

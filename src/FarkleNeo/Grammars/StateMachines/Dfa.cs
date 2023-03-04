@@ -74,9 +74,11 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     public bool HasConflicts { get; }
 
     /// <summary>
-    /// Gets the <see cref="DfaState{TChar}"/> of the <see cref="Dfa{TChar}"/> with the specific index.
+    /// Gets the <see cref="DfaState{TChar}"/> of the <see cref="Dfa{TChar}"/> with the specified index.
     /// </summary>
     /// <param name="index">The state's index, starting from zero.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is
+    /// less than zero or greater than or equal to <see cref="Count"/>.</exception>
     public DfaState<TChar> this[int index]
     {
         get
@@ -98,7 +100,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     public abstract int NextState(int state, TChar c);
 
     /// <summary>
-    /// Gets the enumerator of the DFA's states.
+    /// Gets the enumerator of the <see cref="Dfa{TChar}"/>'s states.
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
@@ -111,22 +113,22 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     /// </summary>
     public struct Enumerator : IEnumerator<DfaState<TChar>>
     {
-        private readonly Dfa<TChar> dfa;
+        private readonly Dfa<TChar> _dfa;
         private int _currentIndex = -1;
 
         internal Enumerator(Dfa<TChar> dfa)
         {
-            this.dfa = dfa;
+            _dfa = dfa;
         }
 
         /// <inheritdoc/>
-        public DfaState<TChar> Current => dfa[_currentIndex];
+        public DfaState<TChar> Current => _dfa[_currentIndex];
 
         /// <inheritdoc/>
         public bool MoveNext()
         {
             int nextIndex = _currentIndex + 1;
-            if (_currentIndex < dfa.Count)
+            if (_currentIndex < _dfa.Count)
             {
                 _currentIndex = nextIndex;
                 return true;

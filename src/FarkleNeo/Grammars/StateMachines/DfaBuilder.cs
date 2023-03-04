@@ -121,41 +121,6 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
             ThrowHelpers.ThrowInvalidOperationException("Not all states have been defined.");
         }
         _isFinished = true;
-
-        for (int i = 0; i < _firstEdges.Length - 1; i++)
-        {
-            int firstEdge = _firstEdges[i];
-            int nextEdge = i < _firstEdges.Length - 1 ? _firstEdges[i + 1] : _edges.Count;
-            SortAndValidateRanges(firstEdge, nextEdge - firstEdge, i);
-        }
-        SortAndValidateRanges(_firstEdges[^1], _edges.Count - _firstEdges[^1], StateCount - 1);
-
-        void SortAndValidateRanges(int start, int count, int state)
-        {
-            if (count <= 1)
-            {
-                return;
-            }
-
-            _edges.Sort(start, count, null);
-            TChar k0 = _edges[start].KeyTo;
-            for (int i = 1; i < count; i++)
-            {
-                (TChar keyFrom, TChar keyTo, _) = _edges[start + i];
-
-                // We have tested that each edge's range is properly ordered when we added it.
-                Debug.Assert(keyFrom.CompareTo(keyTo) <= 0);
-                if (k0.CompareTo(keyFrom) >= 0)
-                {
-                    ThrowOverlappingRanges(state);
-                }
-
-                k0 = keyTo;
-            }
-
-            static void ThrowOverlappingRanges(int state) =>
-                ThrowHelpers.ThrowInvalidOperationException($"DFA ranges overlap on DFA state {state}");
-        }
     }
 
     public void NextState()
@@ -165,6 +130,11 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot advance to next state; already at the last state.");
         }
+
+        int firstEdge = _firstEdges[_currentState];
+        SortAndValidateEdgeRanges(firstEdge, _edges.Count - firstEdge);
+        int firstAccept = _firstAccepts[_currentState];
+        _accepts.Sort(firstAccept, _accepts.Count - firstAccept, null);
 
         _currentState++;
         _firstEdges[_currentState] = _edges.Count;
@@ -183,6 +153,30 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
             ThrowHelpers.ThrowInvalidOperationException("Default transition is already set for this state.");
         HasDefaultTransitions = true;
         _defaultTransitions[_currentState] = targetState + 1;
+    }
+
+    private void SortAndValidateEdgeRanges(int start, int count)
+    {
+        if (count <= 1)
+        {
+            return;
+        }
+
+        _edges.Sort(start, count, null);
+        TChar k0 = _edges[start].KeyTo;
+        for (int i = 1; i < count; i++)
+        {
+            (TChar keyFrom, TChar keyTo, _) = _edges[start + i];
+
+            // We have tested that each edge's range is properly ordered when we added it.
+            Debug.Assert(keyFrom.CompareTo(keyTo) <= 0);
+            if (k0.CompareTo(keyFrom) >= 0)
+            {
+                ThrowHelpers.ThrowInvalidOperationException("DFA ranges overlap.");
+            }
+
+            k0 = keyTo;
+        }
     }
 
     private void ValidateState(int state, [CallerArgumentExpression(nameof(state))] string? paramName = null)

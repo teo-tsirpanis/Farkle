@@ -42,9 +42,8 @@ internal readonly struct GrammarTables
     public readonly int NonterminalNameBase, NonterminalFlagsBase, NonterminalFirstProductionBase;
 
     public readonly int ProductionRowCount;
-    // PERF: We could calculate it on-demand; this is a single-column row.
     public readonly byte ProductionRowSize;
-    public readonly int ProductionFirstMemberBase;
+    public readonly int ProductionHeadBase, ProductionFirstMemberBase;
 
     public readonly int ProductionMemberRowCount;
     // PERF: We could calculate it on-demand; this is a single-column row.
@@ -304,8 +303,9 @@ internal readonly struct GrammarTables
         NonterminalFirstProductionBase = NonterminalFlagsBase + sizeof(ushort);
 
         ValidateRowCount(TableKind.Production, ProductionRowSize,
-            productionMemberIndexSize);
-        ProductionFirstMemberBase = productionBase + 0;
+            nonterminalIndexSize + productionMemberIndexSize);
+        ProductionHeadBase = productionBase + 0;
+        ProductionFirstMemberBase = ProductionHeadBase + nonterminalIndexSize;
 
         ValidateRowCount(TableKind.ProductionMember, ProductionMemberRowSize,
             productionMemberCodedIndexSize);
@@ -366,6 +366,9 @@ internal readonly struct GrammarTables
 
     public ProductionHandle GetNonterminalFirstProduction(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadProductionHandle(grammarFile, GetTableCellOffset(NonterminalFirstProductionBase, NonterminalRowCount, NonterminalRowSize, index));
+
+    public NonterminalHandle GetProductionHead(ReadOnlySpan<byte> grammarFile, uint index) =>
+        ReadNonterminalHandle(grammarFile, GetTableCellOffset(ProductionHeadBase, ProductionRowCount, ProductionRowSize, index));
 
     public uint GetProductionFirstMember(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadProductionMemberHandle(grammarFile, GetTableCellOffset(ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, index));

@@ -340,7 +340,7 @@ internal struct GrammarTablesBuilder
         WriteRowSize(groupRows, stringHeapIndexSize + 3 * tokenSymbolIndexSize + sizeof(ushort) + groupNestingIndexSize);
         WriteRowSize(groupNestingRows, groupIndexSize);
         WriteRowSize(nonterminalRows, stringHeapIndexSize + sizeof(ushort) + productionIndexSize);
-        WriteRowSize(productionRows, productionMemberIndexSize);
+        WriteRowSize(productionRows, nonterminalIndexSize + productionMemberIndexSize);
         WriteRowSize(productionMemberRows, symbolCodedIndexSize);
         WriteRowSize(stateMachineRows, sizeof(ulong) + blobHeapIndexSize);
         WriteRowSize(specialNameRows, stringHeapIndexSize + symbolCodedIndexSize);
@@ -401,11 +401,35 @@ internal struct GrammarTablesBuilder
 
         if (_productions is not null)
         {
+            List<NonterminalRow>? nonterminals = _nonterminals;
+            Debug.Assert(nonterminals is not null);
+
+            int currentNonterminal = 0;
+            int remainingProductions = nonterminals[currentNonterminal].ProductionCount;
+            UpdateRemainingProductions();
+
             uint firstMember = 1;
             foreach (var row in _productions)
             {
+                // currentNonterminal is zero-based, we have to increment it by one to write it.
+                writer.WriteVariableSize((uint)currentNonterminal + 1, nonterminalIndexSize);
                 writer.WriteVariableSize(firstMember, productionMemberIndexSize);
                 firstMember += (uint)row.MemberCount;
+                remainingProductions--;
+                UpdateRemainingProductions();
+            }
+
+            // We track the head nonterminal by counting how many productions we have written
+            // and how many productions are left in the current nonterminal. When we have finished
+            // writing all productions for the current nonterminal, we move to the next nonterminal,
+            // while skipping those with no productions.
+            void UpdateRemainingProductions()
+            {
+                while (remainingProductions == 0 && currentNonterminal < nonterminals.Count)
+                {
+                    currentNonterminal++;
+                    remainingProductions = nonterminals[currentNonterminal].ProductionCount;
+                }
             }
         }
 

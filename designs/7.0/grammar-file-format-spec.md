@@ -236,12 +236,14 @@ The following rules apply to the _Nonterminal_ table:
 
 ### Production table
 
-The _Production_ table contains the following column:
+The _Production_ table contains the following columns:
 
+* __Head__ (an index to the _Nonterminal_ table): The nonterminal that this production belongs to.
 * __FirstMember__ (an index to the _ProductionMember_ table): The index to the first member of this production. This member list ends before the __FirstMember__ value of the next production, or at the end of the _ProductionMember_ table if this is the last production.
 
 The following rules apply to the _Production_ table:
 
+* A production's __Head__ column MUST have a value corresponding to its head nonterminal, as determined by the __FirstProduction__ column of the _Nonterminal_ table.
 * A production's __FirstMember__ column MUST be greater or equal than the __FirstMember__ column of the previous production.
 * The value of the __FirstMember__ column of the first production MUST be equal to one.
 * If the last production does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.

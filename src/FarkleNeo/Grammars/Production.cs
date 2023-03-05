@@ -51,31 +51,15 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// Gets a <see cref="NonterminalHandle"/> pointing to the <see cref="Production"/>'s head.
+    /// A <see cref="NonterminalHandle"/> pointing to the <see cref="Production"/>'s head.
     /// </summary>
-    /// <remarks>
-    /// This method's implementation has a non-constant time complexity, relative to the
-    /// number of nonterminals in the grammar. If you are calling this method in a loop,
-    /// you should instead start from a <see cref="Nonterminal"/> and enumerate its
-    /// <see cref="Nonterminal.Productions"/>. Farkle's grammar format is not optimized
-    /// for quick lookups of a production's head.
-    /// </remarks>
-    public NonterminalHandle GetHead()
+    public NonterminalHandle Head
     {
-        AssertHasValue();
-        Debug.Assert(Handle.Value < _grammar.GrammarTables.ProductionRowCount);
-
-        ref readonly GrammarTables grammarTables = ref _grammar.GrammarTables;
-        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
-        for (uint i = 2; i <= grammarTables.NonterminalRowCount; i++)
+        get
         {
-            if (Handle.TableIndex < grammarTables.GetNonterminalFirstProduction(grammarFile, i).TableIndex)
-            {
-                return new(i - 1);
-            }
+            AssertHasValue();
+            return _grammar.GrammarTables.GetProductionHead(_grammar.GrammarFile, Handle.TableIndex);
         }
-
-        return new((uint)grammarTables.NonterminalRowCount);
     }
 
     /// <summary>

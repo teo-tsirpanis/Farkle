@@ -62,7 +62,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
         return (0, 0);
     }
 
-    internal override TokenSymbolHandle GetAcceptSymbol(int index) => GetSingleAcceptSymbol(index);
+    internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetSingleAcceptSymbol(index);
 
     internal override TokenSymbolHandle GetSingleAcceptSymbol(int state)
     {

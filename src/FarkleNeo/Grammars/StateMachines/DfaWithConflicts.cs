@@ -73,7 +73,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         return (firstAccept,  nextFirstAccept - firstAccept);
     }
 
-    internal override TokenSymbolHandle GetAcceptSymbol(int index)
+    internal override TokenSymbolHandle GetAcceptSymbolAt(int index)
     {
         if ((uint)index >= (uint)_acceptCount)
         {

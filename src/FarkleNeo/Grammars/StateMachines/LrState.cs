@@ -97,7 +97,7 @@ public readonly struct LrState
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._lr.GetAction(_collection._offset + _currentIndex);
+                    return _collection._lr.GetActionAt(_collection._offset + _currentIndex);
                 }
             }
 
@@ -171,7 +171,7 @@ public readonly struct LrState
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._lr.GetEndOfFileActionImpl(_collection._offset + _currentIndex);
+                    return _collection._lr.GetEndOfFileActionAt(_collection._offset + _currentIndex);
                 }
             }
 
@@ -246,7 +246,7 @@ public readonly struct LrState
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._lr.GetGoto(_collection._offset + _currentIndex);
+                    return _collection._lr.GetGotoAt(_collection._offset + _currentIndex);
                 }
             }
 

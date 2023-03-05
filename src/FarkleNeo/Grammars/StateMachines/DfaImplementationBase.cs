@@ -97,7 +97,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
         return (edgeOffset, nextEdgeOffset - edgeOffset);
     }
 
-    internal sealed override DfaEdge<TChar> GetEdge(int index)
+    internal sealed override DfaEdge<TChar> GetEdgeAt(int index)
     {
         if ((uint)index >= (uint)_edgeCount)
         {

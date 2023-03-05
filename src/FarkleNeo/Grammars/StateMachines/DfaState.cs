@@ -135,7 +135,7 @@ public readonly struct DfaState<TChar>
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._dfa.GetEdge(_collection._offset + _currentIndex);
+                    return _collection._dfa.GetEdgeAt(_collection._offset + _currentIndex);
                 }
             }
 
@@ -210,7 +210,7 @@ public readonly struct DfaState<TChar>
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._dfa.GetAcceptSymbol(_collection._offset + _currentIndex);
+                    return _collection._dfa.GetAcceptSymbolAt(_collection._offset + _currentIndex);
                 }
             }
 

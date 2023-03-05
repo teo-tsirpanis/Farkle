@@ -27,18 +27,20 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal abstract (int Offset, int Count) GetAcceptSymbolBounds(int state);
 
-    internal abstract TokenSymbolHandle GetAcceptSymbol(int index);
+    internal abstract TokenSymbolHandle GetAcceptSymbolAt(int index);
 
     internal abstract int GetDefaultTransition(int state);
 
     internal abstract (int Offset, int Count) GetEdgeBounds(int state);
+
+    internal abstract DfaEdge<TChar> GetEdgeAt(int index);
 
     internal virtual TokenSymbolHandle GetSingleAcceptSymbol(int state)
     {
         switch (GetAcceptSymbolBounds(state))
         {
             case (int offset, 1):
-                return GetAcceptSymbol(offset);
+                return GetAcceptSymbolAt(offset);
             case (_, 0):
                 return default;
             default:
@@ -46,8 +48,6 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
                 return default;
         }
     }
-
-    internal abstract DfaEdge<TChar> GetEdge(int index);
 
     internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 

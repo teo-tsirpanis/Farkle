@@ -19,15 +19,15 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
 
     internal abstract (int Offset, int Count) GetActionBounds(int state);
 
-    internal abstract KeyValuePair<TokenSymbolHandle, LrTerminalAction> GetAction(int state);
+    internal abstract KeyValuePair<TokenSymbolHandle, LrTerminalAction> GetActionAt(int state);
 
     internal abstract (int Offset, int Count) GetEndOfFileActionBounds(int state);
 
-    internal abstract LrEndOfFileAction GetEndOfFileActionImpl(int index);
+    internal abstract LrEndOfFileAction GetEndOfFileActionAt(int index);
 
     internal abstract (int Offset, int Count) GetGotoBounds(int state);
 
-    internal abstract KeyValuePair<NonterminalHandle, int> GetGoto(int index);
+    internal abstract KeyValuePair<NonterminalHandle, int> GetGotoAt(int index);
 
     internal virtual bool StateHasConflicts(int state)
     {
@@ -41,10 +41,10 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
         {
             return false;
         }
-        TokenSymbolHandle previousTerminal = GetAction(offset).Key;
+        TokenSymbolHandle previousTerminal = GetActionAt(offset).Key;
         for (int i = 1; i < count; i++)
         {
-            TokenSymbolHandle terminal = GetAction(offset + i).Key;
+            TokenSymbolHandle terminal = GetActionAt(offset + i).Key;
             if (terminal == previousTerminal)
             {
                 return true;
@@ -114,7 +114,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
         switch (GetEndOfFileActionBounds(state))
         {
             case (int offset, 1):
-                return GetEndOfFileActionImpl(offset);
+                return GetEndOfFileActionAt(offset);
             case (_, 0):
                 return LrEndOfFileAction.Error;
             default:

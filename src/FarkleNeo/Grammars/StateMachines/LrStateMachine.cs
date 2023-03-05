@@ -1,0 +1,179 @@
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
+using System.Collections;
+
+namespace Farkle.Grammars.StateMachines;
+
+/// <summary>
+/// Represents an LR(1) state machine stored in a <see cref="Grammar"/>.
+/// It is used by parsers to parse tokens produced by tokenizers.
+/// </summary>
+public abstract class LrStateMachine : IReadOnlyList<LrState>
+{
+    internal LrStateMachine(int count, bool hasConflicts)
+    {
+        Count = count;
+        HasConflicts = hasConflicts;
+    }
+
+    internal abstract (int Offset, int Count) GetActionBounds(int state);
+
+    internal abstract KeyValuePair<TokenSymbolHandle, LrTerminalAction> GetAction(int state);
+
+    internal abstract (int Offset, int Count) GetEndOfFileActionBounds(int state);
+
+    internal abstract LrEndOfFileAction GetEndOfFileActionImpl(int index);
+
+    internal abstract (int Offset, int Count) GetGotoBounds(int state);
+
+    internal abstract KeyValuePair<NonterminalHandle, int> GetGoto(int index);
+
+    internal virtual bool StateHasConflicts(int state)
+    {
+        if (GetEndOfFileActionBounds(state).Count > 1)
+        {
+            return true;
+        }
+
+        (int offset, int count) = GetActionBounds(state);
+        if (count <= 1)
+        {
+            return false;
+        }
+        TokenSymbolHandle previousTerminal = GetAction(offset).Key;
+        for (int i = 1; i < count; i++)
+        {
+            TokenSymbolHandle terminal = GetAction(offset + i).Key;
+            if (terminal == previousTerminal)
+            {
+                return true;
+            }
+            previousTerminal = terminal;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The number of the <see cref="LrStateMachine"/>'s initial state.
+    /// </summary>
+    public int InitialState => 0;
+
+    /// <summary>
+    /// The number of states in the <see cref="LrStateMachine"/>.
+    /// </summary>
+    public int Count { get; }
+
+    /// <summary>
+    /// Whether there might be at least one state in the <see cref="LrStateMachine"/> with
+    /// more than one possible actions for the same terminal, or the end of input.
+    /// </summary>
+    /// <remarks>
+    /// <para>Parsers can use this property to quickly determine if the state machine is usable for parsing.</para>
+    /// <para>Note that on some pathological grammar files it is possible for a state machine to not
+    /// have conflicts and this property to have a value of <see langword="true"/>, but a value of
+    /// <see langword="false"/> guarantees that it doesn't have conflicts. Farkle does not treat
+    /// such state machines as suitable for parsing.</para>
+    /// </remarks>
+    public bool HasConflicts { get; }
+
+    /// <summary>
+    /// Gets the <see cref="LrState"/> of the <see cref="LrStateMachine"/> with the specified index.
+    /// </summary>
+    /// <param name="index">The state's index, starting from zero.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is
+    /// less than zero or greater than or equal to <see cref="Count"/>.</exception>
+    public LrState this[int index]
+    {
+        get
+        {
+            if ((uint)index >= (uint)Count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
+            }
+            return new(this, index);
+        }
+    }
+
+    /// <summary>
+    /// Gets the next action from a state, when the given terminal is encountered.
+    /// </summary>
+    /// <param name="state">The current state.</param>
+    /// <param name="terminal">The terminal that was encountered.</param>
+    /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
+    public abstract LrTerminalAction GetTerminalAction(int state, TokenSymbolHandle terminal);
+
+    /// <summary>
+    /// Gets the next action from a state, when the end of the input stream is reached.
+    /// </summary>
+    /// <param name="state">The current state.</param>
+    /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
+    public virtual LrEndOfFileAction GetEndOfFileAction(int state)
+    {
+        switch (GetEndOfFileActionBounds(state))
+        {
+            case (int offset, 1):
+                return GetEndOfFileActionImpl(offset);
+            case (_, 0):
+                return LrEndOfFileAction.Error;
+            default:
+                ThrowHelpers.ThrowInvalidOperationException("The LR state has more than one end-of-file action.");
+                return default;
+        }
+    }
+
+    /// <summary>
+    /// Performs a GOTO transition from one state to another, based on a nonterminal produced by a reduction.
+    /// </summary>
+    /// <param name="state">The index of the current state.</param>
+    /// <param name="nonterminal">The nonterminal that was produced.</param>
+    /// <returns>The index of the state to go to.</returns>
+    /// <exception cref="KeyNotFoundException">A GOTO was not found for this state and nonterminal.
+    /// Properly written parsers and grammar files should not encounter this exception.</exception>
+    public abstract int GetGoto(int state, NonterminalHandle nonterminal);
+
+    /// <summary>
+    /// Gets the enumerator of the <see cref="LrStateMachine"/>'s states.
+    /// </summary>
+    public Enumerator GetEnumerator() => new(this);
+
+    IEnumerator<LrState> IEnumerable<LrState>.GetEnumerator() => GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>
+    /// Used to enumerate the states of an <see cref="LrStateMachine"/>.
+    /// </summary>
+    public struct Enumerator : IEnumerator<LrState>
+    {
+        private readonly LrStateMachine _lr;
+        private int _currentIndex = -1;
+
+        internal Enumerator(LrStateMachine lr)
+        {
+            _lr = lr;
+        }
+
+        /// <inheritdoc/>
+        public LrState Current => _lr[_currentIndex];
+
+        /// <inheritdoc/>
+        public bool MoveNext()
+        {
+            int nextIndex = _currentIndex + 1;
+            if (_currentIndex < _lr.Count)
+            {
+                _currentIndex = nextIndex;
+                return true;
+            }
+            return false;
+        }
+
+        object IEnumerator.Current => Current;
+
+        void IDisposable.Dispose() { }
+
+        void IEnumerator.Reset() => _currentIndex = -1;
+    }
+}

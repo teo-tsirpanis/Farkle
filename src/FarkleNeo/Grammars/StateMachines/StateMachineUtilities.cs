@@ -9,6 +9,29 @@ namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {
+    /// <summary>
+    /// Gets the size in bytes of a zero-based index to a state machine construct.
+    /// </summary>
+    public static byte GetIndexSize(int count) => count switch
+    {
+        // If we have say 256 states, they fit in a byte; the first has an index of 0, the last has an index of 255.
+        <= byte.MaxValue + 1 => sizeof(byte),
+        <= ushort.MaxValue + 1 => sizeof(ushort),
+        _ => sizeof(uint)
+    };
+
+    /// <summary>
+    /// Gets the size in bytes of an index to a DFA target state.
+    /// </summary>
+    internal static byte GetDfaStateTargetIndexSize(int stateCount) => stateCount switch
+    {
+        // If we have say 255 states, they fit in a byte; the first has an index of 1,
+        // the last has an index of 255 and failure is represented as 0.
+        <= byte.MaxValue => sizeof(byte),
+        <= ushort.MaxValue => sizeof(ushort),
+        _ => sizeof(uint)
+    };
+
     [DoesNotReturn]
     private static void ThrowUnsupportedDfaCharacter() =>
         throw new NotSupportedException("Unsupported DFA character type. You can add support for it by editing the DfaUtilities class.");
@@ -74,25 +97,25 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return stateCount switch
+        return GetDfaStateTargetIndexSize(stateCount) switch
         {
-            <= byte.MaxValue => Stage1<byte>(),
-            <= ushort.MaxValue => Stage1<ushort>(),
-            <= int.MaxValue => Stage1<int>()
+            1 => Stage1<byte>(),
+            2 => Stage1<ushort>(),
+            _ => Stage1<uint>()
         };
 
-        Dfa<TChar> Stage1<TState>() => edgeCount switch
+        Dfa<TChar> Stage1<TState>() => GetIndexSize(edgeCount) switch
         {
-            <= byte.MaxValue => Stage2<TState, byte>(),
-            <= ushort.MaxValue => Stage2<TState, ushort>(),
-            <= int.MaxValue => Stage2<TState, int>()
+            1 => Stage2<TState, byte>(),
+            2 => Stage2<TState, ushort>(),
+            _ => Stage2<TState, uint>()
         };
 
-        Dfa<TChar> Stage2<TState, TEdge>() => grammar.GrammarTables.TokenSymbolRowCount switch
+        Dfa<TChar> Stage2<TState, TEdge>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
-            <= byte.MaxValue => Finish<TState, TEdge, byte>(),
-            <= ushort.MaxValue => Finish<TState, TEdge, ushort>(),
-            <= int.MaxValue => Finish<TState, TEdge, int>()
+            1 => Finish<TState, TEdge, byte>(),
+            2 => Finish<TState, TEdge, ushort>(),
+            _ => Finish<TState, TEdge, uint>()
         };
 
         Dfa<TChar> Finish<TState, TEdge, TTokenSymbol>() =>
@@ -115,32 +138,32 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return stateCount switch
+        return GetDfaStateTargetIndexSize(stateCount) switch
         {
-            <= byte.MaxValue => Stage1<byte>(),
-            <= ushort.MaxValue => Stage1<ushort>(),
-            <= int.MaxValue => Stage1<int>()
+            1 => Stage1<byte>(),
+            2 => Stage1<ushort>(),
+            _ => Stage1<uint>()
         };
 
-        Dfa<TChar> Stage1<TState>() => edgeCount switch
+        Dfa<TChar> Stage1<TState>() => GetIndexSize(edgeCount) switch
         {
-            <= byte.MaxValue => Stage2<TState, byte>(),
-            <= ushort.MaxValue => Stage2<TState, ushort>(),
-            <= int.MaxValue => Stage2<TState, int>()
+            1 => Stage2<TState, byte>(),
+            2 => Stage2<TState, ushort>(),
+            _ => Stage2<TState, uint>()
         };
 
-        Dfa<TChar> Stage2<TState, TEdge>() => grammar.GrammarTables.TokenSymbolRowCount switch
+        Dfa<TChar> Stage2<TState, TEdge>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
-            <= byte.MaxValue => Stage3<TState, TEdge, byte>(),
-            <= ushort.MaxValue => Stage3<TState, TEdge, ushort>(),
-            <= int.MaxValue => Stage3<TState, TEdge, int>()
+            1 => Stage3<TState, TEdge, byte>(),
+            2 => Stage3<TState, TEdge, ushort>(),
+            _ => Stage3<TState, TEdge, uint>()
         };
 
-        Dfa<TChar> Stage3<TState, TEdge, TTokenSymbol>() => acceptCount switch
+        Dfa<TChar> Stage3<TState, TEdge, TTokenSymbol>() => GetIndexSize(acceptCount) switch
         {
-            <= byte.MaxValue => Finish<TState, TEdge, TTokenSymbol, byte>(),
-            <= ushort.MaxValue => Finish<TState, TEdge, TTokenSymbol, ushort>(),
-            <= int.MaxValue => Finish<TState, TEdge, TTokenSymbol, int>()
+            1 => Finish<TState, TEdge, TTokenSymbol, byte>(),
+            2 => Finish<TState, TEdge, TTokenSymbol, ushort>(),
+            _ => Finish<TState, TEdge, TTokenSymbol, uint>()
         };
 
         Dfa<TChar> Finish<TState, TEdge, TTokenSymbol, TAccept>() =>

@@ -68,18 +68,24 @@ internal readonly struct GrammarTables
 
     public const int MaxSymbolRowCount = 0xF_FFFF; // 2^20 - 1
 
+    /// <summary>
+    /// Gets the size in bytes of a one-based index to a table.
+    /// </summary>
     public static byte GetIndexSize(int rowCount) => rowCount switch
     {
-        < 0xFF => 1,
-        < 0xFFFF => 2,
-        _ => 4
+        <= byte.MaxValue => sizeof(byte),
+        <= ushort.MaxValue => sizeof(ushort),
+        _ => sizeof(uint)
     };
 
+    /// <summary>
+    /// Gets the size in bytes of a one-based coded index to two tables.
+    /// </summary>
     public static byte GetBinaryCodedIndexSize(int row1Count, int row2Count) => (row1Count | row2Count) switch
     {
-        < 0x7F => 1,
-        < 0x7FF => 2,
-        _ => 4
+        <= sbyte.MaxValue => sizeof(sbyte),
+        <= short.MaxValue => sizeof(short),
+        _ => sizeof(int)
     };
 
     private static int GetTableCellOffset(int columnBase, int rowCount, byte rowSize, uint index)

@@ -202,8 +202,8 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
             writer.Write(_accepts.Count);
         }
 
-        byte stateIndexSize = GrammarTables.GetIndexSize(StateCount);
-        byte edgeIndexSize = GrammarTables.GetIndexSize(_edges.Count);
+        byte stateTargetSize = StateMachineUtilities.GetDfaStateTargetIndexSize(StateCount);
+        byte edgeIndexSize = StateMachineUtilities.GetIndexSize(_edges.Count);
         byte tokenSymbolSize = GrammarTables.GetIndexSize(tokenSymbolCount);
 
         foreach (int firstEdge in _firstEdges)
@@ -220,12 +220,12 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
         }
         foreach ((_, _, int targetState) in _edges)
         {
-            writer.WriteVariableSize((uint)targetState, stateIndexSize);
+            writer.WriteVariableSize((uint)targetState, stateTargetSize);
         }
 
         if (HasConflicts)
         {
-            byte acceptIndexSize = GrammarTables.GetIndexSize(_accepts.Count);
+            byte acceptIndexSize = StateMachineUtilities.GetIndexSize(_accepts.Count);
             foreach (int firstAccept in _firstAccepts)
             {
                 writer.WriteVariableSize((uint)firstAccept, acceptIndexSize);
@@ -256,10 +256,10 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
             ThrowHelpers.ThrowInvalidOperationException("DFA has no default transitions.");
         }
 
-        byte stateIndexSize = GrammarTables.GetIndexSize(StateCount);
+        byte stateTargetSize = StateMachineUtilities.GetDfaStateTargetIndexSize(StateCount);
         foreach (int state in _defaultTransitions)
         {
-            writer.WriteVariableSize((uint)state, stateIndexSize);
+            writer.WriteVariableSize((uint)state, stateTargetSize);
         }
     }
 }

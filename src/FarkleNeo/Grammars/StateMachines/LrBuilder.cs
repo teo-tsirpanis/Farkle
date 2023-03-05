@@ -201,11 +201,11 @@ internal sealed class LrBuilder
             writer.Write(_eofActions.Count);
         }
 
-        byte stateIndexSize = GrammarTables.GetIndexSize(StateCount);
-        byte actionIndexSize = GrammarTables.GetIndexSize(_actions.Count);
+        byte stateIndexSize = StateMachineUtilities.GetIndexSize(StateCount);
+        byte actionIndexSize = StateMachineUtilities.GetIndexSize(_actions.Count);
         byte actionSize = LrTerminalAction.GetEncodedSize(StateCount, productionCount);
         byte eofActionSize = LrEndOfFileAction.GetEncodedSize(productionCount);
-        byte gotoIndexSize = GrammarTables.GetIndexSize(_gotos.Count);
+        byte gotoIndexSize = StateMachineUtilities.GetIndexSize(_gotos.Count);
         byte nonterminalIndexSize = GrammarTables.GetIndexSize(nonterminalCount);
         byte tokenSymbolIndexSize = GrammarTables.GetIndexSize(tokenSymbolCount);
 
@@ -223,7 +223,7 @@ internal sealed class LrBuilder
         }
         if (HasConflicts)
         {
-            byte eofActionIndexSize = GrammarTables.GetIndexSize(_eofActions.Count);
+            byte eofActionIndexSize = StateMachineUtilities.GetIndexSize(_eofActions.Count);
             foreach (int firstEofAction in _firstEofActions)
             {
                 writer.WriteVariableSize((uint)firstEofAction, eofActionIndexSize);

@@ -25,8 +25,8 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
     protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
-        Debug.Assert(GrammarTables.GetIndexSize(stateCount) == sizeof(TState));
-        Debug.Assert(GrammarTables.GetIndexSize(edgeCount) == sizeof(TEdge));
+        Debug.Assert(StateMachineUtilities.GetDfaStateTargetIndexSize(stateCount) == sizeof(TState));
+        Debug.Assert(StateMachineUtilities.GetIndexSize(edgeCount) == sizeof(TEdge));
 
         _grammar = grammar;
         _edgeCount = edgeCount;

@@ -12,9 +12,9 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
 
     internal static byte GetEncodedSize(int stateCount, int productionCount) => (stateCount, productionCount) switch
     {
-        (<= sbyte.MaxValue - 1, <= -sbyte.MinValue) => 1,
-        (<= short.MaxValue - 1, <= -short.MinValue) => 2,
-        _ => 4
+        (<= sbyte.MaxValue - 1, <= -sbyte.MinValue) => sizeof(sbyte),
+        (<= short.MaxValue - 1, <= -short.MinValue) => sizeof(short),
+        _ => sizeof(int)
     };
 
     internal LrTerminalAction(int value) => Value = value;

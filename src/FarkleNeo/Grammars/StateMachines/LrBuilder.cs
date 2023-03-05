@@ -230,7 +230,7 @@ internal sealed class LrBuilder
             }
             foreach (LrEndOfFileAction eofAction in _eofActions)
             {
-                writer.WriteVariableSize((uint)eofAction.Value, eofActionSize);
+                writer.WriteVariableSize(eofAction.Value, eofActionSize);
             }
         }
         else
@@ -241,7 +241,7 @@ internal sealed class LrBuilder
                 int nextFirstEofAction = i < _firstEofActions.Length - 1 ? _firstEofActions[i + 1] : _eofActions.Count;
 
                 LrEndOfFileAction action = firstEofAction < nextFirstEofAction ? _eofActions[firstEofAction] : LrEndOfFileAction.Error;
-                writer.WriteVariableSize((uint)action.Value, tokenSymbolIndexSize);
+                writer.WriteVariableSize(action.Value, tokenSymbolIndexSize);
             }
         }
         foreach (int firstGoto in _firstGotos)

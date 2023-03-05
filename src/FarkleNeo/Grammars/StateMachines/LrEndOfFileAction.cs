@@ -8,7 +8,7 @@ namespace Farkle.Grammars.StateMachines;
 /// </summary>
 public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
 {
-    internal int Value { get; }
+    internal uint Value { get; }
 
     internal static byte GetEncodedSize(int productionCount) => productionCount switch
     {
@@ -17,7 +17,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
         _ => sizeof(uint)
     };
 
-    internal LrEndOfFileAction(int value) => Value = value;
+    internal LrEndOfFileAction(uint value) => Value = value;
 
     /// <summary>
     /// An <see cref="LrEndOfFileAction"/> that will cause a syntax error.
@@ -44,7 +44,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(production));
         }
-        return new((int)production.TableIndex + 1);
+        return new(production.TableIndex + 1);
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
             {
                 ThrowHelpers.ThrowInvalidOperationException("This action is not a reduction.");
             }
-            return new((uint)(Value - 1));
+            return new(Value - 1);
         }
     }
 
@@ -89,7 +89,7 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
     public bool Equals(LrEndOfFileAction other) => Value == other.Value;
 
     /// <inheritdoc/>
-    public override int GetHashCode() => Value;
+    public override int GetHashCode() => (int)Value;
 
     /// <inheritdoc/>
     public override string ToString()

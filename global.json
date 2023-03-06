@@ -1,8 +1,5 @@
 {
     "sdk": {
-        "version": "7.0.100"
-    },
-    "msbuild-sdks": {
-        "Microsoft.Build.NoTargets": "3.7.0"
+        "version": "7.0.200"
     }
 }

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
-    <FakeVersion>5.23.1</FakeVersion>
+    <FakeVersion>6.0.0</FakeVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Argu" Version="6.2.2" />

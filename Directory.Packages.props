@@ -27,7 +27,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageVersion Include="NUnit.Analyzers" Version="3.6.0" />
     <PackageVersion Include="NUnit" Version="3.13.3" />
-    <PackageVersion Include="NUnit3TestAdapter" Version="4.4.0" />
+    <PackageVersion Include="NUnit3TestAdapter" Version="4.4.2" />
     <PackageVersion Include="PolySharp" Version="1.12.1" />
     <PackageVersion Include="Scriban" Version="5.7.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="4.1.0" />

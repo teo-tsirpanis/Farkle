@@ -32,19 +32,26 @@ internal static class StateMachineUtilities
         _ => sizeof(uint)
     };
 
-    [DoesNotReturn]
-    private static void ThrowUnsupportedDfaCharacter() =>
-        throw new NotSupportedException("Unsupported DFA character type. You can add support for it by editing the DfaUtilities class.");
-
-    public static TChar ReadChar<TChar>(ReadOnlySpan<byte> buffer, int index)
+    public static T Read<T>(ReadOnlySpan<byte> buffer, int index)
     {
-        if (typeof(TChar) == typeof(char))
+        if (typeof(T) == typeof(char))
         {
-            return (TChar)(object)(char)buffer.ReadUInt16(index);
+            return (T)(object)(char)buffer.ReadUInt16(index);
+        }
+        if (typeof(T) == typeof(byte))
+        {
+            return (T)(object)buffer[index];
+        }
+        if (typeof(T) == typeof(ushort))
+        {
+            return (T)(object)buffer.ReadUInt16(index);
+        }
+        if (typeof(T) == typeof(uint))
+        {
+            return (T)(object)buffer.ReadUInt32(index);
         }
 
-        ThrowUnsupportedDfaCharacter();
-        return default;
+        throw new NotSupportedException();
     }
 
     public static void WriteChar<TChar>(this IBufferWriter<byte> writer, TChar c) where TChar : unmanaged
@@ -54,27 +61,45 @@ internal static class StateMachineUtilities
             writer.Write((char)(object)c);
         }
 
-        ThrowUnsupportedDfaCharacter();
+        throw new NotSupportedException();
     }
 
-    public static unsafe int BufferBinarySearch<TChar>(ReadOnlySpan<byte> buffer, int @base, int length, TChar item) where TChar : unmanaged, IComparable<TChar>
+    public static T CastUInt<T>(uint value) where T : unmanaged
     {
-        int low = @base, high = @base + length * sizeof(TChar);
+        if (typeof(T) == typeof(byte))
+        {
+            return (T)(object)(byte)value;
+        }
+        if (typeof(T) == typeof(ushort))
+        {
+            return (T)(object)(ushort)value;
+        }
+        if (typeof(T) == typeof(uint))
+        {
+            return (T)(object)value;
+        }
+
+        throw new NotSupportedException();
+    }
+
+    public static unsafe int BufferBinarySearch<T>(ReadOnlySpan<byte> buffer, int @base, int length, T item) where T : unmanaged, IComparable<T>
+    {
+        int low = @base, high = @base + length * sizeof(T);
 
         while (low <= high)
         {
             int mid = low + (high - low) / 2;
-            TChar midItem = ReadChar<TChar>(buffer, mid);
+            T midItem = Read<T>(buffer, mid);
 
             switch (midItem.CompareTo(item))
             {
                 case 0:
                     return mid;
                 case -1:
-                    low = mid + sizeof(TChar);
+                    low = mid + sizeof(T);
                     break;
                 case 1:
-                    high = mid - sizeof(TChar);
+                    high = mid - sizeof(T);
                     break;
             }
         }
@@ -170,18 +195,184 @@ internal static class StateMachineUtilities
             DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol, TAccept>.Create(grammar, stateCount, edgeCount, acceptCount, dfa, dfaDefaultTransitions);
     }
 
-    public static Dfa<char>? GetGrammarStateMachines(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines stateMachines)
+    private static LrStateMachine? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
     {
+        if (lr.Length < sizeof(uint) * 3)
+        {
+            ThrowHelpers.ThrowInvalidLrDataSize();
+        }
+
+        int stateCount = (int)grammarFile.ReadUInt32(lr.Offset);
+        int actionCount = (int)grammarFile.ReadUInt32(lr.Offset + sizeof(uint));
+        int gotoCount = (int)grammarFile.ReadUInt32(lr.Offset + sizeof(uint) * 2);
+
+        if (stateCount == 0)
+        {
+            return null;
+        }
+
+        return GetIndexSize(stateCount) switch
+        {
+            1 => Stage1<byte>(),
+            2 => Stage1<ushort>(),
+            _ => Stage1<uint>()
+        };
+
+        LrStateMachine Stage1<TStateIndex>() => GetIndexSize(actionCount) switch
+        {
+            1 => Stage2<TStateIndex, byte>(),
+            2 => Stage2<TStateIndex, ushort>(),
+            _ => Stage2<TStateIndex, uint>()
+        };
+
+        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetIndexSize(gotoCount) switch
+        {
+            1 => Stage3<TStateIndex, TActionIndex, byte>(),
+            2 => Stage3<TStateIndex, TActionIndex, ushort>(),
+            _ => Stage3<TStateIndex, TActionIndex, uint>()
+        };
+
+        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => LrTerminalAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        {
+            1 => Stage4<TStateIndex, TActionIndex, TGotoIndex, sbyte>(),
+            2 => Stage4<TStateIndex, TActionIndex, TGotoIndex, short>(),
+            _ => Stage4<TStateIndex, TActionIndex, TGotoIndex, int>()
+        };
+
+        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TAction>() => LrEndOfFileAction.GetEncodedSize(grammar.GrammarTables.ProductionRowCount) switch
+        {
+            1 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, byte>(),
+            2 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, ushort>(),
+            _ => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, uint>()
+        };
+
+        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        {
+            1 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, byte>(),
+            2 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, ushort>(),
+            _ => Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, uint>()
+        };
+
+        LrStateMachine Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol>()
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GrammarTables.GetIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
+            {
+                1 => Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, byte>(),
+                2 => Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, ushort>(),
+                _ => Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, uint>()
+            };
+
+        LrStateMachine Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>()
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
+            where TNonterminal : unmanaged, IComparable<TNonterminal> =>
+            LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>.Create(grammar, stateCount, actionCount, gotoCount, lr);
+    }
+
+    private static LrStateMachine? CreateLrWithConflicts(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
+    {
+        if (lr.Length < sizeof(uint) * 4)
+        {
+            ThrowHelpers.ThrowInvalidLrDataSize();
+        }
+
+        int stateCount = (int)grammarFile.ReadUInt32(lr.Offset);
+        int actionCount = (int)grammarFile.ReadUInt32(lr.Offset + sizeof(uint));
+        int gotoCount = (int)grammarFile.ReadUInt32(lr.Offset + sizeof(uint) * 2);
+        int eofActionCount = (int)grammarFile.ReadUInt32(lr.Offset + sizeof(uint) * 3);
+
+        if (stateCount == 0)
+        {
+            return null;
+        }
+
+        return GetIndexSize(stateCount) switch
+        {
+            1 => Stage1<byte>(),
+            2 => Stage1<ushort>(),
+            _ => Stage1<uint>()
+        };
+
+        LrStateMachine Stage1<TStateIndex>() => GetIndexSize(actionCount) switch
+        {
+            1 => Stage2<TStateIndex, byte>(),
+            2 => Stage2<TStateIndex, ushort>(),
+            _ => Stage2<TStateIndex, uint>()
+        };
+
+        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetIndexSize(gotoCount) switch
+        {
+            1 => Stage3<TStateIndex, TActionIndex, byte>(),
+            2 => Stage3<TStateIndex, TActionIndex, ushort>(),
+            _ => Stage3<TStateIndex, TActionIndex, uint>()
+        };
+
+        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => GetIndexSize(eofActionCount) switch
+        {
+            1 => Stage4<TStateIndex, TActionIndex, TGotoIndex, byte>(),
+            2 => Stage4<TStateIndex, TActionIndex, TGotoIndex, ushort>(),
+            _ => Stage4<TStateIndex, TActionIndex, TGotoIndex, uint>()
+        };
+
+        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex>() => LrTerminalAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        {
+            1 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, sbyte>(),
+            2 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, short>(),
+            _ => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, int>()
+        };
+
+        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction>() => LrEndOfFileAction.GetEncodedSize(grammar.GrammarTables.ProductionRowCount) switch
+        {
+            1 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, byte>(),
+            2 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, ushort>(),
+            _ => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, uint>()
+        };
+
+        LrStateMachine Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        {
+            1 => Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, byte>(),
+            2 => Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, ushort>(),
+            _ => Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, uint>()
+        };
+
+        LrStateMachine Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol>()
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GrammarTables.GetIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
+            {
+                1 => Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, byte>(),
+                2 => Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, ushort>(),
+                _ => Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, uint>()
+            };
+
+        LrStateMachine Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>()
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
+            where TNonterminal : unmanaged, IComparable<TNonterminal> =>
+            LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>.Create(grammar, stateCount, actionCount, gotoCount, eofActionCount, lr);
+    }
+
+    public static (Dfa<char>? DfaOnChar, LrStateMachine? LrStateMachine) GetGrammarStateMachines(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines stateMachines)
+    {
+        Dfa<char>? dfaOnChar = null;
+
         if (!stateMachines.DfaOnChar.IsEmpty)
         {
-            return CreateDfa<char>(grammar, grammarFile, stateMachines.DfaOnChar, stateMachines.DfaOnCharDefaultTransitions);
+            dfaOnChar = CreateDfa<char>(grammar, grammarFile, stateMachines.DfaOnChar, stateMachines.DfaOnCharDefaultTransitions);
         }
 
-        if (!stateMachines.DfaOnCharWithConflicts.IsEmpty)
+        if (dfaOnChar is null && !stateMachines.DfaOnCharWithConflicts.IsEmpty)
         {
-            return CreateDfaWithConflicts<char>(grammar, grammarFile, stateMachines.DfaOnCharWithConflicts, stateMachines.DfaOnCharDefaultTransitions);
+            dfaOnChar = CreateDfaWithConflicts<char>(grammar, grammarFile, stateMachines.DfaOnCharWithConflicts, stateMachines.DfaOnCharDefaultTransitions);
         }
 
-        return null;
+        LrStateMachine? lr = null;
+
+        if (!stateMachines.Lr1.IsEmpty)
+        {
+            lr = CreateLr(grammar, grammarFile, stateMachines.Lr1);
+        }
+
+        if (lr is null && !stateMachines.Glr1.IsEmpty)
+        {
+            lr = CreateLrWithConflicts(grammar, grammarFile, stateMachines.Glr1);
+        }
+
+        return (dfaOnChar, lr);
     }
 }

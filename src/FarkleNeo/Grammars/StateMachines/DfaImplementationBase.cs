@@ -56,8 +56,8 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
                 edge = Math.Min(~edge, edgeLength - 1);
             }
 
-            TChar cFrom = StateMachineUtilities.ReadChar<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(char));
-            TChar cTo = StateMachineUtilities.ReadChar<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(char));
+            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(char));
+            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(char));
 
             if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {
@@ -106,8 +106,8 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
         ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
 
-        TChar cFrom = StateMachineUtilities.ReadChar<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
-        TChar cTo = StateMachineUtilities.ReadChar<TChar>(grammarFile, RangeToBase + index * sizeof(char));
+        TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
+        TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + index * sizeof(char));
         int target = ReadState(grammarFile, EdgeTargetBase + index * sizeof(TState));
 
         return new(cFrom, cTo, target);

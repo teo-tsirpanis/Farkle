@@ -57,6 +57,25 @@ internal static class BufferExtensions
     public static ulong ReadUInt64(this ReadOnlySpan<byte> buffer, int index) =>
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
 
+    // Signed integers of variable size must be read with this method to ensure they are sign-extended.
+    public static int ReadIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
+    {
+        if (typeof(T) == typeof(sbyte))
+        {
+            return (sbyte)buffer[index];
+        }
+        if (typeof(T) == typeof(short))
+        {
+            return (short)buffer.ReadUInt16(index);
+        }
+        if (typeof(T) == typeof(int))
+        {
+            return buffer.ReadInt32(index);
+        }
+
+        throw new NotSupportedException("Unsupported type.");
+    }
+
     public static uint ReadUIntVariableSize(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
     {
         switch (dataSize)

@@ -51,6 +51,10 @@ internal static class ThrowHelpers
         throw new InvalidOperationException("Invalid DFA data size.");
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowInvalidLrDataSize() =>
+        throw new InvalidOperationException("Invalid LR state machine data size.");
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 

@@ -65,6 +65,11 @@ public abstract class Grammar
     /// </summary>
     public Dfa<char>? DfaOnChar { get; }
 
+    /// <summary>
+    /// The <see cref="Grammar"/>'s <see cref="StateMachines.LrStateMachine"/>, if it exists.
+    /// </summary>
+    public LrStateMachine? LrStateMachine { get; }
+
     private static void ValidateHeader(GrammarHeader header)
     {
         if (header.IsSupported)
@@ -96,7 +101,7 @@ public abstract class Grammar
         GrammarTables = new(grammarFile, streams.TableStream, out _);
 
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
-        DfaOnChar = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
+        (DfaOnChar, LrStateMachine) = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
         bool rejectTerminals = false;
         for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)

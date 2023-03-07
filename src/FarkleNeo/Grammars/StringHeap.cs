@@ -67,16 +67,16 @@ internal readonly struct StringHeap
         return Encoding.UTF8.GetString(grammarFile.Slice(section.Offset, section.Length));
     }
 
-    public StringHandle LookupString(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<char> chars)
+    public StringHandle? LookupString(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<char> chars)
     {
         if (chars.IsEmpty || Length == 0)
         {
-            return default;
+            return default(StringHandle);
         }
 
         if (chars.IndexOf('\0') != -1)
         {
-            return default;
+            return null;
         }
 
         const int StackAllocationSize = 64;
@@ -101,7 +101,7 @@ internal readonly struct StringHeap
             }
             catch (EncoderFallbackException)
             {
-                return default;
+                return null;
             }
 
             Span<byte> stringBytes = buffer[..(writtenBytes + 2)];
@@ -111,7 +111,7 @@ internal readonly struct StringHeap
             int locationInStringHeap = grammarFile.Slice(Offset, Length).IndexOf(stringBytes);
             if (locationInStringHeap < 0)
             {
-                return default;
+                return null;
             }
             return new StringHandle((uint)locationInStringHeap + 1);
         }

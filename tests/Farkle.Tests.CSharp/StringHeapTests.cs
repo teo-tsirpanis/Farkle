@@ -5,7 +5,6 @@ using Farkle.Buffers;
 using Farkle.Grammars;
 #if NET
 using NUnit.Framework.Constraints;
-using System.Runtime.CompilerServices;
 using System.Text;
 #endif
 
@@ -49,11 +48,11 @@ internal class StringHeapTests
             Assert.That(() => heap.GetString(actualHeap, new StringHandle(aaaHandle.Value + 1)), Throws.InstanceOf<ArgumentOutOfRangeException>());
             Assert.That(() => heap.GetString(actualHeap, new StringHandle(184)), Throws.InstanceOf<ArgumentOutOfRangeException>());
 
-            Assert.That(heap.LookupString(actualHeap, "".AsSpan()).IsEmpty);
+            Assert.That(heap.LookupString(actualHeap, "".AsSpan()), Is.EqualTo(default(StringHandle)));
             Assert.That(heap.LookupString(actualHeap, "aaa".AsSpan()), Is.EqualTo(aaaHandle));
             Assert.That(heap.LookupString(actualHeap, "bbb".AsSpan()), Is.EqualTo(bbbHandle));
             Assert.That(heap.LookupString(actualHeap, "ccc".AsSpan()), Is.EqualTo(cccHandle));
-            Assert.That(heap.LookupString(actualHeap, "ddd".AsSpan()).IsEmpty);
+            Assert.That(heap.LookupString(actualHeap, "ddd".AsSpan()), Is.Null);
         });
     }
 

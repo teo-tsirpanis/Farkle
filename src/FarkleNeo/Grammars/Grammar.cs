@@ -211,6 +211,42 @@ public abstract class Grammar
     }
 
     /// <summary>
+    /// Looks up a token symbol or nonterminal with the specified special name.
+    /// </summary>
+    /// <param name="specialName">The symbol's special name.</param>
+    /// <param name="throwIfNotFound">Whether to throw an exception if the symbol was not found.
+    /// Defaults to <see true="false"/>.</param>
+    /// <returns>An <see cref="EntityHandle"/> containing either a <see cref="TokenSymbolHandle"/>
+    /// or a <see cref="NonterminalHandle"/> pointing to the symbol with the specified special name,
+    /// or pointing to nothing if the symbol was not found and <paramref name="throwIfNotFound"/>
+    /// has a value of <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="specialName"/> is <see langword="null"/>.</exception>
+    /// <exception cref="KeyNotFoundException">The symbol was not found and <paramref name="throwIfNotFound"/>
+    /// had a value of <see langword="true"/>.</exception>
+    public EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(specialName);
+
+        ReadOnlySpan<byte> grammarFile = GrammarFile;
+        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is StringHandle nameHandle)
+        {
+            for (uint i = 1; i <= GrammarTables.SpecialNameRowCount; i++)
+            {
+                if (GrammarTables.GetSpecialNameName(grammarFile, i) == nameHandle)
+                {
+                    return GrammarTables.GetSpecialNameSymbol(grammarFile, i);
+                }
+            }
+        }
+
+        if (throwIfNotFound)
+        {
+            ThrowHelpers.ThrowKeyNotFoundException("Could not find symbol with the specified special name.");
+        }
+        return default;
+    }
+
+    /// <summary>
     /// Checks whether the given <see cref="TokenSymbolHandle"/> points to a
     /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>

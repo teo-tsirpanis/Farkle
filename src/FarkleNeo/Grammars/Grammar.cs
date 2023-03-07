@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -244,8 +245,15 @@ public abstract class Grammar
     {
         private readonly ImmutableArray<byte> _grammarFile;
 
-        internal override ReadOnlySpan<byte> GrammarFile =>
-            _grammarFile.AsSpan();
+        internal override ReadOnlySpan<byte> GrammarFile
+        {
+            get
+            {
+                // During construction the `GrammarFile` property has not yet been assigned. This assert makes sure that it is not accessed.
+                Debug.Assert(!_grammarFile.IsDefault);
+                return _grammarFile.AsSpan();
+            }
+        }
 
         public ManagedMemoryGrammar(ReadOnlySpan<byte> grammarFile) : base(grammarFile)
         {

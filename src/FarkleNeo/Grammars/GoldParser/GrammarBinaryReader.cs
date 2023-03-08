@@ -85,6 +85,11 @@ internal sealed class GrammarBinaryReader
         return sb.ToString();
     }
 
+    private void SkipNullTerminatedString()
+    {
+        while (_reader.ReadUInt16() != 0) { }
+    }
+
     public byte ReadByte()
     {
         ReadEntryType('b');
@@ -125,11 +130,17 @@ internal sealed class GrammarBinaryReader
                 _ = _reader.ReadUInt16();
                 break;
             case 'S':
-                _ = ReadNullTerminatedString();
+                SkipNullTerminatedString();
                 break;
             default:
                 ThrowHelpers.ThrowInvalidDataException(UnexpectedEntryTypeMessage);
                 break;
         }
+    }
+
+    public void SkipString()
+    {
+        ReadEntryType('S');
+        SkipNullTerminatedString();
     }
 }

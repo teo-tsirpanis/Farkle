@@ -127,7 +127,7 @@ internal static class GoldGrammarReader
                 case 'p':
                     {
                         int index = reader.ReadUInt16();
-                        _ = reader.ReadString();
+                        reader.SkipString();
                         string value = reader.ReadString();
                         if (index == 0)
                         {

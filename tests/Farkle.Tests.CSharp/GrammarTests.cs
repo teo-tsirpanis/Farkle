@@ -7,8 +7,8 @@ namespace Farkle.Tests.CSharp;
 
 internal class GrammarTests
 {
-    [TestCase("legacy.cgt", GrammarFileType.Cgt)]
-    [TestCase("JSON.egt", GrammarFileType.Egt5)]
+    [TestCase("legacy.cgt", GrammarFileType.GoldParser)]
+    [TestCase("JSON.egt", GrammarFileType.GoldParser)]
     [TestCase("JSON.egtn", GrammarFileType.EgtNeo)]
     public void TestInvalidFiles(string fileName, GrammarFileType fileType)
     {

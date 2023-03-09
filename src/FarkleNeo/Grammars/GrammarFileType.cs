@@ -7,7 +7,6 @@ internal enum GrammarFileType
 {
     Unknown,
     Farkle,
-    Cgt,
-    Egt5,
+    GoldParser,
     EgtNeo
 }

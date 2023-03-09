@@ -29,8 +29,7 @@ internal readonly struct GrammarHeader
     public GrammarFileType FileType { get; private init; }
 
     public static GrammarHeader Unknown => default;
-    public static GrammarHeader Cgt => new() { FileType = GrammarFileType.Cgt };
-    public static GrammarHeader Egt5 => new() { FileType = GrammarFileType.Egt5 };
+    public static GrammarHeader GoldParser => new() { FileType = GrammarFileType.GoldParser };
     public static GrammarHeader EgtNeo => new() { FileType = GrammarFileType.EgtNeo };
     public static GrammarHeader CreateFarkle(ushort versionMajor, ushort versionMinor, uint streamCount) =>
         new(versionMajor, versionMinor, streamCount, GrammarFileType.Farkle);
@@ -57,14 +56,9 @@ internal readonly struct GrammarHeader
             return EgtNeo;
         }
 
-        if (grammarFile.StartsWith(Egt5Header))
+        if (grammarFile.StartsWith(Egt5Header) || grammarFile.StartsWith(CgtHeader))
         {
-            return Egt5;
-        }
-
-        if (grammarFile.StartsWith(CgtHeader))
-        {
-            return Cgt;
+            return GoldParser;
         }
 
         return Unknown;

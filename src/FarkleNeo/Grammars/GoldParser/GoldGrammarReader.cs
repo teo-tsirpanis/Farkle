@@ -421,7 +421,7 @@ internal static class GoldGrammarReader
         return new()
         {
             Name = grammarName,
-            StartSymbol = startSymbol,
+            StartSymbolIndex = startSymbol,
             CharacterSets = characterSets,
             Symbols = symbols,
             Groups = groups,

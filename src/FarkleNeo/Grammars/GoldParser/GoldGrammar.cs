@@ -12,7 +12,7 @@ internal sealed class GoldGrammar
 {
     public required string Name { get; init; }
 
-    public required ushort StartSymbol { get; init; }
+    public required ushort StartSymbolIndex { get; init; }
 
     public required ImmutableArray<(char Start, char End)>[] CharacterSets { get; init; }
 

@@ -67,6 +67,10 @@ internal static class GoldGrammarReader
         char firstOfRange = chars[0], lastChar = firstOfRange;
         foreach (char c in chars.AsSpan(1))
         {
+            if (c <= lastChar)
+            {
+                ThrowHelpers.ThrowInvalidDataException();
+            }
             if (c == lastChar + 1)
             {
                 lastChar = c;

@@ -23,4 +23,11 @@ internal class GoldGrammarReaderTests
 
         Assert.That(sb.ToString(), Is.EqualTo(expected));
     }
+
+    [TestCase("aa")]
+    [TestCase("ba")]
+    public void TestInvalidCgtCharacterSet(string characterSet)
+    {
+        Assert.That(() => GoldGrammarReader.ConvertCgtCharacterSet(characterSet), Throws.InstanceOf<InvalidDataException>());
+    }
 }

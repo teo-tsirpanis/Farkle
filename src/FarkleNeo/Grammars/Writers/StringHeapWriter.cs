@@ -8,9 +8,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.Writers;
 
-internal struct StringHeapBuilder
+internal struct StringHeapWriter
 {
     private List<string>? _strings;
     private StringDictionary<StringHandle>? _stringHandles;

@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using Farkle.Grammars.StateMachines;
 using System.Buffers;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.Writers;
 
-internal sealed class GrammarBuilder
+internal sealed class GrammarWriter
 {
-    private StringHeapBuilder _stringHeapBuilder;
+    private StringHeapWriter _stringHeapWriter;
 
-    private BlobHeapBuilder _blobHeapBuilder;
+    private BlobHeapWriter _blobHeapWriter;
 
-    private GrammarTablesBuilder _tablesBuilder;
+    private GrammarTablesWriter _tablesWriter;
 
     private static void ValidateTableIndex(uint tableIndex, string paramName)
     {
@@ -22,77 +21,77 @@ internal sealed class GrammarBuilder
     }
 
     private GrammarHeapSizes HeapSizes =>
-        (_stringHeapBuilder.LengthSoFar <= ushort.MaxValue ? GrammarHeapSizes.StringHeapSmall : 0)
-        | (_blobHeapBuilder.LengthSoFar <= ushort.MaxValue ? GrammarHeapSizes.BlobHeapSmall : 0);
+        (_stringHeapWriter.LengthSoFar <= ushort.MaxValue ? GrammarHeapSizes.StringHeapSmall : 0)
+        | (_blobHeapWriter.LengthSoFar <= ushort.MaxValue ? GrammarHeapSizes.BlobHeapSmall : 0);
 
     private int StreamCount =>
         1 // We always write a table stream.
-        + (_stringHeapBuilder.LengthSoFar > 0 ? 1 : 0)
-        + (_blobHeapBuilder.LengthSoFar > 0 ? 1 : 0);
+        + (_stringHeapWriter.LengthSoFar > 0 ? 1 : 0)
+        + (_blobHeapWriter.LengthSoFar > 0 ? 1 : 0);
 
     public StringHandle GetOrAddString(string str)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(str);
 
-        return _stringHeapBuilder.Add(str);
+        return _stringHeapWriter.Add(str);
     }
 
     public BlobHandle GetOrAddBlob(PooledSegmentBufferWriter<byte> blob) =>
-        _blobHeapBuilder.Add(blob);
+        _blobHeapWriter.Add(blob);
 
     public BlobHandle GetOrAddBlob(ReadOnlySpan<byte> blob) =>
-        _blobHeapBuilder.Add(blob);
+        _blobHeapWriter.Add(blob);
 
     public void SetGrammarInfo(StringHandle name, NonterminalHandle startSymbol, GrammarAttributes flags)
     {
-        _stringHeapBuilder.ValidateHandle(name);
+        _stringHeapWriter.ValidateHandle(name);
         ValidateTableIndex(startSymbol.TableIndex, nameof(startSymbol));
-        _tablesBuilder.SetGrammarInfo(name, startSymbol, flags);
+        _tablesWriter.SetGrammarInfo(name, startSymbol, flags);
     }
 
     public TokenSymbolHandle AddTokenSymbol(StringHandle name, TokenSymbolAttributes flags)
     {
-        _stringHeapBuilder.ValidateHandle(name);
-        return _tablesBuilder.AddTokenSymbol(name, flags);
+        _stringHeapWriter.ValidateHandle(name);
+        return _tablesWriter.AddTokenSymbol(name, flags);
     }
 
     public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
     {
-        _stringHeapBuilder.ValidateHandle(name);
+        _stringHeapWriter.ValidateHandle(name);
         ValidateTableIndex(container.TableIndex, nameof(container));
         ValidateTableIndex(start.TableIndex, nameof(start));
         ValidateTableIndex(end.TableIndex, nameof(end));
-        return _tablesBuilder.AddGroup(name, container, flags, start, end, nestingCount);
+        return _tablesWriter.AddGroup(name, container, flags, start, end, nestingCount);
     }
 
     public void AddGroupNesting(uint groupIndex)
     {
         ValidateTableIndex(groupIndex, nameof(groupIndex));
-        _tablesBuilder.AddGroupNesting(groupIndex);
+        _tablesWriter.AddGroupNesting(groupIndex);
     }
 
     public NonterminalHandle AddNonterminal(StringHandle name, NonterminalAttributes flags, int productionCount)
     {
-        _stringHeapBuilder.ValidateHandle(name);
-        return _tablesBuilder.AddNonterminal(name, flags, productionCount);
+        _stringHeapWriter.ValidateHandle(name);
+        return _tablesWriter.AddNonterminal(name, flags, productionCount);
     }
 
     public ProductionHandle AddProduction(int memberCount)
     {
-        return _tablesBuilder.AddProduction(memberCount);
+        return _tablesWriter.AddProduction(memberCount);
     }
 
     public void AddProductionMember(EntityHandle member)
     {
         ValidateTableIndex(member.TableIndex, nameof(member));
-        _tablesBuilder.AddProductionMember(member);
+        _tablesWriter.AddProductionMember(member);
     }
 
-    public void AddStateMachine(DfaBuilder<char> dfa)
+    public void AddStateMachine(DfaWriter<char> dfa)
     {
         using var buffer = new PooledSegmentBufferWriter<byte>();
 
-        dfa.WriteDfaData(buffer, _tablesBuilder.TokenSymbolRowCount);
+        dfa.WriteDfaData(buffer, _tablesWriter.TokenSymbolRowCount);
         ulong dfaDataKind = dfa.HasConflicts ? GrammarConstants.DfaOnCharWithConflictsKind : GrammarConstants.DfaOnCharKind;
         AddStateMachine(dfaDataKind, GetOrAddBlob(buffer));
 
@@ -104,32 +103,32 @@ internal sealed class GrammarBuilder
         }
     }
 
-    public void AddStateMachine(LrBuilder lr)
+    public void AddStateMachine(LrWriter lr)
     {
         using var buffer = new PooledSegmentBufferWriter<byte>();
 
-        lr.WriteData(buffer, _tablesBuilder.TokenSymbolRowCount, _tablesBuilder.TerminalCount, _tablesBuilder.ProductionCount, _tablesBuilder.NonterminalCount);
+        lr.WriteData(buffer, _tablesWriter.TokenSymbolRowCount, _tablesWriter.TerminalCount, _tablesWriter.ProductionCount, _tablesWriter.NonterminalCount);
         ulong kind = lr.HasConflicts ? GrammarConstants.Lr1Kind : GrammarConstants.Glr1Kind;
         AddStateMachine(kind, GetOrAddBlob(buffer));
     }
 
     public void AddStateMachine(ulong kind, BlobHandle data)
     {
-        _blobHeapBuilder.ValidateHandle(data);
-        _tablesBuilder.AddStateMachine(kind, data);
+        _blobHeapWriter.ValidateHandle(data);
+        _tablesWriter.AddStateMachine(kind, data);
     }
 
     public void AddSpecialName(StringHandle name, EntityHandle symbol)
     {
-        _stringHeapBuilder.ValidateHandle(name);
+        _stringHeapWriter.ValidateHandle(name);
         ValidateTableIndex(symbol.TableIndex, nameof(symbol));
-        _tablesBuilder.AddSpecialName(name, symbol);
+        _tablesWriter.AddSpecialName(name, symbol);
     }
 
     public void WriteTo(IBufferWriter<byte> writer)
     {
         using PooledSegmentBufferWriter<byte> tablesBuffer = new();
-        _tablesBuilder.WriteTo(tablesBuffer, HeapSizes);
+        _tablesWriter.WriteTo(tablesBuffer, HeapSizes);
 
         if (tablesBuffer.WrittenCount > int.MaxValue)
         {
@@ -145,12 +144,12 @@ internal sealed class GrammarBuilder
             sizeof(ulong) + 2 * sizeof(ushort) + sizeof(uint)
             + StreamCount * (sizeof(ulong) + 2 * sizeof(int));
 
-        bool writeStringHeap = _stringHeapBuilder.LengthSoFar > 0;
-        bool writeBlobHeap = _blobHeapBuilder.LengthSoFar > 0;
+        bool writeStringHeap = _stringHeapWriter.LengthSoFar > 0;
+        bool writeBlobHeap = _blobHeapWriter.LengthSoFar > 0;
 
         if (writeStringHeap)
         {
-            int length = _stringHeapBuilder.LengthSoFar;
+            int length = _stringHeapWriter.LengthSoFar;
             writer.Write(GrammarConstants.StringHeapIdentifier);
             writer.Write(dataOffset);
             writer.Write(length);
@@ -159,7 +158,7 @@ internal sealed class GrammarBuilder
 
         if (writeBlobHeap)
         {
-            int length = _blobHeapBuilder.LengthSoFar;
+            int length = _blobHeapWriter.LengthSoFar;
             writer.Write(GrammarConstants.BlobHeapIdentifier);
             writer.Write(dataOffset);
             writer.Write(length);
@@ -172,12 +171,12 @@ internal sealed class GrammarBuilder
 
         if (writeStringHeap)
         {
-            _stringHeapBuilder.WriteTo(writer);
+            _stringHeapWriter.WriteTo(writer);
         }
 
         if (writeBlobHeap)
         {
-            _blobHeapBuilder.WriteTo(writer);
+            _blobHeapWriter.WriteTo(writer);
         }
 
         tablesBuffer.WriteTo(ref writer);

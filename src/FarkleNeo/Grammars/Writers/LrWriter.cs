@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace Farkle.Grammars.StateMachines;
+namespace Farkle.Grammars.Writers;
 
-internal sealed class LrBuilder
+internal sealed class LrWriter
 {
     private int _currentState;
     private bool _isFinished;
@@ -27,7 +28,7 @@ internal sealed class LrBuilder
 
     public bool HasConflicts { get; private set; }
 
-    public LrBuilder(int stateCount)
+    public LrWriter(int stateCount)
     {
         if (stateCount <= 0)
         {
@@ -120,7 +121,7 @@ internal sealed class LrBuilder
     {
         if (!_isFinished)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Builder is not finished, call Finish() first.");
+            ThrowHelpers.ThrowInvalidOperationException("Writer is not finished, call Finish() first.");
         }
     }
 
@@ -128,7 +129,7 @@ internal sealed class LrBuilder
     {
         if (_isFinished)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished builder.");
+            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished writer.");
         }
     }
 

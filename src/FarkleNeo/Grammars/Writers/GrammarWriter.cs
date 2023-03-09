@@ -2,18 +2,17 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using Farkle.Grammars.StateMachines;
 using System.Buffers;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.Writers;
 
-internal sealed class GrammarBuilder
+internal sealed class GrammarWriter
 {
-    private StringHeapBuilder _stringHeapBuilder;
+    private StringHeapWriter _stringHeapBuilder;
 
-    private BlobHeapBuilder _blobHeapBuilder;
+    private BlobHeapWriter _blobHeapBuilder;
 
-    private GrammarTablesBuilder _tablesBuilder;
+    private GrammarTablesWriter _tablesBuilder;
 
     private static void ValidateTableIndex(uint tableIndex, string paramName)
     {
@@ -88,7 +87,7 @@ internal sealed class GrammarBuilder
         _tablesBuilder.AddProductionMember(member);
     }
 
-    public void AddStateMachine(DfaBuilder<char> dfa)
+    public void AddStateMachine(DfaWriter<char> dfa)
     {
         using var buffer = new PooledSegmentBufferWriter<byte>();
 
@@ -104,7 +103,7 @@ internal sealed class GrammarBuilder
         }
     }
 
-    public void AddStateMachine(LrBuilder lr)
+    public void AddStateMachine(LrWriter lr)
     {
         using var buffer = new PooledSegmentBufferWriter<byte>();
 

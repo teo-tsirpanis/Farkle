@@ -9,9 +9,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.Writers;
 
-internal struct BlobHeapBuilder
+internal struct BlobHeapWriter
 {
     private List<ImmutableArray<byte>>? _blobs;
     private BlobDictionary<BlobHandle>? _blobHandles;

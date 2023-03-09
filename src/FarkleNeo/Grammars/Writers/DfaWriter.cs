@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Farkle.Grammars.StateMachines;
+namespace Farkle.Grammars.Writers;
 
-internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
+internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     private int _currentState;
     private bool _isFinished;
@@ -32,7 +33,7 @@ internal class DfaBuilder<TChar> where TChar : unmanaged, IComparable<TChar>
 
     public int StateCount { get; }
 
-    public DfaBuilder(int stateCount)
+    public DfaWriter(int stateCount)
     {
         if (stateCount <= 0)
         {

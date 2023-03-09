@@ -3,6 +3,7 @@
 
 using Farkle.Buffers;
 using Farkle.Grammars;
+using Farkle.Grammars.Writers;
 #if NET
 using NUnit.Framework.Constraints;
 using System.Text;
@@ -15,7 +16,7 @@ internal class StringHeapTests
     [Test]
     public void TestWriteAndRead()
     {
-        StringHeapBuilder builder = new();
+        StringHeapWriter builder = new();
         StringHandle emptyHandle = builder.Add("");
         StringHandle aaaHandle = builder.Add("aaa");
         StringHandle bbbHandle = builder.Add("bbb");
@@ -70,7 +71,7 @@ internal class StringHeapTests
     [Test]
     public void TestAddInvalidStrings()
     {
-        StringHeapBuilder builder = new();
+        StringHeapWriter builder = new();
         Assert.Multiple(() =>
         {
             Assert.That(() => builder.Add("\0"), Throws.ArgumentException);
@@ -99,7 +100,7 @@ internal class StringHeapTests
     [Test]
     public void TestBuildEmptyHeap()
     {
-        StringHeapBuilder builder = new();
+        StringHeapWriter builder = new();
         builder.Add("");
         using var bw = new PooledSegmentBufferWriter<byte>();
         builder.WriteTo(bw);
@@ -110,7 +111,7 @@ internal class StringHeapTests
     public unsafe void TestHeapSizeReached([Values(true, false)] bool reachExactly)
     {
 #if NET
-        StringHeapBuilder builder = new();
+        StringHeapWriter builder = new();
         // Warning, this might crash the debugger.
         string hugeString = string.Create(0x0FFFFFFF, reachExactly, static (buffer, reachExactly) =>
         {

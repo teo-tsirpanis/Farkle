@@ -3,6 +3,7 @@
 
 using Farkle.Buffers;
 using Farkle.Grammars;
+using Farkle.Grammars.Writers;
 
 namespace Farkle.Tests.CSharp;
 
@@ -13,15 +14,15 @@ internal class GrammarTablesTests
     [Test]
     public void TestGrammarTable()
     {
-        var builder = new GrammarTablesBuilder();
-        using var writer = new PooledSegmentBufferWriter<byte>();
+        var writer = new GrammarTablesWriter();
+        using var buffer = new PooledSegmentBufferWriter<byte>();
 
-        var startSymbol = builder.AddNonterminal(DummyStringHandle, NonterminalAttributes.None, 0);
+        var startSymbol = writer.AddNonterminal(DummyStringHandle, NonterminalAttributes.None, 0);
 
-        Assert.That(() => builder.WriteTo(writer, GrammarHeapSizes.StringHeapSmall), Throws.InvalidOperationException);
-        builder.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None);
-        Assert.That(() => builder.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None), Throws.InvalidOperationException);
-        builder.WriteTo(writer, GrammarHeapSizes.StringHeapSmall);
+        Assert.That(() => writer.WriteTo(buffer, GrammarHeapSizes.StringHeapSmall), Throws.InvalidOperationException);
+        writer.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None);
+        Assert.That(() => writer.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None), Throws.InvalidOperationException);
+        writer.WriteTo(buffer, GrammarHeapSizes.StringHeapSmall);
         byte[] expectedData = new byte[]
         {
             0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // TablesPresent
@@ -33,7 +34,7 @@ internal class GrammarTablesTests
             0x86, 0x00, 0x00, 0x00, 0x01 // Nonterminal
         };
 
-        Assert.That(writer.ToArray(), Is.EqualTo(expectedData));
+        Assert.That(buffer.ToArray(), Is.EqualTo(expectedData));
 
         var tables = new GrammarTables(expectedData, new(0, expectedData.Length), out bool hasUnknownTables);
         Assert.Multiple(() =>
@@ -48,21 +49,21 @@ internal class GrammarTablesTests
     [Test]
     public void TestTokenSymbolTable()
     {
-        var builder = new GrammarTablesBuilder();
+        var writer = new GrammarTablesWriter();
 
-        builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal);
+        writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal);
         // A terminal can't start a group.
-        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal | TokenSymbolAttributes.GroupStart), Throws.ArgumentException);
-        builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
+        Assert.That(() => writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal | TokenSymbolAttributes.GroupStart), Throws.ArgumentException);
+        writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
         // Terminals must be together at the beginning.
-        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal), Throws.InvalidOperationException);
+        Assert.That(() => writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.Terminal), Throws.InvalidOperationException);
 
         for (int i = 0; i < 0xF_FFFD; i++)
         {
-            builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
+            writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None);
         }
 
         // We can add up to 2^20 - 1 token symbols.
-        Assert.That(() => builder.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None), Throws.InvalidOperationException);
+        Assert.That(() => writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None), Throws.InvalidOperationException);
     }
 }

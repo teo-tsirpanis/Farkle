@@ -6,9 +6,9 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Farkle.Grammars;
+namespace Farkle.Grammars.Writers;
 
-internal struct GrammarTablesBuilder
+internal struct GrammarTablesWriter
 {
     private StringHandle _grammarName;
     private NonterminalHandle _grammarStartSymbol;
@@ -50,12 +50,12 @@ internal struct GrammarTablesBuilder
     {
         if (handle.IsTokenSymbol)
         {
-            return (handle.TableIndex << 1) | 0;
+            return handle.TableIndex << 1 | 0;
         }
         else
         {
             Debug.Assert(handle.IsNonterminal);
-            return (handle.TableIndex << 1) | 1;
+            return handle.TableIndex << 1 | 1;
         }
     }
 

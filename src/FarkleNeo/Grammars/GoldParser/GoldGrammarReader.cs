@@ -10,21 +10,28 @@ namespace Farkle.Grammars.GoldParser;
 
 internal static class GoldGrammarReader
 {
-    private static void ValidateHeader(string header)
+    private static bool IsEgtHeader(string header)
     {
-        string? errorMessage = header switch
+        string errorMessage;
+        switch (header)
         {
-            GrammarConstants.HeaderMagicString => "Grammar files produced by Farkle 7.x. must be opened with the Grammar.Create method instead.",
-            GrammarConstants.EgtNeoHeaderString => "EGTneo grammar files produced by Farkle 6.x are not supported.",
-            GrammarConstants.Egt5HeaderString => null,
-            GrammarConstants.CgtHeaderString => "CGT grammar files produced by GOLD Parser are not supported.",
-            _ => "Unrecognized file format."
-        };
-
-        if (errorMessage is not null)
-        {
-            ThrowHelpers.ThrowNotSupportedException(errorMessage);
+            case GrammarConstants.HeaderMagicString:
+                errorMessage = "Grammar files produced by Farkle 7 and above must be opened with the Grammar.Create method.";
+                break;
+            case GrammarConstants.EgtNeoHeaderString:
+                errorMessage = "EGTneo grammar files produced by Farkle 6.x are not supported.";
+                break;
+            case GrammarConstants.Egt5HeaderString:
+                return true;
+            case GrammarConstants.CgtHeaderString:
+                return false;
+            default:
+                errorMessage = "Unrecognized file format.";
+                break;
         }
+
+        ThrowHelpers.ThrowNotSupportedException(errorMessage);
+        return false;
     }
 
     private static void AssignOnce<T>(ImmutableArray<T>[] array, int index, ImmutableArray<T> item)
@@ -47,6 +54,33 @@ internal static class GoldGrammarReader
         array[index] = item;
     }
 
+    static void CreateArray<T>([NotNull] ref T[]? array, int length) => array = new T[length];
+
+    internal static ImmutableArray<(char Start, char End)> ConvertCgtCharacterSet(string chars)
+    {
+        if (chars.Length == 0)
+        {
+            return ImmutableArray<(char, char)>.Empty;
+        }
+
+        var builder = ImmutableArray.CreateBuilder<(char, char)>();
+        char firstOfRange = chars[0], lastChar = firstOfRange;
+        foreach (char c in chars.AsSpan(1))
+        {
+            if (c == lastChar + 1)
+            {
+                lastChar = c;
+            }
+            else
+            {
+                builder.Add((firstOfRange, lastChar));
+                firstOfRange = lastChar = c;
+            }
+        }
+        builder.Add((firstOfRange, lastChar));
+        return builder.ToImmutable();
+    }
+
     private static void DecrementRemainingRecord(ref int recordCount)
     {
         if (recordCount == 0)
@@ -59,6 +93,8 @@ internal static class GoldGrammarReader
 
     private static ushort InferStartSymbol(ImmutableArray<LalrAction>[] lalrStates)
     {
+        // The starting symbol is the one that has a GOTO from the initial LALR state
+        // to the accepting one. If such symbol does not exist, the grammar is invalid.
         var firstState = lalrStates[0];
         for (int i = 0; i < firstState.Length; i++)
         {
@@ -67,6 +103,7 @@ internal static class GoldGrammarReader
                 int candidateStateIndex = firstState[i].TargetIndex;
                 foreach (ref readonly var action in lalrStates[candidateStateIndex].AsSpan())
                 {
+                    // The accept action should trigger on EOF, but who cares, we can forgo checking it.
                     if (action.Kind == LalrActionKind.Accept)
                     {
                         return (ushort)candidateStateIndex;
@@ -107,9 +144,10 @@ internal static class GoldGrammarReader
     public static GoldGrammar ReadGrammar(Stream stream)
     {
         GrammarBinaryReader reader = new GrammarBinaryReader(stream);
-        ValidateHeader(reader.Header);
+        bool isEgt = IsEgtHeader(reader.Header);
 
         string? grammarName = null;
+        ushort startSymbol = 0;
         ImmutableArray<(char Start, char End)>[]? characterSets = null;
         Symbol[]? symbols = null;
         GoldGrammar.Group[]? groups = null;
@@ -122,9 +160,10 @@ internal static class GoldGrammarReader
         while (reader.NextRecord())
         {
             byte entryKind = reader.ReadByte();
-            switch ((char)entryKind)
+            switch ((char)entryKind, isEgt)
             {
-                case 'p':
+                // EGT-only records
+                case ('p', true):
                     {
                         int index = reader.ReadUInt16();
                         reader.SkipString();
@@ -139,7 +178,7 @@ internal static class GoldGrammarReader
                         }
                     }
                     break;
-                case 't' when characterSets is null:
+                case ('t', true) when characterSets is null:
                     {
                         Debug.Assert(symbols is null && groups is null && productions is null && dfaStates is null && lalrStates is null);
                         CreateArray(ref symbols, remainingSymbols = reader.ReadUInt16());
@@ -148,11 +187,9 @@ internal static class GoldGrammarReader
                         CreateArray(ref dfaStates, remainingDfaStates = reader.ReadUInt16());
                         CreateArray(ref lalrStates, remainingLalrStates = reader.ReadUInt16());
                         CreateArray(ref groups, remainingGroups = reader.ReadUInt16());
-
-                        static void CreateArray<T>([NotNull] ref T[]? array, int length) => array = new T[length];
                     }
                     break;
-                case 'c' when characterSets is not null:
+                case ('c', true) when characterSets is not null:
                     {
                         DecrementRemainingRecord(ref remainingCharacterSets);
                         int index = reader.ReadIndex(characterSets.Length);
@@ -176,27 +213,7 @@ internal static class GoldGrammarReader
                         AssignOnce(characterSets, index, builder.MoveToImmutable());
                     }
                     break;
-                case 'S' when symbols is not null && groups is null:
-                    {
-                        DecrementRemainingRecord(ref remainingSymbols);
-                        int index = reader.ReadIndex(symbols.Length);
-                        string name = reader.ReadString();
-                        SymbolKind symbolKind = reader.ReadUInt16() switch
-                        {
-                            0 => SymbolKind.Nonterminal,
-                            1 => SymbolKind.Terminal,
-                            2 => SymbolKind.Noise,
-                            3 => SymbolKind.EndOfFile,
-                            4 => SymbolKind.GroupStart,
-                            5 => SymbolKind.GroupEnd,
-                            7 => SymbolKind.Error,
-                            _ => throw new InvalidDataException()
-                        };
-
-                        AssignOnce(symbols, index, new() { Kind = symbolKind, Name = name });
-                    }
-                    break;
-                case 'g' when groups is not null:
+                case ('g', true) when groups is not null:
                     {
                         Debug.Assert(symbols is not null);
                         DecrementRemainingRecord(ref remainingGroups);
@@ -224,7 +241,58 @@ internal static class GoldGrammarReader
                         });
                     }
                     break;
-                case 'R' when productions is not null:
+                // CGT-only records
+                case ('P', false) when grammarName is null:
+                    {
+                        grammarName = reader.ReadString();
+                        reader.SkipString();
+                        reader.SkipString();
+                        reader.SkipString();
+                        _ = reader.ReadBoolean();
+                        startSymbol = reader.ReadUInt16();
+                    }
+                    break;
+                case ('T', false) when characterSets is null:
+                    {
+                        Debug.Assert(symbols is null && groups is null && productions is null && dfaStates is null && lalrStates is null);
+                        CreateArray(ref symbols, remainingSymbols = reader.ReadUInt16());
+                        CreateArray(ref characterSets, remainingCharacterSets = reader.ReadUInt16());
+                        CreateArray(ref productions, remainingProductions = reader.ReadUInt16());
+                        CreateArray(ref dfaStates, remainingDfaStates = reader.ReadUInt16());
+                        CreateArray(ref lalrStates, remainingLalrStates = reader.ReadUInt16());
+                        groups = Array.Empty<GoldGrammar.Group>();
+                    }
+                    break;
+                case ('C', false) when characterSets is not null:
+                    {
+                        DecrementRemainingRecord(ref remainingCharacterSets);
+                        int index = reader.ReadIndex(characterSets.Length);
+                        string chars = reader.ReadString();
+                        AssignOnce(characterSets, index, ConvertCgtCharacterSet(chars));
+                    }
+                    break;
+                // Records present in both EGT and CGT
+                case ('S', _) when symbols is not null && groups is null:
+                    {
+                        DecrementRemainingRecord(ref remainingSymbols);
+                        int index = reader.ReadIndex(symbols.Length);
+                        string name = reader.ReadString();
+                        SymbolKind symbolKind = reader.ReadUInt16() switch
+                        {
+                            0 => SymbolKind.Nonterminal,
+                            1 => SymbolKind.Terminal,
+                            2 => SymbolKind.Noise,
+                            3 => SymbolKind.EndOfFile,
+                            4 => SymbolKind.GroupStart,
+                            5 => SymbolKind.GroupEnd,
+                            7 => SymbolKind.Error,
+                            _ => throw new InvalidDataException()
+                        };
+
+                        AssignOnce(symbols, index, new() { Kind = symbolKind, Name = name });
+                    }
+                    break;
+                case ('R', _) when productions is not null:
                     {
                         Debug.Assert(symbols is not null);
                         DecrementRemainingRecord(ref remainingProductions);
@@ -236,7 +304,7 @@ internal static class GoldGrammarReader
                         AssignOnce(productions, index, new() { HeadIndex = headIndex, Members = members });
                     }
                     break;
-                case 'I':
+                case ('I', _):
                     {
                         ushort dfaStateCount = reader.ReadUInt16();
                         ushort lalrStateCount = reader.ReadUInt16();
@@ -246,7 +314,7 @@ internal static class GoldGrammarReader
                         }
                     }
                     break;
-                case 'D' when dfaStates is not null:
+                case ('D', _) when dfaStates is not null:
                     {
                         Debug.Assert(characterSets is not null && symbols is not null);
                         DecrementRemainingRecord(ref remainingDfaStates);
@@ -275,7 +343,7 @@ internal static class GoldGrammarReader
                         AssignOnce(dfaStates, index, new() { AcceptIndex = isAccept ? acceptIndex : null, Edges = builder.MoveToImmutable() });
                     }
                     break;
-                case 'L' when lalrStates is not null:
+                case ('L', _) when lalrStates is not null:
                     {
                         Debug.Assert(symbols is not null && productions is not null);
                         DecrementRemainingRecord(ref remainingLalrStates);
@@ -334,13 +402,22 @@ internal static class GoldGrammarReader
         {
             ThrowHelpers.ThrowInvalidDataException();
         }
-
         Debug.Assert(symbols is not null && groups is not null && productions is not null && dfaStates is not null && lalrStates is not null);
+
+        if (isEgt)
+        {
+            // EGT files don't store the grammar's starting symbol; we have to find it ourselves.
+            startSymbol = InferStartSymbol(lalrStates);
+        }
+        else if (startSymbol >= symbols.Length)
+        {
+            ThrowHelpers.ThrowInvalidDataException();
+        }
 
         return new()
         {
             Name = grammarName,
-            StartSymbol = InferStartSymbol(lalrStates),
+            StartSymbol = startSymbol,
             CharacterSets = characterSets,
             Symbols = symbols,
             Groups = groups,

@@ -121,7 +121,7 @@ internal sealed class LrWriter
     {
         if (!_isFinished)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Builder is not finished, call Finish() first.");
+            ThrowHelpers.ThrowInvalidOperationException("Writer is not finished, call Finish() first.");
         }
     }
 
@@ -129,7 +129,7 @@ internal sealed class LrWriter
     {
         if (_isFinished)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished builder.");
+            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished writer.");
         }
     }
 

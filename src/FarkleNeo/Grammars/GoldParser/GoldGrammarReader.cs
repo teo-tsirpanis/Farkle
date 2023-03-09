@@ -21,7 +21,7 @@ internal static class GoldGrammarReader
             case GrammarConstants.EgtNeoHeaderString:
                 errorMessage = "EGTneo grammar files produced by Farkle 6.x are not supported.";
                 break;
-            case GrammarConstants.Egt5HeaderString:
+            case GrammarConstants.EgtHeaderString:
                 return true;
             case GrammarConstants.CgtHeaderString:
                 return false;

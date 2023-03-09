@@ -56,7 +56,7 @@ internal readonly struct GrammarHeader
             return EgtNeo;
         }
 
-        if (grammarFile.StartsWith(Egt5Header) || grammarFile.StartsWith(CgtHeader))
+        if (grammarFile.StartsWith(EgtHeader) || grammarFile.StartsWith(CgtHeader))
         {
             return GoldParser;
         }

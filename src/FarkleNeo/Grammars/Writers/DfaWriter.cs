@@ -12,7 +12,6 @@ namespace Farkle.Grammars.Writers;
 internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     private int _currentState;
-    private bool _isFinished;
 
     private readonly int[] _firstEdges;
     // We use a tuple instead of DfaEdge to avoid writing our own comparer.
@@ -97,49 +96,34 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     private void EnsureFinished()
     {
-        if (!_isFinished)
+        if (_currentState != StateCount)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Writer is not finished, call Finish() first.");
+            ThrowHelpers.ThrowInvalidOperationException("Not all states have been written.");
         }
     }
 
     private void EnsureNotFinished()
     {
-        if (_isFinished)
+        if (_currentState == StateCount)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished writer.");
+            ThrowHelpers.ThrowInvalidOperationException("All states have already been written.");
         }
     }
 
-    public void Finish()
-    {
-        if (_isFinished)
-        {
-            return;
-        }
-        if (_currentState != StateCount - 1)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Not all states have been defined.");
-        }
-        _isFinished = true;
-    }
-
-    public void NextState()
+    public void FinishState()
     {
         EnsureNotFinished();
-        if (_currentState == StateCount - 1)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot advance to next state; already at the last state.");
-        }
-
         int firstEdge = _firstEdges[_currentState];
         SortAndValidateEdgeRanges(firstEdge, _edges.Count - firstEdge);
         int firstAccept = _firstAccepts[_currentState];
         _accepts.Sort(firstAccept, _accepts.Count - firstAccept, null);
 
         _currentState++;
-        _firstEdges[_currentState] = _edges.Count;
-        _firstAccepts[_currentState] = _accepts.Count;
+        if (_currentState < StateCount)
+        {
+            _firstEdges[_currentState] = _edges.Count;
+            _firstAccepts[_currentState] = _accepts.Count;
+        }
 #if DEBUG
         _acceptsOfState.Clear();
 #endif

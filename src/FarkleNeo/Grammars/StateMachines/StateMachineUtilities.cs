@@ -59,6 +59,7 @@ internal static class StateMachineUtilities
         if (typeof(TChar) == typeof(char))
         {
             writer.Write((char)(object)c);
+            return;
         }
 
         throw new NotSupportedException();

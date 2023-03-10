@@ -136,6 +136,7 @@ internal sealed class GrammarBinaryReader
                 ThrowHelpers.ThrowInvalidDataException(UnexpectedEntryTypeMessage);
                 break;
         }
+        RemainingEntries--;
     }
 
     public void SkipString()

@@ -108,7 +108,7 @@ internal sealed class GrammarWriter
         using var buffer = new PooledSegmentBufferWriter<byte>();
 
         lr.WriteData(buffer, _tablesWriter.TokenSymbolRowCount, _tablesWriter.TerminalCount, _tablesWriter.ProductionCount, _tablesWriter.NonterminalCount);
-        ulong kind = lr.HasConflicts ? GrammarConstants.Lr1Kind : GrammarConstants.Glr1Kind;
+        ulong kind = lr.HasConflicts ? GrammarConstants.Glr1Kind : GrammarConstants.Lr1Kind;
         AddStateMachine(kind, GetOrAddBlob(buffer));
     }
 

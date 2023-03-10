@@ -425,7 +425,7 @@ internal struct GrammarTablesWriter
             // while skipping those with no productions.
             void UpdateRemainingProductions()
             {
-                while (remainingProductions == 0 && currentNonterminal < nonterminals.Count)
+                while (remainingProductions == 0 && currentNonterminal < nonterminals.Count - 1)
                 {
                     currentNonterminal++;
                     remainingProductions = nonterminals[currentNonterminal].ProductionCount;

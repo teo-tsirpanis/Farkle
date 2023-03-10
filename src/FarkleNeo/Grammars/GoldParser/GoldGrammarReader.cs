@@ -174,7 +174,7 @@ internal static class GoldGrammarReader
                         string value = reader.ReadString();
                         if (index == 0)
                         {
-                            if (grammarName is null)
+                            if (grammarName is not null)
                             {
                                 ThrowHelpers.ThrowInvalidDataException();
                             }
@@ -276,7 +276,7 @@ internal static class GoldGrammarReader
                     }
                     break;
                 // Records present in both EGT and CGT
-                case ('S', _) when symbols is not null && groups is null:
+                case ('S', _) when symbols is not null && remainingGroups == groups!.Length:
                     {
                         DecrementRemainingRecord(ref remainingSymbols);
                         int index = reader.ReadIndex(symbols.Length);
@@ -338,7 +338,7 @@ internal static class GoldGrammarReader
                         for (int i = 0; i < edgeCount; i++)
                         {
                             ushort charSetIndex = reader.ReadIndex(characterSets.Length);
-                            ushort targetIndex = reader.ReadIndex(symbols.Length);
+                            ushort targetIndex = reader.ReadIndex(dfaStates.Length);
                             reader.SkipEntry();
 
                             builder.Add((charSetIndex, targetIndex));
@@ -377,12 +377,12 @@ internal static class GoldGrammarReader
                                     targetIndex = reader.ReadIndex(productions.Length);
                                     break;
                                 case 3:
-                                    actionType = LalrActionKind.Accept;
-                                    targetIndex = 0;
-                                    break;
-                                case 4:
                                     actionType = LalrActionKind.Goto;
                                     targetIndex = reader.ReadIndex(lalrStates.Length);
+                                    break;
+                                case 4:
+                                    actionType = LalrActionKind.Accept;
+                                    targetIndex = reader.ReadUInt16();
                                     break;
                                 default:
                                     throw new InvalidDataException();

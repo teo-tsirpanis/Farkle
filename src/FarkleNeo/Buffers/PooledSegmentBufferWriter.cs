@@ -181,7 +181,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
             buffer.CopyTo(span.Slice(writtenElements));
             writtenElements += buffer.Length;
         }
-        Debug.Assert(writtenElements == span.Length);
+        Debug.Assert(writtenElements == WrittenCount);
         return true;
     }
 

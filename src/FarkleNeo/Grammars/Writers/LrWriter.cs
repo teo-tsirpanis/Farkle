@@ -67,10 +67,6 @@ internal sealed class LrWriter
         {
             _maxTerminal = terminal.TableIndex;
         }
-        if (_actions.Count - _firstActions[_currentState] > 1)
-        {
-            HasConflicts = true;
-        }
 
         _actions.Add((terminal.TableIndex, action));
     }
@@ -96,11 +92,11 @@ internal sealed class LrWriter
 
     private void AddEofAction(LrEndOfFileAction action)
     {
+        _eofActions.Add(action);
         if (_eofActions.Count - _firstEofActions[_currentState] > 1)
         {
             HasConflicts = true;
         }
-        _eofActions.Add(action);
     }
 
     public void AddGoto(NonterminalHandle nonterminal, int state)
@@ -135,9 +131,13 @@ internal sealed class LrWriter
     public void FinishState()
     {
         EnsureNotFinished();
-        Sort(_firstActions, _actions);
-        Sort(_firstEofActions, _eofActions);
-        Sort(_firstGotos, _gotos);
+        HasConflicts |= SortAndCheckForConflicts(_firstActions, _actions);
+        int firstEofAction = _firstEofActions[_currentState];
+        _eofActions.Sort(firstEofAction, _eofActions.Count - firstEofAction, null);
+        if (SortAndCheckForConflicts(_firstGotos, _gotos))
+        {
+            ThrowHelpers.ThrowInvalidOperationException("Conflicts on GOTO transitions are not allowed.");
+        }
 
         _currentState++;
         if (_currentState < StateCount)
@@ -147,10 +147,24 @@ internal sealed class LrWriter
             _firstGotos[_currentState] = _gotos.Count;
         }
 
-        void Sort<T>(int[] firstItems, List<T> items)
+        bool SortAndCheckForConflicts<T>(int[] firstItems, List<(uint Key, T)> items)
         {
             int firstItem = firstItems[_currentState];
             items.Sort(firstItem, items.Count - firstItem, null);
+
+            if (firstItem != items.Count)
+            {
+                uint previousKey = items[firstItem].Key;
+                for (int i = firstItem + 1; i < items.Count; i++)
+                {
+                    uint key = items[i].Key;
+                    if (key == previousKey)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 

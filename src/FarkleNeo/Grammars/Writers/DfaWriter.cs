@@ -19,7 +19,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
     private readonly int[] _defaultTransitions;
 
     private readonly int[] _firstAccepts;
-    private readonly List<TokenSymbolHandle> _accepts = new();
+    private readonly List<uint> _accepts = new();
 #if DEBUG
     private readonly HashSet<TokenSymbolHandle> _acceptsOfState = new();
 #endif
@@ -60,7 +60,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
         }
 #endif
 
-        _accepts.Add(handle);
+        _accepts.Add(handle.TableIndex);
         if (_accepts.Count - _firstAccepts[_currentState] > 1)
         {
             HasConflicts = true;
@@ -215,9 +215,9 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             {
                 writer.WriteVariableSize((uint)firstAccept, acceptIndexSize);
             }
-            foreach (TokenSymbolHandle handle in _accepts)
+            foreach (uint handle in _accepts)
             {
-                writer.WriteVariableSize(handle.TableIndex, tokenSymbolSize);
+                writer.WriteVariableSize(handle, tokenSymbolSize);
             }
         }
         else
@@ -227,7 +227,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
                 int firstAccept = _firstAccepts[i];
                 int nextFirstAccept = i < _firstAccepts.Length - 1 ? _firstAccepts[i + 1] : _accepts.Count;
 
-                uint handle = firstAccept < nextFirstAccept ? _accepts[firstAccept].TableIndex : 0;
+                uint handle = firstAccept < nextFirstAccept ? _accepts[firstAccept] : 0;
                 writer.WriteVariableSize(handle, tokenSymbolSize);
             }
         }

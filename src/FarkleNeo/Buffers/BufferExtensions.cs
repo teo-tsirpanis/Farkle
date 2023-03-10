@@ -169,6 +169,25 @@ internal static class BufferExtensions
         buffer.Advance(sizeof(ulong));
     }
 
+    public static void WriteVariableSize(this IBufferWriter<byte> buffer, int value, byte dataSize)
+    {
+        switch (dataSize)
+        {
+            case 1:
+                Debug.Assert(value == (sbyte)value);
+                buffer.Write((byte)(sbyte)value);
+                break;
+            case 2:
+                Debug.Assert(value == (short)value);
+                buffer.Write((ushort)(short)value);
+                break;
+            default:
+                Debug.Assert(dataSize == 4);
+                buffer.Write(value);
+                break;
+        }
+    }
+
     public static void WriteVariableSize(this IBufferWriter<byte> buffer, uint value, byte dataSize)
     {
         switch (dataSize)

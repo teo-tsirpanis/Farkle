@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Grammars.GoldParser;
 using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Collections.Immutable;
@@ -83,7 +84,7 @@ public abstract class Grammar
             GrammarFileType.Farkle when header.VersionMajor > GrammarConstants.VersionMajor => "The grammar's format version is too new for this version of Farkle to support.",
             GrammarFileType.Farkle => "The grammar's format version is too old for this version of Farkle to support.",
             GrammarFileType.EgtNeo => "EGTneo grammar files produced by Farkle 6.x are not supported.",
-            GrammarFileType.GoldParser => "Grammar files produced by GOLD Parser must be opened with the Grammar.CreateFromGoldParser method.",
+            GrammarFileType.GoldParser => "Grammar files produced by GOLD Parser must be opened with the Grammar.CreateFromGoldParserGrammar method.",
             _ => "Unrecognized file format."
         };
         ThrowHelpers.ThrowNotSupportedException(errorMessage);
@@ -157,6 +158,32 @@ public abstract class Grammar
     public static Grammar Create(ReadOnlySpan<byte> grammarData)
     {
         return new ManagedMemoryGrammar(grammarData);
+    }
+
+    /// <summary>
+    /// Converts a grammar file produced by GOLD Parser into a <see cref="Grammar"/>.
+    /// </summary>
+    /// <param name="grammarFile">A <see cref="Stream"/> containing the GOLD Parser grammar file.</param>
+    /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
+    /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
+    /// <remarks>
+    /// Both Enhanced Grammar Tables (EGT) and Compiled Grammar Tables (CGT) files are supported.
+    /// </remarks>
+    public static Grammar CreateFromGoldParserGrammar(Stream grammarFile)
+    {
+        GoldGrammar grammar = GoldGrammarReader.ReadGrammar(grammarFile);
+        ImmutableArray<byte> data;
+        try
+        {
+            data = GoldGrammarConverter.Convert(grammar);
+        }
+        catch (Exception e) when (e is not (NotSupportedException or InvalidDataException))
+        {
+            // Let's provide a unified experience for any stray exceptions that might be thrown.
+            // We cover only Convert to avoid wrapping I/O errors.
+            throw new InvalidDataException("Failed to convert the grammar.", e);
+        }
+        return Create(data);
     }
 
     /// <summary>

@@ -53,7 +53,7 @@ internal struct BlobHeapWriter
         byte[] buffer = ArrayPool<byte>.Shared.Rent(blobLength);
         bool copied = blob.TryCopyTo(buffer);
         Debug.Assert(copied);
-        BlobHandle handle = Add(buffer.AsSpan(blobLength));
+        BlobHandle handle = Add(buffer.AsSpan(0, blobLength));
         ArrayPool<byte>.Shared.Return(buffer);
         return handle;
     }

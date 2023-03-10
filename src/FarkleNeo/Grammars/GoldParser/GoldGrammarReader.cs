@@ -102,15 +102,15 @@ internal static class GoldGrammarReader
         var firstState = lalrStates[0];
         for (int i = 0; i < firstState.Length; i++)
         {
-            if (firstState[i].Kind == LalrActionKind.Goto)
+            ref readonly LalrAction candidateAction = ref firstState.ItemRef(i);
+            if (candidateAction.Kind == LalrActionKind.Goto)
             {
-                int candidateStateIndex = firstState[i].TargetIndex;
-                foreach (ref readonly var action in lalrStates[candidateStateIndex].AsSpan())
+                foreach (ref readonly var action in lalrStates[candidateAction.TargetIndex].AsSpan())
                 {
                     // The accept action should trigger on EOF, but who cares, we can forgo checking it.
                     if (action.Kind == LalrActionKind.Accept)
                     {
-                        return (ushort)candidateStateIndex;
+                        return candidateAction.SymbolIndex;
                     }
                 }
             }

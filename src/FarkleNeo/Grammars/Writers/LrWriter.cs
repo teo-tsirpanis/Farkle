@@ -11,7 +11,6 @@ namespace Farkle.Grammars.Writers;
 internal sealed class LrWriter
 {
     private int _currentState;
-    private bool _isFinished;
 
     private readonly List<(uint TerminalIndex, LrTerminalAction Action)> _actions = new();
     private readonly int[] _firstActions;
@@ -119,49 +118,34 @@ internal sealed class LrWriter
 
     private void EnsureFinished()
     {
-        if (!_isFinished)
+        if (_currentState != StateCount)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Writer is not finished, call Finish() first.");
+            ThrowHelpers.ThrowInvalidOperationException("Not all states have been written.");
         }
     }
 
     private void EnsureNotFinished()
     {
-        if (_isFinished)
+        if (_currentState == StateCount)
         {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot modify a finished writer.");
+            ThrowHelpers.ThrowInvalidOperationException("All states have already been written.");
         }
     }
 
-    public void Finish()
-    {
-        if (_isFinished)
-        {
-            return;
-        }
-        if (_currentState != StateCount - 1)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Not all states have been defined.");
-        }
-        _isFinished = true;
-    }
-
-    public void NextState()
+    public void FinishState()
     {
         EnsureNotFinished();
-        if (_currentState == StateCount - 1)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Cannot advance to next state; already at the last state.");
-        }
-
         Sort(_firstActions, _actions);
         Sort(_firstEofActions, _eofActions);
         Sort(_firstGotos, _gotos);
 
         _currentState++;
-        _firstActions[_currentState] = _actions.Count;
-        _firstEofActions[_currentState] = _eofActions.Count;
-        _firstGotos[_currentState] = _gotos.Count;
+        if (_currentState < StateCount)
+        {
+            _firstActions[_currentState] = _actions.Count;
+            _firstEofActions[_currentState] = _eofActions.Count;
+            _firstGotos[_currentState] = _gotos.Count;
+        }
 
         void Sort<T>(int[] firstItems, List<T> items)
         {

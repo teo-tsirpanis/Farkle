@@ -3,7 +3,6 @@
 
 using Farkle.Buffers;
 using Farkle.Grammars.Writers;
-using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using static Farkle.Grammars.GoldParser.GoldGrammar;
@@ -161,9 +160,8 @@ internal static class GoldGrammarConverter
                         break;
                 }
             }
-            lr.NextState();
+            lr.FinishState();
         }
-        lr.Finish();
         if (lr.HasConflicts)
         {
             ThrowHelpers.ThrowInvalidDataException("LALR states have conflicts.");
@@ -184,9 +182,8 @@ internal static class GoldGrammarConverter
             {
                 dfa.AddAccept((TokenSymbolHandle)symbolMapping[acceptIndex]);
             }
-            dfa.NextState();
+            dfa.FinishState();
         }
-        dfa.Finish();
         // We will call AddAccept at most once for each state. We can't have conflicts.
         Debug.Assert(!dfa.HasConflicts);
         writer.AddStateMachine(dfa);

@@ -204,7 +204,7 @@ internal sealed class LrWriter
         }
         foreach ((_, LrTerminalAction action) in _actions)
         {
-            writer.WriteVariableSize((uint)action.Value, actionSize);
+            writer.WriteVariableSize(action.Value, actionSize);
         }
         if (HasConflicts)
         {

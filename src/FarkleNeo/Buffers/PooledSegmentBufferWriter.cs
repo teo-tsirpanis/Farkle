@@ -53,7 +53,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
         Segment[] segments = _segments ??= InitializeSegments(sizeHint);
         ref Segment segment = ref segments[_activeSegmentIndex];
         int remaining = segment.Remaining;
-        if (remaining == 0 || (remaining > sizeHint && !segment.TryResizeInPlace(sizeHint)))
+        if (remaining == 0 || (remaining < sizeHint && !segment.TryResizeInPlace(sizeHint)))
         {
             segment = ref AllocateNewSegment(sizeHint);
         }

@@ -12,12 +12,12 @@ internal sealed class LrWriter
 {
     private int _currentState;
 
-    private readonly List<(uint TerminalIndex, LrTerminalAction Action)> _actions = new();
+    private readonly List<(uint TerminalIndex, int Action)> _actions = new();
     private readonly int[] _firstActions;
     private uint _maxTerminal, _maxProduction;
 
     private readonly int[] _firstEofActions;
-    private readonly List<LrEndOfFileAction> _eofActions = new();
+    private readonly List<uint> _eofActions = new();
 
     private readonly List<(uint NonterminalIndex, int State)> _gotos = new();
     private readonly int[] _firstGotos;
@@ -68,7 +68,7 @@ internal sealed class LrWriter
             _maxTerminal = terminal.TableIndex;
         }
 
-        _actions.Add((terminal.TableIndex, action));
+        _actions.Add((terminal.TableIndex, action.Value));
     }
 
     public void AddEofAccept()
@@ -92,7 +92,7 @@ internal sealed class LrWriter
 
     private void AddEofAction(LrEndOfFileAction action)
     {
-        _eofActions.Add(action);
+        _eofActions.Add(action.Value);
         if (_eofActions.Count - _firstEofActions[_currentState] > 1)
         {
             HasConflicts = true;
@@ -216,9 +216,9 @@ internal sealed class LrWriter
         {
             writer.WriteVariableSize(terminal, tokenSymbolIndexSize);
         }
-        foreach ((_, LrTerminalAction action) in _actions)
+        foreach ((_, int action) in _actions)
         {
-            writer.WriteVariableSize(action.Value, actionSize);
+            writer.WriteVariableSize(action, actionSize);
         }
         if (HasConflicts)
         {
@@ -227,9 +227,9 @@ internal sealed class LrWriter
             {
                 writer.WriteVariableSize((uint)firstEofAction, eofActionIndexSize);
             }
-            foreach (LrEndOfFileAction eofAction in _eofActions)
+            foreach (uint eofAction in _eofActions)
             {
-                writer.WriteVariableSize(eofAction.Value, eofActionSize);
+                writer.WriteVariableSize(eofAction, eofActionSize);
             }
         }
         else
@@ -239,8 +239,8 @@ internal sealed class LrWriter
                 int firstEofAction = _firstEofActions[i];
                 int nextFirstEofAction = i < _firstEofActions.Length - 1 ? _firstEofActions[i + 1] : _eofActions.Count;
 
-                LrEndOfFileAction action = firstEofAction < nextFirstEofAction ? _eofActions[firstEofAction] : LrEndOfFileAction.Error;
-                writer.WriteVariableSize(action.Value, tokenSymbolIndexSize);
+                uint action = firstEofAction < nextFirstEofAction ? _eofActions[firstEofAction] : LrEndOfFileAction.Error.Value;
+                writer.WriteVariableSize(action, tokenSymbolIndexSize);
             }
         }
         foreach (int firstGoto in _firstGotos)

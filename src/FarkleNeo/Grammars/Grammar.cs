@@ -123,12 +123,37 @@ public abstract class Grammar
     }
 
     /// <summary>
+    /// Creates a <see cref="Grammar"/> from a preallocated immutable byte buffer.
+    /// </summary>
+    /// <param name="grammarData">An <see cref="ImmutableArray{Byte}"/>
+    /// containing the grammar's data.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="grammarData"/> has its
+    /// <see cref="ImmutableArray{Byte}.IsDefault"/> property set to <see langword="true"/>.</exception>
+    /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
+    /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
+    /// <remarks>
+    /// This overload is more efficient because it avoids copying <paramref name="grammarData"/>.
+    /// </remarks>
+    public static Grammar Create(ImmutableArray<byte> grammarData)
+    {
+        if (grammarData.IsDefault)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
+        }
+        return new ManagedMemoryGrammar(grammarData);
+    }
+
+    /// <summary>
     /// Creates a <see cref="Grammar"/> from a byte buffer.
     /// </summary>
     /// <param name="grammarData">A <see cref="ReadOnlySpan{Byte}"/>
     /// containing the grammar's data.</param>
     /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
     /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
+    /// <remarks>
+    /// The contents of <paramref name="grammarData"/> will be copied to a new internal buffer.
+    /// To limit such data copies use <see cref="Create(ImmutableArray{byte})"/> instead.
+    /// </remarks>
     public static Grammar Create(ReadOnlySpan<byte> grammarData)
     {
         return new ManagedMemoryGrammar(grammarData);
@@ -288,6 +313,11 @@ public abstract class Grammar
                 Debug.Assert(!_grammarFile.IsDefault);
                 return _grammarFile.AsSpan();
             }
+        }
+
+        public ManagedMemoryGrammar(ImmutableArray<byte> grammarFile) : base(grammarFile.AsSpan())
+        {
+            _grammarFile = grammarFile;
         }
 
         public ManagedMemoryGrammar(ReadOnlySpan<byte> grammarFile) : base(grammarFile)

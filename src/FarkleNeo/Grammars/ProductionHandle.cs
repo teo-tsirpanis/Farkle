@@ -41,7 +41,7 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     /// Whether this <see cref="ProductionHandle"/> has a valid value.
     /// </summary>
     /// <seealso cref="Value"/>
-    public bool HasValue => TableIndex == 0;
+    public bool HasValue => TableIndex != 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is ProductionHandle handle && Equals(handle);

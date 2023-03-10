@@ -41,7 +41,7 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// Whether this <see cref="NonterminalHandle"/> has a valid value.
     /// </summary>
     /// <seealso cref="Value"/>
-    public bool HasValue => TableIndex == 0;
+    public bool HasValue => TableIndex != 0;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is NonterminalHandle handle && Equals(handle);

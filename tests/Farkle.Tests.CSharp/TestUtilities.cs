@@ -5,7 +5,9 @@ namespace Farkle.Tests.CSharp;
 
 public static class TestUtilities
 {
-    public static IEnumerable<string> Farkle7Grammars => Directory.EnumerateFiles(AppContext.BaseDirectory, "*.grammar.dat");
+    private static readonly string ResourcePath = Path.Combine(AppContext.BaseDirectory, "resources");
 
-    public static string GetResourceFile(string fileName) => Path.Combine(AppContext.BaseDirectory, fileName);
+    public static IEnumerable<string> Farkle7Grammars => Directory.EnumerateFiles(ResourcePath, "*.grammar.dat");
+
+    public static string GetResourceFile(string fileName) => Path.Combine(ResourcePath, fileName);
 }

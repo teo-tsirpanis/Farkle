@@ -205,7 +205,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
             return;
         }
 
-        for (int i = 0; i < _activeSegmentIndex; i++)
+        for (int i = 0; i <= _activeSegmentIndex; i++)
         {
             bufferWriter.Write(segments[i].WrittenSpan);
         }

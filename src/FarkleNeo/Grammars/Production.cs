@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Text;
 
 namespace Farkle.Grammars;
 
@@ -73,5 +74,30 @@ public readonly struct Production
             (uint offset, uint nextOffset) = GetMemberBounds(_grammar.GrammarFile, in _grammar.GrammarTables);
             return new(_grammar, offset, (int)(nextOffset - offset));
         }
+    }
+
+    /// <summary>
+    /// Returns a string describing the the <see cref="Production"/>.
+    /// </summary>
+    public override string ToString()
+    {
+        StringBuilder sb = new();
+
+        sb.Append(_grammar.GetNonterminal(Head));
+        sb.Append(" ::=");
+        foreach (EntityHandle member in Members)
+        {
+            sb.Append(' ');
+            if (member.IsTokenSymbol)
+            {
+                sb.Append(_grammar.GetTokenSymbol((TokenSymbolHandle)member));
+            }
+            else
+            {
+                sb.Append(_grammar.GetNonterminal((NonterminalHandle)member));
+            }
+        }
+
+        return sb.ToString();
     }
 }

@@ -83,4 +83,9 @@ public readonly struct Nonterminal
             return new(_grammar, offset, (int)(nextOffset - offset));
         }
     }
+
+    /// <summary>
+    /// Returns a string describing the the <see cref="Nonterminal"/>.
+    /// </summary>
+    public override string ToString() => $"<{_grammar.GetString(Name)}>";
 }

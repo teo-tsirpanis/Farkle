@@ -18,7 +18,7 @@ namespace Farkle.Grammars.StateMachines;
 /// </remarks>
 /// <typeparam name="TChar">The type of characters the DFA accepts.
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
-[DebuggerDisplay("Count = {Count}")]
+[DebuggerDisplay("Count = {Count}; HasConflicts = {HasConflicts}}")]
 public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 {
     internal Dfa(int stateCount, bool hasConflicts)

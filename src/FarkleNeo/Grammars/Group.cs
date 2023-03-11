@@ -130,4 +130,9 @@ public readonly struct Group
             return new(_grammar, offset, (int)(nextOffset - offset));
         }
     }
+
+    /// <summary>
+    /// Returns a string describing the the <see cref="Group"/>.
+    /// </summary>
+    public override string ToString() => _grammar.GetString(Name);
 }

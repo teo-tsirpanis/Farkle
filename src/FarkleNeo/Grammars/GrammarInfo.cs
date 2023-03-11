@@ -1,12 +1,15 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Grammars;
 
 /// <summary>
 /// Contains general information about a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.GrammarInfo"/>
+[DebuggerDisplay("Name = {_grammar.GetString(Name)}; StartSymbol = {_grammar.GetNonterminal(StartSymbol)}; Attributes = {Attributes}")]
 public readonly struct GrammarInfo
 {
     private readonly Grammar _grammar { get; }

@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
@@ -8,6 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 /// </summary>
 /// <typeparam name="TChar">The type of characters the DFA accepts.
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
 {
     /// <summary>
@@ -36,6 +39,45 @@ public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
         KeyFrom = keyFrom;
         KeyTo = keyTo;
         Target = target;
+    }
+
+    private string DebuggerDisplay()
+    {
+        string target = Target < 0 ? "<fail>" : Target.ToString();
+        if (EqualityComparer<TChar>.Default.Equals(KeyFrom, KeyTo))
+        {
+            return $"{Format(KeyFrom)} -> {target}";
+        }
+        return $"[{Format(KeyFrom)},{Format(KeyTo)}] -> {target}";
+
+        static string Format(TChar c)
+        {
+            if (c is char c2)
+            {
+                return c2 switch
+                {
+                    '\0' => "'\\0'",
+                    '\a' => "'\\a'",
+                    '\b' => "'\\b'",
+                    '\f' => "'\\f'",
+                    '\n' => "'\\n'",
+                    '\r' => "'\\r'",
+                    '\t' => "'\\t'",
+                    '\v' => "'\\v'",
+                    '\'' => "'\\''",
+                    '"' => "'\"'",
+                    '\\' => "'\\\\'",
+                    _ => c2 < 32 || c2 > 126 ? $"'\\u{(int)c2:X4}'" : $"'{c2}'"
+                };
+            }
+
+            if (c is byte b)
+            {
+                return $"0x{b:X2}";
+            }
+
+            return $"'{c}'";
+        }
     }
 
     /// <inheritdoc/>

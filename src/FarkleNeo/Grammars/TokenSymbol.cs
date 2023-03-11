@@ -55,4 +55,31 @@ public readonly struct TokenSymbol
             return _grammar.GrammarTables.GetTokenSymbolFlags(_grammar.GrammarFile, Handle.TableIndex);
         }
     }
+
+    /// <summary>
+    /// Returns a string describing the the <see cref="TokenSymbol"/>.
+    /// </summary>
+    public override string ToString()
+    {
+        string name = _grammar.GetString(Name);
+
+        return ShouldQuote(name) ? $"'{name}'" : name;
+
+        static bool ShouldQuote(string str)
+        {
+            if (str is "" || !char.IsLetter(str[0]))
+            {
+                return true;
+            }
+
+            foreach (char c in str)
+            {
+                if (!char.IsLetter(c) && c is not ('.' or '-' or '_'))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }

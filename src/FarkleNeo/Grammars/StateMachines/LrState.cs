@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
 /// Represents a state of an <see cref="LrStateMachine"/>.
 /// </summary>
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct LrState
 {
     private readonly LrStateMachine _lr;
@@ -22,6 +24,9 @@ public readonly struct LrState
         _lr = lr;
         StateIndex = stateIndex;
     }
+
+    private string DebuggerDisplay() =>
+        $"{Actions.Count + EndOfFileActions.Count} actions, {Gotos.Count} gotos{(HasConflicts ? ", has conflicts" : "")}";
 
     /// <summary>
     /// The terminals the <see cref="LrState"/> accepts, along

@@ -53,6 +53,11 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     public override int GetHashCode() => TableIndex.GetHashCode();
 
     /// <summary>
+    /// Returns a string describing the the <see cref="ProductionHandle"/>.
+    /// </summary>
+    public override string ToString() => HasValue ? Value.ToString() : "<null>";
+
+    /// <summary>
     /// Checks if two <see cref="ProductionHandle"/>s are pointing to the same row.
     /// </summary>
     /// <param name="left">The first handle.</param>

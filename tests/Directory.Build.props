@@ -1,8 +1,10 @@
 <Project>
-  <PropertyGroup>
-    <VSTestLogger Condition="'$(GITHUB_ACTIONS)' != ''">GitHubActions</VSTestLogger>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' != ''">
+    <VSTestCollect>XPlat Code Coverage</VSTestCollect>
+    <VSTestLogger>GitHubActions</VSTestLogger>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
     <PackageReference Include="GitHubActionsTestLogger" />
   </ItemGroup>
 </Project>

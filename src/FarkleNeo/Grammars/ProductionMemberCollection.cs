@@ -64,7 +64,7 @@ public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHa
         public bool MoveNext()
         {
             int nextIndex = _currentIndex + 1;
-            if (_currentIndex < _collection.Count)
+            if (nextIndex < _collection.Count)
             {
                 _currentIndex = nextIndex;
                 return true;

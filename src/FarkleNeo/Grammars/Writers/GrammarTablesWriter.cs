@@ -61,6 +61,10 @@ internal struct GrammarTablesWriter
 
     private static void ValidateHandle<T>(uint handle, [NotNull] List<T>? list, string parameterName)
     {
+        if (handle == 0)
+        {
+            ThrowHelpers.ThrowArgumentNullException(parameterName);
+        }
         if (list is null || handle > (uint)list.Count)
         {
             ThrowHelpers.ThrowArgumentException(parameterName, "Invalid handle.");

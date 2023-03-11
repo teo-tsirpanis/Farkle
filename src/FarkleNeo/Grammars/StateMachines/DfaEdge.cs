@@ -21,10 +21,10 @@ public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
     public TChar KeyTo { get; }
 
     /// <summary>
-    /// The index of the target DFA state, starting from 1.
+    /// The index of the target DFA state, starting from 0.
     /// </summary>
     /// <remarks>
-    /// A value of 0 indicates that following this edge should stop the tokenizer.
+    /// A negative value indicates that following this edge should stop the tokenizer.
     /// </remarks>
     public int Target { get; }
 

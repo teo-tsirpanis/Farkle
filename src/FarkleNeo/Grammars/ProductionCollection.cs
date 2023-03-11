@@ -9,7 +9,7 @@ namespace Farkle.Grammars;
 /// Contains the members of a <see cref="Production"/>.
 /// </summary>
 /// <seealso cref="Production.Members"/>
-public readonly struct ProductionCollection : IReadOnlyCollection<EntityHandle>
+public readonly struct ProductionCollection : IReadOnlyCollection<Production>
 {
     private readonly Grammar _grammar;
 
@@ -30,13 +30,13 @@ public readonly struct ProductionCollection : IReadOnlyCollection<EntityHandle>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<EntityHandle> IEnumerable<EntityHandle>.GetEnumerator() => GetEnumerator();
+    IEnumerator<Production> IEnumerable<Production>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     /// Used to enumerate a <see cref="ProductionCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<EntityHandle>
+    public struct Enumerator : IEnumerator<Production>
     {
         private readonly ProductionCollection _collection;
         private int _currentIndex = -1;
@@ -47,7 +47,7 @@ public readonly struct ProductionCollection : IReadOnlyCollection<EntityHandle>
         }
 
         /// <inheritdoc/>
-        public EntityHandle Current
+        public Production Current
         {
             get
             {
@@ -55,8 +55,7 @@ public readonly struct ProductionCollection : IReadOnlyCollection<EntityHandle>
                 {
                     ThrowHelpers.ThrowInvalidOperationException();
                 }
-                Grammar grammar = _collection._grammar;
-                return grammar.GrammarTables.GetProductionMemberMember(grammar.GrammarFile, (uint)(_collection._offset + _currentIndex));
+                return new(_collection._grammar, new((uint)(_collection._offset + _currentIndex)));
             }
         }
 

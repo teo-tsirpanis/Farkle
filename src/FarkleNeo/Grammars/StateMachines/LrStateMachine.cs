@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 /// Represents an LR(1) state machine stored in a <see cref="Grammar"/>.
 /// It is used by parsers to parse tokens produced by tokenizers.
 /// </summary>
-[DebuggerDisplay("Count = {Count}")]
+[DebuggerDisplay("Count = {Count}; HasConflicts = {HasConflicts}}")]
 public abstract class LrStateMachine : IReadOnlyList<LrState>
 {
     internal LrStateMachine(int count, bool hasConflicts)

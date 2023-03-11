@@ -53,6 +53,11 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     public override int GetHashCode() => TableIndex.GetHashCode();
 
     /// <summary>
+    /// Returns a string describing the the <see cref="NonterminalHandle"/>.
+    /// </summary>
+    public override string ToString() => HasValue ? Value.ToString() : "<null>";
+
+    /// <summary>
     /// Checks if two <see cref="NonterminalHandle"/>s are pointing to the same row.
     /// </summary>
     /// <param name="left">The first handle.</param>

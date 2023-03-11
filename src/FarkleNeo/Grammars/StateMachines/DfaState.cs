@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
+using System.Text;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -14,6 +16,7 @@ namespace Farkle.Grammars.StateMachines;
 /// APIs of this type are intended for presentation purposes. To match text against a DFA,
 /// use the <see cref="Dfa{TChar}.NextState"/> function instead.
 /// </remarks>
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct DfaState<TChar>
 {
     private readonly Dfa<TChar> _dfa;
@@ -55,6 +58,24 @@ public readonly struct DfaState<TChar>
             (int offset, int count) = _dfa.GetAcceptSymbolBounds(StateIndex);
             return new(_dfa, offset, count);
         }
+    }
+
+    private string DebuggerDisplay()
+    {
+        var sb = new StringBuilder();
+
+        sb.Append($"{Edges.Count} edges");
+        switch (AcceptSymbols.Count)
+        {
+            case 1:
+                sb.Append(", accept");
+                break;
+            case > 1:
+                sb.Append($", accept({AcceptSymbols.Count})");
+                break;
+        }
+
+        return sb.ToString();
     }
 
     /// <summary>

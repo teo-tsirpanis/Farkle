@@ -67,6 +67,11 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     public override int GetHashCode() => _valueAndKind.GetHashCode();
 
     /// <summary>
+    /// Returns a string describing the the <see cref="EntityHandle"/>.
+    /// </summary>
+    public override string ToString() => HasValue ? $"{Kind} {TableIndex + 1}" : "<null>";
+
+    /// <summary>
     /// Checks if two <see cref="EntityHandle"/>s are pointing to the same table row.
     /// </summary>
     /// <param name="left">The first handle.</param>

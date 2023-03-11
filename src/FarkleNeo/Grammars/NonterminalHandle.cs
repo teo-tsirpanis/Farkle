@@ -89,7 +89,7 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator NonterminalHandle(EntityHandle handle)
     {
-        if (handle.HasValue)
+        if (!handle.HasValue)
         {
             return default;
         }

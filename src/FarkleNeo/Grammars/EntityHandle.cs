@@ -26,7 +26,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     {
         Debug.Assert(value <= ValueMask);
         _valueAndKind = value == 0 ? 0 : (value & ValueMask) | ((uint)kind << ValueSize);
-        Debug.Assert(HasValue || IsTokenSymbol || IsNonterminal || IsProduction, "Cannot export this type of handle.");
+        Debug.Assert(!HasValue || IsTokenSymbol || IsNonterminal || IsProduction, "Cannot export this type of handle.");
     }
 
     internal void TypeCheck(TableKind expectedKind)
@@ -40,7 +40,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     /// <summary>
     /// Whether this <see cref="EntityHandle"/> has a valid value.
     /// </summary>
-    public bool HasValue => TableIndex == 0;
+    public bool HasValue => TableIndex != 0;
 
     /// <summary>
     /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="TokenSymbolHandle"/>.

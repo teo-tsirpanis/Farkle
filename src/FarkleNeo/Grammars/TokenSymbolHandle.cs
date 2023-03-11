@@ -89,7 +89,7 @@ public readonly struct TokenSymbolHandle : IEquatable<TokenSymbolHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator TokenSymbolHandle(EntityHandle handle)
     {
-        if (handle.HasValue)
+        if (!handle.HasValue)
         {
             return default;
         }

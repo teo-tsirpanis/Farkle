@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -10,6 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="Grammar.Terminals"/>
 /// <seealso cref="Grammar.TokenSymbols"/>
+[DebuggerDisplay("Count = {Count}")]
 public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
 {
     private readonly Grammar _grammar;

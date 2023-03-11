@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -17,6 +18,7 @@ namespace Farkle.Grammars.StateMachines;
 /// </remarks>
 /// <typeparam name="TChar">The type of characters the DFA accepts.
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
+[DebuggerDisplay("Count = {Count}")]
 public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 {
     internal Dfa(int stateCount, bool hasConflicts)

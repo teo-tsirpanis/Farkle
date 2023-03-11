@@ -43,7 +43,17 @@ public readonly struct GroupCollection : IReadOnlyCollection<Group>
         }
 
         /// <inheritdoc/>
-        public Group Current => new(_collection._grammar, (uint)(_currentIndex + 1));
+        public Group Current
+        {
+            get
+            {
+                if (_currentIndex < 0)
+                {
+                    ThrowHelpers.ThrowInvalidOperationException();
+                }
+                return new(_collection._grammar, (uint)(_currentIndex + 1));
+            }
+        }
 
         /// <inheritdoc/>
         public bool MoveNext()

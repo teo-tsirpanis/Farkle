@@ -45,7 +45,17 @@ public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
         }
 
         /// <inheritdoc/>
-        public TokenSymbol Current => new(_collection._grammar, new((uint)(_currentIndex + 1)));
+        public TokenSymbol Current
+        {
+            get
+            {
+                if (_currentIndex < 0)
+                {
+                    ThrowHelpers.ThrowInvalidOperationException();
+                }
+                return new(_collection._grammar, new((uint)(_currentIndex + 1)));
+            }
+        }
 
         /// <inheritdoc/>
         public bool MoveNext()

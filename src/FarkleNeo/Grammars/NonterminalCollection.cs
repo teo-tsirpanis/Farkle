@@ -43,7 +43,17 @@ public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
         }
 
         /// <inheritdoc/>
-        public Nonterminal Current => new(_collection._grammar, new((uint)(_currentIndex + 1)));
+        public Nonterminal Current
+        {
+            get
+            {
+                if (_currentIndex < 0)
+                {
+                    ThrowHelpers.ThrowInvalidOperationException();
+                }
+                return new(_collection._grammar, new((uint)(_currentIndex + 1)));
+            }
+        }
 
         /// <inheritdoc/>
         public bool MoveNext()

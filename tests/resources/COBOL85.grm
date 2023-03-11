@@ -1,0 +1,2480 @@
+! -----------------------------------------------------------------------------
+! COBOL 85
+!
+! COmmon Business Oriented Language
+!
+!
+! The COBOL programming language is one of the oldest still in use today. It
+! was originally designed by the United States Department of defense under the
+! supervision of the COnference on DAta SYstems Languages (CODASYL) Committee.
+! Most of the groundwork and design of COBOL was done by General Grace Hopper
+! of the United States Navy.
+!
+! The COBOL language was designed to be a self-documenting language where
+! programs would read as close to English as possible. All interaction
+! between the user, the terminal and files are performed through language
+! statements rather than third-party libraries. The metaphor used for data
+! types is abstract and completely platform independent. As a result of these
+! factors, COBOL is a very portable.
+!
+! The COBOL 85 grammar is complex - containing, over 350 reserved words,
+! 950 rules which results in over 1,600 LALR states.
+!
+!
+! Side Note: General Grace Hopper was the engineer who coined the term "bug"
+! when she found an "ill-positioned" insect in an early mainframe.
+!
+! Revisions:
+!    09-13-06: Devin Cook
+!       * Fixed a flaw in the Communications Section where a period was added
+!         to the end of a terminal rather than as a separate terminal. Thanks
+!         to Jose Ventura for finding this flaw.
+!
+!       * Fixed a flaw in the PicString terminal. The definition required two or
+!         more spaces between PIC and the picture characters. Thanks to Jose
+!         Ventura for finding this flaw.
+!
+!    07-21-06: Devin Cook
+!       * The grammar was modified to better handle embedded statements and
+!         message handling clauses.
+!
+!    06-12-06: Devin Cook
+!       * Grammar was completed
+! -----------------------------------------------------------------------------
+
+"Name"    = 'COBOL 85'
+"Version" = '1.1'
+
+"Author"  = 'General Grace Hopper (United States Navy) and the CODASYL Committee'
+
+"About"   = 'Originally created in 1960, COBOL (COmmon Business Oriented Language)'
+          | 'is one of the top 5 most popular languages in use today. COBOL was designed'
+          | 'to be self-documenting by using a structure similar to basic English.'
+          | 'This is the full 85 grammar. However, However, differ vendors have'
+          | 'created specialized dialects. As result, this grammar may not parse'
+          | 'them. This grammar was written by Devin Cook.'
+
+"Case Sensitive" = False
+"Start Symbol" = <Program>
+
+
+{String Chars 1} = {Printable} - ['']
+{String Chars 2} = {Printable} - ["]
+{Id Tail Chars}  = {Alphanumeric} + [-]
+
+StringLiteral = ''{String Chars 1}*'' | '"'{String Chars 2}*'"'
+IntLiteral    = {Digit}+
+FloatLiteral  = {Digit}+'.'{Digit}+
+Identifier    = {Letter}{Id Tail Chars}*
+
+! -----------------------------------------------------------------------------
+! Picture Clause
+! -----------------------------------------------------------------------------
+
+! TYPE SYMBOLS
+!   X
+!   9
+!
+! EDITED SYMBOLS
+!   , B 0 /          Simple Insertion
+!   .                Special Insertion
+!   - CR DB $        Fixed Insertion
+!   + - $            Floating Insertion
+!   Z *              Suppression and Replacement
+
+
+{Pic Ch} = [xa9] + [bpz0*+-,]
+{WS}     = {Space} + {HT} + {NBSP}
+
+PicString = PIC(TURE)? {WS}+ (IS {WS}+)?  (CR|DB|[$s])? {Pic Ch}+ ( '('{Number}+')' )? ( [v.] {Pic Ch}+ ( '('{Number}+')' )? )? (CR|DB|[$s])?
+          | PIC(TURE)? {WS}+ (IS {WS}+)?  ''  {String Chars 1}* ''
+          | PIC(TURE)? {WS}+ (IS {WS}+)?  '"' {String Chars 2}* '"'
+
+! -----------------------------------------------------------------------------
+! Main program structure
+! -----------------------------------------------------------------------------
+
+<Program>
+        ::= <Identification Division> <Environment Division> <Data Division> <Procedure Division>
+
+! -----------------------------------------------------------------------------
+! Optional Keywords - Often used only for readability
+! -----------------------------------------------------------------------------
+
+<ADVANCING Opt>  ::= ADVANCING    |  !Optional
+<ALL Opt>        ::= ALL          |  !Optional
+<ARE Opt>        ::= ARE          |  !Optional
+<AREA Opt>       ::= AREA | AREAS |  !Optional
+<AT Opt>         ::= AT           |  !Optional
+<BY Opt>         ::= BY           |  !Optional
+<CHARACTERS Opt> ::= CHARACTERS   |  !Optional
+<COLLATING Opt>  ::= COLLATING    |  !Optional
+<CONTAINS Opt>   ::= CONTAINS     |  !Optional
+<DATA Opt>       ::= DATA         |  !Optional
+<EVERY Opt>      ::= EVERY        |  !Optional
+<FILE Opt>       ::= FILE         |  !Optional
+<FINAL Opt>      ::= FINAL        |  !Optional
+<FOR Opt>        ::= FOR          |  !Optional
+<GLOBAL Opt>     ::= GLOBAL       |  !Optional
+<IN Opt>         ::= IN           |  !Optional
+<INDICATE Opt>   ::= INDICATE     |  !Optional
+<INITIAL Opt>    ::= INITIAL      |  !Optional
+<IS Opt>         ::= IS           |  !Optional
+<KEY Opt>        ::= KEY          |  !Optional
+<LINE Opt>       ::= LINE         |  !Optional
+<LINES Opt>      ::= LINE | LINES |  !Optional
+<MESSAGE opt>    ::= MESSAGE      |  !Optional
+<MODE Opt>       ::= MODE         |  !Optional
+<NEXT Opt>       ::= NEXT         |  !Optional
+<NUMBER Opt>     ::= NUMBER       |  !Optional
+<OF Opt>         ::= OF           |  !Optional
+<ON Opt>         ::= ON           |  !Optional
+<ORDER opt>      ::= ORDER        |  !Optional
+<PRINTING Opt>   ::= PRINTING     |  !Optional
+<RECORD Opt>     ::= RECORD       |  !Optional
+<REFERENCES Opt> ::= REFERENCES   |  !Optional
+<RIGHT Opt>      ::= RIGHT        |  !Optional
+<ROUNDED Opt>    ::= ROUNDED      |  !Optional
+<STANDARD Opt>   ::= STANDARD     |  !Optional
+<SIGN Opt>       ::= SIGN         |  !Optional
+<SIZE Opt>       ::= SIZE         |  !Optional
+<STATUS Opt>     ::= STATUS       |  !Optional
+<SYMBOLIC Opt>   ::= SYMBOLIC     |  !Optional
+<TAPE Opt>       ::= TAPE         |  !Optional
+<THEN Opt>       ::= THEN         |  !Optional
+<THAN Opt>       ::= THAN         |  !Optional
+<TO Opt>         ::= TO           |  !Optional
+<WHEN Opt>       ::= WHEN         |  !Optional
+<WITH Opt>       ::= WITH         |  !Optional
+
+! -----------------------------------------------------------------------------
+! Equivelent Keywords
+! -----------------------------------------------------------------------------
+
+<THRU>
+        ::= THRU
+         |  THROUGH
+
+<IS ARE Opt>
+        ::= IS
+         |  ARE
+         |  !Optional
+
+<CORRESPONDING>
+        ::= CORRESPONDING
+         |  CORR
+
+! -----------------------------------------------------------------------------
+! Clauses Shared By Multiple Rules
+! -----------------------------------------------------------------------------
+
+<Giving Clause Opt>
+        ::= GIVING Identifier
+         |  !Optional
+
+<Pointer Clause>
+        ::= <WITH Opt> POINTER <Variable>
+         |  !Optional
+
+<File Name>
+        ::= Identifier
+         |  StringLiteral
+
+<File Name List>
+        ::= <File Name List> <File Name>
+         |  <File Name>
+
+<Int Constant>
+        ::= Identifier
+         |  <Integer>
+
+<Index Clause>
+        ::= INDEXED <BY Opt> Identifier
+         |  !Optional
+
+<BEFORE AFTER>
+        ::= BEFORE
+         |  AFTER
+
+! -----------------------------------------------------------------------------
+! Values, Literals, etc...
+! -----------------------------------------------------------------------------
+
+<Symbolic Value>
+        ::= <Literal>
+         |  <Variable>
+         |  <Figurative>
+
+<Values>
+       ::= <Values> <Value>
+        |  <Value>
+
+<Value>
+        ::= <Literal>
+         |  <Variable>
+
+<Numeric>
+        ::= <Integer>
+         |  Identifier
+
+<Literal>
+        ::= <Integer>
+         |  FloatLiteral
+         |  StringLiteral
+         |  QUOTE
+         |  QUOTES
+
+<Integer>
+        ::= IntLiteral
+         |  '66'
+         |  '77'
+         |  '88'
+
+<Figurative>
+        ::= ZERO
+         |  ZEROS
+         |  ZEROES
+         |  SPACE
+         |  SPACES
+         |  HIGH-VALUE
+         |  HIGH-VALUES
+         |  LOW-VALUE
+         |  LOW-VALUES
+         |  ALL StringLiteral
+         |  NULL
+         |  NULLS
+
+<Identifiers>
+        ::= <Identifiers> Identifier
+         |  Identifier
+
+<Variables>
+        ::= <Variables> Identifier
+         |  Identifier
+
+<Variable>
+        ::= Identifier
+         |  Identifier '(' <Subsets> ')'
+
+<Subsets>
+        ::= <Subsets> ':' <Numeric>
+         |  <Numeric>
+
+! -----------------------------------------------------------------------------
+! ------------------------- IDENTIFICATION DIVISION ---------------------------
+! -----------------------------------------------------------------------------
+
+<Identification Division>
+        ::= IDENTIFICATION DIVISION '.' <Prog ID> <Program Info Items>
+
+<Prog ID>
+        ::= PROGRAM-ID '.' <Word List> <Prog Name Opt> '.'
+
+<Program Info Items>
+        ::= <Program Info Items> <Program Info Item>
+         |  !Zero or more
+
+<Program Info Item>
+        ::= AUTHOR        '.' <Word List> '.'
+         |  INSTALLATION  '.' <Word List> '.'
+         |  DATE-WRITTEN  '.' <Word List> '.'
+         |  DATE-COMPILED '.' <Word List> '.'
+         |  SECURITY      '.' <Word List> '.'
+
+<Word List>
+        ::= <Word List> <Word Item>
+         |  <Word Item>
+
+<Word Item>
+        ::= Identifier
+         |  <Integer>
+         |  FloatLiteral
+         |  StringLiteral
+         |  '/'
+         |  ','
+
+<Prog Name Opt>
+        ::= <IS Opt> <Common Initial> <Program Opt>
+         |  !Optional
+
+<Common Initial>
+        ::= COMMON
+         |  INITIAL
+
+<Program Opt>
+         ::= PROGRAM
+          |  !Optional
+
+! -----------------------------------------------------------------------------
+! -------------------------- ENVIRONMENT DIVISION -----------------------------
+! -----------------------------------------------------------------------------
+
+<Environment Division>
+       ::= ENVIRONMENT DIVISION '.' <Config Section> <Input-Output Section>
+        |  !Optional
+
+! -----------------------------------------------------------------------------
+! CONFIGURATION SECTION
+! -----------------------------------------------------------------------------
+
+<Config Section>
+        ::= CONFIGURATION SECTION '.' <Config Section Items>
+         |  !Optional
+
+<Config Section Items>
+        ::= <Config Section Items> <Config Section Item>
+         |  !Zero or more
+
+<Config Section Item>
+        ::= <Source Computer>
+         |  <Object Computer>
+         |  <Special Names>
+
+! -----------------------------------------------------------------------------
+! SOURCE-COMPUTER
+! -----------------------------------------------------------------------------
+
+<Source Computer>
+        ::= SOURCE-COMPUTER '.' <Source Computer Clause Opt>
+
+<Source Computer Clause Opt>
+        ::= Identifier <Source Debug Opt> '.'
+         |  !Optional
+
+<Source Debug Opt>
+        ::= <WITH Opt> DEBUGGING MODE
+
+! -----------------------------------------------------------------------------
+! OBJECT-COMPUTER
+! -----------------------------------------------------------------------------
+
+<Object Computer>
+        ::= OBJECT-COMPUTER '.' <Object Computer Clause Opt>
+
+<Object Computer Clause Opt>
+        ::= Identifier <Object Clauses> '.'
+         |  !Optional
+
+<Object Clauses>
+        ::= <Object Clause> <Object Clauses>
+         |  !Optional
+
+<Object Clause>
+        ::= <Program Opt> <COLLATING Opt> SEQUENCE <IS Opt> Identifier
+         |  SEGMENT-LIMIT <IS Opt> <Integer>
+
+! -----------------------------------------------------------------------------
+! SPECIAL-NAMES
+! -----------------------------------------------------------------------------
+
+<Special Names>
+        ::= SPECIAL-NAMES '.' <Special Name List>
+
+<Special Name List>
+        ::= <Special Name List> <Special Names Item>
+         |  !Zero or more
+
+<Special Names Item>
+        ::= Identifier <IS Opt> Identifier <Name Status Items> '.'
+         |  Identifier                     <Name Status Items> '.'
+         |  SYMBOLIC <CHARACTERS Opt> <Symbolic Char List>  '.'
+         |  ALPHABET Identifier <IS Opt> <Alphabet Item>    '.'
+         |  CLASS Identifier    <IS Opt> <Special Ranges>   '.'
+         |  CURRENCY <SIGN Opt> <IS Opt> <Literal>          '.'
+         |  DECIMAL-POINT       <IS Opt> COMMA              '.'
+
+<Name Status Items>
+        ::= <Name Status Items> <Name Status Item>
+         |  !Zero or more
+
+<Name Status Item>
+        ::= ON  <STATUS Opt> <IS Opt> Identifier
+         |  OFF <STATUS Opt> <IS Opt> Identifier
+
+! -----------------------------------------------
+
+<Alphabet Item>
+        ::= STANDARD-1
+         |  STANDARD-2
+         |  NATIVE
+         |  Identifier
+         |  <Special Ranges>
+
+<Special Ranges>
+         ::= <Special Ranges> ALSO <Special Range>
+          |  <Special Range>
+
+<Special Range>
+         ::= <Literal> <THRU> <Literal>
+
+! -----------------------------------------------
+
+<Symbolic Char List>
+         ::= <Symbolic Characters>
+          |  <Symbolic Characters> IN Identifier
+
+<Symbolic Characters>
+         ::= <Symbolic Character> <Symbolic Value>
+          |  <Symbolic Character>
+
+<Symbolic Character>
+         ::= Identifier <IS ARE Opt> <Literal>
+
+! -----------------------------------------------------------------------------
+! INPUT-OUTPUT SECTION
+! -----------------------------------------------------------------------------
+
+<Input-Output Section>
+        ::= INPUT-OUTPUT SECTION '.' <File-Control> <I-O-Control>
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! FILE-CONTROL
+! -----------------------------------------------------------------------------
+
+<File-Control>
+        ::= FILE-CONTROL '.' <Select Block>
+         |  !Optional
+
+<Select Block>
+        ::= <Select Block> <Select Paragraph>
+         |  !Optional
+
+<Select Paragraph>
+        ::= SELECT <Optional Opt> Identifier ASSIGN <TO Opt> Identifier <Select Opt List> '.'
+
+<Optional Opt>
+        ::= OPTIONAL
+         |  !Null
+
+<Select Opt List>
+        ::= <Select Option> <Select Opt List>
+         |  !Zero or more
+
+<Select Option>
+        ::= RESERVE <Integer> <AREA Opt>
+         |  ORGANIZATION <IS Opt> <Organization Kind>
+         |                        <Organization Kind>
+         |  PADDING <Character Opt> <IS Opt> <Padding Kind>
+         |  RECORD DELIMITER  <IS Opt> <Record Delimiter Kind>
+         |  RECORD <KEY Opt>  <IS Opt> Identifier
+         |  ALTERNATIVE RECORD <KEY Opt> <IS Opt> Identifier <Duplicates Clause Opt>
+
+         |  ACCESS <MODE Opt> <IS Opt> <Access Mode>
+         |  <FILE Opt> STATUS <IS Opt> Identifier
+
+<Access Mode>
+        ::= SEQUENTIAL
+         |  RANDOM
+         |  DYNAMIC
+
+<Organization Kind>
+        ::= SEQUENTIAL
+         |  LINE SEQUENTIAL
+         |  RELATIVE <Relative Key Opt>
+         |  INDEXED
+
+<Relative Key Opt>
+        ::= <KEY Opt> <IS Opt> Identifier
+         |  !Optional
+
+<Record Delimiter Kind>
+        ::= STANDARD-1
+         |  Identifier
+
+<Padding Kind>
+        ::= Identifier
+         |  <Literal>
+
+<Duplicates Clause Opt>
+        ::= <WITH Opt> DUPLICATES
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! I-O CONTROL
+! -----------------------------------------------------------------------------
+
+<I-O-Control>
+        ::= I-O-CONTROL '.' <Rerun List> <Same List> <Multiple List> '.'
+
+<Rerun List>
+        ::= <Rerun List> <Rerun Item>
+         |  !Zero or more
+
+<Rerun Item>
+        ::= RERUN <Rerun Clause Opt> <EVERY Opt> <Every Clause>
+
+<Rerun Clause Opt>
+        ::= ON <File Name>
+         |  !Optional
+
+<Every Clause>
+        ::= <End Of Opt> <Every End Target> <OF Opt> <File Name>
+         |  <Integer> RECORDS
+         |  <Integer> CLOCK-UNITS
+         |  Identifier
+
+<End Of Opt>
+        ::= END <OF Opt>
+         |  !Optional
+
+<Every End Target>
+        ::= REEL
+         |  UNIT
+
+! -----------------------------------------------
+
+<Same List>
+        ::= <Same List> <Same Item>
+         |  !Zero or more
+
+<Same Item>
+        ::= SAME <Same Source> <AREA Opt> <File Name> <File Name List>
+
+<Same Source>
+        ::= RECORD
+         |  SORT
+         |  SORT-MERGE
+
+<Multiple List>
+        ::= <Multiple List> <Multiple Item>
+         |  !Zero or more
+
+<Multiple Item>
+        ::= MULTIPLE FILE <TAPE Opt> <CONTAINS Opt> <Contain List>
+
+<Contain List>
+        ::= <Contain List> <Contain Item>
+         |  <Contain Item>
+
+<Contain Item>
+        ::= <File Name> POSITION <IS Opt> <Integer>
+         |  <File Name>
+
+! -----------------------------------------------------------------------------
+! ------------------------------ DATA DIVISION --------------------------------
+! -----------------------------------------------------------------------------
+
+<Data Division>
+        ::= DATA DIVISION '.' <Data Section List>
+
+
+<Data Section List>
+        ::= <Data Section Entry> <Data Section List>
+         |  !Zero or more
+
+<Data Section Entry>
+        ::= <File Section>
+         |  <Working-Storage Section>
+         |  <Linkage Section>
+         |  <Screen Section>
+         |  <Communication Section>
+         |  <Report Section>
+
+! -----------------------------------------------------------------------------
+! Record Definition
+! -----------------------------------------------------------------------------
+
+<Record Entry Block>
+        ::= <Record Entry Block> <Record Entry>
+         |  !Zero or more
+
+<Record Entry>
+        ::= IntLiteral <Level Name> <Record Option List>         '.'   !Normal Record
+         |  '66'       <Level Name> RENAMES <Identifier Range>   '.'
+         |  '77'       <Level Name> <Record Option List>         '.'   !Constant
+         |  '88'       <Level Name> VALUES <IS ARE Opt> <Values> '.'
+
+<Level Name>
+        ::= Identifier
+         |  FILLER
+
+<Times Opt>
+        ::= TIMES
+         |  !Optional
+
+<Record Option List>
+        ::= <Record Option List> <Record Option>
+         |  !Zero or more
+
+
+<Record Option>
+        ::= REDEFINES Identifier
+         |  <IS Opt> EXTERNAL
+         |  <IS Opt> INTERNAL
+         |  <Picture>
+
+         |  USAGE <IS Opt> <Usage Args>
+         |                 <Usage Args>
+
+         |  SIGN <IS Opt> <Sign Args> <Sep Char Option>
+         |  OCCURS <Numeric>              <Times Opt>                               <Key Clause> <Index Clause>
+         |  OCCURS <Numeric> TO <Numeric> <Times Opt> DEPENDING <ON Opt> Identifier <Key Clause> <Index Clause>
+         |  SYNCHRONIZED <Left Right Opt>
+         |  SYNC         <Left Right Opt>
+         |  JUSTIFIED <RIGHT Opt>
+         |  JUST      <RIGHT Opt>
+         |  BLANK <WHEN Opt> ZERO
+         |  VALUE <IS Opt> <Symbolic Value>
+
+<Picture>
+        ::= PicString
+
+<Key Clause>
+        ::= ASCENDING <KEY Opt> <IS Opt> <Identifiers>
+         |  DESCENDING <KEY Opt> <IS Opt> <Identifiers>
+         |  !Optional
+
+<Usage Args>
+        ::= BINARY
+         |  COMPUTATIONAL
+         |  COMP
+         |  DISPLAY
+         |  INDEX
+         |  PACKED-DECIMAL
+
+<Sign Args>
+        ::= LEADING
+         |  TRAILING
+
+<Sep Char Option>
+        ::= SEPARATE <Character Opt>
+         |  !Optional
+
+<Character Opt>
+        ::= CHARACTER
+         |  !Optional
+
+<Left Right Opt>
+        ::= LEFT
+         |  RIGHT
+         |  !Optional
+
+
+! -----------------------------------------------------------------------------
+! FILE SECTION
+! -----------------------------------------------------------------------------
+
+<File Section>
+        ::= FILE SECTION '.' <File Desc Block>
+
+<File Desc Block>
+        ::= <File Desc Entry> <File Desc Block>
+         |  !Zero ore more
+
+<File Desc Entry>
+        ::= FD Identifier <File Option List> '.' <Record Entry Block>
+         |  SD Identifier <File Option List> '.' <Record Entry Block>
+
+<File Option List>
+        ::= <File Option List> <File Option>
+         |  !Zero or more
+
+<File Option>
+        ::= <File Is Option>
+         |  <File Block Option>
+         |  <File Record Option>
+         |  <File Label Option>
+         |  <File Value Option>
+         |  <File Data Option>
+         |  <File Linage Option>
+         |  <File Code-Set Option>
+
+! -----------------------------------------------------------------------------
+! Description Clauses
+! -----------------------------------------------------------------------------
+
+<File Is Option>
+        ::= <IS Opt> EXTERNAL
+         |  <IS Opt> INTERNAL
+
+! -----------------------------------------------
+
+<File Block Option>
+        ::= BLOCK <CONTAINS Opt> <Numeric>              <File Block Units>
+         |  BLOCK <CONTAINS Opt> <Numeric> TO <Numeric> <File Block Units>
+
+<File Block Units>
+        ::= RECORDS
+         |  CHARACTERS
+         |  !Optional - defaults to characters.
+
+! -----------------------------------------------
+
+<File Record Option>
+        ::= RECORD <CONTAINS Opt> <Numeric> <CHARACTERS Opt>
+         |  RECORD <CONTAINS Opt> <Numeric> TO <Numeric> <CHARACTERS Opt>
+         |  RECORD <IS Opt> VARYING <IN Opt> <SIZE Opt> <File Record Size Clause> <File Record Depending Clause>
+
+<File Record Size Clause>
+        ::= FROM <Numeric> <CHARACTERS Opt>
+         |  TO   <Numeric> <CHARACTERS Opt>
+         |  FROM <Numeric> TO <Numeric> <CHARACTERS Opt>
+         |  !Optional
+
+<File Record Depending Clause>
+        ::= DEPENDING <ON Opt> Identifier
+         |  !Optional
+
+! -----------------------------------------------
+
+<File Label Option>
+        ::= LABEL RECORD  <IS Opt> <File Label Type>
+         |  LABEL RECORDS <IS Opt> <File Label Type>
+
+<File Label Type>
+        ::= STANDARD
+         |  OMITTED
+
+! -----------------------------------------------
+
+<File Value Option>
+        ::= VALUE OF <File Value List>
+
+<File Value List>
+        ::= <File Value List> <File Value Item>
+         |  <File Value Item>
+
+<File Value Item>
+        ::= Identifier <IS Opt> Identifier
+         |  Identifier <IS Opt> <Literal>
+
+! -----------------------------------------------
+
+<File Data Option>
+        ::= DATA RECORD  <IS Opt>  <Identifiers>
+         |  DATA RECORDS <ARE Opt> <Identifiers>
+
+! -----------------------------------------------
+
+<File Linage Option>
+        ::= LINAGE <IS Opt> <Int Constant> <LINES Opt> <File Linage Footing> <File Linage Top> <File Linage Bottom>
+
+<File Linage Footing>
+        ::= <WITH Opt> FOOTING <AT Opt> <Int Constant>
+         !  Optional
+
+<File Linage Top>
+        ::= <LINES Opt> <AT Opt> TOP <Int Constant>
+         !  Optional
+
+<File Linage Bottom>
+        ::= <LINES Opt> <AT Opt> BOTTOM <Int Constant>
+         !  Optional
+
+! -----------------------------------------------
+
+<File Code-Set Option>
+        ::= CODE-SET <IS Opt> Identifier
+
+! -----------------------------------------------------------------------------
+! WORKING-STORAGE SECTION
+! -----------------------------------------------------------------------------
+
+<Working-Storage Section>
+        ::= WORKING-STORAGE SECTION '.' <Record Entry Block>
+
+
+! -----------------------------------------------------------------------------
+! LINKAGE SECTION
+! -----------------------------------------------------------------------------
+
+<Linkage Section>
+        ::= LINKAGE SECTION '.' <Record Entry Block>
+
+
+! -----------------------------------------------------------------------------
+! SCREEN SECTION
+! -----------------------------------------------------------------------------
+
+<Screen Section>
+        ::= SCREEN SECTION '.'  <Screen Field List>
+
+<Screen Field List>
+        ::= <Screen Field> <Screen Field List>
+         |  <Screen Field>
+
+<Screen Field>
+        ::= <Integer> <Field Name opt> <Field Def List> '.'
+
+<Field Name opt>
+        ::= Identifier
+         |  !Optional
+
+<Field Def List>
+        ::= <Field Def List>  <Field Def Item>
+         |  !Optional
+
+<Field Def Item>
+        ::= LINE   <Numeric>
+         |  COLUMN <Numeric>
+         |  FOREGROUND-COLOR <Numeric>
+         |  BACKGROUND-COLOR <Numeric>
+         |  VALUE <IS Opt> <Symbolic Value>
+         |  <Picture>
+         |  FROM Identifier
+         |  USING Identifier
+         |  HIGHLIGHT
+         |  REVERSE-VIDEO
+         |  BLINK
+         |  UNDERLINE
+         |  BLANK SCREEN
+
+! -----------------------------------------------------------------------------
+! COMMUNICATION SECTION
+! -----------------------------------------------------------------------------
+
+<Communication Section>
+        ::= COMMUNICATION SECTION '.' <Comm Desc List>
+
+<Comm Desc List>
+        ::= <Comm Desc List> <Comm Desc>
+         |   !Zero or more
+
+<Comm Desc>
+        ::= CD Identifier <FOR Opt> <INITIAL Opt> INPUT  <Comm Input Body>     '.' <Record Entry Block>
+         |  CD Identifier <FOR Opt>               OUTPUT <Comm Output Options> '.' <Record Entry Block>
+         |  CD Identifier <FOR Opt> <INITIAL Opt> I-O    <Comm I-O Body>       '.' <Record Entry Block>
+
+<Comm Input Body>
+        ::= <Identifiers>
+         |  <Comm Input Options>
+
+<Comm Input Options>
+        ::= <Comm Input Options> <Comm Input Option>
+         |  !Zero ore more
+
+<Comm Input Option>
+        ::= <SYMBOLIC Opt> QUEUE       <IS Opt> Identifier
+         |  <SYMBOLIC Opt> SUB-QUEUE-1 <IS Opt> Identifier
+         |  <SYMBOLIC Opt> SUB-QUEUE-2 <IS Opt> Identifier
+         |  <SYMBOLIC Opt> SUB-QUEUE-3 <IS Opt> Identifier
+         |  MESSAGE DATE <IS Opt> Identifier
+         |  MESSAGE TIME <IS Opt> Identifier
+         |  <SYMBOLIC Opt> SOURCE <IS Opt> Identifier
+         |  TEXT LENGTH <IS Opt> <Numeric>
+         |  END KEY <IS Opt> Identifier
+         |  STATUS KEY  <IS Opt> Identifier
+         |  MESSAGE COUNT <IS Opt> Identifier
+
+<Comm Output Options>
+        ::= <Comm Output Options>  <Comm Output Option>
+         |  !Zero or more
+
+<Comm Output Option>
+        ::= DESTINATION TABLES OCCURS <Numeric> <TIMES Opt> <Index Clause>
+         |  DESTINATION COUNT    <IS Opt> Identifier
+         |  TEXT LENGTH          <IS Opt> Identifier
+         |  STATUS KEY           <IS Opt> Identifier
+         |  ERROR KEY            <IS Opt> Identifier
+         |  SYMBOLIC DESTINATION <IS Opt> Identifier
+         |  DESTINATION          <IS Opt> Identifier
+
+<Comm I-O Body>
+        ::= <Identifiers>
+         |  <Comm I-O Options>
+
+<Comm I-O Options>
+        ::= <Comm I-O Options> <Comm I-O Option>
+         |  !Zero or more
+
+<Comm I-O Option>
+        ::= MESSAGE DATE <IS Opt> Identifier
+         |  MESSAGE TIME <IS Opt> Identifier
+         |  <SYMBOLIC Opt> TERMINAL <IS Opt> Identifier
+         |  TEXT LENGTH  <IS Opt> <Numeric>
+         |  END KEY      <IS Opt> Identifier
+         |  STATUS KEY   <IS Opt> Identifier
+
+! -----------------------------------------------------------------------------
+! REPORT SECTION
+! -----------------------------------------------------------------------------
+
+<Report Section>
+        ::= REPORT SECTION '.' <Report Desc List>
+
+<Report Desc List>
+        ::= <Report Desc List> <Report Desc>
+         |  !Zero or more
+
+<Report Desc>
+        ::= RD Identifier <Report Options> <Report Entry Block>
+
+<Report Options>
+        ::= <Report Options> <Report Option>
+         |  !Zero or more
+
+<Report Option>
+        ::= <IS Opt> GLOBAL
+         |  CODE <Literal>
+         |  <CONTROL IS> <FINAL Opt> <Identifiers>
+         |  PAGE <LIMITS IS Opt> <Numeric> <LINES Opt> <Report Heading Opt>
+
+<CONTROL IS>
+        ::= CONTROL  IS
+         |  CONTROLS ARE
+
+<LIMITS IS Opt>
+        ::= LIMIT IS
+         |  LIMITS ARE
+         |  !Optional
+
+<Report Heading Opt>
+        ::= HEADING <Integer>
+         |  !Optional
+
+<Report Entry Block>
+        ::= <Report Entry Block> <Report Entry>
+         |  !Zero or more
+
+<Report Entry>
+        ::= <Integer> Identifier <Report Entry Options>  '.'
+
+<Report Entry Options>
+        ::= <Report Entry Option> <Report Entry Options>
+         |  !Zero or more
+
+<Report Entry Option>
+        ::= LINE <NUMBER Opt> <IS Opt> <Numeric>
+         |  LINE <NUMBER Opt> <IS Opt> <Numeric> ON NEXT PAGE      !Same as above
+         |  LINE <NUMBER Opt> <IS Opt> PLUS <Numeric>
+         |  NEXT GROUP        <IS Opt> <Report Entry Next Group>
+         |  TYPE              <IS Opt> <Report Entry Type>
+         |  USAGE             <IS Opt> DISPLAY
+         |  DISPLAY
+
+         |  <Picture>
+         |  SIGN <IS Opt> <Sign Args> <Sep Char Option>
+         |  JUSTIFIED <RIGHT Opt>
+         |  JUST      <RIGHT Opt>
+         |  BLANK <WHEN Opt> ZERO
+         |  COLUMN <Number Opt> <IS Opt> <Numeric>
+         |  SOURCE  <IS Opt> <Numeric>
+         |  VALUE   <IS Opt> <Symbolic Value>
+         |  SUM <Identifiers>
+         |  SUM <Identifiers> UPON <Identifiers> <Report Entry Result Clause>
+         |  GROUP <INDICATE Opt>
+
+<Report Entry Next Group>
+        ::= <Numeric>
+         |  PLUS <Numeric>
+         |  NEXT PAGE
+
+<Report Entry Type>
+        ::= REPORT HEADING
+         |  RH                !Report Heading
+         |  PAGE HEADING
+         |  PH                !Page Heading
+         |  CONTROL HEADING
+         |  CH                !Control Heading
+         |  DETAIL
+         |  DE                !Detail
+         |  CONTROL FOOTING
+         |  CF                !Control Footing
+         |  PAGE FOOTING
+         |  PF                !Page Footing
+         |  REPORT FOOTING
+         |  RF                !Report Footing
+
+
+<Report Entry Result Clause>
+        ::= RESET <ON Opt> Identifier
+         |  RESET <ON Opt> FINAL
+         |  !Optional
+
+! ------------------------------------------------------------------------------
+! --------------------------- PROCEDURE DIVISION -------------------------------
+! ------------------------------------------------------------------------------
+
+<Procedure Division>
+        ::= PROCEDURE DIVISION <Using Clause Opt> <Declarative Block> '.' <Paragraphs>
+
+<Using Clause Opt>
+        ::= USING <Identifiers>
+         |  !Optional
+
+<Paragraphs>
+        ::= <Paragraphs> <Paragraph>
+         |  !Zero or more
+
+<Paragraph>
+        ::= Identifier SECTION '.' Identifier '.' <Sentences>
+         |                         Identifier '.' <Sentences>
+
+! -----------------------------------------------------------------------------
+! Declaratives
+! -----------------------------------------------------------------------------
+
+<Declarative Block>
+        ::= DECLARATIVES '.' <Declarative Sections> END DECLARATIVES '.'    !No dash - inconsistent
+         |  !Optional
+
+<Declarative Sections>
+        ::= <Declarative Sections> <Declarative Section>
+         |  !Zero or more
+
+<Declarative Section>
+        ::= Identifier SECTION '.' USE <BEFORE AFTER> <STANDARD Opt> ERROR PROCEDURE ON <Error Cause>  '.' <Sentences>
+         |  Identifier '.' <Sentences>
+
+<Error Cause>
+        ::= Identifier
+         |  INPUT
+         |  OUTPUT
+         |  I-O
+         |  EXTEND
+
+! -----------------------------------------------------------------------------
+! Shared by sentences
+! -----------------------------------------------------------------------------
+
+<Sort Keys>
+        ::= <Sort Keys> <Sort Key>
+         |  <Sort Key>
+
+<Sort Key>
+        ::= <ON Opt> ASCENDING  <KEY Opt> Identifier
+         |  <ON Opt> DESCENDING <KEY Opt> Identifier
+
+<Collating Clause>
+        ::= <COLLATING Opt> SEQUENCE <IS Opt> Identifier
+         |  !Optional
+
+<Sort Source>
+        ::= INPUT PROCEDURE <IS Opt> <Identifier Range>
+         |  USING <Values>
+
+<Sort Target>
+        ::= OUTPUT PROCEDURE <IS Opt> <Identifier Range>
+         |  GIVING <Values>
+
+<Identifier Range>
+        ::= Identifier
+         |  Identifier THRU Identifier
+         |  Identifier THROUGH Identifier
+
+<Enabled Disable Mode>
+        ::= INPUT
+         |  INPUT TERMINAL
+         |  I-O TERMINAL
+         |  OUTPUT
+
+<Enable Disable Key>
+        ::= <WITH Opt> KEY <Value>
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! Boolean Expressions
+! -----------------------------------------------------------------------------
+
+! Note: <Not Opt> is very significant in the operators below
+
+<Boolean Exp>
+        ::= <Boolean Exp> OR <And Exp>
+         |  <And Exp>
+
+<And Exp>
+        ::= <Negation Exp> And <And Exp>
+         |  <Negation Exp>
+
+<Negation Exp>
+        ::= <Compare Exp>
+         |  NOT <Compare Exp>
+
+!<And Exp>
+!        ::= <And Exp> AND <Compare Exp>
+!         |  <Compare Exp>
+
+<Compare Exp>
+        ::= <Symbolic Value> <Compare Op> <Symbolic Value>
+         |  <Symbolic Value> IS ALPHABETIC
+         |  <Symbolic Value> IS ALPHABETIC-UPPER
+         |  <Symbolic Value> IS ALPHABETIC-LOWER
+         |  '(' <Boolean Exp> ')'
+         |  <Symbolic Value>
+
+<Compare Op>
+        ::= <IS ARE Opt>     <Greater Op>
+         |  <IS ARE Opt> NOT <Greater Op>
+
+         |  <IS ARE Opt>     <Greater Eq Op>
+         |  <IS ARE Opt> NOT <Greater Eq Op>
+
+         |  <IS ARE Opt>     <Less Op>
+         |  <IS ARE Opt> NOT <Less Op>
+
+         |  <IS ARE Opt>     <Less Eq Op>
+         |  <IS ARE Opt> NOT <Less Eq Op>
+
+         |  <IS ARE Opt>     <Equal Op>
+         |  <IS ARE Opt> NOT <Equal Op>
+
+<Greater Op>
+        ::= GREATER <THAN Opt>
+         |  '>'
+
+<Greater Eq Op>
+        ::= GREATER <THAN Opt> OR EQUAL <TO Opt>
+         |  '>='
+
+<Less Op>
+        ::= LESS <THAN Opt>
+         |  '<'
+
+<Less Eq Op>
+        ::= LESS <THAN Opt> OR EQUAL <TO Opt>
+         |  '<='
+
+<Equal Op>
+        ::= EQUAL <TO Opt>
+         |  '='
+
+
+! -----------------------------------------------------------------------------
+! Sentences
+! -----------------------------------------------------------------------------
+
+! If you add statements to the grammar, make sure to update the corresponding
+! <Statement> rules below
+
+<Sentences>
+        ::= <Sentence> <Sentences>
+         |  !Zero or more
+
+<Sentence>
+        ::= <Sent Stm>  '.'
+
+<Sent Stm>
+        ::= <Accept Sent>
+         |  <Add Sent>
+         |  <Alter Sent>
+         |  <Call Sent>
+         |  <Cancel Sent>
+         |  <Close Sent>
+         |  <Compute Sent>
+         |  <Continue Sent>
+         |  <Delete Sent>
+         |  <Disable Sent>
+         |  <Display Sent>
+         |  <Divide Sent>
+         |  <Enable Sent>
+         |  <Evaluate Sent>
+         |  <Exit Sent>
+         |  <Generate Sent>
+         |  <Go To Sent>
+         |  <If Sent>
+         |  <Initialize Sent>
+         |  <Initiate Sent>
+         |  <Inspect Sent>
+         |  <Merge Sent>
+         |  <Move Sent>
+         |  <Multiply Sent>
+         |  <Open Sent>
+         |  <Perform Sent>
+         |  <Read Sent>
+         |  <Release Sent>
+         |  <Return Sent>
+         |  <Rewrite Sent>
+         |  <Search Sent>
+         |  <Send Sent>
+         |  <Set Sent>
+         |  <Sort Sent>
+         |  <Start Sent>
+         |  <Stop Sent>
+         |  <String Sent>
+         |  <Subtract Sent>
+         |  <Suppress Sent>
+         |  <Terminate Sent>
+         |  <Unstring Sent>
+         |  <Use Sent>
+         |  <Write Sent>
+
+<Embed Stms>
+        ::= <Embed Stms> <Embed Stm>
+         |  <Embed Stm>
+
+<Embed Stm>
+        ::= <Accept Embed>
+         |  <Add Embed>
+         |  <Alter Embed>
+         |  <Call Embed>
+         |  <Cancel Embed>
+         |  <Close Embed>
+         |  <Compute Embed>
+         |  <Continue Embed>
+         |  <Delete Embed>
+         |  <Disable Embed>
+         |  <Display Embed>
+         |  <Divide Embed>
+         |  <Enable Embed>
+         |  <Evaluate Embed>
+         |  <Exit Embed>
+         |  <Generate Embed>
+         |  <Go To Embed>
+         |  <If Embed>
+         |  <Initialize Embed>
+         |  <Initiate Embed>
+         |  <Inspect Embed>
+         |  <Merge Embed>
+         |  <Move Embed>
+         |  <Multiply Embed>
+         |  <Open Embed>
+         |  <Perform Embed>
+         |  <Read Embed>
+         |  <Release Embed>
+         |  <Return Embed>
+         |  <Rewrite Embed>
+         |  <Search Embed>
+         |  <Send Embed>
+         |  <Set Embed>
+         |  <Sort Embed>
+         |  <Start Embed>
+         |  <Stop Embed>
+         |  <String Embed>
+         |  <Subtract Embed>
+         |  <Suppress Embed>
+         |  <Terminate Embed>
+         |  <Unstring Embed>
+         |  <Use Embed>
+         |  <Write Embed>
+
+<Imperative Stms>
+        ::= <Imperative Stms> <Imperative Stm>
+         |  <Imperative Stm>
+
+<Imperative Stm>
+        ::= <Accept Imp>
+         |  <Add Imp>
+         |  <Alter Imp>
+         |  <Call Imp>
+         |  <Cancel Imp>
+         |  <Close Imp>
+         |  <Compute Imp>
+         |  <Continue Imp>
+         |  <Delete Imp>
+         |  <Disable Imp>
+         |  <Display Imp>
+         |  <Divide Imp>
+         |  <Enable Imp>
+         |  <Evaluate Imp>
+         |  <Exit Imp>
+         |  <Generate Imp>
+         |  <Go To Imp>
+         |  <If Imp>
+         |  <Initialize Imp>
+         |  <Initiate Imp>
+         |  <Inspect Imp>
+         |  <Merge Imp>
+         |  <Move Imp>
+         |  <Multiply Imp>
+         |  <Open Imp>
+         |  <Perform Imp>
+         |  <Read Imp>
+         |  <Release Imp>
+         |  <Return Imp>
+         |  <Rewrite Imp>
+         |  <Search Imp>
+         |  <Send Imp>
+         |  <Set Imp>
+         |  <Sort Imp>
+         |  <Start Imp>
+         |  <Stop Imp>
+         |  <String Imp>
+         |  <Subtract Imp>
+         |  <Suppress Imp>
+         |  <Terminate Imp>
+         |  <Unstring Imp>
+         |  <Use Imp>
+         |  <Write Imp>
+
+! -----------------------------------------------------------------------------
+! Exception Handling
+! -----------------------------------------------------------------------------
+
+<Size Clauses>
+        ::= <Size Clauses> <Size Clause>
+         |  <Size Clause>
+
+<Size Clause>
+        ::=     <ON Opt> SIZE ERROR <Imperative Stms>
+         |  NOT <ON Opt> SIZE ERROR <Imperative Stms>
+
+!-----------------------------------------
+
+<Invalid Key Clauses>
+        ::= <Invalid Key Clauses> <Invalid Key Clause>
+         |  <Invalid Key Clause>
+
+<Invalid Key Clause>
+        ::=     INVALID <KEY Opt> <Imperative Stms>
+         |  NOT INVALID <KEY Opt> <Imperative Stms>
+
+!-----------------------------------------
+
+<Exception Clauses>
+        ::= <Exception Clauses> <Exception Clause>
+         |  <Exception Clause>
+
+<Exception Clause>
+        ::=     <ON Opt> EXCEPTION <Imperative Stms>
+         |  NOT <ON Opt> EXCEPTION <Imperative Stms>
+
+!-----------------------------------------
+
+<Overflow Clauses>
+        ::= <Overflow Clauses> <Overflow Clause>
+         |  <Overflow Clause>
+
+<Overflow Clause>
+        ::=     <ON Opt> OVERFLOW <Imperative Stms>
+         |  NOT <ON Opt> OVERFLOW <Imperative Stms>
+
+!-----------------------------------------
+
+<At End Clauses>
+        ::= <At End Clauses> <At End Clause>
+         |  <At End Clause>
+
+<At End Clause>
+        ::=     AT END <Imperative Stms>
+         |  NOT AT END <Imperative Stms>
+
+!-----------------------------------------
+
+<AT EOP Clauses>
+        ::= <AT EOP Clauses> <AT EOP Clause>
+         |  <AT EOP Clause>
+
+<AT EOP Clause>
+        ::= AT <End of Page> <Imperative Stms>
+         |  NOT AT <End of Page> <Imperative Stms>
+
+<End of Page>
+        ::= END-OF-PAGE
+         |  EOP
+
+! -----------------------------------------------------------------------------
+! ACCEPT Statement
+! -----------------------------------------------------------------------------
+
+<Accept Sent>
+       ::= <Accept Stm>
+
+<Accept Embed>
+       ::= <Accept Stm>
+
+<Accept Imp>
+       ::= <Accept Stm>
+
+<Accept Stm>
+       ::= ACCEPT Identifier
+        |  ACCEPT Identifier FROM <Accept From Arg>
+        |  ACCEPT Identifier <MESSAGE opt> COUNT        !CD
+
+<Accept From Arg>
+       ::= FROM DATE
+        |  FROM DAY
+        |  FROM DAY-OF-WEEK
+        |  FROM TIME
+        |  FROM CONSOLE
+        |  FROM Identifier
+        |  !Optional
+
+! -----------------------------------------------------------------------------
+! ADD Statement
+! -----------------------------------------------------------------------------
+
+<Add Sent>
+        ::= <Add Stm> <Size Clauses> <END-ADD Opt>
+         |  <Add Stm>
+
+<Add Embed>
+        ::= <Add Stm> <Size Clauses> 'END-ADD'
+         |  <Add Stm>
+
+<Add Imp>
+        ::= <Add Stm>
+
+<Add Stm>
+        ::= ADD <Values> TO <Add Items> <Giving Clause>
+         |  ADD <CORRESPONDING> Identifier TO Identifier <ROUNDED Opt>
+
+<Giving Clause>
+        ::= GIVING <Add Item>
+         |  !Optional
+
+<Add Items>
+        ::= <Add Items> <Add Item>
+         |  <Add Item>
+
+<Add Item>
+        ::= <Variable> <ROUNDED Opt>
+
+
+<END-ADD Opt>
+        ::= END-ADD
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! ALTER Statement
+! -----------------------------------------------------------------------------
+
+<Alter Sent>
+       ::= <Alter Stm>
+
+<Alter Embed>
+       ::= <Alter Stm>
+
+<Alter Imp>
+       ::= <Alter Stm>
+
+<Alter Stm>
+       ::= ALTER Identifier TO Identifier
+        |  ALTER Identifier TO PROCEED TO Identifier
+
+! -----------------------------------------------------------------------------
+! CALL Statement
+! -----------------------------------------------------------------------------
+
+!Call can call just about anything, it depends on the system.
+
+<Call Sent>
+        ::= <Call Stm> <Exception Clauses> <END-CALL Opt>
+         |  <Call Stm> <Overflow Clauses>  <END-CALL Opt>
+         |  <Call Stm>
+
+<Call Embed>
+        ::= <Call Stm> <Exception Clauses> END-CALL
+         |  <Call Stm> <Overflow Clauses>  END-CALL
+         |  <Call Stm>
+
+<Call Imp>
+        ::= <Call Stm>
+
+<Call Stm>
+        ::= CALL <Value>
+         |  CALL <Value> USING <Call Items>
+
+<Call Items>
+        ::= <Call Items> <Call Item>
+         |  <Call Item>
+
+<Call Item>
+        ::= <Variable>
+         |  <BY Opt> REFERENCE <Variable>   !default
+         |  <BY Opt> CONTENT   <Variable>
+
+<END-CALL Opt>
+        ::= END-CALL
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! CANCEL Statement
+! -----------------------------------------------------------------------------
+
+<Cancel Sent>
+        ::= <Cancel Stm>
+
+<Cancel Embed>
+        ::= <Cancel Stm>
+
+<Cancel Imp>
+        ::= <Cancel Stm>
+
+<Cancel Stm>
+        ::= CANCEL <Values>
+
+! -----------------------------------------------------------------------------
+! CLOSE Statement
+! -----------------------------------------------------------------------------
+
+<Close Sent>
+        ::= <Close Stm>
+
+<Close Embed>
+        ::= <Close Stm>
+
+<Close Imp>
+        ::= <Close Stm>
+
+<Close Stm>
+        ::= CLOSE <Close Items>
+
+<Close Items>
+        ::= <Close Items> <Close Item>
+         |  <Close Item>
+
+<Close Item>
+        ::= Identifier <Close Options>
+
+<Close Options>
+        ::= UNIT <Close Method>
+         |  REEL <Close Method>
+         |  <WITH Opt> LOCK
+         |  <WITH Opt> NO REWIND
+         |  !Empty
+
+<Close Method>
+        ::= <FOR Opt> REMOVAL
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! COMPUTE Statement
+! -----------------------------------------------------------------------------
+
+<Compute Sent>
+        ::= <Compute Stm> <Size Clauses> <END-COMPUTE Opt>
+         |  <Compute Stm>
+
+<Compute Embed>
+        ::= <Compute Stm> <Size Clauses> END-COMPUTE
+         |  <Compute Stm>
+
+<Compute Imp>
+        ::= <Compute Stm>
+
+<Compute Stm>
+        ::= COMPUTE Identifier <ROUNDED Opt> <Equal Op> <Math Exp>
+
+<Math Exp>
+        ::= <Math Exp> '+' <Mult Exp>
+         |  <Math Exp> '-' <Mult Exp>
+         |  <Mult Exp>
+
+<Mult Exp>
+        ::= <Mult Exp> '*' <Negate Exp>
+         |  <Mult Exp> '/' <Negate Exp>
+         |  <Negate Exp>
+
+<Negate Exp>
+        ::= '-' <Value>
+         |  <Value>
+         |  '(' <Math Exp> ')'
+
+<END-COMPUTE Opt>
+        ::= END-COMPUTE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! CONTINUE
+! -----------------------------------------------------------------------------
+
+<Continue Sent>
+        ::= <Continue Stm>
+
+<Continue Embed>
+        ::= <Continue Stm>
+
+<Continue Imp>
+        ::= <Continue Stm>
+
+<Continue Stm>
+        ::= CONTINUE
+
+! -----------------------------------------------------------------------------
+! DELETE Statement
+! -----------------------------------------------------------------------------
+
+<Delete Sent>
+        ::= <Delete Stm> <Invalid Key Clauses> <END-DELETE Opt>
+         |  <Delete Stm>
+
+<Delete Embed>
+        ::= <Delete Stm> <Invalid Key Clauses> END-DELETE
+         |  <Delete Stm>
+
+<Delete Imp>
+        ::= <Delete Stm>
+
+<Delete Stm>
+        ::= DELETE Identifier <RECORD Opt>
+
+<END-DELETE Opt>
+        ::= END-DELETE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! DISABLE Statement
+! -----------------------------------------------------------------------------
+
+<Disable Sent>
+        ::= <Disable Stm>
+
+<Disable Embed>
+        ::= <Disable Stm>
+
+<Disable Imp>
+        ::= <Disable Stm>
+
+<Disable Stm>
+        ::= DISABLE <Enabled Disable Mode> Identifier <Enable Disable Key>
+
+! -----------------------------------------------------------------------------
+! DISPLAY Statement
+! -----------------------------------------------------------------------------
+
+<Display Sent>
+        ::= <Display Stm>
+
+<Display Embed>
+        ::= <Display Stm>
+
+<Display Imp>
+        ::= <Display Stm>
+
+<Display Stm>
+        ::= DISPLAY <Values> <Display Target> <Advancing Clause>
+
+<Display Target>
+        ::= UPON Identifier
+         |  !Optional
+
+<Advancing Clause>
+        ::= <WITH Opt> NO ADVANCING
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! DIVIDE Statement
+! -----------------------------------------------------------------------------
+
+<Divide Sent>
+        ::= <Divide Stm> <Size Clauses> <END-DIVIDE Opt>
+         |  <Divide Stm>
+
+<Divide Embed>
+        ::= <Divide Stm> <Size Clauses> 'END-DIVIDE'
+         |  <Divide Stm>
+
+<Divide Imp>
+        ::= <Divide Stm>
+
+<Divide Stm>
+        ::= DIVIDE <Values> BY   <Values>
+         |  DIVIDE <Values> BY   <Values> GIVING <Variable> <ROUNDED Opt>
+         |  DIVIDE <Values> INTO <Values>
+         |  DIVIDE <Values> INTO <Values> GIVING <Variable> <ROUNDED Opt> <Remainder Opt>
+
+<Remainder Opt>
+        ::= REMAINDER <Variable>
+         |  !Optional
+
+<END-DIVIDE Opt>
+        ::= END-DIVIDE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! ENABLE Statement
+! -----------------------------------------------------------------------------
+
+<Enable Sent>
+        ::= <Enable Stm>
+
+<Enable Embed>
+        ::= <Enable Stm>
+
+<Enable Imp>
+        ::= <Enable Stm>
+
+<Enable Stm>
+        ::= ENABLE <Enabled Disable Mode> Identifier <Enable Disable Key>
+
+! -----------------------------------------------------------------------------
+! EVALUATE Statement
+! -----------------------------------------------------------------------------
+
+<Evaluate Sent>
+        ::= <Evaluate Stm> <END-EVALUATE Opt>
+
+<Evaluate Embed>
+        ::= <Evaluate Stm> END-EVALUATE
+
+<Evaluate Imp>
+        ::= <Evaluate Stm> END-EVALUATE
+
+<Evaluate Stm>
+        ::= EVALUATE <Subjects> <When Clauses>
+
+<Subjects>
+        ::= <Subjects> ALSO <Subject>
+         |  <Subject>
+
+<Subject>
+        ::= TRUE
+         |  <Boolean Exp>
+
+<When Clauses>
+        ::= <When Clauses> <When Clause>
+         |  <When Clause>
+
+<When Clause>
+        ::= WHEN <Phrases> <THEN Opt> <Embed Stms>
+         |  WHEN OTHER <THEN Opt> <Embed Stms>
+
+<Phrases>
+        ::= <Phrases> ALSO <Phrase>
+         |  <Phrase>
+
+<Phrase>
+        ::= ANY
+         |  <Symbolic Value> THROUGH <Symbolic Value>
+         |  <Symbolic Value> THRU <Symbolic Value>
+         |  <Symbolic Value>
+
+<END-EVALUATE Opt>
+        ::= END-EVALUATE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! EXIT Statement
+! -----------------------------------------------------------------------------
+
+<Exit Sent>
+       ::= <Exit Stm>
+
+<Exit Embed>
+       ::= <Exit Stm>
+
+<Exit Imp>
+       ::= <Exit Stm>
+
+<Exit Stm>
+        ::= EXIT
+         |  EXIT PROGRAM
+
+! -----------------------------------------------------------------------------
+! GENERATE Statement
+! -----------------------------------------------------------------------------
+
+<Generate Sent>
+        ::= <Generate Stm>
+
+<Generate Embed>
+        ::= <Generate Stm>
+
+<Generate Imp>
+        ::= <Generate Stm>
+
+<Generate Stm>
+        ::= GENERATE Identifier
+
+! -----------------------------------------------------------------------------
+! GO TO Statement
+! -----------------------------------------------------------------------------
+
+<Go To Sent>
+        ::= <Go To Stm>
+
+<Go To Embed>
+        ::= <Go To Stm>
+
+<Go To Imp>
+        ::= <Go To Stm>
+
+<Go To Stm>
+        ::= GO TO Identifier
+         |  GO TO <Identifiers> DEPENDING ON <Variable>
+
+! -----------------------------------------------------------------------------
+! IF Statement
+! -----------------------------------------------------------------------------
+
+<If Sent>
+        ::= <If Stm> <END-IF Opt>
+
+<If Embed>
+        ::= <If Stm> END-IF
+
+<If Imp>
+        ::= <If Stm> END-IF
+
+<If Stm>
+        ::= IF <Boolean Exp> <THEN Opt> <Embed Stms>
+         |  IF <Boolean Exp> <THEN Opt> <Embed Stms> ELSE <THEN Opt> <Embed Stms>
+         |  IF <Boolean Exp> <THEN Opt> <Embed Stms> ELSE NEXT SENTENCE
+
+<END-IF Opt>
+        ::= END-IF
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! INITIALIZE Statement
+! -----------------------------------------------------------------------------
+
+<Initialize Sent>
+        ::= <Initialize Stm>
+
+<Initialize Embed>
+        ::= <Initialize Stm>
+
+<Initialize Imp>
+        ::= <Initialize Stm>
+
+<Initialize Stm>
+        ::= INITIALIZE <Variables> <Replacing Opt>
+
+<Replacing Opt>
+        ::= REPLACING <Replacing Items>
+
+<Replacing Items>
+        ::= <Replacing Items> <Replacing Item>
+         |  <Replacing Item>
+
+<Replacing Item>
+        ::= <Replacing Type> <DATA Opt> <Value>
+
+<Replacing Type>
+        ::= ALPHABETIC
+         |  ALPHANUMERIC
+         |  NUMERIC
+         |  ALPHANUMERIC-EDITED
+         |  NUMERIC-EDITED
+
+! -----------------------------------------------------------------------------
+! INITIATE Statement
+! -----------------------------------------------------------------------------
+
+<Initiate Sent>
+        ::= <Initiate Stm>
+
+<Initiate Embed>
+        ::= <Initiate Stm>
+
+<Initiate Imp>
+        ::= <Initiate Stm>
+
+<Initiate Stm>
+        ::= INITIATE <Identifiers>
+
+! -----------------------------------------------------------------------------
+! INSPECT Statement
+! -----------------------------------------------------------------------------
+
+<Inspect Sent>
+        ::= <Inspect Stm>
+
+<Inspect Embed>
+        ::= <Inspect Stm>
+
+<Inspect Imp>
+        ::= <Inspect Stm>
+
+<Inspect Stm>
+        ::= INSPECT <Variable> TALLYING <Tally Variables>
+         |  INSPECT <Variable> TALLYING <Tally Variables> REPLACING <Replace Chars>
+         |  INSPECT <Variable> REPLACING <Replace Chars>
+         |  INSPECT <Variable> CONVERTING <Value> TO <Value> <Inspect Specs>
+
+! ----------------------------------- Tally group
+
+<Tally Variables>
+        ::= <Tally Variables> <Tally Variable>
+         |  <Tally Variable>
+
+<Tally Variable>
+        ::= <Variable> FOR <Tally Items>
+
+<Tally Items>
+        ::= <Tally Items> <Tally Item>
+         |  <Tally Item>
+
+<Tally Item>
+        ::= CHARACTERS <Inspect Specs>
+         |  ALL      <Value> <Inspect Specs>
+         |  LEADING  <Value> <Inspect Specs>
+
+! ----------------------------------- Replacing group
+
+<Replace Chars>
+        ::= <Replace Chars> <Replace Char>
+         |  <Replace Char>
+
+<Replace Char>
+        ::= CHARACTERS BY <Value> <Inspect Specs>
+         |  ALL     <Replace Items>
+         |  LEADING <Replace Items>
+         |  FIRST   <Replace Items>
+
+<Replace Items>
+        ::= <Replace Items> <Replace Item>
+         |  <Replace Item>
+
+<Replace Item>
+        ::= <Value> BY <Value> <Inspect Specs>
+
+! ----------------------------------- Substring Specifiers
+
+<Inspect Specs>
+        ::= <Inspect Specs> <Inspect Spec>
+         |  !Zero or more
+
+<Inspect Spec>
+        ::= <BEFORE AFTER> INITIAL <Value>
+
+! -----------------------------------------------------------------------------
+! MERGE Statement
+! -----------------------------------------------------------------------------
+
+<Merge Sent>
+        ::= <Merge Stm>
+
+<Merge Embed>
+        ::= <Merge Stm>
+
+<Merge Imp>
+        ::= <Merge Stm>
+
+<Merge Stm>
+        ::= MERGE Identifier <Sort Keys> <Collating Clause> USING <Identifiers> <Sort Target>
+
+! -----------------------------------------------------------------------------
+! MOVE Statement
+! -----------------------------------------------------------------------------
+
+<Move Sent>
+        ::= <Move Stm> <Size Clauses> <END-MOVE Opt>
+         |  <Move Stm>
+
+<Move Embed>
+        ::= <Move Stm> <Size Clauses> END-MOVE
+         |  <Move Stm>
+
+<Move Imp>
+        ::= <Move Stm>
+
+<Move Stm>
+        ::= MOVE <Symbolic Value> TO <Variables>
+         |  MOVE <CORRESPONDING> Identifier TO Identifier
+
+<END-MOVE Opt>
+        ::= END-MOVE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! MULTIPLY Statement
+! -----------------------------------------------------------------------------
+
+<Multiply Sent>
+        ::= <Multiply Stm> <Size Clauses> <END-MULTIPLY Opt>
+         |  <Multiply Stm>
+
+<Multiply Embed>
+        ::= <Multiply Stm> <Size Clauses> END-MULTIPLY
+         |  <Multiply Stm>
+
+<Multiply Imp>
+        ::= <Multiply Stm>
+
+<Multiply Stm>
+        ::= MULTIPLY <Variables> BY <Multiply Items> <Giving Clause Opt>
+
+<Multiply Items>
+        ::= <Multiply Items> <Multiply Item>
+         |  <Multiply Item>
+
+<Multiply Item>
+        ::= <Value> <ROUNDED Opt>
+
+<END-MULTIPLY Opt>
+        ::= END-MULTIPLY
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! OPEN Statement
+! -----------------------------------------------------------------------------
+
+<Open Sent>
+        ::= <Open Stm>
+
+<Open Embed>
+        ::= <Open Stm>
+
+<Open Imp>
+        ::= <Open Stm>
+
+<Open Stm>
+        ::= OPEN <Open List>
+
+<Open List>
+        ::= <Open List> <Open Entry>
+         |  <Open Entry>
+
+<Open Entry>
+        ::= INPUT  <Variables> <Open No Rewind>
+         |  OUTPUT <Variables> <Open No Rewind>
+         |  EXTEND <Variables> <Open No Rewind>
+         |  I-O    <Variables> <Open No Rewind>
+
+<Open No Rewind>
+        ::= <WITH Opt> NO REWIND
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! PERFORM Statement
+! -----------------------------------------------------------------------------
+
+<Perform Sent>
+        ::= <Perform Block> <END-PERFORM Opt>
+         |  <Perform Stm>
+         |  <Perform Loop>
+
+<Perform Embed>
+        ::= <Perform Block> END-PERFORM
+         |  <Perform Stm>
+         |  <Perform Loop>
+
+<Perform Imp>
+        ::= <Perform Block> END-PERFORM
+         |  <Perform Stm>
+
+
+<Perform Stm>
+        ::= PERFORM <Identifier Range>
+         |  PERFORM <Identifier Range> <Numeric> TIMES
+
+<Perform Loop>
+        ::= PERFORM <Identifier Range> <With Test> UNTIL <Boolean Exp>
+         |  PERFORM <Identifier Range> <With Test> VARYING <Perform For List>
+
+<Perform Block>
+        ::= PERFORM <With Test> UNTIL <Boolean Exp>         <Embed Stms>
+         |  PERFORM <With Test> VARYING <Perform For List>  <Embed Stms>
+         |  PERFORM <Numeric> TIMES                         <Embed Stms>
+
+<With Test>
+        ::= <WITH Opt> TEST <BEFORE AFTER>
+         |  !Optional
+
+<Perform For List>
+        ::= <Perform For List> AFTER <Perform For Range>
+         |  <Perform For Range>
+
+<Perform For Range>
+        ::=  <Variable> FROM <Numeric> BY <Numeric> UNTIL <Boolean Exp>
+
+<END-PERFORM Opt>
+        ::= END-PERFORM
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! READ Statement
+! -----------------------------------------------------------------------------
+
+<Read Sent>
+        ::= <Read Stm> <Read Msg Clauses> <END-READ Opt>
+         |  <Read Stm>
+
+<Read Embed>
+        ::= <Read Stm> <Read Msg Clauses> END-READ
+         |  <Read Stm>
+
+<Read Imp>
+        ::= <Read Stm>
+
+<Read Stm>
+        ::= READ Identifier <Next Opt> <RECORD Opt>
+         |  READ Identifier <Next Opt> <RECORD Opt> INTO <Variable> <Read Key Opt>
+
+<Read Msg Clauses>
+        ::= <At End Clauses>
+         |  <Invalid Key Clauses>
+
+<Read Key Opt>
+        ::= KEY <IS Opt> Identifier
+         |  !Optional
+
+<END-READ Opt>
+        ::= END-READ
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! RELEASE Statement
+! -----------------------------------------------------------------------------
+
+<Release Sent>
+        ::= <Release Stm>
+
+<Release Embed>
+        ::= <Release Stm>
+
+<Release Imp>
+        ::= <Release Stm>
+
+<Release Stm>
+        ::= RELEASE Identifier
+         |  RELEASE Identifier FROM Identifier
+
+! -----------------------------------------------------------------------------
+! RETURN Statement
+! -----------------------------------------------------------------------------
+
+<Return Sent>
+        ::= <Return Stm>
+
+<Return Embed>
+        ::= <Return Stm>
+
+<Return Imp>
+        ::= <Return Stm>
+
+<Return Stm>
+        ::= RETURN Identifier <RECORD Opt>
+         |  RETURN Identifier <RECORD Opt> INTO Identifier
+
+! -----------------------------------------------------------------------------
+! REWRITE Statement
+! -----------------------------------------------------------------------------
+
+<Rewrite Sent>
+        ::= <Rewrite Stm> <Invalid Key Clauses> <END-REWRITE Opt>
+         |  <Rewrite Stm>
+
+<Rewrite Embed>
+        ::= <Rewrite Stm> <Invalid Key Clauses> END-REWRITE
+         |  <Rewrite Stm>
+
+<Rewrite Imp>
+        ::= <Rewrite Stm>
+
+<Rewrite Stm>
+        ::= REWRITE Identifier
+         |  REWRITE Identifier FROM Identifier
+
+<END-REWRITE Opt>
+        ::= END-REWRITE
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! SEARCH Statement
+! -----------------------------------------------------------------------------
+
+<Search Sent>
+        ::= <Search Stm> <END-SEARCH Opt>
+
+<Search Embed>
+        ::= <Search Stm> END-SEARCH
+
+<Search Imp>
+        ::= <Search Stm> END-SEARCH
+
+<Search Stm>
+        ::= SEARCH Identifier <Varying Opt> <At End Clauses> <When Clauses>
+         |  SEARCH ALL Identifier           <At End Clauses> <When Clauses>
+
+<Varying Opt>
+        ::= VARYING <Value>
+         |  !Optional
+
+<END-SEARCH Opt>
+        ::= END-SEARCH
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! SEND Statement
+! -----------------------------------------------------------------------------
+
+<Send Sent>
+        ::= <Send Stm>
+
+<Send Embed>
+        ::= <Send Stm>
+
+<Send Imp>
+        ::= <Send Stm>
+
+<Send Stm>
+        ::= SEND Identifier FROM <Variable>
+         |  SEND Identifier FROM <Variable> <Send With> <Send Spec> <Send Replacing Opt>
+         |  SEND Identifier                 <Send With> <Send Spec> <Send Replacing Opt>
+
+<Send With>
+        ::= <WITH Opt> Identifier
+         |  <WITH Opt> ESI
+         |  <WITH Opt> EMI
+         |  <WITH Opt> EGI
+
+<Send Spec>
+        ::= <BEFORE AFTER> <ADVANCING Opt> <Send Advance>
+
+<Send Advance>
+        ::= <Value> <LINES Opt>
+         |  PAGE
+
+<Send Replacing Opt>
+        ::= REPLACING <LINE Opt>
+
+! -----------------------------------------------------------------------------
+! SET Statement
+! -----------------------------------------------------------------------------
+
+<Set Sent>
+        ::= <Set Stm>
+
+<Set Embed>
+        ::= <Set Stm>
+
+<Set Imp>
+        ::= <Set Stm>
+
+<Set Stm>
+        ::= SET <Variables> UP BY <Value>
+         |  SET <Variables> DOWN BY <Value>
+         |  SET <Variables> TO <Set Value>
+
+<Set Value>
+        ::= ON
+         |  OFF
+         |  TRUE
+
+! -----------------------------------------------------------------------------
+! SORT Statement
+! -----------------------------------------------------------------------------
+
+<Sort Sent>
+        ::= <Sort Stm>
+
+<Sort Embed>
+        ::= <Sort Stm>
+
+<Sort Imp>
+        ::= <Sort Stm>
+
+<Sort Stm>
+        ::= SORT <Value> <Sort Keys> <Sort Duplicates Opt> <Collating Opt> <Sort Source> <Sort Target>
+
+<Sort Duplicates Opt>
+        ::= <WITH Opt> DUPLICATES <IN Opt> <ORDER opt>
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! START Statement
+! -----------------------------------------------------------------------------
+
+<Start Sent>
+        ::= <Start Stm> <Invalid Key Clauses> <END-START Opt>
+         |  <Start Stm>
+
+<Start Embed>
+        ::= <Start Stm> <Invalid Key Clauses> END-START
+         |  <Start Stm>
+
+<Start Imp>
+        ::= <Start Stm>
+
+<Start Stm>
+        ::= START Identifier <Start Key Opt>
+
+<Start Key Opt>
+        ::= KEY <Compare Op> Identifier
+         |  !Optional
+
+<END-START Opt>
+        ::= END-START
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! STOP Statement
+! -----------------------------------------------------------------------------
+
+<Stop Sent>
+        ::= <Stop Stm>
+
+<Stop Embed>
+        ::= <Stop Stm>
+
+<Stop Imp>
+        ::= <Stop Stm>
+
+<Stop Stm>
+        ::= STOP RUN
+         |  STOP <Literal>
+
+! -----------------------------------------------------------------------------
+! STRING Statement
+! -----------------------------------------------------------------------------
+
+<String Sent>
+        ::= <String Stm> <Overflow Clauses> <END-STRING Opt>
+         |  <String Stm>
+
+<String Embed>
+        ::= <String Stm> <Overflow Clauses> END-STRING
+         |  <String Stm>
+
+<String Imp>
+        ::= <String Stm>
+
+<String Stm>
+        ::= STRING <String Items> INTO <Variable> <Pointer Clause>
+
+<String Items>
+        ::= <String Item> <String Items>
+         |  <String Item>
+
+<String Item>
+        ::= <Values> DELIMITED <BY Opt> <Value>
+
+<END-STRING Opt>
+        ::= END-STRING
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! SUBTRACT Statement
+! -----------------------------------------------------------------------------
+
+<Subtract Sent>
+        ::= <Subtract Stm> <Size Clauses> <END-SUBTRACT Opt>
+         |  <Subtract Stm>
+
+<Subtract Embed>
+        ::= <Subtract Stm> <Size Clauses> END-SUBTRACT
+         |  <Subtract Stm>
+
+<Subtract Imp>
+        ::= <Subtract Stm>
+
+<Subtract Stm>
+        ::= SUBTRACT <Values> FROM <Variables> <Giving Clause Opt>
+          | SUBTRACT <CORRESPONDING> <Value> FROM Identifier
+
+<END-SUBTRACT Opt>
+        ::= END-SUBTRACT
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! SUPPRESS Statement
+! -----------------------------------------------------------------------------
+
+<Suppress Sent>
+        ::= <Suppress Stm>
+
+<Suppress Embed>
+        ::= <Suppress Stm>
+
+<Suppress Imp>
+        ::= <Suppress Stm>
+
+<Suppress Stm>
+        ::= SUPPRESS <PRINTING Opt>
+
+! -----------------------------------------------------------------------------
+! TERMINATE Statement
+! -----------------------------------------------------------------------------
+
+<Terminate Sent>
+        ::= <Terminate Stm>
+
+<Terminate Embed>
+        ::= <Terminate Stm>
+
+<Terminate Imp>
+        ::= <Terminate Stm>
+
+<Terminate Stm>
+        ::= TERMINATE <Identifiers>
+
+! -----------------------------------------------------------------------------
+! UNSTRING Statement
+! -----------------------------------------------------------------------------
+
+<Unstring Sent>
+        ::= <Unstring Stm> <Overflow Clauses> <END-UNSTRING Opt>
+         |  <Unstring Stm>
+
+<Unstring Embed>
+        ::= <Unstring Stm> <Overflow Clauses> END-UNSTRING
+         |  <Unstring Stm>
+
+<Unstring Imp>
+        ::= <Unstring Stm>
+
+<Unstring Stm>
+        ::= UNSTRING identifier <Delimiter Clause> INTO Identifier <Unstring Options>
+
+<Delimiter Clause>
+        ::= DELIMITED <BY Opt> <Unstring Delimiter List>
+         |  !Optional
+
+<Unstring Delimiter List>
+        ::= <Unstring Delimiter List> OR <Unstring Delimiter>
+         |  <Unstring Delimiter>
+
+<Unstring Delimiter>
+        ::= <ALL Opt> <Value>
+
+<Unstring Options>
+        ::= <Unstring Options> <Unstring Option>
+         |  !Empty
+
+<Unstring Option>
+        ::= <WITH Opt> POINTER <Variable>
+         |  TALLYING <IN Opt> Identifier
+
+<END-UNSTRING Opt>
+        ::= END-UNSTRING
+         |  !Optional
+
+! -----------------------------------------------------------------------------
+! USE Statement
+! -----------------------------------------------------------------------------
+
+<Use Sent>
+        ::= <Use Stm>
+
+<Use Embed>
+        ::= <Use Stm>
+
+<Use Imp>
+        ::= <Use Stm>
+
+<Use Stm>
+        ::= USE <GLOBAL Opt> AFTER STANDARD <Use Proc Type> PROCEDURE ON <Use Access>
+         |  USE <GLOBAL Opt> BEFORE REPORTING Identifier
+         |  USE <FOR Opt> DEBUGGING <ON Opt> <Use Debug>
+
+<Use Proc Type>
+        ::= EXCEPTION
+         |  ERROR
+
+<Use Access>
+        ::= INPUT
+         |  OUTPUT
+         |  I-O
+         |  EXTEND
+         |  <Value>
+
+<Use Debug>
+        ::= ALL <REFERENCES Opt> <OF Opt> Identifier
+         |  ALL PROCEDURES
+         |  <Value>
+
+! -----------------------------------------------------------------------------
+! WRITE Statement
+! -----------------------------------------------------------------------------
+
+<Write Sent>
+        ::= <Write Stm> <Invalid Key Clauses> <END-WRITE Opt>
+         |  <Write Stm> <AT EOP Clauses>      <END-WRITE Opt>
+         |  <Write Stm>
+
+<Write Embed>
+        ::= <Write Stm> <Invalid Key Clauses> END-WRITE
+         |  <Write Stm> <AT EOP Clauses>      END-WRITE
+         |  <Write Stm>
+
+<Write Imp>
+        ::= <Write Stm>
+
+<Write Stm>
+        ::= WRITE Identifier                 <Write Options>
+         |  WRITE Identifier FROM Identifier <Write Options>
+
+<Write Options>
+        ::= <BEFORE AFTER> <ADVANCING Opt> <Write Advance>
+
+<Write Advance>
+        ::= <Value> <LINES Opt>
+         |  PAGE
+
+<END-WRITE Opt>
+        ::= END-WRITE
+         |  !Optional

@@ -20,6 +20,7 @@ As we are moving to Farkle 7 there are still issues that need to be addressed:
 * __Extensibility:__ EGTneo was designed very hastily and without any thoughts on how it could be extended in the future without sacrificing backwards compatibility.
 * __More size reduction opportunities:__ The EGT file format which EGTneo extended is self-describing, with each entry having a leading byte indicating its type. While this is good for error detecting purposes, it unnecessarily increases size for no clear benefit, and validating errors can still be done with a specialized format.
 * __Reading overhead:__ EGT and EGTneo files are intended to be read sequentially once, and deserialize the entries into objects, incurring allocations. It would be interesting to investigate whether a file format that is intended to be randomly accessed in memory will be faster to read from and allocate less objects.
+* __Determinism:__ Previous formats contained the date and time the grammar was generated, which causes problems with determinism and reproducibility. The new format is an opportunity to address this mistake.
 
 With that being said, Farkle 7 will debut with a new grammar file format.
 
@@ -51,3 +52,14 @@ With that being said, Farkle 7 will debut with a new grammar file format.
     Provide compatibility with the old grammar API.
 
     > There will inevitably be breaking API changes. Templates will also have to be adjusted but no third-party templates are known to exist.
+
+### Appendix: Two decades of grammar file formats
+
+Now that Farkle 7's development has reached a point where it can write grammars, it's a good time to look back at the various grammar file formats that GOLD Parser and Farkle have created over the years.
+
+|Grammar format|Release date|New features|[JSON](https://github.com/teo-tsirpanis/Farkle/blob/egt5/tests/resources/JSON.grm) grammar size|[COBOL 85](https://github.com/teo-tsirpanis/Farkle/blob/egt5/tests/resources/COBOL85.grm) grammar size|
+|--------------|------------|------------|-----------------|------------------|
+|CGT (GOLD Parser 1.x)|2001|initial version, designed for sequential access|131004 bytes|619462 bytes|
+|EGT (GOLD Parser 5.x)|2011|groups, compact character sets|4683 bytes (-96,5%)|612511 bytes (-1.1%)|
+|EGTneo (Farkle 6)|2020|streamlined encoding, DFA default transitions|2304 bytes (-50.8%)|478273 bytes (-21.9%)|
+|Farkle 7|2023|an entirely different format, designed for random access and future extensibility|1350 bytes (-41.4%)|305239 bytes (-36.2%)|

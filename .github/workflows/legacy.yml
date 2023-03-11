@@ -24,6 +24,7 @@ jobs:
   test:
     name: 'Test the legacy F# codebase'
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}

@@ -41,7 +41,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+          dotnet tool install dotnet-sonarscanner --tool-path .\.sonar\scanner
       - name: Set up .NET SDK from global.json
         uses: actions/setup-dotnet@v3
       - name: Restore .NET local tools

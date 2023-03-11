@@ -11,7 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="Production.Members"/>
 [DebuggerDisplay("Count = {Count}")]
-public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHandle>
+public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
 {
     private readonly Grammar _grammar;
 
@@ -20,7 +20,24 @@ public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHa
     /// <inheritdoc/>
     public int Count { get; }
 
-    internal ProductionMemberCollection(Grammar grammar, uint offset, int count)
+    /// <summary>
+    /// Gets the production member at the specified index.
+    /// </summary>
+    /// <param name="index">The index of the production member.</param>
+    public EntityHandle this[int index]
+    {
+        get
+        {
+            if ((uint)index >= (uint)Count)
+            {
+                ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
+            }
+
+            return _grammar.GrammarTables.GetProductionMemberMember(_grammar.GrammarFile, (uint)index + _offset);
+        }
+    }
+
+    internal ProductionMemberList(Grammar grammar, uint offset, int count)
     {
         _grammar = grammar;
         _offset = offset;
@@ -36,14 +53,14 @@ public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHa
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Used to enumerate a <see cref="ProductionMemberCollection"/>.
+    /// Used to enumerate a <see cref="ProductionMemberList"/>.
     /// </summary>
     public struct Enumerator : IEnumerator<EntityHandle>
     {
-        private readonly ProductionMemberCollection _collection;
+        private readonly ProductionMemberList _collection;
         private int _currentIndex = -1;
 
-        internal Enumerator(ProductionMemberCollection collection)
+        internal Enumerator(ProductionMemberList collection)
         {
             _collection = collection;
         }
@@ -57,8 +74,7 @@ public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHa
                 {
                     ThrowHelpers.ThrowInvalidOperationException();
                 }
-                Grammar grammar = _collection._grammar;
-                return grammar.GrammarTables.GetProductionMemberMember(grammar.GrammarFile, (uint)(_collection._offset + _currentIndex));
+                return _collection[_currentIndex];
             }
         }
 

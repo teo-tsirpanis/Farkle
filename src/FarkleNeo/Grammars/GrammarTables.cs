@@ -208,7 +208,7 @@ internal readonly struct GrammarTables
             {
                 ThrowHelpers.ThrowInvalidDataException("Table row count cannot be zero.");
             }
-            if (rowSize== 0)
+            if (rowSize == 0)
             {
                 ThrowHelpers.ThrowInvalidDataException("Table row size cannot be zero.");
             }
@@ -265,9 +265,9 @@ internal readonly struct GrammarTables
         }
 
         Debug.Assert(i == tableCount);
-        if (section.Length != currentTableBase)
+        if (currentTableBase != section.Offset + section.Length)
         {
-            ThrowHelpers.ThrowInvalidDataException("Too small table stream.");
+            ThrowHelpers.ThrowInvalidDataException("Incorrect table stream size.");
         }
 
         int tokenSymbolIndexSize = GetIndexSize(TokenSymbolRowCount);
@@ -285,7 +285,7 @@ internal readonly struct GrammarTables
         GrammarFlagsOffset = GrammarStartSymbolOffset + nonterminalIndexSize;
 
         ValidateRowCount(TableKind.TokenSymbol, TokenSymbolRowSize,
-            StringHeapIndexSize + sizeof(ushort));
+            StringHeapIndexSize + sizeof(uint));
         TokenSymbolNameBase = tokenSymbolBase + 0;
         TokenSymbolFlagsBase = TokenSymbolNameBase + StringHeapIndexSize;
 

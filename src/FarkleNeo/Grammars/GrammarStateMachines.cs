@@ -14,7 +14,7 @@ internal readonly struct GrammarStateMachines
         bool seenDfaOnChar = false, seenDfaOnCharWithConflicts = false, seenDfaOnCharDefaultTransitions = false, seenLr1 = false, seenGlr1 = false;
 
         hasUnknownStateMachines = false;
-        for (uint i = 0; i < (uint)tables.StateMachineRowCount; i++)
+        for (uint i = 1; i <= (uint)tables.StateMachineRowCount; i++)
         {
             ulong kind = tables.GetStateMachineKind(grammarFile, i);
             BlobHandle data = tables.GetStateMachineData(grammarFile, i);

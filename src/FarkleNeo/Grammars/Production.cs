@@ -45,7 +45,7 @@ public readonly struct Production
     {
         uint tableIndex = Handle.TableIndex;
         uint firstNesting = grammarTables.GetProductionFirstMember(grammarFile, tableIndex);
-        uint firstNestingOfNext = tableIndex < (uint)grammarTables.ProductionRowCount - 1 ? grammarTables.GetProductionFirstMember(grammarFile, tableIndex + 1) : (uint)grammarTables.ProductionRowCount;
+        uint firstNestingOfNext = tableIndex < (uint)grammarTables.ProductionRowCount - 1 ? grammarTables.GetProductionFirstMember(grammarFile, tableIndex + 1) : (uint)grammarTables.ProductionMemberRowCount;
         Debug.Assert(firstNesting <= firstNestingOfNext);
         return (firstNesting, firstNestingOfNext);
     }

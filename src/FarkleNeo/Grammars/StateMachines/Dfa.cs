@@ -128,7 +128,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
         public bool MoveNext()
         {
             int nextIndex = _currentIndex + 1;
-            if (_currentIndex < _dfa.Count)
+            if (nextIndex < _dfa.Count)
             {
                 _currentIndex = nextIndex;
                 return true;

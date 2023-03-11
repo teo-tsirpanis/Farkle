@@ -162,7 +162,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
         public bool MoveNext()
         {
             int nextIndex = _currentIndex + 1;
-            if (_currentIndex < _lr.Count)
+            if (nextIndex < _lr.Count)
             {
                 _currentIndex = nextIndex;
                 return true;

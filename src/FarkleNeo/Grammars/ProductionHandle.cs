@@ -89,7 +89,7 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     /// property is <see langword="false"/>.</exception>
     public static explicit operator ProductionHandle(EntityHandle handle)
     {
-        if (handle.HasValue)
+        if (!handle.HasValue)
         {
             return default;
         }

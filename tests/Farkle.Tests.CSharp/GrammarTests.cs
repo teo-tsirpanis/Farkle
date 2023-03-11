@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Grammars;
+using Farkle.Grammars.GoldParser;
+using System.Collections.Immutable;
 
 namespace Farkle.Tests.CSharp;
 
@@ -19,5 +21,26 @@ internal class GrammarTests
             Assert.That(header.IsSupported, Is.False);
             Assert.That(header.FileType, Is.EqualTo(fileType));
         });
+    }
+
+    [TestCase("JSON")]
+    [TestCase("COBOL85")]
+    public void TestGoldParserConversion(string grammarName)
+    {
+        var convertedFromEgt = ConvertGrammarFile(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".egt")));
+        var convertedFromCgt = ConvertGrammarFile(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".cgt")));
+        var originalFarkleGrammar = File.ReadAllBytes(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".grammar.dat")));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(convertedFromEgt, Is.EqualTo(originalFarkleGrammar));
+            Assert.That(convertedFromCgt, Is.EqualTo(originalFarkleGrammar));
+        });
+
+        static ImmutableArray<byte> ConvertGrammarFile(string path)
+        {
+            using var stream = File.OpenRead(path);
+            return GoldGrammarConverter.Convert(GoldGrammarReader.ReadGrammar(stream));
+        }
     }
 }

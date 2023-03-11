@@ -63,9 +63,9 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// A sequence of the <see cref="Production"/>'s members.
+    /// A list of the <see cref="Production"/>'s members.
     /// </summary>
-    public ProductionMemberCollection Members
+    public ProductionMemberList Members
     {
         get
         {

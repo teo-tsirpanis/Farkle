@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -9,6 +10,7 @@ namespace Farkle.Grammars;
 /// Contains the <see cref="Nonterminal"/>s of a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.Nonterminals"/>
+[DebuggerDisplay("Count = {Count}")]
 public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
 {
     private readonly Grammar _grammar;

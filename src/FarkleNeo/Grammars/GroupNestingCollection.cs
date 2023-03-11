@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -9,6 +10,7 @@ namespace Farkle.Grammars;
 /// Contains the <see cref="Group"/>s that can be nested inside a <see cref="Group"/>.
 /// </summary>
 /// <seealso cref="Group.Nesting"/>
+[DebuggerDisplay("Count = {Count}")]
 public readonly struct GroupNestingCollection : IReadOnlyCollection<Group>
 {
     private readonly Grammar _grammar;

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars;
 
@@ -9,6 +10,7 @@ namespace Farkle.Grammars;
 /// Contains the members of a <see cref="Production"/>.
 /// </summary>
 /// <seealso cref="Production.Members"/>
+[DebuggerDisplay("Count = {Count}")]
 public readonly struct ProductionMemberCollection : IReadOnlyCollection<EntityHandle>
 {
     private readonly Grammar _grammar;

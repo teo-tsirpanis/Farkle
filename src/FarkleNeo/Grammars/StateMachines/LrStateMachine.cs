@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections;
+using System.Diagnostics;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -9,6 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 /// Represents an LR(1) state machine stored in a <see cref="Grammar"/>.
 /// It is used by parsers to parse tokens produced by tokenizers.
 /// </summary>
+[DebuggerDisplay("Count = {Count}")]
 public abstract class LrStateMachine : IReadOnlyList<LrState>
 {
     internal LrStateMachine(int count, bool hasConflicts)

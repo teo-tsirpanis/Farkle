@@ -23,19 +23,33 @@ internal class GrammarTests
         });
     }
 
-    [TestCase("JSON")]
-    [TestCase("COBOL85")]
-    public void TestGoldParserConversion(string grammarName)
+    private static IEnumerable<string[]> FarkleAndGoldGrammars
     {
-        var convertedFromEgt = ConvertGrammarFile(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".egt")));
-        var convertedFromCgt = ConvertGrammarFile(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".cgt")));
-        var originalFarkleGrammar = File.ReadAllBytes(TestUtilities.GetResourceFile(Path.ChangeExtension(grammarName, ".grammar.dat")));
-
-        Assert.Multiple(() =>
+        get
         {
-            Assert.That(convertedFromEgt, Is.EqualTo(originalFarkleGrammar));
-            Assert.That(convertedFromCgt, Is.EqualTo(originalFarkleGrammar));
-        });
+            foreach (string path in TestUtilities.Farkle7Grammars)
+            {
+                var egtFile = path.Replace(".grammar.dat", ".egt");
+                if (File.Exists(egtFile))
+                {
+                    yield return new string[] { path, egtFile };
+                }
+                var cgtFile = path.Replace(".grammar.dat", ".cgt");
+                if (File.Exists(egtFile))
+                {
+                    yield return new string[] { path, cgtFile };
+                }
+            }
+        }
+    }
+
+    [TestCaseSource(nameof(FarkleAndGoldGrammars))]
+    public void TestGoldParserConversion(string farkleGrammar, string goldGrammar)
+    {
+        var originalFarkleGrammar = File.ReadAllBytes(farkleGrammar);
+        var convertedGrammar = ConvertGrammarFile(goldGrammar);
+
+        Assert.That(convertedGrammar, Is.EqualTo(originalFarkleGrammar));
 
         static ImmutableArray<byte> ConvertGrammarFile(string path)
         {

@@ -6,7 +6,7 @@ namespace Farkle.Grammars.StateMachines;
 /// <summary>
 /// Specifies what an LR parser will do if it encounters a terminal.
 /// </summary>
-public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
+public readonly struct LrAction : IEquatable<LrAction>
 {
     internal int Value { get; }
 
@@ -17,22 +17,22 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
         _ => sizeof(int)
     };
 
-    internal LrTerminalAction(int value) => Value = value;
+    internal LrAction(int value) => Value = value;
 
     /// <summary>
-    /// An <see cref="LrTerminalAction"/> that will cause a syntax error.
+    /// An <see cref="LrAction"/> that will cause a syntax error.
     /// </summary>
     /// <seealso cref="IsError"/>
-    public static LrTerminalAction Error => default;
+    public static LrAction Error => default;
 
     /// <summary>
-    /// Creates an <see cref="LrTerminalAction"/> that will shift to the specified state.
+    /// Creates an <see cref="LrAction"/> that will shift to the specified state.
     /// </summary>
     /// <param name="state">The state's number, starting from zero.</param>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="state"/> is negative.</exception>
     /// <seealso cref="IsReduce"/>
-    public static LrTerminalAction CreateShift(int state)
+    public static LrAction CreateShift(int state)
     {
         if (state < 0)
         {
@@ -42,13 +42,13 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     }
 
     /// <summary>
-    /// Creates an <see cref="LrTerminalAction"/> that will reduce the specified <see cref="ProductionHandle"/>.
+    /// Creates an <see cref="LrAction"/> that will reduce the specified <see cref="ProductionHandle"/>.
     /// </summary>
     /// <param name="production">The production to reuse.</param>
     /// <exception cref="ArgumentNullException"><paramref name="production"/>'s
     /// <see cref="ProductionHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <seealso cref="IsReduce"/>
-    public static LrTerminalAction CreateReduce(ProductionHandle production)
+    public static LrAction CreateReduce(ProductionHandle production)
     {
         if (!production.HasValue)
         {
@@ -58,25 +58,25 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     }
 
     /// <summary>
-    /// Whether this <see cref="LrTerminalAction"/> will cause a syntax error.
+    /// Whether this <see cref="LrAction"/> will cause a syntax error.
     /// </summary>
     /// <seealso cref="Error"/>
     public bool IsError => Value == 0;
 
     /// <summary>
-    /// Whether this <see cref="LrTerminalAction"/> will shift to another state.
+    /// Whether this <see cref="LrAction"/> will shift to another state.
     /// </summary>
     /// <seealso cref="CreateShift"/>
     public bool IsShift => Value > 0;
 
     /// <summary>
-    /// Whether this <see cref="LrTerminalAction"/> will reduce a production.
+    /// Whether this <see cref="LrAction"/> will reduce a production.
     /// </summary>
     /// <seealso cref="CreateReduce"/>
     public bool IsReduce => Value < 0;
 
     /// <summary>
-    /// The state this <see cref="LrTerminalAction"/> will shift to.
+    /// The state this <see cref="LrAction"/> will shift to.
     /// </summary>
     /// <exception cref="InvalidOperationException">The <see cref="IsShift"/>
     /// property is <see langword="false"/>.</exception>
@@ -93,7 +93,7 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     }
 
     /// <summary>
-    /// The production this <see cref="LrTerminalAction"/> will reduce.
+    /// The production this <see cref="LrAction"/> will reduce.
     /// </summary>
     /// <exception cref="InvalidOperationException">The <see cref="IsReduce"/>
     /// property is <see langword="false"/>.</exception>
@@ -110,10 +110,10 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     }
 
     /// <inheritdoc/>
-    public override bool Equals(object? other) => other is LrTerminalAction x && Equals(x);
+    public override bool Equals(object? other) => other is LrAction x && Equals(x);
 
     /// <inheritdoc/>
-    public bool Equals(LrTerminalAction other) => Value == other.Value;
+    public bool Equals(LrAction other) => Value == other.Value;
 
     /// <inheritdoc/>
     public override int GetHashCode() => Value;
@@ -150,16 +150,16 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
     }
 
     /// <summary>
-    /// Checks two <see cref="LrTerminalAction"/>s for equality.
+    /// Checks two <see cref="LrAction"/>s for equality.
     /// </summary>
     /// <param name="left">The first action.</param>
     /// <param name="right">The second action.</param>
-    public static bool operator ==(LrTerminalAction left, LrTerminalAction right) => left.Equals(right);
+    public static bool operator ==(LrAction left, LrAction right) => left.Equals(right);
 
     /// <summary>
-    /// Checks two <see cref="LrTerminalAction"/>s for inequality.
+    /// Checks two <see cref="LrAction"/>s for inequality.
     /// </summary>
     /// <param name="left">The first action.</param>
     /// <param name="right">The second action.</param>
-    public static bool operator !=(LrTerminalAction left, LrTerminalAction right) => !(left==right);
+    public static bool operator !=(LrAction left, LrAction right) => !(left==right);
 }

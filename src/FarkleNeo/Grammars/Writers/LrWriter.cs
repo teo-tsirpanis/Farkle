@@ -45,7 +45,7 @@ internal sealed class LrWriter
     {
         EnsureNotFinished();
 
-        AddAction(terminal, LrTerminalAction.CreateReduce(production));
+        AddAction(terminal, LrAction.CreateReduce(production));
 
         if (production.TableIndex > _maxProduction)
         {
@@ -58,10 +58,10 @@ internal sealed class LrWriter
         EnsureNotFinished();
         ValidateState(state);
 
-        AddAction(terminal, LrTerminalAction.CreateShift(state));
+        AddAction(terminal, LrAction.CreateShift(state));
     }
 
-    private void AddAction(TokenSymbolHandle terminal, LrTerminalAction action)
+    private void AddAction(TokenSymbolHandle terminal, LrAction action)
     {
         if (terminal.TableIndex > _maxTerminal)
         {
@@ -202,7 +202,7 @@ internal sealed class LrWriter
 
         byte stateIndexSize = StateMachineUtilities.GetIndexSize(StateCount);
         byte actionIndexSize = StateMachineUtilities.GetIndexSize(_actions.Count);
-        byte actionSize = LrTerminalAction.GetEncodedSize(StateCount, productionCount);
+        byte actionSize = LrAction.GetEncodedSize(StateCount, productionCount);
         byte eofActionSize = LrEndOfFileAction.GetEncodedSize(productionCount);
         byte gotoIndexSize = StateMachineUtilities.GetIndexSize(_gotos.Count);
         byte nonterminalIndexSize = GrammarTables.GetIndexSize(nonterminalCount);

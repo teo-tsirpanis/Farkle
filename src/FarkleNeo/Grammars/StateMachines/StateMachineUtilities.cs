@@ -233,7 +233,7 @@ internal static class StateMachineUtilities
             _ => Stage3<TStateIndex, TActionIndex, uint>()
         };
 
-        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => LrTerminalAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => LrAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage4<TStateIndex, TActionIndex, TGotoIndex, sbyte>(),
             2 => Stage4<TStateIndex, TActionIndex, TGotoIndex, short>(),
@@ -313,7 +313,7 @@ internal static class StateMachineUtilities
             _ => Stage4<TStateIndex, TActionIndex, TGotoIndex, uint>()
         };
 
-        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex>() => LrTerminalAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex>() => LrAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, sbyte>(),
             2 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, short>(),

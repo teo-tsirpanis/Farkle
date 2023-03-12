@@ -38,7 +38,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         GotoCount = gotoCount;
     }
 
-    protected LrTerminalAction ReadAction(ReadOnlySpan<byte> grammarFile, int index) =>
+    protected LrAction ReadAction(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadIntVariableSize<TAction>(ActionBase + index * sizeof(TAction)));
 
     protected int ReadFirstAction(ReadOnlySpan<byte> grammarFile, int state) =>
@@ -67,7 +67,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         return (actionOffset, nextActionOffset - actionOffset);
     }
 
-    internal sealed override KeyValuePair<TokenSymbolHandle, LrTerminalAction> GetActionAt(int index)
+    internal sealed override KeyValuePair<TokenSymbolHandle, LrAction> GetActionAt(int index)
     {
         if ((uint)index >= (uint)ActionCount)
         {
@@ -77,7 +77,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
         TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray<TTokenSymbol>(grammarFile, ActionTerminalBase, index));
-        LrTerminalAction action = ReadAction(grammarFile, index);
+        LrAction action = ReadAction(grammarFile, index);
 
         return new(terminal, action);
     }

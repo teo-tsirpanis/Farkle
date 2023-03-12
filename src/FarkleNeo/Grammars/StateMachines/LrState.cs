@@ -33,7 +33,7 @@ public readonly struct LrState
 
     /// <summary>
     /// The terminals the <see cref="LrState"/> accepts, along
-    /// with their respective <see cref="LrTerminalAction"/>.
+    /// with their respective <see cref="LrAction"/>.
     /// </summary>
     public ActionCollection Actions => new(_lr, StateIndex);
 
@@ -55,10 +55,10 @@ public readonly struct LrState
 
     /// <summary>
     /// Contains the terminals an <see cref="LrState"/> accepts,
-    /// along with their respective <see cref="LrTerminalAction"/>.
+    /// along with their respective <see cref="LrAction"/>.
     /// </summary>
-    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbolHandle, LrTerminalAction>, ActionCollection>))]
-    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbolHandle, LrTerminalAction>>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbolHandle, LrAction>, ActionCollection>))]
+    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbolHandle, LrAction>>
     {
         private readonly LrStateMachine _lr;
 
@@ -78,15 +78,15 @@ public readonly struct LrState
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<KeyValuePair<TokenSymbolHandle, LrTerminalAction>>
-            IEnumerable<KeyValuePair<TokenSymbolHandle, LrTerminalAction>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<TokenSymbolHandle, LrAction>>
+            IEnumerable<KeyValuePair<TokenSymbolHandle, LrAction>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate an <see cref="ActionCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbolHandle, LrTerminalAction>>
+        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbolHandle, LrAction>>
         {
             private readonly ActionCollection _collection;
 
@@ -98,7 +98,7 @@ public readonly struct LrState
             }
 
             /// <inheritdoc/>
-            public KeyValuePair<TokenSymbolHandle, LrTerminalAction> Current
+            public KeyValuePair<TokenSymbolHandle, LrAction> Current
             {
                 get
                 {

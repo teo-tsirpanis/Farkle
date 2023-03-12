@@ -54,7 +54,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
     {
         ValidateStateIndex(state);
 
-        if (GetSingleAcceptSymbol(state).HasValue)
+        if (GetAcceptSymbol(state).HasValue)
         {
             return (state, 1);
         }
@@ -62,9 +62,9 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
         return (0, 0);
     }
 
-    internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetSingleAcceptSymbol(index);
+    internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
 
-    internal override TokenSymbolHandle GetSingleAcceptSymbol(int state)
+    public override TokenSymbolHandle GetAcceptSymbol(int state)
     {
         ValidateStateIndex(state);
         return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));

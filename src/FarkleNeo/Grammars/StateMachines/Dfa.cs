@@ -40,20 +40,6 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal abstract DfaEdge<TChar> GetEdgeAt(int index);
 
-    internal virtual TokenSymbolHandle GetSingleAcceptSymbol(int state)
-    {
-        switch (GetAcceptSymbolBounds(state))
-        {
-            case (int offset, 1):
-                return GetAcceptSymbolAt(offset);
-            case (_, 0):
-                return default;
-            default:
-                ThrowHelpers.ThrowInvalidOperationException("The DFA state has more than one accept symbol.");
-                return default;
-        }
-    }
-
     internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 
     /// <summary>
@@ -97,11 +83,23 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     }
 
     /// <summary>
+    /// Gets the accept symbol of a state on a <see cref="Dfa{TChar}"/>
+    /// with no conflicting accept symbols.
+    /// </summary>
+    /// <param name="state">The state's index.</param>
+    /// <returns>A <see cref="TokenSymbolHandle"/> pointing to the state's accept symbol,
+    /// or having no value if the state is not an accept state.</returns>
+    /// <exception cref="NotSupportedException">The DFA <see cref="HasConflicts"/>.</exception>
+    /// <remarks>This method is intended to be used by parsers.</remarks>
+    public abstract TokenSymbolHandle GetAcceptSymbol(int state);
+
+    /// <summary>
     /// Performs a transition from one state to another, based on the current character.
     /// </summary>
     /// <param name="state">The index of the current state.</param>
     /// <param name="c">The current character in the input stream.</param>
     /// <returns>The index of the next state or -1 if such state does not exist.</returns>
+    /// <remarks>This method is intended to be used by parsers.</remarks>
     public abstract int NextState(int state, TChar c);
 
     /// <summary>

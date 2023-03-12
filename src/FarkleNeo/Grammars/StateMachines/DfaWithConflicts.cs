@@ -81,4 +81,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         }
         return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
     }
+
+    public override TokenSymbolHandle GetAcceptSymbol(int state) =>
+        throw new NotSupportedException("This method is not supported for DFAs with conflicts.");
 }

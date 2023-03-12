@@ -36,23 +36,8 @@ public readonly struct DfaState<TChar>
     }
 
     /// <summary>
-    /// The <see cref="DfaState{TChar}"/>'s accept symbol, if it exists.
-    /// </summary>
-    /// <returns>A <see cref="TokenSymbolHandle"/> pointing to the state's accept symbol.
-    /// Its <see cref="TokenSymbolHandle.HasValue"/> property will be set to <see langword="false"/>
-    /// if the state is not an accept state.</returns>
-    /// <exception cref="InvalidOperationException">The state has more than one accept symbols.
-    /// This can be checked with the <see cref="HasConflicts"/> property.</exception>
-    /// <remarks>
-    /// To improve performance, parsers should use this property instead of <see cref="AcceptSymbols"/>.
-    /// </remarks>
-    /// <seealso cref="HasConflicts"/>
-    public TokenSymbolHandle AcceptSymbol => _dfa.GetSingleAcceptSymbol(StateIndex);
-
-    /// <summary>
     /// The <see cref="DfaState{TChar}"/>'s possible accept symbols.
     /// </summary>
-    /// <seealso cref="AcceptSymbol"/>
     /// <seealso cref="HasConflicts"/>
     public AcceptSymbolCollection AcceptSymbols
     {

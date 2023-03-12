@@ -107,6 +107,21 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
         return "Error";
     }
 
+    internal string ToString(Grammar grammar)
+    {
+        if (IsReduce)
+        {
+            return $"Reduce production {grammar.GetProduction(ReduceProduction)}";
+        }
+
+        if (IsAccept)
+        {
+            return "Accept";
+        }
+
+        return "Error";
+    }
+
     /// <summary>
     /// Checks two <see cref="LrEndOfFileAction"/>s for equality.
     /// </summary>

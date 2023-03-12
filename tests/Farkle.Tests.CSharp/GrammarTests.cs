@@ -68,6 +68,7 @@ internal class GrammarTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(grammar.HasUnknownData, Is.False);
             Assert.That(grammar.GrammarInfo.Name.IsEmpty, Is.False);
             Assert.That(() => grammar.GrammarInfo.Attributes, Throws.Nothing);
             Assert.That(grammar.GrammarInfo.StartSymbol.HasValue);

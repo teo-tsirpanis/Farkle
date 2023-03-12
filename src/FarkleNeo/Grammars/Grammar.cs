@@ -27,9 +27,14 @@ public abstract class Grammar
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
     /// <summary>
-    /// The length of the grammar's data in bytes.
+    /// The length of the <see cref="Grammar"/>'s data in bytes.
     /// </summary>
     public int DataLength => GrammarFile.Length;
+
+    /// <summary>
+    /// Whether the <see cref="Grammar"/> contains data that are not recognized by this version of Farkle.
+    /// </summary>
+    public bool HasUnknownData { get; }
 
     /// <summary>
     /// General information about this <see cref="Grammar"/>.
@@ -95,13 +100,13 @@ public abstract class Grammar
         GrammarHeader header = GrammarHeader.Read(grammarFile);
         ValidateHeader(header);
 
-        GrammarStreams streams = new(grammarFile, header.StreamCount, out _);
+        GrammarStreams streams = new(grammarFile, header.StreamCount, out bool hasUnknownStreams);
 
         StringHeap = new(grammarFile, streams.StringHeap);
         BlobHeap = new(streams.BlobHeap);
-        GrammarTables = new(grammarFile, streams.TableStream, out _);
+        GrammarTables = new(grammarFile, streams.TableStream, out bool hasUnknownTables);
 
-        GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out _);
+        GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out bool hasUnknownStateMachines);
         (DfaOnChar, LrStateMachine) = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
         bool rejectTerminals = false;
@@ -121,6 +126,8 @@ public abstract class Grammar
                 rejectTerminals = true;
             }
         }
+
+        HasUnknownData = header.HasUnknownData || hasUnknownStreams || hasUnknownTables || hasUnknownStateMachines;
     }
 
     /// <summary>

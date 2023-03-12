@@ -86,7 +86,7 @@ public readonly struct LrState
         {
             private readonly ActionCollection _collection;
 
-            private int _currentIndex;
+            private int _currentIndex = -1;
 
             internal Enumerator(ActionCollection collection)
             {
@@ -160,7 +160,7 @@ public readonly struct LrState
         {
             private readonly EndOfFileActionCollection _collection;
 
-            private int _currentIndex;
+            private int _currentIndex = -1;
 
             internal Enumerator(EndOfFileActionCollection collection)
             {
@@ -235,7 +235,7 @@ public readonly struct LrState
         {
             private readonly GotoCollection _collection;
 
-            private int _currentIndex;
+            private int _currentIndex = -1;
 
             internal Enumerator(GotoCollection collection)
             {

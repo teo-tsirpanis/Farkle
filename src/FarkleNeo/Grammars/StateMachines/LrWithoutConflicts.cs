@@ -74,13 +74,15 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
         return LrAction.Error;
     }
 
-    internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
+    public override LrEndOfFileAction GetEndOfFileAction(int state)
     {
-        ValidateStateIndex(index);
+        ValidateStateIndex(state);
 
         ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-        return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, index));
+        return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, state));
     }
+
+    internal override LrEndOfFileAction GetEndOfFileActionAt(int index) => GetEndOfFileAction(index);
 
     internal override (int Offset, int Count) GetEndOfFileActionBounds(int state)
     {

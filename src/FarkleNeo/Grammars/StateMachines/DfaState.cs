@@ -17,9 +17,12 @@ namespace Farkle.Grammars.StateMachines;
 /// use the <see cref="Dfa{TChar}.NextState"/> function instead.
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay(),nq}")]
+[DebuggerTypeProxy(typeof(DfaStateProxy<>))]
 public readonly struct DfaState<TChar>
 {
     private readonly Dfa<TChar> _dfa;
+
+    internal Grammar Grammar => _dfa.Grammar;
 
     /// <summary>
     /// The index of this <see cref="DfaState{TChar}"/>, starting from 0.
@@ -108,6 +111,7 @@ public readonly struct DfaState<TChar>
     /// <summary>
     /// Contains the edges of a <see cref="DfaState{TChar}"/>.
     /// </summary>
+    [DebuggerTypeProxy(typeof(DfaEdgesProxy<>))]
     public readonly struct EdgeCollection : IReadOnlyCollection<DfaEdge<TChar>>
     {
         private readonly Dfa<TChar> _dfa;
@@ -183,6 +187,7 @@ public readonly struct DfaState<TChar>
     /// <summary>
     /// Contains the accept symbols of a <see cref="DfaState{TChar}"/>.
     /// </summary>
+    [DebuggerTypeProxy(typeof(DfaAcceptSymbolsProxy<>))]
     public readonly struct AcceptSymbolCollection : IReadOnlyCollection<TokenSymbolHandle>
     {
         private readonly Dfa<TChar> _dfa;

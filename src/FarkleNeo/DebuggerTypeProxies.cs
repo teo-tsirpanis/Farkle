@@ -72,3 +72,35 @@ internal sealed class LrStateProxy
         Debug.Assert(i == _actions.Length);
     }
 }
+
+internal sealed class DfaStateProxy<TChar>
+{
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+    private readonly NameValuePair[] _actions;
+
+    public DfaStateProxy(DfaState<TChar> state)
+    {
+        int defaultTransition = state.DefaultTransition;
+
+        _actions = new NameValuePair[state.Edges.Count + (defaultTransition != -1 ? 1 : 0) + state.AcceptSymbols.Count];
+
+        Grammar grammar = state.Grammar;
+        int i = 0;
+        foreach (var edge in state.Edges)
+        {
+            string key = EqualityComparer<TChar>.Default.Equals(edge.KeyFrom, edge.KeyTo)
+                ? $"{DfaEdge<TChar>.Format(edge.KeyFrom)}"
+                : $"[{DfaEdge<TChar>.Format(edge.KeyFrom)},{DfaEdge<TChar>.Format(edge.KeyTo)}]";
+            string value = edge.Target < 0 ? "Fail" : $"Goto state {edge.Target}";
+            _actions[i++] = new NameValuePair(key, value);
+        }
+        if (defaultTransition >= 0)
+        {
+            _actions[i++] = new NameValuePair(i > 0 ? "In all other cases" : "Always", $"Goto state {defaultTransition}");
+        }
+        foreach (var accept in state.AcceptSymbols)
+        {
+            _actions[i++] = new NameValuePair("Accept", grammar.GetTokenSymbol(accept).ToString());
+        }
+    }
+}

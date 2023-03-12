@@ -50,34 +50,35 @@ public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
         }
         return $"[{Format(KeyFrom)},{Format(KeyTo)}] -> {target}";
 
-        static string Format(TChar c)
+    }
+
+    internal static string Format(TChar c)
+    {
+        if (c is char c2)
         {
-            if (c is char c2)
+            return c2 switch
             {
-                return c2 switch
-                {
-                    '\0' => "'\\0'",
-                    '\a' => "'\\a'",
-                    '\b' => "'\\b'",
-                    '\f' => "'\\f'",
-                    '\n' => "'\\n'",
-                    '\r' => "'\\r'",
-                    '\t' => "'\\t'",
-                    '\v' => "'\\v'",
-                    '\'' => "'\\''",
-                    '"' => "'\"'",
-                    '\\' => "'\\\\'",
-                    _ => c2 < 32 || c2 > 126 ? $"'\\u{(int)c2:X4}'" : $"'{c2}'"
-                };
-            }
-
-            if (c is byte b)
-            {
-                return $"0x{b:X2}";
-            }
-
-            return $"'{c}'";
+                '\0' => "'\\0'",
+                '\a' => "'\\a'",
+                '\b' => "'\\b'",
+                '\f' => "'\\f'",
+                '\n' => "'\\n'",
+                '\r' => "'\\r'",
+                '\t' => "'\\t'",
+                '\v' => "'\\v'",
+                '\'' => "'\\''",
+                '"' => "'\"'",
+                '\\' => "'\\\\'",
+                _ => c2 < 32 || c2 > 126 ? $"'\\u{(int)c2:X4}'" : $"'{c2}'"
+            };
         }
+
+        if (c is byte b)
+        {
+            return $"0x{b:X2}";
+        }
+
+        return $"'{c}'";
     }
 
     /// <inheritdoc/>

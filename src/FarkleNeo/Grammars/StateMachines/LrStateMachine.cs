@@ -24,7 +24,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
 
     internal abstract (int Offset, int Count) GetActionBounds(int state);
 
-    internal abstract KeyValuePair<TokenSymbolHandle, LrTerminalAction> GetActionAt(int state);
+    internal abstract KeyValuePair<TokenSymbolHandle, LrAction> GetActionAt(int state);
 
     internal abstract (int Offset, int Count) GetEndOfFileActionBounds(int state);
 
@@ -107,7 +107,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// <param name="state">The current state.</param>
     /// <param name="terminal">The terminal that was encountered.</param>
     /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
-    public abstract LrTerminalAction GetTerminalAction(int state, TokenSymbolHandle terminal);
+    public abstract LrAction GetAction(int state, TokenSymbolHandle terminal);
 
     /// <summary>
     /// Gets the next action from a state, when the end of the input stream is reached.

@@ -62,7 +62,7 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         };
     }
 
-    public override LrTerminalAction GetTerminalAction(int state, TokenSymbolHandle terminal)
+    public override LrAction GetAction(int state, TokenSymbolHandle terminal)
     {
         ThrowHasConflicts();
         return default;

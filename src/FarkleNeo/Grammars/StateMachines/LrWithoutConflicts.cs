@@ -51,7 +51,7 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
 
     internal override bool StateHasConflicts(int state) => false;
 
-    public override LrTerminalAction GetTerminalAction(int state, TokenSymbolHandle terminal)
+    public override LrAction GetAction(int state, TokenSymbolHandle terminal)
     {
         ValidateStateIndex(state);
 
@@ -71,7 +71,7 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
             }
         }
 
-        return LrTerminalAction.Error;
+        return LrAction.Error;
     }
 
     public override int GetGoto(int state, NonterminalHandle nonterminal)

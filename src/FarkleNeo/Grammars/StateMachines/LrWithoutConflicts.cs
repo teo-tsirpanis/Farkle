@@ -74,30 +74,6 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
         return LrAction.Error;
     }
 
-    public override int GetGoto(int state, NonterminalHandle nonterminal)
-    {
-        ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        int gotoOffset = ReadFirstGoto(grammarFile, state);
-        int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
-        int gotoCount = nextGotoOffset - gotoOffset;
-
-        if (gotoCount != 0)
-        {
-            int nextGoto = StateMachineUtilities.BufferBinarySearch(grammarFile, GotoNonterminalBase + gotoOffset * sizeof(TNonterminal), gotoCount, StateMachineUtilities.CastUInt<TNonterminal>(nonterminal.TableIndex));
-
-            if (nextGoto >= 0)
-            {
-                return ReadGoto(grammarFile, gotoOffset + nextGoto);
-            }
-        }
-
-        ThrowHelpers.ThrowKeyNotFoundException("Could not find GOTO transition");
-        return 0;
-    }
-
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {
         ValidateStateIndex(index);

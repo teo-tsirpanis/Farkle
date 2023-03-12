@@ -62,11 +62,11 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         };
     }
 
-    public override LrAction GetAction(int state, TokenSymbolHandle terminal)
-    {
-        ThrowHasConflicts();
-        return default;
-    }
+    public override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
+        throw CreateHasConflictsException();
+
+    public override LrEndOfFileAction GetEndOfFileAction(int state) =>
+        throw CreateHasConflictsException();
 
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {
@@ -91,7 +91,6 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         return (firstEofAction, nextFirstEofAction - firstEofAction);
     }
 
-    [DoesNotReturn, StackTraceHidden]
-    private static void ThrowHasConflicts() =>
-        ThrowHelpers.ThrowNotSupportedException("State machine has conflicts.");
+    private static NotSupportedException CreateHasConflictsException() =>
+        new("State machine has conflicts.");
 }

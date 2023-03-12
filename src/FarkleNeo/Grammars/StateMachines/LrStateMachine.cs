@@ -107,6 +107,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// <param name="state">The current state.</param>
     /// <param name="terminal">The terminal that was encountered.</param>
     /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
+    /// <remarks>This method is intended to be used by parsers.</remarks>
     public abstract LrAction GetAction(int state, TokenSymbolHandle terminal);
 
     /// <summary>
@@ -114,19 +115,8 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// </summary>
     /// <param name="state">The current state.</param>
     /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
-    public virtual LrEndOfFileAction GetEndOfFileAction(int state)
-    {
-        switch (GetEndOfFileActionBounds(state))
-        {
-            case (int offset, 1):
-                return GetEndOfFileActionAt(offset);
-            case (_, 0):
-                return LrEndOfFileAction.Error;
-            default:
-                ThrowHelpers.ThrowInvalidOperationException("The LR state has more than one end-of-file action.");
-                return default;
-        }
-    }
+    /// <remarks>This method is intended to be used by parsers.</remarks>
+    public abstract LrEndOfFileAction GetEndOfFileAction(int state);
 
     /// <summary>
     /// Performs a GOTO transition from one state to another, based on a nonterminal produced by a reduction.
@@ -136,6 +126,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// <returns>The index of the state to go to.</returns>
     /// <exception cref="KeyNotFoundException">A GOTO was not found for this state and nonterminal.
     /// Properly written parsers and grammar files should not encounter this exception.</exception>
+    /// <remarks>This method is intended to be used by parsers.</remarks>
     public abstract int GetGoto(int state, NonterminalHandle nonterminal);
 
     /// <summary>

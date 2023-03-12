@@ -58,6 +58,8 @@ internal readonly struct GrammarTables
     public readonly byte SpecialNameRowSize;
     public readonly int SpecialNameNameBase, SpecialNameSymbolBase;
 
+    public readonly int TerminalCount;
+
     private readonly GrammarHeapSizes _heapSizes;
 
     public byte BlobHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
@@ -140,6 +142,31 @@ internal readonly struct GrammarTables
         uint indexValue = codedIndex >> 1;
         return new(indexValue, kind);
     }
+
+    private int GetTerminalCount(ReadOnlySpan<byte> grammarFile)
+    {
+        int count = 0;
+        bool rejectTerminals = false;
+        for (int i = 1; i <= TokenSymbolRowCount; i++)
+        {
+            TokenSymbolAttributes flags = GetTokenSymbolFlags(grammarFile, (uint)i);
+            if ((flags & TokenSymbolAttributes.Terminal) != 0)
+            {
+                if (rejectTerminals)
+                {
+                    ThrowHelpers.ThrowInvalidDataException("Terminals must come before other token symbols.");
+                }
+                count++;
+            }
+            else
+            {
+                rejectTerminals = true;
+            }
+        }
+        return count;
+    }
+
+    public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
 
     public GrammarTables(ReadOnlySpan<byte> grammarFile, GrammarFileSection section, out bool hasUnknownTables) : this()
     {
@@ -326,6 +353,8 @@ internal readonly struct GrammarTables
             StringHeapIndexSize + productionMemberCodedIndexSize);
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
+
+        TerminalCount = GetTerminalCount(grammarFile);
     }
 
     public StringHandle GetGrammarName(ReadOnlySpan<byte> grammarFile) =>

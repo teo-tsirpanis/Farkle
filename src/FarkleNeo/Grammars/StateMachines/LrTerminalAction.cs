@@ -134,6 +134,21 @@ public readonly struct LrTerminalAction : IEquatable<LrTerminalAction>
         return "Error";
     }
 
+    internal string ToString(Grammar grammar)
+    {
+        if (IsShift)
+        {
+            return $"Shift to state {ShiftState}";
+        }
+
+        if (IsReduce)
+        {
+            return $"Reduce production {grammar.GetProduction(ReduceProduction)}";
+        }
+
+        return "Error";
+    }
+
     /// <summary>
     /// Checks two <see cref="LrTerminalAction"/>s for equality.
     /// </summary>

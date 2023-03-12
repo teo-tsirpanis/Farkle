@@ -10,9 +10,12 @@ namespace Farkle.Grammars.StateMachines;
 /// Represents a state of an <see cref="LrStateMachine"/>.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay(),nq}")]
+[DebuggerTypeProxy(typeof(LrStateProxy))]
 public readonly struct LrState
 {
     private readonly LrStateMachine _lr;
+
+    internal Grammar Grammar => _lr.Grammar;
 
     /// <summary>
     /// The index of the <see cref="LrState"/>, starting from 0.

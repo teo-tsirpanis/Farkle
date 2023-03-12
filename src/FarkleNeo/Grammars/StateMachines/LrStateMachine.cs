@@ -11,6 +11,7 @@ namespace Farkle.Grammars.StateMachines;
 /// It is used by parsers to parse tokens produced by tokenizers.
 /// </summary>
 [DebuggerDisplay("Count = {Count}; HasConflicts = {HasConflicts}}")]
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<LrState, LrStateMachine>))]
 public abstract class LrStateMachine : IReadOnlyList<LrState>
 {
     internal LrStateMachine(int count, bool hasConflicts)

@@ -12,6 +12,7 @@ namespace Farkle.Grammars;
 /// <seealso cref="Grammar.Terminals"/>
 /// <seealso cref="Grammar.TokenSymbols"/>
 [DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<TokenSymbol, TokenSymbolCollection>))]
 public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
 {
     private readonly Grammar _grammar;

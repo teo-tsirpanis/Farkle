@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
-/// Represents a deterministic finite automaton (DFA) stored in a <see cref="Grammar"/>.
+/// Represents a deterministic finite automaton (DFA) stored in a <see cref="Grammars.Grammar"/>.
 /// It is used by tokenizers to break the input stream into a series of tokens.
 /// </summary>
 /// <remarks>
@@ -26,6 +26,8 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
         Count = stateCount;
         HasConflicts = hasConflicts;
     }
+
+    internal abstract Grammar Grammar { get; }
 
     internal abstract (int Offset, int Count) GetAcceptSymbolBounds(int state);
 

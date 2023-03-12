@@ -67,7 +67,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
     internal override TokenSymbolHandle GetSingleAcceptSymbol(int state)
     {
         ValidateStateIndex(state);
-        return new(_grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
+        return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
     }
 
     internal override bool StateHasConflicts(int state) => false;

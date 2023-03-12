@@ -3,7 +3,6 @@
 
 using Farkle.Buffers;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
@@ -12,8 +11,6 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {
-    protected Grammar Grammar { get; }
-
     protected int ActionCount { get; }
 
     protected int GotoCount { get; }
@@ -55,6 +52,8 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     protected static uint ReadUIntVariableSizeFromArray<T>(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
         grammarFile.ReadUIntVariableSize<T>(@base + index * sizeof(T));
+
+    internal sealed override Grammar Grammar { get; }
 
     internal sealed override (int Offset, int Count) GetActionBounds(int state)
     {

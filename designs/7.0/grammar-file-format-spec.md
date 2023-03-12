@@ -435,7 +435,6 @@ Readers SHOULD expose an API that indicates whether a grammar file contains data
 * A stream whose __Identifier__ field is not known to the reader.
 * A state machine whose __Kind__ is not known to the reader.
 * A table whose kind is not specified in this specification.
-* A set bit in a table row's __Flags__ column that is not specified in this specification.
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

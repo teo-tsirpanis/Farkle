@@ -11,6 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="Grammar.Groups"/>
 [DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<Group, GroupCollection>))]
 public readonly struct GroupCollection : IReadOnlyCollection<Group>
 {
     private readonly Grammar _grammar;

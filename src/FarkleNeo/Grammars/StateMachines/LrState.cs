@@ -54,6 +54,7 @@ public readonly struct LrState
     /// Contains the terminals an <see cref="LrState"/> accepts,
     /// along with their respective <see cref="LrTerminalAction"/>.
     /// </summary>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbolHandle, LrTerminalAction>, ActionCollection>))]
     public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbolHandle, LrTerminalAction>>
     {
         private readonly LrStateMachine _lr;
@@ -129,6 +130,7 @@ public readonly struct LrState
     /// <summary>
     /// Contains the possible actions when the end of input is reached at an <see cref="LrState"/>.
     /// </summary>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<LrEndOfFileAction, EndOfFileActionCollection>))]
     public readonly struct EndOfFileActionCollection : IReadOnlyCollection<LrEndOfFileAction>
     {
         private readonly LrStateMachine _lr;
@@ -203,6 +205,7 @@ public readonly struct LrState
     /// <summary>
     /// Contains pairs of <see cref="NonterminalHandle"/>s and their respective GOTO destination states.
     /// </summary>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<NonterminalHandle, int>, GotoCollection>))]
     public readonly struct GotoCollection : IReadOnlyCollection<KeyValuePair<NonterminalHandle, int>>
     {
         private readonly LrStateMachine _lr;

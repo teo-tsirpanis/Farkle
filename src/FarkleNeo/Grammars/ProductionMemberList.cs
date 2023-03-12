@@ -11,6 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="Production.Members"/>
 [DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<EntityHandle, ProductionMemberList>))]
 public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
 {
     private readonly Grammar _grammar;

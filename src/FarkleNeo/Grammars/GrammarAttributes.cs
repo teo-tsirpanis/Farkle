@@ -16,5 +16,10 @@ public enum GrammarAttributes : ushort
     /// <summary>
     /// The grammar cannot be used for parsing, even if the necessary state machines are present.
     /// </summary>
-    Unparsable = 1
+    Unparsable = 1 << 0,
+    /// <summary>
+    /// The grammar cannot be used for parsing if it contains data unknown to its reader.
+    /// </summary>
+    /// <seealso cref="Grammar.HasUnknownData"/>
+    Critical = 1 << 1
 }

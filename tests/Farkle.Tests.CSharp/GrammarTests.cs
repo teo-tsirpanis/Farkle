@@ -68,6 +68,10 @@ internal class GrammarTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(grammar.GrammarInfo.Name.IsEmpty, Is.False);
+            Assert.That(() => grammar.GrammarInfo.Attributes, Throws.Nothing);
+            Assert.That(grammar.GrammarInfo.StartSymbol.HasValue);
+
             foreach (var tokenSymbol in grammar.TokenSymbols)
             {
                 Assert.That(tokenSymbol.Name.IsEmpty, Is.False);
@@ -87,20 +91,15 @@ internal class GrammarTests
                 Assert.That(() => group.Attributes, Throws.Nothing);
                 Assert.That(group.Start.HasValue);
                 Assert.That(group.End.HasValue);
-                foreach (var nesting in group.Nesting)
-                {
-                    Assert.That(nesting.Name.IsEmpty, Is.False);
-                }
+                Assert.That(group.Nesting.Count(), Is.EqualTo(group.Nesting.Count));
             }
 
             foreach (var production in grammar.Productions)
             {
                 Assert.That(production.Head.HasValue);
-                foreach (var member in production.Members)
-                {
-                    Assert.That(member.HasValue);
-                }
+                Assert.That(production.Members.Count(), Is.EqualTo(production.Members.Count));
             }
+
             if (grammar.DfaOnChar is { } dfa)
             {
                 int count = 0;
@@ -108,21 +107,22 @@ internal class GrammarTests
                 {
                     Assert.That(state.StateIndex, Is.EqualTo(count));
                     Assert.That(() => state.DefaultTransition, Throws.Nothing);
-                    Assert.That(() => { foreach (var edge in state.Edges) { } }, Throws.Nothing);
-                    Assert.That(() => { foreach (var acceptSymbol in state.AcceptSymbols) { } }, Throws.Nothing);
+                    Assert.That(state.Edges.Count(), Is.EqualTo(state.Edges.Count));
+                    Assert.That(state.AcceptSymbols.Count(), Is.EqualTo(state.AcceptSymbols.Count));
                     count++;
                 }
                 Assert.That(count, Is.EqualTo(dfa.Count));
             }
+
             if (grammar.LrStateMachine is { } lr)
             {
                 int count = 0;
                 foreach (var state in lr)
                 {
                     Assert.That(state.StateIndex, Is.EqualTo(count));
-                    Assert.That(() => { foreach (var action in state.Actions) { } }, Throws.Nothing);
-                    Assert.That(() => { foreach (var action in state.EndOfFileActions) { } }, Throws.Nothing);
-                    Assert.That(() => { foreach (var @goto in state.Gotos) { } }, Throws.Nothing);
+                    Assert.That(state.Actions.Count(), Is.EqualTo(state.Actions.Count));
+                    Assert.That(state.EndOfFileActions.Count(), Is.EqualTo(state.EndOfFileActions.Count));
+                    Assert.That(state.Gotos.Count(), Is.EqualTo(state.Gotos.Count));
                     count++;
                 }
                 Assert.That(count, Is.EqualTo(lr.Count));

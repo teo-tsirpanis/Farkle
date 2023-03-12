@@ -146,7 +146,8 @@ The following bit values are defined for the __Flags__ column:
 
 |Bit|Name|Description|
 |---|----|-----------|
-|0|`Unparsable`|The grammar has flaws that make it unsuitable for parsing.|
+|0|`Unparsable`|The grammar must not be used for parsing.|
+|1|`Critical`|The grammar must not be used for parsing if it contains data unknown to its reader, as defined later in this specification.|
 
 > Note that the absence of the `Unparsable` flag does not guarantee that the grammar can be parsed. Another way for a grammar to be unparsable is if it lacks a necessary state machine. But if we have say a grammar with a production that has no members, we can emit an unusable state machine for diagnostics purposes, but set the flag.
 

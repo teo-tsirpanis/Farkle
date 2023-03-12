@@ -55,6 +55,30 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     internal sealed override Grammar Grammar { get; }
 
+    public sealed override int GetGoto(int state, NonterminalHandle nonterminal)
+    {
+        ValidateStateIndex(state);
+
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
+
+        int gotoOffset = ReadFirstGoto(grammarFile, state);
+        int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
+        int gotoCount = nextGotoOffset - gotoOffset;
+
+        if (gotoCount != 0)
+        {
+            int nextGoto = StateMachineUtilities.BufferBinarySearch(grammarFile, GotoNonterminalBase + gotoOffset * sizeof(TNonterminal), gotoCount, StateMachineUtilities.CastUInt<TNonterminal>(nonterminal.TableIndex));
+
+            if (nextGoto >= 0)
+            {
+                return ReadGoto(grammarFile, gotoOffset + nextGoto);
+            }
+        }
+
+        ThrowHelpers.ThrowKeyNotFoundException("Could not find GOTO transition");
+        return 0;
+    }
+
     internal sealed override (int Offset, int Count) GetActionBounds(int state)
     {
         ValidateStateIndex(state);

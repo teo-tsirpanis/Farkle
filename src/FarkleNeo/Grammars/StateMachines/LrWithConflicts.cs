@@ -68,12 +68,6 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         return default;
     }
 
-    public override int GetGoto(int state, NonterminalHandle nonterminal)
-    {
-        ThrowHasConflicts();
-        return default;
-    }
-
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {
         if ((uint)index >= (uint)_eofActionCount)

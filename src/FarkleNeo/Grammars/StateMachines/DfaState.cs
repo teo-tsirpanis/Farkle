@@ -140,7 +140,7 @@ public readonly struct DfaState<TChar>
         {
             private readonly EdgeCollection _collection;
 
-            private int _currentIndex;
+            private int _currentIndex = -1;
 
             internal Enumerator(EdgeCollection collection)
             {
@@ -215,7 +215,7 @@ public readonly struct DfaState<TChar>
         {
             private readonly AcceptSymbolCollection _collection;
 
-            private int _currentIndex;
+            private int _currentIndex = -1;
 
             internal Enumerator(AcceptSymbolCollection collection)
             {

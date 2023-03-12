@@ -86,10 +86,6 @@ public readonly struct DfaState<TChar>
     /// <summary>
     /// Whether the <see cref="DfaState{TChar}"/> has more than one possible accept symbol.
     /// </summary>
-    /// <remarks>
-    /// Accessing the <see cref="AcceptSymbol"/> property while this property
-    /// has a value of <see langword="true"/> will cause an exception.
-    /// </remarks>
     /// <seealso cref="Dfa{TChar}.HasConflicts"/>
     public bool HasConflicts => _dfa.StateHasConflicts(StateIndex);
 

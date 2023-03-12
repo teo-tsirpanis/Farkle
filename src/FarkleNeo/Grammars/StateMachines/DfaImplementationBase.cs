@@ -9,8 +9,6 @@ namespace Farkle.Grammars.StateMachines;
 
 internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    protected readonly Grammar _grammar;
-
     private readonly int _edgeCount;
 
     public required int FirstEdgeBase { get; init; }
@@ -28,7 +26,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
         Debug.Assert(StateMachineUtilities.GetDfaStateTargetIndexSize(stateCount) == sizeof(TState));
         Debug.Assert(StateMachineUtilities.GetIndexSize(edgeCount) == sizeof(TEdge));
 
-        _grammar = grammar;
+        Grammar = grammar;
         _edgeCount = edgeCount;
     }
 
@@ -42,7 +40,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
     {
         ValidateStateIndex(state);
 
-        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
@@ -73,6 +71,8 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
         return -1;
     }
 
+    internal sealed override Grammar Grammar { get; }
+
     internal sealed override int GetDefaultTransition(int state)
     {
         ValidateStateIndex(state);
@@ -82,14 +82,14 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
             return -1;
         }
 
-        return ReadState(_grammar.GrammarFile, DefaultTransitionBase + state * sizeof(TState));
+        return ReadState(Grammar.GrammarFile, DefaultTransitionBase + state * sizeof(TState));
     }
 
     internal sealed override (int Offset, int Count) GetEdgeBounds(int state)
     {
         ValidateStateIndex(state);
 
-        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int nextEdgeOffset = state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount;
@@ -104,7 +104,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
 
-        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
         TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
         TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + index * sizeof(char));

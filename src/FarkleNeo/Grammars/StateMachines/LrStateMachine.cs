@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace Farkle.Grammars.StateMachines;
 
 /// <summary>
-/// Represents an LR(1) state machine stored in a <see cref="Grammar"/>.
+/// Represents an LR(1) state machine stored in a <see cref="Grammars.Grammar"/>.
 /// It is used by parsers to parse tokens produced by tokenizers.
 /// </summary>
 [DebuggerDisplay("Count = {Count}; HasConflicts = {HasConflicts}}")]
@@ -18,6 +18,8 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
         Count = count;
         HasConflicts = hasConflicts;
     }
+
+    internal abstract Grammar Grammar { get; }
 
     internal abstract (int Offset, int Count) GetActionBounds(int state);
 

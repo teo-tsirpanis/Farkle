@@ -67,7 +67,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
     {
         ValidateStateIndex(state);
 
-        ReadOnlySpan<byte> grammarFile = _grammar.GrammarFile;
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
         int firstAccept = ReadFirstAccept(grammarFile, state);
         int nextFirstAccept = state != Count - 1 ? ReadFirstAccept(grammarFile, state + 1) : _acceptCount;
         return (firstAccept,  nextFirstAccept - firstAccept);
@@ -79,6 +79,6 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
-        return new(_grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
+        return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
     }
 }

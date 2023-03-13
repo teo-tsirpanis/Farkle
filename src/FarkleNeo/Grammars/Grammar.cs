@@ -129,7 +129,9 @@ public abstract class Grammar
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
         }
-        return new ManagedMemoryGrammar(grammarData);
+        ManagedMemoryGrammar grammar = new ManagedMemoryGrammar(grammarData);
+        grammar.ValidateContent();
+        return grammar;
     }
 
     /// <summary>
@@ -145,7 +147,9 @@ public abstract class Grammar
     /// </remarks>
     public static Grammar Create(ReadOnlySpan<byte> grammarData)
     {
-        return new ManagedMemoryGrammar(grammarData);
+        ManagedMemoryGrammar grammar = new ManagedMemoryGrammar(grammarData);
+        grammar.ValidateContent();
+        return grammar;
     }
 
     /// <summary>
@@ -303,6 +307,13 @@ public abstract class Grammar
     /// <param name="destination">The span to copy the data to.</param>
     /// <returns>Whether <paramref name="destination"/> was big enough to store the grammar's data.</returns>
     public bool TryCopyDataTo(Span<byte> destination) => GrammarFile.TryCopyTo(destination);
+
+    internal void ValidateContent()
+    {
+        ReadOnlySpan<byte> grammarFile = GrammarFile;
+
+        GrammarTables.ValidateContent(grammarFile, in StringHeap, in BlobHeap);
+    }
 
     /// <summary>
     /// Writes the grammar's data to an <see cref="IBufferWriter{Byte}"/>.

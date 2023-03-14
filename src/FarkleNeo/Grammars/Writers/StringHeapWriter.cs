@@ -14,9 +14,6 @@ internal struct StringHeapWriter
 {
     private List<string>? _strings;
     private StringDictionary<StringHandle>? _stringHandles;
-#if DEBUG
-    private HashSet<StringHandle>? _validHandles;
-#endif
 
     public int LengthSoFar { get; private set; }
 
@@ -70,9 +67,6 @@ internal struct StringHeapWriter
 
         handle = new((uint)LengthSoFar);
         handle = _stringHandles.GetOrAdd(str, handle, out bool exists);
-#if DEBUG
-        (_validHandles ??= new()).Add(handle);
-#endif
         Debug.Assert(!exists);
 
         LengthSoFar += stringLength;
@@ -82,16 +76,10 @@ internal struct StringHeapWriter
 
     public void ValidateHandle(StringHandle handle)
     {
-        if (handle.IsEmpty || handle.Value >= (uint)LengthSoFar)
+        if (handle.Value < (uint)LengthSoFar)
         {
             return;
         }
-#if DEBUG
-        if (_validHandles?.Contains(handle) ?? false)
-        {
-            return;
-        }
-#endif
         ThrowHelpers.ThrowArgumentException(nameof(handle), "String handle is invalid.");
     }
 

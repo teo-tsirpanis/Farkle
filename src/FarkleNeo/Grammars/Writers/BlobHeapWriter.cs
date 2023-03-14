@@ -15,9 +15,6 @@ internal struct BlobHeapWriter
 {
     private List<ImmutableArray<byte>>? _blobs;
     private BlobDictionary<BlobHandle>? _blobHandles;
-#if DEBUG
-    private HashSet<BlobHandle>? _validHandles;
-#endif
 
     public int LengthSoFar { get; private set; }
 
@@ -76,9 +73,6 @@ internal struct BlobHeapWriter
 
         BlobHandle handle = new((uint)LengthSoFar);
         handle = _blobHandles.GetOrAdd(blob, handle, out bool exists, out ImmutableArray<byte> immutableBlob);
-#if DEBUG
-        (_validHandles ??= new()).Add(handle);
-#endif
 
         if (!exists)
         {
@@ -91,16 +85,10 @@ internal struct BlobHeapWriter
 
     public void ValidateHandle(BlobHandle handle)
     {
-        if (handle.IsEmpty || handle.Value >= (uint)LengthSoFar)
+        if (handle.Value < (uint)LengthSoFar)
         {
             return;
         }
-#if DEBUG
-        if (_validHandles?.Contains(handle) ?? false)
-        {
-            return;
-        }
-#endif
         ThrowHelpers.ThrowArgumentException(nameof(handle), "Invalid blob handle.");
     }
 

@@ -87,7 +87,7 @@ let benchmarkArguments = "-f * --memory true -e github -j short"
 
 let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 
-let benchmarkReportsDirectory = "./performance/"
+let benchmarkReportsDirectory = "./performance/reports"
 
 let packOutputDirectory = "./bin/"
 

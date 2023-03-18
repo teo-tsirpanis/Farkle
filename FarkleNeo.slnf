@@ -3,6 +3,7 @@
     "path": "Farkle.sln",
     "projects": [
       "eng\\Farkle.Build.fsproj",
+      "performance\\Farkle.Benchmarks.CSharp\\Farkle.Benchmarks.CSharp.csproj",
       "src\\FarkleNeo\\FarkleNeo.csproj",
       "tests\\Farkle.Tests.CSharp\\Farkle.Tests.CSharp.csproj"
     ]

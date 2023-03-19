@@ -4,10 +4,6 @@ on:
   push:
     tags:
       - '*'
-  pull_request:
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.txt'
   workflow_dispatch:
 
 permissions: read-all

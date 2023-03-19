@@ -5,12 +5,14 @@ on:
     branches:
       - mainstream
     paths-ignore:
+      - 'performance/Farkle.Benchmarks.CSharp/**'
       - 'src/FarkleNeo/**'
       - 'tests/Farkle.Tests.CSharp/**'
   pull_request:
     paths-ignore:
       - '**/*.md'
       - '**/*.txt'
+      - 'performance/Farkle.Benchmarks.CSharp/**'
       - 'src/FarkleNeo/**'
       - 'tests/Farkle.Tests.CSharp/**'
   schedule:

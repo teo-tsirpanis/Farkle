@@ -80,14 +80,12 @@ let localPackagesFolder = "./tests/packages/"
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
 // The project to be benchmarked
-let benchmarkProject = "./tests/Farkle.Benchmarks/Farkle.Benchmarks.fsproj"
+let benchmarkProject = "./performance/Farkle.Benchmarks.CSharp/Farkle.Benchmarks.CSharp.csproj"
+
+let benchmarkArtifactsDirectory = "./performance/artifacts"
 
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = "-f * --memory true -e github -j short"
-
-let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
-
-let benchmarkReportsDirectory = "./performance/reports"
+let benchmarkArguments = $"-f * --memory true -e github json --artifacts {benchmarkArtifactsDirectory}"
 
 let packOutputDirectory = "./bin/"
 
@@ -261,18 +259,6 @@ let runMSBuildTestsNetCore _ =
 
 let benchmark _ =
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
-    Seq.iter pushArtifact benchmarkReports
-
-let addBenchmarkReport _ =
-    let reportFileName x = benchmarkReportsDirectory @@ (sprintf "%s.%s.md" x nugetVersion)
-    Directory.ensure benchmarkReportsDirectory
-    Trace.logItems "Benchmark reports: " benchmarkReports
-    benchmarkReports
-    |> Seq.iter (fun x ->
-        let newFn = Regex.Replace(Path.GetFileName x, @"Farkle\.Benchmarks\.(\w+)-report-github\.md", "$1") |> reportFileName
-        Shell.copyFile newFn x
-        File.applyReplace (String.replace ";" ",") newFn
-    )
 
 let nugetPack _ =
     sourceProjects
@@ -374,11 +360,6 @@ let remoteToPush = lazy (
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
-let publishBenchmarkReport _ =
-    !! "performance/**" |> Seq.iter (Git.Staging.stageFile "" >> ignore)
-    Git.Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
-    Git.Branches.pushBranch "" remoteToPush.Value (Git.Information.getBranchName "")
-
 let githubRelease _ =
     Git.Branches.tag "" nugetVersion
     Git.Branches.pushTag "" remoteToPush.Value nugetVersion
@@ -432,8 +413,6 @@ let initTargets() =
 
     Target.description "Runs all benchmarks"
     Target.create "Benchmark" benchmark
-    Target.description "Adds the benchmark results to the appropriate folder"
-    Target.create "AddBenchmarkReport" addBenchmarkReport
     Target.description "Builds the NuGet packages"
     Target.create "NuGetPack" nugetPack
     Target.description "Publishes the NuGet packages"
@@ -446,8 +425,6 @@ let initTargets() =
     Target.create "GenerateDocs" generateDocsRelease
     Target.description "Generates the website for the project - for local use"
     Target.create "GenerateDocsDebug" generateDocsDebug
-    Target.description "Publishes the benchmark report."
-    Target.create "PublishBenchmarkReport" publishBenchmarkReport
     Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
     Target.create "GitHubRelease" githubRelease
 
@@ -482,14 +459,6 @@ let initTargets() =
     "PrepareDocsGeneration"
         ==>! "KeepGeneratingDocs"
 
-    "Benchmark"
-        ==> "AddBenchmarkReport"
-        ==>! "PublishBenchmarkReport"
-
-    // I want a clean repo when the packages are going to be built.
-    "NuGetPublish"
-        ?=>! "AddBenchmarkReport"
-
     "Clean"
         ==> "NuGetPack"
         ==> "NuGetPublish"
@@ -504,7 +473,7 @@ let initTargets() =
 let main argv =
     argv
     |> Array.toList
-    |> Context.FakeExecutionContext.Create false "build.fsx"
+    |> Context.FakeExecutionContext.Create false "build.fs"
     |> Context.RuntimeContext.Fake
     |> Context.setExecutionContext
     initTargets()

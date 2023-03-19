@@ -82,10 +82,10 @@ let projects = !! "**/*.??proj" -- "**/*.shproj"
 // The project to be benchmarked
 let benchmarkProject = "./performance/Farkle.Benchmarks.CSharp/Farkle.Benchmarks.CSharp.csproj"
 
-let benchmarkArtifactsDirectory = "./performance/artifacts"
-
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = $"-f * --memory true -e github json --artifacts {benchmarkArtifactsDirectory}"
+let benchmarkArguments = $"-f * --memory true -e github json"
+
+let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 
 let packOutputDirectory = "./bin/"
 
@@ -259,6 +259,18 @@ let runMSBuildTestsNetCore _ =
 
 let benchmark _ =
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
+    match Environment.environVarOrNone "GITHUB_STEP_SUMMARY" with
+    | Some stepSummary ->
+        let regex = Regex("Farkle\.Benchmarks\.(\w+)-report-github\.md")
+        use writer = new StreamWriter(File.OpenWrite stepSummary)
+        writer.WriteLine("# Benchmark report")
+        benchmarkReports
+        |> Seq.iter(fun path ->
+            let benchmarkName = regex.Match(path).Groups[1].Value
+            writer.WriteLine $"## {benchmarkName}"
+            File.readAsString path
+            |> writer.WriteLine)
+    | None -> ()
 
 let nugetPack _ =
     sourceProjects
@@ -425,7 +437,7 @@ let initTargets() =
     Target.create "GenerateDocs" generateDocsRelease
     Target.description "Generates the website for the project - for local use"
     Target.create "GenerateDocsDebug" generateDocsDebug
-    Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
+    Target.description "Makes a tag on the current commit, and a GitHub release afterwards"
     Target.create "GitHubRelease" githubRelease
 
     Target.description "Publishes the documentation and makes a GitHub release"

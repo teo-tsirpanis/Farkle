@@ -24,5 +24,3 @@ jobs:
         run: dotnet tool restore
       - name: Run benchmarks
         run: dotnet run --project eng/Farkle.Build.fsproj -- -t Benchmark
-      - name: Print benchmark results
-        run: find ./performance/artifacts -name '*.md' | xargs cat >> $GITHUB_STEP_SUMMARY

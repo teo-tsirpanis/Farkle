@@ -10,16 +10,16 @@ using Farkle.Grammars;
 using System.Collections.Immutable;
 using Farkle6 = farkle6::Farkle;
 
-namespace Farkle.Benchmarks.CSharp;
+namespace Farkle.Benchmarks;
 
 [MemoryDiagnoser, GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 public class GrammarReaderBenchmarks
 {
     [Params("JSON", "COBOL85")] public string Grammars { get; set; }
 
-    public byte[] Egt, EgtNeo;
+    private byte[] Egt, EgtNeo;
 
-    public ImmutableArray<byte> Farkle7Grammar;
+    private ImmutableArray<byte> Farkle7Grammar;
 
     [GlobalSetup]
     public void GlobalSetup()

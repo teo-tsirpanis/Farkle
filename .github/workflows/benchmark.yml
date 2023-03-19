@@ -1,0 +1,28 @@
+name: Benchmark
+
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  benchmark:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET SDK from global.json
+        uses: actions/setup-dotnet@v3
+      - name: Restore .NET local tools
+        run: dotnet tool restore
+      - name: Run benchmarks
+        run: dotnet run --project eng/Farkle.Build.fsproj -- -t Benchmark
+      - name: Print benchmark results
+        run: find ./performance/artifacts -name '*.md' | xargs cat >> $GITHUB_STEP_SUMMARY

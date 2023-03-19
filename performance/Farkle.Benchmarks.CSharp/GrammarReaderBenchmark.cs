@@ -13,7 +13,7 @@ using Farkle6 = farkle6::Farkle;
 namespace Farkle.Benchmarks;
 
 [MemoryDiagnoser, GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-public class GrammarReaderBenchmarks
+public class GrammarReaderBenchmark
 {
     [Params("JSON", "COBOL85")] public string Grammars { get; set; }
 

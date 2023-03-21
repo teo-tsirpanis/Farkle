@@ -37,4 +37,5 @@ jobs:
         run: |
           dotnet sonarscanner begin /k:"teo-tsirpanis_Farkle" /o:"teo-tsirpanis" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet run --project eng/Farkle.Build.fsproj -- -t Test
-          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          $coverageFile = Get-ChildItem -Path .\tests\Farkle.Tests.CSharp\TestResults\ -Include *coverage.opencover.xml -File -Recurse | Select-Object -Property FullName -First 1
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="$coverageFile"

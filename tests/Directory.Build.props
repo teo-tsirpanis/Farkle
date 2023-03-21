@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' != ''">
-    <VSTestCollect>XPlat Code Coverage</VSTestCollect>
+    <VSTestCollect>XPlat Code Coverage%3BFormat=opencover</VSTestCollect>
     <VSTestLogger>GitHubActions</VSTestLogger>
   </PropertyGroup>
   <ItemGroup>

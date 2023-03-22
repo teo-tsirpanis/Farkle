@@ -15,14 +15,26 @@ jobs:
   test:
     name: Test
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of SonarCloud analysis
+      - name: Set up JDK 11 # Needed for sonarscanner
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'microsoft'
+          java-version: '11'
       - name: Set up .NET SDK from global.json
         uses: actions/setup-dotnet@v3
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Run tests
-        run: dotnet run --project eng/Farkle.Build.fsproj -- -t Test
+        shell: pwsh
+        run: |
+          dotnet sonarscanner begin /k:"teo-tsirpanis_Farkle" /o:"teo-tsirpanis" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="./**/*.opencover.xml"
+          dotnet run --project eng/Farkle.Build.fsproj -- -t Test
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"

@@ -3,7 +3,6 @@
 
 using Farkle.Buffers;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 

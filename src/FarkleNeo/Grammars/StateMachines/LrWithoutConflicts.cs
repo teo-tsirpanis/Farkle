@@ -74,12 +74,15 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
         return LrAction.Error;
     }
 
+    private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    {
+        return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, state));
+    }
+
     public override LrEndOfFileAction GetEndOfFileAction(int state)
     {
         ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-        return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, state));
+        return GetEndOfFileActionUnsafe(Grammar.GrammarFile, state);
     }
 
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index) => GetEndOfFileAction(index);
@@ -88,11 +91,21 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
     {
         ValidateStateIndex(state);
 
-        if (!GetEndOfFileActionAt(state).IsError)
+        if (!GetEndOfFileActionUnsafe(Grammar.GrammarFile, state).IsError)
         {
             return (state, 1);
         }
 
         return (0, 0);
+    }
+
+    internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
+    {
+        base.ValidateContent(grammarFile, grammarTables);
+
+        for (int i = 0; i < Count; i++)
+        {
+            ValidateAction(GetEndOfFileActionUnsafe(grammarFile, i), in grammarTables);
+        }
     }
 }

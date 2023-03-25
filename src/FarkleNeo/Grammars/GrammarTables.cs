@@ -565,11 +565,11 @@ internal readonly struct GrammarTables
         }
     }
 
-    private void ValidateHandle(TokenSymbolHandle handle) => ValidateHandle(handle.TableIndex, TokenSymbolRowCount);
+    internal void ValidateHandle(TokenSymbolHandle handle) => ValidateHandle(handle.TableIndex, TokenSymbolRowCount);
 
-    private void ValidateHandle(NonterminalHandle handle) => ValidateHandle(handle.TableIndex, NonterminalRowCount);
+    internal void ValidateHandle(NonterminalHandle handle) => ValidateHandle(handle.TableIndex, NonterminalRowCount);
 
-    private void ValidateHandle(ProductionHandle handle) => ValidateHandle(handle.TableIndex, ProductionRowCount);
+    internal void ValidateHandle(ProductionHandle handle) => ValidateHandle(handle.TableIndex, ProductionRowCount);
 
     private static void ValidateHandle(uint tableIndex, int rowCount)
     {

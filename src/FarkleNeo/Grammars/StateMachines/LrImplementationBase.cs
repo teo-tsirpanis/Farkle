@@ -3,6 +3,7 @@
 
 using Farkle.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
@@ -79,16 +80,38 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         return 0;
     }
 
+    private (int Offset, int Count) GetActionBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    {
+        int actionOffset = ReadFirstAction(grammarFile, state);
+        int nextActionOffset = state != Count - 1 ? ReadFirstAction(grammarFile, state + 1) : ActionCount;
+        return (actionOffset, nextActionOffset - actionOffset);
+    }
+
+    private KeyValuePair<TokenSymbolHandle, LrAction> GetActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
+    {
+        TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray<TTokenSymbol>(grammarFile, ActionTerminalBase, index));
+        LrAction action = ReadAction(grammarFile, index);
+        return new(terminal, action);
+    }
+
+    private (int Offset, int Count) GetGotoBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    {
+        int gotoOffset = ReadFirstGoto(grammarFile, state);
+        int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
+        return (gotoOffset, nextGotoOffset - gotoOffset);
+    }
+
+    private KeyValuePair<NonterminalHandle, int> GetGotoAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
+    {
+        NonterminalHandle nonterminal = new(ReadUIntVariableSizeFromArray<TNonterminal>(grammarFile, GotoNonterminalBase, index));
+        int state = ReadGoto(grammarFile, index);
+        return new(nonterminal, state);
+    }
+
     internal sealed override (int Offset, int Count) GetActionBounds(int state)
     {
         ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        int actionOffset = ReadFirstAction(grammarFile, state);
-        int nextActionOffset = state != Count - 1 ? ReadFirstAction(grammarFile, state + 1) : ActionCount;
-
-        return (actionOffset, nextActionOffset - actionOffset);
+        return GetActionBoundsUnsafe(Grammar.GrammarFile, state);
     }
 
     internal sealed override KeyValuePair<TokenSymbolHandle, LrAction> GetActionAt(int index)
@@ -97,25 +120,13 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray<TTokenSymbol>(grammarFile, ActionTerminalBase, index));
-        LrAction action = ReadAction(grammarFile, index);
-
-        return new(terminal, action);
+        return GetActionAtUnsafe(Grammar.GrammarFile, index);
     }
 
     internal sealed override (int Offset, int Count) GetGotoBounds(int state)
     {
         ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        int gotoOffset = ReadFirstGoto(grammarFile, state);
-        int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
-
-        return (gotoOffset, nextGotoOffset - gotoOffset);
+        return GetGotoBoundsUnsafe(Grammar.GrammarFile, state);
     }
 
     internal sealed override KeyValuePair<NonterminalHandle, int> GetGotoAt(int index)
@@ -124,13 +135,107 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
+        return GetGotoAtUnsafe(Grammar.GrammarFile, index);
+    }
 
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
+    internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
+    {
+        {
+            int previousFirstAction = ReadFirstAction(grammarFile, 0);
+            int previousFirstGoto = ReadFirstGoto(grammarFile, 0);
+            Assert(previousFirstAction == 0);
+            Assert(previousFirstGoto == 0);
+            for (int i = 1; i < Count; i++)
+            {
+                int firstAction = ReadFirstAction(grammarFile, i);
+                Assert(firstAction >= previousFirstAction, "LR state first action is out of sequence.");
+                previousFirstAction = firstAction;
+                // We don't have to do an unsigned check; ActionCount has been read from an unsigned integer.
+                Assert(firstAction <= ActionCount);
 
-        NonterminalHandle nonterminal = new(ReadUIntVariableSizeFromArray<TNonterminal>(grammarFile, GotoNonterminalBase, index));
-        int state = ReadGoto(grammarFile, index);
+                int firstGoto = ReadFirstGoto(grammarFile, i);
+                Assert(firstGoto >= previousFirstGoto, "LR state first goto is out of sequence.");
+                previousFirstGoto = firstGoto;
+                // We don't have to do an unsigned check; GotoCount has been read from an unsigned integer.
+                Assert(firstGoto <= GotoCount);
+            }
+        }
 
-        return new(nonterminal, state);
+        // State machines with conflicts support duplicate actions.
+        // With this we determine once if we want them or not.
+        int actionComparisonKey = HasConflicts ? 0 : -1;
+        for (int i = 0; i < Count; i++)
+        {
+            (int actionOffset, int actionCount) = GetActionBoundsUnsafe(grammarFile, i);
+            if (actionCount > 0)
+            {
+                uint previousActionTerminal = GetActionAtUnsafe(grammarFile, actionOffset).Key.TableIndex;
+                for (int j = 0; j < actionCount; j++)
+                {
+                    KeyValuePair<TokenSymbolHandle, LrAction> action = GetActionAtUnsafe(grammarFile, actionOffset + j);
+                    grammarTables.ValidateHandle(action.Key);
+                    if (j != 0)
+                    {
+                        Assert(previousActionTerminal.CompareTo(action.Key.TableIndex) <= actionComparisonKey, "LR state terminal is out of sequence or unexpected LR conflict.");
+                    }
+                    previousActionTerminal = action.Key.TableIndex;
+                    ValidateAction(action.Value, in grammarTables);
+                }
+            }
+
+            (int gotoOffset, int gotoCount) = GetGotoBoundsUnsafe(grammarFile, i);
+            if (GotoCount > 0)
+            {
+                uint previousGotoNonterminal = GetGotoAtUnsafe(grammarFile, gotoOffset).Key.TableIndex;
+                for (int j = 0; j < gotoCount; j++)
+                {
+                    KeyValuePair<NonterminalHandle, int> @goto = GetGotoAtUnsafe(grammarFile, gotoOffset + j);
+                    grammarTables.ValidateHandle(@goto.Key);
+                    if (j != 0)
+                    {
+                        switch (previousGotoNonterminal.CompareTo(@goto.Key.TableIndex))
+                        {
+                            case 0:
+                                ThrowHelpers.ThrowInvalidDataException("GOTO conflicts are not allowed.");
+                                break;
+                            case > 0:
+                                ThrowHelpers.ThrowInvalidDataException("GOTO nonterminal is out of sequence.");
+                                break;
+                        }
+                    }
+                    previousGotoNonterminal = @goto.Key.TableIndex;
+                    ValidateStateIndex(@goto.Value);
+                }
+            }
+        }
+
+        static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        {
+            if (!condition)
+            {
+                ThrowHelpers.ThrowInvalidDataException(message);
+            }
+        }
+    }
+
+    private void ValidateAction(LrAction action, in GrammarTables grammarTables)
+    {
+        if (action.IsReduce)
+        {
+            grammarTables.ValidateHandle(action.ReduceProduction);
+        }
+        else if (action.IsShift)
+        {
+            ValidateStateIndex(action.ShiftState);
+        }
+    }
+
+    protected static void ValidateAction(LrEndOfFileAction action, in GrammarTables grammarTables)
+    {
+        if (action.IsReduce)
+        {
+            grammarTables.ValidateHandle(action.ReduceProduction);
+        }
     }
 
     protected void ValidateStateIndex(int state, [CallerArgumentExpression(nameof(state))] string? paramName = null)

@@ -468,13 +468,10 @@ internal readonly struct GrammarTables
                 uint firstNesting = GetGroupFirstNesting(grammarFile, i);
                 Assert(firstNesting >= previousFirstNesting, "Group first nestings are out of sequence.");
                 previousFirstNesting = firstNesting;
-                if (i != (uint)GroupRowCount)
-                {
-                    ValidateHandle(firstNesting, GroupNestingRowCount);
-                }
+                // The First*** columns can be one number bigger than their respective row count.
+                // This can happen if the row and all its subsequent ones have no child items.
+                ValidateHandle(firstNesting, GroupNestingRowCount + 1);
             }
-            // The last first group nesting can be one greater than the group nesting row count.
-            ValidateHandle(previousFirstNesting, GroupNestingRowCount + 1);
             Assert(groupStarts.Count == 0, "All token symbols with the GroupStart flag set must start a group.");
         }
 
@@ -498,12 +495,8 @@ internal readonly struct GrammarTables
                 ProductionHandle firstProduction = GetNonterminalFirstProduction(grammarFile, i);
                 Assert(firstProduction.TableIndex >= previousFirstProduction.TableIndex, "Nonterminal first productions are out of sequence.");
                 previousFirstProduction = firstProduction;
-                if (i != (uint)NonterminalRowCount)
-                {
-                    ValidateHandle(firstProduction);
-                }
+                ValidateHandle(firstProduction.TableIndex, ProductionRowCount + 1);
             }
-            ValidateHandle(previousFirstProduction.TableIndex, ProductionRowCount + 1);
         }
 
         if (ProductionRowCount != 0)
@@ -523,10 +516,7 @@ internal readonly struct GrammarTables
                 uint firstMember = GetProductionFirstMember(grammarFile, i);
                 Assert(firstMember >= previousFirstMember, "Production first members are out of sequence.");
                 previousFirstMember = firstMember;
-                if (i != (uint)ProductionRowCount)
-                {
-                    ValidateHandle(firstMember, ProductionMemberRowCount);
-                }
+                ValidateHandle(firstMember, ProductionMemberRowCount + 1);
             }
             Assert(currentHead == NonterminalRowCount);
         }

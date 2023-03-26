@@ -152,6 +152,17 @@ public abstract class Grammar
         return grammar;
     }
 
+    // Internal for benchmarking purposes.
+    // It can be made public once a [RequiresUnsafe] attribute is added.
+    internal static Grammar CreateUnsafe(ImmutableArray<byte> grammarData)
+    {
+        if (grammarData.IsDefault)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
+        }
+        return new ManagedMemoryGrammar(grammarData);
+    }
+
     /// <summary>
     /// Converts a grammar file produced by GOLD Parser into a <see cref="Grammar"/>.
     /// </summary>

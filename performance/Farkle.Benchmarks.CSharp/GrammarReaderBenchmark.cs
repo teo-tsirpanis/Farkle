@@ -37,6 +37,10 @@ public class GrammarReaderBenchmark
     public object ReadFarkle7() =>
         Grammar.Create(Farkle7Grammar);
 
+    [BenchmarkCategory("Read"), Benchmark]
+    public object ReadFarkle7NoValidation() =>
+        Grammar.CreateUnsafe(Farkle7Grammar);
+
     [BenchmarkCategory("Convert"), Benchmark(Baseline = true)]
     public object ConvertFarkle6() =>
         Farkle6.Grammar.EGT.ReadFromStream(new MemoryStream(Egt, false));

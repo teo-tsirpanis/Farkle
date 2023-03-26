@@ -11,6 +11,7 @@
     <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Farkle.Benchmarks.CSharp" />
     <InternalsVisibleTo Include="Farkle.Tests.CSharp" />
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />

@@ -64,10 +64,27 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
     internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
 
+    private TokenSymbolHandle GetAcceptSymbolUnsafe(ReadOnlySpan<byte> grammarFile, int state) =>
+        new(grammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
+
     public override TokenSymbolHandle GetAcceptSymbol(int state)
     {
         ValidateStateIndex(state);
-        return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
+        return GetAcceptSymbolUnsafe(Grammar.GrammarFile, state);
+    }
+
+    internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
+    {
+        base.ValidateContent(grammarFile, grammarTables);
+
+        for (int state = 0; state < Count; state++)
+        {
+            TokenSymbolHandle acceptSymbol = GetAcceptSymbolUnsafe(grammarFile, state);
+            if (acceptSymbol.HasValue)
+            {
+                grammarTables.ValidateHandle(acceptSymbol);
+            }
+        }
     }
 
     internal override bool StateHasConflicts(int state) => false;

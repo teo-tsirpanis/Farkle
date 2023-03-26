@@ -422,6 +422,7 @@ internal struct GrammarTablesWriter
                 remainingProductions--;
                 UpdateRemainingProductions();
             }
+            Debug.Assert(remainingProductions == 0 && currentNonterminal == nonterminals.Count - 1);
 
             // We track the head nonterminal by counting how many productions we have written
             // and how many productions are left in the current nonterminal. When we have finished

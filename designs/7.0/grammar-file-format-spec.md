@@ -415,7 +415,6 @@ A GLR(1) state machine has at least one terminal and state where there is more t
     * The type `eof_action_index_t` is the smallest of one, two or four bytes that can hold the value of the `eofActionCount` field plus one.
 * The `eofAction` field's type is changed to `eof_action_t[eofActionCount]`.
 * For each state, duplicate values of the `actionTerminal` field are allowed.
-    * Nevertheless, the count of shift actions for a given state and terminal MUST NOT be greater than one. In other words, "shift-shift" conflicts are not allowed to be encoded.
 
 ## Extensibility
 

@@ -58,6 +58,8 @@ internal readonly struct GrammarTables
     public readonly byte SpecialNameRowSize;
     public readonly int SpecialNameNameBase, SpecialNameSymbolBase;
 
+    public readonly int TerminalCount;
+
     private readonly GrammarHeapSizes _heapSizes;
 
     public byte BlobHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
@@ -140,6 +142,25 @@ internal readonly struct GrammarTables
         uint indexValue = codedIndex >> 1;
         return new(indexValue, kind);
     }
+
+    private int CountTerminalsFast(ReadOnlySpan<byte> grammarFile)
+    {
+        // Because usually almost all token symbols are terminals, we can count them
+        // by looping from the end and stopping at the first terminal we find. This
+        // would cause problems if the terminals are at the beginning of the table
+        // but that's the job of content validation to detect.
+        for (int i = TokenSymbolRowCount; i > 0; i--)
+        {
+            TokenSymbolAttributes flags = GetTokenSymbolFlags(grammarFile, (uint)i);
+            if ((flags & TokenSymbolAttributes.Terminal) != 0)
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
 
     public GrammarTables(ReadOnlySpan<byte> grammarFile, GrammarFileSection section, out bool hasUnknownTables) : this()
     {
@@ -326,6 +347,8 @@ internal readonly struct GrammarTables
             StringHeapIndexSize + productionMemberCodedIndexSize);
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
+
+        TerminalCount = CountTerminalsFast(grammarFile);
     }
 
     public StringHandle GetGrammarName(ReadOnlySpan<byte> grammarFile) =>
@@ -393,6 +416,168 @@ internal readonly struct GrammarTables
 
     public EntityHandle GetSpecialNameSymbol(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadSymbolHandle(grammarFile, GetTableCellOffset(SpecialNameSymbolBase, SpecialNameRowCount, SpecialNameRowSize, index));
+
+    public void ValidateContent(ReadOnlySpan<byte> grammarFile, in StringHeap stringHeap, in BlobHeap blobHeap)
+    {
+        HashSet<uint>? groupStarts = null;
+
+        {
+            _ = stringHeap.GetStringSection(grammarFile, GetGrammarName(grammarFile));
+            ValidateHandle(GetGrammarStartSymbol(grammarFile));
+        }
+
+        bool rejectTerminals = false;
+        for (uint i = 1; i <= (uint)TokenSymbolRowCount; i++)
+        {
+            _ = stringHeap.GetStringSection(grammarFile, GetTokenSymbolName(grammarFile, i));
+            TokenSymbolAttributes flags = GetTokenSymbolFlags(grammarFile, i);
+            bool isTerminal = (flags & TokenSymbolAttributes.Terminal) != 0;
+            bool isGroupStart = (flags & TokenSymbolAttributes.GroupStart) != 0;
+            if (isTerminal)
+            {
+                Assert(!rejectTerminals, "Terminals must come before other token symbols.");
+                rejectTerminals = false;
+            }
+            if (isGroupStart)
+            {
+                Assert(!isTerminal, "Terminals must not have the GroupStart flag set.");
+                bool added = (groupStarts ??= new()).Add(i);
+                Debug.Assert(added);
+            }
+        }
+
+        if (GroupRowCount != 0)
+        {
+            Assert(groupStarts is not null);
+            uint previousFirstNesting = GetGroupFirstNesting(grammarFile, 1);
+            Assert(previousFirstNesting == 1);
+            for (uint i = 1; i <= (uint)GroupRowCount; i++)
+            {
+                _ = stringHeap.GetStringSection(grammarFile, GetGroupName(grammarFile, i));
+                TokenSymbolHandle container = GetGroupContainer(grammarFile, i);
+                ValidateHandle(container);
+                Assert((GetTokenSymbolFlags(grammarFile, container.TableIndex) & TokenSymbolAttributes.GroupStart) == 0, "Group container must not have the GroupStart flag set.");
+                TokenSymbolHandle start = GetGroupStart(grammarFile, i);
+                ValidateHandle(start);
+                Assert((GetTokenSymbolFlags(grammarFile, start.TableIndex) & TokenSymbolAttributes.GroupStart) != 0, "Group start must have the GroupStart flag set.");
+                Assert(groupStarts.Remove(start.TableIndex), "Group start must be a group start symbol and start only one group.");
+                TokenSymbolHandle end = GetGroupEnd(grammarFile, i);
+                ValidateHandle(end);
+                Assert((GetTokenSymbolFlags(grammarFile, end.TableIndex) & TokenSymbolAttributes.GroupStart) == 0, "Group end must not have the GroupStart flag set.");
+
+                uint firstNesting = GetGroupFirstNesting(grammarFile, i);
+                Assert(firstNesting >= previousFirstNesting, "Group first nestings are out of sequence.");
+                previousFirstNesting = firstNesting;
+                // The First*** columns can be one number bigger than their respective row count.
+                // This can happen if the row and all its subsequent ones have no child items.
+                ValidateHandle(firstNesting, GroupNestingRowCount + 1);
+            }
+            Assert(groupStarts.Count == 0, "All token symbols with the GroupStart flag set must start a group.");
+        }
+
+        if (GroupNestingRowCount != 0)
+        {
+            Assert(GroupRowCount != 0);
+        }
+        for (uint i = 1; i <= (uint)GroupNestingRowCount; i++)
+        {
+            ValidateHandle(GetGroupNestingGroup(grammarFile, i), GroupRowCount);
+        }
+
+        if (NonterminalRowCount != 0)
+        {
+            ProductionHandle previousFirstProduction = GetNonterminalFirstProduction(grammarFile, 1);
+            Assert(previousFirstProduction.TableIndex == 1);
+            for (uint i = 1; i <= (uint)NonterminalRowCount; i++)
+            {
+                _ = stringHeap.GetStringSection(grammarFile, GetNonterminalName(grammarFile, i));
+
+                ProductionHandle firstProduction = GetNonterminalFirstProduction(grammarFile, i);
+                Assert(firstProduction.TableIndex >= previousFirstProduction.TableIndex, "Nonterminal first productions are out of sequence.");
+                previousFirstProduction = firstProduction;
+                ValidateHandle(firstProduction.TableIndex, ProductionRowCount + 1);
+            }
+        }
+
+        if (ProductionRowCount != 0)
+        {
+            Assert(NonterminalRowCount != 0);
+            uint previousFirstMember = GetProductionFirstMember(grammarFile, 1);
+            uint currentHead = 1;
+            Assert(previousFirstMember == 1);
+            for (uint i = 1; i <= (uint)ProductionRowCount; i++)
+            {
+                while (currentHead < NonterminalRowCount && GetNonterminalFirstProduction(grammarFile, currentHead + 1).TableIndex <= i)
+                {
+                    currentHead++;
+                }
+                Assert(GetProductionHead(grammarFile, i).TableIndex == currentHead, "Invalid production head");
+
+                uint firstMember = GetProductionFirstMember(grammarFile, i);
+                Assert(firstMember >= previousFirstMember, "Production first members are out of sequence.");
+                previousFirstMember = firstMember;
+                ValidateHandle(firstMember, ProductionMemberRowCount + 1);
+            }
+            Assert(currentHead == NonterminalRowCount);
+        }
+
+        for (uint i = 1; i <= (uint)ProductionMemberRowCount; i++)
+        {
+            EntityHandle member = GetProductionMemberMember(grammarFile, i);
+            Assert(member.HasValue);
+            if (member.IsTokenSymbol)
+            {
+                Assert(IsTerminal((TokenSymbolHandle)member), "Token symbols in productions must have the Terminal flag set.");
+                ValidateHandle((TokenSymbolHandle)member);
+            }
+            else
+            {
+                ValidateHandle((NonterminalHandle)member);
+            }
+        }
+
+        for (uint i = 1; i <= (uint)StateMachineRowCount; i++)
+        {
+            _ = blobHeap.GetBlobSection(grammarFile, GetStateMachineData(grammarFile, i));
+        }
+
+        for (uint i = 1; i <= (uint)SpecialNameRowCount; i++)
+        {
+            _ = stringHeap.GetStringSection(grammarFile, GetSpecialNameName(grammarFile, i));
+            EntityHandle member = GetSpecialNameSymbol(grammarFile, i);
+            Assert(member.HasValue);
+            if (member.IsTokenSymbol)
+            {
+                ValidateHandle((TokenSymbolHandle)member);
+            }
+            else
+            {
+                ValidateHandle((NonterminalHandle)member);
+            }
+        }
+
+        static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        {
+            if (!condition)
+            {
+                ThrowHelpers.ThrowInvalidDataException(message);
+            }
+        }
+    }
+
+    internal void ValidateHandle(TokenSymbolHandle handle) => ValidateHandle(handle.TableIndex, TokenSymbolRowCount);
+
+    internal void ValidateHandle(NonterminalHandle handle) => ValidateHandle(handle.TableIndex, NonterminalRowCount);
+
+    internal void ValidateHandle(ProductionHandle handle) => ValidateHandle(handle.TableIndex, ProductionRowCount);
+
+    private static void ValidateHandle(uint tableIndex, int rowCount)
+    {
+        if (tableIndex > (uint)rowCount)
+        {
+            ThrowHelpers.ThrowInvalidDataException("Invalid handle.");
+        }
+    }
 
     private static void ValidateRowCount(TableKind table, byte actual, int expected)
     {

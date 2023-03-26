@@ -22,7 +22,6 @@ public abstract class Grammar
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
     internal readonly GrammarTables GrammarTables;
-    internal readonly int TerminalCount;
 
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
@@ -45,7 +44,7 @@ public abstract class Grammar
     /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
     /// that have the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
-    public TokenSymbolCollection Terminals => new(this, TerminalCount);
+    public TokenSymbolCollection Terminals => new(this, GrammarTables.TerminalCount);
 
     /// <summary>
     /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s.
@@ -109,24 +108,6 @@ public abstract class Grammar
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out bool hasUnknownStateMachines);
         (DfaOnChar, LrStateMachine) = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
-        bool rejectTerminals = false;
-        for (int i = 1; i <= GrammarTables.TokenSymbolRowCount; i++)
-        {
-            TokenSymbolAttributes flags = GrammarTables.GetTokenSymbolFlags(grammarFile, (uint)i);
-            if ((flags & TokenSymbolAttributes.Terminal) != 0)
-            {
-                if (rejectTerminals)
-                {
-                    ThrowHelpers.ThrowInvalidDataException("Terminals must come before other token symbols.");
-                }
-                TerminalCount++;
-            }
-            else
-            {
-                rejectTerminals = true;
-            }
-        }
-
         HasUnknownData = header.HasUnknownData || hasUnknownStreams || hasUnknownTables || hasUnknownStateMachines;
     }
 
@@ -148,7 +129,9 @@ public abstract class Grammar
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
         }
-        return new ManagedMemoryGrammar(grammarData);
+        ManagedMemoryGrammar grammar = new ManagedMemoryGrammar(grammarData);
+        grammar.ValidateContent();
+        return grammar;
     }
 
     /// <summary>
@@ -164,6 +147,19 @@ public abstract class Grammar
     /// </remarks>
     public static Grammar Create(ReadOnlySpan<byte> grammarData)
     {
+        ManagedMemoryGrammar grammar = new ManagedMemoryGrammar(grammarData);
+        grammar.ValidateContent();
+        return grammar;
+    }
+
+    // Internal for benchmarking purposes.
+    // It can be made public once a [RequiresUnsafe] attribute is added.
+    internal static Grammar CreateUnsafe(ImmutableArray<byte> grammarData)
+    {
+        if (grammarData.IsDefault)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
+        }
         return new ManagedMemoryGrammar(grammarData);
     }
 
@@ -309,7 +305,7 @@ public abstract class Grammar
     /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
     /// <param name="handle">The token symbol handle to check;</param>
-    public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
+    public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
 
     /// <summary>
     /// Copies the grammar's data into a new array.
@@ -322,6 +318,15 @@ public abstract class Grammar
     /// <param name="destination">The span to copy the data to.</param>
     /// <returns>Whether <paramref name="destination"/> was big enough to store the grammar's data.</returns>
     public bool TryCopyDataTo(Span<byte> destination) => GrammarFile.TryCopyTo(destination);
+
+    internal void ValidateContent()
+    {
+        ReadOnlySpan<byte> grammarFile = GrammarFile;
+
+        GrammarTables.ValidateContent(grammarFile, in StringHeap, in BlobHeap);
+        LrStateMachine?.ValidateContent(grammarFile, in GrammarTables);
+        DfaOnChar?.ValidateContent(grammarFile, in GrammarTables);
+    }
 
     /// <summary>
     /// Writes the grammar's data to an <see cref="IBufferWriter{Byte}"/>.

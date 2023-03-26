@@ -34,6 +34,8 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
 
     internal abstract KeyValuePair<NonterminalHandle, int> GetGotoAt(int index);
 
+    internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
+
     internal virtual bool StateHasConflicts(int state)
     {
         if (GetEndOfFileActionBounds(state).Count > 1)

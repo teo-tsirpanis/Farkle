@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -68,15 +67,21 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
     public override LrEndOfFileAction GetEndOfFileAction(int state) =>
         throw CreateHasConflictsException();
 
+    private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
+    {
+        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, index));
+    }
+
+    private int ReadFirstEofAction(ReadOnlySpan<byte> grammarFile, int state) =>
+        (int)ReadUIntVariableSizeFromArray<TEofActionIndex>(grammarFile, FirstEofActionBase, state);
+
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {
         if ((uint)index >= (uint)_eofActionCount)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, index));
+        return GetEndOfFileActionAtUnsafe(Grammar.GrammarFile, index);
     }
 
     internal override (int Offset, int Count) GetEndOfFileActionBounds(int state)
@@ -85,12 +90,43 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
 
         ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
-        int firstEofAction = (int)ReadUIntVariableSizeFromArray<TEofActionIndex>(grammarFile, FirstEofActionBase, state);
-        int nextFirstEofAction = state != Count - 1 ? (int)ReadUIntVariableSizeFromArray<TEofActionIndex>(grammarFile, FirstEofActionBase, state + 1) : _eofActionCount;
+        int firstEofAction = ReadFirstEofAction(grammarFile, state);
+        int nextFirstEofAction = state != Count - 1 ? ReadFirstEofAction(grammarFile, state + 1) : _eofActionCount;
 
         return (firstEofAction, nextFirstEofAction - firstEofAction);
     }
 
     private static NotSupportedException CreateHasConflictsException() =>
         new("State machine has conflicts.");
+
+    internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
+    {
+        base.ValidateContent(grammarFile, grammarTables);
+
+        if (_eofActionCount > 0)
+        {
+            int previousFirstEof = ReadFirstEofAction(grammarFile, 0);
+            Assert(previousFirstEof == 0);
+            for (int i = 1; i < Count; i++)
+            {
+                int firstEof = ReadFirstEofAction(grammarFile, i);
+                Assert(firstEof > previousFirstEof);
+                previousFirstEof = firstEof;
+                Assert(firstEof <= _eofActionCount);
+            }
+        }
+
+        for (int i = 0; i < _eofActionCount; i++)
+        {
+            ValidateAction(GetEndOfFileActionAtUnsafe(grammarFile, i), in grammarTables);
+        }
+
+        static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        {
+            if (!condition)
+            {
+                ThrowHelpers.ThrowInvalidDataException(message);
+            }
+        }
+    }
 }

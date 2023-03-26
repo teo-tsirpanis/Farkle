@@ -48,6 +48,7 @@ internal class GrammarTests
     {
         var originalFarkleGrammar = File.ReadAllBytes(farkleGrammar);
         var convertedGrammar = ConvertGrammarFile(goldGrammar);
+        _ = Grammar.Create(convertedGrammar);
 
         Assert.That(convertedGrammar, Is.EqualTo(originalFarkleGrammar));
 

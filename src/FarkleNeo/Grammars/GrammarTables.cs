@@ -143,27 +143,21 @@ internal readonly struct GrammarTables
         return new(indexValue, kind);
     }
 
-    private int GetTerminalCount(ReadOnlySpan<byte> grammarFile)
+    private int CountTerminalsFast(ReadOnlySpan<byte> grammarFile)
     {
-        int count = 0;
-        bool rejectTerminals = false;
-        for (int i = 1; i <= TokenSymbolRowCount; i++)
+        // Because usually almost all token symbols are terminals, we can count them
+        // by looping from the end and stopping at the first terminal we find. This
+        // would cause problems if the terminals are at the beginning of the table
+        // but that's the job of content validation to detect.
+        for (int i = TokenSymbolRowCount; i > 0; i--)
         {
             TokenSymbolAttributes flags = GetTokenSymbolFlags(grammarFile, (uint)i);
             if ((flags & TokenSymbolAttributes.Terminal) != 0)
             {
-                if (rejectTerminals)
-                {
-                    ThrowHelpers.ThrowInvalidDataException("Terminals must come before other token symbols.");
-                }
-                count++;
-            }
-            else
-            {
-                rejectTerminals = true;
+                return i;
             }
         }
-        return count;
+        return 0;
     }
 
     public bool IsTerminal(TokenSymbolHandle handle) => handle.HasValue && handle.Value < TerminalCount;
@@ -354,7 +348,7 @@ internal readonly struct GrammarTables
         SpecialNameNameBase = specialNameBase + 0;
         SpecialNameSymbolBase = SpecialNameNameBase + StringHeapIndexSize;
 
-        TerminalCount = GetTerminalCount(grammarFile);
+        TerminalCount = CountTerminalsFast(grammarFile);
     }
 
     public StringHandle GetGrammarName(ReadOnlySpan<byte> grammarFile) =>
@@ -432,15 +426,21 @@ internal readonly struct GrammarTables
             ValidateHandle(GetGrammarStartSymbol(grammarFile));
         }
 
+        bool rejectTerminals = false;
         for (uint i = 1; i <= (uint)TokenSymbolRowCount; i++)
         {
             _ = stringHeap.GetStringSection(grammarFile, GetTokenSymbolName(grammarFile, i));
             TokenSymbolAttributes flags = GetTokenSymbolFlags(grammarFile, i);
-            // Terminals being first is validated earlier when constructing
-            // the grammar and is part of the mandatory structure validation.
-            if ((flags & TokenSymbolAttributes.GroupStart) != 0)
+            bool isTerminal = (flags & TokenSymbolAttributes.Terminal) != 0;
+            bool isGroupStart = (flags & TokenSymbolAttributes.GroupStart) != 0;
+            if (isTerminal)
             {
-                Assert((flags & TokenSymbolAttributes.Terminal) == 0, "Terminals must not have the GroupStart flag set.");
+                Assert(!rejectTerminals, "Terminals must come before other token symbols.");
+                rejectTerminals = false;
+            }
+            if (isGroupStart)
+            {
+                Assert(!isTerminal, "Terminals must not have the GroupStart flag set.");
                 bool added = (groupStarts ??= new()).Add(i);
                 Debug.Assert(added);
             }

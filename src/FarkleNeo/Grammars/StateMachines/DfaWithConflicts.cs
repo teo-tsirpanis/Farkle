@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -63,14 +64,20 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
     private int ReadFirstAccept(ReadOnlySpan<byte> grammarFile, int state) =>
         (int)grammarFile.ReadUIntVariableSize<TAccept>(FirstAcceptBase + state * sizeof(TAccept));
 
+    private (int Offset, int Count) GetAcceptSymbolBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    {
+        int firstAccept = ReadFirstAccept(grammarFile, state);
+        int nextFirstAccept = state != Count - 1 ? ReadFirstAccept(grammarFile, state + 1) : _acceptCount;
+        return (firstAccept, nextFirstAccept - firstAccept);
+    }
+
+    private TokenSymbolHandle GetAcceptSymbolAtUnsafe(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(grammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
+
     internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)
     {
         ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-        int firstAccept = ReadFirstAccept(grammarFile, state);
-        int nextFirstAccept = state != Count - 1 ? ReadFirstAccept(grammarFile, state + 1) : _acceptCount;
-        return (firstAccept,  nextFirstAccept - firstAccept);
+        return GetAcceptSymbolBoundsUnsafe(Grammar.GrammarFile, state);
     }
 
     internal override TokenSymbolHandle GetAcceptSymbolAt(int index)
@@ -79,7 +86,39 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
-        return new(Grammar.GrammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
+        return GetAcceptSymbolAtUnsafe(Grammar.GrammarFile, index);
+    }
+
+    internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
+    {
+        base.ValidateContent(grammarFile, grammarTables);
+
+        if (_acceptCount != 0)
+        {
+            int previousFirstAccept = ReadFirstAccept(grammarFile, 0);
+            Assert(previousFirstAccept == 0);
+            for (int i = 1; i < Count; i++)
+            {
+                int firstAccept = ReadFirstAccept(grammarFile, i);
+                Assert(firstAccept > previousFirstAccept);
+                previousFirstAccept = firstAccept;
+                Assert(firstAccept <= _acceptCount);
+            }
+        }
+
+        for (int i = 0; i < Count; i++)
+        {
+            TokenSymbolHandle acceptSymbol = GetAcceptSymbolAtUnsafe(grammarFile, i);
+            grammarTables.ValidateHandle(acceptSymbol);
+        }
+
+        static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        {
+            if (!condition)
+            {
+                ThrowHelpers.ThrowInvalidDataException(message);
+            }
+        }
     }
 
     public override TokenSymbolHandle GetAcceptSymbol(int state) =>

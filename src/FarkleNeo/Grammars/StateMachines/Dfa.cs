@@ -42,6 +42,8 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 
+    internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
+
     /// <summary>
     /// The number of the <see cref="Dfa{TChar}"/>'s initial state.
     /// </summary>

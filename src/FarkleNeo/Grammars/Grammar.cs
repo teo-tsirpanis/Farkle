@@ -314,6 +314,7 @@ public abstract class Grammar
 
         GrammarTables.ValidateContent(grammarFile, in StringHeap, in BlobHeap);
         LrStateMachine?.ValidateContent(grammarFile, in GrammarTables);
+        DfaOnChar?.ValidateContent(grammarFile, in GrammarTables);
     }
 
     /// <summary>

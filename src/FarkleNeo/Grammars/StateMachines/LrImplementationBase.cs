@@ -174,6 +174,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
                 {
                     KeyValuePair<TokenSymbolHandle, LrAction> action = GetActionAtUnsafe(grammarFile, actionOffset + j);
                     grammarTables.ValidateHandle(action.Key);
+                    Assert(grammarTables.IsTerminal(action.Key));
                     if (j != 0)
                     {
                         Assert(previousActionTerminal.CompareTo(action.Key.TableIndex) <= actionComparisonKey, "LR state terminal is out of sequence or unexpected LR conflict.");

@@ -1,10 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Buffers;
 using Farkle.Grammars.GoldParser;
 using Farkle.Grammars.StateMachines;
-using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
@@ -23,12 +21,12 @@ public abstract class Grammar
     internal readonly BlobHeap BlobHeap;
     internal readonly GrammarTables GrammarTables;
 
-    internal abstract ReadOnlySpan<byte> GrammarFile { get; }
-
     /// <summary>
-    /// The length of the <see cref="Grammar"/>'s data in bytes.
+    /// A read-only buffer to the <see cref="Grammar"/>'s binary data.
     /// </summary>
-    public int DataLength => GrammarFile.Length;
+    public ReadOnlySpan<byte> Data => GrammarFile;
+
+    internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
     /// <summary>
     /// Whether the <see cref="Grammar"/> contains data that are not recognized by this version of Farkle.
@@ -307,18 +305,6 @@ public abstract class Grammar
     /// <param name="handle">The token symbol handle to check;</param>
     public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
 
-    /// <summary>
-    /// Copies the grammar's data into a new array.
-    /// </summary>
-    public byte[] ToArray() => GrammarFile.ToArray();
-
-    /// <summary>
-    /// Attempts to copy the grammar's data into a <see cref="Span{Byte}"/>.
-    /// </summary>
-    /// <param name="destination">The span to copy the data to.</param>
-    /// <returns>Whether <paramref name="destination"/> was big enough to store the grammar's data.</returns>
-    public bool TryCopyDataTo(Span<byte> destination) => GrammarFile.TryCopyTo(destination);
-
     internal void ValidateContent()
     {
         ReadOnlySpan<byte> grammarFile = GrammarFile;
@@ -326,18 +312,6 @@ public abstract class Grammar
         GrammarTables.ValidateContent(grammarFile, in StringHeap, in BlobHeap);
         LrStateMachine?.ValidateContent(grammarFile, in GrammarTables);
         DfaOnChar?.ValidateContent(grammarFile, in GrammarTables);
-    }
-
-    /// <summary>
-    /// Writes the grammar's data to an <see cref="IBufferWriter{Byte}"/>.
-    /// </summary>
-    /// <param name="buffer">The buffer writer to write the data to.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="buffer"/>
-    /// is <see langword="null"/>.</exception>
-    public void WriteDataTo(IBufferWriter<byte> buffer)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(buffer);
-        buffer.Write(GrammarFile);
     }
 
     private sealed class ManagedMemoryGrammar : Grammar

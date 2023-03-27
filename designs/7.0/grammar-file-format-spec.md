@@ -215,7 +215,7 @@ The following rules apply to the _Group_ table:
 * The __Start__ column MUST NOT contain duplicate values.
 * The token symbols pointed by the __End__ and __Container__ columns MUST NOT have the `GroupStart` flag set.
 * The value of the __FirstNesting__ column of the first group MUST be equal to one.
-* If the last group does not have any nested groups, its __FirstNesting__ column MUST be equal to the number of rows in the _GroupNesting_ table plus one.
+* If a group and all groups after it do not have any nested groups, its __FirstNesting__ column MUST be equal to the number of rows in the _GroupNesting_ table plus one.
 
 > Before accessing the nesting of a group, readers MUST ensure that the group can actually be nested. It is possible for the __FirstNesting__ column to point to a non-existent row if no groups can be nested.
 
@@ -244,7 +244,7 @@ The following rules apply to the _Nonterminal_ table:
 * The _Nonterminal_ table MUST NOT contain more than 2<sup>20</sup> - 1 rows.
 * A nonterminal's __FirstProduction__ column MUST be greater or equal than the __FirstProduction__ column of the previous nonterminal.
 * The value of the __FirstProduction__ column of the first nonterminal MUST be equal to one.
-* If the last nonterminal does not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
+* If a nonterminal and all nonterminals after it do not have any productions, its __FirstProduction__ column MUST be equal to the number of rows in the _Production_ table plus one.
 > Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 
 > Before accessing the productions of a nonterminal, readers MUST ensure that the nonterminal actually has productions. Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
@@ -261,7 +261,7 @@ The following rules apply to the _Production_ table:
 * A production's __Head__ column MUST have a value corresponding to its head nonterminal, as determined by the __FirstProduction__ column of the _Nonterminal_ table.
 * A production's __FirstMember__ column MUST be greater or equal than the __FirstMember__ column of the previous production.
 * The value of the __FirstMember__ column of the first production MUST be equal to one.
-* If the last production does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
+* If a production and all productions after it does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
 
 > Before accessing the members of a production, readers MUST ensure that it actually has members.
 
@@ -336,7 +336,7 @@ The type `char_t` can be any unsigned integer type.
 
 The DFA's initial state is always the first one.
 
-A state's edges end when the next state's edges begin, or at the end of the edges if this is the last state.
+A state's edges end when the next state's edges begin, or at the end of the edges if this is the last state. If a state and all states after it do not have any edges, its `firstEdge` field MUST be equal to the number of edges in the DFA plus one.
 
 For each state, its edges' ranges MUST be disjoint and sorted in ascending order.
 
@@ -353,7 +353,7 @@ A DFA has conflicts when at least one of its states has more than one accept sym
     * The type `accept_t` is the smallest of one, two or four bytes that can hold the value of the `acceptCount` field plus one.
 * The `accept` field's type is changed to `token_symbol_t[acceptCount]`.
 
-A state's accept symbols end when the next state's accept symbols begin, or at the end of the accept symbols if this is the last state.
+A state's accept symbols end when the next state's accept symbols begin, or at the end of the accept symbols if this is the last state. If a state and all states after it do not have any accept symbols, its `firstAccept` field MUST be equal to the number of accept symbols in the DFA plus one.
 
 ### Deterministic Finite Automaton (DFA) default transitions
 
@@ -406,7 +406,7 @@ The type `eof_action_t` describes the type of the action (reduce, accept, error)
 
 The LR(1) state machine's initial state is always the first one.
 
-A state's actions end when the next state's actions begin, or at the end of the actions if this is the last state. The same applies to GOTO actions.
+A state's actions end when the next state's actions begin, or at the end of the actions if this is the last state. If a state and all states after it have no actions, its `firstAction` field MUST be set to the number of all actions in the state machine plus one. The same applies to GOTO actions.
 
 For each state, its `actionTerminal` and `gotoNonterminal` fields MUST be unique and sorted in ascending order.
 

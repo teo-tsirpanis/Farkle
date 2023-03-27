@@ -95,7 +95,7 @@ Each table row is stored as the concatenation of its columns and indexed startin
 
 * An integer of fixed length.
 * An index to the String or Blob heaps. Its length depends on the corresponding bit in the __HeapSizes__ field.
-* An index to the row of another table. Its length is one or two bytes if the table's row count is less than 2<sup>8</sup> or 2<sup>16</sup> respectively, and four bytes otherwise.
+* A compressed index to the row of another table. Its length is defined in a following section.
 * A coded index to the row of one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
 A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specification states a lower limit.
@@ -103,6 +103,20 @@ A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specificatio
 Table and coded indices of value zero point to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
 
 The supported table types are listed in following sections.
+
+## Compressed Indices
+
+To save space, indices in Farkle grammars have a size proportional to the number of collections of the object they point to. The following table shows the maximum number of items each index size can point to:
+
+|Number of items|Index size in bytes|
+|---------------|-------------------|
+|< 2<sup>8</sup> - 1|1|
+|< 2<sup>16</sup> - 1|2|
+|_otherwise_|4|
+
+The same encoding is used regardless of whether the indices are one-based or zero-based (as occurs in state machines).
+
+> The threshold before switching to a bigger index size is one less than the maximum value of the corresponding integer type. The reason for that is that some table columns can have indices that point to one more than the corresponding table's row. This way we ensure that no index overflows.
 
 ## Coded Indices
 
@@ -139,7 +153,7 @@ The specification defines the following tables, identified by the bit index of t
 The _Grammar_ table contains the following columns:
 
 * __Name__ (an index to the String heap): The name of the grammar.
-* __StartSymbol__ (an index to the _Nonterminal_ table): The starting nonterminal of the grammar.
+* __StartSymbol__ (a compressed index to the _Nonterminal_ table): The starting nonterminal of the grammar.
 * __Flags__ (a two-byte bit vector): Characteristics of the grammar.
 
 The following bit values are defined for the __Flags__ column:
@@ -181,11 +195,11 @@ The following rules apply to the _TokenSymbol_ table:
 The _Group_ table contains the following columns:
 
 * __Name__ (an index to the String heap): The name of the group.
-* __Container__ (an index to the _TokenSymbol_ table): The token symbol that corresponds to this group.
+* __Container__ (a compressed index to the _TokenSymbol_ table): The token symbol that corresponds to this group.
 * __Flags__ (a two-byte bit vector): Characteristics of the group.
-* __Start__ (an index to the _TokenSymbol_ table): The token symbol that starts the group.
-* __End__ (an index to the _TokenSymbol_ table): The token symbol that ends the group.
-* __FirstNesting__ (an index to the _GroupNesting_ table): The index to the first row in the _GroupNesting_ table that contains the groups allowed to be nested inside this group. This group list ends before the __FirstNesting__ value of the next group, or at the end of the _GroupNesting_ table if this is the last group.
+* __Start__ (a compressed index to the _TokenSymbol_ table): The token symbol that starts the group.
+* __End__ (a compressed index to the _TokenSymbol_ table): The token symbol that ends the group.
+* __FirstNesting__ (a compressed index to the _GroupNesting_ table): The index to the first row in the _GroupNesting_ table that contains the groups allowed to be nested inside this group. This group list ends before the __FirstNesting__ value of the next group, or at the end of the _GroupNesting_ table if this is the last group.
 
 The following bit values are defined for the __Flags__ column:
 
@@ -312,19 +326,13 @@ A DFA's representation consists of the following data:
 |----|-----|-----------|
 |`uint32_t`|`stateCount`|The number of states in the DFA.|
 |`uint32_t`|`edgeCount`|The number of edges in the DFA.|
-|`edge_t[stateCount]`|`firstEdge`|The zero-based index to the first edge of each state.|
+|`edge_t[stateCount]`|`firstEdge`|The compressed zero-based index to the first edge of each state.|
 |`char_t[edgeCount]`|`rangeFrom`|The starting character of each edge's range, inclusive.|
 |`char_t[edgeCount]`|`rangeTo`|The ending character of each edge's range, inclusive.|
-|`state_t[edgeCount]`|`edgeTarget`|The one-based index to target state of each edge, or zero if following the edge would stop the tokenizer.|
-|`token_symbol_t[stateCount]`|`accept`|An index to the _TokenSymbol_ table that points to the token symbol that will get accepted at each state, or zero if the state is not an accept state.|
-
-The type `edge_t` is the smallest of one, two or four bytes that can hold the value of the `edgeCount` field minus one.
+|`state_t[edgeCount]`|`edgeTarget`|The compressed one-based index to target state of each edge, or zero if following the edge would stop the tokenizer.|
+|`token_symbol_t[stateCount]`|`accept`|The compressed index to the _TokenSymbol_ table that points to the token symbol that will get accepted at each state, or zero if the state is not an accept state.|
 
 The type `char_t` can be any unsigned integer type.
-
-The type `state_t` is the smallest of one, two or four bytes that can hold the value of the `stateCount` field.
-
-The type `token_symbol_t` is the type used to encode indices to the _TokenSymbol_ table.
 
 The DFA's initial state is always the first one.
 
@@ -341,7 +349,7 @@ An edge with its `edgeTarget` field set to zero indicates that traversing this e
 A DFA has conflicts when at least one of its states has more than one accept symbol. It is represented as a regular DFA with the following changes:
 
 * A field of type `uint32_t` called `acceptCount` is added after the `edgeCount` field.
-* A field of type `accept_t[stateCount]` called `firstAccept` is added before the `accept` field. It contains the zero-based index to the first accept symbol of each state.
+* A field of type `accept_t[stateCount]` called `firstAccept` is added before the `accept` field. It contains the compressed zero-based index to the first accept symbol of each state.
     * The type `accept_t` is the smallest of one, two or four bytes that can hold the value of the `acceptCount` field plus one.
 * The `accept` field's type is changed to `token_symbol_t[acceptCount]`.
 
@@ -364,19 +372,15 @@ An LR(1) state machine's representation consists of the following data:
 |`uint32_t`|`stateCount`|The number of states in the state machine.|
 |`uint32_t`|`actionCount`|The number of actions in the state machine.|
 |`uint32_t`|`gotoCount`|The number of GOTO actions in the state machine.|
-|`action_index_t[stateCount]`|`firstAction`|The zero-based index to the first action of each state.|
-|`token_symbol_t[actionCount]`|`actionTerminal`|An index to the _TokenSymbol_ table that specifies the terminal that triggers each action.|
+|`action_index_t[stateCount]`|`firstAction`|The compressed zero-based index to the first action of each state.|
+|`token_symbol_t[actionCount]`|`actionTerminal`|The compressed index to the _TokenSymbol_ table that specifies the terminal that triggers each action.|
 |`lr_action_t[actionCount]`|`action`|The type of each action.|
 |`eof_action_t[stateCount]`|`eofAction`|The type of the action to take if input ends while being on each state.|
-|`goto_t[stateCount]`|`firstGoto`|The zero-based index to the first GOTO action of each state.|
-|`nonterminal_t[gotoCount]`|`gotoNonterminal`|An index to the _Nonterminal_ table that points to the nonterminal that triggers each GOTO action.|
-|`state_t[gotoCount]`|`gotoState`|The zero-based index to the target state of each GOTO action.|
+|`goto_t[stateCount]`|`firstGoto`|The compressed zero-based index to the first GOTO action of each state.|
+|`nonterminal_t[gotoCount]`|`gotoNonterminal`|The compressed index to the _Nonterminal_ table that points to the nonterminal that triggers each GOTO action.|
+|`state_t[gotoCount]`|`gotoState`|The compressed zero-based index to the target state of each GOTO action.|
 
-The type `action_index_t` is the smallest of one, two or four bytes that can hold the value of the `actionCount` field minus one.
-
-The type `token_symbol_t` is the type used to encode indices to the _TokenSymbol_ table.
-
-The type `lr_action_t` describes the type of an action (shift or reduce). It is encoded as follows and its size is the smallest of one, two or four bytes that can encode all valid values for this grammar:
+The type `lr_action_t` is a signed integer that describes the type of an action (shift or reduce). It is encoded as follows:
 
 *
     An error action is encoded as `0`.
@@ -386,15 +390,19 @@ The type `lr_action_t` describes the type of an action (shift or reduce). It is 
     A reduce action to the production with the index `p` is encoded as `-p`.
     > Remember that table row indices are one-based, so the first production has an index of `1`.
 
-The type `eof_action_t` describes the type of the action (reduce, accept, error) to take when input ends while being on a state. It is encoded as follows and its size is the smallest of one, two or four bytes that can hold the number of productions in the grammar plus one:
+Its size depends on the number of states in the state machine and the number of productions in the grammar:
+
+|States|Productions|Size in bytes|
+|------|-----------|-------------|
+|≤ 2<sup>7</sup> - 2|≤ 2<sup>7</sup>|1|
+|≤ 2<sup>15</sup> - 2|≤ 2<sup>15</sup>|2|
+|_Otherwise_|_Otherwise_|4|
+
+The type `eof_action_t` describes the type of the action (reduce, accept, error) to take when input ends while being on a state. It is encoded as follows and has the size of a compressed index to the Production table:
 
 * An error action is encoded as `0`.
 * An accept action is encoded as `1`.
 * A reduce action to the production with the index `p` is encoded as `p + 1`.
-
-The type `state_t` is the smallest of one, two or four bytes that can hold the value of the `stateCount` field minus one.
-
-The type `goto_t` is the smallest of one, two or four bytes that can hold the value of the `gotoCount` field minus one.
 
 The LR(1) state machine's initial state is always the first one.
 
@@ -411,7 +419,7 @@ The specific algorithm used to build this state machine (Canonical LR(1), LALR(1
 A GLR(1) state machine has at least one terminal and state where there is more than one possible action. It is represented as a regular LR(1) state machine with the following changes:
 
 * A field of type `uint32_t` called `eofActionCount` is added after the `gotoCount` field.
-* A field of type `eof_action_index_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the zero-based index to the first EOF action of each state.
+* A field of type `eof_action_index_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the compressed zero-based index to the first EOF action of each state.
     * The type `eof_action_index_t` is the smallest of one, two or four bytes that can hold the value of the `eofActionCount` field plus one.
 * The `eofAction` field's type is changed to `eof_action_t[eofActionCount]`.
 * For each state, duplicate values of the `actionTerminal` field are allowed.

@@ -34,7 +34,7 @@ internal readonly struct BlobHeap
 
         int blobStart = (int)handle.Value;
         int blobLength = grammarFile.ReadBlobLength(Offset + blobStart, out int blobContentStartOffset);
-        int blobContentStart = blobStart += blobContentStartOffset;
+        int blobContentStart = blobStart + blobContentStartOffset;
         if (BufferExtensions.IsOutOfBounds(blobContentStart, blobLength, Length))
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle), "Invalid blob handle.");

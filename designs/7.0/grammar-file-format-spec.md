@@ -100,7 +100,7 @@ Each table row is stored as the concatenation of its columns and indexed startin
 
 A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specification states a lower limit.
 
-Table and coded indices of value zero point to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
+Table and coded indices are always one-based. An index with a value of zero points to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
 
 The supported table types are listed in following sections.
 
@@ -340,7 +340,7 @@ A state's edges end when the next state's edges begin, or at the end of the edge
 
 For each state, its edges' ranges MUST be disjoint and sorted in ascending order.
 
-An edge with its `edgeTarget` field set to zero indicates that traversing this edge will stop the tokenization process. When this happens the tokenizer will return a token at the last accepted state, or fail if such state does not exist.
+An edge with its `edgeTarget` field set to zero indicates that traversing this edge will stop the tokenization process. When this happens the tokenizer will return a token at the last accepting state it encountered, or fail if such state does not exist.
 
 > The previous EGTneo format was encoding group start accept symbols by specifying their group index, to avoid traversing the group table. Here we go back to GOLD Parser's approach and encode the group's start _symbol_ instead. This decreases performance but thanks to the `GroupStart` flag we can perform the lookup only if a group is about to start.
 
@@ -416,7 +416,7 @@ The specific algorithm used to build this state machine (Canonical LR(1), LALR(1
 
 ### GLR(1) state machine
 
-A GLR(1) state machine has at least one terminal and state where there is more than one possible action. It is represented as a regular LR(1) state machine with the following changes:
+A GLR(1) state machine has at least one state where there at least one terminal or the end of input has more than one possible action. It is represented as a regular LR(1) state machine with the following changes:
 
 * A field of type `uint32_t` called `eofActionCount` is added after the `gotoCount` field.
 * A field of type `eof_action_index_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the compressed zero-based index to the first EOF action of each state.

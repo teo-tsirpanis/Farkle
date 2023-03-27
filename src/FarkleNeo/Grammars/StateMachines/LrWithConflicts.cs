@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
@@ -18,6 +19,8 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
 
     public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount) : base(grammar, stateCount, actionCount, gotoCount, true)
     {
+        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(eofActionCount) == sizeof(TEofActionIndex));
+
         _eofActionCount = eofActionCount;
     }
 

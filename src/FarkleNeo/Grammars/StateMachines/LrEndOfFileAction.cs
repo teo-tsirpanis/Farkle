@@ -10,13 +10,6 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
 {
     internal uint Value { get; }
 
-    internal static byte GetEncodedSize(int productionCount) => productionCount switch
-    {
-        <= byte.MaxValue - 1 => sizeof(byte),
-        <= ushort.MaxValue - 1 => sizeof(ushort),
-        _ => sizeof(uint)
-    };
-
     internal LrEndOfFileAction(uint value) => Value = value;
 
     /// <summary>

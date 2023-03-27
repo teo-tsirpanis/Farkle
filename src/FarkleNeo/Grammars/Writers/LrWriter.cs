@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.Writers;
 
@@ -200,13 +201,13 @@ internal sealed class LrWriter
             writer.Write(_eofActions.Count);
         }
 
-        byte stateIndexSize = StateMachineUtilities.GetIndexSize(StateCount);
-        byte actionIndexSize = StateMachineUtilities.GetIndexSize(_actions.Count);
-        byte actionSize = LrAction.GetEncodedSize(StateCount, productionCount);
-        byte eofActionSize = LrEndOfFileAction.GetEncodedSize(productionCount);
-        byte gotoIndexSize = StateMachineUtilities.GetIndexSize(_gotos.Count);
-        byte nonterminalIndexSize = GrammarTables.GetIndexSize(nonterminalCount);
-        byte tokenSymbolIndexSize = GrammarTables.GetIndexSize(tokenSymbolCount);
+        byte stateIndexSize = GetCompressedIndexSize(StateCount);
+        byte actionIndexSize = GetCompressedIndexSize(_actions.Count);
+        byte actionSize = GetLrActionEncodedSize(StateCount, productionCount);
+        byte eofActionSize = GetCompressedIndexSize(productionCount);
+        byte gotoIndexSize = GetCompressedIndexSize(_gotos.Count);
+        byte nonterminalIndexSize = GetCompressedIndexSize(nonterminalCount);
+        byte tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolCount);
 
         foreach (int firstAction in _firstActions)
         {
@@ -222,7 +223,7 @@ internal sealed class LrWriter
         }
         if (HasConflicts)
         {
-            byte eofActionIndexSize = StateMachineUtilities.GetIndexSize(_eofActions.Count);
+            byte eofActionIndexSize = GetCompressedIndexSize(_eofActions.Count);
             foreach (int firstEofAction in _firstEofActions)
             {
                 writer.WriteVariableSize((uint)firstEofAction, eofActionIndexSize);

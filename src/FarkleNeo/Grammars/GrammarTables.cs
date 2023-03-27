@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars;
 
@@ -70,26 +71,6 @@ internal readonly struct GrammarTables
 
     public const int MaxSymbolRowCount = 0xF_FFFF; // 2^20 - 1
 
-    /// <summary>
-    /// Gets the size in bytes of a one-based index to a table.
-    /// </summary>
-    public static byte GetIndexSize(int rowCount) => rowCount switch
-    {
-        <= byte.MaxValue => sizeof(byte),
-        <= ushort.MaxValue => sizeof(ushort),
-        _ => sizeof(uint)
-    };
-
-    /// <summary>
-    /// Gets the size in bytes of a one-based coded index to two tables.
-    /// </summary>
-    public static byte GetBinaryCodedIndexSize(int row1Count, int row2Count) => (row1Count | row2Count) switch
-    {
-        <= sbyte.MaxValue => sizeof(sbyte),
-        <= short.MaxValue => sizeof(short),
-        _ => sizeof(int)
-    };
-
     private static int GetTableCellOffset(int columnBase, int rowCount, byte rowSize, uint index)
     {
         Debug.Assert(index != 0);
@@ -103,7 +84,7 @@ internal readonly struct GrammarTables
     }
 
     private static uint ReadTableIndex(ReadOnlySpan<byte> grammarFile, int index, int rowCount) =>
-        grammarFile.ReadUIntVariableSize(index, GetIndexSize(rowCount));
+        grammarFile.ReadUIntVariableSize(index, GetCompressedIndexSize(rowCount));
 
     private StringHandle ReadStringHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(index, StringHeapIndexSize));
@@ -291,11 +272,11 @@ internal readonly struct GrammarTables
             ThrowHelpers.ThrowInvalidDataException("Incorrect table stream size.");
         }
 
-        int tokenSymbolIndexSize = GetIndexSize(TokenSymbolRowCount);
-        int groupNestingIndexSize = GetIndexSize(GroupNestingRowCount);
-        int nonterminalIndexSize = GetIndexSize(NonterminalRowCount);
-        int productionIndexSize = GetIndexSize(ProductionRowCount);
-        int productionMemberIndexSize = GetIndexSize(ProductionMemberRowCount);
+        int tokenSymbolIndexSize = GetCompressedIndexSize(TokenSymbolRowCount);
+        int groupNestingIndexSize = GetCompressedIndexSize(GroupNestingRowCount);
+        int nonterminalIndexSize = GetCompressedIndexSize(NonterminalRowCount);
+        int productionIndexSize = GetCompressedIndexSize(ProductionRowCount);
+        int productionMemberIndexSize = GetCompressedIndexSize(ProductionMemberRowCount);
 
         int productionMemberCodedIndexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
 

@@ -30,9 +30,9 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     protected unsafe LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
-        Debug.Assert(StateMachineUtilities.GetIndexSize(stateCount) == sizeof(TStateIndex));
-        Debug.Assert(StateMachineUtilities.GetIndexSize(actionCount) == sizeof(TActionIndex));
-        Debug.Assert(StateMachineUtilities.GetIndexSize(gotoCount) == sizeof(TGotoIndex));
+        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(stateCount) == sizeof(TStateIndex));
+        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(actionCount) == sizeof(TActionIndex));
+        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(gotoCount) == sizeof(TGotoIndex));
 
         Grammar = grammar;
         ActionCount = actionCount;

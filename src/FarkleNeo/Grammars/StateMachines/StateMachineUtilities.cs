@@ -3,34 +3,12 @@
 
 using Farkle.Buffers;
 using System.Buffers;
+using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {
-    /// <summary>
-    /// Gets the size in bytes of a zero-based index to a state machine construct.
-    /// </summary>
-    public static byte GetIndexSize(int count) => count switch
-    {
-        // If we have say 256 states, they fit in a byte; the first has an index of 0, the last has an index of 255.
-        <= byte.MaxValue + 1 => sizeof(byte),
-        <= ushort.MaxValue + 1 => sizeof(ushort),
-        _ => sizeof(uint)
-    };
-
-    /// <summary>
-    /// Gets the size in bytes of an index to a DFA target state.
-    /// </summary>
-    internal static byte GetDfaStateTargetIndexSize(int stateCount) => stateCount switch
-    {
-        // If we have say 255 states, they fit in a byte; the first has an index of 1,
-        // the last has an index of 255 and failure is represented as 0.
-        <= byte.MaxValue => sizeof(byte),
-        <= ushort.MaxValue => sizeof(ushort),
-        _ => sizeof(uint)
-    };
-
     public static T Read<T>(ReadOnlySpan<byte> buffer, int index)
     {
         if (typeof(T) == typeof(char))
@@ -122,21 +100,21 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return GetDfaStateTargetIndexSize(stateCount) switch
+        return GetCompressedIndexSize(stateCount) switch
         {
             1 => Stage1<byte>(),
             2 => Stage1<ushort>(),
             _ => Stage1<uint>()
         };
 
-        Dfa<TChar> Stage1<TState>() => GetIndexSize(edgeCount) switch
+        Dfa<TChar> Stage1<TState>() => GetCompressedIndexSize(edgeCount) switch
         {
             1 => Stage2<TState, byte>(),
             2 => Stage2<TState, ushort>(),
             _ => Stage2<TState, uint>()
         };
 
-        Dfa<TChar> Stage2<TState, TEdge>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        Dfa<TChar> Stage2<TState, TEdge>() => GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
             1 => Finish<TState, TEdge, byte>(),
             2 => Finish<TState, TEdge, ushort>(),
@@ -163,28 +141,28 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return GetDfaStateTargetIndexSize(stateCount) switch
+        return GetCompressedIndexSize(stateCount) switch
         {
             1 => Stage1<byte>(),
             2 => Stage1<ushort>(),
             _ => Stage1<uint>()
         };
 
-        Dfa<TChar> Stage1<TState>() => GetIndexSize(edgeCount) switch
+        Dfa<TChar> Stage1<TState>() => GetCompressedIndexSize(edgeCount) switch
         {
             1 => Stage2<TState, byte>(),
             2 => Stage2<TState, ushort>(),
             _ => Stage2<TState, uint>()
         };
 
-        Dfa<TChar> Stage2<TState, TEdge>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        Dfa<TChar> Stage2<TState, TEdge>() => GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
             1 => Stage3<TState, TEdge, byte>(),
             2 => Stage3<TState, TEdge, ushort>(),
             _ => Stage3<TState, TEdge, uint>()
         };
 
-        Dfa<TChar> Stage3<TState, TEdge, TTokenSymbol>() => GetIndexSize(acceptCount) switch
+        Dfa<TChar> Stage3<TState, TEdge, TTokenSymbol>() => GetCompressedIndexSize(acceptCount) switch
         {
             1 => Finish<TState, TEdge, TTokenSymbol, byte>(),
             2 => Finish<TState, TEdge, TTokenSymbol, ushort>(),
@@ -211,42 +189,42 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return GetIndexSize(stateCount) switch
+        return GetCompressedIndexSize(stateCount) switch
         {
             1 => Stage1<byte>(),
             2 => Stage1<ushort>(),
             _ => Stage1<uint>()
         };
 
-        LrStateMachine Stage1<TStateIndex>() => GetIndexSize(actionCount) switch
+        LrStateMachine Stage1<TStateIndex>() => GetCompressedIndexSize(actionCount) switch
         {
             1 => Stage2<TStateIndex, byte>(),
             2 => Stage2<TStateIndex, ushort>(),
             _ => Stage2<TStateIndex, uint>()
         };
 
-        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetIndexSize(gotoCount) switch
+        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetCompressedIndexSize(gotoCount) switch
         {
             1 => Stage3<TStateIndex, TActionIndex, byte>(),
             2 => Stage3<TStateIndex, TActionIndex, ushort>(),
             _ => Stage3<TStateIndex, TActionIndex, uint>()
         };
 
-        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => LrAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => GetLrActionEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage4<TStateIndex, TActionIndex, TGotoIndex, sbyte>(),
             2 => Stage4<TStateIndex, TActionIndex, TGotoIndex, short>(),
             _ => Stage4<TStateIndex, TActionIndex, TGotoIndex, int>()
         };
 
-        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TAction>() => LrEndOfFileAction.GetEncodedSize(grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TAction>() => GetCompressedIndexSize(grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, byte>(),
             2 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, ushort>(),
             _ => Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, uint>()
         };
 
-        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction>() => GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
             1 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, byte>(),
             2 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, ushort>(),
@@ -254,7 +232,7 @@ internal static class StateMachineUtilities
         };
 
         LrStateMachine Stage6<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol>()
-            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GrammarTables.GetIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GetCompressedIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
             {
                 1 => Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, byte>(),
                 2 => Finish<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, ushort>(),
@@ -284,49 +262,49 @@ internal static class StateMachineUtilities
             return null;
         }
 
-        return GetIndexSize(stateCount) switch
+        return GetCompressedIndexSize(stateCount) switch
         {
             1 => Stage1<byte>(),
             2 => Stage1<ushort>(),
             _ => Stage1<uint>()
         };
 
-        LrStateMachine Stage1<TStateIndex>() => GetIndexSize(actionCount) switch
+        LrStateMachine Stage1<TStateIndex>() => GetCompressedIndexSize(actionCount) switch
         {
             1 => Stage2<TStateIndex, byte>(),
             2 => Stage2<TStateIndex, ushort>(),
             _ => Stage2<TStateIndex, uint>()
         };
 
-        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetIndexSize(gotoCount) switch
+        LrStateMachine Stage2<TStateIndex, TActionIndex>() => GetCompressedIndexSize(gotoCount) switch
         {
             1 => Stage3<TStateIndex, TActionIndex, byte>(),
             2 => Stage3<TStateIndex, TActionIndex, ushort>(),
             _ => Stage3<TStateIndex, TActionIndex, uint>()
         };
 
-        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => GetIndexSize(eofActionCount) switch
+        LrStateMachine Stage3<TStateIndex, TActionIndex, TGotoIndex>() => GetCompressedIndexSize(eofActionCount) switch
         {
             1 => Stage4<TStateIndex, TActionIndex, TGotoIndex, byte>(),
             2 => Stage4<TStateIndex, TActionIndex, TGotoIndex, ushort>(),
             _ => Stage4<TStateIndex, TActionIndex, TGotoIndex, uint>()
         };
 
-        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex>() => LrAction.GetEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage4<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex>() => GetLrActionEncodedSize(stateCount, grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, sbyte>(),
             2 => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, short>(),
             _ => Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, int>()
         };
 
-        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction>() => LrEndOfFileAction.GetEncodedSize(grammar.GrammarTables.ProductionRowCount) switch
+        LrStateMachine Stage5<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction>() => GetCompressedIndexSize(grammar.GrammarTables.ProductionRowCount) switch
         {
             1 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, byte>(),
             2 => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, ushort>(),
             _ => Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, uint>()
         };
 
-        LrStateMachine Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction>() => GrammarTables.GetIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
+        LrStateMachine Stage6<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction>() => GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount) switch
         {
             1 => Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, byte>(),
             2 => Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, ushort>(),
@@ -334,7 +312,7 @@ internal static class StateMachineUtilities
         };
 
         LrStateMachine Stage7<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol>()
-            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GrammarTables.GetIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
+            where TTokenSymbol : unmanaged, IComparable<TTokenSymbol> => GetCompressedIndexSize(grammar.GrammarTables.NonterminalRowCount) switch
             {
                 1 => Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, byte>(),
                 2 => Finish<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, ushort>(),

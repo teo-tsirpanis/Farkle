@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.Writers;
 
@@ -315,14 +316,14 @@ internal struct GrammarTablesWriter
         byte blobHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
         byte stringHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
 
-        byte tokenSymbolIndexSize = GrammarTables.GetIndexSize(tokenSymbolRows);
-        byte groupIndexSize = GrammarTables.GetIndexSize(groupRows);
-        byte groupNestingIndexSize = GrammarTables.GetIndexSize(groupNestingRows);
-        byte nonterminalIndexSize = GrammarTables.GetIndexSize(nonterminalRows);
-        byte productionIndexSize = GrammarTables.GetIndexSize(productionRows);
-        byte productionMemberIndexSize = GrammarTables.GetIndexSize(productionMemberRows);
+        byte tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolRows);
+        byte groupIndexSize = GetCompressedIndexSize(groupRows);
+        byte groupNestingIndexSize = GetCompressedIndexSize(groupNestingRows);
+        byte nonterminalIndexSize = GetCompressedIndexSize(nonterminalRows);
+        byte productionIndexSize = GetCompressedIndexSize(productionRows);
+        byte productionMemberIndexSize = GetCompressedIndexSize(productionMemberRows);
 
-        byte symbolCodedIndexSize = GrammarTables.GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
+        byte symbolCodedIndexSize = GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
 
         TableKinds presentTables = PresentTables;
         int presentTableCount = BitOperationsCompat.PopCount((ulong)presentTables);

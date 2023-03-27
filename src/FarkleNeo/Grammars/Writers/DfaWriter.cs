@@ -6,6 +6,7 @@ using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.Writers;
 
@@ -187,9 +188,9 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             writer.Write(_accepts.Count);
         }
 
-        byte stateTargetSize = StateMachineUtilities.GetDfaStateTargetIndexSize(StateCount);
-        byte edgeIndexSize = StateMachineUtilities.GetIndexSize(_edges.Count);
-        byte tokenSymbolSize = GrammarTables.GetIndexSize(tokenSymbolCount);
+        byte stateTargetSize = GetCompressedIndexSize(StateCount);
+        byte edgeIndexSize = GetCompressedIndexSize(_edges.Count);
+        byte tokenSymbolSize = GetCompressedIndexSize(tokenSymbolCount);
 
         foreach (int firstEdge in _firstEdges)
         {
@@ -210,7 +211,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
         if (HasConflicts)
         {
-            byte acceptIndexSize = StateMachineUtilities.GetIndexSize(_accepts.Count);
+            byte acceptIndexSize = GetCompressedIndexSize(_accepts.Count);
             foreach (int firstAccept in _firstAccepts)
             {
                 writer.WriteVariableSize((uint)firstAccept, acceptIndexSize);
@@ -241,7 +242,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             ThrowHelpers.ThrowInvalidOperationException("DFA has no default transitions.");
         }
 
-        byte stateTargetSize = StateMachineUtilities.GetDfaStateTargetIndexSize(StateCount);
+        byte stateTargetSize = GetCompressedIndexSize(StateCount);
         foreach (int state in _defaultTransitions)
         {
             writer.WriteVariableSize((uint)state, stateTargetSize);

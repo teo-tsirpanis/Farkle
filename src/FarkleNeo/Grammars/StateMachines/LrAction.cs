@@ -10,13 +10,6 @@ public readonly struct LrAction : IEquatable<LrAction>
 {
     internal int Value { get; }
 
-    internal static byte GetEncodedSize(int stateCount, int productionCount) => (stateCount, productionCount) switch
-    {
-        (<= sbyte.MaxValue - 1, <= -sbyte.MinValue) => sizeof(sbyte),
-        (<= short.MaxValue - 1, <= -short.MinValue) => sizeof(short),
-        _ => sizeof(int)
-    };
-
     internal LrAction(int value) => Value = value;
 
     /// <summary>

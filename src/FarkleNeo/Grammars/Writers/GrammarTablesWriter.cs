@@ -60,6 +60,14 @@ internal struct GrammarTablesWriter
         }
     }
 
+    [MemberNotNull(nameof(_tokenSymbols))]
+    private void ValidateHandle(TokenSymbolHandle handle, string parameterName) =>
+        ValidateHandle(handle.TableIndex, _tokenSymbols, parameterName);
+
+    [MemberNotNull(nameof(_nonterminals))]
+    private void ValidateHandle(NonterminalHandle handle, string parameterName) =>
+        ValidateHandle(handle.TableIndex, _nonterminals, parameterName);
+
     private static void ValidateHandle<T>(uint handle, [NotNull] List<T>? list, string parameterName)
     {
         if (handle == 0)
@@ -100,7 +108,7 @@ internal struct GrammarTablesWriter
             ThrowHelpers.ThrowInvalidOperationException("Cannot set grammar info more than once.");
         }
 
-        ValidateHandle(startSymbol.TableIndex, _nonterminals, nameof(startSymbol));
+        ValidateHandle(startSymbol, nameof(startSymbol));
 
         _grammarName = name;
         _grammarStartSymbol = startSymbol;
@@ -144,13 +152,13 @@ internal struct GrammarTablesWriter
     public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
     {
         ValidateRowCount(_groups, TableKind.Group);
-        ValidateHandle(container.TableIndex, _groups, nameof(container));
-        ValidateHandle(start.TableIndex, _groups, nameof(start));
+        ValidateHandle(container, nameof(container));
+        ValidateHandle(start, nameof(start));
         if (_pendingGroupStarts is null || !_pendingGroupStarts.Contains(start))
         {
             ThrowHelpers.ThrowArgumentException(nameof(start), "Cannot start group with this token symbol, either it has been used to start another group or its GroupStart flag is not set.");
         }
-        ValidateHandle(end.TableIndex, _groups, nameof(end));
+        ValidateHandle(end, nameof(end));
         ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(nestingCount);
 
         _pendingGroupStarts.Remove(start);
@@ -219,7 +227,7 @@ internal struct GrammarTablesWriter
         if (member.IsTokenSymbol)
         {
             var tokenSymbol = (TokenSymbolHandle)member;
-            ValidateHandle(tokenSymbol.TableIndex, _tokenSymbols, nameof(member));
+            ValidateHandle(tokenSymbol, nameof(member));
             if ((_tokenSymbols[(int)tokenSymbol.TableIndex - 1].Flags & TokenSymbolAttributes.Terminal) == 0)
             {
                 ThrowHelpers.ThrowArgumentException(nameof(member), "Token symbols must have the Terminal flag set.");
@@ -227,8 +235,7 @@ internal struct GrammarTablesWriter
         }
         else if (member.IsNonterminal)
         {
-            var nonterminal = (NonterminalHandle)member;
-            ValidateHandle(nonterminal.TableIndex, _nonterminals, nameof(member));
+            ValidateHandle((NonterminalHandle)member, nameof(member));
         }
         else
         {
@@ -261,13 +268,11 @@ internal struct GrammarTablesWriter
         ValidateRowCount(_specialNames, TableKind.SpecialName);
         if (symbol.IsTokenSymbol)
         {
-            var tokenSymbol = (TokenSymbolHandle)symbol;
-            ValidateHandle(tokenSymbol.TableIndex, _tokenSymbols, nameof(symbol));
+            ValidateHandle((TokenSymbolHandle)symbol, nameof(symbol));
         }
         else if (symbol.IsNonterminal)
         {
-            var nonterminal = (NonterminalHandle)symbol;
-            ValidateHandle(nonterminal.TableIndex, _nonterminals, nameof(symbol));
+            ValidateHandle((NonterminalHandle)symbol, nameof(symbol));
         }
         else
         {

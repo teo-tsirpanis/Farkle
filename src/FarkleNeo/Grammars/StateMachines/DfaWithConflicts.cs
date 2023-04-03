@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol, TAccept> : DfaImplementationBase<TChar, TState, TEdge> where TChar : unmanaged, IComparable<TChar>
+internal unsafe sealed class DfaWithConflicts<TChar, TIndex> : DfaImplementationBase<TChar, TIndex> where TChar : unmanaged, IComparable<TChar>
 {
     private readonly int _acceptCount;
 
@@ -17,20 +16,18 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
 
     public DfaWithConflicts(Grammar grammar, int stateCount, int edgeCount, int acceptCount) : base(grammar, stateCount, edgeCount, true)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(acceptCount) == sizeof(TAccept));
-
         _acceptCount = acceptCount;
     }
 
-    public static DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol, TAccept> Create(Grammar grammar, int stateCount, int edgeCount, int acceptCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
+    public static DfaWithConflicts<TChar, TIndex> Create(Grammar grammar, int stateCount, int edgeCount, int acceptCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
     {
         int expectedSize =
             sizeof(uint) * 3
-            + stateCount * sizeof(TEdge)
+            + stateCount * sizeof(TIndex)
             + edgeCount * sizeof(TChar) * 2
-            + edgeCount * sizeof(TState)
-            + stateCount * sizeof(TAccept)
-            + acceptCount * sizeof(TTokenSymbol);
+            + edgeCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex)
+            + acceptCount * sizeof(TIndex);
 
         if (dfa.Length != expectedSize)
         {
@@ -38,15 +35,15 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
         }
 
         int firstEdgeBase = dfa.Offset + sizeof(uint) * 3;
-        int rangeFromBase = firstEdgeBase + stateCount * sizeof(TEdge);
+        int rangeFromBase = firstEdgeBase + stateCount * sizeof(TIndex);
         int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
         int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
-        int firstAcceptBase = edgeTargetBase + edgeCount * sizeof(TState);
-        int acceptBase = firstAcceptBase + stateCount * sizeof(TAccept);
+        int firstAcceptBase = edgeTargetBase + edgeCount * sizeof(TIndex);
+        int acceptBase = firstAcceptBase + stateCount * sizeof(TIndex);
 
         if (dfaDefaultTransitions.Length > 0)
         {
-            if (dfaDefaultTransitions.Length != stateCount * sizeof(TState))
+            if (dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
             {
                 ThrowHelpers.ThrowInvalidDfaDataSize();
             }
@@ -65,7 +62,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
     }
 
     private int ReadFirstAccept(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize<TAccept>(FirstAcceptBase + state * sizeof(TAccept));
+        (int)grammarFile.ReadUIntVariableSize<TIndex>(FirstAcceptBase + state * sizeof(TIndex));
 
     private (int Offset, int Count) GetAcceptSymbolBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
@@ -75,7 +72,7 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
     }
 
     private TokenSymbolHandle GetAcceptSymbolAtUnsafe(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + index * sizeof(TTokenSymbol)));
+        new(grammarFile.ReadUIntVariableSize<TIndex>(AcceptBase + index * sizeof(TIndex)));
 
     internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)
     {

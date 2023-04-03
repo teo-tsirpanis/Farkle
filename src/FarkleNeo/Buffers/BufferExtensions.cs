@@ -58,17 +58,18 @@ internal static class BufferExtensions
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
 
     // Signed integers of variable size must be read with this method to ensure they are sign-extended.
+    // The generic type must be unsigned.
     public static int ReadIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
     {
-        if (typeof(T) == typeof(sbyte))
+        if (typeof(T) == typeof(byte))
         {
             return (sbyte)buffer[index];
         }
-        if (typeof(T) == typeof(short))
+        if (typeof(T) == typeof(ushort))
         {
             return (short)buffer.ReadUInt16(index);
         }
-        if (typeof(T) == typeof(int))
+        if (typeof(T) == typeof(uint))
         {
             return buffer.ReadInt32(index);
         }

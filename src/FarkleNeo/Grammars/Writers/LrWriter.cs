@@ -202,25 +202,19 @@ internal sealed class LrWriter
             writer.Write(_eofActions.Count);
         }
 
-        byte stateIndexSize = GetCompressedIndexSize(StateCount);
-        byte actionIndexSize = GetCompressedIndexSize(_actions.Count);
-        byte actionSize = GetLrActionEncodedSize(StateCount, productionCount);
-        byte eofActionSize = GetCompressedIndexSize(productionCount);
-        byte gotoIndexSize = GetCompressedIndexSize(_gotos.Count);
-        byte nonterminalIndexSize = GetCompressedIndexSize(nonterminalCount);
-        byte tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolCount);
+        byte indexSize = GetLrIndexSize(StateCount, _actions.Count, _gotos.Count, _eofActions.Count, tokenSymbolCount, nonterminalCount, productionCount);
 
         foreach (int firstAction in _firstActions)
         {
-            writer.WriteVariableSize((uint)firstAction, actionIndexSize);
+            writer.WriteVariableSize((uint)firstAction, indexSize);
         }
         foreach ((uint terminal, _) in _actions)
         {
-            writer.WriteVariableSize(terminal, tokenSymbolIndexSize);
+            writer.WriteVariableSize(terminal, indexSize);
         }
         foreach ((_, int action) in _actions)
         {
-            writer.WriteVariableSize(action, actionSize);
+            writer.WriteVariableSize(action, indexSize);
         }
         if (HasConflicts)
         {
@@ -231,7 +225,7 @@ internal sealed class LrWriter
             }
             foreach (uint eofAction in _eofActions)
             {
-                writer.WriteVariableSize(eofAction, eofActionSize);
+                writer.WriteVariableSize(eofAction, indexSize);
             }
         }
         else
@@ -242,20 +236,20 @@ internal sealed class LrWriter
                 int nextFirstEofAction = i < _firstEofActions.Length - 1 ? _firstEofActions[i + 1] : _eofActions.Count;
 
                 uint action = firstEofAction < nextFirstEofAction ? _eofActions[firstEofAction] : LrEndOfFileAction.Error.Value;
-                writer.WriteVariableSize(action, eofActionSize);
+                writer.WriteVariableSize(action, indexSize);
             }
         }
         foreach (int firstGoto in _firstGotos)
         {
-            writer.WriteVariableSize((uint)firstGoto, gotoIndexSize);
+            writer.WriteVariableSize((uint)firstGoto, indexSize);
         }
         foreach ((uint nonterminal, _) in _gotos)
         {
-            writer.WriteVariableSize(nonterminal, nonterminalIndexSize);
+            writer.WriteVariableSize(nonterminal, indexSize);
         }
         foreach ((_, int state) in _gotos)
         {
-            writer.WriteVariableSize((uint)state, stateIndexSize);
+            writer.WriteVariableSize((uint)state, indexSize);
         }
     }
 }

@@ -37,5 +37,21 @@ namespace Farkle.Grammars
             (<= short.MaxValue - 1, <= -short.MinValue) => sizeof(short),
             _ => sizeof(int)
         };
+
+        public static byte GetDfaIndexSize(int stateCount, int edgeCount, int conflictAcceptCount, int tokenSymbolCount) =>
+            Math.Max(GetCompressedIndexSize(stateCount),
+                Math.Max(GetCompressedIndexSize(edgeCount),
+                Math.Max(GetCompressedIndexSize(conflictAcceptCount),
+                GetCompressedIndexSize(tokenSymbolCount))));
+
+        public static byte GetLrIndexSize(int stateCount, int actionCount, int gotoCount, int conflictEofActionCount, int tokenSymbolCount, int nonterminalCount, int productionCount) =>
+            Math.Max(GetCompressedIndexSize(stateCount),
+                Math.Max(GetCompressedIndexSize(actionCount),
+                Math.Max(GetCompressedIndexSize(gotoCount),
+                Math.Max(GetCompressedIndexSize(conflictEofActionCount),
+                Math.Max(GetLrActionEncodedSize(stateCount, productionCount),
+                Math.Max(GetCompressedIndexSize(tokenSymbolCount),
+                Math.Max(GetCompressedIndexSize(nonterminalCount),
+                GetCompressedIndexSize(productionCount))))))));
     }
 }

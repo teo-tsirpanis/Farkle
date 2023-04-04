@@ -55,12 +55,9 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TIndex>(Grammar grammar,
         int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
         int acceptBase = edgeTargetBase + edgeCount * sizeof(TIndex);
 
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
         {
-            if (dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
         return new(grammar, stateCount, edgeCount)

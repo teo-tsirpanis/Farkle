@@ -41,12 +41,9 @@ internal unsafe sealed class DfaWithConflicts<TChar, TIndex> : DfaImplementation
         int firstAcceptBase = edgeTargetBase + edgeCount * sizeof(TIndex);
         int acceptBase = firstAcceptBase + stateCount * sizeof(TIndex);
 
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
         {
-            if (dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
         return new(grammar, stateCount, edgeCount, acceptCount)

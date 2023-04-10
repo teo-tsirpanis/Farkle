@@ -84,10 +84,10 @@ public abstract class Grammar
         string errorMessage = header.FileType switch
         {
             GrammarFileType.Farkle when header.VersionMajor > GrammarConstants.VersionMajor => Resources.Grammar_TooNewFormat,
-            GrammarFileType.Farkle => "The grammar's format version is too old for this version of Farkle to support.",
-            GrammarFileType.EgtNeo => "EGTneo grammar files produced by Farkle 6.x are not supported.",
-            GrammarFileType.GoldParser => "Grammar files produced by GOLD Parser must be opened with the Grammar.CreateFromGoldParserGrammar method.",
-            _ => "Unrecognized file format."
+            GrammarFileType.Farkle => Resources.Grammar_TooOldFormat,
+            GrammarFileType.EgtNeo => Resources.Grammar_EgtNeoNotSupported,
+            GrammarFileType.GoldParser => Resources.Grammar_GoldParserMustConvert,
+            _ => Resources.Grammar_UnrecognizedFormat
         };
         ThrowHelpers.ThrowNotSupportedException(errorMessage);
     }

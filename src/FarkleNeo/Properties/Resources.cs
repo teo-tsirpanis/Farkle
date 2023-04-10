@@ -31,4 +31,14 @@ internal static class Resources
     }
 
     public static string Grammar_TooNewFormat => GetResourceString(nameof(Grammar_TooNewFormat));
+
+    public static string Grammar_TooOldFormat => GetResourceString(nameof(Grammar_TooOldFormat));
+
+    public static string Grammar_EgtNeoNotSupported=> GetResourceString(nameof(Grammar_EgtNeoNotSupported));
+
+    public static string Grammar_GoldParserMustConvert=> GetResourceString(nameof(Grammar_GoldParserMustConvert));
+
+    public static string Grammar_UnrecognizedFormat => GetResourceString(nameof(Grammar_UnrecognizedFormat));
+
+    public static string Grammar_Farkle7MustOpen => GetResourceString(nameof(Grammar_Farkle7MustOpen));
 }

@@ -16,17 +16,17 @@ internal static class GoldGrammarReader
         switch (header)
         {
             case GrammarConstants.HeaderMagicString:
-                errorMessage = "Grammar files produced by Farkle 7 and above must be opened with the Grammar.Create method.";
+                errorMessage = Resources.Grammar_Farkle7MustOpen;
                 break;
             case GrammarConstants.EgtNeoHeaderString:
-                errorMessage = "EGTneo grammar files produced by Farkle 6.x are not supported.";
+                errorMessage = Resources.Grammar_EgtNeoNotSupported;
                 break;
             case GrammarConstants.EgtHeaderString:
                 return true;
             case GrammarConstants.CgtHeaderString:
                 return false;
             default:
-                errorMessage = "Unrecognized file format.";
+                errorMessage = Resources.Grammar_UnrecognizedFormat;
                 break;
         }
 

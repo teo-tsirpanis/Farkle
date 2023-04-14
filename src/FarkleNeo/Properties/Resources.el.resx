@@ -19,15 +19,15 @@
     <value>Η έκδοση μορφής της γραμματικής είναι πολύ παλιά για να την υποστηρίξει αυτή η έκδοση του Farkle.</value>
   </data>
   <data name="Grammar_EgtNeoNotSupported" xml:space="preserve">
-    <value>Γραμματικές από αρχεία μορφής EGTneo που παρήχθησαν από το Farkle 6.x δεν υποστηρίζονται.</value>
+    <value>Γραμματικές μορφής EGTneo που παρήχθησαν από το Farkle 6.x δεν υποστηρίζονται.</value>
   </data>
   <data name="Grammar_GoldParserMustConvert" xml:space="preserve">
-    <value>Γραμματικές από αρχεία που παρήχθησαν από το GOLD Parser πρέπει να ανοιχτούν με τη μέθοδο Grammar.CreateFromGoldParserGrammar.</value>
+    <value>Γραμματικές που παρήχθησαν από το GOLD Parser πρέπει να ανοιχτούν με τη μέθοδο Grammar.CreateFromGoldParserGrammar.</value>
   </data>
   <data name="Grammar_UnrecognizedFormat" xml:space="preserve">
     <value>Μη αναγνωρισμένη μορφή αρχείου.</value>
   </data>
   <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
-    <value>Γραμματικές από αρχεία που παρήχθησαν από το Farkle 7 και πάνω πρέπει να ανοιχτούν με τη μέθοδο Grammar.Create.</value>
+    <value>Γραμματικές που παρήχθησαν από το Farkle 7 και πάνω πρέπει να ανοιχτούν με τη μέθοδο Grammar.Create.</value>
   </data>
 </root>

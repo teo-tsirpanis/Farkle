@@ -9,13 +9,13 @@ insert_final_newline = true
 tab_width = 4
 trim_trailing_whitespace = true
 
-[*.{{*proj,props,targets},nuspec,config}]
+[*.{{*proj,props,targets},nuspec,config,resx,xml}]
 indent_size = 2
 
 [*.yml]
 indent_size = 2
 
-[*.json]
+[*.{json,resx}]
 # Some JSON files are edited by tools and do not have a trailing newline.
 insert_final_newline = unset
 

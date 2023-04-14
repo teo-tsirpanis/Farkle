@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Grammar_TooNewFormat" xml:space="preserve">
+    <value>The grammar's format version is too new for this version of Farkle to support.</value>
+  </data>
+  <data name="Grammar_TooOldFormat" xml:space="preserve">
+    <value>The grammar's format version is too old for this version of Farkle to support.</value>
+  </data>
+  <data name="Grammar_EgtNeoNotSupported" xml:space="preserve">
+    <value>EGTneo grammar files produced by Farkle 6.x are not supported.</value>
+  </data>
+  <data name="Grammar_GoldParserMustConvert" xml:space="preserve">
+    <value>Grammar files produced by GOLD Parser must be opened with the Grammar.CreateFromGoldParserGrammar method.</value>
+  </data>
+  <data name="Grammar_UnrecognizedFormat" xml:space="preserve">
+    <value>Unrecognized file format.</value>
+  </data>
+  <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
+    <value>Grammar files produced by Farkle 7 and above must be opened with the Grammar.Create method.</value>
+  </data>
+</root>

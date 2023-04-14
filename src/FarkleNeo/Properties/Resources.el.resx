@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Grammar_TooNewFormat" xml:space="preserve">
+    <value>Η έκδοση μορφής της γραμματικής είναι πολύ νέα για να την υποστηρίξει αυτή η έκδοση του Farkle.</value>
+  </data>
+  <data name="Grammar_TooOldFormat" xml:space="preserve">
+    <value>Η έκδοση μορφής της γραμματικής είναι πολύ παλιά για να την υποστηρίξει αυτή η έκδοση του Farkle.</value>
+  </data>
+  <data name="Grammar_EgtNeoNotSupported" xml:space="preserve">
+    <value>Γραμματικές μορφής EGTneo που παρήχθησαν από το Farkle 6.x δεν υποστηρίζονται.</value>
+  </data>
+  <data name="Grammar_GoldParserMustConvert" xml:space="preserve">
+    <value>Γραμματικές που παρήχθησαν από το GOLD Parser πρέπει να ανοιχτούν με τη μέθοδο Grammar.CreateFromGoldParserGrammar.</value>
+  </data>
+  <data name="Grammar_UnrecognizedFormat" xml:space="preserve">
+    <value>Μη αναγνωρισμένη μορφή αρχείου.</value>
+  </data>
+  <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
+    <value>Γραμματικές που παρήχθησαν από το Farkle 7 και πάνω πρέπει να ανοιχτούν με τη μέθοδο Grammar.Create.</value>
+  </data>
+</root>

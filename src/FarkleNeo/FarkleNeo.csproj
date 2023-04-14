@@ -25,6 +25,7 @@
     <PackageReference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />
     <EmbeddedResource Include="ILLink.Substitutions.xml" LogicalName="ILLink.Substitutions.xml" />
   </ItemGroup>
 </Project>

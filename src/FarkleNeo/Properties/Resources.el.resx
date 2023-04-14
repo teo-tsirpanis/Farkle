@@ -30,4 +30,7 @@
   <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
     <value>Γραμματικές που παρήχθησαν από το Farkle 7 και πάνω πρέπει να ανοιχτούν με τη μέθοδο Grammar.Create.</value>
   </data>
+  <data name="Grammar_FailedToConvert" xml:space="preserve">
+    <value>Αποτυχία μετατροπής της γραμματικής.</value>
+  </data>
 </root>

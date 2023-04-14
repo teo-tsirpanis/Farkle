@@ -30,4 +30,7 @@
   <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
     <value>Grammar files produced by Farkle 7 and above must be opened with the Grammar.Create method.</value>
   </data>
+  <data name="Grammar_FailedToConvert" xml:space="preserve">
+    <value>Failed to convert the grammar.</value>
+  </data>
 </root>

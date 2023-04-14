@@ -41,4 +41,6 @@ internal static class Resources
     public static string Grammar_UnrecognizedFormat => GetResourceString(nameof(Grammar_UnrecognizedFormat));
 
     public static string Grammar_Farkle7MustOpen => GetResourceString(nameof(Grammar_Farkle7MustOpen));
+
+    public static string Grammar_FailedToConvert => GetResourceString(nameof(Grammar_FailedToConvert));
 }

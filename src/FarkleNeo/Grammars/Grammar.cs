@@ -178,11 +178,12 @@ public abstract class Grammar
         {
             data = GoldGrammarConverter.Convert(grammar);
         }
-        catch (Exception e) when (e is not (NotSupportedException or InvalidDataException))
+        catch (Exception e)
         {
-            // Let's provide a unified experience for any stray exceptions that might be thrown.
+            // Let's provide a unified experience for any exceptions
+            // that might be thrown, with a localized message.
             // We cover only Convert to avoid wrapping I/O errors.
-            throw new InvalidDataException("Failed to convert the grammar.", e);
+            throw new InvalidDataException(Resources.Grammar_FailedToConvert, e);
         }
         return Create(data);
     }

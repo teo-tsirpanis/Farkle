@@ -26,6 +26,249 @@ Farkle 7's parser API will employ a _push-based_ model. Previous versions of Far
 
 This model allows us to suspend the parser between invocations, and use any means to read the characters. Reading them with an `await textReader.ReadAsync()` becomes surprisingly simple, compared to a pull-based model, where the entire parsing pipeline would have to support async, penalizing all non-async use cases.
 
+## The code
+
+Let's get into the code. The following API shapes are a general idea and not final. Additional members might be proposed in separate design documents.
+
+### State management
+
+We start by defining a type to keep the state of a parsing operation and provide a read-only view of it to external code. It will be passed to transformers by reference and replace the existing `Farkle.ITransformerContext` interface.
+
+```csharp
+namespace Farkle;
+
+public struct ParserState
+{
+    public readonly Position CurrentPosition { get; }
+    public readonly long TotalCharactersRead { get; }
+
+    // Extensibility points for user code.
+    public void SetValue(object key, object value);
+    public readonly bool TryGetValue(object key, [MaybeNullWhen(false)] out object value);
+    public bool RemoveValue(object key);
+}
+```
+
+_All_ state of a parser (with a small exception later) will be held in the `ParserState`. All other parser objects (tokenizers, semantic providers) will be stateless and singletons. This will both simplify things and improve performance; no more creating a custom tokenizer every time we parse something.
+
+`ParserState` has only one position property, `CurrentPosition`. It is equivalent to `ITransformerContext.StartPosition` in Farkle 6. A replacement for `ITransformerContext.EndPosition` will not be provided. This will simplify some things around position tracking and updating these two values.
+
+The proposed extensibility points are superior to the existing `ITransformerContext.ObjectStore` property. Different components of a parser cannot conflict because the keys are arbitrary objects, and there is no API to clear or enumerate all values. If you have a `private static readonly object MyKey = new();` and you use it as a key, you can be sure that no other component will ever touch it. `ObjectStore` could be shimmed on top of these objects if there is a demand for it.
+
+### Reading input
+
+A `ParserState` can be manipulated with a `ParserInputReader`, the replacement of Farkle 6's `CharStream`. It contains a reference to a `ParserState` and a read-only span of characters. The type of characters is generic to enable supporting byte parsers in the future.
+
+```csharp
+namespace Farkle;
+
+public ref struct ParserInputReader<TChar>
+{
+#if NET7_0_OR_GREATER
+    // Takes advantage of .NET 7's ref fields. Could be exposed in .NET Standard 2.1+ but it is
+    // not certain that the ref safety rules would be enforced if an older SDK is being used.
+    // Still we can internally make use of it.
+    public ParserInputReader(ref ParserState state, ReadOnlySpan<TChar> input, bool isFinal = true);
+#endif
+
+    // This is our only choice for the frameworks that do not support ref fields.
+    public ParserInputReader(IParserStateBox stateBox, ReadOnlySpan<TChar> input, bool isFinal = true);
+
+    public readonly ReadOnlySpan<TChar> RemainingCharacters { get; }
+
+    // Whether this is the final block of input.
+    public readonly bool IsFinalBlock { get; }
+
+    public ref ParserState State { get; }
+
+    // Parser implementations might store additional state in a custom implementation of IParserStateBox to avoid
+    // the allocation overhead of ParserState's extensibility points, so it makes sense to expose as a property.
+    // This property will be null if the reader was created with a direct reference to the state.
+    public readonly IParserStateBox? StateBox { get; }
+
+    public void AdvanceBy(int count);
+}
+
+public interface IParserStateBox
+{
+    ref ParserState State { get; }
+}
+
+#if NET7_0_OR_GREATER
+[Obsolete("Use a ParserState and pass it to the ParserInputReader's constructor by reference instead.")]
+#endif
+public sealed class ParserStateBox : IParserStateBox
+{
+    public ParserStateBox();
+
+    public ref ParserState State { get; }
+}
+```
+
+In frameworks that do not support ref fields, we have to use an interface and put the `ParserState` on the heap. A `ParserStateBox` class is provided for convenience and will be marked as obsolete on .NET 7.0+ to encourage the more efficient alternative.
+
+The `AdvanceBy` method will update the `TokenStartPosition` and `TotalCharactersRead` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
+
+### The parser
+
+And now we get to the parser itself. We first have to define a type to represent the result of a parsing operation. It is a discriminated union with two cases: success and error. The success value is generic, while the error value is an `object`, for simplicity.
+
+```csharp
+namespace Farkle;
+
+public readonly struct ParserResult<T>
+{
+    public bool IsSuccess { get; }
+    public bool IsError { get; }
+
+    // Will throw if IsSuccess is false.
+    public T Value { get; }
+    // Will throw if IsError is false.
+    public object Error { get; }
+}
+
+public static class ParserResult
+{
+    public static Result<T> CreateSuccess<T>(T value);
+    public static Result<T> CreateError<T>(object error);
+}
+
+// Holds whether the parser has completed, and its result.
+// We can't put that inside ParserState because the result type can
+// be anything and we can neither make it generic or box the result.
+public struct ParserCompletionState<T>
+{
+    public readonly bool IsCompleted { get; }
+    // Will throw if IsCompleted is false.
+    public readonly ParserResult<T> Result { get; }
+
+    // Will throw if IsCompleted is true.
+    public void SetResult(ParserResult<T> result);
+}
+
+public static class ParserCompletionStateExtensions
+{
+    public static void SetSuccess<T>(this ref ParserCompletionState<T> state, T value);
+    public static void SetError<T>(this ref ParserCompletionState<T> state, object error);
+    // Used to easily implement the non-generic parser interface.
+    public static void CopyTo<T>(this in ParserCompletionState<T> state, ref ParserCompletionState<object> other);
+}
+
+public interface IParser<TChar> : IServiceProvider
+{
+    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<object?> completionState);
+}
+
+public interface IParser<TChar, T> : IParser<TChar>
+{
+    // A default implementation of the non-generic IParser interface will be provided on supported frameworks.
+    void IParser<TChar>.Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<object?> completionState) => …;
+    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
+}
+```
+
+The `IParser.Run` methods encapsulate the parser logic. They take a reference to a `ParserInputReader` to read and advance the input characters and persist any state, and a reference to a `ParserCompletionState` to signal that a parsing operation has completed. If `Run` returns without setting the completion state, it means that the parser needs more characters. The amount of characters that must be kept in memory can be determined by comparing the `RemainingCharacters` property before and after the call to `Run`.
+
+Parser objects also implement `IServiceProvider`, to allow them to expose arbitrary custom features. Default services will be described in a later section.
+
+### Parsing streaming input
+
+The `IParser` interfaces themselves support parsing streaming input but the responsibility to manage the input buffers falls to the user. To make this easier, Farkle provides the `ParserStateContext` classes that greatly simplify parsing streaming input.
+
+```csharp
+namespace Farkle;
+
+public class ParserStateContextOptions
+{
+    public int InitialBufferSize { get; init; }
+}
+
+// The base of parser state contexts. Allows uniformly performing all operations but getting the result.
+public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter<TChar>
+{
+    // User code must inherit from ParserStateContext<TChar, T> for some T instead.
+    private protected ParserStateContext(ParserStateContextOptions? options = null);
+
+    public ref ParserState State { get; }
+
+    // These members are overridden by ParserStateContext<TChar, T>.
+    // Whether the parsing operation has completed.
+    public abstract bool IsCompleted { get; }
+    // Performs a parsing step.
+    public abstract void Run();
+    // Resets the context's state to allow reusing it for another parsing operation.
+    // Also returns any pooled buffers to the array pool.
+    public virtual void Reset();
+
+    // IBufferWriter<TChar> implementation.
+    // Gets a span/memory to which new characters can be written.
+    public Memory<TChar> GetMemory(int sizeHint = 0);
+    public Span<TChar> GetSpan(int sizeHint = 0);
+    // Signals that new characters have been written.
+    public void Advance(int count);
+
+    // Whether CompleteInput has been called.
+    public bool IsInputCompleted { get; }
+    // Signals that the input has ended.
+    public void CompleteInput();
+}
+
+public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
+{
+    protected ParserStateContext(ParserStateContextOptions? options = null);
+
+    // These members cannot be overridden by user code.
+    public sealed override bool IsCompleted { get; }
+    public sealed override void Run();
+    public sealed override void Reset();
+
+    // The result of the parsing operation. Will throw if IsCompleted is false.
+    public ParserResult<T> Result { get; }
+
+    // These members can be overridden by user code.
+    // Performs any additional resetting logic.
+    protected virtual void OnReset() {}
+    protected abstract void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T?> completionState);
+}
+
+public static class ParserStateContext
+{
+    public static ParserStateContext<TChar, object?> Create<TChar>(IParser<TChar> parser, ParserStateContextOptions? options = null);
+    public static ParserStateContext<TChar, T> Create<TChar, T>(IParser<TChar, T> parser, ParserStateContextOptions? options = null);
+}
+```
+
+A `ParserStateContext` encapsulates a parsing operation on streaming input. It contains an `IParser<TChar,T>` that parses the text, a `ParserState` to keep track of the parser's state, a `ParserCompletionState<T>` to keep track if parsing has finished, a buffer to store the input characters, and the logic to make them all work together. It implements the `IBufferWriter<TChar>` interface to allow writing characters very efficiently and with zero copies.
+
+Parsing streaming input with a `ParserStateContext` can be done like this:
+
+```csharp
+public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reader)
+{
+    ParserStateContext<char, T> context = ParserStateContext.Create(parser);
+    while (!context.IsCompleted)
+    {
+        if (!context.IsInputCompleted)
+        {
+            ReadOnlySpan<char> buffer = context.GetSpan();
+            int charsRead = reader.Read(buffer);
+            if (charsRead == 0)
+            {
+                context.CompleteInput();
+            }
+            else
+            {
+                context.Advance(charsRead);
+            }
+        }
+        context.Run();
+    }
+    ParserResult<T> result = context.Result;
+    context.Reset();
+    return result;
+}
+```
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

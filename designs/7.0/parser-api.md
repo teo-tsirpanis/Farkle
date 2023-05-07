@@ -305,6 +305,92 @@ The following things changed since Farkle 6:
 
 Another difference is that in Farkle 7 the semantic providers return values of type `SemanticValue` instead of `object`. `SemanticValue` is a type that wraps an arbitrary value and can support storing  small value types without boxing, with the drawback that getting the value from a `SemanticValue` requires knowing a priori the value's type. Farkle's own semantic providers always know the type but using `SemanticValue` in general-purpose code needs caution; `SemanticValue.CreateUnsafe<string>("Hello").GetUnsafe<int>()` is undefined behavior and that's the reason for the `Unsafe` suffix in the method names.
 
+### Predefined services
+
+The initial release of Farkle 7 will provide the following parser services. All are optional.
+
+#### Getting the grammar of a parser
+
+The `IGrammarProvider` service interface allows getting the grammar of a parser, if the parser is backed by one (it doesn't have to). For simplicity the `Grammar` object also implements that interface.
+
+```csharp
+namespace Farkle.Grammars;
+
+public interface IGrammarProvider
+{
+    Grammar GetGrammar();
+}
+
+public abstract class Grammar : IGrammarProvider
+{
+    public Grammar GetGrammar() => this;
+}
+
+public static class GrammarProviderExtensions
+{
+    public static Grammar? GetGrammar(this IServiceProvider serviceProvider);
+}
+```
+
+#### Custom parser state contexts
+
+To avoid allocating a parser state dictionary, the `ParserStateContext` class supports being subclassed, to store essential state in its descendants. The `IParserStateContextFactory` service interface provides an extensibility point for parsers to create their own state contexts. It will be used by the `ParserStateContext.Create` methods if available.
+
+```csharp
+namespace Farkle.Parser;
+
+public interface IParserStateContextFactory<TChar>
+{
+    ParserStateContext<TChar, object?> Create(ParserStateContextOptions? options = null);
+}
+
+public interface IParserStateContextFactory<TChar, T> : IParserStateContextFactory<TChar>
+{
+    // A default implementation of the base interface will be provided on supported frameworks.
+    ParserStateContext<TChar, object?> IParserStateContextFactory<TChar>.Create(ParserStateContextOptions? options = null) => …;
+    ParserStateContext<TChar, T> Create(ParserStateContextOptions? options = null);
+}
+```
+
+#### Intervening in the parser state machine
+
+> **Warning**
+> This service interface is not certain to ship in Farkle 7.0.0 due to unaddressed technical questions.
+
+The usual way to advance the state of a parser is by feeding it with more characters. The characters will be processed by the tokenizer, the tokenizer will emit a token, and the LR parser will read the tokens and advance its state machine accordingly. We want to support bypassing the first stage and directly inject tokens into the parser's state machine. The `IParserStateMachineController` service interface allows doing that.
+
+```csharp
+namespace Farkle.Parser;
+
+public interface IParserStateMachineController
+{
+    // The number of possible states in the parser's state machine.
+    int StateCount { get; }
+    // Returns an array of the names of the terminals expected by the parser in the given state.
+    // A null value in the array indicates that the parser expects the end of input.
+    ImmutableArray<string?> GetExpectedTerminals(int stateIndex);
+    // Returns a handle to the grammar's symbol with the given special name.
+    EntityHandle GetSymbolBySpecialName(string name, bool throwIfNotFound = false);
+
+    // Returns whether the parser has been suspended in the middle of a token.
+    // In that case injecting tokens is not allowed.
+    bool IsTokenizing(ref ParserState state);
+    // Returns the state the parser's state machine is in.
+    int GetCurrentState(ref ParserState state);
+    // Injects a token into the parser's state machine, performing the necessary
+    // shift/reduce/goto actions.
+    // Returns true if it succeeded, and false if either the parser is suspended in
+    // the middle of a token, or the symbol is not expected in the current state.
+    bool TryAddToken(ref ParserState state, EntityHandle symbol, SemanticValue value);
+}
+```
+
+The first three methods provide general information about the parser's state machine and do not require a parsing operation. `GetSymbolBySpecialName` is equivalent to `Grammar.GetSymbolBySpecialName` but it does not require an entire grammar.
+
+TODO: Write about the other three methods. There is a complication with `TryAddToken` on nonterminals: it will always perform a single goto from the current state; it will sometimes reject injections that intuitively make sense. For example in the grammar `<S> ::= <A> <B>; A ::= <>; <B> ::= "x"`, you cannot inject a `B` nonterminal if you are at the beginning.
+
+TODO: What would happen if we inject a token in the middle of tokenizing? It might fail in some cases and doesn't make sense; we have to somehow block it.
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

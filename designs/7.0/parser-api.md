@@ -35,7 +35,7 @@ Let's get into the code. The following API shapes are a general idea and not fin
 We start by defining a type to keep the state of a parsing operation and provide a read-only view of it to external code. It will be passed to transformers by reference and replace the existing `Farkle.ITransformerContext` interface.
 
 ```csharp
-namespace Farkle;
+namespace Farkle.Parser;
 
 public struct ParserState
 {
@@ -64,7 +64,7 @@ To avoid the allocation overhead of the extensibility points, the `Context` prop
 A `ParserState` can be manipulated with a `ParserInputReader`, the replacement of Farkle 6's `CharStream`. It contains a reference to a `ParserState` and a read-only span of characters. The type of characters is generic to enable supporting byte parsers in the future.
 
 ```csharp
-namespace Farkle;
+namespace Farkle.Parser;
 
 public ref struct ParserInputReader<TChar>
 {
@@ -113,7 +113,7 @@ The `AdvanceBy` method will update the `TokenStartPosition` and `TotalCharacters
 And now we get to the parser itself. We first have to define a type to represent the result of a parsing operation. It is a discriminated union with two cases: success and error. The success value is generic, while the error value is an `object`, for simplicity.
 
 ```csharp
-namespace Farkle;
+namespace Farkle.Parser;
 
 public readonly struct ParserResult<T>
 {
@@ -175,7 +175,7 @@ Parser objects also implement `IServiceProvider`, to allow them to expose arbitr
 The `IParser` interfaces themselves support parsing streaming input but the responsibility to manage the input buffers falls to the user. To make this easier, Farkle provides the `ParserStateContext` classes that greatly simplify parsing streaming input.
 
 ```csharp
-namespace Farkle;
+namespace Farkle.Parser;
 
 public class ParserStateContextOptions
 {
@@ -274,7 +274,7 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
 Semantic analysis (called _post-processing_ in earlier versions of Farkle) is the process of converting a parse tree to an object meaningful for the application. This behavior is controlled by the `ISemanticProvider` interfaces.
 
 ```csharp
-namespace Farkle;
+namespace Farkle.Parser.SemanticAnalysis;
 
 public readonly struct SemanticValue
 {

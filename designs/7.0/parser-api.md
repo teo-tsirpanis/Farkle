@@ -269,6 +269,42 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
 }
 ```
 
+### Semantic analysis
+
+Semantic analysis (called _post-processing_ in earlier versions of Farkle) is the process of converting a parse tree to an object meaningful for the application. This behavior is controlled by the `ISemanticProvider` interfaces.
+
+```csharp
+namespace Farkle;
+
+public readonly struct SemanticValue
+{
+    public static SemanticValue CreateUnsafe<T>(T value);
+
+    public T GetUnsafe<T>();
+}
+
+public interface ITransformer<TChar>
+{
+    SemanticValue Transform(ref ParserState state, TokenSymbolHandle terminal, ReadOnlySpan<TChar> data);
+}
+
+public interface IFuser
+{
+    SemanticValue Fuse(ref ParserState state, ProductionHandle production, Span<SemanticValue> children);
+}
+
+public interface ISemanticProvider<TChar, out T> : ITransformer<TChar>, IFuser {}
+```
+
+The following things changed since Farkle 6:
+
+1. `PostProcessor` was renamed to `ISemanticProvider`. This adheres to the .NET naming conventions and makes the name more descriptive. The `Transform` and `Fuse` methods were not renamed.
+2. The `Transform` and `Fuse` methods were split to two interfaces, `ITransformer<TChar>` and `IFuser`. This helps with separation of concerns and does not require having a character type to run the fuser. The `ISemanticProvider` interface is now a marker interface that combines the two, and adds a covariant generic parameter of the starting symbol's return type.
+3. `Fuse` accepts a reference to a `ParserState`, allowing stateful fuses; why not?
+4. `Fuse` accepts a read-write span of the production's member values, instead of a read-only span in previous versions of Farkle. This allows the span to be used as a temporary buffer by the fuser; it would easily enable certain scenarios and the buffer gets discarded afterwards either way.
+
+Another difference is that in Farkle 7 the semantic providers return values of type `SemanticValue` instead of `object`. `SemanticValue` is a type that wraps an arbitrary value and can support storing  small value types without boxing, with the drawback that getting the value from a `SemanticValue` requires knowing a priori the value's type. Farkle's own semantic providers always know the type but using `SemanticValue` in general-purpose code needs caution; `SemanticValue.CreateUnsafe<string>("Hello").GetUnsafe<int>()` is undefined behavior and that's the reason for the `Unsafe` suffix in the method names.
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

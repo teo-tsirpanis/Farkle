@@ -42,6 +42,8 @@ public struct ParserState
     public readonly Position CurrentPosition { get; }
     public readonly long TotalCharactersRead { get; }
 
+    public object? Context { readonly get; init; }
+
     // Extensibility points for user code.
     public void SetValue(object key, object value);
     public readonly bool TryGetValue(object key, [MaybeNullWhen(false)] out object value);
@@ -49,11 +51,13 @@ public struct ParserState
 }
 ```
 
-_All_ state of a parser (with a small exception later) will be held in the `ParserState`. All other parser objects (tokenizers, semantic providers) will be stateless and singletons. This will both simplify things and improve performance; no more creating a custom tokenizer every time we parse something.
+All state of a parser will be held in the `ParserState`. All other parser objects (tokenizers, semantic providers) will be stateless and singletons. This will both simplify things and improve performance; no more creating a custom tokenizer every time we parse something.
 
 `ParserState` has only one position property, `CurrentPosition`. It is equivalent to `ITransformerContext.StartPosition` in Farkle 6. A replacement for `ITransformerContext.EndPosition` will not be provided. This will simplify some things around position tracking and updating these two values.
 
 The proposed extensibility points are superior to the existing `ITransformerContext.ObjectStore` property. Different components of a parser cannot conflict because the keys are arbitrary objects, and there is no API to clear or enumerate all values. If you have a `private static readonly object MyKey = new();` and you use it as a key, you can be sure that no other component will ever touch it. `ObjectStore` could be shimmed on top of these objects if there is a demand for it.
+
+To avoid the allocation overhead of the extensibility points, the `Context` property can point to one arbitrary object and is held directly into the state. It is intended to be used only by the main parser code; for user extensions this object will not make sense.
 
 ### Reading input
 
@@ -80,11 +84,6 @@ public ref struct ParserInputReader<TChar>
     public readonly bool IsFinalBlock { get; }
 
     public ref ParserState State { get; }
-
-    // Parser implementations might store additional state in a custom implementation of IParserStateBox to avoid
-    // the allocation overhead of ParserState's extensibility points, so it makes sense to expose as a property.
-    // This property will be null if the reader was created with a direct reference to the state.
-    public readonly IParserStateBox? StateBox { get; }
 
     public void AdvanceBy(int count);
 }
@@ -189,6 +188,7 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
     // User code must inherit from ParserStateContext<TChar, T> for some T instead.
     private protected ParserStateContext(ParserStateContextOptions? options = null);
 
+    // Invariant: State.Context == this
     public ref ParserState State { get; }
 
     // These members are overridden by ParserStateContext<TChar, T>.

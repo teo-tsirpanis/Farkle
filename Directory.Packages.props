@@ -16,7 +16,7 @@
     <PackageVersion Include="Expecto" Version="9.0.4" />
     <PackageVersion Include="Farkle" Version="6.5.1" />
     <PackageVersion Include="FParsec" Version="1.1.1" />
-    <PackageVersion Include="FSharp.Core" Version="7.0.200" />
+    <PackageVersion Include="FSharp.Core" Version="7.0.300" />
     <PackageVersion Include="FsLexYacc.Runtime" Version="11.2.0" />
     <PackageVersion Include="FsLexYacc" Version="11.2.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.1.0" />

@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
+internal unsafe abstract class DfaImplementationBase<TChar, TIndex> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     private readonly int _edgeCount;
 
@@ -24,18 +23,18 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
     protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(stateCount) == sizeof(TState));
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(edgeCount) == sizeof(TEdge));
-
         Grammar = grammar;
         _edgeCount = edgeCount;
     }
 
-    private int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize<TEdge>(FirstEdgeBase + state * sizeof(TEdge));
+    private static int ReadIndex(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
+        (int)grammarFile.ReadUIntVariableSize<TIndex>(@base + index * sizeof(TIndex));
 
-    private static int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
-        (int)grammarFile.ReadUIntVariableSize<TState>(@base) - 1;
+    private int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
+        ReadIndex(grammarFile, FirstEdgeBase, state);
+
+    private static int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
+        ReadIndex(grammarFile, @base, index) - 1;
 
     public sealed override int NextState(int state, TChar c)
     {
@@ -60,13 +59,13 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
             if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {
-                return ReadState(grammarFile, EdgeTargetBase + (edgeOffset + edge) * sizeof(TState));
+                return ReadIndex(grammarFile, EdgeTargetBase, edgeOffset + edge);
             }
         }
 
         if (DefaultTransitionBase != 0)
         {
-            return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
+            return GetDefaultTransitionUnsafe(grammarFile, state);
         }
 
         return -1;
@@ -76,7 +75,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
     private int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
-        return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
+        return ReadState(grammarFile, DefaultTransitionBase, state);
     }
 
     private (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
@@ -90,7 +89,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
     {
         TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
         TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + index * sizeof(char));
-        int target = ReadState(grammarFile, EdgeTargetBase + index * sizeof(TState));
+        int target = ReadState(grammarFile, EdgeTargetBase, index);
 
         return new(cFrom, cTo, target);
     }

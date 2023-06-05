@@ -197,7 +197,6 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
     // Performs a parsing step.
     public abstract void Run();
     // Resets the context's state to allow reusing it for another parsing operation.
-    // Also returns any pooled buffers to the array pool.
     public virtual void Reset();
 
     // IBufferWriter<TChar> implementation.
@@ -263,9 +262,7 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
         }
         context.Run();
     }
-    ParserResult<T> result = context.Result;
-    context.Reset();
-    return result;
+    return context.Result;
 }
 ```
 

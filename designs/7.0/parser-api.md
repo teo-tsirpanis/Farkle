@@ -388,6 +388,89 @@ TODO: Write about the other three methods. There is a complication with `TryAddT
 
 TODO: What would happen if we inject a token in the middle of tokenizing? It might fail in some cases and doesn't make sense; we have to somehow block it.
 
+### Tokenizing
+
+Farkle 7 defines the following API for tokenizers and the tokens they produce:
+
+```csharp
+namespace Farkle.Parser.LexicalAnalysis;
+
+public readonly struct Token
+{
+    public Token(TokenSymbolHandle symbol, SemanticValue semanticValue, Position position);
+
+    public TokenSymbolHandle Symbol { get; }
+    public SemanticValue SemanticValue { get; }
+    public Position Position { get; }
+}
+
+public abstract class Tokenizer<TChar>
+{
+    protected Tokenizer();
+
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, out Token token);
+}
+```
+
+It resembles the `Tokenizer` class of Farkle 6, with the following differences:
+
+* The class is generic over the character type, like the rest of the foundational parser APIs.
+* The tokenizer's worker method's shape has changed to follow a `Try` pattern instead of returning special EOF tokens.
+* The types of the parameters of `TryGetNextToken` have changed to the corresponding Farkle 7 types.
+
+If the `TryGetNextToken` method returns `true`, it means that a token was successfully read from the input, and will be fed to the parser. If it returns `false`, it means that the tokenizer cannot produce any more tokens from the available input. The parsing operation will be suspended, and should be resumed after more input becomes available.
+
+> **Note** More specific APIs about creating and using tokenizers will be provided in a separate design document.
+
+### High-level parsers
+
+The `IParser` interfaces are pretty limited and support only parsing text. To provide the customization features that Farkle 6 offered, we define `CharParser<T>`, the direct replacement of `RuntimeFarkle<T>`. It provides the following functionality on top of `IParser`:
+
+* Guarantees that the parser is backed by a `Grammar` and supports getting it without querying the `IGrammarProvider` service interface from the parser.
+* Supports changing the parser's tokenizer.
+* Supports changing the parser's semantic provider, and consequently the parser's return type.
+* Supports communicating that the parser was created from a faulty grammar and will always fail.
+
+```csharp
+namespace Farkle;
+
+public abstract class CharParser<T> : IParser<char, T>
+{
+    // Everything inherited from IParser.
+
+    // Returns whether the parser has a defect that will cause it
+    // to always fail regardless of the input. You can retrieve
+    // information about the failure by parsing an empty string.
+    public abstract bool IsFailing { get; }
+
+    public abstract Grammar GetGrammar();
+
+    // In Farkle 6 these methods were called Change***. The With suffix
+    // communicates better that the existing instance is not mutated.
+    public abstract CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider);
+
+    public abstract CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
+}
+
+public static class CharParser
+{
+    public static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider);
+
+    // Creates a parser with a dummy semantic provider that always returns null.
+    public static CharParser<object?> CreateSyntaxChecker(Grammar grammar);
+
+    // Creates a parser that if successful, always returns null, of any reference type.
+    // Will be useful for the F# API, whose syntax checkers will return unit.
+    public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class;
+
+    public static CharParser<object?> ToSyntaxChecker<T>(this CharParser<T> parser);
+
+    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class;
+}
+```
+
+To avoid specifying the character type in the common cases, `CharParser<T>` is not generic over the character type. When/if Farkle supports building parsers on bytes, we will add a `ByteParser<T>` class, and on frameworks with covariant return types, we could add a `ParserBase<TChar, T>` class that both `CharParser<T>` and `ByteParser<T>` will inherit from.
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

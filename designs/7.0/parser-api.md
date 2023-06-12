@@ -153,15 +153,8 @@ public static class ParserCompletionStateExtensions
     public static void CopyTo<T>(this in ParserCompletionState<T> state, ref ParserCompletionState<object> other);
 }
 
-public interface IParser<TChar> : IServiceProvider
+public interface IParser<TChar, T> : IServiceProvider
 {
-    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<object?> completionState);
-}
-
-public interface IParser<TChar, T> : IParser<TChar>
-{
-    // A default implementation of the non-generic IParser interface will be provided on supported frameworks.
-    void IParser<TChar>.Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<object?> completionState) => …;
     void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
 }
 ```
@@ -232,7 +225,6 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
 
 public static class ParserStateContext
 {
-    public static ParserStateContext<TChar, object?> Create<TChar>(IParser<TChar> parser, ParserStateContextOptions? options = null);
     public static ParserStateContext<TChar, T> Create<TChar, T>(IParser<TChar, T> parser, ParserStateContextOptions? options = null);
 }
 ```
@@ -336,15 +328,8 @@ To avoid allocating a parser state dictionary, the `ParserStateContext` class su
 ```csharp
 namespace Farkle.Parser;
 
-public interface IParserStateContextFactory<TChar>
+public interface IParserStateContextFactory<TChar, T>
 {
-    ParserStateContext<TChar, object?> Create(ParserStateContextOptions? options = null);
-}
-
-public interface IParserStateContextFactory<TChar, T> : IParserStateContextFactory<TChar>
-{
-    // A default implementation of the base interface will be provided on supported frameworks.
-    ParserStateContext<TChar, object?> IParserStateContextFactory<TChar>.Create(ParserStateContextOptions? options = null) => …;
     ParserStateContext<TChar, T> Create(ParserStateContextOptions? options = null);
 }
 ```

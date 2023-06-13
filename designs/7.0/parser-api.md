@@ -265,21 +265,14 @@ Semantic analysis (called _post-processing_ in earlier versions of Farkle) is th
 ```csharp
 namespace Farkle.Parser.SemanticAnalysis;
 
-public readonly struct SemanticValue
-{
-    public static SemanticValue CreateUnsafe<T>(T value);
-
-    public T GetUnsafe<T>();
-}
-
 public interface ITransformer<TChar>
 {
-    SemanticValue Transform(ref ParserState state, TokenSymbolHandle terminal, ReadOnlySpan<TChar> data);
+    object? Transform(ref ParserState state, TokenSymbolHandle terminal, ReadOnlySpan<TChar> data);
 }
 
 public interface IFuser
 {
-    SemanticValue Fuse(ref ParserState state, ProductionHandle production, Span<SemanticValue> children);
+    object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> children);
 }
 
 public interface ISemanticProvider<TChar, out T> : ITransformer<TChar>, IFuser {}
@@ -291,8 +284,6 @@ The following things changed since Farkle 6:
 2. The `Transform` and `Fuse` methods were split to two interfaces, `ITransformer<TChar>` and `IFuser`. This helps with separation of concerns and does not require having a character type to run the fuser. The `ISemanticProvider` interface is now a marker interface that combines the two, and adds a covariant generic parameter of the starting symbol's return type.
 3. `Fuse` accepts a reference to a `ParserState`, allowing stateful fuses; why not?
 4. `Fuse` accepts a read-write span of the production's member values, instead of a read-only span in previous versions of Farkle. This allows the span to be used as a temporary buffer by the fuser; it would easily enable certain scenarios and the buffer gets discarded afterwards either way.
-
-Another difference is that in Farkle 7 the semantic providers return values of type `SemanticValue` instead of `object`. `SemanticValue` is a type that wraps an arbitrary value and can support storing  small value types without boxing, with the drawback that getting the value from a `SemanticValue` requires knowing a priori the value's type. Farkle's own semantic providers always know the type but using `SemanticValue` in general-purpose code needs caution; `SemanticValue.CreateUnsafe<string>("Hello").GetUnsafe<int>()` is undefined behavior and that's the reason for the `Unsafe` suffix in the method names.
 
 ### Predefined services
 
@@ -363,7 +354,7 @@ public interface IParserStateMachineController
     // shift/reduce/goto actions.
     // Returns true if it succeeded, and false if either the parser is suspended in
     // the middle of a token, or the symbol is not expected in the current state.
-    bool TryAddToken(ref ParserState state, EntityHandle symbol, SemanticValue value);
+    bool TryAddToken(ref ParserState state, EntityHandle symbol, object? data);
 }
 ```
 
@@ -382,10 +373,10 @@ namespace Farkle.Parser.LexicalAnalysis;
 
 public readonly struct Token
 {
-    public Token(TokenSymbolHandle symbol, SemanticValue semanticValue, Position position);
+    public Token(TokenSymbolHandle symbol, object? data, Position position);
 
     public TokenSymbolHandle Symbol { get; }
-    public SemanticValue SemanticValue { get; }
+    public object? data { get; }
     public Position Position { get; }
 }
 

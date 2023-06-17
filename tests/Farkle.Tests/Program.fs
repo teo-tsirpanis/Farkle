@@ -23,4 +23,4 @@ let main argv =
         System.IO.File.WriteAllText(jsonOutputPath, jsonContents)
         printfn "Done."
         0
-    | argv -> runTestsInAssembly defaultConfig argv
+    | argv -> runTestsInAssemblyWithCLIArgs [] argv

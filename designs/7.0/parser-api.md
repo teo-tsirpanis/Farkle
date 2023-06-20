@@ -371,12 +371,20 @@ Farkle 7 defines the following API for tokenizers and the tokens they produce:
 ```csharp
 namespace Farkle.Parser.LexicalAnalysis;
 
-public readonly struct Token
+// Represents the result of a tokenizer invocation.
+public readonly struct TokenizerResult
 {
-    public Token(TokenSymbolHandle symbol, object? data, Position position);
+    // Creates a TokenizerResult that indicates success.
+    public static TokenizerResult CreateSuccess(TokenSymbolHandle symbol, object? semanticValue, Position position);
+    // Creates a TokenizerResult that indicates failure.
+    // The errorObject parameter will be set in the ParserCompletionState provided by the user.
+    public static TokenizerResult CreateFailure(object errorObject);
+
+    [MemberNotNullWhen(false, nameof(Data))]
+    public bool IsSuccess { get; }
 
     public TokenSymbolHandle Symbol { get; }
-    public object? data { get; }
+    public object? Data { get; }
     public Position Position { get; }
 }
 
@@ -384,7 +392,7 @@ public abstract class Tokenizer<TChar>
 {
     protected Tokenizer();
 
-    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, out Token token);
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, out TokenizerResult result);
 }
 ```
 
@@ -392,6 +400,11 @@ It resembles the `Tokenizer` class of Farkle 6, with the following differences:
 
 * The class is generic over the character type, like the rest of the foundational parser APIs.
 * The tokenizer's worker method's shape has changed to follow a `Try` pattern instead of returning special EOF tokens.
+    * If `TryGetNextToken` returns `true`, the tokenizer has either successfully produced a token, or failed with a lexical error.
+    * If `TryGetNextToken` returns `false`, the tokenizer cannot produce a token. The action the parser must take depends on the value of `inputReader.IsFinalBlock`:
+        * If it is `true`, the parser will not receive any other token. It must perform an end-of-input action to its state machine, and set its completion state to either success or failure.
+        * If it is `false`, the parser must return without completing. By the time it is invoked again, more characters will be available and the tokenizer might be able to produce a token.
+* The `Token` type has been replaced by the `TokenizerResult` struct, which is a discriminated union of success or failure. On success, it contains the symbol and the semantic value of the token, and on failure, it contains an error object that will be passed to the parser's completion state.
 * The types of the parameters of `TryGetNextToken` have changed to the corresponding Farkle 7 types.
 
 If the `TryGetNextToken` method returns `true`, it means that a token was successfully read from the input, and will be fed to the parser. If it returns `false`, it means that the tokenizer cannot produce any more tokens from the available input. The parsing operation will be suspended, and should be resumed after more input becomes available.

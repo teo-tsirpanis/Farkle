@@ -431,6 +431,8 @@ public abstract class CharParser<T> : IParser<char, T>
 {
     // Everything inherited from IParser.
 
+    private protected CharParser();
+
     // Returns whether the parser has a defect that will cause it
     // to always fail regardless of the input. You can retrieve
     // information about the failure by parsing an empty string.
@@ -463,6 +465,8 @@ public static class CharParser
 ```
 
 To avoid specifying the character type in the common cases, `CharParser<T>` is not generic over the character type. When/if Farkle supports building parsers on bytes, we will add a `ByteParser<T>` class, and on frameworks with covariant return types, we could add a `ParserBase<TChar, T>` class that both `CharParser<T>` and `ByteParser<T>` will inherit from.
+
+`CharParser` is an abstract class with a `private protected` constructor, which means that third-party code will not be able to extend the API. This is done for simplicity and to keep the extensibility endpoints to a minimum. We could add service interfaces to swap the tokenizer and the semantic provider, if there is a demand for it.
 
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 

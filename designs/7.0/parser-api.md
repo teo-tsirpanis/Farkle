@@ -100,7 +100,8 @@ public interface IParserStateBox
 }
 
 #if NET7_0_OR_GREATER
-[Obsolete("Use a ParserState and pass it to the ParserInputReader's constructor by reference instead.")]
+[Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. In .NET 7+ use a ParserState" +
+"and pass it to the ParserInputReader's constructor by reference instead.")]
 #endif
 public sealed class ParserStateBox : IParserStateBox
 {
@@ -421,7 +422,7 @@ If the `TryGetNextToken` method returns `true`, it means that a token was succes
 
 ### High-level parsers
 
-The `IParser` interfaces are pretty limited and support only parsing text. To provide the customization features that Farkle 6 offered, we define `CharParser<T>`, the direct replacement of `RuntimeFarkle<T>`. It provides the following functionality on top of `IParser`:
+The `IParser` interfaces are pretty limited and support only parsing text. To provide the customization features that Farkle 6 offered, we define `CharParser<T>`, the direct replacement of `RuntimeFarkle<T>`. By assuming some more things about how it is implemented, `CharParser<T>` provides the following functionality on top of `IParser`:
 
 * Guarantees that the parser is backed by a `Grammar` and supports getting it without querying the `IGrammarProvider` service interface from the parser.
 * Supports changing the parser's tokenizer.
@@ -440,6 +441,8 @@ public abstract class CharParser<T> : IParser<char, T>
     // Returns whether the parser has a defect that will cause it
     // to always fail regardless of the input. You can retrieve
     // information about the failure by parsing an empty string.
+    // If a grammar has a defective DFA but a valid LR(1) table,
+    // it is possible to fix the parser by changing its tokenizer.
     public abstract bool IsFailing { get; }
 
     public abstract Grammar GetGrammar();

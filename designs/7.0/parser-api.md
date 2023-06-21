@@ -170,6 +170,8 @@ The `IParser.Run` methods encapsulate the parser logic. They take a reference to
 
 Parser objects also implement `IServiceProvider`, to allow them to expose arbitrary custom features. Default services will be described in a later section.
 
+> **Warning** The parser API is not exception-safe. If the `IParser.Run` method throws an exception, the `ParserState` held by the `ParserInputReader` will be left in an undefined state. The caller must ensure that the state is not used again afterwards.
+
 ### Parsing streaming input
 
 The `IParser` interfaces themselves support parsing streaming input but the responsibility to manage the input buffers falls to the user. To make this easier, Farkle provides the `ParserStateContext` classes that greatly simplify parsing streaming input.

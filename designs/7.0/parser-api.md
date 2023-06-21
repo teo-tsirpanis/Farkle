@@ -44,7 +44,7 @@ public struct ParserState
     public readonly Position CurrentPosition { get; }
     public readonly long TotalCharactersRead { get; }
 
-    public object? Context { get; set; }
+    public object? Context { get; init; }
     // A string describing the input source. Could be
     // used for error messages, and could be set to
     // the file's name if we are parsing a file.

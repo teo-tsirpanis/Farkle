@@ -158,8 +158,6 @@ public static class ParserCompletionStateExtensions
 {
     public static void SetSuccess<T>(this ref ParserCompletionState<T> state, T value);
     public static void SetError<T>(this ref ParserCompletionState<T> state, object error);
-    // Used to easily implement the non-generic parser interface.
-    public static void CopyTo<T>(this in ParserCompletionState<T> state, ref ParserCompletionState<object> other);
 }
 
 public interface IParser<TChar, T> : IServiceProvider

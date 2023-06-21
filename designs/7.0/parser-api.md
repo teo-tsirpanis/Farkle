@@ -30,6 +30,8 @@ This model allows us to suspend the parser between invocations, and use any mean
 
 Let's get into the code. The following API shapes are a general idea and not final. Additional members might be proposed in separate design documents.
 
+The high-level types that users are most likely to interact with go to the `Farkle` namespace. The lower-level types will go to `Farkle.Parser` or to a namespace inside of it.
+
 ### State management
 
 We start by defining a type to keep the state of a parsing operation and provide a read-only view of it to external code. It will be passed to transformers by reference and replace the existing `Farkle.ITransformerContext` interface.
@@ -117,7 +119,7 @@ The `AdvanceBy` method will update the `TokenStartPosition` and `TotalCharacters
 And now we get to the parser itself. We first have to define a type to represent the result of a parsing operation. It is a discriminated union with two cases: success and error. The success value is generic, while the error value is an `object`, for simplicity.
 
 ```csharp
-namespace Farkle.Parser;
+namespace Farkle;
 
 public readonly struct ParserResult<T>
 {
@@ -135,6 +137,8 @@ public static class ParserResult
     public static Result<T> CreateSuccess<T>(T value);
     public static Result<T> CreateError<T>(object error);
 }
+
+namespace Farkle.Parser;
 
 // Holds whether the parser has completed, and its result.
 // We can't put that inside ParserState because the result type can

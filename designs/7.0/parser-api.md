@@ -468,6 +468,30 @@ To avoid specifying the character type in the common cases, `CharParser<T>` is n
 
 `CharParser` is an abstract class with a `private protected` constructor, which means that third-party code will not be able to extend the API. This is done for simplicity and to keep the extensibility endpoints to a minimum. We could add service interfaces to swap the tokenizer and the semantic provider, if there is a demand for it.
 
+### Putting it all together
+
+With everything in place, we can now define the highest-level and user-friendliest APIs to parse text:
+
+```csharp
+namespace Farkle;
+
+public static class ParserExtensions
+{
+    public static ParserResult<T> Parse<TChar, T>(this IParser<TChar, T> parser, ReadOnlySpan<TChar> input);
+
+    // In .NET Standard 2.0 strings are not implicitly converted to spans.
+    public static ParserResult<T> Parse<T>(this IParser<char, T> parser, string input);
+
+    public static ParserResult<T> Parse<T>(this IParser<char, T> parser, TextReader input);
+
+    public static ParserResult<T> ParseFile<T>(this IParser<char, T> parser, string path);
+
+    public static ValueTask<ParserResult<T>> ParseAsync<T>(this IParser<char, T> parser, TextReader input, CancellationToken cancellationToken = default);
+
+    public static ValueTask<ParserResult<T>> ParseFileAsync<T>(this IParser<char, T> parser, string path, CancellationToken cancellationToken = default);
+}
+```
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

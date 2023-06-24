@@ -499,6 +499,36 @@ public static class ParserExtensions
 }
 ```
 
+## Alternative designs
+
+### Rejected - Untyped parser APIs
+
+In the initial design the `IParser<TChar, TResult>` interface had a base `IParser<TChar>` interface with a `Run` method that accepted a reference to a `ParserCompletionState<object?>` instead of `ParserCompletionState<TResult>`, and would box the result of the parser operation. This would allow parsers of different result types to be handled uniformly, but implementers of the interface would be needed to write more boilerplate (or not with DIMs, but then there's .NET Standard 2.0), and the number of methods in the `ParserExtensions` class would double to also support untyped parsers. Because of the increased complexity and because there was no need for this feature, it was eventually dropped.
+
+### Rejected - Local state, detached state
+
+The `ParserInputReader<TChar>` struct contains a read-only span of characters, and a reference to a `ParserState`. In the initial design it would also store a whole `ParserState` by itself, and its `State` property would decide whether to return a reference to its own state or to the state its reference points to. I had considered but initially rejected the current design because it would need ref fields which exist only in .NET 7+ (and .NET Standard 2.1 inside spans), but then had the idea to use the `IStateMachineBox` interface to store the reference in .NET Standard 2.0.
+
+The advantages of the accepted design over this one are that `ParserInputReader` is very small, and its `State` property is branchless. The disadvantage is that in .NET Standard 2.0 parsing is not allocation-free, but the zero-alloc guarantee applies only when targeting the latest framework, and the state machine box object could be cached.
+
+### Rejected - A custom type for semantic values
+
+Because Farkle's builder objects can return objects of arbitrary type, value types have to be boxed causing unavoidable allocations. I had the idea of introducing a `SemanticValue` type with a role similar to dotnet/runtime#28882, that would avoid boxing small value types, but without the ability to inspect what type of object it holds. The semantic provider interfaces would then be updated to accept and return values of type `SemanticValue` instead of `object?`s.
+
+Ultimately this idea was rejected because it would be a premature optimization with a dubious value. Sure the calculator benchmarks are allocation-free, but the object stack takes twice the space; which is more memory-efficient? Besides efficiency, having a custom semantic value type would complicate certain operations like upcasting parser and builder objects without a proxy parser object.
+
+When dotnet/runtime#28882 is implemented, we can revisit this idea.
+
+### The cardinal sin of high-performance software
+
+From a sky-high view, [most of computing is just moving data around](https://www.strchr.com/x86_machine_code_statistics), which means that one way to improve performance is to avoid moving data around when it's not needed. I call unnecessary data moving the cardinal sin of high-performance software. Historically Farkle's streaming input parser has been committing this sin. When it is about to read new characters, the unconsumed characters at the end of the buffer are moved to the beginning, and if no character in the buffer has been consumed, a new buffer with double the size is created and the existing characters are copied there.
+
+Farkle 7 will follow the same buffer management logic. The performance impact of these copies is not expected to be significant; the unconsumed characters that get moved are the beginning of the next token, and the assumption is that tokens are usually small. With a reasonably sized character buffer (256 characters in Farkle 6, might bump it in 7), the only case it would need to be resized is on big tokens (such as string literals in a programming language) or non-noise groups; if anyone will use them. Characters inside noise groups have always been immediately consumed and will not trigger buffer resizes.
+
+To atone from the cardinal sin of high-performance software, we would need to support parsing from `ReadOnlySequence`s, where the characters are stored in a linked list of buffers. Supporting this would require transformers accepting `ReadOnlySequence`s, which would put a great strain on user-written transformers, and would preclude supporting parsing raw spans, which is a requirement.
+
+However, as I was writing this I realized that we might be able to support both read-only sequences and spans in a similar way `Utf8JsonReader` does it. On the builder's side, specific terminals can opt-in by providing an additional transformer on sequences, and the parser would either make a copy or directly pass the sequence depending on the terminal. This will be considered for inclusion after Farkle 7.0, and would have been more valuable once we support UTF-8 parsers, which would enable us to directly and very efficiently parse `PipeReader`s. Performance must be carefully measured to avoid regressing the common case of parsing spans.
+
 [^antlr]: Contrast this with solutions like ANTLR [where you need six lines to parse a string and you are not even done yet](https://github.com/antlr/antlr4/blob/master/doc/csharp-target.md#how-do-i-use-the-runtime-from-my-project). Sure it's super flexible but the barrier of entry is super high. And creating a grammar has an even higher barrier.
 
 [^parser]: By _parser_ here we mean the entire pipeline consisting of the tokenizer, the LR parser and the semantic analyzer.

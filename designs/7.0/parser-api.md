@@ -284,6 +284,13 @@ public interface IFuser
     object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> children);
 }
 
+// The legacy 7.x F# codebase used a base IPostProcessor interface
+// that contained Transform and Fuse. We could add such base interface
+// here, but with the split of transformers and fusers it's not really
+// needed. And we could add it in the future in a backwards-compatible
+// way (I think).
+// public interface ISemanticProvider<TChar> : ITransformer<TChar>, IFuser {}
+
 public interface ISemanticProvider<TChar, out T> : ITransformer<TChar>, IFuser {}
 ```
 
@@ -461,7 +468,7 @@ public static class CharParser
     // Creates a parser with a dummy semantic provider that always returns null.
     public static CharParser<object?> CreateSyntaxChecker(Grammar grammar);
 
-    // Creates a parser that if successful, always returns null, of any reference type.
+    // Creates a parser that if successful, always returns null of any reference type.
     // Will be useful for the F# API, whose syntax checkers will return unit.
     public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class;
 
@@ -503,19 +510,19 @@ public static class ParserExtensions
 
 ### Rejected - Untyped parser APIs
 
-In the initial design the `IParser<TChar, TResult>` interface had a base `IParser<TChar>` interface with a `Run` method that accepted a reference to a `ParserCompletionState<object?>` instead of `ParserCompletionState<TResult>`, and would box the result of the parser operation. This would allow parsers of different result types to be handled uniformly, but implementers of the interface would be needed to write more boilerplate (or not with DIMs, but then there's .NET Standard 2.0), and the number of methods in the `ParserExtensions` class would double to also support untyped parsers. Because of the increased complexity and because there was no need for this feature, it was eventually dropped.
+In the initial design the `IParser<TChar, T>` interface had a base `IParser<TChar>` interface with a `Run` method that accepted a reference to a `ParserCompletionState<object?>` instead of `ParserCompletionState<T>`, and would box the result of the parser operation. This would allow parsers of different result types to be handled uniformly, but implementers of the interface would be needed to write more boilerplate (or not with DIMs, but then there's .NET Standard 2.0), and the number of methods in the `ParserExtensions` class would double to also support untyped parsers. Because of the increased complexity and because there was no need for this feature, it was eventually dropped.
 
 ### Rejected - Local state, detached state
 
 The `ParserInputReader<TChar>` struct contains a read-only span of characters, and a reference to a `ParserState`. In the initial design it would also store a whole `ParserState` by itself, and its `State` property would decide whether to return a reference to its own state or to the state its reference points to. I had considered but initially rejected the current design because it would need ref fields which exist only in .NET 7+ (and .NET Standard 2.1 inside spans), but then had the idea to use the `IStateMachineBox` interface to store the reference in .NET Standard 2.0.
 
-The advantages of the accepted design over this one are that `ParserInputReader` is very small, and its `State` property is branchless. The disadvantage is that in .NET Standard 2.0 parsing is not allocation-free, but the zero-alloc guarantee applies only when targeting the latest framework, and the state machine box object could be cached.
+The advantages of the accepted design over this one are that `ParserInputReader` is very small, and its `State` property is branchless. The disadvantage is that in .NET Standard 2.0 parsing is not allocation-free, but that guarantee applies only when targeting the latest framework, and the state machine box object could be cached.
 
 ### Rejected - A custom type for semantic values
 
 Because Farkle's builder objects can return objects of arbitrary type, value types have to be boxed causing unavoidable allocations. I had the idea of introducing a `SemanticValue` type with a role similar to dotnet/runtime#28882, that would avoid boxing small value types, but without the ability to inspect what type of object it holds. The semantic provider interfaces would then be updated to accept and return values of type `SemanticValue` instead of `object?`s.
 
-Ultimately this idea was rejected because it would be a premature optimization with a dubious value. Sure the calculator benchmarks are allocation-free, but the object stack takes twice the space; which is more memory-efficient? Besides efficiency, having a custom semantic value type would complicate certain operations like upcasting parser and builder objects without a proxy parser object.
+Ultimately this idea was rejected because it would be a premature optimization with a dubious value. Sure the calculator benchmarks are allocation-free, but the object stack takes twice the space; which is more memory-efficient? Besides efficiency, having a custom semantic value type would complicate certain operations like upcasting parser and builder objects.
 
 When dotnet/runtime#28882 is implemented, we can revisit this idea.
 

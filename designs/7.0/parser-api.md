@@ -425,7 +425,7 @@ It resembles the `Tokenizer` class of Farkle 6, with the following differences:
 
 If the `TryGetNextToken` method returns `true`, it means that a token was successfully read from the input, and will be fed to the parser. If it returns `false`, it means that the tokenizer cannot produce any more tokens from the available input. The parsing operation will be suspended, and should be resumed after more input becomes available.
 
-> **Note** More specific APIs about creating and using tokenizers will be provided in a separate design document.
+> **Note** More specific APIs about creating and using tokenizers will be provided in [a separate design document](tokenizer-api.md).
 
 ### High-level parsers
 

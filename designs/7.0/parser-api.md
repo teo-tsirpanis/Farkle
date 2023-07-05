@@ -196,8 +196,6 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
     // These members are overridden by ParserStateContext<TChar, T>.
     // Whether the parsing operation has completed.
     public abstract bool IsCompleted { get; }
-    // Performs a parsing step.
-    public abstract void Run();
     // Resets the context's state to allow reusing it for another parsing operation.
     public virtual void Reset();
 
@@ -220,7 +218,6 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
 
     // These members cannot be overridden by user code.
     public sealed override bool IsCompleted { get; }
-    public sealed override void Run();
     public sealed override void Reset();
 
     // The result of the parsing operation. Will throw if IsCompleted is false.
@@ -238,7 +235,9 @@ public static class ParserStateContext
 }
 ```
 
-A `ParserStateContext` encapsulates a parsing operation on streaming input. It contains an `IParser<TChar,T>` that parses the text, a `ParserState` to keep track of the parser's state, a `ParserCompletionState<T>` to keep track if parsing has finished, a buffer to store the input characters, and the logic to make them all work together. It implements the `IBufferWriter<TChar>` interface to allow writing characters very efficiently and with zero copies.
+A `ParserStateContext` encapsulates a parsing operation on streaming input. It contains an `IParser<TChar,T>` that parses the text, a `ParserState` to keep track of the parser's state, a `ParserCompletionState<T>` to keep track if parsing has finished, a buffer to store the input characters, and the logic to make them all work together.
+
+Parser state contexts implement the `IBufferWriter<TChar>` interface to allow writing characters very efficiently and with zero copies. When the streaming input ends, the `CompleteInput` method makes it known to the context. The `Advance` and `CompleteInput` methods automatically call the `Run` method which usually redirects to an `IParser`.
 
 Parsing streaming input with a `ParserStateContext` can be done like this:
 
@@ -248,20 +247,16 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
     ParserStateContext<char, T> context = ParserStateContext.Create(parser);
     while (!context.IsCompleted)
     {
-        if (!context.IsInputCompleted)
+        int charsRead = reader.Read(context.GetSpan());
+        if (charsRead == 0)
         {
-            ReadOnlySpan<char> buffer = context.GetSpan();
-            int charsRead = reader.Read(buffer);
-            if (charsRead == 0)
-            {
-                context.CompleteInput();
-            }
-            else
-            {
-                context.Advance(charsRead);
-            }
+            context.CompleteInput();
+            break;
         }
-        context.Run();
+        else
+        {
+            context.Advance(charsRead);
+        }
     }
     return context.Result;
 }

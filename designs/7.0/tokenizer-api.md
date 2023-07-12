@@ -81,3 +81,89 @@ Besides simple tokenizer objects, the tokenizer of a `CharParser` can be changed
 A tokenizer factory is a delegate that accepts a `TokenizerFactoryContext` and returns a tokenizer. We use `TokenizerFactoryContext` instead of just `Grammar` to allow in the future looking up the special names without depending on the entire grammar API.
 
 A chained tokenizer builder builds a chain of tokenizers from the start to the end and can be either passed to a `CharParser` or used standalone. Each component of a chained tokenizer builder can be a tokenizer, a tokenizer factory or another chained tokenizer builder. The `Default` property of `ChainedTokenizerBuilder` is a builder that starts with the existing tokenizer of a `CharParser` as its only component. The `AppendDefault` method appends that default tokenizer to the chain.
+
+### Suspending tokenizers
+
+We will provide the following APIs to support suspending the tokenization process:
+
+```csharp
+namespace Farkle.Parser.LexicalAnalysis;
+
+public interface ITokenizerResumptionPoint<TChar, in TArg>
+{
+    bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, TArg arg, out TokenizerResult token);
+}
+
+public static class TokenizerExtensions
+{
+    public static void SuspendTokenizer<TChar>(this ref ParserInputReader<TChar> inputReader,
+        Tokenizer<TChar> tokenizer);
+    public static void SuspendTokenizer<TChar, TArg>(this ref ParserInputReader<TChar> inputReader,
+        ITokenizerResumptionPoint<TChar, TArg> suspensionPoint, TArg argument);
+}
+```
+
+The `SuspendTokenizer` extension methods implement the tokenizer suspension mechanism described above. A tokenizer that needs more input can call `inputReader.SuspendTokenizer(this)` before returning, and when parsing resumes the chain will continue from that tokenizer. The exact tokenizer instance passed to `SuspendTokenizer` does not matter; Farkle keeps track of the index of the running tokenizer in the chain.
+
+Besides a tokenizer, we can resume the tokenization process to an object of type `ITokenizerResumptionPoint`. This interface provides a very similar API to `Tokenizer`, but also accepts an argument of type `TArg`, giving some more flexibility to tokenizer authors. A tokenizer can implement this interface many times with different types for `TArg` to support different resumption points. Here's an example:
+
+```csharp
+public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTokenizer.Case1Args>,
+    ITokenizerResumptionPoint<char, MyTokenizer.Case2Args>
+{
+    public override bool TryGetNextToken(ref ParserInputReader<char> inputReader,
+        ITransformer<char> transformer, out TokenizerResult token)
+    {
+        if (/* case 1 */)
+        {
+            inputReader.SuspendTokenizer(this, new Case1Args(/* … */));
+            token = default;
+            return false;
+        }
+        else if (/* case 2 */)
+        {
+            inputReader.SuspendTokenizer(this, new Case2Args(/* … */));
+            token = default;
+            return false;
+        }
+        else
+        {
+            // …
+        }
+    }
+
+    bool ITokenizerResumptionPoint<char, Case1Args>.TryGetNextToken(ref ParserInputReader<char> inputReader,
+        ITransformer<char> transformer, Case1Args arg, out TokenizerResult token)
+    {
+        // Case 1 resumes here with more characters.
+        // …
+    }
+
+    bool ITokenizerResumptionPoint<char, Case2Args>.TryGetNextToken(ref ParserInputReader<char> inputReader,
+        ITransformer<char> transformer, Case2Args arg, out TokenizerResult token)
+    {
+        // Case 2 resumes here with more characters.
+        // …
+    }
+
+    private struct Case1Args { /* … */ }
+    private struct Case2Args { /* … */ }
+}
+```
+
+### Suspending a standalone tokenizer
+
+If you have a chain of more than one tokenizers, they are externally presented as one tokenizer that runs them in sequence and can resume at a specific point. But what happens if you have only one tokenizer? If you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will call directly the tokenizer's regular entry point, without giving the opportunity for something to call the resumption point.
+
+The solution to this is to wrap even single tokenizers into a chain. `ChainedTokenizerBuilder.Build` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and thus don't have to be wrapped (suspending them will have no effect).
+
+Another way to avoid the indirection is to add the following API to `ParserInputReader` and require parsers to call it at the start of a parsing operation:
+
+```csharp
+public static class TokenizerExtensions
+{
+    public static void ProcessSuspendedTokenizer(this ref ParserInputReader<TChar> inputReaders);
+}
+```
+
+This idea was rejected because it would add more conventions to an already convention-based API, would break the transparency requirement of the suspension mechanism, and the benefits are tiny and situational.

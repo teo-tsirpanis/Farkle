@@ -10,6 +10,8 @@ With Farkle 7's push-based parsing model, a tokenizer that needs more characters
 
 * Even in cases of success a tokenizer would want to resume at a specific point at the next invocation, like if it wants to emit many tokens consecutively and does not want to be distracted by other tokenizers.
 
+* And all that has to be invisible by the parser that is using the tokenizer.
+
 ## The idea
 
 To satisfy the above requirements, Farkle 7 will introduce the concept of _tokenizer chaining_ as the means to extend the tokenization logic. Imagine that you are writing a parser for an indentation-sensitive language. Instead of your custom tokenizer that handles indentation explicitly invoking the default tokenizer, you define _at creation time_ a chain of tokenizers, and Farkle will invoke them in order, until one of them returns a result. In your case, the chain would consist of your custom tokenizer first, and Farkle's default tokenizer at the end.

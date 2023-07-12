@@ -167,3 +167,15 @@ public static class TokenizerExtensions
 ```
 
 This idea was rejected because it would add more conventions to an already convention-based API, would break the transparency requirement of the suspension mechanism, and the benefits are tiny and situational.
+
+## Alternative designs
+
+### Rejected - `await`ing for more characters
+
+The need for chaining and suspending tokenizers would have been eliminated if we could do something like `await reader.WaitForMoreCharactersAsync()`. To avoid making the entire parser asynchronous, the tokenizer's entry point would return a special type with a custom async method builder that supports only `await`ing the method above, which would suspend the tokenizer and set a very precise resumption point.
+
+The advantage of this approach is that we can compose tokenizers in arbitrary ways just like in Farkle 6 and provide a very intuitive and much smaller API set. The disadvantage is that it would be bad for performance since the parser state must be stored in the heap and preclude us from supporting parsing spans.
+
+### More complex chaining
+
+The "flat" chaining model described above is quite primitive. There were thoughts to support more complex chains, with components that act as "filters" where they can inspect and potentially change the result of a part of the chain. One use case would be to handle tokenizer failures, but the whole feature needs quite some thought and was postponed for a version after 7.0.

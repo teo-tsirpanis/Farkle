@@ -59,6 +59,8 @@ public readonly struct Position : IEquatable<Position>
     public static Position Create1(int line, int column) =>
         Create0(line - 1, column - 1);
 
+    internal Position NextLine() => new(_line + 1, 0);
+
     /// <summary>
     /// Checks two <see cref="Position"/>s for equality.
     /// </summary>

@@ -172,6 +172,8 @@ Parser objects also implement `IServiceProvider`, to allow them to expose arbitr
 
 > **Warning** The parser API is not exception-safe. If the `IParser.Run` method throws an exception, the `ParserState` held by the `ParserInputReader` will be left in an undefined state. The caller must ensure that the state is not used again afterwards.
 
+> **Note** For compatibility with the streaming input parsing API described below, a parser should consume as much input as it can at each invocation, and invoking the parser with an input reader whose `IsFinalBlock` property is set to `true` should complete the operation by setting a result to the `ParserCompletionState` parameter. If a parser supports scenarios such as parsing one token at a time, it is recommended to be gated behind an option disabled by default.
+
 ### Parsing streaming input
 
 The `IParser` interfaces themselves support parsing streaming input but the responsibility to manage the input buffers falls to the user. To make this easier, Farkle provides the `ParserStateContext` classes that greatly simplify parsing streaming input.

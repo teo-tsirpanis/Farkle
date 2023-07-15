@@ -105,9 +105,11 @@ public static class TokenizerExtensions
 }
 ```
 
-The `SuspendTokenizer` extension methods implement the tokenizer suspension mechanism described above. A tokenizer that needs more input can call `inputReader.SuspendTokenizer(this)` before returning, and when parsing resumes the chain will continue from that tokenizer. The exact tokenizer instance passed to `SuspendTokenizer` does not matter; Farkle keeps track of the index of the running tokenizer in the chain.
+There are two use cases for suspension. A tokenizer that needs more input can call `SuspendTokenizer` in `TryGetNextToken` and return `false`, and when parsing resumes the chain will continue from that tokenizer.
 
-Besides a tokenizer, we can resume the tokenization process to an object of type `ITokenizerResumptionPoint`. This interface provides a very similar API to `Tokenizer`, but also accepts an argument of type `TArg`, giving some more flexibility to tokenizer authors. A tokenizer can implement this interface many times with different types for `TArg` to support different resumption points. Here's an example:
+Alternatively a tokenizer that has found a token and wants to keep finding for potentially another token can call `SuspendTokenizer` in `TryGetNextToken` and return `true`. The tokenizer chain does not continue when a tokenizer finds a token either way, but when the tokenizer chain is invoked again it will not start over.
+
+The arguments to the `SuspendTokenizer` methods determine where the chain will continue from. Besides a `Tokenizer<TChar>` we can resume the tokenization process to an object of type `ITokenizerResumptionPoint`. This interface provides a very similar API to `Tokenizer`, but also accepts an argument of type `TArg`, giving some more flexibility to tokenizer authors. A tokenizer can implement this interface many times with different types for `TArg` to support different resumption points. Here's an example:
 
 ```csharp
 public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTokenizer.Case1Args>,
@@ -153,9 +155,11 @@ public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTo
 }
 ```
 
+After the resumed tokenizer or resumption point are ran, the tokenizer chain continues from the next tokenizer after the one that had invoked `SuspendTokenizer`. The exact tokenizer or tokenizer resumption point instance passed to `SuspendTokenizer` does not matter; Farkle itself keeps track of the index of the running tokenizer in the chain.
+
 ### Suspending a standalone tokenizer
 
-If you have a chain of more than one tokenizers, they are externally presented as one tokenizer that runs them in sequence and can resume at a specific point. But what happens if you have only one tokenizer? If you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will call directly the tokenizer's regular entry point, without giving the opportunity for something to call the resumption point.
+If you have a chain of many tokenizers, they are wrapped into one tokenizer object that runs them in sequence and supports suspending. But if you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will directly call the tokenizer's regular entry point without giving the opportunity for something to call a custom resuming tokenizer or resumption point.
 
 The solution to this is to wrap even single tokenizers into a chain. `ChainedTokenizerBuilder.Build` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and thus don't have to be wrapped (suspending them will have no effect).
 
@@ -180,4 +184,4 @@ The advantage of this approach is that we can compose tokenizers in arbitrary wa
 
 ### More complex chaining
 
-The "flat" chaining model described above is quite primitive. There were thoughts to support more complex chains, with components that act as "filters" where they can inspect and potentially change the result of a part of the chain. One use case would be to handle tokenizer failures, but the whole feature needs quite some thought and was postponed for a version after 7.0.
+The "flat" chaining model described above is quite primitive. There were thoughts to support more complex chains, with components that act as "filters" where they can inspect and potentially change the result of a part of the chain. One use case would be to handle tokenizer failures, but the whole feature needs more thought and was postponed for a version after 7.0.

@@ -33,4 +33,10 @@
   <data name="Grammar_FailedToConvert" xml:space="preserve">
     <value>Failed to convert the grammar.</value>
   </data>
+  <data name="Parser_ResultAlreadySet" xml:space="preserve">
+    <value>The parsing operation has already set a result.</value>
+  </data>
+  <data name="Parser_ResultNotSet" xml:space="preserve">
+    <value>The parsing operation has not yet set a result.</value>
+  </data>
 </root>

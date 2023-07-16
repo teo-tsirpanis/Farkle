@@ -33,4 +33,10 @@
   <data name="Grammar_FailedToConvert" xml:space="preserve">
     <value>Αποτυχία μετατροπής της γραμματικής.</value>
   </data>
+  <data name="Parser_ResultAlreadySet" xml:space="preserve">
+    <value>Η συντακτική ανάλυση έχει ήδη θέσει ένα αποτέλεσμα.</value>
+  </data>
+  <data name="Parser_ResultNotSet" xml:space="preserve">
+    <value>Η συντακτική ανάλυση δεν έχει θέσει ακόμα ένα αποτέλεσμα.</value>
+  </data>
 </root>

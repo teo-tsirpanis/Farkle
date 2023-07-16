@@ -102,7 +102,7 @@ public interface IParserStateBox
 }
 
 #if NET7_0_OR_GREATER
-[Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. In .NET 7+ use a ParserState" +
+[Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. In .NET 7+ use a ParserState " +
 "and pass it to the ParserInputReader's constructor by reference instead.")]
 #endif
 public sealed class ParserStateBox : IParserStateBox

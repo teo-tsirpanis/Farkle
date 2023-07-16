@@ -93,7 +93,7 @@ public ref struct ParserInputReader<TChar>
 
     public ref ParserState State { get; }
 
-    public void AdvanceBy(int count);
+    public void Consume(int count);
 }
 
 public interface IParserStateBox
@@ -115,7 +115,7 @@ public sealed class ParserStateBox : IParserStateBox
 
 In frameworks that do not support ref fields, we have to use an interface and put the `ParserState` on the heap. A `ParserStateBox` class is provided for convenience and will be marked as obsolete on .NET 7.0+ to encourage the more efficient alternative.
 
-The `AdvanceBy` method will update the `TokenStartPosition` and `TotalCharactersRead` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
+The `Consume` method will update the `TokenStartPosition` and `TotalCharactersRead` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
 
 ### The parser
 

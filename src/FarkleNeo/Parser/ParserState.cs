@@ -34,11 +34,13 @@ public struct ParserState
     /// character of the token, analogous to the
     /// <code>ITransformerContext.TokenStartPosition</code> property of Farkle 6.
     /// </remarks>
+    /// <seealso cref="ParserInputReader{TChar}.Consume"/>
     public readonly Position CurrentPosition => _positionTracker.Position;
 
     /// <summary>
     /// The number of characters the parser has read.
     /// </summary>
+    /// <seealso cref="ParserInputReader{TChar}.Consume"/>
     public long TotalCharactersRead { get; private set; }
 
     /// <summary>

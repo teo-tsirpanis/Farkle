@@ -43,4 +43,8 @@ internal static class Resources
     public static string Grammar_Farkle7MustOpen => GetResourceString(nameof(Grammar_Farkle7MustOpen));
 
     public static string Grammar_FailedToConvert => GetResourceString(nameof(Grammar_FailedToConvert));
+
+    public static string Parser_ResultAlreadySet => GetResourceString(nameof(Parser_ResultAlreadySet));
+
+    public static string Parser_ResultNotSet => GetResourceString(nameof(Parser_ResultNotSet));
 }

@@ -33,7 +33,7 @@ public interface IParser<TChar,T> : IServiceProvider
     /// <para>
     /// This method must be invoked after reading new characters from the input source.
     /// To determine how many characters in the buffer should be kept, compare the
-    /// <see cref="ParserState.TotalCharactersRead"/> before and after running the parser.
+    /// <see cref="ParserState.TotalCharactersConsumed"/> before and after running the parser.
     /// </para>
     /// <para>
     /// After a result has been set to <paramref name="completionState"/> the parsing operation

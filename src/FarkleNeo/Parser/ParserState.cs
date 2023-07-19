@@ -27,7 +27,7 @@ public struct ParserState
     private Dictionary<object, object> _stateDictionary;
 
     /// <summary>
-    /// The position of the last character the parser has read.
+    /// The position of the last character the parser has consumed.
     /// </summary>
     /// <remarks>
     /// In transformers, this is the position of the <em>first</em>
@@ -38,10 +38,10 @@ public struct ParserState
     public readonly Position CurrentPosition => _positionTracker.Position;
 
     /// <summary>
-    /// The number of characters the parser has read.
+    /// The number of characters the parser has consumed.
     /// </summary>
     /// <seealso cref="ParserInputReader{TChar}.Consume"/>
-    public long TotalCharactersRead { get; private set; }
+    public long TotalCharactersConsumed { get; private set; }
 
     /// <summary>
     /// An implementation-specific object that can hold additional state without
@@ -61,10 +61,10 @@ public struct ParserState
     /// </remarks>
     public string? InputName { get; set; }
 
-    internal void Advance<T>(ReadOnlySpan<T> characters)
+    internal void Consume<T>(ReadOnlySpan<T> characters)
     {
         _positionTracker.Advance(characters);
-        TotalCharactersRead += characters.Length;
+        TotalCharactersConsumed += characters.Length;
     }
 
     /// <summary>

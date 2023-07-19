@@ -106,7 +106,7 @@ public ref struct ParserInputReader<TChar>
     /// negative or greater than the length of <see cref="RemainingCharacters"/>.</exception>
     /// <remarks>
     /// This method updates <see cref="RemainingCharacters"/> and the
-    /// <see cref="ParserState.CurrentPosition"/> and <see cref="ParserState.TotalCharactersRead"/>
+    /// <see cref="ParserState.CurrentPosition"/> and <see cref="ParserState.TotalCharactersConsumed"/>
     /// properties of <see cref="State"/>.
     /// </remarks>
     /// <seealso cref="ParserState.GetPositionAfter"/>
@@ -116,7 +116,7 @@ public ref struct ParserInputReader<TChar>
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(count));
         }
-        State.Advance(RemainingCharacters[..count]);
+        State.Consume(RemainingCharacters[..count]);
         RemainingCharacters = RemainingCharacters[count..];
     }
 }

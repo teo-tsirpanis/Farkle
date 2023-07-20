@@ -8,12 +8,15 @@ using System.Runtime.InteropServices;
 namespace Farkle.Parser;
 
 /// <summary>
-/// Provides an interface for a parser to read characters.
+/// Provides an interface for a parser to read characters and alter its <see cref="ParserState"/>.
 /// </summary>
-/// <typeparam name="TChar">The type of characters.</typeparam>
+/// <typeparam name="TChar">The type of characters that are parsed. Usually it is
+/// <see cref="char"/> or <see cref="byte"/> (not supported by Farkle's built-in
+/// parsers).</typeparam>
 /// <remarks>
 /// This type is the replacement of the <code>Farkle.IO.CharStream</code> code of Farkle 6.
-/// Contrary to that, this is a mutable value type that must be passed around by reference.
+/// Contrary to that, this is a mutable <c>ref struct</c> that must be passed around by
+/// reference and cannot be placed on the heap.
 /// </remarks>
 public ref struct ParserInputReader<TChar>
 {

@@ -17,7 +17,13 @@ namespace Farkle.Parser;
 /// of text from either a contiguous buffer or from streaming input.
 /// </para>
 /// <para>
+/// <see cref="IParser{TChar, T}"/> is the lowest-level parser API of Farkle.
+/// Higher-level APIs exist in the form of <see cref="ParserStateContext{TChar, T}"/>.
+/// </para>
+/// <para>
 /// Objects implementing <see cref="IParser{TChar, T}"/> must be stateless and thread-safe.
+/// To provide additional functionality, <see cref="IParser{TChar, T}"/> inherits from the
+/// <see cref="IServiceProvider"/> interface.
 /// </para>
 /// </remarks>
 public interface IParser<TChar,T> : IServiceProvider
@@ -40,8 +46,8 @@ public interface IParser<TChar,T> : IServiceProvider
     /// has completed and the parser should not run again with the same parameters.
     /// </para>
     /// <para>
-    /// For compatibility with Farkle's default streaming input parsing mechanism, running a parser
-    /// whose <paramref name="inputReader"/>'s <see cref="ParserInputReader{TChar}.IsFinalBlock"/>
+    /// For compatibility with Farkle's higher-level parsing APIs, running a parser whose
+    /// <paramref name="inputReader"/>'s <see cref="ParserInputReader{TChar}.IsFinalBlock"/>
     /// property is set to <see langword="true"/> should set a result to <paramref name="completionState"/>.
     /// Custom parsers can support deviating from this behavior, but must do it in an opt-in fashion.
     /// </para>

@@ -1,6 +1,10 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+#if NET7_0_OR_GREATER
+using System.ComponentModel;
+#endif
+
 namespace Farkle.Parser;
 
 /// <summary>
@@ -15,6 +19,7 @@ namespace Farkle.Parser;
 #if NET7_0_OR_GREATER
 [Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. " +
     "In .NET 7+ use a ParserState and pass it to the ParserInputReader's constructor by reference instead.")]
+[EditorBrowsable(EditorBrowsableState.Never)]
 #endif
 public sealed class ParserStateBox : IParserStateBox
 {

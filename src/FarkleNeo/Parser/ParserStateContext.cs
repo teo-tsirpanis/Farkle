@@ -205,6 +205,12 @@ public static class ParserStateContext
     public static ParserStateContext<TChar, T> Create<TChar, T>(IParser<TChar, T> parser, ParserStateContextOptions? options = null)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(parser);
+
+        if (parser.GetService(typeof(IParserStateContextFactory<TChar, T>)) is IParserStateContextFactory<TChar, T> factory)
+        {
+            return factory.CreateContext(options);
+        }
+
         return new DefaultContext<TChar, T>(parser, options);
     }
 }

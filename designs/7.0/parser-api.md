@@ -336,7 +336,7 @@ namespace Farkle.Parser;
 
 public interface IParserStateContextFactory<TChar, T>
 {
-    ParserStateContext<TChar, T> Create(ParserStateContextOptions? options = null);
+    ParserStateContext<TChar, T> CreateContext(ParserStateContextOptions? options = null);
 }
 ```
 

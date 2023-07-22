@@ -4,7 +4,7 @@
 namespace Farkle.Parser;
 
 /// <summary>
-/// Parses a series of characters and produces a result.
+/// Encapsulates the logic of converting characters into meaningful objects.
 /// </summary>
 /// <typeparam name="TChar">The type of characters that are parsed. Usually it is
 /// <see cref="char"/> or <see cref="byte"/> (not supported by Farkle's built-in
@@ -18,7 +18,8 @@ namespace Farkle.Parser;
 /// </para>
 /// <para>
 /// <see cref="IParser{TChar, T}"/> is the lowest-level parser API of Farkle.
-/// Higher-level APIs exist in the form of <see cref="ParserStateContext{TChar, T}"/>.
+/// Higher-level APIs exist in the form of <see cref="ParserExtensions"/> and
+/// <see cref="ParserStateContext{TChar, T}"/>.
 /// </para>
 /// <para>
 /// Objects implementing <see cref="IParser{TChar, T}"/> must be stateless and thread-safe.

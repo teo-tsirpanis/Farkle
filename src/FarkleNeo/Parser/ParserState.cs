@@ -35,7 +35,7 @@ public struct ParserState
     /// <code>ITransformerContext.TokenStartPosition</code> property of Farkle 6.
     /// </remarks>
     /// <seealso cref="ParserInputReader{TChar}.Consume"/>
-    public readonly Position CurrentPosition => _positionTracker.Position;
+    public readonly TextPosition CurrentPosition => _positionTracker.Position;
 
     /// <summary>
     /// The number of characters the parser has consumed.
@@ -84,7 +84,7 @@ public struct ParserState
     /// CR characters at the end of <paramref name="characters"/> do not change the line number.
     /// </para>
     /// </remarks>
-    public readonly Position GetPositionAfter<T>(ReadOnlySpan<T> characters) =>
+    public readonly TextPosition GetPositionAfter<T>(ReadOnlySpan<T> characters) =>
         _positionTracker.GetPositionAfter(characters);
 
     /// <summary>

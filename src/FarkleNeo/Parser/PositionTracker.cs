@@ -21,9 +21,9 @@ internal struct PositionTracker
     /// <summary>
     /// The current position.
     /// </summary>
-    public Position Position { get; private set; }
+    public TextPosition Position { get; private set; }
 
-    private static Position AdvanceCore<T>(Position position, ReadOnlySpan<T> span, T cr, T lf)
+    private static TextPosition AdvanceCore<T>(TextPosition position, ReadOnlySpan<T> span, T cr, T lf)
         where T : struct, IEquatable<T>
     {
         int line = position.Line, column = position.Column;
@@ -32,7 +32,7 @@ internal struct PositionTracker
             switch (span.IndexOfAny(lf, cr))
             {
                 case -1:
-                    return Position.Create0(line, column + span.Length);
+                    return TextPosition.Create0(line, column + span.Length);
                 case int nlPos:
                     if (span[nlPos].Equals(lf) || span[nlPos].Equals(cr) && nlPos < span.Length)
                     {
@@ -46,7 +46,7 @@ internal struct PositionTracker
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe Position Advance<T>(Position position, ReadOnlySpan<T> span)
+    private static unsafe TextPosition Advance<T>(TextPosition position, ReadOnlySpan<T> span)
     {
         if (typeof(T) == typeof(char))
         {
@@ -56,7 +56,7 @@ internal struct PositionTracker
         {
             return AdvanceCore(position, *(ReadOnlySpan<byte>*)&span, (byte)'\r', (byte)'\n');
         }
-        return Position.Create0(position.Line, position.Column + span.Length);
+        return TextPosition.Create0(position.Line, position.Column + span.Length);
     }
 
     /// <summary>
@@ -77,9 +77,9 @@ internal struct PositionTracker
     /// </para>
     /// </remarks>
     /// <seealso cref="Advance{T}(ReadOnlySpan{T})"/>
-    public readonly Position GetPositionAfter<T>(ReadOnlySpan<T> span)
+    public readonly TextPosition GetPositionAfter<T>(ReadOnlySpan<T> span)
     {
-        Position pos = Position;
+        TextPosition pos = Position;
         if (!span.IsEmpty)
         {
             if (_lastSeenCr)

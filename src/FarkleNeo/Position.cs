@@ -24,7 +24,7 @@ public readonly struct Position : IEquatable<Position>
     /// <summary>
     /// A <see cref="Position"/> that points to the start of text.
     /// </summary>
-    public Position Initial => default;
+    public static Position Initial => default;
 
     /// <summary>
     /// The line number of the <see cref="Position"/>.
@@ -61,15 +61,6 @@ public readonly struct Position : IEquatable<Position>
 
     internal Position NextLine() => new(_line + 1, 0);
 
-    /// <summary>
-    /// Checks two <see cref="Position"/>s for equality.
-    /// </summary>
-    /// <param name="other">The other position.</param>
-    /// <returns>Whether <see langword="this"/> and <paramref name="other"/>
-    /// have the same <see cref="Line"/> and <see cref="Column"/> values.</returns>
-    public bool Equals(Position other) =>
-        Line == other.Line && Column == other.Column;
-
     private string ToString(IFormatProvider? formatProvider) =>
 #if NET6_0_OR_GREATER
         string.Create(formatProvider, stackalloc char[32], $"({Line}, {Column})");
@@ -85,9 +76,34 @@ public readonly struct Position : IEquatable<Position>
         destination.TryWrite(provider, $"({Line}, {Column})", out charsWritten);
 #endif
 
+    /// <summary>
+    /// Checks two <see cref="Position"/>s for equality.
+    /// </summary>
+    /// <param name="other">The other position.</param>
+    /// <returns>Whether <see langword="this"/> and <paramref name="other"/>
+    /// have the same <see cref="Line"/> and <see cref="Column"/> values.</returns>
+    public bool Equals(Position other) =>
+        Line == other.Line && Column == other.Column;
+
     /// <inheritdoc/>
     public override bool Equals([NotNullWhen(true)] object? obj) =>
         obj is Position pos && Equals(pos);
+
+    /// <summary>
+    /// Implements the equality operator for <see cref="Position"/>.
+    /// </summary>
+    /// <param name="left">The first position.</param>
+    /// <param name="right">The second position.</param>
+    /// <returns>Whether the two positions are equal.</returns>
+    public static bool operator ==(Position left, Position right) => left.Equals(right);
+
+    /// <summary>
+    /// Implements the inequality operator for <see cref="Position"/>.
+    /// </summary>
+    /// <param name="left">The first position.</param>
+    /// <param name="right">The second position.</param>
+    /// <returns>Whether the two positions are not equal.</returns>
+    public static bool operator !=(Position left, Position right) => !left.Equals(right);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(Line, Column);

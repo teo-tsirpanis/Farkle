@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.Bcl.HashCode" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />

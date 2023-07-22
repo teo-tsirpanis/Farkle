@@ -41,10 +41,10 @@ namespace Farkle.Parser;
 
 public struct ParserState
 {
-    public readonly Position CurrentPosition { get; }
+    public readonly TextPosition CurrentPosition { get; }
     public readonly long TotalCharactersConsumed { get; }
 
-    public Position GetPositionAfter<T>(ReadOnlySpan<T> characters);
+    public TextPosition GetPositionAfter<T>(ReadOnlySpan<T> characters);
 
     public object? Context { get; init; }
     // A string describing the input source. Could be
@@ -390,7 +390,7 @@ namespace Farkle.Parser.LexicalAnalysis;
 public readonly struct TokenizerResult
 {
     // Creates a TokenizerResult that indicates success.
-    public static TokenizerResult CreateSuccess(TokenSymbolHandle symbol, object? semanticValue, Position position);
+    public static TokenizerResult CreateSuccess(TokenSymbolHandle symbol, object? semanticValue, TextPosition position);
     // Creates a TokenizerResult that indicates failure.
     // The errorObject parameter will be set in the ParserCompletionState provided by the user.
     public static TokenizerResult CreateFailure(object errorObject);
@@ -400,7 +400,7 @@ public readonly struct TokenizerResult
 
     public TokenSymbolHandle Symbol { get; }
     public object? Data { get; }
-    public Position Position { get; }
+    public TextPosition Position { get; }
 }
 
 public abstract class Tokenizer<TChar>

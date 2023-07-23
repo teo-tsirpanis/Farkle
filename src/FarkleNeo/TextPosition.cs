@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Farkle;
 
@@ -59,6 +60,46 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     public static TextPosition Create1(int line, int column) =>
         Create0(line - 1, column - 1);
 
+    internal TextPosition AdvanceCore<T>(ReadOnlySpan<T> span, T cr, T lf)
+        where T : struct, IEquatable<T>
+    {
+        int line = _line, column = _column;
+        while (true)
+        {
+            switch (span.IndexOfAny(lf, cr))
+            {
+                case -1:
+                    return Create0(line, column + span.Length);
+                case int nlPos:
+                    if (span[nlPos].Equals(cr) && nlPos == span.Length - 1)
+                    {
+                        column += nlPos;
+                    }
+                    else
+                    {
+                        line++;
+                        column = 0;
+                    }
+                    span = span[(nlPos + 1)..];
+                    break;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal unsafe TextPosition Advance<T>(ReadOnlySpan<T> span)
+    {
+        if (typeof(T) == typeof(char))
+        {
+            return AdvanceCore(*(ReadOnlySpan<char>*)&span, '\r', '\n');
+        }
+        if (typeof(T) == typeof(byte))
+        {
+            return AdvanceCore(*(ReadOnlySpan<byte>*)&span, (byte)'\r', (byte)'\n');
+        }
+        return Create0(_line, _column + span.Length);
+    }
+
     internal TextPosition NextLine() => new(_line + 1, 0);
 
     private string ToString(IFormatProvider? formatProvider) =>
@@ -83,7 +124,7 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     /// <returns>Whether <see langword="this"/> and <paramref name="other"/>
     /// have the same <see cref="Line"/> and <see cref="Column"/> values.</returns>
     public bool Equals(TextPosition other) =>
-        Line == other.Line && Column == other.Column;
+        _line == other._line && _column == other._column;
 
     /// <inheritdoc/>
     public override bool Equals([NotNullWhen(true)] object? obj) =>

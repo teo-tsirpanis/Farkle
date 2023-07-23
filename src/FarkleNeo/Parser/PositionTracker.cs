@@ -1,8 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Runtime.CompilerServices;
-
 namespace Farkle.Parser;
 
 /// <summary>
@@ -22,42 +20,6 @@ internal struct PositionTracker
     /// The current position.
     /// </summary>
     public TextPosition Position { get; private set; }
-
-    private static TextPosition AdvanceCore<T>(TextPosition position, ReadOnlySpan<T> span, T cr, T lf)
-        where T : struct, IEquatable<T>
-    {
-        int line = position.Line, column = position.Column;
-        while (true)
-        {
-            switch (span.IndexOfAny(lf, cr))
-            {
-                case -1:
-                    return TextPosition.Create0(line, column + span.Length);
-                case int nlPos:
-                    if (span[nlPos].Equals(lf) || span[nlPos].Equals(cr) && nlPos < span.Length)
-                    {
-                        line++;
-                        column = 0;
-                    }
-                    span = span[(nlPos + 1)..];
-                    break;
-            }
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe TextPosition Advance<T>(TextPosition position, ReadOnlySpan<T> span)
-    {
-        if (typeof(T) == typeof(char))
-        {
-            return AdvanceCore(position, *(ReadOnlySpan<char>*)&span, '\r', '\n');
-        }
-        if (typeof(T) == typeof(byte))
-        {
-            return AdvanceCore(position, *(ReadOnlySpan<byte>*)&span, (byte)'\r', (byte)'\n');
-        }
-        return TextPosition.Create0(position.Line, position.Column + span.Length);
-    }
 
     /// <summary>
     /// Gets the position of the last of the given characters,
@@ -90,7 +52,7 @@ internal struct PositionTracker
                     pos = pos.NextLine();
                 }
             }
-            pos = Advance(pos, span);
+            pos = pos.Advance(span);
         }
         return pos;
     }

@@ -121,5 +121,9 @@ public ref struct ParserInputReader<TChar>
         }
         State.Consume(RemainingCharacters[..count]);
         RemainingCharacters = RemainingCharacters[count..];
+        if (RemainingCharacters.IsEmpty && IsFinalBlock)
+        {
+            State.CompleteInput();
+        }
     }
 }

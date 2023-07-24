@@ -44,13 +44,11 @@ internal struct PositionTracker
         TextPosition pos = Position;
         if (!span.IsEmpty)
         {
-            if (_lastSeenCr)
+            if (_lastSeenCr
+                && ((typeof(T) == typeof(char) && (char)(object)span[0]! != '\n')
+                || (typeof(T) == typeof(byte) && (byte)(object)span[0]! != (byte)'\n')))
             {
-                if ((typeof(T) == typeof(char) && (char)(object)span[0]! != '\n')
-                    || (typeof(T) == typeof(byte) && (byte)(object)span[0]! != (byte)'\n'))
-                {
-                    pos = pos.NextLine();
-                }
+                pos = pos.NextLine();
             }
             pos = pos.Advance(span);
         }

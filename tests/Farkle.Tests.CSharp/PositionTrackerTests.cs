@@ -7,7 +7,7 @@ namespace Farkle.Tests.CSharp;
 
 internal class PositionTrackerTests
 {
-    public static void TestLineEndings<T>(ReadOnlySpan<T> text)
+    private static void TestLineEndings<T>(ReadOnlySpan<T> text)
     {
         TextPosition[] expectedPositions = {
             TextPosition.Initial,
@@ -35,7 +35,7 @@ internal class PositionTrackerTests
     [Test]
     public void TestLineEndingsByte() => TestLineEndings("\r \n\r\n"u8);
 
-    public void TestFinalCr<T>(ReadOnlySpan<T> text)
+    private static void TestFinalCr<T>(ReadOnlySpan<T> text)
     {
         PositionTracker tracker = new();
         tracker.Advance(text);

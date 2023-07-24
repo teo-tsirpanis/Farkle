@@ -67,6 +67,8 @@ public struct ParserState
         TotalCharactersConsumed += characters.Length;
     }
 
+    internal void CompleteInput() => _positionTracker.CompleteInput();
+
     /// <summary>
     /// Gets the position of the last of the given characters,
     /// assuming they start at <see cref="CurrentPosition"/>.

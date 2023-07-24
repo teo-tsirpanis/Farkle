@@ -20,7 +20,7 @@
     <PackageVersion Include="FsLexYacc.Runtime" Version="11.2.0" />
     <PackageVersion Include="FsLexYacc" Version="11.2.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.3.2" />
-    <PackageVersion Include="HtmlAgilityPack" Version="1.11.49" />
+    <PackageVersion Include="HtmlAgilityPack" Version="1.11.50" />
     <PackageVersion Include="MedallionShell" Version="1.6.2" />
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.5.5" />

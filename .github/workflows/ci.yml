@@ -34,17 +34,17 @@ jobs:
         run: dotnet tool restore
       - name: Enable SonarCloud scanning
         env:
+          # We can't use secrets in if conditions so we first put it in an environment variable.
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # We can't use secrets in if conditions so we first put it in an environment variable.
-        if: env.SONAR_TOKEN != null && runner.os == 'Linux'
+        if: vars.SONAR_PROJECT_KEY != null && env.SONAR_TOKEN != null && runner.os == 'Linux'
         run: |
-          dotnet sonarscanner begin /k:"teo-tsirpanis_Farkle" /o:"teo-tsirpanis" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="./**/*.opencover.xml"
+          dotnet sonarscanner begin /k:"${{ vars.SONAR_PROJECT_KEY }}" /o:"${{ vars.SONAR_PROJECT_ORGANIZATION }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="./**/*.opencover.xml"
       - name: Run tests
         run: |
           dotnet run --project eng/Farkle.Build.fsproj -- -t Test
       - name: End SonarCloud scanning
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: env.SONAR_TOKEN != null && runner.os == 'Linux'
+        if: vars.SONAR_PROJECT_KEY != null && env.SONAR_TOKEN != null && runner.os == 'Linux'
         run: |
           dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"

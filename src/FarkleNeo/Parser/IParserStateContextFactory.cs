@@ -18,10 +18,6 @@ namespace Farkle.Parser;
 /// </remarks>
 public interface IParserStateContextFactory<TChar, T>
 {
-    /// <summary>
-    /// Creates a <see cref="ParserStateContext{TChar, T}"/>.
-    /// </summary>
-    /// <param name="options"></param>
-    /// <returns></returns>
+    /// <inheritdoc cref="ParserStateContext{TChar, T}.ParserStateContext"/>
     public ParserStateContext<TChar, T> CreateContext(ParserStateContextOptions? options = null);
 }

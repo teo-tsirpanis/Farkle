@@ -48,3 +48,9 @@ jobs:
         if: vars.SONAR_PROJECT_KEY != null && env.SONAR_TOKEN != null && runner.os == 'Linux'
         run: |
           dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  full_ci_passed:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0

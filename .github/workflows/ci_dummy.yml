@@ -1,0 +1,18 @@
+# This workflow gives a positive check result to PRs that only
+# change non-code files. It is needed for branch protection to work.
+name: CI (dummy)
+
+on:
+  pull_request:
+    # Paths must be synchronized with ci.yml.
+    paths:
+      - '**/*.md'
+      - '**/*.txt'
+
+permissions: read-all
+
+jobs:
+  full_ci_passed:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0

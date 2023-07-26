@@ -15,7 +15,7 @@ namespace Farkle.Grammars;
 /// The grammar's data is internally stored in a binary format described in
 /// <see href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/designs/7.0/grammar-file-format-spec.md"/>
 /// </remarks>
-public abstract class Grammar
+public abstract class Grammar : IGrammarProvider
 {
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
@@ -305,6 +305,8 @@ public abstract class Grammar
     /// </summary>
     /// <param name="handle">The token symbol handle to check;</param>
     public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
+
+    Grammar IGrammarProvider.GetGrammar() => this;
 
     internal void ValidateContent()
     {

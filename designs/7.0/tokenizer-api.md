@@ -27,18 +27,6 @@ To be created, a tokenizer needs the grammar of the language it will operate on.
 ```csharp
 namespace Farkle.Parser.LexicalAnalysis;
 
-public readonly struct TokenizerFactoryContext
-{
-    public TokenizerFactoryContext(Grammar? grammar);
-
-    // These two methods will fail if the grammar in the constructor
-    // or the ChainedTokenizerBuilder.Build method is null. They will
-    // never fail when creating a tokenizer for a CharParser since it
-    // guarantees that a grammar exists.
-    public Grammar GetGrammar();
-    public EntityHandle GetSymbolFromSpecialName(string name, bool throwIfNotFound = false);
-}
-
 public sealed class ChainedTokenizerBuilder<TChar>
 {
     // A placeholder for the existing tokenizer of a CharParser.
@@ -47,21 +35,21 @@ public sealed class ChainedTokenizerBuilder<TChar>
     public static ChainedTokenizerBuilder<TChar> Create(Tokenizer<TChar> tokenizer);
 
     public static ChainedTokenizerBuilder<TChar> Create(
-        Func<TokenizerFactoryContext, Tokenizer<TChar>> tokenizerFactory);
+        Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
 
     // The Append methods are immutable and return a new builder with the new tokenizer appended.
     public ChainedTokenizerBuilder<TChar> Append(Tokenizer<TChar> tokenizer);
 
     public ChainedTokenizerBuilder<TChar> Append(
-        Func<TokenizerFactoryContext, Tokenizer<TChar>> tokenizerFactory);
+        Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
 
     public ChainedTokenizerBuilder<TChar> Append(ChainedTokenizerBuilder<TChar> builder);
 
     public ChainedTokenizerBuilder<TChar> AppendDefault();
 
-    // If grammar is null, TokenizerFactoryContext.GetGrammar will throw in the tokenizer factories.
+    // If grammar is null, IGrammarProvider.GetGrammar will throw in the tokenizer factories.
     // If defaultTokenizer is null, using ChainedTokenizerBuilder.Default in the chain will throw.
-    public Tokenizer<TChar> Build(Grammar? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
+    public Tokenizer<TChar> Build(IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
 }
 
 namespace Farkle;
@@ -72,7 +60,7 @@ public abstract partial class CharParser<T>
     // public abstract CharParser<T> WithTokenizer(Tokenizer<T> tokenizer);
 
     public abstract CharParser<T> WithTokenizer(
-        Func<TokenizerFactoryContext, Tokenizer<T>> tokenizerFactory);
+        Func<IGrammarProvider, Tokenizer<T>> tokenizerFactory);
 
     public abstract CharParser<T> WithTokenizer(ChainedTokenizerBuilder<T> builder);
 }
@@ -80,7 +68,7 @@ public abstract partial class CharParser<T>
 
 Besides simple tokenizer objects, the tokenizer of a `CharParser` can be changed by providing a _tokenizer factory_ or a _chained tokenizer builder_.
 
-A tokenizer factory is a delegate that accepts a `TokenizerFactoryContext` and returns a tokenizer. We use `TokenizerFactoryContext` instead of just `Grammar` to allow in the future looking up the special names without depending on the entire grammar API.
+A tokenizer factory is a delegate that accepts a `IGrammarProvider` and returns a tokenizer. We use `IGrammarProvider` instead of just `Grammar` to allow in the future looking up the special names without depending on the entire grammar API.
 
 A chained tokenizer builder builds a chain of tokenizers from the start to the end and can be either passed to a `CharParser` or used standalone. Each component of a chained tokenizer builder can be a tokenizer, a tokenizer factory or another chained tokenizer builder. The `Default` property of `ChainedTokenizerBuilder` is a builder that starts with the existing tokenizer of a `CharParser` as its only component. The `AppendDefault` method appends that default tokenizer to the chain.
 

@@ -306,7 +306,9 @@ The initial release of Farkle 7 will provide the following parser services. All 
 
 #### Getting the grammar of a parser
 
-The `IGrammarProvider` service interface allows getting the grammar of a parser, if the parser is backed by one (it doesn't have to). For simplicity the `Grammar` object also implements that interface.
+We define the `IGrammarProvider` interface as an abstraction over the `Farkle.Grammars.Grammar` type. It has methods to get the concrete grammar, and to look up a symbol by its special name (allowing in the future to be performed without reading the entire grammar binary blob).
+
+Besides some overall utility, this interface can be returned as a service by parsers that are backed by a Farkle grammar (they don't have to). For simplicity the `Grammar` object also implements that interface.
 
 ```csharp
 namespace Farkle.Grammars;
@@ -314,16 +316,15 @@ namespace Farkle.Grammars;
 public interface IGrammarProvider
 {
     Grammar GetGrammar();
+
+    EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false);
 }
 
 public abstract class Grammar : IGrammarProvider
 {
-    public Grammar GetGrammar() => this;
-}
+    Grammar IGrammarProvider.GetGrammar() => this;
 
-public static class GrammarProviderExtensions
-{
-    public static Grammar? GetGrammar(this IServiceProvider serviceProvider);
+    // GetSymbolFromSpecialName is implemented implicitly.
 }
 ```
 

@@ -271,16 +271,16 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
 Semantic analysis (called _post-processing_ in earlier versions of Farkle) is the process of converting a parse tree to an object meaningful for the application. This behavior is controlled by the `ISemanticProvider` interfaces.
 
 ```csharp
-namespace Farkle.Parser.SemanticAnalysis;
+namespace Farkle.Parser.Semantics;
 
-public interface ITransformer<TChar>
+public interface ITokenSemanticProvider<TChar>
 {
-    object? Transform(ref ParserState state, TokenSymbolHandle terminal, ReadOnlySpan<TChar> data);
+    object? Transform(ref ParserState state, TokenSymbolHandle symbol, ReadOnlySpan<TChar> characters);
 }
 
-public interface IFuser
+public interface IProductionSemanticProvider
 {
-    object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> children);
+    object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> members);
 }
 
 // The legacy 7.x F# codebase used a base IPostProcessor interface
@@ -299,6 +299,8 @@ The following things changed since Farkle 6:
 2. The `Transform` and `Fuse` methods were split to two interfaces, `ITransformer<TChar>` and `IFuser`. This helps with separation of concerns and does not require having a character type to run the fuser. The `ISemanticProvider` interface is now a marker interface that combines the two, and adds a covariant generic parameter of the starting symbol's return type.
 3. `Fuse` accepts a reference to a `ParserState`, allowing stateful fuses; why not?
 4. `Fuse` accepts a read-write span of the production's member values, instead of a read-only span in previous versions of Farkle. This allows the span to be used as a temporary buffer by the fuser; it would easily enable certain scenarios and the buffer gets discarded afterwards either way.
+
+> In earlier versions of this document the `ITokenSemanticProvider` and `IProductionSemanticProvider` interfaces were called `ITransformer` and `IFuser` respectively. They were eventually renamed, since historically transformers and fusers in Farkle process tokens and productions of specific kinds, while these interfaces _multiplex_ over the available transformers and fusers.
 
 ### Predefined services
 
@@ -408,7 +410,7 @@ public abstract class Tokenizer<TChar>
 {
     protected Tokenizer();
 
-    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, out TokenizerResult result);
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
 }
 ```
 

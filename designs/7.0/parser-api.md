@@ -387,7 +387,7 @@ TODO: What would happen if we inject a token in the middle of tokenizing? It mig
 Farkle 7 defines the following API for tokenizers and the tokens they produce:
 
 ```csharp
-namespace Farkle.Parser.LexicalAnalysis;
+namespace Farkle.Parser.Tokenizers;
 
 // Represents the result of a tokenizer invocation.
 public readonly struct TokenizerResult

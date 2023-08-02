@@ -452,15 +452,20 @@ public abstract class CharParser<T> : IParser<char, T>
     // information about the failure by parsing an empty string.
     // If a grammar has a defective DFA but a valid LR(1) table,
     // it is possible to fix the parser by changing its tokenizer.
-    public abstract bool IsFailing { get; }
+    public bool IsFailing { get; }
 
-    public abstract Grammar GetGrammar();
+    public Grammar GetGrammar();
 
     // In Farkle 6 these methods were called Change***. The With suffix
     // communicates better that the existing instance is not mutated.
-    public abstract CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider);
+    public CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider);
 
-    public abstract CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
+    // Some semantic providers (such as the generic AST) need access to
+    // the grammar and there is no other way to provide it. Putting it
+    // in ParserState becomes tricky.
+    public CharParser<TNew> WithSemanticProvider<TNew>(Func<IGrammarProvider, ISemanticProvider<char, TNew>> semanticProviderFactory);
+
+    public CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
 }
 
 public static class CharParser

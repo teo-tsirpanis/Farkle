@@ -57,12 +57,12 @@ namespace Farkle;
 public abstract partial class CharParser<T>
 {
     // Already defined at parser-api.md:
-    // public abstract CharParser<T> WithTokenizer(Tokenizer<T> tokenizer);
+    // public CharParser<T> WithTokenizer(Tokenizer<T> tokenizer);
 
-    public abstract CharParser<T> WithTokenizer(
+    public CharParser<T> WithTokenizer(
         Func<IGrammarProvider, Tokenizer<T>> tokenizerFactory);
 
-    public abstract CharParser<T> WithTokenizer(ChainedTokenizerBuilder<T> builder);
+    public CharParser<T> WithTokenizer(ChainedTokenizerBuilder<T> builder);
 }
 ```
 

@@ -25,7 +25,7 @@ This arrangement of tokenizers imposes some constraints -like tokenizers not bei
 To be created, a tokenizer needs the grammar of the language it will operate on. Farkle 6 had the `TokenizerFactory` class with an abstract `Create` method that accepted a grammar and returned a tokenizer. For Farkle 7 we want to be slightly more flexible, as well as support building chained tokenizers:
 
 ```csharp
-namespace Farkle.Parser.LexicalAnalysis;
+namespace Farkle.Parser.Tokenizers;
 
 public sealed class ChainedTokenizerBuilder<TChar>
 {
@@ -77,7 +77,7 @@ A chained tokenizer builder builds a chain of tokenizers from the start to the e
 We will provide the following APIs to support suspending the tokenization process:
 
 ```csharp
-namespace Farkle.Parser.LexicalAnalysis;
+namespace Farkle.Parser.Tokenizers;
 
 public interface ITokenizerResumptionPoint<TChar, in TArg>
 {

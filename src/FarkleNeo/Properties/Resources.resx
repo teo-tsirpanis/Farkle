@@ -39,4 +39,13 @@
   <data name="Parser_ResultNotSet" xml:space="preserve">
     <value>The parsing operation has not yet set a result.</value>
   </data>
+  <data name="ChainedTokenizerBuilder_NoGrammar" xml:space="preserve">
+    <value>No grammar has been specified.</value>
+  </data>
+  <data name="ChainedTokenizerBuilder_NoDefaultTokenizer" xml:space="preserve">
+    <value>No default tokenizer has been specified.</value>
+  </data>
+  <data name="Tokenizer_AlreadySuspended" xml:space="preserve">
+    <value>The tokenizer has already been suspended.</value>
+  </data>
 </root>

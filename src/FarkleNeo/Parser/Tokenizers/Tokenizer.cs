@@ -17,6 +17,20 @@ public abstract class Tokenizer<TChar>
     protected Tokenizer() { }
 
     /// <summary>
+    /// Whether the tokenizer does not need to be wrapped in a tokenizer chain.
+    /// </summary>
+    /// <remarks>
+    /// To always support suspension, even standalone tokenizers are wrapped in a
+    /// tokenizer chain, leading to an extra layer of indirection. By setting this
+    /// property to <see langword="true"/>, Farkle does not wrap the tokenizer if
+    /// it is the only one in the chain. This enables the tokenizer to be directly
+    /// called by the parser, but the consequence is that suspending the tokenizer
+    /// has no effect. It should therefore be used by tokenizers that are known to
+    /// never suspend.
+    /// </remarks>
+    internal bool CanSkipChainedTokenizerWrapping { get; private protected init; }
+
+    /// <summary>
     /// Tries to get the next token from the input.
     /// </summary>
     /// <param name="reader">A <see cref="ParserInputReader{TChar}"/> with the input

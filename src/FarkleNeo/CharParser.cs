@@ -35,6 +35,8 @@ public abstract class CharParser<T> : IParser<char, T>
 
     private protected abstract IGrammarProvider GetGrammarProvider();
 
+    private protected abstract Tokenizer<char> GetTokenizer();
+
     private protected virtual object? GetServiceCore(Type serviceType)
     {
         if (serviceType == typeof(IGrammarProvider))
@@ -49,6 +51,9 @@ public abstract class CharParser<T> : IParser<char, T>
 
     private protected virtual CharParser<T> WithTokenizerCore(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory) =>
         WithTokenizerCore(tokenizerFactory(GetGrammarProvider()));
+
+    private protected virtual CharParser<T> WithTokenizerCore(ChainedTokenizerBuilder<char> builder) =>
+        WithTokenizerCore(builder.Build(GetGrammarProvider(), GetTokenizer()));
 
     private protected abstract CharParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider);
 
@@ -151,7 +156,7 @@ public abstract class CharParser<T> : IParser<char, T>
 
     /// <summary>
     /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a
-    /// <see cref="Tokenizer{TChar}"/> that depends on a <see cref="Grammar"/>.
+    /// <see cref="Tokenizer{TChar}"/> that depends on a grammar.
     /// </summary>
     /// <param name="tokenizerFactory">A delegate that accepts an <see cref="IGrammarProvider"/>
     /// and returns a tokenizer.</param>
@@ -167,5 +172,24 @@ public abstract class CharParser<T> : IParser<char, T>
     {
         ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
         return WithTokenizerCore(tokenizerFactory);
+    }
+
+    /// <summary>
+    /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a
+    /// chained tokenizer to be built from a <see cref="ChainedTokenizerBuilder{TChar}"/>.
+    /// </summary>
+    /// <param name="builder">The chained tokenizer builder to use.</param>
+    /// <returns>A <see cref="CharParser{T}"/> with the tokenizer built from <paramref name="builder"/>
+    /// as its tokenizer.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="builder"/>
+    /// is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// In certain failing parsers, <paramref name="builder"/> will not be built,
+    /// and this method will have no effect and return <see langword="this"/>.
+    /// </remarks>
+    public CharParser<T> WithTokenizer(ChainedTokenizerBuilder<char> builder)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        return WithTokenizerCore(builder);
     }
 }

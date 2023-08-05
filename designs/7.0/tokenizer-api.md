@@ -29,13 +29,13 @@ namespace Farkle.Parser.Tokenizers;
 
 public sealed class ChainedTokenizerBuilder<TChar>
 {
-    // A placeholder for the existing tokenizer of a CharParser.
-    public static ChainedTokenizerBuilder<TChar> Default { get; }
-
     public static ChainedTokenizerBuilder<TChar> Create(Tokenizer<TChar> tokenizer);
 
     public static ChainedTokenizerBuilder<TChar> Create(
         Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
+
+    // Starts the chain with the existing tokenizer of a CharParser.
+    public static ChainedTokenizerBuilder<TChar> CreateDefault();
 
     // The Append methods are immutable and return a new builder with the new tokenizer appended.
     public ChainedTokenizerBuilder<TChar> Append(Tokenizer<TChar> tokenizer);

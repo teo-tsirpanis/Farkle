@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -38,5 +38,14 @@
   </data>
   <data name="Parser_ResultNotSet" xml:space="preserve">
     <value>Η συντακτική ανάλυση δεν έχει θέσει ακόμα ένα αποτέλεσμα.</value>
+  </data>
+  <data name="ChainedTokenizerBuilder_NoGrammar" xml:space="preserve">
+    <value>Δεν έχει δοθεί μία γραμματική.</value>
+  </data>
+  <data name="ChainedTokenizerBuilder_NoDefaultTokenizer" xml:space="preserve">
+    <value>Δεν έχει δοθεί ένας προεπιλεγμένος λεκτικός αναλυτής.</value>
+  </data>
+  <data name="Tokenizer_AlreadySuspended" xml:space="preserve">
+    <value>Ο λεκτικός αναλυτής έχει ήδη παυθεί.</value>
   </data>
 </root>

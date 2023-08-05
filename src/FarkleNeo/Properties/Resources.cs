@@ -34,9 +34,9 @@ internal static class Resources
 
     public static string Grammar_TooOldFormat => GetResourceString(nameof(Grammar_TooOldFormat));
 
-    public static string Grammar_EgtNeoNotSupported=> GetResourceString(nameof(Grammar_EgtNeoNotSupported));
+    public static string Grammar_EgtNeoNotSupported => GetResourceString(nameof(Grammar_EgtNeoNotSupported));
 
-    public static string Grammar_GoldParserMustConvert=> GetResourceString(nameof(Grammar_GoldParserMustConvert));
+    public static string Grammar_GoldParserMustConvert => GetResourceString(nameof(Grammar_GoldParserMustConvert));
 
     public static string Grammar_UnrecognizedFormat => GetResourceString(nameof(Grammar_UnrecognizedFormat));
 
@@ -47,4 +47,10 @@ internal static class Resources
     public static string Parser_ResultAlreadySet => GetResourceString(nameof(Parser_ResultAlreadySet));
 
     public static string Parser_ResultNotSet => GetResourceString(nameof(Parser_ResultNotSet));
+
+    public static string ChainedTokenizerBuilder_NoGrammar => GetResourceString(nameof(ChainedTokenizerBuilder_NoGrammar));
+
+    public static string ChainedTokenizerBuilder_NoDefaultTokenizer => GetResourceString(nameof(ChainedTokenizerBuilder_NoDefaultTokenizer));
+
+    public static string Tokenizer_AlreadySuspended => GetResourceString(nameof(Tokenizer_AlreadySuspended));
 }

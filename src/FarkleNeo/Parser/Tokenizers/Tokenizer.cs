@@ -30,6 +30,9 @@ public abstract class Tokenizer<TChar>
     /// </remarks>
     internal bool CanSkipChainedTokenizerWrapping { get; private protected init; }
 
+    /// <seealso cref="CharParser{T}.IsFailing"/>
+    internal bool IsFailing { get; private protected init; }
+
     /// <summary>
     /// Tries to get the next token from the input.
     /// </summary>

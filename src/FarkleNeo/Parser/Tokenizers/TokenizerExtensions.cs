@@ -15,9 +15,9 @@ namespace Farkle.Parser.Tokenizers;
 /// </remarks>
 public static class TokenizerExtensions
 {
-    internal static ChainedTokenizerState<TChar>? GetChainedTokenizerStateOrNull<TChar>(this in ParserState parserState)
+    internal static ChainedTokenizerState<TChar>? GetChainedTokenizerStateOrNull<TChar>(this in ParserInputReader<TChar> input)
     {
-        if (parserState.TryGetValue(typeof(ChainedTokenizerState<TChar>), out object? value))
+        if (input.State.TryGetValue(typeof(ChainedTokenizerState<TChar>), out object? value))
         {
             Debug.Assert(value is ChainedTokenizerState<TChar>);
             return Unsafe.As<ChainedTokenizerState<TChar>>(value);
@@ -25,20 +25,20 @@ public static class TokenizerExtensions
         return null;
     }
 
-    internal static ChainedTokenizerState<TChar> GetOrCreateChainedTokenizerState<TChar>(this ref ParserState parserState)
+    internal static ChainedTokenizerState<TChar> GetOrCreateChainedTokenizerState<TChar>(this ref ParserInputReader<TChar> input)
     {
-        if (!parserState.TryGetValue(typeof(ChainedTokenizerState<TChar>), out object? value))
+        if (!input.State.TryGetValue(typeof(ChainedTokenizerState<TChar>), out object? value))
         {
             value = new ChainedTokenizerState<TChar>();
-            parserState.SetValue(typeof(ChainedTokenizerState<TChar>), value);
+            input.State.SetValue(typeof(ChainedTokenizerState<TChar>), value);
         }
         Debug.Assert(value is ChainedTokenizerState<TChar>);
         return Unsafe.As<ChainedTokenizerState<TChar>>(value);
     }
 
-    private static void SuspendTokenizerCore<TChar>(this ref ParserState state, Tokenizer<TChar> tokenizer)
+    private static void SuspendTokenizerCore<TChar>(this ref ParserInputReader<TChar> input, Tokenizer<TChar> tokenizer)
     {
-        var tokenizerState = state.GetOrCreateChainedTokenizerState<TChar>();
+        var tokenizerState = input.GetOrCreateChainedTokenizerState();
         if (tokenizerState.TokenizerToResume is not null)
         {
             ThrowHelpers.ThrowInvalidOperationException(Resources.Tokenizer_AlreadySuspended);
@@ -50,7 +50,7 @@ public static class TokenizerExtensions
     /// Suspends the tokenization process and sets it to resume at the specified <see cref="Tokenizer{TChar}"/>.
     /// </summary>
     /// <typeparam name="TChar">The type of characters the tokenizer processes.</typeparam>
-    /// <param name="state">The state of the parsing operation.</param>
+    /// <param name="input">The state of the parsing operation.</param>
     /// <param name="tokenizer">The tokenizer to resume at.</param>
     /// <exception cref="ArgumentNullException"><paramref name="tokenizer"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException">The tokenizer is already suspended.</exception>
@@ -75,10 +75,10 @@ public static class TokenizerExtensions
     /// they call this method.
     /// </para>
     /// </remarks>
-    public static void SuspendTokenizer<TChar>(this ref ParserState state, Tokenizer<TChar> tokenizer)
+    public static void SuspendTokenizer<TChar>(this ref ParserInputReader<TChar> input, Tokenizer<TChar> tokenizer)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(tokenizer);
-        state.SuspendTokenizerCore(tokenizer);
+        input.SuspendTokenizerCore(tokenizer);
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public static class TokenizerExtensions
     /// </summary>
     /// <typeparam name="TChar">The type of characters the tokenizer processes.</typeparam>
     /// <typeparam name="TArg">The type of <paramref name="arg"/>.</typeparam>
-    /// <param name="state">The state of the parsing operation.</param>
+    /// <param name="input">The state of the parsing operation.</param>
     /// <param name="resumptionPoint">The resumption point to resume at.</param>
     /// <param name="arg">An argument to pass to <paramref name="resumptionPoint"/>
     /// when it gets invoked.</param>
@@ -115,11 +115,11 @@ public static class TokenizerExtensions
     /// they call this method.
     /// </para>
     /// </remarks>
-    public static void SuspendTokenizer<TChar, TArg>(this ref ParserState state,
+    public static void SuspendTokenizer<TChar, TArg>(this ref ParserInputReader<TChar> input,
         ITokenizerResumptionPoint<TChar, TArg> resumptionPoint, TArg arg)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(resumptionPoint);
-        state.SuspendTokenizerCore(new TokenizerResumptionPoint<TChar, TArg>(resumptionPoint, arg));
+        input.SuspendTokenizerCore(new TokenizerResumptionPoint<TChar, TArg>(resumptionPoint, arg));
     }
 
     private sealed class TokenizerResumptionPoint<TChar, TArg> : Tokenizer<TChar>

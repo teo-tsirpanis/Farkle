@@ -15,7 +15,7 @@ namespace Farkle.Parser.Tokenizers;
 /// <para>
 /// A chained tokenizer invokes the tokenizers in order, until one of them returns with
 /// a result. Tokenizers can set to contunue after returning without resetting the chain
-/// by calling <see cref="TokenizerExtensions.SuspendTokenizer{TChar}(ref ParserState, Tokenizer{TChar})"/>
+/// by calling <see cref="TokenizerExtensions.SuspendTokenizer{TChar}(ref ParserInputReader{TChar}, Tokenizer{TChar})"/>
 /// or an overload thereof.
 /// </para>
 /// <para>

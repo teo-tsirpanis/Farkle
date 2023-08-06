@@ -76,7 +76,7 @@ public abstract class CharParser<T> : IParser<char, T>
     }
 
     /// <inheritdoc />
-    public abstract void Run(ref ParserInputReader<char> inputReader, ref ParserCompletionState<T> completionState);
+    public abstract void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState);
 
     /// <summary>
     /// Whether the <see cref="CharParser{T}"/> will always fail because of problems

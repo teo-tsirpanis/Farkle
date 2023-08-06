@@ -32,7 +32,7 @@ public interface IParser<TChar,T> : IServiceProvider
     /// <summary>
     /// Moves forward a parsing operation by parsing a block of characters.
     /// </summary>
-    /// <param name="inputReader">Used to access the characters
+    /// <param name="input">Used to access the characters
     /// and the operation's <see cref="ParserState"/>.</param>
     /// <param name="completionState">Used to set that the operation
     /// has completed.</param>
@@ -48,7 +48,7 @@ public interface IParser<TChar,T> : IServiceProvider
     /// </para>
     /// <para>
     /// For compatibility with Farkle's higher-level parsing APIs, running a parser whose
-    /// <paramref name="inputReader"/>'s <see cref="ParserInputReader{TChar}.IsFinalBlock"/>
+    /// <paramref name="input"/>'s <see cref="ParserInputReader{TChar}.IsFinalBlock"/>
     /// property is set to <see langword="true"/> should set a result to <paramref name="completionState"/>.
     /// Custom parsers can support deviating from this behavior, but must do it in an opt-in fashion.
     /// </para>
@@ -61,5 +61,5 @@ public interface IParser<TChar,T> : IServiceProvider
     /// </remarks>
     /// <seealso cref="ParserExtensions"/>
     /// <seealso cref="ParserStateContext"/>
-    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
+    void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState);
 }

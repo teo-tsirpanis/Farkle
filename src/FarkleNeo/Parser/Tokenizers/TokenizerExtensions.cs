@@ -133,8 +133,8 @@ public static class TokenizerExtensions
             _arg = arg;
         }
 
-        public override bool TryGetNextToken(ref ParserInputReader<TChar> reader,
+        public override bool TryGetNextToken(ref ParserInputReader<TChar> input,
             ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result) =>
-            _resumptionPoint.TryGetNextToken(ref reader, semanticProvider, _arg, out result);
+            _resumptionPoint.TryGetNextToken(ref input, semanticProvider, _arg, out result);
     }
 }

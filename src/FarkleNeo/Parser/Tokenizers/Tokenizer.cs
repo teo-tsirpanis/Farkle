@@ -36,7 +36,7 @@ public abstract class Tokenizer<TChar>
     /// <summary>
     /// Tries to get the next token from the input.
     /// </summary>
-    /// <param name="reader">A <see cref="ParserInputReader{TChar}"/> with the input
+    /// <param name="input">A <see cref="ParserInputReader{TChar}"/> with the input
     /// and the <see cref="ParserState"/>.</param>
     /// <param name="semanticProvider">An <see cref="ITokenSemanticProvider{TChar}"/>
     /// to create the semantic values for the tokens.</param>
@@ -50,9 +50,9 @@ public abstract class Tokenizer<TChar>
     /// <para>
     /// <see langword="false"/> if either the tokenizer needs more input to make a decision
     /// or input has ended if the <see cref="ParserInputReader{TChar}.IsFinalBlock"/> property
-    /// of <paramref name="reader"/> is <see langword="true"/>. In this case the tokenizer
+    /// of <paramref name="input"/> is <see langword="true"/>. In this case the tokenizer
     /// should be invoked again after more input has been provided.
     /// </para>
     /// </returns>
-    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> reader, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
 }

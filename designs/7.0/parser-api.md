@@ -164,7 +164,7 @@ public static class ParserCompletionStateExtensions
 
 public interface IParser<TChar, T> : IServiceProvider
 {
-    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
+    void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState);
 }
 ```
 
@@ -230,7 +230,7 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
     // These members can be overridden by user code.
     // Performs any additional resetting logic.
     protected virtual void OnReset() {}
-    protected abstract void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T?> completionState);
+    protected abstract void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T?> completionState);
 }
 
 public static class ParserStateContext
@@ -410,7 +410,7 @@ public abstract class Tokenizer<TChar>
 {
     protected Tokenizer();
 
-    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
 }
 ```
 

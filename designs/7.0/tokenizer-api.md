@@ -81,14 +81,14 @@ namespace Farkle.Parser.Tokenizers;
 
 public interface ITokenizerResumptionPoint<TChar, in TArg>
 {
-    bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, TArg arg, out TokenizerResult token);
+    bool TryGetNextToken(ref ParserInputReader<TChar> input, ITransformer<TChar> transformer, TArg arg, out TokenizerResult token);
 }
 
 public static class TokenizerExtensions
 {
-    public static void SuspendTokenizer<TChar>(this ref ParserInputReader<TChar> inputReader,
+    public static void SuspendTokenizer<TChar>(this ref ParserInputReader<TChar> input,
         Tokenizer<TChar> tokenizer);
-    public static void SuspendTokenizer<TChar, TArg>(this ref ParserInputReader<TChar> inputReader,
+    public static void SuspendTokenizer<TChar, TArg>(this ref ParserInputReader<TChar> input,
         ITokenizerResumptionPoint<TChar, TArg> suspensionPoint, TArg argument);
 }
 ```
@@ -103,7 +103,7 @@ The arguments to the `SuspendTokenizer` methods determine where the chain will c
 public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTokenizer.Case1Args>,
     ITokenizerResumptionPoint<char, MyTokenizer.Case2Args>
 {
-    public override bool TryGetNextToken(ref ParserInputReader<char> inputReader,
+    public override bool TryGetNextToken(ref ParserInputReader<char> input,
         ITransformer<char> transformer, out TokenizerResult token)
     {
         if (/* case 1 */)
@@ -124,14 +124,14 @@ public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTo
         }
     }
 
-    bool ITokenizerResumptionPoint<char, Case1Args>.TryGetNextToken(ref ParserInputReader<char> inputReader,
+    bool ITokenizerResumptionPoint<char, Case1Args>.TryGetNextToken(ref ParserInputReader<char> input,
         ITransformer<char> transformer, Case1Args arg, out TokenizerResult token)
     {
         // Case 1 resumes here with more characters.
         // …
     }
 
-    bool ITokenizerResumptionPoint<char, Case2Args>.TryGetNextToken(ref ParserInputReader<char> inputReader,
+    bool ITokenizerResumptionPoint<char, Case2Args>.TryGetNextToken(ref ParserInputReader<char> input,
         ITransformer<char> transformer, Case2Args arg, out TokenizerResult token)
     {
         // Case 2 resumes here with more characters.
@@ -156,7 +156,7 @@ Another way to avoid the indirection is to add the following API to `ParserInput
 ```csharp
 public static class TokenizerExtensions
 {
-    public static void ProcessSuspendedTokenizer(this ref ParserInputReader<TChar> inputReaders);
+    public static void ProcessSuspendedTokenizer(this ref ParserInputReader<TChar> input);
 }
 ```
 

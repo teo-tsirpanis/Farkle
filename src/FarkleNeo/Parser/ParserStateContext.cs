@@ -168,12 +168,12 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
     /// <summary>
     /// Invokes the parsing logic of the <see cref="ParserStateContext{TChar, T}"/>.
     /// </summary>
-    /// <param name="inputReader">Used to access the characters
+    /// <param name="input">Used to access the characters
     /// and the operation's <see cref="ParserState"/>.</param>
     /// <param name="completionState">Used to set that the operation
     /// has completed.</param>
     /// <seealso cref="IParser{TChar, T}.Run"/>
-    protected abstract void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
+    protected abstract void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState);
 }
 
 /// <summary>
@@ -188,8 +188,8 @@ public static class ParserStateContext
         public DefaultContext(IParser<TChar, T> parser, ParserStateContextOptions? options) : base(options) =>
             _parser = parser;
 
-        protected override void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState) =>
-            _parser.Run(ref inputReader, ref completionState);
+        protected override void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState) =>
+            _parser.Run(ref input, ref completionState);
     }
 
     /// <summary>

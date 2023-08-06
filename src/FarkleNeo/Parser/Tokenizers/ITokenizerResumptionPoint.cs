@@ -21,7 +21,7 @@ public interface ITokenizerResumptionPoint<TChar, in TArg>
     /// This method is identical to <see cref="Tokenizer{TChar}.TryGetNextToken"/>
     /// with the only addition of the <paramref name="arg"/> parameter.
     /// </summary>
-    /// <param name="reader">A <see cref="ParserInputReader{TChar}"/> with the input
+    /// <param name="input">A <see cref="ParserInputReader{TChar}"/> with the input
     /// and the <see cref="ParserState"/>.</param>
     /// <param name="semanticProvider">An <see cref="ITokenSemanticProvider{TChar}"/>
     /// to create the semantic values for the tokens.</param>
@@ -33,6 +33,6 @@ public interface ITokenizerResumptionPoint<TChar, in TArg>
     /// to either find a token or conclusively fail. See
     /// <see cref="Tokenizer{TChar}.TryGetNextToken"/> for more details about the semantics of
     /// the method's return type.</returns>
-    public bool TryGetNextToken(ref ParserInputReader<TChar> reader,
+    public bool TryGetNextToken(ref ParserInputReader<TChar> input,
         ITokenSemanticProvider<TChar> semanticProvider, TArg arg, out TokenizerResult result);
 }

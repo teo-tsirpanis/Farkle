@@ -14,7 +14,7 @@ namespace Farkle.Parser;
 /// <see cref="char"/> or <see cref="byte"/> (not supported by Farkle's built-in
 /// parsers).</typeparam>
 /// <remarks>
-/// This type is the replacement of the <code>Farkle.IO.CharStream</code> code of Farkle 6.
+/// This type is the replacement of the <c>Farkle.IO.CharStream</c> class of Farkle 6.
 /// Contrary to that, this is a mutable <c>ref struct</c> that must be passed around by
 /// reference and cannot be placed on the heap.
 /// </remarks>

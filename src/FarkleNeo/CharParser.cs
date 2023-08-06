@@ -14,11 +14,11 @@ namespace Farkle;
 /// <typeparam name="T">The type of objects the parser produces in case of success.</typeparam>
 /// <remarks>
 /// <para>
-/// This class extends <see cref="IParser{TChar, T}"/> with features like
-/// swapping the parser's <see cref="Tokenizer{TChar}"/> and
-/// <see cref="ISemanticProvider{TChar, T}"/>, getting the parser's
-/// <see cref="Grammar"/> and representing parsers that will always fail
-/// because of problems with the grammar.
+/// This class is the replacement of the <c>RuntimeFarkle</c> class of Farkle 6.
+/// It extends <see cref="IParser{TChar, T}"/> with features likeswapping the parser's
+/// <see cref="Tokenizer{TChar}"/> and <see cref="ISemanticProvider{TChar, T}"/>,
+/// getting the parser's <see cref="Grammar"/> and representing parsers that will
+/// always fail because of problems with the grammar.
 /// </para>
 /// <para>
 /// <see cref="CharParser{T}"/>s are immutable, stateless and thread-safe.
@@ -87,7 +87,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// The error can be retrieved by parsing an empty string.
     /// </para>
     /// <para>
-    /// If the problem is in the grammar's lecical analysis tables,
+    /// If the problem is in the grammar's lexical analysis tables,
     /// the parser can be fixed by changing the tokenizer.
     /// </para>
     /// </remarks>

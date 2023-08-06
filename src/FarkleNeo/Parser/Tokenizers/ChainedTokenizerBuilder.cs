@@ -123,7 +123,11 @@ public sealed class ChainedTokenizerBuilder<TChar>
     /// given in <see cref="Create(Func{IGrammarProvider, Tokenizer{TChar}})"/>
     /// and <see cref="Add(Func{IGrammarProvider, Tokenizer{TChar}})"/>.
     /// This parameter is optional if no such delegates have been added.</param>
-    /// <param name="defaultTokenizer">The tokenizer to use in place of <see cref="CreateDefault"/> or <see cref="AddDefault"/>.</param>
+    /// <param name="defaultTokenizer">The tokenizer to use in place of
+    /// <see cref="CreateDefault"/> or <see cref="AddDefault"/>.</param>
+    /// <exception cref="InvalidOperationException"> <paramref name="grammar"/> is <see langword="null"/>
+    /// and the builder contains a grammar-dependent tokenizer, or <paramref name="defaultTokenizer"/>
+    /// is <see langwword="null"/> and the builder contains the default tokenizer.</exception>
     public Tokenizer<TChar> Build(IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null)
     {
         var builder = ImmutableArray.CreateBuilder<Tokenizer<TChar>>(_items.Count);

@@ -13,7 +13,7 @@ namespace Farkle.Parser.Tokenizers;
 /// <typeparam name="TArg">A type a value of which will be passed to the resumption point.
 /// Implementing this interface with multiple <typeparamref name="TArg"/> types
 /// allows defining many suspension points.</typeparam>
-/// <seealso cref="TokenizerExtensions.SuspendTokenizer{TChar, TArg}(ref ParserState, ITokenizerResumptionPoint{TChar, TArg}, TArg)"/>
+/// <seealso cref="TokenizerExtensions.SuspendTokenizer{TChar, TArg}(ref ParserInputReader{TChar}, ITokenizerResumptionPoint{TChar, TArg}, TArg)"/>
 public interface ITokenizerResumptionPoint<TChar, in TArg>
 {
     /// <summary>
@@ -26,7 +26,7 @@ public interface ITokenizerResumptionPoint<TChar, in TArg>
     /// <param name="semanticProvider">An <see cref="ITokenSemanticProvider{TChar}"/>
     /// to create the semantic values for the tokens.</param>
     /// <param name="arg">The value that had been passed in
-    /// <see cref="TokenizerExtensions.SuspendTokenizer{TChar, TArg}(ref ParserState, ITokenizerResumptionPoint{TChar, TArg}, TArg)"/>.</param>
+    /// <see cref="TokenizerExtensions.SuspendTokenizer{TChar, TArg}(ref ParserInputReader{TChar}, ITokenizerResumptionPoint{TChar, TArg}, TArg)"/>.</param>
     /// <param name="result">Will hold the <see cref="TokenizerResult"/> if the method
     /// returns <see langword="true"/>.</param>
     /// <returns>Whether the tokenizer was given enough characters

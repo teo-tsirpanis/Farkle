@@ -32,7 +32,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
     {
         // Get the state of the chained tokenizer. If we have not suspended before,
         // it will be null.
-        var tokenizerState = reader.State.GetChainedTokenizerStateOrNull<TChar>();
+        var tokenizerState = reader.GetChainedTokenizerStateOrNull();
         int i = 0;
         // Check if we are resuming from a previous suspension.
         if (tokenizerState is { IsSuspended: true })
@@ -69,7 +69,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
             // we must always check if we have suspended after invoking a tokenizer.
             // If our tokenizer state is null, we check again in case we have suspended
             // for the first time.
-            tokenizerState ??= reader.State.GetChainedTokenizerStateOrNull<TChar>();
+            tokenizerState ??= reader.GetChainedTokenizerStateOrNull();
             // If there is a state and it is suspended, we set NextChainIndex and return
             // whatever the result of the tokenizer was.
             if (tokenizerState is { IsSuspended: true })

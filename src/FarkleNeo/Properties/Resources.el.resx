@@ -48,4 +48,7 @@
   <data name="Tokenizer_AlreadySuspended" xml:space="preserve">
     <value>Ο λεκτικός αναλυτής έχει ήδη παυθεί.</value>
   </data>
+  <data name="Parser_UnrecognizedToken" xml:space="preserve">
+    <value>Άγνωστο σύμβολο '{0}'</value>
+  </data>
 </root>

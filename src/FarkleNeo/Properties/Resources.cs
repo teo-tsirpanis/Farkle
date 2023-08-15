@@ -30,6 +30,20 @@ internal static class Resources
         return ResourceManager.GetString(resourceKey, cultureInfo)!;
     }
 
+    public static string Format<T>(IFormatProvider? formatProvider, string resourceKey, T arg)
+    {
+        if (UsingResourceKeys())
+        {
+#if NET6_0_OR_GREATER
+            return string.Create(formatProvider, $"{resourceKey}, {arg}");
+#else
+            return ((FormattableString)$"{resourceKey}, {arg}").ToString(formatProvider);
+#endif
+        }
+
+        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo), arg);
+    }
+
     public static string Grammar_TooNewFormat => GetResourceString(nameof(Grammar_TooNewFormat));
 
     public static string Grammar_TooOldFormat => GetResourceString(nameof(Grammar_TooOldFormat));
@@ -53,4 +67,6 @@ internal static class Resources
     public static string ChainedTokenizerBuilder_NoDefaultTokenizer => GetResourceString(nameof(ChainedTokenizerBuilder_NoDefaultTokenizer));
 
     public static string Tokenizer_AlreadySuspended => GetResourceString(nameof(Tokenizer_AlreadySuspended));
+
+    public static string Parser_UnrecognizedToken => GetResourceString(nameof(Parser_UnrecognizedToken));
 }

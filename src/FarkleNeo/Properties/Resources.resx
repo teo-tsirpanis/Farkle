@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -47,5 +47,8 @@
   </data>
   <data name="Tokenizer_AlreadySuspended" xml:space="preserve">
     <value>The tokenizer has already been suspended.</value>
+  </data>
+  <data name="Parser_UnrecognizedToken" xml:space="preserve">
+    <value>Unrecognized token '{0}'</value>
   </data>
 </root>

@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Grammars;
 
 /// <summary>
@@ -54,6 +56,23 @@ public readonly struct TokenSymbol
             }
             return _grammar.GrammarTables.GetTokenSymbolFlags(_grammar.GrammarFile, Handle.TableIndex);
         }
+    }
+
+    internal uint GetStartedGroup()
+    {
+        Debug.Assert((Attributes & TokenSymbolAttributes.GroupStart) != 0);
+        var grammarFile = _grammar.GrammarFile;
+        var groupCount = _grammar.GrammarTables.GroupRowCount;
+        for (int i = 1; i <= groupCount; i++)
+        {
+            var groupStart = _grammar.GrammarTables.GetGroupStart(grammarFile, (uint)i);
+            if (groupStart == Handle)
+            {
+                return (uint)i;
+            }
+        }
+
+        return 0;
     }
 
     /// <summary>

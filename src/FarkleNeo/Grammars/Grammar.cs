@@ -217,6 +217,12 @@ public abstract class Grammar : IGrammarProvider
         return new(this, handle);
     }
 
+    internal Group GetGroup(uint index)
+    {
+        Debug.Assert(index > 0 && index <= GrammarTables.GroupRowCount);
+        return new(this, index);
+    }
+
     /// <summary>
     /// Gets the <see cref="Nonterminal"/> pointed by the given <see cref="NonterminalHandle"/>.
     /// </summary>

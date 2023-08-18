@@ -59,6 +59,8 @@ public struct ParserState
     /// <remarks>
     /// When parsing a file this could be the file's path.
     /// </remarks>
+    /// <seealso cref="ParserExtensions.ParseFile"/>
+    /// <seealso cref="ParserExtensions.ParseFileAsync"/>
     public string? InputName { get; set; }
 
     internal void Consume<T>(ReadOnlySpan<T> characters)

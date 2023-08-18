@@ -20,7 +20,7 @@ public sealed class LexicalError : IFormattable
     public string? TokenText { get; }
 
     /// <summary>
-    /// The number of the tokenizer's state machine at the time of the error.
+    /// The state the tokenizer's state machine was at the time of the error.
     /// </summary>
     public int TokenizerState { get; }
 

@@ -26,7 +26,9 @@ public abstract class Tokenizer<TChar>
     /// it is the only one in the chain. This enables the tokenizer to be directly
     /// called by the parser, but the consequence is that suspending the tokenizer
     /// has no effect. It should therefore be used by tokenizers that are known to
-    /// never suspend.
+    /// never suspend. An exception to this is when the tokenizer suspends by calling
+    /// <see cref="TokenizerExtensions.SuspendTokenizer{TChar}(ref ParserInputReader{TChar}, Tokenizer{TChar})"/>
+    /// with a resumption point of <see langword="this"/>.
     /// </remarks>
     internal bool CanSkipChainedTokenizerWrapping { get; private protected init; }
 

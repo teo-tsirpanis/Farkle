@@ -309,7 +309,7 @@ public abstract class Grammar : IGrammarProvider
     /// Checks whether the given <see cref="TokenSymbolHandle"/> points to a
     /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
-    /// <param name="handle">The token symbol handle to check;</param>
+    /// <param name="handle">The token symbol handle to check.</param>
     public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
 
     Grammar IGrammarProvider.GetGrammar() => this;

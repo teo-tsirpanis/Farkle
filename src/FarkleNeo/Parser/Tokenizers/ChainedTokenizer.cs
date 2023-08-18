@@ -65,7 +65,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         {
             // We invoke the next tokenizer in the chain.
             bool foundToken = Components[i].TryGetNextToken(ref input, semanticProvider, out result);
-            // Because in the main loop when we suspend, we must update NextChainIndex
+            // Because in the main loop when we suspend we must update NextChainIndex,
             // we must always check if we have suspended after invoking a tokenizer.
             // If our tokenizer state is null, we check again in case we have suspended
             // for the first time.
@@ -78,7 +78,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
                 return foundToken;
             }
             // After checking for suspension, we stop the loop if we have found a token.
-            // In this case, the next time the tokenizer will start over.
+            // In this case, the next time the chain will start all over.
             if (foundToken)
             {
                 return true;

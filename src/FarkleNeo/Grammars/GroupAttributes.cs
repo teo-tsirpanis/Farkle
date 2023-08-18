@@ -24,5 +24,9 @@ public enum GroupAttributes : ushort
     /// <summary>
     /// When the group ends, the parser should keep the token that ended the group in the input stream.
     /// </summary>
+    /// <remarks>
+    /// In GOLD Parser and earlier versions of Farkle, groups with this flag set were called to have an
+    /// "open ending mode".
+    /// </remarks>
     KeepEndToken = 1 << 2
 }

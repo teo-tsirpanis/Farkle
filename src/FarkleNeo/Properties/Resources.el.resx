@@ -51,4 +51,7 @@
   <data name="Parser_UnrecognizedToken" xml:space="preserve">
     <value>Άγνωστο σύμβολο '{0}'</value>
   </data>
+  <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
+    <value>Απροσδόκητο τέλος της εισόδου καθώς βρισκόταν μέσα στην ομάδα `{0}`</value>
+  </data>
 </root>

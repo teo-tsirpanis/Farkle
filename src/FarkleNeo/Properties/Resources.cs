@@ -69,4 +69,6 @@ internal static class Resources
     public static string Tokenizer_AlreadySuspended => GetResourceString(nameof(Tokenizer_AlreadySuspended));
 
     public static string Parser_UnrecognizedToken => GetResourceString(nameof(Parser_UnrecognizedToken));
+
+    public static string Parser_UnexpectedEndOfInputInGroup => GetResourceString(nameof(Parser_UnexpectedEndOfInputInGroup));
 }

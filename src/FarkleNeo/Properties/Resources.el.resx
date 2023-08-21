@@ -54,4 +54,10 @@
   <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
     <value>Απροσδόκητο τέλος της εισόδου καθώς βρισκόταν μέσα στην ομάδα `{0}`</value>
   </data>
+  <data name="Parser_UnexpectedToken" xml:space="preserve">
+    <value>Βρέθηκε {0}, αναμένονταν {1}</value>
+  </data>
+  <data name="Parser_Eof" xml:space="preserve">
+    <value>(ΤΕΛΟΣ)</value>
+  </data>
 </root>

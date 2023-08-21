@@ -75,13 +75,8 @@ public readonly struct TokenSymbol
         return 0;
     }
 
-    /// <summary>
-    /// Returns a string describing the the <see cref="TokenSymbol"/>.
-    /// </summary>
-    public override string ToString()
+    internal static string FormatName(string name)
     {
-        string name = _grammar.GetString(Name);
-
         return ShouldQuote(name) ? $"'{name}'" : name;
 
         static bool ShouldQuote(string str)
@@ -101,4 +96,9 @@ public readonly struct TokenSymbol
             return false;
         }
     }
+
+    /// <summary>
+    /// Returns a string describing the the <see cref="TokenSymbol"/>.
+    /// </summary>
+    public override string ToString() => FormatName(_grammar.GetString(Name));
 }

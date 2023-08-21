@@ -18,6 +18,15 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         Components = components;
     }
 
+    internal static Tokenizer<TChar> Create(Tokenizer<TChar> tokenizer)
+    {
+        if (tokenizer.CanSkipChainedTokenizerWrapping)
+        {
+            return tokenizer;
+        }
+        return new ChainedTokenizer<TChar>(ImmutableArray.Create(tokenizer));
+    }
+
     internal static Tokenizer<TChar> Create(ImmutableArray<Tokenizer<TChar>> components)
     {
         Debug.Assert(!components.IsDefaultOrEmpty);

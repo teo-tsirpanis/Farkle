@@ -1,6 +1,10 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
+using System.Collections.Immutable;
+
 namespace Farkle.Parser.Implementation;
 
 internal static class ParserCommon
@@ -38,5 +42,20 @@ internal static class ParserCommon
             return GetAbbreviatedLexicalErrorText(*(ReadOnlySpan<char>*)&chars);
         }
         throw new NotImplementedException();
+    }
+
+    public static ImmutableArray<string?> GetExpectedSymbols(Grammar grammar, LrState state)
+    {
+        int count = state.Actions.Count + (state.EndOfFileActions.Count > 0 ? 1 : 0);
+        var builder = ImmutableArray.CreateBuilder<string?>(count);
+        foreach (var action in state.Actions)
+        {
+            builder.Add(grammar.GetString(grammar.GetTokenSymbol(action.Key).Name));
+        }
+        if (state.EndOfFileActions.Count > 0)
+        {
+            builder.Add(null);
+        }
+        return builder.MoveToImmutable();
     }
 }

@@ -20,14 +20,14 @@ internal static class Resources
     // The trimming tools are also capable of replacing the value of this method when the application is being trimmed.
     internal static bool UsingResourceKeys() => s_usingResourceKeys;
 
-    public static string GetResourceString(string resourceKey, CultureInfo? cultureInfo = null)
+    public static string GetResourceString(string resourceKey, IFormatProvider? formatProvider = null)
     {
         if (UsingResourceKeys())
         {
             return resourceKey;
         }
 
-        return ResourceManager.GetString(resourceKey, cultureInfo)!;
+        return ResourceManager.GetString(resourceKey, formatProvider as CultureInfo)!;
     }
 
     public static string Format<T>(IFormatProvider? formatProvider, string resourceKey, T arg)
@@ -41,7 +41,30 @@ internal static class Resources
 #endif
         }
 
-        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo), arg);
+        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!, arg);
+    }
+
+    public static string Format<T1, T2>(IFormatProvider? formatProvider, string resourceKey, T1 arg1, T2 arg2)
+    {
+        if (UsingResourceKeys())
+        {
+#if NET6_0_OR_GREATER
+            return string.Create(formatProvider, $"{resourceKey}, {arg1}, {arg2}");
+#else
+            return ((FormattableString)$"{resourceKey}, {arg1}, {arg2}").ToString(formatProvider);
+#endif
+        }
+
+        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!, arg1, arg2);
+    }
+
+    public static string GetEofString(IFormatProvider? formatProvider)
+    {
+        if (UsingResourceKeys())
+        {
+            return "(EOF)";
+        }
+        return GetResourceString(nameof(Parser_Eof), formatProvider);
     }
 
     public static string Grammar_TooNewFormat => GetResourceString(nameof(Grammar_TooNewFormat));
@@ -71,4 +94,8 @@ internal static class Resources
     public static string Parser_UnrecognizedToken => GetResourceString(nameof(Parser_UnrecognizedToken));
 
     public static string Parser_UnexpectedEndOfInputInGroup => GetResourceString(nameof(Parser_UnexpectedEndOfInputInGroup));
+
+    public static string Parser_UnexpectedToken => GetResourceString(nameof(Parser_UnexpectedToken));
+
+    public static string Parser_Eof => GetResourceString(nameof(Parser_Eof));
 }

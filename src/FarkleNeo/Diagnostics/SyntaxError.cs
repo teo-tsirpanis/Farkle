@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Grammars;
 using System.Collections.Immutable;
 
 namespace Farkle.Diagnostics;
@@ -11,7 +12,7 @@ namespace Farkle.Diagnostics;
 /// <remarks>
 /// A syntax error occurs when the parser encounters a token in an unexpected place.
 /// </remarks>
-public sealed class SyntaxError
+public sealed class SyntaxError : IFormattable
 {
     /// <summary>
     /// The name of the token found by the parser, or <see langword="null"/> if the end of the input was reached.
@@ -51,4 +52,18 @@ public sealed class SyntaxError
         ExpectedTokenNames = expectedTokenNames;
         ParserState = parserState;
     }
+
+    private string ToString(IFormatProvider? formatProvider)
+    {
+        string eofString = Resources.GetEofString(formatProvider);
+        return Resources.Format(formatProvider,
+            nameof(Resources.Parser_UnexpectedToken),
+            ActualTokenName ?? eofString,
+            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+    }
+
+    string IFormattable.ToString(string format, IFormatProvider formatProvider) => ToString(formatProvider);
+
+    /// <inheritdoc/>
+    public override string ToString() => ToString(null);
 }

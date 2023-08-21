@@ -54,4 +54,10 @@
   <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
     <value>Unexpected end of input while being inside group '{0}'</value>
   </data>
+  <data name="Parser_UnexpectedToken" xml:space="preserve">
+    <value>Found {0}, expected {1}</value>
+  </data>
+  <data name="Parser_Eof" xml:space="preserve">
+    <value>(EOF)</value>
+  </data>
 </root>

@@ -60,4 +60,16 @@
   <data name="Parser_Eof" xml:space="preserve">
     <value>(EOF)</value>
   </data>
+  <data name="Parser_UnparsableGrammar" xml:space="preserve">
+    <value>The grammar cannot be used for parsing or tokenizing because of an unspecified problem with it</value>
+  </data>
+  <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
+    <value>The grammar cannot be used for parsing or tokenizing because it contains data not recognized by this version of Farkle</value>
+  </data>
+  <data name="Parser_GrammarLrProblem" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because its LR state table has conflicts or does not exist</value>
+  </data>
+  <data name="Parser_GrammarDfaProblem" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because its DFA has conflicts or does not exist</value>
+  </data>
 </root>

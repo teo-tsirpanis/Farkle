@@ -5,6 +5,7 @@ using Farkle.Grammars.GoldParser;
 using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars;
 
@@ -188,6 +189,15 @@ public abstract class Grammar : IGrammarProvider
         return Create(data);
     }
 
+    internal Dfa<TChar>? GetDfa<TChar>()
+    {
+        if (typeof(TChar) == typeof(char))
+        {
+            return DfaOnChar as Dfa<TChar>;
+        }
+        throw new NotSupportedException();
+    }
+
     /// <summary>
     /// Returns the string pointed by the given <see cref="StringHandle"/>.
     /// </summary>
@@ -311,6 +321,23 @@ public abstract class Grammar : IGrammarProvider
     /// </summary>
     /// <param name="handle">The token symbol handle to check.</param>
     public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
+
+    internal bool IsUnparsable([NotNullWhen(true)] out string? errorResourceKey)
+    {
+        GrammarAttributes flags = GrammarInfo.Attributes;
+        if ((flags & GrammarAttributes.Unparsable) != 0)
+        {
+            errorResourceKey = nameof(Resources.Parser_UnparsableGrammar);
+            return true;
+        }
+        if (HasUnknownData && (flags & GrammarAttributes.Critical) != 0)
+        {
+            errorResourceKey = nameof(Resources.Parser_UnparsableGrammar_Critical);
+            return true;
+        }
+        errorResourceKey = null;
+        return false;
+    }
 
     Grammar IGrammarProvider.GetGrammar() => this;
 

@@ -1,8 +1,10 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Parser;
+using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 
@@ -192,4 +194,72 @@ public abstract class CharParser<T> : IParser<char, T>
         ArgumentNullExceptionCompat.ThrowIfNull(builder);
         return WithTokenizerCore(builder);
     }
+}
+
+/// <summary>
+/// Provides factory methods to create <see cref="CharParser{T}"/>s.
+/// </summary>
+public static class CharParser
+{
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
+    /// <param name="grammar">The <see cref="Grammar"/> the parser will use.</param>
+    /// <param name="semanticProvider">The <see cref="ISemanticProvider{TChar, T}"/> the parser will use.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="grammar"/> or <paramref name="semanticProvider"/>
+    /// is <see langword="null"/>.</exception>
+    public static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        ArgumentNullExceptionCompat.ThrowIfNull(semanticProvider);
+
+        if (grammar.IsUnparsable(out string? errorKey))
+        {
+            return Fail(errorKey);
+        }
+        if (grammar.LrStateMachine is not { HasConflicts: false } lrStateMachine)
+        {
+            return Fail(nameof(Resources.Parser_GrammarLrProblem));
+        }
+
+        Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false);
+        return new DefaultParser<T>(grammar, lrStateMachine, semanticProvider, tokenizer);
+
+        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(new LocalizedDiagnostic(resourceKey), grammar);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/> that does not perform any semantic analysis.
+    /// </summary>
+    /// <typeparam name="T">The type of objects the syntax checker will return in case of success.
+    /// Must be a reference type and usually it is <see cref="object"/>
+    /// or <see cref="T:Microsoft.FSharp.Core.Unit"/>.</typeparam>
+    /// <param name="grammar">The <see cref="Grammar"/> the syntax checker will use.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="grammar"/> is <see langword="null"/>.</exception>
+    /// <remarks>Syntax checkers always return <see langword="null"/> in case of success.</remarks>
+    public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class =>
+        Create(grammar, SyntaxChecker<char, T>.Instance);
+
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/> that does not perform any semantic analysis.
+    /// </summary>
+    /// <param name="grammar">The <see cref="Grammar"/> the syntax checker will use.</param>
+    /// <remarks>Syntax checkers always return <see langword="null"/> in case of success.</remarks>
+    public static CharParser<object?> CreateSyntaxChecker(Grammar grammar) =>
+        CreateSyntaxChecker<object>(grammar);
+
+    /// <summary>
+    /// Converts a <see cref="CharParser{T}"/> to a syntax checker with a user-defined return type.
+    /// </summary>
+    /// <seealso cref="CreateSyntaxChecker{T}(Grammar)"/>
+    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class =>
+        parser.WithSemanticProvider(SyntaxChecker<char, TNew>.Instance);
+
+    /// <summary>
+    /// Converts a <see cref="CharParser{T}"/> to a syntax checker.
+    /// </summary>
+    /// <seealso cref="CreateSyntaxChecker(Grammar)"/>
+    public static CharParser<object?> ToSyntaxChecker<T>(this CharParser<T> parser) =>
+        parser.ToSyntaxChecker<T, object>();
 }

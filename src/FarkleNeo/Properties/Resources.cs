@@ -98,4 +98,12 @@ internal static class Resources
     public static string Parser_UnexpectedToken => GetResourceString(nameof(Parser_UnexpectedToken));
 
     public static string Parser_Eof => GetResourceString(nameof(Parser_Eof));
+
+    public static string Parser_UnparsableGrammar => GetResourceString(nameof(Parser_UnparsableGrammar));
+
+    public static string Parser_UnparsableGrammar_Critical => GetResourceString(nameof(Parser_UnparsableGrammar_Critical));
+
+    public static string Parser_GrammarLrProblem => GetResourceString(nameof(Parser_GrammarLrProblem));
+
+    public static string Parser_GrammarDfaProblem => GetResourceString(nameof(Parser_GrammarDfaProblem));
 }

@@ -107,7 +107,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             TextPosition errorPos = foundToken ? token.Position : input.State.CurrentPosition;
             string? actualTokenName = foundToken ? Grammar.GetString(Grammar.GetTokenSymbol(token.Symbol).Name) : null;
-            ImmutableArray<string?> expectedTokens = ParserCommon.GetExpectedSymbols(Grammar, _lrStateMachine[currentState]);
+            ImmutableArray<string?> expectedTokens = ParserUtilities.GetExpectedSymbols(Grammar, _lrStateMachine[currentState]);
             result = new ParserDiagnostic(errorPos, new SyntaxError(actualTokenName, expectedTokens, currentState));
             return RunResult.Failure;
         }

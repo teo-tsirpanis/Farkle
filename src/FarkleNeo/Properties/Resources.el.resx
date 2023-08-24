@@ -60,4 +60,16 @@
   <data name="Parser_Eof" xml:space="preserve">
     <value>(ΤΕΛΟΣ)</value>
   </data>
+  <data name="Parser_UnparsableGrammar" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση λόγω ενός ακαθόριστου προβλήματος με αυτήν</value>
+  </data>
+  <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή περιέχει δεδομένα που δεν αναγνωρίζονται από αυτήν την έκδοση του Farkle</value>
+  </data>
+  <data name="Parser_GrammarLrProblem" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει διενέξεις ή δεν υπάρχει</value>
+  </data>
+  <data name="Parser_GrammarDfaProblem" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA της έχει διενέξεις ή δεν υπάρχει</value>
+  </data>
 </root>

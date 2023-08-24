@@ -1,6 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Diagnostics;
+using Farkle.Grammars;
+using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 
 namespace Farkle.Parser.Tokenizers;
@@ -57,4 +60,39 @@ public abstract class Tokenizer<TChar>
     /// </para>
     /// </returns>
     public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
+}
+
+/// <summary>
+/// Provides factory methods to create <see cref="Tokenizer{TChar}"/>s.
+/// </summary>
+public static class Tokenizer
+{
+    /// <summary>
+    /// Creates a <see cref="Tokenizer{TChar}"/>.
+    /// </summary>
+    /// <typeparam name="TChar">The type of characters the tokenizer accepts.</typeparam>
+    /// <param name="grammar">The <see cref="Grammar"/> the tokenizer will use.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="grammar"/> is <see langword="null"/>.</exception>
+    /// <exception cref="NotSupportedException"><typeparamref name="TChar"/> is not <see cref="char"/>.</exception>
+    /// <exception cref="InvalidOperationException">The grammar cannot be used for tokenizing.</exception>
+    public static Tokenizer<TChar> Create<TChar>(Grammar grammar) => Create<TChar>(grammar, throwIfError: true);
+
+    internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        if (grammar.IsUnparsable(out string? errorKey))
+        {
+            return Fail(errorKey);
+        }
+        if (grammar.GetDfa<TChar>() is not { HasConflicts: false } dfa)
+        {
+            return Fail(nameof(Resources.Parser_GrammarDfaProblem));
+        }
+        return new DefaultTokenizer<TChar>(grammar, dfa);
+
+        Tokenizer<TChar> Fail(string resourceKey) =>
+            throwIfError
+            ? throw new InvalidOperationException(Resources.GetResourceString(resourceKey))
+            : new FailingTokenizer<TChar>(new LocalizedDiagnostic(resourceKey));
+    }
 }

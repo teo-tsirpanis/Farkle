@@ -412,6 +412,14 @@ public abstract class Tokenizer<TChar>
 
     public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
 }
+
+public static class Tokenizer
+{
+    // Creates a standalone tokenizer from a grammar. Char is the only supported character type.
+    // If the grammar cannot be used for tokenizing or the character type is unsupported,
+    // the method will throw.
+    public static Tokenizer<TChar> Create(Grammar grammar);
+}
 ```
 
 It resembles the `Tokenizer` class of Farkle 6, with the following differences:

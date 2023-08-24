@@ -7,7 +7,7 @@ using System.Collections.Immutable;
 
 namespace Farkle.Parser.Implementation;
 
-internal static class ParserCommon
+internal static class ParserUtilities
 {
     private static string GetAbbreviatedLexicalErrorText(ReadOnlySpan<char> chars)
     {

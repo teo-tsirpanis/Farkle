@@ -301,7 +301,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 return false;
             }
 
-            string errorText = ParserCommon.GetAbbreviatedLexicalErrorText(lexeme);
+            string errorText = ParserUtilities.GetAbbreviatedLexicalErrorText(lexeme);
             result = TokenizerResult.CreateError(new ParserDiagnostic(state.CurrentPosition,
                 new LexicalError(errorText, tokenizerState)));
             return true;

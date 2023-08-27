@@ -19,7 +19,7 @@ internal sealed class FailingCharParser<T> : CharParser<T>
         IsFailing = true;
     }
 
-    public override void Run(ref ParserInputReader<char> inputReader, ref ParserCompletionState<T> completionState) =>
+    public override void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState) =>
         completionState.SetError(_error);
 
     private protected override IGrammarProvider GetGrammarProvider() => _grammar;

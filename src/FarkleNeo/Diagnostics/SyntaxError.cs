@@ -62,7 +62,7 @@ public sealed class SyntaxError : IFormattable
             new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
     }
 
-    string IFormattable.ToString(string format, IFormatProvider formatProvider) => ToString(formatProvider);
+    string IFormattable.ToString(string? format, IFormatProvider? formatProvider) => ToString(formatProvider);
 
     /// <inheritdoc/>
     public override string ToString() => ToString(null);

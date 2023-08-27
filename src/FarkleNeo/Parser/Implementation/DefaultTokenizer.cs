@@ -54,7 +54,12 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             }
         }
 
-        if (!isFinal)
+        // If this is not the final input block and the DFA can move forward, we cannot accept
+        // a token. To see why, consider a JSON grammar and the tokenizer finding `184` at the
+        // end of the input block. We cannot accept it, there could be more digits after it that
+        // were not yet read yet. By contrast, if we had found `true` at the end of the block, we
+        // can accept it, because there is no way for a longer token to be formed.
+        if (!(isFinal || _dfa[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
         {
             acceptSymbol = default;
         }

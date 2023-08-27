@@ -8,7 +8,7 @@ namespace Farkle.Parser;
 
 internal sealed class FailingTokenizer<TChar> : Tokenizer<TChar>
 {
-    private object _message;
+    private readonly object _message;
 
     public FailingTokenizer(object message)
     {

@@ -64,7 +64,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         {
             return (acceptSymbol, acceptSymbolLength, currentState);
         }
-        return (default, i + 1, currentState);
+        return (default, i, currentState);
     }
 
     /// <summary>
@@ -168,7 +168,6 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 ConsumeInput(ref input, ref chars, 1, isNoise);
                 // TODO: Optimize by quickly searching for the next interesting character like in Farkle 6.
             }
-            continue;
         }
 
         groupLength = input.RemainingCharacters.Length - chars.Length;

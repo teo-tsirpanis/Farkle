@@ -63,6 +63,17 @@ public struct ParserState
     /// <seealso cref="ParserExtensions.ParseFileAsync"/>
     public string? InputName { get; set; }
 
+    /// <summary>
+    /// Whether suspending the tokenizer will have any effect.
+    /// </summary>
+    /// <remarks>
+    /// We must have this property because if the tokenizer is not wrapped in a chain
+    /// and suspends to itself (which is still supported), there is no chain to "unsuspend"
+    /// the tokenizer, and when the tokenizer returns and wants to suspend again, it will
+    /// throw with a message that it is already suspended.
+    /// </remarks>
+    internal bool TokenizerSupportsSuspending { get; set; }
+
     internal void Consume<T>(ReadOnlySpan<T> characters)
     {
         _positionTracker.Advance(characters);

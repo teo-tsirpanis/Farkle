@@ -78,6 +78,11 @@ public static class TokenizerExtensions
     public static void SuspendTokenizer<TChar>(this ref ParserInputReader<TChar> input, Tokenizer<TChar> tokenizer)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(tokenizer);
+
+        if (!input.State.TokenizerSupportsSuspending)
+        {
+            return;
+        }
         input.SuspendTokenizerCore(tokenizer);
     }
 
@@ -119,6 +124,11 @@ public static class TokenizerExtensions
         ITokenizerResumptionPoint<TChar, TArg> resumptionPoint, TArg arg)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(resumptionPoint);
+
+        if (!input.State.TokenizerSupportsSuspending)
+        {
+            return;
+        }
         input.SuspendTokenizerCore(new TokenizerResumptionPoint<TChar, TArg>(resumptionPoint, arg));
     }
 

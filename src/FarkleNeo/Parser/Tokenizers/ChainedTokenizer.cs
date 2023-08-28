@@ -39,6 +39,10 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
 
     public override bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result)
     {
+        // We mark this parser operation as supporting suspending the tokenizer.
+        // It might cause some issues if the tokenizer changes in the middle of the
+        // operation but this is not a supported scenario.
+        input.State.TokenizerSupportsSuspending = true;
         // Get the state of the chained tokenizer. If we have not suspended before,
         // it will be null.
         var tokenizerState = input.GetChainedTokenizerStateOrNull();

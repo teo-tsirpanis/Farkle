@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Grammars;
+
 namespace Farkle.Tests.CSharp;
 
 public static class TestUtilities
@@ -10,4 +12,7 @@ public static class TestUtilities
     public static IEnumerable<string> Farkle7Grammars => Directory.EnumerateFiles(ResourcePath, "*.grammar.dat");
 
     public static string GetResourceFile(string fileName) => Path.Combine(ResourcePath, fileName);
+
+    public static Grammar LoadGrammarFromResource(string fileName) =>
+        Grammar.Create(File.ReadAllBytes(GetResourceFile(fileName)));
 }

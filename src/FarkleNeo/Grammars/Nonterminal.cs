@@ -41,10 +41,10 @@ public readonly struct Nonterminal
     internal (uint Offset, uint NextOffset) GetProductionsBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
     {
         uint tableIndex = Handle.TableIndex;
-        uint firstNesting = grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex).TableIndex;
-        uint firstNestingOfNext = tableIndex < (uint)grammarTables.ProductionRowCount - 1 ? grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex + 1).TableIndex : (uint)grammarTables.ProductionRowCount;
-        Debug.Assert(firstNesting <= firstNestingOfNext);
-        return (firstNesting, firstNestingOfNext);
+        uint firstProduction = grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex).TableIndex;
+        uint firstProductionOfNext = tableIndex < (uint)grammarTables.NonterminalRowCount ? grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex + 1).TableIndex : (uint)grammarTables.ProductionRowCount + 1;
+        Debug.Assert(firstProduction <= firstProductionOfNext);
+        return (firstProduction, firstProductionOfNext);
     }
 
     /// <summary>

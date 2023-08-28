@@ -99,7 +99,7 @@ public readonly struct Group
     internal (uint Offset, uint NextOffset) GetNestingBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
     {
         uint firstNesting = grammarTables.GetGroupFirstNesting(grammarFile, Index);
-        uint firstNestingOfNext = Index < (uint)grammarTables.GroupNestingRowCount - 1 ? grammarTables.GetGroupFirstNesting(grammarFile, Index + 1) : (uint)grammarTables.GroupNestingRowCount;
+        uint firstNestingOfNext = Index < (uint)grammarTables.GroupRowCount ? grammarTables.GetGroupFirstNesting(grammarFile, Index + 1) : (uint)grammarTables.GroupNestingRowCount + 1;
         Debug.Assert(firstNesting <= firstNestingOfNext);
         return (firstNesting, firstNestingOfNext);
     }

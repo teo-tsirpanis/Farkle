@@ -115,7 +115,7 @@ internal static class GoldGrammarConverter
             productionOriginalPositions[productions[i]] = i;
         }
         // We could have sorted the original array but let's not; it's supposed to be immutable.
-        GoldGrammar.Production[]? sortedProductions = productions.AsSpan().ToArray();
+        GoldGrammar.Production[] sortedProductions = productions.AsSpan().ToArray();
         // Because the nonterminals were added in increasing order of appearance,
         // sorting by their original head index is the same as sorting by their mapped index.
         // The algorithm does not need to be stable.

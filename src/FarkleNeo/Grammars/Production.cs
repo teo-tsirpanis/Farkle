@@ -45,10 +45,10 @@ public readonly struct Production
     internal (uint Offset, uint NextOffset) GetMemberBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
     {
         uint tableIndex = Handle.TableIndex;
-        uint firstNesting = grammarTables.GetProductionFirstMember(grammarFile, tableIndex);
-        uint firstNestingOfNext = tableIndex < (uint)grammarTables.ProductionRowCount - 1 ? grammarTables.GetProductionFirstMember(grammarFile, tableIndex + 1) : (uint)grammarTables.ProductionMemberRowCount;
-        Debug.Assert(firstNesting <= firstNestingOfNext);
-        return (firstNesting, firstNestingOfNext);
+        uint firstMember = grammarTables.GetProductionFirstMember(grammarFile, tableIndex);
+        uint firstMemberOfNext = tableIndex < (uint)grammarTables.ProductionRowCount ? grammarTables.GetProductionFirstMember(grammarFile, tableIndex + 1) : (uint)grammarTables.ProductionMemberRowCount + 1;
+        Debug.Assert(firstMember <= firstMemberOfNext);
+        return (firstMember, firstMemberOfNext);
     }
 
     /// <summary>

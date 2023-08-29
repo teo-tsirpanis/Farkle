@@ -6,8 +6,7 @@
     <TieredCompilation>false</TieredCompilation>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
-    <ProjectReference Include="..\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
-    <PackageReference Include="Chiron" />
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
   </ItemGroup>
 </Project>

@@ -133,6 +133,8 @@ internal readonly struct DefaultParserImplementation<TChar>
                 completionState.SetError(result);
                 break;
         }
+        stateStack.Dispose();
+        semanticValueStack.Dispose();
     }
 
     public void Run<T>(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState)
@@ -145,24 +147,26 @@ internal readonly struct DefaultParserImplementation<TChar>
         State state = State.GetOrCreate(_lrStateMachine, ref input.State);
         var stateStack = new ValueStack<int>(state.StateStack);
         var semanticValueStack = new ValueStack<object?>(state.SemanticValueStack);
-        try
+        RunResult result = Run(ref input, ref stateStack, ref semanticValueStack, out object? runResult);
+        switch (result)
         {
-            RunResult result = Run(ref input, ref stateStack, ref semanticValueStack, out object? runResult);
-            switch (result)
-            {
-                case RunResult.Success:
-                    completionState.SetSuccess((T)runResult!);
-                    break;
-                case RunResult.Failure:
-                    Debug.Assert(runResult is not null);
-                    completionState.SetError(runResult);
-                    break;
-            }
+            case RunResult.Success:
+                completionState.SetSuccess((T)runResult!);
+                break;
+            case RunResult.Failure:
+                Debug.Assert(runResult is not null);
+                completionState.SetError(runResult);
+                break;
         }
-        finally
+        if (result == RunResult.NeedsMoreInput)
         {
             state.StateStack = stateStack.ExportState();
             state.SemanticValueStack = semanticValueStack.ExportState();
+        }
+        else
+        {
+            stateStack.Dispose();
+            semanticValueStack.Dispose();
         }
     }
 

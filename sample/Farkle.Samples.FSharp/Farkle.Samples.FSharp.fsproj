@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
@@ -9,6 +9,6 @@
     <Compile Include="IndentBased.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Farkle" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
   </ItemGroup>
 </Project>

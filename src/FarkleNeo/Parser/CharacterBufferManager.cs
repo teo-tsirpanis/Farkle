@@ -45,7 +45,7 @@ internal struct CharacterBufferManager<TChar>
         _usedCharacterStart = 0;
     }
 
-    private int GetWriteBufferOffset(int sizeHint)
+    private void EnsureWriteBufferSize(int sizeHint)
     {
         CheckInputNotCompleted();
         sizeHint = Math.Max(sizeHint, 0);
@@ -58,8 +58,6 @@ internal struct CharacterBufferManager<TChar>
         {
             ExpandBuffer(sizeHint);
         }
-
-        return _usedCharacterEnd;
     }
 
     public bool IsInputCompleted { get; private set; }
@@ -84,17 +82,23 @@ internal struct CharacterBufferManager<TChar>
         IsInputCompleted = true;
     }
 
-    public Span<TChar> GetSpan(int sizeHint) =>
-        _buffer.AsSpan(GetWriteBufferOffset(sizeHint));
+    public Span<TChar> GetSpan(int sizeHint)
+    {
+        EnsureWriteBufferSize(sizeHint);
+        return _buffer.AsSpan(_usedCharacterEnd);
+    }
 
-    public Memory<TChar> GetMemory(int sizeHint) =>
-        _buffer.AsMemory(GetWriteBufferOffset(sizeHint));
+    public Memory<TChar> GetMemory(int sizeHint)
+    {
+        EnsureWriteBufferSize(sizeHint);
+        return _buffer.AsMemory(_usedCharacterEnd);
+    }
 
 #if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
     public ArraySegment<TChar> GetArraySegment(int sizeHint)
     {
-        int offset = GetWriteBufferOffset(sizeHint);
-        return new ArraySegment<TChar>(_buffer, offset, _buffer.Length - offset);
+        EnsureWriteBufferSize(sizeHint);
+        return new ArraySegment<TChar>(_buffer, _usedCharacterEnd, _buffer.Length - _usedCharacterEnd);
     }
 #endif
 

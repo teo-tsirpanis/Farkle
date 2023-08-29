@@ -59,8 +59,9 @@ internal readonly struct DefaultParserImplementation<TChar>
         currentState = gotoState;
     }
 
-    private RunResult Run(ref ParserInputReader<TChar> input, ref int currentState, ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, out object? result)
+    private RunResult Run(ref ParserInputReader<TChar> input, ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, out object? result)
     {
+        int currentState = stateStack.Peek();
         bool foundToken = Tokenizer.TryGetNextToken(ref input, TokenSemanticProvider, out TokenizerResult token);
         while (true)
         {
@@ -117,9 +118,10 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         ValueStack<int> stateStack = new(stackalloc int[InitialStackCapacity]);
         ValueStack<object?> semanticValueStack = new(InitialStackCapacity);
-        int currentState = _lrStateMachine.InitialState;
+        stateStack.Push(_lrStateMachine.InitialState);
+        semanticValueStack.Push(null);
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-        RunResult runResult = Run(ref input, ref currentState, ref stateStack, ref semanticValueStack, out object? result);
+        RunResult runResult = Run(ref input, ref stateStack, ref semanticValueStack, out object? result);
 #pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         switch (runResult)
         {
@@ -145,7 +147,7 @@ internal readonly struct DefaultParserImplementation<TChar>
         var semanticValueStack = new ValueStack<object?>(state.SemanticValueStack);
         try
         {
-            RunResult result = Run(ref input, ref state.CurrentState, ref stateStack, ref semanticValueStack, out object? runResult);
+            RunResult result = Run(ref input, ref stateStack, ref semanticValueStack, out object? runResult);
             switch (result)
             {
                 case RunResult.Success:
@@ -173,7 +175,6 @@ internal readonly struct DefaultParserImplementation<TChar>
 
     private sealed class State
     {
-        public int CurrentState;
         public ValueStack<int>.State StateStack;
         public ValueStack<object?>.State SemanticValueStack;
 
@@ -183,13 +184,19 @@ internal readonly struct DefaultParserImplementation<TChar>
             {
                 state = new State
                 {
-                    CurrentState = lrStateMachine.InitialState,
-                    StateStack = new ValueStack<int>(InitialStackCapacity).ExportState(),
-                    SemanticValueStack = new ValueStack<object?>(InitialStackCapacity).ExportState()
+                    StateStack = CreateStack(lrStateMachine.InitialState),
+                    SemanticValueStack = CreateStack<object?>(null)
                 };
                 parserState.SetValue(typeof(State), state);
             }
             return (State)state;
+
+            static ValueStack<T>.State CreateStack<T>(T initialValue)
+            {
+                var stack = new ValueStack<T>(InitialStackCapacity);
+                stack.Push(initialValue);
+                return stack.ExportState();
+            }
         }
     }
 }

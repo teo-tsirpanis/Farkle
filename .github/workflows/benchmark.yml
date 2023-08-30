@@ -5,8 +5,16 @@ on:
     tags:
       - '*'
   workflow_dispatch:
+    inputs:
+      args:
+        description: 'Arguments to pass to the benchmark program'
+        default: '-f * --memory true -e github json'
+        required: true
 
 permissions: read-all
+
+env:
+  FARKLE_BENCHMARK_ARGS: ${{ github.event.inputs.args }}
 
 jobs:
   benchmark:

@@ -83,7 +83,7 @@ let projects = !! "**/*.??proj" -- "**/*.shproj"
 let benchmarkProject = "./performance/Farkle.Benchmarks.CSharp/Farkle.Benchmarks.CSharp.csproj"
 
 // Additional command line arguments passed to BenchmarkDotNet.
-let benchmarkArguments = $"-f * --memory true -e github json"
+let benchmarkArguments = Environment.environVarOrDefault "FARKLE_BENCHMARK_ARGS" "-f * --memory true -e github json"
 
 let benchmarkReports = !! (Path.getDirectory benchmarkProject @@ "BenchmarkDotNet.Artifacts/results/*-report-github.md")
 

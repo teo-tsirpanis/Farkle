@@ -3,13 +3,15 @@
 
 using Farkle.Buffers;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {
-    public static T Read<T>(ReadOnlySpan<byte> buffer, int index)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(ReadOnlySpan<byte> buffer, int index) where T : unmanaged
     {
         if (typeof(T) == typeof(char))
         {

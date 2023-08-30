@@ -7,6 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
+    <PackageReference Include="Farkle" Aliases="farkle6" />
   </ItemGroup>
 </Project>

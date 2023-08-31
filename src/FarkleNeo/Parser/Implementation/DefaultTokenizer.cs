@@ -15,12 +15,14 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 {
     private readonly Grammar _grammar;
     private readonly Dfa<TChar> _dfa;
+    private readonly DfaOptimizedLookup _dfaOptimizedLookup;
 
     public DefaultTokenizer(Grammar grammar, Dfa<TChar> dfa)
     {
         Debug.Assert(!dfa.HasConflicts);
         _grammar = grammar;
         _dfa = dfa;
+        _dfaOptimizedLookup = new(dfa);
         // If a grammar does not have any groups, we will suspend only to return
         // to the main tokenizer entry point. Without a wrapping, it would be called
         // either way regardless of suspending.
@@ -37,7 +39,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         for (i = 0; i < chars.Length; i++)
         {
             TChar c = chars[i];
-            int nextState = _dfa.NextState(currentState, c);
+            int nextState = _dfaOptimizedLookup.NextState(currentState, c);
             if (nextState >= 0)
             {
                 ignoreLeadingErrors = false;
@@ -309,6 +311,83 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             result = TokenizerResult.CreateError(new ParserDiagnostic(state.CurrentPosition,
                 new LexicalError(errorText, tokenizerState)));
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Employs an array to optimize DFA state lookup of ASCII characters.
+    /// Falls back to DFA's binary search otherwise.
+    /// </summary>
+    private sealed class DfaOptimizedLookup
+    {
+        private readonly int[][] _states;
+
+        private readonly int[] _defaultTransitions;
+
+        private readonly Dfa<TChar> _dfa;
+
+        static char Cast(TChar c)
+        {
+            if (typeof(TChar) == typeof(byte))
+            {
+                return (char)(byte)(object)c!;
+            }
+            if (typeof(TChar) == typeof(char))
+            {
+                return (char)(object)c!;
+            }
+
+            throw new NotSupportedException();
+        }
+
+        private static bool IsAscii(TChar c) => Cast(c) < ParserUtilities.AsciiCharacterCount;
+
+        public DfaOptimizedLookup(Dfa<TChar> dfa)
+        {
+            _dfa = dfa;
+
+            _states = new int[dfa.Count][];
+            _defaultTransitions = new int[dfa.Count];
+            for (int i = 0; i < _states.Length; i++)
+            {
+                DfaState<TChar> state = dfa[i];
+                _defaultTransitions[i] = state.DefaultTransition;
+                bool failsOnAllAscii =
+                    state.DefaultTransition == -1
+                    && (state.Edges.Count == 0 || !IsAscii(state.Edges[0].KeyFrom));
+                if (failsOnAllAscii)
+                {
+                    _states[i] = ParserUtilities.DfaStateAllErrors;
+                }
+                else
+                {
+                    int[] arr = new int[ParserUtilities.AsciiCharacterCount];
+                    int defaultTransition = state.DefaultTransition;
+                    arr.AsSpan().Fill(defaultTransition);
+                    foreach (DfaEdge<TChar> edge in state.Edges)
+                    {
+                        if (!IsAscii(edge.KeyFrom))
+                        {
+                            break;
+                        }
+                        int kFrom = Cast(edge.KeyFrom);
+                        int kTo = Math.Min((int)Cast(edge.KeyTo), ParserUtilities.AsciiCharacterCount - 1);
+                        arr.AsSpan(kFrom, kTo - kFrom + 1).Fill(edge.Target);
+                    }
+                    _states[i] = arr;
+                }
+            }
+        }
+
+        public int NextState(int state, TChar c)
+        {
+            int[] stateArray = _states[state];
+            if (Cast(c) < stateArray.Length)
+            {
+                Debug.Assert(_dfa.NextState(state, c) == stateArray[Cast(c)]);
+                return stateArray[Cast(c)];
+            }
+            return _dfa.NextState(state, c);
         }
     }
 

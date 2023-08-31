@@ -114,6 +114,15 @@ public readonly struct DfaState<TChar>
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
+        internal DfaEdge<TChar> this[int index]
+        {
+            get
+            {
+                Debug.Assert((uint)index < (uint)Count);
+                return _dfa.GetEdgeAt(_offset + index);
+            }
+        }
+
         IEnumerator<DfaEdge<TChar>> IEnumerable<DfaEdge<TChar>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

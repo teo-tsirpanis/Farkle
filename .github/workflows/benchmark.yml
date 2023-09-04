@@ -13,7 +13,7 @@ jobs:
     name: Benchmark
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up .NET SDK from global.json
         uses: actions/setup-dotnet@v3
       - name: Restore .NET local tools

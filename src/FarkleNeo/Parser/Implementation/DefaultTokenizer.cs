@@ -15,63 +15,17 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 {
     private readonly Grammar _grammar;
     private readonly Dfa<TChar> _dfa;
-    private readonly DfaOptimizedLookup _dfaOptimizedLookup;
 
     public DefaultTokenizer(Grammar grammar, Dfa<TChar> dfa)
     {
         Debug.Assert(!dfa.HasConflicts);
         _grammar = grammar;
         _dfa = dfa;
-        _dfaOptimizedLookup = new(dfa);
+        _dfa.PrepareForParsing();
         // If a grammar does not have any groups, we will suspend only to return
         // to the main tokenizer entry point. Without a wrapping, it would be called
         // either way regardless of suspending.
         CanSkipChainedTokenizerWrapping = grammar.Groups.Count == 0;
-    }
-
-    private (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState) TokenizeDfa(ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = false)
-    {
-        TokenSymbolHandle acceptSymbol = default;
-        int acceptSymbolLength = 0;
-
-        int currentState = _dfa.InitialState;
-        int i;
-        for (i = 0; i < chars.Length; i++)
-        {
-            TChar c = chars[i];
-            int nextState = _dfaOptimizedLookup.NextState(currentState, c);
-            if (nextState >= 0)
-            {
-                ignoreLeadingErrors = false;
-                currentState = nextState;
-                if (_dfa.GetAcceptSymbol(currentState) is { HasValue: true } s)
-                {
-                    acceptSymbol = s;
-                    acceptSymbolLength = i + 1;
-                }
-            }
-            else if (!ignoreLeadingErrors)
-            {
-                goto Return;
-            }
-        }
-
-        // If this is not the final input block and the DFA can move forward, we cannot accept
-        // a token. To see why, consider a JSON grammar and the tokenizer finding `184` at the
-        // end of the input block. We cannot accept it, there could be more digits after it that
-        // were not yet read yet. By contrast, if we had found `true` at the end of the block, we
-        // can accept it, because there is no way for a longer token to be formed.
-        if (!(isFinal || _dfa[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
-        {
-            acceptSymbol = default;
-        }
-
-    Return:
-        if (acceptSymbol.HasValue)
-        {
-            return (acceptSymbol, acceptSymbolLength, currentState);
-        }
-        return (default, i, currentState);
     }
 
     /// <summary>
@@ -82,6 +36,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// callers need to suspend.</returns>
     public bool TokenizeGroup(ref ParserInputReader<TChar> input, bool isNoise, ref ValueStack<uint> groupStack, ref int groupLength, out ParserDiagnostic? error)
     {
+        ReadOnlySpan<byte> grammarFile = _grammar.Data;
+
         // In Farkle 6, we were tracking two positions in CharStream (the predecessor of ParserInputReader).
         // The "current position" was the position where RemainingCharacters would start from, and the
         // "starting index" was the index of the first character that we must keep in the buffer. When parsing
@@ -128,7 +84,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             // but that's an assumption we'd better not be based on.
             bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
             var (acceptSymbol, charactersRead, _) =
-                TokenizeDfa(chars, input.IsFinalBlock, ignoreLeadingErrors);
+                _dfa.Match(grammarFile, chars, input.IsFinalBlock, ignoreLeadingErrors);
             // The DFA found something.
             if (acceptSymbol.HasValue)
             {
@@ -250,6 +206,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 
     public override bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result)
     {
+        ReadOnlySpan<byte> grammarFile = _grammar.Data;
         ref ParserState state = ref input.State;
         while (true)
         {
@@ -260,7 +217,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             }
 
             var (acceptSymbol, charactersRead, tokenizerState) =
-                TokenizeDfa(input.RemainingCharacters, input.IsFinalBlock);
+                _dfa.Match(grammarFile, input.RemainingCharacters, input.IsFinalBlock, ignoreLeadingErrors: false);
             ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..charactersRead];
 
             if (acceptSymbol.HasValue)
@@ -311,83 +268,6 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             result = TokenizerResult.CreateError(new ParserDiagnostic(state.CurrentPosition,
                 new LexicalError(errorText, tokenizerState)));
             return true;
-        }
-    }
-
-    /// <summary>
-    /// Employs an array to optimize DFA state lookup of ASCII characters.
-    /// Falls back to DFA's binary search otherwise.
-    /// </summary>
-    private sealed class DfaOptimizedLookup
-    {
-        private readonly int[][] _states;
-
-        private readonly int[] _defaultTransitions;
-
-        private readonly Dfa<TChar> _dfa;
-
-        static char Cast(TChar c)
-        {
-            if (typeof(TChar) == typeof(byte))
-            {
-                return (char)(byte)(object)c!;
-            }
-            if (typeof(TChar) == typeof(char))
-            {
-                return (char)(object)c!;
-            }
-
-            throw new NotSupportedException();
-        }
-
-        private static bool IsAscii(TChar c) => Cast(c) < ParserUtilities.AsciiCharacterCount;
-
-        public DfaOptimizedLookup(Dfa<TChar> dfa)
-        {
-            _dfa = dfa;
-
-            _states = new int[dfa.Count][];
-            _defaultTransitions = new int[dfa.Count];
-            for (int i = 0; i < _states.Length; i++)
-            {
-                DfaState<TChar> state = dfa[i];
-                _defaultTransitions[i] = state.DefaultTransition;
-                bool failsOnAllAscii =
-                    state.DefaultTransition == -1
-                    && (state.Edges.Count == 0 || !IsAscii(state.Edges[0].KeyFrom));
-                if (failsOnAllAscii)
-                {
-                    _states[i] = ParserUtilities.DfaStateAllErrors;
-                }
-                else
-                {
-                    int[] arr = new int[ParserUtilities.AsciiCharacterCount];
-                    int defaultTransition = state.DefaultTransition;
-                    arr.AsSpan().Fill(defaultTransition);
-                    foreach (DfaEdge<TChar> edge in state.Edges)
-                    {
-                        if (!IsAscii(edge.KeyFrom))
-                        {
-                            break;
-                        }
-                        int kFrom = Cast(edge.KeyFrom);
-                        int kTo = Math.Min((int)Cast(edge.KeyTo), ParserUtilities.AsciiCharacterCount - 1);
-                        arr.AsSpan(kFrom, kTo - kFrom + 1).Fill(edge.Target);
-                    }
-                    _states[i] = arr;
-                }
-            }
-        }
-
-        public int NextState(int state, TChar c)
-        {
-            int[] stateArray = _states[state];
-            if (Cast(c) < stateArray.Length)
-            {
-                Debug.Assert(_dfa.NextState(state, c) == stateArray[Cast(c)]);
-                return stateArray[Cast(c)];
-            }
-            return _dfa.NextState(state, c);
         }
     }
 

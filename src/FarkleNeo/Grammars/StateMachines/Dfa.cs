@@ -85,24 +85,35 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     }
 
     /// <summary>
-    /// Gets the accept symbol of a state on a <see cref="Dfa{TChar}"/>
-    /// with no conflicting accept symbols.
+    /// Uses the <see cref="Dfa{TChar}"/> to match a sequence of characters.
     /// </summary>
-    /// <param name="state">The state's index.</param>
-    /// <returns>A <see cref="TokenSymbolHandle"/> pointing to the state's accept symbol,
-    /// or having no value if the state is not an accept state.</returns>
-    /// <exception cref="NotSupportedException">The DFA <see cref="HasConflicts"/>.</exception>
-    /// <remarks>This method is intended to be used by parsers.</remarks>
-    public abstract TokenSymbolHandle GetAcceptSymbol(int state);
+    /// <param name="grammarFile">A span with the grammar's data</param>
+    /// <param name="chars">The characters to match.</param>
+    /// <param name="isFinal">Whether there will be no more characters in the
+    /// input stream after <paramref name="chars"/>.</param>
+    /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
+    /// beginning of <paramref name="chars"/>.</param>
+    /// <returns>
+    /// A tuple with:
+    /// <list type="bullet">
+    /// <item>A <see cref="TokenSymbolHandle"/> containing the token symbol that was found,
+    /// or containing no value in case of a lexical error.</item>
+    /// <item>The number of characters that were read before matching a token or encountering
+    /// a lexical error.</item>
+    /// <item>The state the DFA was at when it stopped..</item>
+    /// </list>
+    /// </returns>
+    internal virtual (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
+        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = true)
+    {
+        throw new NotSupportedException();
+    }
 
     /// <summary>
-    /// Performs a transition from one state to another, based on the current character.
+    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing
+    /// This initializes some lookup tables that speed up <see cref="Match"/>.
     /// </summary>
-    /// <param name="state">The index of the current state.</param>
-    /// <param name="c">The current character in the input stream.</param>
-    /// <returns>The index of the next state or -1 if such state does not exist.</returns>
-    /// <remarks>This method is intended to be used by parsers.</remarks>
-    public abstract int NextState(int state, TChar c);
+    internal virtual void PrepareForParsing() { }
 
     /// <summary>
     /// Gets the enumerator of the <see cref="Dfa{TChar}"/>'s states.

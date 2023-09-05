@@ -123,7 +123,4 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
             }
         }
     }
-
-    public override TokenSymbolHandle GetAcceptSymbol(int state) =>
-        throw new NotSupportedException("This method is not supported for DFAs with conflicts.");
 }

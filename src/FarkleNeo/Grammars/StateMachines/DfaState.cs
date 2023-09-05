@@ -14,7 +14,7 @@ namespace Farkle.Grammars.StateMachines;
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
 /// <remarks>
 /// APIs of this type are intended for presentation purposes. To match text against a DFA,
-/// use the <see cref="Dfa{TChar}.NextState"/> function instead.
+/// use Farkle's parsing APIs instead.
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay(),nq}")]
 [DebuggerTypeProxy(typeof(DfaStateProxy<>))]

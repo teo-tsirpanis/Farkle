@@ -9,17 +9,6 @@ namespace Farkle.Parser.Implementation;
 
 internal static class ParserUtilities
 {
-    public const int AsciiCharacterCount = 128;
-
-    public static readonly int[] DfaStateAllErrors = CreateAllErrorsState();
-
-    private static int[] CreateAllErrorsState()
-    {
-        int[] array = new int[AsciiCharacterCount];
-        array.AsSpan().Fill(-1);
-        return array;
-    }
-
     private static string GetAbbreviatedLexicalErrorText(ReadOnlySpan<char> chars)
     {
         const int MaxLength = 20;

@@ -10,6 +10,17 @@ namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {
+    public const int AsciiCharacterCount = 128;
+
+    public static readonly int[] DfaStateAllErrors = CreateAllErrorsState();
+
+    private static int[] CreateAllErrorsState()
+    {
+        int[] array = new int[AsciiCharacterCount];
+        array.AsSpan().Fill(-1);
+        return array;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Read<T>(ReadOnlySpan<byte> buffer, int index) where T : unmanaged
     {

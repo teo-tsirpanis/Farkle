@@ -36,7 +36,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// callers need to suspend.</returns>
     public bool TokenizeGroup(ref ParserInputReader<TChar> input, bool isNoise, ref ValueStack<uint> groupStack, ref int groupLength, out ParserDiagnostic? error)
     {
-        ReadOnlySpan<byte> grammarFile = _grammar.Data;
+        GrammarTablesHotData hotData = new(_grammar);
 
         // In Farkle 6, we were tracking two positions in CharStream (the predecessor of ParserInputReader).
         // The "current position" was the position where RemainingCharacters would start from, and the
@@ -50,8 +50,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         ReadOnlySpan<TChar> chars = input.RemainingCharacters[groupLength..];
         while (groupStack.Count != 0)
         {
-            Group currentGroup = _grammar.GetGroup(groupStack.Peek());
-            GroupAttributes groupAttributes = currentGroup.Attributes;
+            uint currentGroup = groupStack.Peek();
+            GroupAttributes groupAttributes = hotData.GetGroupFlags(currentGroup);
             // Check if we ran out of input.
             if (chars.IsEmpty)
             {
@@ -67,7 +67,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     // Consume all remaining characters to get the position at the end of input.
                     // If we are in a noise group, they are already consumed and this will do nothing.
                     input.Consume(input.RemainingCharacters.Length);
-                    error = new(input.State.CurrentPosition, new UnexpectedEndOfInputInGroupError(_grammar.GetString(currentGroup.Name)));
+                    string groupName = _grammar.GetString(hotData.GetGroupName(currentGroup));
+                    error = new(input.State.CurrentPosition, new UnexpectedEndOfInputInGroupError(groupName));
                     return true;
                 }
                 // If this is not the final block, we have to update the group's length and suspend.
@@ -84,26 +85,25 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             // but that's an assumption we'd better not be based on.
             bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
             var (acceptSymbol, charactersRead, _) =
-                _dfa.Match(grammarFile, chars, input.IsFinalBlock, ignoreLeadingErrors);
+                _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, ignoreLeadingErrors);
             // The DFA found something.
             if (acceptSymbol.HasValue)
             {
-                TokenSymbol s = _grammar.GetTokenSymbol(acceptSymbol);
-                TokenSymbolAttributes symbolAttributes = s.Attributes;
+                TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
                 // A new group begins.
                 if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
-                    Group newGroup = _grammar.GetGroup(s.GetStartedGroup());
+                    uint newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     // The group is allowed to nest into this one.
-                    if (newGroup.CanGroupNest(currentGroup.Index))
+                    if (hotData.CanGroupNest(currentGroup, newGroup))
                     {
                         ConsumeInput(ref input, ref chars, charactersRead, isNoise);
-                        groupStack.Push(newGroup.Index);
+                        groupStack.Push(newGroup);
                         continue;
                     }
                 }
                 // A symbol is found that ends the current group.
-                else if (acceptSymbol == currentGroup.End)
+                else if (acceptSymbol == hotData.GetGroupEnd(currentGroup))
                 {
                     if ((groupAttributes & GroupAttributes.KeepEndToken) != 0)
                     {
@@ -152,12 +152,12 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <summary>
     /// Starts tokenizing a group.
     /// </summary>
-    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, Group group, out int charactersRead, out ParserDiagnostic? error)
+    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData, uint group, out int charactersRead, out ParserDiagnostic? error)
     {
-        TokenSymbolHandle groupContainerSymbol = group.Container;
-        bool isNoise = !_grammar.IsTerminal(groupContainerSymbol);
+        TokenSymbolHandle groupContainerSymbol = hotData.GetGroupContainer(group);
+        bool isNoise = !hotData.IsTerminal(groupContainerSymbol);
         ValueStack<uint> groupStack = new(stackalloc uint[4]);
-        groupStack.Push(group.Index);
+        groupStack.Push(group);
         charactersRead = 0;
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         // The compiler cannot prove that the stack pointers of groupStack will not leak to
@@ -206,7 +206,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 
     public override bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result)
     {
-        ReadOnlySpan<byte> grammarFile = _grammar.Data;
+        GrammarTablesHotData hotData = new(_grammar);
         ref ParserState state = ref input.State;
         while (true)
         {
@@ -217,24 +217,23 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             }
 
             var (acceptSymbol, charactersRead, tokenizerState) =
-                _dfa.Match(grammarFile, input.RemainingCharacters, input.IsFinalBlock, ignoreLeadingErrors: false);
+                _dfa.Match(hotData.GrammarFile, input.RemainingCharacters, input.IsFinalBlock, ignoreLeadingErrors: false);
             ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..charactersRead];
 
             if (acceptSymbol.HasValue)
             {
-                if (_grammar.IsTerminal(acceptSymbol))
+                if (hotData.IsTerminal(acceptSymbol))
                 {
                     object? semanticValue = semanticProvider.Transform(ref state, acceptSymbol, lexeme);
                     result = TokenizerResult.CreateSuccess(acceptSymbol, semanticValue, state.CurrentPosition);
                     input.Consume(charactersRead);
                     return true;
                 }
-                TokenSymbol tokenSymbol = _grammar.GetTokenSymbol(acceptSymbol);
-                TokenSymbolAttributes symbolAttributes = tokenSymbol.Attributes;
+                TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
                 if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
-                    Group group = _grammar.GetGroup(tokenSymbol.GetStartedGroup());
-                    if (!TokenizeGroup(ref input, group, out charactersRead, out ParserDiagnostic? error))
+                    uint group = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
+                    if (!TokenizeGroup(ref input, in hotData, group, out charactersRead, out ParserDiagnostic? error))
                     {
                         result = default;
                         return false;
@@ -244,7 +243,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                         result = TokenizerResult.CreateError(error);
                         return true;
                     }
-                    if (_grammar.IsTerminal(group.Container))
+                    if (hotData.IsTerminal(hotData.GetGroupContainer(group)))
                     {
                         object? semanticValue = semanticProvider.Transform(ref state, acceptSymbol, input.RemainingCharacters[..charactersRead]);
                         result = TokenizerResult.CreateSuccess(acceptSymbol, semanticValue, state.CurrentPosition);

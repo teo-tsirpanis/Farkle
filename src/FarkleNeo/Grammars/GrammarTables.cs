@@ -347,6 +347,20 @@ internal readonly struct GrammarTables
     public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
         (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index));
 
+    public uint GetTokenSymbolStartedGroup(ReadOnlySpan<byte> grammarFile, uint index)
+    {
+        for (int i = 1; i <= GroupRowCount; i++)
+        {
+            var groupStart = GetGroupStart(grammarFile, (uint)i).TableIndex;
+            if (groupStart == index)
+            {
+                return (uint)i;
+            }
+        }
+
+        return 0;
+    }
+
     public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(GroupNameBase, GroupRowCount, GroupRowSize, index));
 
@@ -367,6 +381,28 @@ internal readonly struct GrammarTables
 
     public uint GetGroupNestingGroup(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadGroupHandle(grammarFile, GetTableCellOffset(GroupNestingGroupBase, GroupNestingRowCount, GroupNestingRowSize, index));
+
+    public (uint Offset, uint NextOffset) GetGroupNestingBounds(ReadOnlySpan<byte> grammarFile, uint index)
+    {
+        uint firstNesting = GetGroupFirstNesting(grammarFile, index);
+        uint firstNestingOfNext = index < (uint)GroupRowCount ? GetGroupFirstNesting(grammarFile, index + 1) : (uint)GroupNestingRowCount + 1;
+        Debug.Assert(firstNesting <= firstNestingOfNext);
+        return (firstNesting, firstNestingOfNext);
+    }
+
+    public bool CanGroupNest(ReadOnlySpan<byte> grammarFile, uint outerIndex, uint innerIndex)
+    {
+        (uint offset, uint nextOffset) = GetGroupNestingBounds(grammarFile, outerIndex);
+        for (uint i = offset; i < nextOffset; i++)
+        {
+            uint nesting = GetGroupNestingGroup(grammarFile, i);
+            if (nesting == innerIndex)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public StringHandle GetNonterminalName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(NonterminalNameBase, NonterminalRowCount, NonterminalRowSize, index));

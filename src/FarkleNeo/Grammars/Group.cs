@@ -96,30 +96,6 @@ public readonly struct Group
         }
     }
 
-    internal (uint Offset, uint NextOffset) GetNestingBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
-    {
-        uint firstNesting = grammarTables.GetGroupFirstNesting(grammarFile, Index);
-        uint firstNestingOfNext = Index < (uint)grammarTables.GroupRowCount ? grammarTables.GetGroupFirstNesting(grammarFile, Index + 1) : (uint)grammarTables.GroupNestingRowCount + 1;
-        Debug.Assert(firstNesting <= firstNestingOfNext);
-        return (firstNesting, firstNestingOfNext);
-    }
-
-    internal bool CanGroupNest(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables, uint groupIndex)
-    {
-        (uint offset, uint nextOffset) = GetNestingBounds(grammarFile, in grammarTables);
-        for (uint i = offset; i < nextOffset; i++)
-        {
-            uint nesting = grammarTables.GetGroupNestingGroup(grammarFile, i);
-            if (nesting == groupIndex)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    internal bool CanGroupNest(uint groupIndex) => CanGroupNest(_grammar.GrammarFile, in _grammar.GrammarTables, groupIndex);
-
     /// <summary>
     /// A collection of the <see cref="Group"/>s that can be nested inside this <see cref="Group"/>.
     /// </summary>
@@ -128,7 +104,7 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            (uint offset, uint nextOffset) = GetNestingBounds(_grammar.GrammarFile, in _grammar.GrammarTables);
+            (uint offset, uint nextOffset) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Index);
             return new(_grammar, offset, (int)(nextOffset - offset));
         }
     }

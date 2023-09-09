@@ -297,7 +297,7 @@ public abstract class Grammar : IGrammarProvider
         ArgumentNullExceptionCompat.ThrowIfNull(specialName);
 
         ReadOnlySpan<byte> grammarFile = GrammarFile;
-        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is StringHandle nameHandle)
+        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is { } nameHandle)
         {
             for (uint i = 1; i <= GrammarTables.SpecialNameRowCount; i++)
             {

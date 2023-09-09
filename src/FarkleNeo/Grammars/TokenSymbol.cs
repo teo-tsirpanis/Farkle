@@ -58,23 +58,6 @@ public readonly struct TokenSymbol
         }
     }
 
-    internal uint GetStartedGroup()
-    {
-        Debug.Assert((Attributes & TokenSymbolAttributes.GroupStart) != 0);
-        var grammarFile = _grammar.GrammarFile;
-        var groupCount = _grammar.GrammarTables.GroupRowCount;
-        for (int i = 1; i <= groupCount; i++)
-        {
-            var groupStart = _grammar.GrammarTables.GetGroupStart(grammarFile, (uint)i);
-            if (groupStart == Handle)
-            {
-                return (uint)i;
-            }
-        }
-
-        return 0;
-    }
-
     internal static string FormatName(string name)
     {
         return ShouldQuote(name) ? $"'{name}'" : name;

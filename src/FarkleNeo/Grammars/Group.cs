@@ -104,8 +104,8 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            (uint offset, uint nextOffset) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Index);
-            return new(_grammar, offset, (int)(nextOffset - offset));
+            (uint offset, int count) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Index);
+            return new(_grammar, offset, count);
         }
     }
 

@@ -42,15 +42,6 @@ public readonly struct Production
         }
     }
 
-    internal (uint Offset, uint NextOffset) GetMemberBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
-    {
-        uint tableIndex = Handle.TableIndex;
-        uint firstMember = grammarTables.GetProductionFirstMember(grammarFile, tableIndex);
-        uint firstMemberOfNext = tableIndex < (uint)grammarTables.ProductionRowCount ? grammarTables.GetProductionFirstMember(grammarFile, tableIndex + 1) : (uint)grammarTables.ProductionMemberRowCount + 1;
-        Debug.Assert(firstMember <= firstMemberOfNext);
-        return (firstMember, firstMemberOfNext);
-    }
-
     /// <summary>
     /// A <see cref="NonterminalHandle"/> pointing to the <see cref="Production"/>'s head.
     /// </summary>
@@ -71,8 +62,8 @@ public readonly struct Production
         get
         {
             AssertHasValue();
-            (uint offset, uint nextOffset) = GetMemberBounds(_grammar.GrammarFile, in _grammar.GrammarTables);
-            return new(_grammar, offset, (int)(nextOffset - offset));
+            (uint offset, int count) = _grammar.GrammarTables.GetProductionMemberBounds(_grammar.GrammarFile, Handle.TableIndex);
+            return new(_grammar, offset, count);
         }
     }
 

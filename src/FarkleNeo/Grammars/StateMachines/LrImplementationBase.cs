@@ -12,6 +12,8 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {
+    private Dictionary<NonterminalHandle, int>[]? _gotoLookup;
+
     protected int ActionCount { get; }
 
     protected int GotoCount { get; }
@@ -28,7 +30,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     public required int GotoStateBase { get; init; }
 
-    protected unsafe LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, bool hasConflicts) : base(stateCount, hasConflicts)
+    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
         Debug.Assert(GrammarUtilities.GetCompressedIndexSize(stateCount) == sizeof(TStateIndex));
         Debug.Assert(GrammarUtilities.GetCompressedIndexSize(actionCount) == sizeof(TActionIndex));
@@ -56,38 +58,40 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     internal sealed override Grammar Grammar { get; }
 
-    public sealed override int GetGoto(int state, NonterminalHandle nonterminal)
+    internal override void PrepareForParsing()
     {
-        ValidateStateIndex(state);
-
+        Debug.Assert(!HasConflicts);
         ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
-        int gotoOffset = ReadFirstGoto(grammarFile, state);
-        int nextGotoOffset = state != Count - 1 ? ReadFirstGoto(grammarFile, state + 1) : GotoCount;
-        int gotoCount = nextGotoOffset - gotoOffset;
-
-        if (gotoCount != 0)
+        var gotoLookup = new Dictionary<NonterminalHandle, int>[Count];
+        for (int i = 0; i < gotoLookup.Length; i++)
         {
-            int nextGoto = StateMachineUtilities.BufferBinarySearch(grammarFile, GotoNonterminalBase + gotoOffset * sizeof(TNonterminal), gotoCount, StateMachineUtilities.CastUInt<TNonterminal>(nonterminal.TableIndex));
-
-            if (nextGoto >= 0)
+            var dict = new Dictionary<NonterminalHandle, int>();
+            (int gotoOffset, int gotoCount) = GetGotoBoundsUnsafe(grammarFile, i);
+            for (int j = 0; j < gotoCount; j++)
             {
-                return ReadGoto(grammarFile, gotoOffset + nextGoto);
+                ((ICollection<KeyValuePair<NonterminalHandle, int>>)dict).Add(GetGotoAtUnsafe(grammarFile, gotoOffset + j));
             }
+            gotoLookup[i] = dict;
         }
-
-        ThrowHelpers.ThrowKeyNotFoundException("Could not find GOTO transition");
-        return 0;
+        _gotoLookup = gotoLookup;
     }
 
-    private (int Offset, int Count) GetActionBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    internal sealed override int GetGoto(int state, NonterminalHandle nonterminal)
+    {
+        Debug.Assert(_gotoLookup is not null, "PrepareForParsing has not been called.");
+
+        return _gotoLookup[state][nonterminal];
+    }
+
+    protected (int Offset, int Count) GetActionBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         int actionOffset = ReadFirstAction(grammarFile, state);
         int nextActionOffset = state != Count - 1 ? ReadFirstAction(grammarFile, state + 1) : ActionCount;
         return (actionOffset, nextActionOffset - actionOffset);
     }
 
-    private KeyValuePair<TokenSymbolHandle, LrAction> GetActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
+    protected KeyValuePair<TokenSymbolHandle, LrAction> GetActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
     {
         TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray<TTokenSymbol>(grammarFile, ActionTerminalBase, index));
         LrAction action = ReadAction(grammarFile, index);

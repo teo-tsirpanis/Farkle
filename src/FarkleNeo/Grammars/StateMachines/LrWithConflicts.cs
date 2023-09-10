@@ -64,10 +64,10 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         };
     }
 
-    public override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
+    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
         throw CreateHasConflictsException();
 
-    public override LrEndOfFileAction GetEndOfFileAction(int state) =>
+    internal override LrEndOfFileAction GetEndOfFileAction(int state) =>
         throw CreateHasConflictsException();
 
     private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)

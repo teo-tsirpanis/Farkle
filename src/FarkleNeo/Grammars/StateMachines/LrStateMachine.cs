@@ -104,13 +104,18 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     }
 
     /// <summary>
+    /// Prepares the <see cref="LrStateMachine"/> to be used for parsing.
+    /// </summary>
+    internal virtual void PrepareForParsing() { }
+
+    /// <summary>
     /// Gets the next action from a state, when the given terminal is encountered.
     /// </summary>
     /// <param name="state">The current state.</param>
     /// <param name="terminal">The terminal that was encountered.</param>
     /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
     /// <remarks>This method is intended to be used by parsers.</remarks>
-    public abstract LrAction GetAction(int state, TokenSymbolHandle terminal);
+    internal abstract LrAction GetAction(int state, TokenSymbolHandle terminal);
 
     /// <summary>
     /// Gets the next action from a state, when the end of the input stream is reached.
@@ -118,7 +123,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// <param name="state">The current state.</param>
     /// <exception cref="NotSupportedException">The <see cref="LrStateMachine"/> has conflicts.</exception>
     /// <remarks>This method is intended to be used by parsers.</remarks>
-    public abstract LrEndOfFileAction GetEndOfFileAction(int state);
+    internal abstract LrEndOfFileAction GetEndOfFileAction(int state);
 
     /// <summary>
     /// Performs a GOTO transition from one state to another, based on a nonterminal produced by a reduction.
@@ -129,7 +134,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     /// <exception cref="KeyNotFoundException">A GOTO was not found for this state and nonterminal.
     /// Properly written parsers and grammar files should not encounter this exception.</exception>
     /// <remarks>This method is intended to be used by parsers.</remarks>
-    public abstract int GetGoto(int state, NonterminalHandle nonterminal);
+    internal abstract int GetGoto(int state, NonterminalHandle nonterminal);
 
     /// <summary>
     /// Gets the enumerator of the <see cref="LrStateMachine"/>'s states.

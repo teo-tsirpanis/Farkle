@@ -28,6 +28,7 @@ internal readonly struct DefaultParserImplementation<TChar>
     {
         Grammar = grammar;
         _lrStateMachine = lrStateMachine;
+        _lrStateMachine.PrepareForParsing();
         _semanticProvider = semanticProvider;
         Tokenizer = tokenizer;
     }

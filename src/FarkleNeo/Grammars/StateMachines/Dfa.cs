@@ -110,7 +110,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     }
 
     /// <summary>
-    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing
+    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing.
     /// This initializes some lookup tables that speed up <see cref="Match"/>.
     /// </summary>
     internal virtual void PrepareForParsing() { }

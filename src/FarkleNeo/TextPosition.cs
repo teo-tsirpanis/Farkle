@@ -106,7 +106,7 @@ public readonly struct TextPosition : IEquatable<TextPosition>
 #if NET6_0_OR_GREATER
         string.Create(formatProvider, stackalloc char[32], $"({Line}, {Column})");
 #else
-        formatProvider is null ? $"({Line}, {Column})" : ((FormattableString)$"({Line}, {Column})").ToString(formatProvider);
+        ((FormattableString)$"({Line}, {Column})").ToString(formatProvider);
 #endif
 
 #if NET6_0_OR_GREATER

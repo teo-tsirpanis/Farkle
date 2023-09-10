@@ -73,6 +73,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                     result = null;
                     return RunResult.NeedsMoreInput;
                 }
+                RetryEof:
                 LrEndOfFileAction eofAction = _lrStateMachine.GetEndOfFileAction(currentState);
                 if (eofAction.IsAccept)
                 {
@@ -82,7 +83,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                 if (eofAction.IsReduce)
                 {
                     currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
-                    continue;
+                    goto RetryEof;
                 }
             }
             else if (!token.IsSuccess)
@@ -92,6 +93,7 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             else
             {
+                RetryToken:
                 LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
                 if (action.IsShift)
                 {
@@ -104,7 +106,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                 if (action.IsReduce)
                 {
                     currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
-                    continue;
+                    goto RetryToken;
                 }
             }
             TextPosition errorPos = foundToken ? token.Position : input.State.CurrentPosition;

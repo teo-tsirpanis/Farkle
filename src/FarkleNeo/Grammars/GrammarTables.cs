@@ -117,7 +117,7 @@ internal readonly struct GrammarTables
         uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
 
         // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.
-        ReadOnlySpan<TableKind> tableKinds = new TableKind[] { TableKind.TokenSymbol, TableKind.Nonterminal };
+        ReadOnlySpan<TableKind> tableKinds = new [] { TableKind.TokenSymbol, TableKind.Nonterminal };
         TableKind kind = tableKinds[(int)codedIndex & 1];
 
         uint indexValue = codedIndex >> 1;

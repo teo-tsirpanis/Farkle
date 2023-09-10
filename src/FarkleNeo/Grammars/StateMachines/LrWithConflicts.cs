@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Farkle.Grammars.StateMachines;
 
 internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
+    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {

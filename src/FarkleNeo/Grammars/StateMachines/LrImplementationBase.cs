@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal> : LrStateMachine
+internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal> : LrStateMachine
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {

@@ -45,23 +45,23 @@ internal readonly struct DefaultParserImplementation<TChar>
     public DefaultParserImplementation<TChar> WithSemanticProvider<T>(ISemanticProvider<TChar, T> semanticProvider) =>
         new(Grammar, _lrStateMachine, semanticProvider, Tokenizer);
 
-    private void Reduce(ref ParserInputReader<TChar> input, ref int currentState, ref ValueStack<int> stateStack,
-        ref ValueStack<object?> semanticValueStack, ProductionHandle production)
+    private int Reduce(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData,
+        ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, ProductionHandle production)
     {
-        Production p = Grammar.GetProduction(production);
-        int membersLength = p.Members.Count;
+        int membersLength = hotData.GetProductionMemberCount(production);
         int goFromState = stateStack.Peek(membersLength);
-        int gotoState = _lrStateMachine.GetGoto(goFromState, p.Head);
-        object? semanticValue = ProductionSemanticProvider.Fuse(ref input.State, p.Handle, semanticValueStack.PeekMany(membersLength));
+        int gotoState = _lrStateMachine.GetGoto(goFromState, hotData.GetProductionHead(production));
+        object? semanticValue = ProductionSemanticProvider.Fuse(ref input.State, production, semanticValueStack.PeekMany(membersLength));
         semanticValueStack.PopMany(membersLength);
         semanticValueStack.Push(semanticValue);
         stateStack.PopMany(membersLength);
         stateStack.Push(gotoState);
-        currentState = gotoState;
+        return gotoState;
     }
 
     private RunResult Run(ref ParserInputReader<TChar> input, ref ValueStack<int> stateStack, ref ValueStack<object?> semanticValueStack, out object? result)
     {
+        GrammarTablesHotData hotData = new(Grammar);
         int currentState = stateStack.Peek();
         bool foundToken = Tokenizer.TryGetNextToken(ref input, TokenSemanticProvider, out TokenizerResult token);
         while (true)
@@ -81,7 +81,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (eofAction.IsReduce)
                 {
-                    Reduce(ref input, ref currentState, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
+                    currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
                     continue;
                 }
             }
@@ -103,7 +103,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (action.IsReduce)
                 {
-                    Reduce(ref input, ref currentState, ref stateStack, ref semanticValueStack, action.ReduceProduction);
+                    currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
                     continue;
                 }
             }

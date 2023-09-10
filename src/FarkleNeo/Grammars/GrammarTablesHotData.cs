@@ -95,4 +95,18 @@ internal readonly ref struct GrammarTablesHotData
 
         return GrammarTables.CanGroupNest(GrammarFile, outerGroup, innerGroup);
     }
+
+    public NonterminalHandle GetProductionHead(ProductionHandle production)
+    {
+        Debug.Assert(production.TableIndex != 0 && production.TableIndex <= (uint)GrammarTables.ProductionRowCount);
+
+        return GrammarTables.GetProductionHead(GrammarFile, production.TableIndex);
+    }
+
+    public int GetProductionMemberCount(ProductionHandle production)
+    {
+        Debug.Assert(production.TableIndex != 0 && production.TableIndex <= (uint)GrammarTables.ProductionRowCount);
+
+        return GrammarTables.GetProductionMemberBounds(GrammarFile, production.TableIndex).Count;
+    }
 }

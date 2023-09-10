@@ -8,6 +8,8 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {
+    private Dictionary<TokenSymbolHandle, LrAction>[]? _actionLookup;
+
     internal required int EofActionBase { get; init; }
 
     public LrWithoutConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount) : base(grammar, stateCount, actionCount, gotoCount, false) { }
@@ -51,35 +53,33 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
 
     internal override bool StateHasConflicts(int state) => false;
 
-    public override LrAction GetAction(int state, TokenSymbolHandle terminal)
+    internal override void PrepareForParsing()
     {
-        ValidateStateIndex(state);
-
+        base.PrepareForParsing();
         ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
 
-        int actionOffset = ReadFirstAction(grammarFile, state);
-        int nextActionOffset = state != Count - 1 ? ReadFirstAction(grammarFile, state + 1) : ActionCount;
-        int actionCount = nextActionOffset - actionOffset;
-
-        if (actionCount != 0)
+        var actionLookup = new Dictionary<TokenSymbolHandle, LrAction>[Count];
+        for (int i = 0; i < actionLookup.Length; i++)
         {
-            int nextAction = StateMachineUtilities.BufferBinarySearch(grammarFile, ActionTerminalBase + actionOffset * sizeof(TTokenSymbol), actionCount, StateMachineUtilities.CastUInt<TTokenSymbol>(terminal.TableIndex));
-
-            if (nextAction >= 0)
+            var dict = new Dictionary<TokenSymbolHandle, LrAction>();
+            (int actionOffset, int actionCount) = GetActionBoundsUnsafe(grammarFile, i);
+            for (int j = 0; j < actionCount; j++)
             {
-                return ReadAction(grammarFile, actionOffset + nextAction);
+                ((ICollection<KeyValuePair<TokenSymbolHandle, LrAction>>)dict).Add(GetActionAtUnsafe(grammarFile, actionOffset + j));
             }
+            actionLookup[i] = dict;
         }
-
-        return LrAction.Error;
+        _actionLookup = actionLookup;
     }
+
+    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) => _actionLookup![state][terminal];
 
     private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, state));
     }
 
-    public override LrEndOfFileAction GetEndOfFileAction(int state)
+    internal override LrEndOfFileAction GetEndOfFileAction(int state)
     {
         ValidateStateIndex(state);
         return GetEndOfFileActionUnsafe(Grammar.GrammarFile, state);

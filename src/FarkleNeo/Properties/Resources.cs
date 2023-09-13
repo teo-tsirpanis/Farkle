@@ -3,6 +3,10 @@
 
 using System.Globalization;
 using System.Resources;
+using System.Runtime.CompilerServices;
+#if NET8_0_OR_GREATER
+using System.Text;
+#endif
 
 namespace Farkle;
 
@@ -30,6 +34,38 @@ internal static class Resources
         return ResourceManager.GetString(resourceKey, formatProvider as CultureInfo)!;
     }
 
+#if NET8_0_OR_GREATER
+    private static readonly ConditionalWeakTable<string, CompositeFormat> _compositeFormatCache = new();
+
+    public static CompositeFormat GetCompositeFormat(string x) =>
+        _compositeFormatCache.GetValue(x, CompositeFormat.Parse);
+
+    public static bool TryWrite<T>(Span<char> destination, IFormatProvider? formatProvider, string resourceKey, out int charsWritten, T arg)
+    {
+        if (UsingResourceKeys())
+        {
+            return destination.TryWrite(formatProvider, $"{resourceKey}, {arg}", out charsWritten);
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg);
+    }
+
+    public static bool TryWrite<T1, T2>(Span<char> destination, IFormatProvider? formatProvider, string resourceKey, out int charsWritten, T1 arg1, T2 arg2)
+    {
+        if (UsingResourceKeys())
+        {
+            return destination.TryWrite(formatProvider, $"{resourceKey}, {arg1}, {arg2}", out charsWritten);
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2);
+    }
+
+#else
+    public static string GetCompositeFormat(string x) => x;
+#endif
+
     public static string Format<T>(IFormatProvider? formatProvider, string resourceKey, T arg)
     {
         if (UsingResourceKeys())
@@ -41,7 +77,8 @@ internal static class Resources
 #endif
         }
 
-        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!, arg);
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return string.Format(formatProvider, GetCompositeFormat(msg), arg);
     }
 
     public static string Format<T1, T2>(IFormatProvider? formatProvider, string resourceKey, T1 arg1, T2 arg2)
@@ -55,7 +92,8 @@ internal static class Resources
 #endif
         }
 
-        return string.Format(formatProvider, ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!, arg1, arg2);
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2);
     }
 
     public static string GetEofString(IFormatProvider? formatProvider)

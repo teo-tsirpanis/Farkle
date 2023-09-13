@@ -7,6 +7,9 @@ namespace Farkle.Diagnostics;
 /// Contains information about a tokenizer error where input ended inside a group.
 /// </summary>
 public sealed class UnexpectedEndOfInputInGroupError : IFormattable
+#if NET8_0_OR_GREATER
+    , ISpanFormattable
+#endif
 {
     /// <summary>
     /// The name of the group that was left open at the time input ended.
@@ -28,7 +31,12 @@ public sealed class UnexpectedEndOfInputInGroupError : IFormattable
     }
 
     private string ToString(IFormatProvider? formatProvider) =>
-        Resources.Format(formatProvider, nameof(Resources.Parser_UnrecognizedToken), GroupName);
+        Resources.Format(formatProvider, nameof(Resources.Parser_UnexpectedEndOfInputInGroup), GroupName);
+
+#if NET8_0_OR_GREATER
+    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
+        Resources.TryWrite(destination, provider, nameof(Resources.Parser_UnexpectedEndOfInputInGroup), out charsWritten, GroupName);
+#endif
 
     /// <inheritdoc/>
     public string ToString(string? format, IFormatProvider? formatProvider) => ToString(formatProvider);

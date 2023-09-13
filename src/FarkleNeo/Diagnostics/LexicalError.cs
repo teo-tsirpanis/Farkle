@@ -10,6 +10,9 @@ namespace Farkle.Diagnostics;
 /// A lexical error occurs when the tokenizer cannot recognize some characters as part of a token.
 /// </remarks>
 public sealed class LexicalError : IFormattable
+#if NET8_0_OR_GREATER
+    , ISpanFormattable
+#endif
 {
     /// <summary>
     /// The characters of the token that caused the error.
@@ -38,6 +41,11 @@ public sealed class LexicalError : IFormattable
 
     private string ToString(IFormatProvider? formatProvider) =>
         Resources.Format(formatProvider, nameof(Resources.Parser_UnrecognizedToken), TokenText);
+
+#if NET8_0_OR_GREATER
+    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
+        Resources.TryWrite(destination, provider, nameof(Resources.Parser_UnrecognizedToken), out charsWritten, TokenText);
+#endif
 
     /// <inheritdoc/>
     public string ToString(string? format, IFormatProvider? formatProvider) => ToString(formatProvider);

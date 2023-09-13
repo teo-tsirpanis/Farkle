@@ -8,40 +8,23 @@ using System.Diagnostics;
 
 namespace Farkle.DebuggerTypeProxies;
 
-internal class FlatCollectionProxy<T, TCollection> where TCollection : IEnumerable<T>
+internal class FlatCollectionProxy<T, TCollection>(TCollection list) where TCollection : IEnumerable<T>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-    public readonly T[] _items;
-
-    public FlatCollectionProxy(TCollection list) => _items = list.ToArray();
+    public readonly T[] _items = list.ToArray();
 }
 
-internal class DfaProxy<TChar> : FlatCollectionProxy<DfaState<TChar>, Dfa<TChar>>
-{
-    public DfaProxy(Dfa<TChar> dfa) : base(dfa) { }
-}
+internal class DfaProxy<TChar>(Dfa<TChar> dfa) : FlatCollectionProxy<DfaState<TChar>, Dfa<TChar>>(dfa);
 
-internal class DfaAcceptSymbolsProxy<TChar> : FlatCollectionProxy<TokenSymbolHandle, DfaState<TChar>.AcceptSymbolCollection>
-{
-    public DfaAcceptSymbolsProxy(DfaState<TChar>.AcceptSymbolCollection collection) : base(collection) { }
-}
+internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbolHandle, DfaState<TChar>.AcceptSymbolCollection>(collection);
 
-internal class DfaEdgesProxy<TChar> : FlatCollectionProxy<DfaEdge<TChar>, DfaState<TChar>.EdgeCollection>
-{
-    public DfaEdgesProxy(DfaState<TChar>.EdgeCollection collection) : base(collection) { }
-}
+internal class DfaEdgesProxy<TChar>(DfaState<TChar>.EdgeCollection collection) : FlatCollectionProxy<DfaEdge<TChar>, DfaState<TChar>.EdgeCollection>(collection);
 
 [DebuggerDisplay("{Value,nq}", Name = "{Name,nq}")]
-internal readonly struct NameValuePair
+internal readonly struct NameValuePair(string name, string value)
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    public readonly string Name, Value;
-
-    public NameValuePair(string name, string value)
-    {
-        Name = name;
-        Value = value;
-    }
+    public readonly string Name = name, Value = value;
 }
 
 internal sealed class LrStateProxy

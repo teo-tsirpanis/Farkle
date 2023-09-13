@@ -5,18 +5,11 @@ using System.Buffers;
 
 namespace Farkle.Parser;
 
-internal struct CharacterBufferManager<TChar>
+internal struct CharacterBufferManager<TChar>(int initialBufferSize)
 {
-    private TChar[] _buffer;
-    private readonly int _initialBufferSize;
+    private TChar[] _buffer = ArrayPool<TChar>.Shared.Rent(initialBufferSize);
     private long _totalCharactersConsumed = 0;
     private int _usedCharacterStart = 0, _usedCharacterEnd = 0;
-
-    public CharacterBufferManager(int initialBufferSize)
-    {
-        _initialBufferSize = initialBufferSize;
-        _buffer = ArrayPool<TChar>.Shared.Rent(initialBufferSize);
-    }
 
     private readonly void CheckInputNotCompleted()
     {
@@ -108,7 +101,7 @@ internal struct CharacterBufferManager<TChar>
         {
             ArrayPool<TChar>.Shared.Return(_buffer);
         }
-        _buffer = ArrayPool<TChar>.Shared.Rent(_initialBufferSize);
+        _buffer = ArrayPool<TChar>.Shared.Rent(initialBufferSize);
         _totalCharactersConsumed = 0;
         _usedCharacterStart = 0;
         _usedCharacterEnd = 0;

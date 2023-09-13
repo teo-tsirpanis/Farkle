@@ -132,19 +132,10 @@ public static class TokenizerExtensions
         input.SuspendTokenizerCore(new TokenizerResumptionPoint<TChar, TArg>(resumptionPoint, arg));
     }
 
-    private sealed class TokenizerResumptionPoint<TChar, TArg> : Tokenizer<TChar>
+    private sealed class TokenizerResumptionPoint<TChar, TArg>(ITokenizerResumptionPoint<TChar, TArg> resumptionPoint, TArg arg) : Tokenizer<TChar>
     {
-        private readonly ITokenizerResumptionPoint<TChar, TArg> _resumptionPoint;
-        private readonly TArg _arg;
-
-        public TokenizerResumptionPoint(ITokenizerResumptionPoint<TChar, TArg> resumptionPoint, in TArg arg)
-        {
-            _resumptionPoint = resumptionPoint;
-            _arg = arg;
-        }
-
         public override bool TryGetNextToken(ref ParserInputReader<TChar> input,
             ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result) =>
-            _resumptionPoint.TryGetNextToken(ref input, semanticProvider, _arg, out result);
+            resumptionPoint.TryGetNextToken(ref input, semanticProvider, arg, out result);
     }
 }

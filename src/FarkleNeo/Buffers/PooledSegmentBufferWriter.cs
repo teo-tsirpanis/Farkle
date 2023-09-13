@@ -215,11 +215,11 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
     private static void ThrowCannotAdvance(int count) =>
         throw new ArgumentOutOfRangeException(nameof(count), count, "Cannot advance past the end of the buffer.");
 
-    private struct Segment : IDisposable
+    private struct Segment(int sizeHint) : IDisposable
     {
         public int WrittenCount { get; private set; }
 
-        public T[]? Buffer;
+        public T[]? Buffer = RentBuffer(sizeHint);
 
         private static T[] RentBuffer(int sizeHint) =>
             ArrayPool<T>.Shared.Rent(sizeHint <= 0 ? DefaultSegmentCapacity : sizeHint);
@@ -231,11 +231,6 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
                 Debug.Assert(Buffer is not null);
                 return Buffer!.Length - WrittenCount;
             }
-        }
-
-        public Segment(int sizeHint)
-        {
-            Buffer = RentBuffer(sizeHint);
         }
 
         public void Dispose()

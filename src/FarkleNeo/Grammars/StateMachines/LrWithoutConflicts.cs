@@ -3,16 +3,14 @@
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>
+internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>(Grammar grammar, int stateCount, int actionCount, int gotoCount)
+    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>(grammar, stateCount, actionCount, gotoCount, false)
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {
     private Dictionary<TokenSymbolHandle, LrAction>[]? _actionLookup;
 
     internal required int EofActionBase { get; init; }
-
-    public LrWithoutConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount) : base(grammar, stateCount, actionCount, gotoCount, false) { }
 
     public static LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, GrammarFileSection lr)
     {

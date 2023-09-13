@@ -6,33 +6,23 @@ using System.Text;
 
 namespace Farkle.Diagnostics;
 
-internal readonly struct DelimitedString
+internal readonly struct DelimitedString(ImmutableArray<string?> values, string delimiter,
+    string fallback, Func<string, string>? valueTransform = null)
 {
-    private readonly ImmutableArray<string?> _values;
-    private readonly string _delimiter;
-    private readonly string _fallback;
-    private readonly Func<string, string> _valueTransform;
-
-    public DelimitedString(ImmutableArray<string?> values, string delimiter, string fallback, Func<string, string>? valueTransform = null)
-    {
-        _values = values;
-        _delimiter = delimiter;
-        _fallback = fallback;
-        _valueTransform = valueTransform ?? (x => x);
-    }
+    private readonly Func<string, string> ValueTransform = valueTransform ?? (x => x);
 
     public override string ToString()
     {
-        switch (_values)
+        switch (values)
         {
             case []: return string.Empty;
-            case [null]: return _fallback;
-            case [var x]: return _valueTransform(x);
+            case [null]: return fallback;
+            case [var x]: return ValueTransform(x);
         }
 
         StringBuilder sb = new();
         bool first = true;
-        foreach (string? value in _values)
+        foreach (string? value in values)
         {
             if (first)
             {
@@ -40,9 +30,9 @@ internal readonly struct DelimitedString
             }
             else
             {
-                sb.Append(_delimiter);
+                sb.Append(delimiter);
             }
-            sb.Append(value is null ? _fallback : _valueTransform(value));
+            sb.Append(value is null ? fallback : ValueTransform(value));
         }
         return sb.ToString();
     }

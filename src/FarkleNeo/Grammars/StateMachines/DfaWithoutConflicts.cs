@@ -6,7 +6,7 @@ using Farkle.Buffers;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> : DfaImplementationBase<TChar, TState, TEdge> where TChar : unmanaged, IComparable<TChar>
+internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol>(Grammar grammar, int stateCount, int edgeCount) : DfaImplementationBase<TChar, TState, TEdge>(grammar, stateCount, edgeCount, false) where TChar : unmanaged, IComparable<TChar>
 {
     internal required int AcceptBase { get; init; }
 
@@ -34,8 +34,6 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
     }
 
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
-
-    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount) : base(grammar, stateCount, edgeCount, false) { }
 
     public static DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> Create(Grammar grammar, int stateCount, int edgeCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
     {

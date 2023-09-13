@@ -181,15 +181,10 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
 /// </summary>
 public static class ParserStateContext
 {
-    private sealed class DefaultContext<TChar, T> : ParserStateContext<TChar, T>
+    private sealed class DefaultContext<TChar, T>(IParser<TChar, T> parser, ParserStateContextOptions? options) : ParserStateContext<TChar, T>(options)
     {
-        private readonly IParser<TChar, T> _parser;
-
-        public DefaultContext(IParser<TChar, T> parser, ParserStateContextOptions? options) : base(options) =>
-            _parser = parser;
-
         protected override void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState) =>
-            _parser.Run(ref input, ref completionState);
+            parser.Run(ref input, ref completionState);
     }
 
     /// <summary>

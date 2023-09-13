@@ -8,25 +8,17 @@ using static Farkle.Grammars.GrammarConstants;
 namespace Farkle.Grammars;
 
 [StructLayout(LayoutKind.Auto)]
-internal readonly struct GrammarHeader
+internal readonly struct GrammarHeader(ushort versionMajor, ushort versionMinor, uint streamCount, GrammarFileType fileType)
 {
     /// <summary>
     /// The size of the version-independent part of a Farkle grammar header.
     /// </summary>
     private const int VersionIndependentHeaderSize = sizeof(ulong) + 2 * sizeof(ushort);
 
-    public GrammarHeader(ushort versionMajor, ushort versionMinor, uint streamCount, GrammarFileType fileType)
-    {
-        VersionMajor = versionMajor;
-        VersionMinor = versionMinor;
-        StreamCount = streamCount;
-        FileType = fileType;
-    }
-
-    public ushort VersionMajor { get; private init; }
-    public ushort VersionMinor { get; private init; }
-    public uint StreamCount { get; private init; }
-    public GrammarFileType FileType { get; private init; }
+    public ushort VersionMajor { get; private init; } = versionMajor;
+    public ushort VersionMinor { get; private init; } = versionMinor;
+    public uint StreamCount { get; private init; } = streamCount;
+    public GrammarFileType FileType { get; private init; } = fileType;
 
     public static GrammarHeader Unknown => default;
     public static GrammarHeader GoldParser => new() { FileType = GrammarFileType.GoldParser };

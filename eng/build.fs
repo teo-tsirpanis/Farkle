@@ -261,7 +261,7 @@ let benchmark _ =
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
     match Environment.environVarOrNone "GITHUB_STEP_SUMMARY" with
     | Some stepSummary ->
-        let regex = Regex("Farkle\.Benchmarks\.CSharp\.(\w+)-report-github\.md")
+        let regex = Regex("Farkle\.Benchmarks\.(\w+)-report-github\.md")
         use writer = new StreamWriter(File.OpenWrite stepSummary)
         writer.WriteLine("# Benchmark report")
         benchmarkReports

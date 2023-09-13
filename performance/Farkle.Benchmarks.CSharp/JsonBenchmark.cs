@@ -11,7 +11,7 @@ using Farkle.Parser.Semantics;
 using Farkle6 = farkle6::Farkle;
 using ParserState = Farkle.Parser.ParserState;
 
-namespace Farkle.Benchmarks.CSharp;
+namespace Farkle.Benchmarks;
 
 [MemoryDiagnoser, GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 public class JsonBenchmark

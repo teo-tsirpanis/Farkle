@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RuntimeFarkle<'TResult> (Farkle)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - RuntimeFarkle<'TResult> (Farkle)">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <div>
+  <h2>
+    RuntimeFarkle<'TResult> Type
+  </h2>
+  <dl class="fsdocs-metadata">
+    <dt>
+      Namespace: 
+      <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle.html">
+        Farkle
+      </a>
+    </dt>
+    <dt>
+      Assembly: Farkle.dll
+    </dt>
+    <dt>
+      Base Type: 
+      <code>obj</code>
+    </dt>
+    <dt>
+      All Interfaces: 
+      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-igrammarprovider.html">IGrammarProvider</a></code>
+    </dt>
+  </dl>
+  <div class="fsdocs-xmldoc">
+    <div>
+      <p class="fsdocs-summary">
+        A reusable parser and post-processor,
+ created for a specific grammar, and returning
+ a specific type of object that best describes
+ an expression of the language of this grammar.
+      </p>
+    </div>
+    <p class="fsdocs-remarks">
+      <p class='fsdocs-para'>Its parsing methods return an F# result
+ type containing either the post-processed return
+ type, or a type describing what did wrong and where.</p><p class='fsdocs-para'>Exceptions during post-processing (apart from
+ <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parserapplicationexception.html">ParserApplicationException</a>) are thrown
+ after being wrapped in a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessorexception.html">PostProcessorException</a>.</p>
+    </p>
+  </div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div>
+    <h3>
+      Record fields
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Record Field
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '312', 312)" onmouseover="showTip(event, '312', 312)">
+                <p>
+                  <a id="Grammar">
+                    <a href="#Grammar">
+                      <code>Grammar</code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="312">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code>Grammar</code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Field type: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a>,&#32;<span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-builderror.html">BuildError</a>&#32;list</span></span>&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Field type: 
+                </span>
+                <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a>,&#32;<span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-builderror.html">BuildError</a>&#32;list</span></span>&gt;</span></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '313', 313)" onmouseover="showTip(event, '313', 313)">
+                <p>
+                  <a id="PostProcessor">
+                    <a href="#PostProcessor">
+                      <code>PostProcessor</code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="313">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code>PostProcessor</code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Field type: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Field type: 
+                </span>
+                <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TResult&gt;</span></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '314', 314)" onmouseover="showTip(event, '314', 314)">
+                <p>
+                  <a id="TokenizerFactory">
+                    <a href="#TokenizerFactory">
+                      <code>TokenizerFactory</code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="314">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code>TokenizerFactory</code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Field type: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizerfactory.html">TokenizerFactory</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Field type: 
+                </span>
+                <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizerfactory.html">TokenizerFactory</a></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div></div>
+  <div></div>
+  <div>
+    <h3>
+      Instance members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Instance member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '315', 315)" onmouseover="showTip(event, '315', 315)">
+                <p>
+                  <a id="Cast">
+                    <a href="#Cast">
+                      <code><span>this.Cast</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="315">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.Cast</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Cast``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Cast\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the runtime Farkle's returning type to
+ <a href="https://learn.microsoft.com/dotnet/api/object">Object</a>, without changing its post-processsor.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '316', 316)" onmouseover="showTip(event, '316', 316)">
+                <p>
+                  <a id="ChangePostProcessor">
+                    <a href="#ChangePostProcessor">
+                      <code><span>this.ChangePostProcessor</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="316">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.ChangePostProcessor</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        pp
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TNewResult&gt;</span></code>
+                       - 
+                      The new post-processor.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TNewResult&gt;</span></code>
+                  </span>
+                  A new runtime Farkle with ite post-
+ processor changed to <span class="fsdocs-param-name">pp</span>.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.RuntimeFarkle`1.ChangePostProcessor``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.ChangePostProcessor``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the <a href="https://learn.microsoft.com/dotnet/api/postprocessor">PostProcessor</a> of this runtime Farkle.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    pp
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TNewResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The new post-processor.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TNewResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    A new runtime Farkle with ite post-
+ processor changed to <span class="fsdocs-param-name">pp</span>.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '317', 317)" onmouseover="showTip(event, '317', 317)">
+                <p>
+                  <a id="ChangeTokenizer">
+                    <a href="#ChangeTokenizer">
+                      <code><span>this.ChangeTokenizer</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="317">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.ChangeTokenizer</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  A new runtime Farkle that will parse text with
+ tokenizers of type <typeparamref name="TTokenizer" />.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.RuntimeFarkle`1.ChangeTokenizer``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.ChangeTokenizer``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizer.html">Tokenizer</a> type this runtime Farkle will use.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                A new tokenizer will be created with each parse operation.
+              </p>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    A new runtime Farkle that will parse text with
+ tokenizers of type <typeparamref name="TTokenizer" />.
+                  </p>
+                </dd>
+              </dl>
+              <table class="fsdocs-exception-list">
+                <tr>
+                  <td>
+                    <a href="https://learn.microsoft.com/dotnet/api/missingmethodesception">
+                      MissingMethodEsception
+                    </a>
+                  </td>
+                  <td>
+                    <typeparamref name="TTokenizer" />
+ does not have a public constructor that accepts a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a>.
+                  </td>
+                </tr>
+              </table>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '318', 318)" onmouseover="showTip(event, '318', 318)">
+                <p>
+                  <a id="ChangeTokenizer">
+                    <a href="#ChangeTokenizer">
+                      <code><span>this.ChangeTokenizer</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="318">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.ChangeTokenizer</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        tokenizerFactory
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizerfactory.html">TokenizerFactory</a></code>
+                       - 
+                      The new tokenizer factory
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  A new runtime Farkle that will parse text with the tokenizer
+ <span class="fsdocs-param-name">tokenizerFactory</span> will create.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.ChangeTokenizer``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.ChangeTokenizer\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizerfactory.html">TokenizerFactory</a> of this runtime Farkle.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                A new tokenizer will be created with each parse operation.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    tokenizerFactory
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-parser-tokenizerfactory.html">TokenizerFactory</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The new tokenizer factory
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    A new runtime Farkle that will parse text with the tokenizer
+ <span class="fsdocs-param-name">tokenizerFactory</span> will create.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '319', 319)" onmouseover="showTip(event, '319', 319)">
+                <p>
+                  <a id="GetBuildErrorMessage">
+                    <a href="#GetBuildErrorMessage">
+                      <code><span>this.GetBuildErrorMessage</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="319">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.GetBuildErrorMessage</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>string</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.GetBuildErrorMessage``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.GetBuildErrorMessage\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    
+ Returns a user-friendly error message that
+ describes what had gone wrong while building,
+ or an empty string if building had been successful.
+
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '320', 320)" onmouseover="showTip(event, '320', 320)">
+                <p>
+                  <a id="GetBuildErrors">
+                    <a href="#GetBuildErrors">
+                      <code><span>this.GetBuildErrors</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="320">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.GetBuildErrors</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-builderror.html">BuildError</a>&#32;list</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.GetBuildErrors``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.GetBuildErrors\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    
+ Returns a list of `BuildError` objects that
+ describe what had gone wrong while building, or returns
+ an empty list if building had been successful.
+
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-builderror.html">BuildError</a>&#32;list</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '321', 321)" onmouseover="showTip(event, '321', 321)">
+                <p>
+                  <a id="GetGrammar">
+                    <a href="#GetGrammar">
+                      <code><span>this.GetGrammar</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="321">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.GetGrammar</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.GetGrammar``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.GetGrammar\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Gets the <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a>
+ behind the <a href="https://learn.microsoft.com/dotnet/api/runtimefarkle{tresult}">RuntimeFarkle{TResult}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+              <table class="fsdocs-exception-list">
+                <tr>
+                  <td>
+                    <a href="https://learn.microsoft.com/dotnet/api/invalidoperationexception">
+                      InvalidOperationException
+                    </a>
+                  </td>
+                  <td>
+                    Building the grammar
+ had failed. The exception's message contains further details.
+                  </td>
+                </tr>
+              </table>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '322', 322)" onmouseover="showTip(event, '322', 322)">
+                <p>
+                  <a id="IsBuildSuccessful">
+                    <a href="#IsBuildSuccessful">
+                      <code><span>this.IsBuildSuccessful</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="322">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.IsBuildSuccessful</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>bool</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:P:Farkle.RuntimeFarkle`1.IsBuildSuccessful``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'P:Farkle.RuntimeFarkle`1.IsBuildSuccessful\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    
+ Returns whether building was successful.
+ If loaded from an EGT file, it will always return true.
+
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '323', 323)" onmouseover="showTip(event, '323', 323)">
+                <p>
+                  <a id="Parse">
+                    <a href="#Parse">
+                      <code><span>this.Parse</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="323">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.Parse</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        textReader
+                      </b>
+                      :
+                      <code><a href="https://learn.microsoft.com/dotnet/api/system.io.textreader">TextReader</a></code>
+                       - 
+                      The text reader to parse.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                  </span>
+                  An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Parse``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Parse\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Parses and post-processes a <a href="https://learn.microsoft.com/dotnet/api/system.io.textreader">TextReader</a>.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                The text reader's content will be lazily read.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    textReader
+                  </span>
+                  :
+                  <code><a href="https://learn.microsoft.com/dotnet/api/system.io.textreader">TextReader</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The text reader to parse.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '324', 324)" onmouseover="showTip(event, '324', 324)">
+                <p>
+                  <a id="Parse">
+                    <a href="#Parse">
+                      <code><span>this.Parse</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="324">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.Parse</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        inputString
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The string to parse.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                  </span>
+                  An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Parse``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Parse\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Parses and post-processes a string.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    inputString
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The string to parse.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '325', 325)" onmouseover="showTip(event, '325', 325)">
+                <p>
+                  <a id="Parse">
+                    <a href="#Parse">
+                      <code><span>this.Parse</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="325">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.Parse</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        input
+                      </b>
+                      :
+                      <code><span><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1">ReadOnlyMemory</a>&lt;char&gt;</span></code>
+                       - 
+                      The read-only memory to parse.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                  </span>
+                  An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Parse``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Parse\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Parses and post-processes a
+ <a href="https://learn.microsoft.com/dotnet/api/readonlymemory{char}">ReadOnlyMemory{Char}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    input
+                  </span>
+                  :
+                  <code><span><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1">ReadOnlyMemory</a>&lt;char&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The read-only memory to parse.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '326', 326)" onmouseover="showTip(event, '326', 326)">
+                <p>
+                  <a id="Parse">
+                    <a href="#Parse">
+                      <code><span>this.Parse</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="326">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.Parse</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        input
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-io-charstream.html">CharStream</a></code>
+                       - 
+                      The character stream to parse.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                  </span>
+                  An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Parse``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Parse\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Parses and post-processes a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-io-charstream.html">CharStream</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    input
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-io-charstream.html">CharStream</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The character stream to parse.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '327', 327)" onmouseover="showTip(event, '327', 327)">
+                <p>
+                  <a id="ParseFile">
+                    <a href="#ParseFile">
+                      <code><span>this.ParseFile</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="327">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.ParseFile</span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        path
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The path of the file to parse.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                  </span>
+                  An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.ParseFile``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.ParseFile\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Parses and post-processes a file.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                The file's content will be lazily read.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    path
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The path of the file to parse.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://fsharp.github.io/fsharp-core-docs/reference/fsharp-core-fsharpresult-2">Result</a>&lt;<span>'TResult,&#32;<a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-farkleerror.html">FarkleError</a></span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs">
+                  <p>
+                    An F# result type containing either the
+ post-processed return type, or a type describing
+ what did wrong and where.
+                  </p>
+                </dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '328', 328)" onmouseover="showTip(event, '328', 328)">
+                <p>
+                  <a id="SyntaxCheck">
+                    <a href="#SyntaxCheck">
+                      <code><span>this.SyntaxCheck</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="328">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.SyntaxCheck</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.SyntaxCheck``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.SyntaxCheck\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the <a href="https://learn.microsoft.com/dotnet/api/postprocessor">PostProcessor</a> of this runtime Farkle to
+ a dummy one that is useful for syntax-checking instead of parsing.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>
+      Static members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Static member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '329', 329)" onmouseover="showTip(event, '329', 329)">
+                <p>
+                  <a id="Create">
+                    <a href="#Create">
+                      <code><span>RuntimeFarkle.Create<span><span>(<span>grammar,&#32;postProcessor</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="329">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>RuntimeFarkle.Create<span><span>(<span>grammar,&#32;postProcessor</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        grammar
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a></code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        postProcessor
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TResult&gt;</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('``cref:M:Farkle.RuntimeFarkle`1.Create``')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.RuntimeFarkle`1.Create\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a <a href="https://learn.microsoft.com/dotnet/api/runtimefarkle{tresult}">RuntimeFarkle{TResult}</a> from the given
+ <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a> and <a href="https://learn.microsoft.com/dotnet/api/postprocessor{tresult}">PostProcessor{TResult}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    grammar
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-grammar-grammar.html">Grammar</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    postProcessor
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-postprocessor-1.html">PostProcessor</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+            
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

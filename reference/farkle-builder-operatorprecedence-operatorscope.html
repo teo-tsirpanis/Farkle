@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OperatorScope (Farkle)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - OperatorScope (Farkle)">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <div>
+  <h2>
+    OperatorScope Type
+  </h2>
+  <dl class="fsdocs-metadata">
+    <dt>
+      Namespace: 
+      <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence.html">
+        Farkle.Builder.OperatorPrecedence
+      </a>
+    </dt>
+    <dt>
+      Assembly: Farkle.dll
+    </dt>
+    <dt>
+      Base Type: 
+      <code>obj</code>
+    </dt>
+  </dl>
+  <div class="fsdocs-xmldoc">
+    <div>
+      <p class="fsdocs-summary">
+        A group of associativity groups sorted by precedence.
+      </p>
+    </div>
+    <p class="fsdocs-remarks">
+      <p class='fsdocs-para'>A symbol in an operator scope has higher precedence than
+ another one if it appears in a group below the former symbol's group.</p><p class='fsdocs-para'>If the same symbol is specified in multiple associativity groups,
+ it will have the precedence of the earliest group in which it appeared.</p><p class='fsdocs-para'>Symbols from multiple operator scopes cannot be compared for precedence.</p><p class='fsdocs-para'>A symbol can belong in only one operator scope; if it belongs in more,
+ the operator scope to which the symbol will be assigned is undefined.</p><p class='fsdocs-para'>Operator scopes are used to automatically resolve Shift-Reduce conflicts.
+ Resolving Reduce-Reduce conflicts can also happen but it must be explicitly
+ opt-in by passing a boolean argument of  in the first
+ argument of the appropriate operator scope's constructor overloads.</p>
+    </p>
+  </div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div>
+    <h3>
+      Constructors
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Constructor
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '494', 494)" onmouseover="showTip(event, '494', 494)">
+                <p>
+                  <a id="``.ctor``">
+                    <a href="#``.ctor``">
+                      <code><span>OperatorScope<span><span>(<span>assocGroups</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="494">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>OperatorScope<span><span>(<span>assocGroups</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        assocGroups
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>[]</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-params">
+              <dt class="fsdocs-param">
+                <span class="fsdocs-param-name">
+                  assocGroups
+                </span>
+                :
+                <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>[]</span></code>
+              </dt>
+              <dd class="fsdocs-param-docs"></dd>
+            </dl>
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Returns: 
+                </span>
+                <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '495', 495)" onmouseover="showTip(event, '495', 495)">
+                <p>
+                  <a id="``.ctor``">
+                    <a href="#``.ctor``">
+                      <code><span>OperatorScope<span><span>(<span>resolveReduceReduceConflicts,&#32;assocGroups</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="495">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>OperatorScope<span><span>(<span>resolveReduceReduceConflicts,&#32;assocGroups</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        resolveReduceReduceConflicts
+                      </b>
+                      :
+                      <code>bool</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        assocGroups
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>[]</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-params">
+              <dt class="fsdocs-param">
+                <span class="fsdocs-param-name">
+                  resolveReduceReduceConflicts
+                </span>
+                :
+                <code>bool</code>
+              </dt>
+              <dd class="fsdocs-param-docs"></dd>
+              <dt class="fsdocs-param">
+                <span class="fsdocs-param-name">
+                  assocGroups
+                </span>
+                :
+                <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>[]</span></code>
+              </dt>
+              <dd class="fsdocs-param-docs"></dd>
+            </dl>
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Returns: 
+                </span>
+                <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '496', 496)" onmouseover="showTip(event, '496', 496)">
+                <p>
+                  <a id="``.ctor``">
+                    <a href="#``.ctor``">
+                      <code><span>OperatorScope<span><span>(<span>resolvesReduceReduceConflicts,&#32;assocGroups</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="496">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>OperatorScope<span><span>(<span>resolvesReduceReduceConflicts,&#32;assocGroups</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        resolvesReduceReduceConflicts
+                      </b>
+                      :
+                      <code>bool</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        assocGroups
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>&#32;seq</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <dl class="fsdocs-params">
+              <dt class="fsdocs-param">
+                <span class="fsdocs-param-name">
+                  resolvesReduceReduceConflicts
+                </span>
+                :
+                <code>bool</code>
+              </dt>
+              <dd class="fsdocs-param-docs"></dd>
+              <dt class="fsdocs-param">
+                <span class="fsdocs-param-name">
+                  assocGroups
+                </span>
+                :
+                <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-associativitygroup.html">AssociativityGroup</a>&#32;seq</span></code>
+              </dt>
+              <dd class="fsdocs-param-docs"></dd>
+            </dl>
+            <dl class="fsdocs-returns">
+              <dt>
+                <span class="fsdocs-return-name">
+                  Returns: 
+                </span>
+                <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+              </dt>
+              <dd class="fsdocs-return-docs"></dd>
+            </dl>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>
+      Instance members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Instance member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '497', 497)" onmouseover="showTip(event, '497', 497)">
+                <p>
+                  <a id="ResolvesReduceReduceConflict">
+                    <a href="#ResolvesReduceReduceConflict">
+                      <code><span>this.ResolvesReduceReduceConflict</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="497">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>this.ResolvesReduceReduceConflict</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>bool</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:P:Farkle.Builder.OperatorPrecedence.OperatorScope.ResolvesReduceReduceConflict`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'P:Farkle.Builder.OperatorPrecedence.OperatorScope.ResolvesReduceReduceConflict\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    
+ Whether Farkle uses this operator scope to automatically resolve
+ Reduce-Reduce conflicts. Because the impact of this feature is
+ unknown, it is set to false by default. It can be changed by
+ passing true to a constructor overload that accepts a boolean.
+
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>
+      Static members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Static member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '498', 498)" onmouseover="showTip(event, '498', 498)">
+                <p>
+                  <a id="Empty">
+                    <a href="#Empty">
+                      <code><span>OperatorScope.Empty</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="498">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>OperatorScope.Empty</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:P:Farkle.Builder.OperatorPrecedence.OperatorScope.Empty`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'P:Farkle.Builder.OperatorPrecedence.OperatorScope.Empty\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    
+ An operator scope that does not contain any associativity groups.
+
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+            
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

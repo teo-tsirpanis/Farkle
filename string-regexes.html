@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Farkle's string regexes
+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - Farkle's string regexes
+">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <h1><a name="Farkle-s-string-regexes" class="anchor" href="#Farkle-s-string-regexes">Farkle's string regexes</a></h1>
+<p>In Farkle, terminals are defined by regular expressions or <em>regexes</em>. Defining a non-trivial regex used to take several lines of code like this example of a number with an optional sign at the beginning:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="id">Farkle</span><span class="pn">.</span><span class="id">Builder</span><span class="pn">.</span><span class="id">Regex</span>
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="id">number</span> <span class="o">=</span> <span class="id">concat</span> <span class="pn">[</span>
+    <span class="id">chars</span> <span class="s">&quot;+-&quot;</span> <span class="o">|&gt;</span> <span class="id">optional</span>
+    <span class="id">plus</span> <span class="id">Number</span>
+<span class="pn">]</span>
+</code></pre>
+<p>Not anymore. Starting with Farkle 6, a regex can be defined much more simply and intuitively with a string. Here is the previous example, using a string regex:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="id">Farkle</span><span class="pn">.</span><span class="id">Builder</span>
+
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 2)" onmouseover="showTip(event, 'fs1', 2)" class="id">number</span> <span class="o">=</span> <span class="id">Regex</span><span class="pn">.</span><span class="id">regexString</span> <span class="s">&quot;[+-]?\d+&quot;</span>
+</code></pre>
+<p>And in C#:</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp"><span class="k">using</span> Farkle.Builder;
+
+<span class="k">var</span> number <span class="o">=</span> Regex.FromRegexString(<span class="s">"[+-]?\\d+"</span>);
+</code></pre></td></tr></table>
+<p>These regexes are full-blown <code>Regex</code>-typed objects. They are composable, reusable and can be used anywhere instead of constructed regexes. Despite their similarity however, the language of regex strings is not the same with the language of popular regex libraries like PCRE or .NET's own <code>System.Text.RegularExpressions.Regex</code>. In this guide we will take a look at what is supported in regex strings, what isn't and what is different. So, are you ready? Let's do this!</p>
+<h2><a name="Supported-string-regex-constructs" class="anchor" href="#Supported-string-regex-constructs">Supported string regex constructs</a></h2>
+<h3><a name="Character-classes" class="anchor" href="#Character-classes">Character classes</a></h3>
+<p>In Farkle's string regexes, you can define character classes mostly in the same way with PCRE regexes Here's what is supported:</p>
+<ul>
+<li>You can define a regex that recognizes only one character -say <code>A</code>- surprisingly simply, by typing <code>A</code>.</li>
+<li>You can define a regex that recognizes only some characters -say <code>A</code>, <code>D</code>, <code>O</code> and <code>U</code>-, by typing <code>[ADOU]</code>. If you want your regex to match any character except of the four that were mentioned before, you can do that by typing <code>[^ADOU]</code>.</li>
+<li>You can define a regex that recognizes all characters in a range -say between <code>A</code> and <code>Z</code>-, by typing <code>[A-Z]</code>. Similarly, you can match all characters that don't lie between <code>A</code> and <code>Z</code> by typing <code>[^A-Z]</code>.</li>
+<li>Since Farkle 6.2.0, you can combine the two previous rules and recognize multiple character sets and ranges on the same regex construct. For example you can match all valid Base64 characters (excluding the padding) by typing <code>[A-Za-z+/]</code> and you can match all characters except of those that appear in valid Base64 by typing <code>[^A-Za-z+/]</code>.</li>
+<li>You can define a regex that recognizes all characters in a predefined set -say <code>Katakana</code>- by typing <code>\p{Katakana}</code>. The predefined sets' names are the same in the <a href="reference/farkle-builder-predefinedsets.html"><code>Farkle.Builder.PredefinedSets</code> module</a>. Similarly you can match all characters except of Katakana by typing <code>\P{Katakana}</code>. Since Farkle 6.4.0, you can also use the prefedefined set's property name in addition to the GOLD Parser name. For example, you can match the <code>All Letters</code> predefined set by typing both <code>\p{All Letters}</code> and <code>\p{AllLetters}</code>.</li>
+<li>Decimal digits can be matched by typing <code>\d</code>. All characters except of decimal digits can be matched by typing <code>\D</code>.</li>
+<li>Whitespace can be matched by typing <code>\s</code>. All characters except of whitespace can be matched by typing <code>\S</code>. Carriage return, line feed, space and horizontal tab are considered whitespace.</li>
+<li>You can match any other character by typing <code>.</code>. Just be careful of <a href="#The-dot-regex">the caveats</a>.</li>
+<li>You can match a literal sequence of characters by enclosing them into single quotes. For example <code>'[ADOU].'</code> will literally match the seven characters inside the single quotes without treating them specially. A single quote can be escaped by typing <code>''</code>.</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> Prior to Farkle 6.2.0, single quotes could be escaped with <code>\'</code>. After that version the regex parser was improved but some constructs like that are no longer possible to maintain unambiguity. <code>\</code> is not anymore specially treated in literal strings.</p>
+</blockquote>
+<ul>
+<li>In character sets and ranges you have to use <code>\</code> to escape the following characters: <code>-\]^</code>. For example, to match either left or the right brackets you have to type <code>[\[\]]</code>.</li>
+<li>The backslash character itself can be escaped with <code>\\</code>.</li>
+</ul>
+<h3><a name="Quantifiers" class="anchor" href="#Quantifiers">Quantifiers</a></h3>
+<p>As with PCRE regexes, quantifiers like the <code>*</code>, <code>+</code> or <code>?</code> mean "zero or more", "one or more", and "zero or one" respectively. Less known quantifiers like <code>{m,n}</code>, <code>{m,}</code> and <code>{m}</code> mean "between <code>m</code> and <code>n</code> times", "at least <code>m</code> times" and "exactly <code>m</code> times" respectively.</p>
+<p>You can also stack quantifiers; <code>\d{4}?</code> will match either four decimal digits or none.</p>
+<blockquote>
+<p><strong>Note:</strong> Prior to Farkle 6.2.0, the regex above did not work due to a bug; you had to write <code>(\d{4})?</code>.</p>
+</blockquote>
+<h3><a name="Precedence-and-grouping" class="anchor" href="#Precedence-and-grouping">Precedence and grouping</a></h3>
+<p>The regex disjunction operator <code>|</code> takes precedence over regex concatenation, which means that <code>foo|bar</code> matches either <code>foo</code> or <code>bar</code>, not <code>fo</code>, either <code>o</code> or <code>b</code>, and then <code>ar</code>. You can specify a custom operator precedence with parentheses. For example, <code>fo(o|u)</code> matches only either <code>foo</code> or <code>fou</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> Parentheses exist only for defining operator precedence. Capturing groups is not supported.</p>
+</blockquote>
+<h2><a name="Caveats" class="anchor" href="#Caveats">Caveats</a></h2>
+<h3><a name="The-dot-regex" class="anchor" href="#The-dot-regex">The dot regex</a></h3>
+<p>When I was describing the <code>.</code> regex, I intentionally told it matches any <em>other</em> character and not <em>any</em> character. In other words, <strong>the <code>.</code> regex is matched only if no other regex can be matched</strong>. The difference is subtle but can have a difference in certain scenarios.</p>
+<p>Let's take a look at a simple regex for a string enclosed in double quotes that also supports escaping them: <code>"(.|\")*"</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> You will need additional escaping to write the above regex in code.</p>
+</blockquote>
+<p>The dot in the above regex will be never matched to a double quote because it also can be matched to the double quote at the end which has a higher priority. In essence, the regex above is the equivalent to <code>"([^"]|\")*"</code>.</p>
+<p>Now, what if we required the string to have at least one character? The regex would have turned into <code>"(.|\")+"</code>.</p>
+<p>But the regex above would match strings like <code>""foo"</code>. The reason to this is actually surprisingly simple. Generally <code>x+</code> is equivalent to <code>xx*</code>, making the regex above equivalent to <code>"(.|\")(.|\")*"</code>. In <code>""foo"</code>, the first double quote is matched to the first double quote in the regex, the second one is matched to the regex's first dot, and the third is matched to the regex's final double quote. So if you want a regex that matches strings with at least one character you have to explicitly write <code>"([^"]|\")+"</code>.</p>
+<h3><a name="Whitespace" class="anchor" href="#Whitespace">Whitespace</a></h3>
+<p>In Farkle's string regexes, you can have arbitrary whitespace everywhere except of literal strings and character sets and ranges. This means that <code>f o o ( bar ) ?</code> is equivalent to <code>foo(bar)?</code>. If you want to match a literal space you can escape the space (<code>' '</code>) or use a character set (<code>[ ]</code>).</p>
+<p>This deliberate deviation from the typical regex syntax was made due to Farkle's philosophy that whitespace is automatically handled by default, and allows you to write big regexes in a more clean and less compact way.</p>
+<h3><a name="Escaping" class="anchor" href="#Escaping">Escaping</a></h3>
+<p>When using <code>\</code> in regexes, be careful with the string escaping performed by programming languages themselves. To match a decimal digit, F# allows you to write an unrecognized escape sequence like <code>"\d"</code>, but C# doesn't, failing with an error and you have to use a verbatim string like <code>@"\d"</code>.</p>
+<p>In a more complicated example, if you want to match the literal sequence of characters <code>\d</code>, the regex is either <code>'\d'</code> or <code>\\d</code>, which you would write as either <code>"'\\d'"</code> or <code>"\\\\d"</code>, or as either <code>@"'\d'"</code> or <code>@"\\d"</code> with a verbatim string.</p>
+<p>Similarly, writing <code>"\n"</code> somewhere in a regex will be ignored because it is whitespace, as we saw earlier. If you want to match the literal sequence of characters <code>\n</code>, you would follow the example we saw in the previous paragraph. If you want to match an actual line feed character, you would either write it with a literal string as <code>"'\n'"</code>, or with a character set as <code>"[\n]"</code>.</p>
+<h3><a name="Unicode-categories" class="anchor" href="#Unicode-categories">Unicode categories</a></h3>
+<p>Matching characters that belong in a Unicode category is not yet possible. Support might be added in a future version of Farkle if there is demand for it.</p>
+<h2><a name="How-do-they-work" class="anchor" href="#How-do-they-work">How do they work</a></h2>
+<p>Finally, let's take a look at how string regexes work. It's actually surprisingly simple. These strings are parsed and converted to constructed regexes using Farkle itself. That parsing happens when you build a designtime Farkle containing a string regex. If a syntax error occurs in a regex string, building the designtime Farkle will fail.</p>
+<p>You can parse strings into regular expressions yourself by using the objects in the <a href="reference/farkle-builder-regexgrammar.html"><code>Farkle.Builder.RegexGrammar</code> module</a>.</p>
+<hr />
+<p>So I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try and maybe you feel especially quantified today and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!</p>
+
+            <div class="fsdocs-tip" id="fs1">val number: obj</div>
+
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

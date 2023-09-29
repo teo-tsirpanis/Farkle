@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>DesigntimeFarkleExtensions (Farkle)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - DesigntimeFarkleExtensions (Farkle)">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <div>
+  <h2>
+    DesigntimeFarkleExtensions Type
+  </h2>
+  <dl class="fsdocs-metadata">
+    <dt>
+      Namespace: 
+      <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder.html">
+        Farkle.Builder
+      </a>
+    </dt>
+    <dt>
+      Assembly: Farkle.dll
+    </dt>
+    <dt>
+      Base Type: 
+      <code>obj</code>
+    </dt>
+  </dl>
+  <div class="fsdocs-xmldoc">
+    <div>
+      <p class="fsdocs-summary">
+        Extension methods for <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>s.
+      </p>
+    </div>
+    <p class="fsdocs-remarks">
+      Most of these methods must be applied to the topmost designtime Farkle
+ that will eventually be built. Use <a href="https://learn.microsoft.com/dotnet/api/cast">Cast</a> first to use these functions
+ on untyped designtime Farkles.
+    </p>
+  </div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div>
+    <h3>
+      Static members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Static member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '348', 348)" onmouseover="showTip(event, '348', 348)">
+                <p>
+                  <a id="AddBlockComment">
+                    <a href="#AddBlockComment">
+                      <code><span>DesigntimeFarkleExtensions.AddBlockComment<span><span>(<span>df,&#32;commentStart,&#32;commentEnd</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="348">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.AddBlockComment<span><span>(<span>df,&#32;commentStart,&#32;commentEnd</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        commentStart
+                      </b>
+                      :
+                      <code>string</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        commentEnd
+                      </b>
+                      :
+                      <code>string</code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.AddBlockComment``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.AddBlockComment``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Adds a block comment to the given
+ <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    commentStart
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    commentEnd
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '349', 349)" onmouseover="showTip(event, '349', 349)">
+                <p>
+                  <a id="AddLineComment">
+                    <a href="#AddLineComment">
+                      <code><span>DesigntimeFarkleExtensions.AddLineComment<span><span>(<span>df,&#32;commentStart</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="349">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.AddLineComment<span><span>(<span>df,&#32;commentStart</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        commentStart
+                      </b>
+                      :
+                      <code>string</code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.AddLineComment``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.AddLineComment``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Adds a line comment to the given
+ <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    commentStart
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '350', 350)" onmouseover="showTip(event, '350', 350)">
+                <p>
+                  <a id="AddNoiseSymbol">
+                    <a href="#AddNoiseSymbol">
+                      <code><span>DesigntimeFarkleExtensions.AddNoiseSymbol<span><span>(<span>df,&#32;name,&#32;regex</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="350">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.AddNoiseSymbol<span><span>(<span>df,&#32;name,&#32;regex</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        name
+                      </b>
+                      :
+                      <code>string</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        regex
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.AddNoiseSymbol``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.AddNoiseSymbol``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Adds a symbol specified by the given <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a>
+ that will be ignored in input text, to the given <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    name
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    regex
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '351', 351)" onmouseover="showTip(event, '351', 351)">
+                <p>
+                  <a id="AutoWhitespace">
+                    <a href="#AutoWhitespace">
+                      <code><span>DesigntimeFarkleExtensions.AutoWhitespace<span><span>(<span>df,&#32;x</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="351">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.AutoWhitespace<span><span>(<span>df,&#32;x</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        x
+                      </b>
+                      :
+                      <code>bool</code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.AutoWhitespace``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.AutoWhitespace``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Controls whether the given <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>
+ would automatically ignore whitespace in input text.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    x
+                  </span>
+                  :
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '352', 352)" onmouseover="showTip(event, '352', 352)">
+                <p>
+                  <a id="Build">
+                    <a href="#Build">
+                      <code><span>DesigntimeFarkleExtensions.Build<span><span>(<span>df,&#32;?ct,&#32;?options</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="352">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Build<span><span>(<span>df,&#32;?ct,&#32;?options</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                       - 
+                      The designtime Farkle to build.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?ct
+                      </b>
+                      :
+                      <code><a href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></code>
+                       - 
+                      Used to cancel the operation.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?options
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-buildoptions.html">BuildOptions</a></code>
+                       - 
+                      Additional options to configure the process.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Build``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Build``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Builds a <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>
+ into a <a href="https://learn.microsoft.com/dotnet/api/runtimefarkle{tresult}">RuntimeFarkle{TResult}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The designtime Farkle to build.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?ct
+                  </span>
+                  :
+                  <code><a href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Used to cancel the operation.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?options
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-buildoptions.html">BuildOptions</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Additional options to configure the process.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+              <table class="fsdocs-exception-list">
+                <tr>
+                  <td>
+                    <a href="https://learn.microsoft.com/dotnet/api/operationcanceledexception">
+                      OperationCanceledException
+                    </a>
+                  </td>
+                  <td>
+                    <span class="fsdocs-param-name">ct</span> was triggered.
+                  </td>
+                </tr>
+              </table>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '353', 353)" onmouseover="showTip(event, '353', 353)">
+                <p>
+                  <a id="BuildUntyped">
+                    <a href="#BuildUntyped">
+                      <code><span>DesigntimeFarkleExtensions.BuildUntyped<span><span>(<span>df,&#32;?ct,&#32;?options</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="353">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.BuildUntyped<span><span>(<span>df,&#32;?ct,&#32;?options</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                       - 
+                      The designtime Farkle to build.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?ct
+                      </b>
+                      :
+                      <code><a href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></code>
+                       - 
+                      Used to cancel the operation.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?options
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-buildoptions.html">BuildOptions</a></code>
+                       - 
+                      Additional options to configure the process.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:M:Farkle.Builder.DesigntimeFarkleExtensions.BuildUntyped`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.BuildUntyped\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Builds a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a> into a syntax-checking
+ <a href="https://learn.microsoft.com/dotnet/api/runtimefarkle{system.object}">Object}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The designtime Farkle to build.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?ct
+                  </span>
+                  :
+                  <code><a href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Used to cancel the operation.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?options
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-buildoptions.html">BuildOptions</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Additional options to configure the process.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-runtimefarkle-1.html">RuntimeFarkle</a>&lt;obj&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+              <table class="fsdocs-exception-list">
+                <tr>
+                  <td>
+                    <a href="https://learn.microsoft.com/dotnet/api/operationcanceledexception">
+                      OperationCanceledException
+                    </a>
+                  </td>
+                  <td>
+                    <span class="fsdocs-param-name">ct</span> was triggered.
+                  </td>
+                </tr>
+              </table>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '354', 354)" onmouseover="showTip(event, '354', 354)">
+                <p>
+                  <a id="CaseSensitive">
+                    <a href="#CaseSensitive">
+                      <code><span>DesigntimeFarkleExtensions.CaseSensitive<span><span>(<span>df,&#32;?x</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="354">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.CaseSensitive<span><span>(<span>df,&#32;?x</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?x
+                      </b>
+                      :
+                      <code>bool</code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.CaseSensitive``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.CaseSensitive``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Controls whether the given <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>
+ is case sensitive.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?x
+                  </span>
+                  :
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '355', 355)" onmouseover="showTip(event, '355', 355)">
+                <p>
+                  <a id="Cast">
+                    <a href="#Cast">
+                      <code><span>DesigntimeFarkleExtensions.Cast<span><span>(<span>df</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="355">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Cast<span><span>(<span>df</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;obj&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Cast`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Cast\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Casts a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>
+ into a <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{object}">DesigntimeFarkle{Object}</a>
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                The object <span class="fsdocs-param-name">df</span> will return is undefined.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;obj&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '356', 356)" onmouseover="showTip(event, '356', 356)">
+                <p>
+                  <a id="Many">
+                    <a href="#Many">
+                      <code><span>DesigntimeFarkleExtensions.Many<span><span>(<span>df,&#32;?atLeastOne</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="356">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Many<span><span>(<span>df,&#32;?atLeastOne</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                       - 
+                      The designtime Farkle to recognize many times.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?atLeastOne
+                      </b>
+                      :
+                      <code>bool</code>
+                       - 
+                      Whether at least one occurrence
+ is required. Defaults to false.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TCollection&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Many``2```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Many``2\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a new <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tcollection}">DesigntimeFarkle{TCollection}</a>
+ that recognizes many occurrences of the given
+ <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The designtime Farkle to recognize many times.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?atLeastOne
+                  </span>
+                  :
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Whether at least one occurrence
+ is required. Defaults to false.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TCollection&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '357', 357)" onmouseover="showTip(event, '357', 357)">
+                <p>
+                  <a id="Nullable">
+                    <a href="#Nullable">
+                      <code><span>DesigntimeFarkleExtensions.Nullable<span><span>(<span>df</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="357">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Nullable<span><span>(<span>df</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;<span><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1">Nullable</a>&lt;'TResult&gt;</span>&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Nullable``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Nullable``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    <a href="https://learn.microsoft.com/dotnet/api/optional">Optional</a>
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;<span><a href="https://learn.microsoft.com/dotnet/api/system.nullable-1">Nullable</a>&lt;'TResult&gt;</span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '358', 358)" onmouseover="showTip(event, '358', 358)">
+                <p>
+                  <a id="Optional">
+                    <a href="#Optional">
+                      <code><span>DesigntimeFarkleExtensions.Optional<span><span>(<span>df</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="358">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Optional<span><span>(<span>df</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Optional``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Optional``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a new <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>
+ that might recognize the given one, or not. In the latter
+ case, it returns the default value of the result type.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '359', 359)" onmouseover="showTip(event, '359', 359)">
+                <p>
+                  <a id="Rename">
+                    <a href="#Rename">
+                      <code><span>DesigntimeFarkleExtensions.Rename<span><span>(<span>df,&#32;name</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="359">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Rename<span><span>(<span>df,&#32;name</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        name
+                      </b>
+                      :
+                      <code>string</code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Rename``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Rename``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Changes the name of a <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                Useful for diagnostic purposes.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    name
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '360', 360)" onmouseover="showTip(event, '360', 360)">
+                <p>
+                  <a id="Select">
+                    <a href="#Select">
+                      <code><span>DesigntimeFarkleExtensions.Select<span><span>(<span>df,&#32;f</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="360">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.Select<span><span>(<span>df,&#32;f</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        f
+                      </b>
+                      :
+                      <code><span><a href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<span>'TResult,&#32;'TConverted</span>&gt;</span></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TConverted&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.Select``2```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.Select``2\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a new <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>
+ that transforms the output of the given one with the given delegate.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    f
+                  </span>
+                  :
+                  <code><span><a href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<span>'TResult,&#32;'TConverted</span>&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TConverted&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '361', 361)" onmouseover="showTip(event, '361', 361)">
+                <p>
+                  <a id="SeparatedBy">
+                    <a href="#SeparatedBy">
+                      <code><span>DesigntimeFarkleExtensions.SeparatedBy<span><span>(<span>df,&#32;separator,&#32;?atLeastOne</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="361">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.SeparatedBy<span><span>(<span>df,&#32;separator,&#32;?atLeastOne</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                       - 
+                      The designtime Farkle to recognize many times.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        separator
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                       - 
+                      The designtime Farkle that
+ separates instances of <span class="fsdocs-param-name">df</span>.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        ?atLeastOne
+                      </b>
+                      :
+                      <code>bool</code>
+                       - 
+                      Whether at least one occurrence
+ is required. Defaults to false.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TCollection&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.SeparatedBy``2```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.SeparatedBy``2\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a new <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tcollection}">DesigntimeFarkle{TCollection}</a>
+ that recognizes many occurrences of the given
+ <a href="https://learn.microsoft.com/dotnet/api/designtimefarkle{tresult}">DesigntimeFarkle{TResult}</a>, separated by another
+ <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TResult&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The designtime Farkle to recognize many times.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    separator
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The designtime Farkle that
+ separates instances of <span class="fsdocs-param-name">df</span>.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    ?atLeastOne
+                  </span>
+                  :
+                  <code>bool</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    Whether at least one occurrence
+ is required. Defaults to false.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'TCollection&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '362', 362)" onmouseover="showTip(event, '362', 362)">
+                <p>
+                  <a id="WithMetadata">
+                    <a href="#WithMetadata">
+                      <code><span>DesigntimeFarkleExtensions.WithMetadata<span><span>(<span>df,&#32;metadata</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="362">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.WithMetadata<span><span>(<span>df,&#32;metadata</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        metadata
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-grammarmetadata.html">GrammarMetadata</a></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.WithMetadata``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.WithMetadata``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Sets a custom <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-grammarmetadata.html">GrammarMetadata</a>
+ object to a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    metadata
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-grammarmetadata.html">GrammarMetadata</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '363', 363)" onmouseover="showTip(event, '363', 363)">
+                <p>
+                  <a id="WithOperatorScope">
+                    <a href="#WithOperatorScope">
+                      <code><span>DesigntimeFarkleExtensions.WithOperatorScope<span><span>(<span>df,&#32;opScope</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="363">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>DesigntimeFarkleExtensions.WithOperatorScope<span><span>(<span>df,&#32;opScope</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        df
+                      </b>
+                      :
+                      <code>'T</code>
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        opScope
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code>'T</code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.DesigntimeFarkleExtensions.WithOperatorScope``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.DesigntimeFarkleExtensions.WithOperatorScope``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Sets an <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a>
+ to a <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>. Any previous ones -if exist- are discarded.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    df
+                  </span>
+                  :
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    opScope
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-operatorprecedence-operatorscope.html">OperatorScope</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs"></dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code>'T</code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+            
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

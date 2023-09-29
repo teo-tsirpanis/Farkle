@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Terminal (Farkle)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - Terminal (Farkle)">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <div>
+  <h2>
+    Terminal Type
+  </h2>
+  <dl class="fsdocs-metadata">
+    <dt>
+      Namespace: 
+      <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder.html">
+        Farkle.Builder
+      </a>
+    </dt>
+    <dt>
+      Assembly: Farkle.dll
+    </dt>
+    <dt>
+      Base Type: 
+      <code>obj</code>
+    </dt>
+  </dl>
+  <div class="fsdocs-xmldoc">
+    <div>
+      <p class="fsdocs-summary">
+        
+ A helper static class to create terminals.
+
+      </p>
+    </div>
+  </div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div>
+    <h3>
+      Static members
+    </h3>
+    <table class="table outer-list fsdocs-member-list">
+      <thead>
+        <tr>
+          <td class="fsdocs-member-list-header">
+            Static member
+          </td>
+          <td class="fsdocs-member-list-header">
+            Description
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '472', 472)" onmouseover="showTip(event, '472', 472)">
+                <p>
+                  <a id="Create">
+                    <a href="#Create">
+                      <code><span>Terminal.Create<span><span>(<span>name,&#32;regex</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="472">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>Terminal.Create<span><span>(<span>name,&#32;regex</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        name
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The terminal's name.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        regex
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                       - 
+                      The terminal's corresponding regular expression.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:M:Farkle.Builder.Terminal.Create`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.Terminal.Create\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a terminal that does not contain any significant
+ information for the parsing application.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    name
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The terminal's name.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    regex
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The terminal's corresponding regular expression.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '473', 473)" onmouseover="showTip(event, '473', 473)">
+                <p>
+                  <a id="Create">
+                    <a href="#Create">
+                      <code><span>Terminal.Create<span><span>(<span>name,&#32;fTransform,&#32;regex</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="473">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>Terminal.Create<span><span>(<span>name,&#32;fTransform,&#32;regex</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        name
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The terminal's name.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        fTransform
+                      </b>
+                      :
+                      <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-transformer-1.html">T</a>&lt;'T&gt;</span></code>
+                       - 
+                      The function that transforms
+ the terminal's position and data to <typeparamref name="T" />.
+ Must not be null.
+                    </span>
+                    <br/>
+                    <span>
+                      <b>
+                        regex
+                      </b>
+                      :
+                      <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                       - 
+                      The terminal's corresponding regular expression.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'T&gt;</span></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('```cref:M:Farkle.Builder.Terminal.Create``1```')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.Terminal.Create``1\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a terminal that contains significant
+ information of type <typeparamref name="T" />.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    name
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The terminal's name.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    fTransform
+                  </span>
+                  :
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-transformer-1.html">T</a>&lt;'T&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The function that transforms
+ the terminal's position and data to <typeparamref name="T" />.
+ Must not be null.
+                  </p>
+                </dd>
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    regex
+                  </span>
+                  :
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-regex.html">Regex</a></code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The terminal's corresponding regular expression.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><span><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle-1.html">DesigntimeFarkle</a>&lt;'T&gt;</span></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '474', 474)" onmouseover="showTip(event, '474', 474)">
+                <p>
+                  <a id="Literal">
+                    <a href="#Literal">
+                      <code><span>Terminal.Literal<span><span>(<span>str</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="474">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>Terminal.Literal<span><span>(<span>str</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        str
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The string literal this terminal will recognize.
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:M:Farkle.Builder.Terminal.Literal`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.Terminal.Literal\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a terminal that recognizes a literal string.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                It does not return anything.
+              </p>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    str
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The string literal this terminal will recognize.
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '475', 475)" onmouseover="showTip(event, '475', 475)">
+                <p>
+                  <a id="NewLine">
+                    <a href="#NewLine">
+                      <code><span>Terminal.NewLine</span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="475">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>Terminal.NewLine</span></code>
+                  <br/>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:P:Farkle.Builder.Terminal.NewLine`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'P:Farkle.Builder.Terminal.NewLine\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    A special kind of <a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a>
+ that represents a new line.
+                  </p>
+                </div>
+              </summary>
+              <p class="fsdocs-remarks">
+                This is different and better than a literal of
+ newline characters. If used anywhere in a grammar, it indicates that it
+ is line-based, which means that newline characters are not noise.
+ Newline characters are considered the character sequences
+ <code>\r</code> (deprecated and will be removed in a future release),
+ <code>\n</code>, or <code>\r\n</code>.
+              </p>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+        <tr>
+          <td class="fsdocs-member-usage">
+            <div>
+              <code onmouseout="hideTip(event, '476', 476)" onmouseover="showTip(event, '476', 476)">
+                <p>
+                  <a id="Virtual">
+                    <a href="#Virtual">
+                      <code><span>Terminal.Virtual<span><span>(<span>name</span>)</span></span></span></code>
+                    </a>
+                  </a>
+                </p>
+              </code>
+              <div class="fsdocs-tip" id="476">
+                <div class="member-tooltip">
+                  Full Usage: 
+                  <code><span>Terminal.Virtual<span><span>(<span>name</span>)</span></span></span></code>
+                  <br/>
+                  <br/>
+                  Parameters: 
+                  <ul>
+                    <span>
+                      <b>
+                        name
+                      </b>
+                      :
+                      <code>string</code>
+                       - 
+                      The virtual terminal's name
+                    </span>
+                    <br/>
+                  </ul>
+                  <br/>
+                  <span>
+                    Returns: 
+                    <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                  </span>
+                  <br/>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="fsdocs-member-xmldoc">
+            <details>
+              <summary>
+                <div class="fsdocs-summary">
+                  <div class="fsdocs-source-link" title="Copy signature (Markdown)" onclick="Clipboard_CopyTo('`cref:M:Farkle.Builder.Terminal.Virtual`')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-md-hover.png" class="hover"/>
+                  </div>
+                  <div class="fsdocs-source-link" title="Copy signature (XML)" onclick="Clipboard_CopyTo('<see cref=\'M:Farkle.Builder.Terminal.Virtual\'/>')">
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml.png" class="normal"/>
+                    <img src="https://teo-tsirpanis.github.io/Farkle/content/img/copy-xml-hover.png" class="hover"/>
+                  </div>
+                  <p class="fsdocs-summary">
+                    Creates a virtual terminal. This method is
+ intended for use in advanced scenarios.
+                  </p>
+                </div>
+              </summary>
+              <dl class="fsdocs-params">
+                <dt class="fsdocs-param">
+                  <span class="fsdocs-param-name">
+                    name
+                  </span>
+                  :
+                  <code>string</code>
+                </dt>
+                <dd class="fsdocs-param-docs">
+                  <p>
+                    The virtual terminal's name
+                  </p>
+                </dd>
+              </dl>
+              <dl class="fsdocs-returns">
+                <dt>
+                  <span class="fsdocs-return-name">
+                    Returns: 
+                  </span>
+                  <code><a href="https://teo-tsirpanis.github.io/Farkle/reference/farkle-builder-designtimefarkle.html">DesigntimeFarkle</a></code>
+                </dt>
+                <dd class="fsdocs-return-docs"></dd>
+              </dl>
+            </details>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+            
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Advanced features
+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - Advanced features
+">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <h1><a name="Advanced-features" class="anchor" href="#Advanced-features">Advanced features</a></h1>
+<p>Farkle has a couple of features that were not covered in other guides because they are less likely to be useful. In this guide, we will take a look at some of these features that truly push Farkle's capabilities to the fullest. So, are you ready? Let's do this!</p>
+<h2><a name="The-untyped-API" class="anchor" href="#The-untyped-API">The untyped API</a></h2>
+<p>The first feature we are going to discuss is a different API for creating grammars, which is called the untyped API. Usually, when we write our designtime Farkles, we do not only state how our grammar is structured, but also what should our parser do when he encounters a specific symbol. There are times however that we do not want to do the latter thing: we just want Farkle to create a grammar. Let's take a look at the following grammar which matches matching parentheses:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="pn">&lt;</span><span class="id">S</span><span class="pn">&gt;</span> <span class="o">::</span><span class="o">=</span> <span class="pn">&lt;</span><span class="id">S</span><span class="pn">&gt;</span> <span class="pn">(</span> <span class="pn">&lt;</span><span class="id">S</span><span class="pn">&gt;</span> <span class="pn">)</span>
+<span class="pn">&lt;</span><span class="id">S</span><span class="pn">&gt;</span> <span class="o">::</span><span class="o">=</span> <span class="o">&lt;&gt;</span>
+</code></pre>
+<p>In Farkle, one way to write this grammar, is to just write it, but return dummy types like units on every production:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// In all our examples, we always open this namespace.</span>
+<span class="k">open</span> <span class="id">Farkle</span><span class="pn">.</span><span class="id">Builder</span>
+
+<span class="k">let</span> <span class="id">S</span> <span class="o">=</span> <span class="id">nonterminal</span> <span class="s">&quot;S&quot;</span>
+
+<span class="id">S</span><span class="pn">.</span><span class="id">SetProductions</span><span class="pn">(</span>
+    <span class="o">!%</span> <span class="id">S</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;(&quot;</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="id">S</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;)&quot;</span> <span class="o">=%</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">,</span>
+    <span class="id">empty</span> <span class="o">=%</span> <span class="pn">(</span><span class="pn">)</span>
+<span class="pn">)</span>
+</code></pre>
+<p>On larger grammars however, this habit of adding <code>=% ()</code> to the end of each production tends to be repetitive. Also imagine if we had more complex terminals. We would have done something like this:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">X</span> <span class="o">=</span>
+    <span class="id">myComplexRegex</span>
+    <span class="o">|&gt;</span> <span class="id">terminal</span> <span class="s">&quot;X&quot;</span> <span class="pn">(</span><span class="id">T</span><span class="pn">(</span><span class="k">fun</span> <span class="id">_</span> <span class="id">_</span> <span class="k">-&gt;</span> <span class="pn">(</span><span class="pn">)</span><span class="pn">)</span><span class="pn">)</span>
+</code></pre>
+<p>The parentheses-ridden delegate definition at the end would have to be repeated, for every terminal we would have to create.</p>
+<p>For this reason, the untyped API was created, to minimize code duplication. Let's first see how we would write our terminal:</p>
+<p><strong>F#:</strong></p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">X</span> <span class="o">=</span>
+    <span class="id">myComplexRegex</span>
+    <span class="o">|&gt;</span> <span class="id">terminalU</span> <span class="s">&quot;X&quot;</span>
+</code></pre>
+<p><strong>C#:</strong></p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp">DesigntimeFarkle X <span class="o">=</span> Terminal.Create(<span class="s">"X"</span>, myComplexRegex);
+</code></pre></td></tr></table>
+<p>In F#, we use the <code>terminalU</code> function (guess what the U stands for), and in C# we just omit the delegate (it would have otherwise appeared between the name and the regex).</p>
+<p>As you might have seen, the terminal is of type <code>DesigntimeFarkle</code>, without a generic parameter at the end. This means it can be normally used from other grammars (even typed), but it cannot be the significant member of a production. You can write for example <code>!@ W .&gt;&gt; X</code> (or <code>W.Extended().Append(X)</code> in C#), but not <code>!@ W .&gt;&gt;. X</code> (or <code>W.Extended().Extend(X)</code>).</p>
+<blockquote>
+<p>If you don't remember how to use an API from C#, <a href="csharp.html">this guide</a> can help you.</p>
+</blockquote>
+<h3><a name="Defining-untyped-nonterminals" class="anchor" href="#Defining-untyped-nonterminals">Defining untyped nonterminals</a></h3>
+<p>The nonterminals use a slightly different approach. Let's see how we would write the nonterminal that recognizes the balanced parentheses:</p>
+<p><strong>F#:</strong></p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">S</span> <span class="o">=</span> <span class="id">nonterminalU</span> <span class="s">&quot;S&quot;</span>
+
+<span class="id">S</span><span class="pn">.</span><span class="id">SetProductions</span><span class="pn">(</span>
+    <span class="o">!%</span> <span class="id">S</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;(&quot;</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="id">S</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;)&quot;</span><span class="pn">,</span>
+    <span class="id">empty</span>
+<span class="pn">)</span>
+</code></pre>
+<p><strong>C#:</strong></p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp"><span class="k">var</span> S <span class="o">=</span> Nonterminal.CreateUntyped(<span class="s">"S"</span>);
+
+S.SetProductions(
+    <span class="k">new</span> ProductionBuilder(S, <span class="s">"("</span>, S, <span class="s">")"</span>),
+    ProductionBuilder.Empty
+);
+</code></pre></td></tr></table>
+<p>For F# we use the <code>nonterminalU</code> function to define an untyped nonterminal, and after that we set its productions, just like the typed nonterminals. We use the familiar production builders syntax to do it but with some changes: we always chain the members of the production with the <code>.&gt;&gt;</code> operator since none of its members are significant, and we don't finish the production builder in the end with <code>=&gt;</code> or <code>=%</code>. <code>S</code> is of type <code>Farkle.Builder.Untyped.Nonterminal</code>, which implements only the untyped <code>DesigntimeFarkle</code> interface.</p>
+<p>For C# we could use production builders without extending or finishing them like in F#, but there is another shorter way. We use the <code>ProductionBuilder</code>'s constructor which accepts a variable amount of objects (or none, but this is essentially the empty one). You can pass designtime Farkles to be used in the resulting production as they are, or strings or characters to be used as literals. To avoid boxing, it's better to not pass characters at all, but not prohibited. If you pass any other type, an exception will be thrown.</p>
+<p>In earlier versions of Farkle we could not reliably use the production builder syntax due to a compiler limitation. If you are getting weird syntax errors about type mismatches, use the <code>ProductionBuilder</code>'s constructor instead.</p>
+<hr />
+<p>To show how to define non-recursive productions, let's take a look at a different example. Consider this F# designtime Farkle:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">number</span> <span class="o">=</span> <span class="id">Terminals</span><span class="pn">.</span><span class="id">uint32</span> <span class="s">&quot;Number&quot;</span>
+
+<span class="k">let</span> <span class="id">adder</span> <span class="o">=</span> <span class="s">&quot;Add&quot;</span> <span class="o">||=</span> <span class="pn">[</span><span class="o">!@</span> <span class="id">number</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;+&quot;</span> <span class="pn">.</span><span class="o">&gt;&gt;.</span> <span class="id">number</span> <span class="o">=&gt;</span> <span class="pn">(</span><span class="o">+</span><span class="pn">)</span><span class="pn">]</span>
+</code></pre>
+<p>It does exactly what you think it does. It gets a string of the form <code>X + Y</code>, and returns an unsigned integer containing their sum.</p>
+<p>A grammar that recognizes the same language without returning anything can be defined like this:</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="id">number</span> <span class="o">=</span> <span class="id">Terminals</span><span class="pn">.</span><span class="id">uint32</span> <span class="s">&quot;Number&quot;</span>
+
+<span class="k">let</span> <span class="id">adder</span> <span class="o">=</span> <span class="s">&quot;Add&quot;</span> <span class="o">|||=</span> <span class="pn">[</span><span class="o">!%</span> <span class="id">number</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="s">&quot;+&quot;</span> <span class="pn">.</span><span class="o">&gt;&gt;</span> <span class="id">number</span><span class="pn">]</span>
+</code></pre>
+<p>There are four differences in the untyped terminal. We use the <code>|||=</code> operator instead of <code>||=</code>, <code>!%</code> instead of <code>!@</code>, <code>.&gt;&gt;</code> instead of <code>.&gt;&gt;.</code> and omit finishing the production builder with <code>=&gt;</code>. In C# we can do the same thing with the <code>ProductionBuilder</code> like that:</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp">DesigntimeFarkle&lt;<span class="k">uint</span>&gt; Number <span class="o">=</span> Terminals.UInt<span class="n">32</span>(<span class="s">"Number"</span>);
+DesigntimeFarkle Adder <span class="o">=</span> Nonterminal.CreateUntyped(<span class="s">"Adder"</span>, <span class="k">new</span> ProductionBuilder(Number, <span class="s">"+"</span>, Number))
+</code></pre></td></tr></table>
+<h3><a name="Building-untyped-designtime-Farkles" class="anchor" href="#Building-untyped-designtime-Farkles">Building untyped designtime Farkles</a></h3>
+<p>Building these untyped designtime Farkles is actually surprisingly simple and can be done this way:</p>
+<p><strong>F#:</strong></p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// This is of type `RuntimeFarkle&lt;unit&gt;`.</span>
+<span class="k">let</span> <span class="id">adderRuntime</span> <span class="o">=</span> <span class="id">RuntimeFarkle</span><span class="pn">.</span><span class="id">buildUntyped</span> <span class="id">adder</span>
+</code></pre>
+<p><strong>C#:</strong></p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp"><span class="c">// The object it returns will always be null.</span>
+RuntimeFarkle&lt;<span class="k">object</span>&gt; AdderRuntime <span class="o">=</span> Adder.BuildUntyped();
+</code></pre></td></tr></table>
+<p><code>buildUntyped</code> creates a <code>RuntimeFarkle</code> that does not return anything meaningful, and succeeds if the input text is valid. On F# it returns a unit and on C# an object that is always <code>null</code>.</p>
+<h2><a name="Syntax-checking" class="anchor" href="#Syntax-checking">Syntax checking</a></h2>
+<p>It is sometimes useful to just check if a string is syntactically valid, instead of giving it a meaning by returning an object out of it.</p>
+<p>This is what the untyped API does, and we can call <code>buildUntyped</code> on a typed designtime Farkle to achieve the same.</p>
+<p>Because building a designtime Farkle is expensive, if we already have a runtime Farkle, we can create a new one with the same grammar, but with a post-processor that does nothing. This post-processor is called a <em>syntax checker</em>. We can change the post-processor of a runtime Farkle this way:</p>
+<p><strong>F#:</strong></p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="id">Farkle</span><span class="pn">.</span><span class="id">PostProcessor</span>
+
+<span class="k">let</span> <span class="id">designtime</span><span class="pn">:</span> <span class="id">DesigntimeFarkle</span><span class="pn">&lt;</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="id">int</span><span class="pn">&gt;</span> <span class="o">=</span> <span class="id">foo</span><span class="pn">(</span><span class="pn">)</span>
+
+<span class="k">let</span> <span class="id">runtime</span><span class="pn">:</span> <span class="id">RuntimeFarkle</span><span class="pn">&lt;</span><span onmouseout="hideTip(event, 'fs1', 2)" onmouseover="showTip(event, 'fs1', 2)" class="id">int</span><span class="pn">&gt;</span> <span class="o">=</span> <span class="id">RuntimeFarkle</span><span class="pn">.</span><span class="id">build</span> <span class="id">designtime</span>
+
+<span class="c">// syntaxChecker is of type RuntimeFarkle&lt;unit&gt;.</span>
+<span class="k">let</span> <span class="id">syntaxCheck</span> <span class="o">=</span> <span class="id">RuntimeFarkle</span><span class="pn">.</span><span class="id">changePostProcessor</span> <span class="id">PostProcessors</span><span class="pn">.</span><span class="id">syntaxCheck</span> <span class="id">runtime</span>
+</code></pre>
+<p><strong>C#:</strong></p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="csharp">DesigntimeFarkle&lt;<span class="k">int</span>&gt; Designtime <span class="o">=</span> Foo();
+
+RuntimeFarkle&lt;<span class="k">int</span>&gt; Runtime <span class="o">=</span> Designtime.Build();
+
+RuntimeFarkle&lt;<span class="k">object</span>&gt; SyntaxCheck <span class="o">=</span> Runtime.SyntaxCheck();
+<span class="c">// or</span>
+RuntimeFarkle&lt;Unit&gt; SyntaxCheck <span class="o">=</span> Runtime.ChangePostProcessor(PostProcessors.SyntaxChecker);
+</code></pre></td></tr></table>
+<p>Changing the post-processor is extremely cheap; no new grammar objects are created, and the syntax-checking post-processor is the same.</p>
+<blockquote>
+<p>Actually, the post-processor used in both the F# and the C# example is the same object too. Post-processors are <a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/covariance-contravariance/">covariant</a> like designtime Farkles, because they are interfaces. Runtime Farkles on the other hand are classes and therefore not variant at all.</p>
+</blockquote>
+<h2><a name="Custom-tokenizers" class="anchor" href="#Custom-tokenizers">Custom tokenizers</a></h2>
+<p>Farkle's default tokenizer is relatively simple. It splits the input text into tokens, without any regard for these tokens' location. There are some more complex grammars however that need a smarter tokenizer, for example indentation-based languages like F# and Python. Using Farkle's standard facilities is not enough to determine when a block begins or ends.</p>
+<p>For these advanced cases, Farkle provides a way to write additional tokenizing logic on top of the default tokenizer. There is <a href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs">an extensively commented sample</a> where we write a parser for a simple indentation-based language. Our indentation level detection logic only kicks in when we are at the beginning of a line, and we defer to Farkle's default tokenizer to take care of the rest.</p>
+<hr />
+<p>Farkle has more APIs for various little features that would make this document too lengthy. Fortunately, <a href="reference/index.html">they are well-documented in this site</a>, as well as while you code thanks to IntelliSense.</p>
+<p>So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially untyped today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!</p>
+
+            <div class="fsdocs-tip" id="fs1">Multiple items<br />val int: value: &#39;T -&gt; int (requires member op_Explicit)<br /><br />--------------------<br />type int = int32<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; =
+  int</div>
+
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

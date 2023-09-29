@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Templating Reference
+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="author" content="Theodore Tsirpanis">
+  <meta name="description" content="Farkle - Templating Reference
+">
+
+  <link rel="stylesheet" id="theme_link" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.6.0/materia/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK" crossorigin="anonymous"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/navbar-fixed-left.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-default.css" />
+  <link type="text/css" rel="stylesheet" href="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-custom.css" />
+  <style>
+    .container img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
+  <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-tips.js"></script>
+  <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+  <!-- END SEARCH BOX: this adds support for the search box -->
+</head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-secondary fixed-left" id="fsdocs-nav">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <a href="https://teo-tsirpanis.github.io/Farkle/index.html"><img id="fsdocs-logo" src="https://teo-tsirpanis.github.io/Farkle/img/logo.png" /></a>
+        <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+        <div id="header">
+          <div class="searchbox" id="fsdocs-searchbox">
+            <input data-search-input="" id="search-by" type="search" placeholder="Search..." />
+          </div>
+        </div>
+        <!-- END SEARCH BOX: this adds support for the search box -->
+
+        <ul class="navbar-nav">
+          <li class="nav-header">Links</li>
+          <li class="nav-item"><a class="nav-link" href="https://nuget.org/packages/Farkle">Get Library via NuGet</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://github.com/teo-tsirpanis/Farkle">Source Code on GitHub</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/license.html">License</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/release-notes.html">Release Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/choosing-a-parser.html">Choosing a parser: Farkle vs alternatives</a></li>
+
+          <li class="nav-header">Getting started</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/quickstart.html">Quick Start with F#</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/csharp.html">Using Farkle with C#</a></li>
+
+          <li class="nav-header">Documentation</li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/reference/index.html">API Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/templates.html">Templating Reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/string-regexes.html">String regex reference</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/the-precompiler.html">The precompiler</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://teo-tsirpanis.github.io/Farkle/advanced-features.html">Advanced Features</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+        <div class="masthead">
+            <h3 class="muted"><a href="https://teo-tsirpanis.github.io/Farkle/index.html">Farkle</a></h3>
+        </div>
+        <hr />
+        <div class="container" id="fsdocs-content">
+            <h1><a name="Templating-Reference" class="anchor" href="#Templating-Reference">Templating Reference</a></h1>
+<p>Farkle comes with a templating system which further helps developers work with the grammars they create. This system is a more powerful edition of both GOLD Parser's <a href="http://www.goldparser.org/doc/builder-cmd/goldwebpage.htm">"Create Webpage"</a> and <a href="http://www.goldparser.org/doc/builder-cmd/goldprog.htm">"Create Skeleton Program"</a> tools. In this guide, we will first see how to create an HTML page describing our grammar, and next we will see how to create our own templates. So, are you ready? Let's do this!</p>
+<h2><a name="Preparing-ourselves" class="anchor" href="#Preparing-ourselves">Preparing ourselves</a></h2>
+<p>Before we start, we first have to install <a href="https://nuget.org/packages/Farkle.Tools">Farkle's CLI tool from NuGet</a> by opening a command prompt and running</p>
+<pre class="fssnip highlighted"><code lang="fsharp"><span class="id">dotnet</span> <span class="id">tool</span> <span class="id">install</span> <span class="o">-</span><span class="id">g</span> <span class="id">Farkle</span><span class="pn">.</span><span class="id">Tools</span>
+</code></pre>
+<h3><a name="Supported-input-types" class="anchor" href="#Supported-input-types">Supported input types</a></h3>
+<p>The CLI tool can work with grammars from three kinds of files:</p>
+<ul>
+<li>GOLD Parser 5.0 Enhanced Grammar Tables files with the <code>.egt</code> extension.</li>
+<li>.NET assemblies with <a href="the-precompiler.html">precompiled</a> grammars. These assemblies can target any framework and their dependencies don't have to be present. Because precompiled grammars are stored in the assembly's embedded resources, no code from them is executed.</li>
+<li>.NET projects with precompiled grammars. The projects must have already been built; Farkle does not do it by itself at the moment.</li>
+</ul>
+<p>If we don't explicitly specify an input, the CLI tool will try to find a project in the current directory. If only one is found, it will be used. Otherwise the tool will fail with an error.</p>
+<h3><a name="Dealing-with-multiple-precompiled-grammars" class="anchor" href="#Dealing-with-multiple-precompiled-grammars">Dealing with multiple precompiled grammars</a></h3>
+<p>If the assembly or project passed to the CLI tool has only one precompiled grammar, it will be automatically used. If it has more than one however, we can tell it which one to use by adding a <code>::MyGrammar</code> to the end of the input path.</p>
+<p>To see an example, if you want to pick a specific grammar from an assembly or project, you can do it by writing <code>MyAssembly.dll::MyGrammar</code> or <code>MyProject.csproj::MyGrammar</code> respectively. If the current directory has only one project and you are bored to type it, you can write <code>::MyGrammar</code>.</p>
+<p>You can see the names of all precompiled grammars with the <code>farkle list</code> command which also takes an assembly, a project, or tries to find one on its own.</p>
+<h2><a name="Creating-HTML-pages" class="anchor" href="#Creating-HTML-pages">Creating HTML pages</a></h2>
+<p>For the rest of this guide, we will assume that we have a project with a precompiled grammar next to us. Once we build it, we can create an HTML page by running <code>farkle new</code>.</p>
+<p>If everything went well, we will see a file named like <code>MyAwesomeGrammar.html</code>. It describes the grammar's syntax, its LALR states, its DFA states and more. If you are just watching, take a look at a sample <a href="JSON-generated.html">HTML file generated for a JSON grammar</a> to get a better idea.</p>
+<p>These HTML files can be customized by omitting the state tables, the CSS styling, or by adding custom content at the end if their <code>&lt;head&gt;</code>. Run <code>farkle new --help</code> to get all the available options.</p>
+<p>You can automatically generate an HTML file from your project's precompiled grammars by adding the following lines in it:</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip highlighted"><code lang="xml"><span class="k">&lt;</span><span class="i">PropertyGroup</span><span class="k">&gt;</span>
+  <span class="k">&lt;</span><span class="i">FarkleGenerateHtml</span><span class="k">&gt;</span>true<span class="k">&lt;/</span><span class="i">FarkleGenerateHtml</span><span class="k">&gt;</span>
+<span class="k">&lt;/</span><span class="i">PropertyGroup</span><span class="k">&gt;</span>
+</code></pre></td></tr></table>
+<p>The HTML files will be generated to your project's build output directory and cannot be customized in any way. They are intended for development use; for most customizability it is recommended to use the CLI tool.</p>
+<h2><a name="Creating-your-own-templates" class="anchor" href="#Creating-your-own-templates">Creating your own templates</a></h2>
+<p>Instead of GOLD's custom and limited templating language, Farkle's templates use [Scriban], which features a much more powerful templating language. If you want to create your own templates, I recommend to first learn it from <a href="https://github.com/scriban/scriban/blob/master/doc/language.md">Scriban's official documentation</a>.</p>
+<h3><a name="Variables" class="anchor" href="#Variables">Variables</a></h3>
+<p>Farkle's templates can use the following Scriban variables:</p>
+<ul>
+<li><p><code>file_extension</code>: This variable is used to change the default extension of the output file. For example if you are creating an HTML template you would add a `{{ file_extension = ".html" }} at the beginning.</p></li>
+<li><p><code>farkle.version</code>: The version of the CLI tool.</p></li>
+<li>
+<p><code>grammar</code>: A Farkle <code>Grammar</code> object that represents the input grammar.</p>
+<ul>
+<li><p><code>grammar.productions_groupped</code>: A <code>System.Linq.IGrouping&lt;Nonterminal,Production&gt;</code> object that groups productions by their head nonterminal.</p></li>
+</ul>
+</li>
+<li><p><code>grammar_path</code>: The path to the given input file; either a grammar file or an assembly. When processing project files this variable will have the project's underlying assembly.</p></li>
+<li><p><code>properties</code>: An object that holds custom properties passed by the <code>-prop</code> CLI argument. For example, if you pass <code>-prop foo bar</code> to the CLI tool and write <code>{{ properties.foo }}</code> in your template, it will be evaluated as <code>bar</code>.</p></li>
+</ul>
+<p>Scriban imports all properties of Farkle's objects but changes their names. Take a look at <a href="https://github.com/teo-tsirpanis/Farkle/tree/mainstream/src/Farkle.Tools.Shared/builtin-templates">Farkle's built-in templates</a> to get an idea how to write your own template, but keep in mind that the HTML templates use some constructs not available to custom templates, like Scriban's <code>import</code> statement and some other internal functions.</p>
+<h3><a name="Functions" class="anchor" href="#Functions">Functions</a></h3>
+<p>The templates can furthermore use the following functions:</p>
+<ul>
+<li><code>to_base_64 &lt;bool&gt;</code>: Returns the grammar file as a Base64-encoded string. If you pass <code>true</code>, it will add line breaks every 76 characters.</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> Precompiled grammars from an assembly or project are encoded in a format called EGTneo which is incompatible with GOLD Parser's EGT's format. When creating a template from an EGT file however, the <code>to_base_64</code> function will return the Base-64 representation of that file.</p>
+</blockquote>
+<ul>
+<li><p><code>group_dfa_edge &lt;dfa_state&gt;</code>: Returns an <code>IGrouping</code> object that groups the edges of a DFA state by their action.</p></li>
+<li><p><code>fmt &lt;terminal or production&gt; &lt;case&gt; &lt;separator&gt;</code>: Formats a terminal or a production to a string. You can specify the case of the generated string (<code>upper_case</code>, <code>lower_case</code>, <code>pascal_case</code>, <code>camel_case</code>), as well as the separator between the members of the production.</p></li>
+</ul>
+<h3><a name="Using-custom-templates" class="anchor" href="#Using-custom-templates">Using custom templates</a></h3>
+<p>A custom template can be rendered by writing <code>farkle new -t MyCustomTemplate.scriban</code>. Of <code>farkle new</code>'s arguments, custom templates only support <code>-prop</code>, as explained above.</p>
+<hr />
+<p>So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle.Tools a try, and maybe you feel especially willing to create some templates today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!</p>
+
+            
+        </div>
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'https://teo-tsirpanis.github.io/Farkle/';</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script async type="text/javascript" src="https://teo-tsirpanis.github.io/Farkle/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+  </body>
+
+</html>

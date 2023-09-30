@@ -326,6 +326,7 @@ let generateDocs doWatch isRelease =
         "--output"
         docsOutput
         "--properties"
+        "--strict"
         $"TargetFramework={DocumentationAssemblyFramework}"
         if not isRelease then
             "--parameters"

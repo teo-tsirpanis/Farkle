@@ -63,9 +63,8 @@ internal class GrammarTests
     public void TestReadGrammar(string grammarFile)
     {
         var filePath = TestUtilities.GetResourceFile(grammarFile);
-        var buffer = File.ReadAllBytes(filePath);
 
-        var grammar = Grammar.Create(buffer);
+        var grammar = Grammar.CreateFromFile(filePath);
 
         Assert.Multiple(() =>
         {

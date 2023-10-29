@@ -14,5 +14,5 @@ public static class TestUtilities
     public static string GetResourceFile(string fileName) => Path.Combine(ResourcePath, fileName);
 
     public static Grammar LoadGrammarFromResource(string fileName) =>
-        Grammar.Create(File.ReadAllBytes(GetResourceFile(fileName)));
+        Grammar.CreateFromFile(GetResourceFile(fileName));
 }

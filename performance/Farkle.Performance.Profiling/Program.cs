@@ -23,7 +23,7 @@ internal static class Program
     private static readonly Farkle6.RuntimeFarkle<object> _syntaxCheck =
         Farkle6.RuntimeFarkle<object>.Create(Farkle6.Grammar.EGT.ReadFromFile(Farkle6GrammarPath), Farkle6.PostProcessors.SyntaxChecker);
     private static readonly CharParser<object> _syntaxCheck7 =
-        CharParser.CreateSyntaxChecker(Grammars.Grammar.Create(File.ReadAllBytes(Farkle7GrammarPath)));
+        CharParser.CreateSyntaxChecker(Grammar.CreateFromFile(Farkle7GrammarPath));
     private static readonly Farkle6.Parser.Tokenizer _tokenizer =
         new Farkle6.Parser.DefaultTokenizer(_syntaxCheck.GetGrammar());
     private static readonly Farkle.Parser.Tokenizers.Tokenizer<char> _tokenizer7 =

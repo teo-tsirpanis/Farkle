@@ -6,6 +6,7 @@ using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace Farkle.Grammars;
 
@@ -160,6 +161,21 @@ public abstract class Grammar : IGrammarProvider
             ThrowHelpers.ThrowArgumentNullException(nameof(grammarData));
         }
         return new ManagedMemoryGrammar(grammarData);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Grammar"/> from a file. The entire file is read in memory.
+    /// </summary>
+    /// <param name="path">The path to the file.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is
+    /// <see langword="null"/>.</exception>
+    public static Grammar CreateFromFile(string path)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        // TODO-PERF: Consider reading a part of the file at the beginning
+        // to validate the header, and then reading all of it.
+        ImmutableArray<byte> data = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes(path));
+        return Create(data);
     }
 
     /// <summary>

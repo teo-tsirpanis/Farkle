@@ -12,11 +12,12 @@
     <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="Farkle.fs" Pack="true" PackagePath="src/fs" />
+    <Content Include="FarkleNeo.props" Pack="true" PackagePath="build;buildTransitive" />
     <InternalsVisibleTo Include="Farkle.Benchmarks.CSharp" />
     <InternalsVisibleTo Include="Farkle.Tests.CSharp" />
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" />
     <PackageReference Include="System.Collections.Immutable" />
     <Using Include="Farkle.Compatibility" />
   </ItemGroup>

@@ -8,6 +8,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using Farkle.Grammars;
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using Farkle6 = farkle6::Farkle;
 
 namespace Farkle.Benchmarks;
@@ -26,7 +27,7 @@ public class GrammarReaderBenchmark
     {
         Egt = File.ReadAllBytes($"resources/{Grammars}.egt");
         EgtNeo = File.ReadAllBytes($"resources/{Grammars}.egtn");
-        Farkle7Grammar = File.ReadAllBytes($"resources/{Grammars}.grammar.dat").ToImmutableArray();
+        Farkle7Grammar = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes($"resources/{Grammars}.grammar.dat"));
     }
 
     [BenchmarkCategory("Read"), Benchmark(Baseline = true)]

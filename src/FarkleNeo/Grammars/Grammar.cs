@@ -172,9 +172,27 @@ public abstract class Grammar : IGrammarProvider
     public static Grammar CreateFromFile(string path)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(path);
-        // TODO-PERF: Consider reading a part of the file at the beginning
-        // to validate the header, and then reading all of it.
-        ImmutableArray<byte> data = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes(path));
+        ImmutableArray<byte> data;
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        // If the file is very big, read only a part of it to make
+        // sure it has a valid header, before reading the entire file.
+        using (Stream file = File.OpenRead(path))
+        {
+            if (file.Length > 4096)
+            {
+                Span<byte> buffer = stackalloc byte[GrammarHeader.MinHeaderDisambiguatorSize];
+                int nRead = file.ReadAtLeast(buffer, buffer.Length);
+                GrammarHeader header = GrammarHeader.Read(buffer);
+                ValidateHeader(header);
+                file.Position = 0;
+            }
+            byte[] dataArray = new byte[file.Length];
+            file.ReadExactly(dataArray);
+            data = ImmutableCollectionsMarshal.AsImmutableArray(dataArray);
+        }
+#else
+        data = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes(path));
+#endif
         return Create(data);
     }
 

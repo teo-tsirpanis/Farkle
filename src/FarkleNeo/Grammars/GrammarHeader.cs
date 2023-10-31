@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using static Farkle.Grammars.GrammarConstants;
 
@@ -14,6 +15,22 @@ internal readonly struct GrammarHeader(ushort versionMajor, ushort versionMinor,
     /// The size of the version-independent part of a Farkle grammar header.
     /// </summary>
     private const int VersionIndependentHeaderSize = sizeof(ulong) + 2 * sizeof(ushort);
+
+    /// <summary>
+    /// The smallest number of bytes necessary to read from
+    /// the start of a Farkle grammar file to determine its type.
+    /// </summary>
+    public static int MinHeaderDisambiguatorSize => EgtNeoHeader.Length;
+
+#if DEBUG
+    static GrammarHeader()
+    {
+        Debug.Assert(MinHeaderDisambiguatorSize >= VersionIndependentHeaderSize);
+        Debug.Assert(MinHeaderDisambiguatorSize >= CgtHeader.Length);
+        Debug.Assert(MinHeaderDisambiguatorSize >= EgtHeader.Length);
+        Debug.Assert(MinHeaderDisambiguatorSize >= EgtNeoHeader.Length);
+    }
+#endif
 
     public ushort VersionMajor { get; private init; } = versionMajor;
     public ushort VersionMinor { get; private init; } = versionMinor;

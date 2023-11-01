@@ -24,6 +24,8 @@ module internal Grammar =
     /// Should be preferred over ofSpan when an immutable array is available.
     let inline ofBytes (x: ImmutableArray<byte>) = Grammar.Create x
 
+    let inline ofFile path = Grammar.CreateFromFile path
+
     /// Converts a GOLD Parser grammar to a Farkle grammar.
     let inline ofGoldParserStream (x: Stream) = Grammar.CreateFromGoldParserGrammar x
 

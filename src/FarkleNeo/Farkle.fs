@@ -199,13 +199,13 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
     let inline syntaxCheck rf = CharParser.syntaxCheck rf
 
     [<Obsolete("Use CharParser.parseSpan instead.")>]
-    let inline parseMemory rf (x: ReadOnlyMemory<char>) = CharParser.parseSpan rf (x.Span)
+    let inline parseMemory rf (x: ReadOnlyMemory<char>) = CharParser.parseSpan rf (x.Span) |> ParserResult.toResult
 
     [<Obsolete("Use CharParser.parseString instead.")>]
-    let inline parseString rf input = CharParser.parseString rf input
+    let inline parseString rf input = CharParser.parseString rf input |> ParserResult.toResult
 
     [<Obsolete("Use CharParser.parseTextReader instead.")>]
-    let inline parseTextReader rf input = CharParser.parseTextReader rf input
+    let inline parseTextReader rf input = CharParser.parseTextReader rf input |> ParserResult.toResult
 
     [<Obsolete("Use CharParser.parseFile instead.")>]
-    let inline parseFile rf input = CharParser.parseFile rf input
+    let inline parseFile rf input = CharParser.parseFile rf input |> ParserResult.toResult

@@ -172,3 +172,40 @@ module internal CharParser =
         else
             return! vt.AsTask() |> Async.AwaitTask
     }
+
+// -------------------------------------------------------------------
+// Farkle 6 compatibility APIs
+// -------------------------------------------------------------------
+
+[<Obsolete("Use CharParser<'T> instead")>]
+type internal RuntimeFarkle<'TResult> = CharParser<'TResult>
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal RuntimeFarkle =
+
+    [<Obsolete("Use CharParser.withSemanticProvicer instead")>]
+    let inline changePostProcessor pp rf = CharParser.withSemanticProvider pp rf
+
+    [<Obsolete("Use CharParser.create instead")>]
+    let inline create semanticProvider grammar = CharParser.create semanticProvider grammar
+
+    [<Obsolete("Use CharParser.withTokenizer instead. Also note that the API for \
+customizing tokenizers has substantially changed in Farkle 7.")>]
+    let inline changeTokenizer (fTokenizer: _ -> #Tokenizers.Tokenizer<char>) parser =
+        parser
+        |> CharParser.withTokenizerFactory (fun x -> x.GetGrammar() |> fTokenizer :> _)
+
+    [<Obsolete("Use CharParser.syntaxCheck instead.")>]
+    let inline syntaxCheck rf = CharParser.syntaxCheck rf
+
+    [<Obsolete("Use CharParser.parseSpan instead.")>]
+    let inline parseMemory rf (x: ReadOnlyMemory<char>) = CharParser.parseSpan rf (x.Span)
+
+    [<Obsolete("Use CharParser.parseString instead.")>]
+    let inline parseString rf input = CharParser.parseString rf input
+
+    [<Obsolete("Use CharParser.parseTextReader instead.")>]
+    let inline parseTextReader rf input = CharParser.parseTextReader rf input
+
+    [<Obsolete("Use CharParser.parseFile instead.")>]
+    let inline parseFile rf input = CharParser.parseFile rf input

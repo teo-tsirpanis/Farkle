@@ -94,6 +94,17 @@ module internal ParserResult =
         else
             Error x.Error
 
+/// Contains active patterns for types in the Farkle namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    let inline (|ParserSuccess|ParserError|) (x: ParserResult<_>) =
+        if x.IsSuccess then
+            ParserSuccess x.Value
+        else
+            ParserError x.Error
+
 /// Functions to create and modify CharParser objects, as well as parse text with them.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal CharParser =
@@ -173,6 +184,40 @@ module internal CharParser =
             return! vt.AsTask() |> Async.AwaitTask
     }
 
+namespace Farkle.Diagnostics
+
+/// Contains active patterns for types in the Farkle.Diagnostics namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    open System.Collections.Immutable
+
+    let private mapExpectedTokenNames (x: string ImmutableArray) =
+        let b = ImmutableArray.CreateBuilder(x.Length)
+        for i = 0 to x.Length - 1 do
+            b.Add <| ValueOption.ofObj x.[i]
+        b.MoveToImmutable()
+
+    let inline (|ParserDiagnostic|_|) (x: obj) =
+        match x with
+        | :? ParserDiagnostic as x -> Some(x.Position, x.Message)
+        | _ -> None
+
+    let (|SyntaxError|_|) (x: obj) =
+        match x with
+        | :? SyntaxError as x -> Some(mapExpectedTokenNames x.ExpectedTokenNames, ValueOption.ofObj x.ActualTokenName)
+        | _ -> None
+
+    let inline (|LexicalError|_|) (x: obj) =
+        match x with
+        | :? LexicalError as x -> Some <| ValueOption.ofObj x.TokenText
+        | _ -> None
+
+namespace Farkle
+
+open System
+
 // -------------------------------------------------------------------
 // Farkle 6 compatibility APIs
 // -------------------------------------------------------------------
@@ -183,6 +228,8 @@ type internal RuntimeFarkle<'TResult> = CharParser<'TResult>
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal RuntimeFarkle =
 
+    open Farkle.Parser.Tokenizers
+
     [<Obsolete("Use CharParser.withSemanticProvicer instead")>]
     let inline changePostProcessor pp rf = CharParser.withSemanticProvider pp rf
 
@@ -191,7 +238,7 @@ module internal RuntimeFarkle =
 
     [<Obsolete("Use CharParser.withTokenizer instead. Also note that the API for \
 customizing tokenizers has substantially changed in Farkle 7.")>]
-    let inline changeTokenizer (fTokenizer: _ -> #Tokenizers.Tokenizer<char>) parser =
+    let inline changeTokenizer (fTokenizer: _ -> #Tokenizer<char>) parser =
         parser
         |> CharParser.withTokenizerFactory (fun x -> x.GetGrammar() |> fTokenizer :> _)
 

@@ -94,43 +94,7 @@ module internal ParserResult =
         else
             Error x.Error
 
-/// Functions to parse text with Farkle parsers.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal Parser =
-
-    /// Parses a read-only span of characters. All types of characters are supported.
-    let inline parseSpan (parser: IParser<'TChar, 'T>) (x: ReadOnlySpan<'TChar>) = parser.Parse x
-
-    /// Parses a string.
-    let inline parseString (parser: IParser<_, 'T>) (x: string) = parser.Parse x
-
-    /// Parses characters from a text reader.
-    let inline parseTextReader (parser: IParser<_, 'T>) (x: TextReader) = parser.Parse x
-
-    /// Parses characters from a file.
-    let inline parseFile (parser: IParser<_, 'T>) x = parser.ParseFile x
-
-    /// Asynchronously parses characters from a text reader.
-    let asyncParseTextReader (parser: IParser<_, 'T>) x = async {
-        let! ct = Async.CancellationToken
-        let vt = parser.ParseAsync(x, ct)
-        if vt.IsCompleted then
-            return vt.Result
-        else
-            return! vt.AsTask() |> Async.AwaitTask
-    }
-
-    /// Asynchronously parses characters from a file.
-    let asyncParseFile (parser: IParser<_, 'T>) x = async {
-        let! ct = Async.CancellationToken
-        let vt = parser.ParseFileAsync(x, ct)
-        if vt.IsCompleted then
-            return vt.Result
-        else
-            return! vt.AsTask() |> Async.AwaitTask
-    }
-
-/// Functions to create and modify CharParser objects.
+/// Functions to create and modify CharParser objects, as well as parse text with them.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal CharParser =
 
@@ -176,3 +140,35 @@ module internal CharParser =
         components
         |> Internal.ChainedTokenizerBuilder.create
         |> parser.WithTokenizer
+
+    /// Parses a read-only span of characters. All types of characters are supported.
+    let inline parseSpan (parser: IParser<char, 'T>) (x: ReadOnlySpan<_>) = parser.Parse x
+
+    /// Parses a string.
+    let inline parseString (parser: IParser<_, 'T>) (x: string) = parser.Parse x
+
+    /// Parses characters from a text reader.
+    let inline parseTextReader (parser: IParser<_, 'T>) (x: TextReader) = parser.Parse x
+
+    /// Parses characters from a file.
+    let inline parseFile (parser: IParser<_, 'T>) x = parser.ParseFile x
+
+    /// Asynchronously parses characters from a text reader.
+    let asyncParseTextReader (parser: IParser<_, 'T>) x = async {
+        let! ct = Async.CancellationToken
+        let vt = parser.ParseAsync(x, ct)
+        if vt.IsCompleted then
+            return vt.Result
+        else
+            return! vt.AsTask() |> Async.AwaitTask
+    }
+
+    /// Asynchronously parses characters from a file.
+    let asyncParseFile (parser: IParser<_, 'T>) x = async {
+        let! ct = Async.CancellationToken
+        let vt = parser.ParseFileAsync(x, ct)
+        if vt.IsCompleted then
+            return vt.Result
+        else
+            return! vt.AsTask() |> Async.AwaitTask
+    }

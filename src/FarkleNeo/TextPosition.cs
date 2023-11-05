@@ -28,11 +28,11 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     public static TextPosition Initial => default;
 
     /// <summary>
-    /// The line number of the <see cref="TextPosition"/>.
+    /// The line number of the <see cref="TextPosition"/>, starting from 1.
     /// </summary>
     public int Line => _line + 1;
     /// <summary>
-    /// The column number of the <see cref="TextPosition"/>.
+    /// The column number of the <see cref="TextPosition"/>, starting from 1.
     /// </summary>
     public int Column => _column + 1;
 

@@ -9,7 +9,7 @@
   <ItemGroup>
     <Compile Include="../../src/FarkleNeo/Farkle.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="GOLDParserBridge.fs" />
+    <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />

@@ -11,6 +11,10 @@ public static class TestUtilities
 
     public static IEnumerable<string> Farkle7Grammars => Directory.EnumerateFiles(ResourcePath, "*.grammar.dat");
 
+    public static IEnumerable<string> GoldParserGrammars =>
+        Directory.EnumerateFiles(ResourcePath, "*.egt")
+        .Concat(Directory.EnumerateFiles(ResourcePath, "*.cgt"));
+
     public static string GetResourceFile(string fileName) => Path.Combine(ResourcePath, fileName);
 
     public static Grammar LoadGrammarFromResource(string fileName) =>

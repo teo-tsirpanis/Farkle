@@ -13,6 +13,8 @@ public static class TestUtilities
 
     public static IEnumerable<string> GoldParserGrammars =>
         Directory.EnumerateFiles(ResourcePath, "*.egt")
+        // On .NET Framework this apparently also matches .egtn files, which are not supported.
+        .Where(x => x.EndsWith(".egt"))
         .Concat(Directory.EnumerateFiles(ResourcePath, "*.cgt"));
 
     public static string GetResourceFile(string fileName) => Path.Combine(ResourcePath, fileName);

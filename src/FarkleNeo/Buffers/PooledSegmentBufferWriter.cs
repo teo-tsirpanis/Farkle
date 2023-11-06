@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Farkle.Buffers;
 
@@ -145,25 +146,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
         return result;
     }
 
-    public ImmutableArray<T> ToImmutableArray()
-    {
-        if (WrittenCount == 0)
-        {
-            return ImmutableArray<T>.Empty;
-        }
-
-        int length = (int)WrittenCount;
-        if (length != WrittenCount)
-        {
-            ThrowHelpers.ThrowOutOfMemoryException();
-        }
-
-        return ImmutableArrayUtilities.Create<T, PooledSegmentBufferWriter<T>>(length, this, static (span, @this) =>
-        {
-            bool copied = @this.TryCopyTo(span);
-            Debug.Assert(copied);
-        });
-    }
+    public ImmutableArray<T> ToImmutableArray() => ImmutableCollectionsMarshal.AsImmutableArray(ToArray());
 
     public bool TryCopyTo(Span<T> span)
     {

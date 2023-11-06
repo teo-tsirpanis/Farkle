@@ -74,7 +74,7 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
 
     private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
-        return new(ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, EofActionBase, state));
+        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, state));
     }
 
     internal override LrEndOfFileAction GetEndOfFileAction(int state)

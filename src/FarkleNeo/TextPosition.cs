@@ -63,24 +63,45 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     internal TextPosition AdvanceCore<T>(ReadOnlySpan<T> span, T cr, T lf)
         where T : struct, IEquatable<T>
     {
+        // We advance the line number if:
+        // 1. We found a CR and it is not the last character in the span.
+        // 2. We found an LF.
+        // 3. We found a CRLF sequence.
         int line = _line, column = _column;
         while (true)
         {
             switch (span.IndexOfAny(lf, cr))
             {
                 case -1:
+                    // No CR or LF found. Advance the column number by the remaining
+                    // characters and return.
                     return Create0(line, column + span.Length);
                 case int nlPos:
-                    if (span[nlPos].Equals(cr) && nlPos == span.Length - 1)
+                    // CR or LF found.
+                    bool foundCr = span[nlPos].Equals(cr);
+                    // If the character is a CR, and it is the last character in the span,
+                    // advance the column number by the number of characters before it.
+                    if (foundCr && nlPos == span.Length - 1)
                     {
                         column += nlPos;
                     }
+                    // Otherwise (LF or CR not at the end of the span), advance the line number.
                     else
                     {
                         line++;
                         column = 0;
                     }
-                    span = span[(nlPos + 1)..];
+                    // We will continue searching from the character after the CR or LF we found above.
+                    int nextChar = nlPos + 1;
+                    // But, if the character was a CR, it was not the last character in the span,
+                    // and the character after it is an LF, we will skip the LF; we have already
+                    // advanced the line number for the CRLF sequence.
+                    if (foundCr && nextChar < span.Length && span[nextChar].Equals(lf))
+                    {
+                        nextChar++;
+                    }
+                    // Slice the span to the remaining characters.
+                    span = span[nextChar..];
                     break;
             }
         }
@@ -89,6 +110,8 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe TextPosition Advance<T>(ReadOnlySpan<T> span)
     {
+        // Because of lack of language support, we have to do some duplication here.
+        // We cast the span with pointers because it's a ref struct and we cannot box it.
         if (typeof(T) == typeof(char))
         {
             return AdvanceCore(*(ReadOnlySpan<char>*)&span, '\r', '\n');
@@ -97,6 +120,7 @@ public readonly struct TextPosition : IEquatable<TextPosition>
         {
             return AdvanceCore(*(ReadOnlySpan<byte>*)&span, (byte)'\r', (byte)'\n');
         }
+        // For any other type, we will just advance the column number by the length of the span.
         return Create0(_line, _column + span.Length);
     }
 

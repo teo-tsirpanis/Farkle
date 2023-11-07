@@ -7,28 +7,45 @@ module Farkle.Tests.ParserTests
 
 open Expecto
 open Farkle
-open Farkle.Builder
-open Farkle.Grammars
-open Farkle.IO
-open Farkle.Samples
-open Farkle.Parser
+open Farkle.Diagnostics
+open Farkle.Parser.Semantics
 open Farkle.Tests
 open System.IO
 open System.Text.Json.Nodes
 
-module SimpleMaths = Farkle.Samples.FSharp.SimpleMaths
+/// A domain-ignorant Abstract Syntax Tree that describes the output of a parser.
+/// Used to be part of Farkle 6's public API but was removed in Farkle 7.
+[<RequireQualifiedAccess>]
+type AST =
+    | Content of int * TextPosition * string
+    | Nonterminal of int * AST list
+
+let astSemanticProvider = {new ISemanticProvider<char, AST> with
+    member _.Transform(state, symbol, chars) = AST.Content(symbol.Value, state.CurrentPosition,chars.ToString())
+    member _.Fuse(_, production, members) =
+        let mutable membersList = []
+        for i = members.Length - 1 downto 0 do
+            membersList <- members.[i] :?> AST :: membersList
+        AST.Nonterminal(production.Value, membersList)
+}
 
 let testParser grammarFile displayName text =
-    let testImpl streamMode fCharStream =
+    let testImpl streamMode useStaticBlock =
         let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode" grammarFile displayName streamMode
         test description {
-            let rf = loadRuntimeFarkle grammarFile
-            let result = RuntimeFarkle.parseChars rf |> using (fCharStream text)
+            let rf = loadCharParser grammarFile
+            let result =
+                if useStaticBlock then
+                    CharParser.parseString rf text
+                else
+                    use sr = new StringReader(text)
+                    CharParser.parseTextReader rf sr
+                |> ParserResult.toResult
             Expect.isOk result "Parsing failed"
         }
     [
-        testImpl "static" (CharStream: string -> _)
-        testImpl "dynamic" (fun x -> StringReader(x) |> CharStream)
+        testImpl "static" true
+        testImpl "dynamic" false
     ]
 
 let gmlSourceContent = File.ReadAllText <| getResourceFile "gml.grm"
@@ -42,52 +59,59 @@ let tests = testList "Parser tests" [
     |> List.collect ((<|||) testParser)
     |> testList "Domain-ignorant parsing tests"
 
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     test "Parsing a simple mathematical expression generates the correct AST" {
         let testString = "475 + 724"
         let expectedAST =
-            let grammar = SimpleMaths.int.GetGrammar()
-            let nont idx xs = AST.Nonterminal(grammar.Productions.[idx], xs)
-            let numberTerminal = Terminal(3u, "Number")
+            let nont idx xs = AST.Nonterminal(idx, xs)
+            let numberTerminal = 7
+            let makePos line col = TextPosition.Create1(line, col)
             nont 0 [
                 nont 6 [
-                    AST.Content(numberTerminal, Position.Create1 1 1, "475")
+                    AST.Content(numberTerminal, makePos 1 1, "475")
                 ]
-                AST.Content(Terminal(0u, "+"), Position.Create1 1 5, "+")
+                AST.Content(6, makePos 1 5, "+")
                 nont 6 [
-                    AST.Content(numberTerminal, Position.Create1 1 7, "724")
+                    AST.Content(numberTerminal, makePos 1 7, "724")
                 ]
             ]
 
         let num =
-            RuntimeFarkle.parseString SimpleMaths.int testString
+            CharParser.parseString SampleParsers.simpleMaths testString
+            |> ParserResult.toResult
             |> Flip.Expect.wantOk "Parsing failed"
-        let astRuntime = RuntimeFarkle.changePostProcessor PostProcessors.ast SimpleMaths.int
+        let astParser = CharParser.withSemanticProvider astSemanticProvider SampleParsers.simpleMaths
         let ast =
-            RuntimeFarkle.parseString astRuntime testString
+            CharParser.parseString astParser testString
+            |> ParserResult.toResult
             |> Flip.Expect.wantOk "Parsing failed"
         Expect.equal num 1199 "The numerical result is different than the expected"
-        Expect.equal (AST.toASCIITree ast) (AST.toASCIITree expectedAST) "The AST is different"
+        Expect.equal ast expectedAST "The AST is different"
     }
+#endif
 
     test "Lexical errors report the correct position" {
-        let jsonString = "{\"Almost True\": truffle}"
-        let result = RuntimeFarkle.parseString FSharp.JSON.runtime jsonString
-        let error =
-            ParserError(Position.Create1 1 20, ParseErrorType.LexicalError 'f')
-            |> FarkleError.ParseError
-            |> Result.Error
-        Expect.equal result error "The wrong position was reported on a lexical error"
+        let jsonString = """{"Almost True": truffle}"""
+        let result = CharParser.parseString SampleParsers.json jsonString
+        Expect.isTrue result.IsError "Parsing did not fail"
+        match result.Error with
+        | ParserDiagnostic(pos, _) ->
+            // Prior to Farkle 7, the error was reported at 1:20, the place where the unrecognized character was found.
+            // Now, the error is reported at 1:17, the place where the tokenizer last started.
+            Expect.equal pos (TextPosition.Create1(1, 17)) "The position is different than the expected"
+        | _ -> failtest "The error is not a ParserDiagnostic"
     }
 
     test "Parsing a mathematical expression with comments works well" {
-        let num = RuntimeFarkle.parseString SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
-        Expect.equal num (Ok 2) "Parsing a mathematical expression with comments failed"
+        let num = CharParser.parseString SampleParsers.simpleMaths "/*I guess that */ 1 + 1\n// Is equal to two"
+        Expect.equal num (ParserResult.CreateSuccess 2) "Parsing a mathematical expression with comments failed"
     }
 
     testProperty "The JSON parser works well" (fun json ->
         let formatJson (json: JsonNode) = match json with null -> "null" | _ -> json.ToJsonString()
-        
+
         let jsonAsString = formatJson json
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
         let farkleFSharp =
             RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
             |> Flip.Expect.wantOk "Farkle's parser failed"
@@ -98,8 +122,17 @@ let tests = testList "Parser tests" [
             |> Flip.Expect.wantOk "Farkle's parser failed"
             |> formatJson
         Expect.equal farkleCSharp jsonAsString "The JSON generated from the Farkle C# parser is different"
+#else
+        let farkle =
+            CharParser.parseString SampleParsers.json jsonAsString
+            |> ParserResult.toResult
+            |> Flip.Expect.wantOk "Farkle's parser failed"
+            |> formatJson
+        Expect.equal farkle jsonAsString "The JSON generated from the Farkle parser is different"
+#endif
     )
 
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     testProperty "The calculator works well" (fun expr ->
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
@@ -129,4 +162,5 @@ let tests = testList "Parser tests" [
         let actualResult = rf.Parse testString
         Expect.equal actualResult expectedResult "Unexpected result"
     }
+#endif
 ]

@@ -11,6 +11,7 @@
     <Compile Include="Common.fs" />
     <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
+    <Compile Include="SampleParsers.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />

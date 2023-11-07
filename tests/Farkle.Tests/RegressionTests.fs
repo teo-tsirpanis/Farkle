@@ -7,24 +7,21 @@ module Farkle.Tests.RegressionTests
 
 open Expecto
 open Farkle
-open Farkle.Parser
+open Farkle.Diagnostics
 
 let private reproduceIssue issueNumber = test (sprintf "GitHub issue #%02i" issueNumber)
-
-let parse rf str = RuntimeFarkle.parseString rf str
 
 [<Tests>]
 let tests = testList "Regression tests" [
     reproduceIssue 8 {
-        let rf = loadRuntimeFarkle "issue-8.egt"
-        Expect.isOk (parse rf "45") "The two-digit input was not successfully parsed"
+        let parser = loadCharParser "issue-8.egt"
+        let result = CharParser.parseString parser "45"
+        Expect.equal result (ParserResult.CreateSuccess()) "The two-digit input was not successfully parsed"
 
-        let expectedError =
-            ParserError(Position.Create1 1 2, ParseErrorType.UnexpectedEndOfInput)
-            |> FarkleError.ParseError
-            |> Error
-
-        Expect.equal (parse rf "3") expectedError
-            "The issue was reproduced; parsing a single-digit input was successful, while it shouldn't"
+        let (|TextPosition|) (pos: TextPosition) = TextPosition(pos.Line, pos.Column)
+        let result = CharParser.parseString parser "3"
+        match result with
+        | ParserError(ParserDiagnostic(TextPosition(1, 1), LexicalError _)) -> ()
+        | _ -> failtestNoStackf $"The issue was not reproduced: {result}"
     }
 ]

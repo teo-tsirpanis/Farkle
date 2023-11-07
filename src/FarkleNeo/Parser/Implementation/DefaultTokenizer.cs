@@ -113,10 +113,9 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     continue;
                 }
             }
-            // If the DFA found nothing and reached the end, we have to suspend and wait for more input.
+            // If the DFA found nothing of value and reached the end, we have to suspend and wait for more input.
             if (!input.IsFinalBlock && charactersRead == chars.Length)
             {
-                Debug.Assert(!acceptSymbol.HasValue);
                 groupLength = input.RemainingCharacters.Length - chars.Length;
                 error = null;
                 return false;

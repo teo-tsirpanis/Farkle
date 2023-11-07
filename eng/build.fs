@@ -68,7 +68,7 @@ let sourceProjects = [
 // The project to be tested
 let testProject = "./tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj"
 
-let legacyTestProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
+let fsharpTestProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
@@ -202,13 +202,13 @@ let generateCode _ =
             File.WriteAllText(dest, generatedSource)
     )
 
-let runUnitTests _ =
+let runCSharpUnitTests _ =
     testProject
     |> DotNet.test id
 
-let runLegacyUnitTests _ =
-    dotNetRun legacyTestProject None DotNet.BuildConfiguration.Debug "" testArguments
-    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory legacyTestProject @@ "TestResults.xml")
+let runFSharpUnitTests _ =
+    dotNetRun fsharpTestProject None DotNet.BuildConfiguration.Debug "" testArguments
+    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory fsharpTestProject @@ "TestResults.xml")
 
 let prepareMSBuildTests _ =
     Shell.cleanDir localPackagesFolder
@@ -408,8 +408,6 @@ let initTargets() =
     Target.create "CleanDocs" cleanDocs
     Target.description "Generates some required source code files"
     Target.create "GenerateCode" generateCode
-    Target.description "Runs the unit tests on the legacy F# codebase"
-    Target.create "RunLegacyUnitTests" runLegacyUnitTests
     Target.description "Prepares the MSBuild integration tests"
     Target.create "PrepareMSBuildTests" prepareMSBuildTests
     Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
@@ -419,8 +417,10 @@ let initTargets() =
     Target.description "Runs all tests of the legacy F# codebase"
     Target.create "TestLegacy" ignore
 
-    Target.description "Runs the unit tests on the C# codebase"
-    Target.create "RunUnitTests" runUnitTests
+    Target.description "Runs the C# unit tests"
+    Target.create "RunCSharpUnitTests" runCSharpUnitTests
+    Target.description "Runs the F# unit tests"
+    Target.create "RunFSharpUnitTests" runFSharpUnitTests
     Target.description "Runs all tests on the C# codebase"
     Target.create "Test" ignore
 
@@ -447,18 +447,18 @@ let initTargets() =
     "Clean"
         ==>! "GenerateCode"
 
-    ["RunLegacyUnitTests"; "PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+    ["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
     |> List.iter (fun target -> "GenerateCode" ==>! target)
 
     ["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
     |> List.iter (fun target -> "PrepareMSBuildTests" ==>! target)
 
-    "TestLegacy" <== ["RunLegacyUnitTests"; "RunMSBuildTestsNetCore"]
+    "TestLegacy" <== ["RunMSBuildTestsNetCore"]
 
     "RunMSBuildTestsNetFramework"
         =?>! ("TestLegacy", OperatingSystem.IsWindows())
 
-    "Test" <== ["RunUnitTests"]
+    "Test" <== ["RunCSharpUnitTests"; "RunFSharpUnitTests"]
 
     // We used to have "Test" ==>! "NuGetPack".
     // This dependency will be expressed higher at the GitHub Actions level.

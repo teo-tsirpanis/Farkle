@@ -44,6 +44,8 @@ internal struct PositionTracker
         TextPosition pos = Position;
         if (!span.IsEmpty)
         {
+            // If the last character we saw was a CR, and the current character is not an LF,
+            // move to the next line, which we did not do last time.
             if (_lastSeenCr
                 && ((typeof(T) == typeof(char) && (char)(object)span[0]! != '\n')
                 || (typeof(T) == typeof(byte) && (byte)(object)span[0]! != (byte)'\n')))
@@ -83,6 +85,8 @@ internal struct PositionTracker
     /// </remarks>
     public void CompleteInput()
     {
+        // If the last character we saw was a CR, we will not see anything after that,
+        // so move to the next line and reset _lastSeenCr.
         if (_lastSeenCr)
         {
             _lastSeenCr = false;

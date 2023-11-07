@@ -7,7 +7,7 @@ namespace Farkle.Tests.CSharp;
 
 internal class PositionTrackerTests
 {
-    private static void TestLineEndings<T>(ReadOnlySpan<T> text)
+    private static unsafe void TestLineEndings<T>(ReadOnlySpan<T> text)
     {
         TextPosition[] expectedPositions = {
             TextPosition.Initial,
@@ -26,7 +26,16 @@ internal class PositionTrackerTests
             actualPositions[i] = tracker.Position;
         }
 
-        Assert.That(actualPositions, Is.EqualTo(expectedPositions));
+        // The delegate cannot directly capture text. It will capture the pointer to it,
+        // which is safe here since it will not be executed beyond this method.
+        ReadOnlySpan<T>* textPtr = &text;
+        Assert.Multiple(() =>
+        {
+            Assert.That(actualPositions, Is.EqualTo(expectedPositions));
+
+            // Test that advancing the whole text gives the same result as advancing each character one by one.
+            Assert.That(TextPosition.Initial.Advance(*textPtr), Is.EqualTo(expectedPositions[^1]));
+        });
     }
 
     [Test]

@@ -111,6 +111,13 @@ internal readonly struct DefaultParserImplementation<TChar>
                     currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
                     goto RetryToken;
                 }
+                TokenSymbolAttributes flags = hotData.GetTokenSymbolFlags(token.Symbol);
+                // TODO: Add a test once we add the builder and can define noise terminals.
+                if ((flags & TokenSymbolAttributes.Noise) != 0)
+                {
+                    foundToken = Tokenizer.TryGetNextToken(ref input, TokenSemanticProvider, out token);
+                    continue;
+                }
             }
             TextPosition errorPos = foundToken ? token.Position : input.State.CurrentPosition;
             string? actualTokenName = foundToken ? Grammar.GetString(Grammar.GetTokenSymbol(token.Symbol).Name) : null;

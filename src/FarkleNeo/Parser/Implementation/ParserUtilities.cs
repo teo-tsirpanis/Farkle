@@ -46,16 +46,21 @@ internal static class ParserUtilities
 
     public static ImmutableArray<string?> GetExpectedSymbols(Grammar grammar, LrState state)
     {
-        int count = state.Actions.Count + (state.EndOfFileActions.Count > 0 ? 1 : 0);
-        var builder = ImmutableArray.CreateBuilder<string?>(count);
+        var builder = ImmutableArray.CreateBuilder<string?>();
         foreach (var action in state.Actions)
         {
-            builder.Add(grammar.GetString(grammar.GetTokenSymbol(action.Key).Name));
+            TokenSymbol symbol = grammar.GetTokenSymbol(action.Key);
+            // TODO: Add a test once we add the builder and can define hidden terminals.
+            if ((symbol.Attributes & TokenSymbolAttributes.Hidden) != 0)
+            {
+                continue;
+            }
+            builder.Add(grammar.GetString(symbol.Name));
         }
         if (state.EndOfFileActions.Count > 0)
         {
             builder.Add(null);
         }
-        return builder.MoveToImmutable();
+        return builder.ToImmutable();
     }
 }

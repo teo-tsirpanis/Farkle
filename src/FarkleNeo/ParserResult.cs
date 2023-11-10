@@ -12,7 +12,10 @@ namespace Farkle;
 /// </summary>
 /// <typeparam name="T">The type of values held by successful parser
 /// results.</typeparam>
-public readonly struct ParserResult<T>
+public readonly struct ParserResult<T> : IFormattable
+#if NET6_0_OR_GREATER
+    , ISpanFormattable
+#endif
 {
     private readonly T _value;
 
@@ -21,6 +24,43 @@ public readonly struct ParserResult<T>
         _value = value;
         Error = error;
     }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    /// Writes the <see cref="ParserResult{T}"/>'s success or error value to a span.
+    /// </summary>
+    /// <param name="destination">The span to write to.</param>
+    /// <param name="charsWritten">The number of characters written to <paramref name="destination"/>.</param>
+    /// <param name="format">Ignored.</param>
+    /// <param name="provider">The <see cref="IFormatProvider"/> to use to format the string.</param>
+    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
+        IsSuccess
+            ? destination.TryWrite(provider, $"{Value}", out charsWritten)
+            : destination.TryWrite(provider, $"{Error}", out charsWritten);
+#endif
+
+    private string ToString(IFormatProvider? formatProvider) =>
+        IsSuccess
+#if NET6_0_OR_GREATER
+            ? string.Create(formatProvider, $"{Value}")
+            : string.Create(formatProvider, $"{Error}");
+#else
+            ? ((FormattableString)$"{Value}").ToString(formatProvider)
+            : ((FormattableString)$"{Error}").ToString(formatProvider);
+#endif
+
+    /// <summary>
+    /// Converts the <see cref="ParserResult{T}"/>'s success or error value to a string.
+    /// </summary>
+    /// <param name="format">Ignored.</param>
+    /// <param name="formatProvider">The <see cref="IFormatProvider"/> to use to format the string.</param>
+    public string ToString(string? format, IFormatProvider? formatProvider) =>
+        ToString(formatProvider);
+
+    /// <summary>
+    /// Converts the <see cref="ParserResult{T}"/>'s success or error value to a string.
+    /// </summary>
+    public override string? ToString() => ToString(null, null);
 
     /// <summary>
     /// Whether the <see cref="ParserResult{T}"/> represents success.

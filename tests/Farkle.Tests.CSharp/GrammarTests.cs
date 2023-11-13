@@ -43,14 +43,18 @@ internal class GrammarTests
         }
     }
 
-    [TestCaseSource(nameof(FarkleAndGoldGrammars))]
-    public void TestGoldParserConversion(string farkleGrammar, string goldGrammar)
+    [TestCaseSource(typeof(TestUtilities), nameof(TestUtilities.GoldParserGrammars))]
+    public void TestGoldParserConversion(string goldGrammar)
     {
-        var originalFarkleGrammar = File.ReadAllBytes(farkleGrammar);
         var convertedGrammar = ConvertGrammarFile(goldGrammar);
         _ = Grammar.Create(convertedGrammar);
 
-        Assert.That(convertedGrammar, Is.EqualTo(originalFarkleGrammar));
+        var farkleGrammar = Path.ChangeExtension(goldGrammar, ".grammar.dat");
+        if (File.Exists(farkleGrammar))
+        {
+            var originalFarkleGrammar = File.ReadAllBytes(farkleGrammar);
+            Assert.That(convertedGrammar, Is.EqualTo(originalFarkleGrammar));
+        }
 
         static ImmutableArray<byte> ConvertGrammarFile(string path)
         {
@@ -63,9 +67,8 @@ internal class GrammarTests
     public void TestReadGrammar(string grammarFile)
     {
         var filePath = TestUtilities.GetResourceFile(grammarFile);
-        var buffer = File.ReadAllBytes(filePath);
 
-        var grammar = Grammar.Create(buffer);
+        var grammar = Grammar.CreateFromFile(filePath);
 
         Assert.Multiple(() =>
         {

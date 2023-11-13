@@ -43,7 +43,6 @@ internal class SpanDictionaryTests
     public void TestCollisions()
     {
         var dict = new CollidingBlobDictionary<int>();
-        // In debug mode these keys will have the same hash code.
         dict.Add("ab"u8, 1);
         dict.Add("ba"u8, 2);
 

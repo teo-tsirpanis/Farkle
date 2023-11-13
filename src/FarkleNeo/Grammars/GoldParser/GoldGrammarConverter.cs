@@ -45,14 +45,14 @@ internal static class GoldGrammarConverter
         for (int i = 0; i < groups.Length; i++)
         {
             GoldGrammar.Group group = groups[i];
-            StringHandle name = writer.GetOrAddString(group.Name);
-            SymbolKind containerKind = symbols[group.ContainerIndex].Kind;
-            bool isNewLine = group.Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase);
-            if (containerKind != SymbolKind.GroupEnd && !(isNewLine && containerKind is SymbolKind.Terminal or SymbolKind.Noise))
+            SymbolKind endKind = symbols[group.EndIndex].Kind;
+            bool isNewLine = symbols[group.EndIndex].Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase);
+            if (endKind != SymbolKind.GroupEnd && !(isNewLine && endKind is SymbolKind.Terminal or SymbolKind.Noise))
             {
                 // Farkle 6 did the same validation.
                 ThrowHelpers.ThrowNotSupportedException("Group does not end with a GroupEnd or a newline. Please open an issue on GitHub.");
             }
+            StringHandle name = writer.GetOrAddString(group.Name);
             TokenSymbolHandle container = (TokenSymbolHandle)symbolMapping[group.ContainerIndex];
             GroupAttributes flags =
                 (group.AdvanceByChar ? GroupAttributes.AdvanceByCharacter : 0)
@@ -62,8 +62,7 @@ internal static class GoldGrammarConverter
             TokenSymbolHandle end = (TokenSymbolHandle)symbolMapping[group.EndIndex];
             int nestingCount = group.Nesting.Length;
 
-            uint groupIndex = writer.AddGroup(name, container, flags, start, end, nestingCount);
-            Debug.Assert(groupIndex == (uint)i);
+            writer.AddGroup(name, container, flags, start, end, nestingCount);
         }
         // After all groups are added we add their nestings.
         foreach (GoldGrammar.Group group in groups)
@@ -115,7 +114,7 @@ internal static class GoldGrammarConverter
             productionOriginalPositions[productions[i]] = i;
         }
         // We could have sorted the original array but let's not; it's supposed to be immutable.
-        GoldGrammar.Production[]? sortedProductions = productions.AsSpan().ToArray();
+        GoldGrammar.Production[] sortedProductions = productions.AsSpan().ToArray();
         // Because the nonterminals were added in increasing order of appearance,
         // sorting by their original head index is the same as sorting by their mapped index.
         // The algorithm does not need to be stable.

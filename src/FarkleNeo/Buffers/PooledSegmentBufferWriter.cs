@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Farkle.Buffers;
 
@@ -145,25 +146,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
         return result;
     }
 
-    public ImmutableArray<T> ToImmutableArray()
-    {
-        if (WrittenCount == 0)
-        {
-            return ImmutableArray<T>.Empty;
-        }
-
-        int length = (int)WrittenCount;
-        if (length != WrittenCount)
-        {
-            ThrowHelpers.ThrowOutOfMemoryException();
-        }
-
-        return ImmutableArrayUtilities.Create<T, PooledSegmentBufferWriter<T>>(length, this, static (span, @this) =>
-        {
-            bool copied = @this.TryCopyTo(span);
-            Debug.Assert(copied);
-        });
-    }
+    public ImmutableArray<T> ToImmutableArray() => ImmutableCollectionsMarshal.AsImmutableArray(ToArray());
 
     public bool TryCopyTo(Span<T> span)
     {
@@ -215,11 +198,11 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
     private static void ThrowCannotAdvance(int count) =>
         throw new ArgumentOutOfRangeException(nameof(count), count, "Cannot advance past the end of the buffer.");
 
-    private struct Segment : IDisposable
+    private struct Segment(int sizeHint) : IDisposable
     {
         public int WrittenCount { get; private set; }
 
-        public T[]? Buffer;
+        public T[]? Buffer = RentBuffer(sizeHint);
 
         private static T[] RentBuffer(int sizeHint) =>
             ArrayPool<T>.Shared.Rent(sizeHint <= 0 ? DefaultSegmentCapacity : sizeHint);
@@ -231,11 +214,6 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
                 Debug.Assert(Buffer is not null);
                 return Buffer!.Length - WrittenCount;
             }
-        }
-
-        public Segment(int sizeHint)
-        {
-            Buffer = RentBuffer(sizeHint);
         }
 
         public void Dispose()

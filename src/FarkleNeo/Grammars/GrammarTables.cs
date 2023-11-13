@@ -83,6 +83,17 @@ internal readonly struct GrammarTables
         return columnBase + rowSize * ((int)index - 1);
     }
 
+    private static (uint Offset, int Count) GetTableBounds(ReadOnlySpan<byte> grammarFile, int columnBase,
+        int rowCount, byte rowSize, int childTableRowCount, uint index)
+    {
+        uint firstMember =
+            ReadTableIndex(grammarFile, GetTableCellOffset(columnBase, rowCount, rowSize, index), rowCount);
+        uint firstMemberOfNext = index < (uint)rowCount ? ReadTableIndex(grammarFile,
+            GetTableCellOffset(columnBase, rowCount, rowSize, index + 1), rowCount) : (uint)childTableRowCount + 1;
+        Debug.Assert(firstMember <= firstMemberOfNext);
+        return (firstMember, (int)(firstMemberOfNext - firstMember));
+    }
+
     private static uint ReadTableIndex(ReadOnlySpan<byte> grammarFile, int index, int rowCount) =>
         grammarFile.ReadUIntVariableSize(index, GetCompressedIndexSize(rowCount));
 
@@ -117,7 +128,7 @@ internal readonly struct GrammarTables
         uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
 
         // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.
-        ReadOnlySpan<TableKind> tableKinds = new TableKind[] { TableKind.TokenSymbol, TableKind.Nonterminal };
+        ReadOnlySpan<TableKind> tableKinds = new [] { TableKind.TokenSymbol, TableKind.Nonterminal };
         TableKind kind = tableKinds[(int)codedIndex & 1];
 
         uint indexValue = codedIndex >> 1;
@@ -347,6 +358,20 @@ internal readonly struct GrammarTables
     public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
         (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index));
 
+    public uint GetTokenSymbolStartedGroup(ReadOnlySpan<byte> grammarFile, uint index)
+    {
+        for (int i = 1; i <= GroupRowCount; i++)
+        {
+            var groupStart = GetGroupStart(grammarFile, (uint)i).TableIndex;
+            if (groupStart == index)
+            {
+                return (uint)i;
+            }
+        }
+
+        return 0;
+    }
+
     public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(GroupNameBase, GroupRowCount, GroupRowSize, index));
 
@@ -368,6 +393,23 @@ internal readonly struct GrammarTables
     public uint GetGroupNestingGroup(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadGroupHandle(grammarFile, GetTableCellOffset(GroupNestingGroupBase, GroupNestingRowCount, GroupNestingRowSize, index));
 
+    public (uint Offset, int Count) GetGroupNestingBounds(ReadOnlySpan<byte> grammarFile, uint index) =>
+        GetTableBounds(grammarFile, GroupFirstNestingBase, GroupRowCount, GroupRowSize, GroupNestingRowCount, index);
+
+    public bool CanGroupNest(ReadOnlySpan<byte> grammarFile, uint outerIndex, uint innerIndex)
+    {
+        (uint offset, int count) = GetGroupNestingBounds(grammarFile, outerIndex);
+        for (uint i = offset; i < offset + (uint)count; i++)
+        {
+            uint nesting = GetGroupNestingGroup(grammarFile, i);
+            if (nesting == innerIndex)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public StringHandle GetNonterminalName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(NonterminalNameBase, NonterminalRowCount, NonterminalRowSize, index));
 
@@ -377,11 +419,17 @@ internal readonly struct GrammarTables
     public ProductionHandle GetNonterminalFirstProduction(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadProductionHandle(grammarFile, GetTableCellOffset(NonterminalFirstProductionBase, NonterminalRowCount, NonterminalRowSize, index));
 
+    public (uint Offset, int Count) GetNonterminalProductionBounds(ReadOnlySpan<byte> grammarFile, uint index) =>
+        GetTableBounds(grammarFile, NonterminalFirstProductionBase, NonterminalRowCount, NonterminalRowSize, ProductionRowCount, index);
+
     public NonterminalHandle GetProductionHead(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadNonterminalHandle(grammarFile, GetTableCellOffset(ProductionHeadBase, ProductionRowCount, ProductionRowSize, index));
 
     public uint GetProductionFirstMember(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadProductionMemberHandle(grammarFile, GetTableCellOffset(ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, index));
+
+    internal (uint Offset, int Count) GetProductionMemberBounds(ReadOnlySpan<byte> grammarFile, uint index) =>
+        GetTableBounds(grammarFile, ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, ProductionMemberRowCount, index);
 
     public EntityHandle GetProductionMemberMember(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadSymbolHandle(grammarFile, GetTableCellOffset(ProductionMemberMemberBase, ProductionMemberRowCount, ProductionMemberRowSize, index));

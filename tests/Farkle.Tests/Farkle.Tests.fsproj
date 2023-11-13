@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,9 +7,11 @@
     <NoWarn>$(NoWarn);FS0760</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/FarkleNeo/Farkle.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="GOLDParserBridge.fs" />
+    <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
+    <Compile Include="SampleParsers.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
@@ -18,9 +20,7 @@
     <EmbeddedResource Include="../resources/legacy.cgt" LogicalName="FaultyPrecompiled.precompiled.egtn" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
   </ItemGroup>

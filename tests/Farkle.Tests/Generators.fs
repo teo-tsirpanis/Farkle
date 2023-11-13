@@ -8,81 +8,16 @@ module Farkle.Tests.Generators
 
 open Expecto
 open Farkle
-open Farkle.Builder
-open Farkle.Collections
-open Farkle.Grammars
-open Farkle.Grammars.EGTFile
-open Farkle.IO
 open FsCheck
-open Farkle.Samples.FSharp.SimpleMaths
 open System.Collections.Generic
-open System.IO
-open System.Text
 open System.Text.Json.Nodes
 
 let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
-let positionGen =
+let textPositionGen =
     Arb.generate
     |> Gen.two
-    |> Gen.map (fun (line, col) -> Position.Create0 line col)
-
-let egtEntryGen =
-    [
-        Gen.constant Entry.Empty
-        Arb.generate |> Gen.map Entry.Byte
-        Arb.generate |> Gen.map Entry.Boolean
-        Arb.generate |> Gen.map Entry.UInt32
-        Arb.generate |> Gen.map (fun (NonNull str) -> Entry.String str)
-    ]
-    |> Gen.oneof
-
-let ASTGen() =
-    let rec impl size =
-        match size with
-        | size when size > 0 ->
-            let tree = impl (size / 2)
-            [
-                Gen.map AST.Content Arb.generate
-                Gen.map2 (fun prod tree -> AST.Nonterminal(prod, tree)) Arb.generate (Gen.nonEmptyListOf tree)
-            ]
-            |> Gen.oneof
-        | _ -> Gen.map AST.Content Arb.generate
-    Gen.sized impl
-
-let rangeMapGen() = gen {
-    // Generate and sort an array of elements.
-    let! arr = Arb.generate |> Gen.arrayOf |> Gen.map Array.distinct
-    Array.sortInPlace arr
-    let mutable i = 0
-    let l = ResizeArray(arr.Length)
-    while i < arr.Length do
-        let! v = Arb.generate
-        match! Arb.generate with
-        // Make a range between the next two consecutive elements.
-        | true when i < arr.Length - 1 ->
-            l.Add(arr.[i], arr.[i + 1], v)
-            i <- i + 2
-        // Or add a single one.
-        | _ ->
-            l.Add(arr.[i], arr.[i], v)
-            i <- i + 1
-    return RangeMap l
-}
-
-let regexGen =
-    let rec impl size = gen {
-        if size <= 1 then
-            return! nonEmptyString |> Gen.map Regex.chars
-        else
-            let gen = impl <| size / 2
-            match! Gen.choose(0, 2) with
-            | 0 -> return! Gen.map2 (<&>) gen gen
-            | 1 -> return! Gen.map2 (<|>) gen gen
-            | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
-            | _ -> return! Gen.map Regex.star gen
-    }
-    Gen.sized impl
+    |> Gen.map (fun (line, col) -> TextPosition.Create0(line, col))
 
 let JsonGen =
     let leaves =
@@ -115,6 +50,7 @@ let JsonGen =
             ]
     Gen.sized (impl >> branches)
 
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
 let simpleMathsASTGen =
     let rec impl size =
         if size <= 1 then
@@ -137,7 +73,19 @@ let simpleMathsASTGen =
         }
     Gen.sized impl
 
-type CS = CS of CharStream * string * steps:int
+let regexGen =
+    let rec impl size = gen {
+        if size <= 1 then
+            return! nonEmptyString |> Gen.map Regex.chars
+        else
+            let gen = impl <| size / 2
+            match! Gen.choose(0, 2) with
+            | 0 -> return! Gen.map2 (<&>) gen gen
+            | 1 -> return! Gen.map2 (<|>) gen gen
+            | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
+            | _ -> return! Gen.map Regex.star gen
+    }
+    Gen.sized impl
 
 type Regexes = Regexes of (Regex * DFASymbol) list * (string * DFASymbol) list
 
@@ -236,30 +184,18 @@ let designtimeFarkleGen =
         match DesigntimeFarkleBuild.buildGrammarOnly gDef with
         | Ok _ -> true
         | Result.Error _ -> false)
+#endif
 
 type Generators =
-    static member Terminal() = Gen.map2 (fun idx name -> Terminal(idx, name)) Arb.generate Arb.generate |> Arb.fromGen
-    static member Position() = Arb.fromGen positionGen
-    static member EGTEntry() = Arb.fromGen egtEntryGen
-    static member AST() = Arb.fromGen <| ASTGen()
-    static member RangeMap() = Arb.fromGen <| rangeMapGen()
-    static member CS() = Arb.fromGen <| gen {
-        let! str = nonEmptyString
-        let! steps = Gen.choose(1, str.Length)
-        let! generateStaticBlock = Arb.generate
-        let charStream =
-            if generateStaticBlock then
-                CharStream str
-            else
-                StringReader(str) |> CharStream
-        return CS(charStream, str, steps)
-    }
-    static member Regex() = Arb.fromGen regexGen
+    static member TextPosition() = Arb.fromGen textPositionGen
     static member Json() = Arb.fromGen JsonGen
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
+    static member Regex() = Arb.fromGen regexGen
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
+#endif
 
 let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 

@@ -1,0 +1,5 @@
+﻿<Project>
+  <ItemGroup Condition="'$(Language)' == 'F#' AND $(FarkleIncludeFSharpApi) != false">
+    <CompileBefore Include="$(MSBuildThisFileDirectory)../src/fs/Farkle.fs" />
+  </ItemGroup>
+</Project>

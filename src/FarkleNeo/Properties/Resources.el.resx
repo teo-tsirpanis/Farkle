@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -32,5 +32,44 @@
   </data>
   <data name="Grammar_FailedToConvert" xml:space="preserve">
     <value>Αποτυχία μετατροπής της γραμματικής.</value>
+  </data>
+  <data name="Parser_ResultAlreadySet" xml:space="preserve">
+    <value>Η συντακτική ανάλυση έχει ήδη θέσει ένα αποτέλεσμα.</value>
+  </data>
+  <data name="Parser_ResultNotSet" xml:space="preserve">
+    <value>Η συντακτική ανάλυση δεν έχει θέσει ακόμα ένα αποτέλεσμα.</value>
+  </data>
+  <data name="ChainedTokenizerBuilder_NoGrammar" xml:space="preserve">
+    <value>Δεν έχει δοθεί μία γραμματική.</value>
+  </data>
+  <data name="ChainedTokenizerBuilder_NoDefaultTokenizer" xml:space="preserve">
+    <value>Δεν έχει δοθεί ένας προεπιλεγμένος λεκτικός αναλυτής.</value>
+  </data>
+  <data name="Tokenizer_AlreadySuspended" xml:space="preserve">
+    <value>Ο λεκτικός αναλυτής έχει ήδη παυθεί.</value>
+  </data>
+  <data name="Parser_UnrecognizedToken" xml:space="preserve">
+    <value>Άγνωστο σύμβολο '{0}'</value>
+  </data>
+  <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
+    <value>Απροσδόκητο τέλος της εισόδου καθώς βρισκόταν μέσα στην ομάδα `{0}`</value>
+  </data>
+  <data name="Parser_UnexpectedToken" xml:space="preserve">
+    <value>Βρέθηκε {0}, αναμένονταν {1}</value>
+  </data>
+  <data name="Parser_Eof" xml:space="preserve">
+    <value>(ΤΕΛΟΣ)</value>
+  </data>
+  <data name="Parser_UnparsableGrammar" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση λόγω ενός ακαθόριστου προβλήματος με αυτήν</value>
+  </data>
+  <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή περιέχει δεδομένα που δεν αναγνωρίζονται από αυτήν την έκδοση του Farkle</value>
+  </data>
+  <data name="Parser_GrammarLrProblem" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει διενέξεις ή δεν υπάρχει</value>
+  </data>
+  <data name="Parser_GrammarDfaProblem" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA της έχει διενέξεις ή δεν υπάρχει</value>
   </data>
 </root>

@@ -41,8 +41,10 @@ namespace Farkle.Parser;
 
 public struct ParserState
 {
-    public readonly Position CurrentPosition { get; }
-    public readonly long TotalCharactersRead { get; }
+    public readonly TextPosition CurrentPosition { get; }
+    public readonly long TotalCharactersConsumed { get; }
+
+    public TextPosition GetPositionAfter<T>(ReadOnlySpan<T> characters);
 
     public object? Context { get; init; }
     // A string describing the input source. Could be
@@ -91,7 +93,7 @@ public ref struct ParserInputReader<TChar>
 
     public ref ParserState State { get; }
 
-    public void AdvanceBy(int count);
+    public void Consume(int count);
 }
 
 public interface IParserStateBox
@@ -100,7 +102,7 @@ public interface IParserStateBox
 }
 
 #if NET7_0_OR_GREATER
-[Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. In .NET 7+ use a ParserState" +
+[Obsolete("This type is provided for compatibility with frameworks that do not support ref fields. In .NET 7+ use a ParserState " +
 "and pass it to the ParserInputReader's constructor by reference instead.")]
 #endif
 public sealed class ParserStateBox : IParserStateBox
@@ -113,7 +115,7 @@ public sealed class ParserStateBox : IParserStateBox
 
 In frameworks that do not support ref fields, we have to use an interface and put the `ParserState` on the heap. A `ParserStateBox` class is provided for convenience and will be marked as obsolete on .NET 7.0+ to encourage the more efficient alternative.
 
-The `AdvanceBy` method will update the `TokenStartPosition` and `TotalCharactersRead` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
+The `Consume` method will update the `TokenStartPosition` and `TotalCharactersConsumed` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
 
 ### The parser
 
@@ -162,7 +164,7 @@ public static class ParserCompletionStateExtensions
 
 public interface IParser<TChar, T> : IServiceProvider
 {
-    void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T> completionState);
+    void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState);
 }
 ```
 
@@ -228,7 +230,7 @@ public abstract class ParserStateContext<TChar, T> : ParserStateContext<TChar>
     // These members can be overridden by user code.
     // Performs any additional resetting logic.
     protected virtual void OnReset() {}
-    protected abstract void Run(ref ParserInputReader<TChar> inputReader, ref ParserCompletionState<T?> completionState);
+    protected abstract void Run(ref ParserInputReader<TChar> input, ref ParserCompletionState<T?> completionState);
 }
 
 public static class ParserStateContext
@@ -269,16 +271,16 @@ public static ParserResult<T> Parse<T>(IParser<char, T> parser, TextReader reade
 Semantic analysis (called _post-processing_ in earlier versions of Farkle) is the process of converting a parse tree to an object meaningful for the application. This behavior is controlled by the `ISemanticProvider` interfaces.
 
 ```csharp
-namespace Farkle.Parser.SemanticAnalysis;
+namespace Farkle.Parser.Semantics;
 
-public interface ITransformer<TChar>
+public interface ITokenSemanticProvider<TChar>
 {
-    object? Transform(ref ParserState state, TokenSymbolHandle terminal, ReadOnlySpan<TChar> data);
+    object? Transform(ref ParserState state, TokenSymbolHandle symbol, ReadOnlySpan<TChar> characters);
 }
 
-public interface IFuser
+public interface IProductionSemanticProvider
 {
-    object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> children);
+    object? Fuse(ref ParserState state, ProductionHandle production, Span<object?> members);
 }
 
 // The legacy 7.x F# codebase used a base IPostProcessor interface
@@ -298,13 +300,17 @@ The following things changed since Farkle 6:
 3. `Fuse` accepts a reference to a `ParserState`, allowing stateful fuses; why not?
 4. `Fuse` accepts a read-write span of the production's member values, instead of a read-only span in previous versions of Farkle. This allows the span to be used as a temporary buffer by the fuser; it would easily enable certain scenarios and the buffer gets discarded afterwards either way.
 
+> In earlier versions of this document the `ITokenSemanticProvider` and `IProductionSemanticProvider` interfaces were called `ITransformer` and `IFuser` respectively. They were eventually renamed, since historically transformers and fusers in Farkle process tokens and productions of specific kinds, while these interfaces _multiplex_ over the available transformers and fusers.
+
 ### Predefined services
 
 The initial release of Farkle 7 will provide the following parser services. All are optional.
 
 #### Getting the grammar of a parser
 
-The `IGrammarProvider` service interface allows getting the grammar of a parser, if the parser is backed by one (it doesn't have to). For simplicity the `Grammar` object also implements that interface.
+We define the `IGrammarProvider` interface as an abstraction over the `Farkle.Grammars.Grammar` type. It has methods to get the concrete grammar, and to look up a symbol by its special name (allowing in the future to be performed without reading the entire grammar binary blob).
+
+Besides some overall utility, this interface can be returned as a service by parsers that are backed by a Farkle grammar (they don't have to). For simplicity the `Grammar` object also implements that interface.
 
 ```csharp
 namespace Farkle.Grammars;
@@ -312,16 +318,15 @@ namespace Farkle.Grammars;
 public interface IGrammarProvider
 {
     Grammar GetGrammar();
+
+    EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false);
 }
 
 public abstract class Grammar : IGrammarProvider
 {
-    public Grammar GetGrammar() => this;
-}
+    Grammar IGrammarProvider.GetGrammar() => this;
 
-public static class GrammarProviderExtensions
-{
-    public static Grammar? GetGrammar(this IServiceProvider serviceProvider);
+    // GetSymbolFromSpecialName is implemented implicitly.
 }
 ```
 
@@ -334,7 +339,7 @@ namespace Farkle.Parser;
 
 public interface IParserStateContextFactory<TChar, T>
 {
-    ParserStateContext<TChar, T> Create(ParserStateContextOptions? options = null);
+    ParserStateContext<TChar, T> CreateContext(ParserStateContextOptions? options = null);
 }
 ```
 
@@ -382,13 +387,13 @@ TODO: What would happen if we inject a token in the middle of tokenizing? It mig
 Farkle 7 defines the following API for tokenizers and the tokens they produce:
 
 ```csharp
-namespace Farkle.Parser.LexicalAnalysis;
+namespace Farkle.Parser.Tokenizers;
 
 // Represents the result of a tokenizer invocation.
 public readonly struct TokenizerResult
 {
     // Creates a TokenizerResult that indicates success.
-    public static TokenizerResult CreateSuccess(TokenSymbolHandle symbol, object? semanticValue, Position position);
+    public static TokenizerResult CreateSuccess(TokenSymbolHandle symbol, object? semanticValue, TextPosition position);
     // Creates a TokenizerResult that indicates failure.
     // The errorObject parameter will be set in the ParserCompletionState provided by the user.
     public static TokenizerResult CreateFailure(object errorObject);
@@ -398,14 +403,22 @@ public readonly struct TokenizerResult
 
     public TokenSymbolHandle Symbol { get; }
     public object? Data { get; }
-    public Position Position { get; }
+    public TextPosition Position { get; }
 }
 
 public abstract class Tokenizer<TChar>
 {
     protected Tokenizer();
 
-    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> inputReader, ITransformer<TChar> transformer, out TokenizerResult result);
+    public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
+}
+
+public static class Tokenizer
+{
+    // Creates a standalone tokenizer from a grammar. Char is the only supported character type.
+    // If the grammar cannot be used for tokenizing or the character type is unsupported,
+    // the method will throw.
+    public static Tokenizer<TChar> Create(Grammar grammar);
 }
 ```
 
@@ -447,15 +460,20 @@ public abstract class CharParser<T> : IParser<char, T>
     // information about the failure by parsing an empty string.
     // If a grammar has a defective DFA but a valid LR(1) table,
     // it is possible to fix the parser by changing its tokenizer.
-    public abstract bool IsFailing { get; }
+    public bool IsFailing { get; }
 
-    public abstract Grammar GetGrammar();
+    public Grammar GetGrammar();
 
     // In Farkle 6 these methods were called Change***. The With suffix
     // communicates better that the existing instance is not mutated.
-    public abstract CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider);
+    public CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider);
 
-    public abstract CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
+    // Some semantic providers (such as the generic AST) need access to
+    // the grammar and there is no other way to provide it. Putting it
+    // in ParserState becomes tricky.
+    public CharParser<TNew> WithSemanticProvider<TNew>(Func<IGrammarProvider, ISemanticProvider<char, TNew>> semanticProviderFactory);
+
+    public CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
 }
 
 public static class CharParser

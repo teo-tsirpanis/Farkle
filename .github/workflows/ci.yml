@@ -20,31 +20,39 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of SonarCloud analysis
-      - name: Set up JDK 11 # Needed for sonarscanner
+      - name: Set up JDK 17 # Needed for sonarscanner
         uses: actions/setup-java@v3
         with:
           distribution: 'microsoft'
-          java-version: '11'
-      - name: Set up .NET SDK from global.json
+          java-version: '17'
+      - name: Set up .NET SDK
         uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Enable SonarCloud scanning
         env:
+          # We can't use secrets in if conditions so we first put it in an environment variable.
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # We can't use secrets in if conditions so we first put it in an environment variable.
-        if: env.SONAR_TOKEN != null && runner.os == 'Linux'
+        if: vars.SONAR_PROJECT_KEY != null && env.SONAR_TOKEN != null && runner.os == 'Linux'
         run: |
-          dotnet sonarscanner begin /k:"teo-tsirpanis_Farkle" /o:"teo-tsirpanis" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="./**/*.opencover.xml"
+          dotnet sonarscanner begin /k:"${{ vars.SONAR_PROJECT_KEY }}" /o:"${{ vars.SONAR_PROJECT_ORGANIZATION }}" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="./**/*.opencover.xml"
       - name: Run tests
         run: |
           dotnet run --project eng/Farkle.Build.fsproj -- -t Test
       - name: End SonarCloud scanning
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        if: env.SONAR_TOKEN != null && runner.os == 'Linux'
+        if: vars.SONAR_PROJECT_KEY != null && env.SONAR_TOKEN != null && runner.os == 'Linux'
         run: |
-          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  full_ci_passed:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0

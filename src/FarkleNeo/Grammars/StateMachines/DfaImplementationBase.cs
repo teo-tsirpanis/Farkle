@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 
 internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    private readonly int _edgeCount;
+    protected readonly int _edgeCount;
 
     public required int FirstEdgeBase { get; init; }
 
@@ -31,46 +31,11 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
         _edgeCount = edgeCount;
     }
 
-    private int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
+    protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
         (int)grammarFile.ReadUIntVariableSize<TEdge>(FirstEdgeBase + state * sizeof(TEdge));
 
-    private static int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
+    protected static int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
         (int)grammarFile.ReadUIntVariableSize<TState>(@base) - 1;
-
-    public sealed override int NextState(int state, TChar c)
-    {
-        ValidateStateIndex(state);
-
-        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
-
-        int edgeOffset = ReadFirstEdge(grammarFile, state);
-        int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
-
-        if (edgeLength != 0)
-        {
-            int edge = StateMachineUtilities.BufferBinarySearch(grammarFile, RangeToBase + edgeOffset * sizeof(TChar), edgeLength, c);
-
-            if (edge < 0)
-            {
-                edge = Math.Min(~edge, edgeLength - 1);
-            }
-
-            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(char));
-            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(char));
-
-            if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
-            {
-                return ReadState(grammarFile, EdgeTargetBase + (edgeOffset + edge) * sizeof(TState));
-            }
-        }
-
-        if (DefaultTransitionBase != 0)
-        {
-            return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
-        }
-
-        return -1;
-    }
 
     internal sealed override Grammar Grammar { get; }
 

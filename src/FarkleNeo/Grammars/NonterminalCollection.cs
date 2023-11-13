@@ -11,6 +11,7 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="Grammar.Nonterminals"/>
 [DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<Nonterminal, NonterminalCollection>))]
 public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
 {
     private readonly Grammar _grammar;

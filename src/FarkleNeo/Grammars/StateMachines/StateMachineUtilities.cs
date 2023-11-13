@@ -3,13 +3,26 @@
 
 using Farkle.Buffers;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.StateMachines;
 
 internal static class StateMachineUtilities
 {
-    public static T Read<T>(ReadOnlySpan<byte> buffer, int index)
+    public const int AsciiCharacterCount = 128;
+
+    public static readonly int[] DfaStateAllErrors = CreateAllErrorsState();
+
+    private static int[] CreateAllErrorsState()
+    {
+        int[] array = new int[AsciiCharacterCount];
+        array.AsSpan().Fill(-1);
+        return array;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(ReadOnlySpan<byte> buffer, int index) where T : unmanaged
     {
         if (typeof(T) == typeof(char))
         {
@@ -62,22 +75,22 @@ internal static class StateMachineUtilities
 
     public static unsafe int BufferBinarySearch<T>(ReadOnlySpan<byte> buffer, int @base, int length, T item) where T : unmanaged, IComparable<T>
     {
-        int low = @base, high = @base + length * sizeof(T);
+        int low = 0, high = length;
 
         while (low <= high)
         {
             int mid = low + (high - low) / 2;
-            T midItem = Read<T>(buffer, mid);
+            T midItem = Read<T>(buffer, @base + mid * sizeof(T));
 
             switch (midItem.CompareTo(item))
             {
                 case 0:
                     return mid;
-                case -1:
-                    low = mid + sizeof(T);
+                case < 0:
+                    low = mid + 1;
                     break;
-                case 1:
-                    high = mid - sizeof(T);
+                case > 0:
+                    high = mid - 1;
                     break;
             }
         }

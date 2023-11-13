@@ -38,15 +38,6 @@ public readonly struct Nonterminal
         }
     }
 
-    internal (uint Offset, uint NextOffset) GetProductionsBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
-    {
-        uint tableIndex = Handle.TableIndex;
-        uint firstNesting = grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex).TableIndex;
-        uint firstNestingOfNext = tableIndex < (uint)grammarTables.ProductionRowCount - 1 ? grammarTables.GetNonterminalFirstProduction(grammarFile, tableIndex + 1).TableIndex : (uint)grammarTables.ProductionRowCount;
-        Debug.Assert(firstNesting <= firstNestingOfNext);
-        return (firstNesting, firstNestingOfNext);
-    }
-
     /// <summary>
     /// A <see cref="StringHandle"/> pointing to the <see cref="Nonterminal"/>'s name.
     /// </summary>
@@ -79,8 +70,8 @@ public readonly struct Nonterminal
         get
         {
             AssertHasValue();
-            (uint offset, uint nextOffset) = GetProductionsBounds(_grammar.GrammarFile, in _grammar.GrammarTables);
-            return new(_grammar, offset, (int)(nextOffset - offset));
+            (uint offset, int count) =_grammar.GrammarTables.GetNonterminalProductionBounds(_grammar.GrammarFile, Handle.TableIndex);
+            return new(_grammar, offset, count);
         }
     }
 

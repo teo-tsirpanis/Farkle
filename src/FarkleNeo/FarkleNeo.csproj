@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net6.0;netstandard2.0;netstandard2.1</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
+    <TargetFrameworks>net8.0;net7.0;net6.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Nullable Condition="'$(TargetFramework)' == 'netstandard2.0'">annotations</Nullable>
@@ -12,11 +12,12 @@
     <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="Farkle.fs" Pack="true" PackagePath="src/fs" />
+    <Content Include="FarkleNeo.props" Pack="true" PackagePath="build;buildTransitive" />
     <InternalsVisibleTo Include="Farkle.Benchmarks.CSharp" />
     <InternalsVisibleTo Include="Farkle.Tests.CSharp" />
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" />
     <PackageReference Include="System.Collections.Immutable" />
     <Using Include="Farkle.Compatibility" />
   </ItemGroup>
@@ -24,6 +25,7 @@
     <PackageReference Include="Microsoft.Bcl.HashCode" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />

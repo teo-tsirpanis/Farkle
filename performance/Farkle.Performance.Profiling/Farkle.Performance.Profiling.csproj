@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- We want the best JITed code the soonest. -->
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <PackageReference Include="Farkle" Aliases="farkle6" />
+  </ItemGroup>
+</Project>

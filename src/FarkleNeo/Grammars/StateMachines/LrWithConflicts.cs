@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Farkle.Grammars.StateMachines;
 
 internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
+    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>
     where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
     where TNonterminal : unmanaged, IComparable<TNonterminal>
 {
@@ -64,10 +64,10 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         };
     }
 
-    public override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
+    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
         throw CreateHasConflictsException();
 
-    public override LrEndOfFileAction GetEndOfFileAction(int state) =>
+    internal override LrEndOfFileAction GetEndOfFileAction(int state) =>
         throw CreateHasConflictsException();
 
     private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)

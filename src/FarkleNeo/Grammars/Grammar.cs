@@ -5,6 +5,8 @@ using Farkle.Grammars.GoldParser;
 using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace Farkle.Grammars;
 
@@ -15,7 +17,7 @@ namespace Farkle.Grammars;
 /// The grammar's data is internally stored in a binary format described in
 /// <see href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/designs/7.0/grammar-file-format-spec.md"/>
 /// </remarks>
-public abstract class Grammar
+public abstract class Grammar : IGrammarProvider
 {
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
@@ -162,6 +164,39 @@ public abstract class Grammar
     }
 
     /// <summary>
+    /// Creates a <see cref="Grammar"/> from a file. The entire file is read in memory.
+    /// </summary>
+    /// <param name="path">The path to the file.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is
+    /// <see langword="null"/>.</exception>
+    public static Grammar CreateFromFile(string path)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        ImmutableArray<byte> data;
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        // If the file is very big, read only a part of it to make
+        // sure it has a valid header, before reading the entire file.
+        using (Stream file = File.OpenRead(path))
+        {
+            if (file.Length > 4096)
+            {
+                Span<byte> buffer = stackalloc byte[GrammarHeader.MinHeaderDisambiguatorSize];
+                int nRead = file.ReadAtLeast(buffer, buffer.Length);
+                GrammarHeader header = GrammarHeader.Read(buffer);
+                ValidateHeader(header);
+                file.Position = 0;
+            }
+            byte[] dataArray = new byte[file.Length];
+            file.ReadExactly(dataArray);
+            data = ImmutableCollectionsMarshal.AsImmutableArray(dataArray);
+        }
+#else
+        data = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes(path));
+#endif
+        return Create(data);
+    }
+
+    /// <summary>
     /// Converts a grammar file produced by GOLD Parser into a <see cref="Grammar"/>.
     /// </summary>
     /// <param name="grammarFile">A <see cref="Stream"/> containing the GOLD Parser grammar file.</param>
@@ -186,6 +221,15 @@ public abstract class Grammar
             throw new InvalidDataException(Resources.Grammar_FailedToConvert, e);
         }
         return Create(data);
+    }
+
+    internal Dfa<TChar>? GetDfa<TChar>()
+    {
+        if (typeof(TChar) == typeof(char))
+        {
+            return DfaOnChar as Dfa<TChar>;
+        }
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -215,6 +259,12 @@ public abstract class Grammar
         }
 
         return new(this, handle);
+    }
+
+    internal Group GetGroup(uint index)
+    {
+        Debug.Assert(index > 0 && index <= GrammarTables.GroupRowCount);
+        return new(this, index);
     }
 
     /// <summary>
@@ -281,7 +331,7 @@ public abstract class Grammar
         ArgumentNullExceptionCompat.ThrowIfNull(specialName);
 
         ReadOnlySpan<byte> grammarFile = GrammarFile;
-        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is StringHandle nameHandle)
+        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is { } nameHandle)
         {
             for (uint i = 1; i <= GrammarTables.SpecialNameRowCount; i++)
             {
@@ -303,8 +353,27 @@ public abstract class Grammar
     /// Checks whether the given <see cref="TokenSymbolHandle"/> points to a
     /// token symbol with the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
-    /// <param name="handle">The token symbol handle to check;</param>
+    /// <param name="handle">The token symbol handle to check.</param>
     public bool IsTerminal(TokenSymbolHandle handle) => GrammarTables.IsTerminal(handle);
+
+    internal bool IsUnparsable([NotNullWhen(true)] out string? errorResourceKey)
+    {
+        GrammarAttributes flags = GrammarInfo.Attributes;
+        if ((flags & GrammarAttributes.Unparsable) != 0)
+        {
+            errorResourceKey = nameof(Resources.Parser_UnparsableGrammar);
+            return true;
+        }
+        if (HasUnknownData && (flags & GrammarAttributes.Critical) != 0)
+        {
+            errorResourceKey = nameof(Resources.Parser_UnparsableGrammar_Critical);
+            return true;
+        }
+        errorResourceKey = null;
+        return false;
+    }
+
+    Grammar IGrammarProvider.GetGrammar() => this;
 
     internal void ValidateContent()
     {

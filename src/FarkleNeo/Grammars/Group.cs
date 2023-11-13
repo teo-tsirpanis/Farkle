@@ -18,19 +18,19 @@ public readonly struct Group
 {
     private readonly Grammar _grammar;
 
-    private readonly uint _tableIndex;
+    internal uint Index { get; }
 
     internal Group(Grammar grammar, uint tableIndex)
     {
         _grammar = grammar;
-        _tableIndex = tableIndex;
+        Index = tableIndex;
     }
 
     [StackTraceHidden]
     private void AssertHasValue()
     {
         Debug.Assert(_grammar is not null);
-        if (_tableIndex == 0)
+        if (Index == 0)
         {
             ThrowHelpers.ThrowHandleHasNoValue();
         }
@@ -44,7 +44,7 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupName(_grammar.GrammarFile, _tableIndex);
+            return _grammar.GrammarTables.GetGroupName(_grammar.GrammarFile, Index);
         }
     }
 
@@ -56,7 +56,7 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, _tableIndex);
+            return _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, Index);
         }
     }
 
@@ -68,7 +68,7 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupFlags(_grammar.GrammarFile, _tableIndex);
+            return _grammar.GrammarTables.GetGroupFlags(_grammar.GrammarFile, Index);
         }
     }
 
@@ -80,7 +80,7 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, _tableIndex);
+            return _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, Index);
         }
     }
 
@@ -92,30 +92,8 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, _tableIndex);
+            return _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, Index);
         }
-    }
-
-    internal (uint Offset, uint NextOffset) GetNestingBounds(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
-    {
-        uint firstNesting = grammarTables.GetGroupFirstNesting(grammarFile, _tableIndex);
-        uint firstNestingOfNext = _tableIndex < (uint)grammarTables.GroupNestingRowCount - 1 ? grammarTables.GetGroupFirstNesting(grammarFile, _tableIndex + 1) : (uint)grammarTables.GroupNestingRowCount;
-        Debug.Assert(firstNesting <= firstNestingOfNext);
-        return (firstNesting, firstNestingOfNext);
-    }
-
-    internal bool CanGroupNest(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables, uint groupIndex)
-    {
-        (uint offset, uint nextOffset) = GetNestingBounds(grammarFile, in grammarTables);
-        for (uint i = offset; i < nextOffset; i++)
-        {
-            uint nesting = grammarTables.GetGroupNestingGroup(grammarFile, i);
-            if (nesting == groupIndex)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// <summary>
@@ -126,8 +104,8 @@ public readonly struct Group
         get
         {
             AssertHasValue();
-            (uint offset, uint nextOffset) = GetNestingBounds(_grammar.GrammarFile, in _grammar.GrammarTables);
-            return new(_grammar, offset, (int)(nextOffset - offset));
+            (uint offset, int count) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Index);
+            return new(_grammar, offset, count);
         }
     }
 

@@ -10,18 +10,21 @@ namespace Farkle.Grammars.StateMachines;
 /// </summary>
 /// <typeparam name="TChar">The type of characters the DFA accepts.
 /// Typically it is <see cref="char"/> or <see cref="byte"/>.</typeparam>
+/// <param name="keyFrom">The value of <see cref="KeyFrom"/></param>
+/// <param name="keyTo">The value of <see cref="KeyTo"/></param>
+/// <param name="target">The value of <see cref="Target"/></param>
 [DebuggerDisplay("{DebuggerDisplay(),nq}")]
-public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
+public readonly struct DfaEdge<TChar>(TChar keyFrom, TChar keyTo, int target) : IEquatable<DfaEdge<TChar>>
 {
     /// <summary>
     /// The first character in the range, inclusive.
     /// </summary>
-    public TChar KeyFrom { get; }
+    public TChar KeyFrom { get; } = keyFrom;
 
     /// <summary>
     /// The last character in the range, inclusive.
     /// </summary>
-    public TChar KeyTo { get; }
+    public TChar KeyTo { get; } = keyTo;
 
     /// <summary>
     /// The index of the target DFA state, starting from 0.
@@ -29,17 +32,7 @@ public readonly struct DfaEdge<TChar> : IEquatable<DfaEdge<TChar>>
     /// <remarks>
     /// A negative value indicates that following this edge should stop the tokenizer.
     /// </remarks>
-    public int Target { get; }
-
-    /// <summary>
-    /// Creates a <see cref="DfaEdge{TChar}"/>.
-    /// </summary>
-    public DfaEdge(TChar keyFrom, TChar keyTo, int target)
-    {
-        KeyFrom = keyFrom;
-        KeyTo = keyTo;
-        Target = target;
-    }
+    public int Target { get; } = target;
 
     private string DebuggerDisplay()
     {

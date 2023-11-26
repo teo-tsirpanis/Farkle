@@ -36,15 +36,15 @@ Like before, these interfaces will be considered black boxes and user code will 
 
 ### The scope of operator scopes
 
-In Farkle 6 setting an operator scope is a local option and can be done from anywhere in the grammar. However, if the same symbol exists in multiple scopes, the behavior during parser conflict resolution is undefined. One obvious fix to this is to ask all operator scopes to resolve the conflict and fail if more than one of them can do it but gives contradictory results. Having many scopes poses the question of how to encode them in a grammar (which we will want to do in the future). There is the naïve way of directly encoding the operator scopes, their associativity groups, and their symbols, but maybe we could represent them in a more sophisticated way that is more efficient to read and any ambiguities are resolved at installation time.
+In Farkle 6 setting an operator scope is a local option and can be done from anywhere in the grammar. However, if the same symbol exists in multiple scopes, the behavior during parser conflict resolution is undefined. One obvious fix to this is to ask all operator scopes to resolve the conflict and fail if more than one of them can do it but gives contradictory results. Having many scopes poses the question of how to encode them in a grammar, which we will want to do in the future. There is the naïve way of directly encoding the operator scopes, their associativity groups, and their symbols, but maybe we could represent them in a more sophisticated way that is more efficient to read and any contradictions are detected at construction time.
 
-I have pondered this for a significant amount of time in the past, without any concrete idea of this sophisticated implementation, but I am not convinced that such way does not exist. To avoid painting myself in a corner, and also having found no use cases for multiple operator scopes yet, I am inclining on making the operator scope a global option for Farkle 7.
+I have pondered this for a significant amount of time in the past, without any concrete idea of this sophisticated implementation, but I am not convinced that such way does not exist. To avoid painting myself in a corner, and also having found no use cases for multiple operator scopes yet, I am inclined on making the operator scope a global option for Farkle 7.
 
 ## Remove generic configuration methods
 
-In Farkle 6.3.0 the aforementioned configuration methods became generic to support using them on either typed or untyped builder objects. Besides being weird design-wise, it actually restricts certain scenarios and will not be repeated in Farkle 7.
+In Farkle 6.3.0 the aforementioned configuration methods became generic to support using them on either typed or untyped builder objects. Besides being weird design-wise, it actually restricts certain scenarios and will not be done again in Farkle 7.
 
-Instead we will make the extra step of creating two pairs of extension methods, for typed and untyped builder objects respectively. For F# we will have untyped configuration functions with a `U` suffix, just like the rest of the builder API.
+Instead we will take the extra step of creating two pairs of extension methods for typed and untyped builder objects respectively. For F# we will have untyped configuration functions with a `U` suffix, just like the rest of the builder API.
 
 ## Reconsider case-insensitivity by default
 
@@ -56,7 +56,7 @@ To allow using case-insensitivity when it is actually needed, specific regexes w
 
 Farkle 6 introduced an API to create regexes from string patterns. The language for these regexes was based on GOLD Parser's regex language and has several oddities compared to established regex dialects. Two (the only?) examples of this is that whitespace characters are ignored by default unless surrounded by quotes, and the special meaning of the `.` pattern[^any].
 
-For Farkle 7 the string regex language will change to not ignore whitespaces and change the meaning of `.` to "any character".
+For Farkle 7 the string regex language will change to not ignore whitespaces and change the meaning of `.` to actually "any character".
 
 ## New terminal kinds
 
@@ -66,7 +66,7 @@ The grammar file format for Farkle 7 specifies two concepts for terminals that d
 * The definition of noise symbols became more flexible to allow even regular terminals to be marked as noise, enabling the parser to ignore them if found in unexpected places, instead of failing with a syntax error.
     * This would especially benefit the special `NewLine` terminal. In previous versions, its presence anywhere in the grammar would mean that new lines in places not clearly specified would cause a syntax error, but we can configure it, either according to the "auto whitespace" option or with a dedicated "`NewLine` is noise" option.
 
-The same concepts will be supported for groups.
+The same concepts will be supported for groups. The respective attributes will be applied to the group's container symbol.
 
 ## Compatibility levels
 
@@ -113,7 +113,7 @@ The existing operators will be kept for compatibility reasons and be marked as o
 
 ## Separate symbol and grammar name
 
-In Farkle 6 the name of a grammar is always equal to the name of its start symbol. This results in either the grammar or the start symbol having a name that does not fit well (good luck with naming your grammar `Compilation Unit`). In Farkle 7 the name the grammar will be a global option and settable with a separate method from the start symbol's name. If the grammar name has not been set, it will still be equal to the name of the start symbol.
+In Farkle 6 the name of a grammar is always equal to the name of its start symbol. This results in either the grammar or the start symbol having a name that does not fit well (good luck with naming your grammar `Compilation Unit`). In Farkle 7 the name of the grammar will be a global option and settable with a separate method from the start symbol's name. If the grammar name has not been set, it will still be equal to the name of the start symbol.
 
 ## Better-defined symbol renaming
 
@@ -122,5 +122,11 @@ In Farkle 6 if you rename a symbol, you must only use its renamed instance throu
 ## Group nesting
 
 While nesting groups has always been supported in all of GOLD Parser's and Farkle's grammar formats, declaring groups that can be nested within each other has not been supported in Farkle's builder API. We will add APIs for it in Farkle 7.
+
+## Improve setting productions
+
+Because nonterminals with no productions are not allowed, the `Nonterminal.Create` and `SetProductions` methods enforced at compile-time that at least one production is created, by accepting one production and then a `params` array of productions. While it offers some safety, it is a bit weird and in Farkle 7 the methods will be changed to just a `params` array of productions (and an `IEnumerable`). Passing an empty array to these methods could be detected by an analyzer.
+
+Also the behavior of `SetProductions` will be changed to throw if called more than once on the same nonterminal, instead of ignoring subsequent calls.
 
 [^any]: In Farkle 6 `.` matches any character that is not matched by any other at the present DFA state. This effectively gives `.` lower precedence than other patterns, which is something unusual for regexes.

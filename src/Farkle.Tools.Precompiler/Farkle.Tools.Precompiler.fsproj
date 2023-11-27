@@ -20,6 +20,6 @@
     Furthermore, System.Text.Encodings.Web 4.7.0 has a security
     vulnerability that cannot be patched because MSBuild has the
     old version and I'm not gonna risk making it cry. -->
-    <PackageReference Include="System.Text.Json" VersionOverride="[4.7.0]" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
+    <PackageReference Include="System.Text.Json" VersionOverride="[8.0.0]" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
   </ItemGroup>
 </Project>

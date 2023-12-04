@@ -29,7 +29,7 @@ jobs:
           distribution: 'microsoft'
           java-version: '17'
       - name: Set up .NET SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
       - name: Restore .NET local tools

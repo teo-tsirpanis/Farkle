@@ -52,6 +52,9 @@ public sealed class Regex
         }
     }
 
+    private static bool HaveSameFlags(Regex left, Regex right) =>
+        (left._kindAndFlags & ~Kind.KindMask) == (right._kindAndFlags & ~Kind.KindMask);
+
     private Regex(Kind kind, object? data, int m = 1, int n = 1)
     {
         _kindAndFlags = kind;
@@ -373,7 +376,40 @@ public sealed class Regex
     /// <returns>A <see cref="Regex"/> that matches <paramref name="left"/>
     /// and then <paramref name="right"/> in sequence.</returns>
     /// <seealso cref="Join"/>
-    public static Regex operator +(Regex left, Regex right) => Join([left, right]);
+    public static Regex operator +(Regex left, Regex right)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(left);
+        ArgumentNullExceptionCompat.ThrowIfNull(right);
+
+        // Try to optimize for certain patterns.
+        // We can't safely do that if the regexes have different flags.
+        if (HaveSameFlags(left, right))
+        {
+            // Optimize a(bc) to abc.
+            // This is important to ensure the depth of the regex tree remains
+            // constant when the user combines many regexes with +.
+            bool isLeftConcat = left.IsConcat(out var leftConcat);
+            bool isRightConcat = right.IsConcat(out var rightConcat);
+            switch ((isLeftConcat, isRightConcat))
+            {
+                case (true, true):
+                    return Join([.. leftConcat, .. rightConcat]);
+                case (true, false):
+                    return Join([.. leftConcat, right]);
+                case (false, true):
+                    return Join([left, .. rightConcat]);
+                case (false, false):
+                    break;
+            }
+            // Optimize ("abc")("def") to "abcdef".
+            if (left.IsStringLiteral(out var leftString) &&
+                right.IsStringLiteral(out var rightString))
+            {
+                return Literal(leftString + rightString);
+            }
+        }
+        return Join([left, right]);
+    }
 
     /// <summary>
     /// Combines two <see cref="Regex"/> objects with an OR operator.
@@ -383,7 +419,40 @@ public sealed class Regex
     /// <returns>A <see cref="Regex"/> that matches either
     /// <paramref name="left"/> or <paramref name="right"/>.</returns>
     /// <seealso cref="Join"/>
-    public static Regex operator |(Regex left, Regex right) => Choice([left, right]);
+    public static Regex operator |(Regex left, Regex right)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(left);
+        ArgumentNullExceptionCompat.ThrowIfNull(right);
+
+        if (HaveSameFlags(left, right))
+        {
+            // Optimize a|(b|c) to a|b|c.
+            // This is important to ensure the depth of the regex tree remains
+            // constant when the user combines many regexes with |.
+            switch ((left.IsAlt(out var leftAlt), right.IsAlt(out var rightAlt)))
+            {
+                case (true, true):
+                    return Choice([.. leftAlt, .. rightAlt]);
+                case (true, false):
+                    return Choice([.. leftAlt, right]);
+                case (false, true):
+                    return Choice([left, .. rightAlt]);
+                case (false, false):
+                    break;
+            }
+            // Optimize [abc]|[def] to [abcdef].
+            // Farkle 6 also optimized patterns with AllButChars, but that would
+            // involve intersecting or taking the difference of the two sets, and
+            // it's not likely to occur either way.
+            if (left.IsChars(out var leftChars, out var leftIsInverted) &&
+                right.IsChars(out var rightChars, out var rightIsInverted) &&
+                !(leftIsInverted || rightIsInverted))
+            {
+                return OneOf([.. leftChars, .. rightChars]);
+            }
+        }
+        return Choice([left, right]);
+    }
 
     [Flags]
     internal enum Kind : byte

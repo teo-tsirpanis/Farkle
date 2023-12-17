@@ -35,10 +35,10 @@ internal static class Resources
     }
 
 #if NET8_0_OR_GREATER
-    private static readonly ConditionalWeakTable<string, CompositeFormat> _compositeFormatCache = new();
+    private static readonly ConditionalWeakTable<string, CompositeFormat> s_compositeFormatCache = new();
 
     public static CompositeFormat GetCompositeFormat(string x) =>
-        _compositeFormatCache.GetValue(x, CompositeFormat.Parse);
+        s_compositeFormatCache.GetValue(x, CompositeFormat.Parse);
 
     public static bool TryWrite<T>(Span<char> destination, IFormatProvider? formatProvider, string resourceKey, out int charsWritten, T arg)
     {
@@ -144,4 +144,10 @@ internal static class Resources
     public static string Parser_GrammarLrProblem => GetResourceString(nameof(Parser_GrammarLrProblem));
 
     public static string Parser_GrammarDfaProblem => GetResourceString(nameof(Parser_GrammarDfaProblem));
+
+    public static string Builder_RegexCharacterRangeReverseOrder => GetResourceString(nameof(Builder_RegexCharacterRangeReverseOrder));
+
+    public static string Builder_RegexLoopRangeReverseOrder => GetResourceString(nameof(Builder_RegexLoopRangeReverseOrder));
+
+    public static string Builder_RegexLoopMaxTooBig => GetResourceString(nameof(Builder_RegexLoopMaxTooBig));
 }

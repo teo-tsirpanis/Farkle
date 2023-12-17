@@ -72,4 +72,13 @@
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA της έχει διενέξεις ή δεν υπάρχει</value>
   </data>
+  <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
+    <value>Το εύρος χαρακτήρων είναι σε αντεστραμμένη σειρά.</value>
+  </data>
+  <data name="Builder_RegexLoopRangeReverseOrder" xml:space="preserve">
+    <value>Το εύρος φορών επανάληψης είναι σε αντεστραμμένη σειρά.</value>
+  </data>
+  <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
+    <value>Το άνω όριο επανάληψης δεν μπορεί να είναι μεγαλύτερο ή ίσο του 2147483647.</value>
+  </data>
 </root>

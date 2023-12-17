@@ -72,4 +72,13 @@
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
     <value>The grammar cannot be used for parsing because its DFA has conflicts or does not exist</value>
   </data>
+  <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
+    <value>Character range is in reverse order.</value>
+  </data>
+  <data name="Builder_RegexLoopRangeReverseOrder" xml:space="preserve">
+    <value>Loop count range is in reverse order.</value>
+  </data>
+  <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
+    <value>Loop upper bound cannot be greater or equal to 2147483647.</value>
+  </data>
 </root>

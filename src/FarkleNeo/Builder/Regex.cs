@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Farkle.Builder;
@@ -80,6 +81,85 @@ public sealed class Regex
             return this;
         return new(Kind.Loop, this, m, n);
     }
+
+    internal bool IsAny() => KindReal == Kind.Any;
+
+    internal bool IsStringLiteral([MaybeNullWhen(false)] out string s)
+    {
+        if (KindReal == Kind.StringLiteral)
+        {
+            s = (string)_data!;
+            return true;
+        }
+        s = null;
+        return false;
+    }
+
+    internal bool IsChars(out ImmutableArray<(char, char)> chars, out bool isInverted)
+    {
+        if (KindReal is Kind.Chars or Kind.AllButChars)
+        {
+            isInverted = KindReal == Kind.AllButChars;
+            chars = ImmutableCollectionsMarshal.AsImmutableArray(((char, char)[])_data!);
+            return true;
+        }
+        chars = [];
+        isInverted = false;
+        return false;
+    }
+
+    internal bool IsConcat(out ImmutableArray<Regex> regexes)
+    {
+        if (KindReal == Kind.Concat)
+        {
+            regexes = ImmutableCollectionsMarshal.AsImmutableArray((Regex[])_data!);
+            return true;
+        }
+        regexes = [];
+        return false;
+    }
+
+    internal bool IsAlt(out ImmutableArray<Regex> regexes)
+    {
+        if (KindReal == Kind.Alt)
+        {
+            regexes = ImmutableCollectionsMarshal.AsImmutableArray((Regex[])_data!);
+            return true;
+        }
+        regexes = [];
+        return false;
+    }
+
+    internal bool IsLoop([MaybeNullWhen(false)] out Regex regex, out int m, out int n)
+    {
+        m = M;
+        n = N;
+        if (KindReal == Kind.Loop)
+        {
+            regex = (Regex)_data!;
+            return true;
+        }
+        regex = null;
+        return false;
+    }
+
+    internal bool IsRegexString([MaybeNullWhen(false)] out RegexStringHolder regexString)
+    {
+        if (KindReal == Kind.RegexString)
+        {
+            regexString = (RegexStringHolder)_data!;
+            return true;
+        }
+        regexString = null;
+        return false;
+    }
+
+    internal bool AdjustCaseSensitivityFlag(bool existingIsCaseSensitive) => (_kindAndFlags & Kind.CaseMask) switch
+    {
+        Kind.CaseSensitive => true,
+        Kind.CaseInsensitive => false,
+        _ => existingIsCaseSensitive,
+    };
 
     /// <summary>
     /// A <see cref="Regex"/> that matches any character.

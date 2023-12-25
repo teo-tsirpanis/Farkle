@@ -172,7 +172,12 @@ public sealed class Regex
     /// <summary>
     /// A <see cref="Regex"/> that matches the empty string.
     /// </summary>
-    public static Regex Empty { get; } = Join([]);
+    public static Regex Empty { get; } = new(Kind.Concat, (Regex[])[]);
+
+    /// <summary>
+    /// A <see cref="Regex"/> that does not match anything.
+    /// </summary>
+    internal static Regex Void { get; } = new(Kind.Alt, (Regex[])[]);
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
@@ -185,6 +190,11 @@ public sealed class Regex
     public static Regex Literal(string s)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(s);
+
+        if (s.Length == 0)
+        {
+            return Empty;
+        }
         return new(Kind.StringLiteral, s);
     }
 
@@ -210,8 +220,15 @@ public sealed class Regex
     /// <param name="chars">An immutable array with characters.</param>
     public static Regex NotOneOf(ImmutableArray<char> chars)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(chars);
-        return new(Kind.AllButChars, chars.Select(c => (c, c)).ToArray());
+        char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
+
+        if (arrayUnsafe.Length == 0)
+        {
+            return Any;
+        }
+
+        return new(Kind.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <summary>
@@ -225,8 +242,14 @@ public sealed class Regex
     public static Regex NotOneOf(ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
         ValidateCharacterRange(arrayUnsafe.AsSpan());
+
+        if (arrayUnsafe.Length == 0)
+        {
+            return Any;
+        }
+
         return new(Kind.AllButChars, arrayUnsafe);
     }
 
@@ -236,8 +259,15 @@ public sealed class Regex
     /// <param name="chars">An immutable array with the characters.</param>
     public static Regex OneOf(ImmutableArray<char> chars)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(chars);
-        return new(Kind.Chars, chars.Select(c => (c, c)).ToArray());
+        char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
+
+        if (arrayUnsafe.Length == 0)
+        {
+            return Empty;
+        }
+
+        return new(Kind.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <summary>
@@ -250,8 +280,14 @@ public sealed class Regex
     public static Regex OneOf(ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
         ValidateCharacterRange(arrayUnsafe.AsSpan());
+
+        if (arrayUnsafe.Length == 0)
+        {
+            return Empty;
+        }
+
         return new(Kind.Chars, arrayUnsafe);
     }
 
@@ -262,10 +298,16 @@ public sealed class Regex
     public static Regex Join(ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));
         foreach (Regex regex in arrayUnsafe)
             ArgumentNullExceptionCompat.ThrowIfNull(regex, nameof(regexes));
-        return new(Kind.Concat, arrayUnsafe);
+
+        return arrayUnsafe switch
+        {
+            [] => Empty,
+            [var x] => x,
+            _ => new(Kind.Concat, arrayUnsafe),
+        };
     }
 
     /// <summary>
@@ -275,10 +317,16 @@ public sealed class Regex
     public static Regex Choice(ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe);
+        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));
         foreach (Regex regex in arrayUnsafe)
             ArgumentNullExceptionCompat.ThrowIfNull(regex, nameof(regexes));
-        return new(Kind.Alt, arrayUnsafe);
+
+        return arrayUnsafe switch
+        {
+            [] => Void,
+            [var x] => x,
+            _ => new(Kind.Alt, arrayUnsafe),
+        };
     }
 
     /// <summary>

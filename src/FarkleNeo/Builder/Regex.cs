@@ -257,6 +257,11 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches specific characters.
     /// </summary>
     /// <param name="chars">An immutable array with the characters.</param>
+    /// <remarks>
+    /// Passing an empty array to <paramref name="chars"/> will result in
+    /// a regex that cannot match anything. This is usually not desirable
+    /// and will result in a build-time warning.
+    /// </remarks>
     public static Regex OneOf(ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
@@ -264,7 +269,7 @@ public sealed class Regex
 
         if (arrayUnsafe.Length == 0)
         {
-            return Empty;
+            return Void;
         }
 
         return new(Kind.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
@@ -277,6 +282,11 @@ public sealed class Regex
     /// inclusive.</param>
     /// <exception cref="ArgumentException">A range's start is greater
     /// than its end.</exception>
+    /// <remarks>
+    /// Passing an empty array to <paramref name="ranges"/> will result in
+    /// a regex that cannot match anything. This is usually not desirable
+    /// and will result in a build-time warning.
+    /// </remarks>
     public static Regex OneOf(ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
@@ -285,7 +295,7 @@ public sealed class Regex
 
         if (arrayUnsafe.Length == 0)
         {
-            return Empty;
+            return Void;
         }
 
         return new(Kind.Chars, arrayUnsafe);
@@ -314,6 +324,11 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches either one of many regexes.
     /// </summary>
     /// <param name="regexes">An immutable array of regexes.</param>
+    /// <remarks>
+    /// Passing an empty array to <paramref name="regexes"/> will result in
+    /// a regex that cannot match anything. This is usually not desirable
+    /// and will result in a build-time warning.
+    /// </remarks>
     public static Regex Choice(ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);

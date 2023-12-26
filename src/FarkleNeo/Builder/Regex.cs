@@ -21,7 +21,8 @@ public sealed class Regex
         and the DFA builder were representing character sets as trees of
         individual characters, and the ranges were constructed at the end of
         the DFA building process. Farkle 7 will represent character sets as
-        ranges throughout the builder's pipeline.
+        ranges throughout the builder's pipeline (with the exception of case
+        desensitivizing).
 
     2.  Reducing upfront computations: In previous versions of Farkle, a regex
         like a{3,} would be expanded to aaaa* at construction time (or worse,
@@ -157,12 +158,34 @@ public sealed class Regex
         return false;
     }
 
-    internal bool AdjustCaseSensitivityFlag(bool existingIsCaseSensitive) => (_kindAndFlags & Kind.CaseMask) switch
+    /// <summary>
+    /// Effects the case sensitivity override of this <see cref="Regex"/>, after considering
+    /// the state of the DFA builder.
+    /// </summary>
+    /// <param name="existingIsCaseSensitive">The existing case sensitivity setting at the time the
+    /// DFA builder encountered this regex.</param>
+    /// <param name="isCaseOverridden">Whether the case sensitivity has been overriden by a parent
+    /// regex at the same level. This option allows overriding the case sensitivity of a string
+    /// regex. If the parameter's value is <see langword="true"/>, the case sensitivity settings of this
+    /// regex will not be considered.</param>
+    /// <returns>Whether the regex and its children should be matched as case sensitive.</returns>
+    internal bool AdjustCaseSensitivityFlag(bool existingIsCaseSensitive, ref bool isCaseOverridden)
     {
-        Kind.CaseSensitive => true,
-        Kind.CaseInsensitive => false,
-        _ => existingIsCaseSensitive,
-    };
+        if (!isCaseOverridden)
+        {
+            switch (_kindAndFlags & Kind.CaseMask)
+            {
+                case Kind.CaseSensitive:
+                    isCaseOverridden = true;
+                    return true;
+                case Kind.CaseInsensitive:
+                    isCaseOverridden = true;
+                    return false;
+            }
+        }
+
+        return existingIsCaseSensitive;
+    }
 
     /// <summary>
     /// A <see cref="Regex"/> that matches any character.

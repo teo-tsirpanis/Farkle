@@ -26,4 +26,20 @@ public sealed class BuilderOptions
     /// that is proportional to the complexity of the input regexes.
     /// </remarks>
     public int MaxTokenizerStates { get; set; } = -1;
+
+    internal static int GetMaxTokenizerStates(int maxTokenizerStates, int numLeaves)
+    {
+        if (maxTokenizerStates > 0)
+        {
+            return maxTokenizerStates;
+        }
+
+        long limit = (long)numLeaves * 16;
+        if (limit > int.MaxValue)
+        {
+            return int.MaxValue;
+        }
+
+        return Math.Min(256, (int)limit);
+    }
 }

@@ -27,9 +27,19 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private readonly CancellationToken CancellationToken { get; }
 
-    private const int TerminalPriority = 1;
+    // Priorities. The lower the number, the higher the priority.
 
+    /// <summary>
+    /// The priority number for fixed-size regexes that do
+    /// not directly or indirectly contain a star operator.
+    /// </summary>
     private const int LiteralPriority = 0;
+
+    /// <summary>
+    /// The priority number for regexes that do not fall into
+    /// any other category.
+    /// </summary>
+    private const int TerminalPriority = 1;
 
     private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out bool isInverted)
     {
@@ -45,6 +55,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         isInverted = false;
         return false;
     }
+
+    private static TChar PreviousChar(TChar c) => (TChar)(object)((char)(object)c - 1);
+
+    private static TChar NextChar(TChar c) => (TChar)(object)((char)(object)c + 1);
 
     public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, CancellationToken cancellationToken = default)
     {
@@ -62,17 +76,314 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// </summary>
     /// <param name="regexes">A collection of tuples of <see cref="Regex"/>es,
     /// their accept <see cref="TokenSymbolHandle"/> and the symbol's name.</param>
-    /// <param name="writer">The <see cref="DfaWriter{TChar}"/> to write the DFA to.</param>
     /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
     /// <param name="prioritizeFixedLengthSymbols">Whether symbols with fixed-length regexes
     /// will be prioritized in cases of conflicts.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static void Build(IReadOnlyCollection<TerminalSymbol> regexes, DfaWriter<TChar> writer, bool caseSensitive = false,
+    public static DfaWriter<TChar> Build(IReadOnlyCollection<TerminalSymbol> regexes, bool caseSensitive = false,
         bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, CancellationToken cancellationToken = default)
     {
         var @this = new DfaBuild<TChar>(regexes, cancellationToken);
         var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
+        maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
+        var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
+        return WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
+    }
+
+    private static TokenSymbolHandle? FindDominantTokenSymbolHandle(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols)
+    {
+        // This algorithm mimics what Farkle 6 does:
+        // 1. Account for the trivial cases of zero or one accept symbols.
+        // 2. Sort the accept symbols by priority.
+        // 3. Lock on the first list item and loop over the subsequent list items.
+        //    * If you see the same symbol next to the first one in the list, ignore it.
+        //    * If you see a different symbol with a lower priority, it means that the
+        //      first symbol has prevailed. Return it.
+        //    * If you see a different symbol with the same priority, goto step 4.
+        // 4. Return with a failure to resolve the conflict.
+        switch (acceptSymbols)
+        {
+            case []: return null;
+            case [(_, var symbol)]: return symbol;
+        }
+
+        acceptSymbols.Sort((x1, x2) => x1.Priority.CompareTo(x2.Priority));
+
+        var (firstPriority, firstSymbol)= acceptSymbols[0];
+
+        for (int i = 1; i < acceptSymbols.Count; i++)
+        {
+            if (firstSymbol != acceptSymbols[i].Symbol)
+            {
+                if (firstPriority < acceptSymbols[i].Priority)
+                {
+                    return firstSymbol;
+                }
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    private static DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
+    {
+        DfaWriter<TChar> dfaWriter = new(states.Count);
+
+        foreach (var state in states)
+        {
+            foreach (var (start, end, target) in state.Transitions)
+            {
+                if (target is { } t)
+                {
+                    dfaWriter.AddEdge(start, end, t);
+                }
+                else
+                {
+                    dfaWriter.AddEdgeFail(start, end);
+                }
+            }
+
+            if (state.DefaultTransition is { } dt)
+            {
+                dfaWriter.SetDefaultTransition(dt);
+            }
+
+            if (prioritizeFixedLengthSymbols && FindDominantTokenSymbolHandle(state.AcceptSymbols) is { } sym)
+            {
+                dfaWriter.AddAccept(sym);
+            }
+            else
+            {
+                // Returning null means either:
+                // 1. There are no accept symbols so we add nothing.
+                // 2. There are multiple accept symbols so we add them all.
+                foreach (var (_, symbol) in state.AcceptSymbols)
+                {
+                    dfaWriter.AddAccept(symbol);
+                }
+            }
+
+            dfaWriter.FinishState();
+        }
+
+        return dfaWriter;
+    }
+
+    private List<DfaState> BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
+    {
+        Dictionary<BitSet, DfaState> states = [];
+        List<DfaState> stateList = [];
+        Stack<int> unmarkedStates = [];
+
+        List<(TChar, IntervalType, int)> stateIntervals = [];
+        BitArrayNeo presentLeaves = new(leaves.Count);
+        List<BitSet> followPosUnionCache = [];
+
+        _ = GetOrAddState(rootStateId);
+        while (unmarkedStates.TryPop(out int stateIdx))
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+
+            if (maxStates == stateList.Count)
+            {
+                // TODO: Emit a non-throwing error.
+                throw new InvalidOperationException("DFA state limit reached.");
+            }
+
+            DfaState S = stateList[stateIdx];
+
+            stateIntervals.Clear();
+            presentLeaves.SetAll(false);
+
+            bool emitDefaultTransition = false;
+            int invertedCount = 0;
+            foreach (int i in S.StateId)
+            {
+                switch (leaves[i])
+                {
+                    case RegexLeaf.Any:
+                        presentLeaves[i] = true;
+                        emitDefaultTransition = true;
+                        break;
+                    case RegexLeaf.EndWithPriority { LeafIndex: int leafIndex, Priority: int priority }:
+                        TokenSymbolHandle symbol = ((RegexLeaf.End)leaves[leafIndex]).Symbol;
+                        S.AcceptSymbols.Add((priority, symbol));
+                        break;
+                    case RegexLeaf.End:
+                        throw new InvalidOperationException("Internal error: direct reference to end leaf.");
+                    case RegexLeaf.Chars x:
+                        if (x.IsInverted)
+                        {
+                            presentLeaves[i] = true;
+                            emitDefaultTransition = true;
+                            invertedCount++;
+                        }
+                        foreach (var (start, end) in x.Ranges)
+                        {
+                            stateIntervals.Add((start, x.IsInverted ? IntervalType.InvertedStart : IntervalType.Start, i));
+                            stateIntervals.Add((end, x.IsInverted ? IntervalType.InvertedEnd : IntervalType.End, i));
+                        }
+                        break;
+                }
+            }
+
+            stateIntervals.Sort();
+
+            TChar? previousChar = null;
+            bool previousIsStart = false;
+            int depth = 0;
+            int invertedDepth = 0;
+
+            foreach (var (c, type, leaf) in stateIntervals)
+            {
+                bool isStart = type is IntervalType.Start or IntervalType.InvertedStart;
+                // We first see if we should attempt emitting a transition, which is if:
+                // 1. We are inside a range (this implies that we have seen a character before).
+                // 2. Either:
+                //    a. The current character is different than the one seen in the previous iteration.
+                //    b. The current character is the same with the one seen in the previous iteration,
+                //    but we currently are at the end of a range, while we were at the start of a range
+                //    in the previous iteration.
+                //        The reason for this is to account for single-character ranges, such as [a-a].
+                bool isInsideRange = depth > 0;
+                bool characterChanged = previousChar is { } c0 && c0.CompareTo(c) < 0;
+                bool intervalTypeChanged = previousIsStart && !isStart;
+                bool shouldCheckForTransition = isInsideRange && (characterChanged || intervalTypeChanged);
+                if (shouldCheckForTransition)
+                {
+                    // Implied by isInsideRange. If the depth is non-zero,
+                    // we have surely seen at least one character before.
+                    Debug.Assert(previousChar is not null);
+                    int? transitionState = GetOrAddState(FollowLeaves(presentLeaves));
+
+                    bool shouldEmitTransition;
+                    if (transitionState is not null)
+                    {
+                        // If following this transition would lead to another state, we must always emit it.
+                        shouldEmitTransition = true;
+                    }
+                    else
+                    {
+                        // Following this transition would cause a failure.
+                        // We must explicitly emit a failure if all the following rules apply:
+                        // 1. This state has at least one inverted leaf.
+                        // 2. We are inside the character ranges of all these leaves.
+                        // If we are inside all the inverted leaves, and also inside some regular
+                        // leaves, we still have to emit a failure, because if transitionState is
+                        // null, it means that we could not move forward even with the regular leaves.
+                        shouldEmitTransition = invertedCount > 0 && invertedDepth == invertedCount;
+                    }
+
+                    if (shouldEmitTransition)
+                    {
+                        // Adjust the transition range to account for ranges inside other ranges.
+                        // If we are inside some range, and saw another range start, the transition
+                        // must end at the previous character than the current one.
+                        // Similarly, if a range has ended just before, the transition must start
+                        // at the next character than the previous one.
+                        // For example, if we have the ranges [0-9] and [2-5], we must emit transitions
+                        // for [0-1], [2-5] and [6-9] (the first and last should point to the same state).
+                        TChar transitionRangeStart = previousChar.GetValueOrDefault();
+                        bool previousIsEnd = !previousIsStart;
+                        if (previousIsEnd)
+                        {
+                            // This cannot overflow because previousChar cannot take the maximum
+                            // character value and this path be entered at the same time.
+                            // A range that is before the last one cannot end at the maximum
+                            // character value.
+                            transitionRangeStart = NextChar(transitionRangeStart);
+                        }
+                        TChar transitionRangeEnd = c;
+                        if (isStart)
+                        {
+                            // This cannot underflow because to enter this path, a range must
+                            // have already started, and only the first item in the list can
+                            // have a NUL character.
+                            transitionRangeEnd = PreviousChar(transitionRangeEnd);
+                        }
+
+                        S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
+                    }
+                }
+
+                // Change presentLeaves.
+                // The idea is that when a range starts/ends, we add/remove its leaf to/from presentLeaves.
+                // Conversely, because inverted leaves are present from the start,
+                // when an inverted range starts/ends, we remove/add its leaf from/to presentLeaves.
+                // Because we have canonicalized the ranges of each leaf to not overlap,
+                // we don't add a leaf to presentLeaves twice, and this essentially means that the value
+                // of presentLeaves[leaf] gets flipped when a range starts or ends.
+                bool switchValue;
+                switch (type)
+                {
+                    case IntervalType.Start:
+                        depth++;
+                        switchValue = true;
+                        break;
+                    case IntervalType.InvertedStart:
+                        depth++;
+                        invertedDepth++;
+                        switchValue = false;
+                        break;
+                    case IntervalType.End:
+                        depth--;
+                        switchValue = false;
+                        break;
+                    default:
+                        Debug.Assert(type is IntervalType.InvertedEnd);
+                        depth--;
+                        invertedDepth--;
+                        switchValue = true;
+                        break;
+                }
+                Debug.Assert(presentLeaves[leaf] != switchValue);
+                presentLeaves[leaf] = switchValue;
+                previousChar = c;
+                previousIsStart = isStart;
+            }
+
+            Debug.Assert(depth is 0);
+            if (emitDefaultTransition)
+            {
+                // At the end of the interval loop, presentLeaves should contain
+                // the indices for the any and inverted character leaves.
+                S.DefaultTransition = GetOrAddState(FollowLeaves(presentLeaves));
+            }
+        }
+
+        return stateList;
+
+        BitSet FollowLeaves(BitArrayNeo presentLeaves)
+        {
+            followPosUnionCache.Clear();
+            foreach (var i in presentLeaves)
+            {
+                followPosUnionCache.Add(followPos[i]);
+            }
+            return BitSet.UnionMany(followPosUnionCache);
+        }
+
+        int? GetOrAddState(BitSet stateId)
+        {
+            if (stateId.IsEmpty)
+            {
+                return null;
+            }
+
+            if (states.TryGetValue(stateId, out var state))
+            {
+                return state.Index;
+            }
+
+            int index = stateList.Count;
+            state = new DfaState(stateId, index);
+            unmarkedStates.Push(index);
+            stateList.Add(state);
+            states.Add(stateId, state);
+            return index;
+        }
     }
 
     private static Regex LowerRegex(Regex regex, bool caseSensitive, Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache)
@@ -149,12 +460,15 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // We detect that by checking if its LastPos is empty, which would make
             // it unable to flow to the end leaf.
             bool isVoid = true;
+            int endLeafIndex = AddLeaf(new RegexLeaf.End(symbol));
+            int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             foreach (var r in regexes)
             {
                 var visitResult = Visit(in this, r, caseSensitive);
                 rootFirstPos = BitSet.Union(in rootFirstPos, in visitResult.FirstPos);
-                // TODO: Avoid adding an end leaf for the same symbol many times.
-                int leafIndex = AddLeaf(new RegexLeaf.End(symbol, visitResult.HasStar ? TerminalPriority : LiteralPriority));
+                int leafIndex = visitResult.HasStar
+                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.EndWithPriority(endLeafIndex, TerminalPriority))
+                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.EndWithPriority(endLeafIndex, LiteralPriority));
                 LinkFollowPos(in visitResult.LastPos, BitSet.Singleton(leafIndex));
                 hasVoid |= visitResult.HasVoid;
                 isVoid &= !visitResult.LastPos.IsEmpty;
@@ -279,6 +593,19 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         }
     }
 
+    private sealed class DfaState(BitSet stateId, int index)
+    {
+        public BitSet StateId { get; } = stateId;
+
+        public int Index { get; } = index;
+
+        public List<(TChar, TChar, int?)> Transitions { get; } = [];
+
+        public int? DefaultTransition { get; set; }
+
+        public List<(int Priority, TokenSymbolHandle)> AcceptSymbols { get; } = [];
+    }
+
     private abstract class RegexLeaf
     {
         public sealed class Any : RegexLeaf
@@ -295,9 +622,21 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             public bool IsInverted { get; } = isInverted;
         }
 
-        public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf
+        public sealed class End(TokenSymbolHandle symbol) : RegexLeaf
         {
             public TokenSymbolHandle Symbol { get; } = symbol;
+        }
+
+        /// <summary>
+        /// A pseudo-leaf that points to an <see cref="End"/> leaf and contains priority information.
+        /// </summary>
+        /// <remarks>
+        /// This is used to ensure that there is one end leaf per symbol,
+        /// in face of its regex being an alt of regexes with varying priorities.
+        /// </remarks>
+        public sealed class EndWithPriority(int leafIndex, int priority) : RegexLeaf
+        {
+            public int LeafIndex { get; } = leafIndex;
 
             public int Priority { get; } = priority;
         }
@@ -380,5 +719,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// this characteristic.
         /// </remarks>
         HasVoid = 2
+    }
+
+    private enum IntervalType : byte
+    {
+        // It is important that the Start values are before the End values.
+        Start,
+        InvertedStart,
+        InvertedEnd,
+        End
     }
 }

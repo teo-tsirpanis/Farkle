@@ -3,6 +3,7 @@
 
 using Farkle.Buffers;
 using System.Buffers;
+using System.Collections.Immutable;
 
 namespace Farkle.Grammars.Writers;
 
@@ -180,5 +181,12 @@ internal sealed class GrammarWriter
         }
 
         tablesBuffer.WriteTo(ref writer);
+    }
+
+    public ImmutableArray<byte> ToImmutableArray()
+    {
+        using var buffer = new PooledSegmentBufferWriter<byte>();
+        WriteTo(buffer);
+        return buffer.ToImmutableArray();
     }
 }

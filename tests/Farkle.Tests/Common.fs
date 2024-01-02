@@ -14,7 +14,6 @@ open Farkle.Grammars.Writers
 open Farkle.Parser.Semantics
 open System
 open System.IO
-open System.Reflection
 
 let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> with
     member _.Transform (_, symbol, _) = symbol.Value
@@ -54,7 +53,7 @@ let buildSimpleRegexMatcher caseSensitive regexes =
 
 // It guarantees to work regardless of current directory.
 // The resources folder is copied alongside with the executable.
-let resourcesPath = Assembly.GetExecutingAssembly().Location |> Path.GetDirectoryName
+let resourcesPath = AppContext.BaseDirectory |> Path.GetDirectoryName
 
 let allEGTFiles =
     Directory.GetFiles(resourcesPath, "*.egt")
@@ -78,7 +77,7 @@ let loadCharParser egtFile =
 let listOfSpan (span: ReadOnlySpan<_>) =
     let mutable list = []
     for i = span.Length - 1 downto 0 do
-        list <- span.[i] :: list
+        list <- span[i] :: list
     list
 
 let expectIsParseSuccess result msg =

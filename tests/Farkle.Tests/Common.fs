@@ -6,31 +6,51 @@
 [<AutoOpen>]
 module Farkle.Tests.Common
 
+open Expecto
 open Farkle
+open Farkle.Builder.StateMachines
 open Farkle.Grammars
+open Farkle.Grammars.Writers
 open Farkle.Parser.Semantics
-open System.Collections.Immutable
 open System
 open System.IO
 open System.Reflection
 
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
-/// A very simple function to check if a string is recognized by a DFA.
-/// We don't need a full-blown tokenizer here.
-let matchDFAToString (states: ImmutableArray<DFAState>) str =
-    let rec impl currState idx =
-        if idx = String.length str then
-            currState.AcceptSymbol
-        else
-            let newState =
-                match currState.Edges.TryFind str.[idx] with
-                | ValueSome s -> s
-                | ValueNone -> currState.AnythingElse
-            match newState with
-            | Some s -> impl states.[int s] (idx + 1)
-            | None -> None
-    impl states.[0] 0
-#endif
+let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> with
+    member _.Transform (_, symbol, _) = symbol.Value
+    member _.Fuse (_, _, members) = members[0]
+}
+
+/// Builds a grammar that matches either of the given regexes.
+/// Until the LALR builder gets implemented, this function manually
+/// constructs the LR state machine.
+let buildSimpleRegexMatcher caseSensitive regexes =
+    let count = List.length regexes
+    let gw = GrammarWriter()
+    let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
+    let rootNonterminal = gw.AddNonterminal(gw.GetOrAddString("S"), NonterminalAttributes.None, count)
+    let productions = Array.init count (fun _ -> gw.AddProduction(1))
+    Array.iter (TokenSymbolHandle.op_Implicit >> gw.AddProductionMember) tokenSymbols
+    do
+        // We need the initial state, the accepting state, and one state
+        // for each token symbol to reduce the corresponding production.
+        let lr = LrWriter(count + 2)
+        Array.iteri (fun i x -> lr.AddShift(x, i + 2)) tokenSymbols
+        lr.AddGoto(rootNonterminal, 1)
+        lr.FinishState()
+        lr.AddEofAccept()
+        lr.FinishState()
+        Array.iter2 (fun t p -> lr.AddReduce(t, p); lr.FinishState()) tokenSymbols productions
+        gw.AddStateMachine lr
+    (regexes, tokenSymbols)
+    ||> Seq.map2 (fun r t -> struct (r, t, ""))
+    |> Array.ofSeq
+    |> fun x -> DfaBuild<char>.Build(x, caseSensitive)
+    |> gw.AddStateMachine
+    gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
+    gw.ToImmutableArray()
+    |> Grammar.ofBytes
+    |> CharParser.create terminalIndexSemanticProvider
 
 // It guarantees to work regardless of current directory.
 // The resources folder is copied alongside with the executable.
@@ -60,3 +80,9 @@ let listOfSpan (span: ReadOnlySpan<_>) =
     for i = span.Length - 1 downto 0 do
         list <- span.[i] :: list
     list
+
+let expectIsParseSuccess result msg =
+    Expect.isOk (ParserResult.toResult result) msg
+
+let expectWantParseSuccess result msg =
+    Expect.wantOk (ParserResult.toResult result) msg

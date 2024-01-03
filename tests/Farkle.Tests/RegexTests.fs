@@ -89,7 +89,7 @@ let tests = testList "Regex tests" [
         "Ǆǅǆ"
         |> String.iter (fun c ->
             dfa.[0].Edges
-            |> Seq.exists (fun x -> x.KeyFrom = c && x.KeyTo = c)
+            |> Seq.exists (fun x -> x.KeyFrom <= c && c <= x.KeyTo)
             |> Flip.Expect.isTrue $"%c{c} is not recognized")
     }
 

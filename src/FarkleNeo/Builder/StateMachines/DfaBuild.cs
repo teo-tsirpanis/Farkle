@@ -203,10 +203,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 switch (leaves[i])
                 {
-                    case RegexLeaf.Any:
-                        presentLeaves[i] = true;
-                        emitDefaultTransition = true;
-                        break;
                     case RegexLeaf.EndWithPriority { LeafIndex: int leafIndex, Priority: int priority }:
                         TokenSymbolHandle symbol = ((RegexLeaf.End)leaves[leafIndex]).Symbol;
                         S.AcceptSymbols.Add((priority, symbol));
@@ -250,34 +246,31 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 bool isInsideRange = depth > 0;
                 bool characterChanged = previousChar is { } c0 && c0.CompareTo(c) < 0;
                 bool intervalTypeChanged = previousIsStart && !isStart;
-                bool shouldCheckForTransition = isInsideRange && (characterChanged || intervalTypeChanged);
-                if (shouldCheckForTransition)
+                bool shouldEmitTransition = isInsideRange && (characterChanged || intervalTypeChanged);
+                if (shouldEmitTransition)
                 {
                     // Implied by isInsideRange. If the depth is non-zero,
                     // we have surely seen at least one character before.
                     Debug.Assert(previousChar is not null);
-                    int? transitionState = GetOrAddState(FollowLeaves(presentLeaves));
 
-                    bool shouldEmitTransition;
-                    if (transitionState is not null)
+                    // We must emit an explicit failure if we are inside all the inverted leaves
+                    // and only these.
+                    // The presence of Any leaves will cause the above to never hold, because
+                    // Any leaves are inverted Chars leaves with no ranges, which means that
+                    // some inverted leaves will never be entered.
+                    bool insideAllInvertedRanges = invertedDepth == invertedCount;
+                    bool insideOnlyInvertedRanges = invertedDepth == depth;
+                    bool shouldEmitFailure = insideAllInvertedRanges && insideOnlyInvertedRanges;
+                    if (shouldEmitFailure)
                     {
-                        // If following this transition would lead to another state, we must always emit it.
-                        shouldEmitTransition = true;
+                        // We are inside all the inverted leaves, and also inside some regular leaves.
+                        // We must emit a failure.
+                        S.Transitions.Add((previousChar.GetValueOrDefault(), c, null));
                     }
                     else
                     {
-                        // Following this transition would cause a failure.
-                        // We must explicitly emit a failure if all the following rules apply:
-                        // 1. This state has at least one inverted leaf.
-                        // 2. We are inside the character ranges of all these leaves.
-                        // If we are inside all the inverted leaves, and also inside some regular
-                        // leaves, we still have to emit a failure, because if transitionState is
-                        // null, it means that we could not move forward even with the regular leaves.
-                        shouldEmitTransition = invertedCount > 0 && invertedDepth == invertedCount;
-                    }
+                        int transitionState = GetOrAddState(FollowLeaves(presentLeaves));
 
-                    if (shouldEmitTransition)
-                    {
                         // Adjust the transition range to account for ranges inside other ranges.
                         // If we are inside some range, and saw another range start, the transition
                         // must end at the previous character than the current one.
@@ -304,6 +297,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                             transitionRangeEnd = PreviousChar(transitionRangeEnd);
                         }
 
+                        Debug.Assert(transitionRangeStart.CompareTo(transitionRangeEnd) <= 0);
                         S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
                     }
                 }
@@ -365,13 +359,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             return BitSet.UnionMany(followPosUnionCache);
         }
 
-        int? GetOrAddState(BitSet stateId)
+        int GetOrAddState(BitSet stateId)
         {
-            if (stateId.IsEmpty)
-            {
-                return null;
-            }
-
             if (states.TryGetValue(stateId, out var state))
             {
                 return state.Index;
@@ -561,7 +550,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (regex.IsAny())
             {
-                return VisitResult.Singleton(AddLeaf(RegexLeaf.Any.Instance));
+                return VisitResult.Singleton(AddLeaf(RegexLeaf.Any));
             }
 
             if (IsRegexChars(regex, out var chars, out bool isInverted))
@@ -608,12 +597,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private abstract class RegexLeaf
     {
-        public sealed class Any : RegexLeaf
-        {
-            private Any() { }
-
-            public static Any Instance { get; } = new();
-        }
+        public static RegexLeaf Any { get; } = new Chars([], true);
 
         public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, bool isInverted) : RegexLeaf
         {

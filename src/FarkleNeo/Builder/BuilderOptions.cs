@@ -40,6 +40,6 @@ public sealed class BuilderOptions
             return int.MaxValue;
         }
 
-        return Math.Min(256, (int)limit);
+        return Math.Max(256, (int)limit);
     }
 }

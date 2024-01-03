@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+
 namespace Farkle.Builder;
 
 /// <summary>
@@ -18,6 +20,7 @@ internal abstract class RegexStringHolder
 
     public static RegexStringHolder Create(string pattern) => new Default(pattern);
 
+    [DebuggerDisplay("{Pattern,nq}")]
     private sealed class Default(string pattern) : RegexStringHolder
     {
         public string Pattern { get; } = pattern;

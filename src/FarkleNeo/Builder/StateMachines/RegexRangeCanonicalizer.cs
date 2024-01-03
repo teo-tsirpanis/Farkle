@@ -11,9 +11,9 @@ internal static class RegexRangeCanonicalizer
     /// <summary>
     /// Checks if the content of <paramref name="ranges"/> is sorted, non-adjacent and non-overlapping.
     /// </summary>
-    public static bool IsCanonical<TChar>(ReadOnlySpan<(TChar, TChar)> ranges) where TChar : unmanaged, IComparable<TChar>
+    public static bool IsCanonical(ReadOnlySpan<(char, char)> ranges)
     {
-        TChar previousEnd;
+        char previousEnd;
         switch (ranges)
         {
             case []: return true;
@@ -25,8 +25,8 @@ internal static class RegexRangeCanonicalizer
         foreach (var (start, end) in ranges[1..])
         {
             // This is checked at the time of the regex's construction.
-            Debug.Assert(start.CompareTo(end) <= 0);
-            if (start.CompareTo(previousEnd) <= 0)
+            Debug.Assert(start <= end);
+            if (start - previousEnd <= 1)
             {
                 return false;
             }

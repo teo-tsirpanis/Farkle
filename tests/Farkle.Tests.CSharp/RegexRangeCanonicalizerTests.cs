@@ -19,17 +19,19 @@ internal class RegexRangeCanonicalizerTests
         return result;
     }
 
-    [TestCase(new int[] { }, true)]
-    [TestCase(new[] { 1, 1 }, true)]
-    [TestCase(new[] { 1, 2 }, true)]
-    [TestCase(new[] { 1, 2, 3, 4 }, true)]
-    [TestCase(new[] { 1, 2, 2, 3 }, false)]
-    [TestCase(new[] { 1, 2, 3, 3 }, true)]
-    [TestCase(new[] { 1, 4, 2, 3 }, false)]
-    public void TestIsCanonical(int[] data, bool expectedResult)
+    [TestCase("", true)]
+    [TestCase("11", true)]
+    [TestCase("12", true)]
+    [TestCase("1234", false)]
+    [TestCase("1245", true)]
+    [TestCase("1223", false)]
+    [TestCase("1233", false)]
+    [TestCase("1244", true)]
+    [TestCase("1423", false)]
+    public void TestIsCanonical(string data, bool expectedResult)
     {
-        var pairs = MakePairs<int>(data.AsSpan());
-        Assert.That(RegexRangeCanonicalizer.IsCanonical<int>(pairs.AsSpan()), Is.EqualTo(expectedResult));
+        var pairs = MakePairs(data.AsSpan());
+        Assert.That(RegexRangeCanonicalizer.IsCanonical(pairs.AsSpan()), Is.EqualTo(expectedResult));
     }
 
     [TestCase("", true, "")]
@@ -41,6 +43,7 @@ internal class RegexRangeCanonicalizerTests
     [TestCase("az", false, "AZaz")]
     [TestCase("aaeeiioouu", false, "AAEEIIOOUUaaeeiioouu")]
     [TestCase("aabbeeiioouu", false, "ABEEIIOOUUabeeiioouu")]
+    [TestCase("aabbcc", true, "ac")]
     public void TestCanonicalize(string data, bool caseSensitive, string expectedResult)
     {
         var pairs = MakePairs(data.AsSpan());

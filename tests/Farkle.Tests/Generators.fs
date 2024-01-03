@@ -63,7 +63,7 @@ let regexGen =
             | 0 -> return! Gen.map2 (+) gen gen
             | 1 -> return! Gen.map2 (|||) gen gen
             | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
-            | _ -> return! Gen.map Regex.star gen
+            | _ -> return! Gen.map Regex.plus gen
     }
     Gen.sized impl
 

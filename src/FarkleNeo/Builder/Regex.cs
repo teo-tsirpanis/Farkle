@@ -11,6 +11,7 @@ namespace Farkle.Builder;
 /// <summary>
 /// Represents a pattern that must be matched by terminals in a grammar.
 /// </summary>
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
 public sealed class Regex
 {
     /*
@@ -32,14 +33,19 @@ public sealed class Regex
         when the precompiler is being used.
     */
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly Kind _kindAndFlags;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
     private readonly object? _data;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private Kind KindReal => _kindAndFlags & Kind.KindMask;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private int M { get; }
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private int N { get; }
 
     private static void ValidateCharacterRange(ReadOnlySpan<(char, char)> ranges)
@@ -78,6 +84,41 @@ public sealed class Regex
         }
         Debug.Assert(M >= 0);
         Debug.Assert(N >= M);
+    }
+    
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private string DebuggerDisplay
+    {
+        get
+        {
+            string caseString = (_kindAndFlags & Kind.CaseMask) switch
+            {
+                Kind.CaseSensitive => " CaseSensitive",
+                Kind.CaseInsensitive => " CaseInsensitive",
+                _ => "",
+            };
+            string dataString = KindReal switch
+            {
+                Kind.Any =>
+                    "Any",
+                Kind.StringLiteral =>
+                    $"\"{_data}\"",
+                Kind.Chars =>
+                    $"Chars[{(((char, char)[])_data!).Length}]",
+                Kind.AllButChars =>
+                    $"AllButChars[{(((char, char)[])_data!).Length}]",
+                Kind.Concat =>
+                    $"Concat[{((Regex[])_data!).Length}]",
+                Kind.Alt =>
+                    $"Alt[{((Regex[])_data!).Length}]",
+                Kind.Loop =>
+                    $"{((Regex)_data!).DebuggerDisplay}{{{M},{N}}}",
+                Kind.RegexString =>
+                    $"\"{_data}\"",
+                _ => ""
+            };
+            return $"{dataString}{caseString}";
+        }
     }
 
     private Regex Loop(int m, int n)

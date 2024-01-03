@@ -39,7 +39,7 @@ let buildSimpleRegexMatcher caseSensitive regexes =
         lr.FinishState()
         lr.AddEofAccept()
         lr.FinishState()
-        Array.iter2 (fun t p -> lr.AddReduce(t, p); lr.FinishState()) tokenSymbols productions
+        Array.iter (fun p -> lr.AddEofReduce(p); lr.FinishState()) productions
         gw.AddStateMachine lr
     (regexes, tokenSymbols)
     ||> Seq.map2 (fun r t -> struct (r, t, ""))

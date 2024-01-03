@@ -67,8 +67,9 @@ public sealed class Regex
         {
             case (Kind.Any, null):
             case (Kind.StringLiteral, string):
-            case (Kind.Chars | Kind.AllButChars, (char, char)[]):
-            case (Kind.Concat | Kind.Alt, Regex[]):
+            case (Kind.Chars or Kind.AllButChars, (char, char)[]):
+            case (Kind.Concat or Kind.Alt, Regex[]):
+            case (Kind.Loop, Regex):
             case (Kind.RegexString, RegexStringHolder):
                 break;
             default:

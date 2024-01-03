@@ -56,9 +56,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return false;
     }
 
-    private static TChar PreviousChar(TChar c) => (TChar)(object)((char)(object)c - 1);
+    private static TChar PreviousChar(TChar c) => (TChar)(object)(char)((char)(object)c - 1);
 
-    private static TChar NextChar(TChar c) => (TChar)(object)((char)(object)c + 1);
+    private static TChar NextChar(TChar c) => (TChar)(object)(char)((char)(object)c + 1);
 
     public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, CancellationToken cancellationToken = default)
     {

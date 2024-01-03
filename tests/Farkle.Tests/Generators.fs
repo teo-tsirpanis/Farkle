@@ -98,18 +98,19 @@ let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexR
         failwith "Impossible"
 
 let genRegexString regex =
+    let containsInRanges xs x = xs |> Seq.exists (fun struct(a, b) -> a <= x && x <= b)
     let rec impl (sb: StringBuilder) regex = gen {
         match regex with
         | RegexAny ->
             let! c = Arb.generate<char>
             do sb.Append(c) |> ignore
         | RegexChars x ->
-            let! c = Gen.elements x
+            let! c = Arb.generate |> Gen.filter (containsInRanges x)
             do sb.Append(c) |> ignore
         | RegexAllButChars x ->
             // This is our best shot here; creating the
             // complement is probably not a good idea.
-            let! c = Arb.generate |> Gen.filter (x.Contains >> not)
+            let! c = Arb.generate |> Gen.filter (containsInRanges x >> not)
             do sb.Append(c) |> ignore
         | RegexAlt xs ->
             let! x = Gen.elements xs
@@ -238,3 +239,5 @@ let ptestProperty x = ptestPropertyWithConfig fsCheckConfig x
 
 /// Performs a property test with a smaller sample size.
 let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
+let ftestPropertySmall name prop = ftestPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
+let ptestPropertySmall name prop = ptestPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop

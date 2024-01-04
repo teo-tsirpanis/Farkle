@@ -265,8 +265,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     }
                     else
                     {
-                        int transitionState = GetOrAddState(FollowLeaves(presentLeaves));
-
                         // Adjust the transition range to account for ranges inside other ranges.
                         // If we are inside some range, and saw another range start, the transition
                         // must end at the previous character than the current one.
@@ -293,8 +291,15 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                             transitionRangeEnd = PreviousChar(transitionRangeEnd);
                         }
 
-                        Debug.Assert(transitionRangeStart.CompareTo(transitionRangeEnd) <= 0);
-                        S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
+                        // Don't emit a transition if the range start is greater than the range end.
+                        // This can occur when we have three leaves with ranges [a-b], [a-a] and [b-b],
+                        // causing failures later when writing the DFA.
+                        // This if statement fixed this and FsCheck has not reported any other failures.
+                        if (transitionRangeStart.CompareTo(transitionRangeEnd) <= 0)
+                        {
+                            int transitionState = GetOrAddState(FollowLeaves(presentLeaves));
+                            S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
+                        }
                     }
                 }
 

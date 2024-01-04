@@ -202,12 +202,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 switch (leaves[i])
                 {
-                    case RegexLeaf.EndWithPriority { LeafIndex: int leafIndex, Priority: int priority }:
-                        TokenSymbolHandle symbol = ((RegexLeaf.End)leaves[leafIndex]).Symbol;
+                    case RegexLeaf.End { Symbol: TokenSymbolHandle symbol, Priority: int priority }:
                         S.AcceptSymbols.Add((priority, symbol));
                         break;
-                    case RegexLeaf.End:
-                        throw new InvalidOperationException("Internal error: direct reference to end leaf.");
                     case RegexLeaf.Chars x:
                         if (x.IsInverted)
                         {
@@ -448,15 +445,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // We detect that by checking if its LastPos is empty, which would make
             // it unable to flow to the end leaf.
             bool isVoid = true;
-            int endLeafIndex = AddLeaf(new RegexLeaf.End(symbol));
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             foreach (var r in regexes)
             {
                 var visitResult = Visit(in this, r, caseSensitive);
                 rootFirstPos = BitSet.Union(in rootFirstPos, in visitResult.FirstPos);
                 int leafIndex = visitResult.HasStar
-                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.EndWithPriority(endLeafIndex, TerminalPriority))
-                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.EndWithPriority(endLeafIndex, LiteralPriority));
+                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
+                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
                 LinkFollowPos(in visitResult.LastPos, BitSet.Singleton(leafIndex));
                 hasVoid |= visitResult.HasVoid;
                 isVoid &= !visitResult.LastPos.IsEmpty;
@@ -605,21 +601,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             public bool IsInverted { get; } = isInverted;
         }
 
-        public sealed class End(TokenSymbolHandle symbol) : RegexLeaf
+        public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf
         {
             public TokenSymbolHandle Symbol { get; } = symbol;
-        }
-
-        /// <summary>
-        /// A pseudo-leaf that points to an <see cref="RegexLeaf.End"/> leaf and contains priority information.
-        /// </summary>
-        /// <remarks>
-        /// This is used to ensure that there is one end leaf per symbol,
-        /// in face of its regex being an alt of regexes with varying priorities.
-        /// </remarks>
-        public sealed class EndWithPriority(int leafIndex, int priority) : RegexLeaf
-        {
-            public int LeafIndex { get; } = leafIndex;
 
             public int Priority { get; } = priority;
         }

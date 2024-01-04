@@ -12,7 +12,6 @@ namespace Farkle.Builder.StateMachines;
 
 /// <summary>
 /// Contains the logic for building a DFA from a set of regular expressions.
-/// Builds a DFA from a set of regular expressions.
 /// </summary>
 /// <typeparam name="TChar">The type of characters the DFA accepts.
 /// Currently only <see cref="char"/> is supported, with
@@ -612,7 +611,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         }
 
         /// <summary>
-        /// A pseudo-leaf that points to an <see cref="End"/> leaf and contains priority information.
+        /// A pseudo-leaf that points to an <see cref="RegexLeaf.End"/> leaf and contains priority information.
         /// </summary>
         /// <remarks>
         /// This is used to ensure that there is one end leaf per symbol,

@@ -293,7 +293,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(Kind.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(Kind.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <summary>

@@ -23,8 +23,8 @@ let tests = testList "Regex tests" [
     )
 
     testProperty "Regex.ZeroOrMore is idempotent" (fun regex ->
-        let star1 = Regex.atLeast 0 regex
-        let star2 = Regex.atLeast 0 star1
+        let star1 = Regex.star regex
+        let star2 = Regex.star star1
         star1 = star2)
 
     // The default size makes tests run for too long

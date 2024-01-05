@@ -34,13 +34,13 @@ public sealed class Regex
     */
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly Kind _kindAndFlags;
+    private readonly KindAndFlags _kindAndFlags;
 
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
     private readonly object? _data;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private Kind KindReal => _kindAndFlags & Kind.KindMask;
+    private KindAndFlags Kind => _kindAndFlags & KindAndFlags.KindMask;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private int M { get; }
@@ -60,23 +60,23 @@ public sealed class Regex
     }
 
     private static bool HaveSameFlags(Regex left, Regex right) =>
-        (left._kindAndFlags & ~Kind.KindMask) == (right._kindAndFlags & ~Kind.KindMask);
+        (left._kindAndFlags & ~KindAndFlags.KindMask) == (right._kindAndFlags & ~KindAndFlags.KindMask);
 
-    private Regex(Kind kind, object? data, int m = 1, int n = 1)
+    private Regex(KindAndFlags kind, object? data, int m = 1, int n = 1)
     {
         _kindAndFlags = kind;
         _data = data;
         M = m;
         N = n;
-        Debug.Assert((_kindAndFlags & Kind.CaseMask) != Kind.CaseMask);
-        switch (KindReal, _data)
+        Debug.Assert((_kindAndFlags & KindAndFlags.CaseMask) != KindAndFlags.CaseMask);
+        switch (Kind, _data)
         {
-            case (Kind.Any, null):
-            case (Kind.StringLiteral, string):
-            case (Kind.Chars or Kind.AllButChars, (char, char)[]):
-            case (Kind.Concat or Kind.Alt, Regex[]):
-            case (Kind.Loop, Regex):
-            case (Kind.RegexString, RegexStringHolder):
+            case (KindAndFlags.Any, null):
+            case (KindAndFlags.StringLiteral, string):
+            case (KindAndFlags.Chars or KindAndFlags.AllButChars, (char, char)[]):
+            case (KindAndFlags.Concat or KindAndFlags.Alt, Regex[]):
+            case (KindAndFlags.Loop, Regex):
+            case (KindAndFlags.RegexString, RegexStringHolder):
                 break;
             default:
                 Debug.Fail("Invalid regex data.");
@@ -91,29 +91,29 @@ public sealed class Regex
     {
         get
         {
-            string caseString = (_kindAndFlags & Kind.CaseMask) switch
+            string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
             {
-                Kind.CaseSensitive => " CaseSensitive",
-                Kind.CaseInsensitive => " CaseInsensitive",
+                KindAndFlags.CaseSensitive => " CaseSensitive",
+                KindAndFlags.CaseInsensitive => " CaseInsensitive",
                 _ => "",
             };
-            string dataString = KindReal switch
+            string dataString = Kind switch
             {
-                Kind.Any =>
+                KindAndFlags.Any =>
                     "Any",
-                Kind.StringLiteral =>
+                KindAndFlags.StringLiteral =>
                     $"\"{_data}\"",
-                Kind.Chars =>
+                KindAndFlags.Chars =>
                     $"Chars[{(((char, char)[])_data!).Length}]",
-                Kind.AllButChars =>
+                KindAndFlags.AllButChars =>
                     $"AllButChars[{(((char, char)[])_data!).Length}]",
-                Kind.Concat =>
+                KindAndFlags.Concat =>
                     $"Concat[{((Regex[])_data!).Length}]",
-                Kind.Alt =>
+                KindAndFlags.Alt =>
                     $"Alt[{((Regex[])_data!).Length}]",
-                Kind.Loop =>
+                KindAndFlags.Loop =>
                     $"{((Regex)_data!).DebuggerDisplay}{{{M},{N}}}",
-                Kind.RegexString =>
+                KindAndFlags.RegexString =>
                     $"\"{_data}\"",
                 _ => ""
             };
@@ -123,16 +123,16 @@ public sealed class Regex
 
     private Regex Loop(int m, int n)
     {
-        if (KindReal == Kind.Loop && m == M && n == N)
+        if (Kind == KindAndFlags.Loop && m == M && n == N)
             return this;
-        return new(Kind.Loop, this, m, n);
+        return new(KindAndFlags.Loop, this, m, n);
     }
 
-    internal bool IsAny() => KindReal == Kind.Any;
+    internal bool IsAny() => Kind == KindAndFlags.Any;
 
     internal bool IsStringLiteral([MaybeNullWhen(false)] out string s)
     {
-        if (KindReal == Kind.StringLiteral)
+        if (Kind == KindAndFlags.StringLiteral)
         {
             s = (string)_data!;
             return true;
@@ -143,9 +143,9 @@ public sealed class Regex
 
     internal bool IsChars(out ImmutableArray<(char, char)> chars, out bool isInverted)
     {
-        if (KindReal is Kind.Chars or Kind.AllButChars)
+        if (Kind is KindAndFlags.Chars or KindAndFlags.AllButChars)
         {
-            isInverted = KindReal == Kind.AllButChars;
+            isInverted = Kind == KindAndFlags.AllButChars;
             chars = ImmutableCollectionsMarshal.AsImmutableArray(((char, char)[])_data!);
             return true;
         }
@@ -156,7 +156,7 @@ public sealed class Regex
 
     internal bool IsConcat(out ImmutableArray<Regex> regexes)
     {
-        if (KindReal == Kind.Concat)
+        if (Kind == KindAndFlags.Concat)
         {
             regexes = ImmutableCollectionsMarshal.AsImmutableArray((Regex[])_data!);
             return true;
@@ -167,7 +167,7 @@ public sealed class Regex
 
     internal bool IsAlt(out ImmutableArray<Regex> regexes)
     {
-        if (KindReal == Kind.Alt)
+        if (Kind == KindAndFlags.Alt)
         {
             regexes = ImmutableCollectionsMarshal.AsImmutableArray((Regex[])_data!);
             return true;
@@ -180,7 +180,7 @@ public sealed class Regex
     {
         m = M;
         n = N;
-        if (KindReal == Kind.Loop)
+        if (Kind == KindAndFlags.Loop)
         {
             regex = (Regex)_data!;
             return true;
@@ -191,7 +191,7 @@ public sealed class Regex
 
     internal bool IsRegexString([MaybeNullWhen(false)] out RegexStringHolder regexString)
     {
-        if (KindReal == Kind.RegexString)
+        if (Kind == KindAndFlags.RegexString)
         {
             regexString = (RegexStringHolder)_data!;
             return true;
@@ -215,12 +215,12 @@ public sealed class Regex
     {
         if (!isCaseOverridden)
         {
-            switch (_kindAndFlags & Kind.CaseMask)
+            switch (_kindAndFlags & KindAndFlags.CaseMask)
             {
-                case Kind.CaseSensitive:
+                case KindAndFlags.CaseSensitive:
                     isCaseOverridden = true;
                     return true;
-                case Kind.CaseInsensitive:
+                case KindAndFlags.CaseInsensitive:
                     isCaseOverridden = true;
                     return false;
             }
@@ -232,17 +232,17 @@ public sealed class Regex
     /// <summary>
     /// A <see cref="Regex"/> that matches any character.
     /// </summary>
-    public static Regex Any { get; } = new(Kind.Any, null);
+    public static Regex Any { get; } = new(KindAndFlags.Any, null);
 
     /// <summary>
     /// A <see cref="Regex"/> that matches the empty string.
     /// </summary>
-    public static Regex Empty { get; } = new(Kind.Concat, (Regex[])[]);
+    public static Regex Empty { get; } = new(KindAndFlags.Concat, (Regex[])[]);
 
     /// <summary>
     /// A <see cref="Regex"/> that does not match anything.
     /// </summary>
-    internal static Regex Void { get; } = new(Kind.Alt, (Regex[])[]);
+    internal static Regex Void { get; } = new(KindAndFlags.Alt, (Regex[])[]);
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
@@ -260,7 +260,7 @@ public sealed class Regex
         {
             return Empty;
         }
-        return new(Kind.StringLiteral, s);
+        return new(KindAndFlags.StringLiteral, s);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public sealed class Regex
     public static Regex FromRegexString(string pattern)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(pattern);
-        return new(Kind.RegexString, RegexStringHolder.Create(pattern));
+        return new(KindAndFlags.RegexString, RegexStringHolder.Create(pattern));
     }
 
     /// <summary>
@@ -293,7 +293,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(Kind.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <summary>
@@ -315,7 +315,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(Kind.AllButChars, arrayUnsafe);
+        return new(KindAndFlags.AllButChars, arrayUnsafe);
     }
 
     /// <summary>
@@ -337,7 +337,7 @@ public sealed class Regex
             return Void;
         }
 
-        return new(Kind.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <summary>
@@ -363,7 +363,7 @@ public sealed class Regex
             return Void;
         }
 
-        return new(Kind.Chars, arrayUnsafe);
+        return new(KindAndFlags.Chars, arrayUnsafe);
     }
 
     /// <summary>
@@ -381,7 +381,7 @@ public sealed class Regex
         {
             [] => Empty,
             [var x] => x,
-            _ => new(Kind.Concat, arrayUnsafe),
+            _ => new(KindAndFlags.Concat, arrayUnsafe),
         };
     }
 
@@ -405,7 +405,7 @@ public sealed class Regex
         {
             [] => Void,
             [var x] => x,
-            _ => new(Kind.Alt, arrayUnsafe),
+            _ => new(KindAndFlags.Alt, arrayUnsafe),
         };
     }
 
@@ -440,7 +440,7 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches this regex either once or
     /// not at all.
     /// </summary>
-    public Regex Optional() => this is { KindReal: Kind.Loop, M: 0 } ? this : Loop(0, 1);
+    public Regex Optional() => this is { Kind: KindAndFlags.Loop, M: 0 } ? this : Loop(0, 1);
 
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches this regex a number of times
@@ -478,23 +478,23 @@ public sealed class Regex
         return Loop(m, int.MaxValue);
     }
 
-    private Regex WithCase(Kind @case)
+    private Regex WithCase(KindAndFlags @case)
     {
-        Debug.Assert(@case is Kind.CaseSensitive or Kind.CaseInsensitive);
-        if ((_kindAndFlags & Kind.CaseMask) == @case)
+        Debug.Assert(@case is KindAndFlags.CaseSensitive or KindAndFlags.CaseInsensitive);
+        if ((_kindAndFlags & KindAndFlags.CaseMask) == @case)
             return this;
-        return new(_kindAndFlags & ~Kind.CaseMask | @case, _data, M, N);
+        return new(_kindAndFlags & ~KindAndFlags.CaseMask | @case, _data, M, N);
     }
 
     /// <summary>
     /// Creates a case-sensitive copy of this <see cref="Regex"/>.
     /// </summary>
-    public Regex CaseSensitive() => WithCase(Kind.CaseSensitive);
+    public Regex CaseSensitive() => WithCase(KindAndFlags.CaseSensitive);
 
     /// <summary>
     /// Creates a case-insensitive copy of this <see cref="Regex"/>.
     /// </summary>
-    public Regex CaseInsensitive() => WithCase(Kind.CaseInsensitive);
+    public Regex CaseInsensitive() => WithCase(KindAndFlags.CaseInsensitive);
 
     /// <summary>
     /// Concatenates two <see cref="Regex"/> objects.
@@ -583,7 +583,7 @@ public sealed class Regex
     }
 
     [Flags]
-    internal enum Kind : byte
+    private enum KindAndFlags : byte
     {
         /// <summary>
         /// The regex matches any character.

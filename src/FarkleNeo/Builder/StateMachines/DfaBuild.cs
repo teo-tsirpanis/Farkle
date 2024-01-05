@@ -453,8 +453,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // The regex contains Regex.Void somewhere.
             bool hasVoid = regexes.IsEmpty;
             // The entire regex is equivalent to Regex.Void and impossible to match.
-            // We detect that by checking if its LastPos is empty, which would make
-            // it unable to flow to the end leaf.
+            // We detect that by checking if it's not nullable or its LastPos is empty,
+            // which would make it unable to flow from the root to the end leaf.
             bool isVoid = true;
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             foreach (var r in regexes)
@@ -464,9 +464,13 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 int leafIndex = visitResult.HasStar
                     ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
                     : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
+                if (visitResult.IsNullable)
+                {
+                    rootFirstPos = rootFirstPos.Set(leafIndex, true);
+                }
                 LinkFollowPos(in visitResult.LastPos, BitSet.Singleton(leafIndex));
                 hasVoid |= visitResult.HasVoid;
-                isVoid &= !visitResult.LastPos.IsEmpty;
+                isVoid &= !visitResult.IsNullable && visitResult.LastPos.IsEmpty;
             }
             Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
             if (isVoid)

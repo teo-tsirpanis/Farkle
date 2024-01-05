@@ -79,6 +79,18 @@ let tests = testList "Regex tests" [
             |> getDfa
         Expect.hasLength dfa (str.Length + 1) "The DFA is not minimal")
 
+    test "The DFA for a regex matching the empty string has the expected shape" {
+        let dfa =
+            [Regex.string ""]
+            |> buildSimpleRegexMatcher true
+            |> getDfa
+        Expect.hasLength dfa 1 "The DFA does not have one state"
+        let state = dfa[0]
+        Expect.isEmpty state.Edges "The state has edges"
+        Expect.equal state.DefaultTransition -1 "The state has a default transition"
+        Expect.hasLength state.AcceptSymbols 1 "The state does not have an accepting symbol"
+    }
+
     test "Titlecase letters are correctly handled when building a case-insensitive DFA" {
         let regex = Regex.char 'ǅ'
         let dfa =

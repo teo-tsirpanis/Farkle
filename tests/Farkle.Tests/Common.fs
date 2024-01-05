@@ -85,3 +85,6 @@ let expectIsParseSuccess result msg =
 
 let expectWantParseSuccess result msg =
     Expect.wantOk (ParserResult.toResult result) msg
+
+let expectIsParseFailure result msg =
+    Expect.isError (ParserResult.toResult result) msg

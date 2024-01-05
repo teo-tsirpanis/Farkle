@@ -292,6 +292,12 @@ module Regex =
     /// An alias for `Regex.FromRegexString`.
     let regexString x = Regex.FromRegexString x
 
+    /// An alias for `Regex.CaseSensitive`.
+    let caseSensitive (x: Regex) = x.CaseSensitive()
+
+    /// An alias for `Regex.CaseInsensitive`.
+    let caseInsensitive (x: Regex) = x.CaseInsensitive()
+
 /// F# operators to easily create `Regex`es.
 [<AutoOpen>]
 module RegexCompatibilityOperators =

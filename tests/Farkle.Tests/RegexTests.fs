@@ -40,6 +40,19 @@ let tests = testList "Regex tests" [
                 expectWantParseSuccess (CharParser.parseString parser str) "The string was not recognized" = i)
     )
 
+    test "Overriding case sensitivity in individual regexes works" {
+        let regexes =
+            [
+                Regex.string "a"
+                Regex.string "b" |> Regex.caseSensitive
+            ]
+        let parser = buildSimpleRegexMatcher false regexes
+        expectIsParseSuccess (CharParser.parseString parser "a") "The lowercase string did not match the case-insensitive regex"
+        expectIsParseSuccess (CharParser.parseString parser "A") "The uppercase string did not match the case-insensitive regex"
+        expectIsParseSuccess (CharParser.parseString parser "b") "The lowercase string did not match the case-sensitive regex"
+        expectIsParseFailure (CharParser.parseString parser "B") "The uppercase string did match the case-sensitive regex"
+    }
+
     testPropertySmall "A case insensitive DFA recognizes strings regardless of their capitalization" (fun (RegexStringPair (regex, str)) ->
         let dfa =
             buildSimpleRegexMatcher false [regex]

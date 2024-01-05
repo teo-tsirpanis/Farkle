@@ -44,7 +44,7 @@ let buildSimpleRegexMatcher caseSensitive regexes =
     (regexes, tokenSymbols)
     ||> Seq.map2 (fun r t -> struct (r, t, ""))
     |> Array.ofSeq
-    |> fun x -> DfaBuild<char>.Build(x, caseSensitive)
+    |> fun x -> DfaBuild<char>.Build(x, caseSensitive, maxTokenizerStates=Int32.MaxValue)
     |> gw.AddStateMachine
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
     gw.ToImmutableArray()

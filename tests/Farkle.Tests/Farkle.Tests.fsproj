@@ -23,5 +23,7 @@
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
   </ItemGroup>
 </Project>

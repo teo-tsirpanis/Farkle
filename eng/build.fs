@@ -72,9 +72,6 @@ let fsharpTestProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
-// Additional command line arguments passed to Expecto.
-let testArguments = "--nunit-summary TestResults.xml"
-
 let localPackagesFolder = "./tests/packages/"
 
 let projects = !! "**/*.??proj" -- "**/*.shproj"
@@ -207,8 +204,8 @@ let runCSharpUnitTests _ =
     |> DotNet.test id
 
 let runFSharpUnitTests _ =
-    dotNetRun fsharpTestProject None DotNet.BuildConfiguration.Debug "" testArguments
-    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory fsharpTestProject @@ "TestResults.xml")
+    fsharpTestProject
+    |> DotNet.test id
 
 let prepareMSBuildTests _ =
     Shell.cleanDir localPackagesFolder

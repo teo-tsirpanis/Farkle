@@ -86,7 +86,7 @@ public sealed class Regex
         Debug.Assert(N >= M);
     }
     
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    [DebuggerBrowsable(DebuggerBrowsableState.Never), ExcludeFromCodeCoverage]
     private string DebuggerDisplay
     {
         get

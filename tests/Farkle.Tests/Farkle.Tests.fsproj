@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
     <!-- Using "new" to create disposable types. -->
     <NoWarn>$(NoWarn);FS0760</NoWarn>
+    <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/FarkleNeo/Farkle.fs" />

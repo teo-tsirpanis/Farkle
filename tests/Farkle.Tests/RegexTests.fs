@@ -100,7 +100,12 @@ let tests = testList "Regex tests" [
         let dfa =
             buildSimpleRegexMatcher true [regex1; regex2]
             |> getDfa
-        Expect.equal dfa.Count 2 "The DFA did not have two states"
+        // Before Farkle 7 the DFA had two states because on character
+        // "a" regex1 takes precedence over regex2. Since Farkle 7,
+        // both regexes are followed, so the DFA has three states;
+        // the initial state, the state after "a" and the state for
+        // characters before and after "a".
+        Expect.equal dfa.Count 3 "The DFA does not have three states"
         Expect.equal dfa.[0].DefaultTransition -1 "The unreachable Anything Else edge was not removed"
     }
 

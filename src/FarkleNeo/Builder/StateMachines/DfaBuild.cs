@@ -59,6 +59,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private static TChar NextChar(TChar c) => (TChar)(object)(char)((char)(object)c + 1);
 
+    private static TChar MinCharValue => (TChar)(object)char.MinValue;
+
+    private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
+
     public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, CancellationToken cancellationToken = default)
     {
         if (typeof(TChar) != typeof(char))
@@ -340,7 +344,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             }
 
             Debug.Assert(depth is 0);
-            if (emitDefaultTransition)
+            // If there is a transition for every possible character,
+            // a default transition will be unreachable so don't emit it.
+            if (emitDefaultTransition && !S.IsTransitionSpaceFull())
             {
                 // At the end of the interval loop, presentLeaves should contain
                 // the indices for the any and inverted character leaves.
@@ -593,6 +599,41 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         public int? DefaultTransition { get; set; }
 
         public List<(int Priority, TokenSymbolHandle)> AcceptSymbols { get; } = [];
+
+        /// <summary>
+        /// Returns whether the transitions of this state cover all
+        /// possible values <typeparamref name="TChar"/> can take.
+        /// </summary>
+        /// <remarks>
+        /// This method assumes the items of <see cref="Transitions"/> are sorted.
+        /// </remarks>
+        public bool IsTransitionSpaceFull()
+        {
+            TChar lastEnd;
+            switch (Transitions)
+            {
+                case [(var start, var end, _), ..]:
+                    if (start.CompareTo(MinCharValue) > 0)
+                    {
+                        return false;
+                    }
+                    lastEnd = end;
+                    break;
+                default: return false;
+            }
+
+            for (int i = 1; i < Transitions.Count; i++)
+            {
+                var (start, end, _) = Transitions[i];
+                if (lastEnd.CompareTo(PreviousChar(start)) != 0)
+                {
+                    return false;
+                }
+                lastEnd = end;
+            }
+
+            return lastEnd.CompareTo(MaxCharValue) == 0;
+        }
     }
 
     private abstract class RegexLeaf

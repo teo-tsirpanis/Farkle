@@ -13,7 +13,7 @@ internal class PooledSegmentBufferWriterTests
     public void TestExceptionalCases()
     {
         using var bw = new PooledSegmentBufferWriter<byte>(0);
-        
+
         Assert.That(() => bw.Advance(184), Throws.InstanceOf<ArgumentOutOfRangeException>());
         _ = bw.GetMemory(1);
         Assert.That(() => bw.Advance(int.MaxValue), Throws.InstanceOf<ArgumentOutOfRangeException>());
@@ -29,7 +29,7 @@ internal class PooledSegmentBufferWriterTests
         bw.Clear();
         Assert.That(obj, Is.Null);
     }
-    
+
     [TestCase(10)]
     [TestCase(100)]
     public void TestAlternatingLengthWrites(int totalWrites)
@@ -39,12 +39,12 @@ internal class PooledSegmentBufferWriterTests
         Run();
         bw.Clear();
         bw.Clear();
-        CollectionAssert.IsEmpty(bw.ToArray());
+        Assert.That(bw.ToArray(), Is.Empty);
         Run();
         bw.Dispose();
         bw.Dispose();
         bw.Clear();
-        CollectionAssert.IsEmpty(bw.ToArray());
+        Assert.That(bw.ToArray(), Is.Empty);
         Run();
 
         void Run()
@@ -75,7 +75,7 @@ internal class PooledSegmentBufferWriterTests
             }
 
             byte[] readData = bw.ToArray();
-            CollectionAssert.AreEqual(data, readData);
+            Assert.That(readData, Is.EqualTo(data).AsCollection);
         }
     }
 

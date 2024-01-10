@@ -88,6 +88,10 @@ public static class Tokenizer
         {
             return Fail(nameof(Resources.Parser_GrammarDfaProblem));
         }
+        if (dfa[0].AcceptSymbols.Count > 0)
+        {
+            return Fail(nameof(Resources.Parser_GrammarDfaProblem));
+        }
         return ChainedTokenizer<TChar>.Create(new DefaultTokenizer<TChar>(grammar, dfa));
 
         Tokenizer<TChar> Fail(string resourceKey) =>

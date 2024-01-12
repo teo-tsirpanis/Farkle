@@ -459,18 +459,18 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             foreach (var r in regexes)
             {
-                var visitResult = Visit(in this, r, caseSensitive);
-                rootFirstPos = BitSet.Union(in rootFirstPos, in visitResult.FirstPos);
-                int leafIndex = visitResult.HasStar
+                var info = Visit(in this, r, caseSensitive);
+                rootFirstPos = BitSet.Union(in rootFirstPos, in info.FirstPos);
+                int leafIndex = info.HasStar
                     ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
                     : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
-                if (visitResult.IsNullable)
+                if (info.IsNullable)
                 {
                     rootFirstPos = rootFirstPos.Set(leafIndex, true);
                 }
-                LinkFollowPos(in visitResult.LastPos, BitSet.Singleton(leafIndex));
-                hasVoid |= visitResult.HasVoid;
-                isVoid &= !visitResult.IsNullable && visitResult.LastPos.IsEmpty;
+                LinkFollowPos(in info.LastPos, BitSet.Singleton(leafIndex));
+                hasVoid |= info.HasVoid;
+                isVoid &= !info.IsNullable && info.LastPos.IsEmpty;
             }
             Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
             if (isVoid)
@@ -485,7 +485,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         return (leaves, followPos, rootFirstPos);
 
-        VisitResult Visit(in DfaBuild<TChar> @this, Regex regex, bool caseSensitive, bool isLowered = false)
+        RegexInfo Visit(in DfaBuild<TChar> @this, Regex regex, bool caseSensitive, bool isLowered = false)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
@@ -500,57 +500,57 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (regex.IsConcat(out ImmutableArray<Regex> regexes))
             {
-                VisitResult result = VisitResult.Empty;
+                RegexInfo info = RegexInfo.Empty;
                 foreach (var r in regexes)
                 {
-                    VisitResult nextResult = Visit(in @this, r, caseSensitive, isLowered);
-                    LinkFollowPos(in result.LastPos, in nextResult.FirstPos);
-                    result += nextResult;
+                    RegexInfo nextResult = Visit(in @this, r, caseSensitive, isLowered);
+                    LinkFollowPos(in info.LastPos, in nextResult.FirstPos);
+                    info += nextResult;
                 }
-                return result;
+                return info;
             }
 
             if (regex.IsAlt(out regexes))
             {
                 if (regexes.IsEmpty)
                 {
-                    return VisitResult.Void;
+                    return RegexInfo.Void;
                 }
-                VisitResult result = Visit(in @this, regexes[0], caseSensitive, isLowered);
+                RegexInfo info = Visit(in @this, regexes[0], caseSensitive, isLowered);
                 foreach (var r in regexes.AsSpan()[1..])
                 {
-                    result |= Visit(in @this, r, caseSensitive, isLowered);
+                    info |= Visit(in @this, r, caseSensitive, isLowered);
                 }
-                return result;
+                return info;
             }
 
             if (regex.IsLoop(out Regex? loopItem, out int m, out int n))
             {
-                VisitResult result = VisitResult.Empty;
+                RegexInfo info = RegexInfo.Empty;
                 for (int i = 0; i < m; i++)
                 {
-                    VisitResult nextResult = Visit(in @this, loopItem, caseSensitive, isLowered);
-                    LinkFollowPos(in result.LastPos, in nextResult.FirstPos);
-                    result += nextResult;
+                    RegexInfo nextInfo = Visit(in @this, loopItem, caseSensitive, isLowered);
+                    LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
+                    info += nextInfo;
                 }
 
                 if (n == int.MaxValue)
                 {
-                    VisitResult starResult = Visit(in @this, loopItem, caseSensitive, isLowered).AsStar();
-                    LinkFollowPos(in starResult.LastPos, in starResult.FirstPos);
-                    LinkFollowPos(in result.LastPos, in starResult.FirstPos);
-                    result += starResult;
+                    RegexInfo starInfo = Visit(in @this, loopItem, caseSensitive, isLowered).AsStar();
+                    LinkFollowPos(in starInfo.LastPos, in starInfo.FirstPos);
+                    LinkFollowPos(in info.LastPos, in starInfo.FirstPos);
+                    info += starInfo;
                 }
                 else
                 {
                     for (int i = m; i < n; i++)
                     {
-                        VisitResult nextResult = Visit(in @this, loopItem, caseSensitive, isLowered).AsOptional();
-                        LinkFollowPos(in result.LastPos, in nextResult.FirstPos);
-                        result += nextResult;
+                        RegexInfo nextInfo = Visit(in @this, loopItem, caseSensitive, isLowered).AsOptional();
+                        LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
+                        info += nextInfo;
                     }
                 }
-                return result;
+                return info;
             }
 
             if (!isLowered)
@@ -560,12 +560,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (regex.IsAny())
             {
-                return VisitResult.Singleton(AddLeaf(RegexLeaf.Any));
+                return RegexInfo.Singleton(AddLeaf(RegexLeaf.Any));
             }
 
             if (IsRegexChars(regex, out var chars, out bool isInverted))
             {
-                return VisitResult.Singleton(AddLeaf(new RegexLeaf.Chars(chars, isInverted)));
+                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, isInverted)));
             }
 
             if (!isLowered)
@@ -659,7 +659,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         }
     }
 
-    private readonly struct VisitResult(BitSet FirstPos, BitSet LastPos, bool IsNullable,
+    private readonly struct RegexInfo(BitSet FirstPos, BitSet LastPos, bool IsNullable,
         RegexCharacteristics Characteristics = RegexCharacteristics.None)
     {
         public readonly BitSet FirstPos = FirstPos;
@@ -674,34 +674,34 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public bool HasVoid => (Characteristics & RegexCharacteristics.HasVoid) != 0;
 
-        public VisitResult AsOptional() =>
+        public RegexInfo AsOptional() =>
             new(FirstPos, LastPos, true, Characteristics);
 
-        public VisitResult AsStar() =>
+        public RegexInfo AsStar() =>
             new(FirstPos, LastPos, true, Characteristics | RegexCharacteristics.HasStar);
 
-        public static VisitResult Empty => new(BitSet.Empty, BitSet.Empty, true);
+        public static RegexInfo Empty => new(BitSet.Empty, BitSet.Empty, true);
 
-        public static VisitResult Void => new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasVoid);
+        public static RegexInfo Void => new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasVoid);
 
-        public static VisitResult Singleton(int index)
+        public static RegexInfo Singleton(int index)
         {
             BitSet pos = BitSet.Singleton(index);
-            return new VisitResult(pos, pos, IsNullable: false);
+            return new RegexInfo(pos, pos, IsNullable: false);
         }
 
-        public static VisitResult operator +(in VisitResult left, in VisitResult right)
+        public static RegexInfo operator +(in RegexInfo left, in RegexInfo right)
         {
-            return new VisitResult(
+            return new RegexInfo(
                 left.IsNullable ? BitSet.Union(in left.FirstPos, in right.FirstPos) : left.FirstPos,
                 right.IsNullable ? BitSet.Union(in left.LastPos, in right.LastPos) : right.LastPos,
                 left.IsNullable && right.IsNullable,
                 left.Characteristics | right.Characteristics);
         }
 
-        public static VisitResult operator |(in VisitResult left, in VisitResult right)
+        public static RegexInfo operator |(in RegexInfo left, in RegexInfo right)
         {
-            return new VisitResult(
+            return new RegexInfo(
                 BitSet.Union(in left.FirstPos, in right.FirstPos),
                 BitSet.Union(in left.LastPos, in right.LastPos),
                 left.IsNullable || right.IsNullable,

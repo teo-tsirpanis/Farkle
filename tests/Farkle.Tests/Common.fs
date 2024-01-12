@@ -23,7 +23,9 @@ let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> wi
 /// Builds a grammar that matches either of the given regexes.
 /// Until the LALR builder gets implemented, this function manually
 /// constructs the LR state machine.
-let buildSimpleRegexMatcher caseSensitive regexes =
+/// This is an advanced overload that also allows you to prioritize
+/// fixed-length symbols.
+let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes =
     let count = List.length regexes
     let gw = GrammarWriter()
     let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
@@ -44,12 +46,18 @@ let buildSimpleRegexMatcher caseSensitive regexes =
     (regexes, tokenSymbols)
     ||> Seq.map2 (fun r t -> struct (r, t, ""))
     |> Array.ofSeq
-    |> fun x -> DfaBuild<char>.Build(x, caseSensitive, maxTokenizerStates=Int32.MaxValue)
+    |> fun x -> DfaBuild<char>.Build(x, caseSensitive, prioritizeFixedLengthSymbols, Int32.MaxValue)
     |> gw.AddStateMachine
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
     gw.ToImmutableArray()
     |> Grammar.ofBytes
     |> CharParser.create terminalIndexSemanticProvider
+
+/// Builds a grammar that matches either of the given regexes.
+/// Until the LALR builder gets implemented, this function manually
+/// constructs the LR state machine.
+let buildSimpleRegexMatcher caseSensitive regexes =
+    buildSimpleRegexMatcherEx caseSensitive false regexes
 
 // It guarantees to work regardless of current directory.
 // The resources folder is copied alongside with the executable.

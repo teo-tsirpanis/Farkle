@@ -470,7 +470,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 }
                 LinkFollowPos(in info.LastPos, BitSet.Singleton(leafIndex));
                 hasVoid |= info.HasVoid;
-                isVoid &= !info.IsNullable && info.LastPos.IsEmpty;
+                isVoid &= info.IsVoid;
             }
             Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
             if (isVoid)
@@ -512,12 +512,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (regex.IsAlt(out regexes))
             {
-                if (regexes.IsEmpty)
-                {
-                    return RegexInfo.Void;
-                }
-                RegexInfo info = Visit(in @this, regexes[0], caseSensitive, isLowered);
-                foreach (var r in regexes.AsSpan()[1..])
+                RegexInfo info = RegexInfo.Void;
+                foreach (var r in regexes)
                 {
                     info |= Visit(in @this, r, caseSensitive, isLowered);
                 }
@@ -668,6 +664,16 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public bool IsNullable { get; } = IsNullable;
 
+        /// <summary>
+        /// Whether the regex cannot be followed by any character.
+        /// </summary>
+        /// <remarks>
+        /// This is usually undesirable. The builder will
+        /// emit a warning if the regex of a terminal has
+        /// this characteristic.
+        /// </remarks>
+        public bool IsVoid => !IsNullable && LastPos.IsEmpty;
+
         private RegexCharacteristics Characteristics { get; } = Characteristics;
 
         public bool HasStar => (Characteristics & RegexCharacteristics.HasStar) != 0;
@@ -682,7 +688,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo Empty => new(BitSet.Empty, BitSet.Empty, true);
 
-        public static RegexInfo Void => new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasVoid);
+        public static RegexInfo Void => new(BitSet.Empty, BitSet.Empty, false);
 
         public static RegexInfo Singleton(int index)
         {
@@ -692,11 +698,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo operator +(in RegexInfo left, in RegexInfo right)
         {
+            RegexCharacteristics hasVoidMaybe = right.IsVoid
+                ? RegexCharacteristics.HasVoid
+                : RegexCharacteristics.None;
             return new RegexInfo(
                 left.IsNullable ? BitSet.Union(in left.FirstPos, in right.FirstPos) : left.FirstPos,
                 right.IsNullable ? BitSet.Union(in left.LastPos, in right.LastPos) : right.LastPos,
                 left.IsNullable && right.IsNullable,
-                left.Characteristics | right.Characteristics);
+                left.Characteristics | right.Characteristics | hasVoidMaybe);
         }
 
         public static RegexInfo operator |(in RegexInfo left, in RegexInfo right)
@@ -731,9 +740,16 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// The regex contains <see cref="Regex.Void"/>.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// This is usually undesirable. The builder will
         /// emit a warning if the regex of a terminal has
         /// this characteristic.
+        /// </para>
+        /// <para>
+        /// This characteristic gets originated when a <see cref="RegexInfo"/>
+        /// gets concatenated on the right with one that has the
+        /// <see cref="RegexInfo.IsVoid"/> property.
+        /// </para>
         /// </remarks>
         HasVoid = 2
     }

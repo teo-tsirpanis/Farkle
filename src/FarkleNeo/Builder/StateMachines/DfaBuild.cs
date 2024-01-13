@@ -138,6 +138,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             foreach (var (start, end, target) in state.Transitions)
             {
+                if (target == state.DefaultTransition)
+                {
+                    continue;
+                }
                 if (target is { } t)
                 {
                     dfaWriter.AddEdge(start, end, t);

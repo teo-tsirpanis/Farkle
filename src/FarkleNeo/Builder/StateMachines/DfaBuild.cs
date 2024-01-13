@@ -253,57 +253,50 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     // we have surely seen at least one character before.
                     Debug.Assert(previousChar is not null);
 
-                    // We must emit an explicit failure if we are inside all the inverted leaves
-                    // and only these.
-                    // The presence of Any leaves will cause the above to never hold, because
-                    // Any leaves are inverted Chars leaves with no ranges, which means that
-                    // some inverted leaves will never be entered.
-                    bool insideAllInvertedRanges = invertedDepth == invertedCount;
-                    bool insideOnlyInvertedRanges = invertedDepth == depth;
-                    bool shouldEmitFailure = insideAllInvertedRanges && insideOnlyInvertedRanges;
-                    if (shouldEmitFailure)
+                    // Adjust the transition range to account for ranges inside other ranges.
+                    // If we are inside some range, and saw another range start, the transition
+                    // must end at the previous character than the current one.
+                    // Similarly, if a range has ended just before, the transition must start
+                    // at the next character than the previous one.
+                    // For example, if we have the ranges [0-9] and [2-5], we must emit transitions
+                    // for [0-1], [2-5] and [6-9] (the first and last should point to the same state).
+                    TChar transitionRangeStart = previousChar.GetValueOrDefault();
+                    bool previousIsEnd = !previousIsStart;
+                    if (previousIsEnd)
                     {
+                        // This cannot overflow because previousChar cannot take the maximum
+                        // character value and this path be entered at the same time.
+                        // A range that is before the last one cannot end at the maximum
+                        // character value.
+                        transitionRangeStart = NextChar(transitionRangeStart);
+                    }
+                    TChar transitionRangeEnd = c;
+                    if (isStart)
+                    {
+                        // This cannot underflow because to enter this path, a range must
+                        // have already started, and only the first item in the list can
+                        // have a NUL character.
+                        transitionRangeEnd = PreviousChar(transitionRangeEnd);
+                    }
+
+                    // Don't emit a transition if the range start is greater than the range end.
+                    // This can occur when we have three leaves with ranges [a-b], [a-a] and [b-b],
+                    // causing failures later when writing the DFA.
+                    // This if statement fixed this and FsCheck has not reported any other failures.
+                    if (transitionRangeStart.CompareTo(transitionRangeEnd) <= 0)
+                    {
+                        // We must emit an explicit failure if we are inside all the inverted leaves
+                        // and only these.
+                        // The presence of Any leaves will cause the above to never hold, because
+                        // Any leaves are inverted Chars leaves with no ranges, which means that
+                        // some inverted leaves will never be entered.
+                        bool insideAllInvertedRanges = invertedDepth == invertedCount;
+                        bool insideOnlyInvertedRanges = invertedDepth == depth;
+                        bool shouldEmitFailure = insideAllInvertedRanges && insideOnlyInvertedRanges;
                         // We are inside all the inverted leaves, and also inside some regular leaves.
                         // We must emit a failure.
-                        S.Transitions.Add((previousChar.GetValueOrDefault(), c, null));
-                    }
-                    else
-                    {
-                        // Adjust the transition range to account for ranges inside other ranges.
-                        // If we are inside some range, and saw another range start, the transition
-                        // must end at the previous character than the current one.
-                        // Similarly, if a range has ended just before, the transition must start
-                        // at the next character than the previous one.
-                        // For example, if we have the ranges [0-9] and [2-5], we must emit transitions
-                        // for [0-1], [2-5] and [6-9] (the first and last should point to the same state).
-                        TChar transitionRangeStart = previousChar.GetValueOrDefault();
-                        bool previousIsEnd = !previousIsStart;
-                        if (previousIsEnd)
-                        {
-                            // This cannot overflow because previousChar cannot take the maximum
-                            // character value and this path be entered at the same time.
-                            // A range that is before the last one cannot end at the maximum
-                            // character value.
-                            transitionRangeStart = NextChar(transitionRangeStart);
-                        }
-                        TChar transitionRangeEnd = c;
-                        if (isStart)
-                        {
-                            // This cannot underflow because to enter this path, a range must
-                            // have already started, and only the first item in the list can
-                            // have a NUL character.
-                            transitionRangeEnd = PreviousChar(transitionRangeEnd);
-                        }
-
-                        // Don't emit a transition if the range start is greater than the range end.
-                        // This can occur when we have three leaves with ranges [a-b], [a-a] and [b-b],
-                        // causing failures later when writing the DFA.
-                        // This if statement fixed this and FsCheck has not reported any other failures.
-                        if (transitionRangeStart.CompareTo(transitionRangeEnd) <= 0)
-                        {
-                            int transitionState = GetOrAddState(FollowLeaves(presentLeaves));
-                            S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
-                        }
+                        int? transitionState = shouldEmitFailure ? null : GetOrAddState(FollowLeaves(presentLeaves));
+                        S.Transitions.Add((transitionRangeStart, transitionRangeEnd, transitionState));
                     }
                 }
 

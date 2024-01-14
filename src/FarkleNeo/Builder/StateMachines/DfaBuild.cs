@@ -416,8 +416,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 }
                 else
                 {
-                    var loweredChars = RegexRangeCanonicalizer.Canonicalize(chars.AsSpan(), caseSensitive);
-                    result = isInverted ? Regex.NotOneOf(loweredChars) : Regex.OneOf(loweredChars);
+                    chars = RegexRangeCanonicalizer.Canonicalize(chars.AsSpan(), caseSensitive);
+                    result = isInverted ? Regex.NotOneOf(chars) : Regex.OneOf(chars);
+                }
+                // If the regex has been canonicalized into a set of all/none characters
+                // and is/isn't inverted, change it to Regex.Void.
+                if ((chars, isInverted) is ([], false) or ([(char.MinValue, char.MaxValue)], true))
+                {
+                    result = Regex.Void;
                 }
             }
             else

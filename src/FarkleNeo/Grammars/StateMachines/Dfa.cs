@@ -24,6 +24,7 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 {
     internal Dfa(int stateCount, bool hasConflicts)
     {
+        Debug.Assert(stateCount > 0);
         Count = stateCount;
         HasConflicts = hasConflicts;
     }

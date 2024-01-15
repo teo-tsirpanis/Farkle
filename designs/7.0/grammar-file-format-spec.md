@@ -300,6 +300,8 @@ The following rules apply to the _StateMachine_ table:
 * If both state machines of __Kind__ 0 and 1, or 3 and 4 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
 * If a state machine of __Kind__ 2 exists, a state machine of __Kind__ 0 or 1 MUST also exist.
 
+State machines with no states MUST be treated as if they do not exist.
+
 The format of the blob pointed to by the __Data__ column depends on the value of the __Kind__ column and is specified in following sections.
 
 ### SpecialName table

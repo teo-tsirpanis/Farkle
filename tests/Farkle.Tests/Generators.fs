@@ -56,6 +56,10 @@ let JsonGen =
 let regexGen =
     let rec impl size = gen {
         if size <= 1 then
+            // Generating inverted character sets presents many challenges,
+            // including difficulty in generating a string that matches them,
+            // and generating case-insensitive regexes, so we will not do it
+            // at least for now.
             return! nonEmptyString |> Gen.map Regex.chars
         else
             let gen = impl <| size / 2
@@ -231,7 +235,7 @@ type Generators =
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
 #endif
 
-let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
+let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = Some (1903651590, 297281888)}
 
 let testProperty x = testPropertyWithConfig fsCheckConfig x
 let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x

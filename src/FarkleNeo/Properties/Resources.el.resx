@@ -66,11 +66,17 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή περιέχει δεδομένα που δεν αναγνωρίζονται από αυτήν την έκδοση του Farkle</value>
   </data>
+  <data name="Parser_GrammarLrMissing" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή δεν έχει πίνακα καταστάσεων LR</value>
+  </data>
   <data name="Parser_GrammarLrProblem" xml:space="preserve">
-    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει διενέξεις ή δεν υπάρχει</value>
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει κάποιο πρόβλημα</value>
+  </data>
+  <data name="Parser_GrammarDfaMissing" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή δεν έχει αυτόματο DFA</value>
   </data>
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
-    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA της έχει διενέξεις ή δεν υπάρχει</value>
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA έχει κάποιο πρόβλημα</value>
   </data>
   <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
     <value>Το εύρος χαρακτήρων είναι σε αντεστραμμένη σειρά.</value>

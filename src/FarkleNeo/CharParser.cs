@@ -218,7 +218,11 @@ public static class CharParser
         {
             return Fail(errorKey);
         }
-        if (grammar.LrStateMachine is not { HasConflicts: false } lrStateMachine)
+        if (grammar.LrStateMachine is not { } lrStateMachine)
+        {
+            return Fail(nameof(Resources.Parser_GrammarLrMissing));
+        }
+        if (lrStateMachine.HasConflicts)
         {
             return Fail(nameof(Resources.Parser_GrammarLrProblem));
         }

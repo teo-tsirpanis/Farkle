@@ -84,11 +84,11 @@ public static class Tokenizer
         {
             return Fail(errorKey);
         }
-        if (grammar.GetDfa<TChar>() is not { HasConflicts: false } dfa)
+        if (grammar.GetDfa<TChar>() is not { } dfa)
         {
-            return Fail(nameof(Resources.Parser_GrammarDfaProblem));
+            return Fail(nameof(Resources.Parser_GrammarDfaMissing));
         }
-        if (dfa[0].AcceptSymbols.Count > 0)
+        if (dfa.HasConflicts || dfa[0].AcceptSymbols.Count > 0)
         {
             return Fail(nameof(Resources.Parser_GrammarDfaProblem));
         }

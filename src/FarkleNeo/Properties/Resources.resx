@@ -66,11 +66,17 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>The grammar cannot be used for parsing or tokenizing because it contains data not recognized by this version of Farkle</value>
   </data>
+  <data name="Parser_GrammarLrMissing" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because it does not contain an LR state table</value>
+  </data>
   <data name="Parser_GrammarLrProblem" xml:space="preserve">
-    <value>The grammar cannot be used for parsing because its LR state table has conflicts or does not exist</value>
+    <value>The grammar cannot be used for parsing because its LR state table has a problem</value>
+  </data>
+  <data name="Parser_GrammarDfaMissing" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because it does not contain a DFA</value>
   </data>
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
-    <value>The grammar cannot be used for parsing because its DFA has conflicts or does not exist</value>
+    <value>The grammar cannot be used for parsing because its DFA has a problem</value>
   </data>
   <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
     <value>Character range is in reverse order.</value>

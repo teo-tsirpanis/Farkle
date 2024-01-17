@@ -76,7 +76,7 @@ internal readonly struct DefaultParserImplementation<TChar>
                     result = null;
                     return RunResult.NeedsMoreInput;
                 }
-                RetryEof:
+            RetryEof:
                 LrEndOfFileAction eofAction = _lrStateMachine.GetEndOfFileAction(currentState);
                 if (eofAction.IsAccept)
                 {
@@ -91,12 +91,14 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             else if (!token.IsSuccess)
             {
-                result = token.Data;
+                result = ParserUtilities.SupplyParserStateInfo(token.Data,
+                    ParserUtilities.GetExpectedSymbols(Grammar, _lrStateMachine[currentState]),
+                    currentState);
                 return RunResult.Failure;
             }
             else
             {
-                RetryToken:
+            RetryToken:
                 LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
                 if (action.IsShift)
                 {

@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
@@ -63,4 +64,13 @@ internal static class ParserUtilities
         }
         return builder.ToImmutable();
     }
+
+    internal static object SupplyParserStateInfo(object diagnostic, ImmutableArray<string?> expectedTokenNames, int parserState)
+        => diagnostic switch
+        {
+            IParserStateInfoSupplier x => x.WithParserStateInfo(expectedTokenNames, parserState),
+            ParserDiagnostic { Message: IParserStateInfoSupplier x, Position: var position } =>
+                new ParserDiagnostic(position, x.WithParserStateInfo(expectedTokenNames, parserState)),
+            _ => diagnostic
+        };
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using Farkle.Grammars;
 
 namespace Farkle.Diagnostics;
 
@@ -54,12 +55,24 @@ public sealed class LexicalError : IFormattable, IParserStateInfoSupplier
     object IParserStateInfoSupplier.WithParserStateInfo(ImmutableArray<string?> expectedTokenNames, int parserState) =>
         new LexicalError(TokenText, TokenizerState, expectedTokenNames, parserState);
 
-    private string ToString(IFormatProvider? formatProvider) =>
-        Resources.Format(formatProvider, nameof(Resources.Parser_UnrecognizedToken), TokenText);
+    private string ToString(IFormatProvider? formatProvider)
+    {
+        string eofString = Resources.GetEofString(formatProvider);
+        return Resources.Format(formatProvider,
+            nameof(Resources.Parser_UnrecognizedToken),
+            TokenText,
+            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+    }
 
 #if NET8_0_OR_GREATER
-    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
-        Resources.TryWrite(destination, provider, nameof(Resources.Parser_UnrecognizedToken), out charsWritten, TokenText);
+    bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        string eofString = Resources.GetEofString(provider);
+        return Resources.TryWrite(destination, provider,
+            nameof(Resources.Parser_UnrecognizedToken), out charsWritten,
+            TokenText,
+            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+    }
 #endif
 
     /// <inheritdoc/>

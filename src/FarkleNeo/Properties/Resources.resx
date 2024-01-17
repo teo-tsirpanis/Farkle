@@ -49,7 +49,7 @@
     <value>The tokenizer has already been suspended.</value>
   </data>
   <data name="Parser_UnrecognizedToken" xml:space="preserve">
-    <value>Unrecognized token '{0}'</value>
+    <value>Unrecognized token '{0}', expected {1}</value>
   </data>
   <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
     <value>Unexpected end of input while being inside group '{0}'</value>

@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using Farkle.Diagnostics;
+
 namespace Farkle.Builder;
 
 /// <summary>
@@ -26,6 +28,30 @@ public sealed class BuilderOptions
     /// that is proportional to the complexity of the input regexes.
     /// </remarks>
     public int MaxTokenizerStates { get; set; } = -1;
+
+    internal BuilderLogger Log = new() { LogLevel = DiagnosticSeverity.Information };
+
+    /// <summary>
+    /// An event that is raised when a diagnostic is reported.
+    /// </summary>
+    /// <seealso cref="LogLevel"/>
+    public event Action<BuilderDiagnostic>? OnDiagnostic
+    {
+        add => Log.OnDiagnostic += value;
+        remove => Log.OnDiagnostic -= value;
+    }
+
+    /// <summary>
+    /// The minimum severity of diagnostics that are reported.
+    /// Defaults to <see cref="DiagnosticSeverity.Information"/>.
+    /// </summary>
+    /// <seealso cref="OnDiagnostic"/>
+    /// <seealso cref="BuilderDiagnostic.Severity"/>
+    public DiagnosticSeverity LogLevel
+    {
+        get => Log.LogLevel;
+        set => Log.LogLevel = value;
+    }
 
     internal static int GetMaxTokenizerStates(int maxTokenizerStates, int numLeaves)
     {

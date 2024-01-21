@@ -18,10 +18,13 @@ internal static class Resources
 
     public static ResourceManager ResourceManager => s_resourceManager ??= new ResourceManager("Farkle.Resources", typeof(Resources).Assembly);
 
-    // This method is used to decide if we need to append the exception message parameters to the message when calling SR.Format.
-    // by default it returns the value of System.Resources.UseSystemResourceKeys AppContext switch or false if not specified.
-    // Native code generators can replace the value this returns based on user input at the time of native code generation.
-    // The trimming tools are also capable of replacing the value of this method when the application is being trimmed.
+    // This method is used to decide if we need to append the exception message
+    // parameters to the message when calling SR.Format. By default it returns
+    // the value of System.Resources.UseSystemResourceKeys AppContext switch
+    // or false if not specified.  Native code generators can replace the value
+    // this returns based on user input at the time of native code generation.
+    // The trimming tools are also capable of replacing the value of this method
+    // when the application is being trimmed.
     internal static bool UsingResourceKeys() => s_usingResourceKeys;
 
     public static string GetResourceString(string resourceKey, IFormatProvider? formatProvider = null)
@@ -154,4 +157,8 @@ internal static class Resources
     public static string Builder_RegexLoopRangeReverseOrder => GetResourceString(nameof(Builder_RegexLoopRangeReverseOrder));
 
     public static string Builder_RegexLoopMaxTooBig => GetResourceString(nameof(Builder_RegexLoopMaxTooBig));
+
+    public static string Warning => GetResourceString(nameof(Warning));
+
+    public static string Error => GetResourceString(nameof(Error));
 }

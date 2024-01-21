@@ -87,4 +87,10 @@
   <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
     <value>Loop upper bound cannot be greater or equal to 2147483647.</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
 </root>

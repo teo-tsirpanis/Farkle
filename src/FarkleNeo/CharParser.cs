@@ -230,7 +230,7 @@ public static class CharParser
         Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false);
         return new DefaultParser<T>(grammar, lrStateMachine, semanticProvider, tokenizer);
 
-        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(new LocalizedDiagnostic(resourceKey), grammar);
+        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(LocalizedDiagnostic.Create(resourceKey), grammar);
     }
 
     /// <summary>

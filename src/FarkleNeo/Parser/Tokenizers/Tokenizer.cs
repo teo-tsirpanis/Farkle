@@ -97,6 +97,6 @@ public static class Tokenizer
         Tokenizer<TChar> Fail(string resourceKey) =>
             throwIfError
             ? throw new InvalidOperationException(Resources.GetResourceString(resourceKey))
-            : new FailingTokenizer<TChar>(new LocalizedDiagnostic(resourceKey));
+            : new FailingTokenizer<TChar>(LocalizedDiagnostic.Create(resourceKey));
     }
 }

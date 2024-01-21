@@ -84,13 +84,17 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// will be prioritized in cases of conflicts.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static DfaWriter<TChar> Build(IReadOnlyCollection<TerminalSymbol> regexes, bool caseSensitive = false,
+    public static DfaWriter<TChar>? Build(IReadOnlyCollection<TerminalSymbol> regexes, bool caseSensitive = false,
         bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, CancellationToken cancellationToken = default)
     {
         var @this = new DfaBuild<TChar>(regexes, cancellationToken);
         var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
         var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
+        if (dfaStates is null)
+        {
+            return null;
+        }
         return WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
     }
 
@@ -178,7 +182,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return dfaWriter;
     }
 
-    private List<DfaState> BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
+    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
     {
         Dictionary<BitSet, DfaState> states = [];
         List<DfaState> stateList = [];
@@ -195,8 +199,18 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (maxStates == stateList.Count)
             {
-                // TODO: Emit a non-throwing error.
-                throw new InvalidOperationException("DFA state limit reached.");
+                // If the maximum number of states has been reached, do not create a DFA.
+                // This is the best option, out of writing the half-built DFA to the grammar
+                // and either:
+                // 1. Marking the whole grammar as unparsable, which we can't do because the
+                //    parser might be otherwise usable.
+                // 2. Marking the DFA as with conflicts, which we can't do because it might
+                //    not have any conflicts.
+                // 3. Introducing a new "untokenizable" grammar flag, which is not a good
+                //    idea because it has a very niche use case and it would need additional
+                //    flags when we add byte parsers.
+                // TODO: Also emit an error.
+                return null;
             }
 
             DfaState S = stateList[stateIdx];

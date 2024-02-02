@@ -19,5 +19,28 @@ internal static class LocalizedDiagnostic
             Resources.GetResourceString(resourceKey);
     }
 
+    internal sealed class Composite<TArg>(string resourceKey, TArg arg) : IFormattable
+#if NET8_0_OR_GREATER
+        , ISpanFormattable
+#endif
+    {
+        public string ResourceKey { get; } = resourceKey;
+
+        public TArg Arg { get; } = arg;
+
+#if NET8_0_OR_GREATER
+        bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
+            Resources.TryWrite(destination, provider, ResourceKey, out charsWritten, Arg);
+#endif
+
+        public string ToString(string? format, IFormatProvider? formatProvider) =>
+            Resources.Format(formatProvider, ResourceKey, Arg);
+
+        public override string ToString() =>
+            Resources.Format(null, ResourceKey, Arg);
+    }
+
     public static object Create(string resourceKey) => new Simple(resourceKey);
+
+    public static object Create<TArg>(string resourceKey, TArg arg) => new Composite<TArg>(resourceKey, arg);
 }

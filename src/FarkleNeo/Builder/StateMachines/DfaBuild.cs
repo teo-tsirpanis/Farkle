@@ -26,6 +26,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private readonly CancellationToken CancellationToken { get; }
 
+    private readonly BuilderLogger Log;
+
     // Priorities. The lower the number, the higher the priority.
 
     /// <summary>
@@ -63,7 +65,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
 
-    public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, CancellationToken cancellationToken = default)
+    public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, BuilderLogger log, CancellationToken cancellationToken = default)
     {
         if (typeof(TChar) != typeof(char))
         {
@@ -71,6 +73,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         }
 
         Regexes = regexes;
+        Log = log;
         CancellationToken = cancellationToken;
     }
 
@@ -83,11 +86,13 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// <param name="prioritizeFixedLengthSymbols">Whether symbols with fixed-length regexes
     /// will be prioritized in cases of conflicts.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
+    /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
     public static DfaWriter<TChar>? Build(IReadOnlyCollection<TerminalSymbol> regexes, bool caseSensitive = false,
-        bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, CancellationToken cancellationToken = default)
+        bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
+        CancellationToken cancellationToken = default)
     {
-        var @this = new DfaBuild<TChar>(regexes, cancellationToken);
+        var @this = new DfaBuild<TChar>(regexes, log, cancellationToken);
         var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
         var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
@@ -209,7 +214,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 // 3. Introducing a new "untokenizable" grammar flag, which is not a good
                 //    idea because it has a very niche use case and it would need additional
                 //    flags when we add byte parsers.
-                // TODO: Also emit an error.
+                Log.DfaStateLimitExceeded(maxStates);
                 return null;
             }
 

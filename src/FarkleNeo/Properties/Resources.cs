@@ -158,6 +158,8 @@ internal static class Resources
 
     public static string Builder_RegexLoopMaxTooBig => GetResourceString(nameof(Builder_RegexLoopMaxTooBig));
 
+    public static string Builder_DfaStateLimitExceeded => GetResourceString(nameof(Builder_DfaStateLimitExceeded));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

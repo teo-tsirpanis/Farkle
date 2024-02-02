@@ -87,6 +87,9 @@
   <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
     <value>Το άνω όριο επανάληψης δεν μπορεί να είναι μεγαλύτερο ή ίσο του 2147483647.</value>
   </data>
+  <data name="Builder_DfaStateLimitExceeded" xml:space="preserve">
+    <value>Το DFA έχει υπερβεί το όριο των {0} καταστάσεων</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

@@ -17,7 +17,7 @@ namespace Farkle;
 /// <remarks>
 /// <para>
 /// This class is the replacement of the <c>RuntimeFarkle</c> class of Farkle 6.
-/// It extends <see cref="IParser{TChar, T}"/> with features likeswapping the parser's
+/// It extends <see cref="IParser{TChar, T}"/> with features like swapping the parser's
 /// <see cref="Tokenizer{TChar}"/> and <see cref="ISemanticProvider{TChar, T}"/>,
 /// getting the parser's <see cref="Grammar"/> and representing parsers that will
 /// always fail because of problems with the grammar.

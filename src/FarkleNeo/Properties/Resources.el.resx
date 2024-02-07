@@ -90,6 +90,21 @@
   <data name="Builder_DfaStateLimitExceeded" xml:space="preserve">
     <value>Το DFA έχει υπερβεί το όριο των {0} καταστάσεων</value>
   </data>
+  <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
+    <value>Δε μπορεί να γίνει διάκριση μεταξύ των συμβόλων: {0}</value>
+  </data>
+  <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
+    <value>τερματικό</value>
+  </data>
+  <data name="Builder_SymbolKind_Noise" xml:space="preserve">
+    <value>σύμβολο θορύβου</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupStart" xml:space="preserve">
+    <value>έναρξη ομάδας</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupEnd" xml:space="preserve">
+    <value>λήξη ομάδας</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

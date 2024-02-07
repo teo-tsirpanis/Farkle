@@ -27,11 +27,11 @@ internal static class Resources
     // when the application is being trimmed.
     internal static bool UsingResourceKeys() => s_usingResourceKeys;
 
-    public static string GetResourceString(string resourceKey, IFormatProvider? formatProvider = null)
+    public static string GetResourceString(string resourceKey, IFormatProvider? formatProvider = null, string? defaultValue = null)
     {
         if (UsingResourceKeys())
         {
-            return resourceKey;
+            return defaultValue ?? resourceKey;
         }
 
         return ResourceManager.GetString(resourceKey, formatProvider as CultureInfo)!;
@@ -159,6 +159,16 @@ internal static class Resources
     public static string Builder_RegexLoopMaxTooBig => GetResourceString(nameof(Builder_RegexLoopMaxTooBig));
 
     public static string Builder_DfaStateLimitExceeded => GetResourceString(nameof(Builder_DfaStateLimitExceeded));
+
+    public static string Builder_IndistinguishableSymbols => GetResourceString(nameof(Builder_IndistinguishableSymbols));
+
+    public static string Builder_SymbolKind_Terminal => GetResourceString(nameof(Builder_SymbolKind_Terminal));
+
+    public static string Builder_SymbolKind_Noise => GetResourceString(nameof(Builder_SymbolKind_Noise));
+
+    public static string Builder_SymbolKind_GroupStart => GetResourceString(nameof(Builder_SymbolKind_GroupStart));
+
+    public static string Builder_SymbolKind_GroupEnd => GetResourceString(nameof(Builder_SymbolKind_GroupEnd));
 
     public static string Warning => GetResourceString(nameof(Warning));
 

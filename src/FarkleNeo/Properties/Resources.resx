@@ -90,6 +90,21 @@
   <data name="Builder_DfaStateLimitExceeded" xml:space="preserve">
     <value>DFA has exceeded the limit of {0} states</value>
   </data>
+  <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
+    <value>Cannot distinguish between symbols: {0}</value>
+  </data>
+  <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
+    <value>terminal</value>
+  </data>
+  <data name="Builder_SymbolKind_Noise" xml:space="preserve">
+    <value>noise symbol</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupStart" xml:space="preserve">
+    <value>group start</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupEnd" xml:space="preserve">
+    <value>group end</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>

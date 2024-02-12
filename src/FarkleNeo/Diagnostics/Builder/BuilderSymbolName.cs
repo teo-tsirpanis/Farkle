@@ -3,7 +3,7 @@
 
 using Farkle.Grammars;
 
-namespace Farkle.Diagnostics;
+namespace Farkle.Diagnostics.Builder;
 
 /// <summary>
 /// Represents the name of a token symbol in a grammar to be built, along with diagnostic information.
@@ -32,9 +32,6 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
     /// in the grammar.
     /// </summary>
     public bool ShouldDisambiguate { get; } = ShouldDisambiguate;
-
-    public static implicit operator BuilderSymbolName((string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) x) =>
-        new(x.Name, x.Kind, x.ShouldDisambiguate);
 
     private static string GetTokenSymbolKindName(TokenSymbolKind kind, IFormatProvider? formatProvider)
     {

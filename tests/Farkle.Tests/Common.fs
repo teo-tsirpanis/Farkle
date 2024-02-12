@@ -10,7 +10,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.StateMachines
-open Farkle.Diagnostics
+open Farkle.Diagnostics.Builder
 open Farkle.Grammars
 open Farkle.Grammars.Writers
 open Farkle.Parser.Semantics

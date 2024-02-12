@@ -1,9 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Diagnostics;
-
-namespace Farkle.Builder;
+namespace Farkle.Diagnostics.Builder;
 
 internal static class BuilderLoggerExtensions
 {

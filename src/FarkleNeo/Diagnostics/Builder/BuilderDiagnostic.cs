@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Diagnostics;
+namespace Farkle.Diagnostics.Builder;
 
 /// <summary>
 /// Contains information about actions performed by Farkle's builder.

@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Diagnostics;
+namespace Farkle.Diagnostics.Builder;
 
 /// <summary>
 /// Represents the kind of a token symbol in a grammar to be built.

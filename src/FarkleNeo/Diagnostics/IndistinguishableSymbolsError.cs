@@ -18,6 +18,7 @@ namespace Farkle.Diagnostics;
 /// by their kind (terminal, noise, group start, group end) if the
 /// same name appears in symbols of different kind.
 /// </remarks>
+/// <seealso href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/docs/diagnostics/FARKLE0002.md"/>
 public sealed class IndistinguishableSymbolsError : IFormattable
 #if NET8_0_OR_GREATER
     , ISpanFormattable

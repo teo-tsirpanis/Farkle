@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 using BitCollections;
-using Farkle.Grammars;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using TerminalSymbol = (Farkle.Builder.Regex Regex, Farkle.Grammars.TokenSymbolHandle Symbol, string Name);
 
 namespace Farkle.Builder.StateMachines;
 
@@ -22,7 +20,7 @@ namespace Farkle.Builder.StateMachines;
 /// </remarks>
 internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    private readonly IReadOnlyCollection<TerminalSymbol> Regexes { get; }
+    private readonly IGrammarSymbolsProvider Symbols { get; }
 
     private readonly CancellationToken CancellationToken { get; }
 
@@ -65,34 +63,33 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
 
-    public DfaBuild(IReadOnlyCollection<TerminalSymbol> regexes, BuilderLogger log, CancellationToken cancellationToken = default)
+    public DfaBuild(IGrammarSymbolsProvider symbols, BuilderLogger log, CancellationToken cancellationToken = default)
     {
         if (typeof(TChar) != typeof(char))
         {
             throw new NotSupportedException("Unsupported character type. Currently only char is supported.");
         }
 
-        Regexes = regexes;
+        Symbols = symbols;
         Log = log;
         CancellationToken = cancellationToken;
     }
 
     /// <summary>
-    /// Builds a DFA from a set of regular expressions.
+    /// Builds a DFA that matches the symbols of a grammar.
     /// </summary>
-    /// <param name="regexes">A collection of tuples of <see cref="Regex"/>es,
-    /// their accept <see cref="TokenSymbolHandle"/> and the symbol's name.</param>
+    /// <param name="symbols">The symbols of the grammar.</param>
     /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
     /// <param name="prioritizeFixedLengthSymbols">Whether symbols with fixed-length regexes
     /// will be prioritized in cases of conflicts.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static DfaWriter<TChar>? Build(IReadOnlyCollection<TerminalSymbol> regexes, bool caseSensitive = false,
+    public static DfaWriter<TChar>? Build(IGrammarSymbolsProvider symbols, bool caseSensitive = false,
         bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
         CancellationToken cancellationToken = default)
     {
-        var @this = new DfaBuild<TChar>(regexes, log, cancellationToken);
+        var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
         var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
         var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
@@ -100,10 +97,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             return null;
         }
-        return WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
+        return @this.WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
     }
 
-    private static TokenSymbolHandle? FindDominantTokenSymbolHandle(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols)
+    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols)
     {
         // This algorithm mimics what Farkle 6 does:
         // 1. Account for the trivial cases of zero or one accept symbols.
@@ -122,11 +119,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         acceptSymbols.Sort((x1, x2) => x1.Priority.CompareTo(x2.Priority));
 
-        var (firstPriority, firstSymbol)= acceptSymbols[0];
+        var (firstPriority, firstSymbol) = acceptSymbols[0];
 
         for (int i = 1; i < acceptSymbols.Count; i++)
         {
-            if (firstSymbol != acceptSymbols[i].Symbol)
+            if (firstSymbol != acceptSymbols[i].SymbolIndex)
             {
                 if (firstPriority < acceptSymbols[i].Priority)
                 {
@@ -139,7 +136,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return null;
     }
 
-    private static DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
+    private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
     {
         DfaWriter<TChar> dfaWriter = new(states.Count);
 
@@ -166,18 +163,18 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 dfaWriter.SetDefaultTransition(dt);
             }
 
-            if (prioritizeFixedLengthSymbols && FindDominantTokenSymbolHandle(state.AcceptSymbols) is { } sym)
+            if (prioritizeFixedLengthSymbols && FindDominantSymbol(state.AcceptSymbols) is { } sym)
             {
-                dfaWriter.AddAccept(sym);
+                dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(sym));
             }
             else
             {
-                // Returning null means either:
+                // FindDominantSymbol returning null means either:
                 // 1. There are no accept symbols so we add nothing.
                 // 2. There are multiple accept symbols so we add them all.
                 foreach (var (_, symbol) in state.AcceptSymbols)
                 {
-                    dfaWriter.AddAccept(symbol);
+                    dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(symbol));
                 }
             }
 
@@ -229,8 +226,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 switch (leaves[i])
                 {
-                    case RegexLeaf.End { Symbol: TokenSymbolHandle symbol, Priority: int priority }:
-                        S.AcceptSymbols.Add((priority, symbol));
+                    case RegexLeaf.End { SymbolIndex: int symbolIndex, Priority: int priority }:
+                        S.AcceptSymbols.Add((priority, symbolIndex));
                         break;
                     case RegexLeaf.Chars x:
                         if (x.IsInverted)
@@ -464,8 +461,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         List<BitSet> followPos = [];
         BitSet rootFirstPos = BitSet.Empty;
 
-        foreach (var (regex, symbol, name) in Regexes)
+        int count = Symbols.SymbolCount;
+        for (int i = 0; i < count; i++)
         {
+            Regex regex = Symbols.GetRegex(i);
             // If the symbol's regex's root is an Alt, we assign each of its children a different priority. This
             // emulates the behavior of GOLD Parser and resolves some nasty indistinguishable symbols errors.
             // Earlier versions of Farkle were flattening nested Alts. Because we are not doing that anymore,
@@ -484,8 +483,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 var info = Visit(in this, r, caseSensitive);
                 rootFirstPos = BitSet.Union(in rootFirstPos, in info.FirstPos);
                 int leafIndex = info.HasStar
-                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
-                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
+                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(i, TerminalPriority))
+                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(i, LiteralPriority));
                 if (info.IsNullable)
                 {
                     rootFirstPos = rootFirstPos.Set(leafIndex, true);
@@ -620,7 +619,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public int? DefaultTransition { get; set; }
 
-        public List<(int Priority, TokenSymbolHandle)> AcceptSymbols { get; } = [];
+        public List<(int Priority, int SymbolIndex)> AcceptSymbols { get; } = [];
 
         /// <summary>
         /// Returns whether the transitions of this state cover all
@@ -669,9 +668,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             public bool IsInverted { get; } = isInverted;
         }
 
-        public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf
+        public sealed class End(int symbolIndex, int priority) : RegexLeaf
         {
-            public TokenSymbolHandle Symbol { get; } = symbol;
+            public int SymbolIndex { get; } = symbolIndex;
 
             public int Priority { get; } = priority;
         }

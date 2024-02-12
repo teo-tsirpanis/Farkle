@@ -214,6 +214,18 @@ module internal ActivePatterns =
         | :? LexicalError as x -> Some <| ValueOption.ofObj x.TokenText
         | _ -> None
 
+namespace Farkle.Diagnostics.Builder
+
+/// Contains active patterns for types in the Farkle.Diagnostics.Builder namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    let inline (|IndistinguishableSymbolsError|_|) (x: obj) =
+        match x with
+        | :? IndistinguishableSymbolsError as x -> Some x.SymbolNames
+        | _ -> None
+
 namespace Farkle.Builder
 
 open System

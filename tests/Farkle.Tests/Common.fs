@@ -50,7 +50,7 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes
         member _.SymbolCount = regexes.Length
         member _.GetRegex i = regexes[i]
         member _.GetTokenSymbolHandle i = tokenSymbols[i]
-        member _.GetDiagnosticInfo i = ($"Token{i}", TokenSymbolKind.Terminal, false)}
+        member _.GetName i = BuilderSymbolName($"Token{i}", TokenSymbolKind.Terminal, false)}
     DfaBuild<char>.Build(symbolsProvider, caseSensitive, prioritizeFixedLengthSymbols, Int32.MaxValue)
     |> ValueOption.ofObj
     |> ValueOption.iter gw.AddStateMachine

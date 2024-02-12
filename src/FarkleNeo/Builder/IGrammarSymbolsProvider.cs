@@ -26,16 +26,8 @@ internal interface IGrammarSymbolsProvider
     /// <param name="index">The index of the token symbol.</param>
     TokenSymbolHandle GetTokenSymbolHandle(int index);
     /// <summary>
-    /// Gets diagnostic information about the token symbol at the specified index.
+    /// Gets the <see cref="BuilderSymbolName"/> of the token symbol at the specified index.
     /// </summary>
     /// <param name="index">The index of the token symbol.</param>
-    /// <returns>
-    /// <list type="bullet">
-    /// <item>The name of the token symbol.</item>
-    /// <item>The <see cref="TokenSymbolKind"/> of the token symbol.</item>
-    /// <item>Whether the kind of the token symbol should be displayed in messages,
-    /// because there is a token symbol with the same name and a different kind.</item>
-    /// </list>
-    /// </returns>
-    (string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) GetDiagnosticInfo(int index);
+    BuilderSymbolName GetName(int index);
 }

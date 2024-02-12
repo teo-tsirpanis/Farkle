@@ -185,9 +185,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     foreach (var (_, symbol) in state.AcceptSymbols)
                     {
                         conflictsOfState[symbol] = true;
-                        var (name, kind, shouldDisambiguate) = Symbols.GetDiagnosticInfo(symbol);
-                        namesBuilder.Add(name);
-                        symbolInfoBuilder.Add((kind, shouldDisambiguate));
+                        var name = Symbols.GetName(symbol);
+                        namesBuilder.Add(name.Name);
+                        symbolInfoBuilder.Add((name.Kind, name.ShouldDisambiguate));
                     }
                     // Do not log the same set of indistunguishable symbols twice.
                     if (seenConflicts.Add(conflictsOfState.ToBitSet()))

@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Farkle.Grammars;
 
 namespace Farkle.Diagnostics;
 
@@ -105,40 +104,7 @@ public sealed class IndistinguishableSymbolsError : IFormattable
                 }
                 string name = names.Current;
                 (TokenSymbolKind kind, bool shouldDisambiguate) = info.Current;
-                bool shouldQuote = kind is TokenSymbolKind.Terminal;
-                switch (shouldQuote, shouldDisambiguate)
-                {
-                    case (false, false):
-                        shouldAppend = sb.AppendLiteral("(");
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendFormatted(name);
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendLiteral(")");
-                        break;
-                    case (false, true):
-                        shouldAppend = sb.AppendLiteral("(");
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendFormatted(name);
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendLiteral(") (");
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendFormatted(GetTokenSymbolKindName(kind, provider));
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendLiteral(")");
-                        break;
-                    case (true, false):
-                        shouldAppend = sb.AppendFormatted(TokenSymbol.FormatName(name));
-                        break;
-                    case (true, true):
-                        shouldAppend = sb.AppendFormatted(TokenSymbol.FormatName(name));
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendLiteral(" (");
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendFormatted(GetTokenSymbolKindName(kind, provider));
-                        if (!shouldAppend) break;
-                        shouldAppend = sb.AppendLiteral(")");
-                        break;
-                }
+                shouldAppend = sb.AppendFormatted(new BuilderSymbolName(name, kind, shouldDisambiguate));
             }
             return destination.TryWrite(provider, ref sb, out charsWritten);
         }
@@ -162,22 +128,11 @@ public sealed class IndistinguishableSymbolsError : IFormattable
                 }
                 string name = names.Current;
                 (TokenSymbolKind kind, bool shouldDisambiguate) = info.Current;
-                bool shouldQuote = kind is TokenSymbolKind.Terminal;
-                switch (shouldQuote, shouldDisambiguate)
-                {
-                    case (false, false):
-                        sb.Append($"({name})");
-                        break;
-                    case (false, true):
-                        sb.Append($"({name}) ({GetTokenSymbolKindName(kind, provider)})");
-                        break;
-                    case (true, false):
-                        sb.Append(TokenSymbol.FormatName(name));
-                        break;
-                    case (true, true):
-                        sb.Append($"{TokenSymbol.FormatName(name)} ({GetTokenSymbolKindName(kind, provider)})");
-                        break;
-                }
+#if NET6_0_OR_GREATER
+                sb.Append(provider, $"{new BuilderSymbolName(name, kind, shouldDisambiguate)}");
+#else
+                sb.Append(((FormattableString)$"{new BuilderSymbolName(name, kind, shouldDisambiguate)}").ToString(provider));
+#endif
             }
             return sb.ToString();
         }

@@ -140,6 +140,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
     {
         DfaWriter<TChar> dfaWriter = new(states.Count);
+        HashSet<BitSet>? seenConflicts = null;
+        BitArrayNeo? conflictsOfState = null;
 
         foreach (var state in states)
         {
@@ -175,15 +177,23 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 // 2. There are multiple accept symbols so we add them all.
                 if (state.AcceptSymbols is not [])
                 {
+                    seenConflicts ??= [];
+                    conflictsOfState ??= new BitArrayNeo(Symbols.SymbolCount);
+                    conflictsOfState.SetAll(false);
                     var namesBuilder = ImmutableArray.CreateBuilder<string>(state.AcceptSymbols.Count);
                     var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(state.AcceptSymbols.Count);
                     foreach (var (_, symbol) in state.AcceptSymbols)
                     {
+                        conflictsOfState[symbol] = true;
                         var (name, kind, shouldDisambiguate) = Symbols.GetDiagnosticInfo(symbol);
                         namesBuilder.Add(name);
                         symbolInfoBuilder.Add((kind, shouldDisambiguate));
                     }
-                    Log.IndistinguishableSymbols(new(namesBuilder.MoveToImmutable(), symbolInfoBuilder.MoveToImmutable()));
+                    // Do not log the same set of indistunguishable symbols twice.
+                    if (seenConflicts.Add(conflictsOfState.ToBitSet()))
+                    {
+                        Log.IndistinguishableSymbols(new(namesBuilder.MoveToImmutable(), symbolInfoBuilder.MoveToImmutable()));
+                    }
                 }
                 foreach (var (_, symbol) in state.AcceptSymbols)
                 {

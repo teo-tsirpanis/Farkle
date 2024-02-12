@@ -8,7 +8,9 @@ module Farkle.Tests.Common
 
 open Expecto
 open Farkle
+open Farkle.Builder
 open Farkle.Builder.StateMachines
+open Farkle.Diagnostics
 open Farkle.Grammars
 open Farkle.Grammars.Writers
 open Farkle.Parser.Semantics
@@ -26,8 +28,9 @@ let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> wi
 /// This is an advanced overload that also allows you to prioritize
 /// fixed-length symbols.
 let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes =
-    let count = List.length regexes
     let gw = GrammarWriter()
+    let regexes = Array.ofList regexes
+    let count = Array.length regexes
     let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
     let rootNonterminal = gw.AddNonterminal(gw.GetOrAddString("S"), NonterminalAttributes.None, count)
     let productions = Array.init count (fun _ -> gw.AddProduction(1))
@@ -43,10 +46,12 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes
         lr.FinishState()
         Array.iter (fun p -> lr.AddEofReduce(p); lr.FinishState()) productions
         gw.AddStateMachine lr
-    (regexes, tokenSymbols)
-    ||> Seq.map2 (fun r t -> struct (r, t, ""))
-    |> Array.ofSeq
-    |> fun x -> DfaBuild<char>.Build(x, caseSensitive, prioritizeFixedLengthSymbols, Int32.MaxValue)
+    let symbolsProvider = {new IGrammarSymbolsProvider with
+        member _.SymbolCount = regexes.Length
+        member _.GetRegex i = regexes[i]
+        member _.GetTokenSymbolHandle i = tokenSymbols[i]
+        member _.GetDiagnosticInfo i = ($"Token{i}", TokenSymbolKind.Terminal, false)}
+    DfaBuild<char>.Build(symbolsProvider, caseSensitive, prioritizeFixedLengthSymbols, Int32.MaxValue)
     |> ValueOption.ofObj
     |> ValueOption.iter gw.AddStateMachine
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)

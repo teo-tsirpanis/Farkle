@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using BitCollections;
+using Farkle.Diagnostics;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -172,6 +173,18 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 // FindDominantSymbol returning null means either:
                 // 1. There are no accept symbols so we add nothing.
                 // 2. There are multiple accept symbols so we add them all.
+                if (state.AcceptSymbols is not [])
+                {
+                    var namesBuilder = ImmutableArray.CreateBuilder<string>(state.AcceptSymbols.Count);
+                    var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(state.AcceptSymbols.Count);
+                    foreach (var (_, symbol) in state.AcceptSymbols)
+                    {
+                        var (name, kind, shouldDisambiguate) = Symbols.GetDiagnosticInfo(symbol);
+                        namesBuilder.Add(name);
+                        symbolInfoBuilder.Add((kind, shouldDisambiguate));
+                    }
+                    Log.IndistinguishableSymbols(new(namesBuilder.MoveToImmutable(), symbolInfoBuilder.MoveToImmutable()));
+                }
                 foreach (var (_, symbol) in state.AcceptSymbols)
                 {
                     dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(symbol));

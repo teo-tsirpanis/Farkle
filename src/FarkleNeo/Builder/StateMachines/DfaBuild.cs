@@ -197,7 +197,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             CancellationToken.ThrowIfCancellationRequested();
 
-            if (maxStates == stateList.Count)
+            if (maxStates < stateList.Count)
             {
                 // If the maximum number of states has been reached, do not create a DFA.
                 // This is the best option, out of writing the half-built DFA to the grammar

@@ -8,6 +8,6 @@ Farkle resolves certain conflicts automatically, favoring regexes with fixed len
 
 Furthermore, if the regex has an alternation in its root, each alternative will be considered separately. For example, a conflict between the regexes `a+` and `a{3}|b+` on the string `aaa` will be resolved again in favor of the latter. The variable-sized second alternative will not have an effect on the resolution of the conflict.
 
-In code, this error is represented by the `Farkle.Diagnostics.IndistinguishableSymbolsError` class. A build diagnostic listener can cast the message object of diagnostics of this code to `IndistinguishableSymbolsError` to get more information about the conflicting symbols.
+In code, this error is represented by the `Farkle.Diagnostics.Builder.IndistinguishableSymbolsError` class. A build diagnostic listener can cast the message object of diagnostics of this code to `IndistinguishableSymbolsError` to get more information about the conflicting symbols.
 
 Farkle will not emit this error multiple times for the same set of symbols.

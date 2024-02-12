@@ -3,6 +3,7 @@
 
 using BitCollections;
 using Farkle.Diagnostics;
+using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;

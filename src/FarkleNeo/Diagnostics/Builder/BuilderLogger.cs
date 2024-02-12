@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
-using Farkle.Diagnostics;
 
-namespace Farkle.Builder;
+namespace Farkle.Diagnostics.Builder;
 
 internal struct BuilderLogger
 {

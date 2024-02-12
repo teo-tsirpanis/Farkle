@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace Farkle.Diagnostics;
+namespace Farkle.Diagnostics.Builder;
 
 /// <summary>
 /// Contains information about a case where the builder could

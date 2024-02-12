@@ -740,6 +740,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo operator +(in RegexInfo left, in RegexInfo right)
         {
+            // We can skip checking if left is void because when processing a concatenation of regexes,
+            // left starts to be RegexInfo.Empty and right gets passed all the regexes eventually,
+            // so we don't miss anything.
             RegexCharacteristics hasVoidMaybe = right.IsVoid
                 ? RegexCharacteristics.HasVoid
                 : RegexCharacteristics.None;

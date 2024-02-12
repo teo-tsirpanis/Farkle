@@ -25,18 +25,6 @@ public sealed class IndistinguishableSymbolsError : IFormattable
 {
     private ImmutableArray<(TokenSymbolKind, bool ShouldDisambiguate)> SymbolDiagnosticInfo { get; }
 
-    private static string GetTokenSymbolKindName(TokenSymbolKind kind, IFormatProvider? formatProvider)
-    {
-        return kind switch
-        {
-            TokenSymbolKind.Terminal => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Terminal), formatProvider, "terminal"),
-            TokenSymbolKind.Noise => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Noise), formatProvider, "noise"),
-            TokenSymbolKind.GroupStart => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupStart), formatProvider, "group start"),
-            TokenSymbolKind.GroupEnd => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupEnd), formatProvider, "group end"),
-            _ => throw new ArgumentOutOfRangeException(nameof(kind))
-        };
-    }
-
     /// <summary>
     /// The names of the conflicting symbols.
     /// </summary>

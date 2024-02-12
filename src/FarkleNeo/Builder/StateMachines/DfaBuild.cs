@@ -517,13 +517,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 isVoid &= info.IsVoid;
             }
             Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
-            if (isVoid)
+            // Let's emit the same diagnostic for a regex that both is entirely void
+            // or part of it is. This situation is very niche.
+            if (Log.IsEnabled(DiagnosticSeverity.Warning) && isVoid || hasVoid)
             {
-                // TODO: Warn that the regex for symbol <name> cannot be matched.
-            }
-            else if (hasVoid)
-            {
-                // TODO: Warn that part of the regex for symbol <name> cannot be matched.
+                Log.RegexContainsVoid(Symbols.GetName(i));
             }
         }
 

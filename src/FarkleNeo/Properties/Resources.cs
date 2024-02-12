@@ -162,6 +162,8 @@ internal static class Resources
 
     public static string Builder_IndistinguishableSymbols => GetResourceString(nameof(Builder_IndistinguishableSymbols));
 
+    public static string Builder_RegexContainsVoid => GetResourceString(nameof(Builder_RegexContainsVoid));
+
     public static string Builder_SymbolKind_Terminal => GetResourceString(nameof(Builder_SymbolKind_Terminal));
 
     public static string Builder_SymbolKind_Noise => GetResourceString(nameof(Builder_SymbolKind_Noise));

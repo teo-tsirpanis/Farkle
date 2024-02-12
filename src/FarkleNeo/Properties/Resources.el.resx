@@ -93,6 +93,9 @@
   <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
     <value>Δε μπορεί να γίνει διάκριση μεταξύ των συμβόλων: {0}</value>
   </data>
+  <data name="Builder_RegexContainsVoid" xml:space="preserve">
+    <value>Η κανονική έκφραση για το σύμβολο {0} (ή μέρος της οποίας) δεν μπορεί να αντιστοιχηθεί από κανέναν χαρακτήρα</value>
+  </data>
   <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
     <value>τερματικό</value>
   </data>

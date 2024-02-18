@@ -72,11 +72,11 @@ public sealed class Nonterminal : INonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentException("Productions cannot be empty", nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
         if (!ImmutableInterlocked.InterlockedCompareExchange(ref _productions, productions, default).IsDefault)
         {
-            throw new InvalidOperationException("Cannot set productions of a nonterminal more than once.");
+            ThrowHelpers.ThrowInvalidOperationExceptionLocalized(nameof(Resources.Builder_Nonterminal_SetProductionsManyTimes));
         }
     }
 

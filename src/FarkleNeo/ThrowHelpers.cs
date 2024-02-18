@@ -15,6 +15,10 @@ internal static class ThrowHelpers
         => throw new ArgumentException(parameterName, message, innerException);
 
     [DoesNotReturn, StackTraceHidden]
+    public static void ThrowArgumentExceptionLocalized(string? parameterName, string resourceKey, Exception? innerException = null) =>
+        throw new ArgumentException(parameterName, Resources.GetResourceString(resourceKey), innerException);
+
+    [DoesNotReturn, StackTraceHidden]
     public static void ThrowArgumentNullException(string? parameterName, string? message = null)
         => throw new ArgumentNullException(parameterName, message);
 
@@ -57,6 +61,10 @@ internal static class ThrowHelpers
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowInvalidOperationExceptionLocalized(string resourceKey) =>
+        throw new InvalidOperationException(Resources.GetResourceString(resourceKey));
 
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowNotSupportedException(string? message = null) =>

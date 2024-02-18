@@ -53,7 +53,7 @@ public static class Nonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentException("Cannot create a nonterminal with no productions", nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
         return new Nonterminal<T>(name, productions);
     }
@@ -101,7 +101,7 @@ public static class Nonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentException("Cannot create a nonterminal with no productions", nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
         return new Untyped.Nonterminal(name, productions);
     }
@@ -173,11 +173,11 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentException("Productions cannot be empty", nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
         if (!ImmutableInterlocked.InterlockedCompareExchange(ref _productions, productions, default).IsDefault)
         {
-            throw new InvalidOperationException("Cannot set productions of a nonterminal more than once.");
+            ThrowHelpers.ThrowInvalidOperationExceptionLocalized(nameof(Resources.Builder_Nonterminal_SetProductionsManyTimes));
         }
     }
 

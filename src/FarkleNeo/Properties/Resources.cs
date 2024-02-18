@@ -172,6 +172,10 @@ internal static class Resources
 
     public static string Builder_SymbolKind_GroupEnd => GetResourceString(nameof(Builder_SymbolKind_GroupEnd));
 
+    public static string Builder_Nonterminal_EmptyProductions => GetResourceString(nameof(Builder_Nonterminal_EmptyProductions));
+
+    public static string Builder_Nonterminal_SetProductionsManyTimes => GetResourceString(nameof(Builder_Nonterminal_SetProductionsManyTimes));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

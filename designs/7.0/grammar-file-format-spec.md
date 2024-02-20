@@ -180,7 +180,7 @@ The following bit values are defined for the __Flags__ column:
 |---|----|-----------|
 |0|`Terminal`|The token symbol can exist in the right-hand side of a production.|
 |1|`GroupStart`|The token symbol appears in the __Start__ column of the _Group_ table.|
-|2|`Noise`|The token symbol can be skipped by parsers if encountered in an unexpected place in the input.|
+|2|`Noise`|The token symbol must be skipped by parsers if encountered in an unexpected place in the input.|
 |3|`Hidden`|The token symbol should not be displayed by parsers in the expected tokens list in case of a syntax error.|
 |4|`Generated`|The token symbol was not explicitly defined by the grammar author.|
 

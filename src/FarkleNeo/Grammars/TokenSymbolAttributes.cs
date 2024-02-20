@@ -25,7 +25,7 @@ public enum TokenSymbolAttributes : uint
     // and happens on every token. We can skip this check with this flag.
     GroupStart = 1 << 1,
     /// <summary>
-    /// The token symbol can be skipped by parsers if encountered in an unexpected place in the input.
+    /// The token symbol must be skipped by parsers if encountered in an unexpected place in the input.
     /// </summary>
     Noise = 1 << 2,
     /// <summary>

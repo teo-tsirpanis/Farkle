@@ -323,6 +323,11 @@ public abstract class Grammar : IGrammarProvider
     /// or a <see cref="NonterminalHandle"/> pointing to the symbol with the specified special name,
     /// or pointing to nothing if the symbol was not found and <paramref name="throwIfNotFound"/>
     /// has a value of <see langword="false"/>.</returns>
+    /// <remarks>
+    /// Special names are intended to be used on token symbolss that will be emitted by custom
+    /// tokenizers. Because symbol names are not guaranteed to be unique, a special name
+    /// provides a guaranteed way to retrieve the handle for a specific symbol.
+    /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="specialName"/> is <see langword="null"/>.</exception>
     /// <exception cref="KeyNotFoundException">The symbol was not found and <paramref name="throwIfNotFound"/>
     /// had a value of <see langword="true"/>.</exception>

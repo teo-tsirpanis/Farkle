@@ -104,11 +104,14 @@ public partial class Terminal : ISymbolBase
 
     internal Transformer<char, object?> Transformer { get; }
 
-    internal Terminal(string name, Regex regex, Transformer<char, object?> transformer)
+    internal TerminalOptions Options { get; }
+
+    internal Terminal(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options)
     {
         Name = name;
         Regex = regex;
         Transformer = transformer;
+        Options = options;
     }
 
     string IGrammarSymbol.Name => Name;
@@ -155,11 +158,14 @@ public abstract partial class Group : ISymbolBase
 
     internal Transformer<char, object?> Transformer { get; }
 
-    private protected Group(string name, string groupStart, Transformer<char, object?> transformer)
+    internal GroupOptions Options { get; }
+
+    private protected Group(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options)
     {
         Name = name;
         GroupStart = groupStart;
         Transformer = transformer;
+        Options = options;
     }
 
     string IGrammarSymbol.Name => Name;
@@ -167,9 +173,9 @@ public abstract partial class Group : ISymbolBase
     ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
-internal class LineGroup(string name, string groupStart, Transformer<char, object?> transformer) : Group(name, groupStart, transformer);
+internal class LineGroup(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : Group(name, groupStart, transformer, options);
 
-internal class BlockGroup(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer) : Group(name, groupStart, transformer)
+internal class BlockGroup(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer, GroupOptions options) : Group(name, groupStart, transformer, options)
 {
     public string GroupEnd { get; } = groupEnd;
 }
@@ -189,11 +195,11 @@ internal interface INonterminal : ISymbolBase
     ImmutableArray<IProduction> FreezeAndGetProductions();
 }
 
-internal sealed class Terminal<T>(string name, Regex regex, Transformer<char, object?> transformer) : Terminal(name, regex, transformer), IGrammarSymbol<T>;
+internal sealed class Terminal<T>(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : Terminal(name, regex, transformer, options), IGrammarSymbol<T>;
 
-internal sealed class LineGroup<T>(string name, string groupStart, Transformer<char, object?> transformer) : LineGroup(name, groupStart, transformer), IGrammarSymbol<T>;
+internal sealed class LineGroup<T>(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : LineGroup(name, groupStart, transformer, options), IGrammarSymbol<T>;
 
-internal sealed class BlockGroup<T>(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer) : BlockGroup(name, groupStart, groupEnd, transformer), IGrammarSymbol<T>;
+internal sealed class BlockGroup<T>(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer, GroupOptions options) : BlockGroup(name, groupStart, groupEnd, transformer, options), IGrammarSymbol<T>;
 
 /// <summary>
 /// Represents a production in a grammar to be built that produces a value.

@@ -8,6 +8,14 @@ namespace Farkle.Builder;
 /// </summary>
 public partial class Terminal
 {
+    private static void ValidateOptions(TerminalOptions options)
+    {
+        if ((options & ~(TerminalOptions.Noisy | TerminalOptions.Hidden | TerminalOptions.SpecialName)) != 0)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(options));
+        }
+    }
+
     /// <summary>
     /// A special terminal that matches a new line.
     /// </summary>
@@ -25,11 +33,13 @@ public partial class Terminal
     /// </summary>
     /// <param name="name">The name of the terminal.</param>
     /// <param name="regex">The <see cref="Regex"/> that matches the terminal.</param>
-    public static IGrammarSymbol Create(string name, Regex regex)
+    /// <param name="options">Options to configure the terminal. Optional.</param>
+    public static IGrammarSymbol Create(string name, Regex regex, TerminalOptions options = TerminalOptions.None)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         ArgumentNullExceptionCompat.ThrowIfNull(regex);
-        return new Terminal(name, regex, Builder.Transformer.GetIdentity<char, object>());
+        ValidateOptions(options);
+        return new Terminal(name, regex, Builder.Transformer.GetIdentity<char, object>(), options);
     }
 
     /// <summary>
@@ -39,12 +49,15 @@ public partial class Terminal
     /// <param name="name">The name of the terminal.</param>
     /// <param name="regex">The <see cref="Regex"/> that matches the terminal.</param>
     /// <param name="transformer">The transformer to apply to the content of the terminal.</param>
-    public static IGrammarSymbol<T> Create<T>(string name, Regex regex, Transformer<char, T> transformer)
+    /// <param name="options">Options to configure the terminal. Optional.</param>
+    public static IGrammarSymbol<T> Create<T>(string name, Regex regex, Transformer<char, T> transformer,
+        TerminalOptions options = TerminalOptions.None)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         ArgumentNullExceptionCompat.ThrowIfNull(regex);
         ArgumentNullExceptionCompat.ThrowIfNull(transformer);
-        return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer));
+        ValidateOptions(options);
+        return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), options);
     }
 
     /// <summary>
@@ -52,9 +65,16 @@ public partial class Terminal
     /// </summary>
     /// <param name="value">The string matched by the terminal.</param>
     /// <remarks>
+    /// <para>
     /// Multiple instances of literals with the same <paramref name="value"/> resolve to the
     /// same terminal in a grammar, and will not cause conflicts when building it.
+    /// </para>
+    /// <para>
+    /// The equivalence of literals when building a grammar is affected by the grammar's
+    /// case sensitivity option.
+    /// </para>
     /// </remarks>
+    /// <seealso cref="ProductionBuilderExtensions.Append"/>
     public static IGrammarSymbol Literal(string value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);

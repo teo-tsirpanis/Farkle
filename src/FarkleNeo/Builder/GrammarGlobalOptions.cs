@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using Farkle.Builder.OperatorPrecedence;
 
 namespace Farkle.Builder;
 
@@ -21,6 +22,8 @@ internal readonly struct GrammarGlobalOptions
     public bool AutoWhitespace { get; init; } = true;
 
     public bool? NewLineIsNoisy { get; init; } = null;
+
+    public OperatorScope? OperatorScope { get; init; } = null;
 
     public ImmutableList<(string Name, Regex Regex)> NoiseSymbols { get; init; } = [];
 

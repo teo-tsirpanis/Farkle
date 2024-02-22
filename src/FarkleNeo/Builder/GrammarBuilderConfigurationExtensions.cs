@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using Farkle.Builder.OperatorPrecedence;
 
 namespace Farkle.Builder;
 
@@ -165,6 +166,36 @@ public static class GrammarBuilderConfigurationExtensions
         return value == builder.GetOptions().GrammarName
             ? builder
             : builder.WithOptions(builder.GetOptions() with { GrammarName = value });
+    }
+
+    /// <summary>
+    /// Changes the <see cref="OperatorScope"/> used to resolve parser conflicts in the grammar.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <param name="value">The <see cref="OperatorScope"/> to use in the grammar.</param>
+    /// <remarks>
+    /// In versions of Farkle prior to 7 this option could be applied to individual symbols and
+    /// still had effect on the entire grammar. Since Farkle 7 a grammar may only have one operator
+    /// scope. The reason for this change is that the previous behavior had limited utility and lots
+    /// of edge cases that were difficult to define and handle.
+    /// </remarks>
+    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, OperatorScope value)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(value);
+
+        return value == builder.GetOptions().OperatorScope
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
+    }
+
+    /// <inheritdoc cref="WithOperatorScope"/>
+    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, OperatorScope value)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(value);
+
+        return value == builder.GetOptions().OperatorScope
+            ? builder
+            : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
 
     /// <summary>

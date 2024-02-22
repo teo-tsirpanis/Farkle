@@ -16,10 +16,11 @@ namespace Farkle.Builder;
 /// and cannot be implemented by user code.
 /// </para>
 /// <para>
-/// The only operations allowed on this interface are building it and
-/// setting global options.
+/// The only operations allowed on grammar builders are building a grammar and
+/// setting options global to the grammar.
 /// </para>
 /// </remarks>
+/// <seealso cref="GrammarBuilderConfigurationExtensions"/>
 public interface IGrammarBuilder
 {
     internal ISymbolBase Symbol { get; }
@@ -33,6 +34,7 @@ public interface IGrammarBuilder
 /// <remarks>
 /// This interface cannot be implemented by user code.
 /// </remarks>
+/// <seealso cref="GrammarBuilderConfigurationExtensions"/>
 public interface IGrammarBuilder<out T> : IGrammarBuilder;
 
 /// <summary>
@@ -52,16 +54,16 @@ public interface IGrammarBuilder<out T> : IGrammarBuilder;
 /// operations apply to individual symbols and which apply to the whole grammar.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarSymbolExtensions"/>
+/// <seealso cref="GrammarSymbolConfigurationExtensions"/>
 public interface IGrammarSymbol : IGrammarBuilder
 {
     /// <summary>
     /// The symbol's name.
     /// </summary>
     /// <remarks>
-    /// This value is used only for diagnostics purposes and does not affect the
-    /// grammar's behavior when parsing. A grammar may contain multiple symbols
-    /// with the same name.
+    /// This value is used only for diagnostic and documentation purposes and does
+    /// not affect the grammar's behavior when parsing. A grammar may contain multiple
+    /// symbols with the same name.
     /// </remarks>
     string Name { get; }
 }
@@ -82,7 +84,7 @@ public interface IGrammarSymbol : IGrammarBuilder
 /// operations apply to individual symbols and which apply to the whole grammar.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarSymbolExtensions"/>
+/// <seealso cref="GrammarSymbolConfigurationExtensions"/>
 /// <seealso cref="IGrammarBuilder"/>
 public interface IGrammarSymbol<out T> : IGrammarBuilder<T>, IGrammarSymbol;
 

@@ -74,7 +74,9 @@ This document describes several behavior breaking changes. To allow containing t
 
 Compatibility levels will be introduced with a major or minor version when it brings potentially breaking changes to the default builder behavior. Patch releases will not introduce such changes.
 
-Initially two compatibility levels will be introduced: one for Farkle 6 and one for Farkle 7.0. A "latest" compatibility level that will always alias to the newest one will also be introduced. Initially setting a compatibility level will be added as a global option and when creating a string regex. All compatibility levels except for the one for the current version and the "latest" one will be marked as obsolete.
+~~Initially two compatibility levels will be introduced: one for Farkle 6 and one for Farkle 7.0. A "latest" compatibility level that will always alias to the newest one will also be introduced.~~ Initially one compatibility level will be introduced for Farkle 7.0, and future ones will be added as needed. Setting a compatibility level will be added as a global option and when creating a string regex (affecting only how the string regex will be parsed). All compatibility levels except for the one for the current version and the "latest" one will be marked as obsolete.
+
+__Update__: After some consideration, it was decided that a compatibility level for Farkle 6 will not be provided. Given the fundamental changes in places like the DFA builder, and the already extensive API changes, providing behavior compatibility with Farkle 6 would not have any significant benefits. The "latest" compatibility level alias will also not be provided; it would be equivalent to not setting a compatibility level. Because the precompiler already provides this shielding from behavior breaking changes, explicit compatibility levels will be recommended to be set only in specific scenarios. This feature was very close to being entirely cancelled, but introducing it later would lose some of its purpose.
 
 ## P&A for nonterminals
 
@@ -122,6 +124,8 @@ In Farkle 6 if you rename a symbol, you must only use its renamed instance throu
 ## Group nesting
 
 While nesting groups has always been supported in all of GOLD Parser's and Farkle's grammar formats, declaring groups that can be nested within each other has not been supported in Farkle's builder API. We will add APIs for it in Farkle 7.
+
+__Update__: Groups can be defined to nest with themselves. More custom nesting will be implemented at a later time.
 
 ## Improve setting productions
 

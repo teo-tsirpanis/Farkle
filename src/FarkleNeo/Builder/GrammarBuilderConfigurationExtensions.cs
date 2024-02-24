@@ -199,6 +199,37 @@ public static class GrammarBuilderConfigurationExtensions
     }
 
     /// <summary>
+    /// Changes the <see cref="CompatibilityLevel"/> that will be used to build the grammar.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <param name="value">The <see cref="CompatibilityLevel"/> to use in the grammar.</param>
+    /// <remarks>
+    /// <para>
+    /// If this option is not set, the latest available compatibility level (at runtime, or at
+    /// compile time if the precompiler is used).
+    /// </para>
+    /// <para>
+    /// Because the precompiler already protects from behavior breaking changes in the builder,
+    /// setting a compatibility level for a grammar will have benefits only if the precompiler
+    /// is not being used.
+    /// </para>
+    /// </remarks>
+    public static IGrammarBuilder WithCompatibilityLevel(this IGrammarBuilder builder, CompatibilityLevel value)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(value);
+
+        return builder;
+    }
+
+    /// <inheritdoc cref="WithCompatibilityLevel"/>
+    public static IGrammarBuilder<T> WithCompatibilityLevel<T>(this IGrammarBuilder<T> builder, CompatibilityLevel value)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(value);
+
+        return builder;
+    }
+
+    /// <summary>
     /// Adds a noise symbol to the grammar that will be ignored if it is encountered in the input.
     /// </summary>
     /// <param name="builder">The grammar builder.</param>

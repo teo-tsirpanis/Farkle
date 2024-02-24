@@ -6,8 +6,11 @@
 [<AutoOpen>]
 module Farkle.Tests.Generators
 
+open System
+open System.Text
 open Expecto
 open Farkle
+open Farkle.Builder
 open FsCheck
 open System.Collections.Generic
 open System.Text.Json.Nodes
@@ -50,6 +53,109 @@ let JsonGen =
             ]
     Gen.sized (impl >> branches)
 
+let regexGen =
+    let rec impl size = gen {
+        if size <= 1 then
+            // Generating inverted character sets presents many challenges,
+            // including difficulty in generating a string that matches them,
+            // and generating case-insensitive regexes, so we will not do it
+            // at least for now.
+            return! nonEmptyString |> Gen.map Regex.chars
+        else
+            let gen = impl <| size / 2
+            match! Gen.choose(0, 2) with
+            | 0 -> return! Gen.map2 (+) gen gen
+            | 1 -> return! Gen.map2 (|||) gen gen
+            | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
+            | _ -> return! Gen.map Regex.plus gen
+    }
+    Gen.sized impl
+
+type Regexes = Regexes of Regex list * (string * int) list
+
+type RegexStringPair = RegexStringPair of Regex * string
+
+let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexRegexString|) (r: Regex) =
+    let mutable chars = Unchecked.defaultof<_>
+    let mutable isInverted = false
+    let mutable regexes = Unchecked.defaultof<_>
+    let mutable inner = null
+    let mutable m = 0
+    let mutable n = 0
+    let mutable regexString = Unchecked.defaultof<_>
+    if r.IsAny() then
+        RegexAny
+    elif r.IsChars(&chars, &isInverted) then
+        if isInverted then
+            RegexAllButChars chars
+        else
+            RegexChars chars
+    elif r.IsAlt(&regexes) then
+        RegexAlt regexes
+    elif r.IsConcat(&regexes) then
+        RegexConcat regexes
+    elif r.IsLoop(&inner, &m, &n) then
+        RegexLoop(inner, m, n)
+    elif r.IsRegexString(&regexString) then
+        RegexRegexString ()
+    else
+        failwith "Impossible"
+
+let genRegexString regex =
+    let containsInRanges xs x = xs |> Seq.exists (fun struct(a, b) -> a <= x && x <= b)
+    let rec impl (sb: StringBuilder) regex = gen {
+        match regex with
+        | RegexAny ->
+            let! c = Arb.generate<char>
+            do sb.Append(c) |> ignore
+        | RegexChars x ->
+            let! c = Arb.generate |> Gen.filter (containsInRanges x)
+            do sb.Append(c) |> ignore
+        | RegexAllButChars x ->
+            // This is our best shot here; creating the
+            // complement is probably not a good idea.
+            let! c = Arb.generate |> Gen.filter (containsInRanges x >> not)
+            do sb.Append(c) |> ignore
+        | RegexAlt xs ->
+            let! x = Gen.elements xs
+            do! impl sb x
+        | RegexConcat xs ->
+            for x in xs do
+                do! impl sb x
+        | RegexLoop(x, m, n) ->
+            for __ = 0 to m - 1 do
+                do! impl sb x
+            let! (NonNegativeInt len) =
+                Arb.generate
+                |> if n = Int32.MaxValue then id else Gen.filter (fun (NonNegativeInt x) -> x <= n - m)
+            for __ = 0 to len - 1 do
+                do! impl sb x
+        // Regex strings are never created by the generator.
+        | RegexRegexString() -> ()
+    }
+    gen {
+        let sb = StringBuilder()
+        do! impl sb regex
+        return sb.ToString()
+    }
+
+let regexesGen = gen {
+    let! regexSpec =
+        Arb.generate
+        |> Gen.nonEmptyListOf
+    let! strings =
+        regexSpec
+        |> List.mapi (fun i x -> x |> genRegexString |> Gen.map (fun x -> x, i))
+        |> Gen.sequence
+    return Regexes(regexSpec, strings)
+}
+
+let regexStringPairGen = gen {
+    let! regex = Arb.generate
+    let! str = genRegexString regex
+    return RegexStringPair(regex, str)
+}
+
 #if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
 let simpleMathsASTGen =
     let rec impl size =
@@ -72,74 +178,6 @@ let simpleMathsASTGen =
                 ]
         }
     Gen.sized impl
-
-let regexGen =
-    let rec impl size = gen {
-        if size <= 1 then
-            return! nonEmptyString |> Gen.map Regex.chars
-        else
-            let gen = impl <| size / 2
-            match! Gen.choose(0, 2) with
-            | 0 -> return! Gen.map2 (<&>) gen gen
-            | 1 -> return! Gen.map2 (<|>) gen gen
-            | 2 when size >= 16 -> return! Gen.map Regex.chars nonEmptyString
-            | _ -> return! Gen.map Regex.star gen
-    }
-    Gen.sized impl
-
-type Regexes = Regexes of (Regex * DFASymbol) list * (string * DFASymbol) list
-
-type RegexStringPair = RegexStringPair of Regex * string
-
-let genRegexString regex =
-    let rec impl (sb: StringBuilder) regex = gen {
-        match regex with
-        | Regex.Chars x ->
-            let! c = Gen.elements x
-            do sb.Append(c) |> ignore
-        | Regex.AllButChars x ->
-            // This is our best shot here; creating the
-            // complement is probably not a good idea.
-            let! c = Arb.generate |> Gen.filter (x.Contains >> not)
-            do sb.Append(c) |> ignore
-        | Regex.Alt xs ->
-            let! x = Gen.elements xs
-            do! impl sb x
-        | Regex.Concat xs ->
-            for x in xs do
-                do! impl sb x
-        | Regex.Star x ->
-            let! (NonNegativeInt len) = Arb.generate
-            for __ = 0 to len - 1 do
-                do! impl sb x
-        // Regex strings are never created by the generator.
-        | Regex.RegexString _ -> ()
-    }
-    gen {
-        let sb = StringBuilder()
-        do! impl sb regex
-        return sb.ToString()
-    }
-
-let regexesGen = gen {
-    let! regexSpec =
-        Arb.generate
-        |> Gen.nonEmptyListOf
-        |> Gen.map (List.mapi (fun idx regex ->
-            let symbol = Choice1Of4 <| Terminal(uint32 idx, sprintf "Terminal %d" idx)
-            regex, symbol))
-    let! strings =
-        regexSpec
-        |> List.map (fun (regex, symbol) -> regex |> genRegexString |> Gen.map (fun x -> x, symbol))
-        |> Gen.sequence
-    return Regexes(regexSpec, strings)
-}
-
-let regexStringPairGen = gen {
-    let! regex = Arb.generate
-    let! str = genRegexString regex
-    return RegexStringPair(regex, str)
-}
 
 let designtimeFarkleGen =
     let impl size = gen {
@@ -189,15 +227,15 @@ let designtimeFarkleGen =
 type Generators =
     static member TextPosition() = Arb.fromGen textPositionGen
     static member Json() = Arb.fromGen JsonGen
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
-    static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
     static member Regex() = Arb.fromGen regexGen
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
+    static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
 #endif
 
-let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
+let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = Some (1903651590, 297281888)}
 
 let testProperty x = testPropertyWithConfig fsCheckConfig x
 let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x
@@ -205,3 +243,5 @@ let ptestProperty x = ptestPropertyWithConfig fsCheckConfig x
 
 /// Performs a property test with a smaller sample size.
 let testPropertySmall name prop = testPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
+let ftestPropertySmall name prop = ftestPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop
+let ptestPropertySmall name prop = ptestPropertyWithConfigs {fsCheckConfig with endSize = 50} fsCheckConfig name prop

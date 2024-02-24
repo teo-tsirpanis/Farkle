@@ -14,6 +14,7 @@ However it hasn't been all rosy. The use of F# brought several drawbacks, that c
     * [The language has some weird rules around static field initialization.](https://github.com/dotnet/fsharp/issues/9719)
     * Lack of `protected`.
     * Lack of pinning arbitrary `byref`s.
+        * [Subsequently added in F# 8.](https://github.com/fsharp/fslang-design/blob/main/FSharp-8.0/FS-1081-extended-fixed-bindings.md)
     * Lack of lightweight optional values. `Option` allocates and `ValueOption` has overhead. C#'s nullable reference types are by far superior.
     * …
 * Any assembly compiled with F# has to use `FSharp.Core`, a package that weighs two and a half megabytes. Being a low-level library, Farkle depending on `FSharp.Core` is problematic. [BitCollections](https://github.com/teo-tsirpanis/BitCollections), another dependency of Farkle is used only by the grammar state machine builders, and can be entirely removed with trimming when using the precompiler. By contrast, the use of `FSharp.Core` is necessarily so pervasive that it cannot be entirely trimmed away.

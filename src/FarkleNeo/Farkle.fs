@@ -214,6 +214,114 @@ module internal ActivePatterns =
         | :? LexicalError as x -> Some <| ValueOption.ofObj x.TokenText
         | _ -> None
 
+namespace Farkle.Diagnostics.Builder
+
+/// Contains active patterns for types in the Farkle.Diagnostics.Builder namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    let inline (|IndistinguishableSymbolsError|_|) (x: obj) =
+        match x with
+        | :? IndistinguishableSymbolsError as x -> Some x.SymbolNames
+        | _ -> None
+
+namespace Farkle.Builder
+
+open System
+
+/// F#-friendly members of the `Farkle.Builder.Regex` class.
+/// Please consult the members of the class for documentation.
+module Regex =
+
+    open System.Collections.Immutable
+
+    let private makeImmutableArray<'T,'TSeq when 'TSeq :> 'T seq> (x: 'TSeq) =
+        if Type.op_Equality(typeof<'TSeq>, typeof<ImmutableArray<'T>>) then
+            Unchecked.unbox x
+        else
+            x.ToImmutableArray()
+
+    /// An alias for `Regex.Literal` that takes a character.
+    let char (c: char) = Regex.Literal c
+
+    /// An alias for `Regex.OneOf` that takes characters.
+    let chars (str: #seq<char>) =
+        str
+        |> makeImmutableArray
+        |> Regex.OneOf
+
+    /// An alias for `Regex.OneOf` that takes character ranges.
+    let charRanges (str: #seq<struct(char * char)>) =
+        str
+        |> makeImmutableArray
+        |> Regex.OneOf
+
+    /// An alias for `Regex.Any`.
+    let any = Regex.Any
+
+    /// An alias for `Regex.NotOneOf` that takes characters.
+    let allButChars  (str: #seq<char>) =
+        str
+        |> makeImmutableArray
+        |> Regex.NotOneOf
+
+    /// An alias for `Regex.NotOneOf` that takes character ranges.
+    let allButCharRanges (str: #seq<struct(char * char)>) =
+        str
+        |> makeImmutableArray
+        |> Regex.NotOneOf
+
+    /// An alias for `Regex.Literal` that takes a string.
+    let string (str: string) = Regex.Literal str
+
+    /// An alias for `Regex.Join`.
+    let concat (xs: #seq<Regex>) = Regex.Join(makeImmutableArray xs)
+
+    /// An alias for `Regex.Choice`.
+    let choice (xs: #seq<Regex>) = Regex.Choice(makeImmutableArray xs)
+
+    /// An alias for `Regex.Repeat`.
+    let repeat num (x: Regex) = x.Repeat num
+
+    /// An alias for `Regex.Optional`.
+    let optional (x: Regex) = x.Optional()
+
+    /// An alias for `Regex.Between`.
+    let between from upTo (x: Regex) = x.Between(from, upTo)
+
+    /// An alias for `Regex.AtLeast`.
+    let atLeast num (x: Regex) = x.AtLeast num
+
+    /// An alias for `Regex.ZeroOrMore`.
+    /// The name alludes to the Kleene Star.
+    let star (x: Regex) = x.ZeroOrMore()
+
+    /// An alias for `atLeast 1`.
+    /// The name alludes to the plus symbol of regular expressions.
+    let plus x = atLeast 1 x
+
+    /// An alias for `Regex.FromRegexString`.
+    let regexString x = Regex.FromRegexString x
+
+    /// An alias for `Regex.CaseSensitive`.
+    let caseSensitive (x: Regex) = x.CaseSensitive()
+
+    /// An alias for `Regex.CaseInsensitive`.
+    let caseInsensitive (x: Regex) = x.CaseInsensitive()
+
+/// F# operators to easily create `Regex`es.
+[<AutoOpen>]
+module RegexCompatibilityOperators =
+
+    /// Obsolete operator for Farkle 6 compatibility.
+    [<Obsolete("The <&> operator on regexes is obsolete. Use the + operator or the concat function instead.")>]
+    let (<&>) (x1: Regex) x2 = x1 + x2
+
+    /// Obsolete operator for Farkle 6 compatibility.
+    [<Obsolete("The <|> operator on regexes is obsolete. Use the ||| operator or the choice function instead.")>]
+    let (<|>) (x1: Regex) x2 = x1 ||| x2
+
 namespace Farkle
 
 open System

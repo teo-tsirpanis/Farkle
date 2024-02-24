@@ -49,7 +49,7 @@
     <value>The tokenizer has already been suspended.</value>
   </data>
   <data name="Parser_UnrecognizedToken" xml:space="preserve">
-    <value>Unrecognized token '{0}'</value>
+    <value>Unrecognized token '{0}', expected {1}</value>
   </data>
   <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
     <value>Unexpected end of input while being inside group '{0}'</value>
@@ -66,10 +66,52 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>The grammar cannot be used for parsing or tokenizing because it contains data not recognized by this version of Farkle</value>
   </data>
+  <data name="Parser_GrammarLrMissing" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because it does not contain an LR state table</value>
+  </data>
   <data name="Parser_GrammarLrProblem" xml:space="preserve">
-    <value>The grammar cannot be used for parsing because its LR state table has conflicts or does not exist</value>
+    <value>The grammar cannot be used for parsing because its LR state table has a problem</value>
+  </data>
+  <data name="Parser_GrammarDfaMissing" xml:space="preserve">
+    <value>The grammar cannot be used for parsing because it does not contain a DFA</value>
   </data>
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
-    <value>The grammar cannot be used for parsing because its DFA has conflicts or does not exist</value>
+    <value>The grammar cannot be used for parsing because its DFA has a problem</value>
+  </data>
+  <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
+    <value>Character range is in reverse order.</value>
+  </data>
+  <data name="Builder_RegexLoopRangeReverseOrder" xml:space="preserve">
+    <value>Loop count range is in reverse order.</value>
+  </data>
+  <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
+    <value>Loop upper bound cannot be greater or equal to 2147483647.</value>
+  </data>
+  <data name="Builder_DfaStateLimitExceeded" xml:space="preserve">
+    <value>DFA has exceeded the limit of {0} states</value>
+  </data>
+  <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
+    <value>Cannot distinguish between symbols: {0}</value>
+  </data>
+  <data name="Builder_RegexContainsVoid" xml:space="preserve">
+    <value>Regex for symbol {0} (or part of it) cannot be matched by any character</value>
+  </data>
+  <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
+    <value>terminal</value>
+  </data>
+  <data name="Builder_SymbolKind_Noise" xml:space="preserve">
+    <value>noise symbol</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupStart" xml:space="preserve">
+    <value>group start</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupEnd" xml:space="preserve">
+    <value>group end</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
   </data>
 </root>

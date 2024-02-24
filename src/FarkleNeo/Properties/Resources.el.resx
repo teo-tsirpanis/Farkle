@@ -49,7 +49,7 @@
     <value>Ο λεκτικός αναλυτής έχει ήδη παυθεί.</value>
   </data>
   <data name="Parser_UnrecognizedToken" xml:space="preserve">
-    <value>Άγνωστο σύμβολο '{0}'</value>
+    <value>Άγνωστο σύμβολο '{0}', αναμένονταν {1}</value>
   </data>
   <data name="Parser_UnexpectedEndOfInputInGroup" xml:space="preserve">
     <value>Απροσδόκητο τέλος της εισόδου καθώς βρισκόταν μέσα στην ομάδα `{0}`</value>
@@ -66,10 +66,52 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή περιέχει δεδομένα που δεν αναγνωρίζονται από αυτήν την έκδοση του Farkle</value>
   </data>
+  <data name="Parser_GrammarLrMissing" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή δεν έχει πίνακα καταστάσεων LR</value>
+  </data>
   <data name="Parser_GrammarLrProblem" xml:space="preserve">
-    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει διενέξεις ή δεν υπάρχει</value>
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή ο πίνακας καταστάσεων LR έχει κάποιο πρόβλημα</value>
+  </data>
+  <data name="Parser_GrammarDfaMissing" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή δεν έχει αυτόματο DFA</value>
   </data>
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
-    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA της έχει διενέξεις ή δεν υπάρχει</value>
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA έχει κάποιο πρόβλημα</value>
+  </data>
+  <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
+    <value>Το εύρος χαρακτήρων είναι σε αντεστραμμένη σειρά.</value>
+  </data>
+  <data name="Builder_RegexLoopRangeReverseOrder" xml:space="preserve">
+    <value>Το εύρος φορών επανάληψης είναι σε αντεστραμμένη σειρά.</value>
+  </data>
+  <data name="Builder_RegexLoopMaxTooBig" xml:space="preserve">
+    <value>Το άνω όριο επανάληψης δεν μπορεί να είναι μεγαλύτερο ή ίσο του 2147483647.</value>
+  </data>
+  <data name="Builder_DfaStateLimitExceeded" xml:space="preserve">
+    <value>Το DFA έχει υπερβεί το όριο των {0} καταστάσεων</value>
+  </data>
+  <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
+    <value>Δε μπορεί να γίνει διάκριση μεταξύ των συμβόλων: {0}</value>
+  </data>
+  <data name="Builder_RegexContainsVoid" xml:space="preserve">
+    <value>Η κανονική έκφραση για το σύμβολο {0} (ή μέρος της οποίας) δεν μπορεί να αντιστοιχηθεί από κανέναν χαρακτήρα</value>
+  </data>
+  <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
+    <value>τερματικό</value>
+  </data>
+  <data name="Builder_SymbolKind_Noise" xml:space="preserve">
+    <value>σύμβολο θορύβου</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupStart" xml:space="preserve">
+    <value>έναρξη ομάδας</value>
+  </data>
+  <data name="Builder_SymbolKind_GroupEnd" xml:space="preserve">
+    <value>λήξη ομάδας</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Προειδοποίηση</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Σφάλμα</value>
   </data>
 </root>

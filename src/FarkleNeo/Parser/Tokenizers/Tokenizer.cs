@@ -84,7 +84,11 @@ public static class Tokenizer
         {
             return Fail(errorKey);
         }
-        if (grammar.GetDfa<TChar>() is not { HasConflicts: false } dfa)
+        if (grammar.GetDfa<TChar>() is not { } dfa)
+        {
+            return Fail(nameof(Resources.Parser_GrammarDfaMissing));
+        }
+        if (dfa.HasConflicts || dfa[0].AcceptSymbols.Count > 0)
         {
             return Fail(nameof(Resources.Parser_GrammarDfaProblem));
         }
@@ -93,6 +97,6 @@ public static class Tokenizer
         Tokenizer<TChar> Fail(string resourceKey) =>
             throwIfError
             ? throw new InvalidOperationException(Resources.GetResourceString(resourceKey))
-            : new FailingTokenizer<TChar>(new LocalizedDiagnostic(resourceKey));
+            : new FailingTokenizer<TChar>(LocalizedDiagnostic.Create(resourceKey));
     }
 }

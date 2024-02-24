@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
     <!-- Using "new" to create disposable types. -->
     <NoWarn>$(NoWarn);FS0760</NoWarn>
+    <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/FarkleNeo/Farkle.fs" />
@@ -23,5 +24,7 @@
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" />
   </ItemGroup>
 </Project>

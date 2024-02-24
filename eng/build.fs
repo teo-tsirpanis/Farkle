@@ -19,6 +19,7 @@ open Fake.Tools
 open Scriban
 open System
 open System.IO
+open System.Reflection
 open System.Text.RegularExpressions
 
 // Information about the project are used
@@ -71,9 +72,6 @@ let testProject = "./tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj"
 let fsharpTestProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
-
-// Additional command line arguments passed to Expecto.
-let testArguments = "--nunit-summary TestResults.xml"
 
 let localPackagesFolder = "./tests/packages/"
 
@@ -207,8 +205,8 @@ let runCSharpUnitTests _ =
     |> DotNet.test id
 
 let runFSharpUnitTests _ =
-    dotNetRun fsharpTestProject None DotNet.BuildConfiguration.Debug "" testArguments
-    Trace.publish (ImportData.Nunit NunitDataVersion.Nunit) (Path.getDirectory fsharpTestProject @@ "TestResults.xml")
+    fsharpTestProject
+    |> DotNet.test id
 
 let prepareMSBuildTests _ =
     Shell.cleanDir localPackagesFolder
@@ -484,6 +482,12 @@ let initTargets() =
 
 [<EntryPoint>]
 let main argv =
+    // Workaround for failures on Linux.
+    Assembly.Load("StructuredLogger")
+        .GetType("Microsoft.Build.Logging.StructuredLogger.Strings", true)
+        .GetMethod("Initialize")
+        .Invoke(null, [|"en-US"|])
+    |> ignore
     argv
     |> Array.toList
     |> Context.FakeExecutionContext.Create false "build.fs"

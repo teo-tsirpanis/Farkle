@@ -103,13 +103,13 @@ internal unsafe sealed class DfaWithConflicts<TChar, TState, TEdge, TTokenSymbol
             for (int i = 1; i < Count; i++)
             {
                 int firstAccept = ReadFirstAccept(grammarFile, i);
-                Assert(firstAccept > previousFirstAccept);
+                Assert(firstAccept >= previousFirstAccept);
                 previousFirstAccept = firstAccept;
                 Assert(firstAccept <= _acceptCount);
             }
         }
 
-        for (int i = 0; i < Count; i++)
+        for (int i = 0; i < _acceptCount; i++)
         {
             TokenSymbolHandle acceptSymbol = GetAcceptSymbolAtUnsafe(grammarFile, i);
             grammarTables.ValidateHandle(acceptSymbol);

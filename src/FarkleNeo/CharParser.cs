@@ -17,7 +17,7 @@ namespace Farkle;
 /// <remarks>
 /// <para>
 /// This class is the replacement of the <c>RuntimeFarkle</c> class of Farkle 6.
-/// It extends <see cref="IParser{TChar, T}"/> with features likeswapping the parser's
+/// It extends <see cref="IParser{TChar, T}"/> with features like swapping the parser's
 /// <see cref="Tokenizer{TChar}"/> and <see cref="ISemanticProvider{TChar, T}"/>,
 /// getting the parser's <see cref="Grammar"/> and representing parsers that will
 /// always fail because of problems with the grammar.
@@ -218,7 +218,11 @@ public static class CharParser
         {
             return Fail(errorKey);
         }
-        if (grammar.LrStateMachine is not { HasConflicts: false } lrStateMachine)
+        if (grammar.LrStateMachine is not { } lrStateMachine)
+        {
+            return Fail(nameof(Resources.Parser_GrammarLrMissing));
+        }
+        if (lrStateMachine.HasConflicts)
         {
             return Fail(nameof(Resources.Parser_GrammarLrProblem));
         }
@@ -226,7 +230,7 @@ public static class CharParser
         Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false);
         return new DefaultParser<T>(grammar, lrStateMachine, semanticProvider, tokenizer);
 
-        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(new LocalizedDiagnostic(resourceKey), grammar);
+        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(LocalizedDiagnostic.Create(resourceKey), grammar);
     }
 
     /// <summary>

@@ -114,7 +114,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
                         Assert(previousKeyTo.CompareTo(edge.KeyFrom) < 0, "DFA state edges are unsorted.");
                     }
                     previousKeyTo = edge.KeyTo;
-                    ValidateStateIndex(edge.Target);
+                    ValidateEdgeTarget(edge.Target);
                 }
             }
         }
@@ -124,7 +124,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
             for (int i = 0; i < Count; i++)
             {
                 int defaultTransition = GetDefaultTransitionUnsafe(grammarFile, i);
-                ValidateStateIndex(defaultTransition);
+                ValidateEdgeTarget(defaultTransition);
             }
         }
 
@@ -134,6 +134,14 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
             {
                 ThrowHelpers.ThrowInvalidDataException(message);
             }
+        }
+    }
+
+    private void ValidateEdgeTarget(int state, [CallerArgumentExpression(nameof(state))] string? paramName = null)
+    {
+        if (state != -1)
+        {
+            ValidateStateIndex(state, paramName);
         }
     }
 

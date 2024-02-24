@@ -16,6 +16,7 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
 {
     internal LrStateMachine(int count, bool hasConflicts)
     {
+        Debug.Assert(count > 0);
         Count = count;
         HasConflicts = hasConflicts;
     }

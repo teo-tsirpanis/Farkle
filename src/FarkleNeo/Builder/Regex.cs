@@ -85,7 +85,7 @@ public sealed class Regex
         Debug.Assert(M >= 0);
         Debug.Assert(N >= M);
     }
-    
+
     [DebuggerBrowsable(DebuggerBrowsableState.Never), ExcludeFromCodeCoverage]
     private string DebuggerDisplay
     {
@@ -275,6 +275,40 @@ public sealed class Regex
     public static Regex FromRegexString(string pattern)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(pattern);
+        return new(KindAndFlags.RegexString, RegexStringHolder.Create(pattern));
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Regex"/> specified by a string pattern.
+    /// </summary>
+    /// <param name="pattern">The regex's pattern.</param>
+    /// <param name="compatibilityLevel">The <see cref="CompatibilityLevel"/>
+    /// of the pattern's language. Used to protect against breaking changes in
+    /// the language of string regexes.</param>
+    /// <remarks>
+    /// <para>
+    /// This method will not fail if the pattern is invalid, but when
+    /// the returned <see cref="Regex"/> is used to build a grammar,
+    /// it will result in a build error.
+    /// </para>
+    /// <para>
+    /// The <paramref name="compatibilityLevel"/> parameter is used to protect
+    /// against potential future breaking changes only in how <paramref name="pattern"/>
+    /// is parsed. If for example a string regex is created with compatibility level A,
+    /// and the whole grammar is built with compatibility level B, behaviors like the
+    /// regex's case sensitivity or priority will be determined by level B.
+    /// </para>
+    /// <para>
+    /// Creating a string regex with a compatibility level will have benefits only when the
+    /// regex will be used by a grammar in a different assembly where it cannot update Farkle
+    /// at the same time as the regex (for example a library that exports reusable Farkle grammar
+    /// symbols).
+    /// </para>
+    /// </remarks>
+    public static Regex FromRegexString(string pattern, CompatibilityLevel compatibilityLevel)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(pattern);
+        ArgumentNullExceptionCompat.ThrowIfNull(compatibilityLevel);
         return new(KindAndFlags.RegexString, RegexStringHolder.Create(pattern));
     }
 

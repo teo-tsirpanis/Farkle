@@ -51,8 +51,8 @@ namespace Farkle.Tools.MSBuild.Tests
             if (pcdf == null)
                 throw new MissingFieldException(typeof(PrecompilableDesigntimeFarkle).FullName, fieldName);
 
-            var precompiledGrammar =
-                pcdf.TryGetPrecompiledGrammar()?.Value.GetGrammar() ?? throw new NotNullException();
+            var precompiledGrammar = pcdf.TryGetPrecompiledGrammar()?.Value.GetGrammar();
+            Assert.NotNull(precompiledGrammar);
             var builtGrammar = pcdf.InnerDesigntimeFarkle.BuildUntyped().GetGrammar();
 
             Assert.Equal(GrammarSource.Precompiled, precompiledGrammar.Properties.Source);

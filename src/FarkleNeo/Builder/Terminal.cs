@@ -86,9 +86,10 @@ public partial class Terminal
     /// Users will have to provide a custom tokenizer to match this terminal.
     /// </summary>
     /// <param name="name">The name of the virtual terminal.</param>
-    public static IGrammarSymbol Virtual(string name)
+    /// <param name="options">Options to configure the terminal. Optional.</param>
+    public static IGrammarSymbol Virtual(string name, TerminalOptions options = TerminalOptions.None)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
-        return new VirtualTerminal(name);
+        return new VirtualTerminal(name, options);
     }
 }

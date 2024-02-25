@@ -119,11 +119,11 @@ public partial class Terminal : ISymbolBase
     ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
-internal sealed class VirtualTerminal(string name) : ISymbolBase
+internal sealed class VirtualTerminal(string name, TerminalOptions options) : ISymbolBase
 {
     public string Name { get; } = name;
 
-    public string Value => Name;
+    public TerminalOptions Options { get; } = options;
 
     ISymbolBase IGrammarBuilder.Symbol => this;
 }
@@ -180,7 +180,8 @@ internal class BlockGroup(string name, string groupStart, string groupEnd, Trans
     public string GroupEnd { get; } = groupEnd;
 }
 
-internal interface IProduction {
+internal interface IProduction
+{
     ImmutableArray<IGrammarSymbol> Members { get; }
 
     Fuser<object?> Fuser { get; }
@@ -211,7 +212,8 @@ internal sealed class BlockGroup<T>(string name, string groupStart, string group
 /// <seealso cref="Nonterminal.Create{T}(string, IProduction{T}[])"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
-public interface IProduction<out T> {
+public interface IProduction<out T>
+{
     // We cannot inherit IProduction because we want the generic interface to be public.
     // Instead, we expose the IProduction through this property.
     internal IProduction Production { get; }

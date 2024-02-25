@@ -323,8 +323,8 @@ let generateDocs doWatch isRelease =
         Path.GetFullPath farkle6DocsProject
         "--output"
         docsOutput
-        "--properties"
         "--strict"
+        "--properties"
         $"TargetFramework={DocumentationAssemblyFramework}"
         if not isRelease then
             "--parameters"

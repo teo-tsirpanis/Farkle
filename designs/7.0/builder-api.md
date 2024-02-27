@@ -44,7 +44,9 @@ I have pondered this for a significant amount of time in the past, without any c
 
 In Farkle 6.3.0 the aforementioned configuration methods became generic to support using them on either typed or untyped builder objects. Besides being weird design-wise, it actually restricts certain scenarios and will not be done again in Farkle 7.
 
-Instead we will take the extra step of creating two pairs of extension methods for typed and untyped builder objects respectively. For F# we will have untyped configuration functions with a `U` suffix, just like the rest of the builder API.
+Instead we will take the extra step of creating two pairs of extension methods for typed and untyped builder objects respectively. ~~For F# we will have untyped configuration functions with a `U` suffix, just like the rest of the builder API.~~
+
+__Update__: F# functions will be provided only for setting local options (just renaming symbols at the moment). Setting global options will be done with the same extension methods C# will use. The reason for this is to reduce the amount of code in the F# API, and because in most cases the types of grammar builders and symbols is statically known and does not need type annotations to call extension methods.
 
 ## Reconsider case-insensitivity by default
 
@@ -82,7 +84,10 @@ __Update__: After some consideration, it was decided that a compatibility level 
 
 _Tracked in [#41](https://github.com/teo-tsirpanis/Farkle/issues/41)._
 
-## Uniform F# operators
+## ~~Uniform F# operators~~
+
+> [!NOTE]
+> This is postponed because of [limitations in the F# language](https://github.com/fsharp/fslang-design/blob/main/RFCs/FS-1043-extension-members-for-operators-and-srtp-constraints.md).
 
 The use of custom operators F# builder API maybe can be simplified, assuming my guesses about how operator overloading in F# can be implemented:
 

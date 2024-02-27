@@ -196,7 +196,7 @@ module internal ActivePatterns =
     let private mapExpectedTokenNames (x: string ImmutableArray) =
         let b = ImmutableArray.CreateBuilder(x.Length)
         for i = 0 to x.Length - 1 do
-            b.Add <| ValueOption.ofObj x.[i]
+            b.Add <| ValueOption.ofObj x[i]
         b.MoveToImmutable()
 
     let inline (|ParserDiagnostic|_|) (x: obj) =
@@ -230,17 +230,21 @@ namespace Farkle.Builder
 
 open System
 
-/// F#-friendly members of the `Farkle.Builder.Regex` class.
-/// Please consult the members of the class for documentation.
-module Regex =
+module private Internal =
 
     open System.Collections.Immutable
 
-    let private makeImmutableArray<'T,'TSeq when 'TSeq :> 'T seq> (x: 'TSeq) =
+    let inline makeImmutableArray<'T,'TSeq when 'TSeq :> 'T seq> (x: 'TSeq) =
         if Type.op_Equality(typeof<'TSeq>, typeof<ImmutableArray<'T>>) then
             Unchecked.unbox x
         else
             x.ToImmutableArray()
+
+/// F#-friendly members of the `Farkle.Builder.Regex` class.
+/// Please consult the members of the class for documentation.
+module internal Regex =
+
+    open Internal
 
     /// An alias for `Regex.Literal` that takes a character.
     let char (c: char) = Regex.Literal c
@@ -312,7 +316,7 @@ module Regex =
 
 /// F# operators to easily create `Regex`es.
 [<AutoOpen>]
-module RegexCompatibilityOperators =
+module internal RegexCompatibilityOperators =
 
     /// Obsolete operator for Farkle 6 compatibility.
     [<Obsolete("The <&> operator on regexes is obsolete. Use the + operator or the concat function instead.")>]
@@ -322,15 +326,198 @@ module RegexCompatibilityOperators =
     [<Obsolete("The <|> operator on regexes is obsolete. Use the ||| operator or the choice function instead.")>]
     let (<|>) (x1: Regex) x2 = x1 ||| x2
 
-namespace Farkle
+/// An alias to the `Farkle.Builder.Transformer` class.
+/// It is provided with a one-letter name to make it easier to type
+/// since it is required in F#.
+type internal T<'TChar, 'T> = Transformer<'TChar, 'T>
 
-open System
+/// Internal facade types for production builders to work around limitations of F#.
+/// Types in this module must not be used directly by user code.
+// This module cannot be made internal because of https://github.com/dotnet/fsharp/issues/16762
+[<CompiledName("InternalFSharpProductionBuilders")>]
+module FSharpProductionBuilders =
+
+    /// Helper interface to enable the `prec` function. Do not use directly.
+    type ISupportPrecedence<'T> =
+        abstract member WithPrecedence: obj -> 'T
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder<'T1,'T2,'T3,'T4,'T5>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3,'T4,'T5>) =
+        member private _.Value = pb
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (=>) (pb: ProductionBuilder<_,_,_,_,_>, f: _ -> _ -> _ -> _ -> _ -> _) =
+            let f = OptimizedClosures.FSharpFunc<_,_,_,_,_,_>.Adapt f
+            Func<_,_,_,_,_,_>(f.Invoke) |> pb.Value.Finish
+        interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3,'T4,'T5>> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder<'T1,'T2,'T3,'T4>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3,'T4>) =
+        member private _.Value = pb
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>.) (pb: ProductionBuilder<_,_,_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_,_,_>
+        static member (=>) (pb: ProductionBuilder<_,_,_,_>, f: _ -> _ -> _ -> _ -> _) =
+            let f = OptimizedClosures.FSharpFunc<_,_,_,_,_>.Adapt f
+            Func<_,_,_,_,_>(f.Invoke) |> pb.Value.Finish
+        interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3,'T4>> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder<'T1,'T2,'T3>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3>) =
+        member private _.Value = pb
+        static member (.>>) (pb: ProductionBuilder<_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>.) (pb: ProductionBuilder<_,_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_,_>
+        static member (=>) (pb: ProductionBuilder<_,_,_>, f: _ -> _ -> _ -> _) =
+            let f = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt f
+            Func<_,_,_,_>(f.Invoke) |> pb.Value.Finish
+        interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3>> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder<'T1,'T2>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2>) =
+        member private _.Value = pb
+        static member (.>>) (pb: ProductionBuilder<_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>.) (pb: ProductionBuilder<_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_>
+        static member (=>) (pb: ProductionBuilder<_,_>, f: _ -> _ -> _) =
+            let f = OptimizedClosures.FSharpFunc<_,_,_>.Adapt f
+            Func<_,_,_>(f.Invoke) |> pb.Value.Finish
+        interface ISupportPrecedence<ProductionBuilder<'T1,'T2>> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder<'T1>(pb: ProductionBuilders.ProductionBuilder<'T1>) =
+        member private _.Value = pb
+        member x.AsIs() = x.Value.AsIs()
+        static member (.>>) (pb: ProductionBuilder<_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>.) (pb: ProductionBuilder<_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_>
+        static member (=>) (pb: ProductionBuilder<_>, f: _ -> _) =
+            Func<_,_>(f) |> pb.Value.Finish
+        interface ISupportPrecedence<ProductionBuilder<'T1>> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+    /// Wraps a production builder to provide F# operators. Do not use directly.
+    [<Struct>]
+    type ProductionBuilder(pb: Farkle.Builder.ProductionBuilder) =
+        member private _.Value = pb
+        static member (.>>) (pb: ProductionBuilder, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>.) (pb: ProductionBuilder, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_>
+        static member (=>) (pb: ProductionBuilder, f: unit -> _) =
+            Func<_>(f) |> pb.Value.Finish
+        static member (=%) (pb: ProductionBuilder, x) = pb.Value.FinishConstant x
+        /// Implicit conversion to the real production builder type.
+        /// Required for seamless interoperability betwee the two types.
+        static member op_Implicit (pb: ProductionBuilder) = pb.Value
+        /// Implicit conversion from the real production builder type.
+        /// Required for seamless interoperability betwee the two types.
+        static member op_Implicit (pb: Farkle.Builder.ProductionBuilder) = ProductionBuilder(pb)
+        interface ISupportPrecedence<ProductionBuilder> with
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+
+/// Functions to set options on grammar symbols.
+/// To set options on the entire grammar, use the extension methods on grammar builders.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal GrammarSymbol =
+
+    let inline rename name (symbol: IGrammarSymbol<_>) = symbol.Rename name
+
+    let inline renameU name (symbol: IGrammarSymbol) = symbol.Rename name
+
+/// F# operators and functions to easily work with grammar symbols and productions.
+/// Production builders created by F# operators cannot be used from C# and vice versa,
+/// and support only up to five significant grammar symbols.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal GrammarBuilderOperators =
+
+    open System.Collections.Immutable
+
+    type Untyped.Nonterminal with
+        /// An alias for `SetProductions`.
+        member inline x.SetProductions ([<ParamArray>] productions: FSharpProductionBuilders.ProductionBuilder[]) =
+            let b = ImmutableArray.CreateBuilder<ProductionBuilder>(productions.Length)
+            for i = 0 to productions.Length - 1 do
+                b.Add(productions[i])
+            x.SetProductions(b.MoveToImmutable())
+
+    /// Creates a terminal.
+    let inline terminal name (fTransform: T<_,_>) regex = Terminal.Create(name, regex, fTransform)
+
+    /// Creates a terminal that does not perform any semantic actions.
+    let inline terminalU name regex = Terminal.Create(name, regex)
+
+    /// Creates a terminal that is never produced by Farkle's default tokenizer.
+    /// Users will have to provide a custom tokenizer to match it.
+    let inline virtualTerminal name = Terminal.Virtual(name)
+
+    /// Creates a terminal that matches a literal string.
+    let inline literal str = Terminal.Literal str
+
+    /// An alias for `Terminal.NewLine`.
+    let inline newline<'a> = Terminal.NewLine
+
+    /// Creates a `Nonterminal` whose productions must be
+    /// later set with `SetProductions`, or it will raise an
+    /// error on building. Useful for recursive productions.
+    let inline nonterminal name = Nonterminal.Create name
+
+    /// Creates an `Untyped.Nonterminal` whose productions must be
+    /// later set with `SetProductions`, or it will raise an
+    /// error on building. Useful for recursive productions.
+    let inline nonterminalU name = Nonterminal.CreateUntyped name
+
+    /// Creates a `IGrammarSymbol&lt;'T&gt;` that represents
+    /// a nonterminal with the given name and productions.
+    let inline (||=) name (productions: #seq<_>) =
+        Nonterminal.Create(name, Internal.makeImmutableArray productions)
+
+    /// Creates an `IGrammarSymbol&lt;'T&gt;` that represents
+    /// a nonterminal with the given name and productions.
+    let (|||=) name (productions: seq<FSharpProductionBuilders.ProductionBuilder>) =
+        let productions =
+            productions
+            |> Seq.map FSharpProductionBuilders.ProductionBuilder.op_Implicit
+            |> ImmutableArray.CreateRange
+        Nonterminal.CreateUntyped(name, productions)
+
+    /// An empty production builder.
+    let inline empty<'a> = ProductionBuilder.Empty |> FSharpProductionBuilders.ProductionBuilder
+
+    /// Sets a precedence token on a production builder.
+    let inline prec<'T when 'T :> FSharpProductionBuilders.ISupportPrecedence<'T>> (token: obj) (pb: 'T) =
+        pb.WithPrecedence token
+
+    /// Finishes building a production, making it return its single significant member unchanged.
+    let inline asIs (pb: FSharpProductionBuilders.ProductionBuilder<_>) = pb.AsIs()
+
+    /// Starts a production builder with a symbol as a significant member.
+    let inline (!@) symbol = empty .>>. symbol
+
+    /// Starts a production builder with a symbol.
+    let inline (!%) (symbol: IGrammarSymbol) = empty .>> symbol
+
+    /// Starts a production builder with a literal.
+    let inline (!&) (str : string) = empty .>> str
 
 // -------------------------------------------------------------------
 // Farkle 6 compatibility APIs
 // -------------------------------------------------------------------
 
-[<Obsolete("Use CharParser<'T> instead")>]
+namespace Farkle
+
+open System
+
+[<Obsolete("Use CharParser<'T> instead.")>]
 type internal RuntimeFarkle<'TResult> = CharParser<'TResult>
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -354,7 +541,7 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
     let inline syntaxCheck rf = CharParser.syntaxCheck rf
 
     [<Obsolete("Use CharParser.parseSpan instead.")>]
-    let inline parseMemory rf (x: ReadOnlyMemory<char>) = CharParser.parseSpan rf (x.Span) |> ParserResult.toResult
+    let inline parseMemory rf (x: ReadOnlyMemory<char>) = CharParser.parseSpan rf x.Span |> ParserResult.toResult
 
     [<Obsolete("Use CharParser.parseString instead.")>]
     let inline parseString rf input = CharParser.parseString rf input |> ParserResult.toResult
@@ -364,3 +551,43 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
 
     [<Obsolete("Use CharParser.parseFile instead.")>]
     let inline parseFile rf input = CharParser.parseFile rf input |> ParserResult.toResult
+
+namespace Farkle.Builder
+
+open System
+
+[<Obsolete("Use IGrammarSymbol for individual grammar symbols or IGrammarBuilder for whole grammars instead.")>]
+type internal DesigntimeFarkle = IGrammarSymbol
+
+[<Obsolete("Use IGrammarSymbol<'T> for individual grammar symbols or IGrammarBuilder<'T> for whole grammars instead.")>]
+type internal DesigntimeFarkle<'TResult> = IGrammarSymbol<'TResult>
+
+module DesigntimeFarkle =
+
+    [<Obsolete("Use the WithOperatorScope extension method instead.")>]
+    let inline withOperatorScope scope (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.WithOperatorScope scope
+
+    [<Obsolete("Use the GrammarSymbol.rename or renameU functions instead.")>]
+    let inline rename name (symbol: IGrammarSymbol<_>) =
+        symbol.Rename name
+
+    [<Obsolete("Use the CaseSensitive extension method instead.")>]
+    let inline caseSensitive (flag: bool) (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.CaseSensitive flag
+
+    [<Obsolete("Use the AutoWhitespace extension method instead.")>]
+    let inline autoWhitespace (flag: bool) (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.AutoWhitespace flag
+
+    [<Obsolete("Use the AddNoiseSymbol extension method instead.")>]
+    let inline addNoiseSymbol name regex (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.AddNoiseSymbol(name, regex)
+
+    [<Obsolete("Use the AddLineComment extension method instead.")>]
+    let inline addLineComment commentStart (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.AddLineComment commentStart
+
+    [<Obsolete("Use the AddBlockComment extension method instead.")>]
+    let inline addBlockComment commentStart commentEnd (grammarBuilder: IGrammarBuilder<_>) =
+        grammarBuilder.AddBlockComment(commentStart, commentEnd)

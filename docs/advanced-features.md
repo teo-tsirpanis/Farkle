@@ -1,3 +1,9 @@
+---
+category: Advanced
+categoryindex: 2
+index: 1
+description: Advanced features of Farkle, applicable to less common scenarios.
+---
 # Advanced features
 
 Farkle has a couple of features that were not covered in other guides because they are less likely to be useful. In this guide, we will take a look at some of these features that truly push Farkle's capabilities to the fullest. So, are you ready? Let's do this!

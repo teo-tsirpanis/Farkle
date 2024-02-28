@@ -1,3 +1,11 @@
+(**
+---
+category: Documentation
+categoryindex: 1
+index: 1
+description: A quick start guide to Farkle.
+---
+*)
 (*** hide ***)
 #r "nuget: Farkle, 6.5.1"
 

@@ -1,3 +1,9 @@
+---
+category: Advanced
+categoryindex: 2
+index: 2
+description: A guide on how to create and use templates with Farkle.
+---
 # Templating Reference
 
 Farkle comes with a templating system which further helps developers work with the grammars they create. This system is a more powerful edition of both GOLD Parser's ["Create Webpage"][gold-webpage] and ["Create Skeleton Program"][gold-skeleton] tools. In this guide, we will first see how to create an HTML page describing our grammar, and next we will see how to create our own templates. So, are you ready? Let's do this!

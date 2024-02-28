@@ -1,3 +1,11 @@
+(**
+---
+category: Documentation
+categoryindex: 1
+index: 5
+description: A guide on how to use Farkle's precompiler.
+---
+*)
 (*** hide ***)
 #r "nuget: Farkle, 6.5.1"
 

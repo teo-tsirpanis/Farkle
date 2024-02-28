@@ -1,3 +1,9 @@
+---
+category: Documentation
+categoryindex: 1
+index: 3
+description: A guide comparing Farkle with other parsing libraries for F#.
+---
 # Choosing a parser for your .NET project
 
 Besides Farkle, there are many other general-purpose parsing projects for the .NET ecosystem. Farkle's main competitors are FsLexYacc and FParsec to a lesser degree. In this guide we will examine the strengths and weaknesses of each parser library and help you decide which one to use for your next project. So, are you ready? Let's do this!

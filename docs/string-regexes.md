@@ -1,3 +1,9 @@
+---
+category: Documentation
+categoryindex: 1
+index: 4
+description: A reference on Farkle's string regex language.
+---
 # Farkle's string regexes
 
 In Farkle, terminals are defined by regular expressions or _regexes_. Defining a non-trivial regex used to take several lines of code like this example of a number with an optional sign at the beginning:

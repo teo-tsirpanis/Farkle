@@ -1,3 +1,9 @@
+---
+category: Documentation
+categoryindex: 1
+index: 2
+description: A guide on how to use Farkle from C#.
+---
 # Using Farkle from C\#
 
 Farkle is a library written in F#, but supporting the much more used C# is a valuable feature. Because these two languages are quite different, there is a more idiomatic API for C# users. In this tutorial, we will assume that you have read [the F# quickstart guide][fsharp].

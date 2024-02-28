@@ -1,4 +1,4 @@
-## FARKLKE0002: Cannot distinguish between symbols
+## FARKLE0002: Cannot distinguish between symbols
 
 This error is emitted when the builder detects that two or more symbols cannot always be distinguished from each other because there is a string that matches all of them. For example, the regexes `ab*` and `a+` cannot be distinguished from each other because the string `a` matches both of them.
 

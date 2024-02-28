@@ -305,17 +305,10 @@ let docsOutput = Path.GetFullPath "_site/"
 let farkle6Repo = "temp/farkle6"
 let farkle6DocsProject = farkle6Repo @@ farkleProject
 
-let moveFileTemporarily src dest =
-    File.Copy(src, dest, true)
-    {new IDisposable with member _.Dispose() = File.delete dest}
-
 let cleanDocs _ =
     Shell.cleanDir docsOutput
 
 let generateDocs doWatch isRelease =
-    use __ = moveFileTemporarily "RELEASE_NOTES.md" "docs/release-notes.md"
-    use __ = moveFileTemporarily "LICENSE.txt" "docs/license.md"
-
     let arguments = [
         if doWatch then "watch" else "build"
         "--clean"

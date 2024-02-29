@@ -1,9 +1,10 @@
 ---
 category: Diagnostic codes
 categoryindex: 3
+title: FARKLE0003
 description: FARKLE0003: Regex cannot be matched by any character
 ---
-## FARKLE0003: Regex cannot be matched by any character
+# FARKLE0003: Regex cannot be matched by any character
 
 This warning is emitted when the builder detects that a regex or a part of it cannot be matched by any character.
 

@@ -10,6 +10,7 @@ using Farkle.Builder;
 using Farkle.Parser;
 using System;
 using System.Collections.Immutable;
+using System.ComponentModel;
 
 /// <summary>A production builder with 16 significant members.</summary>
 /// <seealso cref="ProductionBuilder"/>
@@ -938,7 +939,17 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <summary>
     /// Finishes building the production, making it return its single significant member unchanged.
     /// </summary>
-    public IProduction<T1> AsIs() => Finish(x => x);
+    public IProduction<T1> AsProduction() => Finish(x => x);
+
+    /// <summary>
+    /// Obsolete, use <see cref="AsProduction"/> instead.
+    /// </summary>
+    [Obsolete(Obsoletions.AsIsApiMessage
+#if NET5_0_OR_GREATER
+        , DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat
+#endif
+    ), EditorBrowsable(EditorBrowsableState.Never)]
+    public IProduction<T1> AsIs() => AsProduction();
 
     /// <inheritdoc/>
     public ProductionBuilder<T1> WithPrecedence(object precedenceToken)

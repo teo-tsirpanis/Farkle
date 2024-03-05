@@ -396,7 +396,7 @@ module FSharpProductionBuilders =
     [<Struct>]
     type ProductionBuilder<'T1>(pb: ProductionBuilders.ProductionBuilder<'T1>) =
         member private _.Value = pb
-        member x.AsIs() = x.Value.AsIs()
+        member x.AsProduction() = x.Value.AsProduction()
         static member (.>>) (pb: ProductionBuilder<_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
         static member (.>>) (pb: ProductionBuilder<_>, str: string) = pb.Value.Append str |> ProductionBuilder
         static member (.>>.) (pb: ProductionBuilder<_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_>
@@ -498,7 +498,11 @@ module internal GrammarBuilderOperators =
         pb.WithPrecedence token
 
     /// Finishes building a production, making it return its single significant member unchanged.
-    let inline asIs (pb: FSharpProductionBuilders.ProductionBuilder<_>) = pb.AsIs()
+    let inline asProduction (pb: FSharpProductionBuilders.ProductionBuilder<_>) = pb.AsProduction()
+
+    /// Obsolete, use `asProduction` instead.
+    [<Obsolete("Use the asProduction function instead.")>]
+    let inline asIs pb = asProduction pb
 
     /// Starts a production builder with a symbol as a significant member.
     let inline (!@) symbol = empty .>>. symbol

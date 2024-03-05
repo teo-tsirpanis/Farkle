@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.ComponentModel;
 using Farkle.Builder.ProductionBuilders;
 
 namespace Farkle.Builder;
@@ -138,6 +139,17 @@ public static class ProductionBuilderExtensions
     /// This method is a shortcut that combines <see cref="Appended(IGrammarSymbol)"/> and
     /// <see cref="ProductionBuilder{T1}.AsIs"/>.
     /// </remarks>
+    public static IProduction<T> AsProduction<T>(this IGrammarSymbol<T> symbol) =>
+        symbol.Extended().AsProduction();
+
+    /// <summary>
+    /// Obsolete, use <see cref="AsProduction"/> instead.
+    /// </summary>
+    [Obsolete(Obsoletions.AsIsApiMessage
+#if NET5_0_OR_GREATER
+        , DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat
+#endif
+    ), EditorBrowsable(EditorBrowsableState.Never)]
     public static IProduction<T> AsIs<T>(this IGrammarSymbol<T> symbol) =>
-        symbol.Extended().AsIs();
+        symbol.AsProduction();
 }

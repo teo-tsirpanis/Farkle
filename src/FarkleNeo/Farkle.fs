@@ -409,6 +409,7 @@ module FSharpProductionBuilders =
     [<Struct>]
     type ProductionBuilder(pb: Farkle.Builder.ProductionBuilder) =
         member private _.Value = pb
+        static member Empty = Farkle.Builder.ProductionBuilder.Empty |> ProductionBuilder
         static member (.>>) (pb: ProductionBuilder, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
         static member (.>>) (pb: ProductionBuilder, str: string) = pb.Value.Append str |> ProductionBuilder
         static member (.>>.) (pb: ProductionBuilder, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_>
@@ -416,10 +417,10 @@ module FSharpProductionBuilders =
             Func<_>(f) |> pb.Value.Finish
         static member (=%) (pb: ProductionBuilder, x) = pb.Value.FinishConstant x
         /// Implicit conversion to the real production builder type.
-        /// Required for seamless interoperability betwee the two types.
+        /// Required for seamless interoperability between the two types.
         static member op_Implicit (pb: ProductionBuilder) = pb.Value
         /// Implicit conversion from the real production builder type.
-        /// Required for seamless interoperability betwee the two types.
+        /// Required for seamless interoperability between the two types.
         static member op_Implicit (pb: Farkle.Builder.ProductionBuilder) = ProductionBuilder(pb)
         interface ISupportPrecedence<ProductionBuilder> with
             member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
@@ -429,8 +430,10 @@ module FSharpProductionBuilders =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal GrammarSymbol =
 
+    /// Renames a grammar symbol. This is an alias for `GrammarSymbolConfigurationExtensions.Rename`.
     let inline rename name (symbol: IGrammarSymbol<_>) = symbol.Rename name
 
+    /// Renames an untyped grammar symbol. This is an alias for `GrammarSymbolConfigurationExtensions.Rename`.
     let inline renameU name (symbol: IGrammarSymbol) = symbol.Rename name
 
 /// F# operators and functions to easily work with grammar symbols and productions.
@@ -491,7 +494,7 @@ module internal GrammarBuilderOperators =
         Nonterminal.CreateUntyped(name, productions)
 
     /// An empty production builder.
-    let inline empty<'a> = ProductionBuilder.Empty |> FSharpProductionBuilders.ProductionBuilder
+    let inline empty<'a> = FSharpProductionBuilders.ProductionBuilder.Empty
 
     /// Sets a precedence token on a production builder.
     let inline prec<'T when 'T :> FSharpProductionBuilders.ISupportPrecedence<'T>> (token: obj) (pb: 'T) =
@@ -505,7 +508,7 @@ module internal GrammarBuilderOperators =
     let inline asIs pb = asProduction pb
 
     /// Starts a production builder with a symbol as a significant member.
-    let inline (!@) symbol = empty .>>. symbol
+    let inline (!@) (symbol: IGrammarSymbol<_>) = empty .>>. symbol
 
     /// Starts a production builder with a symbol.
     let inline (!%) (symbol: IGrammarSymbol) = empty .>> symbol

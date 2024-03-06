@@ -44,6 +44,7 @@ public static class GrammarSymbolConfigurationExtensions
     /// <seealso cref="IGrammarSymbol.Name"/>
     public static IGrammarSymbol Rename(this IGrammarSymbol symbol, string name)
     {
+        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         Debug.Assert(symbol is GrammarSymbolWrapper or ISymbolBase);
         if (symbol is GrammarSymbolWrapper wrapper)
@@ -54,6 +55,7 @@ public static class GrammarSymbolConfigurationExtensions
     /// <inheritdoc cref="Rename"/>
     public static IGrammarSymbol<T> Rename<T>(this IGrammarSymbol<T> symbol, string name)
     {
+        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         Debug.Assert(symbol is GrammarSymbolWrapper<T> or ISymbolBase);
         if (symbol is GrammarSymbolWrapper<T> wrapper)

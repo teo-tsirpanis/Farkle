@@ -14,9 +14,8 @@ namespace Farkle.Builder;
 /// </list>
 /// <para>
 /// Currently, setting a compatibility level is supported on individual string regexes and on the whole grammar.
-/// You are recommended to explicitly set to the latest available compatibility level. When a new compatibility
-/// level is introduced, the previous ones will be marked as obsolete and should only be used as a temporary
-/// measure.
+/// When a new compatibility level is introduced, the previous ones will be marked as obsolete and should only
+/// be used as a temporary measure.
 /// </para>
 /// <para>
 /// When a compatibility level is not set, the latest one will be used.

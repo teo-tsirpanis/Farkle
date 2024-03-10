@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
-using Farkle.Builder.StateMachines;
+using Farkle.Builder.Dfa;
 
 namespace Farkle.Tests.CSharp;
 

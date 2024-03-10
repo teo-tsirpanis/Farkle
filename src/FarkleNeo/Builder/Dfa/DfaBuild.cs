@@ -8,7 +8,7 @@ using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-namespace Farkle.Builder.StateMachines;
+namespace Farkle.Builder.Dfa;
 
 /// <summary>
 /// Contains the logic for building a DFA from a set of regular expressions.

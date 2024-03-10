@@ -4,7 +4,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-namespace Farkle.Builder.StateMachines;
+namespace Farkle.Builder.Dfa;
 
 internal static class RegexRangeCanonicalizer
 {

@@ -192,3 +192,4 @@ tmp/
 .paket/
 *.binlog
 .fsdocs/
+.vscode/launch.json

@@ -21,7 +21,7 @@ namespace Farkle.Builder;
 /// When a compatibility level is not set, the latest one will be used.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarBuilderConfigurationExtensions.WithCompatibilityLevel"/>
+/// <seealso cref="GrammarBuilderExtensions.WithCompatibilityLevel"/>
 /// <seealso cref="Regex.FromRegexString(string, CompatibilityLevel)"/>
 public sealed class CompatibilityLevel
 {
@@ -31,11 +31,11 @@ public sealed class CompatibilityLevel
     /// <remarks>
     /// The following changes were introduced since Farkle 6.x:
     /// <list type="bullet">
-    /// <item>The default value of <see cref="GrammarBuilderConfigurationExtensions.CaseSensitive(IGrammarBuilder,bool)"/>
+    /// <item>The default value of <see cref="GrammarBuilderExtensions.CaseSensitive(IGrammarBuilder,bool)"/>
     /// was changed from <see langword="false"/> to <see langword="true"/>.</item>
-    /// <item>The default value of <see cref="GrammarBuilderConfigurationExtensions.NewLineIsNoisy"/>
+    /// <item>The default value of <see cref="GrammarBuilderExtensions.NewLineIsNoisy"/>
     /// was changed from <see langword="false"/> to the value of
-    /// <see cref="GrammarBuilderConfigurationExtensions.AutoWhitespace"/>.</item>
+    /// <see cref="GrammarBuilderExtensions.AutoWhitespace"/>.</item>
     /// <item>The language for string regexes is different and more in line with standard regex dialects.</item>
     /// <item><see cref="Regex.Any"/> and the <c>.</c> character in regexes match any character and no longer
     /// have lower precedence when being matched.</item>

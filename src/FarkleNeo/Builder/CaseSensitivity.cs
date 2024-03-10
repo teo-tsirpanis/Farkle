@@ -6,7 +6,7 @@ namespace Farkle.Builder;
 /// <summary>
 /// Specifies the case sensitivity of a grammar to be built.
 /// </summary>
-/// <seealso cref="GrammarBuilderConfigurationExtensions.CaseSensitive(IGrammarBuilder, CaseSensitivity)"/>
+/// <seealso cref="GrammarBuilderExtensions.CaseSensitive(IGrammarBuilder, CaseSensitivity)"/>
 public enum CaseSensitivity
 {
     /// <summary>

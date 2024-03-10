@@ -20,7 +20,7 @@ namespace Farkle.Builder;
 /// setting options global to the grammar.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarBuilderConfigurationExtensions"/>
+/// <seealso cref="GrammarBuilderExtensions"/>
 public interface IGrammarBuilder
 {
     internal ISymbolBase Symbol { get; }
@@ -34,7 +34,7 @@ public interface IGrammarBuilder
 /// <remarks>
 /// This interface cannot be implemented by user code.
 /// </remarks>
-/// <seealso cref="GrammarBuilderConfigurationExtensions"/>
+/// <seealso cref="GrammarBuilderExtensions"/>
 public interface IGrammarBuilder<out T> : IGrammarBuilder;
 
 /// <summary>
@@ -54,7 +54,7 @@ public interface IGrammarBuilder<out T> : IGrammarBuilder;
 /// operations apply to individual symbols and which apply to the whole grammar.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarSymbolConfigurationExtensions"/>
+/// <seealso cref="GrammarSymbolExtensions"/>
 public interface IGrammarSymbol : IGrammarBuilder
 {
     /// <summary>
@@ -84,7 +84,7 @@ public interface IGrammarSymbol : IGrammarBuilder
 /// operations apply to individual symbols and which apply to the whole grammar.
 /// </para>
 /// </remarks>
-/// <seealso cref="GrammarSymbolConfigurationExtensions"/>
+/// <seealso cref="GrammarSymbolExtensions"/>
 /// <seealso cref="IGrammarBuilder"/>
 public interface IGrammarSymbol<out T> : IGrammarBuilder<T>, IGrammarSymbol;
 

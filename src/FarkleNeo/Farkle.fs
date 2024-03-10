@@ -229,6 +229,8 @@ module internal ActivePatterns =
 namespace Farkle.Builder
 
 open System
+open System.Collections
+open System.Collections.Generic
 
 module private Internal =
 
@@ -430,10 +432,10 @@ module FSharpProductionBuilders =
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal GrammarSymbol =
 
-    /// Renames a grammar symbol. This is an alias for `GrammarSymbolConfigurationExtensions.Rename`.
+    /// Renames a grammar symbol. This is an alias for `GrammarSymbolExtensions.Rename`.
     let inline rename name (symbol: IGrammarSymbol<_>) = symbol.Rename name
 
-    /// Renames an untyped grammar symbol. This is an alias for `GrammarSymbolConfigurationExtensions.Rename`.
+    /// Renames an untyped grammar symbol. This is an alias for `GrammarSymbolExtensions.Rename`.
     let inline renameU name (symbol: IGrammarSymbol) = symbol.Rename name
 
 /// F# operators and functions to easily work with grammar symbols and productions.
@@ -445,6 +447,22 @@ module internal GrammarBuilderOperators =
 
     open System.Collections.Immutable
 
+    type private ListBuilder<'T>() =
+        let mutable builder = CompilerServices.ListCollector<_>()
+        member _.MoveToList() = builder.Close()
+        interface IEnumerable with
+            member _.GetEnumerator() = raise (NotImplementedException())
+        interface IEnumerable<'T> with
+            member _.GetEnumerator() = raise (NotImplementedException())
+        interface ICollection<'T> with
+            member _.Count = raise (NotImplementedException())
+            member _.IsReadOnly = false
+            member _.Add x = builder.Add x
+            member _.Clear() = builder <- Unchecked.defaultof<_>
+            member _.Contains _ = raise (NotImplementedException())
+            member _.CopyTo(_, _) = raise (NotImplementedException())
+            member _.Remove _ = raise (NotImplementedException())
+
     type Untyped.Nonterminal with
         /// An alias for `SetProductions`.
         member inline x.SetProductions ([<ParamArray>] productions: FSharpProductionBuilders.ProductionBuilder[]) =
@@ -452,6 +470,8 @@ module internal GrammarBuilderOperators =
             for i = 0 to productions.Length - 1 do
                 b.Add(productions[i])
             x.SetProductions(b.MoveToImmutable())
+
+    let private symbolName (symbol: IGrammarSymbol) = symbol.Name
 
     /// Creates a terminal.
     let inline terminal name (fTransform: T<_,_>) regex = Terminal.Create(name, regex, fTransform)
@@ -515,6 +535,78 @@ module internal GrammarBuilderOperators =
 
     /// Starts a production builder with a literal.
     let inline (!&) (str : string) = empty .>> str
+
+    /// Creates a symbol that recognizes many occurrences
+    /// of the given one and returns them in any collection type.
+    let inline manyCollection<'T, 'TCollection
+            when 'TCollection :> ICollection<'T>
+            and 'TCollection: (new: unit -> 'TCollection)> (symbol: IGrammarSymbol<'T>) =
+        symbol.Many<'T, 'TCollection>(false)
+
+    /// Creates a symbol that recognizes more than one occurrences
+    /// of the given one and returns them in any collection type.
+    let inline manyCollection1<'T, 'TCollection
+            when 'TCollection :> ICollection<'T>
+            and 'TCollection: (new: unit -> 'TCollection)> (symbol: IGrammarSymbol<'T>) =
+        symbol.Many<'T, 'TCollection>(true)
+
+    /// Creates a symbol that recognizes many occurrences
+    /// of the given one and returns them in a list.
+    let many symbol =
+        $"{symbolName symbol} List"
+        ||= [!@ (manyCollection<_, ListBuilder<_>> symbol) => (fun x -> x.MoveToList())]
+
+    /// Creates a symbol that recognizes more than one occurrences
+    /// of the given one and returns them in a list.
+    let many1 symbol =
+        $"{symbolName symbol} Non-empty List"
+        ||= [!@ (manyCollection1<_, ListBuilder<_>> symbol) => (fun x -> x.MoveToList())]
+
+    /// Creates a symbol that recognizes more than one occurrences
+    /// of `symbol` separated by `separator` and returns them in any collection type.
+    let inline sepByCollection<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)> separator (symbol: IGrammarSymbol<'T>) =
+        symbol.SeparatedBy<'T, 'TCollection>(separator, false)
+
+    /// Creates a symbol that recognizes many occurrences of
+    /// `symbol` separated by `separator` and returns them in any collection type.
+    let inline sepByCollection1<'T, 'TCollection
+        when 'TCollection :> ICollection<'T>
+        and 'TCollection: (new: unit -> 'TCollection)> separator (symbol: IGrammarSymbol<'T>) =
+        symbol.SeparatedBy<'T, 'TCollection>(separator, true)
+
+    /// Creates a symbol that recognizes more than one
+    /// occurrences of `symbol` separated by `separator` and returns them in a list.
+    let sepBy separator symbol =
+        $"{symbolName symbol} List Separated By {symbolName separator}" ||=
+        [!@ (sepByCollection<_, ListBuilder<_>> separator symbol) => (fun x -> x.MoveToList())]
+
+    /// Creates a symbol that recognizes many occurrences
+    /// of `symbol` separated by `separator` and returns them in a list.
+    let sepBy1 separator symbol =
+        $"{symbolName symbol} Non-Empty List Separated By {symbolName separator}" ||=
+        [!@ (sepByCollection1<_, ListBuilder<_>> separator symbol) => (fun x -> x.MoveToList())]
+
+    /// Creates a symbol that matches either one occurrence of `symbol` or none.
+    /// In the latter case it returns `None`.
+    let opt symbol =
+        $"{symbolName symbol} Maybe" ||= [
+            !@ symbol => Some
+            empty =% None
+        ]
+
+    /// Creates a symbol that matches either one occurrence of `symbol` or none.
+    /// In the latter case it returns `ValueNone`.
+    let vopt symbol =
+        $"{symbolName symbol} Maybe" ||= [
+            !@ symbol => ValueSome
+            empty =% ValueNone
+        ]
+
+    /// Creates a symbol that transforms the output of `symbol with `f`.
+    let (|>>) (f: _ -> 'b) symbol =
+        $"{symbolName symbol} :?> {typeof<'b>.Name}" ||= [!@ symbol => f]
 
 // -------------------------------------------------------------------
 // Farkle 6 compatibility APIs

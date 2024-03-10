@@ -17,11 +17,11 @@ namespace Farkle.Builder;
 /// </para>
 /// <para>
 /// Because these methods apply to the entire grammar, they must be called on the topmost symbol
-/// of the grammar, and after the methods on <see cref="GrammarSymbolConfigurationExtensions"/>. Failure to do
+/// of the grammar, and after the methods on <see cref="GrammarSymbolExtensions"/>. Failure to do
 /// so will result in compile errors.
 /// </para>
 /// </remarks>
-public static class GrammarBuilderConfigurationExtensions
+public static class GrammarBuilderExtensions
 {
     internal static ref readonly GrammarGlobalOptions GetOptions(this IGrammarBuilder builder) =>
         ref builder is GrammarBuilderWrapper wrapper ? ref wrapper.Options : ref GrammarGlobalOptions.Default;
@@ -148,7 +148,7 @@ public static class GrammarBuilderConfigurationExtensions
     /// </remarks>
     /// <seealso cref="IGrammarSymbol.Name"/>
     /// <seealso cref="Grammars.GrammarInfo.Name"/>
-    /// <seealso cref="GrammarSymbolConfigurationExtensions.Rename"/>
+    /// <seealso cref="GrammarSymbolExtensions.Rename"/>
     public static IGrammarBuilder WithGrammarName(this IGrammarBuilder builder, string value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);

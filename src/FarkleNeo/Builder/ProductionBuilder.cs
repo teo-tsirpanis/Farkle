@@ -19,7 +19,7 @@ namespace Farkle.Builder;
 /// </remarks>
 public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, IProduction
 {
-    private readonly ImmutableList<IGrammarSymbol> _members = [];
+    private readonly ImmutableList<IGrammarSymbol> _members;
 
     private readonly object? _precedenceToken;
 

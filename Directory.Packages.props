@@ -27,7 +27,7 @@
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.2.206" />
-    <PackageVersion Include="NUnit.Analyzers" Version="4.0.1" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.1.0" />
     <PackageVersion Include="NUnit" Version="3.14.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageVersion Include="PolySharp" Version="1.14.1" />

@@ -65,7 +65,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
 
-    public DfaBuild(IGrammarSymbolsProvider symbols, BuilderLogger log, CancellationToken cancellationToken = default)
+    private DfaBuild(IGrammarSymbolsProvider symbols, BuilderLogger log, CancellationToken cancellationToken = default)
     {
         if (typeof(TChar) != typeof(char))
         {

@@ -132,11 +132,12 @@ internal readonly struct LalrBuild
     /// <summary>
     /// Computes the LR(0) states.
     /// </summary>
-    private ImmutableArray<Lr0State> ComputeStates()
+    private Lr0StateMachine ComputeLr0StateMachine()
     {
         Log.Debug("Computing states...");
         // These variables are global to the whole process.
         var states = ImmutableArray.CreateBuilder<Lr0State>();
+        var gotos = ImmutableArray.CreateBuilder<GotoInfo>();
         var kernelItemSetsToProcess = new Queue<KernelItemSet>();
 #if DEBUG
         // Keeps track of the order each item gets added. In previous versions,
@@ -201,7 +202,16 @@ internal readonly struct LalrBuild
             var transitions = new Dictionary<Symbol, int>();
             foreach (var x in grouppedTransitions)
             {
-                transitions.Add(x.Key, GetOrQueueItemSet(new(x.Value)));
+                var destinationState = GetOrQueueItemSet(new(x.Value));
+                if (x.Key.IsTerminal)
+                {
+                    transitions.Add(x.Key, destinationState);
+                }
+                else
+                {
+                    transitions.Add(x.Key, gotos.Count);
+                    gotos.Add(new(states.Count, destinationState, x.Key.Index));
+                }
             }
             states.Add(new Lr0State(kernelItems, transitions));
 
@@ -212,10 +222,10 @@ internal readonly struct LalrBuild
 
         if (Log.IsEnabled(DiagnosticSeverity.Debug))
         {
-            Log.Debug($"Created {states.Count} states.");
+            Log.Debug($"Created {states.Count} states with {gotos.Count} gotos.");
         }
 
-        return states.DrainToImmutable();
+        return new(states.DrainToImmutable(), gotos.DrainToImmutable());
 
         // Gets the index of a kernel item set, or queues it for processing if it
         // was first encountered. In the latter case, it returns a "phantom" index
@@ -312,6 +322,10 @@ internal readonly struct LalrBuild
         /// <summary>
         /// The transitions from this state to other states. Do not modify.
         /// </summary>
+        /// <remarks>
+        /// IMPORTANT: If the key is a terminal, the value is an index in <see cref="Lr0StateMachine.States"/>,
+        /// but if the key is a nonterminal, the value is an index in <see cref="Lr0StateMachine.Gotos"/>.
+        /// </remarks>
         public Dictionary<Symbol, int> Transitions { get; } = transitions;
     }
 

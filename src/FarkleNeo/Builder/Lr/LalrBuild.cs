@@ -31,6 +31,285 @@ internal readonly struct LalrBuild
     }
 
     /// <summary>
+    /// Computes the reduction lookahead sets of each state.
+    /// </summary>
+    /// <param name="stateMachine">The state machine.</param>
+    /// <param name="gotoFollows">The follow sets of each GOTO transition of the state machine.</param>
+    /// <returns>
+    /// An array of tuples, each containing:
+    /// <list type="bullet">
+    /// <item><description>The index of the state.</description></item>
+    /// <item><description>The production to reduce.</description></item>
+    /// <item><description>A bit array of the terminals to perform the reduction on. Do not modify.</description></item>
+    /// </list>
+    /// </returns>
+    private ImmutableArray<(int State, Production Production, BitArrayNeo Lookahead)> ComputeReductionLookaheads(
+        Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
+    {
+        Log.Debug("Computing reduction lookaheads");
+        // These variables are global to the whole process.
+        ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
+        ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
+        var reductionLookaheads = ImmutableArray.CreateBuilder<(int State, Production Production, BitArrayNeo Lookahead)>();
+        // These variables are local to each step, but we declare them
+        // outside the loop and reuse them for performance.
+        // ComputeLr0StateMachine tracks whole items, we can just track nonterminals because we are specifically interested in the non-kernal items produced by each kernel item.
+        var nonterminalsToProcess = new Queue<int>();
+        var visitedNonterminals = new BitArrayNeo(Syntax.NonterminalCount);
+        for (int i = 0; i < states.Length; i++)
+        {
+            // The idea is, for each GOTO on a kernel item, get the non-kernel items that are
+            // derived by the kernel item, and for each of them, keep moving the dot to the right
+            // and when you reach the end, set the lookahead set of that item to the GOTO follow
+            // set of the original kernel item's GOTO.
+            ref readonly Lr0State state = ref states[i];
+            foreach (Lr0Item kernelItem in state.KernelItems)
+            {
+                // Skip items whose dot is at the end.
+                if (!TryAdvanceItem(kernelItem, out Symbol s, out _))
+                {
+                    continue;
+                }
+                // Skip items whose dot is at a terminal.
+                if (s.IsTerminal)
+                {
+                    continue;
+                }
+                BitArrayNeo emergedLookaheadSet = gotoFollows[state.Transitions[s]];
+                nonterminalsToProcess.Enqueue(s.Index);
+                while (nonterminalsToProcess.TryDequeue(out int nonterminal))
+                {
+                    CancellationToken.ThrowIfCancellationRequested();
+
+                    if (!visitedNonterminals.Set(nonterminal, true))
+                    {
+                        continue;
+                    }
+
+                    foreach (Production p in Syntax.EnumerateNonterminalProductions(nonterminal))
+                    {
+                        ProductionMemberList productionMembers = Syntax.GetProductionMembers(p);
+                        // If the production starts with a nonterminal, queue it so that we can
+                        // look at its own productions as well.
+                        if (productionMembers is [{ IsTerminal: false, Index: int firstNonterminalOfProduction }, ..])
+                        {
+                            nonterminalsToProcess.Enqueue(firstNonterminalOfProduction);
+                        }
+                        // From the state we are, follow the production to the end.
+                        int currentState = i;
+                        foreach (Symbol s2 in productionMembers)
+                        {
+                            currentState = states[currentState].FollowTransition(s2, gotos);
+                        }
+                        reductionLookaheads.Add((currentState, p, emergedLookaheadSet));
+                    }
+                }
+
+                Debug.Assert(nonterminalsToProcess.Count == 0);
+                visitedNonterminals.SetAll(false);
+            }
+        }
+        // Because reduction lookaheads of the various states get added out
+        // of order, sort them before returning.
+        reductionLookaheads.Sort((x1, x2) => (x1.State, x1.Production.Index).CompareTo((x2.State, x2.Production.Index)));
+        Log.Debug("Computed reduction lookaheads");
+        return reductionLookaheads.DrainToImmutable();
+    }
+
+    /// <summary>
+    /// Computes and propagates GOTO follow sets.
+    /// </summary>
+    /// <param name="stateMachine">The state machine.</param>
+    /// <param name="dependencies">The GOTO follow dependencies, computed by
+    /// <see cref="ComputeGotoFollowDependencies"/>.</param>
+    /// <param name="dependencyKindsToPropagate">The kinds of dependencies to propagate.</param>
+    /// <param name="existingGotoFollows">The GOTO follow set to initialize the returning
+    /// value with, before propagation. If not specified, it will generate the initial
+    /// GOTO follows from the Shift transitions of each GOTO's destination states.</param>
+    /// <returns>An array of bit arrays, containing the sets of terminals that can appear after
+    /// each GOTO transition.</returns>
+    private ImmutableArray<BitArrayNeo> PropagateGotoFollows(Lr0StateMachine stateMachine,
+        ReadOnlySpan<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
+        ReadOnlySpan<BitArrayNeo> existingGotoFollows = default)
+    {
+        Debug.Assert(existingGotoFollows.IsEmpty || existingGotoFollows.Length == stateMachine.Gotos.Length);
+        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(stateMachine.Gotos.Length);
+        if (existingGotoFollows.IsEmpty)
+        {
+            Log.Debug("Generating initial GOTO follow sets");
+            foreach (ref readonly var @goto in stateMachine.Gotos.AsSpan())
+            {
+                var follow = new BitArrayNeo(Syntax.TerminalCount);
+                foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
+                {
+                    if (s.IsTerminal)
+                    {
+                        follow.Set(s.Index, true);
+                    }
+                }
+                follows.Add(follow);
+            }
+            Log.Debug("Generated initial GOTO follow sets");
+        }
+        else
+        {
+            foreach (BitArrayNeo follow in existingGotoFollows)
+            {
+                follows.Add(new(follow));
+            }
+        }
+
+        Log.Debug($"Propagating {dependencyKindsToPropagate} GOTO follow dependencies");
+        bool changed;
+        int iterations = 0;
+        do
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+
+            changed = false;
+            iterations++;
+            foreach (ref readonly var dependency in dependencies)
+            {
+                GotoFollowDependencyKinds dependencyKind =
+                    dependency.IsSuccessor ? GotoFollowDependencyKinds.Successor
+                    : (dependency.FromGoto == dependency.ToGoto ? GotoFollowDependencyKinds.Internal
+                    : GotoFollowDependencyKinds.Predecessor);
+
+                if ((dependencyKindsToPropagate & dependencyKind) != 0)
+                {
+                    changed = follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
+                }
+            }
+        } while (changed);
+        if (Log.IsEnabled(DiagnosticSeverity.Debug))
+        {
+            Log.Debug($"Propagated after {iterations} iterations");
+            if (Log.IsEnabled(DiagnosticSeverity.Verbose))
+            {
+                foreach (BitArrayNeo x in follows)
+                {
+                    Log.Verbose($"{x}");
+                }
+            }
+        }
+        return follows.MoveToImmutable();
+    }
+
+    /// <summary>
+    /// Computes the dependencies between the follow sets of GOTO transitions.
+    /// </summary>
+    private ImmutableArray<GotoFollowDependency> ComputeGotoFollowDependencies(Lr0StateMachine stateMachine,
+        BitArrayNeo nullableNonterminals, ReadOnlySpan<int> productionNullableStarts)
+    {
+        Log.Debug("Computing GOTO follow dependencies");
+        ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
+        ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
+        var dependencies = ImmutableArray.CreateBuilder<GotoFollowDependency>();
+        int successorCount = 0, internalCount = 0, predecessorCount = 0;
+        for (int i = 0; i < gotos.Length; i++)
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+            ref readonly GotoInfo @goto = ref gotos[i];
+
+            // Compute successor dependencies.
+            foreach (var transition in states[@goto.ToState].Transitions)
+            {
+                // If GOTO A leads to a state with GOTO B, and B gets triggered by a nullable
+                // nonterminal, then the follow set of A should include the follow set of B.
+                if (transition.Key.IsTerminal)
+                {
+                    continue;
+                }
+                if (nullableNonterminals[gotos[transition.Value].Symbol])
+                {
+                    dependencies.Add(new(i, transition.Value, isSuccessor: true));
+                    successorCount++;
+                }
+            }
+
+            // Compute includes dependencies.
+            foreach (Production p in Syntax.EnumerateNonterminalProductions(@goto.Symbol))
+            {
+                CancellationToken.ThrowIfCancellationRequested();
+
+                ProductionMemberList members = Syntax.GetProductionMembers(p);
+                // We have to see if a production is of the form A -> αBβ, where:
+                // - α and β are potentially empty sequences of symbols
+                // - B is a nonterminal
+                // - β is either empty or all of its symbols are nullable
+                // If so, the follow set of the GOTO on the item A -> α•Bβ that starts
+                // from our GOTO's state, should include the follow set of our GOTO.
+                // If β is not empty, the item can be rewritten as A -> αB•ββ', and
+                // by substituting α with αB, B with β and β with β', the property still holds.
+
+                // Skip productions with no members, or whose last member is a terminal.
+                // There is no B we can take that satisfies the properties above.
+                if (members is [] or [.., { IsTerminal: true }])
+                {
+                    continue;
+                }
+                int indexOfB;
+                {
+                    // We split the production into parts α and β and we need to take B from one of the parts.
+                    // Let's keep this variable in a separate block to avoid accidents.
+                    int indexOfβ = productionNullableStarts[p.Index];
+                    if (indexOfβ > 0 && !members[indexOfβ - 1].IsTerminal)
+                    {
+                        // If α is not empty (i.e. the first element of β is not the first member of the production)
+                        // and the last element of α is a nonterminal, then B is the last element of α.
+                        indexOfB = indexOfβ - 1;
+                    }
+                    else
+                    {
+                        // Otherwise (i.e. α is empty or its last element is a terminal), B is the first element of β
+                        // and β's start gets moved one place to the right. We can do this per above.
+                        indexOfB = indexOfβ;
+                    }
+                }
+                int state = @goto.FromState;
+                int j;
+                // Follow the production through α until we reach B.
+                for (j = 0; j < indexOfB; j++)
+                {
+                    state = states[state].FollowTransition(members[j], gotos);
+                }
+                // We now have Bβ in front of us. Per above, each subsequent member can be substituted as B.
+                // Add a dependency for each of them.
+                for (; j < members.Count; j++)
+                {
+                    Symbol s = members[j];
+                    // All these members are nonterminals, which means that all transitions are GOTOs.
+                    Debug.Assert(!s.IsTerminal);
+                    int gotoIdx = states[state].Transitions[s];
+                    dependencies.Add(new(gotoIdx, i, isSuccessor: false));
+                    state = gotos[gotoIdx].ToState;
+
+                    // We don't specifically store whether a dependency is internal or predecessor,
+                    // but we keep a count of each kind for diagnostic purposes.
+                    // There are two equivalent definitions of internal dependencies. Either α is empty
+                    // (i.e. B is the first member of the production) or both GOTOs of the dependency
+                    // are in the same state. Assert that the former is true iif the latter is true.
+                    bool isInternalDependency = indexOfB == 0;
+                    Debug.Assert(isInternalDependency == (gotos[gotoIdx].FromState == i));
+                    if (isInternalDependency)
+                    {
+                        internalCount++;
+                    }
+                    else
+                    {
+                        predecessorCount++;
+                    }
+                }
+            }
+        }
+        if (Log.IsEnabled(DiagnosticSeverity.Debug))
+        {
+            Log.Debug($"Computed GOTO follow dependencies: {successorCount} successors, {internalCount} internals, {predecessorCount} predecessors");
+        }
+        return dependencies.DrainToImmutable();
+    }
+
+    /// <summary>
     /// Computes for each production the index of the first member where this and all subsequent
     /// members are nullable.
     /// </summary>
@@ -270,6 +549,52 @@ internal readonly struct LalrBuild
     }
 
     /// <summary>
+    /// Represents the kinds of dependencies to propagate GOTO follow sets through.
+    /// </summary>
+    /// <seealso cref="PropagateGotoFollows"/>
+    [Flags]
+    private enum GotoFollowDependencyKinds
+    {
+        /// <summary>
+        /// Do not propagate any dependencies.
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Propagate dependencies between a GOTO and an immediate successor of it.
+        /// </summary>
+        Successor = 1,
+        /// <summary>
+        /// Propagate dependencies between two GOTOs in the same state.
+        /// </summary>
+        Internal = 2,
+        /// <summary>
+        /// Propagate dependencies between a GOTO and an eventual predecessor of it.
+        /// </summary>
+        Predecessor = 4
+    }
+
+    /// <summary>
+    /// Represents a dependency between the follow sets of two GOTO transitions.
+    /// </summary>
+    private readonly struct GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
+    {
+        /// <summary>
+        /// The GOTO transition from which the dependency originates.
+        /// </summary>
+        public int FromGoto { get; } = fromGoto;
+
+        /// <summary>
+        /// The GOTO transition to which the dependency leads.
+        /// </summary>
+        public int ToGoto { get; } = toGoto;
+
+        /// <summary>
+        /// Whether the dependency is a <see cref="GotoFollowDependencyKinds.Successor"/> dependency.
+        /// </summary>
+        public bool IsSuccessor { get; } = isSuccessor;
+    }
+
+    /// <summary>
     /// Contains an LR(0) state machine of a grammar. This is the same as an LALR(1) state, but
     /// without lookahead sets.
     /// </summary>
@@ -326,7 +651,27 @@ internal readonly struct LalrBuild
         /// IMPORTANT: If the key is a terminal, the value is an index in <see cref="Lr0StateMachine.States"/>,
         /// but if the key is a nonterminal, the value is an index in <see cref="Lr0StateMachine.Gotos"/>.
         /// </remarks>
+        /// <seealso cref="FollowTransition"/>
         public Dictionary<Symbol, int> Transitions { get; } = transitions;
+
+        /// <summary>
+        /// Follows a transition from this state.
+        /// </summary>
+        /// <param name="symbol">The symbol whose transition to follow.</param>
+        /// <param name="gotos">The GOTO transitions of the state machine,
+        /// as returned by <see cref="Lr0StateMachine.Gotos"/>.</param>
+        /// <returns>The index of the destination state.</returns>
+        /// <remarks>This method correctly handles GOTO transitions and is
+        /// recommended to be used over <see cref="Transitions"/>.</remarks>
+        public int FollowTransition(Symbol symbol, ReadOnlySpan<GotoInfo> gotos)
+        {
+            int idx = Transitions[symbol];
+            if (symbol.IsTerminal)
+            {
+                return idx;
+            }
+            return gotos[idx].ToState;
+        }
     }
 
     /// <summary>

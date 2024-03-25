@@ -19,7 +19,7 @@ internal sealed class GrammarBinaryReader
     public GrammarBinaryReader(Stream input)
     {
         _reader = new BinaryReader(input);
-        Header = ReadNullTerminatedString();
+        Header = ReadNullTerminatedString(isHeader: true);
     }
 
     public string Header { get; }

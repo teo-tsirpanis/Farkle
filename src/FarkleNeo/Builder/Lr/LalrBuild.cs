@@ -168,14 +168,9 @@ internal readonly struct LalrBuild
 
             changed = false;
             iterations++;
-            foreach (ref readonly var dependency in dependencies)
+            foreach (var dependency in dependencies)
             {
-                GotoFollowDependencyKinds dependencyKind =
-                    dependency.IsSuccessor ? GotoFollowDependencyKinds.Successor
-                    : (dependency.FromGoto == dependency.ToGoto ? GotoFollowDependencyKinds.Internal
-                    : GotoFollowDependencyKinds.Predecessor);
-
-                if ((dependencyKindsToPropagate & dependencyKind) != 0)
+                if ((dependencyKindsToPropagate & dependency.DependencyKind) != 0)
                 {
                     changed = follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
                 }
@@ -578,10 +573,14 @@ internal readonly struct LalrBuild
     /// </summary>
     private readonly struct GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
     {
+        private const uint IsSuccessorMask = 1u << 31;
+
+        private readonly uint _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
+
         /// <summary>
         /// The GOTO transition from which the dependency originates.
         /// </summary>
-        public int FromGoto { get; } = fromGoto;
+        public int FromGoto => (int)(_fromGotoAndIsSuccessor & ~IsSuccessorMask);
 
         /// <summary>
         /// The GOTO transition to which the dependency leads.
@@ -589,9 +588,23 @@ internal readonly struct LalrBuild
         public int ToGoto { get; } = toGoto;
 
         /// <summary>
-        /// Whether the dependency is a <see cref="GotoFollowDependencyKinds.Successor"/> dependency.
+        /// The kind of the dependency.
         /// </summary>
-        public bool IsSuccessor { get; } = isSuccessor;
+        public GotoFollowDependencyKinds DependencyKind
+        {
+            get
+            {
+                if ((_fromGotoAndIsSuccessor & IsSuccessorMask) != 0)
+                {
+                    return GotoFollowDependencyKinds.Successor;
+                }
+                if (FromGoto == ToGoto)
+                {
+                    return GotoFollowDependencyKinds.Internal;
+                }
+                return GotoFollowDependencyKinds.Predecessor;
+            }
+        }
     }
 
     /// <summary>

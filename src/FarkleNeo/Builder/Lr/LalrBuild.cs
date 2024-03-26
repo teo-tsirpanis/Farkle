@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using BitCollections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
@@ -36,21 +37,21 @@ internal readonly struct LalrBuild
     /// <param name="stateMachine">The state machine.</param>
     /// <param name="gotoFollows">The follow sets of each GOTO transition of the state machine.</param>
     /// <returns>
-    /// An array of tuples, each containing:
+    /// An array of lists for each state, with each list containing:
     /// <list type="bullet">
-    /// <item><description>The index of the state.</description></item>
     /// <item><description>The production to reduce.</description></item>
     /// <item><description>A bit array of the terminals to perform the reduction on. Do not modify.</description></item>
     /// </list>
+    /// If a list for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
-    private ImmutableArray<(int State, Production Production, BitArrayNeo Lookahead)> ComputeReductionLookaheads(
+    private ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> ComputeReductionLookaheads(
         Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         // These variables are global to the whole process.
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = ImmutableArray.CreateBuilder<(int State, Production Production, BitArrayNeo Lookahead)>();
+        var reductionLookaheads = new List<(Production Production, BitArrayNeo Lookahead)>?[states.Length];
         // These variables are local to each step, but we declare them
         // outside the loop and reuse them for performance.
         // ComputeLr0StateMachine tracks whole items, we can just track nonterminals because we are specifically interested in the non-kernal items produced by each kernel item.
@@ -101,7 +102,7 @@ internal readonly struct LalrBuild
                         {
                             currentState = states[currentState].FollowTransition(s2, gotos);
                         }
-                        reductionLookaheads.Add((currentState, p, emergedLookaheadSet));
+                        (reductionLookaheads[currentState] ??= []).Add((p, emergedLookaheadSet));
                     }
                 }
 
@@ -109,11 +110,8 @@ internal readonly struct LalrBuild
                 visitedNonterminals.SetAll(false);
             }
         }
-        // Because reduction lookaheads of the various states get added out
-        // of order, sort them before returning.
-        reductionLookaheads.Sort((x1, x2) => (x1.State, x1.Production.Index).CompareTo((x2.State, x2.Production.Index)));
         Log.Debug("Computed reduction lookaheads");
-        return reductionLookaheads.DrainToImmutable();
+        return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
     }
 
     /// <summary>

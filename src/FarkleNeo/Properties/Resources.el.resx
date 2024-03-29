@@ -117,6 +117,24 @@
   <data name="Builder_ProductionBuilderInvalidMemberObject" xml:space="preserve">
     <value>Άκυρο αντικείμενο μέλους κατασκευαστή παραγωγής· πρέπει να είναι IGrammarSymbol, string ή char</value>
   </data>
+  <data name="Builder_ConflictMustBeShiftReduce" xml:space="preserve">
+    <value>Ο τύπος της σύγκρουσης πρέπει να είναι Ολίσθησης-Ελάττωσης για να προσπελαστεί αυτή η ιδιότητα</value>
+  </data>
+  <data name="Builder_ConflictMustBeReduceReduce" xml:space="preserve">
+    <value>Ο τύπος της σύγκρουσης πρέπει να είναι Ελάττωσης-Ελάττωσης για να προσπελαστεί αυτή η ιδιότητα</value>
+  </data>
+  <data name="Builder_ShiftReduceConflict" xml:space="preserve">
+    <value>Σύγκρουση Ολίσθησης-Ελάττωσης μεταξύ ολίσθησης της κατάστασης {0} και ελάττωσης της παραγωγής {1}</value>
+  </data>
+  <data name="Builder_ReduceReduceConflict" xml:space="preserve">
+    <value>Σύγκρουση Ελάττωσης-Ελάττωσης μεταξύ των παραγωγών {0} και {1}</value>
+  </data>
+  <data name="Builder_AcceptReduceConflict" xml:space="preserve">
+    <value>Σύγκρουση Αποδοχής-Ελάττωσης μεταξύ αποδοχής και ελάττωσης της παραγωγής {0}</value>
+  </data>
+  <data name="Builder_ConflictDescription" xml:space="preserve">
+    <value>{0}, κατά τη συνάντηση του συμβόλου {1} στην κατάσταση {2}</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

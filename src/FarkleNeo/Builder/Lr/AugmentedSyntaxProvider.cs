@@ -31,9 +31,23 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public int ProductionCount => _provider.ProductionCount + 1;
 
-    public Symbol StartSymbol => Symbol.CreateNonterminal(0, this);
+    public const int StartSymbolIndex = 0;
 
-    public Symbol EndSymbol => Symbol.CreateTerminal(0, this);
+    public Symbol StartSymbol => Symbol.CreateNonterminal(StartSymbolIndex, this);
+
+    public const int EndSymbolIndex = 0;
+
+    public Symbol EndSymbol => Symbol.CreateTerminal(EndSymbolIndex, this);
+
+    /// <summary>
+    /// The index of <see cref="StartProduction"/>.
+    /// </summary>
+    public const int StartProductionIndex = 0;
+
+    /// <summary>
+    /// The starting <c>S' → S #</c> production of the grammar.
+    /// </summary>
+    public Production StartProduction => new(StartProductionIndex, this);
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
 
@@ -43,9 +57,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     private (int FirstProduction, int ProductionCount) GetNonterminalProductions(int nonterminalIndex)
     {
-        if (nonterminalIndex == 0)
+        if (nonterminalIndex == StartSymbolIndex)
         {
-            return (0, 1);
+            return (StartProductionIndex, 1);
         }
         else
         {
@@ -60,13 +74,13 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         return new(first, count, this);
     }
 
-    public Symbol GetProductionHead(int productionIndex) => productionIndex == 0
+    public Symbol GetProductionHead(int productionIndex) => productionIndex == StartProductionIndex
         ? StartSymbol
         : Symbol.CreateNonterminal(_provider.GetProductionHead(productionIndex - 1) + 1, this);
 
     private (int FirstMember, int MemberCount) GetProductionMembersBounds(int index)
     {
-        if (index == 0)
+        if (index == StartProductionIndex)
         {
             return (0, 1);
         }

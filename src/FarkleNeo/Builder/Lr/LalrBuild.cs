@@ -430,7 +430,7 @@ internal readonly struct LalrBuild
         // are being created in a deterministic order.
         var grouppedTransitions = new SortedDictionary<Symbol, HashSet<Lr0Item>>();
 
-        _ = GetOrQueueItemSet(new([.. Syntax.EnumerateNonterminalProductions(Syntax.StartSymbol.Index)]));
+        _ = GetOrQueueItemSet(new([Syntax.StartProduction]));
 
         while (kernelItemSetsToProcess.TryDequeue(out var kernelItems))
         {

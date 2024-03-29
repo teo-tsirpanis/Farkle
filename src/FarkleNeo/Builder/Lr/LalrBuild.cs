@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using BitCollections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars.StateMachines;
+using Farkle.Grammars.Writers;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
@@ -29,6 +31,28 @@ internal readonly struct LalrBuild
         Syntax = new(syntax);
         CancellationToken = cancellationToken;
         Log = log;
+    }
+
+    /// <summary>
+    /// Builds an LR(1) state machine that can parse the syntax of a grammar.
+    /// </summary>
+    /// <param name="syntax">The syntax of the grammar.</param>
+    /// <param name="log">Used to log events in the building process.</param>
+    /// <param name="cancellationToken">Used to cancel the building process.</param>
+    public static LrWriter Build(IGrammarSyntaxProvider syntax, BuilderLogger log = default, CancellationToken cancellationToken = default)
+    {
+        var @this = new LalrBuild(syntax, log, cancellationToken);
+        var lr0StateMachine = @this.ComputeLr0StateMachine();
+        var nullableNonterminals = @this.ComputeNullableNonterminals();
+        var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);
+        var gotoFollowDependencies = @this.ComputeGotoFollowDependencies(lr0StateMachine, nullableNonterminals, productionNullableStarts.AsSpan());
+        var alwaysFollows = @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
+            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal);
+        var gotoFollows = @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
+            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, alwaysFollows.AsSpan());
+        var reductionLookaheads = @this.ComputeReductionLookaheads(lr0StateMachine, gotoFollows.AsSpan());
+        var stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
+        return stateMachine.ToLrWriter();
     }
 
     /// <summary>
@@ -539,6 +563,60 @@ internal readonly struct LalrBuild
         symbol = productionMembers[item.DotPosition];
         nextItem = new(item.Production, item.DotPosition + 1);
         return true;
+    }
+
+    private sealed class DefaultLrStateMachine(Lr0StateMachine states,
+        ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> reductionLookaheads) : LrStateMachine
+    {
+        private Lr0StateMachine Lr0StateMachine { get; } = states;
+
+        private ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> ReductionLookaheads { get; } = reductionLookaheads;
+
+        public override int StateCount => Lr0StateMachine.States.Length;
+
+        public override IEnumerable<LrStateEntry> GetEntriesOfState(int state)
+        {
+            foreach (var transition in Lr0StateMachine.States[state].Transitions)
+            {
+                switch (transition.Key)
+                {
+                    case { IsTerminal: true, Index: int idx }:
+                        yield return LrStateEntry.Create(TranslateTerminalIndex(idx), LrAction.CreateShift(transition.Value));
+                        break;
+                    case { IsTerminal: false, Index: int idx }:
+                        yield return LrStateEntry.CreateGoto(TranslateNonterminalIndex(idx), Lr0StateMachine.Gotos[transition.Value].ToState);
+                        break;
+                }
+            }
+
+            if (ReductionLookaheads[state] is not { } lookaheads)
+            {
+                yield break;
+            }
+            foreach ((var p, BitArrayNeo lookahead) in lookaheads)
+            {
+                if (p.Index == StartProductionIndex)
+                {
+                    foreach (int terminal in lookahead)
+                    {
+                        Debug.Assert(terminal == EndSymbolIndex);
+                        yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.Accept);
+                    }
+                }
+                else
+                {
+                    var productionHandle = TranslateProductionIndex(p.Index);
+                    foreach (int terminal in lookahead)
+                    {
+                        if (terminal == EndSymbolIndex)
+                        {
+                            yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.CreateReduce(productionHandle));
+                        }
+                        yield return LrStateEntry.Create(TranslateTerminalIndex(terminal), LrAction.CreateReduce(productionHandle));
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

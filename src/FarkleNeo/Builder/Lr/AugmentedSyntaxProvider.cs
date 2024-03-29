@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Text;
+using Farkle.Grammars;
 
 namespace Farkle.Builder.Lr;
 
@@ -66,6 +67,34 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             var (first, count) = _provider.GetNonterminalProductions(nonterminalIndex - 1);
             return (first + 1, count);
         }
+    }
+
+    // Converts indices of the Builder API to indices of the Grammars API.
+    public static TokenSymbolHandle TranslateTerminalIndex(int index)
+    {
+        Debug.Assert(index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
+        // IGrammarSyntaxProvider indexes its symbols starting from zero,
+        // while AugmentedSyntaxProvider and the grammars API index them
+        // starting from one. Return the index unchanged.
+        return new((uint)index);
+    }
+
+    public static NonterminalHandle TranslateNonterminalIndex(int index)
+    {
+        Debug.Assert(index != StartSymbolIndex, "No grammar should ever have a GOTO on the start symbol");
+        // IGrammarSyntaxProvider indexes its symbols starting from zero,
+        // while AugmentedSyntaxProvider and the grammars API index them
+        // starting from one. Return the index unchanged.
+        return new((uint)index);
+    }
+
+    public static ProductionHandle TranslateProductionIndex(int index)
+    {
+        Debug.Assert(index != StartProductionIndex, "Reducing the start production should be filtered earlier as accepting");
+        // IGrammarSyntaxProvider indexes its symbols starting from zero,
+        // while AugmentedSyntaxProvider and the grammars API index them
+        // starting from one. Return the index unchanged.
+        return new((uint)index);
     }
 
     public ProductionCollection EnumerateNonterminalProductions(int nonterminalIndex)

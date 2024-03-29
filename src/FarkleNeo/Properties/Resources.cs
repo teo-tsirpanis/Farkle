@@ -65,6 +65,17 @@ internal static class Resources
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2);
     }
 
+    public static bool TryWrite<T1, T2, T3>(Span<char> destination, IFormatProvider? formatProvider, string resourceKey, out int charsWritten, T1 arg1, T2 arg2, T3 arg3)
+    {
+        if (UsingResourceKeys())
+        {
+            return destination.TryWrite(formatProvider, $"{resourceKey}, {arg1}, {arg2}, {arg3}", out charsWritten);
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2, arg3);
+    }
+
 #else
     public static string GetCompositeFormat(string x) => x;
 #endif
@@ -97,6 +108,21 @@ internal static class Resources
 
         string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2);
+    }
+
+    public static string Format<T1, T2, T3>(IFormatProvider? formatProvider, string resourceKey, T1 arg1, T2 arg2, T3 arg3)
+    {
+        if (UsingResourceKeys())
+        {
+#if NET6_0_OR_GREATER
+            return string.Create(formatProvider, $"{resourceKey}, {arg1}, {arg2}, {arg3}");
+#else
+            return ((FormattableString)$"{resourceKey}, {arg1}, {arg2}, {arg3}").ToString(formatProvider);
+#endif
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2, arg3);
     }
 
     public static string GetEofString(IFormatProvider? formatProvider)
@@ -177,6 +203,18 @@ internal static class Resources
     public static string Builder_Nonterminal_SetProductionsManyTimes => GetResourceString(nameof(Builder_Nonterminal_SetProductionsManyTimes));
 
     public static string Builder_ProductionBuilderInvalidMemberObject => GetResourceString(nameof(Builder_ProductionBuilderInvalidMemberObject));
+
+    public static string Builder_ConflictMustBeShiftReduce => GetResourceString(nameof(Builder_ConflictMustBeShiftReduce));
+
+    public static string Builder_ConflictMustBeReduceReduce => GetResourceString(nameof(Builder_ConflictMustBeReduceReduce));
+
+    public static string Builder_ShiftReduceConflict => GetResourceString(nameof(Builder_ShiftReduceConflict));
+
+    public static string Builder_ReduceReduceConflict => GetResourceString(nameof(Builder_ReduceReduceConflict));
+
+    public static string Builder_AcceptReduceConflict => GetResourceString(nameof(Builder_AcceptReduceConflict));
+
+    public static string Builder_ConflictDescription => GetResourceString(nameof(Builder_ConflictDescription));
 
     public static string Warning => GetResourceString(nameof(Warning));
 

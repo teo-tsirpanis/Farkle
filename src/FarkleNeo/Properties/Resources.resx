@@ -117,6 +117,24 @@
   <data name="Builder_ProductionBuilderInvalidMemberObject" xml:space="preserve">
     <value>Invalid production builder member object; must be IGrammarSymbol, string or char</value>
   </data>
+  <data name="Builder_ConflictMustBeShiftReduce" xml:space="preserve">
+    <value>The conflict's kind must be Shift-Reduce to access this property</value>
+  </data>
+  <data name="Builder_ConflictMustBeReduceReduce" xml:space="preserve">
+    <value>The conflict's kind must be Reduce-Reduce to access this property</value>
+  </data>
+  <data name="Builder_ShiftReduceConflict" xml:space="preserve">
+    <value>Shift-Reduce conflict between shifting to state {0} and reducing production {1}</value>
+  </data>
+  <data name="Builder_ReduceReduceConflict" xml:space="preserve">
+    <value>Reduce-Reduce conflict between productions {0} and {1}</value>
+  </data>
+  <data name="Builder_AcceptReduceConflict" xml:space="preserve">
+    <value>Accept-Reduce conflict between accepting and reducing production {0}</value>
+  </data>
+  <data name="Builder_ConflictDescription" xml:space="preserve">
+    <value>{0}, while encountering the symbol {1} at state {2}</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>

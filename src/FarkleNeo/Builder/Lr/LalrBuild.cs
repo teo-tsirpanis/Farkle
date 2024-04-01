@@ -37,9 +37,10 @@ internal readonly struct LalrBuild
     /// Builds an LR(1) state machine that can parse the syntax of a grammar.
     /// </summary>
     /// <param name="syntax">The syntax of the grammar.</param>
+    /// <param name="conflictResolver">The conflict resolver to use. Optional.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static LrWriter Build(IGrammarSyntaxProvider syntax, BuilderLogger log = default, CancellationToken cancellationToken = default)
+    public static LrWriter Build(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default)
     {
         var @this = new LalrBuild(syntax, log, cancellationToken);
         var lr0StateMachine = @this.ComputeLr0StateMachine();
@@ -51,7 +52,12 @@ internal readonly struct LalrBuild
         var gotoFollows = @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
             GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, alwaysFollows.AsSpan());
         var reductionLookaheads = @this.ComputeReductionLookaheads(lr0StateMachine, gotoFollows.AsSpan());
-        var stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
+
+        LrStateMachine stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
+        if (conflictResolver is not null)
+        {
+            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, conflictResolver);
+        }
         return stateMachine.ToLrWriter();
     }
 

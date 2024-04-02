@@ -116,6 +116,80 @@ public sealed class LrConflict : IFormattable
     }
 
     /// <summary>
+    /// Gets all conflicts of the LR state machine of a <see cref="Grammar"/>.
+    /// </summary>
+    internal static IEnumerable<LrConflict> GetConflicts(Grammar grammar)
+    {
+        if (grammar.LrStateMachine is not { HasConflicts: true } states)
+        {
+            return [];
+        }
+        return GetConflicts(states);
+    }
+
+    private static IEnumerable<LrConflict> GetConflicts(LrStateMachine states)
+    {
+        Dictionary<TokenSymbolHandle, LrAction> firstActionOfTerminal = [];
+        foreach (LrState state in states)
+        {
+            foreach (var kvp in state.Actions)
+            {
+                if (!firstActionOfTerminal.TryGetValue(kvp.Key, out var firstAction))
+                {
+                    firstActionOfTerminal.Add(kvp.Key, kvp.Value);
+                    continue;
+                }
+                yield return Create(states.Grammar, state.StateIndex, kvp.Key, firstAction, kvp.Value);
+            }
+            firstActionOfTerminal.Clear();
+
+            // There are conflicts on the end of input if there are more than one EOF actions.
+            var eofActionsEnumerator = state.EndOfFileActions.GetEnumerator();
+            if (!eofActionsEnumerator.MoveNext())
+            {
+                continue;
+            }
+            LrEndOfFileAction firstEofAction = eofActionsEnumerator.Current;
+            while (eofActionsEnumerator.MoveNext())
+            {
+                yield return Create(states.Grammar, state.StateIndex, firstEofAction, eofActionsEnumerator.Current);
+            }
+        }
+    }
+
+    private static LrConflict Create(Grammar grammar, int stateIndex, TokenSymbolHandle terminal, LrAction action1, LrAction action2)
+    {
+        Debug.Assert(!action1.IsError);
+        Debug.Assert(!action2.IsError);
+        Debug.Assert(!(action1.IsShift && action1.IsShift), "Shift/Shift conflict is not possible");
+        if (action1.IsShift)
+        {
+            return CreateShiftReduce(grammar, stateIndex, terminal, action1.ShiftState, action2.ReduceProduction);
+        }
+        if (action2.IsShift)
+        {
+            return CreateShiftReduce(grammar, stateIndex, terminal, action2.ShiftState, action1.ReduceProduction);
+        }
+        return CreateReduceReduce(grammar, stateIndex, terminal, action1.ReduceProduction, action2.ReduceProduction);
+    }
+
+    private static LrConflict Create(Grammar grammar, int stateIndex, LrEndOfFileAction action1, LrEndOfFileAction action2)
+    {
+        Debug.Assert(!action1.IsError);
+        Debug.Assert(!action2.IsError);
+        Debug.Assert(!(action1.IsAccept && action1.IsAccept), "Accept/Accept conflict is not possible");
+        if (action1.IsAccept)
+        {
+            return CreateAcceptReduce(grammar, stateIndex, action2.ReduceProduction);
+        }
+        if (action2.IsAccept)
+        {
+            return CreateAcceptReduce(grammar, stateIndex, action1.ReduceProduction);
+        }
+        return CreateReduceReduce(grammar, stateIndex, default, action1.ReduceProduction, action2.ReduceProduction);
+    }
+
+    /// <summary>
     /// Creates an <see cref="LrConflict"/> representing a Shift-Reduce conflict.
     /// </summary>
     /// <param name="grammar">The <see cref="Grammar"/> that the conflict is in.</param>

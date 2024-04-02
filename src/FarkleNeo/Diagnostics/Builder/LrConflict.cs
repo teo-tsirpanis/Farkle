@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 
 namespace Farkle.Diagnostics.Builder;
 
@@ -20,32 +21,34 @@ public sealed class LrConflict : IFormattable
 {
     private readonly int _shiftState;
 
-    private readonly string? _reduceProduction2;
+    private readonly ProductionHandle _reduceProduction2;
 
     private object GetConflictDescription()
     {
+        Production reduceProduction = Grammar.GetProduction(ReduceProduction);
         switch (Kind)
         {
             case LrConflictKind.ShiftReduce:
-                return LocalizedDiagnostic.Create(nameof(Resources.Builder_ShiftReduceConflict), ShiftState, ReduceProduction);
+                return LocalizedDiagnostic.Create(nameof(Resources.Builder_ShiftReduceConflict), ShiftState, reduceProduction);
             case LrConflictKind.ReduceReduce:
-                return LocalizedDiagnostic.Create(nameof(Resources.Builder_ReduceReduceConflict), ReduceProduction, ReduceProduction2);
+                Production reduceProduction2 = Grammar.GetProduction(ReduceProduction2);
+                return LocalizedDiagnostic.Create(nameof(Resources.Builder_ReduceReduceConflict), reduceProduction, reduceProduction2);
             default:
                 Debug.Assert(Kind == LrConflictKind.AcceptReduce);
-                return LocalizedDiagnostic.Create(nameof(Resources.Builder_AcceptReduceConflict), ReduceProduction);
+                return LocalizedDiagnostic.Create(nameof(Resources.Builder_AcceptReduceConflict), reduceProduction);
         }
     }
 
-    private string GetTerminalNameLocalized(IFormatProvider? provider)
-    {
-        if (TerminalName is not { } terminalName)
-        {
-            return Resources.GetEofString(provider);
-        }
-        return TokenSymbol.FormatName(terminalName);
-    }
+    private string GetTerminalNameLocalized(IFormatProvider? provider) => TerminalOrEndOfInput.HasValue
+        ? Grammar.GetTokenSymbol(TerminalOrEndOfInput).ToString()
+        : Resources.GetEofString(provider);
 
     private LrConflict() { }
+
+    /// <summary>
+    /// The grammar whose LR state machine has this conflict.
+    /// </summary>
+    public required Grammar Grammar { get; init; }
 
     /// <summary>
     /// The index of the state with this conflict.
@@ -53,15 +56,16 @@ public sealed class LrConflict : IFormattable
     public required int StateIndex { get; init; }
 
     /// <summary>
-    /// The name of the terminal upon whose encounter the conflict manifests.
+    /// The handle to the terminal upon whose encounter the conflict manifests.
     /// </summary>
     /// <remarks>
-    /// This property can be <see langword="null"/> if the conflict manifests
-    /// when the parser reaches the end of the input. This can never be the case
-    /// in <see cref="LrConflictKind.ShiftReduce"/> conflicts, and is always the
-    /// case in <see cref="LrConflictKind.AcceptReduce"/> conflicts.
+    /// This property can have no value (as determined by <see cref="TokenSymbolHandle.HasValue"/>)
+    /// if the conflict manifests when the parser reaches the end of the input.
+    /// This can never be the case in <see cref="LrConflictKind.ShiftReduce"/>
+    /// conflicts, and is always the case in <see cref="LrConflictKind.AcceptReduce"/>
+    /// conflicts.
     /// </remarks>
-    public required string? TerminalName { get; init; }
+    public required TokenSymbolHandle TerminalOrEndOfInput { get; init; }
 
     /// <summary>
     /// The kind of the conflict.
@@ -88,21 +92,21 @@ public sealed class LrConflict : IFormattable
     }
 
     /// <summary>
-    /// The production to reduce to, as one of the possible outcomes of the conflict.
+    /// The handle to the production to reduce, as one of the possible outcomes of the conflict.
     /// </summary>
-    public required string ReduceProduction { get; init; }
+    public required ProductionHandle ReduceProduction { get; init; }
 
     /// <summary>
-    /// The alternative production to reduce to, as one of the possible
+    /// The handle to the alternative production to reduce, as one of the possible
     /// outcomes of a Reduce-Reduce conflict.
     /// </summary>
     /// <exception cref="InvalidOperationException"><see cref="Kind"/> is not
     /// <see cref="LrConflictKind.ReduceReduce"/>.</exception>
-    public string ReduceProduction2
+    public ProductionHandle ReduceProduction2
     {
         get
         {
-            if (_reduceProduction2 is null)
+            if (!_reduceProduction2.HasValue)
             {
                 ThrowHelpers.ThrowInvalidOperationExceptionLocalized(nameof(Resources.Builder_ConflictMustBeReduceReduce));
             }
@@ -114,19 +118,28 @@ public sealed class LrConflict : IFormattable
     /// <summary>
     /// Creates an <see cref="LrConflict"/> representing a Shift-Reduce conflict.
     /// </summary>
+    /// <param name="grammar">The <see cref="Grammar"/> that the conflict is in.</param>
     /// <param name="stateIndex">The index of the state with the conflict.</param>
-    /// <param name="terminalName">The name of the terminal upon whose encounter the conflict manifests.
-    /// Cannot be <see langword="null"/> because the parser cannot Shift on the end of input.</param>
+    /// <param name="terminal">The name of the terminal upon whose encounter the conflict manifests.</param>
     /// <param name="shiftState">The index of the state to shift to.</param>
-    /// <param name="reduceProduction">The production to reduce to.</param>
-    public static LrConflict CreateShiftReduce(int stateIndex, string terminalName, int shiftState, string reduceProduction)
+    /// <param name="reduceProduction">The production to reduce.</param>
+    public static LrConflict CreateShiftReduce(Grammar grammar, int stateIndex, TokenSymbolHandle terminal,
+        int shiftState, ProductionHandle reduceProduction)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(terminalName);
-        ArgumentNullExceptionCompat.ThrowIfNull(reduceProduction);
+        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        if (!terminal.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(terminal));
+        }
+        if (!reduceProduction.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction));
+        }
         return new LrConflict
         {
+            Grammar = grammar,
             StateIndex = stateIndex,
-            TerminalName = terminalName,
+            TerminalOrEndOfInput = terminal,
             Kind = LrConflictKind.ShiftReduce,
             ShiftState = shiftState,
             ReduceProduction = reduceProduction
@@ -136,18 +149,30 @@ public sealed class LrConflict : IFormattable
     /// <summary>
     /// Creates an <see cref="LrConflict"/> representing a Reduce-Reduce conflict.
     /// </summary>
+    /// <param name="grammar">The <see cref="Grammar"/> that the conflict is in.</param>
     /// <param name="stateIndex">The index of the state with the conflict.</param>
-    /// <param name="terminalName">The name of the terminal upon whose encounter the conflict manifests, or
-    /// <see langword="null"/> if the ocnflict manifests when encountering the end of input.</param>
+    /// <param name="terminalOrEndOfInput">The name of the terminal upon whose encounter the conflict
+    /// manifests, or <see langword="default"/> if the ocnflict manifests when encountering the end
+    /// of input.</param>
     /// <param name="reduceProduction">The first production to reduce.</param>
     /// <param name="reduceProduction2">The second production to reduce.</param>
-    public static LrConflict CreateReduceReduce(int stateIndex, string? terminalName, string reduceProduction, string reduceProduction2)
+    public static LrConflict CreateReduceReduce(Grammar grammar, int stateIndex, TokenSymbolHandle terminalOrEndOfInput,
+        ProductionHandle reduceProduction, ProductionHandle reduceProduction2)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(reduceProduction);
+        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        if (!reduceProduction.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction));
+        }
+        if (!reduceProduction2.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction2));
+        }
         return new LrConflict
         {
+            Grammar = grammar,
             StateIndex = stateIndex,
-            TerminalName = terminalName,
+            TerminalOrEndOfInput = terminalOrEndOfInput,
             Kind = LrConflictKind.ReduceReduce,
             ReduceProduction = reduceProduction,
             ReduceProduction2 = reduceProduction2
@@ -157,15 +182,21 @@ public sealed class LrConflict : IFormattable
     /// <summary>
     /// Creates an <see cref="LrConflict"/> representing an Accept-Reduce conflict.
     /// </summary>
+    /// <param name="grammar">The <see cref="Grammar"/> that the conflict is in.</param>
     /// <param name="stateIndex">The index of the state with the conflict.</param>
     /// <param name="reduceProduction">The production to reduce.</param>
-    public static LrConflict CreateAcceptReduce(int stateIndex, string reduceProduction)
+    public static LrConflict CreateAcceptReduce(Grammar grammar, int stateIndex, ProductionHandle reduceProduction)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(reduceProduction);
+        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        if (!reduceProduction.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction));
+        }
         return new LrConflict
         {
+            Grammar = grammar,
             StateIndex = stateIndex,
-            TerminalName = null,
+            TerminalOrEndOfInput = default,
             Kind = LrConflictKind.AcceptReduce,
             ReduceProduction = reduceProduction
         };

@@ -4,7 +4,7 @@
 namespace Farkle.Diagnostics.Builder;
 
 /// <summary>
-/// The kind of an LR parser conflict.
+/// The kind of an <see cref="LrConflict"/>.
 /// </summary>
 public enum LrConflictKind
 {
@@ -20,7 +20,9 @@ public enum LrConflictKind
     /// The conflict is between an Accept and a Reduce action.
     /// </summary>
     /// <remarks>
-    /// This is a special case of <see cref="ReduceReduce"/>.
+    /// This is a special case of <see cref="ReduceReduce"/> and occurs very rarely.
+    /// Accept-Reduce conflicts cannot be resolved with an
+    /// <see cref="Farkle.Builder.OperatorPrecedence.OperatorScope"/>.
     /// </remarks>
     AcceptReduce
 }

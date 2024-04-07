@@ -14,6 +14,9 @@ namespace Farkle.Compatibility;
 
 internal static class BitOperationsCompat
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsPow2(int value) => (value & (value - 1)) == 0 && value > 0;
+
     public static int PopCount(ulong value)
     {
         const ulong c1 = 0x_55555555_55555555ul;

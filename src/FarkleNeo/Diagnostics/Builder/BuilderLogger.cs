@@ -11,7 +11,7 @@ internal struct BuilderLogger
 
     public event Action<BuilderDiagnostic>? OnDiagnostic;
 
-    public readonly bool IsEnabled(DiagnosticSeverity severity) => severity >= LogLevel;
+    public readonly bool IsEnabled(DiagnosticSeverity severity) => OnDiagnostic is not null && severity >= LogLevel;
 
     public readonly void Log(DiagnosticSeverity severity, object message, string? code = null)
     {

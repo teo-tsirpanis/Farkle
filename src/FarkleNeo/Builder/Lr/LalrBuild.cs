@@ -200,7 +200,7 @@ internal readonly struct LalrBuild
             {
                 if ((dependencyKindsToPropagate & dependency.DependencyKind) != 0)
                 {
-                    changed = follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
+                    changed |= follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
                 }
             }
         } while (changed);

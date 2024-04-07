@@ -36,6 +36,9 @@ public sealed class CompatibilityLevel
     /// <item>The default value of <see cref="GrammarBuilderExtensions.NewLineIsNoisy"/>
     /// was changed from <see langword="false"/> to the value of
     /// <see cref="GrammarBuilderExtensions.AutoWhitespace"/>.</item>
+    /// <item>In grammars with line comments or line groups, new lines are ignored according to the
+    /// value of <see cref="GrammarBuilderExtensions.AutoWhitespace"/>. This is a bug fix from earlier
+    /// versions that can slightly change behavior.</item>
     /// <item>The language for string regexes is different and more in line with standard regex dialects.</item>
     /// <item><see cref="Regex.Any"/> and the <c>.</c> character in regexes match any character and no longer
     /// have lower precedence when being matched.</item>

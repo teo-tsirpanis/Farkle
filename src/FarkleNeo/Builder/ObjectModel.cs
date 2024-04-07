@@ -23,6 +23,10 @@ namespace Farkle.Builder;
 /// <seealso cref="GrammarBuilderExtensions"/>
 public interface IGrammarBuilder
 {
+    // TODO-NS2.0: Change this to return IGrammarSymbol, and add a property to IGrammarSymbol to
+    // return ISymbolBase. We could do it now, but it will introduce lots of duplication because
+    // we would have to add two properties for each class. Better do it when we target exclusively
+    // frameworks that support DIMs.
     internal ISymbolBase Symbol { get; }
 }
 

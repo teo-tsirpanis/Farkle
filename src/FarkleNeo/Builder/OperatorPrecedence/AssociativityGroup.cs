@@ -38,9 +38,8 @@ public class AssociativityGroup
     {
         if (associativityType is < AssociativityType.NonAssociative or > AssociativityType.PrecedenceOnly)
         {
-            return;
+            ThrowHelpers.ThrowArgumentException(nameof(associativityType));
         }
-        ThrowHelpers.ThrowArgumentException(nameof(associativityType));
     }
 
     /// <summary>

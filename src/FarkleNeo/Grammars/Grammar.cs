@@ -324,7 +324,7 @@ public abstract class Grammar : IGrammarProvider
     /// or pointing to nothing if the symbol was not found and <paramref name="throwIfNotFound"/>
     /// has a value of <see langword="false"/>.</returns>
     /// <remarks>
-    /// Special names are intended to be used on token symbolss that will be emitted by custom
+    /// Special names are intended to be used on token symbols that will be emitted by custom
     /// tokenizers. Because symbol names are not guaranteed to be unique, a special name
     /// provides a guaranteed way to retrieve the handle for a specific symbol.
     /// </remarks>

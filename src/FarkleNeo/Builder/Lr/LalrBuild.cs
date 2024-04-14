@@ -311,7 +311,7 @@ internal readonly struct LalrBuild
                     // but we keep a count of each kind for diagnostic purposes.
                     // There are two equivalent definitions of internal dependencies. Either α is empty
                     // (i.e. B is the first member of the production) or both GOTOs of the dependency
-                    // are in the same state. Assert that the former is true iif the latter is true.
+                    // are in the same state. Assert that the former is true iff the latter is true.
                     bool isInternalDependency = indexOfB == 0;
                     Debug.Assert(isInternalDependency == (gotos[gotoIdx].FromState == i));
                     if (isInternalDependency)

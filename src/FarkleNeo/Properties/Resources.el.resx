@@ -141,6 +141,9 @@
   <data name="Builder_NonterminalProductionsNotSet" xml:space="preserve">
     <value>Το μη τερματικό {0} δεν έχει παραγωγές. Σιγουρέψου ότι έχεις καλέσει την μέθοδο SetProductions σε αυτό.</value>
   </data>
+  <data name="Builder_DuplicateOperatorSymbol" xml:space="preserve">
+    <value>Το σύμβολο τελεστή {0} ορίστηκε με επίπεδο προτεραιότητας και {1} και {2}.</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

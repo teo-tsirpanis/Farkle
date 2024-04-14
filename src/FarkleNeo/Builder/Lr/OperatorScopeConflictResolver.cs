@@ -83,9 +83,16 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         {
             foreach (var x in operatorScope.AssociativityGroups[i].Symbols)
             {
-                if (!_precedenceMap.TryAdd(x, i) && _precedenceMap[x] != i)
+                if (_precedenceMap.TryGetValue(x, out int existingPrecedence))
                 {
-                    // TODO: Log a warning that the same operator is defined in multiple associativity groups.
+                    if (existingPrecedence != i)
+                    {
+                        log.DuplicateOperatorSymbol(x, existingPrecedence, i);
+                    }
+                }
+                else
+                {
+                    _precedenceMap.Add(x, i);
                 }
             }
         }

@@ -220,6 +220,8 @@ internal static class Resources
 
     public static string Builder_NonterminalProductionsNotSet => GetResourceString(nameof(Builder_NonterminalProductionsNotSet));
 
+    public static string Builder_DuplicateOperatorSymbol => GetResourceString(nameof(Builder_DuplicateOperatorSymbol));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

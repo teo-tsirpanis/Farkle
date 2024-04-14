@@ -54,9 +54,14 @@ internal static class GrammarBuild
         bool autoWhitespace = globalOptions.AutoWhitespace;
         bool newLineIsNoisy = globalOptions.NewLineIsNoisy ?? autoWhitespace;
         bool literalsCaseInsensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseSensitive;
+        var operatorScope = globalOptions.OperatorScope;
         var log = options.Log;
         var writer = new GrammarWriter();
         bool isUnparsable = false;
+
+        // Maps symbol handles (terminals or productions) to their representation
+        // in the operator scope. We create and populate this only if needed.
+        var operatorSymbolMap = operatorScope is not null ? new Dictionary<EntityHandle, object>() : null;
 
         var productionMemberMap = new Dictionary<ISymbolBase, EntityHandle>(
             grammarDefinition.Terminals.Count + grammarDefinition.Nonterminals.Count,
@@ -108,6 +113,7 @@ internal static class GrammarBuild
                     writeSpecialNames = false;
                 }
             }
+            operatorSymbolMap?.Add(handle, terminal);
         }
 
         if (writeSpecialNames && specialNameMap is not null)
@@ -169,12 +175,16 @@ internal static class GrammarBuild
         List<EntityHandle> productionMembers = [];
         foreach (IProduction production in grammarDefinition.Productions)
         {
-            writer.AddProduction(production.Members.Length);
+            ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
                 EntityHandle memberHandle = productionMemberMap[member.Symbol];
                 productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
+            }
+            if (production.PrecedenceToken is { } precedenceToken)
+            {
+                operatorSymbolMap?.Add(handle, precedenceToken);
             }
         }
 
@@ -232,8 +242,11 @@ internal static class GrammarBuild
             writer.AddStateMachine(dfaWriter);
         }
 
+        var conflictResolver = operatorScope is not null
+            ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
+            : null;
         var syntaxProvider = new GrammarSyntaxProvider(grammarDefinition, productionMembers);
-        writer.AddStateMachine(LalrBuild.Build(syntaxProvider, null, log, options.CancellationToken));
+        writer.AddStateMachine(LalrBuild.Build(syntaxProvider, conflictResolver, log, options.CancellationToken));
 
         // Set grammar info.
         string grammarName = globalOptions.GrammarName ?? grammarDefinition.GetName(grammarDefinition.StartSymbol);

@@ -106,7 +106,7 @@ internal static class GrammarBuild
                 specialNameMap ??= [];
                 if (!specialNameMap.TryAdd(terminal.Name, handle))
                 {
-                    // TODO: Log an error.
+                    log.DuplicateSpecialName(terminal.Name);
                     // If there is a duplicate special name, no special names will be written
                     // to the grammar, and the grammar will be marked as unparsable.
                     isUnparsable = true;

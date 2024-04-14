@@ -20,6 +20,12 @@ internal static class BuilderLoggerExtensions
     public static void RegexContainsVoid(in this BuilderLogger logger, in BuilderSymbolName symbolName) =>
         logger.Warning("FARKLE0003", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexContainsVoid), symbolName));
 
+    public static void DuplicateSpecialName(in this BuilderLogger logger, string specialName) =>
+        logger.Error("FARKLE0004", LocalizedDiagnostic.Create(nameof(Resources.Builder_DuplicateSpecialName), specialName));
+
+    public static void NonterminalProductionsNotSet(in this BuilderLogger logger, string nonterminalName) =>
+        logger.Warning("FARKLE0005", LocalizedDiagnostic.Create(nameof(Resources.Builder_NonterminalProductionsNotSet), nonterminalName));
+
     public static void Debug(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Debug, message);
 
     public static void Verbose(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Verbose, message);

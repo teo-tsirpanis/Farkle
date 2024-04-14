@@ -90,7 +90,7 @@ internal sealed class GrammarDefinition
             ImmutableArray<IProduction> productionsOfNonterminal = nonterminal.FreezeAndGetProductions();
             if (productionsOfNonterminal.IsEmpty)
             {
-                // TODO: Log error.
+                log.NonterminalProductionsNotSet(nonterminal.Name);
             }
             nonterminals.Add(nonterminal);
             foreach (IProduction production in productionsOfNonterminal)

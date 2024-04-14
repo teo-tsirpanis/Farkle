@@ -135,6 +135,12 @@
   <data name="Builder_ConflictDescription" xml:space="preserve">
     <value>{0}, while encountering the symbol {1} at state {2}</value>
   </data>
+  <data name="Builder_DuplicateSpecialName" xml:space="preserve">
+    <value>Symbol already defined with special name {1}</value>
+  </data>
+  <data name="Builder_NonterminalProductionsNotSet" xml:space="preserve">
+    <value>Nonterminal {0} has no productions. Make sure you have called the SetProductions method on it.</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>

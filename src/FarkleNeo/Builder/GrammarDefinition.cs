@@ -32,6 +32,8 @@ internal sealed class GrammarDefinition
     // Maps symbols to their names, if they are renamed.
     public required Dictionary<ISymbolBase, string> RenamedSymbols { get; init; }
 
+    public string GrammarName => GlobalOptions.GrammarName ?? GetName(StartSymbol);
+
     public INonterminal StartSymbol => Nonterminals[0];
 
     /// <summary>

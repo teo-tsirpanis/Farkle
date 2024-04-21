@@ -3,6 +3,7 @@
 
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;
+using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
 using Farkle.Grammars.Writers;
@@ -48,14 +49,36 @@ internal static class GrammarBuild
         }
     }
 
-    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options)
+    /// <summary>
+    /// Builds a <see cref="Grammar"/> object from a <see cref="GrammarDefinition"/>.
+    /// </summary>
+    /// <param name="grammarDefinition">The grammar definition.</param>
+    /// <param name="options">Options to control the building process.</param>
+    /// <param name="errors">An optional collection to store diagnostics of
+    /// severity <see cref="DiagnosticSeverity.Error"/>.</param>
+    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
+    {
+        var log = options.Log.WithRedirectErrors(errors);
+        Grammar grammar = Build(grammarDefinition, options, in log);
+        // Get conflicts and log them. Skip the computation if no errors are logged
+        // (i.e. the log has no listeners at all).
+        if (log.IsEnabled(DiagnosticSeverity.Error))
+        {
+            foreach (LrConflict conflict in LrConflict.GetConflicts(grammar))
+            {
+                log.LrConflict(conflict);
+            }
+        }
+        return grammar;
+    }
+
+    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options, in BuilderLogger log)
     {
         ref readonly GrammarGlobalOptions globalOptions = ref grammarDefinition.GlobalOptions;
         bool autoWhitespace = globalOptions.AutoWhitespace;
         bool newLineIsNoisy = globalOptions.NewLineIsNoisy ?? autoWhitespace;
         bool literalsCaseInsensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseSensitive;
         var operatorScope = globalOptions.OperatorScope;
-        var log = options.Log;
         var writer = new GrammarWriter();
         bool isUnparsable = false;
 

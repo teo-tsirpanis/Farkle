@@ -23,4 +23,27 @@ internal struct BuilderLogger
             OnDiagnostic?.Invoke(new BuilderDiagnostic(severity, message, code));
         }
     }
+
+    /// <summary>
+    /// Creates a new <see cref="BuilderLogger"/> with an additional event listener that adds
+    /// all diagnostics of severity <see cref="DiagnosticSeverity.Error"/> to the specified
+    /// collection.
+    /// </summary>
+    /// <param name="errors">The collection to add each error diagnostic into.
+    /// If it is <see langword="null"/>, it will be ignored.</param>
+    public readonly BuilderLogger WithRedirectErrors(ICollection<BuilderDiagnostic>? errors)
+    {
+        BuilderLogger log = this;
+        if (errors is not null)
+        {
+            log.OnDiagnostic += diagnostic =>
+            {
+                if (diagnostic.Severity >= DiagnosticSeverity.Error)
+                {
+                    errors.Add(diagnostic);
+                }
+            };
+        }
+        return log;
+    }
 }

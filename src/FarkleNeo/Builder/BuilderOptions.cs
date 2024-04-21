@@ -32,6 +32,8 @@ public sealed class BuilderOptions
 
     internal BuilderLogger Log = new() { LogLevel = DiagnosticSeverity.Information };
 
+    internal static readonly BuilderOptions Default = new();
+
     /// <summary>
     /// An event that is raised when a diagnostic is reported.
     /// </summary>

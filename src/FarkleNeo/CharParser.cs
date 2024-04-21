@@ -209,7 +209,16 @@ public static class CharParser
     /// <param name="semanticProvider">The <see cref="ISemanticProvider{TChar, T}"/> the parser will use.</param>
     /// <exception cref="ArgumentNullException"><paramref name="grammar"/> or <paramref name="semanticProvider"/>
     /// is <see langword="null"/>.</exception>
-    public static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider)
+    public static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider) =>
+        Create(grammar, semanticProvider, null);
+
+    /// <inheritdoc cref="Create{T}(Grammar, ISemanticProvider{char, T})"/>
+    /// <param name="customError">A custom error object to be used instead of the default errors. This
+    /// is typically provided by the builder, which has a more complete picture of what went wrong.</param>
+#pragma warning disable CS1573 // Parameter has no matching param tag in the XML comment (but other parameters do)
+    // See https://github.com/dotnet/roslyn/issues/40325
+    internal static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider, object? customError)
+#pragma warning restore CS1573 // Parameter has no matching param tag in the XML comment (but other parameters do)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(grammar);
         ArgumentNullExceptionCompat.ThrowIfNull(semanticProvider);
@@ -227,10 +236,15 @@ public static class CharParser
             return Fail(nameof(Resources.Parser_GrammarLrProblem));
         }
 
-        Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false);
+        // TODO: Custom error is the same for both the parser and the tokenizer,
+        // which can give confusing messages when a failing tokenizer gets swapped
+        // with a working one. We can fix this by providing a separate custom error
+        // for the tokenizer.
+        Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false, customError);
         return new DefaultParser<T>(grammar, lrStateMachine, semanticProvider, tokenizer);
 
-        CharParser<T> Fail(string resourceKey) => new FailingCharParser<T>(LocalizedDiagnostic.Create(resourceKey), grammar);
+        CharParser<T> Fail(string resourceKey) =>
+            new FailingCharParser<T>(customError ?? LocalizedDiagnostic.Create(resourceKey), grammar);
     }
 
     /// <summary>

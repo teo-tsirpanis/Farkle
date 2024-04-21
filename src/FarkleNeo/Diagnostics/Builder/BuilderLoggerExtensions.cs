@@ -29,6 +29,9 @@ internal static class BuilderLoggerExtensions
     public static void DuplicateOperatorSymbol(in this BuilderLogger logger, object symbol, int existingPrecedence, int newPrecedence) =>
         logger.Warning("FARKLE0006", LocalizedDiagnostic.Create(nameof(Resources.Builder_DuplicateOperatorSymbol), symbol, existingPrecedence, newPrecedence));
 
+    public static void LrConflict(in this BuilderLogger logger, LrConflict conflict) =>
+        logger.Error("FARKLE0007", conflict);
+
     public static void Debug(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Debug, message);
 
     public static void Verbose(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Verbose, message);

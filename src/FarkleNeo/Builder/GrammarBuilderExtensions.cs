@@ -3,6 +3,9 @@
 
 using System.Diagnostics;
 using Farkle.Builder.OperatorPrecedence;
+using Farkle.Diagnostics;
+using Farkle.Diagnostics.Builder;
+using Farkle.Parser;
 
 namespace Farkle.Builder;
 
@@ -293,5 +296,31 @@ public static class GrammarBuilderExtensions
         ArgumentNullExceptionCompat.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddLineComment(start));
+    }
+
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/> from the given <see cref="IGrammarBuilder{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
+    /// <param name="builder">The grammar to build.</param>
+    /// <param name="options">Used to customize the building process. Optional.</param>
+    /// <returns>
+    /// A <see cref="CharParser{T}"/> object that can be used to parse text.
+    /// If building the grammar failed, the parser's <see cref="CharParser{T}.IsFailing"/>
+    /// property will be <see langword="true"/>. Detailed error information can be
+    /// obtained by trying to parse any text, and casting the result's <see cref="ParserResult{T}.Error"/>
+    /// property to <see cref="IReadOnlyList{BuilderDiagnostic}"/> of type <see cref="BuilderDiagnostic"/>.
+    /// </returns>
+    public static CharParser<T> Build<T>(this IGrammarBuilder<T> builder, BuilderOptions? options = null)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+
+        options ??= BuilderOptions.Default;
+        GrammarDefinition grammarDefinition = GrammarDefinition.Create(builder, options.Log, options.CancellationToken);
+        List<BuilderDiagnostic> errors = [];
+        var grammar = GrammarBuild.Build(grammarDefinition, options, errors);
+        object? customError = errors is [] ? null : new CompositeDiagnostic<BuilderDiagnostic>(errors);
+        var semanticProvider = SemanticProviderBuild.Build<T>(grammarDefinition);
+        return CharParser.Create(grammar, semanticProvider, customError);
     }
 }

@@ -77,7 +77,7 @@ public static class Tokenizer
     /// <exception cref="InvalidOperationException">The grammar cannot be used for tokenizing.</exception>
     public static Tokenizer<TChar> Create<TChar>(Grammar grammar) => Create<TChar>(grammar, throwIfError: true);
 
-    internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError)
+    internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError, object? customError = null)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(grammar);
         if (grammar.IsUnparsable(out string? errorKey))
@@ -97,6 +97,6 @@ public static class Tokenizer
         Tokenizer<TChar> Fail(string resourceKey) =>
             throwIfError
             ? throw new InvalidOperationException(Resources.GetResourceString(resourceKey))
-            : new FailingTokenizer<TChar>(LocalizedDiagnostic.Create(resourceKey));
+            : new FailingTokenizer<TChar>(customError ?? LocalizedDiagnostic.Create(resourceKey));
     }
 }

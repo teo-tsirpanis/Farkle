@@ -4,9 +4,7 @@
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
-#if NET8_0_OR_GREATER
 using System.Text;
-#endif
 
 namespace Farkle;
 
@@ -76,6 +74,28 @@ internal static class Resources
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2, arg3);
     }
 
+    public static bool TryWrite(Span<char> destination, IFormatProvider? formatProvider, string resourceKey, out int charsWritten, params object[] args)
+    {
+        if (UsingResourceKeys())
+        {
+            const string Delimiter = ", ";
+            var handler = new MemoryExtensions.TryWriteInterpolatedStringHandler(Delimiter.Length * args.Length, args.Length + 1, destination, formatProvider, out bool shouldAppend);
+            int i = 0;
+            while (shouldAppend && i < args.Length)
+            {
+                shouldAppend = handler.AppendFormatted(args[i++]);
+                if (shouldAppend)
+                {
+                    shouldAppend = handler.AppendLiteral(Delimiter);
+                }
+            }
+            return destination.TryWrite(ref handler, out charsWritten);
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, args);
+    }
+
 #else
     public static string GetCompositeFormat(string x) => x;
 #endif
@@ -123,6 +143,32 @@ internal static class Resources
 
         string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2, arg3);
+    }
+
+    public static string Format(IFormatProvider? formatProvider, string resourceKey, params object[] args)
+    {
+        if (UsingResourceKeys())
+        {
+            var sb = new StringBuilder();
+            sb.Append(resourceKey);
+            sb.Append(", ");
+            for (int i = 0; i < args.Length; i++)
+            {
+#if NET6_0_OR_GREATER
+                sb.Append(formatProvider, $"{args[i]}");
+#else
+                sb.AppendFormat(formatProvider, "{0}", args[i]);
+#endif
+                if (i < args.Length - 1)
+                {
+                    sb.Append(", ");
+                }
+            }
+            return sb.ToString();
+        }
+
+        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        return string.Format(formatProvider, GetCompositeFormat(msg), args);
     }
 
     public static string GetEofString(IFormatProvider? formatProvider)
@@ -221,6 +267,10 @@ internal static class Resources
     public static string Builder_NonterminalProductionsNotSet => GetResourceString(nameof(Builder_NonterminalProductionsNotSet));
 
     public static string Builder_DuplicateOperatorSymbol => GetResourceString(nameof(Builder_DuplicateOperatorSymbol));
+
+    public static string Builder_BuildingStarted => GetResourceString(nameof(Builder_BuildingStarted));
+
+    public static string Builder_BuildingFinished => GetResourceString(nameof(Builder_BuildingFinished));
 
     public static string Warning => GetResourceString(nameof(Warning));
 

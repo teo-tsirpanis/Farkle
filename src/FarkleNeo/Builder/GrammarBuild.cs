@@ -59,6 +59,8 @@ internal static class GrammarBuild
     public static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
     {
         var log = options.Log.WithRedirectErrors(errors);
+        string grammarName = grammarDefinition.GrammarName;
+        log.InformationLocalized(nameof(Resources.Builder_BuildingStarted), grammarName);
         Grammar grammar = Build(grammarDefinition, options, in log);
         // Get conflicts and log them. Skip the computation if no errors are logged
         // (i.e. the log has no listeners at all).
@@ -69,6 +71,8 @@ internal static class GrammarBuild
                 log.LrConflict(conflict);
             }
         }
+        log.InformationLocalized(nameof(Resources.Builder_BuildingFinished), grammarName, grammar.TokenSymbols.Count,
+            grammar.Nonterminals.Count, grammar.Productions.Count, grammar.LrStateMachine?.Count ?? 0, grammar.DfaOnChar?.Count ?? 0);
         return grammar;
     }
 
@@ -272,10 +276,9 @@ internal static class GrammarBuild
         writer.AddStateMachine(LalrBuild.Build(syntaxProvider, conflictResolver, log, options.CancellationToken));
 
         // Set grammar info.
-        string grammarName = globalOptions.GrammarName ?? grammarDefinition.GetName(grammarDefinition.StartSymbol);
         GrammarAttributes attributes = isUnparsable ? GrammarAttributes.Unparsable : GrammarAttributes.None;
         NonterminalHandle startSymbol = (NonterminalHandle)productionMemberMap[grammarDefinition.StartSymbol];
-        writer.SetGrammarInfo(writer.GetOrAddString(grammarName), startSymbol, attributes);
+        writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, attributes);
 
         return Grammar.Create(writer.ToImmutableArray());
 

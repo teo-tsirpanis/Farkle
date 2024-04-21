@@ -32,6 +32,46 @@ internal static class BuilderLoggerExtensions
     public static void LrConflict(in this BuilderLogger logger, LrConflict conflict) =>
         logger.Error("FARKLE0007", conflict);
 
+    public static void InformationLocalized(in this BuilderLogger logger, string resourceKey)
+    {
+        if (logger.IsEnabled(DiagnosticSeverity.Information))
+        {
+            logger.Log(DiagnosticSeverity.Information, LocalizedDiagnostic.Create(resourceKey));
+        }
+    }
+
+    public static void InformationLocalized<T>(in this BuilderLogger logger, string resourceKey, T arg)
+    {
+        if (logger.IsEnabled(DiagnosticSeverity.Information))
+        {
+            logger.Log(DiagnosticSeverity.Information, LocalizedDiagnostic.Create(resourceKey, arg));
+        }
+    }
+
+    public static void InformationLocalized<T1, T2>(in this BuilderLogger logger, string resourceKey, T1 arg1, T2 arg2)
+    {
+        if (logger.IsEnabled(DiagnosticSeverity.Information))
+        {
+            logger.Log(DiagnosticSeverity.Information, LocalizedDiagnostic.Create(resourceKey, arg1, arg2));
+        }
+    }
+
+    public static void InformationLocalized<T1, T2, T3>(in this BuilderLogger logger, string resourceKey, T1 arg1, T2 arg2, T3 arg3)
+    {
+        if (logger.IsEnabled(DiagnosticSeverity.Information))
+        {
+            logger.Log(DiagnosticSeverity.Information, LocalizedDiagnostic.Create(resourceKey, arg1, arg2, arg3));
+        }
+    }
+
+    public static void InformationLocalized(in this BuilderLogger logger, string resourceKey, params object[] args)
+    {
+        if (logger.IsEnabled(DiagnosticSeverity.Information))
+        {
+            logger.Log(DiagnosticSeverity.Information, LocalizedDiagnostic.Create(resourceKey, args));
+        }
+    }
+
     public static void Debug(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Debug, message);
 
     public static void Verbose(in this BuilderLogger logger, string message) => logger.Log(DiagnosticSeverity.Verbose, message);

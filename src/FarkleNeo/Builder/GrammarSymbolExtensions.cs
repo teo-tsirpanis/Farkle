@@ -24,6 +24,24 @@ namespace Farkle.Builder;
 public static class GrammarSymbolExtensions
 {
     /// <summary>
+    /// Changes the type of <see cref="IGrammarSymbol"/> to a generic <see cref="IGrammarSymbol{T}"/>
+    /// of type <see cref="object"/>, forcing it to return a value.
+    /// </summary>
+    /// <param name="symbol">The grammar symbol.</param>
+    /// <returns>An <see cref="IGrammarSymbol{T}"/> that returns the object <paramref name="symbol"/>
+    /// would return. If <paramref name="symbol"/> had been created with the untyped API, the returned
+    /// object will be <see langword="null"/>.</returns>
+    public static IGrammarSymbol<object?> Cast(this IGrammarSymbol symbol)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        if (symbol is IGrammarSymbol<object?> b)
+        {
+            return b;
+        }
+        return new GrammarSymbolWrapper<object>((symbol as GrammarSymbolWrapper)?.RenamedName, symbol.Symbol);
+    }
+
+    /// <summary>
     /// Renames a grammar symbol.
     /// </summary>
     /// <param name="symbol">The symbol to rename.</param>

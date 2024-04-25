@@ -48,6 +48,24 @@ public static class GrammarBuilderExtensions
     }
 
     /// <summary>
+    /// Changes the type of <see cref="IGrammarBuilder"/> to a generic <see cref="IGrammarBuilder{T}"/>
+    /// of type <see cref="object"/>, forcing it to return a value.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <returns>An <see cref="IGrammarBuilder{T}"/> that returns the object <paramref name="builder"/>
+    /// would return. If <paramref name="builder"/> had been created with the untyped API, the returned
+    /// object will be <see langword="null"/>.</returns>
+    public static IGrammarBuilder<object?> Cast(this IGrammarBuilder builder)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        if (builder is IGrammarBuilder<object?> b)
+        {
+            return b;
+        }
+        return new GrammarBuilderWrapper<object>(in builder.GetOptions(), GrammarBuilderWrapper.Unwrap(builder));
+    }
+
+    /// <summary>
     /// Changes the case sensitivity option of a grammar. This overload accepts a
     /// <see cref="CaseSensitivity"/> value for more flexibility.
     /// </summary>

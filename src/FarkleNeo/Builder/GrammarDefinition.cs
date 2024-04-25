@@ -128,7 +128,7 @@ internal sealed class GrammarDefinition
 
         void Visit(IGrammarSymbol symbol)
         {
-            string? renamedName = (symbol as GrammarSymbolWrapper)?.Name;
+            string? renamedName = (symbol as GrammarSymbolWrapper)?.RenamedName;
             ISymbolBase innerSymbol = symbol.Symbol;
             // If the symbol is renamed, add the wrapper to the visited set too, to save time.
             if (renamedName is not null && visited.Add(symbol))

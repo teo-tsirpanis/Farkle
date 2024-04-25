@@ -690,3 +690,6 @@ module DesigntimeFarkle =
     [<Obsolete("Use the AddBlockComment extension method instead.")>]
     let inline addBlockComment commentStart commentEnd (grammarBuilder: IGrammarBuilder<_>) =
         grammarBuilder.AddBlockComment(commentStart, commentEnd)
+
+    [<Obsolete("Use the Cast extension method instead.")>]
+    let inline cast (grammarBuilder: IGrammarBuilder) = grammarBuilder.Cast()

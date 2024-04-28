@@ -176,6 +176,8 @@ internal static class Resources
 
     public static string Builder_Nonterminal_SetProductionsManyTimes => GetResourceString(nameof(Builder_Nonterminal_SetProductionsManyTimes));
 
+    public static string Builder_ProductionBuilderInvalidMemberObject => GetResourceString(nameof(Builder_ProductionBuilderInvalidMemberObject));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

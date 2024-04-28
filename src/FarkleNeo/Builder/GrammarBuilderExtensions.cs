@@ -1,11 +1,12 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.ComponentModel;
 using System.Diagnostics;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
-using Farkle.Parser;
+using Farkle.Parser.Semantics;
 
 namespace Farkle.Builder;
 
@@ -341,4 +342,47 @@ public static class GrammarBuilderExtensions
         var semanticProvider = SemanticProviderBuild.Build<T>(grammarDefinition);
         return CharParser.Create(grammar, semanticProvider, customError);
     }
+
+    /// <summary>
+    /// Creates a syntax-checking <see cref="CharParser{T}"/> from the given <see cref="IGrammarBuilder{T}"/>.
+    /// </summary>
+    /// <param name="builder">The grammar to build.</param>
+    /// <param name="options">Used to customize the building process. Optional.</param>
+    /// <typeparam name="T">The supposed return type of the parser. Must be a reference type.</typeparam>
+    /// <returns>
+    /// A <see cref="CharParser{T}"/> object that can be used to parse text, and will always return
+    /// <see langword="null"/> on success.
+    /// </returns>
+    /// <remarks>
+    /// If building the grammar failed, the parser's <see cref="CharParser{T}.IsFailing"/>
+    /// property will be <see langword="true"/>. Detailed error information can be
+    /// obtained by trying to parse any text, and casting the result's <see cref="ParserResult{T}.Error"/>
+    /// property to <see cref="IReadOnlyList{BuilderDiagnostic}"/> of type <see cref="BuilderDiagnostic"/>.
+    /// </remarks>
+    public static CharParser<T?> BuildSyntaxCheck<T>(this IGrammarBuilder builder, BuilderOptions? options = null) where T : class?
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+
+        options ??= BuilderOptions.Default;
+        GrammarDefinition grammarDefinition = GrammarDefinition.Create(builder, options.Log, options.CancellationToken);
+        List<BuilderDiagnostic> errors = [];
+        var grammar = GrammarBuild.Build(grammarDefinition, options, errors);
+        object? customError = errors is [] ? null : new CompositeDiagnostic<BuilderDiagnostic>(errors);
+        return CharParser.Create(grammar, SyntaxChecker<char, T>.Instance, customError);
+    }
+
+    /// <inheritdoc cref="BuildSyntaxCheck{T}"/>
+    public static CharParser<object?> BuildSyntaxCheck(this IGrammarBuilder builder, BuilderOptions? options = null) =>
+        builder.BuildSyntaxCheck<object?>(options);
+
+    /// <summary>
+    /// Obsolete. Use <see cref="BuildSyntaxCheck"/> instead.
+    /// </summary>
+    [Obsolete(Obsoletions.BuildUntypedMessage
+#if NET5_0_OR_GREATER
+        , DiagnosticId = Obsoletions.BuildUntypedCode, UrlFormat = Obsoletions.SharedUrlFormat
+#endif
+    ), EditorBrowsable(EditorBrowsableState.Never)]
+    public static CharParser<object?> BuildUntyped(this IGrammarBuilder builder) =>
+        builder.BuildSyntaxCheck();
 }

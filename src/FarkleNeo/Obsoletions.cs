@@ -9,4 +9,7 @@ internal static class Obsoletions
 
     public const string AsIsApiCode = "FARKLE1001";
     public const string AsIsApiMessage = "Use AsProduction() instead.";
+
+    public const string BuildUntypedCode = "FARKLE1002";
+    public const string BuildUntypedMessage = "Use BuildSyntaxCheck() instead.";
 }

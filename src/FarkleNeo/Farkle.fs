@@ -427,6 +427,16 @@ module FSharpProductionBuilders =
         interface ISupportPrecedence<ProductionBuilder> with
             member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
 
+/// Contains functions to build grammars.
+module internal GrammarBuilder =
+
+    /// Builds a grammar and returns a parser.
+    let build (symbol: IGrammarSymbol<_>) = symbol.Build()
+
+    /// Builds a grammar and returns a syntax checker.
+    /// Syntax checkers do not perform semantic actions.
+    let buildSyntaxCheck (symbol: IGrammarSymbol) = symbol.BuildSyntaxCheck<unit>()
+
 /// Functions to set options on grammar symbols.
 /// To set options on the entire grammar, use the extension methods on grammar builders.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -622,6 +632,7 @@ type internal RuntimeFarkle<'TResult> = CharParser<'TResult>
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal RuntimeFarkle =
 
+    open Farkle.Builder
     open Farkle.Parser.Tokenizers
 
     [<Obsolete("Use CharParser.withSemanticProvicer instead")>]
@@ -650,6 +661,12 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
 
     [<Obsolete("Use CharParser.parseFile instead.")>]
     let inline parseFile rf input = CharParser.parseFile rf input |> ParserResult.toResult
+
+    [<Obsolete("Use GrammarBuilder.build instead.")>]
+    let inline build df = GrammarBuilder.build df
+
+    [<Obsolete("Use GrammarBuilder.buildSyntaxCheck instead.")>]
+    let inline buildUntyped df = GrammarBuilder.buildSyntaxCheck df
 
 namespace Farkle.Builder
 

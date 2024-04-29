@@ -347,65 +347,65 @@ module FSharpProductionBuilders =
     [<Struct>]
     type ProductionBuilder<'T1,'T2,'T3,'T4,'T5>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3,'T4,'T5>) =
         member private _.Value = pb
-        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
-        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder<_,_,_,_,_>
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder<_,_,_,_,_>
         static member (=>) (pb: ProductionBuilder<_,_,_,_,_>, f: _ -> _ -> _ -> _ -> _ -> _) =
             let f = OptimizedClosures.FSharpFunc<_,_,_,_,_,_>.Adapt f
             Func<_,_,_,_,_,_>(f.Invoke) |> pb.Value.Finish
         interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3,'T4,'T5>> with
-            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder<_,_,_,_,_>
 
     /// Wraps a production builder to provide F# operators. Do not use directly.
     [<Struct>]
     type ProductionBuilder<'T1,'T2,'T3,'T4>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3,'T4>) =
         member private _.Value = pb
-        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
-        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder<_,_,_,_>
+        static member (.>>) (pb: ProductionBuilder<_,_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder<_,_,_,_>
         static member (.>>.) (pb: ProductionBuilder<_,_,_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_,_,_>
         static member (=>) (pb: ProductionBuilder<_,_,_,_>, f: _ -> _ -> _ -> _ -> _) =
             let f = OptimizedClosures.FSharpFunc<_,_,_,_,_>.Adapt f
             Func<_,_,_,_,_>(f.Invoke) |> pb.Value.Finish
         interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3,'T4>> with
-            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder<_,_,_,_>
 
     /// Wraps a production builder to provide F# operators. Do not use directly.
     [<Struct>]
     type ProductionBuilder<'T1,'T2,'T3>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2,'T3>) =
         member private _.Value = pb
-        static member (.>>) (pb: ProductionBuilder<_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
-        static member (.>>) (pb: ProductionBuilder<_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder<_,_,_>
+        static member (.>>) (pb: ProductionBuilder<_,_,_>, str: string) = pb.Value.Append str |> ProductionBuilder<_,_,_>
         static member (.>>.) (pb: ProductionBuilder<_,_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_,_>
         static member (=>) (pb: ProductionBuilder<_,_,_>, f: _ -> _ -> _ -> _) =
             let f = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt f
             Func<_,_,_,_>(f.Invoke) |> pb.Value.Finish
         interface ISupportPrecedence<ProductionBuilder<'T1,'T2,'T3>> with
-            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder<_,_,_>
 
     /// Wraps a production builder to provide F# operators. Do not use directly.
     [<Struct>]
     type ProductionBuilder<'T1,'T2>(pb: ProductionBuilders.ProductionBuilder<'T1,'T2>) =
         member private _.Value = pb
-        static member (.>>) (pb: ProductionBuilder<_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
-        static member (.>>) (pb: ProductionBuilder<_,_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_,_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder<_,_>
+        static member (.>>) (pb: ProductionBuilder<_,_>, str: string) = pb.Value.Append str |> ProductionBuilder<_,_>
         static member (.>>.) (pb: ProductionBuilder<_,_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_,_>
         static member (=>) (pb: ProductionBuilder<_,_>, f: _ -> _ -> _) =
             let f = OptimizedClosures.FSharpFunc<_,_,_>.Adapt f
             Func<_,_,_>(f.Invoke) |> pb.Value.Finish
         interface ISupportPrecedence<ProductionBuilder<'T1,'T2>> with
-            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder<_,_>
 
     /// Wraps a production builder to provide F# operators. Do not use directly.
     [<Struct>]
     type ProductionBuilder<'T1>(pb: ProductionBuilders.ProductionBuilder<'T1>) =
         member private _.Value = pb
         member x.AsProduction() = x.Value.AsProduction()
-        static member (.>>) (pb: ProductionBuilder<_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder
-        static member (.>>) (pb: ProductionBuilder<_>, str: string) = pb.Value.Append str |> ProductionBuilder
+        static member (.>>) (pb: ProductionBuilder<_>, symbol: IGrammarSymbol) = pb.Value.Append symbol |> ProductionBuilder<_>
+        static member (.>>) (pb: ProductionBuilder<_>, str: string) = pb.Value.Append str |> ProductionBuilder<_>
         static member (.>>.) (pb: ProductionBuilder<_>, symbol) = pb.Value.Extend symbol |> ProductionBuilder<_,_>
         static member (=>) (pb: ProductionBuilder<_>, f: _ -> _) =
             Func<_,_>(f) |> pb.Value.Finish
         interface ISupportPrecedence<ProductionBuilder<'T1>> with
-            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
+            member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder<_>
 
     /// Wraps a production builder to provide F# operators. Do not use directly.
     [<Struct>]

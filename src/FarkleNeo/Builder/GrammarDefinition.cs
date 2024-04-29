@@ -67,7 +67,7 @@ internal sealed class GrammarDefinition
     // with the terminal in its only production.
     private static IGrammarSymbol GetStartSymbol(IGrammarBuilder grammar)
     {
-        IGrammarSymbol symbol = GrammarBuilderWrapper.Unwrap(grammar);
+        IGrammarSymbol symbol = grammar.Unwrap();
         return symbol.Symbol is INonterminal ? symbol : new PlaceholderNonterminal(symbol.Name, symbol);
     }
 

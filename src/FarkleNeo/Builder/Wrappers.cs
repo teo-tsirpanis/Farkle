@@ -1,8 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
-
 namespace Farkle.Builder;
 
 internal class GrammarBuilderWrapper(in GrammarGlobalOptions options, IGrammarSymbol symbol) : IGrammarBuilder
@@ -12,12 +10,6 @@ internal class GrammarBuilderWrapper(in GrammarGlobalOptions options, IGrammarSy
     public IGrammarSymbol Symbol { get; } = symbol;
 
     ISymbolBase IGrammarBuilder.Symbol => Symbol.Symbol;
-
-    public static IGrammarSymbol Unwrap(IGrammarBuilder builder)
-    {
-        Debug.Assert(builder is IGrammarSymbol or GrammarBuilderWrapper);
-        return builder is IGrammarSymbol symbol ? symbol : ((GrammarBuilderWrapper)builder).Symbol;
-    }
 
     public IGrammarBuilder WithOptions(in GrammarGlobalOptions options) => new GrammarBuilderWrapper(options, Symbol);
 }

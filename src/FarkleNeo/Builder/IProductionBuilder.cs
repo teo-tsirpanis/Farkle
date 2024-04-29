@@ -22,6 +22,11 @@ public interface IProductionBuilder<TSelf> where TSelf : IProductionBuilder<TSel
     /// <param name="symbol">The symbol to append.</param>
     /// <returns>A production builder with <paramref name="symbol"/> added
     /// to the production's end.</returns>
+    /// <remarks>
+    /// If <paramref name="symbol"/>'s actual type is a typed <see cref="IGrammarSymbol{T}"/>,
+    /// appending it to a production will <em>not</em> prevent its semantic actions from being
+    /// executed.
+    /// </remarks>
     TSelf Append(IGrammarSymbol symbol);
 
     /// <summary>

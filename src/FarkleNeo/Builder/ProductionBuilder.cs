@@ -42,6 +42,42 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
         _precedenceToken = precedenceToken;
     }
 
+    /// <summary>
+    /// Creates a production builder with the given members.
+    /// </summary>
+    /// <param name="members">An array of the production's members.</param>
+    /// <exception cref="ArgumentException"><paramref name="members"/> has an item
+    /// whose type is not <see cref="IGrammarSymbol"/>, <see cref="string"/> or
+    /// <see cref="char"/>.</exception>
+    public ProductionBuilder(params object[] members)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(members);
+
+        var membersList = ImmutableList.CreateBuilder<IGrammarSymbol>();
+        for (int i = 0; i < members.Length; i++)
+        {
+            switch (members[i])
+            {
+                case IGrammarSymbol symbol:
+                    membersList.Add(symbol);
+                    break;
+                case string s:
+                    membersList.Add(Terminal.Literal(s));
+                    break;
+                case char c:
+                    membersList.Add(Terminal.Literal(c.ToString()));
+                    break;
+                default:
+                    Fail();
+                    break;
+            }
+            void Fail() =>
+                ThrowHelpers.ThrowArgumentExceptionLocalized($"{nameof(members)}[{i}]", nameof(Resources.Builder_ProductionBuilderInvalidMemberObject));
+        }
+
+        _members = membersList.ToImmutable();
+    }
+
     /// <inheritdoc/>
     public ProductionBuilder Append(IGrammarSymbol symbol)
     {

@@ -114,6 +114,9 @@
   <data name="Builder_Nonterminal_SetProductionsManyTimes" xml:space="preserve">
     <value>Δε μπορούν να τεθούν παραγωγές σε μη τερματικό πάνω από μία φορά</value>
   </data>
+  <data name="Builder_ProductionBuilderInvalidMemberObject" xml:space="preserve">
+    <value>Άκυρο αντικείμενο μέλους κατασκευαστή παραγωγής· πρέπει να είναι IGrammarSymbol, string ή char</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

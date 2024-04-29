@@ -114,6 +114,9 @@
   <data name="Builder_Nonterminal_SetProductionsManyTimes" xml:space="preserve">
     <value>Cannot set productions of a nonterminal more than once</value>
   </data>
+  <data name="Builder_ProductionBuilderInvalidMemberObject" xml:space="preserve">
+    <value>Invalid production builder member object; must be IGrammarSymbol, string or char</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>

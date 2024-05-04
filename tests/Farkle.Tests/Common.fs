@@ -102,3 +102,6 @@ let expectWantParseSuccess result msg =
 
 let expectIsParseFailure result msg =
     Expect.isError (ParserResult.toResult result) msg
+
+let expectWantParseFailure result msg =
+    Expect.wantError (ParserResult.toResult result) msg

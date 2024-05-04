@@ -427,15 +427,16 @@ module FSharpProductionBuilders =
         interface ISupportPrecedence<ProductionBuilder> with
             member this.WithPrecedence token = this.Value.WithPrecedence token |> ProductionBuilder
 
-/// Contains functions to build grammars.
+/// Functions to work with IGrammarBuilder objects.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal GrammarBuilder =
 
     /// Builds a grammar and returns a parser.
-    let build (symbol: IGrammarSymbol<_>) = symbol.Build()
+    let build (x: IGrammarBuilder<_>) = x.Build()
 
     /// Builds a grammar and returns a syntax checker.
     /// Syntax checkers do not perform semantic actions.
-    let buildSyntaxCheck (symbol: IGrammarSymbol) = symbol.BuildSyntaxCheck<unit>()
+    let buildSyntaxCheck (x: IGrammarBuilder) = x.BuildSyntaxCheck<unit>()
 
 /// Functions to set options on grammar symbols.
 /// To set options on the entire grammar, use the extension methods on grammar builders.

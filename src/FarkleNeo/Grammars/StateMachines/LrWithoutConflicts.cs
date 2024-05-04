@@ -70,7 +70,8 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
         _actionLookup = actionLookup;
     }
 
-    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) => _actionLookup![state][terminal];
+    internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
+        _actionLookup![state].TryGetValue(terminal, out LrAction action) ? action : LrAction.Error;
 
     private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {

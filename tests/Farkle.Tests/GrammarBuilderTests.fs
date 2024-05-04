@@ -3,201 +3,143 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tests.DesigntimeFarkleTests
+module Farkle.Tests.GrammarBuilderTests
 
 open Expecto
 open Farkle
 open Farkle.Builder
-open Farkle.Grammars
+open Farkle.Diagnostics
 open Farkle.Parser
-open FsCheck
 open System
-open System.Collections.Immutable
 
 type TestClass = TestClass of string
 with
-    member x.ClassInstance(_: ITransformerContext, _: ReadOnlySpan<char>) =
+    member x.ClassInstance(_: ParserState byref, _: ReadOnlySpan<char>) =
         match x with TestClass x -> x
-    static member ClassStatic (TestClass x, _: ITransformerContext, _: ReadOnlySpan<char>) = x
+    static member ClassStatic (TestClass x, _: ParserState byref, _: ReadOnlySpan<char>) = x
 
 [<Struct>]
 type TestStruct = TestStruct of string
 with
-    member x.StructInstance(_: ITransformerContext, _: ReadOnlySpan<char>) =
+    member x.StructInstance(_: ParserState byref, _: ReadOnlySpan<char>) =
         match x with TestStruct x -> x
 
 [<Tests>]
-let tests = testList "Designtime Farkle tests" [
-    test "A nonterminal with no productions gives an error" {
-        let nt = nonterminal "Vacuous"
-        let result = nt |> DesigntimeFarkleBuild.build |> fst
-        let expectedError = Error [BuildError.EmptyNonterminal "Vacuous"]
-        Expect.equal result expectedError "A nonterminal with no productions does not give an error"
-    }
-
-    test "A nonterminal with duplicate productions gives an error" {
-        let term = literal "a"
-
-        let nt = "Superfluous" ||= [
-            // Returning the same numbers would still fail, but
-            // this demonstrates why it is an error with Farkle, but
-            // just a warning with GOLD Parser. In Farkle each production
-            // has a fuser associated with it. While GOLD Parser would just merge
-            // the duplicate productions and raise a warning, we can't do the same
-            // because we can't choose between the fusers.
-            !% term =% 1
-            !% term =% 2
-        ]
-        let result = nt |> DesigntimeFarkleBuild.build |> fst
-        let expectedError =
-            [BuildError.DuplicateProduction(Nonterminal(0u, nt.Name), ImmutableArray.Create(LALRSymbol.Terminal <| Terminal(0u, term.Name)))]
-            |> Error
-        Expect.equal result expectedError "A nonterminal with duplicate productions does not give an error"
-    }
-
+let tests = testList "Grammar builder tests" [
     test "Duplicate literals do not give an error" {
         let nt = "Colliding" ||= [
             !% (literal "a") =% 1
             !% (literal "a") .>> literal "b" =% 2
         ]
-        let result = nt |> DesigntimeFarkleBuild.build |> fst
-        Expect.isOk result "Duplicate literals give an error"
+        Expect.isFalse (nt.Build().IsFailing) "Duplicate literals give an error"
     }
 
     test "A grammar that only accepts the empty string indeed accepts it" {
-        let designtime = "S" ||= [empty =% ()]
-        let runtime = RuntimeFarkle.build designtime
-        let result = RuntimeFarkle.parseString runtime ""
+        let symbol = "S" |||= [empty]
+        let runtime = GrammarBuilder.buildSyntaxCheck symbol
+        let result = CharParser.parseString runtime ""
 
-        Expect.isOk result "Something went wrong"
+        expectIsParseSuccess result "Something went wrong"
     }
 
     test "A grammar with a nullable terminal is not accepted" {
-        let designtime =
-            let term = terminal "Nullable" (T(fun _ _ -> ())) (Regex.chars Number |> Regex.atLeast 0)
-            "S" ||= [!% term =% ()]
-        let grammar = DesigntimeFarkleBuild.build designtime |> fst
-        Expect.equal grammar (Error [BuildError.NullableSymbol (Choice1Of4 <| Terminal(0u, "Nullable"))])
-            "A grammar with a nullable symbol was accepted"
+        let symbol =
+            "S" |||= [!% (terminalU "Nullable" (Regex.chars "123" |> Regex.atLeast 0))]
+        Expect.isTrue (symbol.BuildSyntaxCheck().IsFailing) "A grammar with a nullable terminal was accepted"
     }
 
-    test "Farkle loudly rejects an Accept-Reduce error which is silently accepted by GOLD Parser" {
-        let designtime =
-            let S = nonterminal "S"
-            let T = "T" ||= [!% S =% ()]
-            S.SetProductions(
-                !& "x" =% (),
-                !% T =% ()
-            )
-            S
-        let grammar = DesigntimeFarkleBuild.build designtime |> fst
-        Expect.isError grammar "An Accept-Reduce error was silently accepted by Farkle too"
-    }
-
-    test "DesigntimeFarkle objects have the correct equality semantics" {
+    test "IGrammarSymbol objects have reference equality semantics" {
         let lit1 = literal "Test"
         let lit2 = literal "Test"
-        Expect.isTrue (lit1 = lit2) "Literal DesigntimeFarkle objects are not checked for structural equality"
+        Expect.isFalse (lit1 = lit2) "Literals are not checked for reference equality"
 
         let t1 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
         let t2 = terminal "Test" (T(fun _ _ -> null)) (Regex.string "Test")
-        Expect.isFalse (t1 = t2) "DesigntimeFarkle terminals are not checked for reference equality"
+        Expect.isFalse (t1 = t2) "Terminals are not checked for reference equality"
 
-        let nont1 = nonterminal "Test" :> DesigntimeFarkle
-        let nont2 = nonterminal "Test" :> DesigntimeFarkle
-        Expect.isFalse (nont1 = nont2) "DesigntimeFarkle nonterminals are not checked for reference equality"
+        let nont1 = nonterminal "Test" :> IGrammarSymbol
+        let nont2 = nonterminal "Test" :> IGrammarSymbol
+        Expect.isFalse (nont1 = nont2) "Nonterminals are not checked for reference equality"
     }
 
+#if false // TODO-FARKLE7: Reevaluate when predefined terminals are implemented in Farkle 7.
     testProperty "Farkle can properly read signed integers" (fun num ->
-        let runtime = Terminals.int64 "Signed" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing a signed integer failed")
+        let runtime = Terminals.int64 "Signed" |> GrammarBuilder.build
+        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing a signed integer failed")
 
     testProperty "Farkle can properly read unsigned integers" (fun num ->
-        let runtime = Terminals.uint64 "Unsigned" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
+        let runtime = Terminals.uint64 "Unsigned" |> GrammarBuilder.build
+        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
 
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
-        let runtime = Terminals.float "Floating-point" |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse(string num)) (Ok num) "Parsing an unsigned integer failed")
+        let runtime = Terminals.float "Floating-point" |> GrammarBuilder.build
+        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
+#endif
 
-    test "Designtime Farkles, productions, post-processors, transformers and fusers are covariant" {
-        let df = Terminals.string '"' "String"
+    test "IGrammarSymbols, productions, and transformers are covariant" {
+        let symbol = terminal "x" (T(fun _ _ -> "")) (Regex.string "x")
         let prod = !& "x" =% ""
         let t = T(fun _ x -> x.ToString())
         let tInt = T(fun _ _ -> 380)
-        let f = Builder.F(fun x -> x.ToString())
-        let fInt = Builder.F(fun _ -> 286)
-        Expect.isSome (tryUnbox<DesigntimeFarkle<obj>> df) "Designtime Farkles are not covariant"
-        Expect.isSome (tryUnbox<Production<obj>> prod) "Productions are not covariant"
-        Expect.isSome (tryUnbox<IPostProcessor<obj>> PostProcessors.ast) "Post-processors are not covariant"
-        Expect.isSome (tryUnbox<T<obj>> t) "Transformers are not covariant"
-        Expect.isNone (tryUnbox<T<obj>> tInt) "Transformers on value types are covariant while they shouldn't"
-        Expect.isSome (tryUnbox<F<obj>> f) "Fusers are not covariant"
-        Expect.isNone (tryUnbox<F<obj>> fInt) "Fusers on value types are covariant while they shouldn't"
+        Expect.isSome (tryUnbox<IGrammarSymbol<obj>> symbol) "Symbols are not covariant"
+        Expect.isSome (tryUnbox<IProduction<obj>> prod) "Productions are not covariant"
+        Expect.isSome (tryUnbox<T<char, obj>> t) "Transformers are not covariant"
+        Expect.isNone (tryUnbox<T<char, obj>> tInt) "Transformers on value types are covariant while they shouldn't"
     }
 
     test "The productions of typed nonterminals can only be set once." {
         let nont = nonterminal "N"
         nont.SetProductions(empty =% 0)
-        // This call should be ignored. If not, building will fail.
-        nont.SetProductions(empty =% 0, empty =% 1)
-        nont
-        |> DesigntimeFarkleBuild.createGrammarDefinition
-        |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> Flip.Expect.isOk "SetProductions can be set more than once."
+        Expect.throws (fun () -> nont.SetProductions(empty =% 0, empty =% 1)) "SetProductions can be set more than once."
     }
 
     test "The productions of untyped nonterminals can only be set once." {
         let nont = nonterminalU "N"
         nont.SetProductions(empty)
-        // This call should be ignored. If not, building will fail.
-        nont.SetProductions(empty, empty)
-        nont
-        |> DesigntimeFarkleBuild.createGrammarDefinition
-        |> DesigntimeFarkleBuild.buildGrammarOnly
-        |> Flip.Expect.isOk "SetProductions can be set more than once."
+        Expect.throws (fun () -> nont.SetProductions(empty, empty)) "SetProductions can be set more than once."
     }
 
     test "Farkle can properly handle line groups" {
         let runtime =
             Group.Line("Line Group", "!!", fun _ data -> data.ToString())
-            |> RuntimeFarkle.build
-        Expect.equal (runtime.Parse "!! No new line") (Ok "!! No new line")
+            |> GrammarBuilder.build
+        Expect.equal (runtime.Parse "!! No new line") (ParserResult.CreateSuccess "!! No new line")
             "Farkle does not properly handle line groups that end on EOF"
-        Expect.equal (runtime.Parse "!! Has new line\n") (Ok "!! Has new line")
+        Expect.equal (runtime.Parse "!! Has new line\n") (ParserResult.CreateSuccess "!! Has new line")
             "Farkle does not properly handle line groups that end on a new line"
     }
 
     test "Terminals named 'Newline' cannot terminate line groups" {
         let runtime =
             "X" |||= [!& "newline"; !& "x1" .>> "x2"]
-            |> DesigntimeFarkle.addLineComment "//"
-            |> RuntimeFarkle.buildUntyped
+            |> fun x -> x.AddLineComment "//"
+            |> GrammarBuilder.buildSyntaxCheck
         let testString = "// newline\nx1 x2"
 
         let result = runtime.Parse testString
 
-        Expect.isOk result "Parsing failed"
+        expectIsParseSuccess result "Parsing failed"
     }
 
     test "Farkle can properly handle block groups" {
         let runtime =
             Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())
-            |> RuntimeFarkle.build
+            |> GrammarBuilder.build
 
-        Expect.equal (runtime.Parse "{🆙🆙}") (Ok "{🆙🆙}") "Farkle does not properly handle block groups"
+        Expect.equal (runtime.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }
 
-    test "Renaming designtime Farkles works" {
-        let doTest name (df: DesigntimeFarkle) =
+    test "Renaming grammar symbols works" {
+        let doTest name (df: IGrammarSymbol) =
             let expectedName = sprintf "%s Renamed" df.Name
-            let (Nonterminal(_, startSymbolName)) =
-                df.Rename(expectedName).BuildUntyped().GetGrammar().StartSymbol
+            let startSymbolName =
+                let grammar = df.Rename(expectedName).BuildSyntaxCheck().GetGrammar()
+                grammar.GetNonterminal(grammar.GrammarInfo.StartSymbol).Name |> grammar.GetString
             Expect.equal startSymbolName expectedName (sprintf "Renaming a %s had no effect" name)
 
-        Terminals.int "Number"
+        terminalU "Number" Regex.any
         |> doTest "terminal"
-        "Nonterminal" ||= [!@ (Terminals.int "Number") |> asIs]
+        "Nonterminal" |||= [!% (terminalU "Number" Regex.any)]
         |> doTest "nonterminal"
         literal "Literal"
         |> doTest "literal"
@@ -205,31 +147,6 @@ let tests = testList "Designtime Farkle tests" [
         |> doTest "line group"
         Group.Block("Block Group", "/*", "*/")
         |> doTest "block group"
-    }
-
-    test "Newlines cannot be renamed" {
-        let (Nonterminal(_, newlineRenamed)) =
-            newline.Rename("NewLine Renamed").BuildUntyped().GetGrammar().StartSymbol
-        Expect.equal newlineRenamed newline.Name "newline was renamed while it shouldn't"
-    }
-
-    test "Terminals named 'NewLine' will be automatically renamed when built" {
-        let (Nonterminal(_, newlineName)) =
-            Terminal.Literal(newline.Name).BuildUntyped().GetGrammar().StartSymbol
-        Expect.notEqual newlineName newline.Name "The terminal was not renamed"
-    }
-
-    test "Typed designtime Farkles and nonterminals implement the IExposedAsDesigntimeFarkleChild interface" {
-        let typesOfInterest = [typedefof<DesigntimeFarkle<_>>; typedefof<Nonterminal<_>>; typeof<Untyped.Nonterminal>]
-
-        typeof<DesigntimeFarkle>.Assembly.GetTypes()
-        |> Seq.filter (fun t -> typeof<DesigntimeFarkle>.IsAssignableFrom t)
-        |> Seq.filter (fun t ->
-            typesOfInterest
-            |> List.exists (fun toi -> toi <> t && toi.IsAssignableFrom t))
-        |> Flip.Expect.all
-            "Not all required interfaces implement IExposedAsDesigntimeFarkleChild"
-            (fun t -> typeof<IExposedAsDesigntimeFarkleChild>.IsAssignableFrom t)
     }
 
     test "Many block groups can be ended by the same symbol" {
@@ -240,9 +157,9 @@ let tests = testList "Designtime Farkle tests" [
                 !% Group.Block("Group 1", "{", "}")
                 !% Group.Block("Group 2", "[", "}")
             ]
-            |> RuntimeFarkle.buildUntyped
+            |> GrammarBuilder.buildSyntaxCheck
 
-        runtime.GetGrammar() |> ignore
+        Expect.isFalse runtime.IsFailing "Building failed"
     }
 
     test "Parsing untyped groups works" {
@@ -250,45 +167,44 @@ let tests = testList "Designtime Farkle tests" [
             "Test" ||= [
                 !% Group.Block("Untyped Group", "{", "}") =% ()
             ]
-            |> RuntimeFarkle.build
+            |> GrammarBuilder.build
 
-        Expect.isOk (runtime.Parse "{test}") "Parsing a test string failed"
+        expectIsParseSuccess (runtime.Parse "{test}") "Parsing a test string failed"
     }
 
     test "The many(1) operators work" {
         let mkRuntime atLeastOne =
-            literal "x"
-            |> DesigntimeFarkle.cast
+            (literal "x").Cast()
             |> if atLeastOne then many1 else many
-            |> RuntimeFarkle.buildUntyped
+            |> GrammarBuilder.buildSyntaxCheck
         let runtime = mkRuntime false
         let runtime1 = mkRuntime true
 
         [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
         |> List.iter (fun x ->
             let s = String.replicate x "x"
-            Expect.isOk (runtime.Parse s) (sprintf "Parsing %A with many failed" s)
+            expectIsParseSuccess (runtime.Parse s) (sprintf "Parsing %A with many failed" s)
             if x <> 0 then
-                Expect.isOk (runtime1.Parse s) (sprintf "Parsing %A with many1 failed" s))
+                expectIsParseSuccess (runtime1.Parse s) (sprintf "Parsing %A with many1 failed" s))
     }
 
     test "The sepBy(1) operators work" {
         let mkRuntime atLeastOne =
-            literal "x"
-            |> DesigntimeFarkle.cast
+            (literal "x").Cast()
             |> (if atLeastOne then sepBy1 else sepBy) (literal ",")
-            |> RuntimeFarkle.buildUntyped
+            |> GrammarBuilder.buildSyntaxCheck
         let runtime = mkRuntime false
         let runtime1 = mkRuntime true
 
         [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
         |> List.iter (fun x ->
             let s = Seq.replicate x "x" |> String.concat ","
-            Expect.isOk (runtime.Parse s) (sprintf "Parsing %A with sepBy failed" s)
+            expectIsParseSuccess (runtime.Parse s) (sprintf "Parsing %A with sepBy failed" s)
             if x <> 0 then
-                Expect.isOk (runtime1.Parse s) (sprintf "Parsing %A with sepBy1 failed" s))
+                expectIsParseSuccess (runtime1.Parse s) (sprintf "Parsing %A with sepBy1 failed" s))
     }
 
+#if false // TODO-FARKLE7: Reevaluate when codegen is implemented in Farkle 7.
     test "The dynamic post-processor works with various kinds of delegates" {
         let magic = Guid.NewGuid().ToString()
         let testClass = magic |> TestClass |> box
@@ -302,24 +218,26 @@ let tests = testList "Designtime Farkle tests" [
         ]
 
         let mkTerminal (name, typ: Type, target) =
-            let t = typ.GetMethod(name).CreateDelegate<T<string>>(target)
+            let t = typ.GetMethod(name).CreateDelegate<T<char,string>>(target)
             terminal name t (Regex.string name)
         let runtime =
             "Test" ||=
-                List.map (fun x -> !@ (mkTerminal x) |> asIs) testData
+                List.map (fun x -> !@ (mkTerminal x) |> asProduction) testData
             |> DesigntimeFarkle.forceDynamicCodeGen
-            |> RuntimeFarkle.build
+            |> GrammarBuilder.build
 
         for x, _, _ in testData do
-            Expect.equal (RuntimeFarkle.parseString runtime x) (Ok magic) (sprintf "%s was not parsed correctly" x)
+            Expect.equal (CharParser.parseString runtime x) (ParserResult.CreateSuccess magic) (sprintf "%s was not parsed correctly" x)
     }
+#endif
 
+#if false // TODO-FARKLE7: Reevaluate when user errors are implemented in Farkle 7.
     test "Parser application errors are correctly handled" {
         let terminal =
             Regex.string "O"
             |> terminal "Terminal" (T(fun _ _ -> error "Terminal found" |> ignore))
         let designtime =
-            "Nonterminal" ||= [!@ terminal |> asIs; empty => (fun () -> error "Empty input")]
+            "Nonterminal" ||= [!@ terminal |> asProduction; empty => (fun () -> error "Empty input")]
         let runtime = designtime.Build()
 
         let mkError column msg =
@@ -332,26 +250,26 @@ let tests = testList "Designtime Farkle tests" [
         let error2 = mkError 4 "Empty input"
         Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught"
     }
+#endif
 
     test "Syntax errors are reported in the right place" {
         let runtime =
             "X" |||= [!& "x1"; !& "x2"]
-            |> RuntimeFarkle.buildUntyped
+            |> GrammarBuilder.buildSyntaxCheck
         let testString = "x1     x2"
-        let expectedErrorPos = Position.Create1 1 8
+        let expectedErrorPos = TextPosition.Create1(1, 8)
 
         let error =
-            runtime.Parse testString
-            |> Flip.Expect.wantError "Parsing did not fail"
+            expectWantParseFailure (runtime.Parse testString) "Parsing did not fail"
 
         match error with
-        | FarkleError.ParseError (ParserError(actualErrorPos, _)) ->
+        | ParserDiagnostic (actualErrorPos, SyntaxError _) ->
             Expect.equal actualErrorPos expectedErrorPos "Parsing failed at a different position"
         | _ ->
             failtestf "Parsing failed with an unexpected error type: %A" error
     }
 
-    test "Farkle does not overflow the stack when processing a deep designtime Farkle" {
+    test "Farkle does not overflow the stack when processing a deep grammar symbol" {
         let depth = 1000
         let nonterminals = Array.init depth (sprintf "N%d" >> nonterminalU)
 
@@ -360,19 +278,16 @@ let tests = testList "Designtime Farkle tests" [
         nonterminals.[nonterminals.Length - 1].SetProductions(ProductionBuilder "x")
 
         let grammar =
-            DesigntimeFarkleBuild.createGrammarDefinition nonterminals.[0]
-            |> DesigntimeFarkleBuild.buildGrammarOnly
-        Expect.isOk grammar "Building failed"
+            GrammarBuilder.buildSyntaxCheck nonterminals[0]
+        Expect.isFalse grammar.IsFailing "Building failed"
     }
 
-    test "Farkle does not overflow the stack when processing a long designtime Farkle" {
+    test "Farkle does not overflow the stack when processing a long grammar symbol" {
         let length = 1000
-        let df = "S" |||= [ProductionBuilder(Array.replicate length (box "x"))]
+        let nonterminal = Nonterminal.CreateUntyped("S", ProductionBuilder(Array.replicate length "x"))
 
         let grammar =
-            DesigntimeFarkleBuild.createGrammarDefinition df
-            |> DesigntimeFarkleBuild.buildGrammarOnly
-
-        Expect.isOk grammar "Building failed"
+            GrammarBuilder.buildSyntaxCheck nonterminal
+        Expect.isFalse grammar.IsFailing "Building failed"
     }
 ]

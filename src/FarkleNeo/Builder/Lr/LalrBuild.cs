@@ -313,7 +313,7 @@ internal readonly struct LalrBuild
                     // (i.e. B is the first member of the production) or both GOTOs of the dependency
                     // are in the same state. Assert that the former is true iff the latter is true.
                     bool isInternalDependency = indexOfB == 0;
-                    Debug.Assert(isInternalDependency == (gotos[gotoIdx].FromState == i));
+                    Debug.Assert(isInternalDependency == (gotos[gotoIdx].FromState == gotos[i].FromState));
                     if (isInternalDependency)
                     {
                         internalCount++;
@@ -519,6 +519,7 @@ internal readonly struct LalrBuild
 
             Debug.Assert(itemsToProcess.Count == 0);
             itemsToProcess.Clear();
+            visitedItems.Clear();
             grouppedTransitions.Clear();
         }
 
@@ -618,7 +619,10 @@ internal readonly struct LalrBuild
                         {
                             yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.CreateReduce(productionHandle));
                         }
-                        yield return LrStateEntry.Create(TranslateTerminalIndex(terminal), LrAction.CreateReduce(productionHandle));
+                        else
+                        {
+                            yield return LrStateEntry.Create(TranslateTerminalIndex(terminal), LrAction.CreateReduce(productionHandle));
+                        }
                     }
                 }
             }

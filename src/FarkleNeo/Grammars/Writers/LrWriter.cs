@@ -241,7 +241,7 @@ internal sealed class LrWriter
                 int nextFirstEofAction = i < _firstEofActions.Length - 1 ? _firstEofActions[i + 1] : _eofActions.Count;
 
                 uint action = firstEofAction < nextFirstEofAction ? _eofActions[firstEofAction] : LrEndOfFileAction.Error.Value;
-                writer.WriteVariableSize(action, tokenSymbolIndexSize);
+                writer.WriteVariableSize(action, eofActionSize);
             }
         }
         foreach (int firstGoto in _firstGotos)

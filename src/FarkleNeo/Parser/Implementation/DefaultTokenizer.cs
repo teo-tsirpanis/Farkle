@@ -250,10 +250,11 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                         result = TokenizerResult.CreateError(error);
                         return true;
                     }
-                    if (hotData.IsTerminal(hotData.GetGroupContainer(group)))
+                    TokenSymbolHandle groupContainer = hotData.GetGroupContainer(group);
+                    if (hotData.IsTerminal(groupContainer))
                     {
-                        object? semanticValue = semanticProvider.Transform(ref state, acceptSymbol, input.RemainingCharacters[..charactersRead]);
-                        result = TokenizerResult.CreateSuccess(acceptSymbol, semanticValue, state.CurrentPosition);
+                        object? semanticValue = semanticProvider.Transform(ref state, groupContainer, input.RemainingCharacters[..charactersRead]);
+                        result = TokenizerResult.CreateSuccess(groupContainer, semanticValue, state.CurrentPosition);
                         input.Consume(charactersRead);
                         return true;
                     }

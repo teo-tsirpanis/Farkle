@@ -37,7 +37,7 @@ internal static class GrammarBuild
                     (uint)GroupOptions.SpecialName, out hasSpecialName);
             default:
                 hasSpecialName = false;
-                return TokenSymbolAttributes.None;
+                return TokenSymbolAttributes.Terminal;
         }
 
         static TokenSymbolAttributes MapFlags(uint flags, uint hiddenFlag, uint noisyFlag, uint specialNameFlag, out bool hasSpecialName)
@@ -90,7 +90,11 @@ internal static class GrammarBuild
         // in the operator scope. We create and populate this only if needed.
         var operatorSymbolMap = operatorScope is not null ? new Dictionary<EntityHandle, object>() : null;
 
-        var productionMemberMap = new Dictionary<ISymbolBase, EntityHandle>(
+        // Maps production members to their entity handles.
+        // The keys must be obtained from the GrammarDefinition.GetSymbolIdentityObject method,
+        // unless we know for sure that the symbol is not a literal, in which case we can directly
+        // pass the ISymbolBase object.
+        var productionMemberMap = new Dictionary<object, EntityHandle>(
             grammarDefinition.Terminals.Count + grammarDefinition.Nonterminals.Count,
             grammarDefinition.SymbolIdentityObjectComparer);
         Dictionary<string, EntityHandle>? specialNameMap = null;
@@ -113,7 +117,7 @@ internal static class GrammarBuild
                 flags |= TokenSymbolAttributes.Noise;
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), flags);
-            productionMemberMap.Add(terminal, handle);
+            productionMemberMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
             if (GetTerminalRegex(terminal) is { } regex)
             {
                 dfaSymbols.Add(regex, handle, name, TokenSymbolKind.Terminal);
@@ -205,7 +209,7 @@ internal static class GrammarBuild
             ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
-                EntityHandle memberHandle = productionMemberMap[member.Symbol];
+                EntityHandle memberHandle = productionMemberMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
                 productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
             }
@@ -258,8 +262,6 @@ internal static class GrammarBuild
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), TokenSymbolAttributes.Noise);
             dfaSymbols.Add(regex, handle, name, TokenSymbolKind.Noise);
         }
-
-        // TODO: Add conflict resolver based on the operator scope.
 
         // Build state machines.
         bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
@@ -370,6 +372,14 @@ internal static class GrammarBuild
                 _nonterminalProductionBounds[i] = (productionIndex, productionCount);
                 _productionHeads.AsSpan(productionIndex, productionCount).Fill(i);
                 productionIndex += productionCount;
+            }
+
+            int productionMemberIndex = 0;
+            for (int i = 0; i < _productionMemberBounds.Length; i++)
+            {
+                int memberCount = _grammarDefinition.Productions[i].Members.Length;
+                _productionMemberBounds[i] = (productionMemberIndex, memberCount);
+                productionMemberIndex += memberCount;
             }
         }
 

@@ -47,10 +47,14 @@ internal readonly struct LalrBuild
         var nullableNonterminals = @this.ComputeNullableNonterminals();
         var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);
         var gotoFollowDependencies = @this.ComputeGotoFollowDependencies(lr0StateMachine, nullableNonterminals, productionNullableStarts.AsSpan());
-        var alwaysFollows = @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal);
-        var gotoFollows = @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, alwaysFollows.AsSpan());
+        var gotoFollows = @this.ComputeInitialGotoFollows(lr0StateMachine);
+        // The rule is, after taking a successor dependency, no internal dependency can be followed.
+        // We can propagate all successor dependencies first, but can also propagate internal dependencies
+        // at the same time. This has an equivalent effect according to §3.3.3 of the IELR paper.
+        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
+            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, gotoFollows);
+        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
+            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
         var reductionLookaheads = @this.ComputeReductionLookaheads(lr0StateMachine, gotoFollows.AsSpan());
 
         LrStateMachine stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
@@ -151,42 +155,13 @@ internal readonly struct LalrBuild
     /// <param name="dependencies">The GOTO follow dependencies, computed by
     /// <see cref="ComputeGotoFollowDependencies"/>.</param>
     /// <param name="dependencyKindsToPropagate">The kinds of dependencies to propagate.</param>
-    /// <param name="existingGotoFollows">The GOTO follow set to initialize the returning
-    /// value with, before propagation. If not specified, it will generate the initial
-    /// GOTO follows from the Shift transitions of each GOTO's destination states.</param>
-    /// <returns>An array of bit arrays, containing the sets of terminals that can appear after
-    /// each GOTO transition.</returns>
-    private ImmutableArray<BitArrayNeo> PropagateGotoFollows(Lr0StateMachine stateMachine,
+    /// <param name="follows">The existing GOTO follow sets that will be propagated in-place.</param>
+    private void PropagateGotoFollows(Lr0StateMachine stateMachine,
         ReadOnlySpan<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
-        ReadOnlySpan<BitArrayNeo> existingGotoFollows = default)
+        ImmutableArray<BitArrayNeo> follows)
     {
         var gotos = stateMachine.Gotos.AsSpan();
-        Debug.Assert(existingGotoFollows.IsEmpty || existingGotoFollows.Length == gotos.Length);
-        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
-        if (existingGotoFollows.IsEmpty)
-        {
-            Log.Debug("Generating initial GOTO follow sets");
-            foreach (ref readonly var @goto in gotos)
-            {
-                var follow = new BitArrayNeo(Syntax.TerminalCount);
-                foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
-                {
-                    if (s.IsTerminal)
-                    {
-                        follow.Set(s.Index, true);
-                    }
-                }
-                follows.Add(follow);
-            }
-            Log.Debug("Generated initial GOTO follow sets");
-        }
-        else
-        {
-            foreach (BitArrayNeo follow in existingGotoFollows)
-            {
-                follows.Add(new(follow));
-            }
-        }
+        Debug.Assert(follows.Length == gotos.Length);
 
         Log.Debug($"Propagating {dependencyKindsToPropagate} GOTO follow dependencies");
         bool changed;
@@ -216,6 +191,36 @@ internal readonly struct LalrBuild
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Computes the initial GOTO follow sets.
+    /// </summary>
+    /// <param name="stateMachine">The state machine.</param>
+    /// <remarks>
+    /// The initial follow set of a GOTO is the set of terminals that can be matched
+    /// right after following the GOTO. Additional terminals may indirectly be followed
+    /// as well, and they can be computed by propagating the follow sets using
+    /// <see cref="PropagateGotoFollows"/>.
+    /// </remarks>
+    private ImmutableArray<BitArrayNeo> ComputeInitialGotoFollows(Lr0StateMachine stateMachine)
+    {
+        var gotos = stateMachine.Gotos.AsSpan();
+        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
+        Log.Debug("Generating initial GOTO follow sets");
+        foreach (ref readonly var @goto in gotos)
+        {
+            var follow = new BitArrayNeo(Syntax.TerminalCount);
+            foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
+            {
+                if (s.IsTerminal)
+                {
+                    follow.Set(s.Index, true);
+                }
+            }
+            follows.Add(follow);
+        }
+        Log.Debug("Generated initial GOTO follow sets");
         return follows.MoveToImmutable();
     }
 

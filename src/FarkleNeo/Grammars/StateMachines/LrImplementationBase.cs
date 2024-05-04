@@ -135,7 +135,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     internal sealed override KeyValuePair<NonterminalHandle, int> GetGotoAt(int index)
     {
-        if ((uint)index >= (uint)ActionCount)
+        if ((uint)index >= (uint)GotoCount)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }

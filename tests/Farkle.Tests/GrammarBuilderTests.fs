@@ -284,7 +284,7 @@ let tests = testList "Grammar builder tests" [
 
     test "Farkle does not overflow the stack when processing a long grammar symbol" {
         let length = 1000
-        let nonterminal = Nonterminal.CreateUntyped("S", ProductionBuilder(Array.replicate length "x"))
+        let nonterminal = Nonterminal.CreateUntyped("S", ProductionBuilder(Array.replicate length (box "x")))
 
         let grammar =
             GrammarBuilder.buildSyntaxCheck nonterminal

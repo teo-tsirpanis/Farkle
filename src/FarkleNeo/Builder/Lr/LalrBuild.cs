@@ -160,12 +160,13 @@ internal readonly struct LalrBuild
         ReadOnlySpan<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
         ReadOnlySpan<BitArrayNeo> existingGotoFollows = default)
     {
-        Debug.Assert(existingGotoFollows.IsEmpty || existingGotoFollows.Length == stateMachine.Gotos.Length);
-        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(stateMachine.Gotos.Length);
+        var gotos = stateMachine.Gotos.AsSpan();
+        Debug.Assert(existingGotoFollows.IsEmpty || existingGotoFollows.Length == gotos.Length);
+        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
         if (existingGotoFollows.IsEmpty)
         {
             Log.Debug("Generating initial GOTO follow sets");
-            foreach (ref readonly var @goto in stateMachine.Gotos.AsSpan())
+            foreach (ref readonly var @goto in gotos)
             {
                 var follow = new BitArrayNeo(Syntax.TerminalCount);
                 foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
@@ -198,7 +199,7 @@ internal readonly struct LalrBuild
             iterations++;
             foreach (var dependency in dependencies)
             {
-                if ((dependencyKindsToPropagate & dependency.DependencyKind) != 0)
+                if ((dependencyKindsToPropagate & dependency.GetDependencyKind(gotos)) != 0)
                 {
                     changed |= follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
                 }
@@ -674,22 +675,27 @@ internal readonly struct LalrBuild
         public int ToGoto { get; } = toGoto;
 
         /// <summary>
-        /// The kind of the dependency.
+        /// Whether the dependency is a successor dependency, otherwise it is an include dependency.
         /// </summary>
-        public GotoFollowDependencyKinds DependencyKind
+        private bool IsSuccessor => (_fromGotoAndIsSuccessor & IsSuccessorMask) != 0;
+
+        /// <summary>
+        /// Gets the exact kind of the dependency, which requires the table with the GOTOs.
+        /// </summary>
+        public GotoFollowDependencyKinds GetDependencyKind(ReadOnlySpan<GotoInfo> gotos)
         {
-            get
+            if (IsSuccessor)
             {
-                if ((_fromGotoAndIsSuccessor & IsSuccessorMask) != 0)
-                {
-                    return GotoFollowDependencyKinds.Successor;
-                }
-                if (FromGoto == ToGoto)
-                {
-                    return GotoFollowDependencyKinds.Internal;
-                }
-                return GotoFollowDependencyKinds.Predecessor;
+                return GotoFollowDependencyKinds.Successor;
             }
+            // We could keep the full kind in the struct, taking advantage of both integers'
+            // high bits. It will complicate things a bit, let's not do it right now, unless
+            // this proves to be a performance bottleneck.
+            if (gotos[FromGoto].FromState == gotos[ToGoto].FromState)
+            {
+                return GotoFollowDependencyKinds.Internal;
+            }
+            return GotoFollowDependencyKinds.Predecessor;
         }
     }
 

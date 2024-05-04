@@ -16,7 +16,7 @@ public static class Nonterminal
     /// <typeparam name="T">The type of values the nonterminal will produce.</typeparam>
     /// <param name="name">The nonterminal's name.</param>
     /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
-    /// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
+    /// <seealso cref="Nonterminal{T}.SetProductions(ReadOnlySpan{IProduction{T}})"/>
     public static Nonterminal<T> Create<T>(string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
@@ -34,7 +34,7 @@ public static class Nonterminal
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        return Create(name, productions.ToImmutableArray());
+        return Create<T>(name, productions.AsSpan());
     }
 
     /// <summary>
@@ -44,18 +44,19 @@ public static class Nonterminal
     /// <param name="name">The nonterminal's name.</param>
     /// <param name="productions">The nonterminal's productions.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol<T> Create<T>(string name, ImmutableArray<IProduction<T>> productions)
+    public static IGrammarSymbol<T> Create<T>(string name, ReadOnlySpan<IProduction<T>> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
-        if (productions.IsDefault)
-        {
-            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
-        }
         if (productions.IsEmpty)
         {
             ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
-        return new Nonterminal<T>(name, productions);
+        var builder = ImmutableArray.CreateBuilder<IProduction>(productions.Length);
+        foreach (var production in productions)
+        {
+            builder.Add(production.Production);
+        }
+        return new Nonterminal<T>(name, builder.MoveToImmutable());
     }
 
     /// <summary>
@@ -64,7 +65,7 @@ public static class Nonterminal
     /// </summary>
     /// <param name="name">The nonterminal's name.</param>
     /// <seealso cref="Untyped.Nonterminal.SetProductions(ProductionBuilder[])"/>
-    /// <seealso cref="Untyped.Nonterminal.SetProductions(ImmutableArray{ProductionBuilder})"/>
+    /// <seealso cref="Untyped.Nonterminal.SetProductions(ReadOnlySpan{ProductionBuilder})"/>
     public static Untyped.Nonterminal CreateUntyped(string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
@@ -82,7 +83,7 @@ public static class Nonterminal
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        return CreateUntyped(name, productions.ToImmutableArray());
+        return CreateUntyped(name, productions.AsSpan());
     }
 
     /// <summary>
@@ -92,18 +93,14 @@ public static class Nonterminal
     /// <param name="productions">The nonterminal's productions, represented as <see cref="ProductionBuilder"/>
     /// objects that have not been <c>Extend</c>ed or <c>Finish</c>ed.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol CreateUntyped(string name, ImmutableArray<ProductionBuilder> productions)
+    public static IGrammarSymbol CreateUntyped(string name, ReadOnlySpan<ProductionBuilder> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
-        if (productions.IsDefault)
-        {
-            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
-        }
         if (productions.IsEmpty)
         {
             ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
-        return new Untyped.Nonterminal(name, productions);
+        return new Untyped.Nonterminal(name, ImmutableArray<IProduction>.CastUp(productions.ToImmutableArray()));
     }
 }
 
@@ -116,32 +113,23 @@ public static class Nonterminal
 /// In Farkle, builder objects are usually immutable. This exception exists to support
 /// defining recursive nonterminals.
 /// </remarks>
-// Keep this synchronized with the untyped Nonterminal class at Untyped.cs.
 public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
 {
     /// <summary>
-    /// The nonterminal's productions.
+    /// Inner untyped nonterminal that contains the logic of setting the productions.
+    /// As with most other places in the builder, the types are erased at the first
+    /// opportunity. This allows us to prevent duplicating the logic in both the typed
+    /// and untyped nonterminals.
     /// </summary>
-    /// <remarks>
-    /// Valid states:
-    /// <list type="bullet">
-    /// <item><description><see langword="default"/>: the productions have not been set yet</description></item>
-    /// <item><description>empty the nonterminal has been used in building a grammar, but no productions had been set yet</description></item>
-    /// <item><description>non-empty: the productions have been set</description></item>
-    /// </list>
-    /// </remarks>
-    private ImmutableArray<IProduction<T>> _productions;
+    private readonly Untyped.Nonterminal _innerNonterminal;
 
     /// <inheritdoc/>
-    public string Name { get; }
+    public string Name => _innerNonterminal.Name;
 
     ISymbolBase IGrammarBuilder.Symbol => this;
 
-    internal Nonterminal(string name, ImmutableArray<IProduction<T>> productions = default)
-    {
-        Name = name;
-        _productions = productions;
-    }
+    internal Nonterminal(string name, ImmutableArray<IProduction> productions = default) =>
+        _innerNonterminal = new(name, productions);
 
     /// <summary>
     /// Sets the productions of this nonterminal.
@@ -154,36 +142,27 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     public void SetProductions(params IProduction<T>[] productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        SetProductions(productions.ToImmutableArray());
+        SetProductions(productions.AsSpan());
     }
 
     /// <summary>
     /// Sets the productions of this nonterminal.
     /// </summary>
-    /// <param name="productions">An immutable array with the productions to set.</param>
+    /// <param name="productions">The productions to set.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    public void SetProductions(ImmutableArray<IProduction<T>> productions)
+    public void SetProductions(ReadOnlySpan<IProduction<T>> productions)
     {
-        if (productions.IsDefault)
+        var builder = ImmutableArray.CreateBuilder<IProduction>(productions.Length);
+        foreach (var production in productions)
         {
-            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
+            builder.Add(production.Production);
         }
-        if (productions.IsEmpty)
-        {
-            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
-        }
-        if (!ImmutableInterlocked.InterlockedCompareExchange(ref _productions, productions, default).IsDefault)
-        {
-            ThrowHelpers.ThrowInvalidOperationExceptionLocalized(nameof(Resources.Builder_Nonterminal_SetProductionsManyTimes));
-        }
+        _innerNonterminal.SetProductions(builder.MoveToImmutable());
     }
 
-    ImmutableArray<IProduction> INonterminal.FreezeAndGetProductions()
-    {
-        ImmutableInterlocked.InterlockedCompareExchange(ref _productions, [], default);
-        return _productions.CastArray<IProduction>();
-    }
+    ImmutableArray<IProduction> INonterminal.FreezeAndGetProductions() =>
+        _innerNonterminal.FreezeAndGetProductions();
 }

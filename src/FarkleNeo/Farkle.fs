@@ -477,10 +477,9 @@ module internal GrammarBuilderOperators =
     type Untyped.Nonterminal with
         /// An alias for `SetProductions`.
         member inline x.SetProductions ([<ParamArray>] productions: FSharpProductionBuilders.ProductionBuilder[]) =
-            let b = ImmutableArray.CreateBuilder<ProductionBuilder>(productions.Length)
-            for i = 0 to productions.Length - 1 do
-                b.Add(productions[i])
-            x.SetProductions(b.MoveToImmutable())
+            productions
+            |> Array.map FSharpProductionBuilders.ProductionBuilder.op_Implicit
+            |> x.SetProductions
 
     let private symbolName (symbol: IGrammarSymbol) = symbol.Name
 
@@ -513,7 +512,7 @@ module internal GrammarBuilderOperators =
     /// Creates a `IGrammarSymbol&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.
     let inline (||=) name (productions: #seq<_>) =
-        Nonterminal.Create(name, Internal.makeImmutableArray productions)
+        Nonterminal.Create(name, (Internal.makeImmutableArray productions).AsSpan())
 
     /// Creates an `IGrammarSymbol&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.
@@ -522,7 +521,7 @@ module internal GrammarBuilderOperators =
             productions
             |> Seq.map FSharpProductionBuilders.ProductionBuilder.op_Implicit
             |> ImmutableArray.CreateRange
-        Nonterminal.CreateUntyped(name, productions)
+        Nonterminal.CreateUntyped(name, productions.AsSpan())
 
     /// An empty production builder.
     let inline empty<'a> = FSharpProductionBuilders.ProductionBuilder.Empty

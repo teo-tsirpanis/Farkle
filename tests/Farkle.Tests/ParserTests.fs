@@ -95,9 +95,19 @@ let tests = testList "Parser tests" [
         let result = CharParser.parseString SampleParsers.json jsonString
         Expect.isTrue result.IsError "Parsing did not fail"
         match result.Error with
-        | ParserDiagnostic(pos, _) ->
+        | ParserDiagnostic(pos, LexicalError _) ->
             // Prior to Farkle 7, the error was reported at 1:20, the place where the unrecognized character was found.
             // Now, the error is reported at 1:17, the place where the tokenizer last started.
+            Expect.equal pos (TextPosition.Create1(1, 17)) "The position is different than the expected"
+        | _ -> failtest "The error is not a ParserDiagnostic"
+    }
+
+    test "Syntax errors report the correct position" {
+        let jsonString = """{"Almost True": }"""
+        let result = CharParser.parseString SampleParsers.json jsonString
+        Expect.isTrue result.IsError "Parsing did not fail"
+        match result.Error with
+        | ParserDiagnostic(pos, SyntaxError(_, ValueSome "}")) ->
             Expect.equal pos (TextPosition.Create1(1, 17)) "The position is different than the expected"
         | _ -> failtest "The error is not a ParserDiagnostic"
     }

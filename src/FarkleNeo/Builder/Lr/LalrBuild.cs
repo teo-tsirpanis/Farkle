@@ -244,7 +244,7 @@ internal readonly struct LalrBuild
                 {
                     continue;
                 }
-                if (nullableNonterminals[gotos[transition.Value].Symbol])
+                if (nullableNonterminals[gotos[transition.Value].NonterminalIndex])
                 {
                     dependencies.Add(new(i, transition.Value, isSuccessor: true));
                     successorCount++;
@@ -252,7 +252,7 @@ internal readonly struct LalrBuild
             }
 
             // Compute includes dependencies.
-            foreach (Production p in Syntax.EnumerateNonterminalProductions(@goto.Symbol))
+            foreach (Production p in Syntax.EnumerateNonterminalProductions(@goto.NonterminalIndex))
             {
                 CancellationToken.ThrowIfCancellationRequested();
 
@@ -513,7 +513,7 @@ internal readonly struct LalrBuild
                 else
                 {
                     transitions.Add(x.Key, gotos.Count);
-                    gotos.Add(new(states.Count, destinationState, x.Key.Index));
+                    gotos.Add(new(states.Count, destinationState, x.Key.Index, Syntax));
                 }
             }
             states.Add(new Lr0State(kernelItems, transitions));
@@ -658,11 +658,14 @@ internal readonly struct LalrBuild
     /// <summary>
     /// Represents a dependency between the follow sets of two GOTO transitions.
     /// </summary>
+    [DebuggerDisplay("{FromGoto} → {ToGoto}, {DebuggerDependencyKind,nq}")]
     private readonly struct GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
     {
         private const uint IsSuccessorMask = 1u << 31;
 
         private readonly uint _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
+
+        private string DebuggerDependencyKind => IsSuccessor ? "Successor" : "Include";
 
         /// <summary>
         /// The GOTO transition from which the dependency originates.
@@ -720,8 +723,13 @@ internal readonly struct LalrBuild
     /// <summary>
     /// Contains detailed information about a GOTO transition.
     /// </summary>
-    private readonly struct GotoInfo(int fromState, int toState, int nonterminal)
+    [DebuggerDisplay("{FromState} → {ToState} ({_symbol})")]
+    private readonly struct GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
     {
+        // Even though it's always a nonterminal, we use a full symbol to take
+        // advantage of better debugger display.
+        private readonly Symbol _symbol = Symbol.CreateNonterminal(nonterminal, syntax);
+
         /// <summary>
         /// The state from which the GOTO originates.
         /// </summary>
@@ -735,7 +743,7 @@ internal readonly struct LalrBuild
         /// <summary>
         /// The index of the nonterminal that triggers the GOTO.
         /// </summary>
-        public int Symbol { get; } = nonterminal;
+        public int NonterminalIndex => _symbol.Index;
     }
 
     /// <summary>

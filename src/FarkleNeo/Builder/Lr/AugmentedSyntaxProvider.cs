@@ -52,7 +52,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
 
-    public string GetTerminalName(int index) => index == 0 ? "(EOF)" : _provider.GetTerminalName(index - 1);
+    public string GetTerminalName(int index) => index == 0 ? "#" : _provider.GetTerminalName(index - 1);
 
     public string GetNonterminalName(int index) => index == 0 ? "S'" : _provider.GetNonterminalName(index - 1);
 
@@ -252,12 +252,21 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
                 var member = members[i];
                 if (member.IsTerminal)
                 {
-                    sb.Append(Grammars.TokenSymbol.FormatName(_debugOnlySyntax.GetTerminalName(member.Index)));
+                    string name = _debugOnlySyntax.GetTerminalName(member.Index);
+                    if (member.Index != EndSymbolIndex)
+                    {
+                        name = TokenSymbol.FormatName(name);
+                    }
+                    sb.Append(name);
                 }
                 else
                 {
                     sb.Append($"<{_debugOnlySyntax.GetNonterminalName(member.Index)}>");
                 }
+            }
+            if (dotPosition == members.Count)
+            {
+                sb.Append(" •");
             }
             return sb.ToString();
         }

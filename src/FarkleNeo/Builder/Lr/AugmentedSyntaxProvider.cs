@@ -19,7 +19,7 @@ namespace Farkle.Builder.Lr;
 /// <list type="bullet">
 /// <item>A new start symbol, <c>S'</c>.</item>
 /// <item>A terminal, <c>#</c>, to mark the end of the input.</item>
-/// <item>A production <c>S' → S #</c>, where <c>S</c> is the original start symbol.</item>
+/// <item>A production <c>S' → S</c>, where <c>S</c> is the original start symbol.</item>
 /// </list>
 /// </remarks>
 internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider)
@@ -38,6 +38,18 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public const int EndSymbolIndex = 0;
 
+    /// <summary>
+    /// The original grammar's start symbol, before augmentation.
+    /// </summary>
+    public Symbol StartSymbolReal => Symbol.CreateNonterminal(_provider.StartSymbol + 1, this);
+
+    /// <summary>
+    /// The symbol signifying the end of the input.
+    /// </summary>
+    /// <remarks>
+    /// This symbol does not appear in productions. It emerges in the follow set of
+    /// <see cref="StartProduction"/>'s GOTO, and gets propagated from there.
+    /// </remarks>
     public Symbol EndSymbol => Symbol.CreateTerminal(EndSymbolIndex, this);
 
     /// <summary>
@@ -46,8 +58,15 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     public const int StartProductionIndex = 0;
 
     /// <summary>
-    /// The starting <c>S' → S #</c> production of the grammar.
+    /// The starting <c>S' → S</c> production of the grammar.
+    /// Reducing this production means accepting the input.
     /// </summary>
+    /// <remarks>
+    /// The IELR paper specified this production as <c>S' → S #</c>.
+    /// We diverge from it because in Farkle's domain model shift actions
+    /// on the end of input are not possible, and the current scheme is
+    /// simpler to implement and requires taking fewer special cases.
+    /// </remarks>
     public Production StartProduction => new(StartProductionIndex, this);
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
@@ -128,11 +147,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         switch (memberIndex)
         {
             case 0:
-                return Symbol.CreateTerminal(_provider.StartSymbol, this);
-            case 1:
-                return EndSymbol;
+                return Symbol.CreateNonterminal(_provider.StartSymbol + 1, this);
             default:
-                var (symbolIndex, isTerminal) = _provider.GetProductionMember(memberIndex - 2);
+                var (symbolIndex, isTerminal) = _provider.GetProductionMember(memberIndex - 1);
                 return Symbol.Create((symbolIndex + 1, isTerminal), this);
         }
     }

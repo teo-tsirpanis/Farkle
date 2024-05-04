@@ -112,6 +112,13 @@ internal readonly struct LalrBuild
                 }
                 BitArrayNeo emergedLookaheadSet = gotoFollows[state.Transitions[s]];
                 nonterminalsToProcess.Enqueue(s.Index);
+                // There is one exception to the above rule. <S'> → • <S> is the only kernel item whose dot
+                // is at the beginning. We have to push it through as well, to propagate the accept action.
+                if (i == 0)
+                {
+                    Debug.Assert(kernelItem.Equals(Syntax.StartProduction));
+                    nonterminalsToProcess.Enqueue(StartSymbolIndex);
+                }
                 while (nonterminalsToProcess.TryDequeue(out int nonterminal))
                 {
                     CancellationToken.ThrowIfCancellationRequested();
@@ -220,6 +227,8 @@ internal readonly struct LalrBuild
             }
             follows.Add(follow);
         }
+        // Add the end symbol to the follow set of the start production's GOTO.
+        follows[stateMachine.States[0].Transitions[Syntax.StartSymbolReal]][EndSymbolIndex] = true;
         Log.Debug("Generated initial GOTO follow sets");
         return follows.MoveToImmutable();
     }

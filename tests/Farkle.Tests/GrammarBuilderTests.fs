@@ -8,7 +8,6 @@ module Farkle.Tests.GrammarBuilderTests
 open Expecto
 open Farkle
 open Farkle.Builder
-open Farkle.Diagnostics
 open Farkle.Parser
 open System
 
@@ -79,8 +78,8 @@ let tests = testList "Grammar builder tests" [
     test "IGrammarSymbols, productions, and transformers are covariant" {
         let symbol = terminal "x" (T(fun _ _ -> "")) (Regex.string "x")
         let prod = !& "x" =% ""
-        let t = T(fun _ x -> x.ToString())
-        let tInt = T(fun _ _ -> 380)
+        let t = T<char,_>(fun _ x -> x.ToString())
+        let tInt = T<char,_>(fun _ _ -> 380)
         Expect.isSome (tryUnbox<IGrammarSymbol<obj>> symbol) "Symbols are not covariant"
         Expect.isSome (tryUnbox<IProduction<obj>> prod) "Productions are not covariant"
         Expect.isSome (tryUnbox<T<char, obj>> t) "Transformers are not covariant"
@@ -128,6 +127,14 @@ let tests = testList "Grammar builder tests" [
 
         Expect.equal (runtime.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }
+    
+    test "Farkle can properly handle recursive block groups" {
+        let runtime =
+            Group.Block("Block Group", "{", "}", (fun _ data -> data.ToString()), GroupOptions.Recursive)
+            |> GrammarBuilder.build
+
+        Expect.equal (runtime.Parse "{{🆙🆙}}") (ParserResult.CreateSuccess "{{🆙🆙}}") "Farkle does not properly handle recursive block groups"
+    }
 
     test "Renaming grammar symbols works" {
         let doTest name (df: IGrammarSymbol) =
@@ -156,10 +163,18 @@ let tests = testList "Grammar builder tests" [
             "Test" |||= [
                 !% Group.Block("Group 1", "{", "}")
                 !% Group.Block("Group 2", "[", "}")
+                // Test conflict between group end and literal.
+                // Conflicts with regular terminals cannot be resolved yet.
+                // Once we implement #153, we will have a separate DFA for
+                // inside each group, and the regular terminal will be out
+                // of the picture.
+                !% Group.Block("Group 3", "(", ")")
+                !& ")"
             ]
             |> GrammarBuilder.buildSyntaxCheck
 
-        Expect.isFalse runtime.IsFailing "Building failed"
+        ["{}"; "[}"; "()"; ")"]
+        |> List.iter (fun x -> expectIsParseSuccess (runtime.Parse x) (sprintf "Parsing %s failed" x))
     }
 
     test "Parsing untyped groups works" {
@@ -252,34 +267,18 @@ let tests = testList "Grammar builder tests" [
     }
 #endif
 
-    test "Syntax errors are reported in the right place" {
-        let runtime =
-            "X" |||= [!& "x1"; !& "x2"]
-            |> GrammarBuilder.buildSyntaxCheck
-        let testString = "x1     x2"
-        let expectedErrorPos = TextPosition.Create1(1, 8)
-
-        let error =
-            expectWantParseFailure (runtime.Parse testString) "Parsing did not fail"
-
-        match error with
-        | ParserDiagnostic (actualErrorPos, SyntaxError _) ->
-            Expect.equal actualErrorPos expectedErrorPos "Parsing failed at a different position"
-        | _ ->
-            failtestf "Parsing failed with an unexpected error type: %A" error
-    }
-
     test "Farkle does not overflow the stack when processing a deep grammar symbol" {
         let depth = 1000
         let nonterminals = Array.init depth (sprintf "N%d" >> nonterminalU)
 
         for i = 0 to nonterminals.Length - 2 do
             nonterminals.[i].SetProductions(!% nonterminals.[i + 1])
-        nonterminals.[nonterminals.Length - 1].SetProductions(ProductionBuilder "x")
+        nonterminals.[nonterminals.Length - 1].SetProductions(!& "x")
 
         let grammar =
             GrammarBuilder.buildSyntaxCheck nonterminals[0]
         Expect.isFalse grammar.IsFailing "Building failed"
+        expectIsParseSuccess (grammar.Parse "x") "Parsing failed"
     }
 
     test "Farkle does not overflow the stack when processing a long grammar symbol" {

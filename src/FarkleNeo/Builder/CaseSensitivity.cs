@@ -20,7 +20,10 @@ public enum CaseSensitivity
     /// Only the literals of the grammar are case insensitive and the other terminals are case
     /// sensitive.
     /// </summary>
-    /// <seealso cref="Terminal.Literal"/>
+    /// <remarks>
+    /// Literals of the grammar are considered the terminals created by <see cref="Terminal.Literal"/>
+    /// as well as the start and end symbols of groups and comments.
+    /// </remarks>
     LiteralsCaseInsensitive,
     /// <summary>
     /// The entire grammar is case insensitive.

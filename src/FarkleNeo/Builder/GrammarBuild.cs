@@ -90,11 +90,13 @@ internal static class GrammarBuild
         // in the operator scope. We create and populate this only if needed.
         var operatorSymbolMap = operatorScope is not null ? new Dictionary<EntityHandle, object>() : null;
 
-        // Maps production members to their entity handles.
+        // Maps builder identity objects of symbols to their entity handles.
+        // They are used to get the handle of production members, and also to
+        // make sure some literals
         // The keys must be obtained from the GrammarDefinition.GetSymbolIdentityObject method,
         // unless we know for sure that the symbol is not a literal, in which case we can directly
         // pass the ISymbolBase object.
-        var productionMemberMap = new Dictionary<object, EntityHandle>(
+        var symbolMap = new Dictionary<object, EntityHandle>(
             grammarDefinition.Terminals.Count + grammarDefinition.Nonterminals.Count,
             grammarDefinition.SymbolIdentityObjectComparer);
         Dictionary<string, EntityHandle>? specialNameMap = null;
@@ -117,7 +119,7 @@ internal static class GrammarBuild
                 flags |= TokenSymbolAttributes.Noise;
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), flags);
-            productionMemberMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
+            symbolMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
             if (GetTerminalRegex(terminal) is { } regex)
             {
                 dfaSymbols.Add(regex, handle, name, TokenSymbolKind.Terminal);
@@ -147,6 +149,7 @@ internal static class GrammarBuild
             operatorSymbolMap?.Add(handle, terminal);
         }
 
+        // Add special names.
         if (writeSpecialNames && specialNameMap is not null)
         {
             foreach (var kvp in specialNameMap)
@@ -167,9 +170,9 @@ internal static class GrammarBuild
                     BlockGroup x => (x.GroupStart, x.GroupEnd),
                     _ => throw new NotSupportedException()
                 };
-                TokenSymbolHandle container = (TokenSymbolHandle)productionMemberMap[group];
+                TokenSymbolHandle container = (TokenSymbolHandle)symbolMap[group];
                 TokenSymbolHandle startHandle = writer.AddTokenSymbol(writer.GetOrAddString(groupStart), TokenSymbolAttributes.GroupStart);
-                dfaSymbols.Add(Regex.Literal(groupStart), startHandle, groupStart, TokenSymbolKind.GroupStart);
+                dfaSymbols.Add(GetRegexForLiteral(groupStart), startHandle, groupStart, TokenSymbolKind.GroupStart);
                 TokenSymbolHandle endHandle;
                 GroupAttributes flags;
                 if (groupEndOrNewLine is null)
@@ -179,8 +182,7 @@ internal static class GrammarBuild
                 }
                 else
                 {
-                    endHandle = writer.AddTokenSymbol(writer.GetOrAddString(groupEndOrNewLine), TokenSymbolAttributes.None);
-                    dfaSymbols.Add(Regex.Literal(groupEndOrNewLine), endHandle, groupEndOrNewLine, TokenSymbolKind.GroupEnd);
+                    endHandle = GetOrCreateGroupEndLiteral(groupEndOrNewLine);
                     flags = GroupAttributes.AdvanceByCharacter;
                 }
                 bool isRecursive = (group.Options & GroupOptions.Recursive) != 0;
@@ -198,7 +200,7 @@ internal static class GrammarBuild
             string name = grammarDefinition.GetName(nonterminal);
             int productionCount = nonterminal.FreezeAndGetProductions().Length;
             NonterminalHandle handle = writer.AddNonterminal(writer.GetOrAddString(name), NonterminalAttributes.None, productionCount);
-            productionMemberMap.Add(nonterminal, handle);
+            symbolMap.Add(nonterminal, handle);
         }
 
         // Add productions.
@@ -209,7 +211,7 @@ internal static class GrammarBuild
             ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
-                EntityHandle memberHandle = productionMemberMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
+                EntityHandle memberHandle = symbolMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
                 productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
             }
@@ -226,7 +228,7 @@ internal static class GrammarBuild
             foreach ((string start, string? endOrNewLine) in comments)
             {
                 TokenSymbolHandle groupStart = writer.AddTokenSymbol(writer.GetOrAddString(start), TokenSymbolAttributes.GroupStart);
-                dfaSymbols.Add(Regex.Literal(start), groupStart, start, TokenSymbolKind.GroupStart);
+                dfaSymbols.Add(GetRegexForLiteral(start), groupStart, start, TokenSymbolKind.GroupStart);
                 TokenSymbolHandle groupEnd;
                 GroupAttributes flags;
                 if (endOrNewLine is null)
@@ -236,8 +238,7 @@ internal static class GrammarBuild
                 }
                 else
                 {
-                    groupEnd = writer.AddTokenSymbol(writer.GetOrAddString(endOrNewLine), TokenSymbolAttributes.None);
-                    dfaSymbols.Add(Regex.Literal(endOrNewLine), groupEnd, endOrNewLine, TokenSymbolKind.GroupEnd);
+                    groupEnd = GetOrCreateGroupEndLiteral(endOrNewLine);
                     flags = GroupAttributes.AdvanceByCharacter;
                 }
                 string name = endOrNewLine is null ? "Comment Line" : "Comment Block";
@@ -279,21 +280,52 @@ internal static class GrammarBuild
 
         // Set grammar info.
         GrammarAttributes attributes = isUnparsable ? GrammarAttributes.Unparsable : GrammarAttributes.None;
-        NonterminalHandle startSymbol = (NonterminalHandle)productionMemberMap[grammarDefinition.StartSymbol];
+        NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
         writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, attributes);
 
         return Grammar.Create(writer.ToImmutableArray());
+
+        // Gets the handle to a group end literal symbol, creating it if it does not exist.
+        // Multiple groups can end with the same symbol without causing a conflict, because
+        // we always know how to end a group when we are inside of it.
+        // In earlier versions of Farkle, group end symbols were structurally equatable by
+        // their content (which BTW was wrong because it did not consider the case sensitivity
+        // of each grammar) and conflicts between them were resolved automatically.
+        // Because now each token symbol is identified by a number, we need to do the
+        // bookkeeping ourselves. By storing the strings inside the general symbol map, we
+        // also avoid conflicts between group end symbols and literals, which was not possible
+        // before.
+        TokenSymbolHandle GetOrCreateGroupEndLiteral(string content)
+        {
+            if (symbolMap.TryGetValue(content, out EntityHandle existingHandle))
+            {
+                return (TokenSymbolHandle)existingHandle;
+            }
+            TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(content), TokenSymbolAttributes.None);
+            dfaSymbols.Add(GetRegexForLiteral(content), handle, content, TokenSymbolKind.GroupEnd);
+            symbolMap.Add(content, handle);
+            return handle;
+        }
 
         Regex? GetTerminalRegex(ISymbolBase symbol)
         {
             return symbol switch
             {
                 Terminal terminal => terminal.Regex,
-                Literal literal when literalsCaseInsensitive => Regex.Literal(literal.Value).CaseInsensitive(),
-                Literal literal => Regex.Literal(literal.Value),
+                Literal literal => GetRegexForLiteral(literal.Value),
                 NewLine => NewLineRegex,
                 _ => null
             };
+        }
+
+        Regex GetRegexForLiteral(string literal)
+        {
+            Regex regex = Regex.Literal(literal);
+            if (literalsCaseInsensitive)
+            {
+                regex = regex.CaseInsensitive();
+            }
+            return regex;
         }
 
         TokenSymbolHandle GetOrCreateNewLineForGroupEnd()

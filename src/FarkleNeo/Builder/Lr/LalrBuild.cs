@@ -82,77 +82,40 @@ internal readonly struct LalrBuild
         Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
-        // These variables are global to the whole process.
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
         var reductionLookaheads = new List<(Production Production, BitArrayNeo Lookahead)>?[states.Length];
-        // These variables are local to each step, but we declare them
-        // outside the loop and reuse them for performance.
-        // ComputeLr0StateMachine tracks whole items, we can just track nonterminals because we are specifically interested in the non-kernal items produced by each kernel item.
-        var nonterminalsToProcess = new Queue<int>();
-        var visitedNonterminals = new BitArrayNeo(Syntax.NonterminalCount);
-        for (int i = 0; i < states.Length; i++)
+        // For each GOTO in the grammar, we take its follow set and push it through the productions
+        // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
+        // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
+        // also don't have to deal with duplicates, as the GOTO list has taken care of items where
+        // the dot is on the same nonterminal.
+        for (int i = 0; i < gotos.Length; i++)
         {
-            // The idea is, for each GOTO on a kernel item, get the non-kernel items that are
-            // derived by the kernel item, and for each of them, keep moving the dot to the right
-            // and when you reach the end, set the lookahead set of that item to the GOTO follow
-            // set of the original kernel item's GOTO.
-            ref readonly Lr0State state = ref states[i];
-            foreach (Lr0Item kernelItem in state.KernelItems)
-            {
-                // Skip items whose dot is at the end.
-                if (!TryAdvanceItem(kernelItem, out Symbol s, out _))
-                {
-                    continue;
-                }
-                // Skip items whose dot is at a terminal.
-                if (s.IsTerminal)
-                {
-                    continue;
-                }
-                BitArrayNeo emergedLookaheadSet = gotoFollows[state.Transitions[s]];
-                nonterminalsToProcess.Enqueue(s.Index);
-                // There is one exception to the above rule. <S'> → • <S> is the only kernel item whose dot
-                // is at the beginning. We have to push it through as well, to propagate the accept action.
-                if (i == 0)
-                {
-                    Debug.Assert(kernelItem.Equals(Syntax.StartProduction));
-                    nonterminalsToProcess.Enqueue(StartSymbolIndex);
-                }
-                while (nonterminalsToProcess.TryDequeue(out int nonterminal))
-                {
-                    CancellationToken.ThrowIfCancellationRequested();
-
-                    if (!visitedNonterminals.Set(nonterminal, true))
-                    {
-                        continue;
-                    }
-
-                    foreach (Production p in Syntax.EnumerateNonterminalProductions(nonterminal))
-                    {
-                        ProductionMemberList productionMembers = Syntax.GetProductionMembers(p);
-                        // If the production starts with a nonterminal, queue it so that we can
-                        // look at its own productions as well.
-                        if (productionMembers is [{ IsTerminal: false, Index: int firstNonterminalOfProduction }, ..])
-                        {
-                            nonterminalsToProcess.Enqueue(firstNonterminalOfProduction);
-                        }
-                        // From the state we are, follow the production to the end.
-                        int currentState = i;
-                        foreach (Symbol s2 in productionMembers)
-                        {
-                            currentState = states[currentState].FollowTransition(s2, gotos);
-                        }
-                        (reductionLookaheads[currentState] ??= []).Add((p, emergedLookaheadSet));
-                    }
-                }
-
-                Debug.Assert(nonterminalsToProcess.Count == 0);
-                visitedNonterminals.SetAll(false);
-            }
+            CancellationToken.ThrowIfCancellationRequested();
+            ref readonly GotoInfo @goto = ref gotos[i];
+            PropagateLookaheads(in Syntax, states, gotos, @goto.FromState, @goto.NonterminalIndex, gotoFollows[i]);
         }
+        // There is one more GOTO to propagate, the one on <S'> → • <S>. The loop before propagated
+        // the GOTO follows on the derived productions of <S>, but did not follow the GOTO itself.
+        // This is necessary to add the accept action.
+        PropagateLookaheads(in Syntax, states, gotos, 0, StartSymbolIndex, gotoFollows[0]);
         Log.Debug("Computed reduction lookaheads");
         return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
+
+        void PropagateLookaheads(in AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
+            int state, int nonterminal, BitArrayNeo lookahead)
+        {
+            foreach (Production p in syntax.EnumerateNonterminalProductions(nonterminal))
+            {
+                int currentState = state;
+                foreach (Symbol s in syntax.GetProductionMembers(p))
+                {
+                    currentState = states[currentState].FollowTransition(s, gotos);
+                }
+                (reductionLookaheads[currentState] ??= []).Add((p, lookahead));
+            }
+        }
     }
 
     /// <summary>

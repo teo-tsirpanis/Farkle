@@ -161,7 +161,7 @@ public sealed class LrConflict : IFormattable
     {
         Debug.Assert(!action1.IsError);
         Debug.Assert(!action2.IsError);
-        Debug.Assert(!(action1.IsShift && action1.IsShift), "Shift/Shift conflict is not possible");
+        Debug.Assert(!(action1.IsShift && action2.IsShift), "Shift/Shift conflict is not possible");
         if (action1.IsShift)
         {
             return CreateShiftReduce(grammar, stateIndex, terminal, action1.ShiftState, action2.ReduceProduction);
@@ -177,7 +177,7 @@ public sealed class LrConflict : IFormattable
     {
         Debug.Assert(!action1.IsError);
         Debug.Assert(!action2.IsError);
-        Debug.Assert(!(action1.IsAccept && action1.IsAccept), "Accept/Accept conflict is not possible");
+        Debug.Assert(!(action1.IsAccept && action2.IsAccept), "Accept/Accept conflict is not possible");
         if (action1.IsAccept)
         {
             return CreateAcceptReduce(grammar, stateIndex, action2.ReduceProduction);

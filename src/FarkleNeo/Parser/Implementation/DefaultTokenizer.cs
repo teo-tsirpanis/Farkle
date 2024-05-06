@@ -105,7 +105,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 // A symbol is found that ends the current group.
                 else if (acceptSymbol == hotData.GetGroupEnd(currentGroup))
                 {
-                    if ((groupAttributes & GroupAttributes.KeepEndToken) != 0)
+                    if ((groupAttributes & GroupAttributes.KeepEndToken) == 0)
                     {
                         ConsumeInput(ref input, ref chars, charactersRead, isNoise);
                     }
@@ -151,13 +151,21 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <summary>
     /// Starts tokenizing a group.
     /// </summary>
-    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData, uint group, out int charactersRead, out ParserDiagnostic? error)
+    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData, uint group, ref int charactersRead, out ParserDiagnostic? error)
     {
         TokenSymbolHandle groupContainerSymbol = hotData.GetGroupContainer(group);
         bool isNoise = !hotData.IsTerminal(groupContainerSymbol);
+        // On entry, charactersRead will contain the length of the group's start,
+        // to let TokenizeGroup continue after that. Because in noise groups the
+        // characters are immediately consumed, we do it here for the group start
+        // characters in order to keep the tokenizer state consistent with the input reader.
+        if (isNoise)
+        {
+            input.Consume(charactersRead);
+            charactersRead = 0;
+        }
         ValueStack<uint> groupStack = new(stackalloc uint[4]);
         groupStack.Push(group);
-        charactersRead = 0;
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         // The compiler cannot prove that the stack pointers of groupStack will not leak to
         // input, so it raises an error. We convert it to a warning with the use of unsafe,
@@ -232,7 +240,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
                     uint group = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
-                    if (!TokenizeGroup(ref input, in hotData, group, out charactersRead, out ParserDiagnostic? error))
+                    if (!TokenizeGroup(ref input, in hotData, group, ref charactersRead, out ParserDiagnostic? error))
                     {
                         result = default;
                         return false;

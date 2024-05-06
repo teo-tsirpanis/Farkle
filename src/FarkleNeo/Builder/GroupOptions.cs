@@ -41,6 +41,9 @@ public enum GroupOptions
     /// The group can appear inside itself. For each time the group starts, it must end
     /// an equal number of times.
     /// </summary>
+    /// <remarks>
+    /// Semantic actions do not run for nested groups.
+    /// </remarks>
     /// <seealso cref="Grammars.Group.Nesting"/>
     Recursive = 8
 }

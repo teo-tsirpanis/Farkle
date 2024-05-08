@@ -29,6 +29,29 @@ module internal Grammar =
     /// Converts a GOLD Parser grammar to a Farkle grammar.
     let inline ofGoldParserStream (x: Stream) = Grammar.CreateFromGoldParserGrammar x
 
+namespace Farkle.Grammars.StateMachines
+
+/// Contains active patterns for types in the Farkle.Grammars.StateMachines namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    let inline (|LrShift|LrReduce|LrError|) (x: LrAction) =
+        if x.IsShift then
+            LrShift x.ShiftState
+        elif x.IsReduce then
+            LrReduce x.ReduceProduction
+        else
+            LrError
+
+    let inline (|LrEndOfFileReduce|LrEndOfFileAccept|LrEndOfFileError|) (x: LrEndOfFileAction) =
+        if x.IsReduce then
+            LrEndOfFileReduce x.ReduceProduction
+        elif x.IsAccept then
+            LrEndOfFileAccept
+        else
+            LrEndOfFileError
+
 namespace Farkle.Parser.Tokenizers
 
 open Farkle.Grammars

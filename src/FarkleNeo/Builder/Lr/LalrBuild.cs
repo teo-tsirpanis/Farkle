@@ -71,20 +71,20 @@ internal readonly struct LalrBuild
     /// <param name="stateMachine">The state machine.</param>
     /// <param name="gotoFollows">The follow sets of each GOTO transition of the state machine.</param>
     /// <returns>
-    /// An array of lists for each state, with each list containing:
+    /// An array of dictionaries for each state, with each dictionary containing:
     /// <list type="bullet">
     /// <item><description>The production to reduce.</description></item>
     /// <item><description>A bit array of the terminals to perform the reduction on. Do not modify.</description></item>
     /// </list>
-    /// If a list for a state is <see langword="null"/>, it means that no reductions happen in this state.
+    /// If a dictionary for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
-    private ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> ComputeReductionLookaheads(
+    private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ComputeReductionLookaheads(
         Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = new List<(Production Production, BitArrayNeo Lookahead)>?[states.Length];
+        var reductionLookaheads = new Dictionary<Production, BitArrayNeo>?[states.Length];
         // For each GOTO in the grammar, we take its follow set and push it through the productions
         // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
         // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
@@ -113,7 +113,15 @@ internal readonly struct LalrBuild
                 {
                     currentState = states[currentState].FollowTransition(s, gotos);
                 }
-                (reductionLookaheads[currentState] ??= []).Add((p, lookahead));
+                var dict = reductionLookaheads[currentState] ??= [];
+                if (!dict.TryGetValue(p, out BitArrayNeo? existingLookahead))
+                {
+                    dict.Add(p, new(lookahead));
+                }
+                else
+                {
+                    existingLookahead.Or(lookahead);
+                }
             }
         }
     }
@@ -282,24 +290,37 @@ internal readonly struct LalrBuild
                     // All these members are nonterminals, which means that all transitions are GOTOs.
                     Debug.Assert(!s.IsTerminal);
                     int gotoIdx = states[state].Transitions[s];
-                    dependencies.Add(new(gotoIdx, i, isSuccessor: false));
-                    state = gotos[gotoIdx].ToState;
+                    // It's possible to have a dependency from a GOTO to itself in items like:
+                    // <A> → a • <B>
+                    // <B> → • b <A>
+                    if (gotoIdx != i)
+                    {
+                        dependencies.Add(new(gotoIdx, i, isSuccessor: false));
 
-                    // We don't specifically store whether a dependency is internal or predecessor,
-                    // but we keep a count of each kind for diagnostic purposes.
-                    // There are two equivalent definitions of internal dependencies. Either α is empty
-                    // (i.e. B is the first member of the production) or both GOTOs of the dependency
-                    // are in the same state. Assert that the former is true iff the latter is true.
-                    bool isInternalDependency = indexOfB == 0;
-                    Debug.Assert(isInternalDependency == (gotos[gotoIdx].FromState == gotos[i].FromState));
-                    if (isInternalDependency)
-                    {
-                        internalCount++;
+                        // We don't specifically store whether a dependency is internal or predecessor,
+                        // but we keep a count of each kind for diagnostic purposes.
+                        // The most reliable indicator of an internal dependency is that both GOTOs are in
+                        // the same state. The IELR paper says that an equivalent definition is that α is
+                        // empty (i.e. B is the first member of the production), but this equivalence does
+                        // not hold in certain cases involving recursive productions.
+                        // Consider the following grammar:
+                        // <A> → a <B>
+                        // <B> → <C>
+                        // <C> → <A>
+                        // There is a dependency from the GOTO on <C> to the GOTO on <B>, but following `a`
+                        // while we are on <A> → a • <B> will lead us back to the same state, while `a` is
+                        // not empty.
+                        bool isInternalDependency = gotos[gotoIdx].FromState == gotos[i].FromState;
+                        if (isInternalDependency)
+                        {
+                            internalCount++;
+                        }
+                        else
+                        {
+                            predecessorCount++;
+                        }
                     }
-                    else
-                    {
-                        predecessorCount++;
-                    }
+                    state = gotos[gotoIdx].ToState;
                 }
             }
         }
@@ -325,7 +346,7 @@ internal readonly struct LalrBuild
             while (i > 0)
             {
                 Symbol s = members[i - 1];
-                bool isNullable = s.IsTerminal ? !s.Equals(Syntax.EndSymbol) : nullableNonterminals[s.Index];
+                bool isNullable = !s.IsTerminal && nullableNonterminals[s.Index];
                 if (!isNullable)
                 {
                     break;
@@ -375,8 +396,8 @@ internal readonly struct LalrBuild
                     bool isProductionNullable = true;
                     foreach (Symbol s in Syntax.GetProductionMembers(p))
                     {
-                        // The end symbol is always nullable.
-                        if (s.IsTerminal && !s.Equals(Syntax.EndSymbol))
+                        // The only nullable terminal is the end symbol, which is not encountered in syntax.
+                        if (s.IsTerminal)
                         {
                             isProductionNullable = false;
                             break;
@@ -436,7 +457,7 @@ internal readonly struct LalrBuild
         var visitedItems = new HashSet<Lr0Item>();
         // This has to be a sorted dictionary to ensure that new states
         // are being created in a deterministic order.
-        var grouppedTransitions = new SortedDictionary<Symbol, HashSet<Lr0Item>>();
+        var grouppedTransitions = new SortedDictionary<Symbol, List<Lr0Item>>();
 
         _ = GetOrQueueItemSet(new([Syntax.StartProduction]));
 
@@ -551,11 +572,11 @@ internal readonly struct LalrBuild
     }
 
     private sealed class DefaultLrStateMachine(Lr0StateMachine states,
-        ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> reductionLookaheads) : LrStateMachine
+        ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads) : LrStateMachine
     {
         private Lr0StateMachine Lr0StateMachine { get; } = states;
 
-        private ImmutableArray<List<(Production Production, BitArrayNeo Lookahead)>?> ReductionLookaheads { get; } = reductionLookaheads;
+        private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ReductionLookaheads { get; } = reductionLookaheads;
 
         public override int StateCount => Lr0StateMachine.States.Length;
 
@@ -636,11 +657,18 @@ internal readonly struct LalrBuild
     /// Represents a dependency between the follow sets of two GOTO transitions.
     /// </summary>
     [DebuggerDisplay("{FromGoto} → {ToGoto}, {DebuggerDependencyKind,nq}")]
-    private readonly struct GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
+    private readonly struct GotoFollowDependency
     {
         private const uint IsSuccessorMask = 1u << 31;
 
-        private readonly uint _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
+        private readonly uint _fromGotoAndIsSuccessor;
+
+        public GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
+        {
+            Debug.Assert(fromGoto != toGoto);
+            _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
+            ToGoto = toGoto;
+        }
 
         private string DebuggerDependencyKind => IsSuccessor ? "Successor" : "Include";
 
@@ -652,7 +680,7 @@ internal readonly struct LalrBuild
         /// <summary>
         /// The GOTO transition to which the dependency leads.
         /// </summary>
-        public int ToGoto { get; } = toGoto;
+        public int ToGoto { get; }
 
         /// <summary>
         /// Whether the dependency is a successor dependency, otherwise it is an include dependency.
@@ -766,25 +794,47 @@ internal readonly struct LalrBuild
 
     /// <summary>
     /// Represents a set of LR(0) items. This is a transparent wrapper around a
-    /// <see cref="HashSet{T}"/> that provides structural equality semantics.
+    /// <see cref="List{T}"/> that provides structural equality semantics.
     /// </summary>
-    /// <param name="items">The set of items. Do not modify after creation.</param>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(FlatCollectionProxy<Lr0Item, KernelItemSet>))]
-    private readonly struct KernelItemSet(HashSet<Lr0Item> items) : IEquatable<KernelItemSet>, IReadOnlyCollection<Lr0Item>
+    private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyCollection<Lr0Item>
     {
-        // TODO-PERF: Could this be a List instead?
-        private readonly HashSet<Lr0Item> _items = items;
+        private readonly List<Lr0Item> _items;
+
+        /// <summary>
+        /// Creates a <see cref="KernelItemSet"/>.
+        /// </summary>
+        /// <param name="items">The list of items. Do not modify after creation.</param>
+        public KernelItemSet(List<Lr0Item> items)
+        {
+            items.Sort();
+            _items = items;
+        }
 
         public int Count => _items.Count;
 
-        public HashSet<Lr0Item>.Enumerator GetEnumerator() => _items.GetEnumerator();
+        public List<Lr0Item>.Enumerator GetEnumerator() => _items.GetEnumerator();
 
         IEnumerator<Lr0Item> IEnumerable<Lr0Item>.GetEnumerator() => _items.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public bool Equals(KernelItemSet other) => _items.SetEquals(other._items);
+        public bool Equals(KernelItemSet other)
+        {
+            if (Count != other.Count)
+            {
+                return false;
+            }
+            for (int i = 0; i < Count; i++)
+            {
+                if (!_items[i].Equals(other._items[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public override bool Equals(object? obj) => obj is KernelItemSet x && Equals(x);
 
@@ -801,7 +851,7 @@ internal readonly struct LalrBuild
     }
 
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    private readonly struct Lr0Item(Production production, int dotPosition) : IEquatable<Lr0Item>
+    private readonly struct Lr0Item(Production production, int dotPosition) : IEquatable<Lr0Item>, IComparable<Lr0Item>
     {
         public Production Production { get; } = production;
 
@@ -816,6 +866,9 @@ internal readonly struct LalrBuild
         public bool Equals(Lr0Item other) => Production.Equals(other.Production) && DotPosition == other.DotPosition;
 
         public override bool Equals(object? obj) => obj is Lr0Item x && Equals(x);
+
+        public int CompareTo(Lr0Item other) =>
+            (Production.Index, DotPosition).CompareTo((other.Production.Index, other.DotPosition));
 
         public override int GetHashCode() => HashCode.Combine(Production, DotPosition);
 

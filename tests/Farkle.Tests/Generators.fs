@@ -235,7 +235,7 @@ type Generators =
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
 #endif
 
-let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = Some (1903651590, 297281888)}
+let fsCheckConfig = {FsCheckConfig.defaultConfig with arbitrary = [typeof<Generators>]; replay = None}
 
 let testProperty x = testPropertyWithConfig fsCheckConfig x
 let ftestProperty x = ftestPropertyWithConfig fsCheckConfig x

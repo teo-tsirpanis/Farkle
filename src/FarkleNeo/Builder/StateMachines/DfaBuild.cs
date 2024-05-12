@@ -102,17 +102,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return @this.WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
     }
 
-    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols)
+    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols, bool prioritizeFixedLengthSymbols)
     {
-        // This algorithm mimics what Farkle 6 does:
-        // 1. Account for the trivial cases of zero or one accept symbols.
-        // 2. Sort the accept symbols by priority.
-        // 3. Lock on the first list item and loop over the subsequent list items.
-        //    * If you see the same symbol next to the first one in the list, ignore it.
-        //    * If you see a different symbol with a lower priority, it means that the
-        //      first symbol has prevailed. Return it.
-        //    * If you see a different symbol with the same priority, goto step 4.
-        // 4. Return with a failure to resolve the conflict.
         switch (acceptSymbols)
         {
             case []: return null;
@@ -127,15 +118,16 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             if (firstSymbol != acceptSymbols[i].SymbolIndex)
             {
-                if (firstPriority < acceptSymbols[i].Priority)
+                if (prioritizeFixedLengthSymbols && firstPriority < acceptSymbols[i].Priority)
                 {
                     return firstSymbol;
                 }
-                break;
+                return null;
             }
         }
 
-        return null;
+        // At this point all symbols are the same.
+        return firstSymbol;
     }
 
     private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
@@ -167,7 +159,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 dfaWriter.SetDefaultTransition(dt);
             }
 
-            if (prioritizeFixedLengthSymbols && FindDominantSymbol(state.AcceptSymbols) is { } sym)
+            if (FindDominantSymbol(state.AcceptSymbols, prioritizeFixedLengthSymbols) is { } sym)
             {
                 dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(sym));
             }
@@ -185,15 +177,19 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(state.AcceptSymbols.Count);
                     foreach (var (_, symbol) in state.AcceptSymbols)
                     {
-                        conflictsOfState[symbol] = true;
+                        if (!conflictsOfState.Set(symbol, true))
+                        {
+                            continue;
+                        }
                         var name = Symbols.GetName(symbol);
                         namesBuilder.Add(name.Name);
                         symbolInfoBuilder.Add((name.Kind, name.ShouldDisambiguate));
                     }
+                    Debug.Assert(namesBuilder.Count > 1);
                     // Do not log the same set of indistunguishable symbols twice.
                     if (seenConflicts.Add(conflictsOfState.ToBitSet()))
                     {
-                        Log.IndistinguishableSymbols(new(namesBuilder.MoveToImmutable(), symbolInfoBuilder.MoveToImmutable()));
+                        Log.IndistinguishableSymbols(new(namesBuilder.DrainToImmutable(), symbolInfoBuilder.DrainToImmutable()));
                     }
                 }
                 foreach (var (_, symbol) in state.AcceptSymbols)

@@ -641,6 +641,39 @@ module internal GrammarBuilderOperators =
     let (|>>) (f: _ -> 'b) symbol =
         $"{symbolName symbol} :?> {typeof<'b>.Name}" ||= [!@ symbol => f]
 
+/// Factory methods for common terminal symbols.
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module internal Terminals =
+
+    /// Creates a terminal that matches a signed 32-bit integer.
+    let inline int name = Terminals.Int32 name
+
+    /// Creates a terminal that matches a signed 64-bit integer.
+    let inline int64 name = Terminals.Int64 name
+
+    /// Creates a terminal that matches an unsigned 32-bit integer.
+    let inline uint32 name = Terminals.UInt32 name
+
+    /// Creates a terminal that matches an unsigned 64-bit integer.
+    let inline uint64 name = Terminals.UInt64 name
+
+    /// Creates a terminal that matches a 32-bit floating-point number.
+    let inline float32 name = Terminals.Single name
+
+    /// Creates a terminal that matches a 64-bit floating-point number.
+    let inline float name = Terminals.Double name
+
+    /// Creates a terminal that matches a decimal number.
+    let inline decimal name = Terminals.Decimal name
+
+    /// Creates a terminal that matches a single-line C-like string.
+    /// See `Terminals.String` for more information.
+    let inline string delim name = Terminals.String(name, delim)
+
+    /// Creates a terminal that matches a C-like string.
+    /// See `Terminals.String` for more information.
+    let inline stringEx escapeChars multiline delim name = Terminals.String(name, delim, escapeChars, multiline)
+
 // -------------------------------------------------------------------
 // Farkle 6 compatibility APIs
 // -------------------------------------------------------------------

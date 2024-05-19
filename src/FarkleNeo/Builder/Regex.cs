@@ -247,7 +247,7 @@ public sealed class Regex
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
     /// </summary>
-    public static Regex Literal(char c) => Literal(c.ToString());
+    public static Regex Literal(char c) => OneOf([(c, c)]);
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific string of characters.

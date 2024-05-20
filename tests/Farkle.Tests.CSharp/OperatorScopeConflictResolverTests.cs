@@ -69,9 +69,9 @@ internal class OperatorScopeConflictResolverTests
     }
 
     [Test]
-    [TestCase(-1, LrConflictResolverDecision.ChooseOption1)]
+    [TestCase(-1, LrConflictResolverDecision.ChooseOption2)]
     [TestCase(0, LrConflictResolverDecision.CannotChoose)]
-    [TestCase(1, LrConflictResolverDecision.ChooseOption2)]
+    [TestCase(1, LrConflictResolverDecision.ChooseOption1)]
     public void TestReduceReduceDifferentPrecedence(int order, LrConflictResolverDecision expectedDecision)
     {
         AssociativityGroup[] associativityGroups = order switch

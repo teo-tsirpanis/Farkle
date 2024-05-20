@@ -40,7 +40,8 @@ public sealed class OperatorScope
     /// Creates an <see cref="OperatorScope"/>.
     /// </summary>
     /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
-    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope.</param>
+    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
+    /// in ascending order of precedence.</param>
     public OperatorScope(bool canResolveReduceReduceConflicts, ImmutableArray<AssociativityGroup> associativityGroups)
     {
         if (associativityGroups.IsDefault)
@@ -59,7 +60,8 @@ public sealed class OperatorScope
     /// Creates an <see cref="OperatorScope"/>.
     /// </summary>
     /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
-    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope.</param>
+    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
+    /// in ascending order of precedence.</param>
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups);
@@ -74,8 +76,8 @@ public sealed class OperatorScope
     /// <summary>
     /// Creates an <see cref="OperatorScope"/>.
     /// </summary>
-    /// <param name="associativityGroups">An array with the <see cref="AssociativityGroup"/>s
-    /// that will comprise the scope.</param>
+    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
+    /// in ascending order of precedence.</param>
     public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
 
 #if false

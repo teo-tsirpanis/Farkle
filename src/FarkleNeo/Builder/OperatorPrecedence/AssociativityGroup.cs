@@ -9,6 +9,7 @@ namespace Farkle.Builder.OperatorPrecedence;
 /// Represents a collection of symbols in a grammar to be built
 /// that have the same precedence and a specific type of associativity.
 /// </summary>
+/// <seealso cref="OperatorScope"/>
 public class AssociativityGroup
 {
     /// <summary>

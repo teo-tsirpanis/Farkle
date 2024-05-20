@@ -440,16 +440,6 @@ internal readonly struct LalrBuild
         var states = ImmutableArray.CreateBuilder<Lr0State>();
         var gotos = ImmutableArray.CreateBuilder<GotoInfo>();
         var kernelItemSetsToProcess = new Queue<KernelItemSet>();
-#if DEBUG
-        // Keeps track of the order each item gets added. In previous versions,
-        // the state was being added while processing its predecessor's transitions,
-        // and its own transitions were assigned later. Now we add only complete
-        // states to the list, and during processing of transitions we enqueue
-        // the kernel item sets to be later converted into a complete state.
-        // This shadow queue exists to ensure the order of processing states is
-        // the expected one.
-        var indexShadowQueue = new Queue<int>();
-#endif
         var kernelItemMap = new Dictionary<KernelItemSet, int>();
         // These variables are local to each step, but we declare them
         // outside the loop and reuse them for performance.
@@ -463,9 +453,6 @@ internal readonly struct LalrBuild
 
         while (kernelItemSetsToProcess.TryDequeue(out var kernelItems))
         {
-#if DEBUG
-            Debug.Assert(indexShadowQueue.Dequeue() == states.Count, "Incorrect state processing order.");
-#endif
             foreach (var item in kernelItems)
             {
                 itemsToProcess.Enqueue(item);
@@ -539,9 +526,6 @@ internal readonly struct LalrBuild
                 return index;
             }
             index = kernelItemMap.Count;
-#if DEBUG
-            indexShadowQueue.Enqueue(index);
-#endif
             kernelItemMap.Add(items, index);
             kernelItemSetsToProcess.Enqueue(items);
             return index;

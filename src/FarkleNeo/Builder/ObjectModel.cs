@@ -215,7 +215,7 @@ internal sealed class BlockGroup<T>(string name, string groupStart, string group
 /// </remarks>
 /// <seealso cref="Nonterminal.Create{T}(string, IProduction{T}[])"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
-/// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
+/// <seealso cref="Nonterminal{T}.SetProductions(ReadOnlySpan{IProduction{T}})"/>
 public interface IProduction<out T>
 {
     // We cannot inherit IProduction because we want the generic interface to be public.

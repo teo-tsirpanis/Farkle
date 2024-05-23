@@ -413,10 +413,9 @@ internal readonly struct LalrBuild
                     {
                         nullable[i] = true;
                         changed = true;
-                        goto nextNonterminal;
+                        break;
                     }
                 }
-            nextNonterminal:;
             }
         } while (changed);
         if (Log.IsEnabled(DiagnosticSeverity.Debug))

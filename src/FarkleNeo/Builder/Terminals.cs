@@ -77,7 +77,7 @@ public static class Terminals
                         't' => '\t',
                         'u' => (char)ushort.Parse(ToCharacters(str.Slice(backslashIdx + 2, 4)), NumberStyles.HexNumber),
                         'v' => '\v',
-                        char x => x
+                        _ => charAtBackslash
                     };
                     sb.Append(c);
                     str = str[(backslashIdx + (charAtBackslash == 'u' ? 6 : 2))..];

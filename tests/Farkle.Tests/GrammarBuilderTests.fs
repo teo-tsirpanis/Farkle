@@ -201,6 +201,38 @@ let tests = testList "Grammar builder tests" [
         Expect.notEqual terminalName "Test" "The original name of a symbol was not preferred"
     }
 
+    test "Special names work" {
+        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("MyTerminal")
+        let nont = "N" |||= [
+            !% sym
+        ]
+        let grammar, warnings =
+            nont.AutoWhitespace(false)
+            |> buildWithWarnings
+        let terminal =
+            grammar.Terminals
+            |> Seq.exactlyOne
+        let terminalFromSpecialName =
+            grammar.GetSymbolFromSpecialName("__MySpecialName")
+            |> Farkle.Grammars.TokenSymbolHandle.op_Explicit
+        Expect.equal terminalFromSpecialName terminal.Handle "The terminal could not be retrieved from the special name."
+    }
+    
+    test "Duplicate special names emit an error" {
+        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test")
+        let sym2 = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test 2")
+        let nont = "N" |||= [
+            !% sym
+            !% sym2
+        ]
+        let grammar, warnings =
+            nont.AutoWhitespace(false)
+            |> buildWithWarnings
+        Expect.hasLength warnings 1 "Grammar was built with the wrong number of warnings"
+        Expect.equal warnings.[0].Code "FARKLE0004" "The warning was not of the correct type"
+        Expect.equal grammar.GrammarInfo.Attributes Grammars.GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
+    }
+
     test "Many block groups can be ended by the same symbol" {
         // It doesn't cause a DFA conflict because the
         // end symbols of the different groups are considered equal.

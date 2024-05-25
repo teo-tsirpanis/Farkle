@@ -136,7 +136,7 @@
     <value>{0}, κατά τη συνάντηση του συμβόλου {1} στην κατάσταση {2}</value>
   </data>
   <data name="Builder_DuplicateSpecialName" xml:space="preserve">
-    <value>Έχει οριστεί ήδη σύμβολο με το ειδικό όνομα {1}</value>
+    <value>Έχει οριστεί ήδη σύμβολο με το ειδικό όνομα {0}</value>
   </data>
   <data name="Builder_NonterminalProductionsNotSet" xml:space="preserve">
     <value>Το μη τερματικό {0} δεν έχει παραγωγές. Σιγουρέψου ότι έχεις καλέσει την μέθοδο SetProductions σε αυτό.</value>

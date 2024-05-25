@@ -168,7 +168,7 @@ let tests = testList "Grammar builder tests" [
         let grammar, warnings =
             nont.AutoWhitespace(false)
             |> buildWithWarnings
-        Expect.isEmpty warnings "Grammar was built with warnings"
+        Expect.isEmpty warnings "Building emitted warnings"
         let terminalName =
             grammar.Terminals
             |> Seq.exactlyOne
@@ -189,7 +189,7 @@ let tests = testList "Grammar builder tests" [
         let grammar, warnings =
             nont.AutoWhitespace(false)
             |> buildWithWarnings
-        Expect.hasLength warnings 3 "Grammar was built with the wrong number of warnings"
+        Expect.hasLength warnings 3 "Building emitted the wrong number of warnings"
         Expect.all warnings (fun x -> x.Code = "FARKLE0008") "Warnings were not of the correct type"
         let terminalName =
             grammar.Terminals
@@ -213,10 +213,11 @@ let tests = testList "Grammar builder tests" [
             |> Seq.exactlyOne
         let terminalFromSpecialName =
             grammar.GetSymbolFromSpecialName("__MySpecialName")
-            |> Farkle.Grammars.TokenSymbolHandle.op_Explicit
+            |> Grammars.TokenSymbolHandle.op_Explicit
+        Expect.isEmpty warnings "Building emitted warnings"
         Expect.equal terminalFromSpecialName terminal.Handle "The terminal could not be retrieved from the special name."
     }
-    
+
     test "Duplicate special names emit an error" {
         let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test")
         let sym2 = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test 2")
@@ -227,9 +228,10 @@ let tests = testList "Grammar builder tests" [
         let grammar, warnings =
             nont.AutoWhitespace(false)
             |> buildWithWarnings
-        Expect.hasLength warnings 1 "Grammar was built with the wrong number of warnings"
+        Expect.hasLength warnings 1 "Building emitted the wrong number of warnings"
         Expect.equal warnings.[0].Code "FARKLE0004" "The warning was not of the correct type"
         Expect.equal grammar.GrammarInfo.Attributes Grammars.GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
+        Expect.isFalse (grammar.GetSymbolFromSpecialName("__MySpecialName").HasValue) "The special name should not be present in the grammar file"
     }
 
     test "Many block groups can be ended by the same symbol" {

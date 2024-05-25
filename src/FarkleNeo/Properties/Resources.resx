@@ -144,6 +144,9 @@
   <data name="Builder_DuplicateOperatorSymbol" xml:space="preserve">
     <value>Operator symbol {0} was defined with precedence level of both {1} and {2}.</value>
   </data>
+  <data name="Builder_SymbolMultipleRenames" xml:space="preserve">
+    <value>Symbol '{0}' was renamed to both '{1}' and '{2}'.</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Building grammar {0}</value>
   </data>

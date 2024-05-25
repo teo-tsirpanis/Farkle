@@ -268,6 +268,8 @@ internal static class Resources
 
     public static string Builder_DuplicateOperatorSymbol => GetResourceString(nameof(Builder_DuplicateOperatorSymbol));
 
+    public static string Builder_SymbolMultipleRenames => GetResourceString(nameof(Builder_SymbolMultipleRenames));
+
     public static string Builder_BuildingStarted => GetResourceString(nameof(Builder_BuildingStarted));
 
     public static string Builder_BuildingFinished => GetResourceString(nameof(Builder_BuildingFinished));

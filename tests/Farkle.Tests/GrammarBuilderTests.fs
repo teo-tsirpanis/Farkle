@@ -127,7 +127,7 @@ let tests = testList "Grammar builder tests" [
 
         Expect.equal (runtime.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }
-    
+
     test "Farkle can properly handle recursive block groups" {
         let runtime =
             Group.Block("Block Group", "{", "}", (fun _ data -> data.ToString()), GroupOptions.Recursive)
@@ -154,6 +154,51 @@ let tests = testList "Grammar builder tests" [
         |> doTest "line group"
         Group.Block("Block Group", "/*", "*/")
         |> doTest "block group"
+    }
+
+    test "The renamed name of a symbol gets preferred" {
+        let sym = virtualTerminal "Test"
+        // Test that multiple symbol objects with the same renamed name are accepted.
+        let mkRenamed() = GrammarSymbol.renameU "Test Renamed" sym
+        let nont = "N" |||= [
+            // While traversing the grammar, the builder will see the original symbol first,
+            // but must still pick the renamed one.
+            !% sym
+            !% mkRenamed() .>> mkRenamed()
+        ]
+        let grammar, warnings =
+            nont.AutoWhitespace(false)
+            |> buildWithWarnings
+        Expect.isEmpty warnings "Grammar was built with warnings"
+        let terminalName =
+            grammar.Terminals
+            |> Seq.exactlyOne
+            |> _.Name
+            |> grammar.GetString
+        Expect.equal terminalName "Test Renamed" "The renamed name of the symbol was not preferred"
+    }
+
+    test "Renaming a symbol twice raises a warning" {
+        let sym = virtualTerminal "Test"
+        let mkRenamed() = GrammarSymbol.renameU "Test Renamed" sym
+        let mkRenamed2() = GrammarSymbol.renameU "Test Renamed 2" sym
+        let nont = "N" |||= [
+            !% sym
+            !% mkRenamed() .>> mkRenamed()
+            !% mkRenamed2() .>> mkRenamed2() .>> mkRenamed2()
+        ]
+        let grammar, warnings =
+            nont.AutoWhitespace(false)
+            |> buildWithWarnings
+        Expect.hasLength warnings 3 "Grammar was built with the wrong number of warnings"
+        Expect.all warnings (fun x -> x.Code = "FARKLE0008") "Warnings were not of the correct type"
+        let terminalName =
+            grammar.Terminals
+            |> Seq.exactlyOne
+            |> _.Name
+            |> grammar.GetString
+        // We can't know for sure which name will be chosen, but it will not be the original one.
+        Expect.notEqual terminalName "Test" "The original name of a symbol was not preferred"
     }
 
     test "Many block groups can be ended by the same symbol" {

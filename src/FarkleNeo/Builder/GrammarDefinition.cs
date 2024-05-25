@@ -119,7 +119,7 @@ internal sealed class GrammarDefinition
             {
                 if (existingName != name)
                 {
-                    // TODO: Warn that the symbol is renamed more than once.
+                    log.SymbolMultipleRenames(symbol.Name, existingName, name);
                 }
                 return;
             }

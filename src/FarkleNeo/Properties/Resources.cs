@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Resources;
 using System.Runtime.CompilerServices;
@@ -8,6 +9,7 @@ using System.Text;
 
 namespace Farkle;
 
+[ExcludeFromCodeCoverage]
 internal static class Resources
 {
     private static readonly bool s_usingResourceKeys = AppContext.TryGetSwitch("System.Resources.UseSystemResourceKeys", out bool usingResourceKeys) && usingResourceKeys;

@@ -3,6 +3,7 @@
 
 using System.Collections;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Farkle.Grammars;
 
@@ -254,6 +255,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 #if DEBUG
         private readonly AugmentedSyntaxProvider _debugOnlySyntax = syntax;
 
+        [ExcludeFromCodeCoverage]
         public readonly string GetDebuggerDisplay(int dotPosition = -1)
         {
             var sb = new StringBuilder();

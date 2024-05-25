@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Parser
+open FsCheck
 open System
 
 type TestClass = TestClass of string
@@ -61,7 +62,6 @@ let tests = testList "Grammar builder tests" [
         Expect.isFalse (nont1 = nont2) "Nonterminals are not checked for reference equality"
     }
 
-#if false // TODO-FARKLE7: Reevaluate when predefined terminals are implemented in Farkle 7.
     testProperty "Farkle can properly read signed integers" (fun num ->
         let runtime = Terminals.int64 "Signed" |> GrammarBuilder.build
         Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing a signed integer failed")
@@ -73,7 +73,6 @@ let tests = testList "Grammar builder tests" [
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> GrammarBuilder.build
         Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
-#endif
 
     test "IGrammarSymbols, productions, and transformers are covariant" {
         let symbol = terminal "x" (T(fun _ _ -> "")) (Regex.string "x")

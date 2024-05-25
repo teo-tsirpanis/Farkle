@@ -110,7 +110,7 @@ let tests = testList "Grammar builder tests" [
     test "Terminals named 'Newline' cannot terminate line groups" {
         let runtime =
             "X" |||= [!& "newline"; !& "x1" .>> "x2"]
-            |> fun x -> x.AddLineComment "//"
+            |> _.AddLineComment("//")
             |> GrammarBuilder.buildSyntaxCheck
         let testString = "// newline\nx1 x2"
 
@@ -267,7 +267,8 @@ let tests = testList "Grammar builder tests" [
 
     test "The many(1) operators work" {
         let mkRuntime atLeastOne =
-            (literal "x").Cast()
+            literal "x"
+            |> _.Cast()
             |> if atLeastOne then many1 else many
             |> GrammarBuilder.buildSyntaxCheck
         let runtime = mkRuntime false
@@ -283,7 +284,8 @@ let tests = testList "Grammar builder tests" [
 
     test "The sepBy(1) operators work" {
         let mkRuntime atLeastOne =
-            (literal "x").Cast()
+            literal "x"
+            |> _.Cast()
             |> (if atLeastOne then sepBy1 else sepBy) (literal ",")
             |> GrammarBuilder.buildSyntaxCheck
         let runtime = mkRuntime false

@@ -10,6 +10,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Dfa
+open Farkle.Diagnostics
 open Farkle.Diagnostics.Builder
 open Farkle.Grammars
 open Farkle.Grammars.Writers
@@ -105,3 +106,11 @@ let expectIsParseFailure result msg =
 
 let expectWantParseFailure result msg =
     Expect.wantError (ParserResult.toResult result) msg
+
+let buildWithWarnings (grammarBuilder: IGrammarBuilder) =
+    let diagnostics = ResizeArray()
+    let builderOptions = BuilderOptions()
+    builderOptions.LogLevel <- DiagnosticSeverity.Warning
+    builderOptions.add_OnDiagnostic (fun x -> diagnostics.Add x)
+    let grammar = grammarBuilder.BuildSyntaxCheck(builderOptions).GetGrammar()
+    grammar, diagnostics

@@ -144,6 +144,9 @@
   <data name="Builder_DuplicateOperatorSymbol" xml:space="preserve">
     <value>Το σύμβολο τελεστή {0} ορίστηκε με επίπεδο προτεραιότητας και {1} και {2}.</value>
   </data>
+  <data name="Builder_SymbolMultipleRenames" xml:space="preserve">
+    <value>Το σύμβολο '{0}' μετονομάστηκε και σε '{1}' και σε '{2}'.</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Χτίζεται η γραμματική {0}</value>
   </data>

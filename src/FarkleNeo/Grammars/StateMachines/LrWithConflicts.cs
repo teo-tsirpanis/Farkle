@@ -113,7 +113,7 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
             for (int i = 1; i < Count; i++)
             {
                 int firstEof = ReadFirstEofAction(grammarFile, i);
-                Assert(firstEof > previousFirstEof);
+                Assert(firstEof >= previousFirstEof, "LR state first EOF action is out of sequence");
                 previousFirstEof = firstEof;
                 Assert(firstEof <= _eofActionCount);
             }

@@ -4,7 +4,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Resources;
+#if NET8_0_OR_GREATER
 using System.Runtime.CompilerServices;
+#endif
 using System.Text;
 
 namespace Farkle;
@@ -38,6 +40,9 @@ internal static class Resources
     }
 
 #if NET8_0_OR_GREATER
+    // Relying on reference equality of strings is usually discouraged, but here
+    // we rely on an implementation detail of ResourceManager that caches the strings
+    // it returns, so that we can cache the parsed CompositeFormat instances.
     private static readonly ConditionalWeakTable<string, CompositeFormat> s_compositeFormatCache = new();
 
     public static CompositeFormat GetCompositeFormat(string x) =>

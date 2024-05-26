@@ -2,7 +2,7 @@
   <assembly fullname="FarkleNeo" feature="System.Resources.UseSystemResourceKeys" featurevalue="true">
     <!-- System.Resources.UseSystemResourceKeys removes resource strings and instead uses the resource key as the exception message -->
     <resource name="Farkle.Resources.resources" action="remove" />
-    <type fullname="System.SR">
+    <type fullname="Farkle.Resources">
       <method signature="System.Boolean UsingResourceKeys()" body="stub" value="true" />
     </type>
   </assembly>

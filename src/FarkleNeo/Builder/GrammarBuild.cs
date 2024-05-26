@@ -215,10 +215,7 @@ internal static class GrammarBuild
                 productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
             }
-            if (production.PrecedenceToken is { } precedenceToken)
-            {
-                operatorSymbolMap?.Add(handle, precedenceToken);
-            }
+            operatorSymbolMap?.Add(handle, production);
         }
 
         // Add comments.

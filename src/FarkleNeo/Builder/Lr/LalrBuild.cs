@@ -186,7 +186,14 @@ internal readonly struct LalrBuild
         var gotos = stateMachine.Gotos.AsSpan();
         var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
         Log.Debug("Generating initial GOTO follow sets");
-        foreach (ref readonly var @goto in gotos)
+        // The first GOTO is the one on <S'> → • <S>, and its follow set consists of only the end symbol.
+        // This happens because the reducing the start production means accepting, and we can only accept
+        // at the end of input.
+        var initialFollow = new BitArrayNeo(Syntax.TerminalCount);
+        initialFollow[EndSymbolIndex] = true;
+        follows.Add(initialFollow);
+        // Add the follow sets of the rest of the GOTOs.
+        foreach (ref readonly var @goto in gotos[1..])
         {
             var follow = new BitArrayNeo(Syntax.TerminalCount);
             foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
@@ -198,8 +205,6 @@ internal readonly struct LalrBuild
             }
             follows.Add(follow);
         }
-        // Add the end symbol to the follow set of the start production's GOTO.
-        follows[stateMachine.States[0].Transitions[Syntax.StartSymbolReal]][EndSymbolIndex] = true;
         Log.Debug("Generated initial GOTO follow sets");
         return follows.MoveToImmutable();
     }

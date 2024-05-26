@@ -37,21 +37,14 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public Symbol StartSymbol => Symbol.CreateNonterminal(StartSymbolIndex, this);
 
-    public const int EndSymbolIndex = 0;
-
     /// <summary>
-    /// The original grammar's start symbol, before augmentation.
-    /// </summary>
-    public Symbol StartSymbolReal => Symbol.CreateNonterminal(_provider.StartSymbol + 1, this);
-
-    /// <summary>
-    /// The symbol signifying the end of the input.
+    /// The index of the symbol signifying the end of the input.
     /// </summary>
     /// <remarks>
     /// This symbol does not appear in productions. It emerges in the follow set of
     /// <see cref="StartProduction"/>'s GOTO, and gets propagated from there.
     /// </remarks>
-    public Symbol EndSymbol => Symbol.CreateTerminal(EndSymbolIndex, this);
+    public const int EndSymbolIndex = 0;
 
     /// <summary>
     /// The index of <see cref="StartProduction"/>.

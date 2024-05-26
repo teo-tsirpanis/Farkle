@@ -125,6 +125,7 @@ internal sealed class ConflictResolvingLrStateMachine(LrStateMachine stateMachin
                     // This is the first action for this terminal.
                     existingActions.Add(symbol, [action]);
                 }
+                continue;
             }
             bool isEof = entry.IsEndOfFileAction(out var endOfFileAction);
             Debug.Assert(isEof);

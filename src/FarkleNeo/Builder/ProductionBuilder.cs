@@ -94,7 +94,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     public ProductionBuilder<T1> Extend<T1>(IGrammarSymbol<T1> symbol)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        return new(_members.Add(symbol), 0, _precedenceToken);
+        return new(_members.Add(symbol), _members.Count, _precedenceToken);
     }
 
     /// <summary>

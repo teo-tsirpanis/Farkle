@@ -3,12 +3,13 @@
 
 using Farkle.Parser;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 #if NET7_0_OR_GREATER
 using System.Numerics;
+#else
+using System.Diagnostics;
 #endif
 
 namespace Farkle.Builder;
@@ -40,9 +41,9 @@ public static class Terminals
     // This method is intended to be used for the framework's parsing methods.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    private static ReadOnlySpan<char> ToCharacters(ReadOnlySpan<char> chars) => chars;
+    internal static ReadOnlySpan<char> ToCharacters(ReadOnlySpan<char> chars) => chars;
 #else
-    private static string ToCharacters(ReadOnlySpan<char> chars) => chars.ToString();
+    internal static string ToCharacters(ReadOnlySpan<char> chars) => chars.ToString();
 #endif
 
     private static string TransformString(ref ParserState state, ReadOnlySpan<char> str)

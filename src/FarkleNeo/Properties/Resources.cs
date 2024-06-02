@@ -281,6 +281,10 @@ internal static class Resources
 
     public static string Builder_BuildingFinished => GetResourceString(nameof(Builder_BuildingFinished));
 
+    public static string Builder_RegexStringPredefinedSetsNotSupported => GetResourceString(nameof(Builder_RegexStringPredefinedSetsNotSupported));
+
+    public static string Builder_RegexStringUnicodeCategoriesNotSupported => GetResourceString(nameof(Builder_RegexStringUnicodeCategoriesNotSupported));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

@@ -147,6 +147,12 @@
   <data name="Builder_SymbolMultipleRenames" xml:space="preserve">
     <value>Symbol '{0}' was renamed to both '{1}' and '{2}'.</value>
   </data>
+  <data name="Builder_RegexStringPredefinedSetsNotSupported" xml:space="preserve">
+    <value>Predefined character sets are not supported starting with Farkle 7</value>
+  </data>
+  <data name="Builder_RegexStringUnicodeCategoriesNotSupported" xml:space="preserve">
+    <value>Unicode categories are not supported</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Building grammar {0}</value>
   </data>

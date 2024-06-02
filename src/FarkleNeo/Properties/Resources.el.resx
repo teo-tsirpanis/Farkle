@@ -147,6 +147,12 @@
   <data name="Builder_SymbolMultipleRenames" xml:space="preserve">
     <value>Το σύμβολο '{0}' μετονομάστηκε και σε '{1}' και σε '{2}'.</value>
   </data>
+  <data name="Builder_RegexStringPredefinedSetsNotSupported" xml:space="preserve">
+    <value>Τα προκαθορισμένα σύμβολα χαρακτήρων δεν υποστηρίζονται ξεκινώντας από το Farkle 7</value>
+  </data>
+  <data name="Builder_RegexStringUnicodeCategoriesNotSupported" xml:space="preserve">
+    <value>Οι κατηγορίες Unicode δεν υποστηρίζονται</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Χτίζεται η γραμματική {0}</value>
   </data>

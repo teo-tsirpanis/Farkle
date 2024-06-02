@@ -148,6 +148,22 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         }
     }
 
+    static TokenizerResult CreateToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, TokenSymbolHandle symbol, int tokenLength)
+    {
+        try
+        {
+            object? semanticValue = semanticProvider.Transform(ref input.State, symbol, input.RemainingCharacters[..tokenLength]);
+            TokenizerResult result = TokenizerResult.CreateSuccess(symbol, semanticValue, input.State.CurrentPosition);
+            input.Consume(tokenLength);
+            return result;
+        }
+        // We have to catch parser application exceptions here as well, because the tokenizer is not always wrapped.
+        catch (ParserApplicationException ex)
+        {
+            return TokenizerResult.CreateError(ex.GetErrorObject(input.State.CurrentPosition));
+        }
+    }
+
     /// <summary>
     /// Starts tokenizing a group.
     /// </summary>
@@ -201,9 +217,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             {
                 return TryGetNextToken(ref input, semanticProvider, out result);
             }
-            object? semanticValue = semanticProvider.Transform(ref input.State, arg.GroupContainerSymbol, input.RemainingCharacters[..charactersRead]);
-            result = TokenizerResult.CreateSuccess(arg.GroupContainerSymbol, semanticValue, input.State.CurrentPosition);
-            input.Consume(charactersRead);
+            result = CreateToken(ref input, semanticProvider, arg.GroupContainerSymbol, charactersRead);
             return true;
         }
         input.SuspendTokenizer(this, arg.Update(ref groupStack, charactersRead));
@@ -225,15 +239,12 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 
             var (acceptSymbol, charactersRead, tokenizerState) =
                 _dfa.Match(hotData.GrammarFile, input.RemainingCharacters, input.IsFinalBlock, ignoreLeadingErrors: false);
-            ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..charactersRead];
 
             if (acceptSymbol.HasValue)
             {
                 if (hotData.IsTerminal(acceptSymbol))
                 {
-                    object? semanticValue = semanticProvider.Transform(ref state, acceptSymbol, lexeme);
-                    result = TokenizerResult.CreateSuccess(acceptSymbol, semanticValue, state.CurrentPosition);
-                    input.Consume(charactersRead);
+                    result = CreateToken(ref input, semanticProvider, acceptSymbol, charactersRead);
                     return true;
                 }
                 TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
@@ -253,9 +264,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     TokenSymbolHandle groupContainer = hotData.GetGroupContainer(group);
                     if (hotData.IsTerminal(groupContainer))
                     {
-                        object? semanticValue = semanticProvider.Transform(ref state, groupContainer, input.RemainingCharacters[..charactersRead]);
-                        result = TokenizerResult.CreateSuccess(groupContainer, semanticValue, state.CurrentPosition);
-                        input.Consume(charactersRead);
+                        result = CreateToken(ref input, semanticProvider, groupContainer, charactersRead);
                         return true;
                     }
                     Debug.Assert(charactersRead == 0);
@@ -271,6 +280,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 return false;
             }
 
+            ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..charactersRead];
             string errorText = ParserUtilities.GetAbbreviatedLexicalErrorText(lexeme);
             result = TokenizerResult.CreateError(new ParserDiagnostic(state.CurrentPosition,
                 new LexicalError(errorText, tokenizerState)));

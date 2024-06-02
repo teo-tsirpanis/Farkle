@@ -85,15 +85,21 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (eofAction.IsReduce)
                 {
-                    currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
+                    try
+                    {
+                        currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
+                    }
+                    catch (ParserApplicationException ex)
+                    {
+                        result = ex.GetErrorObject(input.State.CurrentPosition);
+                        return RunResult.Failure;
+                    }
                     goto RetryEof;
                 }
             }
             else if (!token.IsSuccess)
             {
-                result = ParserUtilities.SupplyParserStateInfo(token.Data,
-                    ParserUtilities.GetExpectedSymbols(Grammar, _lrStateMachine[currentState]),
-                    currentState);
+                result = ParserUtilities.SupplyParserStateInfo(token.Data, Grammar, _lrStateMachine, currentState);
                 return RunResult.Failure;
             }
             else
@@ -110,7 +116,15 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (action.IsReduce)
                 {
-                    currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
+                    try
+                    {
+                        currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);
+                    }
+                    catch (ParserApplicationException ex)
+                    {
+                        result = ex.GetErrorObject(input.State.CurrentPosition);
+                        return RunResult.Failure;
+                    }
                     goto RetryToken;
                 }
                 TokenSymbolAttributes flags = hotData.GetTokenSymbolFlags(token.Symbol);

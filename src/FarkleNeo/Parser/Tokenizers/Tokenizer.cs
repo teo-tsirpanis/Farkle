@@ -23,6 +23,7 @@ public abstract class Tokenizer<TChar>
     /// Whether the tokenizer does not need to be wrapped in a tokenizer chain.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// To always support suspension, even standalone tokenizers are wrapped in a
     /// tokenizer chain, leading to an extra layer of indirection. By setting this
     /// property to <see langword="true"/>, Farkle does not wrap the tokenizer if
@@ -32,6 +33,12 @@ public abstract class Tokenizer<TChar>
     /// never suspend. An exception to this is when the tokenizer suspends by calling
     /// <see cref="TokenizerExtensions.SuspendTokenizer{TChar}(ref ParserInputReader{TChar}, Tokenizer{TChar})"/>
     /// with a resumption point of <see langword="this"/>.
+    /// </para>
+    /// <para>
+    /// Additionally, tokenizers that set this property to <see langword="true"/> must
+    /// handle thrown exceptions of type <sep cref="ParserApplicationException"/> and
+    /// translate them to error <see cref="TokenizerResult"/>s.
+    /// </para>
     /// </remarks>
     internal bool CanSkipChainedTokenizerWrapping { get; private protected init; }
 

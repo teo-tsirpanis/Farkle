@@ -65,12 +65,16 @@ internal static class ParserUtilities
         return builder.ToImmutable();
     }
 
-    internal static object SupplyParserStateInfo(object diagnostic, ImmutableArray<string?> expectedTokenNames, int parserState)
-        => diagnostic switch
+    internal static object SupplyParserStateInfo(object diagnostic, Grammar grammar, LrStateMachine lr, int parserState)
+    {
+        return diagnostic switch
         {
-            IParserStateInfoSupplier x => x.WithParserStateInfo(expectedTokenNames, parserState),
+            IParserStateInfoSupplier x => x.WithParserStateInfo(GetExpectedTokenNames(), parserState),
             ParserDiagnostic { Message: IParserStateInfoSupplier x, Position: var position } =>
-                new ParserDiagnostic(position, x.WithParserStateInfo(expectedTokenNames, parserState)),
+                new ParserDiagnostic(position, x.WithParserStateInfo(GetExpectedTokenNames(), parserState)),
             _ => diagnostic
         };
+
+        ImmutableArray<string?> GetExpectedTokenNames() => GetExpectedSymbols(grammar, lr[parserState]);
+    }
 }

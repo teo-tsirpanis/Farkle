@@ -77,7 +77,19 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         for (; i < Components.Length; i++)
         {
             // We invoke the next tokenizer in the chain.
-            bool foundToken = Components[i].TryGetNextToken(ref input, semanticProvider, out result);
+            bool foundToken;
+            try
+            {
+                foundToken = Components[i].TryGetNextToken(ref input, semanticProvider, out result);
+            }
+            // Catch ParserApplicationException thrown by third-party tokenizers.
+            // First-party tokenizers that opt-out of the wrapping must catch it
+            // themselves.
+            catch (ParserApplicationException ex)
+            {
+                result = TokenizerResult.CreateError(ex.GetErrorObject(input.State.CurrentPosition));
+                foundToken = true;
+            }
             // Because in the main loop when we suspend we must update NextChainIndex,
             // we must always check if we have suspended after invoking a tokenizer.
             // If our tokenizer state is null, we check again in case we have suspended

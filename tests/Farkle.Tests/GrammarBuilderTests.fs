@@ -8,6 +8,7 @@ module Farkle.Tests.GrammarBuilderTests
 open Expecto
 open Farkle
 open Farkle.Builder
+open Farkle.Diagnostics
 open Farkle.Parser
 open FsCheck
 open System
@@ -73,6 +74,24 @@ let tests = testList "Grammar builder tests" [
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
         let runtime = Terminals.float "Floating-point" |> GrammarBuilder.build
         Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
+
+    test "Arithmetic overflows when parsing integers do not cause an exception" {
+        // Add a space at the beginning to test position propagation.
+        let testString = " 99999999999999999999"
+        let doTest (builder: string -> IGrammarSymbol<_>) =
+            let parser = (builder "Number").Build()
+            Expect.isFalse (parser.IsFailing) "Building failed"
+            let result = CharParser.parseString parser testString |> ParserResult.toResult
+            let error = Expect.wantError result "Parsing should have failed"
+            match error with
+            | ParserDiagnostic(pos, :? string) -> Expect.equal pos.Column 2 "Parsing failed at a different position"
+            | _ -> failwith "Parsing did not fail with a string"
+
+        doTest Terminals.int
+        doTest Terminals.int64
+        doTest Terminals.uint32
+        doTest Terminals.uint64
+    }
 
     test "IGrammarSymbols, productions, and transformers are covariant" {
         let symbol = terminal "x" (T(fun _ _ -> "")) (Regex.string "x")

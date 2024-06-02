@@ -532,6 +532,15 @@ module internal GrammarBuilderOperators =
     /// error on building. Useful for recursive productions.
     let inline nonterminalU name = Nonterminal.CreateUntyped name
 
+    /// Raises a `ParserApplicationException` with the given errror object.
+    /// This exception will be caught by Farkle and gracefully fail the parsing operation.
+    /// Use this function when the error might occur under normal circumstances
+    /// (such as an unknown identifier name in a programming language).
+    let error msg = Farkle.ParserApplicationException msg |> raise
+
+    /// Variant of `error` that takes a format string.
+    let errorf fmt = Printf.ksprintf error fmt
+
     /// Creates a `IGrammarSymbol&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.
     let inline (||=) name (productions: #seq<_>) =

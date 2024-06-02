@@ -345,26 +345,24 @@ let tests = testList "Grammar builder tests" [
     }
 #endif
 
-#if false // TODO-FARKLE7: Reevaluate when user errors are implemented in Farkle 7.
     test "Parser application errors are correctly handled" {
         let terminal =
             Regex.string "O"
-            |> terminal "Terminal" (T(fun _ _ -> error "Terminal found" |> ignore))
-        let designtime =
+            |> terminal "Terminal" (T(fun _ data -> errorf "Terminal found: %s" (data.ToString()) |> ignore))
+        let grammar =
             "Nonterminal" ||= [!@ terminal |> asProduction; empty => (fun () -> error "Empty input")]
-        let runtime = designtime.Build()
+        let parser = grammar.Build()
 
-        let mkError column msg =
-            ParserError(Position.Create1 1 column, ParseErrorType.UserError msg)
-            |> FarkleError.ParseError |> Error
+        let doTest input column expectedError assertMsg =
+            match CharParser.parseString parser input with
+            | ParserError(ParserDiagnostic(pos, error)) ->
+                Expect.equal pos (TextPosition.Create1(1, column)) "Parsing failed at the wrong position"
+                Expect.equal error expectedError assertMsg
+            | x -> failtestf "Parsing did not fail with an error: %A" x
 
-        let error1 = mkError 8 "Terminal found"
-        Expect.equal (runtime.Parse "       O") error1 "Application errors at transformers were not caught"
-
-        let error2 = mkError 4 "Empty input"
-        Expect.equal (runtime.Parse "   ") error2 "Application errors at fusers were not caught"
+        doTest "       O" 8 "Terminal found: O" "Application errors at transformers were not caught"
+        doTest "   " 4 "Empty input" "Application errors at fusers were not caught"
     }
-#endif
 
     test "Farkle does not overflow the stack when processing a deep grammar symbol" {
         let depth = 1000

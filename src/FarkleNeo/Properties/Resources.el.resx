@@ -153,6 +153,9 @@
   <data name="Builder_RegexStringUnicodeCategoriesNotSupported" xml:space="preserve">
     <value>Οι κατηγορίες Unicode δεν υποστηρίζονται</value>
   </data>
+  <data name="Builder_RegexStringParseError" xml:space="preserve">
+    <value>Αποτυχία συντακτικής ανάλυσης της κανονικής έκφρασης του {0}: {1}</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Χτίζεται η γραμματική {0}</value>
   </data>

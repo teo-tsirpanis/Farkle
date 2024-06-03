@@ -500,7 +500,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             foreach (var r in regexes)
             {
-                var info = Visit(in this, r, caseSensitive);
+                var info = Visit(in this, i, r, caseSensitive);
                 rootFirstPos = BitSet.Union(in rootFirstPos, in info.FirstPos);
                 int leafIndex = info.HasStar
                     ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(i, TerminalPriority))
@@ -524,7 +524,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         return (leaves, followPos, rootFirstPos);
 
-        RegexInfo Visit(in DfaBuild<TChar> @this, Regex regex, bool caseSensitive, bool isLowered = false)
+        RegexInfo Visit(in DfaBuild<TChar> @this, int symbolIndex, Regex regex, bool caseSensitive, bool isLowered = false)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
@@ -533,7 +533,21 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             while (regex.IsRegexString(out RegexStringHolder? regexString))
             {
-                regex = regexString.GetRegex();
+                switch (regexString.GetRegexOrError())
+                {
+                    case Regex r:
+                        regex = r;
+                        break;
+                    case object error:
+                        // If a faulty string regex exists many times in the grammar (or just once, but `Repeat`ed), we
+                        // will log the same error multiple times. This is also the behavior in previous versions of Farkle.
+                        // We could add checks to ensure the error is logged only once, but it would get quite complicated
+                        // for little benefit; the most common usage pattern of string regexes is directly on a terminal,
+                        // and not composed in another regex.
+                        @this.Log.RegexStringParseError(@this.Symbols.GetName(symbolIndex), error);
+                        regex = Regex.Void;
+                        break;
+                }
                 caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
             }
 
@@ -542,7 +556,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Empty;
                 foreach (var r in regexes)
                 {
-                    RegexInfo nextResult = Visit(in @this, r, caseSensitive, isLowered);
+                    RegexInfo nextResult = Visit(in @this, symbolIndex, r, caseSensitive, isLowered);
                     LinkFollowPos(in info.LastPos, in nextResult.FirstPos);
                     info += nextResult;
                 }
@@ -554,7 +568,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Void;
                 foreach (var r in regexes)
                 {
-                    info |= Visit(in @this, r, caseSensitive, isLowered);
+                    info |= Visit(in @this, symbolIndex, r, caseSensitive, isLowered);
                 }
                 return info;
             }
@@ -564,14 +578,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Empty;
                 for (int i = 0; i < m; i++)
                 {
-                    RegexInfo nextInfo = Visit(in @this, loopItem, caseSensitive, isLowered);
+                    RegexInfo nextInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered);
                     LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                     info += nextInfo;
                 }
 
                 if (n == int.MaxValue)
                 {
-                    RegexInfo starInfo = Visit(in @this, loopItem, caseSensitive, isLowered).AsStar();
+                    RegexInfo starInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered).AsStar();
                     LinkFollowPos(in starInfo.LastPos, in starInfo.FirstPos);
                     LinkFollowPos(in info.LastPos, in starInfo.FirstPos);
                     info += starInfo;
@@ -580,7 +594,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 {
                     for (int i = m; i < n; i++)
                     {
-                        RegexInfo nextInfo = Visit(in @this, loopItem, caseSensitive, isLowered).AsOptional();
+                        RegexInfo nextInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered).AsOptional();
                         LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                         info += nextInfo;
                     }
@@ -605,7 +619,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
             if (!isLowered)
             {
-                return Visit(in @this, regex, caseSensitive, isLowered: true);
+                return Visit(in @this, symbolIndex, regex, caseSensitive, isLowered: true);
             }
 
             throw new InvalidOperationException("Internal error: unrecognized form of lowered regex.");

@@ -16,15 +16,34 @@ internal abstract class RegexStringHolder
 {
     private RegexStringHolder() { }
 
-    public abstract Regex GetRegex();
+    /// <summary>
+    /// Parses the regex string.
+    /// </summary>
+    /// <returns>A <see cref="Regex"/> if parsing was successful,
+    /// or an <see cref="object"/> if not.</returns>
+    public abstract object GetRegexOrError();
 
     public static RegexStringHolder Create(string pattern) => new Default(pattern);
 
     [DebuggerDisplay("{Pattern,nq}")]
     private sealed class Default(string pattern) : RegexStringHolder
     {
+        private object? _result;
+
         public string Pattern { get; } = pattern;
 
-        public override Regex GetRegex() => throw new NotImplementedException();
+        public override object GetRegexOrError()
+        {
+            if (_result is {} result)
+            {
+                return result;
+            }
+
+            var parserResult = RegexGrammar.Parser.Parse(Pattern);
+            result = parserResult.IsSuccess ? parserResult.Value : parserResult.Error;
+            Interlocked.CompareExchange(ref _result, result, null);
+
+            return _result;
+        }
     }
 }

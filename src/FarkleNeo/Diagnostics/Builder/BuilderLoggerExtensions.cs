@@ -35,6 +35,9 @@ internal static class BuilderLoggerExtensions
     public static void SymbolMultipleRenames(in this BuilderLogger logger, string originalName, string renamedName1, string renamedName2) =>
         logger.Warning("FARKLE0008", LocalizedDiagnostic.Create(nameof(Resources.Builder_SymbolMultipleRenames), originalName, renamedName1, renamedName2));
 
+    public static void RegexStringParseError(in this BuilderLogger logger, in BuilderSymbolName symbolName, object error) =>
+        logger.Error("FARKLE0009", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexStringParseError), symbolName, error));
+
     public static void InformationLocalized(in this BuilderLogger logger, string resourceKey)
     {
         if (logger.IsEnabled(DiagnosticSeverity.Information))

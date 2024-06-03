@@ -285,6 +285,8 @@ internal static class Resources
 
     public static string Builder_RegexStringUnicodeCategoriesNotSupported => GetResourceString(nameof(Builder_RegexStringUnicodeCategoriesNotSupported));
 
+    public static string Builder_RegexStringParseError => GetResourceString(nameof(Builder_RegexStringParseError));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

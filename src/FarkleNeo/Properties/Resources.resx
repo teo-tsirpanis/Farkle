@@ -153,6 +153,9 @@
   <data name="Builder_RegexStringUnicodeCategoriesNotSupported" xml:space="preserve">
     <value>Unicode categories are not supported</value>
   </data>
+  <data name="Builder_RegexStringParseError" xml:space="preserve">
+    <value>Failed to parse the regex of {0}: {1}</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Building grammar {0}</value>
   </data>

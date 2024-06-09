@@ -17,6 +17,11 @@ internal abstract class RegexStringHolder
     private RegexStringHolder() { }
 
     /// <summary>
+    /// The string pattern of the regex.
+    /// </summary>
+    public abstract string Pattern { get; }
+
+    /// <summary>
     /// Parses the regex string.
     /// </summary>
     /// <returns>A <see cref="Regex"/> if parsing was successful,
@@ -30,7 +35,7 @@ internal abstract class RegexStringHolder
     {
         private object? _result;
 
-        public string Pattern { get; } = pattern;
+        public override string Pattern { get; } = pattern;
 
         public override object GetRegexOrError()
         {

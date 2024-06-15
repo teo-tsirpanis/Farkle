@@ -15,10 +15,17 @@ namespace Farkle.Builder;
 /// <seealso cref="Regex.FromRegexString(string, CompatibilityLevel)"/>
 internal static class RegexGrammar
 {
+    private static CharParser<Regex> s_parser = null!;
+
+    private static object? s_parserLock;
+
+    private static bool s_parserInitialized;
+
     private static ParserApplicationException CreateLocalizedException(string resourceName) =>
         new(LocalizedDiagnostic.Create(resourceName));
 
-    internal static readonly CharParser<Regex> Parser = GetGrammarBuilder().Build();
+    internal static CharParser<Regex> Parser =>
+        LazyInitializer.EnsureInitialized(ref s_parser, ref s_parserInitialized, ref s_parserLock, () => GetGrammarBuilder().Build());
 
     private static int ParseInt(ReadOnlySpan<char> span)
     {

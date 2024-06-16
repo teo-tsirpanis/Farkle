@@ -9,39 +9,48 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Regex
-open Farkle.Grammars
 open Farkle.Tests
 
 let seqToString x =
     x
-    |> Seq.map (fun c ->
-        // All but the first character need to be escaped
-        // only under specific circumstances, but we will be less discrete.
-        if c = '\\' || c = ']' || c = '^' || c = '-' then
-            sprintf "\\%c" c
+    |> Seq.map (fun struct(cFrom, cTo) ->
+        let escape c =
+            match c with
+            | '\\' | ']' | '^' | '-' -> $"\\{c}"
+            | _ -> Operators.string c
+        if cFrom = cTo then
+            escape cFrom
         else
-            Operators.string c)
+            $"{escape cFrom}-{escape cTo}")
     |> String.concat ""
 
 let rec formatRegex =
     function
-    | Regex.Chars x -> sprintf "[%s]" (seqToString x)
-    | Regex.AllButChars x -> sprintf "[^%s]" (seqToString x)
-    | Regex.Star(Regex.Concat _ as x)
-    | Regex.Star(Regex.Alt _ as x) -> "(" + formatRegex x + ")*"
-    | Regex.Star x -> formatRegex x + "*"
-    | Regex.Alt x -> x |> Seq.map formatRegex |> String.concat "|"
-    | Regex.Concat x ->
+    | RegexAny -> "."
+    | RegexChars x -> $"[{seqToString x}]"
+    | RegexAllButChars x -> $"[^{seqToString x}]"
+    | RegexAlt x -> x |> Seq.map formatRegex |> String.concat "|"
+    | RegexLoop(x, 0, 1) -> $"{formatQuantifiedRegex x}?"
+    | RegexLoop(x, 0, int.MaxValue) -> $"{formatQuantifiedRegex x}*"
+    | RegexLoop(x, 1, int.MaxValue) -> $"{formatQuantifiedRegex x}+"
+    | RegexLoop(x, m, n) when m = n -> $"{formatQuantifiedRegex x}{{{m}}}"
+    | RegexLoop(x, m, n) -> $"{formatQuantifiedRegex x}{{{m},{n}}}"
+    | RegexConcat x ->
         x
-        |> Seq.map (function | Regex.Alt _ as x -> "(" + formatRegex x + ")" | x -> formatRegex x)
+        |> Seq.map (function | RegexAlt _ as x -> "(" + formatRegex x + ")" | x -> formatRegex x)
         |> String.concat ""
-    | Regex.RegexString holder -> "(" + holder.RegexString + ")"
+    | RegexRegexString pattern -> $"({pattern})"
 
-let checkRegex str regex =
+and formatQuantifiedRegex =
+    function
+    | RegexAlt _ | RegexConcat _ as x -> $"({formatRegex x})"
+    | x -> formatRegex x
+
+let checkRegex (str: string) regex =
     let regex' =
-        RuntimeFarkle.parseString RegexGrammar.runtime str
-        |> Flip.Expect.wantOk (sprintf "Error while parsing %A" str)
-    Expect.equal regex' regex "The regexes are different"
+        expectWantParseSuccess (RegexGrammar.Parser.Parse str) (sprintf "Error while parsing %A" str)
+        |> formatRegex
+    Expect.equal regex' (formatRegex regex) "The regexes are different"
 
 let mkTest str regex =
     let testTitle = sprintf "%A parses into the correct regex" str
@@ -57,41 +66,39 @@ let tests = testList "Regex grammar tests" [
 
     testPropertySmall "The Regex.regexString function works" (fun (RegexStringPair (regex, str)) ->
         let regexStr = formatRegex regex
-        let dfa =
-            [regexString regexStr, Choice1Of4 <| Terminal(0u, "Test")]
-            |> DFABuild.buildRegexesToDFA true false
-            |> Flip.Expect.wantOk "Building DFA failed"
-        matchDFAToString dfa str |> Option.isSome)
+        let parser =
+            regexString regexStr
+            |> terminalU "Test"
+            |> _.AutoWhitespace(false)
+            |> _.BuildSyntaxCheck()
+        let result = parser.Parse(str)
+        // Ignore build failures where the DFA has too many states.
+        result.IsSuccess || result.Error.ToString().Contains("FARKLE0001"))
 
     yield! [
         "[a\-z]", chars "a-z"
-        "\d+", Number |> chars |> plus
+        "\d+", charRanges ['0', '9'] |> plus
         "[^^]", allButChars "^"
-        "''", char '\''
-        "'It''s beautiful'", string "It's beautiful"
-        "It''s beautiful", string "It'sbeautiful"
-        "'[a-z]'", string "[a-z]"
+        "It's beautiful", string "It's beautiful"
+        "\[a-z]", string "[a-z]"
         "[1'2]", chars "1'2"
-        "\p{Number}", chars Number
-        @"[\--\\]", chars ['-' .. '\\']
-        "[\^-|]", chars ['^' .. '|']
-        "[^\^-|]", allButChars ['^' .. '|']
+        @"[\--\\]", charRanges ['-', '\\']
+        "[\^-|]", charRanges ['^', '|']
+        "[^\^-|]", allButCharRanges ['^', '|']
         "[\^\-|]", chars "^-|"
-        ".{59}?", any |> repeat 59 |> optional
+        "(.{59})?", any |> repeat 59 |> optional
         "0059", string "0059"
         ".{5,9}", between 5 9 any
         ".{59,}", atLeast 59 any
-        ".'{'59}?", concat [any; string "{59"; char '}' |> optional]
-        "'.'", char '.'
+        ".\{59}?", concat [any; string "{59"; char '}' |> optional]
+        "\.", char '.'
         "[.]", char '.'
-        "' '", char ' '
-        @"'\d'", string "\d"
         @"\\d", string "\d"
-        "''''''", string "'''"
-        "[0-246-8]", chars "0124678"
-        "[-a]", chars "-a"
-        "[a-]", chars "a-"
+        @"\\\\\\", string "\\\\\\"
+        "[0-246-8]", charRanges ['0', '2'; '4', '4'; '6', '8']
+        "[+-]", chars "+-" // We must use a character earlier than '-' in ASCII.
         "[]]", char ']'
+        "[^]]", allButChars [']']
     ]
     |> List.map ((<||) mkTest)
 ]

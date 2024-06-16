@@ -7,6 +7,7 @@
 module Farkle.Tests.Generators
 
 open System
+open System.Collections.Immutable
 open System.Text
 open Expecto
 open Farkle
@@ -78,6 +79,7 @@ type RegexStringPair = RegexStringPair of Regex * string
 let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexRegexString|) (r: Regex) =
     let mutable chars = Unchecked.defaultof<_>
     let mutable isInverted = false
+    let mutable stringLiteral = Unchecked.defaultof<_>
     let mutable regexes = Unchecked.defaultof<_>
     let mutable inner = null
     let mutable m = 0
@@ -90,6 +92,14 @@ let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexR
             RegexAllButChars chars
         else
             RegexChars chars
+    // We can't add another case; F# supports only 7 cases in active patterns.
+    // To add more, we will have to make a dedicated doscriminated union type
+    // for regexes.
+    elif r.IsStringLiteral(&stringLiteral) then
+        stringLiteral
+        |> Seq.map Regex.char
+        |> _.ToImmutableArray()
+        |> Choice5Of7 // RegexConcat but there is a bug in the compiler.
     elif r.IsAlt(&regexes) then
         RegexAlt regexes
     elif r.IsConcat(&regexes) then
@@ -97,7 +107,7 @@ let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexR
     elif r.IsLoop(&inner, &m, &n) then
         RegexLoop(inner, m, n)
     elif r.IsRegexString(&regexString) then
-        RegexRegexString ()
+        RegexRegexString regexString.Pattern
     else
         failwith "Impossible"
 
@@ -131,7 +141,7 @@ let genRegexString regex =
             for __ = 0 to len - 1 do
                 do! impl sb x
         // Regex strings are never created by the generator.
-        | RegexRegexString() -> ()
+        | RegexRegexString _ -> ()
     }
     gen {
         let sb = StringBuilder()

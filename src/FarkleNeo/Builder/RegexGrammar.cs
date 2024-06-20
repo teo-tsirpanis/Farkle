@@ -143,8 +143,8 @@ internal static class RegexGrammar
                 builder.Add((cPrevious, cPrevious));
                 break;
             case ParseCharacterSetState.HasDash:
-                builder.Add(('-', '-'));
                 builder.Add((cPrevious, cPrevious));
+                builder.Add(('-', '-'));
                 break;
         }
 
@@ -265,21 +265,32 @@ internal static class RegexGrammar
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringUnicodeCategoriesNotSupported)),
                 TerminalOptions.Hidden);
 
-        static IGrammarSymbol<Regex> MakeCharacterSet(string name, string start, Func<ImmutableArray<(char, char)>, Regex> fChars) =>
-            Terminal.Create(name,
+        static IGrammarSymbol<Regex> MakeCharacterSet(string name, string start, Func<ImmutableArray<(char, char)>, Regex> fChars)
+        {
+            // TODO: Should we also support shorthand escape sequences inside character sets like [\da-z]?
+            // On first sight not, because it will increase complexity of the transformer, with minimal benefit.
+            // When we support Unicode categories in the future, we can revisit this.
+            Regex escapedChar = Regex.Literal('\\') + Regex.OneOf(['\\', ']', '^', '-']);
+            return Terminal.Create(name,
                 Regex.Join([
                     Regex.Literal(start),
+                    // The first character can also be an unescaped closing bracket (making []] valid),
+                    // but cannot be a caret in non-negated sets (to resolve the ambiguity with
+                    // negated sets).
                     Regex.Choice([
-                        // TODO: Should we also support shorthand escape sequences inside character sets like [\da-z]?
-                        // On first sight not, because it will increase complexity of the transformer, with minimal benefit.
-                        // When we support Unicode categories in the future, we can revisit this.
-                        Regex.Literal('\\') + Regex.OneOf(['\\', ']', '^', '-']),
-                        Regex.Any
-                    ]).AtLeast(1),
+                        escapedChar,
+                        Regex.NotOneOf(start.EndsWith("^") ? ['\\'] : ['\\', '^'])
+                    ]),
+                    // Subsequent characters can be anything except an unescaped closing bracket.
+                    Regex.Choice([
+                        escapedChar,
+                        Regex.NotOneOf(['\\', ']'])
+                    ]).ZeroOrMore(),
                     Regex.Literal(']')
                 ]),
                 (ref ParserState state, ReadOnlySpan<char> data) =>
                     fChars(ParseCharacterSet(in state, data, start.Length)));
+        }
     }
 
     private enum ParseCharacterSetState

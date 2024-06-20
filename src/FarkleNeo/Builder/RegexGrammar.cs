@@ -155,9 +155,12 @@ internal static class RegexGrammar
     {
         var specialCharacters = "\\.[{()|?*+".ToImmutableArray();
 
-        var anyChars = Terminal.Create("Any characters",
-            Regex.NotOneOf(specialCharacters).AtLeast(1),
-            (ref ParserState state, ReadOnlySpan<char> data) => Regex.Literal(data.ToString()));
+        // For a moment this was matching as many characters as possible to create a
+        // single string literal node, but this is not correct, because it matched
+        // abc? as (abc)? instead of ab(c)?.
+        var anyCharacter = Terminal.Create("Any character",
+            Regex.NotOneOf(specialCharacters),
+            (ref ParserState state, ReadOnlySpan<char> data) => Regex.Literal(data[0]));
 
         var escapedCharacter = Terminal.Create("Escaped character",
             Regex.Literal('\\') + Regex.OneOf(specialCharacters),
@@ -218,7 +221,7 @@ internal static class RegexGrammar
             "\\D".Appended().FinishConstant(Regex.NotOneOf(numbers)),
             "\\s".Appended().FinishConstant(Regex.OneOf(whitespace)),
             "\\S".Appended().FinishConstant(Regex.NotOneOf(whitespace)),
-            anyChars.AsProduction(),
+            anyCharacter.AsProduction(),
             escapedCharacter.AsProduction(),
             predefinedSet.AsProduction(),
             allButPredefinedSet.AsProduction(),

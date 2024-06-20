@@ -191,7 +191,7 @@ internal static class RegexGrammar
             });
 
         var quantBetween = Terminal.Create("Between quantifier",
-            Regex.Join([Regex.Literal('{'), numbersRegex, Regex.Literal(','), numbersRegex, Regex.Literal(",}")]),
+            Regex.Join([Regex.Literal('{'), numbersRegex, Regex.Literal(','), numbersRegex, Regex.Literal('}')]),
             (ref ParserState _, ReadOnlySpan<char> data) =>
             {
                 data = data[1..^1];

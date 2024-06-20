@@ -237,16 +237,22 @@ internal static class RegexGrammar
             regexItem.Extended().Extend(quantifier).Finish((r, f) => f(r))
         );
 
-        // TODO-PERF: The + and | operators are inefficient because they allocate a new ImmutableArray each time.
-        var regexConcatenation = Nonterminal.Create<Regex>("Regex concatenation");
-        regexConcatenation.SetProductions(
-            regexQuantified.AsProduction(),
-            regexConcatenation.Extended().Extend(regexQuantified).Finish((r1, r2) => r1 + r2)
-        );
+        // We don't use an immutable array builder because it does not have a default constructor.
+        var regexConcatenation =
+            regexQuantified
+            .Many<Regex, List<Regex>>(atLeastOnce: true)
+            .Rename("Regex concatenation builder")
+            // Do not replace with collection expressions, ToImmutableArray is optimized for Lists.
+            .Select(x => Regex.Join(x.ToImmutableArray()))
+            .Rename("Regex concatenation");
+
+        var regexAlternationBuilder =
+            regexConcatenation
+            .SeparatedBy<Regex, List<Regex>>(Terminal.Literal("|"), atLeastOnce: true)
+            .Rename("Regex alternation builder");
 
         regex.SetProductions(
-            regexConcatenation.AsProduction(),
-            regex.Extended().Append("|").Extend(regexConcatenation).Finish((r1, r2) => r1 | r2)
+            regexAlternationBuilder.Finish(x => Regex.Choice(x.ToImmutableArray()))
         );
 
         return regex.AutoWhitespace(false);

@@ -273,7 +273,7 @@ internal static class RegexGrammar
 
         static IGrammarSymbol<Regex> MakeCharacterSet(string name, string start, Func<ImmutableArray<(char, char)>, Regex> fChars)
         {
-            // TODO: Should we also support shorthand escape sequences inside character sets like [\da-z]?
+            // Should we also support shorthand escape sequences inside character sets like [\da-z]?
             // On first sight not, because it will increase complexity of the transformer, with minimal benefit.
             // When we support Unicode categories in the future, we can revisit this.
             Regex escapedChar = Regex.Literal('\\') + Regex.OneOf(['\\', ']', '^', '-']);

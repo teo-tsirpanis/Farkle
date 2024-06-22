@@ -58,6 +58,16 @@ let mkTest str regex =
         checkRegex str regex
     }
 
+let mkFailedTest str =
+    let testTitle = sprintf "%A fails to parse" str
+    test testTitle {
+        let term =
+            regexString str
+            |> terminalU "Test"
+            |> GrammarBuilder.buildSyntaxCheck
+        expectIsParseFailure (term.Parse "") "The regex should not parse"
+    }
+
 [<Tests>]
 let tests = testList "Regex grammar tests" [
     testProperty "The regex parser works" (fun regex ->
@@ -101,4 +111,21 @@ let tests = testList "Regex grammar tests" [
         "[^]]", allButChars [']']
     ]
     |> List.map ((<||) mkTest)
+
+    yield! [
+        "[]"
+        "["
+        "[^"
+        "[^]"
+        "[z-a]"
+        "\p{Number}"
+        "\P{Number}"
+        "\pL"
+        "\PL"
+        "("
+        "x{}"
+        "x{9999999999}"
+        "x{2,1}"
+    ]
+    |> List.map mkFailedTest
 ]

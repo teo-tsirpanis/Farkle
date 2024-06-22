@@ -266,7 +266,9 @@ internal static class RegexGrammar
 
         static IGrammarSymbol<Regex> MakeCategory(string name, string start) =>
             Terminal.Create<Regex>(name,
-                Regex.Literal(start) + Regex.OneOf([('A', 'Z'), ('a', 'z')]).Repeat(2),
+                // According to https://www.regular-expressions.info/unicode.html,
+                // this syntax accepts only single-letter categories.
+                Regex.Literal(start) + Regex.OneOf([('A', 'Z')]),
                 (ref ParserState _, ReadOnlySpan<char> _) =>
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringUnicodeCategoriesNotSupported)),
                 TerminalOptions.Hidden);

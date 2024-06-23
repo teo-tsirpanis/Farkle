@@ -5,7 +5,7 @@ using Farkle.Grammars;
 
 namespace Farkle.Parser.Semantics;
 
-internal sealed class SyntaxChecker<TChar, T> : ISemanticProvider<TChar, T?> where T : class?
+internal sealed class SyntaxChecker<TChar, T> : ISemanticProvider<TChar, T?>
 {
     private SyntaxChecker() { }
 

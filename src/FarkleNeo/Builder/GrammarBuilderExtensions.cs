@@ -363,7 +363,7 @@ public static class GrammarBuilderExtensions
             // We will collect errors only if we need to report them from a failing parser or tokenizer.
             if ((artifacts & BuilderArtifacts.TokenizerOnChar | BuilderArtifacts.CharParser) != 0)
             {
-                errors ??= [];
+                errors = [];
             }
 
             if ((artifacts & BuilderArtifacts.GrammarSummary) != 0)

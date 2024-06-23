@@ -6,7 +6,9 @@ using System.Diagnostics;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
 using Farkle.Parser.Semantics;
+using Farkle.Parser.Tokenizers;
 
 namespace Farkle.Builder;
 
@@ -324,9 +326,120 @@ public static class GrammarBuilderExtensions
     }
 
     /// <summary>
-    /// Creates a <see cref="CharParser{T}"/> from the given <see cref="IGrammarBuilder{T}"/>.
+    /// Builds an <see cref="IGrammarBuilder"/>. This is the entry point to Farkle's builder.
     /// </summary>
     /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
+    /// <param name="builder">The grammar to build.</param>
+    /// <param name="artifacts">The set of artifacts to build.</param>
+    /// <param name="options">Used to customize the building process. Optional.</param>
+    /// <param name="isSyntaxCheck">Whether to use a dummy semantic provider instead of building one.</param>
+    private static BuilderResult<T> BuildImpl<T>(this IGrammarBuilder builder, BuilderArtifacts artifacts,
+        BuilderOptions? options = null, bool isSyntaxCheck = false)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+
+        options ??= BuilderOptions.Default;
+
+        // Add dependencies between artifacts.
+        // The order is important; if an artifact appears in the first parameter,
+        // it cannot appear in the second parameter of a subsequent call.
+        AddArtifactDependencies(BuilderArtifacts.CharParser,
+            BuilderArtifacts.SemanticProviderOnChar | BuilderArtifacts.TokenizerOnChar | BuilderArtifacts.GrammarLrStateMachine);
+        AddArtifactDependencies(BuilderArtifacts.TokenizerOnChar,
+            BuilderArtifacts.GrammarDfaOnChar);
+        AddArtifactDependencies(BuilderArtifacts.GrammarLrStateMachine | BuilderArtifacts.GrammarDfaOnChar,
+            BuilderArtifacts.GrammarSummary);
+
+        Grammar? grammar = null;
+        ISemanticProvider<char, T>? semanticProvider = null;
+        Tokenizer<char>? tokenizer = null;
+        CharParser<T>? parser = null;
+
+        if (artifacts != BuilderArtifacts.None)
+        {
+            GrammarDefinition grammarDefinition = GrammarDefinition.Create(builder, options.Log, options.CancellationToken);
+
+            List<BuilderDiagnostic>? errors = null;
+            // We will collect errors only if we need to report them from a failing parser or tokenizer.
+            if ((artifacts & BuilderArtifacts.TokenizerOnChar | BuilderArtifacts.CharParser) != 0)
+            {
+                errors = [];
+            }
+
+            if ((artifacts & BuilderArtifacts.GrammarSummary) != 0)
+            {
+                grammar = GrammarBuild.Build(grammarDefinition, artifacts, options, errors);
+            }
+
+            object? customError = errors is null or [] ? null : new CompositeDiagnostic<BuilderDiagnostic>(errors);
+
+            if ((artifacts & BuilderArtifacts.TokenizerOnChar) != 0)
+            {
+                // Custom error is the same for both the parser and the tokenizer, which can
+                // give confusing messages when a failing tokenizer gets swapped with a
+                // working one. We can fix this by providing a separate custom error for the
+                // tokenizer.
+                tokenizer = Tokenizer.Create<char>(grammar!, false, customError);
+            }
+
+            if ((artifacts & BuilderArtifacts.SemanticProviderOnChar) != 0)
+            {
+                semanticProvider = isSyntaxCheck
+                    ? SyntaxChecker<char, T>.Instance!
+                    : SemanticProviderBuild.Build<T>(grammarDefinition);
+            }
+
+            if ((artifacts & BuilderArtifacts.CharParser) != 0)
+            {
+                parser = CharParser.Create(grammar!, tokenizer!, semanticProvider!, customError);
+            }
+        }
+
+        return new BuilderResult<T>
+        {
+            Grammar = grammar,
+            CharParser = parser,
+            SemanticProviderOnChar = semanticProvider,
+            TokenizerOnChar = tokenizer
+        };
+
+        // Adds dependencies between artifacts. If one of dependents is specified, dependencies will be built as well.
+        void AddArtifactDependencies(BuilderArtifacts dependents, BuilderArtifacts dependencies)
+        {
+            if ((artifacts & dependents) != 0)
+            {
+                artifacts |= dependencies;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds multiple artifacts from the given <see cref="IGrammarBuilder{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
+    /// <param name="builder">The grammar to build.</param>
+    /// <param name="artifacts">The set of artifacts to build.</param>
+    /// <param name="options">Used to customize the building process. Optional.</param>
+    /// <returns>
+    /// A <see cref="BuilderResult{T}"/> object with the properties of the requested artifacts populated.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The builder will reuse resources to build the requested artifacts where applicable.
+    /// </para>
+    /// <para>
+    /// Additional artifacts may be built beyond the ones requested, if they are dependencies of the requested
+    /// artifacts. For example, if <see cref="BuilderArtifacts.CharParser"/> is requested, the builder will also
+    /// build <see cref="BuilderArtifacts.TokenizerOnChar"/>, <see cref="BuilderArtifacts.SemanticProviderOnChar"/>.
+    /// </para>
+    /// </remarks>
+    public static BuilderResult<T> Build<T>(this IGrammarBuilder<T> builder, BuilderArtifacts artifacts, BuilderOptions? options = null) =>
+        builder.BuildImpl<T>(artifacts, options);
+
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/> from the given <see cref="IGrammarBuilder{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The return type of the parser or semantic provider.</typeparam>
     /// <param name="builder">The grammar to build.</param>
     /// <param name="options">Used to customize the building process. Optional.</param>
     /// <returns>
@@ -336,18 +449,35 @@ public static class GrammarBuilderExtensions
     /// obtained by trying to parse any text, and casting the result's <see cref="ParserResult{T}.Error"/>
     /// property to <see cref="IReadOnlyList{BuilderDiagnostic}"/> of type <see cref="BuilderDiagnostic"/>.
     /// </returns>
-    public static CharParser<T> Build<T>(this IGrammarBuilder<T> builder, BuilderOptions? options = null)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+    public static CharParser<T> Build<T>(this IGrammarBuilder<T> builder, BuilderOptions? options = null) =>
+        builder.Build(BuilderArtifacts.CharParser, options).GetCharParserOrThrow();
 
-        options ??= BuilderOptions.Default;
-        GrammarDefinition grammarDefinition = GrammarDefinition.Create(builder, options.Log, options.CancellationToken);
-        List<BuilderDiagnostic> errors = [];
-        var grammar = GrammarBuild.Build(grammarDefinition, options, errors);
-        object? customError = errors is [] ? null : new CompositeDiagnostic<BuilderDiagnostic>(errors);
-        var semanticProvider = SemanticProviderBuild.Build<T>(grammarDefinition);
-        return CharParser.Create(grammar, semanticProvider, customError);
-    }
+    /// <summary>
+    /// Builds multiple artifacts from the given untyped <see cref="IGrammarBuilder"/>.
+    /// </summary>
+    /// <typeparam name="T">The supposed return type of the parser and the semantic provider. Must be a reference type.</typeparam>
+    /// <param name="builder">The grammar to build.</param>
+    /// <param name="artifacts">The set of artifacts to build.</param>
+    /// <param name="options">Used to customize the building process. Optional.</param>
+    /// <returns>
+    /// A <see cref="BuilderResult{T}"/> object with the properties of the requested artifacts populated.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The builder will reuse resources to build the requested artifacts where applicable.
+    /// </para>
+    /// <para>
+    /// Additional artifacts may be built beyond the ones requested, if they are dependencies of the requested
+    /// artifacts. For example, if <see cref="BuilderArtifacts.CharParser"/> is requested, the builder will also
+    /// build <see cref="BuilderArtifacts.TokenizerOnChar"/>, <see cref="BuilderArtifacts.SemanticProviderOnChar"/>.
+    /// </para>
+    /// <para>
+    /// If requested, the builder will create a syntax-checking parser and semantic provider that will not execute
+    /// any semantic actions and produce <see langword="null"/> semantic values on success.
+    /// </para>
+    /// </remarks>
+    public static BuilderResult<T?> BuildSyntaxCheck<T>(this IGrammarBuilder builder, BuilderArtifacts artifacts, BuilderOptions? options = null) where T : class? =>
+        builder.BuildImpl<T?>(artifacts, options, isSyntaxCheck: true);
 
     /// <summary>
     /// Creates a syntax-checking <see cref="CharParser{T}"/> from the given <see cref="IGrammarBuilder{T}"/>.
@@ -365,24 +495,19 @@ public static class GrammarBuilderExtensions
     /// obtained by trying to parse any text, and casting the result's <see cref="ParserResult{T}.Error"/>
     /// property to <see cref="IReadOnlyList{BuilderDiagnostic}"/> of type <see cref="BuilderDiagnostic"/>.
     /// </remarks>
-    public static CharParser<T?> BuildSyntaxCheck<T>(this IGrammarBuilder builder, BuilderOptions? options = null) where T : class?
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+    public static CharParser<T?> BuildSyntaxCheck<T>(this IGrammarBuilder builder, BuilderOptions? options = null) where T : class? =>
+        builder.BuildSyntaxCheck<T>(BuilderArtifacts.CharParser, options).GetCharParserOrThrow();
 
-        options ??= BuilderOptions.Default;
-        GrammarDefinition grammarDefinition = GrammarDefinition.Create(builder, options.Log, options.CancellationToken);
-        List<BuilderDiagnostic> errors = [];
-        var grammar = GrammarBuild.Build(grammarDefinition, options, errors);
-        object? customError = errors is [] ? null : new CompositeDiagnostic<BuilderDiagnostic>(errors);
-        return CharParser.Create(grammar, SyntaxChecker<char, T>.Instance, customError);
-    }
-
-    /// <inheritdoc cref="BuildSyntaxCheck{T}"/>
+    /// <inheritdoc cref="BuildSyntaxCheck{T}(IGrammarBuilder, BuilderOptions?)"/>
     public static CharParser<object?> BuildSyntaxCheck(this IGrammarBuilder builder, BuilderOptions? options = null) =>
-        builder.BuildSyntaxCheck<object?>(options);
+        builder.BuildSyntaxCheck<object>(options);
+
+    /// <inheritdoc cref="BuildSyntaxCheck{T}(IGrammarBuilder, BuilderArtifacts, BuilderOptions?)"/>
+    public static BuilderResult<object?> BuildSyntaxCheck(this IGrammarBuilder builder, BuilderArtifacts artifacts, BuilderOptions? options = null) =>
+        builder.BuildSyntaxCheck<object>(artifacts, options);
 
     /// <summary>
-    /// Obsolete. Use <see cref="BuildSyntaxCheck"/> instead.
+    /// Obsolete. Use <see cref="BuildSyntaxCheck(IGrammarBuilder, BuilderOptions?)"/> instead.
     /// </summary>
     [Obsolete(Obsoletions.BuildUntypedMessage
 #if NET5_0_OR_GREATER

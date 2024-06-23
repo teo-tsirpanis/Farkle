@@ -53,15 +53,17 @@ internal static class GrammarBuild
     /// Builds a <see cref="Grammar"/> object from a <see cref="GrammarDefinition"/>.
     /// </summary>
     /// <param name="grammarDefinition">The grammar definition.</param>
+    /// <param name="artifacts">The artifacts to build. Only <see cref="BuilderArtifacts.GrammarLrStateMachine"/>
+    /// and <see cref="BuilderArtifacts.GrammarDfaOnChar"/> are considered.</param>
     /// <param name="options">Options to control the building process.</param>
     /// <param name="errors">An optional collection to store diagnostics of
     /// severity <see cref="DiagnosticSeverity.Error"/>.</param>
-    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
+    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderArtifacts artifacts, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
     {
         var log = options.Log.WithRedirectErrors(errors);
         string grammarName = grammarDefinition.GrammarName;
         log.InformationLocalized(nameof(Resources.Builder_BuildingStarted), grammarName);
-        Grammar grammar = Build(grammarDefinition, options, in log);
+        Grammar grammar = Build(grammarDefinition, artifacts, options, in log);
         // Get conflicts and log them. Skip the computation if no errors are logged
         // (i.e. the log has no listeners at all).
         if (log.IsEnabled(DiagnosticSeverity.Error))
@@ -76,7 +78,7 @@ internal static class GrammarBuild
         return grammar;
     }
 
-    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderOptions options, in BuilderLogger log)
+    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderArtifacts artifacts, BuilderOptions options, in BuilderLogger log)
     {
         ref readonly GrammarGlobalOptions globalOptions = ref grammarDefinition.GlobalOptions;
         bool autoWhitespace = globalOptions.AutoWhitespace;
@@ -103,7 +105,9 @@ internal static class GrammarBuild
         bool writeSpecialNames = true;
 
         // Add terminals.
-        GrammarSymbolsProvider dfaSymbols = new(grammarDefinition.Terminals.Count);
+        GrammarSymbolsProvider? dfaSymbols = ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0)
+            ? new(grammarDefinition.Terminals.Count)
+            : null;
         // We must add the groups' start and end symbols after the terminals.
         // Keep the groups in this list to process them later.
         List<Group>? groups = null;
@@ -122,7 +126,7 @@ internal static class GrammarBuild
             symbolMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
             if (GetTerminalRegex(terminal) is { } regex)
             {
-                dfaSymbols.Add(regex, handle, name, TokenSymbolKind.Terminal);
+                dfaSymbols?.Add(regex, handle, name, TokenSymbolKind.Terminal);
             }
             if (terminal is NewLine)
             {
@@ -172,7 +176,7 @@ internal static class GrammarBuild
                 };
                 TokenSymbolHandle container = (TokenSymbolHandle)symbolMap[group];
                 TokenSymbolHandle startHandle = writer.AddTokenSymbol(writer.GetOrAddString(groupStart), TokenSymbolAttributes.GroupStart);
-                dfaSymbols.Add(GetRegexForLiteral(groupStart), startHandle, groupStart, TokenSymbolKind.GroupStart);
+                dfaSymbols?.Add(GetRegexForLiteral(groupStart), startHandle, groupStart, TokenSymbolKind.GroupStart);
                 TokenSymbolHandle endHandle;
                 GroupAttributes flags;
                 if (groupEndOrNewLine is null)
@@ -225,7 +229,7 @@ internal static class GrammarBuild
             foreach ((string start, string? endOrNewLine) in comments)
             {
                 TokenSymbolHandle groupStart = writer.AddTokenSymbol(writer.GetOrAddString(start), TokenSymbolAttributes.GroupStart);
-                dfaSymbols.Add(GetRegexForLiteral(start), groupStart, start, TokenSymbolKind.GroupStart);
+                dfaSymbols?.Add(GetRegexForLiteral(start), groupStart, start, TokenSymbolKind.GroupStart);
                 TokenSymbolHandle groupEnd;
                 GroupAttributes flags;
                 if (endOrNewLine is null)
@@ -251,29 +255,35 @@ internal static class GrammarBuild
             const string WhitespaceName = "Whitespace";
             TokenSymbolHandle whitespaceHandle = writer.AddTokenSymbol(writer.GetOrAddString(WhitespaceName),
                 TokenSymbolAttributes.Noise | TokenSymbolAttributes.Generated);
-            dfaSymbols.Add(whitespaceRegex, whitespaceHandle, WhitespaceName, TokenSymbolKind.Noise);
+            dfaSymbols?.Add(whitespaceRegex, whitespaceHandle, WhitespaceName, TokenSymbolKind.Noise);
         }
 
         // Add miscellaneous noise symbols.
         foreach ((string name, Regex regex) in globalOptions.NoiseSymbols)
         {
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), TokenSymbolAttributes.Noise);
-            dfaSymbols.Add(regex, handle, name, TokenSymbolKind.Noise);
+            dfaSymbols?.Add(regex, handle, name, TokenSymbolKind.Noise);
         }
 
-        // Build state machines.
+        // Build state machines if they are requested.
         bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
-        var dfaWriter = DfaBuild<char>.Build(dfaSymbols, isCaseSensitive, true, options.MaxTokenizerStates, log, options.CancellationToken);
-        if (dfaWriter is not null)
+        if (dfaSymbols is not null)
         {
-            writer.AddStateMachine(dfaWriter);
+            var dfaWriter = DfaBuild<char>.Build(dfaSymbols, isCaseSensitive, true, options.MaxTokenizerStates, log, options.CancellationToken);
+            if (dfaWriter is not null)
+            {
+                writer.AddStateMachine(dfaWriter);
+            }
         }
 
-        var conflictResolver = operatorScope is not null
-            ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
-            : null;
-        var syntaxProvider = new GrammarSyntaxProvider(grammarDefinition, productionMembers);
-        writer.AddStateMachine(LalrBuild.Build(syntaxProvider, conflictResolver, log, options.CancellationToken));
+        if ((artifacts & BuilderArtifacts.GrammarLrStateMachine) != 0)
+        {
+            var conflictResolver = operatorScope is not null
+                ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
+                : null;
+            var syntaxProvider = new GrammarSyntaxProvider(grammarDefinition, productionMembers);
+            writer.AddStateMachine(LalrBuild.Build(syntaxProvider, conflictResolver, log, options.CancellationToken));
+        }
 
         // Set grammar info.
         GrammarAttributes attributes = isUnparsable ? GrammarAttributes.Unparsable : GrammarAttributes.None;
@@ -299,7 +309,7 @@ internal static class GrammarBuild
                 return (TokenSymbolHandle)existingHandle;
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(content), TokenSymbolAttributes.None);
-            dfaSymbols.Add(GetRegexForLiteral(content), handle, content, TokenSymbolKind.GroupEnd);
+            dfaSymbols?.Add(GetRegexForLiteral(content), handle, content, TokenSymbolKind.GroupEnd);
             symbolMap.Add(content, handle);
             return handle;
         }
@@ -332,7 +342,7 @@ internal static class GrammarBuild
                 string name = NewLine.Instance.Name;
                 newLineHandle = writer.AddTokenSymbol(writer.GetOrAddString(name),
                     autoWhitespace ? TokenSymbolAttributes.Noise : TokenSymbolAttributes.None);
-                dfaSymbols.Add(NewLineRegex, newLineHandle, name,
+                dfaSymbols?.Add(NewLineRegex, newLineHandle, name,
                     autoWhitespace ? TokenSymbolKind.Noise : TokenSymbolKind.GroupEnd);
             }
             return newLineHandle;

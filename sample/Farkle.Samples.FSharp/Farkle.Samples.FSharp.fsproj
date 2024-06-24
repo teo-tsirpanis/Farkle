@@ -10,6 +10,7 @@
     <!--<Compile Include="IndentBased.fs" />-->
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
   </ItemGroup>
 </Project>

@@ -111,11 +111,11 @@ public static class GrammarBuilderExtensions
     /// </summary>
     /// <param name="builder">The grammar builder.</param>
     /// <param name="value">Whether the grammar will be case sensitive or not.</param>
-    public static IGrammarBuilder CaseSensitive(this IGrammarBuilder builder, bool value) =>
+    public static IGrammarBuilder CaseSensitive(this IGrammarBuilder builder, bool value = true) =>
         builder.CaseSensitive(value ? CaseSensitivity.CaseSensitive : CaseSensitivity.CaseInsensitive);
 
     /// <inheritdoc cref="CaseSensitive(IGrammarBuilder, bool)"/>
-    public static IGrammarBuilder<T> CaseSensitive<T>(this IGrammarBuilder<T> builder, bool value) =>
+    public static IGrammarBuilder<T> CaseSensitive<T>(this IGrammarBuilder<T> builder, bool value = true) =>
         builder.CaseSensitive(value ? CaseSensitivity.CaseSensitive : CaseSensitivity.CaseInsensitive);
 
     /// <summary>

@@ -85,7 +85,7 @@ namespace Farkle.Samples.CSharp
                 ProductionBuilder.Empty.Finish(() => new JsonObject()));
             jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsProduction());
 
-            Builder = value.CaseSensitive(true);
+            Builder = value.CaseSensitive();
             Parser = Builder.Build();
 
             static Regex OneOf(string chars) => Regex.OneOf(chars.ToImmutableArray());

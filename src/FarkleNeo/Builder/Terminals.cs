@@ -346,5 +346,5 @@ public static class Terminals
     /// are supported.
     /// </remarks>
     public static IGrammarSymbol<string> String(string name, char delimiter) =>
-        String(name, delimiter, "abefnrtv", false);
+        String(name, delimiter, "abefnrtvu", false);
 }

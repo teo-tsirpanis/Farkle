@@ -349,7 +349,7 @@ public abstract class Grammar : IGrammarProvider
 
         if (throwIfNotFound)
         {
-            ThrowHelpers.ThrowKeyNotFoundException("Could not find symbol with the specified special name.");
+            ThrowHelpers.ThrowSpecialNameNotFound(specialName);
         }
         return default;
     }

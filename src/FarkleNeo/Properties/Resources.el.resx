@@ -33,6 +33,9 @@
   <data name="Grammar_FailedToConvert" xml:space="preserve">
     <value>Αποτυχία μετατροπής της γραμματικής.</value>
   </data>
+  <data name="Grammar_SpecialNameNotFound" xml:space="preserve">
+    <value>Δε βρέθηκε σύμβολο με το ειδικό όνομα '{0}'</value>
+  </data>
   <data name="Parser_ResultAlreadySet" xml:space="preserve">
     <value>Η συντακτική ανάλυση έχει ήδη θέσει ένα αποτέλεσμα.</value>
   </data>

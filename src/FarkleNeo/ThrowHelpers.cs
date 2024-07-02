@@ -73,4 +73,8 @@ internal static class ThrowHelpers
     [DoesNotReturn, StackTraceHidden]
     public static void ThrowOutOfMemoryException(string? message = null) =>
         throw new OutOfMemoryException(message);
+
+    [DoesNotReturn, StackTraceHidden]
+    public static void ThrowSpecialNameNotFound(string specialName) =>
+        ThrowKeyNotFoundException(Resources.Format(null, nameof(Resources.Grammar_SpecialNameNotFound), specialName));
 }

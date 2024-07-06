@@ -95,7 +95,7 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
     }
 
     /// <summary>
-    /// Signals to the <see cref="ParserStateContext{TChar}"/> that no more input
+    /// Signals to the <see cref="ParserStateContext{TChar}"/> that no more input will be supplied.
     /// </summary>
     public void CompleteInput()
     {

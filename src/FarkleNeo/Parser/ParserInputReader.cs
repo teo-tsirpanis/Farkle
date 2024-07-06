@@ -51,6 +51,12 @@ public ref struct ParserInputReader<TChar>
     /// </summary>
     public bool IsFinalBlock { get; }
 
+    /// <summary>
+    /// Whether input has ended. This happens when <see cref="RemainingCharacters"/>
+    /// is empty and <see cref="IsFinalBlock"/> is <see langword="true"/>.
+    /// </summary>
+    public readonly bool IsEndOfInput => RemainingCharacters.IsEmpty && IsFinalBlock;
+
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
     /// <summary>
     /// Creates a <see cref="ParserInputReader{TChar}"/>.

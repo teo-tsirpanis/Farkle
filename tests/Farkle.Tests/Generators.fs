@@ -12,6 +12,7 @@ open System.Text
 open Expecto
 open Farkle
 open Farkle.Builder
+open Farkle.Samples.FSharp.SimpleMaths
 open FsCheck
 open System.Collections.Generic
 open System.Text.Json.Nodes
@@ -166,7 +167,6 @@ let regexStringPairGen = gen {
     return RegexStringPair(regex, str)
 }
 
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
 let simpleMathsASTGen =
     let rec impl size =
         if size <= 1 then
@@ -189,6 +189,7 @@ let simpleMathsASTGen =
         }
     Gen.sized impl
 
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
 let designtimeFarkleGen =
     let impl size = gen {
         let! terminals =
@@ -240,8 +241,8 @@ type Generators =
     static member Regex() = Arb.fromGen regexGen
     static member Regexes() = Arb.fromGen regexesGen
     static member RegexStringPair() = Arb.fromGen regexStringPairGen
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     static member SimpleMathsAST() = Arb.fromGen simpleMathsASTGen
+#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     static member DesigntimeFarkle() = Arb.fromGen designtimeFarkleGen
 #endif
 

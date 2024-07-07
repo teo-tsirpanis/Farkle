@@ -11,8 +11,8 @@ namespace Farkle.Samples.CSharp
 {
     public static class SimpleMaths
     {
-        public static readonly DesigntimeFarkle<double> Designtime;
-        public static readonly RuntimeFarkle<double> Runtime;
+        public static readonly IGrammarBuilder<double> Builder;
+        public static readonly CharParser<double> Parser;
 
         static SimpleMaths()
         {
@@ -20,14 +20,14 @@ namespace Farkle.Samples.CSharp
 
             var expression = Nonterminal.Create<double>("Expression");
             expression.SetProductions(
-                number.AsIs(),
+                number.AsProduction(),
                 expression.Extended().Append("+").Extend(expression).Finish((x1, x2) => x1 + x2),
                 expression.Extended().Append("-").Extend(expression).Finish((x1, x2) => x1 - x2),
                 expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
                 expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
                 "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
                 expression.Extended().Append("^").Extend(expression).Finish(Math.Pow),
-                "(".Appended().Extend(expression).Append(")").AsIs());
+                "(".Appended().Extend(expression).Append(")").AsProduction());
 
             var opScope = new OperatorScope(
                 new LeftAssociative("+", "-"),
@@ -35,8 +35,8 @@ namespace Farkle.Samples.CSharp
                 new PrecedenceOnly(NEG),
                 new RightAssociative("^"));
 
-            Designtime = expression.WithOperatorScope(opScope);
-            Runtime = Designtime.Build();
+            Builder = expression.WithOperatorScope(opScope);
+            Parser = Builder.Build();
         }
     }
 }

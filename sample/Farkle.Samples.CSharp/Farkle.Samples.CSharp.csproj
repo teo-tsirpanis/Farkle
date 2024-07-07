@@ -1,9 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
   </ItemGroup>
 </Project>

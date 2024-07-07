@@ -329,7 +329,7 @@ public static class Terminals
                                 : Regex.Empty
                         ])
                     ])
-                ]),
+                ]).ZeroOrMore(),
                 regexDelimiter
             ]).CaseSensitive();
 

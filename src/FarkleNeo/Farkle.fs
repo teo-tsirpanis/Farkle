@@ -122,6 +122,9 @@ module internal ParserResult =
 [<AutoOpen>]
 module internal ActivePatterns =
 
+    let inline (|TextPosition|) (x: TextPosition) =
+        struct(x.Line, x.Column)
+
     let inline (|ParserSuccess|ParserError|) (x: ParserResult<_>) =
         if x.IsSuccess then
             ParserSuccess x.Value
@@ -235,6 +238,11 @@ module internal ActivePatterns =
     let inline (|LexicalError|_|) (x: obj) =
         match x with
         | :? LexicalError as x -> Some <| ValueOption.ofObj x.TokenText
+        | _ -> None
+
+    let inline (|UnexpectedEndOfInputInGroupError|_|) (x: obj) =
+        match x with
+        | :? UnexpectedEndOfInputInGroupError as x -> Some x.GroupName
         | _ -> None
 
 namespace Farkle.Diagnostics.Builder

@@ -5,52 +5,47 @@
 
 module Farkle.Samples.FSharp.GOLDMetaLanguage
 
-open Farkle
 open Farkle.Builder
 
 open Regex
 
-/// A `DesigntimeFarkle` that represents
+/// An `IGrammarBuilder` that represents
 /// the grammar for the GOLD Meta-Language.
-let designtime =
-    let cLiteral = Printable.Characters.Remove '\''
-    let cParameter = cLiteral.Add '"'
-    let cTerminal = AlphaNumeric.Characters + set "_-."
-    let cNonterminal = cTerminal.Add ' '
-    let cSetLiteral = cLiteral - set "[]"
-    let cSetName = Printable.Characters - set "{}"
+let builder =
+    let cTerminal = [struct ('0', '9'); 'A', 'Z'; 'a', 'z'; '_', '_'; '-', '-'; '.', '.']
+    let cNonterminal = struct (' ', ' ') :: cTerminal
 
     let parameterName =
         [
             char '"'
-            cParameter |> chars |> atLeast 1
+            allButChars ['\''; '"'] |> atLeast 1
             char '"'
         ] |> Regex.concat |> terminalU "ParameterName"
     let _nonterminal =
         [
             char '<'
-            cNonterminal |> chars |> atLeast 1
+            cNonterminal |> charRanges |> atLeast 1
             char '>'
         ] |> Regex.concat |> terminalU "Nonterminal"
     let rLiteral =
         [
             char '\''
-            cLiteral |> chars |> atLeast 0
+            allButChars ['\''] |> atLeast 0
             char '\''
         ] |> Regex.concat
     let _terminal =
         [
-            cTerminal |> chars |> atLeast 1
+            cTerminal |> charRanges |> atLeast 1
             rLiteral
         ] |> Regex.choice |> terminalU "Terminal"
     let setLiteral =
         [
             char '['
             [
-                chars cSetLiteral
+                allButChars ['\''; ']']
                 [
                     char '\''
-                    cLiteral |> chars |> atLeast 0
+                    allButChars ['\''] |> atLeast 0
                     char '\''
                 ] |> concat
             ] |> choice |> atLeast 1
@@ -59,7 +54,7 @@ let designtime =
     let setName =
         [
             char '{'
-            cSetName |> chars |> atLeast 1
+            allButChars ['{'; '}'] |> atLeast 1
             char '}'
         ] |> concat |> terminalU "SetName"
 
@@ -164,7 +159,8 @@ let designtime =
     content.SetProductions(!% content .>> definition, !% definition)
 
     "Grammar" |||= [!% nlOpt .>> content]
-    |> DesigntimeFarkle.addBlockComment "!*" "*!"
-    |> DesigntimeFarkle.addLineComment "!"
+    |> _.AddBlockComment("!*", "*!")
+    |> _.AddLineComment("!")
+    |> _.NewLineIsNoisy(false)
 
-let runtime = RuntimeFarkle.buildUntyped designtime
+let parser = GrammarBuilder.buildSyntaxCheck builder

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Theodore Tsirpanis
+// Copyright (c) 2018 Theodore Tsirpanis
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
@@ -42,9 +42,9 @@ let rec renderExpression x =
     | Divide(x1, x2) -> sprintf "(%s)/(%s)" (renderExpression x1) (renderExpression x2)
     | Negate x -> sprintf "-(%s)" (renderExpression x)
 
-let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
+let makeGrammarBuilder fNumber fAdd fSub fMul fDiv fNeg =
     let number =
-        Regex.chars PredefinedSets.Number
+        Regex.charRanges ['0', '9']
         |> Regex.atLeast 1
         |> terminal "Number" (T(fun _ data -> System.Int32.Parse(data.ToString()) |> fNumber))
 
@@ -58,8 +58,8 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
         !@ expression .>> "*" .>>. expression => fMul,
         !@ expression .>> "/" .>>. expression => fDiv,
         !& "-" .>>. expression |> prec negatePrec => fNeg,
-        !& "(" .>>. expression .>> ")" |> asIs,
-        !@ number |> asIs
+        !& "(" .>>. expression .>> ")" |> asProduction,
+        !@ number |> asProduction
     )
 
     let opScope =
@@ -70,23 +70,25 @@ let makeDesigntime fNumber fAdd fSub fMul fDiv fNeg =
         )
 
     expression
-    |> DesigntimeFarkle.addLineComment "//"
-    |> DesigntimeFarkle.addBlockComment "/*" "*/"
-    |> DesigntimeFarkle.withOperatorScope opScope
+    |> _.AddLineComment("//")
+    |> _.AddBlockComment("/*", "*/")
+    |> _.WithOperatorScope(opScope)
 
 let int =
-    makeDesigntime id (+) (-) ( * ) (/) (~-)
-    |> RuntimeFarkle.build
+    makeGrammarBuilder id (+) (-) ( * ) (/) (~-)
+    |> GrammarBuilder.build
 
 let mathExpression =
     let inline mkExpr f x1 x2 = f(x1, x2) |> MathExpression.Create
-    let pp =
-        makeDesigntime
+    let semanticProvider =
+        makeGrammarBuilder
             (Number >> MathExpression.Create)
             (mkExpr Add)
             (mkExpr Subtract)
             (mkExpr Multiply)
             (mkExpr Divide)
             (Negate >> MathExpression.Create)
-        |> DesigntimeFarkleBuild.buildPostProcessorOnly
-    RuntimeFarkle.changePostProcessor pp int
+        |> _.Build(BuilderArtifacts.SemanticProviderOnChar)
+        |> _.SemanticProviderOnChar
+    int
+    |> CharParser.withSemanticProvider semanticProvider

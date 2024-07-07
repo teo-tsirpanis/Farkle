@@ -8,7 +8,6 @@ module Farkle.Samples.FSharp.JSON
 open System
 open System.Globalization
 open System.Text.Json.Nodes
-open Farkle
 open Farkle.Builder
 
 let toDecimal (x: ReadOnlySpan<char>) =
@@ -18,37 +17,38 @@ let toDecimal (x: ReadOnlySpan<char>) =
     #else
         x.ToString(),
     #endif
-        NumberStyles.AllowExponent ||| NumberStyles.Float, CultureInfo.InvariantCulture)
+        NumberStyles.Float, CultureInfo.InvariantCulture)
         |> JsonValue.Create
         :> JsonNode
 
 open Regex
 
-let designtime =
+let builder =
     // Better let that regex stay.
     // JSON prohibits leading zeroes,
     // and we want to avoid boxing.
     let number =
+        let numberChars = charRanges ['0', '9']
         concat [
             char '-' |> optional
             choice [
                 char '0'
-                chars "123456789" <&> (chars Number |> star)
+                chars "123456789" + (numberChars |> star)
             ]
-            optional <| (char '.' <&> (chars Number |> atLeast 1))
-            [chars "eE"; chars "+-" |> optional; chars Number |> atLeast 1]
+            optional <| (char '.' + (numberChars |> atLeast 1))
+            [chars "eE"; chars "+-" |> optional; numberChars |> atLeast 1]
             |> concat
             |> optional
         ]
         |> terminal "Number" (T(fun _ data -> toDecimal data))
-    let string = Terminals.stringEx "/bfnrt" true false '"' "String"
+    let string = Terminals.stringEx "/bfnrtu" false '"' "String"
     let object = nonterminal "Object"
     let array = nonterminal "Array"
     let value = "Value" ||= [
         !@ string => (fun str -> JsonValue.Create str :> JsonNode)
-        !@ number |> asIs
-        !@ object |> asIs
-        !@ array |> asIs
+        !@ number |> asProduction
+        !@ object |> asProduction
+        !@ array |> asProduction
         !& "true" => (fun () -> JsonValue.Create true :> JsonNode)
         !& "false" => (fun () -> JsonValue.Create false :> JsonNode)
         !& "null" =% null
@@ -59,7 +59,7 @@ let designtime =
         !@ value => (fun x -> let xs = JsonArray() in xs.Add(x); xs)
     )
     let arrayOptional = "Array Optional" ||= [
-        !@ arrayReversed |> asIs
+        !@ arrayReversed |> asProduction
         empty => (fun () -> JsonArray())
     ]
     array.SetProductions(!& "[" .>>. arrayOptional .>> "]" => (fun x -> x :> JsonNode))
@@ -70,13 +70,12 @@ let designtime =
         !@ string .>> ":" .>>. value => (fun k v -> let obj = JsonObject() in obj.Add(k, v); obj)
     )
     let objectOptional = "Object Optional" ||= [
-        !@ objectElement |> asIs
+        !@ objectElement |> asProduction
         empty => (fun () -> JsonObject())
     ]
     object.SetProductions(!& "{" .>>. objectOptional .>> "}" => (fun x -> x :> JsonNode))
 
     value
-    |> DesigntimeFarkle.caseSensitive true
+    |> _.CaseSensitive(true)
 
-[<CompiledName("Runtime")>]
-let runtime = RuntimeFarkle.build designtime
+let parser = GrammarBuilder.build builder

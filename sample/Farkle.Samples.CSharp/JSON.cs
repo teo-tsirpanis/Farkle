@@ -8,13 +8,15 @@ using static Farkle.Builder.Regex;
 using System;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using System.Collections.Immutable;
+using Farkle.Parser;
 
 // ReSharper disable once CheckNamespace
 namespace Farkle.Samples.CSharp
 {
     public static class JSON
     {
-        private static JsonNode? ToDecimal(ReadOnlySpan<char> data)
+        private static JsonValue ToDecimal(ReadOnlySpan<char> data)
         {
             var data2 =
 #if NETCOREAPP
@@ -27,32 +29,33 @@ namespace Farkle.Samples.CSharp
             return JsonValue.Create(num);
         }
 
-        public static readonly DesigntimeFarkle<JsonNode?> Designtime;
+        public static readonly IGrammarBuilder<JsonNode?> Builder;
 
-        public static readonly RuntimeFarkle<JsonNode?> Runtime;
+        public static readonly CharParser<JsonNode?> Parser;
 
         static JSON()
         {
-            var number = Terminal.Create("Number", (_, data) => ToDecimal(data),
-                Join(
+            var number = Terminal.Create("Number",
+                Join([
                     Literal('-').Optional(),
-                    Literal('0').Or(OneOf("123456789").And(OneOf(PredefinedSets.Number).ZeroOrMore())),
-                    Literal('.').And(OneOf(PredefinedSets.Number).AtLeast(1)).Optional(),
-                    Join(
+                    Literal('0') | OneOf("123456789") + OneOf("0123456789").ZeroOrMore(),
+                    (Literal('.') + OneOf("0123456789").AtLeast(1)).Optional(),
+                    Join([
                         OneOf("eE"),
                         OneOf("+-").Optional(),
-                        OneOf(PredefinedSets.Number).AtLeast(1)).Optional()));
-            var jsonString = Terminals.StringEx("/bfnrt", true, false, '"', "String");
+                        OneOf("0123456789").AtLeast(1)]).Optional()]),
+                 (ref ParserState _, ReadOnlySpan<char> data) => ToDecimal(data));
+            var jsonString = Terminals.String("String", '"', "/bfnrtu", false);
             var jsonObject = Nonterminal.Create<JsonObject>("Object");
             var jsonArray = Nonterminal.Create<JsonArray>("Array");
             var value = Nonterminal.Create("Value",
-                jsonString.Finish(x => (JsonNode?)JsonValue.Create(x)),
-                number.AsIs(),
-                jsonObject.Finish(x => (JsonNode?)x),
-                jsonArray.Finish(x => (JsonNode?)x),
-                "true".Finish<JsonNode?>(() => JsonValue.Create(true)),
-                "false".Finish<JsonNode?>(() => JsonValue.Create(false)),
-                "null".FinishConstant<JsonNode?>(null));
+                jsonString.Finish(x => JsonValue.Create(x)),
+                number.AsProduction(),
+                jsonObject.AsProduction(),
+                jsonArray.AsProduction(),
+                "true".Finish(() => JsonValue.Create(true)),
+                "false".Finish(() => JsonValue.Create(false)),
+                "null".FinishConstant((JsonNode?)null));
 
             var arrayReversed = Nonterminal.Create<JsonArray>("Array Reversed");
             arrayReversed.SetProductions(
@@ -61,16 +64,11 @@ namespace Farkle.Samples.CSharp
                     xs.Add(x);
                     return xs;
                 }),
-                value.Finish(x =>
-                {
-                    var xs = new JsonArray();
-                    xs.Add(x);
-                    return xs;
-                }));
+                value.Finish(x => new JsonArray { x }));
             var arrayOptional = Nonterminal.Create("Array Optional",
-                arrayReversed.AsIs(),
+                arrayReversed.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonArray()));
-            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").AsIs());
+            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").AsProduction());
 
             var objectElement = Nonterminal.Create<JsonObject>("Object Element");
             objectElement.SetProductions(
@@ -81,19 +79,16 @@ namespace Farkle.Samples.CSharp
                         return xs;
                     }),
                 jsonString.Extended().Append(":").Extend(value)
-                    .Finish((k, v) =>
-                    {
-                        var xs = new JsonObject();
-                        xs.Add(k, v);
-                        return xs;
-                    }));
+                    .Finish((k, v) => new JsonObject { { k, v } }));
             var objectOptional = Nonterminal.Create("Object Optional",
-                objectElement.AsIs(),
+                objectElement.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonObject()));
-            jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsIs());
+            jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsProduction());
 
-            Designtime = value.CaseSensitive().UseDynamicCodeGen();
-            Runtime = Designtime.Build();
+            Builder = value.CaseSensitive(true);
+            Parser = Builder.Build();
+
+            static Regex OneOf(string chars) => Regex.OneOf(chars.ToImmutableArray());
         }
     }
 }

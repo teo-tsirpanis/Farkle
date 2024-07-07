@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2018 Theodore Tsirpanis
+// Copyright (c) 2018 Theodore Tsirpanis
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
@@ -7,20 +7,14 @@ open Farkle
 open Farkle.Samples.FSharp
 open System
 
-let inline prettyPrintResult x =
-    match x with
-    | Ok x -> string x
-    | Error x -> string x
-    |> Console.WriteLine
-
-let interactive rf =
+let interactive parser =
     let rec impl() =
         eprintf "Your input: "
         let input = Console.ReadLine() |> Option.ofObj
         match input with
         | Some x ->
-            RuntimeFarkle.parseString rf x
-            |> prettyPrintResult
+            CharParser.parseString parser x
+            |> Console.WriteLine
             impl()
         | None -> ()
     eprintfn "This is a simple mathematical expression parser powered by Farkle."
@@ -31,16 +25,11 @@ let interactive rf =
 
 [<EntryPoint>]
 let main args =
-    let rf = SimpleMaths.int
+    let parser = SimpleMaths.int
     match args with
-    | [| |] -> interactive rf
-    | [|"--ast"; x|] ->
-        let rf = RuntimeFarkle.changePostProcessor PostProcessors.ast rf
-        RuntimeFarkle.parseString rf x
-        |> Result.map AST.toASCIITree
-        |> prettyPrintResult
+    | [| |] -> interactive parser
     | _ ->
         for x in args do
-            RuntimeFarkle.parseString rf x
-            |> prettyPrintResult
+            CharParser.parseString parser x
+            |> Console.WriteLine
     0

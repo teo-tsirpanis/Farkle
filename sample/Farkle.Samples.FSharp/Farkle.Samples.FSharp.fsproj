@@ -1,14 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/FarkleNeo/Farkle.fs"/>
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
-    <Compile Include="IndentBased.fs" />
+    <!--<Compile Include="IndentBased.fs" />-->
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
   </ItemGroup>
 </Project>

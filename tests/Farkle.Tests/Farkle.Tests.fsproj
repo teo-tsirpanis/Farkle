@@ -12,7 +12,6 @@
     <Compile Include="Common.fs" />
     <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
-    <Compile Include="SampleParsers.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
@@ -22,6 +21,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
+    <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

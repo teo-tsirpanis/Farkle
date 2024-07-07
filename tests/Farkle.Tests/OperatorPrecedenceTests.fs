@@ -9,10 +9,10 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.OperatorPrecedence
+open Farkle.Samples.FSharp
 
 [<Tests>]
 let tests = testList "Operator precedence tests" [
-#if false // TODO-FARKLE7: Reevaluate when the samples are ported to Farkle 7.
     test "The calculator respects operator precedence and associativity" {
         let runtime = SimpleMaths.int
         let testData = [
@@ -21,9 +21,8 @@ let tests = testList "Operator precedence tests" [
             "125 / 25 / 5", 1
         ]
         for expr, result in testData do
-            Expect.equal (runtime.Parse expr) (Ok result) (sprintf "Parsing '%s' failed" expr)
+            Expect.equal (runtime.Parse expr |> ParserResult.toResult) (Ok result) (sprintf "Parsing '%s' failed" expr)
     }
-#endif
 
     test "Reduce-Reduce conflicts are resolved only on demand" {
         let mkGrammar (resolveRRConflicts: bool) =

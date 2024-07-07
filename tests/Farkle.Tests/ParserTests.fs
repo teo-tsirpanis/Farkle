@@ -7,8 +7,11 @@ module Farkle.Tests.ParserTests
 
 open Expecto
 open Farkle
+open Farkle.Builder
 open Farkle.Diagnostics
 open Farkle.Parser.Semantics
+open Farkle.Samples
+open Farkle.Samples.FSharp
 open Farkle.Tests
 open System.IO
 open System.Text.Json.Nodes
@@ -25,13 +28,13 @@ let astSemanticProvider = {new ISemanticProvider<char, AST> with
     member _.Fuse(_, production, members) =
         let mutable membersList = []
         for i = members.Length - 1 downto 0 do
-            membersList <- members.[i] :?> AST :: membersList
+            membersList <- members[i] :?> AST :: membersList
         AST.Nonterminal(production.Value, membersList)
 }
 
 let testParser grammarFile displayName text =
     let testImpl streamMode useStaticBlock =
-        let description = sprintf "Grammar \"%s\" parses %s successfully in %s block mode" grammarFile displayName streamMode
+        let description = $"Grammar \"{grammarFile}\" parses %s{displayName} successfully in {streamMode} block mode"
         test description {
             let rf = loadCharParser grammarFile
             let result =
@@ -59,28 +62,27 @@ let tests = testList "Parser tests" [
     |> List.collect ((<|||) testParser)
     |> testList "Domain-ignorant parsing tests"
 
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     test "Parsing a simple mathematical expression generates the correct AST" {
         let testString = "475 + 724"
         let expectedAST =
             let nont idx xs = AST.Nonterminal(idx, xs)
-            let numberTerminal = 7
+            let numberTerminal = 6
             let makePos line col = TextPosition.Create1(line, col)
             nont 0 [
                 nont 6 [
                     AST.Content(numberTerminal, makePos 1 1, "475")
                 ]
-                AST.Content(6, makePos 1 5, "+")
+                AST.Content(0, makePos 1 5, "+")
                 nont 6 [
                     AST.Content(numberTerminal, makePos 1 7, "724")
                 ]
             ]
 
         let num =
-            CharParser.parseString SampleParsers.simpleMaths testString
+            CharParser.parseString SimpleMaths.int testString
             |> ParserResult.toResult
             |> Flip.Expect.wantOk "Parsing failed"
-        let astParser = CharParser.withSemanticProvider astSemanticProvider SampleParsers.simpleMaths
+        let astParser = CharParser.withSemanticProvider astSemanticProvider SimpleMaths.int
         let ast =
             CharParser.parseString astParser testString
             |> ParserResult.toResult
@@ -88,32 +90,27 @@ let tests = testList "Parser tests" [
         Expect.equal num 1199 "The numerical result is different than the expected"
         Expect.equal ast expectedAST "The AST is different"
     }
-#endif
 
     test "Lexical errors report the correct position" {
         let jsonString = """{"Almost True": truffle}"""
-        let result = CharParser.parseString SampleParsers.json jsonString
-        Expect.isTrue result.IsError "Parsing did not fail"
-        match result.Error with
-        | ParserDiagnostic(pos, LexicalError _) ->
-            // Prior to Farkle 7, the error was reported at 1:20, the place where the unrecognized character was found.
-            // Now, the error is reported at 1:17, the place where the tokenizer last started.
-            Expect.equal pos (TextPosition.Create1(1, 17)) "The position is different than the expected"
-        | _ -> failtest "The error is not a ParserDiagnostic"
+        let error = expectWantParseFailure (JSON.parser.Parse jsonString) "Parsing should have failed"
+        match error with
+        // Prior to Farkle 7, the error was reported at 1:20, the place where the unrecognized character was found.
+        // Now, the error is reported at 1:17, the place where the tokenizer last started.
+        | ParserDiagnostic(TextPosition(1, 17), LexicalError(ValueSome "tru")) -> ()
+        | error -> failtest $"Unexpected parser error {error}"
     }
 
     test "Syntax errors report the correct position" {
         let jsonString = """{"Almost True": }"""
-        let result = CharParser.parseString SampleParsers.json jsonString
-        Expect.isTrue result.IsError "Parsing did not fail"
-        match result.Error with
-        | ParserDiagnostic(pos, SyntaxError(_, ValueSome "}")) ->
-            Expect.equal pos (TextPosition.Create1(1, 17)) "The position is different than the expected"
-        | _ -> failtest "The error is not a ParserDiagnostic"
+        let error = expectWantParseFailure (JSON.parser.Parse jsonString) "Parsing should have failed"
+        match error with
+        | ParserDiagnostic(TextPosition(1, 17), SyntaxError(_, ValueSome "}")) -> ()
+        | error -> failtest $"Unexpected parser error {error}"
     }
 
     test "Parsing a mathematical expression with comments works well" {
-        let num = CharParser.parseString SampleParsers.simpleMaths "/*I guess that */ 1 + 1\n// Is equal to two"
+        let num = CharParser.parseString SimpleMaths.int "/*I guess that */ 1 + 1\n// Is equal to two"
         Expect.equal num (ParserResult.CreateSuccess 2) "Parsing a mathematical expression with comments failed"
     }
 
@@ -121,56 +118,47 @@ let tests = testList "Parser tests" [
         let formatJson (json: JsonNode) = match json with null -> "null" | _ -> json.ToJsonString()
 
         let jsonAsString = formatJson json
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
         let farkleFSharp =
-            RuntimeFarkle.parseString FSharp.JSON.runtime jsonAsString
+            CharParser.parseString JSON.parser jsonAsString
+            |> ParserResult.toResult
             |> Flip.Expect.wantOk "Farkle's parser failed"
             |> formatJson
         Expect.equal farkleFSharp jsonAsString "The JSON generated from the Farkle F# parser is different"
         let farkleCSharp =
-            RuntimeFarkle.parseString CSharp.JSON.Runtime jsonAsString
-            |> Flip.Expect.wantOk "Farkle's parser failed"
-            |> formatJson
-        Expect.equal farkleCSharp jsonAsString "The JSON generated from the Farkle C# parser is different"
-#else
-        let farkle =
-            CharParser.parseString SampleParsers.json jsonAsString
+            CharParser.parseString CSharp.JSON.Parser jsonAsString
             |> ParserResult.toResult
             |> Flip.Expect.wantOk "Farkle's parser failed"
             |> formatJson
-        Expect.equal farkle jsonAsString "The JSON generated from the Farkle parser is different"
-#endif
+        Expect.equal farkleCSharp jsonAsString "The JSON generated from the Farkle C# parser is different"
     )
 
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     testProperty "The calculator works well" (fun expr ->
         let exprAsString = SimpleMaths.renderExpression expr
         let parsedExpr =
-            RuntimeFarkle.parseString SimpleMaths.mathExpression exprAsString
+            CharParser.parseString SimpleMaths.mathExpression exprAsString
+            |> ParserResult.toResult
             |> Flip.Expect.wantOk "Parsing the mathematical expression failed"
         let num =
-            RuntimeFarkle.parseString SimpleMaths.int exprAsString
+            CharParser.parseString SimpleMaths.int exprAsString
+            |> ParserResult.toResult
             |> Flip.Expect.wantOk "Calculating the mathematical expression failed"
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
-        let result = FSharp.GOLDMetaLanguage.runtime.Parse gmlSourceContent
+        let result = GOLDMetaLanguage.parser.Parse gmlSourceContent |> ParserResult.toResult
         Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
     }
 
     test "Windows line endings inside block groups are correctly handled" {
         let rf =
             literal "hello"
-            |> DesigntimeFarkle.addBlockComment "/*" "*/"
-            |> RuntimeFarkle.buildUntyped
+            |> _.AddBlockComment("/*", "*/")
+            |> GrammarBuilder.buildSyntaxCheck
         let testString = "/*\r\n\r\n\r\n*/ hell"
-        let expectedResult =
-            ParserError(Position.Create1 4 8, ParseErrorType.UnexpectedEndOfInput)
-            |> FarkleError.ParseError
-            |> Error
-        let actualResult = rf.Parse testString
-        Expect.equal actualResult expectedResult "Unexpected result"
+        let error = expectWantParseFailure (rf.Parse testString) "Parsing should have failed"
+        match error with
+        | ParserDiagnostic(TextPosition(4, 4), LexicalError(ValueSome "hell")) -> ()
+        | _ -> failtest $"Unexpected parser error {error}"
     }
-#endif
 ]

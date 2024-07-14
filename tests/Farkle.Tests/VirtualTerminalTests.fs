@@ -1,0 +1,48 @@
+// Copyright (c) 2020 Theodore Tsirpanis
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
+module Farkle.Tests.VirtualTerminalTests
+
+open Expecto
+open Farkle
+open Farkle.Builder
+open Farkle.Diagnostics
+open Farkle.Samples.FSharp.IndentBased
+
+[<Tests>]
+let tests = testList "Virtual terminal tests" [
+    test "A simple IndentCode file is successfully parsed" {
+        let code = Block [Line "USS Oriskany"; Block [Line "CV"; Line "34"]]
+        let rendered = "
+USS Oriskany
+
+    CV
+
+    34
+    "
+
+        let result = expectWantParseSuccess (parser.Parse rendered) "Parsing failed"
+
+        Expect.equal result code "The parsed IndentCode is different from the original"
+    }
+
+    test "An IndentCode file with invalid indentation fails to be parsed" {
+        let code = "A\n    B\n   C"
+        let result = expectWantParseFailure (parser.Parse code) "Parsing should have failed"
+        match result with
+        | ParserDiagnostic(TextPosition(3, 4), msg) when msg = "unindent does not match any outer indentation level" -> ()
+        | _ -> failtest $"Unexpected parser error {result}"
+    }
+
+    test "A grammar with only virtual terminals can be built" {
+        let grammar =
+            virtualTerminal "X"
+            |> _.AutoWhitespace(false)
+            |> _.BuildSyntaxCheck()
+            |> _.GetGrammar()
+
+        Expect.isNull grammar.DfaOnChar "The grammar should not have a DFA"
+    }
+]

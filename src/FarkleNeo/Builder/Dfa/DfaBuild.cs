@@ -42,6 +42,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// </summary>
     private const int TerminalPriority = 1;
 
+    /// <summary>
+    /// The priority number for regexes of noise symbols.
+    /// </summary>
+    private const int NoisePriority = 2;
+
     private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out bool isInverted)
     {
         if (typeof(TChar) == typeof(char))
@@ -498,6 +503,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // which would make it unable to flow from the root to the end leaf.
             bool isVoid = true;
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
+            if (Symbols.GetName(i).Kind == TokenSymbolKind.Noise)
+            {
+                endLeafIndexTerminal = endLeafIndexLiteral = AddLeaf(new RegexLeaf.End(i, NoisePriority));
+            }
             foreach (var r in regexes)
             {
                 var info = Visit(in this, i, r, caseSensitive);

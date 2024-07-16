@@ -28,24 +28,24 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private readonly BuilderLogger Log;
 
-    // Priorities. The lower the number, the higher the priority.
+    // Priorities. The higher the number, the higher the priority.
 
     /// <summary>
-    /// The priority number for fixed-size regexes that do
-    /// not directly or indirectly contain a star operator.
+    /// The priority number for regexes of noise symbols.
     /// </summary>
-    private const int LiteralPriority = 0;
+    private const int NoisePriority = int.MinValue;
 
     /// <summary>
     /// The priority number for regexes that do not fall into
     /// any other category.
     /// </summary>
-    private const int TerminalPriority = 1;
+    private const int TerminalPriority = 0;
 
     /// <summary>
-    /// The priority number for regexes of noise symbols.
+    /// The priority number for fixed-size regexes that do
+    /// not directly or indirectly contain a star operator.
     /// </summary>
-    private const int NoisePriority = 2;
+    private const int LiteralPriority = 1;
 
     private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out bool isInverted)
     {
@@ -87,13 +87,13 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// </summary>
     /// <param name="symbols">The symbols of the grammar.</param>
     /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
-    /// <param name="prioritizeFixedLengthSymbols">Whether symbols with fixed-length regexes
-    /// will be prioritized in cases of conflicts.</param>
+    /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by assigning a priority
+    /// to symbols based on their prioerties.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
     public static DfaWriter<TChar>? Build(IGrammarSymbolsProvider symbols, bool caseSensitive = false,
-        bool prioritizeFixedLengthSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
+        bool prioritizeSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
         CancellationToken cancellationToken = default)
     {
         var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
@@ -104,10 +104,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             return null;
         }
-        return @this.WriteDfa(dfaStates, prioritizeFixedLengthSymbols);
+        return @this.WriteDfa(dfaStates, prioritizeSymbols);
     }
 
-    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols, bool prioritizeFixedLengthSymbols)
+    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols, bool prioritizeSymbols)
     {
         switch (acceptSymbols)
         {
@@ -115,7 +115,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             case [(_, var symbol)]: return symbol;
         }
 
-        acceptSymbols.Sort((x1, x2) => x1.Priority.CompareTo(x2.Priority));
+        acceptSymbols.Sort((x1, x2) => -x1.Priority.CompareTo(x2.Priority));
 
         var (firstPriority, firstSymbol) = acceptSymbols[0];
 
@@ -123,7 +123,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             if (firstSymbol != acceptSymbols[i].SymbolIndex)
             {
-                if (prioritizeFixedLengthSymbols && firstPriority < acceptSymbols[i].Priority)
+                if (prioritizeSymbols && firstPriority > acceptSymbols[i].Priority)
                 {
                     return firstSymbol;
                 }
@@ -135,7 +135,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return firstSymbol;
     }
 
-    private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeFixedLengthSymbols)
+    private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeSymbols)
     {
         DfaWriter<TChar> dfaWriter = new(states.Count);
         HashSet<BitSet>? seenConflicts = null;
@@ -164,7 +164,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 dfaWriter.SetDefaultTransition(dt);
             }
 
-            if (FindDominantSymbol(state.AcceptSymbols, prioritizeFixedLengthSymbols) is { } sym)
+            if (FindDominantSymbol(state.AcceptSymbols, prioritizeSymbols) is { } sym)
             {
                 dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(sym));
             }

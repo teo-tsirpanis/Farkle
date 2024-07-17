@@ -121,11 +121,21 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         for (int i = 1; i < acceptSymbols.Count; i++)
         {
-            if (firstSymbol != acceptSymbols[i].SymbolIndex)
+            var (priority, symbol) = acceptSymbols[i];
+            if (firstSymbol != symbol)
             {
-                if (prioritizeSymbols && firstPriority > acceptSymbols[i].Priority)
+                if (prioritizeSymbols)
                 {
-                    return firstSymbol;
+                    if (firstPriority > priority)
+                    {
+                        return firstSymbol;
+                    }
+                    // Conflicts between noise symbols do not cause an error because
+                    // it doesn't matter which one gets chosen.
+                    if (firstPriority == priority && priority == NoisePriority)
+                    {
+                        continue;
+                    }
                 }
                 return null;
             }

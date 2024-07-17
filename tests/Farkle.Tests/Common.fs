@@ -27,8 +27,8 @@ let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> wi
 /// Until the LALR builder gets implemented, this function manually
 /// constructs the LR state machine.
 /// This is an advanced overload that also allows you to prioritize
-/// fixed-length symbols.
-let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes =
+/// symbols.
+let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
     let gw = GrammarWriter()
     let regexes = Array.ofList regexes
     let count = Array.length regexes
@@ -52,7 +52,7 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeFixedLengthSymbols regexes
         member _.GetRegex i = regexes[i]
         member _.GetTokenSymbolHandle i = tokenSymbols[i]
         member _.GetName i = BuilderSymbolName($"Token{i}", TokenSymbolKind.Terminal, false)}
-    DfaBuild<char>.Build(symbolsProvider, caseSensitive, prioritizeFixedLengthSymbols, Int32.MaxValue)
+    DfaBuild<char>.Build(symbolsProvider, caseSensitive, prioritizeSymbols, Int32.MaxValue)
     |> ValueOption.ofObj
     |> ValueOption.iter gw.AddStateMachine
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)

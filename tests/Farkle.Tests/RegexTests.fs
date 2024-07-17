@@ -127,6 +127,26 @@ let tests = testList "Regex tests" [
         Expect.equal dfa.[0].DefaultTransition -1 "The unreachable Anything Else edge was not removed"
     }
 
+    test "DFA conflicts between terminals and noise symbols are resolved in favor of the former" {
+        let parser =
+            Regex.regexString ".+"
+            |> terminalU "MyTerminal"
+            |> _.AddNoiseSymbol("Noise", Regex.string "aaa")
+            |> _.BuildSyntaxCheck()
+        Expect.isFalse parser.IsFailing "Building the grammar failed"
+        expectIsParseSuccess (CharParser.parseString parser "aaa") "The terminal was not recognized"
+    }
+
+    test "DFA conflicts between noise symbols do not cause a build error" {
+        let parser =
+            Regex.string "x"
+            |> terminalU "MyTerminal"
+            |> _.AddNoiseSymbol("Noise1", Regex.regexString "a|b|c")
+            |> _.AddNoiseSymbol("Noise2", Regex.regexString "a|d|e")
+            |> _.BuildSyntaxCheck()
+        Expect.isFalse parser.IsFailing "Building the grammar failed"
+    }
+
 #if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     test "DFA conflict messages come with a correct example word" {
         let impl regex1 regex2 exampleWord =

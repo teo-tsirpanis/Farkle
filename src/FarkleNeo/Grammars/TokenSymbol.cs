@@ -29,9 +29,14 @@ public readonly struct TokenSymbol
     }
 
     /// <summary>
+    /// The <see cref="TokenSymbol"/>'s name.
+    /// </summary>
+    public string Name => _grammar.GetString(NameHandle);
+
+    /// <summary>
     /// A <see cref="StringHandle"/> pointing to the <see cref="TokenSymbol"/>'s name.
     /// </summary>
-    public StringHandle Name
+    public StringHandle NameHandle
     {
         get
         {
@@ -83,5 +88,5 @@ public readonly struct TokenSymbol
     /// <summary>
     /// Returns a string describing the the <see cref="TokenSymbol"/>.
     /// </summary>
-    public override string ToString() => FormatName(_grammar.GetString(Name));
+    public override string ToString() => _grammar is null ? "" : FormatName(Name);
 }

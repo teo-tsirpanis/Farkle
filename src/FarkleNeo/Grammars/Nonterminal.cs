@@ -39,9 +39,14 @@ public readonly struct Nonterminal
     }
 
     /// <summary>
+    /// The <see cref="Nonterminal"/>'s name.
+    /// </summary>
+    public string Name => _grammar.GetString(NameHandle);
+
+    /// <summary>
     /// A <see cref="StringHandle"/> pointing to the <see cref="Nonterminal"/>'s name.
     /// </summary>
-    public StringHandle Name
+    public StringHandle NameHandle
     {
         get
         {
@@ -78,5 +83,5 @@ public readonly struct Nonterminal
     /// <summary>
     /// Returns a string describing the the <see cref="Nonterminal"/>.
     /// </summary>
-    public override string ToString() => $"<{_grammar.GetString(Name)}>";
+    public override string ToString() => _grammar is null ? "" : $"<{Name}>";
 }

@@ -56,7 +56,7 @@ internal static class ParserUtilities
             {
                 continue;
             }
-            builder.Add(grammar.GetString(symbol.Name));
+            builder.Add(symbol.Name);
         }
         if (state.EndOfFileActions.Count > 0)
         {

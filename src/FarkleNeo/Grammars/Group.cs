@@ -37,9 +37,14 @@ public readonly struct Group
     }
 
     /// <summary>
+    /// The <see cref="Group"/>'s name.
+    /// </summary>
+    public string Name => _grammar.GetString(NameHandle);
+
+    /// <summary>
     /// A <see cref="StringHandle"/> pointing to the <see cref="Group"/>'s name.
     /// </summary>
-    public StringHandle Name
+    public StringHandle NameHandle
     {
         get
         {
@@ -112,5 +117,5 @@ public readonly struct Group
     /// <summary>
     /// Returns a string describing the the <see cref="Group"/>.
     /// </summary>
-    public override string ToString() => _grammar.GetString(Name);
+    public override string ToString() => _grammar is null ? "" : Name;
 }

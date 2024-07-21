@@ -159,7 +159,7 @@ let tests = testList "Grammar builder tests" [
             let expectedName = sprintf "%s Renamed" df.Name
             let startSymbolName =
                 let grammar = df.Rename(expectedName).BuildSyntaxCheck().GetGrammar()
-                grammar.GetNonterminal(grammar.GrammarInfo.StartSymbol).Name |> grammar.GetString
+                grammar.GrammarInfo.StartSymbol.Name
             Expect.equal startSymbolName expectedName (sprintf "Renaming a %s had no effect" name)
 
         terminalU "Number" Regex.any
@@ -192,7 +192,6 @@ let tests = testList "Grammar builder tests" [
             grammar.Terminals
             |> Seq.exactlyOne
             |> _.Name
-            |> grammar.GetString
         Expect.equal terminalName "Test Renamed" "The renamed name of the symbol was not preferred"
     }
 
@@ -214,7 +213,6 @@ let tests = testList "Grammar builder tests" [
             grammar.Terminals
             |> Seq.exactlyOne
             |> _.Name
-            |> grammar.GetString
         // We can't know for sure which name will be chosen, but it will not be the original one.
         Expect.notEqual terminalName "Test" "The original name of a symbol was not preferred"
     }

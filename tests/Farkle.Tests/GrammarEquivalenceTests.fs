@@ -65,7 +65,7 @@ let checkLALRStateTableEquivalence (productionMap: Dictionary<_, _>) (farkleGram
             let goldState = goldStates[lalrStates[i]]
 
             let getTerminalName (grammar: Grammar) (term: TokenSymbolHandle) =
-                grammar.GetTokenSymbol(term).Name |> grammar.GetString
+                grammar.GetTokenSymbol(term).Name
 
             Expect.hasLength farkleState.Actions goldState.Actions.Count "There are not the same number of LALR actions"
             let actionsJoined =
@@ -79,7 +79,7 @@ let checkLALRStateTableEquivalence (productionMap: Dictionary<_, _>) (farkleGram
                 checkActionEquivalence aFarkle aGold
                 
             let getNonterminalName (grammar: Grammar) (nont: NonterminalHandle) =
-                grammar.GetNonterminal(nont).Name |> grammar.GetString
+                grammar.GetNonterminal(nont).Name
 
             Expect.hasLength farkleState.Gotos goldState.Gotos.Count "There are not the same number of LALR GOTO actions"
             let gotoJoined =
@@ -107,10 +107,10 @@ let createProductionMap (farkleGrammar: Grammar) (goldGrammar: Grammar) =
     let goldProductions = HashSet(goldProductions)
     Expect.hasLength farkleProductions goldProductions.Count "The two grammars don't have the same number of productions"
     for farkleProduction in farkleProductions do
-        let farkleProdHeadName = farkleGrammar.GetNonterminal(farkleProduction.Head).Name |> farkleGrammar.GetString
+        let farkleProdHeadName = farkleGrammar.GetNonterminal(farkleProduction.Head).Name
         goldProductions
         |> Seq.tryFind (fun goldProduction ->
-            (goldGrammar.GetNonterminal(goldProduction.Head).Name |> goldGrammar.GetString) = farkleProdHeadName
+            (goldGrammar.GetNonterminal(goldProduction.Head).Name) = farkleProdHeadName
             && string goldProduction = string farkleProduction)
         |> function
         | Some goldProduction ->
@@ -126,11 +126,11 @@ let checkParserEquivalence (farkleGrammar: Grammar) (goldGrammar: Grammar) =
 let recreateSyntaxFromGrammar (g: Grammar) =
     let terminals =
         g.Terminals
-        |> Seq.map (fun t -> t.Name |> g.GetString |> virtualTerminal)
+        |> Seq.map (fun t -> t.Name |> virtualTerminal)
         |> Array.ofSeq
     let nonterminals =
         g.Nonterminals
-        |> Seq.map (fun n -> n.Name |> g.GetString |> nonterminalU)
+        |> Seq.map (fun n -> n.Name |> nonterminalU)
         |> Array.ofSeq
     let getSymbol (x: EntityHandle) =
         if x.IsTokenSymbol then
@@ -146,7 +146,7 @@ let recreateSyntaxFromGrammar (g: Grammar) =
     let parser =
         nonterminals[g.GrammarInfo.StartSymbol.Value]
             .AutoWhitespace(false)
-            .WithGrammarName(g.GetString g.GrammarInfo.Name)
+            .WithGrammarName(g.GrammarInfo.Name)
             .BuildSyntaxCheck()
     if parser.IsFailing then
         failtestf "Failed to build: %O" (parser.Parse "")

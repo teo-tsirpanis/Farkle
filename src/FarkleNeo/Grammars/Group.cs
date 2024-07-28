@@ -54,14 +54,14 @@ public readonly struct Group
     }
 
     /// <summary>
-    /// A <see cref="TokenSymbolHandle"/> pointing to the token symbol that represents the <see cref="Group"/>'s content.
+    /// The token symbol that represents the <see cref="Group"/>'s content.
     /// </summary>
-    public TokenSymbolHandle Container
+    public TokenSymbol Container
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, Index);
+            return new(_grammar, _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, Index));
         }
     }
 
@@ -78,26 +78,26 @@ public readonly struct Group
     }
 
     /// <summary>
-    /// A <see cref="TokenSymbolHandle"/> pointing to the token symbol that starts this <see cref="Group"/>.
+    /// The token symbol that starts this <see cref="Group"/>.
     /// </summary>
-    public TokenSymbolHandle Start
+    public TokenSymbol Start
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, Index);
+            return new(_grammar, _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, Index));
         }
     }
 
     /// <summary>
-    /// A <see cref="TokenSymbolHandle"/> pointing to the token symbol that ends this <see cref="Group"/>.
+    /// The token symbol that ends this <see cref="Group"/>.
     /// </summary>
-    public TokenSymbolHandle End
+    public TokenSymbol End
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, Index);
+            return new(_grammar, _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, Index));
         }
     }
 

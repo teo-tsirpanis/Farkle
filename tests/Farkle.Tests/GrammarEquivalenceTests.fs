@@ -107,10 +107,10 @@ let createProductionMap (farkleGrammar: Grammar) (goldGrammar: Grammar) =
     let goldProductions = HashSet(goldProductions)
     Expect.hasLength farkleProductions goldProductions.Count "The two grammars don't have the same number of productions"
     for farkleProduction in farkleProductions do
-        let farkleProdHeadName = farkleGrammar.GetNonterminal(farkleProduction.Head).Name
+        let farkleProdHeadName = farkleProduction.Head.Name
         goldProductions
         |> Seq.tryFind (fun goldProduction ->
-            (goldGrammar.GetNonterminal(goldProduction.Head).Name) = farkleProdHeadName
+            (goldProduction.Head.Name) = farkleProdHeadName
             && string goldProduction = string farkleProduction)
         |> function
         | Some goldProduction ->
@@ -144,7 +144,7 @@ let recreateSyntaxFromGrammar (g: Grammar) =
         |> Array.ofSeq
         |> fun x -> nonterminals[idx].SetProductions(x))
     let parser =
-        nonterminals[g.GrammarInfo.StartSymbol.Value]
+        nonterminals[g.GrammarInfo.StartSymbol.Handle.Value]
             .AutoWhitespace(false)
             .WithGrammarName(g.GrammarInfo.Name)
             .BuildSyntaxCheck()

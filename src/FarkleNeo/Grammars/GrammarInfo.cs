@@ -32,7 +32,7 @@ public readonly struct GrammarInfo
     /// <summary>
     /// The grammar's starting nonterminal.
     /// </summary>
-    public NonterminalHandle StartSymbol => _grammar.GrammarTables.GetGrammarStartSymbol(_grammar.GrammarFile);
+    public Nonterminal StartSymbol => new(_grammar, _grammar.GrammarTables.GetGrammarStartSymbol(_grammar.GrammarFile));
 
     /// <summary>
     /// The grammar's <see cref="GrammarAttributes"/>.

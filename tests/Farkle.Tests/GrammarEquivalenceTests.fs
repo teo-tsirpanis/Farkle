@@ -64,29 +64,23 @@ let checkLALRStateTableEquivalence (productionMap: Dictionary<_, _>) (farkleGram
             let farkleState = farkleStates[i]
             let goldState = goldStates[lalrStates[i]]
 
-            let getTerminalName (grammar: Grammar) (term: TokenSymbolHandle) =
-                grammar.GetTokenSymbol(term).Name
-
             Expect.hasLength farkleState.Actions goldState.Actions.Count "There are not the same number of LALR actions"
             let actionsJoined =
                 farkleState.Actions.Join(
                     goldState.Actions,
-                    (fun (KeyValue(term, _)) -> getTerminalName farkleGrammar term),
-                    (fun (KeyValue(term, _)) -> getTerminalName goldGrammar term),
+                    (fun (KeyValue(term, _)) -> term.Name),
+                    (fun (KeyValue(term, _)) -> term.Name),
                     fun (KeyValue(_, farkleAction)) (KeyValue(_, goldAction)) -> farkleAction, goldAction)
             Expect.hasLength actionsJoined goldState.Actions.Count "Some terminals do not have a matching LALR action"
             for aFarkle, aGold in actionsJoined do
                 checkActionEquivalence aFarkle aGold
                 
-            let getNonterminalName (grammar: Grammar) (nont: NonterminalHandle) =
-                grammar.GetNonterminal(nont).Name
-
             Expect.hasLength farkleState.Gotos goldState.Gotos.Count "There are not the same number of LALR GOTO actions"
             let gotoJoined =
                 farkleState.Gotos.Join(
                     goldState.Gotos,
-                    (fun (KeyValue(nont, _)) -> getNonterminalName farkleGrammar nont),
-                    (fun (KeyValue(nont, _)) -> getNonterminalName goldGrammar nont),
+                    (fun (KeyValue(nont, _)) -> nont.Name),
+                    (fun (KeyValue(nont, _)) -> nont.Name),
                     fun (KeyValue(nont, farkleAction)) (KeyValue(_, goldAction)) -> nont, farkleAction, goldAction)
             Expect.hasLength gotoJoined goldState.Gotos.Count "Some nonterminals have no matching LALR GOTO action"
             for nont, gotoFarkle, gotoGold in gotoJoined do

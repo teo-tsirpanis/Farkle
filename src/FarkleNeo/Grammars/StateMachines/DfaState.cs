@@ -178,7 +178,7 @@ public readonly struct DfaState<TChar>
     /// Contains the accept symbols of a <see cref="DfaState{TChar}"/>.
     /// </summary>
     [DebuggerTypeProxy(typeof(DfaAcceptSymbolsProxy<>))]
-    public readonly struct AcceptSymbolCollection : IReadOnlyCollection<TokenSymbolHandle>
+    public readonly struct AcceptSymbolCollection : IReadOnlyCollection<TokenSymbol>
     {
         private readonly Dfa<TChar> _dfa;
 
@@ -199,14 +199,14 @@ public readonly struct DfaState<TChar>
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<TokenSymbolHandle> IEnumerable<TokenSymbolHandle>.GetEnumerator() => GetEnumerator();
+        IEnumerator<TokenSymbol> IEnumerable<TokenSymbol>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate an <see cref="AcceptSymbolCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<TokenSymbolHandle>
+        public struct Enumerator : IEnumerator<TokenSymbol>
         {
             private readonly AcceptSymbolCollection _collection;
 
@@ -218,7 +218,7 @@ public readonly struct DfaState<TChar>
             }
 
             /// <inheritdoc/>
-            public TokenSymbolHandle Current
+            public TokenSymbol Current
             {
                 get
                 {
@@ -226,7 +226,7 @@ public readonly struct DfaState<TChar>
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._dfa.GetAcceptSymbolAt(_collection._offset + _currentIndex);
+                    return new(_collection._dfa.Grammar, _collection._dfa.GetAcceptSymbolAt(_collection._offset + _currentIndex));
                 }
             }
 

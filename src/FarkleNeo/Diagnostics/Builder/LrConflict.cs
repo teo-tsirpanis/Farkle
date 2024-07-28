@@ -134,12 +134,12 @@ public sealed class LrConflict : IFormattable
         {
             foreach (var kvp in state.Actions)
             {
-                if (!firstActionOfTerminal.TryGetValue(kvp.Key, out var firstAction))
+                if (!firstActionOfTerminal.TryGetValue(kvp.Key.Handle, out var firstAction))
                 {
-                    firstActionOfTerminal.Add(kvp.Key, kvp.Value);
+                    firstActionOfTerminal.Add(kvp.Key.Handle, kvp.Value);
                     continue;
                 }
-                yield return Create(states.Grammar, state.StateIndex, kvp.Key, firstAction, kvp.Value);
+                yield return Create(states.Grammar, state.StateIndex, kvp.Key.Handle, firstAction, kvp.Value);
             }
             firstActionOfTerminal.Clear();
 

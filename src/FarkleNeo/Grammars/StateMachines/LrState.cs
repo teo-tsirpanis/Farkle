@@ -57,8 +57,8 @@ public readonly struct LrState
     /// Contains the terminals an <see cref="LrState"/> accepts,
     /// along with their respective <see cref="LrAction"/>.
     /// </summary>
-    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbolHandle, LrAction>, ActionCollection>))]
-    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbolHandle, LrAction>>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbol, LrAction>, ActionCollection>))]
+    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbol, LrAction>>
     {
         private readonly LrStateMachine _lr;
 
@@ -78,15 +78,15 @@ public readonly struct LrState
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<KeyValuePair<TokenSymbolHandle, LrAction>>
-            IEnumerable<KeyValuePair<TokenSymbolHandle, LrAction>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<TokenSymbol, LrAction>>
+            IEnumerable<KeyValuePair<TokenSymbol, LrAction>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate an <see cref="ActionCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbolHandle, LrAction>>
+        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbol, LrAction>>
         {
             private readonly ActionCollection _collection;
 
@@ -98,7 +98,7 @@ public readonly struct LrState
             }
 
             /// <inheritdoc/>
-            public KeyValuePair<TokenSymbolHandle, LrAction> Current
+            public KeyValuePair<TokenSymbol, LrAction> Current
             {
                 get
                 {
@@ -106,7 +106,8 @@ public readonly struct LrState
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._lr.GetActionAt(_collection._offset + _currentIndex);
+                    var action = _collection._lr.GetActionAt(_collection._offset + _currentIndex);
+                    return new(new(_collection._lr.Grammar, action.Key), action.Value);
                 }
             }
 
@@ -208,8 +209,8 @@ public readonly struct LrState
     /// <summary>
     /// Contains pairs of <see cref="NonterminalHandle"/>s and their respective GOTO destination states.
     /// </summary>
-    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<NonterminalHandle, int>, GotoCollection>))]
-    public readonly struct GotoCollection : IReadOnlyCollection<KeyValuePair<NonterminalHandle, int>>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<Nonterminal, int>, GotoCollection>))]
+    public readonly struct GotoCollection : IReadOnlyCollection<KeyValuePair<Nonterminal, int>>
     {
         private readonly LrStateMachine _lr;
 
@@ -229,15 +230,15 @@ public readonly struct LrState
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<KeyValuePair<NonterminalHandle, int>>
-            IEnumerable<KeyValuePair<NonterminalHandle, int>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<Nonterminal, int>>
+            IEnumerable<KeyValuePair<Nonterminal, int>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate a <see cref="GotoCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<NonterminalHandle, int>>
+        public struct Enumerator : IEnumerator<KeyValuePair<Nonterminal, int>>
         {
             private readonly GotoCollection _collection;
 
@@ -249,7 +250,7 @@ public readonly struct LrState
             }
 
             /// <inheritdoc/>
-            public KeyValuePair<NonterminalHandle, int> Current
+            public KeyValuePair<Nonterminal, int> Current
             {
                 get
                 {
@@ -257,7 +258,8 @@ public readonly struct LrState
                     {
                         ThrowHelpers.ThrowInvalidOperationException();
                     }
-                    return _collection._lr.GetGotoAt(_collection._offset + _currentIndex);
+                    var @goto = _collection._lr.GetGotoAt(_collection._offset + _currentIndex);
+                    return new(new(_collection._lr.Grammar, @goto.Key), @goto.Value);
                 }
             }
 

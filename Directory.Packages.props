@@ -5,7 +5,7 @@
     <FakeVersion>5.23.1</FakeVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Argu" Version="6.2.3" />
+    <PackageVersion Include="Argu" Version="6.2.4" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageVersion Include="BitCollections" Version="1.0.1" />
     <PackageVersion Include="Chiron" Version="6.3.1" />

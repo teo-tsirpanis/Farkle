@@ -224,7 +224,7 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
             false
 
 // We build our grammar almost as usual.
-let runtime =
+let parser =
     grammarBuilder
     |> GrammarBuilder.build
     // To tell Farkle to use our custom tokenizer with our

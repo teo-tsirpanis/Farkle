@@ -212,10 +212,16 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 return true;
             }
             // The group had been a noise group.
-            // We return to the regular tokenizer logic.
+            // We either return false to give a chance to the other tokenizers in the chain
+            // to run, or return to the regular tokenizer logic if we are the only tokenizer.
             if (arg.IsNoise)
             {
-                return TryGetNextToken(ref input, semanticProvider, out result);
+                if (input.IsSingleTokenizerInChain())
+                {
+                    return TryGetNextToken(ref input, semanticProvider, out result);
+                }
+                result = default;
+                return false;
             }
             result = CreateToken(ref input, semanticProvider, arg.GroupContainerSymbol, charactersRead);
             return true;
@@ -270,7 +276,12 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     Debug.Assert(charactersRead == 0);
                 }
                 input.Consume(charactersRead);
-                continue;
+                if (input.IsSingleTokenizerInChain())
+                {
+                    continue;
+                }
+                result = default;
+                return false;
             }
 
             if (!input.IsFinalBlock && charactersRead == input.RemainingCharacters.Length)

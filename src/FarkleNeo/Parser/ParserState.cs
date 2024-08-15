@@ -63,6 +63,8 @@ public struct ParserState
     /// <seealso cref="ParserExtensions.ParseFileAsync"/>
     public string? InputName { get; set; }
 
+    internal ParserStateAttributes Attributes { get; set; }
+
     /// <summary>
     /// Whether suspending the tokenizer will have any effect.
     /// </summary>
@@ -72,7 +74,12 @@ public struct ParserState
     /// the tokenizer, and when the tokenizer returns and wants to suspend again, it will
     /// throw with a message that it is already suspended.
     /// </remarks>
-    internal bool TokenizerSupportsSuspending { get; set; }
+    internal readonly bool TokenizerSupportsSuspending =>
+        (Attributes & ParserStateAttributes.TokenizerSupportsSuspending) != 0;
+
+    /// <inheritdoc cref="Tokenizers.TokenizerExtensions.IsSingleTokenizerInChain"/>
+    internal readonly bool IsSingleTokenizerInChain =>
+        (Attributes & ParserStateAttributes.HasMoreThanOneTokenizerInChain) == 0;
 
     internal void Consume<T>(ReadOnlySpan<T> characters)
     {

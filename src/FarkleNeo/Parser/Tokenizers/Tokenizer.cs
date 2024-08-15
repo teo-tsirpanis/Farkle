@@ -37,7 +37,8 @@ public abstract class Tokenizer<TChar>
     /// <para>
     /// Additionally, tokenizers that set this property to <see langword="true"/> must
     /// handle thrown exceptions of type <sep cref="ParserApplicationException"/> and
-    /// translate them to error <see cref="TokenizerResult"/>s.
+    /// translate them to error <see cref="TokenizerResult"/>s, and must check the
+    /// <see cref="ParserInputReader{TChar}.IsFinalBlock"/> property.
     /// </para>
     /// </remarks>
     internal bool CanSkipChainedTokenizerWrapping { get; private protected init; }
@@ -60,10 +61,19 @@ public abstract class Tokenizer<TChar>
     /// In this case the result will be written to <paramref name="result"/>.
     /// </para>
     /// <para>
-    /// <see langword="false"/> if either the tokenizer needs more input to make a decision
-    /// or input has ended if the <see cref="ParserInputReader{TChar}.IsFinalBlock"/> property
-    /// of <paramref name="input"/> is <see langword="true"/>. In this case the tokenizer
-    /// should be invoked again after more input has been provided.
+    /// <see langword="false"/> in one of the following cases:
+    /// <list type="bullet">
+    /// <item><description>The tokenizer needs more input to make a decision.</description></item>
+    /// <item><description>Input has ended and the <see cref="ParserInputReader{TChar}.IsFinalBlock"/>
+    /// property of <paramref name="input"/> is <see langword="true"/>.</description></item>
+    /// <item><description><strong>Not applicable for tokenizers that are wrapped in a chain:</strong>
+    /// The tokenizer has encountered a noise symbol.</description></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// A tokenizer object is considered to be wrapped in a chain if it was returned by
+    /// <see cref="ChainedTokenizerBuilder{TChar}.Build"/> method, or by any other public
+    /// API of Farkle.
     /// </para>
     /// </returns>
     public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);

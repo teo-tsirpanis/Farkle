@@ -47,6 +47,19 @@ public static class TokenizerExtensions
     }
 
     /// <summary>
+    /// Returns whether the tokenizer chain in a parsing operation consists of only one tokenizer.
+    /// </summary>
+    /// <typeparam name="TChar">The type of characters the tokenizer processes.</typeparam>
+    /// <param name="input">The state of the parsing operation.</param>
+    /// <remarks>
+    /// If this property is <see langword="true"/>, tokenizers can avoid exiting when they
+    /// encounter a noise symbol, and instead continue tokenizing. Checking for this property
+    /// is optional and provides a performance improvement.
+    /// </remarks>
+    public static bool IsSingleTokenizerInChain<TChar>(this in ParserInputReader<TChar> input) =>
+        input.State.IsSingleTokenizerInChain;
+
+    /// <summary>
     /// Suspends the tokenization process and sets it to resume at the specified <see cref="Tokenizer{TChar}"/>.
     /// </summary>
     /// <typeparam name="TChar">The type of characters the tokenizer processes.</typeparam>

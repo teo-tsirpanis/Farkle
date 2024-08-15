@@ -48,7 +48,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         // Get the state of the chained tokenizer. If we have not suspended before,
         // it will be null.
         var tokenizerState = input.GetChainedTokenizerStateOrNull();
-        int i = 0;
+        int startIndex = 0;
         // Check if we are resuming from a previous suspension.
         if (tokenizerState is { IsSuspended: true })
         {
@@ -84,44 +84,58 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
             }
             // And if the tokenizer did not suspend, we set to continue the regular
             // tokenizer chain at NextChainIndex.
-            i = tokenizerState.NextChainIndex;
+            startIndex = tokenizerState.NextChainIndex;
         }
 
-        for (; i < Components.Length; i++)
+        long charactersConsumed;
+        do
         {
-            // We invoke the next tokenizer in the chain.
-            bool foundToken;
-            try
+            charactersConsumed = input.State.TotalCharactersConsumed;
+            // Run all tokenizers, starting from the one we left off if we are resuming from a suspension.
+            // The goal is, if we have four tokenizers and have suspended at the third, to run tokenizers 4, 1, 2 and 3.
+            // We stop if a tokenizer returns true, suspends, or a full loop is made without consuming any characters.
+            for (int i = 0; i < Components.Length; i++, startIndex++)
             {
-                foundToken = Components[i].TryGetNextToken(ref input, semanticProvider, out result);
+                // Wrap around without using the modulo operator.
+                if (startIndex == Components.Length)
+                {
+                    startIndex = 0;
+                }
+
+                // We invoke the next tokenizer in the chain.
+                bool foundToken;
+                try
+                {
+                    foundToken = Components[startIndex].TryGetNextToken(ref input, semanticProvider, out result);
+                }
+                // Catch ParserApplicationException thrown by third-party tokenizers.
+                // First-party tokenizers that opt-out of the wrapping must catch it
+                // themselves.
+                catch (ParserApplicationException ex)
+                {
+                    result = TokenizerResult.CreateError(ex.GetErrorObject(input.State.CurrentPosition));
+                    foundToken = true;
+                }
+                // Because in the main loop when we suspend we must update NextChainIndex,
+                // we must always check if we have suspended after invoking a tokenizer.
+                // If our tokenizer state is null, we check again in case we have suspended
+                // for the first time.
+                tokenizerState ??= input.GetChainedTokenizerStateOrNull();
+                // If there is a state and it is suspended, we set NextChainIndex and return
+                // whatever the result of the tokenizer was.
+                if (tokenizerState is { IsSuspended: true })
+                {
+                    tokenizerState.NextChainIndex = startIndex + 1;
+                    return foundToken;
+                }
+                // After checking for suspension, we stop the loop if we have found a token.
+                // In this case, the next time the chain will start all over.
+                if (foundToken)
+                {
+                    return true;
+                }
             }
-            // Catch ParserApplicationException thrown by third-party tokenizers.
-            // First-party tokenizers that opt-out of the wrapping must catch it
-            // themselves.
-            catch (ParserApplicationException ex)
-            {
-                result = TokenizerResult.CreateError(ex.GetErrorObject(input.State.CurrentPosition));
-                foundToken = true;
-            }
-            // Because in the main loop when we suspend we must update NextChainIndex,
-            // we must always check if we have suspended after invoking a tokenizer.
-            // If our tokenizer state is null, we check again in case we have suspended
-            // for the first time.
-            tokenizerState ??= input.GetChainedTokenizerStateOrNull();
-            // If there is a state and it is suspended, we set NextChainIndex and return
-            // whatever the result of the tokenizer was.
-            if (tokenizerState is { IsSuspended: true })
-            {
-                tokenizerState.NextChainIndex = i + 1;
-                return foundToken;
-            }
-            // After checking for suspension, we stop the loop if we have found a token.
-            // In this case, the next time the chain will start all over.
-            if (foundToken)
-            {
-                return true;
-            }
-        }
+        } while (charactersConsumed != input.State.TotalCharactersConsumed);
 
         // If we have reached the end of the chain without finding a token, we return false.
         result = default;

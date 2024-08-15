@@ -56,11 +56,22 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
             tokenizerState.TokenizerToResume = null;
             Debug.Assert(!tokenizerState.IsSuspended);
             // Invoke the resuming tokenizer.
-            if (tokenizer.TryGetNextToken(ref input, semanticProvider, out result))
+            try
             {
-                // If the tokenizer returned with a result, return it. It might have
-                // suspended again but since we still execute the resuming tokenizer
-                // we don't have to advance NextChainIndex.
+                if (tokenizer.TryGetNextToken(ref input, semanticProvider, out result))
+                {
+                    // If the tokenizer returned with a result, return it. It might have
+                    // suspended again but since we still execute the resuming tokenizer
+                    // we don't have to advance NextChainIndex.
+                    return true;
+                }
+            }
+            // Catch ParserApplicationException thrown by third-party tokenizers.
+            // First-party tokenizers that opt-out of the wrapping must catch it
+            // themselves.
+            catch (ParserApplicationException ex)
+            {
+                result = TokenizerResult.CreateError(ex.GetErrorObject(input.State.CurrentPosition));
                 return true;
             }
             // If the tokenizer did not return a result but suspended again, we

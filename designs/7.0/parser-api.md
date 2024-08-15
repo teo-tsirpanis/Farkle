@@ -422,20 +422,22 @@ public static class Tokenizer
 }
 ```
 
-It resembles the `Tokenizer` class of Farkle 6, with the following differences:
+`Tokenizer` has the following differences from the `Tokenizer` class of Farkle 6:
 
 * The class is generic over the character type, like the rest of the foundational parser APIs.
 * The tokenizer's worker method's shape has changed to follow a `Try` pattern instead of returning special EOF tokens.
-    * If `TryGetNextToken` returns `true`, the tokenizer has either successfully produced a token, or failed with a lexical error.
-    * If `TryGetNextToken` returns `false`, the tokenizer cannot produce a token. The action the parser must take depends on the value of `inputReader.IsFinalBlock`:
-        * If it is `true`, the parser will not receive any other token. It must perform an end-of-input action to its state machine, and set its completion state to either success or failure.
-        * If it is `false`, the parser must return without completing. By the time it is invoked again, more characters will be available and the tokenizer might be able to produce a token.
+    * If `TryGetNextToken` returns `true`, the tokenizer has either encountered a token, or failed with a lexical error.
+    * If `TryGetNextToken` returns `false`, the tokenizer cannot produce a token. This can happen in one of the following cases:
+        * The tokenizer is in the middle of a token and needs more characters to complete it.
+        * The tokenizer saw a noise token and skipped it.
+        * The tokenizer has reached the end of the input.
 * The `Token` type has been replaced by the `TokenizerResult` struct, which is a discriminated union of success or failure. On success, it contains the symbol and the semantic value of the token, and on failure, it contains an error object that will be passed to the parser's completion state.
 * The types of the parameters of `TryGetNextToken` have changed to the corresponding Farkle 7 types.
 
-If the `TryGetNextToken` method returns `true`, it means that a token was successfully read from the input, and will be fed to the parser. If it returns `false`, it means that the tokenizer cannot produce any more tokens from the available input. The parsing operation will be suspended, and should be resumed after more input becomes available.
+> [!IMPORTANT]
+> In order to support the tokenizer composability model, tokenizer implementations must not greedily read input unlike parsers, and must return `false` if they encounter a noise symbol, instead of continuing to read input.
 
-> **Note** More specific APIs about creating and using tokenizers will be provided in [a separate design document](tokenizer-api.md).
+> **Note** More specific APIs about creating and using tokenizers are provided in [a separate design document](tokenizer-api.md).
 
 ### High-level parsers
 

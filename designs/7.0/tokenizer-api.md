@@ -14,7 +14,7 @@ With Farkle 7's push-based parsing model, a tokenizer that needs more characters
 
 ## The idea
 
-To satisfy the above requirements, Farkle 7 will introduce the concept of _tokenizer chaining_ as the means to extend the tokenization logic. Imagine that you are writing a parser for an indentation-sensitive language. Instead of your custom tokenizer that handles indentation explicitly invoking the default tokenizer, you define _at creation time_ a chain of tokenizers, and Farkle will invoke them in order, until one of them returns a result. In your case, the chain would consist of your custom tokenizer first, and Farkle's default tokenizer at the end.
+To satisfy the above requirements, Farkle 7 will introduce the concept of _tokenizer chaining_ as the means to extend the tokenization logic. Imagine that you are writing a parser for an indentation-sensitive language. Instead of your custom tokenizer that handles indentation and explicitly invokes the default tokenizer when needed, you define _at creation time_ a chain of tokenizers, and Farkle will invoke them in order, until one of them returns a result. In your case, the chain would consist of your custom tokenizer first, and Farkle's default tokenizer at the end.
 
 This arrangement of tokenizers imposes some constraints -like tokenizers not being able to directly invoke others-, but it comes to shine when a tokenizer needs more input. Imagine that you have a chain of three tokenizers. The first is invoked, returns without finding a token, and Farkle invokes the second one. The second tokenizer thinks it is into something, but needs more input to be 100% sure. If it just returned, Farkle would give a chance to the final tokenizer, which will very likely ruin its predecessor's potential catch. Before returning, we want the second tokenizer to be able to _suspend_ the tokenizing process, which would prevent its succeeding tokenizer from being invoked, and when the parser resumes, the second tokenizer will be the first one to be invoked. Every piece of the chain becomes a safe point for resuming the tokenizing process.
 
@@ -70,7 +70,7 @@ Besides simple tokenizer objects, the tokenizer of a `CharParser` can be changed
 
 A tokenizer factory is a delegate that accepts a `IGrammarProvider` and returns a tokenizer. We use `IGrammarProvider` instead of just `Grammar` to allow in the future looking up the special names without depending on the entire grammar API.
 
-A chained tokenizer builder builds a chain of tokenizers from the start to the end and can be either passed to a `CharParser` or used standalone. Each component of a chained tokenizer builder can be a tokenizer, a tokenizer factory or another chained tokenizer builder. The `Default` property of `ChainedTokenizerBuilder` is a builder that starts with the existing tokenizer of a `CharParser` as its only component. The `AppendDefault` method appends that default tokenizer to the chain.
+A chained tokenizer builder builds a chain of tokenizers from the start to the end and can be either passed to a `CharParser` or used standalone. Each component of a chained tokenizer builder can be a tokenizer, a tokenizer factory or another chained tokenizer builder. The `Default` property of `ChainedTokenizerBuilder` is a builder that starts with the existing tokenizer of a `CharParser` as its only component. The `AppendDefault` method appends that default tokenizer to the chain. `Build` creates a wrapper object that runs the tokenizers in sequence as described below.
 
 ### Suspending tokenizers
 
@@ -145,11 +145,52 @@ public class MyTokenizer : Tokenizer<char>, ITokenizerResumptionPoint<char, MyTo
 
 After the resumed tokenizer or resumption point are ran, the tokenizer chain continues from the next tokenizer after the one that had invoked `SuspendTokenizer`. The exact tokenizer or tokenizer resumption point instance passed to `SuspendTokenizer` does not matter; Farkle itself keeps track of the index of the running tokenizer in the chain.
 
+### Composability guidelines
+
+In order to allow multiple tokenizers to interact with each other, tokenizer implementations must not greedily read all input until they can find a token, and must instead stop with returning `false` after encountering a noise symbol. This is a change from Farkle 6.
+
+To understand why this is necessary, consider a simple indentation-based grammar with line comments. Its parser has a chain with two tokenizers; one stateful that handles the indentation level changes at the beginning of each line, and the default stateless tokenizer that parses the comments and the text of each line.
+
+Let's parse the following input:
+
+```
+foo # Comment
+    bar
+```
+
+The following steps would happen if each tokenizer in the chain was greedy. Each step starts with the line and column number the parser input reader is at:
+
+1. (1,1) The stateful tokenizer sees `foo` without any spaces before it, decides to not emit an indentation start token and returns `false`.
+2. (1,1) The stateless tokenizer reads `foo ` and stops at the line comment start. It emits a token, consumes `foo `, and returns `true`.
+3. (1,5) The stateful tokenizer runs and returns immediately because it's not in the beginning of a line.
+4. (1,5) The stateless tokenizer reads `# Comment` and consumes it. __But it continues__ and consumes the newline character, and the spaces, until it finds `bar` which consumes as well, emitting a token, and returning `true`.
+
+The stateful tokenizer did not have the opportunity to see that the second line was indented, and produced an incorrect result. If the stateless tokenizer returned `false` after consuming the comment and the newline, the stateful tokenizer would have been able to see the indentation.
+
+However, this yielding on noise symbols might have a performance impact, as the tokenizer's `TryGetNextToken` method will have to be called more times. To mitigate this, we introduce an extension method that allows tokenizers to check whether they are the only ones in the chain, and thus are allowed (but not mandated) to be greedy:
+
+```csharp
+namespace Farkle.Parser.Tokenizers;
+
+public static class TokenizerExtensions
+{
+    public static bool IsSingleTokenizerInChain<TChar>(this in ParserInputReader<TChar> input);
+}
+```
+
+In order to simplify the consumers of the lazy tokenizers and spare them from having to determine why the tokenizer returned `false` (because it suspended, it needs more input, or it encountered a noise symbol), the chained tokenizer wrapper will itself be greedy, returning `false` only when:
+
+* One of the tokenizers suspends and returns `false`.
+* All tokenizers in the chain return `false` and none of them has `Consume`d any input characters.
+    * If the `IsFinalBlock` property is true, this will signify the end of the input.
+
+Having the same class specify a different contract for implementers and consumers is arguably confusing, but this is the best design that satisfies all requirements of composability and performance (we could add a separate `ITokenizerChainPart` interface for chain parts that are allowed to be greedy, but I'm wary of using an interface due to potential overhead). In order to mitigate the confusion, all `Tokenizer<TChar>` instances returned by Farkle must be wrapped in a chain.
+
 ### Suspending a standalone tokenizer
 
 If you have a chain of many tokenizers, they are wrapped into one tokenizer object that runs them in sequence and supports suspending. But if you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will directly call the tokenizer's regular entry point without giving the opportunity for something to call a custom resuming tokenizer or resumption point.
 
-The solution to this is to wrap even single tokenizers into a chain. `ChainedTokenizerBuilder.Build` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and thus don't have to be wrapped (suspending them will have no effect).
+The solution to this is to wrap even single tokenizers into a chain. `ChainedTokenizerBuilder.Build` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and always read `IsSingleTokenizerInChain`, and thus don't have to be wrapped.
 
 Another way to avoid the indirection is to add the following API to `ParserInputReader` and require parsers to call it at the start of a parsing operation:
 

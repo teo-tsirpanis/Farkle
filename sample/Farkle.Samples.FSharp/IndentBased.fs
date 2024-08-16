@@ -45,7 +45,8 @@ let grammarBuilder =
     let blockEnd = Terminal.Virtual(BlockEndSpecialName, TerminalOptions.SpecialName).Rename("Block End")
 
     let line =
-        Regex.regexString "[^\r\n]+"
+        // Exclude leading spaces from line tokens.
+        Regex.regexString "[^\r\n ][^\r\n]*"
         |> terminal "Line" (T(fun _ data -> data.ToString() |> Line))
 
     let indentCodeBody = nonterminal "IndentCode Body"
@@ -60,6 +61,11 @@ let grammarBuilder =
         empty =% [])
 
     indentCodeBody
+    // Redefine whitespace to not include tabs.
+    |> _.AutoWhitespace(false)
+    |> _.AddNoiseSymbol("Whitespace", Regex.regexString " +")
+    // Ignore repeated newlines.
+    |> _.NewLineIsNoisy(true)
     |> _.WithGrammarName("IndentCode")
 
 type IndentCodeTokenizerState() =
@@ -88,7 +94,8 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
     let blockStart = grammar.GetTokenSymbolFromSpecialName BlockStartSpecialName
     let blockEnd = grammar.GetTokenSymbolFromSpecialName BlockEndSpecialName
 
-    // This function slices a character bufffer until it ends or the line changes.
+    // This function slices a character buffer until it ends or the line changes.
+    // The line end character is included.
     let getNextLine (buffer: ReadOnlySpan<char>) =
         // We try to find either a carriage return or a line feed.
         match buffer.IndexOfAny("\r\n".AsSpan()) with
@@ -96,8 +103,8 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
         // the line is loaded in memory. We simply return the entire buffer.
         | -1 -> buffer
         // If a new line character was found, we return the buffer,
-        // sliced to contain all characters before the new line.
-        | newLineIdx -> buffer.Slice(0, newLineIdx)
+        // sliced to contain all characters including the new line.
+        | newLineIdx -> buffer.Slice(0, newLineIdx + 1)
 
     // We use this method to get or create our state object.
     // Starting with Farkle 7, tokenizers are stateless and reused by many parser operations.
@@ -113,7 +120,7 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
             state.SetValue(stateKey, x)
             x
 
-    let rec impl (input: ParserInputReader<_> byref) =
+    let impl (input: ParserInputReader<_> byref) =
         let state = getOrCreateState &input.State
         let indentLevels = state.IndentLevels
         if not input.IsEndOfInput then
@@ -129,21 +136,24 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
                 let currentIndentLevel = nextLine.Length - nextLineTrimmed.Length
                 // If the line is empty or has only spaces, there are two possible cases:
                 if nextLineTrimmed.IsEmpty then
-                    // If there are no more characters after the spaces, input
-                    // has reached its end. We consume the spaces, and run this
-                    // tokenizer again to start emitting any block end tokens.
-                    if input.IsFinalBlock then
-                        input.Consume currentIndentLevel
-                        impl &input
-                    else
-                        // If there are more characters after the spaces, we cannot make
-                        // a decision because there might be more spaces following and
-                        // the indentation level might change. By calling SuspendTokenizer
-                        // we interrupt the tokenizer chain and yield from the parser code,
-                        // in order to read more characters. When the tokenizer chain runs
-                        // again, it will continue from here.
+                    // If there are more characters after the spaces, we cannot make
+                    // a decision because there might be more spaces following and
+                    // the indentation level might change. By calling SuspendTokenizer
+                    // we interrupt the tokenizer chain and yield from the parser code,
+                    // in order to read more characters. When the tokenizer chain runs
+                    // again, it will continue from here.
+                    if not input.IsFinalBlock then
                         input.SuspendTokenizer(this)
-                        ValueNone
+                    // If there aren't, input has reached its end. We let Farkle's
+                    // tokenizer consume the last characters, and when we return we
+                    // will emit any block end tokens that are needed.
+                    // Either way we return no token for now.
+                    ValueNone
+                // If the line consisted only of spaces, defer to Farkle's tokenizer
+                // to change the line. We will then continue from the start of the
+                // next line.
+                elif nextLineTrimmed[0] = '\n' || nextLineTrimmed[0] = '\r' then
+                    ValueNone
                 // If we are outside of any block or our indentation
                 // level is bigger than our current block's, it means
                 // that we are about to enter a new block.
@@ -158,19 +168,23 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
                         input.FailAtOffset(currentIndentLevel, "unindent does not match any outer indentation level")
                     // We push this line's indentation level to our stack.
                     indentLevels.Push currentIndentLevel
-                    // We tell the character stream to not show us these spaces again.
-                    input.Consume currentIndentLevel
+                    // We could have consumed the spaces and tell the input reader to
+                    // not show them again but let's not do that, to demonstrate how
+                    // the tokenizers can work together. Farkle's tokenizer will consume
+                    // the spaces, this tokenizer will enter again and quickly leave because
+                    // we are not at the start of a line, and then Farkle's tokenizer will
+                    // emit the line token. Furthermore letting this tokenizer consume the
+                    // characters would pose problems for more complex scenarios like comments.
+                    // input.Consume currentIndentLevel
                     state.IsExitingBlock <- false
-                    // And we return a block start token. The null parameter is the token's data.
-                    // Virtual terminals are always untyped so we return null.
+                    // And we emit a block start token. The null parameter is the token's data.
+                    // Virtual terminals are always untyped so the token's data is null.
                     TokenizerResult.CreateSuccess(blockStart, null, input.State.CurrentPosition)
                     |> ValueSome
                 // If our indentation level is equal to our block's,
                 // we are staying at the same block we are.
                 elif currentIndentLevel = indentLevels.Peek() then
                     state.IsExitingBlock <- false
-                    // We have nothing else to do and defer to
-                    // Farkle's tokenizer to get our line token.
                     ValueNone
                 // And if our indentation level is smaller than our
                 // block's, it means that we are exiting that block.
@@ -182,7 +196,7 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
                     // It prevents things like the example above from happening.
                     state.IsExitingBlock <- true
                     // And finally we return a block end token.
-                    // Note that we did not call input.Consume like before.
+                    // We must not call input.Consume here.
                     // The next time this method is called, the line's indentation
                     // level will be considered again, allowing stuff like this:
                     // A

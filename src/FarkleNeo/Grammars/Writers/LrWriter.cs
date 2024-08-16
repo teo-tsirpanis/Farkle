@@ -163,6 +163,7 @@ internal sealed class LrWriter
                     {
                         return true;
                     }
+                    previousKey = key;
                 }
             }
             return false;

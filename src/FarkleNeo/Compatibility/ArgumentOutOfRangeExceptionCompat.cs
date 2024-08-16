@@ -1,13 +1,15 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+#if NET8_0_OR_GREATER
+global using ArgumentOutOfRangeExceptionCompat = System.ArgumentOutOfRangeException;
+#else
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Compatibility;
 
-// TODO: Redirect to ArgumentOutOfRangeException once we target .NET 8.
 internal static class ArgumentOutOfRangeExceptionCompat
 {
     [DoesNotReturn, StackTraceHidden]
@@ -21,3 +23,4 @@ internal static class ArgumentOutOfRangeExceptionCompat
             ThrowNegative(value, paramName);
     }
 }
+#endif

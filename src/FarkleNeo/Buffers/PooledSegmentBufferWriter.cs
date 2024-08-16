@@ -234,7 +234,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
                 return;
             }
 
-#if !NETSTANDARD2_0
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
 #endif
             {

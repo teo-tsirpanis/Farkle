@@ -96,6 +96,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         bool prioritizeSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
         CancellationToken cancellationToken = default)
     {
+        // If there are no symbols, the algorithm will run normally and produce a DFA
+        // with one state and no edges. The alternative would be to produce no DFA at
+        // all, but it was rejected because it would set the IsFailing flag in the parser,
+        // but there is no failure here; the grammar has no symbols and the builder
+        // successfully produces a DFA that will always fail either way.
+
         var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
         var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);

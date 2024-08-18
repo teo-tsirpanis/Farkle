@@ -14,8 +14,10 @@ open Farkle.Diagnostics
 open Farkle.Diagnostics.Builder
 open Farkle.Grammars
 open Farkle.Grammars.Writers
+open Farkle.Parser
 open Farkle.Parser.Semantics
 open System
+open System.Buffers
 open System.IO
 
 let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> with
@@ -114,3 +116,13 @@ let buildWithWarnings (grammarBuilder: IGrammarBuilder) =
     builderOptions.add_OnDiagnostic (fun x -> diagnostics.Add x)
     let grammar = grammarBuilder.BuildSyntaxCheck(builderOptions).GetGrammar()
     grammar, diagnostics
+
+// Parses text with the given parser by feeding it one character at a time.
+let parseGradual parser (text: string) =
+    let ctx = ParserStateContext.Create parser
+    let mutable i = 0
+    while not ctx.IsCompleted && i < text.Length do
+        ctx.Write(text.AsSpan().Slice(i, 1))
+        i <- i + 1
+    ctx.CompleteInput()
+    ctx.Result

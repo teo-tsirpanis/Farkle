@@ -23,9 +23,13 @@ USS Oriskany
     34
     "
 
-        let result = expectWantParseSuccess (parser.Parse rendered) "Parsing failed"
+        ["static"; "dynamic"]
+        |> List.iter (fun mode ->
+            let result = if mode = "static" then parser.Parse rendered else parseGradual parser rendered
+            let result = expectWantParseSuccess result $"Parsing in {mode} block mode failed"
 
-        Expect.equal result code "The parsed IndentCode is different from the original"
+            Expect.equal result code "The parsed IndentCode is different from the original"
+        )
     }
 
     test "An IndentCode file with invalid indentation fails to be parsed" {

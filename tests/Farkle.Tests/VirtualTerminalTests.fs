@@ -47,6 +47,8 @@ USS Oriskany
             |> _.BuildSyntaxCheck()
             |> _.GetGrammar()
 
-        Expect.isNull grammar.DfaOnChar "The grammar should not have a DFA"
+        Expect.isNotNull grammar.DfaOnChar "The grammar does not have a DFA"
+        Expect.hasLength grammar.DfaOnChar 1 "The DFA does not have the expected number of states"
+        Expect.isEmpty grammar.DfaOnChar.[0].Edges "The DFA should not have edges"
     }
 ]

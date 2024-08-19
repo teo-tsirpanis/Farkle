@@ -21,6 +21,7 @@ Installing this tool is also required when building a project that uses the prec
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" />

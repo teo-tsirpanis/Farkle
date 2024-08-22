@@ -5,7 +5,6 @@ module FsLexYacc.JSON.Lexer
 
 open FSharp.Text.Lexing
 open FsLexYacc.JSON.Parser
-open System.Text.Json.Nodes
 
 exception SyntaxError of string
 

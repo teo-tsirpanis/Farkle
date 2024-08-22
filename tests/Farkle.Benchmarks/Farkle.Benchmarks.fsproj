@@ -4,14 +4,16 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Farkle\Farkle.fsproj" />
+    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\performance\Farkle6.Samples\Farkle6.Samples.fsproj" ExcludeAssets="compile" />
     <PackageReference Include="FParsec" />
+    <PackageReference Include="FSharp.Core" />
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="FsLexYacc" PrivateAssets="all" />
     <PackageReference Include="FsLexYacc.Runtime" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\src\Farkle\Common.fs" />
+    <Compile Include="..\..\src\FarkleNeo\Farkle.fs" />
     <FsYacc Include="Parser.fsy">
       <OtherFlags>--module FsLexYacc.JSON.Parser</OtherFlags>
     </FsYacc>

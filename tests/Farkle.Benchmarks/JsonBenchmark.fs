@@ -7,7 +7,6 @@ namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
 open Farkle
-open Farkle.Common.Result
 open Farkle.Samples
 open FParsec
 open System
@@ -21,7 +20,7 @@ type JsonBenchmark() =
 
     let mutable jsonText = ""
 
-    static let farkleRuntimeSyntaxCheck = RuntimeFarkle.syntaxCheck FSharp.JSON.runtime
+    static let farkleRuntimeSyntaxCheck = CharParser.syntaxCheck FSharp.JSON.parser
 
     [<Params("small.json", "medium.json", "big.json")>]
     member val FileName = "" with get, set
@@ -38,13 +37,13 @@ type JsonBenchmark() =
     // memory and FsYacc first copies the string in a byte array.
     member _.FarkleStream() =
         use tr = new StreamReader(new MemoryStream(jsonBytes, false))
-        RuntimeFarkle.parseTextReader farkleRuntimeSyntaxCheck tr
-        |> returnOrFail
+        CharParser.parseTextReader farkleRuntimeSyntaxCheck tr
+        |> _.Value
 
     [<Benchmark>]
     member _.FarkleString() =
-        RuntimeFarkle.parseString farkleRuntimeSyntaxCheck jsonText
-        |> returnOrFail
+        CharParser.parseString farkleRuntimeSyntaxCheck jsonText
+        |> _.Value
 
     [<Benchmark(Baseline = true)>]
     // FParsec's more optimized "Big Data edition" only supports .NET Framework.

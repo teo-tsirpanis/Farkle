@@ -193,3 +193,4 @@ tmp/
 *.binlog
 .fsdocs/
 .vscode/launch.json
+tests/Farkle.Benchmarks/Lexer.fsi

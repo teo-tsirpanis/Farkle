@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="GOLDMetaLanguage.fs" />
+    <Compile Include="EntryPoints.fs" />
+    <PackageReference Include="Farkle" />
+  </ItemGroup>
+</Project>

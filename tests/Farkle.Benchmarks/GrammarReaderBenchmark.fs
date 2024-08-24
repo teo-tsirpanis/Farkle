@@ -6,6 +6,7 @@
 namespace Farkle.Benchmarks
 
 open BenchmarkDotNet.Attributes
+open BenchmarkDotNet.Configs
 open Farkle.Builder
 open Farkle.Grammars
 open Farkle.Samples.FSharp
@@ -13,6 +14,7 @@ open System
 open System.IO
 open System.Runtime.InteropServices
 
+[<GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)>]
 type GrammarReaderBenchmark() =
 
     let mutable egtNeo = Array.empty<byte>
@@ -38,17 +40,17 @@ type GrammarReaderBenchmark() =
         farkle7Grammar <- File.ReadAllBytes "gml.grammar.dat" |> ImmutableCollectionsMarshal.AsImmutableArray
         farkle7GrammarBuilder <- GOLDMetaLanguage.builder
 
-    [<Benchmark>]
+    [<BenchmarkCategory("LoadGrammar"); Benchmark(Baseline = true)>]
     member _.LoadEGTneoFarkle6() = readEGTNeo.Invoke egtNeo
 
-    [<Benchmark>]
+    [<BenchmarkCategory("Build"); Benchmark(Baseline = true)>]
     member _.BuildFarkle6() =
         buildFarkle6.Invoke designtime
 
-    [<Benchmark>]
+    [<BenchmarkCategory("LoadGrammar"); Benchmark>]
     member _.LoadGrammarFarkle7() =
         Grammar.ofBytes farkle7Grammar
 
-    [<Benchmark>]
+    [<BenchmarkCategory("Build"); Benchmark>]
     member _.BuildFarkle7() =
         GrammarBuilder.buildSyntaxCheck farkle7GrammarBuilder

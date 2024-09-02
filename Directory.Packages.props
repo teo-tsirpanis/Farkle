@@ -26,7 +26,7 @@
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
-    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.2.206" />
+    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.2.317" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.3.0" />
     <PackageVersion Include="NUnit" Version="4.1.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />

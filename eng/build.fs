@@ -475,12 +475,6 @@ let initTargets() =
 
 [<EntryPoint>]
 let main argv =
-    // Workaround for failures on Linux.
-    Assembly.Load("StructuredLogger")
-        .GetType("Microsoft.Build.Logging.StructuredLogger.Strings", true)
-        .GetMethod("Initialize")
-        .Invoke(null, [|"en-US"|])
-    |> ignore
     argv
     |> Array.toList
     |> Context.FakeExecutionContext.Create false "build.fs"

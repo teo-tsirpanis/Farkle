@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Collections.Immutable;
 using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Parser.Implementation;
@@ -72,8 +73,7 @@ public abstract class Tokenizer<TChar>
     /// </para>
     /// <para>
     /// A tokenizer object is considered to be wrapped in a chain if it was returned by
-    /// <see cref="ChainedTokenizerBuilder{TChar}.Build"/> method, or by any other public
-    /// API of Farkle.
+    /// <see cref="Tokenizer.CreateChain"/>, or by any other public API of Farkle.
     /// </para>
     /// </returns>
     public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);
@@ -93,6 +93,59 @@ public static class Tokenizer
     /// <exception cref="NotSupportedException"><typeparamref name="TChar"/> is not <see cref="char"/>.</exception>
     /// <exception cref="InvalidOperationException">The grammar cannot be used for tokenizing.</exception>
     public static Tokenizer<TChar> Create<TChar>(Grammar grammar) => Create<TChar>(grammar, throwIfError: true);
+
+    /// <summary>
+    /// Creates a <see cref="Tokenizer{TChar}"/> from a tokenizer chain.
+    /// </summary>
+    /// <typeparam name="TChar">The type of characters the tokenizer accepts.</typeparam>
+    /// <param name="components"></param>
+    /// <param name="grammar">The <see cref="IGrammarProvider"/> to pass to the delegates given in
+    /// <see cref="ChainedTokenizerComponent{TChar}.Create(Func{IGrammarProvider, Tokenizer{TChar}})"/>.
+    /// This parameter is optional if no such delegates have been added.</param>
+    /// <param name="defaultTokenizer">The tokenizer to use in place of
+    /// <see cref="ChainedTokenizerComponent{TChar}.Default"/>.</param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"><paramref name="grammar"/> is <see langword="null"/>
+    /// and <paramref name="components"/> contains a grammar-dependent tokenizer, or
+    /// <paramref name="defaultTokenizer"/> is <see langwword="null"/> and
+    /// <paramref name="components"/> contains the default tokenizer.</exception>
+    public static Tokenizer<TChar> CreateChain<TChar>(ReadOnlySpan<ChainedTokenizerComponent<TChar>> components,
+        IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null)
+    {
+        if (components.IsEmpty)
+        {
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(components), nameof(Resources.ChainedTokenizerBuilder_EmptyChain));
+        }
+
+        var builder = ImmutableArray.CreateBuilder<Tokenizer<TChar>>(components.Length);
+        for (int i = 0; i < components.Length; i++)
+        {
+            switch (components[i].Value)
+            {
+                case Tokenizer<TChar> tokenizer:
+                    builder.Add(tokenizer);
+                    break;
+                case Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory:
+                    if (grammar is null)
+                    {
+                        ThrowHelpers.ThrowInvalidOperationException(Resources.ChainedTokenizerBuilder_NoGrammar);
+                    }
+                    builder.Add(tokenizerFactory(grammar));
+                    break;
+                case null:
+                    if (defaultTokenizer is null)
+                    {
+                        ThrowHelpers.ThrowInvalidOperationException(Resources.ChainedTokenizerBuilder_NoDefaultTokenizer);
+                    }
+                    builder.Add(defaultTokenizer);
+                    break;
+                default:
+                    ThrowHelpers.ThrowArgumentException($"{nameof(components)}[{i}]");
+                    break;
+            }
+        }
+        return ChainedTokenizer<TChar>.Create(builder.DrainToImmutable());
+    }
 
     internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError, object? customError = null)
     {

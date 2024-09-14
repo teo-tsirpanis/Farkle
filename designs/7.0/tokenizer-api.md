@@ -27,29 +27,25 @@ To be created, a tokenizer needs the grammar of the language it will operate on.
 ```csharp
 namespace Farkle.Parser.Tokenizers;
 
-public sealed class ChainedTokenizerBuilder<TChar>
+public readonly struct ChainedTokenizerComponent<TChar>
 {
-    public static ChainedTokenizerBuilder<TChar> Create(Tokenizer<TChar> tokenizer);
+    // Represents the existing tokenizer of a CharParser.
+    public static ChainedTokenizerComponent<TChar> Default { get; }
 
-    public static ChainedTokenizerBuilder<TChar> Create(
-        Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
+    public static ChainedTokenizerComponent<TChar> Create(Tokenizer<TChar> tokenizer);
 
-    // Starts the chain with the existing tokenizer of a CharParser.
-    public static ChainedTokenizerBuilder<TChar> CreateDefault();
+    public static ChainedTokenizerComponent<TChar> Create(Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
 
-    // The Append methods are immutable and return a new builder with the new tokenizer appended.
-    public ChainedTokenizerBuilder<TChar> Append(Tokenizer<TChar> tokenizer);
+    public static implicit operator ChainedTokenizerComponent<TChar>(Tokenizer<TChar> tokenizer);
 
-    public ChainedTokenizerBuilder<TChar> Append(
-        Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
+    public static implicit operator ChainedTokenizerComponent<TChar>(Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
+}
 
-    public ChainedTokenizerBuilder<TChar> Append(ChainedTokenizerBuilder<TChar> builder);
-
-    public ChainedTokenizerBuilder<TChar> AppendDefault();
-
+public static class Tokenizer
+{
     // If grammar is null, IGrammarProvider.GetGrammar will throw in the tokenizer factories.
-    // If defaultTokenizer is null, using ChainedTokenizerBuilder.Default in the chain will throw.
-    public Tokenizer<TChar> Build(IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
+    // If defaultTokenizer is null, using ChainedTokenizerComponent.Default in the chain will throw.
+    public static Tokenizer<TChar> CreateChain<TChar>(ReadOnlySpan<ChainedTokenizerComponent<TChar>> components, IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
 }
 
 namespace Farkle;
@@ -59,18 +55,15 @@ public abstract partial class CharParser<T>
     // Already defined at parser-api.md:
     // public CharParser<T> WithTokenizer(Tokenizer<T> tokenizer);
 
-    public CharParser<T> WithTokenizer(
-        Func<IGrammarProvider, Tokenizer<T>> tokenizerFactory);
+    public CharParser<T> WithTokenizerChain(params ChainedTokenizerComponent<T>[] components);
 
-    public CharParser<T> WithTokenizer(ChainedTokenizerBuilder<T> builder);
+    public CharParser<T> WithTokenizerChain(ReadOnlySpan<ChainedTokenizerComponent<T>> components);
 }
 ```
 
-Besides simple tokenizer objects, the tokenizer of a `CharParser` can be changed by providing a _tokenizer factory_ or a _chained tokenizer builder_.
+Besides simple tokenizer objects, the tokenizer of a `CharParser` can be changed by providing a sequence of _chained tokenizer components_. A chained tokenizer component can be either a tokenizer object, a _tokenizer factory_, or the _default tokenizer_, which maps to the existing tokenizer of the parser. A tokenizer factory is a delegate that accepts a `IGrammarProvider` and returns a tokenizer. We use `IGrammarProvider` instead of just `Grammar` to allow in the future a small subset of operations like looking up the special names without depending on the entire grammars API. The default tokenizer maps to the existing tokenizer of the parser.
 
-A tokenizer factory is a delegate that accepts a `IGrammarProvider` and returns a tokenizer. We use `IGrammarProvider` instead of just `Grammar` to allow in the future looking up the special names without depending on the entire grammar API.
-
-A chained tokenizer builder builds a chain of tokenizers from the start to the end and can be either passed to a `CharParser` or used standalone. Each component of a chained tokenizer builder can be a tokenizer, a tokenizer factory or another chained tokenizer builder. The `Default` property of `ChainedTokenizerBuilder` is a builder that starts with the existing tokenizer of a `CharParser` as its only component. The `AppendDefault` method appends that default tokenizer to the chain. `Build` creates a wrapper object that runs the tokenizers in sequence as described below.
+A sequence of chained tokenizer components can be either used to directly change the tokenizer of a `CharParser` with the `WithTokenizerChain` method, or create a standalone tokenizer with the `Tokenizer.CreateChain` method.
 
 ### Suspending tokenizers
 
@@ -190,7 +183,7 @@ Having the same class specify a different contract for implementers and consumer
 
 If you have a chain of many tokenizers, they are wrapped into one tokenizer object that runs them in sequence and supports suspending. But if you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will directly call the tokenizer's regular entry point without giving the opportunity for something to call a custom resuming tokenizer or resumption point.
 
-The solution to this is to wrap even single tokenizers into a chain. `ChainedTokenizerBuilder.Build` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and always read `IsSingleTokenizerInChain`, and thus don't have to be wrapped.
+The solution to this is to wrap even single tokenizers into a chain. `TokenizerCreateChained` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and always read `IsSingleTokenizerInChain`, and thus don't have to be wrapped.
 
 Another way to avoid the indirection is to add the following API to `ParserInputReader` and require parsers to call it at the start of a parsing operation:
 

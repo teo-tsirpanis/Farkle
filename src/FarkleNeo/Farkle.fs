@@ -55,50 +55,25 @@ module internal ActivePatterns =
 namespace Farkle.Parser.Tokenizers
 
 open Farkle.Grammars
+open System
 
-/// Represents a component of a tokenizer chain.
-/// A list of objects of this type can be used to change the tokenizer of a CharParser.
-/// This type provides an idiomatic F# API for the
-/// Farkle.Parser.Tokenizers.ChainedTokenizerBuilder type.
-/// See the documentation of that type for more information.
-type internal ChainedTokenizerComponent<'TChar> =
-    /// The parser's existing tokenizer.
-    | DefaultTokenizer
-    /// A tokenizer object.
-    | TokenizerObject of Tokenizer<'TChar>
-    /// A function that requires grammar-specific information.
-    | TokenizerFactory of (IGrammarProvider -> Tokenizer<'TChar>)
-
-namespace Farkle.Parser.Tokenizers.Internal
-
-open System.ComponentModel
-
-/// Provides internal functions for use by Farkle's F# API.
-/// Should not be used by user code. No compatibility guarantees
-/// are provided for this module.
+[<AutoOpen>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-[<EditorBrowsable(EditorBrowsableState.Never)>]
-module internal ChainedTokenizerBuilder =
+module internal ChainedTokenizerComponent =
 
-    open Farkle.Parser.Tokenizers
+    let inline defaultTokenizer<'TChar> = ChainedTokenizerComponent<'TChar>.Default
 
-    let create<'TChar> components =
-        components
-        |> List.fold
-            (fun (builder: ChainedTokenizerBuilder<'TChar> voption) x ->
-                match builder, x with
-                | ValueSome builder, DefaultTokenizer -> builder.AddDefault()
-                | ValueSome builder, TokenizerObject tokenizer -> builder.Add tokenizer
-                | ValueSome builder, TokenizerFactory tokenizerFactory -> builder.Add tokenizerFactory
-                | ValueNone, DefaultTokenizer -> ChainedTokenizerBuilder<'TChar>.CreateDefault()
-                | ValueNone, TokenizerObject tokenizer -> ChainedTokenizerBuilder<'TChar>.Create tokenizer
-                | ValueNone, TokenizerFactory tokenizerFactory -> ChainedTokenizerBuilder<'TChar>.Create tokenizerFactory
-                |> ValueSome
-            )
-            ValueNone
-        |> function
-        | ValueSome builder -> builder
-        | ValueNone -> invalidArg (nameof components) "The components list must not be empty."
+    let inline tokenizerFactory (f: IGrammarProvider -> #Tokenizer<'TChar>) =
+        Func<_,_>(f)
+        // Convert Func<_,MyTokenizerSubclass> to Func<_,Tokenizer<_>>.
+        // This is legal because Func is covariant in its return type.
+        |> unbox<Func<_,_>>
+        |> ChainedTokenizerComponent<'TChar>.op_Implicit
+
+    let inline tokenizerObject (x: #Tokenizer<'TChar>) =
+        x
+        :> Tokenizer<_>
+        |> ChainedTokenizerComponent<'TChar>.op_Implicit
 
 namespace Farkle
 
@@ -165,8 +140,8 @@ module internal CharParser =
     /// Changes the tokenizer of a CharParser
     /// to one that requires grammar-specific information.
     let inline withTokenizerFactory tokenizerFactory (parser: CharParser<'T>) =
-        Func<_,_> tokenizerFactory
-        |> parser.WithTokenizer
+        ChainedTokenizerComponent.tokenizerFactory tokenizerFactory
+        |> parser.WithTokenizerChain
 
     /// Changes the tokenizer of a CharParser to a tokenizer chain
     /// specified by a list of components.
@@ -175,8 +150,8 @@ module internal CharParser =
     /// See the documentation of that type for more information.
     let inline withTokenizerChain components (parser: CharParser<'T>) =
         components
-        |> Internal.ChainedTokenizerBuilder.create
-        |> parser.WithTokenizer
+        |> Array.ofSeq
+        |> parser.WithTokenizerChain
 
     /// Parses a read-only span of characters. All types of characters are supported.
     let inline parseSpan (parser: IParser<char, 'T>) (x: ReadOnlySpan<_>) = parser.Parse x
@@ -718,7 +693,7 @@ module internal RuntimeFarkle =
 customizing tokenizers has substantially changed in Farkle 7.")>]
     let inline changeTokenizer (fTokenizer: _ -> #Tokenizer<char>) parser =
         parser
-        |> CharParser.withTokenizerFactory (fun x -> x.GetGrammar() |> fTokenizer :> _)
+        |> CharParser.withTokenizerFactory (fun x -> x.GetGrammar() |> fTokenizer)
 
     [<Obsolete("Use CharParser.syntaxCheck instead.")>]
     let inline syntaxCheck rf = CharParser.syntaxCheck rf

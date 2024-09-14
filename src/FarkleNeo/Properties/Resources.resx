@@ -42,6 +42,9 @@
   <data name="Parser_ResultNotSet" xml:space="preserve">
     <value>The parsing operation has not yet set a result.</value>
   </data>
+  <data name="ChainedTokenizerBuilder_EmptyChain" xml:space="preserve">
+    <value>The tokenizer chain cannot be empty.</value>
+  </data>
   <data name="ChainedTokenizerBuilder_NoGrammar" xml:space="preserve">
     <value>No grammar has been specified.</value>
   </data>

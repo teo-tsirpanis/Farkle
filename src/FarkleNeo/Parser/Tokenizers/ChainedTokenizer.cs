@@ -24,7 +24,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         {
             return tokenizer;
         }
-        return new ChainedTokenizer<TChar>(ImmutableArray.Create(tokenizer));
+        return new ChainedTokenizer<TChar>([tokenizer]);
     }
 
     internal static Tokenizer<TChar> Create(ImmutableArray<Tokenizer<TChar>> components)

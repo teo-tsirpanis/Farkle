@@ -250,4 +250,4 @@ let parser =
     // or signal the end of input if no more input is available.
     // The chain is comprised of two tokenizers; our IdentCodeTokenizer,
     // and the parser's pre-existing tokenizer, which is Farkle's built-in one.
-    |> CharParser.withTokenizerChain [TokenizerFactory (fun grammar -> IndentCodeTokenizer(grammar)); DefaultTokenizer]
+    |> CharParser.withTokenizerChain [tokenizerFactory IndentCodeTokenizer; defaultTokenizer]

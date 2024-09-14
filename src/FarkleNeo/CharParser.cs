@@ -51,11 +51,8 @@ public abstract class CharParser<T> : IParser<char, T>
 
     private protected abstract CharParser<T> WithTokenizerCore(Tokenizer<char> tokenizer);
 
-    private protected virtual CharParser<T> WithTokenizerCore(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory) =>
-        WithTokenizerCore(tokenizerFactory(GetGrammarProvider()));
-
-    private protected virtual CharParser<T> WithTokenizerCore(ChainedTokenizerBuilder<char> builder) =>
-        WithTokenizerCore(builder.Build(GetGrammarProvider(), GetTokenizer()));
+    private protected virtual CharParser<T> WithTokenizerChainCore(ReadOnlySpan<ChainedTokenizerComponent<char>> components) =>
+        WithTokenizerCore(Tokenizer.CreateChain(components, GetGrammarProvider(), GetTokenizer()));
 
     private protected abstract CharParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider);
 
@@ -77,7 +74,7 @@ public abstract class CharParser<T> : IParser<char, T>
         return GetServiceCore(serviceType);
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public abstract void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState);
 
     /// <summary>
@@ -157,42 +154,24 @@ public abstract class CharParser<T> : IParser<char, T>
     }
 
     /// <summary>
-    /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a
-    /// <see cref="Tokenizer{TChar}"/> that depends on a grammar.
+    /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a chained tokenizer
+    /// to be built from a sequence of <see cref="ChainedTokenizerComponent{TChar}"/>s.
     /// </summary>
-    /// <param name="tokenizerFactory">A delegate that accepts an <see cref="IGrammarProvider"/>
-    /// and returns a tokenizer.</param>
-    /// <returns>A <see cref="CharParser{T}"/> with the result of <paramref name="tokenizerFactory"/>
-    /// as its tokenizer.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="tokenizerFactory"/>
-    /// is <see langword="null"/>.</exception>
+    /// <param name="components">The sequence of chained tokenizer components.</param>
+    /// <exception cref="ArgumentException"><paramref name="components"/> is empty.</exception>
     /// <remarks>
-    /// In certain failing parsers, <paramref name="tokenizerFactory"/> will not be called,
-    /// and this method will have no effect and return <see langword="this"/>.
+    /// In certain failing parsers this method will have no effect and return <see langword="this"/>.
     /// </remarks>
-    public CharParser<T> WithTokenizer(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory)
+    public CharParser<T> WithTokenizerChain(ReadOnlySpan<ChainedTokenizerComponent<char>> components)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
-        return WithTokenizerCore(tokenizerFactory);
+        return WithTokenizerChainCore(components);
     }
 
-    /// <summary>
-    /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a
-    /// chained tokenizer to be built from a <see cref="ChainedTokenizerBuilder{TChar}"/>.
-    /// </summary>
-    /// <param name="builder">The chained tokenizer builder to use.</param>
-    /// <returns>A <see cref="CharParser{T}"/> with the tokenizer built from <paramref name="builder"/>
-    /// as its tokenizer.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="builder"/>
-    /// is <see langword="null"/>.</exception>
-    /// <remarks>
-    /// In certain failing parsers, <paramref name="builder"/> will not be built,
-    /// and this method will have no effect and return <see langword="this"/>.
-    /// </remarks>
-    public CharParser<T> WithTokenizer(ChainedTokenizerBuilder<char> builder)
+    /// <inheritdoc cref="WithTokenizerChain(ReadOnlySpan{ChainedTokenizerComponent{char}})"/>
+    public CharParser<T> WithTokenizerChain(params ChainedTokenizerComponent<char>[] components)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
-        return WithTokenizerCore(builder);
+        ArgumentNullExceptionCompat.ThrowIfNull(components);
+        return WithTokenizerChain(components.AsSpan());
     }
 }
 

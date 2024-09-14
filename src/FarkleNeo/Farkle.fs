@@ -68,7 +68,7 @@ module internal ChainedTokenizerComponent =
         // Convert Func<_,MyTokenizerSubclass> to Func<_,Tokenizer<_>>.
         // This is legal because Func is covariant in its return type.
         |> unbox<Func<_,_>>
-        |> ChainedTokenizerComponent<'TChar>.op_Implicit
+        |> ChainedTokenizerComponent<'TChar>.Create
 
     let inline tokenizerObject (x: #Tokenizer<'TChar>) =
         x

@@ -183,7 +183,7 @@ Having the same class specify a different contract for implementers and consumer
 
 If you have a chain of many tokenizers, they are wrapped into one tokenizer object that runs them in sequence and supports suspending. But if you have a single tokenizer, what happens if it suspends? Invoking it again by calling `TryGetNextToken` will directly call the tokenizer's regular entry point without giving the opportunity for something to call a custom resuming tokenizer or resumption point.
 
-The solution to this is to wrap even single tokenizers into a chain. `TokenizerCreateChained` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and always read `IsSingleTokenizerInChain`, and thus don't have to be wrapped.
+The solution to this is to wrap even single tokenizers into a chain. `Tokenizer.CreateChained` will not take a shortcut if it contains only one tokenizer, and if `CharParser<T>.WithTokenizer` is provided a `Tokenizer<char>` that is not a chained one, it will automatically be wrapped in one. This will introduce one extra layer of indirection but will ensure that suspension always works. We could introduce an API to allow tokenizers to declare that they will never suspend and always read `IsSingleTokenizerInChain`, and thus don't have to be wrapped.
 
 Another way to avoid the indirection is to add the following API to `ParserInputReader` and require parsers to call it at the start of a parsing operation:
 

@@ -73,7 +73,7 @@ public abstract class Tokenizer<TChar>
     /// </para>
     /// <para>
     /// A tokenizer object is considered to be wrapped in a chain if it was returned by
-    /// <see cref="Tokenizer.CreateChain"/>, or by any other public API of Farkle.
+    /// <see cref="Tokenizer.CreateChain"/> or by any other public API of Farkle.
     /// </para>
     /// </returns>
     public abstract bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result);

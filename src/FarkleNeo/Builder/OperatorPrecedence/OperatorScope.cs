@@ -25,7 +25,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     /// <remarks>
     /// This capability is not enabled by default.
     /// </remarks>
-    /// <seealso cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
+    /// <seealso cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
     public bool CanResolveReduceReduceConflicts { get; }
 
     internal ImmutableArray<AssociativityGroup> AssociativityGroups { get; }
@@ -36,21 +36,17 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
     /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
     /// in ascending order of precedence.</param>
-    public OperatorScope(bool canResolveReduceReduceConflicts, params ImmutableArray<AssociativityGroup> associativityGroups)
+    public OperatorScope(bool canResolveReduceReduceConflicts, params ReadOnlySpan<AssociativityGroup> associativityGroups)
     {
-        if (associativityGroups.IsDefault)
-        {
-            ThrowHelpers.ThrowArgumentNullException(nameof(associativityGroups));
-        }
         for (int i = 0; i < associativityGroups.Length; i++)
         {
             ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups[i]);
         }
         CanResolveReduceReduceConflicts = canResolveReduceReduceConflicts;
-        AssociativityGroups = associativityGroups;
+        AssociativityGroups = associativityGroups.ToImmutableArray();
     }
 
-    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
+    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups);
@@ -62,18 +58,17 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
         AssociativityGroups = associativityGroups.ToImmutableArray();
     }
 
-    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
+    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
     public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
 
-    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
-    public OperatorScope(params ImmutableArray<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
+    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
+    public OperatorScope(params ReadOnlySpan<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
 
     /// <summary>
     /// Factory method to enable creating operator scopes using collection expressions.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperatorScope Create(ReadOnlySpan<AssociativityGroup> associativityGroups) =>
-        new(false, associativityGroups.ToImmutableArray());
+    public static OperatorScope Create(ReadOnlySpan<AssociativityGroup> associativityGroups) => new(associativityGroups);
 
     // An optimized GetEnumerator() that returns an immutable array enumerator will not
     // be provided at the moment due to the lack of use cases. It can be added in the future

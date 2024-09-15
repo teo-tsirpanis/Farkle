@@ -64,7 +64,7 @@ public sealed class Nonterminal : INonterminal
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    public void SetProductions(ReadOnlySpan<ProductionBuilder> productions) =>
+    public void SetProductions(params ReadOnlySpan<ProductionBuilder> productions) =>
         SetProductions(ImmutableArray<IProduction>.CastUp(productions.ToImmutableArray()));
 
     internal void SetProductions(ImmutableArray<IProduction> productions)

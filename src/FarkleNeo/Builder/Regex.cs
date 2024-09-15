@@ -317,7 +317,7 @@ public sealed class Regex
     /// of specific ones.
     /// </summary>
     /// <param name="chars">An immutable array with characters.</param>
-    public static Regex NotOneOf(ImmutableArray<char> chars)
+    public static Regex NotOneOf(params ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
@@ -338,7 +338,7 @@ public sealed class Regex
     /// inclusive.</param>
     /// <exception cref="ArgumentException">A range's start is greater
     /// than its end.</exception>
-    public static Regex NotOneOf(ImmutableArray<(char, char)> ranges)
+    public static Regex NotOneOf(params ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
@@ -361,7 +361,7 @@ public sealed class Regex
     /// a regex that cannot match anything. This is usually not desirable
     /// and will result in a build-time warning.
     /// </remarks>
-    public static Regex OneOf(ImmutableArray<char> chars)
+    public static Regex OneOf(params ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
@@ -386,7 +386,7 @@ public sealed class Regex
     /// a regex that cannot match anything. This is usually not desirable
     /// and will result in a build-time warning.
     /// </remarks>
-    public static Regex OneOf(ImmutableArray<(char, char)> ranges)
+    public static Regex OneOf(params ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
@@ -404,7 +404,7 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches many regexes in sequence.
     /// </summary>
     /// <param name="regexes">An immutable array of regexes.</param>
-    public static Regex Join(ImmutableArray<Regex> regexes)
+    public static Regex Join(params ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));
@@ -428,7 +428,7 @@ public sealed class Regex
     /// a regex that cannot match anything. This is usually not desirable
     /// and will result in a build-time warning.
     /// </remarks>
-    public static Regex Choice(ImmutableArray<Regex> regexes)
+    public static Regex Choice(params ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));

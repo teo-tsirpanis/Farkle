@@ -13,7 +13,7 @@ namespace Farkle.Builder.OperatorPrecedence;
 public class AssociativityGroup
 {
     /// <summary>
-    /// The <see cref="OperatorPrecedence.AssociativityType"/> of the group.
+    /// The <see cref="OperatorPrecedence.AssociativityType"/> of this group.
     /// </summary>
     public AssociativityType AssociativityType { get; }
 
@@ -46,7 +46,9 @@ public class AssociativityGroup
     /// <summary>
     /// Creates an <see cref="AssociativityGroup"/>.
     /// </summary>
-    public AssociativityGroup(AssociativityType associativityType, ImmutableArray<object> symbols)
+    /// <param name="associativityType">The <see cref="OperatorPrecedence.AssociativityType"/> of the group.</param>
+    /// <param name="symbols">The symbols that belong to the group.</param>
+    public AssociativityGroup(AssociativityType associativityType, params ImmutableArray<object> symbols)
     {
         ValidateAssociativityType(associativityType);
         if (symbols.IsDefault)
@@ -57,9 +59,7 @@ public class AssociativityGroup
         Symbols = symbols;
     }
 
-    /// <summary>
-    /// Creates an <see cref="AssociativityGroup"/>.
-    /// </summary>
+    /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, System.Collections.Immutable.ImmutableArray{object})"/>
     public AssociativityGroup(AssociativityType associativityType, params object[] symbols)
     {
         ValidateAssociativityType(associativityType);
@@ -73,26 +73,62 @@ public class AssociativityGroup
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.NonAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class NonAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.NonAssociative, symbols);
+public sealed class NonAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="NonAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public NonAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.NonAssociative, symbols) { }
+
+    /// <inheritdoc cref="NonAssociative(System.Collections.Immutable.ImmutableArray{object})"/>
+    public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.LeftAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class LeftAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.LeftAssociative, symbols);
+public sealed class LeftAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="LeftAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public LeftAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+
+    /// <inheritdoc cref="LeftAssociative(System.Collections.Immutable.ImmutableArray{object})"/>
+    public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.RightAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class RightAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.RightAssociative, symbols);
+public sealed class RightAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="RightAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public RightAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.RightAssociative, symbols) { }
+
+    /// <inheritdoc cref="RightAssociative(System.Collections.Immutable.ImmutableArray{object})"/>
+    public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.PrecedenceOnly"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class PrecedenceOnly(params object[] symbols) : AssociativityGroup(AssociativityType.PrecedenceOnly, symbols);
+public sealed class PrecedenceOnly : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="PrecedenceOnly"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public PrecedenceOnly(params ImmutableArray<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+
+    /// <inheritdoc cref="NonAssociative(System.Collections.Immutable.ImmutableArray{object})"/>
+    public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+}

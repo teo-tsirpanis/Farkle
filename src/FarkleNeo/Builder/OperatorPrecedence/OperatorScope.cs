@@ -42,7 +42,7 @@ public sealed class OperatorScope
     /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
     /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
     /// in ascending order of precedence.</param>
-    public OperatorScope(bool canResolveReduceReduceConflicts, ImmutableArray<AssociativityGroup> associativityGroups)
+    public OperatorScope(bool canResolveReduceReduceConflicts, params ImmutableArray<AssociativityGroup> associativityGroups)
     {
         if (associativityGroups.IsDefault)
         {
@@ -56,12 +56,7 @@ public sealed class OperatorScope
         AssociativityGroups = associativityGroups;
     }
 
-    /// <summary>
-    /// Creates an <see cref="OperatorScope"/>.
-    /// </summary>
-    /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
-    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
-    /// in ascending order of precedence.</param>
+    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups);
@@ -73,12 +68,11 @@ public sealed class OperatorScope
         AssociativityGroups = associativityGroups.ToImmutableArray();
     }
 
-    /// <summary>
-    /// Creates an <see cref="OperatorScope"/>.
-    /// </summary>
-    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
-    /// in ascending order of precedence.</param>
+    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
     public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
+
+    /// <inheritdoc cref="OperatorScope(bool, System.Collections.Immutable.ImmutableArray{AssociativityGroup})"/>
+    public OperatorScope(params ImmutableArray<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
 
 #if false
     // These APIs might not be necessary with https://github.com/dotnet/csharplang/pull/7895,

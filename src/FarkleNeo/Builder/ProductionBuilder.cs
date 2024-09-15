@@ -34,7 +34,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <summary>
     /// A production builder with no members.
     /// </summary>
-    public static ProductionBuilder Empty { get; } = new([]);
+    public static ProductionBuilder Empty { get; } = new();
 
     private ProductionBuilder(ImmutableList<IGrammarSymbol> members, object? precedenceToken = null)
     {

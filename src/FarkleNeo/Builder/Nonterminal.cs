@@ -44,7 +44,7 @@ public static class Nonterminal
     /// <param name="name">The nonterminal's name.</param>
     /// <param name="productions">The nonterminal's productions.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol<T> Create<T>(string name, ReadOnlySpan<IProduction<T>> productions)
+    public static IGrammarSymbol<T> Create<T>(string name, params ReadOnlySpan<IProduction<T>> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         if (productions.IsEmpty)
@@ -93,7 +93,7 @@ public static class Nonterminal
     /// <param name="productions">The nonterminal's productions, represented as <see cref="ProductionBuilder"/>
     /// objects that have not been <c>Extend</c>ed or <c>Finish</c>ed.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol CreateUntyped(string name, ReadOnlySpan<ProductionBuilder> productions)
+    public static IGrammarSymbol CreateUntyped(string name, params ReadOnlySpan<ProductionBuilder> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
         if (productions.IsEmpty)
@@ -153,7 +153,7 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    public void SetProductions(ReadOnlySpan<IProduction<T>> productions)
+    public void SetProductions(params ReadOnlySpan<IProduction<T>> productions)
     {
         var builder = ImmutableArray.CreateBuilder<IProduction>(productions.Length);
         foreach (var production in productions)

@@ -292,7 +292,7 @@ internal static class RegexGrammar
                     // Subsequent characters can be anything except an unescaped closing bracket.
                     Regex.Choice(
                         escapedChar,
-                        Regex.NotOneOf(['\\', ']'])
+                        Regex.NotOneOf('\\', ']')
                     ).ZeroOrMore(),
                     Regex.Literal(']')
                 ),

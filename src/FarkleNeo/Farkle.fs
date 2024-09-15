@@ -139,7 +139,7 @@ module internal CharParser =
 
     /// Changes the tokenizer of a CharParser
     /// to one that requires grammar-specific information.
-    let inline withTokenizerFactory tokenizerFactory (parser: CharParser<'T>) =
+    let inline withTokenizerFactory (tokenizerFactory: _ -> #Tokenizer<char>) (parser: CharParser<'T>) =
         ChainedTokenizerComponent.tokenizerFactory tokenizerFactory
         |> parser.WithTokenizerChain
 

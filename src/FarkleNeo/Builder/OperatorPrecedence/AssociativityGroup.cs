@@ -56,13 +56,7 @@ public class AssociativityGroup
     }
 
     /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, ReadOnlySpan{object})"/>
-    public AssociativityGroup(AssociativityType associativityType, params object[] symbols)
-    {
-        ValidateAssociativityType(associativityType);
-        ArgumentNullExceptionCompat.ThrowIfNull(symbols);
-        AssociativityType = associativityType;
-        Symbols = [.. symbols];
-    }
+    public AssociativityGroup(AssociativityType associativityType, params object[] symbols) : this(associativityType, symbols.AsSpanChecked()) { }
 }
 
 /// <summary>

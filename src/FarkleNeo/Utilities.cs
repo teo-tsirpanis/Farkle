@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle;
@@ -13,6 +14,16 @@ internal static class Utilities
     {
         Debug.Assert(o is T);
         return Unsafe.As<T>(o);
+    }
+
+    /// <summary>
+    /// Converts an array to a span, while throwing if it is null.
+    /// </summary>
+    public static Span<T> AsSpanChecked<T>([NotNull] this T[]? array,
+        [CallerArgumentExpression((nameof(array)))] string? paramName = null)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(array, paramName);
+        return array.AsSpan();
     }
 
     /// <summary>

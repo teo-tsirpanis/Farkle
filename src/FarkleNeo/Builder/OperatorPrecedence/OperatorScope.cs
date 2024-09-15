@@ -48,15 +48,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
 
     /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups);
-        for (int i = 0; i < associativityGroups.Length; i++)
-        {
-            ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups[i]);
-        }
-        CanResolveReduceReduceConflicts = canResolveReduceReduceConflicts;
-        AssociativityGroups = associativityGroups.ToImmutableArray();
-    }
+        : this(canResolveReduceReduceConflicts, associativityGroups.AsSpanChecked()) { }
 
     /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
     public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }

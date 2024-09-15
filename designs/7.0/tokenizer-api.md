@@ -38,14 +38,16 @@ public readonly struct ChainedTokenizerComponent<TChar>
 
     public static implicit operator ChainedTokenizerComponent<TChar>(Tokenizer<TChar> tokenizer);
 
-    public static implicit operator ChainedTokenizerComponent<TChar>(Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory);
+    // No implicit conversion from Func<IGrammarProvider, Tokenizer<TChar>>
+    // because it does not work on lambdas.
 }
 
 public static class Tokenizer
 {
     // If grammar is null, IGrammarProvider.GetGrammar will throw in the tokenizer factories.
     // If defaultTokenizer is null, using ChainedTokenizerComponent.Default in the chain will throw.
-    public static Tokenizer<TChar> CreateChain<TChar>(ReadOnlySpan<ChainedTokenizerComponent<TChar>> components, IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
+    public static Tokenizer<TChar> CreateChain<TChar>(ReadOnlySpan<ChainedTokenizerComponent<TChar>> components,
+        IGrammarProvider? grammar = null, Tokenizer<TChar>? defaultTokenizer = null);
 }
 
 namespace Farkle;
@@ -54,6 +56,9 @@ public abstract partial class CharParser<T>
 {
     // Already defined at parser-api.md:
     // public CharParser<T> WithTokenizer(Tokenizer<T> tokenizer);
+
+    public CharParser<T> WithTokenizer(
+        Func<IGrammarProvider, Tokenizer<T>> tokenizerFactory);
 
     public CharParser<T> WithTokenizerChain(params ChainedTokenizerComponent<T>[] components);
 

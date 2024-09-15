@@ -154,6 +154,25 @@ public abstract class CharParser<T> : IParser<char, T>
     }
 
     /// <summary>
+    /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a
+    /// <see cref="Tokenizer{TChar}"/> that depends on a grammar.
+    /// </summary>
+    /// <param name="tokenizerFactory">A delegate that accepts an <see cref="IGrammarProvider"/>
+    /// and returns a tokenizer.</param>
+    /// <returns>A <see cref="CharParser{T}"/> with the result of <paramref name="tokenizerFactory"/>
+    /// as its tokenizer.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="tokenizerFactory"/>
+    /// is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// In certain failing parsers this method will have no effect and return <see langword="this"/>.
+    /// </remarks>
+    public CharParser<T> WithTokenizer(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
+        return WithTokenizerChain([ChainedTokenizerComponent<char>.Create(tokenizerFactory)]);
+    }
+
+    /// <summary>
     /// Changes the tokenizer of the <see cref="CharParser{T}"/> to a chained tokenizer
     /// to be built from a sequence of <see cref="ChainedTokenizerComponent{TChar}"/>s.
     /// </summary>

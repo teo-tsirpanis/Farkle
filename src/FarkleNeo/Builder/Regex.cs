@@ -247,7 +247,7 @@ public sealed class Regex
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
     /// </summary>
-    public static Regex Literal(char c) => OneOf([(c, c)]);
+    public static Regex Literal(char c) => OneOf((c, c));
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific string of characters.
@@ -570,7 +570,7 @@ public sealed class Regex
                 return Literal(leftString + rightString);
             }
         }
-        return Join([left, right]);
+        return Join(left, right);
     }
 
     /// <summary>
@@ -613,7 +613,7 @@ public sealed class Regex
                 return OneOf([.. leftChars, .. rightChars]);
             }
         }
-        return Choice([left, right]);
+        return Choice(left, right);
     }
 
     [Flags]

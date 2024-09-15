@@ -44,8 +44,8 @@ internal class OperatorScopeConflictResolverTests
     public void TestDifferentPrecedence(bool reduceFirst, LrConflictResolverDecision expectedDecision)
     {
         OperatorScope operators = reduceFirst
-            ? new(new LeftAssociative(_production1Token), new LeftAssociative(_terminal1))
-            : new(new LeftAssociative(_terminal1), new LeftAssociative(_production1Token));
+            ? [new LeftAssociative(_production1Token), new LeftAssociative(_terminal1)]
+            : [new LeftAssociative(_terminal1), new LeftAssociative(_production1Token)];
         var resolver = new OperatorScopeConflictResolver(operators, _objectMap, true);
 
         LrConflictResolverDecision decision = resolver.ResolveShiftReduceConflict(_terminal1Handle, _production1Handle);
@@ -60,7 +60,7 @@ internal class OperatorScopeConflictResolverTests
     [TestCase(AssociativityType.PrecedenceOnly, LrConflictResolverDecision.CannotChoose)]
     public void TestSamePrecedence(AssociativityType associativityType, LrConflictResolverDecision expectedDecision)
     {
-        OperatorScope operators = new(new AssociativityGroup(associativityType, _terminal1, _production1Token));
+        OperatorScope operators = [new AssociativityGroup(associativityType, _terminal1, _production1Token)];
         var resolver = new OperatorScopeConflictResolver(operators, _objectMap, true);
 
         LrConflictResolverDecision decision = resolver.ResolveShiftReduceConflict(_terminal1Handle, _production1Handle);
@@ -95,7 +95,7 @@ internal class OperatorScopeConflictResolverTests
     [Test]
     public void TestReduceReduceUnsupported()
     {
-        OperatorScope operators = new(new PrecedenceOnly(_production1Token), new PrecedenceOnly(_production2Token));
+        OperatorScope operators = [new PrecedenceOnly(_production1Token), new PrecedenceOnly(_production2Token)];
         var resolver = new OperatorScopeConflictResolver(operators, _objectMap, true);
 
         LrConflictResolverDecision decision = resolver.ResolveReduceReduceConflict(_production1Handle, _production2Handle);
@@ -112,7 +112,7 @@ internal class OperatorScopeConflictResolverTests
     {
         const string literal1 = nameof(literal1);
         const string literal2 = nameof(literal2);
-        OperatorScope operators = new(new PrecedenceOnly(literal1), new PrecedenceOnly(Terminal.Literal(literal2)));
+        OperatorScope operators = [new PrecedenceOnly(literal1), new PrecedenceOnly(Terminal.Literal(literal2))];
         var objectMap = new Dictionary<EntityHandle, object>
         {
             [_terminal1Handle] = Terminal.Literal(caseSensitive ? literal1 : literal1.ToUpperInvariant()),

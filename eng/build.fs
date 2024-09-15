@@ -223,7 +223,7 @@ let runMSBuildTestsNetFramework _ =
     DotNet.build id farkleToolsProject
 
     let testProjectDirectory = Path.getDirectory msBuildTestProject
-    let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/net6.0/Farkle.Tools.dll"
+    let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/net8.0/Farkle.Tools.dll"
     // dotnet clean sometimes fails; this is faster and cleans only this project.
     cleanBinObj testProjectDirectory
     msBuildTestProject

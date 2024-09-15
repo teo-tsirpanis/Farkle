@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="$(MSBuildRuntimeType) == Core">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net6.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
   </PropertyGroup>
   <PropertyGroup Condition="$(MSBuildRuntimeType) != Core">
     <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netstandard2.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>

@@ -42,6 +42,9 @@
   <data name="Parser_ResultNotSet" xml:space="preserve">
     <value>Η συντακτική ανάλυση δεν έχει θέσει ακόμα ένα αποτέλεσμα.</value>
   </data>
+  <data name="ChainedTokenizerBuilder_EmptyChain" xml:space="preserve">
+    <value>Η αλυσίδα λεκτικών αναλυτών δεν μπορεί να είναι κενή.</value>
+  </data>
   <data name="ChainedTokenizerBuilder_NoGrammar" xml:space="preserve">
     <value>Δεν έχει δοθεί μία γραμματική.</value>
   </data>

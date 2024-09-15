@@ -34,7 +34,5 @@ internal sealed class FailingCharParser<T> : CharParser<T>
 
     private protected override CharParser<T> WithTokenizerCore(Tokenizer<char> tokenizer) => this;
 
-    private protected override CharParser<T> WithTokenizerCore(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory) => this;
-
-    private protected override CharParser<T> WithTokenizerCore(ChainedTokenizerBuilder<char> builder) => this;
+    private protected override CharParser<T> WithTokenizerChainCore(ReadOnlySpan<ChainedTokenizerComponent<char>> components) => this;
 }

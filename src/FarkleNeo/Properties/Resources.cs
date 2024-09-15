@@ -207,6 +207,8 @@ internal static class Resources
 
     public static string Parser_ResultNotSet => GetResourceString(nameof(Parser_ResultNotSet));
 
+    public static string ChainedTokenizerBuilder_EmptyChain => GetResourceString(nameof(ChainedTokenizerBuilder_EmptyChain));
+
     public static string ChainedTokenizerBuilder_NoGrammar => GetResourceString(nameof(ChainedTokenizerBuilder_NoGrammar));
 
     public static string ChainedTokenizerBuilder_NoDefaultTokenizer => GetResourceString(nameof(ChainedTokenizerBuilder_NoDefaultTokenizer));

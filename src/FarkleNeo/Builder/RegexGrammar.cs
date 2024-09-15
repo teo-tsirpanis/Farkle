@@ -178,7 +178,7 @@ internal static class RegexGrammar
         var numbersRegex = Regex.OneOf(numbers).AtLeast(1);
 
         var quantRepeat = Terminal.Create("Repeat quantifier",
-            Regex.Join([Regex.Literal('{'), numbersRegex, Regex.Literal('}')]),
+            Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal('}')),
             (ref ParserState _, ReadOnlySpan<char> data) =>
             {
                 var count = ParseInt(data[1..^1]);
@@ -186,7 +186,7 @@ internal static class RegexGrammar
             });
 
         var quantAtLeast = Terminal.Create("At least quantifier",
-            Regex.Join([Regex.Literal('{'), numbersRegex, Regex.Literal(",}")]),
+            Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal(",}")),
             (ref ParserState _, ReadOnlySpan<char> data) =>
             {
                 var count = ParseInt(data[1..^2]);
@@ -194,7 +194,7 @@ internal static class RegexGrammar
             });
 
         var quantBetween = Terminal.Create("Between quantifier",
-            Regex.Join([Regex.Literal('{'), numbersRegex, Regex.Literal(','), numbersRegex, Regex.Literal('}')]),
+            Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal(','), numbersRegex, Regex.Literal('}')),
             (ref ParserState _, ReadOnlySpan<char> data) =>
             {
                 data = data[1..^1];
@@ -259,7 +259,7 @@ internal static class RegexGrammar
 
         static IGrammarSymbol<Regex> MakePredefinedSet(string name, string start) =>
             Terminal.Create<Regex>(name,
-                Regex.Join([Regex.Literal(start), Regex.NotOneOf(['{', '}']).AtLeast(1), Regex.Literal('}')]),
+                Regex.Join(Regex.Literal(start), Regex.NotOneOf('{', '}').AtLeast(1), Regex.Literal('}')),
                 (ref ParserState _, ReadOnlySpan<char> _) =>
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringPredefinedSetsNotSupported)),
                 TerminalOptions.Hidden);
@@ -268,7 +268,7 @@ internal static class RegexGrammar
             Terminal.Create<Regex>(name,
                 // According to https://www.regular-expressions.info/unicode.html,
                 // this syntax accepts only single-letter categories.
-                Regex.Literal(start) + Regex.OneOf([('A', 'Z')]),
+                Regex.Literal(start) + Regex.OneOf(('A', 'Z')),
                 (ref ParserState _, ReadOnlySpan<char> _) =>
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringUnicodeCategoriesNotSupported)),
                 TerminalOptions.Hidden);
@@ -278,24 +278,24 @@ internal static class RegexGrammar
             // Should we also support shorthand escape sequences inside character sets like [\da-z]?
             // On first sight not, because it will increase complexity of the transformer, with minimal benefit.
             // When we support Unicode categories in the future, we can revisit this.
-            Regex escapedChar = Regex.Literal('\\') + Regex.OneOf(['\\', ']', '^', '-']);
+            Regex escapedChar = Regex.Literal('\\') + Regex.OneOf('\\', ']', '^', '-');
             return Terminal.Create(name,
-                Regex.Join([
+                Regex.Join(
                     Regex.Literal(start),
                     // The first character can also be an unescaped closing bracket (making []] valid),
                     // but cannot be a caret in non-negated sets (to resolve the ambiguity with
                     // negated sets).
-                    Regex.Choice([
+                    Regex.Choice(
                         escapedChar,
                         Regex.NotOneOf(start.EndsWith("^") ? ['\\'] : ['\\', '^'])
-                    ]),
+                    ),
                     // Subsequent characters can be anything except an unescaped closing bracket.
-                    Regex.Choice([
+                    Regex.Choice(
                         escapedChar,
-                        Regex.NotOneOf(['\\', ']'])
-                    ]).ZeroOrMore(),
+                        Regex.NotOneOf('\\', ']')
+                    ).ZeroOrMore(),
                     Regex.Literal(']')
-                ]),
+                ),
                 (ref ParserState state, ReadOnlySpan<char> data) =>
                     fChars(ParseCharacterSet(in state, data, start.Length)));
         }

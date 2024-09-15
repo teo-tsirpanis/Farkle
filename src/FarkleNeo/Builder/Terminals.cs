@@ -19,23 +19,23 @@ namespace Farkle.Builder;
 /// </summary>
 public static class Terminals
 {
-    private static readonly Regex s_unsignedIntRegex = Regex.OneOf([('0', '9')]).AtLeast(1);
+    private static readonly Regex s_unsignedIntRegex = Regex.OneOf(('0', '9')).AtLeast(1);
 
-    private static readonly Regex s_intRegex = Regex.OneOf([('-', '-')]).Optional() + s_unsignedIntRegex;
+    private static readonly Regex s_intRegex = Regex.OneOf(('-', '-')).Optional() + s_unsignedIntRegex;
 
-    private static readonly Regex s_unsignedFloatRegex = Regex.Join([
-        Regex.OneOf([('-', '-')]).Optional(),
+    private static readonly Regex s_unsignedFloatRegex = Regex.Join(
+        Regex.OneOf(('-', '-')).Optional(),
         s_unsignedIntRegex,
-        Regex.OneOf(['.']),
+        Regex.OneOf('.'),
         s_unsignedIntRegex,
-        Regex.Join([
-            Regex.OneOf(['e', 'E']),
-            Regex.OneOf(['+', '-']).Optional(),
+        Regex.Join(
+            Regex.OneOf('e', 'E'),
+            Regex.OneOf('+', '-').Optional(),
             s_unsignedIntRegex
-        ]).Optional()
-    ]);
+        ).Optional()
+    );
 
-    private static readonly Regex s_signedFloatRegex = Regex.OneOf(['-', '-']).Optional() + s_unsignedFloatRegex;
+    private static readonly Regex s_signedFloatRegex = Regex.OneOf('-', '-').Optional() + s_unsignedFloatRegex;
 
     // Helper method that returns either a string or a ReadOnlySpan<char> depending on the target framework.
     // This method is intended to be used for the framework's parsing methods.
@@ -311,27 +311,27 @@ public static class Terminals
         var regexDelimiter = Regex.Literal(delimiter);
         var regexBackslash = Regex.Literal('\\');
         var regex =
-            Regex.Join([
+            Regex.Join(
                 regexDelimiter,
-                Regex.Choice([
+                Regex.Choice(
                     Regex.NotOneOf(multiLine ? ['\n', '\r', '\\', delimiter] : ['\\', delimiter]),
-                    Regex.Join([
+                    Regex.Join(
                         regexBackslash,
-                        Regex.Choice([
+                        Regex.Choice(
                             regexBackslash,
                             regexDelimiter,
                             Regex.OneOf(escapeChars.ToImmutableArray()),
                             allowEscapeUnicode
-                                ? Regex.Join([
+                                ? Regex.Join(
                                     Regex.Literal('u'),
-                                    Regex.OneOf([('0', '9'), ('a', 'f'), ('A', 'F')]).Repeat(4)
-                                ])
+                                    Regex.OneOf(('0', '9'), ('a', 'f'), ('A', 'F')).Repeat(4)
+                                )
                                 : Regex.Empty
-                        ])
-                    ])
-                ]).ZeroOrMore(),
+                        )
+                    )
+                ).ZeroOrMore(),
                 regexDelimiter
-            ]).CaseSensitive();
+            ).CaseSensitive();
 
         return Terminal.Create(name, regex, TransformString);
     }

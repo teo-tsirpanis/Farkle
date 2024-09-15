@@ -169,7 +169,7 @@ public abstract class CharParser<T> : IParser<char, T>
     public CharParser<T> WithTokenizer(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
-        return WithTokenizerChain([ChainedTokenizerComponent<char>.Create(tokenizerFactory)]);
+        return WithTokenizerChain(ChainedTokenizerComponent<char>.Create(tokenizerFactory));
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// <remarks>
     /// In certain failing parsers this method will have no effect and return <see langword="this"/>.
     /// </remarks>
-    public CharParser<T> WithTokenizerChain(ReadOnlySpan<ChainedTokenizerComponent<char>> components)
+    public CharParser<T> WithTokenizerChain(params ReadOnlySpan<ChainedTokenizerComponent<char>> components)
     {
         return WithTokenizerChainCore(components);
     }

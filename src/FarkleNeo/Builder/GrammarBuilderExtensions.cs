@@ -209,7 +209,7 @@ public static class GrammarBuilderExtensions
     /// scope. The reason for this change is that the previous behavior had limited utility and lots
     /// of edge cases that were difficult to define and handle.
     /// </remarks>
-    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, OperatorScope value)
+    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params OperatorScope value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);
 
@@ -219,7 +219,7 @@ public static class GrammarBuilderExtensions
     }
 
     /// <inheritdoc cref="WithOperatorScope"/>
-    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, OperatorScope value)
+    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params OperatorScope value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);
 
@@ -361,7 +361,7 @@ public static class GrammarBuilderExtensions
 
             List<BuilderDiagnostic>? errors = null;
             // We will collect errors only if we need to report them from a failing parser or tokenizer.
-            if ((artifacts & BuilderArtifacts.TokenizerOnChar | BuilderArtifacts.CharParser) != 0)
+            if ((artifacts & (BuilderArtifacts.TokenizerOnChar | BuilderArtifacts.CharParser)) != 0)
             {
                 errors = [];
             }

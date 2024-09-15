@@ -12,7 +12,7 @@ namespace Farkle.Builder;
 /// </summary>
 /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
 /// <remarks>
-/// All properties of this class are nullable and they are populated based on the <see cref="BuilderArtifacts"/>
+/// All properties of this class are nullable and populated based on the <see cref="BuilderArtifacts"/>
 /// that were requested when building.
 /// </remarks>
 /// <seealso cref="GrammarBuilderExtensions.Build{T}(IGrammarBuilder{T}, BuilderArtifacts, BuilderOptions?)"/>
@@ -29,14 +29,17 @@ public sealed class BuilderResult<T>
     /// The built <see cref="Grammar"/>.
     /// </summary>
     public Grammar? Grammar { get; internal init; }
+
     /// <summary>
     /// The built <see cref="ISemanticProvider{TChar, T}"/> on <see cref="char"/>.
     /// </summary>
     public ISemanticProvider<char, T>? SemanticProviderOnChar { get; internal init; }
+
     /// <summary>
     /// The built <see cref="Tokenizer{TChar}"/> on <see cref="char"/>.
     /// </summary>
     public Tokenizer<char>? TokenizerOnChar { get; internal init; }
+
     /// <summary>
     /// The built <see cref="CharParser{T}"/>.
     /// </summary>

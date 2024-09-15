@@ -13,7 +13,7 @@ namespace Farkle.Builder.OperatorPrecedence;
 public class AssociativityGroup
 {
     /// <summary>
-    /// The <see cref="OperatorPrecedence.AssociativityType"/> of the group.
+    /// The <see cref="OperatorPrecedence.AssociativityType"/> of this group.
     /// </summary>
     public AssociativityType AssociativityType { get; }
 
@@ -46,53 +46,79 @@ public class AssociativityGroup
     /// <summary>
     /// Creates an <see cref="AssociativityGroup"/>.
     /// </summary>
-    public AssociativityGroup(AssociativityType associativityType, ImmutableArray<object> symbols)
+    /// <param name="associativityType">The <see cref="OperatorPrecedence.AssociativityType"/> of the group.</param>
+    /// <param name="symbols">The symbols that belong to the group.</param>
+    public AssociativityGroup(AssociativityType associativityType, params ReadOnlySpan<object> symbols)
     {
         ValidateAssociativityType(associativityType);
-        if (symbols.IsDefault)
-        {
-            ThrowHelpers.ThrowArgumentNullException(nameof(symbols));
-        }
         AssociativityType = associativityType;
-        Symbols = symbols;
+        Symbols = symbols.ToImmutableArray();
     }
 
-    /// <summary>
-    /// Creates an <see cref="AssociativityGroup"/>.
-    /// </summary>
-    public AssociativityGroup(AssociativityType associativityType, params object[] symbols)
-    {
-        ValidateAssociativityType(associativityType);
-        ArgumentNullExceptionCompat.ThrowIfNull(symbols);
-        AssociativityType = associativityType;
-        Symbols = [.. symbols];
-    }
+    /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, ReadOnlySpan{object})"/>
+    public AssociativityGroup(AssociativityType associativityType, params object[] symbols) : this(associativityType, symbols.AsSpanChecked()) { }
 }
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.NonAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class NonAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.NonAssociative, symbols);
+public sealed class NonAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="NonAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public NonAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.NonAssociative, symbols) { }
+
+    /// <inheritdoc cref="NonAssociative(ReadOnlySpan{object})"/>
+    public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.LeftAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class LeftAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.LeftAssociative, symbols);
+public sealed class LeftAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="LeftAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public LeftAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+
+    /// <inheritdoc cref="LeftAssociative(ReadOnlySpan{object})"/>
+    public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.RightAssociative"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class RightAssociative(params object[] symbols) : AssociativityGroup(AssociativityType.RightAssociative, symbols);
+public sealed class RightAssociative : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="RightAssociative"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public RightAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.RightAssociative, symbols) { }
+
+    /// <inheritdoc cref="RightAssociative(ReadOnlySpan{object})"/>
+    public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols) { }
+}
 
 /// <summary>
 /// Provides a shortcut to create <see cref="AssociativityGroup"/>s with
 /// <see cref="AssociativityType.PrecedenceOnly"/> associativity.
 /// </summary>
-/// <param name="symbols">The symbols of the group.</param>
-public class PrecedenceOnly(params object[] symbols) : AssociativityGroup(AssociativityType.PrecedenceOnly, symbols);
+public sealed class PrecedenceOnly : AssociativityGroup
+{
+    /// <summary>
+    /// Creates a <see cref="PrecedenceOnly"/>.
+    /// </summary>
+    /// <param name="symbols">The symbols of the group.</param>
+    public PrecedenceOnly(params ReadOnlySpan<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+
+    /// <inheritdoc cref="NonAssociative(ReadOnlySpan{object})"/>
+    public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+}

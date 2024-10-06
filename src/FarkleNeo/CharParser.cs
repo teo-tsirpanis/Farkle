@@ -7,6 +7,10 @@ using Farkle.Parser;
 using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
+#if NET6_0_OR_GREATER
+using System.Reflection.Metadata;
+using Farkle.HotReload;
+#endif
 
 namespace Farkle;
 
@@ -35,11 +39,11 @@ public abstract class CharParser<T> : IParser<char, T>
 {
     private protected CharParser() { }
 
-    private protected abstract IGrammarProvider GetGrammarProvider();
+    internal abstract IGrammarProvider GetGrammarProvider();
 
-    private protected abstract Tokenizer<char> GetTokenizer();
+    internal abstract Tokenizer<char> GetTokenizer();
 
-    private protected virtual object? GetServiceCore(Type serviceType)
+    internal virtual object? GetServiceCore(Type serviceType)
     {
         if (serviceType == typeof(IGrammarProvider))
         {
@@ -242,6 +246,38 @@ public static class CharParser
 
         CharParser<T> Fail(string resourceKey) =>
             new FailingCharParser<T>(customError ?? LocalizedDiagnostic.Create(resourceKey), grammar);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="CharParser{T}"/> that wraps the result of a factory function,
+    /// and refreshes it when Hot Reload is performed.
+    /// </summary>
+    /// <typeparam name="T">The type of objects the parser will produce in case of success.</typeparam>
+    /// <param name="parserFactory">The factory to create the parser.</param>
+    /// <remarks>
+    /// <para>This method calls <paramref name="parserFactory"/> before returning and caches the result
+    /// to the returned parser. When Hot Reload gets performed, the cache gets cleared, and the next use
+    /// of the returned parser will call <paramref name="parserFactory"/> again. Modifications to the
+    /// returned parser's tokenizer and semantic provider will be applied again after fetching the updated
+    /// parser.</para>
+    /// <para>The returned parser remains thread-safe and can be reloaded safely while a parser operation
+    /// via <see cref="ParserStateContext{TChar, T}"/> is underway.</para>
+    /// <para>If Hot Reload is not supported, this method is equivalent to calling
+    /// <paramref name="parserFactory"/>.</para>
+    /// </remarks>
+    public static CharParser<T> CreateReloadable<T>(Func<CharParser<T>> parserFactory)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(parserFactory);
+
+#if NET6_0_OR_GREATER
+        // DeclaringType can be null in dynamic methods or the rare module-global methods.
+        if (MetadataUpdater.IsSupported && parserFactory.Method.DeclaringType is {} declaringType)
+        {
+            return MetadataUpdatableParser.Create(declaringType, parserFactory);
+        }
+#endif
+
+        return parserFactory();
     }
 
     /// <summary>

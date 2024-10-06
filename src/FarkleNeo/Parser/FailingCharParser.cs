@@ -22,9 +22,9 @@ internal sealed class FailingCharParser<T> : CharParser<T>
     public override void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState) =>
         completionState.SetError(_error);
 
-    private protected override IGrammarProvider GetGrammarProvider() => _grammar;
+    internal override IGrammarProvider GetGrammarProvider() => _grammar;
 
-    private protected override Tokenizer<char> GetTokenizer() => throw new NotSupportedException();
+    internal override Tokenizer<char> GetTokenizer() => throw new NotSupportedException();
 
     private protected override CharParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider) =>
         this as CharParser<TNew> ?? new FailingCharParser<TNew>(_error, _grammar);

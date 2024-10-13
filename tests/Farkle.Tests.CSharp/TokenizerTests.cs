@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Grammars;
 using Farkle.Parser;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
@@ -80,13 +79,6 @@ namespace Farkle.Tests.CSharp
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess, Is.False);
             });
-        }
-
-        private sealed class SyntaxChecker<TChar> : ITokenSemanticProvider<TChar>
-        {
-            public static readonly SyntaxChecker<TChar> Instance = new();
-
-            public object? Transform(ref ParserState parserState, TokenSymbolHandle symbol, ReadOnlySpan<TChar> characters) => null;
         }
     }
 }

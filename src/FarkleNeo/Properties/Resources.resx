@@ -37,10 +37,10 @@
     <value>Could not find symbol with the special name '{0}'</value>
   </data>
   <data name="Parser_ResultAlreadySet" xml:space="preserve">
-    <value>The parsing operation has already set a result.</value>
+    <value>Parser result is already set</value>
   </data>
   <data name="Parser_ResultNotSet" xml:space="preserve">
-    <value>The parsing operation has not yet set a result.</value>
+    <value>Parser result is not yet set</value>
   </data>
   <data name="ChainedTokenizerBuilder_EmptyChain" xml:space="preserve">
     <value>The tokenizer chain cannot be empty.</value>

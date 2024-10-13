@@ -36,7 +36,7 @@ public struct ParserCompletionState<T>
             }
             return _result;
 
-            static void Fail() => throw new InvalidOperationException(Resources.Parser_ResultAlreadySet);
+            static void Fail() => throw new InvalidOperationException(Resources.Parser_ResultNotSet);
         }
     }
 
@@ -57,7 +57,7 @@ public struct ParserCompletionState<T>
         IsCompleted = true;
         _result = result;
 
-        static void Fail() => throw new InvalidOperationException(Resources.Parser_ResultNotSet);
+        static void Fail() => throw new InvalidOperationException(Resources.Parser_ResultAlreadySet);
     }
 }
 

@@ -58,22 +58,18 @@ internal static class BufferExtensions
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
 
     // Signed integers of variable size must be read with this method to ensure they are sign-extended.
-    public static int ReadIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
+    public static int ReadIntVariableSize(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
     {
-        if (typeof(T) == typeof(sbyte))
+        switch (dataSize)
         {
-            return (sbyte)buffer[index];
+            case 1:
+                return (sbyte)buffer[index];
+            case 2:
+                return (short)buffer.ReadUInt16(index);
+            default:
+                Debug.Assert(dataSize == 4);
+                return buffer.ReadInt32(index);
         }
-        if (typeof(T) == typeof(short))
-        {
-            return (short)buffer.ReadUInt16(index);
-        }
-        if (typeof(T) == typeof(int))
-        {
-            return buffer.ReadInt32(index);
-        }
-
-        throw new NotSupportedException("Unsupported type.");
     }
 
     public static uint ReadUIntVariableSize(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
@@ -88,24 +84,6 @@ internal static class BufferExtensions
                 Debug.Assert(dataSize == 4);
                 return buffer.ReadUInt32(index);
         }
-    }
-
-    public static uint ReadUIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
-    {
-        if (typeof(T) == typeof(byte))
-        {
-            return buffer[index];
-        }
-        if (typeof(T) == typeof(ushort))
-        {
-            return buffer.ReadUInt16(index);
-        }
-        if (typeof(T) == typeof(uint))
-        {
-            return buffer.ReadUInt32(index);
-        }
-
-        throw new NotSupportedException("Unsupported type.");
     }
 
     public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)

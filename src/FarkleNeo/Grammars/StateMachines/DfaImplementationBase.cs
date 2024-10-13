@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
+internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
+    protected readonly byte _stateIndexSize, _edgeIndexSize, _tokenSymbolIndexSize;
+
     protected readonly int _edgeCount;
 
     public required int FirstEdgeBase { get; init; }
@@ -22,26 +23,32 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
 
     public required int DefaultTransitionBase { get; init; }
 
-    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, bool hasConflicts) : base(stateCount, hasConflicts)
+    public required int AcceptBase { get; init; }
+
+    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, bool hasConflicts) : base(stateCount, hasConflicts)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(stateCount) == sizeof(TState));
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(edgeCount) == sizeof(TEdge));
+        _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
+        _edgeIndexSize = GrammarUtilities.GetCompressedIndexSize(edgeCount);
+        _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(tokenSymbolCount);
 
         Grammar = grammar;
         _edgeCount = edgeCount;
     }
 
     protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize<TEdge>(FirstEdgeBase + state * sizeof(TEdge));
+        (int)grammarFile.ReadUIntVariableSize(FirstEdgeBase + state * _edgeIndexSize, _edgeIndexSize);
 
-    protected static int ReadState(ReadOnlySpan<byte> grammarFile, int @base) =>
-        (int)grammarFile.ReadUIntVariableSize<TState>(@base) - 1;
+    protected int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
+        (int)grammarFile.ReadUIntVariableSize(@base + index * _stateIndexSize, _stateIndexSize) - 1;
+
+    protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(grammarFile.ReadUIntVariableSize(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
 
     internal sealed override Grammar Grammar { get; }
 
     private int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
-        return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
+        return ReadState(grammarFile, DefaultTransitionBase, state);
     }
 
     private (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
@@ -55,7 +62,7 @@ internal unsafe abstract class DfaImplementationBase<TChar, TState, TEdge> : Dfa
     {
         TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
         TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + index * sizeof(char));
-        int target = ReadState(grammarFile, EdgeTargetBase + index * sizeof(TState));
+        int target = ReadState(grammarFile, EdgeTargetBase, + index);
 
         return new(cFrom, cTo, target);
     }

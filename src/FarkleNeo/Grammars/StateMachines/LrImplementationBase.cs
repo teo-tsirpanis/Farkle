@@ -8,10 +8,10 @@ using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal> : LrStateMachine
-    where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
-    where TNonterminal : unmanaged, IComparable<TNonterminal>
+internal unsafe abstract class LrImplementationBase : LrStateMachine
 {
+    protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize;
+
     private Dictionary<NonterminalHandle, int>[]? _gotoLookup;
 
     protected int ActionCount { get; }
@@ -24,17 +24,23 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     public required int ActionBase { get; init; }
 
+    public required int EofActionBase { get; init; }
+
     public required int FirstGotoBase { get; init; }
 
     public required int GotoNonterminalBase { get; init; }
 
     public required int GotoStateBase { get; init; }
 
-    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, bool hasConflicts) : base(stateCount, hasConflicts)
+    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, bool hasConflicts) : base(stateCount, hasConflicts)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(stateCount) == sizeof(TStateIndex));
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(actionCount) == sizeof(TActionIndex));
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(gotoCount) == sizeof(TGotoIndex));
+        _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
+        _actionIndexSize = GrammarUtilities.GetCompressedIndexSize(actionCount);
+        _gotoIndexSize = GrammarUtilities.GetCompressedIndexSize(gotoCount);
+        _actionSize = GrammarUtilities.GetLrActionEncodedSize(stateCount, grammarTables.ProductionRowCount);
+        _eofActionSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.ProductionRowCount);
+        _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.TokenSymbolRowCount);
+        _nonterminalIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.NonterminalRowCount);
 
         Grammar = grammar;
         ActionCount = actionCount;
@@ -42,19 +48,22 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
     }
 
     protected LrAction ReadAction(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadIntVariableSize<TAction>(ActionBase + index * sizeof(TAction)));
+        new(grammarFile.ReadIntVariableSize(ActionBase + index * _actionSize, _actionSize));
+
+    protected LrEndOfFileAction ReadEofAction(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadUIntVariableSizeFromArray(grammarFile, EofActionBase, index, _eofActionSize));
 
     protected int ReadFirstAction(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)ReadUIntVariableSizeFromArray<TActionIndex>(grammarFile, FirstActionBase, state);
+        (int)ReadUIntVariableSizeFromArray(grammarFile, FirstActionBase, state, _actionIndexSize);
 
     protected int ReadFirstGoto(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)ReadUIntVariableSizeFromArray<TGotoIndex>(grammarFile, FirstGotoBase, state);
+        (int)ReadUIntVariableSizeFromArray(grammarFile, FirstGotoBase, state, _gotoIndexSize);
 
     protected int ReadGoto(ReadOnlySpan<byte> grammarFile, int index) =>
-        (int)ReadUIntVariableSizeFromArray<TStateIndex>(grammarFile, GotoStateBase + index * sizeof(TStateIndex), 0);
+        (int)ReadUIntVariableSizeFromArray(grammarFile, GotoStateBase, index, _stateIndexSize);
 
-    protected static uint ReadUIntVariableSizeFromArray<T>(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
-        grammarFile.ReadUIntVariableSize<T>(@base + index * sizeof(T));
+    protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
+        grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
 
     internal sealed override Grammar Grammar { get; }
 
@@ -93,7 +102,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     protected KeyValuePair<TokenSymbolHandle, LrAction> GetActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
     {
-        TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray<TTokenSymbol>(grammarFile, ActionTerminalBase, index));
+        TokenSymbolHandle terminal = new(ReadUIntVariableSizeFromArray(grammarFile, ActionTerminalBase, index, _tokenSymbolIndexSize));
         LrAction action = ReadAction(grammarFile, index);
         return new(terminal, action);
     }
@@ -107,7 +116,7 @@ internal unsafe abstract class LrImplementationBase<TStateIndex, TActionIndex, T
 
     private KeyValuePair<NonterminalHandle, int> GetGotoAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
     {
-        NonterminalHandle nonterminal = new(ReadUIntVariableSizeFromArray<TNonterminal>(grammarFile, GotoNonterminalBase, index));
+        NonterminalHandle nonterminal = new(ReadUIntVariableSizeFromArray(grammarFile, GotoNonterminalBase, index, _nonterminalIndexSize));
         int state = ReadGoto(grammarFile, index);
         return new(nonterminal, state);
     }

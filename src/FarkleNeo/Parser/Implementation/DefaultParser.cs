@@ -28,9 +28,9 @@ internal sealed class DefaultParser<T> : CharParser<T>
         _implementation.Run(ref input, ref completionState);
     }
 
-    private protected override IGrammarProvider GetGrammarProvider() => _implementation.Grammar;
+    internal override IGrammarProvider GetGrammarProvider() => _implementation.Grammar;
 
-    private protected override Tokenizer<char> GetTokenizer() => _implementation.Tokenizer;
+    internal override Tokenizer<char> GetTokenizer() => _implementation.Tokenizer;
 
     private protected override CharParser<TNew> WithSemanticProviderCore<TNew>(ISemanticProvider<char, TNew> semanticProvider) =>
         new DefaultParser<TNew>(_implementation.WithSemanticProvider(semanticProvider));

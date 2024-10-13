@@ -6,7 +6,6 @@ namespace Farkle.HotReload;
 /// <summary>
 /// Provides an interface to listen for Hot Reload events.
 /// </summary>
-/// <seealso cref="MetadataUpdatableManager"/>
 internal interface IMetadataUpdatable
 {
     /// <summary>

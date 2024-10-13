@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Grammars;
+using NUnit.Framework.Constraints;
 
 namespace Farkle.Tests.CSharp;
 
@@ -21,4 +22,6 @@ public static class TestUtilities
 
     public static Grammar LoadGrammarFromResource(string fileName) =>
         Grammar.CreateFromFile(GetResourceFile(fileName));
+
+    public static ReusableConstraint IsParserSuccess { get; } = Has.Property(nameof(ParserResult<int>.IsSuccess)).True;
 }

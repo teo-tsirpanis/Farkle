@@ -36,23 +36,14 @@ internal unsafe sealed class LrWithConflicts : LrImplementationBase
             ThrowHelpers.ThrowInvalidLrDataSize();
         }
 
-        int firstActionBase = lr.Offset + sizeof(uint) * 4;
-        int actionTerminalBase = firstActionBase + stateCount * _actionIndexSize;
-        int actionBase = actionTerminalBase + actionCount * _tokenSymbolIndexSize;
-        int firstEofActionBase = actionBase + actionCount * _actionSize;
-        int eofActionBase = firstEofActionBase + stateCount * _eofActionIndexSize;
-        int firstGotoBase = eofActionBase + eofActionCount * _eofActionSize;
-        int gotoNonterminalBase = firstGotoBase + stateCount * _gotoIndexSize;
-        int gotoStateBase = gotoNonterminalBase + gotoCount * _nonterminalIndexSize;
-
-        FirstActionBase = firstActionBase;
-        ActionTerminalBase = actionTerminalBase;
-        ActionBase = actionBase;
-        FirstEofActionBase = firstEofActionBase;
-        EofActionBase = eofActionBase;
-        FirstGotoBase = firstGotoBase;
-        GotoNonterminalBase = gotoNonterminalBase;
-        GotoStateBase = gotoStateBase;
+        FirstActionBase = lr.Offset + sizeof(uint) * 4;
+        ActionTerminalBase = FirstActionBase + stateCount * _actionIndexSize;
+        ActionBase = ActionTerminalBase + actionCount * _tokenSymbolIndexSize;
+        FirstEofActionBase = ActionBase + actionCount * _actionSize;
+        EofActionBase = FirstEofActionBase + stateCount * _eofActionIndexSize;
+        FirstGotoBase = EofActionBase + eofActionCount * _eofActionSize;
+        GotoNonterminalBase = FirstGotoBase + stateCount * _gotoIndexSize;
+        GotoStateBase = GotoNonterminalBase + gotoCount * _nonterminalIndexSize;
     }
 
     internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>

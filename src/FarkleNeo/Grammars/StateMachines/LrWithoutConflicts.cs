@@ -28,21 +28,13 @@ internal unsafe sealed class LrWithoutConflicts : LrImplementationBase
             ThrowHelpers.ThrowInvalidLrDataSize();
         }
 
-        int firstActionBase = lr.Offset + sizeof(uint) * 3;
-        int actionTerminalBase = firstActionBase + stateCount * _actionIndexSize;
-        int actionBase = actionTerminalBase + actionCount * _tokenSymbolIndexSize;
-        int eofActionBase = actionBase + actionCount * _actionSize;
-        int firstGotoBase = eofActionBase + stateCount * _eofActionSize;
-        int gotoNonterminalBase = firstGotoBase + stateCount * _gotoIndexSize;
-        int gotoStateBase = gotoNonterminalBase + gotoCount * _nonterminalIndexSize;
-
-        FirstActionBase = firstActionBase;
-        ActionTerminalBase = actionTerminalBase;
-        ActionBase = actionBase;
-        EofActionBase = eofActionBase;
-        FirstGotoBase = firstGotoBase;
-        GotoNonterminalBase = gotoNonterminalBase;
-        GotoStateBase = gotoStateBase;
+        FirstActionBase = lr.Offset + sizeof(uint) * 3;
+        ActionTerminalBase = FirstActionBase + stateCount * _actionIndexSize;
+        ActionBase = ActionTerminalBase + actionCount * _tokenSymbolIndexSize;
+        EofActionBase = ActionBase + actionCount * _actionSize;
+        FirstGotoBase = EofActionBase + stateCount * _eofActionSize;
+        GotoNonterminalBase = FirstGotoBase + stateCount * _gotoIndexSize;
+        GotoStateBase = GotoNonterminalBase + gotoCount * _nonterminalIndexSize;
     }
 
     internal override bool StateHasConflicts(int state) => false;

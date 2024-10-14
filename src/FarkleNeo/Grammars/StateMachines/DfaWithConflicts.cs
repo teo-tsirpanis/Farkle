@@ -34,28 +34,18 @@ internal unsafe sealed class DfaWithConflicts<TChar> : DfaImplementationBase<TCh
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int firstEdgeBase = dfa.Offset + sizeof(uint) * 3;
-        int rangeFromBase = firstEdgeBase + stateCount * _edgeIndexSize;
-        int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
-        int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
-        int firstAcceptBase = edgeTargetBase + edgeCount * _stateIndexSize;
-        int acceptBase = firstAcceptBase + stateCount * _acceptIndexSize;
-
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
         {
-            if (dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        FirstEdgeBase = firstEdgeBase;
-        RangeFromBase = rangeFromBase;
-        RangeToBase = rangeToBase;
-        EdgeTargetBase = edgeTargetBase;
+        FirstEdgeBase = dfa.Offset + sizeof(uint) * 3;
+        RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
+        RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
+        EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
         DefaultTransitionBase = dfaDefaultTransitions.Offset;
-        AcceptBase = acceptBase;
-        FirstAcceptBase = firstAcceptBase;
+        FirstAcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
+        AcceptBase = FirstAcceptBase + stateCount * _acceptIndexSize;
     }
 
     private int ReadFirstAccept(ReadOnlySpan<byte> grammarFile, int state) =>

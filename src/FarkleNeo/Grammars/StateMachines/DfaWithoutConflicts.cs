@@ -3,7 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Farkle.Buffers;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -50,26 +49,16 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int firstEdgeBase = dfa.Offset + sizeof(uint) * 2;
-        int rangeFromBase = firstEdgeBase + stateCount * _edgeIndexSize;
-        int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
-        int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
-        int acceptBase = edgeTargetBase + edgeCount * _stateIndexSize;
-
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
         {
-            if (dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        FirstEdgeBase = firstEdgeBase;
-        RangeFromBase = rangeFromBase;
-        RangeToBase = rangeToBase;
-        EdgeTargetBase = edgeTargetBase;
-        DefaultTransitionBase = dfaDefaultTransitions.Offset;
-        AcceptBase = acceptBase;
+        FirstEdgeBase = dfa.Offset + sizeof(uint) * 2;
+        RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
+        RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
+        EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
+        AcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
     }
 
     internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)

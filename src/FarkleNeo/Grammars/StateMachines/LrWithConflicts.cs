@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
+using Farkle.Buffers;
 
 namespace Farkle.Grammars.StateMachines;
 
 internal unsafe sealed class LrWithConflicts : LrImplementationBase
 {
-    private readonly byte _eofActionIndexSize;
+    private readonly PowerOfTwo _eofActionIndexSize;
 
     private readonly int _eofActionCount;
 

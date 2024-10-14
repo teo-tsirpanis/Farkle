@@ -176,9 +176,9 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             writer.Write(_accepts.Count);
         }
 
-        byte stateTargetSize = GetCompressedIndexSize(StateCount);
-        byte edgeIndexSize = GetCompressedIndexSize(_edges.Count);
-        byte tokenSymbolSize = GetCompressedIndexSize(tokenSymbolCount);
+        var stateTargetSize = GetCompressedIndexSize(StateCount);
+        var edgeIndexSize = GetCompressedIndexSize(_edges.Count);
+        var tokenSymbolSize = GetCompressedIndexSize(tokenSymbolCount);
 
         foreach (int firstEdge in _firstEdges)
         {
@@ -199,7 +199,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
         if (HasConflicts)
         {
-            byte acceptIndexSize = GetCompressedIndexSize(_accepts.Count);
+            var acceptIndexSize = GetCompressedIndexSize(_accepts.Count);
             foreach (int firstAccept in _firstAccepts)
             {
                 writer.WriteVariableSize((uint)firstAccept, acceptIndexSize);
@@ -230,7 +230,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             ThrowHelpers.ThrowInvalidOperationException("DFA has no default transitions.");
         }
 
-        byte stateTargetSize = GetCompressedIndexSize(StateCount);
+        var stateTargetSize = GetCompressedIndexSize(StateCount);
         foreach (int state in _defaultTransitions)
         {
             writer.WriteVariableSize((uint)state, stateTargetSize);

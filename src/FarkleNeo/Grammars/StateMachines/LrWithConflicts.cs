@@ -1,15 +1,12 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>
-    where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
-    where TNonterminal : unmanaged, IComparable<TNonterminal>
+internal unsafe sealed class LrWithConflicts<TIndex> : LrImplementationBase<TIndex>
+    where TIndex : unmanaged, IComparable<TIndex>
 {
     private readonly int _eofActionCount;
 
@@ -19,23 +16,21 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
 
     public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount) : base(grammar, stateCount, actionCount, gotoCount, true)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(eofActionCount) == sizeof(TEofActionIndex));
-
         _eofActionCount = eofActionCount;
     }
 
-    public static LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, GrammarFileSection lr)
+    public static LrWithConflicts<TIndex> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, GrammarFileSection lr)
     {
         int expectedSize =
             sizeof(uint) * 4
-            + stateCount * sizeof(TActionIndex)
-            + actionCount * sizeof(TTokenSymbol)
-            + actionCount * sizeof(TAction)
-            + stateCount * sizeof(TEofActionIndex)
-            + eofActionCount * sizeof(TEofAction)
-            + stateCount * sizeof(TGotoIndex)
-            + gotoCount * sizeof(TNonterminal)
-            + gotoCount * sizeof(TStateIndex);
+            + stateCount * sizeof(TIndex)
+            + actionCount * sizeof(TIndex)
+            + actionCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex)
+            + eofActionCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex)
+            + gotoCount * sizeof(TIndex)
+            + gotoCount * sizeof(TIndex);
 
         if (lr.Length != expectedSize)
         {
@@ -43,13 +38,13 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         }
 
         int firstActionBase = lr.Offset + sizeof(uint) * 4;
-        int actionTerminalBase = firstActionBase + stateCount * sizeof(TActionIndex);
-        int actionBase = actionTerminalBase + actionCount * sizeof(TTokenSymbol);
-        int firstEofActionBase = actionBase + actionCount * sizeof(TAction);
-        int eofActionBase = firstEofActionBase + stateCount * sizeof(TEofActionIndex);
-        int firstGotoBase = eofActionBase + eofActionCount * sizeof(TEofAction);
-        int gotoNonterminalBase = firstGotoBase + stateCount * sizeof(TGotoIndex);
-        int gotoStateBase = gotoNonterminalBase + gotoCount * sizeof(TNonterminal);
+        int actionTerminalBase = firstActionBase + stateCount * sizeof(TIndex);
+        int actionBase = actionTerminalBase + actionCount * sizeof(TIndex);
+        int firstEofActionBase = actionBase + actionCount * sizeof(TIndex);
+        int eofActionBase = firstEofActionBase + stateCount * sizeof(TIndex);
+        int firstGotoBase = eofActionBase + eofActionCount * sizeof(TIndex);
+        int gotoNonterminalBase = firstGotoBase + stateCount * sizeof(TIndex);
+        int gotoStateBase = gotoNonterminalBase + gotoCount * sizeof(TIndex);
 
         return new(grammar, stateCount, actionCount, gotoCount, eofActionCount)
         {
@@ -70,13 +65,11 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
     internal override LrEndOfFileAction GetEndOfFileAction(int state) =>
         throw CreateHasConflictsException();
 
-    private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
-    {
-        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, index));
-    }
+    private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadIndex(grammarFile, EofActionBase, index));
 
     private int ReadFirstEofAction(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)ReadUIntVariableSizeFromArray<TEofActionIndex>(grammarFile, FirstEofActionBase, state);
+        (int)ReadIndex(grammarFile, FirstEofActionBase, state);
 
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {

@@ -3,26 +3,25 @@
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>(Grammar grammar, int stateCount, int actionCount, int gotoCount)
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>(grammar, stateCount, actionCount, gotoCount, false)
-    where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
-    where TNonterminal : unmanaged, IComparable<TNonterminal>
+internal unsafe sealed class LrWithoutConflicts<TIndex>(Grammar grammar, int stateCount, int actionCount, int gotoCount)
+    : LrImplementationBase<TIndex>(grammar, stateCount, actionCount, gotoCount, false)
+    where TIndex : unmanaged, IComparable<TIndex>
 {
     private Dictionary<TokenSymbolHandle, LrAction>[]? _actionLookup;
 
     internal required int EofActionBase { get; init; }
 
-    public static LrWithoutConflicts<TStateIndex, TActionIndex, TGotoIndex, TAction, TEofAction, TTokenSymbol, TNonterminal> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, GrammarFileSection lr)
+    public static LrWithoutConflicts<TIndex> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, GrammarFileSection lr)
     {
         int expectedSize =
             sizeof(uint) * 3
-            + stateCount * sizeof(TActionIndex)
-            + actionCount * sizeof(TTokenSymbol)
-            + actionCount * sizeof(TAction)
-            + stateCount * sizeof(TEofAction)
-            + stateCount * sizeof(TGotoIndex)
-            + gotoCount * sizeof(TNonterminal)
-            + gotoCount * sizeof(TStateIndex);
+            + stateCount * sizeof(TIndex)
+            + actionCount * sizeof(TIndex)
+            + actionCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex)
+            + gotoCount * sizeof(TIndex)
+            + gotoCount * sizeof(TIndex);
 
         if (lr.Length != expectedSize)
         {
@@ -30,12 +29,12 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
         }
 
         int firstActionBase = lr.Offset + sizeof(uint) * 3;
-        int actionTerminalBase = firstActionBase + stateCount * sizeof(TActionIndex);
-        int actionBase = actionTerminalBase + actionCount * sizeof(TTokenSymbol);
-        int eofActionBase = actionBase + actionCount * sizeof(TAction);
-        int firstGotoBase = eofActionBase + stateCount * sizeof(TEofAction);
-        int gotoNonterminalBase = firstGotoBase + stateCount * sizeof(TGotoIndex);
-        int gotoStateBase = gotoNonterminalBase + gotoCount * sizeof(TNonterminal);
+        int actionTerminalBase = firstActionBase + stateCount * sizeof(TIndex);
+        int actionBase = actionTerminalBase + actionCount * sizeof(TIndex);
+        int eofActionBase = actionBase + actionCount * sizeof(TIndex);
+        int firstGotoBase = eofActionBase + stateCount * sizeof(TIndex);
+        int gotoNonterminalBase = firstGotoBase + stateCount * sizeof(TIndex);
+        int gotoStateBase = gotoNonterminalBase + gotoCount * sizeof(TIndex);
 
         return new(grammar, stateCount, actionCount, gotoCount)
         {
@@ -73,10 +72,8 @@ internal unsafe sealed class LrWithoutConflicts<TStateIndex, TActionIndex, TGoto
     internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
         _actionLookup![state].TryGetValue(terminal, out LrAction action) ? action : LrAction.Error;
 
-    private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
-    {
-        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, state));
-    }
+    private LrEndOfFileAction GetEndOfFileActionUnsafe(ReadOnlySpan<byte> grammarFile, int state) =>
+        new(ReadIndex(grammarFile, EofActionBase, state));
 
     internal override LrEndOfFileAction GetEndOfFileAction(int state)
     {

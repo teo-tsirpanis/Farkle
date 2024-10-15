@@ -328,13 +328,15 @@ A DFA's representation consists of the following data:
 |----|-----|-----------|
 |`uint32_t`|`stateCount`|The number of states in the DFA.|
 |`uint32_t`|`edgeCount`|The number of edges in the DFA.|
-|`edge_t[stateCount]`|`firstEdge`|The compressed zero-based index to the first edge of each state.|
+|`idx_t[stateCount]`|`firstEdge`|The zero-based index to the first edge of each state.|
 |`char_t[edgeCount]`|`rangeFrom`|The starting character of each edge's range, inclusive.|
 |`char_t[edgeCount]`|`rangeTo`|The ending character of each edge's range, inclusive.|
-|`state_t[edgeCount]`|`edgeTarget`|The compressed one-based index to target state of each edge, or zero if following the edge would stop the tokenizer.|
-|`token_symbol_t[stateCount]`|`accept`|The compressed index to the _TokenSymbol_ table that points to the token symbol that will get accepted at each state, or zero if the state is not an accept state.|
+|`idx_t[edgeCount]`|`edgeTarget`|The one-based index to target state of each edge, or zero if following the edge would stop the tokenizer.|
+|`idx_t[stateCount]`|`accept`|The index to the _TokenSymbol_ table that points to the token symbol that will get accepted at each state, or zero if the state is not an accept state.|
 
 The type `char_t` can be any unsigned integer type.
+
+The type `idx_t` is the largest of the compressed indices to the DFA's states, edges, and the grammar's accept symbols.
 
 The DFA's initial state is always the first one.
 
@@ -351,8 +353,8 @@ An edge with its `edgeTarget` field set to zero indicates that traversing this e
 A DFA has conflicts when at least one of its states has more than one accept symbol. It is represented as a regular DFA with the following changes:
 
 * A field of type `uint32_t` called `acceptCount` is added after the `edgeCount` field.
-* A field of type `accept_t[stateCount]` called `firstAccept` is added before the `accept` field. It contains the compressed zero-based index to the first accept symbol of each state.
-    * The type `accept_t` is the smallest of one, two or four bytes that can hold the value of the `acceptCount` field plus one.
+* A field of type `idx_t[stateCount]` called `firstAccept` is added before the `accept` field. It contains the compressed zero-based index to the first accept symbol of each state.
+    * The definition of `idx_t` is updated to include the number of accept symbols in the DFA.
 * The `accept` field's type is changed to `token_symbol_t[acceptCount]`.
 
 A state's accept symbols end when the next state's accept symbols begin, or at the end of the accept symbols if this is the last state. If a state and all states after it do not have any accept symbols, its `firstAccept` field MUST be equal to the number of accept symbols in the DFA plus one.
@@ -382,7 +384,7 @@ An LR(1) state machine's representation consists of the following data:
 |`nonterminal_t[gotoCount]`|`gotoNonterminal`|The compressed index to the _Nonterminal_ table that points to the nonterminal that triggers each GOTO action.|
 |`state_t[gotoCount]`|`gotoState`|The compressed zero-based index to the target state of each GOTO action.|
 
-The type `lr_action_t` is a signed integer that describes the type of an action (shift or reduce). It is encoded as follows:
+The `action` field holds signed integers that describe the type of an action (shift or reduce). They are encoded as follows:
 
 *
     An error action is encoded as `0`.
@@ -392,7 +394,7 @@ The type `lr_action_t` is a signed integer that describes the type of an action 
     A reduce action to the production with the index `p` is encoded as `-p`.
     > Remember that table row indices are one-based, so the first production has an index of `1`.
 
-Its size depends on the number of states in the state machine and the number of productions in the grammar:
+The maximum size of each value held in the `action` field depends on the number of states in the state machine and the number of productions in the grammar:
 
 |States|Productions|Size in bytes|
 |------|-----------|-------------|
@@ -400,11 +402,16 @@ Its size depends on the number of states in the state machine and the number of 
 |≤ 2<sup>15</sup> - 2|≤ 2<sup>15</sup>|2|
 |_Otherwise_|_Otherwise_|4|
 
-The type `eof_action_t` describes the type of the action (reduce, accept, error) to take when input ends while being on a state. It is encoded as follows and has the size of a compressed index to the Production table:
+The type `eof_action_t` describes the type of the action (reduce, accept, error) to take when input ends while being on a state. It is encoded as follows and has the same maximum size as a compressed index to the Production table:
 
 * An error action is encoded as `0`.
 * An accept action is encoded as `1`.
 * A reduce action to the production with the index `p` is encoded as `p + 1`.
+
+The size of the type `idx_t` is the largest of:
+
+* The size of compressed indices to the _TokenSymbol_, _Nonterminal_ and _Production_ tables, and the state machine's states, actions and GOTO actions.
+* The size of each value in the `action` field.
 
 The LR(1) state machine's initial state is always the first one.
 
@@ -421,8 +428,8 @@ The specific algorithm used to build this state machine (Canonical LR(1), LALR(1
 A GLR(1) state machine has at least one state where there at least one terminal or the end of input has more than one possible action. It is represented as a regular LR(1) state machine with the following changes:
 
 * A field of type `uint32_t` called `eofActionCount` is added after the `gotoCount` field.
-* A field of type `eof_action_index_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the compressed zero-based index to the first EOF action of each state.
-    * The type `eof_action_index_t` is the smallest of one, two or four bytes that can hold the value of the `eofActionCount` field plus one.
+* A field of type `idx_t[stateCount]` called `firstEofAction` is added before the `eofAction` field. It contains the compressed zero-based index to the first EOF action of each state.
+    * The definition of `idx_t` is updated to include the number of EOF actions in the state machine.
 * The `eofAction` field's type is changed to `eof_action_t[eofActionCount]`.
 * For each state, duplicate values of the `actionTerminal` field are allowed.
 

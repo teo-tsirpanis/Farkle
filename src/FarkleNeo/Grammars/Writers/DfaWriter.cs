@@ -176,13 +176,11 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             writer.Write(_accepts.Count);
         }
 
-        byte stateTargetSize = GetCompressedIndexSize(StateCount);
-        byte edgeIndexSize = GetCompressedIndexSize(_edges.Count);
-        byte tokenSymbolSize = GetCompressedIndexSize(tokenSymbolCount);
+        byte indexSize = GetDfaIndexSize(StateCount, _edges.Count, _accepts.Count, tokenSymbolCount);
 
         foreach (int firstEdge in _firstEdges)
         {
-            writer.WriteVariableSize((uint)firstEdge, edgeIndexSize);
+            writer.WriteVariableSize((uint)firstEdge, indexSize);
         }
         foreach ((TChar keyFrom, _, _) in _edges)
         {
@@ -194,19 +192,18 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
         }
         foreach ((_, _, int targetState) in _edges)
         {
-            writer.WriteVariableSize((uint)targetState, stateTargetSize);
+            writer.WriteVariableSize((uint)targetState, indexSize);
         }
 
         if (HasConflicts)
         {
-            byte acceptIndexSize = GetCompressedIndexSize(_accepts.Count);
             foreach (int firstAccept in _firstAccepts)
             {
-                writer.WriteVariableSize((uint)firstAccept, acceptIndexSize);
+                writer.WriteVariableSize((uint)firstAccept, indexSize);
             }
             foreach (uint handle in _accepts)
             {
-                writer.WriteVariableSize(handle, tokenSymbolSize);
+                writer.WriteVariableSize(handle, indexSize);
             }
         }
         else
@@ -217,7 +214,7 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
                 int nextFirstAccept = i < _firstAccepts.Length - 1 ? _firstAccepts[i + 1] : _accepts.Count;
 
                 uint handle = firstAccept < nextFirstAccept ? _accepts[firstAccept] : 0;
-                writer.WriteVariableSize(handle, tokenSymbolSize);
+                writer.WriteVariableSize(handle, indexSize);
             }
         }
     }

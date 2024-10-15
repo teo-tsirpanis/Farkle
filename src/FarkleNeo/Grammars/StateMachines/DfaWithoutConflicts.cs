@@ -6,7 +6,7 @@ using Farkle.Buffers;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol>(Grammar grammar, int stateCount, int edgeCount) : DfaImplementationBase<TChar, TState, TEdge>(grammar, stateCount, edgeCount, false) where TChar : unmanaged, IComparable<TChar>
+internal unsafe sealed class DfaWithoutConflicts<TChar, TIndex>(Grammar grammar, int stateCount, int edgeCount) : DfaImplementationBase<TChar, TIndex>(grammar, stateCount, edgeCount, false) where TChar : unmanaged, IComparable<TChar>
 {
     internal required int AcceptBase { get; init; }
 
@@ -35,14 +35,14 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
 
-    public static DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> Create(Grammar grammar, int stateCount, int edgeCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
+    public static DfaWithoutConflicts<TChar, TIndex> Create(Grammar grammar, int stateCount, int edgeCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
     {
         int expectedSize =
             sizeof(uint) * 2
-            + stateCount * sizeof(TEdge)
+            + stateCount * sizeof(TIndex)
             + edgeCount * sizeof(TChar) * 2
-            + edgeCount * sizeof(TState)
-            + stateCount * sizeof(TTokenSymbol);
+            + edgeCount * sizeof(TIndex)
+            + stateCount * sizeof(TIndex);
 
         if (dfa.Length != expectedSize)
         {
@@ -50,17 +50,14 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
         }
 
         int firstEdgeBase = dfa.Offset + sizeof(uint) * 2;
-        int rangeFromBase = firstEdgeBase + stateCount * sizeof(TEdge);
+        int rangeFromBase = firstEdgeBase + stateCount * sizeof(TIndex);
         int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
         int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
-        int acceptBase = edgeTargetBase + edgeCount * sizeof(TState);
+        int acceptBase = edgeTargetBase + edgeCount * sizeof(TIndex);
 
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * sizeof(TIndex))
         {
-            if (dfaDefaultTransitions.Length != stateCount * sizeof(TState))
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
         return new(grammar, stateCount, edgeCount)
@@ -89,7 +86,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
     internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
 
     private TokenSymbolHandle GetAcceptSymbolUnsafe(ReadOnlySpan<byte> grammarFile, int state) =>
-        new(grammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
+        new(grammarFile.ReadUIntVariableSize<TIndex>(AcceptBase + state * sizeof(TIndex)));
 
     private TokenSymbolHandle GetAcceptSymbol(int state)
     {
@@ -127,13 +124,13 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
             if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {
-                return ReadState(grammarFile, EdgeTargetBase + (edgeOffset + edge) * sizeof(TState));
+                return ReadState(grammarFile, EdgeTargetBase, edgeOffset + edge);
             }
         }
 
         if (DefaultTransitionBase != 0)
         {
-            return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
+            return GetDefaultTransitionUnsafe(grammarFile, DefaultTransitionBase + state * sizeof(TIndex));
         }
 
         return -1;

@@ -58,54 +58,32 @@ internal static class BufferExtensions
         BinaryPrimitives.ReadUInt64LittleEndian(buffer[index..]);
 
     // Signed integers of variable size must be read with this method to ensure they are sign-extended.
-    public static int ReadIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
+    public static int ReadIntVariableSize(this ReadOnlySpan<byte> buffer, int index, PowerOfTwo dataSize)
     {
-        if (typeof(T) == typeof(sbyte))
+        switch (dataSize.Log2)
         {
-            return (sbyte)buffer[index];
+            case 0:
+                return (sbyte)buffer[index];
+            case 1:
+                return (short)buffer.ReadUInt16(index);
+            case var n:
+                Debug.Assert(n == 2);
+                return buffer.ReadInt32(index);
         }
-        if (typeof(T) == typeof(short))
-        {
-            return (short)buffer.ReadUInt16(index);
-        }
-        if (typeof(T) == typeof(int))
-        {
-            return buffer.ReadInt32(index);
-        }
-
-        throw new NotSupportedException("Unsupported type.");
     }
 
-    public static uint ReadUIntVariableSize(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
+    public static uint ReadUIntVariableSize(this ReadOnlySpan<byte> buffer, int index, PowerOfTwo dataSize)
     {
-        switch (dataSize)
+        switch (dataSize.Log2)
         {
-            case 1:
+            case 0:
                 return buffer[index];
-            case 2:
+            case 1:
                 return buffer.ReadUInt16(index);
-            default:
-                Debug.Assert(dataSize == 4);
+            case var n:
+                Debug.Assert(n == 2);
                 return buffer.ReadUInt32(index);
         }
-    }
-
-    public static uint ReadUIntVariableSize<T>(this ReadOnlySpan<byte> buffer, int index)
-    {
-        if (typeof(T) == typeof(byte))
-        {
-            return buffer[index];
-        }
-        if (typeof(T) == typeof(ushort))
-        {
-            return buffer.ReadUInt16(index);
-        }
-        if (typeof(T) == typeof(uint))
-        {
-            return buffer.ReadUInt32(index);
-        }
-
-        throw new NotSupportedException("Unsupported type.");
     }
 
     public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)
@@ -169,39 +147,39 @@ internal static class BufferExtensions
         buffer.Advance(sizeof(ulong));
     }
 
-    public static void WriteVariableSize(this IBufferWriter<byte> buffer, int value, byte dataSize)
+    public static void WriteVariableSize(this IBufferWriter<byte> buffer, int value, PowerOfTwo dataSize)
     {
-        switch (dataSize)
+        switch (dataSize.Log2)
         {
-            case 1:
+            case 0:
                 Debug.Assert(value == (sbyte)value);
                 buffer.Write((byte)(sbyte)value);
                 break;
-            case 2:
+            case 1:
                 Debug.Assert(value == (short)value);
                 buffer.Write((ushort)(short)value);
                 break;
-            default:
-                Debug.Assert(dataSize == 4);
+            case var n:
+                Debug.Assert(n == 2);
                 buffer.Write(value);
                 break;
         }
     }
 
-    public static void WriteVariableSize(this IBufferWriter<byte> buffer, uint value, byte dataSize)
+    public static void WriteVariableSize(this IBufferWriter<byte> buffer, uint value, PowerOfTwo dataSize)
     {
-        switch (dataSize)
+        switch (dataSize.Log2)
         {
-            case 1:
+            case 0:
                 Debug.Assert(value <= byte.MaxValue);
                 buffer.Write((byte)value);
                 break;
-            case 2:
+            case 1:
                 Debug.Assert(value <= ushort.MaxValue);
                 buffer.Write((ushort)value);
                 break;
-            default:
-                Debug.Assert(dataSize == 4);
+            case var n:
+                Debug.Assert(n == 2);
                 buffer.Write(value);
                 break;
         }

@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 
 internal unsafe abstract class LrImplementationBase : LrStateMachine
 {
-    protected readonly PowerOfTwo _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize;
+    protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize;
 
     private Dictionary<NonterminalHandle, int>[]? _gotoLookup;
 
@@ -62,7 +62,7 @@ internal unsafe abstract class LrImplementationBase : LrStateMachine
     protected int ReadGoto(ReadOnlySpan<byte> grammarFile, int index) =>
         (int)ReadUIntVariableSizeFromArray(grammarFile, GotoStateBase, index, _stateIndexSize);
 
-    protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, PowerOfTwo indexSize) =>
+    protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
         grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
 
     internal sealed override Grammar Grammar { get; }

@@ -63,9 +63,9 @@ internal readonly struct GrammarTables
 
     private readonly GrammarHeapSizes _heapSizes;
 
-    public PowerOfTwo BlobHeapIndexSize => GetBlobHeapIndexSize(_heapSizes);
+    public byte BlobHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
 
-    public PowerOfTwo StringHeapIndexSize => GetStringHeapIndexSize(_heapSizes);
+    public byte StringHeapIndexSize => (byte)((_heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
 
     public const int MaxRowCount = 0xFF_FFFF; // 2^24 - 1
 
@@ -124,7 +124,7 @@ internal readonly struct GrammarTables
 
     private EntityHandle ReadSymbolHandle(ReadOnlySpan<byte> grammarFile, int index)
     {
-        PowerOfTwo indexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
+        byte indexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
         uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
 
         // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.

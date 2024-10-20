@@ -8,7 +8,7 @@ namespace Farkle.Grammars.StateMachines;
 
 internal unsafe sealed class DfaWithConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    private readonly PowerOfTwo _acceptIndexSize;
+    private readonly byte _acceptIndexSize;
 
     private readonly int _acceptCount;
 

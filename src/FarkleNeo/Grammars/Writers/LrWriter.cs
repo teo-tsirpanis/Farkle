@@ -202,13 +202,13 @@ internal sealed class LrWriter
             writer.Write(_eofActions.Count);
         }
 
-        var stateIndexSize = GetCompressedIndexSize(StateCount);
-        var actionIndexSize = GetCompressedIndexSize(_actions.Count);
-        var actionSize = GetLrActionEncodedSize(StateCount, productionCount);
-        var eofActionSize = GetCompressedIndexSize(productionCount);
-        var gotoIndexSize = GetCompressedIndexSize(_gotos.Count);
-        var nonterminalIndexSize = GetCompressedIndexSize(nonterminalCount);
-        var tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolCount);
+        byte stateIndexSize = GetCompressedIndexSize(StateCount);
+        byte actionIndexSize = GetCompressedIndexSize(_actions.Count);
+        byte actionSize = GetLrActionEncodedSize(StateCount, productionCount);
+        byte eofActionSize = GetCompressedIndexSize(productionCount);
+        byte gotoIndexSize = GetCompressedIndexSize(_gotos.Count);
+        byte nonterminalIndexSize = GetCompressedIndexSize(nonterminalCount);
+        byte tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolCount);
 
         foreach (int firstAction in _firstActions)
         {
@@ -224,7 +224,7 @@ internal sealed class LrWriter
         }
         if (HasConflicts)
         {
-            var eofActionIndexSize = GetCompressedIndexSize(_eofActions.Count);
+            byte eofActionIndexSize = GetCompressedIndexSize(_eofActions.Count);
             foreach (int firstEofAction in _firstEofActions)
             {
                 writer.WriteVariableSize((uint)firstEofAction, eofActionIndexSize);

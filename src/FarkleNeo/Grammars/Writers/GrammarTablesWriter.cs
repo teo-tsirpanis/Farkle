@@ -318,17 +318,17 @@ internal struct GrammarTablesWriter
         int stateMachineRows = _stateMachines?.Count ?? 0;
         int specialNameRows = _specialNames?.Count ?? 0;
 
-        var blobHeapIndexSize = GetBlobHeapIndexSize(heapSizes);
-        var stringHeapIndexSize = GetStringHeapIndexSize(heapSizes);
+        byte blobHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
+        byte stringHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
 
-        var tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolRows);
-        var groupIndexSize = GetCompressedIndexSize(groupRows);
-        var groupNestingIndexSize = GetCompressedIndexSize(groupNestingRows);
-        var nonterminalIndexSize = GetCompressedIndexSize(nonterminalRows);
-        var productionIndexSize = GetCompressedIndexSize(productionRows);
-        var productionMemberIndexSize = GetCompressedIndexSize(productionMemberRows);
+        byte tokenSymbolIndexSize = GetCompressedIndexSize(tokenSymbolRows);
+        byte groupIndexSize = GetCompressedIndexSize(groupRows);
+        byte groupNestingIndexSize = GetCompressedIndexSize(groupNestingRows);
+        byte nonterminalIndexSize = GetCompressedIndexSize(nonterminalRows);
+        byte productionIndexSize = GetCompressedIndexSize(productionRows);
+        byte productionMemberIndexSize = GetCompressedIndexSize(productionMemberRows);
 
-        var symbolCodedIndexSize = GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
+        byte symbolCodedIndexSize = GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
 
         TableKinds presentTables = PresentTables;
         int presentTableCount = BitOperationsCompat.PopCount((ulong)presentTables);

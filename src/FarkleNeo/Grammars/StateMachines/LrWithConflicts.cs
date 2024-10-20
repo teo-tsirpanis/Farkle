@@ -1,67 +1,49 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal>
-    : LrImplementationBase<TStateIndex, TActionIndex, TGotoIndex, TAction, TTokenSymbol, TNonterminal>
-    where TTokenSymbol : unmanaged, IComparable<TTokenSymbol>
-    where TNonterminal : unmanaged, IComparable<TNonterminal>
+internal unsafe sealed class LrWithConflicts : LrImplementationBase
 {
+    private readonly byte _eofActionIndexSize;
+
     private readonly int _eofActionCount;
 
     internal required int FirstEofActionBase { get; init; }
 
-    internal required int EofActionBase { get; init; }
-
-    public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount) : base(grammar, stateCount, actionCount, gotoCount, true)
+    [SetsRequiredMembers]
+    public LrWithConflicts(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, in GrammarTables grammarTables, GrammarFileSection lr)
+        : base(grammar, stateCount, actionCount, gotoCount, in grammarTables, true)
     {
-        Debug.Assert(GrammarUtilities.GetCompressedIndexSize(eofActionCount) == sizeof(TEofActionIndex));
-
+        _eofActionIndexSize = GrammarUtilities.GetCompressedIndexSize(eofActionCount);
         _eofActionCount = eofActionCount;
-    }
 
-    public static LrWithConflicts<TStateIndex, TActionIndex, TGotoIndex, TEofActionIndex, TAction, TEofAction, TTokenSymbol, TNonterminal> Create(Grammar grammar, int stateCount, int actionCount, int gotoCount, int eofActionCount, GrammarFileSection lr)
-    {
         int expectedSize =
             sizeof(uint) * 4
-            + stateCount * sizeof(TActionIndex)
-            + actionCount * sizeof(TTokenSymbol)
-            + actionCount * sizeof(TAction)
-            + stateCount * sizeof(TEofActionIndex)
-            + eofActionCount * sizeof(TEofAction)
-            + stateCount * sizeof(TGotoIndex)
-            + gotoCount * sizeof(TNonterminal)
-            + gotoCount * sizeof(TStateIndex);
+            + stateCount * _actionIndexSize
+            + actionCount * _tokenSymbolIndexSize
+            + actionCount * _actionSize
+            + stateCount * _eofActionIndexSize
+            + eofActionCount * _eofActionSize
+            + stateCount * _gotoIndexSize
+            + gotoCount * _nonterminalIndexSize
+            + gotoCount * _stateIndexSize;
 
         if (lr.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidLrDataSize();
         }
 
-        int firstActionBase = lr.Offset + sizeof(uint) * 4;
-        int actionTerminalBase = firstActionBase + stateCount * sizeof(TActionIndex);
-        int actionBase = actionTerminalBase + actionCount * sizeof(TTokenSymbol);
-        int firstEofActionBase = actionBase + actionCount * sizeof(TAction);
-        int eofActionBase = firstEofActionBase + stateCount * sizeof(TEofActionIndex);
-        int firstGotoBase = eofActionBase + eofActionCount * sizeof(TEofAction);
-        int gotoNonterminalBase = firstGotoBase + stateCount * sizeof(TGotoIndex);
-        int gotoStateBase = gotoNonterminalBase + gotoCount * sizeof(TNonterminal);
-
-        return new(grammar, stateCount, actionCount, gotoCount, eofActionCount)
-        {
-            FirstActionBase = firstActionBase,
-            ActionTerminalBase = actionTerminalBase,
-            ActionBase = actionBase,
-            FirstEofActionBase = firstEofActionBase,
-            EofActionBase = eofActionBase,
-            FirstGotoBase = firstGotoBase,
-            GotoNonterminalBase = gotoNonterminalBase,
-            GotoStateBase = gotoStateBase,
-        };
+        FirstActionBase = lr.Offset + sizeof(uint) * 4;
+        ActionTerminalBase = FirstActionBase + stateCount * _actionIndexSize;
+        ActionBase = ActionTerminalBase + actionCount * _tokenSymbolIndexSize;
+        FirstEofActionBase = ActionBase + actionCount * _actionSize;
+        EofActionBase = FirstEofActionBase + stateCount * _eofActionIndexSize;
+        FirstGotoBase = EofActionBase + eofActionCount * _eofActionSize;
+        GotoNonterminalBase = FirstGotoBase + stateCount * _gotoIndexSize;
+        GotoStateBase = GotoNonterminalBase + gotoCount * _nonterminalIndexSize;
     }
 
     internal override LrAction GetAction(int state, TokenSymbolHandle terminal) =>
@@ -70,13 +52,8 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
     internal override LrEndOfFileAction GetEndOfFileAction(int state) =>
         throw CreateHasConflictsException();
 
-    private LrEndOfFileAction GetEndOfFileActionAtUnsafe(ReadOnlySpan<byte> grammarFile, int index)
-    {
-        return new(ReadUIntVariableSizeFromArray<TEofAction>(grammarFile, EofActionBase, index));
-    }
-
     private int ReadFirstEofAction(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)ReadUIntVariableSizeFromArray<TEofActionIndex>(grammarFile, FirstEofActionBase, state);
+        (int)ReadUIntVariableSizeFromArray(grammarFile, FirstEofActionBase, state, _eofActionIndexSize);
 
     internal override LrEndOfFileAction GetEndOfFileActionAt(int index)
     {
@@ -84,7 +61,7 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
-        return GetEndOfFileActionAtUnsafe(Grammar.GrammarFile, index);
+        return ReadEofAction(Grammar.GrammarFile, index);
     }
 
     internal override (int Offset, int Count) GetEndOfFileActionBounds(int state)
@@ -121,7 +98,7 @@ internal unsafe sealed class LrWithConflicts<TStateIndex, TActionIndex, TGotoInd
 
         for (int i = 0; i < _eofActionCount; i++)
         {
-            ValidateAction(GetEndOfFileActionAtUnsafe(grammarFile, i), in grammarTables);
+            ValidateAction(ReadEofAction(grammarFile, i), in grammarTables);
         }
 
         static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)

@@ -1,15 +1,13 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Farkle.Buffers;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol>(Grammar grammar, int stateCount, int edgeCount) : DfaImplementationBase<TChar, TState, TEdge>(grammar, stateCount, edgeCount, false) where TChar : unmanaged, IComparable<TChar>
+internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    internal required int AcceptBase { get; init; }
-
     /// <summary>
     /// A lookup table with the next state for each ASCII character, for each starting state.
     /// </summary>
@@ -35,43 +33,33 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
 
-    public static DfaWithoutConflicts<TChar, TState, TEdge, TTokenSymbol> Create(Grammar grammar, int stateCount, int edgeCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
+    [SetsRequiredMembers]
+    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
+        : base(grammar, stateCount, edgeCount, tokenSymbolCount, false)
     {
         int expectedSize =
             sizeof(uint) * 2
-            + stateCount * sizeof(TEdge)
+            + stateCount * _edgeIndexSize
             + edgeCount * sizeof(TChar) * 2
-            + edgeCount * sizeof(TState)
-            + stateCount * sizeof(TTokenSymbol);
+            + edgeCount * _stateIndexSize
+            + stateCount * _tokenSymbolIndexSize;
 
         if (dfa.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int firstEdgeBase = dfa.Offset + sizeof(uint) * 2;
-        int rangeFromBase = firstEdgeBase + stateCount * sizeof(TEdge);
-        int rangeToBase = rangeFromBase + edgeCount * sizeof(TChar);
-        int edgeTargetBase = rangeToBase + edgeCount * sizeof(TChar);
-        int acceptBase = edgeTargetBase + edgeCount * sizeof(TState);
-
-        if (dfaDefaultTransitions.Length > 0)
+        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
         {
-            if (dfaDefaultTransitions.Length != stateCount * sizeof(TState))
-            {
-                ThrowHelpers.ThrowInvalidDfaDataSize();
-            }
+            ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        return new(grammar, stateCount, edgeCount)
-        {
-            FirstEdgeBase = firstEdgeBase,
-            RangeFromBase = rangeFromBase,
-            RangeToBase = rangeToBase,
-            EdgeTargetBase = edgeTargetBase,
-            DefaultTransitionBase = dfaDefaultTransitions.Offset,
-            AcceptBase = acceptBase
-        };
+        FirstEdgeBase = dfa.Offset + sizeof(uint) * 2;
+        RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
+        RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
+        EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
+        DefaultTransitionBase = dfaDefaultTransitions.Offset;
+        AcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
     }
 
     internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)
@@ -88,13 +76,10 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
     internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
 
-    private TokenSymbolHandle GetAcceptSymbolUnsafe(ReadOnlySpan<byte> grammarFile, int state) =>
-        new(grammarFile.ReadUIntVariableSize<TTokenSymbol>(AcceptBase + state * sizeof(TTokenSymbol)));
-
     private TokenSymbolHandle GetAcceptSymbol(int state)
     {
         ValidateStateIndex(state);
-        return GetAcceptSymbolUnsafe(Grammar.GrammarFile, state);
+        return ReadAcceptSymbol(Grammar.GrammarFile, state);
     }
 
     private int NextState(ReadOnlySpan<byte> grammarFile, int state, TChar c)
@@ -127,13 +112,13 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
             if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {
-                return ReadState(grammarFile, EdgeTargetBase + (edgeOffset + edge) * sizeof(TState));
+                return ReadState(grammarFile, EdgeTargetBase, edgeOffset + edge);
             }
         }
 
         if (DefaultTransitionBase != 0)
         {
-            return ReadState(grammarFile, DefaultTransitionBase + state * sizeof(TState));
+            return ReadState(grammarFile, DefaultTransitionBase, state);
         }
 
         return -1;
@@ -155,7 +140,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
             {
                 ignoreLeadingErrors = false;
                 currentState = nextState;
-                if (GetAcceptSymbolUnsafe(grammarFile, currentState) is { HasValue: true } s)
+                if (ReadAcceptSymbol(grammarFile, currentState) is { HasValue: true } s)
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;
@@ -177,7 +162,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
             acceptSymbol = default;
         }
 
-        Return:
+    Return:
         if (acceptSymbol.HasValue)
         {
             return (acceptSymbol, acceptSymbolLength, currentState);
@@ -196,7 +181,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar, TState, TEdge, TTokenSym
 
         for (int state = 0; state < Count; state++)
         {
-            TokenSymbolHandle acceptSymbol = GetAcceptSymbolUnsafe(grammarFile, state);
+            TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, state);
             if (acceptSymbol.HasValue)
             {
                 grammarTables.ValidateHandle(acceptSymbol);

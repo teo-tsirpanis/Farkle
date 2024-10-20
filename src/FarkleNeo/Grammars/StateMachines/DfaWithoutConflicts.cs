@@ -58,6 +58,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
         RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
         EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
+        DefaultTransitionBase = dfaDefaultTransitions.Offset;
         AcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
     }
 

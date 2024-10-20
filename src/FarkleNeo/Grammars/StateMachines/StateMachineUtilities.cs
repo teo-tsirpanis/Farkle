@@ -98,7 +98,7 @@ internal static class StateMachineUtilities
         return ~low;
     }
 
-    private static Dfa<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
+    private static DfaWithoutConflicts<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
     {
         if (dfa.Length < sizeof(uint) * 2)
         {
@@ -116,7 +116,7 @@ internal static class StateMachineUtilities
         return new DfaWithoutConflicts<TChar>(grammar, stateCount, edgeCount, grammar.GrammarTables.TokenSymbolRowCount, dfa, dfaDefaultTransitions);
     }
 
-    private static Dfa<TChar>? CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
+    private static DfaWithConflicts<TChar>? CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
     {
         if (dfa.Length < sizeof(uint) * 3)
         {
@@ -135,7 +135,7 @@ internal static class StateMachineUtilities
         return new DfaWithConflicts<TChar>(grammar, stateCount, edgeCount, acceptCount, grammar.GrammarTables.TokenSymbolRowCount, dfa, dfaDefaultTransitions);
     }
 
-    private static LrStateMachine? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
+    private static LrWithoutConflicts? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
     {
         if (lr.Length < sizeof(uint) * 3)
         {
@@ -154,7 +154,7 @@ internal static class StateMachineUtilities
         return new LrWithoutConflicts(grammar, stateCount, actionCount, gotoCount, in grammar.GrammarTables, lr);
     }
 
-    private static LrStateMachine? CreateLrWithConflicts(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
+    private static LrWithConflicts? CreateLrWithConflicts(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
     {
         if (lr.Length < sizeof(uint) * 4)
         {

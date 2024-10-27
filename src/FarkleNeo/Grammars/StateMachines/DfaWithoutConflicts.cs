@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -82,19 +83,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return ReadAcceptSymbol(Grammar.GrammarFile, state);
     }
 
-    private int NextState(ReadOnlySpan<byte> grammarFile, int state, TChar c)
+    private int NextStateSlow(ReadOnlySpan<byte> grammarFile, int state, TChar c)
     {
-        ValidateStateIndex(state);
-
-        if (_asciiLookup is not null)
-        {
-            int[] stateArray = _asciiLookup[state];
-            if (CastChar(c) < stateArray.Length)
-            {
-                return stateArray[CastChar(c)];
-            }
-        }
-
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
 
@@ -127,6 +117,9 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     internal override (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
         Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = true)
     {
+        // PrepareForParsing must have been called before this method.
+        Debug.Assert(_asciiLookup is not null);
+
         TokenSymbolHandle acceptSymbol = default;
         int acceptSymbolLength = 0;
 
@@ -135,7 +128,11 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         for (i = 0; i < chars.Length; i++)
         {
             TChar c = chars[i];
-            int nextState = NextState(grammarFile, currentState, c);
+
+            // Try fast path if the character is ASCII.
+            int[] stateArray = _asciiLookup[currentState];
+            int nextState = CastChar(c) < stateArray.Length ? stateArray[CastChar(c)] : NextStateSlow(grammarFile, currentState, c);
+
             if (nextState >= 0)
             {
                 ignoreLeadingErrors = false;
@@ -155,8 +152,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // If this is not the final input block and the DFA can move forward, we cannot accept
         // a token. To see why, consider a JSON grammar and the tokenizer finding `184` at the
         // end of the input block. We cannot accept it, there could be more digits after it that
-        // were not yet read yet. By contrast, if we had found `true` at the end of the block, we
-        // can accept it, because there is no way for a longer token to be formed.
+        // were not yet read. By contrast, if we had found `true` at the end of the block, we can
+        // accept it, because there is no way for a longer token to be formed.
         if (!(isFinal || this[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
         {
             acceptSymbol = default;

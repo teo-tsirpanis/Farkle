@@ -114,7 +114,10 @@ let private computeFirstSetMap (ct: CancellationToken) terminals nonterminals pr
                         dict.AddTerminalsFromNonterminal head nont
                 changed <- changed || changed'
                 i <- i + 1
-            if i = len - 1 && containsEmpty handle.[len - 1] then
+            // If we went through the entire handle and the last member's FIRST set
+            // contains the empty symbol, then the empty symbol is in the FIRST set
+            // of this production's head.
+            if i = len && len > 0 && containsEmpty handle.[len - 1] then
                 changed <- dict.AddEmpty head || changed
 
     dict.Freeze()

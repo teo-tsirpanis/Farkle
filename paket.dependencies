@@ -17,6 +17,8 @@ group FakeBuild
   nuget Fake.DotNet.Cli
   nuget Fake.DotNet.FsFormatting
   nuget Fake.Tools.Git
+  
+  nuget MSBuild.StructuredLogger
 
   nuget Octokit = 0.48
 

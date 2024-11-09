@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - mainstream
+      - release/*
+      - fix-6.0-build
+  release:
+    types: [published]
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+      - name: Add nightly pack options
+        if: github.event_name != 'release'
+        run: echo "PackageVersionSuffix=nightly.${{ github.run_number }}" >> $GITHUB_ENV
+      - name: Restore .NET local tools
+        run: dotnet tool restore
+      - name: Pack
+        run: dotnet tool run fake run ./build.fsx target NuGetPack
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./bin
+  release:
+    needs: pack
+    environment: ${{ github.event_name == 'release' && 'release' || 'nightly' }}
+    if: vars.NUGET_FEED != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./bin
+      - name: Publish
+        run: dotnet nuget push ./bin/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source ${{ vars.NUGET_FEED }}

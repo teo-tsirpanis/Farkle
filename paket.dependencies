@@ -1,4 +1,4 @@
-version 5.257.0
+version 6.2.1
 
 group FakeBuild
 
@@ -6,6 +6,8 @@ group FakeBuild
 
   storage: none
   framework: netstandard2.0
+
+  nuget FSharp.Core ~> 6
 
   nuget Fake.Api.GitHub
   nuget Fake.BuildServer.AppVeyor

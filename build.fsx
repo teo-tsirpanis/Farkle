@@ -426,10 +426,6 @@ Target.create "GitHubRelease" (fun _ ->
     |> Async.RunSynchronously
 )
 
-Target.description "The CI generates the documentation, the NuGet packages, \
-and uploads them as artifacts, along with the benchmark report."
-Target.create "CI" ignore
-
 Target.description "Publishes the documentation and makes a GitHub release"
 Target.create "Release" ignore
 
@@ -450,10 +446,6 @@ Target.create "Release" ignore
 "RunMSBuildTestsNetFramework"
     =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 
-"Test"
-    ==> "NuGetPack"
-    ==> "CI"
-
 [""; "Debug"]
 |> List.iter (fun x ->
     "CleanDocs"
@@ -462,9 +454,6 @@ Target.create "Release" ignore
 
 "GenerateDocs"
     ==> "ReleaseDocs"
-
-"GenerateDocs"
-    ==> "CI"
 
 "PrepareDocsGeneration"
     ==> "KeepGeneratingDocs"
@@ -481,8 +470,6 @@ Target.create "Release" ignore
     ==> "NuGetPack"
     ==> "NuGetPublish"
     ==> "GitHubRelease"
-
-"CI" <== ["NuGetPack"; "GenerateDocs"]
 
 "CheckForReleaseCredentials"
     ==> "GitHubRelease"

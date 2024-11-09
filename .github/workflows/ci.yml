@@ -31,7 +31,7 @@ jobs:
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Run tests
-        run: dotnet tool run fake run ./build.fsx target CI
+        run: dotnet tool run fake run ./build.fsx target Test
 
   full_ci_passed:
     needs: [test]

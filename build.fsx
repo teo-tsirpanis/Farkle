@@ -126,20 +126,20 @@ let releaseNotes =
     }
     match BuildServer.buildServer with
     | AppVeyor ->
+        let commitMessage = CommitMessage.getCommitMessage Environment.CurrentDirectory
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
-            AppVeyor.Environment.RepoCommit
-            AppVeyor.Environment.RepoName
-            AppVeyor.Environment.RepoBranch
-        :: AppVeyor.Environment.RepoCommitMessage
-        :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
+            GitHubActions.Environment.Sha
+            GitHubActions.Environment.Repository
+            GitHubActions.Environment.Ref
+        :: (commitMessage |> lines |> List.ofSeq)
     | _ -> releaseInfo.Notes
 
 let nugetVersion =
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
+    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
     | _ -> releaseInfo.NugetVersion
 
-BuildServer.install [AppVeyor.Installer]
+BuildServer.install [GitHubActions.Installer]
 
 let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
 let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
@@ -272,15 +272,6 @@ Target.create "RunMSBuildTestsNetCore" (fun _ ->
 
 Target.description "Runs all tests"
 Target.create "Test" ignore
-
-let shouldCIBenchmark =
-    match BuildServer.buildServer with
-    | LocalBuild -> true
-    | AppVeyor ->
-        let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
-    | _ -> true
 
 Target.description "Runs all benchmarks"
 Target.create "Benchmark" (fun _ ->
@@ -492,7 +483,6 @@ Target.create "Release" ignore
     ==> "GitHubRelease"
 
 "CI" <== ["NuGetPack"; "GenerateDocs"]
-"Benchmark" =?> ("CI", shouldCIBenchmark)
 
 "CheckForReleaseCredentials"
     ==> "GitHubRelease"

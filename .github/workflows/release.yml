@@ -34,7 +34,6 @@ jobs:
   release:
     needs: pack
     environment: ${{ github.event_name == 'release' && 'release' || 'nightly' }}
-    if: vars.NUGET_FEED != ''
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository

@@ -5,9 +5,10 @@ group FakeBuild
   source https://api.nuget.org/v3/index.json
 
   storage: none
-  framework: netstandard2.0
+  strategy: min
+  framework: net6.0
 
-  nuget FSharp.Core ~> 6
+  nuget FSharp.Core ~> 6 strategy: max
 
   nuget Fake.BuildServer.GitHubActions ~> 5
   nuget Fake.Core.ReleaseNotes ~> 5
@@ -19,13 +20,6 @@ group FakeBuild
   nuget Fake.DotNet.FsFormatting ~> 5
   nuget Fake.Tools.Git ~> 5
 
-  // Transitive dependencies
-  nuget Fake.Core.Context ~> 5
-  nuget Fake.Core.Environment ~> 5
-  nuget Fake.Core.FakeVar ~> 5
-  nuget Fake.Core.String ~> 5
-  nuget Fake.Core.Trace ~> 5
+  nuget MSBuild.StructuredLogger strategy: max
 
-  nuget MSBuild.StructuredLogger
-
-  nuget Scriban
+  nuget Scriban strategy: max

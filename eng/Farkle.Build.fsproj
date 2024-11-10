@@ -15,7 +15,13 @@
         <PackageReference Include="Fake.DotNet.Cli" Version="$(FakeVersion)" />
         <PackageReference Include="Fake.DotNet.FsFormatting" Version="$(FakeVersion)" />
         <PackageReference Include="Fake.Tools.Git" Version="$(FakeVersion)" />
-        <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
+        <!-- 17.3.2 is the last MSBuild version that targets .NET 6. If it is
+        updated without updating the target framework, restoring will not fail
+        because NuGet will pick the .NET Standard 2.0 target, but because NS2.0
+        only provides reference assemblies, the assemblies will not be copied to
+        the output directory, and we will get missing assembly errors at runtime. -->
+        <PackageReference Include="Microsoft.Build.Framework" Version="17.3.2" />
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.3.2" />
         <PackageReference Include="MSBuild.StructuredLogger" Version="2.2.374" />
         <PackageReference Include="Scriban" Version="5.11.0" />
     </ItemGroup>

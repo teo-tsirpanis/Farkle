@@ -51,4 +51,30 @@ let tests = testList "Regression tests" [
 
         Expect.isTrue grammar.LrStateMachine.HasConflicts "The grammar should have conflicts"
     }
+
+    reproduceIssue 301 {
+        let opt_D = "opt_D" |||= [
+            empty
+            !& "d"
+        ]
+
+        let opt_CD = "opt_CD" |||= [
+            !& "c"
+            !% opt_D
+        ]
+
+        let opt_B = "opt_B" |||= [
+            empty
+            !& "b"
+        ]
+
+        let root = "root" |||= [
+            !& "a" .>> opt_B .>> opt_CD .>> "e"
+        ]
+
+        let rf = GrammarBuilder.buildSyntaxCheck root
+
+        expectIsParseSuccess (CharParser.parseString rf "ae") "Parsing \"ae\" failed"
+        expectIsParseSuccess (CharParser.parseString rf "abe") "Parsing \"abe\" failed"
+    }
 ]

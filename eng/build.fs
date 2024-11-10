@@ -27,6 +27,8 @@ MSBuildLocator.RegisterDefaults() |> ignore
 
 Environment.GetCommandLineArgs()
 |> Array.toList
+// Environment.GetCommandLineArgs() contains the path to the executable as the first argument.
+|> List.tail
 |> Context.FakeExecutionContext.Create false "build.fs"
 |> Context.RuntimeContext.Fake
 |> Context.setExecutionContext

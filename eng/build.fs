@@ -7,15 +7,8 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "paket: groupref FakeBuild //"
-#nowarn "3180" // Mutable locals allocated as reference cells.
+#nowarn "20" // FS0020: The result of this expression has type 'a' and is implicitly ignored
 
-#if !FAKE
-// Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
-#load "./.fake/build.fsx/intellisense_lazy.fsx"
-#endif
-
-open Fake.Api
 open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
@@ -27,8 +20,15 @@ open Fake.Tools.Git
 open Scriban
 open System
 open System.IO
-open System.Runtime.InteropServices
 open System.Text.RegularExpressions
+
+Environment.GetCommandLineArgs()
+|> Array.toList
+// Environment.GetCommandLineArgs() contains the path to the executable as the first argument.
+|> List.tail
+|> Context.FakeExecutionContext.Create false "build.fs"
+|> Context.RuntimeContext.Fake
+|> Context.setExecutionContext
 
 Target.initEnvironment()
 
@@ -125,29 +125,22 @@ let releaseNotes =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | AppVeyor ->
+    | GitHubActions ->
+        let commitMessage = CommitMessage.getCommitMessage Environment.CurrentDirectory
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
-            AppVeyor.Environment.RepoCommit
-            AppVeyor.Environment.RepoName
-            AppVeyor.Environment.RepoBranch
-        :: AppVeyor.Environment.RepoCommitMessage
-        :: (AppVeyor.Environment.RepoCommitMessageExtended |> lines |> List.ofSeq)
+            GitHubActions.Environment.Sha
+            GitHubActions.Environment.Repository
+            GitHubActions.Environment.Ref
+        :: (commitMessage |> lines |> List.ofSeq)
     | _ -> releaseInfo.Notes
 
 let nugetVersion =
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion AppVeyor.Environment.BuildNumber
+    GitHubActions when GitHubActions.Environment.EventName <> "release" ->
+        sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
     | _ -> releaseInfo.NugetVersion
 
-BuildServer.install [AppVeyor.Installer]
-
-let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
-let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
-
-Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-Target.create "CheckForReleaseCredentials" (fun _ ->
-    githubToken.Value |> ignore
-    nugetKey.Value |> ignore)
+BuildServer.install [GitHubActions.Installer]
 
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
@@ -273,15 +266,6 @@ Target.create "RunMSBuildTestsNetCore" (fun _ ->
 Target.description "Runs all tests"
 Target.create "Test" ignore
 
-let shouldCIBenchmark =
-    match BuildServer.buildServer with
-    | LocalBuild -> true
-    | AppVeyor ->
-        let releaseNotesAsString = AppVeyor.Environment.RepoCommitMessage + "\n" + AppVeyor.Environment.RepoCommitMessageExtended
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-        && (AppVeyor.Environment.IsReBuild = "true" || releaseNotesAsString.Contains("!BENCH!"))
-    | _ -> true
-
 Target.description "Runs all benchmarks"
 Target.create "Benchmark" (fun _ ->
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
@@ -317,19 +301,6 @@ Target.create "NuGetPack" (fun _ ->
         )
     )
     Seq.iter pushArtifact nugetPackages
-)
-
-Target.description "Publishes the NuGet packages"
-Target.create "NuGetPublish" (fun _ ->
-    Seq.iter (DotNet.nugetPush (fun p ->
-        {p with
-            PushParams =
-                {p.PushParams with
-                    Source = Some "https://www.nuget.org"
-                    ApiKey = Some nugetKey.Value
-                }
-        }
-    )) nugetPackages
 )
 
 // --------------------------------------------------------------------------------------
@@ -387,20 +358,6 @@ Target.create "GenerateDocs" (fun _ ->
 Target.description "Generates the website for the project - for local use"
 Target.create "GenerateDocsDebug" (fun _ -> generateDocs false false)
 
-Target.description "Releases the documentation to GitHub Pages."
-Target.create "ReleaseDocs" (fun _ ->
-    let tempDocsDir = "temp/gh-pages"
-    Shell.cleanDir tempDocsDir
-    Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
-
-    // Some files might no longer exist; better delete them all before the copy.
-    !! "temp/gh-pages/**" -- "temp/gh-pages/.git/**" |> File.deleteAll
-    Shell.copyRecursive docsOutput tempDocsDir true |> Trace.tracefn "Copied %A"
-    Staging.stageAll tempDocsDir
-    Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
-    Branches.push tempDocsDir
-)
-
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
@@ -409,38 +366,6 @@ let remoteToPush = lazy (
     |> Seq.filter (String.endsWith "(push)")
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
-
-Target.description "Publishes the benchmark report."
-Target.create "PublishBenchmarkReport" (fun _ ->
-    !! "performance/**" |> Seq.iter (Staging.stageFile "" >> ignore)
-    Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
-    Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
-)
-
-Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
-Target.create "GitHubRelease" (fun _ ->
-
-    Branches.tag "" nugetVersion
-    Branches.pushTag "" remoteToPush.Value nugetVersion
-
-    GitHub.createClientWithToken githubToken.Value
-    |> GitHub.createRelease gitOwner gitName nugetVersion
-        (fun x ->
-            {x with
-                Name = sprintf "Version %s" nugetVersion
-                Prerelease = releaseInfo.SemVer.PreRelease.IsSome
-                Body = releaseNotes |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
-    |> GitHub.uploadFiles releaseArtifacts
-    |> GitHub.publishDraft
-    |> Async.RunSynchronously
-)
-
-Target.description "The CI generates the documentation, the NuGet packages, \
-and uploads them as artifacts, along with the benchmark report."
-Target.create "CI" ignore
-
-Target.description "Publishes the documentation and makes a GitHub release"
-Target.create "Release" ignore
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override
@@ -457,11 +382,7 @@ Target.create "Release" ignore
 "Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
 
 "RunMSBuildTestsNetFramework"
-    =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-
-"Test"
-    ==> "NuGetPack"
-    ==> "CI"
+    =?> ("Test", OperatingSystem.IsWindows())
 
 [""; "Debug"]
 |> List.iter (fun x ->
@@ -469,33 +390,13 @@ Target.create "Release" ignore
         ==> "PrepareDocsGeneration"
         ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
-"GenerateDocs"
-    ==> "ReleaseDocs"
-
-"GenerateDocs"
-    ==> "CI"
-
 "PrepareDocsGeneration"
     ==> "KeepGeneratingDocs"
 
 "Benchmark"
     ==> "AddBenchmarkReport"
-    ==> "PublishBenchmarkReport"
-
-// I want a clean repo when the packages are going to be built.
-"NuGetPublish"
-    ?=> "AddBenchmarkReport"
 
 "Clean"
     ==> "NuGetPack"
-    ==> "NuGetPublish"
-    ==> "GitHubRelease"
 
-"CI" <== ["NuGetPack"; "GenerateDocs"]
-"Benchmark" =?> ("CI", shouldCIBenchmark)
-
-"CheckForReleaseCredentials"
-    ==> "GitHubRelease"
-    ==> "Release"
-
-Target.runOrDefault "NuGetPack"
+Target.runOrDefaultWithArguments "NuGetPack"

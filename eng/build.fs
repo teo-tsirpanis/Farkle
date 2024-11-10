@@ -125,7 +125,7 @@ let releaseNotes =
             s <- sr.ReadLine()
     }
     match BuildServer.buildServer with
-    | AppVeyor ->
+    | GitHubActions ->
         let commitMessage = CommitMessage.getCommitMessage Environment.CurrentDirectory
         sprintf "This is a build from the commit with id: %s from branch %s/%s"
             GitHubActions.Environment.Sha
@@ -136,7 +136,7 @@ let releaseNotes =
 
 let nugetVersion =
     match BuildServer.buildServer with
-    AppVeyor -> sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
+    GitHubActions -> sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
     | _ -> releaseInfo.NugetVersion
 
 BuildServer.install [GitHubActions.Installer]

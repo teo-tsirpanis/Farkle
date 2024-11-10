@@ -142,9 +142,6 @@ let nugetVersion =
 
 BuildServer.install [GitHubActions.Installer]
 
-let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
-let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
-
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
@@ -370,13 +367,6 @@ let remoteToPush = lazy (
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
-Target.description "Publishes the benchmark report."
-Target.create "PublishBenchmarkReport" (fun _ ->
-    !! "performance/**" |> Seq.iter (Staging.stageFile "" >> ignore)
-    Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
-    Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
-)
-
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override
 
@@ -405,7 +395,6 @@ Target.create "PublishBenchmarkReport" (fun _ ->
 
 "Benchmark"
     ==> "AddBenchmarkReport"
-    ==> "PublishBenchmarkReport"
 
 "Clean"
     ==> "NuGetPack"

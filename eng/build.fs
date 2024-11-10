@@ -17,10 +17,13 @@ open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
 open Fake.Tools.Git
+open Microsoft.Build.Locator
 open Scriban
 open System
 open System.IO
 open System.Text.RegularExpressions
+
+MSBuildLocator.RegisterDefaults() |> ignore
 
 Environment.GetCommandLineArgs()
 |> Array.toList

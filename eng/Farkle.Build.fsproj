@@ -15,6 +15,7 @@
         <PackageReference Include="Fake.DotNet.Cli" Version="$(FakeVersion)" />
         <PackageReference Include="Fake.DotNet.FsFormatting" Version="$(FakeVersion)" />
         <PackageReference Include="Fake.Tools.Git" Version="$(FakeVersion)" />
+        <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
         <PackageReference Include="MSBuild.StructuredLogger" Version="2.2.374" />
         <PackageReference Include="Scriban" Version="5.11.0" />
     </ItemGroup>

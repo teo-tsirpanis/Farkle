@@ -31,7 +31,7 @@ jobs:
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Run tests
-        run: dotnet run --project eng/Farkle.Build.fsproj -- target Test
+        run: dotnet run --project eng/Farkle.Build.fsproj -- -t Test
 
   full_ci_passed:
     needs: [test]

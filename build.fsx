@@ -15,7 +15,6 @@
 #load "./.fake/build.fsx/intellisense_lazy.fsx"
 #endif
 
-open Fake.Api
 open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
@@ -143,11 +142,6 @@ BuildServer.install [GitHubActions.Installer]
 
 let githubToken = lazy(Environment.environVarOrFail "farkle-github-token")
 let nugetKey = lazy(Environment.environVarOrFail "NUGET_KEY")
-
-Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-Target.create "CheckForReleaseCredentials" (fun _ ->
-    githubToken.Value |> ignore
-    nugetKey.Value |> ignore)
 
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
@@ -310,19 +304,6 @@ Target.create "NuGetPack" (fun _ ->
     Seq.iter pushArtifact nugetPackages
 )
 
-Target.description "Publishes the NuGet packages"
-Target.create "NuGetPublish" (fun _ ->
-    Seq.iter (DotNet.nugetPush (fun p ->
-        {p with
-            PushParams =
-                {p.PushParams with
-                    Source = Some "https://www.nuget.org"
-                    ApiKey = Some nugetKey.Value
-                }
-        }
-    )) nugetPackages
-)
-
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
@@ -378,20 +359,6 @@ Target.create "GenerateDocs" (fun _ ->
 Target.description "Generates the website for the project - for local use"
 Target.create "GenerateDocsDebug" (fun _ -> generateDocs false false)
 
-Target.description "Releases the documentation to GitHub Pages."
-Target.create "ReleaseDocs" (fun _ ->
-    let tempDocsDir = "temp/gh-pages"
-    Shell.cleanDir tempDocsDir
-    Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
-
-    // Some files might no longer exist; better delete them all before the copy.
-    !! "temp/gh-pages/**" -- "temp/gh-pages/.git/**" |> File.deleteAll
-    Shell.copyRecursive docsOutput tempDocsDir true |> Trace.tracefn "Copied %A"
-    Staging.stageAll tempDocsDir
-    Commit.exec tempDocsDir (sprintf "Update generated documentation for version %s" nugetVersion)
-    Branches.push tempDocsDir
-)
-
 // --------------------------------------------------------------------------------------
 // Release Scripts
 
@@ -407,27 +374,6 @@ Target.create "PublishBenchmarkReport" (fun _ ->
     Commit.exec "" (sprintf "Publish performance reports for version %s" nugetVersion)
     Branches.pushBranch "" remoteToPush.Value (Information.getBranchName "")
 )
-
-Target.description "Makes a tag on the current commit, and a GitHub release afterwards."
-Target.create "GitHubRelease" (fun _ ->
-
-    Branches.tag "" nugetVersion
-    Branches.pushTag "" remoteToPush.Value nugetVersion
-
-    GitHub.createClientWithToken githubToken.Value
-    |> GitHub.createRelease gitOwner gitName nugetVersion
-        (fun x ->
-            {x with
-                Name = sprintf "Version %s" nugetVersion
-                Prerelease = releaseInfo.SemVer.PreRelease.IsSome
-                Body = releaseNotes |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
-    |> GitHub.uploadFiles releaseArtifacts
-    |> GitHub.publishDraft
-    |> Async.RunSynchronously
-)
-
-Target.description "Publishes the documentation and makes a GitHub release"
-Target.create "Release" ignore
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build target <Target>' to override
@@ -452,9 +398,6 @@ Target.create "Release" ignore
         ==> "PrepareDocsGeneration"
         ==> (sprintf "GenerateDocs%s" x) |> ignore)
 
-"GenerateDocs"
-    ==> "ReleaseDocs"
-
 "PrepareDocsGeneration"
     ==> "KeepGeneratingDocs"
 
@@ -462,17 +405,7 @@ Target.create "Release" ignore
     ==> "AddBenchmarkReport"
     ==> "PublishBenchmarkReport"
 
-// I want a clean repo when the packages are going to be built.
-"NuGetPublish"
-    ?=> "AddBenchmarkReport"
-
 "Clean"
     ==> "NuGetPack"
-    ==> "NuGetPublish"
-    ==> "GitHubRelease"
-
-"CheckForReleaseCredentials"
-    ==> "GitHubRelease"
-    ==> "Release"
 
 Target.runOrDefault "NuGetPack"

@@ -9,7 +9,6 @@ group FakeBuild
 
   nuget FSharp.Core ~> 6
 
-  nuget Fake.Api.GitHub ~> 5
   nuget Fake.BuildServer.GitHubActions ~> 5
   nuget Fake.Core.ReleaseNotes ~> 5
   nuget Fake.Core.Target ~> 5
@@ -28,7 +27,5 @@ group FakeBuild
   nuget Fake.Core.Trace ~> 5
 
   nuget MSBuild.StructuredLogger
-
-  nuget Octokit = 0.48
 
   nuget Scriban

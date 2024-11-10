@@ -136,7 +136,8 @@ let releaseNotes =
 
 let nugetVersion =
     match BuildServer.buildServer with
-    GitHubActions -> sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
+    GitHubActions when GitHubActions.Environment.EventName <> "release" ->
+        sprintf "%s-ci.%s" releaseInfo.NugetVersion GitHubActions.Environment.RunNumber
     | _ -> releaseInfo.NugetVersion
 
 BuildServer.install [GitHubActions.Installer]

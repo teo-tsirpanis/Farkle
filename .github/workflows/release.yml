@@ -24,6 +24,8 @@ jobs:
         run: echo "PackageVersionSuffix=nightly.${{ github.run_number }}" >> $GITHUB_ENV
       - name: Restore .NET local tools
         run: dotnet tool restore
+      - name: Restore Paket dependencies
+        run: dotnet paket restore
       - name: Pack
         run: dotnet tool run fake run ./build.fsx target NuGetPack
       - name: Upload package artifacts

@@ -5,7 +5,6 @@ on:
     branches:
       - mainstream
       - release/*
-      - fix-6.0-build
   release:
     types: [published]
 

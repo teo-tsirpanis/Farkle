@@ -7,13 +7,7 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-#r "paket: groupref FakeBuild //"
-#nowarn "3180" // Mutable locals allocated as reference cells.
-
-#if !FAKE
-// Because intellisense.fsx would be loaded twice, we have to put the ifdef ourselves.
-#load "./.fake/build.fsx/intellisense_lazy.fsx"
-#endif
+#nowarn "20" // FS0020: The result of this expression has type 'a' and is implicitly ignored
 
 open Fake.BuildServer
 open Fake.Core
@@ -26,8 +20,13 @@ open Fake.Tools.Git
 open Scriban
 open System
 open System.IO
-open System.Runtime.InteropServices
 open System.Text.RegularExpressions
+
+Environment.GetCommandLineArgs()
+|> Array.toList
+|> Context.FakeExecutionContext.Create false "build.fs"
+|> Context.RuntimeContext.Fake
+|> Context.setExecutionContext
 
 Target.initEnvironment()
 
@@ -390,7 +389,7 @@ Target.create "PublishBenchmarkReport" (fun _ ->
 "Test" <== ["RunTests"; "RunMSBuildTestsNetCore"]
 
 "RunMSBuildTestsNetFramework"
-    =?> ("Test", RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+    =?> ("Test", OperatingSystem.IsWindows())
 
 [""; "Debug"]
 |> List.iter (fun x ->
@@ -408,4 +407,4 @@ Target.create "PublishBenchmarkReport" (fun _ ->
 "Clean"
     ==> "NuGetPack"
 
-Target.runOrDefault "NuGetPack"
+Target.runOrDefaultWithArguments "NuGetPack"

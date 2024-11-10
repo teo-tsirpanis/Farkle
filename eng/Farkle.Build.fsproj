@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <FakeVersion>5.23.1</FakeVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="build.fs" />
+        <PackageReference Include="Fake.BuildServer.GitHubActions" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.Core.ReleaseNotes" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.Core.Target" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.Core.UserInput" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.IO.FileSystem" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.IO.Zip" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.DotNet.Cli" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.DotNet.FsFormatting" Version="$(FakeVersion)" />
+        <PackageReference Include="Fake.Tools.Git" Version="$(FakeVersion)" />
+        <PackageReference Include="MSBuild.StructuredLogger" Version="2.2.374" />
+        <PackageReference Include="Scriban" Version="5.11.0" />
+    </ItemGroup>
+</Project>

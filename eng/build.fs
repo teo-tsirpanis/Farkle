@@ -7,7 +7,6 @@
 // FAKE build script
 // --------------------------------------------------------------------------------------
 
-open Fake.Api
 open Fake.BuildServer
 open Fake.Core
 open Fake.Core.TargetOperators
@@ -138,20 +137,6 @@ let nugetVersion =
     match BuildServer.buildServer with
     | GitHubActions -> sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
     | _ -> nugetVersion
-
-let getSecret name =
-    let secret = Environment.environVarOrFail name
-    TraceSecrets.register $"<{name}>" secret
-    secret
-
-let githubToken = lazy(getSecret "farkle-github-token")
-let nugetKey = lazy(getSecret "NUGET_KEY")
-
-Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-Target.create "CheckForReleaseCredentials" (fun _ ->
-    githubToken.Value |> ignore
-    nugetKey.Value |> ignore
-)
 
 Target.description "Checks whether the release notes entry has a date"
 Target.create "CheckForReleaseNotesDate" (fun _ ->
@@ -326,19 +311,6 @@ Target.create "NuGetPack" (fun _ ->
     Seq.iter pushArtifact nugetPackages
 )
 
-Target.description "Publishes the NuGet packages"
-Target.create "NuGetPublish" (fun _ ->
-    Seq.iter (DotNet.nugetPush (fun p ->
-        {p with
-            PushParams =
-                {p.PushParams with
-                    Source = Some "https://www.nuget.org"
-                    ApiKey = Some nugetKey.Value
-                }
-        }
-    )) nugetPackages
-)
-
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
@@ -406,35 +378,6 @@ Target.create "GenerateDocsDebug" (fun _ ->
     generateDocs false false
 )
 
-// --------------------------------------------------------------------------------------
-// Release Scripts
-
-let remoteToPush = lazy (
-    Git.CommandHelper.getGitResult "" "remote -v"
-    |> Seq.filter (String.endsWith "(push)")
-    |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-    |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
-
-Target.description "Makes a tag on the current commit, and a GitHub release afterwards"
-Target.create "GitHubRelease" (fun _ ->
-    Git.Branches.tag "" nugetVersion
-    Git.Branches.pushTag "" remoteToPush.Value nugetVersion
-
-    GitHub.createClientWithToken githubToken.Value
-    |> GitHub.createRelease gitOwner gitName nugetVersion
-        (fun x ->
-            {x with
-                Name = sprintf "Version %s" nugetVersion
-                Prerelease = releaseInfo.Value.SemVer.PreRelease.IsSome
-                Body = releaseNotes() |> Seq.map (sprintf "* %s") |> String.concat Environment.NewLine})
-    |> GitHub.uploadFiles releaseArtifacts
-    |> GitHub.publishDraft
-    |> Async.RunSynchronously
-)
-
-Target.description "Publishes the documentation and makes a GitHub release"
-Target.create "Release" ignore
-
 let (==>!) x y = x ==> y |> ignore
 let (=?>!) x y = x =?> y |> ignore
 let (?=>!) x y = x ?=> y |> ignore
@@ -468,14 +411,7 @@ let (?=>!) x y = x ?=> y |> ignore
     ==>! "KeepGeneratingDocs"
 
 "Clean"
-    ==> "NuGetPack"
-    ==> "NuGetPublish"
-    ==>! "GitHubRelease"
-
-"CheckForReleaseCredentials"
-    ==> "CheckForReleaseNotesDate"
-    ==> "GitHubRelease"
-    ==>! "Release"
+    ==>! "NuGetPack"
 
 // --------------------------------------------------------------------------------------
 // Run NuGetPack by default. Invoke './build.ps1 -t <Target>' to override

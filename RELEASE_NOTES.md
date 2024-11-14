@@ -1,5 +1,8 @@
 #### 7.0.0-preview.1
 
+#### 6.5.2 - 10-11-2024
+* Fixed a bug where the LALR builder would generate wrong parsing tables under certain circumstances. (https://github.com/teo-tsirpanis/Farkle/issues/301)
+
 #### 6.5.1 - 25-01-2023
 * Fixed a bug where the precompiler would not work on .NET Framework editions of MSBuild, like in Visual Studio for Windows, when targeting frameworks greater than .NET 6.
 
@@ -11,7 +14,7 @@
 * The nullability annotations for some generic methods in the builder were fixed.
 * Added `params` in the array parameter overload of `Nonterminal.CreateUntyped` that takes a name and a series of production builders.
 * The color of the goto cells in the HTML tables was changed to a brighter shade of blue whose contrast is compliant with WCAG 2 AA.
-* C# users can now define single-member productions by directly calling `Finish(Constant)` without calling `Appended()` or `Extending()`. Previously only some combinations were supported (`Finish` on typed designtime Farkles and `FinishConstant` on literals), but now all can be used.
+* C# users can now define single-member productions by directly calling `Finish(Constant)` without calling `Appended()` or `Extended()`. Previously only some combinations were supported (`Finish` on typed designtime Farkles and `FinishConstant` on literals), but now all can be used.
 * The HTML DFA States tables were restyled to make them consistent with the LALR States tables. In particular the columns were swapped and the dark grey background of the character cells was removed.
 * The `farkle new` command will place the output in the current directory instead of the input grammar's or assembly's directory, if not given an output path by the user.
 * The `Production<T>` type became a covariant interface, fixing issue #26. Because it used to be a sealed class with no members, it is not expected to be a breaking change. User code is not allowed to implement it.

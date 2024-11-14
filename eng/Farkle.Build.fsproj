@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="build.fs" />
-    <PackageReference Include="Fake.Api.GitHub" />
     <PackageReference Include="Fake.BuildServer.GitHubActions" />
     <PackageReference Include="Fake.Core.ReleaseNotes" />
     <PackageReference Include="Fake.Core.Target" />

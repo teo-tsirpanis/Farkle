@@ -19,8 +19,19 @@ open Fake.Tools
 open Scriban
 open System
 open System.IO
-open System.Reflection
 open System.Text.RegularExpressions
+
+Environment.GetCommandLineArgs()
+|> Array.toList
+// Environment.GetCommandLineArgs() contains the path to the executable as the first argument.
+|> List.tail
+|> Context.FakeExecutionContext.Create false "build.fs"
+|> Context.RuntimeContext.Fake
+|> Context.setExecutionContext
+
+Target.initEnvironment()
+
+BuildServer.install [ GitHubActions.Installer ]
 
 // Information about the project are used
 //  - for version and project name in generated AssemblyInfo file
@@ -136,14 +147,18 @@ let getSecret name =
 let githubToken = lazy(getSecret "farkle-github-token")
 let nugetKey = lazy(getSecret "NUGET_KEY")
 
-let checkForReleaseCredentials _ =
+Target.description "Fails the build if the appropriate environment variables for the release do not exist"
+Target.create "CheckForReleaseCredentials" (fun _ ->
     githubToken.Value |> ignore
     nugetKey.Value |> ignore
+)
 
-let checkForReleaseNotesDate _ =
+Target.description "Checks whether the release notes entry has a date"
+Target.create "CheckForReleaseNotesDate" (fun _ ->
     let releaseInfo = releaseInfo.Value
     if releaseInfo.Date.IsNone then
         failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion
+)
 
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
@@ -171,13 +186,16 @@ let cleanBinObj directory =
 
 let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
-let clean _ =
+Target.description "Cleans the output directories"
+Target.create "Clean" (fun _ ->
     Shell.cleanDirs ["bin"; "temp"]
+)
 
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-let generateCode _ =
+Target.description "Generates some required source code files"
+Target.create "GenerateCode" (fun _ ->
     sourceFilesToGenerate
     |> List.iter (fun (src, dest) ->
         File.checkExists src
@@ -199,16 +217,22 @@ let generateCode _ =
             let generatedSource = template.Render(tc)
             File.WriteAllText(dest, generatedSource)
     )
+)
 
-let runCSharpUnitTests _ =
+Target.description "Runs the C# unit tests"
+Target.create "RunCSharpUnitTests" (fun _ ->
     testProject
     |> DotNet.test id
+)
 
-let runFSharpUnitTests _ =
+Target.description "Runs the F# unit tests"
+Target.create "RunFSharpUnitTests" (fun _ ->
     fsharpTestProject
     |> DotNet.test id
+)
 
-let prepareMSBuildTests _ =
+Target.description "Prepares the MSBuild integration tests"
+Target.create "PrepareMSBuildTests" (fun _ ->
     Shell.cleanDir localPackagesFolder
     Directory.ensure localPackagesFolder
     farkleToolsMSBuildProject
@@ -218,8 +242,10 @@ let prepareMSBuildTests _ =
             MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
         }
     )
+)
 
-let runMSBuildTestsNetFramework _ =
+Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
+Target.create "RunMSBuildTestsNetFramework" (fun _ ->
     DotNet.build id farkleToolsProject
 
     let testProjectDirectory = Path.getDirectory msBuildTestProject
@@ -244,8 +270,10 @@ let runMSBuildTestsNetFramework _ =
             ResultsDirectory = Some testProjectDirectory
         }
     )
+)
 
-let runMSBuildTestsNetCore _ =
+Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
+Target.create "RunMSBuildTestsNetCore" (fun _ ->
     let testProjectDirectory = Path.getDirectory msBuildTestProject
     cleanBinObj testProjectDirectory
     msBuildTestProject
@@ -254,8 +282,16 @@ let runMSBuildTestsNetCore _ =
             ResultsDirectory = Some testProjectDirectory
         }
     )
+)
 
-let benchmark _ =
+Target.description "Runs all tests of the legacy F# codebase"
+Target.create "TestLegacy" ignore
+
+Target.description "Runs all tests on the C# codebase"
+Target.create "Test" ignore
+
+Target.description "Runs all benchmarks"
+Target.create "Benchmark" (fun _ ->
     dotNetRun benchmarkProject None DotNet.BuildConfiguration.Release "" benchmarkArguments
     match Environment.environVarOrNone "GITHUB_STEP_SUMMARY" with
     | Some stepSummary ->
@@ -269,8 +305,10 @@ let benchmark _ =
             File.readAsString path
             |> writer.WriteLine)
     | None -> ()
+)
 
-let nugetPack _ =
+Target.description "Builds the NuGet packages"
+Target.create "NuGetPack" (fun _ ->
     sourceProjects
     |> Seq.iter (
         DotNet.pack (fun p ->
@@ -286,8 +324,10 @@ let nugetPack _ =
         )
     )
     Seq.iter pushArtifact nugetPackages
+)
 
-let nugetPublish _ =
+Target.description "Publishes the NuGet packages"
+Target.create "NuGetPublish" (fun _ ->
     Seq.iter (DotNet.nugetPush (fun p ->
         {p with
             PushParams =
@@ -297,6 +337,7 @@ let nugetPublish _ =
                 }
         }
     )) nugetPackages
+)
 
 // --------------------------------------------------------------------------------------
 // Generate the documentation
@@ -305,8 +346,10 @@ let docsOutput = Path.GetFullPath "_site/"
 let farkle6Repo = "temp/farkle6"
 let farkle6DocsProject = farkle6Repo @@ farkleProject
 
-let cleanDocs _ =
+Target.description "Cleans the output documentation directory"
+Target.create "CleanDocs" (fun _ ->
     Shell.cleanDir docsOutput
+)
 
 let generateDocs doWatch isRelease =
     let arguments = [
@@ -331,7 +374,8 @@ let generateDocs doWatch isRelease =
     |> Proc.run
     |> ignore
 
-let prepareDocsGeneration _ =
+Target.description "Prepares the reference documentation generator"
+Target.create "PrepareDocsGeneration" (fun _ ->
     Git.Repository.cloneSingleBranch "." "https://github.com/teo-tsirpanis/Farkle.git" "release/6.0" farkle6Repo
     DotNet.build (fun p ->
         {p with
@@ -345,15 +389,22 @@ let prepareDocsGeneration _ =
                 }
         }
     ) farkle6DocsProject
+)
 
-let keepGeneratingDocs _ =
+Target.description "Watches the documentation source folder and regenerates it on every file change"
+Target.create "KeepGeneratingDocs" (fun _ ->
     generateDocs true false
+)
 
-let generateDocsRelease _ =
+Target.description "Generates the website for the project - for release"
+Target.create "GenerateDocs" (fun _ ->
     generateDocs false true
+)
 
-let generateDocsDebug _ =
+Target.description "Generates the website for the project - for local use"
+Target.create "GenerateDocsDebug" (fun _ ->
     generateDocs false false
+)
 
 // --------------------------------------------------------------------------------------
 // Release Scripts
@@ -364,7 +415,8 @@ let remoteToPush = lazy (
     |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
     |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0])
 
-let githubRelease _ =
+Target.description "Makes a tag on the current commit, and a GitHub release afterwards"
+Target.create "GitHubRelease" (fun _ ->
     Git.Branches.tag "" nugetVersion
     Git.Branches.pushTag "" remoteToPush.Value nugetVersion
 
@@ -378,108 +430,54 @@ let githubRelease _ =
     |> GitHub.uploadFiles releaseArtifacts
     |> GitHub.publishDraft
     |> Async.RunSynchronously
+)
+
+Target.description "Publishes the documentation and makes a GitHub release"
+Target.create "Release" ignore
+
+let (==>!) x y = x ==> y |> ignore
+let (=?>!) x y = x =?> y |> ignore
+let (?=>!) x y = x ?=> y |> ignore
+
+"Clean"
+    ==>! "GenerateCode"
+
+["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+|> List.iter (fun target -> "GenerateCode" ==>! target)
+
+["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
+|> List.iter (fun target -> "PrepareMSBuildTests" ==>! target)
+
+"TestLegacy" <== ["RunMSBuildTestsNetCore"]
+
+"RunMSBuildTestsNetFramework"
+    =?>! ("TestLegacy", OperatingSystem.IsWindows())
+
+"Test" <== ["RunCSharpUnitTests"; "RunFSharpUnitTests"]
+
+// We used to have "Test" ==>! "NuGetPack".
+// This dependency will be expressed higher at the GitHub Actions level.
+
+[""; "Debug"]
+|> List.iter (fun x ->
+    "CleanDocs"
+        ==> "PrepareDocsGeneration"
+        ==>! (sprintf "GenerateDocs%s" x))
+
+"PrepareDocsGeneration"
+    ==>! "KeepGeneratingDocs"
+
+"Clean"
+    ==> "NuGetPack"
+    ==> "NuGetPublish"
+    ==>! "GitHubRelease"
+
+"CheckForReleaseCredentials"
+    ==> "CheckForReleaseNotesDate"
+    ==> "GitHubRelease"
+    ==>! "Release"
 
 // --------------------------------------------------------------------------------------
-// Run all targets by default. Invoke 'build target <Target>' to override
+// Run NuGetPack by default. Invoke './build.ps1 -t <Target>' to override
 
-let initTargets() =
-    BuildServer.install [ GitHubActions.Installer ]
-
-    let (==>!) x y = x ==> y |> ignore
-    let (=?>!) x y = x =?> y |> ignore
-    let (?=>!) x y = x ?=> y |> ignore
-
-    Target.description "Fails the build if the appropriate environment variables for the release do not exist"
-    Target.create "CheckForReleaseCredentials" checkForReleaseCredentials
-    Target.description "Checks whether the release notes entry has a date"
-    Target.create "CheckForReleaseNotesDate" checkForReleaseNotesDate
-    Target.description "Cleans the output directories"
-    Target.create "Clean" clean
-    Target.description "Cleans the output documentation directory"
-    Target.create "CleanDocs" cleanDocs
-    Target.description "Generates some required source code files"
-    Target.create "GenerateCode" generateCode
-    Target.description "Prepares the MSBuild integration tests"
-    Target.create "PrepareMSBuildTests" prepareMSBuildTests
-    Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
-    Target.create "RunMSBuildTestsNetFramework" runMSBuildTestsNetFramework
-    Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
-    Target.create "RunMSBuildTestsNetCore" runMSBuildTestsNetCore
-    Target.description "Runs all tests of the legacy F# codebase"
-    Target.create "TestLegacy" ignore
-
-    Target.description "Runs the C# unit tests"
-    Target.create "RunCSharpUnitTests" runCSharpUnitTests
-    Target.description "Runs the F# unit tests"
-    Target.create "RunFSharpUnitTests" runFSharpUnitTests
-    Target.description "Runs all tests on the C# codebase"
-    Target.create "Test" ignore
-
-    Target.description "Runs all benchmarks"
-    Target.create "Benchmark" benchmark
-    Target.description "Builds the NuGet packages"
-    Target.create "NuGetPack" nugetPack
-    Target.description "Publishes the NuGet packages"
-    Target.create "NuGetPublish" nugetPublish
-    Target.description "Prepares the reference documentation generator"
-    Target.create "PrepareDocsGeneration" prepareDocsGeneration
-    Target.description "Watches the documentation source folder and regenerates it on every file change"
-    Target.create "KeepGeneratingDocs" keepGeneratingDocs
-    Target.description "Generates the website for the project - for release"
-    Target.create "GenerateDocs" generateDocsRelease
-    Target.description "Generates the website for the project - for local use"
-    Target.create "GenerateDocsDebug" generateDocsDebug
-    Target.description "Makes a tag on the current commit, and a GitHub release afterwards"
-    Target.create "GitHubRelease" githubRelease
-
-    Target.description "Publishes the documentation and makes a GitHub release"
-    Target.create "Release" ignore
-
-    "Clean"
-        ==>! "GenerateCode"
-
-    ["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
-    |> List.iter (fun target -> "GenerateCode" ==>! target)
-
-    ["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
-    |> List.iter (fun target -> "PrepareMSBuildTests" ==>! target)
-
-    "TestLegacy" <== ["RunMSBuildTestsNetCore"]
-
-    "RunMSBuildTestsNetFramework"
-        =?>! ("TestLegacy", OperatingSystem.IsWindows())
-
-    "Test" <== ["RunCSharpUnitTests"; "RunFSharpUnitTests"]
-
-    // We used to have "Test" ==>! "NuGetPack".
-    // This dependency will be expressed higher at the GitHub Actions level.
-
-    [""; "Debug"]
-    |> List.iter (fun x ->
-        "CleanDocs"
-            ==> "PrepareDocsGeneration"
-            ==>! (sprintf "GenerateDocs%s" x))
-
-    "PrepareDocsGeneration"
-        ==>! "KeepGeneratingDocs"
-
-    "Clean"
-        ==> "NuGetPack"
-        ==> "NuGetPublish"
-        ==>! "GitHubRelease"
-
-    "CheckForReleaseCredentials"
-        ==> "CheckForReleaseNotesDate"
-        ==> "GitHubRelease"
-        ==>! "Release"
-
-[<EntryPoint>]
-let main argv =
-    argv
-    |> Array.toList
-    |> Context.FakeExecutionContext.Create false "build.fs"
-    |> Context.RuntimeContext.Fake
-    |> Context.setExecutionContext
-    initTargets()
-    Target.runOrDefaultWithArguments "NuGetPack"
-    0
+Target.runOrDefaultWithArguments "NuGetPack"

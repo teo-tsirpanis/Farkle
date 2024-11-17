@@ -31,12 +31,7 @@ public readonly struct TokenSymbol
     /// <summary>
     /// The <see cref="TokenSymbol"/>'s name.
     /// </summary>
-    public string Name => _grammar.GetString(NameHandle);
-
-    /// <summary>
-    /// A <see cref="StringHandle"/> pointing to the <see cref="TokenSymbol"/>'s name.
-    /// </summary>
-    public StringHandle NameHandle
+    public string Name
     {
         get
         {
@@ -44,7 +39,7 @@ public readonly struct TokenSymbol
             {
                 ThrowHelpers.ThrowHandleHasNoValue();
             }
-            return _grammar.GrammarTables.GetTokenSymbolName(_grammar.GrammarFile, Handle.TableIndex);
+            return _grammar.GetTokenSymbolName(Handle);
         }
     }
 

@@ -6,8 +6,7 @@ namespace Farkle.Grammars;
 /// <summary>
 /// Points to a string in a <see cref="Grammar"/>.
 /// </summary>
-/// <seealso cref="Grammar.GetString"/>
-public readonly struct StringHandle : IEquatable<StringHandle>
+internal readonly struct StringHandle : IEquatable<StringHandle>
 {
     internal uint Value { get; }
 

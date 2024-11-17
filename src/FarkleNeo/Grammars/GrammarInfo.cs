@@ -22,12 +22,7 @@ public readonly struct GrammarInfo
     /// <summary>
     /// The grammar's name.
     /// </summary>
-    public string Name => _grammar.GetString(NameHandle);
-
-    /// <summary>
-    /// A <see cref="StringHandle"/> pointing to the grammar's name.
-    /// </summary>
-    public StringHandle NameHandle => _grammar.GrammarTables.GetGrammarName(_grammar.GrammarFile);
+    public string Name => _grammar.GetGrammarName();
 
     /// <summary>
     /// The grammar's starting nonterminal.

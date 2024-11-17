@@ -56,14 +56,6 @@ internal readonly ref struct GrammarTablesHotData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public StringHandle GetGroupName(uint group)
-    {
-        Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);
-
-        return GrammarTables.GetGroupName(GrammarFile, group);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TokenSymbolHandle GetGroupContainer(uint group)
     {
         Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);

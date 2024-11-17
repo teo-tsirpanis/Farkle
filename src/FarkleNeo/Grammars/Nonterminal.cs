@@ -41,17 +41,12 @@ public readonly struct Nonterminal
     /// <summary>
     /// The <see cref="Nonterminal"/>'s name.
     /// </summary>
-    public string Name => _grammar.GetString(NameHandle);
-
-    /// <summary>
-    /// A <see cref="StringHandle"/> pointing to the <see cref="Nonterminal"/>'s name.
-    /// </summary>
-    public StringHandle NameHandle
+    public string Name
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetNonterminalName(_grammar.GrammarFile, Handle.TableIndex);
+            return _grammar.GetNonterminalName(Handle);
         }
     }
 

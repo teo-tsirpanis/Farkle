@@ -32,7 +32,7 @@ namespace Farkle.Tests.CSharp
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess);
                 Assert.That(token.Position, Is.EqualTo(TextPosition.Initial));
-                Assert.That(grammar.GetString(grammar.GetTokenSymbol(token.Symbol).Name), Is.EqualTo(tokenName));
+                Assert.That(grammar.GetTokenSymbol(token.Symbol).Name, Is.EqualTo(tokenName));
             });
         }
 

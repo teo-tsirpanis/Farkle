@@ -67,7 +67,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     // Consume all remaining characters to get the position at the end of input.
                     // If we are in a noise group, they are already consumed and this will do nothing.
                     input.Consume(input.RemainingCharacters.Length);
-                    string groupName = _grammar.GetString(hotData.GetGroupName(currentGroup));
+                    string groupName = _grammar.GetGroupName(currentGroup);
                     error = new(input.State.CurrentPosition, new UnexpectedEndOfInputInGroupError(groupName));
                     return true;
                 }

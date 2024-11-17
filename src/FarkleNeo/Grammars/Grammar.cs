@@ -17,7 +17,7 @@ namespace Farkle.Grammars;
 /// The grammar's data is internally stored in a binary format described in
 /// <see href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/designs/7.0/grammar-file-format-spec.md"/>
 /// </remarks>
-public abstract class Grammar : IGrammarProvider
+public abstract partial class Grammar : IGrammarProvider
 {
     internal readonly StringHeap StringHeap;
     internal readonly BlobHeap BlobHeap;
@@ -231,12 +231,6 @@ public abstract class Grammar : IGrammarProvider
         }
         throw new NotSupportedException();
     }
-
-    /// <summary>
-    /// Returns the string pointed by the given <see cref="StringHandle"/>.
-    /// </summary>
-    /// <param name="handle">The string handle to retrieve the string from.</param>
-    public string GetString(StringHandle handle) => StringHeap.GetString(GrammarFile, handle);
 
     /// <summary>
     /// Gets the <see cref="TokenSymbol"/> pointed by the given <see cref="TokenSymbolHandle"/>.

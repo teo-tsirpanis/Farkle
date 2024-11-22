@@ -214,6 +214,7 @@ internal sealed class BlockGroup<T>(string name, string groupStart, string group
 /// This interface cannot be implemented by user code.
 /// </remarks>
 /// <seealso cref="Nonterminal.Create{T}(string, IProduction{T}[])"/>
+/// <seealso cref="Nonterminal.Create{T}(string, ReadOnlySpan{IProduction{T}})"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(ReadOnlySpan{IProduction{T}})"/>
 public interface IProduction<out T>

@@ -79,7 +79,7 @@ public sealed class Nonterminal : INonterminal
         {
             ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
-        if (!ImmutableInterlocked.InterlockedCompareExchange(ref _productions, productions, default).IsDefault)
+        if (!ImmutableInterlocked.InterlockedInitialize(ref _productions, ImmutableArray<IProduction>.CastUp(productions)))
         {
             ThrowHelpers.ThrowInvalidOperationExceptionLocalized(nameof(Resources.Builder_Nonterminal_SetProductionsManyTimes));
         }
@@ -93,7 +93,7 @@ public sealed class Nonterminal : INonterminal
             return productions;
         }
 
-        ImmutableInterlocked.InterlockedCompareExchange(ref _productions, [], default);
+        ImmutableInterlocked.InterlockedInitialize(ref _productions, []);
         return _productions;
     }
 

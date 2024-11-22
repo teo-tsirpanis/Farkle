@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
@@ -218,7 +219,17 @@ public static class GrammarBuilderExtensions
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
 
-    /// <inheritdoc cref="WithOperatorScope"/>
+    /// <summary>
+    /// Changes the <see cref="OperatorScope"/> used to resolve parser conflicts in the grammar.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
+    /// in ascending order of precedence.</param>
+    [OverloadResolutionPriority(-1)]
+    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params AssociativityGroup[] associativityGroups) =>
+        builder.WithOperatorScope(new OperatorScope(associativityGroups));
+
+    /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, OperatorScope)"/>
     public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params OperatorScope value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);
@@ -227,6 +238,11 @@ public static class GrammarBuilderExtensions
             ? builder
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
+
+    /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, AssociativityGroup[])"/>
+    [OverloadResolutionPriority(-1)]
+    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params AssociativityGroup[] associativityGroups) =>
+        builder.WithOperatorScope(new OperatorScope(associativityGroups));
 
     /// <summary>
     /// Changes the <see cref="CompatibilityLevel"/> that will be used to build the grammar.

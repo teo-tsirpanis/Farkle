@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.OperatorPrecedence;
 
@@ -48,15 +49,16 @@ public class AssociativityGroup
     /// </summary>
     /// <param name="associativityType">The <see cref="OperatorPrecedence.AssociativityType"/> of the group.</param>
     /// <param name="symbols">The symbols that belong to the group.</param>
-    public AssociativityGroup(AssociativityType associativityType, params ReadOnlySpan<object> symbols)
+    public AssociativityGroup(AssociativityType associativityType, params ImmutableArray<object> symbols)
     {
         ValidateAssociativityType(associativityType);
         AssociativityType = associativityType;
-        Symbols = symbols.ToImmutableArray();
+        Symbols = symbols;
     }
 
-    /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, ReadOnlySpan{object})"/>
-    public AssociativityGroup(AssociativityType associativityType, params object[] symbols) : this(associativityType, symbols.AsSpanChecked()) { }
+    /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, ImmutableArray{object})"/>
+    [OverloadResolutionPriority(-1)]
+    public AssociativityGroup(AssociativityType associativityType, params object[] symbols) : this(associativityType, symbols.ToImmutableArrayChecked()) { }
 }
 
 /// <summary>
@@ -69,9 +71,10 @@ public sealed class NonAssociative : AssociativityGroup
     /// Creates a <see cref="NonAssociative"/>.
     /// </summary>
     /// <param name="symbols">The symbols of the group.</param>
-    public NonAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.NonAssociative, symbols) { }
+    public NonAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.NonAssociative, symbols) { }
 
-    /// <inheritdoc cref="NonAssociative(ReadOnlySpan{object})"/>
+    /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
+    [OverloadResolutionPriority(-1)]
     public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols) { }
 }
 
@@ -85,9 +88,10 @@ public sealed class LeftAssociative : AssociativityGroup
     /// Creates a <see cref="LeftAssociative"/>.
     /// </summary>
     /// <param name="symbols">The symbols of the group.</param>
-    public LeftAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+    public LeftAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.LeftAssociative, symbols) { }
 
-    /// <inheritdoc cref="LeftAssociative(ReadOnlySpan{object})"/>
+    /// <inheritdoc cref="LeftAssociative(ImmutableArray{object})"/>
+    [OverloadResolutionPriority(-1)]
     public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols) { }
 }
 
@@ -101,9 +105,10 @@ public sealed class RightAssociative : AssociativityGroup
     /// Creates a <see cref="RightAssociative"/>.
     /// </summary>
     /// <param name="symbols">The symbols of the group.</param>
-    public RightAssociative(params ReadOnlySpan<object> symbols) : base(AssociativityType.RightAssociative, symbols) { }
+    public RightAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.RightAssociative, symbols) { }
 
-    /// <inheritdoc cref="RightAssociative(ReadOnlySpan{object})"/>
+    /// <inheritdoc cref="RightAssociative(ImmutableArray{object})"/>
+    [OverloadResolutionPriority(-1)]
     public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols) { }
 }
 
@@ -117,8 +122,9 @@ public sealed class PrecedenceOnly : AssociativityGroup
     /// Creates a <see cref="PrecedenceOnly"/>.
     /// </summary>
     /// <param name="symbols">The symbols of the group.</param>
-    public PrecedenceOnly(params ReadOnlySpan<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+    public PrecedenceOnly(params ImmutableArray<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
 
-    /// <inheritdoc cref="NonAssociative(ReadOnlySpan{object})"/>
+    /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
+    [OverloadResolutionPriority(-1)]
     public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
 }

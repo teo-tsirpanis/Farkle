@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Farkle.Builder;
@@ -316,7 +317,7 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches all characters except
     /// of specific ones.
     /// </summary>
-    /// <param name="chars">An immutable array with characters.</param>
+    /// <param name="chars">The characters to not match.</param>
     public static Regex NotOneOf(params ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
@@ -330,15 +331,18 @@ public sealed class Regex
         return new(KindAndFlags.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
+    /// <inheritdoc cref="NotOneOf(ImmutableArray{char})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex NotOneOf(params char[] chars) => NotOneOf(chars.ToImmutableArrayChecked());
+
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches all characters except
     /// of those in specific ranges.
     /// </summary>
-    /// <param name="ranges">An immutable array with the character ranges,
-    /// inclusive.</param>
+    /// <param name="ranges">The character ranges to not match, inclusive.</param>
     /// <exception cref="ArgumentException">A range's start is greater
     /// than its end.</exception>
-    public static Regex NotOneOf(params ImmutableArray<(char, char)> ranges)
+    public static Regex NotOneOf(params ImmutableArray<(char Start, char End)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
         ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
@@ -352,10 +356,14 @@ public sealed class Regex
         return new(KindAndFlags.AllButChars, arrayUnsafe);
     }
 
+    /// <inheritdoc cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex NotOneOf(params (char Start, char End)[] chars) => NotOneOf(chars.ToImmutableArrayChecked());
+
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches specific characters.
     /// </summary>
-    /// <param name="chars">An immutable array with the characters.</param>
+    /// <param name="chars">The characters to match.</param>
     /// <remarks>
     /// Passing an empty array to <paramref name="chars"/> will result in
     /// a regex that cannot match anything. This is usually not desirable
@@ -373,6 +381,10 @@ public sealed class Regex
 
         return new(KindAndFlags.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
+
+    /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex OneOf(params char[] chars) => OneOf(chars.ToImmutableArrayChecked());
 
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches characters in specific ranges.
@@ -400,10 +412,14 @@ public sealed class Regex
         return new(KindAndFlags.Chars, arrayUnsafe);
     }
 
+    /// <inheritdoc cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex OneOf(params (char Start, char End)[] chars) => OneOf(chars.ToImmutableArrayChecked());
+
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches many regexes in sequence.
     /// </summary>
-    /// <param name="regexes">An immutable array of regexes.</param>
+    /// <param name="regexes">The regexes to concatenate.</param>
     public static Regex Join(params ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
@@ -419,10 +435,14 @@ public sealed class Regex
         };
     }
 
+    /// <inheritdoc cref="Join(ImmutableArray{Regex})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex Join(params Regex[] regexes) => Join(regexes.ToImmutableArrayChecked());
+
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches either one of many regexes.
     /// </summary>
-    /// <param name="regexes">An immutable array of regexes.</param>
+    /// <param name="regexes">The regexes to choose form.</param>
     /// <remarks>
     /// Passing an empty array to <paramref name="regexes"/> will result in
     /// a regex that cannot match anything. This is usually not desirable
@@ -442,6 +462,10 @@ public sealed class Regex
             _ => new(KindAndFlags.Alt, arrayUnsafe),
         };
     }
+
+    /// <inheritdoc cref="Choice(ImmutableArray{Regex})"/>
+    [OverloadResolutionPriority(-1)]
+    public static Regex Choice(params Regex[] regexes) => Choice(regexes.ToImmutableArrayChecked());
 
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches this regex any number of
@@ -537,7 +561,7 @@ public sealed class Regex
     /// <param name="right">The second regex.</param>
     /// <returns>A <see cref="Regex"/> that matches <paramref name="left"/>
     /// and then <paramref name="right"/> in sequence.</returns>
-    /// <seealso cref="Join"/>
+    /// <seealso cref="Join(ImmutableArray{Regex})"/>
     public static Regex operator +(Regex left, Regex right)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(left);
@@ -580,7 +604,7 @@ public sealed class Regex
     /// <param name="right">The second regex.</param>
     /// <returns>A <see cref="Regex"/> that matches either
     /// <paramref name="left"/> or <paramref name="right"/>.</returns>
-    /// <seealso cref="Join"/>
+    /// <seealso cref="Choice(ImmutableArray{Regex})"/>
     public static Regex operator |(Regex left, Regex right)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(left);

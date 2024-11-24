@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder;
 
@@ -30,20 +32,6 @@ public static class Nonterminal
     /// <param name="name">The nonterminal's name.</param>
     /// <param name="productions">The nonterminal's productions.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol<T> Create<T>(string name, params IProduction<T>[] productions)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        return Create<T>(name, productions.AsSpan());
-    }
-
-    /// <summary>
-    /// Creates a nonterminal that produces a value.
-    /// </summary>
-    /// <typeparam name="T">The type of values the nonterminal will produce.</typeparam>
-    /// <param name="name">The nonterminal's name.</param>
-    /// <param name="productions">The nonterminal's productions.</param>
-    /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
     public static IGrammarSymbol<T> Create<T>(string name, params ReadOnlySpan<IProduction<T>> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
@@ -59,13 +47,18 @@ public static class Nonterminal
         return new Nonterminal<T>(name, builder.MoveToImmutable());
     }
 
+    /// <inheritdoc cref="Create{T}(string, ReadOnlySpan{IProduction{T}})"/>
+    [ExcludeFromCodeCoverage]
+    public static IGrammarSymbol<T> Create<T>(string name, params IProduction<T>[] productions) =>
+        Create<T>(name, productions.AsSpanChecked());
+
     /// <summary>
     /// Creates a nonterminal that does not produce a value and whose productions
     /// must be assigned at a later time.
     /// </summary>
     /// <param name="name">The nonterminal's name.</param>
     /// <seealso cref="Untyped.Nonterminal.SetProductions(ProductionBuilder[])"/>
-    /// <seealso cref="Untyped.Nonterminal.SetProductions(ReadOnlySpan{ProductionBuilder})"/>
+    /// <seealso cref="Untyped.Nonterminal.SetProductions(ImmutableArray{ProductionBuilder})"/>
     public static Untyped.Nonterminal CreateUntyped(string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
@@ -79,29 +72,25 @@ public static class Nonterminal
     /// <param name="productions">The nonterminal's productions, represented as <see cref="ProductionBuilder"/>
     /// objects that have not been <c>Extend</c>ed or <c>Finish</c>ed.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol CreateUntyped(string name, params ProductionBuilder[] productions)
+    public static IGrammarSymbol CreateUntyped(string name, params ImmutableArray<ProductionBuilder> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        return CreateUntyped(name, productions.AsSpan());
-    }
-
-    /// <summary>
-    /// Creates a nonterminal that does not produce a value.
-    /// </summary>
-    /// <param name="name">The nonterminal's name.</param>
-    /// <param name="productions">The nonterminal's productions, represented as <see cref="ProductionBuilder"/>
-    /// objects that have not been <c>Extend</c>ed or <c>Finish</c>ed.</param>
-    /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol CreateUntyped(string name, params ReadOnlySpan<ProductionBuilder> productions)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        if (productions.IsDefault)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
+        }
         if (productions.IsEmpty)
         {
             ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
-        return new Untyped.Nonterminal(name, ImmutableArray<IProduction>.CastUp(productions.ToImmutableArray()));
+        return new Untyped.Nonterminal(name, ImmutableArray<IProduction>.CastUp(productions));
     }
+
+    /// <inheritdoc cref="CreateUntyped(string, ImmutableArray{ProductionBuilder})"/>
+    [ExcludeFromCodeCoverage]
+    [OverloadResolutionPriority(-1)]
+    public static IGrammarSymbol CreateUntyped(string name, params ProductionBuilder[] productions) =>
+        CreateUntyped(name, productions.ToImmutableArrayChecked());
 }
 
 /// <summary>
@@ -139,6 +128,7 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
+    [ExcludeFromCodeCoverage]
     public void SetProductions(params IProduction<T>[] productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(productions);

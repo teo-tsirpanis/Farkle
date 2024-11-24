@@ -536,7 +536,7 @@ module internal GrammarBuilderOperators =
             productions
             |> Seq.map FSharpProductionBuilders.ProductionBuilder.op_Implicit
             |> ImmutableArray.CreateRange
-        Nonterminal.CreateUntyped(name, productions.AsSpan())
+        Nonterminal.CreateUntyped(name, productions)
 
     /// An empty production builder.
     let inline empty<'a> = FSharpProductionBuilders.ProductionBuilder.Empty
@@ -729,7 +729,7 @@ type internal DesigntimeFarkle<'TResult> = IGrammarSymbol<'TResult>
 module DesigntimeFarkle =
 
     [<Obsolete("Use the WithOperatorScope extension method instead.")>]
-    let inline withOperatorScope scope (grammarBuilder: IGrammarBuilder<_>) =
+    let inline withOperatorScope (scope: OperatorPrecedence.OperatorScope) (grammarBuilder: IGrammarBuilder<_>) =
         grammarBuilder.WithOperatorScope scope
 
     [<Obsolete("Use the GrammarSymbol.rename or renameU functions instead.")>]

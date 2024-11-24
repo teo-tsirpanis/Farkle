@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -24,6 +25,16 @@ internal static class Utilities
     {
         ArgumentNullExceptionCompat.ThrowIfNull(array, paramName);
         return array.AsSpan();
+    }
+
+    /// <summary>
+    /// Converts an array to an immutable array, while throwing if it is null.
+    /// </summary>
+    public static ImmutableArray<T> ToImmutableArrayChecked<T>([NotNull] this T[]? array,
+        [CallerArgumentExpression((nameof(array)))] string? paramName = null)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(array, paramName);
+        return ImmutableArray.Create(array);
     }
 
     /// <summary>

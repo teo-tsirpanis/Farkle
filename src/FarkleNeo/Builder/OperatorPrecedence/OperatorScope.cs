@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.OperatorPrecedence;
@@ -25,7 +26,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     /// <remarks>
     /// This capability is not enabled by default.
     /// </remarks>
-    /// <seealso cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
+    /// <seealso cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
     public bool CanResolveReduceReduceConflicts { get; }
 
     internal ImmutableArray<AssociativityGroup> AssociativityGroups { get; }
@@ -36,7 +37,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     /// <param name="canResolveReduceReduceConflicts">The value of <see cref="CanResolveReduceReduceConflicts"/>.</param>
     /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
     /// in ascending order of precedence.</param>
-    public OperatorScope(bool canResolveReduceReduceConflicts, params ReadOnlySpan<AssociativityGroup> associativityGroups)
+    public OperatorScope(bool canResolveReduceReduceConflicts, params ImmutableArray<AssociativityGroup> associativityGroups)
     {
         for (int i = 0; i < associativityGroups.Length; i++)
         {
@@ -46,21 +47,23 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
         AssociativityGroups = associativityGroups.ToImmutableArray();
     }
 
-    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
+    /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
-        : this(canResolveReduceReduceConflicts, associativityGroups.AsSpanChecked()) { }
+        : this(canResolveReduceReduceConflicts, associativityGroups.ToImmutableArrayChecked()) { }
 
-    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
+    /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
+    public OperatorScope(params ImmutableArray<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
+
+    /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
-
-    /// <inheritdoc cref="OperatorScope(bool, ReadOnlySpan{AssociativityGroup})"/>
-    public OperatorScope(params ReadOnlySpan<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
 
     /// <summary>
     /// Factory method to enable creating operator scopes using collection expressions.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperatorScope Create(ReadOnlySpan<AssociativityGroup> associativityGroups) => new(associativityGroups);
+    public static OperatorScope Create(ReadOnlySpan<AssociativityGroup> associativityGroups) => new(associativityGroups.ToImmutableArray());
 
     // An optimized GetEnumerator() that returns an immutable array enumerator will not
     // be provided at the moment due to the lack of use cases. It can be added in the future

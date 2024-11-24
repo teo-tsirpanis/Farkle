@@ -11,16 +11,16 @@ using System.Diagnostics;
 
 namespace Farkle.Parser.Implementation;
 
-internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResumptionPoint<TChar, DefaultTokenizer<TChar>.GroupState>
+internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResumptionPoint<TChar, DefaultTokenizer<TChar>.GroupState> where TChar : unmanaged, IComparable<TChar>
 {
     private readonly Grammar _grammar;
-    private readonly Dfa<TChar> _dfa;
+    private readonly DfaWithoutConflicts<TChar> _dfa;
 
     public DefaultTokenizer(Grammar grammar, Dfa<TChar> dfa)
     {
         Debug.Assert(!dfa.HasConflicts);
         _grammar = grammar;
-        _dfa = dfa;
+        _dfa = (DfaWithoutConflicts<TChar>)dfa;
         _dfa.PrepareForParsing();
         // If a grammar does not have any groups, we will suspend only to return
         // to the main tokenizer entry point. Without a wrapping, it would be called

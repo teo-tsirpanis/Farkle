@@ -18,7 +18,7 @@ namespace Farkle.Parser.Implementation;
 internal readonly struct DefaultParserImplementation<TChar>
 {
     public Grammar Grammar { get; }
-    private readonly LrStateMachine _lrStateMachine;
+    private readonly LrWithoutConflicts _lrStateMachine;
     private readonly object _semanticProvider;
     public Tokenizer<TChar> Tokenizer { get; }
 
@@ -29,8 +29,9 @@ internal readonly struct DefaultParserImplementation<TChar>
 
     private DefaultParserImplementation(Grammar grammar, LrStateMachine lrStateMachine, object semanticProvider, Tokenizer<TChar> tokenizer)
     {
+        Debug.Assert(!lrStateMachine.HasConflicts);
         Grammar = grammar;
-        _lrStateMachine = lrStateMachine;
+        _lrStateMachine = (LrWithoutConflicts)lrStateMachine;
         _lrStateMachine.PrepareForParsing();
         _semanticProvider = semanticProvider;
         Tokenizer = tokenizer;

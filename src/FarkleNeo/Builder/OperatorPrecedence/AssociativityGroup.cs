@@ -75,7 +75,7 @@ public sealed class NonAssociative : AssociativityGroup
 
     /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
     [OverloadResolutionPriority(-1)]
-    public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols) { }
+    public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
 /// <summary>
@@ -92,7 +92,7 @@ public sealed class LeftAssociative : AssociativityGroup
 
     /// <inheritdoc cref="LeftAssociative(ImmutableArray{object})"/>
     [OverloadResolutionPriority(-1)]
-    public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols) { }
+    public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
 /// <summary>
@@ -109,7 +109,7 @@ public sealed class RightAssociative : AssociativityGroup
 
     /// <inheritdoc cref="RightAssociative(ImmutableArray{object})"/>
     [OverloadResolutionPriority(-1)]
-    public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols) { }
+    public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
 /// <summary>
@@ -126,5 +126,5 @@ public sealed class PrecedenceOnly : AssociativityGroup
 
     /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
     [OverloadResolutionPriority(-1)]
-    public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
+    public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols.ToImmutableArrayChecked()) { }
 }

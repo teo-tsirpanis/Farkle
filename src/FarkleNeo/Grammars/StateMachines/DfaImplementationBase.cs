@@ -25,13 +25,12 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
 
     public required int AcceptBase { get; init; }
 
-    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, bool hasConflicts) : base(stateCount, hasConflicts)
+    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
     {
         _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
         _edgeIndexSize = GrammarUtilities.GetCompressedIndexSize(edgeCount);
         _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(tokenSymbolCount);
 
-        Grammar = grammar;
         _edgeCount = edgeCount;
     }
 
@@ -43,8 +42,6 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
 
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
-
-    internal sealed override Grammar Grammar { get; }
 
     private int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {

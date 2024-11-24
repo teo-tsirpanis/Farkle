@@ -16,7 +16,7 @@ internal class FlatCollectionProxy<T, TCollection>(TCollection list) where TColl
 
 internal class DfaProxy<TChar>(Dfa<TChar> dfa) : FlatCollectionProxy<DfaState<TChar>, Dfa<TChar>>(dfa);
 
-internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbolHandle, DfaState<TChar>.AcceptSymbolCollection>(collection);
+internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbol, DfaState<TChar>.AcceptSymbolCollection>(collection);
 
 internal class DfaEdgesProxy<TChar>(DfaState<TChar>.EdgeCollection collection) : FlatCollectionProxy<DfaEdge<TChar>, DfaState<TChar>.EdgeCollection>(collection);
 
@@ -40,8 +40,7 @@ internal sealed class LrStateProxy
         int i = 0;
         foreach (var action in state.Actions)
         {
-            TokenSymbol terminal = grammar.GetTokenSymbol(action.Key);
-            _actions[i++] = new NameValuePair(terminal.ToString(), action.Value.ToString(grammar));
+            _actions[i++] = new NameValuePair(action.Key.ToString(), action.Value.ToString(grammar));
         }
         foreach (var action in state.EndOfFileActions)
         {
@@ -49,8 +48,7 @@ internal sealed class LrStateProxy
         }
         foreach (var @goto in state.Gotos)
         {
-            Nonterminal nonterminal = grammar.GetNonterminal(@goto.Key);
-            _actions[i++] = new NameValuePair(nonterminal.ToString(), $"Goto state {@goto.Value}");
+            _actions[i++] = new NameValuePair(@goto.Key.ToString(), $"Goto state {@goto.Value}");
         }
         Debug.Assert(i == _actions.Length);
     }
@@ -67,7 +65,6 @@ internal sealed class DfaStateProxy<TChar>
 
         _actions = new NameValuePair[state.Edges.Count + (defaultTransition != -1 ? 1 : 0) + state.AcceptSymbols.Count];
 
-        Grammar grammar = state.Grammar;
         int i = 0;
         foreach (var edge in state.Edges)
         {
@@ -83,7 +80,7 @@ internal sealed class DfaStateProxy<TChar>
         }
         foreach (var accept in state.AcceptSymbols)
         {
-            _actions[i++] = new NameValuePair("Accept", grammar.GetTokenSymbol(accept).ToString());
+            _actions[i++] = new NameValuePair("Accept", accept.ToString());
         }
     }
 }

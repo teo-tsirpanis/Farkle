@@ -64,29 +64,23 @@ let checkLALRStateTableEquivalence (productionMap: Dictionary<_, _>) (farkleGram
             let farkleState = farkleStates[i]
             let goldState = goldStates[lalrStates[i]]
 
-            let getTerminalName (grammar: Grammar) (term: TokenSymbolHandle) =
-                grammar.GetTokenSymbol(term).Name |> grammar.GetString
-
             Expect.hasLength farkleState.Actions goldState.Actions.Count "There are not the same number of LALR actions"
             let actionsJoined =
                 farkleState.Actions.Join(
                     goldState.Actions,
-                    (fun (KeyValue(term, _)) -> getTerminalName farkleGrammar term),
-                    (fun (KeyValue(term, _)) -> getTerminalName goldGrammar term),
+                    (fun (KeyValue(term, _)) -> term.Name),
+                    (fun (KeyValue(term, _)) -> term.Name),
                     fun (KeyValue(_, farkleAction)) (KeyValue(_, goldAction)) -> farkleAction, goldAction)
             Expect.hasLength actionsJoined goldState.Actions.Count "Some terminals do not have a matching LALR action"
             for aFarkle, aGold in actionsJoined do
                 checkActionEquivalence aFarkle aGold
                 
-            let getNonterminalName (grammar: Grammar) (nont: NonterminalHandle) =
-                grammar.GetNonterminal(nont).Name |> grammar.GetString
-
             Expect.hasLength farkleState.Gotos goldState.Gotos.Count "There are not the same number of LALR GOTO actions"
             let gotoJoined =
                 farkleState.Gotos.Join(
                     goldState.Gotos,
-                    (fun (KeyValue(nont, _)) -> getNonterminalName farkleGrammar nont),
-                    (fun (KeyValue(nont, _)) -> getNonterminalName goldGrammar nont),
+                    (fun (KeyValue(nont, _)) -> nont.Name),
+                    (fun (KeyValue(nont, _)) -> nont.Name),
                     fun (KeyValue(nont, farkleAction)) (KeyValue(_, goldAction)) -> nont, farkleAction, goldAction)
             Expect.hasLength gotoJoined goldState.Gotos.Count "Some nonterminals have no matching LALR GOTO action"
             for nont, gotoFarkle, gotoGold in gotoJoined do
@@ -107,10 +101,10 @@ let createProductionMap (farkleGrammar: Grammar) (goldGrammar: Grammar) =
     let goldProductions = HashSet(goldProductions)
     Expect.hasLength farkleProductions goldProductions.Count "The two grammars don't have the same number of productions"
     for farkleProduction in farkleProductions do
-        let farkleProdHeadName = farkleGrammar.GetNonterminal(farkleProduction.Head).Name |> farkleGrammar.GetString
+        let farkleProdHeadName = farkleProduction.Head.Name
         goldProductions
         |> Seq.tryFind (fun goldProduction ->
-            (goldGrammar.GetNonterminal(goldProduction.Head).Name |> goldGrammar.GetString) = farkleProdHeadName
+            (goldProduction.Head.Name) = farkleProdHeadName
             && string goldProduction = string farkleProduction)
         |> function
         | Some goldProduction ->
@@ -126,11 +120,11 @@ let checkParserEquivalence (farkleGrammar: Grammar) (goldGrammar: Grammar) =
 let recreateSyntaxFromGrammar (g: Grammar) =
     let terminals =
         g.Terminals
-        |> Seq.map (fun t -> t.Name |> g.GetString |> virtualTerminal)
+        |> Seq.map (fun t -> t.Name |> virtualTerminal)
         |> Array.ofSeq
     let nonterminals =
         g.Nonterminals
-        |> Seq.map (fun n -> n.Name |> g.GetString |> nonterminalU)
+        |> Seq.map (fun n -> n.Name |> nonterminalU)
         |> Array.ofSeq
     let getSymbol (x: EntityHandle) =
         if x.IsTokenSymbol then
@@ -144,9 +138,9 @@ let recreateSyntaxFromGrammar (g: Grammar) =
         |> Array.ofSeq
         |> fun x -> nonterminals[idx].SetProductions(x))
     let parser =
-        nonterminals[g.GrammarInfo.StartSymbol.Value]
+        nonterminals[g.GrammarInfo.StartSymbol.Handle.Value]
             .AutoWhitespace(false)
-            .WithGrammarName(g.GetString g.GrammarInfo.Name)
+            .WithGrammarName(g.GrammarInfo.Name)
             .BuildSyntaxCheck()
     if parser.IsFailing then
         failtestf "Failed to build: %O" (parser.Parse "")

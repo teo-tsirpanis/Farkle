@@ -92,7 +92,8 @@ public static class Tokenizer
     /// <exception cref="ArgumentNullException"><paramref name="grammar"/> is <see langword="null"/>.</exception>
     /// <exception cref="NotSupportedException"><typeparamref name="TChar"/> is not <see cref="char"/>.</exception>
     /// <exception cref="InvalidOperationException">The grammar cannot be used for tokenizing.</exception>
-    public static Tokenizer<TChar> Create<TChar>(Grammar grammar) => Create<TChar>(grammar, throwIfError: true);
+    public static Tokenizer<TChar> Create<TChar>(Grammar grammar) where TChar : unmanaged, IComparable<TChar> =>
+        Create<TChar>(grammar, throwIfError: true);
 
     /// <summary>
     /// Creates a <see cref="Tokenizer{TChar}"/> from a tokenizer chain.
@@ -148,6 +149,7 @@ public static class Tokenizer
     }
 
     internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError, object? customError = null)
+        where TChar : unmanaged, IComparable<TChar>
     {
         ArgumentNullExceptionCompat.ThrowIfNull(grammar);
         if (grammar.IsUnparsable(out string? errorKey))

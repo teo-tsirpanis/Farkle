@@ -14,14 +14,15 @@ namespace Farkle.Grammars.StateMachines;
 [DebuggerTypeProxy(typeof(FlatCollectionProxy<LrState, LrStateMachine>))]
 public abstract class LrStateMachine : IReadOnlyList<LrState>
 {
-    internal LrStateMachine(int count, bool hasConflicts)
+    internal LrStateMachine(Grammar grammar, int count, bool hasConflicts)
     {
         Debug.Assert(count > 0);
+        Grammar = grammar;
         Count = count;
         HasConflicts = hasConflicts;
     }
 
-    internal abstract Grammar Grammar { get; }
+    internal Grammar Grammar { get; }
 
     internal abstract (int Offset, int Count) GetActionBounds(int state);
 

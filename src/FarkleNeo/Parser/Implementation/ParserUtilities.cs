@@ -50,13 +50,13 @@ internal static class ParserUtilities
         var builder = ImmutableArray.CreateBuilder<string?>();
         foreach (var action in state.Actions)
         {
-            TokenSymbol symbol = grammar.GetTokenSymbol(action.Key);
+            TokenSymbol symbol = action.Key;
             // TODO: Add a test once we add the builder and can define hidden terminals.
             if ((symbol.Attributes & TokenSymbolAttributes.Hidden) != 0)
             {
                 continue;
             }
-            builder.Add(grammar.GetString(symbol.Name));
+            builder.Add(symbol.Name);
         }
         if (state.EndOfFileActions.Count > 0)
         {

@@ -32,7 +32,7 @@ internal unsafe abstract class LrImplementationBase : LrStateMachine
 
     public required int GotoStateBase { get; init; }
 
-    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, bool hasConflicts) : base(stateCount, hasConflicts)
+    protected LrImplementationBase(Grammar grammar, int stateCount, int actionCount, int gotoCount, in GrammarTables grammarTables, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
     {
         _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
         _actionIndexSize = GrammarUtilities.GetCompressedIndexSize(actionCount);
@@ -42,7 +42,6 @@ internal unsafe abstract class LrImplementationBase : LrStateMachine
         _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.TokenSymbolRowCount);
         _nonterminalIndexSize = GrammarUtilities.GetCompressedIndexSize(grammarTables.NonterminalRowCount);
 
-        Grammar = grammar;
         ActionCount = actionCount;
         GotoCount = gotoCount;
     }
@@ -64,8 +63,6 @@ internal unsafe abstract class LrImplementationBase : LrStateMachine
 
     protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
         grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
-
-    internal sealed override Grammar Grammar { get; }
 
     internal override void PrepareForParsing()
     {

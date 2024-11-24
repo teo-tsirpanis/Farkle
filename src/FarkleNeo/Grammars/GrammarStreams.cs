@@ -27,10 +27,9 @@ internal readonly struct GrammarStreams
         // Length
         + sizeof(int);
 
-    public GrammarStreams(ReadOnlySpan<byte> grammarFile, uint streamCount, out bool hasUnknownStreams)
+    public GrammarStreams(ReadOnlySpan<byte> grammarFile, uint streamCount)
     {
         bool seenStringHeap = false, seenBlobHeap = false, seenTableStream = false;
-        hasUnknownStreams = false;
 
         if ((uint)grammarFile.Length < StreamDefinitionsOffset + streamCount * StreamDefinitionSize)
         {
@@ -61,7 +60,6 @@ internal readonly struct GrammarStreams
                 default:
                     // We could have detected duplicate unknown streams to fully conform with the spec,
                     // but let's not, we don't care about them. We do however check their bounds.
-                    hasUnknownStreams = true;
                     break;
             }
         }

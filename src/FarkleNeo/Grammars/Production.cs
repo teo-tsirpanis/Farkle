@@ -43,14 +43,14 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// A <see cref="NonterminalHandle"/> pointing to the <see cref="Production"/>'s head.
+    /// The <see cref="Production"/>'s head.
     /// </summary>
-    public NonterminalHandle Head
+    public Nonterminal Head
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetProductionHead(_grammar.GrammarFile, Handle.TableIndex);
+            return new(_grammar, _grammar.GrammarTables.GetProductionHead(_grammar.GrammarFile, Handle.TableIndex));
         }
     }
 
@@ -74,7 +74,7 @@ public readonly struct Production
     {
         StringBuilder sb = new();
 
-        sb.Append(_grammar.GetNonterminal(Head));
+        sb.Append(Head);
         sb.Append(" ::=");
         foreach (EntityHandle member in Members)
         {

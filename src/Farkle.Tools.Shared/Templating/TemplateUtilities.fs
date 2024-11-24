@@ -40,12 +40,6 @@ module internal Utilities =
         so.Import functions
         so.Import typeof<GrammarFunctions>
 
-    let loadConflictReport grammarDef errors so =
-        let functions = ConflictReportFunctions(grammarDef, errors)
-        functions.LoadInstanceMethods so
-        so.Import functions
-        so.Import typeof<ConflictReportFunctions>
-
     let createDefaultScriptObject() =
         let so = ScriptObject()
         so.SetValue("farkle", defaultFarkleObject, true)

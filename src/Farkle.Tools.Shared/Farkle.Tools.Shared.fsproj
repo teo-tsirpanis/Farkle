@@ -8,7 +8,7 @@
     <Compile Include="Common.fs" />
     <Compile Include="../Farkle/Monads.fs" />
     <Compile Include="ResourceLoader.fs" />
-    <Compile Include="PrecompiledAssemblyFileLoader.fs" />
+    <!-- <Compile Include="PrecompiledAssemblyFileLoader.fs" /> -->
     <Compile Include="Templating/TemplateTypes.fs" />
     <Compile Include="Templating/GrammarFunctions.fs" />
     <Compile Include="Templating/HtmlFunctions.fs" />
@@ -27,7 +27,7 @@
     <EmbeddedResource Include="builtin-templates/Html.Style.css" LogicalName="Html.Style.scriban" WithCulture="false" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../Farkle/Farkle.fsproj" />
+    <ProjectReference Include="../FarkleNeo/FarkleNeo.csproj" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" />

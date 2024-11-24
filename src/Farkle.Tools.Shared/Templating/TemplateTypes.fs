@@ -5,9 +5,7 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Builder
 open Farkle.Grammars
-open System.Collections.Immutable
 
 [<RequireQualifiedAccess>]
 type Language =
@@ -28,6 +26,10 @@ type HtmlOptions = {
     NoLALRStates: bool
     NoDFAStates: bool
 }
+with
+    static let ``default`` = {CustomHeadContent = ""; NoCss = false; NoLALRStates = false; NoDFAStates = false}
+
+    static member Default = ``default``
 
 type CustomTemplateOptions = {
     AdditionalProperties: (string * string) list
@@ -37,7 +39,6 @@ type TemplateType =
     | GrammarHtml of GrammarTemplateInput * HtmlOptions
     | GrammarSkeleton of GrammarTemplateInput * Language * ``namespace``: string option
     | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string * CustomTemplateOptions
-    | LALRConflictReport of GrammarDefinition * LALRConflictState ImmutableArray
 
 type GeneratedTemplate = {
     FileExtension: string

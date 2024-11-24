@@ -5,13 +5,10 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Builder
 open Farkle.Grammars
 open Farkle.Tools
 open Scriban.Runtime
 open System
-open System.Collections.Immutable
-open System.IO
 open System.Linq
 open System.Text
 
@@ -21,8 +18,9 @@ type IdentifierTypeCase =
     | CamelCase
     | PascalCase
 
-[<AbstractClass>]
-type GrammarFunctionsBase(grammarObj: obj, productions: _ ImmutableArray) =
+type GrammarFunctions(g: GrammarTemplateInput) =
+
+    let grammarObj = g.Grammar
 
     static let toIdentifier name case (separator: string) =
         let sb = StringBuilder()
@@ -66,56 +64,63 @@ type GrammarFunctionsBase(grammarObj: obj, productions: _ ImmutableArray) =
             processChar c
         if sb.Length > 0 then
             match case with
-            | UpperCase -> for i = 0 to sb.Length do sb.[i] <- Char.ToUpperInvariant sb.[i]
-            | LowerCase -> for i = 0 to sb.Length do sb.[i] <- Char.ToLowerInvariant sb.[i]
-            | PascalCase -> sb.[0] <- Char.ToUpperInvariant sb.[0]
-            | CamelCase -> sb.[0] <- Char.ToLowerInvariant sb.[0]
+            | UpperCase -> for i = 0 to sb.Length do sb[i] <- Char.ToUpperInvariant sb[i]
+            | LowerCase -> for i = 0 to sb.Length do sb[i] <- Char.ToLowerInvariant sb[i]
+            | PascalCase -> sb[0] <- Char.ToUpperInvariant sb[0]
+            | CamelCase -> sb[0] <- Char.ToLowerInvariant sb[0]
         sb.ToString()
 
-    static let formatProduction printFull {Head = Nonterminal(_, headName); Handle = handle} case separator =
-        let headFormatted = toIdentifier headName case separator
+    let formatProduction printFull (p: Production) case separator =
+        let headFormatted = toIdentifier p.Head.Name case separator
         let handleFormatted =
-            if handle.IsEmpty then
+            if p.Members.Count = 0 then
                 // GOLD Parser doesn't do that, but specifying "Empty" increases readability.
                 ["Empty"]
             else
-                handle
-                |> Seq.choose (function
-                    | LALRSymbol.Terminal (Terminal(_, name)) -> Some <| toIdentifier name case separator
+                p.Members
+                |> Seq.choose (fun x ->
+                    if x.IsTokenSymbol then
+                        let term = grammarObj.GetTokenSymbol <| TokenSymbolHandle.op_Explicit x
+                        Some <| toIdentifier term.Name case separator
                     // We might want to include even the nonterminals in
                     // the name, when names collide, but only then.
-                    | LALRSymbol.Nonterminal (Nonterminal(_, name)) when printFull -> Some <| toIdentifier name case separator
-                    | LALRSymbol.Nonterminal _ -> None)
+                    elif printFull then
+                        let nont = grammarObj.GetNonterminal <| NonterminalHandle.op_Explicit x
+                        Some <| toIdentifier nont.Name case separator
+                    else
+                        None)
                 |> List.ofSeq
         headFormatted :: handleFormatted |> String.concat separator
 
-    static let shouldPrintFullProduction productions =
-        let getFormattingElements prod =
+    let shouldPrintFullProduction productions =
+        let getFormattingElements (prod: Production) =
             let handle =
-                prod.Handle
-                |> Seq.choose (function | LALRSymbol.Terminal term -> Some term | _ -> None)
+                prod.Members
+                |> Seq.choose (fun x -> if x.IsTokenSymbol then Some x else None)
                 |> Array.ofSeq
             prod.Head, handle
         isElementUnique getFormattingElements productions
 
     static let grammarMemberFilter = MemberFilterDelegate(fun mi ->
         match mi.Name with
-        | "Properties"
-        | "StartSymbol"
-        | "Symbols"
-        | "Productions"
+        | "GrammarInfo"
+        | "Terminals"
+        | "TokenSymbols"
         | "Groups"
-        | "LALRStates"
-        | "DFAStates" -> true
+        | "Nonterminals"
+        | "Productions"
+        | "DfaOnChar"
+        | "LrStateMachine" -> true
         | _ -> false)
 
     let grammarSO =
         let so = ScriptObject()
         so.Import(grammarObj, filter = grammarMemberFilter)
-        so.SetValue("productions_groupped", productions.ToLookup(fun x -> x.Head), true)
+        so.SetValue("productions_grouped", grammarObj.Productions.ToLookup(_.Head), true)
         so
 
-    let fShouldPrintFullProduction = shouldPrintFullProduction productions
+    let fShouldPrintFullProduction = shouldPrintFullProduction grammarObj.Productions
+
     static member upper_case = UpperCase
     static member lower_case = LowerCase
     static member pascal_case = PascalCase
@@ -125,47 +130,21 @@ type GrammarFunctionsBase(grammarObj: obj, productions: _ ImmutableArray) =
 
     member _.fmt (x: obj) case separator =
         match x with
-        | :? Terminal as x -> match x with Terminal(_, name) -> toIdentifier name case separator
+        | :? TokenSymbol as x -> toIdentifier x.Name case separator
         | :? Production as x -> formatProduction (fShouldPrintFullProduction x) x case separator
-        | _ -> invalidArg "x" (sprintf "Can only format terminals and productions, but got %O instead." <| x.GetType())
-    static member group_dfa_edges {Edges = edges} =
-        edges.ToLookup(fun x -> x.Value).OrderBy(fun x -> x.Key)
-    abstract is_conflict_report: bool
-    abstract LoadInstanceMethods: ScriptObject -> unit
-    default x.LoadInstanceMethods so =
-        so.Import("fmt", Func<_,_,_,_> x.fmt)
-
-type GrammarFunctions(g) =
-    inherit GrammarFunctionsBase(g.Grammar, g.Grammar.Productions)
-
-    let grammar = g.Grammar
-    let bytesThunk = lazy(
-        let ext = Path.GetExtension(g.GrammarPath).AsSpan()
-        if isGrammarExtension ext then
-            File.ReadAllBytes g.GrammarPath
-        else
-            use stream = new MemoryStream()
-            EGT.toStreamNeo stream grammar
-            stream.ToArray()
-    )
-
+        | _ -> invalidArg "x" (sprintf "Can only format token symbols and productions, but got %O instead." <| x.GetType())
+    static member group_dfa_edges (state: StateMachines.DfaState<char>) =
+        state.Edges.ToLookup(_.Target).OrderBy(_.Key)
+    member _.is_conflict_report =
+        match grammarObj.DfaOnChar, grammarObj.LrStateMachine with
+        | dfa, _ when dfa <> null && dfa.HasConflicts -> true
+        | _, lr when lr <> null && lr.HasConflicts -> true
+        | _, _ -> false
     member _.grammar_path = g.GrammarPath
     member _.to_base64 doPad =
         let options = if doPad then Base64FormattingOptions.InsertLineBreaks else Base64FormattingOptions.None
-        Convert.ToBase64String(bytesThunk.Value, options)
+        Convert.ToBase64String(grammarObj.Data.ToArray(), options)
 
-    override _.is_conflict_report = false
-    override x.LoadInstanceMethods so =
-        base.LoadInstanceMethods so
+    member x.LoadInstanceMethods (so: ScriptObject) =
+        so.Import("fmt", Func<_,_,_,_> x.fmt)
         so.Import("to_base64", Func<_,_> x.to_base64)
-
-type ConflictReportFunctions(grammarDef: GrammarDefinition, conflictReport: LALRConflictState ImmutableArray) as this =
-    inherit GrammarFunctionsBase(grammarDef, grammarDef.Productions)
-
-    do this.Grammar.SetValue("lalr_states", conflictReport, true)
-
-    static member is_conflicting (x: LALRConflictState) =
-        x.Actions.Values |> Seq.exists (function | _ :: _ :: _ -> true | _ -> false)
-        || match x.EOFActions with | _ :: _ :: _ -> true | _ -> false
-
-    override _.is_conflict_report = true

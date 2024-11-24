@@ -65,7 +65,6 @@ internal sealed class DfaStateProxy<TChar>
 
         _actions = new NameValuePair[state.Edges.Count + (defaultTransition != -1 ? 1 : 0) + state.AcceptSymbols.Count];
 
-        Grammar grammar = state.Grammar;
         int i = 0;
         foreach (var edge in state.Edges)
         {

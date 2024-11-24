@@ -25,9 +25,9 @@ type Arguments =
     | [<Unique>] ``No-css``
     | [<Unique>] ``No-lalr``
     | [<Unique>] ``No-dfa``
-    | [<Unique>] GrammarSkeleton
-    | [<Unique; AltCommandLine("-lang")>] Language of Language
-    | [<Unique; AltCommandLine("-ns")>] Namespace of string
+    | [<Unique; Hidden>] GrammarSkeleton
+    | [<Unique; Hidden; AltCommandLine("-lang")>] Language of string
+    | [<Unique; Hidden; AltCommandLine("-ns")>] Namespace of string
     | [<Unique; AltCommandLine("-t")>] TemplateFile of string
     | [<AltCommandLine("-prop")>] Property of string * string
 with
@@ -55,24 +55,6 @@ If not specified, the input file's name will be used."
             | Property _ -> "Additional properties to be passed to your custom template \
 via the 'properties.myproperty' Scriban variable."
 
-let tryInferLanguage() =
-    let hasExtension =
-        let files = Directory.GetFiles(Environment.CurrentDirectory)
-        fun ext -> files |> Array.exists (fun path -> Path.GetExtension(path) = ext)
-    match hasExtension ".csproj", hasExtension ".fsproj" with
-    | true, true ->
-        Log.Error("Cannot infer the language to use; there are both C# and F# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
-        Error()
-    | true, false ->
-        Log.Debug("No language was specified; inferred to be C#, as there are C# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
-        Ok Language.``C#``
-    | false, true ->
-        Log.Debug("No language was specified; inferred to be F#, as there are F# projects in {CurrentDirectory:l}.", Environment.CurrentDirectory)
-        Ok Language.``F#``
-    | false, false ->
-        Log.Debug("Neither a language was specified, nor are there any supported projcets in {CurrentDirectory:l}. Language is inferred to be F#.", Environment.CurrentDirectory)
-        Ok Language.``F#``
-
 let getTemplateType grammarInput (args: ParseResults<_>) = either {
     match args.Contains Html, args.Contains GrammarSkeleton, args.TryGetResult TemplateFile with
     | _, false, None ->
@@ -87,19 +69,16 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
             NoDFAStates = args.Contains ``No-dfa``
         }
         return GrammarHtml(grammarInput, options)
-    | false, true, None ->
-        let! language =
-            args.TryPostProcessResult(Language, Ok)
-            |> Option.defaultWith tryInferLanguage
-        let ns = args.TryGetResult Namespace
-        return TemplateType.GrammarSkeleton(grammarInput, language, ns)
+    | _, true, _ ->
+        Log.Error("The --grammar-skeleton argument is not supported starting from Farkle 7.")
+        return! Error()
     | false, false, Some customTemplatePath ->
         let additionalProperties = args.GetResults Property
         let options = {AdditionalProperties = additionalProperties}
         return GrammarCustomTemplate(grammarInput, customTemplatePath, options)
-    | _, true, Some _ | true, _, Some _ | true, true, _ ->
-        Log.Error("The {Html:l}, {GrammarSkeleton:l} and {T:l} arguments cannot be used at the same time.",
-            "--html", "--grammarskeleton", "-t")
+    | true, _, Some _ ->
+        Log.Error("The {Html:l} and {T:l} arguments cannot be used at the same time.",
+            "--html", "-t")
         return! Error()
 }
 
@@ -110,9 +89,12 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
     let doWarnIfNotOpt isUsed (arg: Quotations.Expr<_>) (argName: string) =
         if not isUsed && args.Contains arg then
             Log.Warning("Argument {IgnoredArgument} is ignored.", argName)
+    let doWarnIgnored (arg: Quotations.Expr<_ -> _>) (argName: string) =
+        if args.Contains arg then
+            Log.Warning("Argument {IgnoredArgument} is no longer supported and ignored.", argName)
     let isSkeleton = args.Contains GrammarSkeleton
     let isCustomTemplate = args.Contains TemplateFile
-    let isHtml = args.Contains Html || (isSkeleton = isCustomTemplate)
+    let isHtml = args.Contains Html || not isCustomTemplate
     let isProjectFile =
         let extension = Path.GetExtension(grammarPath.AsSpan())
         isProjectExtension extension
@@ -120,8 +102,8 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
     doWarnIfNotOpt isHtml <@ ``No-css`` @> "--no-css"
     doWarnIfNotOpt isHtml <@ ``No-lalr`` @> "--no-lalr"
     doWarnIfNotOpt isHtml <@ ``No-dfa`` @> "--no-dfa"
-    doWarnIfNot isSkeleton <@ Language @> "-lang"
-    doWarnIfNot isSkeleton <@ Namespace @> "-ns"
+    doWarnIgnored <@ Language @> "-lang"
+    doWarnIgnored <@ Namespace @> "-ns"
     doWarnIfNot isCustomTemplate <@ Property @> "-prop"
     doWarnIfNot isProjectFile <@ Configuration @> "-c"
 

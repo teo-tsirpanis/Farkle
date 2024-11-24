@@ -16,11 +16,6 @@ open System.IO
 
 module TemplateEngine =
 
-    let private (|LanguageNames|) lang =
-        match lang with
-        | Language.``F#`` -> "FSharp", "F# grammar skeleton template"
-        | Language.``C#`` -> "CSharp", "C# grammar skeleton template"
-
     let private parseTemplate (log: ILogger) templateText templateFileName =
         log.Debug("Parsing {TemplateFileName}", templateFileName.ToString())
         let template = Template.Parse(templateText, templateFileName)
@@ -41,10 +36,6 @@ module TemplateEngine =
             let templateText = ResourceLoader.load "Html.Root.scriban"
             let templateName = "HTML root template"
             parseTemplate log templateText templateName
-        | GrammarSkeleton(_, LanguageNames(langName, templateName), _) ->
-            let resourceKey = sprintf "GrammarSkeleton.%s.scriban" langName
-            let templateText = ResourceLoader.load resourceKey
-            parseTemplate log templateText templateName
         | GrammarCustomTemplate(_, path, _) ->
             let templateText = File.ReadAllText path
             parseTemplate log templateText path
@@ -61,12 +52,6 @@ module TemplateEngine =
         | GrammarHtml(g, options) ->
             Utilities.loadGrammar g so
             Utilities.loadHtml options tc so
-        | GrammarSkeleton(g, _, ns) ->
-            Utilities.loadGrammar g so
-            let ns =
-                ns
-                |> Option.defaultValue (Path.GetFileNameWithoutExtension g.GrammarPath)
-            so.SetValue("namespace", ns, true)
         | GrammarCustomTemplate(g, _, options) ->
             Utilities.loadGrammar g so
             let properties = ScriptObject()

@@ -7,11 +7,6 @@ namespace Farkle.Tools.Templating
 
 open Farkle.Grammars
 
-[<RequireQualifiedAccess>]
-type Language =
-    | ``F#``
-    | ``C#``
-
 type GrammarTemplateInput = {
     Grammar: Grammar
     GrammarPath: string
@@ -37,7 +32,6 @@ type CustomTemplateOptions = {
 
 type TemplateType =
     | GrammarHtml of GrammarTemplateInput * HtmlOptions
-    | GrammarSkeleton of GrammarTemplateInput * Language * ``namespace``: string option
     | GrammarCustomTemplate of GrammarTemplateInput * templatePath: string * CustomTemplateOptions
 
 type GeneratedTemplate = {

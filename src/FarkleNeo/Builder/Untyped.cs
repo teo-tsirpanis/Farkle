@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.Untyped;
@@ -50,6 +51,7 @@ public sealed class Nonterminal : INonterminal
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
+    [ExcludeFromCodeCoverage]
     [OverloadResolutionPriority(-1)]
     public void SetProductions(params ProductionBuilder[] productions)
     {

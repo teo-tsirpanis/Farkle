@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.OperatorPrecedence;
@@ -57,7 +58,7 @@ public class AssociativityGroup
     }
 
     /// <inheritdoc cref="AssociativityGroup(OperatorPrecedence.AssociativityType, ImmutableArray{object})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public AssociativityGroup(AssociativityType associativityType, params object[] symbols) : this(associativityType, symbols.ToImmutableArrayChecked()) { }
 }
 
@@ -74,7 +75,7 @@ public sealed class NonAssociative : AssociativityGroup
     public NonAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.NonAssociative, symbols) { }
 
     /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public NonAssociative(params object[] symbols) : base(AssociativityType.NonAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
@@ -91,7 +92,7 @@ public sealed class LeftAssociative : AssociativityGroup
     public LeftAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.LeftAssociative, symbols) { }
 
     /// <inheritdoc cref="LeftAssociative(ImmutableArray{object})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public LeftAssociative(params object[] symbols) : base(AssociativityType.LeftAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
@@ -108,7 +109,7 @@ public sealed class RightAssociative : AssociativityGroup
     public RightAssociative(params ImmutableArray<object> symbols) : base(AssociativityType.RightAssociative, symbols) { }
 
     /// <inheritdoc cref="RightAssociative(ImmutableArray{object})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public RightAssociative(params object[] symbols) : base(AssociativityType.RightAssociative, symbols.ToImmutableArrayChecked()) { }
 }
 
@@ -125,6 +126,6 @@ public sealed class PrecedenceOnly : AssociativityGroup
     public PrecedenceOnly(params ImmutableArray<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
 
     /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols.ToImmutableArrayChecked()) { }
 }

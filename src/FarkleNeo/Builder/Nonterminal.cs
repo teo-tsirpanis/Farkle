@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder;
@@ -47,6 +48,7 @@ public static class Nonterminal
     }
 
     /// <inheritdoc cref="Create{T}(string, ReadOnlySpan{IProduction{T}})"/>
+    [ExcludeFromCodeCoverage]
     public static IGrammarSymbol<T> Create<T>(string name, params IProduction<T>[] productions) =>
         Create<T>(name, productions.AsSpanChecked());
 
@@ -85,6 +87,7 @@ public static class Nonterminal
     }
 
     /// <inheritdoc cref="CreateUntyped(string, ImmutableArray{ProductionBuilder})"/>
+    [ExcludeFromCodeCoverage]
     [OverloadResolutionPriority(-1)]
     public static IGrammarSymbol CreateUntyped(string name, params ProductionBuilder[] productions) =>
         CreateUntyped(name, productions.ToImmutableArrayChecked());
@@ -125,6 +128,7 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
+    [ExcludeFromCodeCoverage]
     public void SetProductions(params IProduction<T>[] productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(productions);

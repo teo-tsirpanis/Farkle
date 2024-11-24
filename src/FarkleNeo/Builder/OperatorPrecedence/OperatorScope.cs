@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.OperatorPrecedence;
@@ -47,16 +48,16 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     }
 
     /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public OperatorScope(bool canResolveReduceReduceConflicts, params AssociativityGroup[] associativityGroups)
         : this(canResolveReduceReduceConflicts, associativityGroups.ToImmutableArrayChecked()) { }
 
     /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
-    [OverloadResolutionPriority(-1)]
-    public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
+    public OperatorScope(params ImmutableArray<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
 
     /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>
-    public OperatorScope(params ImmutableArray<AssociativityGroup> associativityGroups) : this(false, associativityGroups) { }
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
+    public OperatorScope(params AssociativityGroup[] associativityGroups) : this(false, associativityGroups) { }
 
     /// <summary>
     /// Factory method to enable creating operator scopes using collection expressions.

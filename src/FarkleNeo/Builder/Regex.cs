@@ -332,7 +332,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{char})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex NotOneOf(params char[] chars) => NotOneOf(chars.ToImmutableArrayChecked());
 
     /// <summary>
@@ -357,7 +357,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex NotOneOf(params (char Start, char End)[] chars) => NotOneOf(chars.ToImmutableArrayChecked());
 
     /// <summary>
@@ -383,7 +383,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex OneOf(params char[] chars) => OneOf(chars.ToImmutableArrayChecked());
 
     /// <summary>
@@ -413,7 +413,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex OneOf(params (char Start, char End)[] chars) => OneOf(chars.ToImmutableArrayChecked());
 
     /// <summary>
@@ -436,7 +436,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="Join(ImmutableArray{Regex})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex Join(params Regex[] regexes) => Join(regexes.ToImmutableArrayChecked());
 
     /// <summary>
@@ -464,7 +464,7 @@ public sealed class Regex
     }
 
     /// <inheritdoc cref="Choice(ImmutableArray{Regex})"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex Choice(params Regex[] regexes) => Choice(regexes.ToImmutableArrayChecked());
 
     /// <summary>

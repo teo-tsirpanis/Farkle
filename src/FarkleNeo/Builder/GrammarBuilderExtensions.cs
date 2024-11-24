@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
@@ -225,7 +226,7 @@ public static class GrammarBuilderExtensions
     /// <param name="builder">The grammar builder.</param>
     /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
     /// in ascending order of precedence.</param>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params AssociativityGroup[] associativityGroups) =>
         builder.WithOperatorScope(new OperatorScope(associativityGroups));
 
@@ -240,7 +241,7 @@ public static class GrammarBuilderExtensions
     }
 
     /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, AssociativityGroup[])"/>
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params AssociativityGroup[] associativityGroups) =>
         builder.WithOperatorScope(new OperatorScope(associativityGroups));
 

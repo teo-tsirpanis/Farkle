@@ -99,7 +99,7 @@ public abstract partial class Grammar : IGrammarProvider
         GrammarHeader header = GrammarHeader.Read(grammarFile);
         ValidateHeader(header);
 
-        GrammarStreams streams = new(grammarFile, header.StreamCount, out bool hasUnknownStreams);
+        GrammarStreams streams = new(grammarFile, header.StreamCount);
 
         StringHeap = new(grammarFile, streams.StringHeap);
         BlobHeap = new(streams.BlobHeap);
@@ -108,7 +108,7 @@ public abstract partial class Grammar : IGrammarProvider
         GrammarStateMachines stateMachines = new(grammarFile, in BlobHeap, in GrammarTables, out bool hasUnknownStateMachines);
         (DfaOnChar, LrStateMachine) = StateMachineUtilities.GetGrammarStateMachines(this, grammarFile, in stateMachines);
 
-        HasUnknownData = header.HasUnknownData || hasUnknownStreams || hasUnknownTables || hasUnknownStateMachines;
+        HasUnknownData = header.HasUnknownData || hasUnknownTables || hasUnknownStateMachines;
     }
 
     /// <summary>

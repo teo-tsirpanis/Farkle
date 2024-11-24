@@ -161,7 +161,7 @@ The following bit values are defined for the __Flags__ column:
 |Bit|Name|Description|
 |---|----|-----------|
 |0|`Unparsable`|The grammar must not be used for parsing.|
-|1|`Critical`|The grammar must not be used for parsing if it contains data unknown to its reader, as defined later in this specification.|
+|1|`Critical`|The grammar must not be used for parsing if it contains [data unknown to its reader](#unknown-data).|
 
 > Note that the absence of the `Unparsable` flag does not guarantee that the grammar can be parsed. Another way for a grammar to be unparsable is if it lacks a necessary state machine. But if we have say a grammar with a production that has no members, we can emit an unusable state machine for diagnostics purposes, but set the flag.
 
@@ -433,7 +433,9 @@ A GLR(1) state machine has at least one state where there at least one terminal 
 Third parties MAY extend to the grammar file format, through the following mechanisms only:
 
 * Streams whose first byte of the __Identifier__ field is not `0x23`.
+    * Data in custom streams MUST NOT determine the behavior of parsers. Custom streams are intended for peripheral data of informative or diagnostic value.
 * State machines whose __Kind__ is a negative number.
+    * Data in custom state machines MAY determine the behavior of parsers.
 
 Third parties MUST NOT diverge from this specification in any other way (including but not limited to custom tables or flag values).
 
@@ -442,7 +444,6 @@ Third parties MUST NOT diverge from this specification in any other way (includi
 Readers SHOULD expose an API that indicates whether a grammar file contains data unknown to them. Its value MUST be true if the grammar file has one of the following and false otherwise:
 
 * A __MinorVersion__ field that is greater than the latest __MinorVersion__ field the reader knows.
-* A stream whose __Identifier__ field is not known to the reader.
 * A state machine whose __Kind__ is not known to the reader.
 * A table whose kind is not specified in this specification.
 

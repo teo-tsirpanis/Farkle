@@ -22,14 +22,15 @@ namespace Farkle.Grammars.StateMachines;
 [DebuggerTypeProxy(typeof(DfaProxy<>))]
 public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 {
-    internal Dfa(int stateCount, bool hasConflicts)
+    internal Dfa(Grammar grammar, int stateCount, bool hasConflicts)
     {
         Debug.Assert(stateCount > 0);
+        Grammar = grammar;
         Count = stateCount;
         HasConflicts = hasConflicts;
     }
 
-    internal abstract Grammar Grammar { get; }
+    internal Grammar Grammar { get; }
 
     internal abstract (int Offset, int Count) GetAcceptSymbolBounds(int state);
 

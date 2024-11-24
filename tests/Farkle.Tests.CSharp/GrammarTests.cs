@@ -73,35 +73,35 @@ internal class GrammarTests
         Assert.Multiple(() =>
         {
             Assert.That(grammar.HasUnknownData, Is.False);
-            Assert.That(grammar.GrammarInfo.Name.IsEmpty, Is.False);
+            Assert.That(grammar.GrammarInfo.Name, Is.Not.Empty);
             Assert.That(() => grammar.GrammarInfo.Attributes, Throws.Nothing);
-            Assert.That(grammar.GrammarInfo.StartSymbol.HasValue);
+            Assert.That(grammar.GrammarInfo.StartSymbol.Handle.HasValue);
 
             foreach (var tokenSymbol in grammar.TokenSymbols)
             {
-                Assert.That(tokenSymbol.Name.IsEmpty, Is.False);
+                Assert.That(tokenSymbol.Name, Is.Not.Empty);
                 Assert.That(() => tokenSymbol.Attributes, Throws.Nothing);
             }
 
             foreach (var nonterminal in grammar.Nonterminals)
             {
-                Assert.That(nonterminal.Name.IsEmpty, Is.False);
+                Assert.That(nonterminal.Name, Is.Not.Empty);
                 Assert.That(() => nonterminal.Attributes, Throws.Nothing);
             }
 
             foreach (var group in grammar.Groups)
             {
-                Assert.That(group.Name.IsEmpty, Is.False);
-                Assert.That(group.Container.HasValue);
+                Assert.That(group.Name, Is.Not.Empty);
+                Assert.That(group.Container.Handle.HasValue);
                 Assert.That(() => group.Attributes, Throws.Nothing);
-                Assert.That(group.Start.HasValue);
-                Assert.That(group.End.HasValue);
+                Assert.That(group.Start.Handle.HasValue);
+                Assert.That(group.End.Handle.HasValue);
                 Assert.That(group.Nesting.Count(), Is.EqualTo(group.Nesting.Count));
             }
 
             foreach (var production in grammar.Productions)
             {
-                Assert.That(production.Head.HasValue);
+                Assert.That(production.Head.Handle.HasValue);
                 Assert.That(production.Members.Count(), Is.EqualTo(production.Members.Count));
             }
 

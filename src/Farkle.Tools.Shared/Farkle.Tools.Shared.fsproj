@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../FarkleNeo/FarkleNeo.csproj" />
+    <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" />

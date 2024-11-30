@@ -92,7 +92,6 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
     let doWarnIgnored (arg: Quotations.Expr<_ -> _>) (argName: string) =
         if args.Contains arg then
             Log.Warning("Argument {IgnoredArgument} is no longer supported and ignored.", argName)
-    let isSkeleton = args.Contains GrammarSkeleton
     let isCustomTemplate = args.Contains TemplateFile
     let isHtml = args.Contains Html || not isCustomTemplate
     let isProjectFile =
@@ -133,7 +132,7 @@ let run json (args: ParseResults<_>) = either {
                 if isGrammarExtension (Path.GetExtension grammarPath) then
                     Path.GetFileNameWithoutExtension grammarPath
                 else
-                    (sanitizeUnsafeFileName Log.Logger grammarInput.Grammar.Properties.Name).AsSpan()
+                    (sanitizeUnsafeFileName Log.Logger grammarInput.Grammar.GrammarInfo.Name).AsSpan()
             let extension = generatedTemplate.FileExtension.AsSpan()
             String.Concat(directory, separator, fileName, extension)
 

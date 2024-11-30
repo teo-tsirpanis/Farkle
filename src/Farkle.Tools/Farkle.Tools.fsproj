@@ -16,16 +16,17 @@ Installing this tool is also required when building a project that uses the prec
   <ItemGroup>
     <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
-    <Compile Include="LogSinkBuildEngine.fs" />
-    <Compile Include="Commands/*.fs" />
+    <!-- <Compile Include="LogSinkBuildEngine.fs" /> -->
+    <!-- <Compile Include="Commands/*.fs" /> -->
+    <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
-    <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
-    <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" />
+    <!-- <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" /> -->
     <PackageReference Include="Argu" />
+    <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Locator" />
     <PackageReference Include="Serilog.Sinks.Console" />

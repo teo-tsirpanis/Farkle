@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2019 Theodore Tsirpanis
+// Copyright (c) 2019 Theodore Tsirpanis
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
@@ -24,8 +24,10 @@ type Arguments =
     | [<Inherit>] Json
     | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of LogEventLevel
     | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
+#if TODO_PRECOMPILER
     | [<CliPrefix(CliPrefix.None)>] List of ParseResults<List.Arguments>
     | [<AltCommandLine("generate-predefined-sets"); Hidden>] GeneratePredefinedSets of ParseResults<GeneratePredefinedSets.Arguments>
+#endif
 with
     interface IArgParserTemplate with
         member x.Usage =
@@ -36,17 +38,21 @@ with
 No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
+#if TODO_PRECOMPILER
             | List _ -> "List all precompiled grammars of an assembly."
             | GeneratePredefinedSets _ -> "Generate an F# source file with GOLD Parser's predefined sets. \
 For internal use only."
+#endif
 
 [<EntryPoint>]
 let main argv =
+#if TODO_PRECOMPILER
     // The precompiler worker is a special case, it does not use the regular
     // logging mechanism and reports catastrophic exceptions to stderr.
     // That's why it is given its time to shine at the very beginning,
     // even outside Argu.
     PrecompilerWorker.runIfRequested argv
+#endif
 
     let parser = ArgumentParser.Create("farkle", "Help was requested.", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()
@@ -73,9 +79,11 @@ let main argv =
             else
                 match results.GetSubCommand() with
                 | New args -> New.run json args
+#if TODO_PRECOMPILER
                 | GeneratePredefinedSets args -> GeneratePredefinedSets.run args
                 | List args -> List.run json args
-                | Version _ | Json | Verbosity _ | ``Explain-composite-paths`` -> Ok ()
+#endif
+                | Version | Json | Verbosity _ | ``Explain-composite-paths`` -> Ok ()
                 |> function | Ok () -> 0 | Error () -> 1
         with
         | :? FileNotFoundException as e ->

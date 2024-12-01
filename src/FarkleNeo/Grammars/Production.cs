@@ -17,7 +17,7 @@ namespace Farkle.Grammars;
 /// </remarks>
 /// <seealso cref="Grammar.Productions"/>
 /// <seealso cref="Nonterminal.Productions"/>
-public readonly struct Production
+public readonly struct Production : IEquatable<Production>
 {
     private readonly Grammar _grammar;
 
@@ -67,6 +67,15 @@ public readonly struct Production
         }
     }
 
+    /// <inheritdoc/>
+    public bool Equals(Production other) => _grammar == other._grammar && Handle == other.Handle;
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is Production other && Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
+
     /// <summary>
     /// Returns a string describing the the <see cref="Production"/>.
     /// </summary>
@@ -91,4 +100,18 @@ public readonly struct Production
 
         return sb.ToString();
     }
+
+    /// <summary>
+    /// Compares two <see cref="Production"/>s for equality.
+    /// </summary>
+    /// <param name="left">The first production.</param>
+    /// <param name="right">The second production.</param>
+    public static bool operator ==(Production left, Production right) => left.Equals(right);
+
+    /// <summary>
+    /// Compares two <see cref="Production"/>s for inequality.
+    /// </summary>
+    /// <param name="left">The first production.</param>
+    /// <param name="right">The second production.</param>
+    public static bool operator !=(Production left, Production right) => !left.Equals(right);
 }

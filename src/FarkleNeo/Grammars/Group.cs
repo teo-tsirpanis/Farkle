@@ -14,7 +14,7 @@ namespace Farkle.Grammars;
 /// or nested groups and are contained in one token symbol.</para>
 /// <para>A typical use of groups is in implementing comments.</para>
 /// </remarks>
-public readonly struct Group
+public readonly struct Group : IEquatable<Group>
 {
     private readonly Grammar _grammar;
 
@@ -109,8 +109,31 @@ public readonly struct Group
         }
     }
 
+    /// <inheritdoc/>
+    public bool Equals(Group other) => _grammar == other._grammar && Index == other.Index;
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is Group other && Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(_grammar, Index);
+
     /// <summary>
     /// Returns a string describing the the <see cref="Group"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : Name;
+
+    /// <summary>
+    /// Compares two <see cref="Group"/>s for equality.
+    /// </summary>
+    /// <param name="left">The first group.</param>
+    /// <param name="right">The second group.</param>
+    public static bool operator ==(Group left, Group right) => left.Equals(right);
+
+    /// <summary>
+    /// Compares two <see cref="Group"/>s for inequality.
+    /// </summary>
+    /// <param name="left">The first group.</param>
+    /// <param name="right">The second group.</param>
+    public static bool operator !=(Group left, Group right) => !left.Equals(right);
 }

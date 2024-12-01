@@ -90,7 +90,7 @@ public readonly struct TokenSymbol : IEquatable<TokenSymbol>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the the <see cref="TokenSymbol"/>.
+    /// Returns a string describing the <see cref="TokenSymbol"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : FormatName(Name);
 

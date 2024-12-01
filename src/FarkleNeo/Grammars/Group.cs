@@ -119,7 +119,7 @@ public readonly struct Group : IEquatable<Group>
     public override int GetHashCode() => HashCode.Combine(_grammar, Index);
 
     /// <summary>
-    /// Returns a string describing the the <see cref="Group"/>.
+    /// Returns a string describing the <see cref="Group"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : Name;
 

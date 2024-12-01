@@ -83,7 +83,7 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     public static bool operator ==(EntityHandle left, EntityHandle right) => left.Equals(right);
 
     /// <summary>
-    /// Checks if two <see cref="EntityHandle"/>s are pointing to the same table row.
+    /// Checks if two <see cref="EntityHandle"/>s are not pointing to the same table row.
     /// </summary>
     /// <param name="left">The first handle.</param>
     /// <param name="right">The second handle.</param>

@@ -63,7 +63,7 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     }
 
     /// <summary>
-    /// A sequence of the <see cref="Nonterminal"/>'s <see cref="Production"/>s.
+    /// The <see cref="Production"/>s that have this <see cref="Nonterminal"/> as their <see cref="Production.Head"/>.
     /// </summary>
     public ProductionCollection Productions
     {
@@ -85,7 +85,7 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the the <see cref="Nonterminal"/>.
+    /// Returns a string describing the <see cref="Nonterminal"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : $"<{Name}>";
 

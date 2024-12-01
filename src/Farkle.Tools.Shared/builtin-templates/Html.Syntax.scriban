@@ -5,25 +5,24 @@ https://opensource.org/licenses/MIT ~}}
 <section id="syntax">
     <h2>Syntax</h2>
     <ul>
-        {{~for $group in $2
-            $nont = $group.key~}}
-        <li id="n{{$nont.index}}">
+        {{~for $nont in $1~}}
+        <li id="n{{for.index}}">
             <span class="nonterminal">{{html.escape $nont.name}}</span>
             <ul class="productions">
-                {{~for $prod in $group~}}
-                <li id="prod{{$prod.index}}" >
+                {{~for $prod in $nont.productions~}}
+                <li id="prod{{$prod.handle.value}}" >
                     <ol class="production-handle">
-                        {{~for $sym in $prod.handle
-                            $sym_extracted = $sym.item~}}
+                        {{~for $sym in $prod.members
+                            $sym_extracted = grammar.get_object_from_handle $sym~}}
                         <li>
-                            {{-if $sym.is_terminal-}}
+                            {{-if $sym.is_token_symbol-}}
                             <span class="terminal">{{html.escape $sym_extracted.name}}</span>
                             {{-else-}}
-                            <a class="nonterminal" href="#n{{$sym_extracted.index}}">{{html.escape $sym_extracted.name}}</a>
+                            <a class="nonterminal" href="#n{{$sym_extracted.handle.value}}">{{html.escape $sym_extracted.name}}</a>
                             {{-end-}}
                         </li>
                         {{~end~}}
-                        {{~if $prod.handle.empty?
+                        {{~if $prod.members.empty?
                             # Writing a "Nothing" using CSS will not work because the
                             # :empty selector is tarnation useless and cannot match
                             # <ol>

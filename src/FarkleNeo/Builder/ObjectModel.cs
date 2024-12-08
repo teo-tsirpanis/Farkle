@@ -184,13 +184,21 @@ internal class BlockGroup(string name, string groupStart, string groupEnd, Trans
     public string GroupEnd { get; } = groupEnd;
 }
 
-internal interface IProduction
+/// <summary>
+/// Represents a production in a grammar to be built that produces a value.
+/// </summary>
+/// <remarks>
+/// This interface cannot be implemented by user code and is not directly accepted by any API.
+/// </remarks>
+/// <seealso cref="IProduction{T}"/>
+/// <seealso cref="ProductionBuilder"/>
+public interface IProduction
 {
-    ImmutableArray<IGrammarSymbol> Members { get; }
+    internal ImmutableArray<IGrammarSymbol> Members { get; }
 
-    Fuser<object?> Fuser { get; }
+    internal Fuser<object?> Fuser { get; }
 
-    object? PrecedenceToken { get; }
+    internal object? PrecedenceToken { get; }
 }
 
 // This is an interface because both Nonterminal and Nonterminal<T>
@@ -214,23 +222,16 @@ internal sealed class BlockGroup<T>(string name, string groupStart, string group
 /// This interface cannot be implemented by user code.
 /// </remarks>
 /// <seealso cref="Nonterminal.Create{T}(string, IProduction{T}[])"/>
-/// <seealso cref="Nonterminal.Create{T}(string, ReadOnlySpan{IProduction{T}})"/>
+/// <seealso cref="Nonterminal.Create{T}(string, ImmutableArray{IProduction{T}})"/>
 /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
-/// <seealso cref="Nonterminal{T}.SetProductions(ReadOnlySpan{IProduction{T}})"/>
-public interface IProduction<out T>
-{
-    // We cannot inherit IProduction because we want the generic interface to be public.
-    // Instead, we expose the IProduction through this property.
-    internal IProduction Production { get; }
-}
+/// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
+public interface IProduction<out T> : IProduction;
 
-internal class Production<T>(ImmutableArray<IGrammarSymbol> symbols, Fuser<object?> fuser, object? precedenceToken) : IProduction, IProduction<T>
+internal class Production<T>(ImmutableArray<IGrammarSymbol> symbols, Fuser<object?> fuser, object? precedenceToken) : IProduction<T>
 {
     public ImmutableArray<IGrammarSymbol> Members { get; } = symbols;
 
     public Fuser<object?> Fuser { get; } = fuser;
 
     public object? PrecedenceToken { get; } = precedenceToken;
-
-    IProduction IProduction<T>.Production => this;
 }

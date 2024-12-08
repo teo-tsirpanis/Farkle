@@ -36,14 +36,14 @@ namespace Farkle.Samples.CSharp
         static JSON()
         {
             var number = Terminal.Create("Number",
-                Join([
+                Join(
                     Literal('-').Optional(),
                     Literal('0') | OneOf("123456789") + OneOf("0123456789").ZeroOrMore(),
                     (Literal('.') + OneOf("0123456789").AtLeast(1)).Optional(),
-                    Join([
+                    Join(
                         OneOf("eE"),
                         OneOf("+-").Optional(),
-                        OneOf("0123456789").AtLeast(1)]).Optional()]),
+                        OneOf("0123456789").AtLeast(1)).Optional()),
                  (ref ParserState _, ReadOnlySpan<char> data) => ToDecimal(data));
             var jsonString = Terminals.String("String", '"', "/bfnrtu", false);
             var jsonObject = Nonterminal.Create<JsonObject>("Object");

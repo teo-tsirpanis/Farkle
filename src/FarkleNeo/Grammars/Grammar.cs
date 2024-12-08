@@ -181,7 +181,7 @@ public abstract partial class Grammar : IGrammarProvider
             if (file.Length > 4096)
             {
                 Span<byte> buffer = stackalloc byte[GrammarHeader.MinHeaderDisambiguatorSize];
-                int nRead = file.ReadAtLeast(buffer, buffer.Length);
+                file.ReadExactly(buffer);
                 GrammarHeader header = GrammarHeader.Read(buffer);
                 ValidateHeader(header);
                 file.Position = 0;

@@ -87,7 +87,10 @@ internal sealed class GrammarBinaryReader
 
     private void SkipNullTerminatedString()
     {
-        while (_reader.ReadUInt16() != 0) { }
+        while (_reader.ReadUInt16() != 0)
+        {
+            // Ignore the characters.
+        }
     }
 
     public byte ReadByte()

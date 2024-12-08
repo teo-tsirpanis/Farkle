@@ -720,7 +720,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private abstract class RegexLeaf
     {
-        public static RegexLeaf Any { get; } = new Chars([], true);
+        public static Chars Any { get; } = new Chars([], true);
 
         public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, bool isInverted) : RegexLeaf
         {

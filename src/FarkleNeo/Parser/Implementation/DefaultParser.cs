@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 using Farkle.Parser.Semantics;
@@ -25,7 +26,16 @@ internal sealed class DefaultParser<T> : CharParser<T>
 
     public override void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState)
     {
-        _implementation.Run(ref input, ref completionState);
+        switch (_implementation.Run(ref input, out object? resultValue))
+        {
+            case DefaultParserImplementation.RunResult.Success:
+                completionState.SetSuccess((T)resultValue!);
+                break;
+            case DefaultParserImplementation.RunResult.Failure:
+                Debug.Assert(resultValue is not null);
+                completionState.SetError(resultValue);
+                break;
+        }
     }
 
     internal override IGrammarProvider GetGrammarProvider() => _implementation.Grammar;

@@ -13,6 +13,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 #endif
 
+using static Farkle.Parser.Implementation.DefaultParserImplementation;
+
 namespace Farkle.Parser.Implementation;
 
 internal readonly struct DefaultParserImplementation<TChar>
@@ -21,8 +23,6 @@ internal readonly struct DefaultParserImplementation<TChar>
     private readonly LrWithoutConflicts _lrStateMachine;
     private readonly object _semanticProvider;
     public Tokenizer<TChar> Tokenizer { get; }
-
-    private const int InitialStackCapacity = 64;
 
     private ITokenSemanticProvider<TChar> TokenSemanticProvider => Utilities.UnsafeCast<ITokenSemanticProvider<TChar>>(_semanticProvider);
     private IProductionSemanticProvider ProductionSemanticProvider => Utilities.UnsafeCast<IProductionSemanticProvider>(_semanticProvider);
@@ -144,7 +144,7 @@ internal readonly struct DefaultParserImplementation<TChar>
         }
     }
 
-    private unsafe void RunOneShot<T>(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState)
+    private unsafe RunResult RunOneShot(ref ParserInputReader<TChar> input, out object? resultValue)
     {
         ValueStack<int> stateStack = new(stackalloc int[InitialStackCapacity]);
 #if NET8_0_OR_GREATER
@@ -156,44 +156,24 @@ internal readonly struct DefaultParserImplementation<TChar>
         stateStack.Push(_lrStateMachine.InitialState);
         semanticValueStack.Push(null);
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-        RunResult runResult = Run(ref input, ref stateStack, ref semanticValueStack, out object? result);
+        RunResult runResult = Run(ref input, ref stateStack, ref semanticValueStack, out resultValue);
 #pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-        switch (runResult)
-        {
-            case RunResult.Success:
-                completionState.SetSuccess((T)result!);
-                break;
-            case RunResult.Failure:
-                Debug.Assert(result is not null);
-                completionState.SetError(result);
-                break;
-        }
         stateStack.Dispose();
         semanticValueStack.Dispose();
+        return runResult;
     }
 
-    public void Run<T>(ref ParserInputReader<TChar> input, ref ParserCompletionState<T> completionState)
+    public RunResult Run(ref ParserInputReader<TChar> input, out object? resultValue)
     {
         if (input.IsFinalBlock && !input.State.TryGetValue(typeof(State), out _))
         {
-            RunOneShot(ref input, ref completionState);
-            return;
+            return RunOneShot(ref input, out resultValue);
         }
         State state = State.GetOrCreate(_lrStateMachine, ref input.State);
         var stateStack = new ValueStack<int>(state.StateStack);
         var semanticValueStack = new ValueStack<object?>(state.SemanticValueStack);
-        RunResult result = Run(ref input, ref stateStack, ref semanticValueStack, out object? runResult);
-        switch (result)
-        {
-            case RunResult.Success:
-                completionState.SetSuccess((T)runResult!);
-                break;
-            case RunResult.Failure:
-                Debug.Assert(runResult is not null);
-                completionState.SetError(runResult);
-                break;
-        }
-        if (result == RunResult.NeedsMoreInput)
+        RunResult runResult = Run(ref input, ref stateStack, ref semanticValueStack, out resultValue);
+        if (runResult == RunResult.NeedsMoreInput)
         {
             state.StateStack = stateStack.ExportState();
             state.SemanticValueStack = semanticValueStack.ExportState();
@@ -203,16 +183,19 @@ internal readonly struct DefaultParserImplementation<TChar>
             stateStack.Dispose();
             semanticValueStack.Dispose();
         }
+        return runResult;
     }
+}
 
-    private enum RunResult
-    {
-        Success,
-        Failure,
-        NeedsMoreInput
-    }
+/// <summary>
+/// Contains the parts of <see cref="DefaultParserImplementation{TChar}"/> that do
+/// not depend on the character type.
+/// </summary>
+internal static class DefaultParserImplementation
+{
+    internal const int InitialStackCapacity = 64;
 
-    private sealed class State
+    public sealed class State
     {
         public ValueStack<int>.State StateStack;
         public ValueStack<object?>.State SemanticValueStack;
@@ -241,9 +224,16 @@ internal readonly struct DefaultParserImplementation<TChar>
 
 #if NET8_0_OR_GREATER
     [InlineArray(InitialStackCapacity)]
-    private struct ObjectBuffer
+    public struct ObjectBuffer
     {
         private object? _x;
     }
 #endif
+
+    public enum RunResult
+    {
+        Success,
+        Failure,
+        NeedsMoreInput
+    }
 }

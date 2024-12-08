@@ -47,7 +47,7 @@ internal class GrammarTests
     public void TestGoldParserConversion(string goldGrammar)
     {
         var convertedGrammar = ConvertGrammarFile(goldGrammar);
-        _ = Grammar.Create(convertedGrammar);
+        _ = Grammar.Load(convertedGrammar);
 
         var farkleGrammar = Path.ChangeExtension(goldGrammar, ".grammar.dat");
         if (File.Exists(farkleGrammar))
@@ -68,7 +68,7 @@ internal class GrammarTests
     {
         var filePath = TestUtilities.GetResourceFile(grammarFile);
 
-        var grammar = Grammar.CreateFromFile(filePath);
+        var grammar = Grammar.Load(filePath);
 
         Assert.Multiple(() =>
         {

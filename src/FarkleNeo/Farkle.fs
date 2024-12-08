@@ -17,17 +17,17 @@ module internal Grammar =
     open System.Collections.Immutable
     open System.IO
 
-    /// Creates a grammar from a read-only span of bytes.
-    let inline ofSpan (x: ReadOnlySpan<byte>) = Grammar.Create x
-
     /// Creates a grammar from an immutable array of bytes.
-    /// Should be preferred over ofSpan when an immutable array is available.
-    let inline ofBytes (x: ImmutableArray<byte>) = Grammar.Create x
+    let inline ofBytes (x: ImmutableArray<byte>) = Grammar.Load x
 
-    let inline ofFile path = Grammar.CreateFromFile path
+    /// Loads a grammar from a file.
+    let inline ofFile (path: string) = Grammar.Load path
 
     /// Converts a GOLD Parser grammar to a Farkle grammar.
-    let inline ofGoldParserStream (x: Stream) = Grammar.CreateFromGoldParserGrammar x
+    let inline ofGoldParserStream (x: Stream) = Grammar.ConvertFromGoldParser x
+
+    /// Converts a GOLD Parser grammar to a Farkle grammar.
+    let inline ofGoldParserFile (path: string) = Grammar.ConvertFromGoldParser path
 
 namespace Farkle.Grammars.StateMachines
 

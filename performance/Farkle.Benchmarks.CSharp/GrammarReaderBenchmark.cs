@@ -36,11 +36,11 @@ public class GrammarReaderBenchmark
 
     [BenchmarkCategory("Read"), Benchmark]
     public object ReadFarkle7() =>
-        Grammar.Create(Farkle7Grammar);
+        Grammar.Load(Farkle7Grammar);
 
     [BenchmarkCategory("Read"), Benchmark]
     public object ReadFarkle7NoValidation() =>
-        Grammar.CreateUnsafe(Farkle7Grammar);
+        Grammar.LoadUnsafe(Farkle7Grammar);
 
     [BenchmarkCategory("Convert"), Benchmark(Baseline = true)]
     public object ConvertFarkle6() =>
@@ -48,5 +48,5 @@ public class GrammarReaderBenchmark
 
     [BenchmarkCategory("Convert"), Benchmark]
     public object ConvertFarkle7() =>
-        Grammar.CreateFromGoldParserGrammar(new MemoryStream(Egt, false));
+        Grammar.ConvertFromGoldParser(new MemoryStream(Egt, false));
 }

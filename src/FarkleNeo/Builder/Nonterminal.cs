@@ -147,6 +147,10 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(productions));
         }
+        if (productions.IsEmpty)
+        {
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+        }
         _innerNonterminal.SetProductions(ImmutableArray<IProduction>.CastUp(productions));
     }
 

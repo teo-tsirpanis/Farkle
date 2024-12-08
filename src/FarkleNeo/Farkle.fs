@@ -527,7 +527,7 @@ module internal GrammarBuilderOperators =
     /// Creates a `IGrammarSymbol&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.
     let inline (||=) name (productions: #seq<_>) =
-        Nonterminal.Create(name, (Internal.makeImmutableArray productions).AsSpan())
+        Nonterminal.Create(name, Internal.makeImmutableArray productions)
 
     /// Creates an `IGrammarSymbol&lt;'T&gt;` that represents
     /// a nonterminal with the given name and productions.

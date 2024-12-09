@@ -33,7 +33,7 @@
     <PackageVersion Include="PolySharp" Version="1.15.0" />
     <PackageVersion Include="Scriban" Version="5.12.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageVersion Include="Serilog.Sinks.MSBuild" Version="1.5.0" />
+    <PackageVersion Include="Serilog.Sinks.MSBuild" Version="1.6.0" />
     <PackageVersion Include="Serilog" Version="4.1.0" />
     <PackageVersion Include="Sigourney.Build" Version="0.4.1" />
     <PackageVersion Include="Sigourney" Version="0.4.2" />

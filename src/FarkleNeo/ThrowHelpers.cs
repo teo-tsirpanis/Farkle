@@ -8,73 +8,74 @@ using Farkle.Grammars;
 
 namespace Farkle;
 
+[ExcludeFromCodeCoverage, StackTraceHidden]
 internal static class ThrowHelpers
 {
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowArgumentException(string? parameterName, string? message = null, Exception? innerException = null)
         => throw new ArgumentException(parameterName, message, innerException);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowArgumentExceptionLocalized(string? parameterName, string resourceKey, Exception? innerException = null) =>
         throw new ArgumentException(parameterName, Resources.GetResourceString(resourceKey), innerException);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowArgumentNullException(string? parameterName, string? message = null)
         => throw new ArgumentNullException(parameterName, message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowArgumentOutOfRangeException(string? parameterName, string? message = null)
         => throw new ArgumentOutOfRangeException(parameterName, message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static int ThrowBlobTooBig(int length, [CallerArgumentExpression(nameof(length))] string? parameterName = null) =>
         throw new ArgumentOutOfRangeException(parameterName, length, "Blob cannot be larger than 2^29 bytes");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowEndOfStreamException(string? message = null) =>
         throw new EndOfStreamException(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowEntityHandleMismatch(TableKind expected, TableKind actual) =>
         throw new InvalidCastException($"Expected {expected} but got {actual}.");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowInvalidDataException(string? message = null, Exception? innerException = null) =>
         throw new InvalidDataException(message, innerException);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowKeyNotFoundException(string? message = null) =>
         throw new KeyNotFoundException(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowHandleHasNoValue() =>
         throw new InvalidOperationException("Handle has no value.");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowInvalidDfaDataSize() =>
         throw new InvalidOperationException("Invalid DFA data size.");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowInvalidLrDataSize() =>
         throw new InvalidOperationException("Invalid LR state machine data size.");
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowInvalidOperationException(string? message = null) =>
         throw new InvalidOperationException(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowInvalidOperationExceptionLocalized(string resourceKey) =>
         throw new InvalidOperationException(Resources.GetResourceString(resourceKey));
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowNotSupportedException(string? message = null) =>
         throw new NotSupportedException(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowOutOfMemoryException(string? message = null) =>
         throw new OutOfMemoryException(message);
 
-    [DoesNotReturn, StackTraceHidden]
+    [DoesNotReturn]
     public static void ThrowSpecialNameNotFound(string specialName) =>
         ThrowKeyNotFoundException(Resources.Format(null, nameof(Resources.Grammar_SpecialNameNotFound), specialName));
 }

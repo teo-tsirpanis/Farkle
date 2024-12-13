@@ -9,11 +9,11 @@ namespace Farkle.Grammars.Writers;
 
 internal sealed class GrammarWriter
 {
-    private StringHeapWriter _stringHeapWriter;
+    private StringHeapWriter _stringHeapWriter = new();
 
-    private BlobHeapWriter _blobHeapWriter;
+    private BlobHeapWriter _blobHeapWriter = new();
 
-    private GrammarTablesWriter _tablesWriter;
+    private GrammarTablesWriter _tablesWriter = new();
 
     private static void ValidateTableIndex(uint tableIndex, string paramName)
     {

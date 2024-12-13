@@ -290,7 +290,7 @@ internal static class GrammarBuild
         NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
         writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, attributes);
 
-        return Grammar.Create(writer.ToImmutableArray());
+        return Grammar.Load(writer.ToImmutableArray());
 
         // Gets the handle to a group end literal symbol, creating it if it does not exist.
         // Multiple groups can end with the same symbol without causing a conflict, because

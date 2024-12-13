@@ -5,28 +5,35 @@ global using Farkle.DebuggerTypeProxies;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.DebuggerTypeProxies;
 
+[ExcludeFromCodeCoverage]
 internal class FlatCollectionProxy<T, TCollection>(TCollection list) where TCollection : IEnumerable<T>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
     public readonly T[] _items = list.ToArray();
 }
 
+[ExcludeFromCodeCoverage]
 internal class DfaProxy<TChar>(Dfa<TChar> dfa) : FlatCollectionProxy<DfaState<TChar>, Dfa<TChar>>(dfa);
 
+[ExcludeFromCodeCoverage]
 internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbol, DfaState<TChar>.AcceptSymbolCollection>(collection);
 
+[ExcludeFromCodeCoverage]
 internal class DfaEdgesProxy<TChar>(DfaState<TChar>.EdgeCollection collection) : FlatCollectionProxy<DfaEdge<TChar>, DfaState<TChar>.EdgeCollection>(collection);
 
 [DebuggerDisplay("{Value,nq}", Name = "{Name,nq}")]
+[ExcludeFromCodeCoverage]
 internal readonly struct NameValuePair(string name, string value)
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public readonly string Name = name, Value = value;
 }
 
+[ExcludeFromCodeCoverage]
 internal sealed class LrStateProxy
 {
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
@@ -54,6 +61,7 @@ internal sealed class LrStateProxy
     }
 }
 
+[ExcludeFromCodeCoverage]
 internal sealed class DfaStateProxy<TChar>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]

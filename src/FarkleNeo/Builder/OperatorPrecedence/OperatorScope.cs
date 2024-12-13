@@ -44,7 +44,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
             ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups[i]);
         }
         CanResolveReduceReduceConflicts = canResolveReduceReduceConflicts;
-        AssociativityGroups = associativityGroups.ToImmutableArray();
+        AssociativityGroups = associativityGroups;
     }
 
     /// <inheritdoc cref="OperatorScope(bool, ImmutableArray{AssociativityGroup})"/>

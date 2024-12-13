@@ -18,7 +18,7 @@ public static class Nonterminal
     /// <typeparam name="T">The type of values the nonterminal will produce.</typeparam>
     /// <param name="name">The nonterminal's name.</param>
     /// <seealso cref="Nonterminal{T}.SetProductions(IProduction{T}[])"/>
-    /// <seealso cref="Nonterminal{T}.SetProductions(ReadOnlySpan{IProduction{T}})"/>
+    /// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
     public static Nonterminal<T> Create<T>(string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
@@ -32,25 +32,24 @@ public static class Nonterminal
     /// <param name="name">The nonterminal's name.</param>
     /// <param name="productions">The nonterminal's productions.</param>
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
-    public static IGrammarSymbol<T> Create<T>(string name, params ReadOnlySpan<IProduction<T>> productions)
+    public static IGrammarSymbol<T> Create<T>(string name, params ImmutableArray<IProduction<T>> productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(name);
+        if (productions.IsDefault)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
+        }
         if (productions.IsEmpty)
         {
             ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
         }
-        var builder = ImmutableArray.CreateBuilder<IProduction>(productions.Length);
-        foreach (var production in productions)
-        {
-            builder.Add(production.Production);
-        }
-        return new Nonterminal<T>(name, builder.MoveToImmutable());
+        return new Nonterminal<T>(name, ImmutableArray<IProduction>.CastUp(productions));
     }
 
-    /// <inheritdoc cref="Create{T}(string, ReadOnlySpan{IProduction{T}})"/>
-    [ExcludeFromCodeCoverage]
+    /// <inheritdoc cref="Create{T}(string, ImmutableArray{IProduction{T}})"/>
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static IGrammarSymbol<T> Create<T>(string name, params IProduction<T>[] productions) =>
-        Create<T>(name, productions.AsSpanChecked());
+        Create(name, productions.ToImmutableArrayChecked());
 
     /// <summary>
     /// Creates a nonterminal that does not produce a value and whose productions
@@ -87,8 +86,7 @@ public static class Nonterminal
     }
 
     /// <inheritdoc cref="CreateUntyped(string, ImmutableArray{ProductionBuilder})"/>
-    [ExcludeFromCodeCoverage]
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static IGrammarSymbol CreateUntyped(string name, params ProductionBuilder[] productions) =>
         CreateUntyped(name, productions.ToImmutableArrayChecked());
 }
@@ -128,11 +126,11 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    [ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public void SetProductions(params IProduction<T>[] productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(productions);
-        SetProductions(productions.AsSpan());
+        SetProductions(productions.ToImmutableArrayChecked());
     }
 
     /// <summary>
@@ -143,14 +141,17 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    public void SetProductions(params ReadOnlySpan<IProduction<T>> productions)
+    public void SetProductions(params ImmutableArray<IProduction<T>> productions)
     {
-        var builder = ImmutableArray.CreateBuilder<IProduction>(productions.Length);
-        foreach (var production in productions)
+        if (productions.IsDefault)
         {
-            builder.Add(production.Production);
+            ThrowHelpers.ThrowArgumentNullException(nameof(productions));
         }
-        _innerNonterminal.SetProductions(builder.MoveToImmutable());
+        if (productions.IsEmpty)
+        {
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+        }
+        _innerNonterminal.SetProductions(ImmutableArray<IProduction>.CastUp(productions));
     }
 
     ImmutableArray<IProduction> INonterminal.FreezeAndGetProductions() =>

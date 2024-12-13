@@ -31,7 +31,7 @@ public readonly struct ChainedTokenizerComponent<TChar>
     /// <param name="tokenizer">The tokenizer to use.</param>
     public static ChainedTokenizerComponent<TChar> Create(Tokenizer<TChar> tokenizer)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizer, nameof(tokenizer));
+        ArgumentNullExceptionCompat.ThrowIfNull(tokenizer);
         return new(tokenizer);
     }
 

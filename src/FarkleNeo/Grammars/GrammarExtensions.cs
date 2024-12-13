@@ -75,21 +75,4 @@ public static class GrammarExtensions
 
         return default;
     }
-
-    /// <summary>
-    /// Writes the binary data of a <see cref="Grammar"/> to a file.
-    /// </summary>
-    /// <param name="grammar">The grammar.</param>
-    /// <param name="path">The path to write the grammar's data to.</param>
-    public static void WriteGrammarToFile(this Grammar grammar, string path)
-    {
-        ArgumentNullExceptionCompat.ThrowIfNull(path);
-        using FileStream stream = new(path, FileMode.Create, FileAccess.Write, FileShare.None);
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        stream.Write(grammar.Data);
-#else
-        var array = grammar.Data.ToArray();
-        stream.Write(array, 0, array.Length);
-#endif
-    }
 }

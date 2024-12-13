@@ -22,13 +22,13 @@
     <value>EGTneo grammar files produced by Farkle 6.x are not supported.</value>
   </data>
   <data name="Grammar_GoldParserMustConvert" xml:space="preserve">
-    <value>Grammar files produced by GOLD Parser must be opened with the Grammar.CreateFromGoldParserGrammar method.</value>
+    <value>Grammar files produced by GOLD Parser must be loaded with the Grammar.ConvertFromGoldParser method.</value>
   </data>
   <data name="Grammar_UnrecognizedFormat" xml:space="preserve">
     <value>Unrecognized file format.</value>
   </data>
   <data name="Grammar_Farkle7MustOpen" xml:space="preserve">
-    <value>Grammar files produced by Farkle 7 and above must be opened with the Grammar.Create method.</value>
+    <value>Grammar files produced by Farkle 7 and above must be loaded with the Grammar.Load method.</value>
   </data>
   <data name="Grammar_FailedToConvert" xml:space="preserve">
     <value>Failed to convert the grammar.</value>

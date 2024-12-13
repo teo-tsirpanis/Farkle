@@ -37,7 +37,7 @@ public class JsonBenchmark
         _jsonText = File.ReadAllText($"resources/{FileName}");
         _farkle6Runtime = Farkle6.RuntimeFarkle<object>.Create(Farkle6.Grammar.EGT.ReadFromFile("resources/JSON.egt"), Farkle6.PostProcessors.SyntaxChecker);
         _farkle6Tokenizer = new Farkle6.Parser.DefaultTokenizer(_farkle6Runtime.GetGrammar());
-        _farkle7Parser = CharParser.CreateSyntaxChecker(Grammar.Create(File.ReadAllBytes("resources/JSON.grammar.dat")));
+        _farkle7Parser = CharParser.CreateSyntaxChecker(Grammar.Load("resources/JSON.grammar.dat"));
         _farkle7Tokenizer = Parser.Tokenizers.Tokenizer.Create<char>(_farkle7Parser.GetGrammar());
     }
 

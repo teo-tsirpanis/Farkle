@@ -112,7 +112,7 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Creates a <see cref="Grammar"/> from a preallocated immutable byte buffer.
+    /// Creates a <see cref="Grammar"/> from an immutable byte array.
     /// </summary>
     /// <param name="grammarData">An <see cref="ImmutableArray{Byte}"/>
     /// containing the grammar's data.</param>
@@ -120,10 +120,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// <see cref="ImmutableArray{Byte}.IsDefault"/> property set to <see langword="true"/>.</exception>
     /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
     /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
-    /// <remarks>
-    /// This overload is more efficient because it avoids copying <paramref name="grammarData"/>.
-    /// </remarks>
-    public static Grammar Create(ImmutableArray<byte> grammarData)
+    public static Grammar Load(ImmutableArray<byte> grammarData)
     {
         if (grammarData.IsDefault)
         {
@@ -134,27 +131,9 @@ public abstract partial class Grammar : IGrammarProvider
         return grammar;
     }
 
-    /// <summary>
-    /// Creates a <see cref="Grammar"/> from a byte buffer.
-    /// </summary>
-    /// <param name="grammarData">A <see cref="ReadOnlySpan{Byte}"/>
-    /// containing the grammar's data.</param>
-    /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
-    /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
-    /// <remarks>
-    /// The contents of <paramref name="grammarData"/> will be copied to a new internal buffer.
-    /// To limit such data copies use <see cref="Create(ImmutableArray{byte})"/> instead.
-    /// </remarks>
-    public static Grammar Create(ReadOnlySpan<byte> grammarData)
-    {
-        ManagedMemoryGrammar grammar = new ManagedMemoryGrammar(grammarData);
-        grammar.ValidateContent();
-        return grammar;
-    }
-
     // Internal for benchmarking purposes.
-    // It can be made public once a [RequiresUnsafe] attribute is added.
-    internal static Grammar CreateUnsafe(ImmutableArray<byte> grammarData)
+    // It can be made public once a [RequiresUnsafe] attribute is added to the BCL.
+    internal static Grammar LoadUnsafe(ImmutableArray<byte> grammarData)
     {
         if (grammarData.IsDefault)
         {
@@ -169,10 +148,12 @@ public abstract partial class Grammar : IGrammarProvider
     /// <param name="path">The path to the file.</param>
     /// <exception cref="ArgumentNullException"><paramref name="path"/> is
     /// <see langword="null"/>.</exception>
-    public static Grammar CreateFromFile(string path)
+    /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
+    /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
+    public static Grammar Load(string path)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(path);
-        ImmutableArray<byte> data;
+        byte[] data;
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         // If the file is very big, read only a part of it to make
         // sure it has a valid header, before reading the entire file.
@@ -181,19 +162,18 @@ public abstract partial class Grammar : IGrammarProvider
             if (file.Length > 4096)
             {
                 Span<byte> buffer = stackalloc byte[GrammarHeader.MinHeaderDisambiguatorSize];
-                int nRead = file.ReadAtLeast(buffer, buffer.Length);
+                file.ReadExactly(buffer);
                 GrammarHeader header = GrammarHeader.Read(buffer);
                 ValidateHeader(header);
                 file.Position = 0;
             }
-            byte[] dataArray = new byte[file.Length];
-            file.ReadExactly(dataArray);
-            data = ImmutableCollectionsMarshal.AsImmutableArray(dataArray);
+            data = new byte[file.Length];
+            file.ReadExactly(data);
         }
 #else
-        data = ImmutableCollectionsMarshal.AsImmutableArray(File.ReadAllBytes(path));
+        data = File.ReadAllBytes(path);
 #endif
-        return Create(data);
+        return Load(ImmutableCollectionsMarshal.AsImmutableArray(data));
     }
 
     /// <summary>
@@ -205,8 +185,9 @@ public abstract partial class Grammar : IGrammarProvider
     /// <remarks>
     /// Both Enhanced Grammar Tables (EGT) and Compiled Grammar Tables (CGT) files are supported.
     /// </remarks>
-    public static Grammar CreateFromGoldParserGrammar(Stream grammarFile)
+    public static Grammar ConvertFromGoldParser(Stream grammarFile)
     {
+        ArgumentNullExceptionCompat.ThrowIfNull(grammarFile);
         GoldGrammar grammar = GoldGrammarReader.ReadGrammar(grammarFile);
         ImmutableArray<byte> data;
         try
@@ -220,8 +201,35 @@ public abstract partial class Grammar : IGrammarProvider
             // We cover only Convert to avoid wrapping I/O errors.
             throw new InvalidDataException(Resources.Grammar_FailedToConvert, e);
         }
-        return Create(data);
+        return Load(data);
     }
+
+    /// <summary>
+    /// Converts a grammar file produced by GOLD Parser into a <see cref="Grammar"/>.
+    /// </summary>
+    /// <param name="path">The path to the grammar file.</param>
+    /// <exception cref="NotSupportedException">The data format is unsupported.</exception>
+    /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
+    /// <remarks>
+    /// Both Enhanced Grammar Tables (EGT) and Compiled Grammar Tables (CGT) files are supported.
+    /// </remarks>
+    public static Grammar ConvertFromGoldParser(string path)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        using Stream grammarFile = File.OpenRead(path);
+        return ConvertFromGoldParser(grammarFile);
+    }
+
+    // It's unlikely that we will expose an API that supports reading both a Farkle and a GOLD Parser grammar
+    // for a couple reasons:
+    // 1. Reading a GOLD Parser grammar requires converting it to a Farkle grammar, which is both more expensive
+    //    and will root all the grammar writer code when trimming.
+    // 2. Farkle and GOLD Parser grammars have different access patterns (random vs sequential), so an API that
+    //    supports both would not be appropriate. That's why there are no APIs to load the former from a stream
+    //    or the latter from an immutable array.
+    // 3. There would be few use cases for such API. If you need it, you can implement it in your own code by
+    //    reading the first eight bytes of the file to see if it's a Farkle grammar, and try to convert it otherwise.
+    //    Such code is available in the CLI tool's sources at CompositePath.fs.
 
     internal Dfa<TChar>? GetDfa<TChar>()
     {
@@ -383,9 +391,9 @@ public abstract partial class Grammar : IGrammarProvider
         DfaOnChar?.ValidateContent(grammarFile, in GrammarTables);
     }
 
-    private sealed class ManagedMemoryGrammar : Grammar
+    private sealed class ManagedMemoryGrammar(ImmutableArray<byte> grammarFile) : Grammar(grammarFile.AsSpan())
     {
-        private readonly ImmutableArray<byte> _grammarFile;
+        private readonly ImmutableArray<byte> _grammarFile = grammarFile;
 
         internal override ReadOnlySpan<byte> GrammarFile
         {
@@ -395,18 +403,6 @@ public abstract partial class Grammar : IGrammarProvider
                 Debug.Assert(!_grammarFile.IsDefault);
                 return _grammarFile.AsSpan();
             }
-        }
-
-        public ManagedMemoryGrammar(ImmutableArray<byte> grammarFile) : base(grammarFile.AsSpan())
-        {
-            _grammarFile = grammarFile;
-        }
-
-        public ManagedMemoryGrammar(ReadOnlySpan<byte> grammarFile) : base(grammarFile)
-        {
-            // To support in the future unchecked indexing into the file,
-            // we must load the grammar in memory we own.
-            _grammarFile = grammarFile.ToImmutableArray();
         }
     }
 }

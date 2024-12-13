@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -34,6 +35,7 @@ public readonly struct DfaEdge<TChar>(TChar keyFrom, TChar keyTo, int target) : 
     /// </remarks>
     public int Target { get; } = target;
 
+    [ExcludeFromCodeCoverage]
     private string DebuggerDisplay()
     {
         string target = Target < 0 ? "<fail>" : Target.ToString();
@@ -42,9 +44,9 @@ public readonly struct DfaEdge<TChar>(TChar keyFrom, TChar keyTo, int target) : 
             return $"{Format(KeyFrom)} -> {target}";
         }
         return $"[{Format(KeyFrom)},{Format(KeyTo)}] -> {target}";
-
     }
 
+    [ExcludeFromCodeCoverage]
     internal static string Format(TChar c)
     {
         if (c is char c2)

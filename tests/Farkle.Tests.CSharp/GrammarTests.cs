@@ -23,31 +23,11 @@ internal class GrammarTests
         });
     }
 
-    private static IEnumerable<string[]> FarkleAndGoldGrammars
-    {
-        get
-        {
-            foreach (string path in TestUtilities.Farkle7Grammars)
-            {
-                var egtFile = path.Replace(".grammar.dat", ".egt");
-                if (File.Exists(egtFile))
-                {
-                    yield return new string[] { path, egtFile };
-                }
-                var cgtFile = path.Replace(".grammar.dat", ".cgt");
-                if (File.Exists(egtFile))
-                {
-                    yield return new string[] { path, cgtFile };
-                }
-            }
-        }
-    }
-
     [TestCaseSource(typeof(TestUtilities), nameof(TestUtilities.GoldParserGrammars))]
     public void TestGoldParserConversion(string goldGrammar)
     {
         var convertedGrammar = ConvertGrammarFile(goldGrammar);
-        _ = Grammar.Create(convertedGrammar);
+        _ = Grammar.Load(convertedGrammar);
 
         var farkleGrammar = Path.ChangeExtension(goldGrammar, ".grammar.dat");
         if (File.Exists(farkleGrammar))
@@ -68,7 +48,7 @@ internal class GrammarTests
     {
         var filePath = TestUtilities.GetResourceFile(grammarFile);
 
-        var grammar = Grammar.CreateFromFile(filePath);
+        var grammar = Grammar.Load(filePath);
 
         Assert.Multiple(() =>
         {
@@ -133,5 +113,54 @@ internal class GrammarTests
                 Assert.That(count, Is.EqualTo(lr.Count));
             }
         });
+    }
+
+    [TestCase("gml.grammar.dat")] // Only test grammar with more than one group
+    public void TestGrammarObjectEquality(string grammarFile)
+    {
+        var grammar1 = Grammar.Load(TestUtilities.GetResourceFile(grammarFile));
+        var grammar2 = Grammar.Load(TestUtilities.GetResourceFile(grammarFile));
+
+        var term1 = grammar1.Terminals.First();
+        var term2 = grammar1.Terminals.ElementAt(1);
+        var term3 = grammar2.Terminals.First();
+
+        var nont1 = grammar1.Nonterminals.First();
+        var nont2 = grammar1.Nonterminals.ElementAt(1);
+        var nont3 = grammar2.Nonterminals.First();
+
+        var group1 = grammar1.Groups.First();
+        var group2 = grammar1.Groups.ElementAt(1);
+        var group3 = grammar2.Groups.First();
+
+        var prod1 = grammar1.Productions.First();
+        var prod2 = grammar1.Productions.ElementAt(1);
+        var prod3 = grammar2.Productions.First();
+
+#pragma warning disable CS1718 // Comparison made to same variable
+#pragma warning disable NUnit2010 // Use EqualConstraint for better assertion messages in case of failure
+        Assert.Multiple(() =>
+        {
+            // Same object from same grammar is equal
+            Assert.That(term1 == term1);
+            // Different objects from same grammar are not equal
+            Assert.That(term1 != term2);
+            // Same objects from different grammars are not equal
+            Assert.That(term1 != term3);
+
+            Assert.That(nont1 == nont1);
+            Assert.That(nont1 != nont2);
+            Assert.That(nont1 != nont3);
+
+            Assert.That(group1 == group1);
+            Assert.That(group1 != group2);
+            Assert.That(group1 != group3);
+
+            Assert.That(prod1 == prod1);
+            Assert.That(prod1 != prod2);
+            Assert.That(prod1 != prod3);
+        });
+#pragma warning restore NUnit2010 // Use EqualConstraint for better assertion messages in case of failure
+#pragma warning restore CS1718 // Comparison made to same variable
     }
 }

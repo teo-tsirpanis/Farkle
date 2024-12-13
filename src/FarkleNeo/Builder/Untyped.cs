@@ -51,8 +51,7 @@ public sealed class Nonterminal : INonterminal
     /// <exception cref="InvalidOperationException">The productions have already been successfully set.</exception>
     /// <remarks>This function and its overloads must be called exactly once, and before the
     /// nonterminal is used in building a grammar.</remarks>
-    [ExcludeFromCodeCoverage]
-    [OverloadResolutionPriority(-1)]
+    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public void SetProductions(params ProductionBuilder[] productions)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(productions);

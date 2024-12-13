@@ -17,7 +17,6 @@ internal static class GoldGrammarConverter
         Symbol[] symbols = grammar.Symbols;
         GoldGrammar.Production[] productions = grammar.Productions;
         GoldGrammar.Group[] groups = grammar.Groups;
-        ImmutableArray<LalrAction>[] lalrStates = grammar.LalrStates;
 
         EntityHandle[] symbolMapping = new EntityHandle[symbols.Length];
         ProductionHandle[] productionMapping = new ProductionHandle[productions.Length];

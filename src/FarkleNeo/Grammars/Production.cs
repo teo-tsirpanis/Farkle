@@ -10,20 +10,23 @@ namespace Farkle.Grammars;
 /// Represents a production of a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
-/// A production consists of a "head" <see cref="Nonterminal"/>
-/// and a (possibly empty) sequence of terminals or nonterminals
-/// such that when these symbols are encountered, the head
-/// nonterminal can be derived.
+/// A production is a rule of the form <c>A ::= b</c>, where <c>A</c> (the <see cref="Head"/>) is a <see cref="Nonterminal"/>
+/// and b (the <see cref="Members"/>) is a possibly empty sequence of terminals or nonterminals such that when the right-hand
+/// side symbols are encountered, they can derive and be substituted by the left-hand side symbol.
 /// </remarks>
 /// <seealso cref="Grammar.Productions"/>
 /// <seealso cref="Nonterminal.Productions"/>
-public readonly struct Production
+public readonly struct Production : IEquatable<Production>
 {
     private readonly Grammar _grammar;
 
     /// <summary>
     /// The <see cref="Production"/>'s <see cref="ProductionHandle"/>.
     /// </summary>
+    /// <remarks>
+    /// In earlier versions of Farkle the <c>Handle</c> property referred
+    /// to the property that is now called <see cref="Members"/>.
+    /// </remarks>
     public ProductionHandle Handle { get; }
 
     internal Production(Grammar grammar, ProductionHandle handle)
@@ -43,7 +46,7 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// The <see cref="Production"/>'s head.
+    /// The nonterminal on the <see cref="Production"/>'s left-hand side.
     /// </summary>
     public Nonterminal Head
     {
@@ -55,7 +58,7 @@ public readonly struct Production
     }
 
     /// <summary>
-    /// A list of the <see cref="Production"/>'s members.
+    /// The terminals or nonterminals on the <see cref="Production"/>'s right-hand side.
     /// </summary>
     public ProductionMemberList Members
     {
@@ -67,8 +70,17 @@ public readonly struct Production
         }
     }
 
+    /// <inheritdoc/>
+    public bool Equals(Production other) => _grammar == other._grammar && Handle == other.Handle;
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is Production other && Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
+
     /// <summary>
-    /// Returns a string describing the the <see cref="Production"/>.
+    /// Returns a string describing the <see cref="Production"/>.
     /// </summary>
     public override string ToString()
     {
@@ -91,4 +103,18 @@ public readonly struct Production
 
         return sb.ToString();
     }
+
+    /// <summary>
+    /// Compares two <see cref="Production"/>s for equality.
+    /// </summary>
+    /// <param name="left">The first production.</param>
+    /// <param name="right">The second production.</param>
+    public static bool operator ==(Production left, Production right) => left.Equals(right);
+
+    /// <summary>
+    /// Compares two <see cref="Production"/>s for inequality.
+    /// </summary>
+    /// <param name="left">The first production.</param>
+    /// <param name="right">The second production.</param>
+    public static bool operator !=(Production left, Production right) => !left.Equals(right);
 }

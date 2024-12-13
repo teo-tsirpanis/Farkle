@@ -13,7 +13,7 @@ namespace Farkle.Grammars;
 /// </remarks>
 /// <seealso cref="Grammar.Terminals"/>
 /// <seealso cref="Grammar.TokenSymbols"/>
-public readonly struct TokenSymbol
+public readonly struct TokenSymbol : IEquatable<TokenSymbol>
 {
     private readonly Grammar _grammar;
 
@@ -80,8 +80,31 @@ public readonly struct TokenSymbol
         }
     }
 
+    /// <inheritdoc/>
+    public bool Equals(TokenSymbol other) => _grammar == other._grammar && Handle == other.Handle;
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is TokenSymbol other && Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
+
     /// <summary>
-    /// Returns a string describing the the <see cref="TokenSymbol"/>.
+    /// Returns a string describing the <see cref="TokenSymbol"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : FormatName(Name);
+
+    /// <summary>
+    /// Compares two <see cref="TokenSymbol"/>s for equality.
+    /// </summary>
+    /// <param name="left">The first token symbol.</param>
+    /// <param name="right">The second token symbol.</param>
+    public static bool operator ==(TokenSymbol left, TokenSymbol right) => left.Equals(right);
+
+    /// <summary>
+    /// Compares two <see cref="TokenSymbol"/>s for inequality.
+    /// </summary>
+    /// <param name="left">The first token symbol.</param>
+    /// <param name="right">The second token symbol.</param>
+    public static bool operator !=(TokenSymbol left, TokenSymbol right) => !left.Equals(right);
 }

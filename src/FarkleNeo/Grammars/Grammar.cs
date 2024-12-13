@@ -220,6 +220,17 @@ public abstract partial class Grammar : IGrammarProvider
         return ConvertFromGoldParser(grammarFile);
     }
 
+    // It's unlikely that we will expose an API that supports reading both a Farkle and a GOLD Parser grammar
+    // for a couple reasons:
+    // 1. Reading a GOLD Parser grammar requires converting it to a Farkle grammar, which is both more expensive
+    //    and will root all the grammar writer code when trimming.
+    // 2. Farkle and GOLD Parser grammars have different access patterns (random vs sequential), so an API that
+    //    supports both would not be appropriate. That's why there are no APIs to load the former from a stream
+    //    or the latter from an immutable array.
+    // 3. There would be few use cases for such API. If you need it, you can implement it in your own code by
+    //    reading the first eight bytes of the file to see if it's a Farkle grammar, and try to convert it otherwise.
+    //    Such code is available in the CLI tool's sources at CompositePath.fs.
+
     internal Dfa<TChar>? GetDfa<TChar>()
     {
         if (typeof(TChar) == typeof(char))

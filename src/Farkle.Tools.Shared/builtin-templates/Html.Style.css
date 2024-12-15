@@ -28,7 +28,7 @@ nav>a:hover {
     color: firebrick;
 }
 
-footer {
+html>footer {
     border-top: 1px solid lightgray;
     text-align: center;
     font-size: 0.75em;
@@ -71,8 +71,13 @@ a:active {
     content: ">";
 }
 
-#syntax>ul>li>.nonterminal::after {
-    content: "> ::=";
+.nonterminal-is-defined-as {
+    font-family: monospace;
+    user-select: none;
+}
+
+.syntax-attribute {
+    user-select: none;
 }
 
 .productions>li {

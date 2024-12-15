@@ -5,9 +5,14 @@ https://opensource.org/licenses/MIT ~}}
 <section id="syntax">
     <h2>Syntax</h2>
     <ul>
+        {{~$has_hidden = false; $has_noisy = false; $has_generated = false~}}
         {{~for $nont in $1~}}
         <li id="n{{for.index}}">
             <span class="nonterminal">{{html.escape $nont.name}}</span>
+            {{-if is_generated $nont.attributes; $has_generated = true-}}
+            <abbr class="syntax-attribute" title="Generated"><sup>G</sup></abbr>
+            {{-end-}}
+            <span class="nonterminal-is-defined-as"> ::=</span>
             <ul class="productions">
                 {{~for $prod in $nont.productions~}}
                 <li id="prod{{$prod.handle.value}}" >
@@ -17,6 +22,15 @@ https://opensource.org/licenses/MIT ~}}
                         <li>
                             {{-if $sym.is_token_symbol-}}
                             <span class="terminal">{{html.escape $sym_extracted.name}}</span>
+                            {{-if is_hidden $sym_extracted.attributes; $has_hidden = true-}}
+                            <abbr class="syntax-attribute" title="Hidden"><sup>H</sup></abbr>
+                            {{-end-}}
+                            {{-if is_noise $sym_extracted.attributes; $has_noisy = true-}}
+                            <abbr class="syntax-attribute" title="Noisy"><sup>N</sup></abbr>
+                            {{-end-}}
+                            {{-if is_generated $sym_extracted.attributes; $has_generated = true-}}
+                            <abbr class="syntax-attribute" title="Generated"><sup>G</sup></abbr>
+                            {{-end-}}
                             {{-else-}}
                             <a class="nonterminal" href="#n{{$sym_extracted.handle.value}}">{{html.escape $sym_extracted.name}}</a>
                             {{-end-}}
@@ -36,4 +50,23 @@ https://opensource.org/licenses/MIT ~}}
         </li>
         {{~end~}}
     </ul>
+    {{~if $has_hidden || $has_noisy || $has_generated~}}
+    <footer>
+        <h3>Abbreviations</h3>
+        <dl>
+            {{~if $has_hidden~}}
+            <dt>Hidden<sup>H</sup></dt>
+            <dd>The symbol will not be shown in the expected symbols list in case of a syntax error.</dd>
+            {{~end~}}
+            {{~if $has_noisy~}}
+            <dt>Noisy<sup>N</sup></dt>
+            <dd>The symbol will be ignored if it is encountered in an unexpected place in the input.</dd>
+            {{~end~}}
+            {{~if $has_generated~}}
+            <dt>Generated<sup>G</sup></dt>
+            <dd>The symbol was not explicitly defined by the grammar author.</dd>
+            {{~end~}}
+        </dl>
+    </footer>
+    {{~end~}}
 </section>

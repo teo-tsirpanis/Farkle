@@ -122,6 +122,10 @@ internal static class GrammarBuild
             {
                 flags |= TokenSymbolAttributes.Noise;
             }
+            if (GrammarDefinition.IsGenerated(terminal))
+            {
+                flags |= TokenSymbolAttributes.Generated;
+            }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), flags);
             symbolMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
             if (GetTerminalRegex(terminal) is { } regex)
@@ -202,8 +206,13 @@ internal static class GrammarBuild
         foreach (INonterminal nonterminal in grammarDefinition.Nonterminals)
         {
             string name = grammarDefinition.GetName(nonterminal);
+            NonterminalAttributes flags = NonterminalAttributes.None;
+            if (GrammarDefinition.IsGenerated(nonterminal))
+            {
+                flags |= NonterminalAttributes.Generated;
+            }
             int productionCount = nonterminal.FreezeAndGetProductions().Length;
-            NonterminalHandle handle = writer.AddNonterminal(writer.GetOrAddString(name), NonterminalAttributes.None, productionCount);
+            NonterminalHandle handle = writer.AddNonterminal(writer.GetOrAddString(name), flags, productionCount);
             symbolMap.Add(nonterminal, handle);
         }
 

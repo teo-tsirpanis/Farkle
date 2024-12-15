@@ -5,7 +5,6 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Grammars
 open Farkle.Monads.Either
 open Farkle.Tools
 open Scriban
@@ -39,9 +38,6 @@ module TemplateEngine =
         | GrammarCustomTemplate(_, path, _) ->
             let templateText = File.ReadAllText path
             parseTemplate log templateText path
-
-    let private conflictReportHtmlOptions =
-        {CustomHeadContent = ""; NoCss = false; NoLALRStates = false; NoDFAStates = true}
 
     let private createTemplateContext templateType =
         let tc = TemplateContext()

@@ -12,6 +12,7 @@ open Farkle.Diagnostics
 open Farkle.Parser.Semantics
 open Farkle.Samples
 open Farkle.Samples.FSharp
+open Farkle.Tests
 open System.IO
 open System.Text.Json.Nodes
 

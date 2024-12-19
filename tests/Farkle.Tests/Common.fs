@@ -68,15 +68,7 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
 let buildSimpleRegexMatcher caseSensitive regexes =
     buildSimpleRegexMatcherEx caseSensitive false regexes
 
-// It guarantees to work regardless of current directory.
-// The resources folder is copied alongside with the executable.
-let resourcesPath = AppContext.BaseDirectory |> Path.GetDirectoryName
-
-let allEGTFiles =
-    Directory.GetFiles(resourcesPath, "*.egt")
-    |> List.ofArray
-
-let getResourceFile fileName = Path.Combine(resourcesPath, fileName)
+let getResourceFile fileName = Path.Combine(AppContext.BaseDirectory, fileName)
 
 let loadGrammar (egtFile: string) =
     let resourceFile = getResourceFile egtFile

@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
@@ -44,6 +43,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "performance", "performance", "{7DD730E1-A6E1-44BA-93D2-0C1178E2DF05}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle6.Samples", "performance\Farkle6.Samples\Farkle6.Samples.fsproj", "{145D10C9-9D2A-48BC-B7C7-99D7665A5BD8}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Farkle.Tools.Shared.Tests", "tests\Farkle.Tools.Shared.Tests\Farkle.Tools.Shared.Tests.fsproj", "{33B29558-D0EF-4F86-A15F-6DF15EC02995}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -115,6 +116,10 @@ Global
 		{145D10C9-9D2A-48BC-B7C7-99D7665A5BD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{145D10C9-9D2A-48BC-B7C7-99D7665A5BD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{145D10C9-9D2A-48BC-B7C7-99D7665A5BD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33B29558-D0EF-4F86-A15F-6DF15EC02995}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33B29558-D0EF-4F86-A15F-6DF15EC02995}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33B29558-D0EF-4F86-A15F-6DF15EC02995}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33B29558-D0EF-4F86-A15F-6DF15EC02995}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -136,6 +141,7 @@ Global
 		{5B961FB0-B564-4A04-B1D8-6E3580F0B2F8} = {67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}
 		{3F9FD49D-0EB0-467C-B2C8-853F7D192A80} = {7DD730E1-A6E1-44BA-93D2-0C1178E2DF05}
 		{145D10C9-9D2A-48BC-B7C7-99D7665A5BD8} = {7DD730E1-A6E1-44BA-93D2-0C1178E2DF05}
+		{33B29558-D0EF-4F86-A15F-6DF15EC02995} = {67F3BA8F-F616-4039-9DC1-F5D0523BB0FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94BF4A95-7FC5-4237-8119-C83972D4E1E9}

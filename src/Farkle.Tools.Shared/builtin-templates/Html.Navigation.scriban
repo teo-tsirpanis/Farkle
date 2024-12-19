@@ -2,7 +2,6 @@
 
 This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
-{{~if no_lalrstates && no_dfastates; ret; end~}}
 <nav class="flex-container">
     <a href="#properties">Properties</a>
     <a href="#syntax">Syntax</a>

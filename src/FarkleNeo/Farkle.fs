@@ -194,7 +194,11 @@ module internal ActivePatterns =
 
     open System.Collections.Immutable
 
+#if NULLABLE
+    let private mapExpectedTokenNames (x: ImmutableArray<string | null>) =
+#else
     let private mapExpectedTokenNames (x: string ImmutableArray) =
+#endif
         let b = ImmutableArray.CreateBuilder(x.Length)
         for i = 0 to x.Length - 1 do
             b.Add <| ValueOption.ofObj x[i]

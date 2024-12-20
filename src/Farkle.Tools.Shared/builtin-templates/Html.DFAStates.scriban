@@ -6,9 +6,9 @@ https://opensource.org/licenses/MIT ~}}
     <h2>DFA States</h2>
     <div class="flex-container">
         {{~for $state in $1~}}
-        <table id="dfa{{$state.index}}">
-            <caption>State {{$state.index}}</caption>
-            {{~$has_edges = !$state.edges.empty? || $state.anything_else
+        <table id="dfa{{for.index}}"{{if $state.has_conflicts}} class="conflicting-state"{{end}}>
+            <caption>State {{for.index}}</caption>
+            {{~$has_edges = !$state.edges.empty? || $state.default_transition >= 0
                 if $has_edges~}}
             <thead><tr><th scope="col">Characters</th><th scope="col">Action</th></tr></thead>
             <tbody>
@@ -19,16 +19,15 @@ https://opensource.org/licenses/MIT ~}}
                         {{-format_char_range $range-}}{{-if !for.last; ", "; end-}}
                         {{-end-}}
                     </td>
-                    {{~if $edge.key
-                        $goto_state = $edge.key.value~}}
+                    {{~$goto_state = $edge.key; if $goto_state >= 0~}}
                     <td class="dfa-goto">Go to <a href="#dfa{{$goto_state}}">State {{$goto_state}}</a></td>
                     {{~else~}}
                     <td class="dfa-fail">Fail</td>
                     {{~end~}}
                 </tr>
                 {{~end~}}
-                {{~if $state.anything_else
-                    $ae_state = $state.anything_else.value~}}
+                {{~if $state.default_transition >= 0
+                    $ae_state = $state.default_transition~}}
                 <tr>
                     <td class="dfa-anything-else">{{if $state.edges.empty?}}Always{{else}}In all other cases{{end}}</td>
                     <td class="dfa-goto">Go to <a href="#dfa{{$ae_state}}">State {{$ae_state}}</a></td>
@@ -36,23 +35,23 @@ https://opensource.org/licenses/MIT ~}}
                 {{~end~}}
             </tbody>
             {{~end~}}
-            {{~if $state.accept_symbol
-                $accept_symbol = $state.accept_symbol.value
-                $as_item = $accept_symbol.item~}}
+            {{~if !$state.accept_symbols.empty? ~}}
             <tfoot>
+                {{~for $accept_symbol in $state.accept_symbols~}}
                 <tr>
-                    <td {{if $has_edges}}colspan="2" {{end}}class="dfa-accept">
-                        {{~if $accept_symbol.is_choice1_of4~}}
-                        Accept <span class="terminal">{{html.escape $as_item.name}}</span>
-                        {{~else if $accept_symbol.is_choice2_of4~}}
-                        Accept <span class="noise">{{html.escape $as_item.name}}</span> (Noise)
-                        {{~else if $accept_symbol.is_choice3_of4~}}
-                        Accept <span class="group-start">{{html.escape $as_item.name}}</span> (Group Start)
-                        {{~else~}}
-                        Accept <span class="group-end">{{html.escape $as_item.name}}</span> (Group End)
-                        {{~end~}}
+                    <td {{if $has_edges}}colspan="2" {{end}}class="dfa-accept{{$state.has_conflicts ? " conflicting-action" : ""}}">
+                        {{-if is_terminal $accept_symbol.attributes-}}
+                        Accept <span class="terminal">{{html.escape $accept_symbol.name}}</span>
+                        {{-else if is_noise $accept_symbol.attributes-}}
+                        Accept <span class="noise">{{html.escape $accept_symbol.name}}</span> (Noise)
+                        {{-else if is_group_start $accept_symbol.attributes-}}
+                        Accept <span class="group-start">{{html.escape $accept_symbol.name}}</span> (Group Start)
+                        {{-else-}}
+                        Accept <span>{{html.escape $accept_symbol.name}}</span>
+                        {{-end-}}
                     </td>
                 </tr>
+                {{~end~}}
             </tfoot>
             {{~end~}}
         </table>

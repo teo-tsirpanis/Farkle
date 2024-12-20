@@ -5,7 +5,7 @@
 
 namespace Farkle.Tools.Templating
 
-open Farkle.Collections
+open Farkle.Grammars.StateMachines
 open System
 open System.Text
 open System.Web
@@ -19,7 +19,7 @@ type HtmlFunctions(options) =
     member _.no_lalrstates = options.NoLALRStates
     member _.no_dfastates = options.NoDFAStates
     static member attr_escape x = HttpUtility.HtmlAttributeEncode x
-    static member format_char_range (x: RangeMapElement<char,uint option>) =
+    static member format_char_range (x: DfaEdge<char>) =
         let sb = StringBuilder()
         let formatChar forceCodepoint c =
             match c with

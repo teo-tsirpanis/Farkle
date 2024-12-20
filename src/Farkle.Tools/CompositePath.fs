@@ -9,7 +9,9 @@ open Farkle.Grammars
 open Farkle.Monads.Either
 open Farkle.Tools.Templating
 open System
+open System.Buffers.Binary
 open System.IO
+open System.Runtime.InteropServices
 open Serilog
 
 /// A special kind of file path that also specifies the name of a precompiled grammar.
@@ -30,6 +32,23 @@ module CompositePath =
             None
         else
             Some x
+
+    // Loads a file either as a Farkle grammar or as a GOLD Parser grammar, depending on its signature.
+    let private loadGrammar path =
+        use f = File.OpenRead(path)
+        let mutable magic = 0UL
+        let nRead = f.Read(MemoryMarshal.AsBytes(Span(&magic)))
+        f.Position <- 0L
+        if not BitConverter.IsLittleEndian then
+            magic <- BinaryPrimitives.ReverseEndianness magic
+        if nRead = sizeof<uint64> && magic = 0x0000656C6B726146UL then
+            let bytes = f.Length |> Int32.CreateSaturating |> Array.zeroCreate
+            f.ReadExactly(bytes.AsSpan())
+            bytes
+            |> ImmutableCollectionsMarshal.AsImmutableArray
+            |> Grammar.Create
+        else
+            Grammar.CreateFromGoldParserGrammar f
 
     let create path =
         let sep = CompositePath.Separator
@@ -64,6 +83,7 @@ module CompositePath =
                 // But for the very unlikely case that the project loops again, we should fail.
                 Log.Fatal("An infinite loop was detected in the composite path resolver. Please report a bug on GitHub.")
                 return! Error()
+#if TODO_PRECOMPILER
         elif isAssemblyExtension ext then
             use loader = new PrecompiledAssemblyFileLoader(filePath)
             match grammarName with
@@ -90,8 +110,9 @@ want by appending {CompositePathSuffixHint} to the input file.", "::<grammar-nam
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()
+#endif
         elif isGrammarExtension ext then
-            return GrammarTemplateInput.Create (EGT.ofFile filePath) filePath
+            return GrammarTemplateInput.Create (loadGrammar filePath) filePath
         else
             Log.Error("Unsupported file extension: {FileExtension}", ext.ToString())
             return! Error()

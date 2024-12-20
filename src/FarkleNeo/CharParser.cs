@@ -289,7 +289,7 @@ public static class CharParser
     /// <param name="grammar">The <see cref="Grammar"/> the syntax checker will use.</param>
     /// <exception cref="ArgumentNullException"><paramref name="grammar"/> is <see langword="null"/>.</exception>
     /// <remarks>Syntax checkers always return <see langword="null"/> in case of success.</remarks>
-    public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class =>
+    public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class? =>
         Create(grammar, SyntaxChecker<char, T>.Instance);
 
     /// <summary>
@@ -304,7 +304,7 @@ public static class CharParser
     /// Converts a <see cref="CharParser{T}"/> to a syntax checker with a user-defined return type.
     /// </summary>
     /// <seealso cref="CreateSyntaxChecker{T}(Grammar)"/>
-    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class =>
+    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class? =>
         parser.WithSemanticProvider(SyntaxChecker<char, TNew>.Instance);
 
     /// <summary>

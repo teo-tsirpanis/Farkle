@@ -36,6 +36,9 @@ internal sealed class GrammarDefinition
 
     public INonterminal StartSymbol => Nonterminals[0];
 
+    public static bool IsGenerated(ISymbolBase symbol) =>
+        symbol is PlaceholderNonterminal;
+
     /// <summary>
     /// An equality comparer that compares the objects returned by
     /// <see cref="GetSymbolIdentityObject"/>.

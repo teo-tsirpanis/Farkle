@@ -79,7 +79,10 @@ let sourceProjects = [
 // The project to be tested
 let testProject = "./tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj"
 
-let fsharpTestProject = "./tests/Farkle.Tests/Farkle.Tests.fsproj"
+let fsharpTestProjects = [
+    "./tests/Farkle.Tests/Farkle.Tests.fsproj"
+    "./tests/Farkle.Tools.Shared.Tests/Farkle.Tools.Shared.Tests.fsproj"
+]
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
@@ -212,8 +215,8 @@ Target.create "RunCSharpUnitTests" (fun _ ->
 
 Target.description "Runs the F# unit tests"
 Target.create "RunFSharpUnitTests" (fun _ ->
-    fsharpTestProject
-    |> DotNet.test id
+    fsharpTestProjects
+    |> List.iter (DotNet.test id)
 )
 
 Target.description "Prepares the MSBuild integration tests"

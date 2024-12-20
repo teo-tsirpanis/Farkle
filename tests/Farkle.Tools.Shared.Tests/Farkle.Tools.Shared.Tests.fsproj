@@ -3,15 +3,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <!-- Using "new" to create disposable types. -->
-    <NoWarn>$(NoWarn);FS0760</NoWarn>
+    <Nullable>enable</Nullable>
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/FarkleNeo/Farkle.fs" />
-    <Compile Include="Common.fs" />
-    <!-- <Compile Include="GOLDParserBridge.fs" /> -->
-    <Compile Include="Generators.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
@@ -19,10 +15,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
-    <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
+    <ProjectReference Include="..\..\src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" />
   </ItemGroup>

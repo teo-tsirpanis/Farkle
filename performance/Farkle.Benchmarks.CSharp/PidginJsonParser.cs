@@ -3,9 +3,8 @@
 
 // Originally copied from
 // https://github.com/benjamin-hodgson/Pidgin/blob/main/Pidgin.Examples/Json/JsonParser.cs
-// and extended to parse the full JSON grammar.
+// and extended to parse the full JSON grammar and remove semantic actions.
 
-using System.Text.Json.Nodes;
 using Pidgin;
 using static Pidgin.Parser;
 
@@ -15,7 +14,7 @@ public static class PidginJsonParser
 {
     private static readonly Parser<char, char> _comma = Char(',');
 
-    private static readonly Parser<char, char> _charOrEscape =
+    private static readonly Parser<char, Unit> _charOrEscape =
         AnyCharExcept('"', '\\')
             .Or(Char('\\').Then(OneOf(
                     Char('"'),
@@ -26,61 +25,102 @@ public static class PidginJsonParser
                     Char('n').ThenReturn('\n'),
                     Char('r').ThenReturn('\r'),
                     Char('t').ThenReturn('\t'),
-                    Char('u').Then(_ =>
-                        OneOf("0123456789abcdefABCDEF")
-                            .RepeatString(4)
-                            .Select(cs => (char)ushort.Parse(cs, System.Globalization.NumberStyles.HexNumber))
-                    ))));
+                    Char('u').Then(OneOf("0123456789abcdefABCDEF").SkipRepeat(4))
+                    )))
+            .IgnoreResult();
 
-    private static readonly Parser<char, string> _string =
+    private static readonly Parser<char, Unit> _string =
         _charOrEscape
-            .ManyString()
+            .SkipMany()
             .Between(Char('"'));
 
-    private static readonly Parser<char, JsonNode?> _jsonNumber =
-        Real.Select<JsonNode?>(s => JsonValue.Create(s));
+    private static readonly Parser<char, Unit> _json =
+        Rec(() => OneOf(
+                _string,
+                Real.IgnoreResult(),
+                _jsonArray!,
+                _jsonObject!,
+                String("true").IgnoreResult(),
+                String("false").IgnoreResult(),
+                String("null").IgnoreResult()
+            ));
 
-    private static readonly Parser<char, JsonNode?> _jsonString =
-        _string.Select<JsonNode?>(s => JsonValue.Create(s));
-
-    private static readonly Parser<char, JsonNode?> _json =
-        Rec(() =>
-            _jsonString
-                .Or(_jsonNumber)
-                .Or(_jsonArray!)
-                .Or(_jsonObject!)
-                .Or(String("true").Select<JsonNode?>(_ => JsonValue.Create(true)))
-                .Or(String("false").Select<JsonNode?>(_ => JsonValue.Create(false)))
-                .Or(String("null").ThenReturn<JsonNode?>(null))
-            );
-
-    private static readonly Parser<char, JsonNode?> _jsonArray =
+    private static readonly Parser<char, Unit> _jsonArray =
         _json.Between(SkipWhitespaces)
-            .Separated(_comma)
-            .Between(Char('['), Char(']'))
-            .Select<JsonNode?>(els =>
+            .SkipSeparated(_comma)
+            .Between(Char('['), Char(']'));
+
+    private static readonly Parser<char, Unit> _jsonMember =
+        _string
+            .Then(Char(':').Between(SkipWhitespaces))
+            .Then(_json);
+
+    private static readonly Parser<char, Unit> _jsonObject =
+        _jsonMember.Between(SkipWhitespaces)
+            .SkipSeparated(_comma)
+            .Between(Char('{'), Char('}'));
+
+    public static Result<char, Unit> Parse(string input) => _json.Parse(input);
+
+    public static Result<char, Unit> Parse(TextReader input) => _json.Parse(input);
+
+    private static Parser<TToken, T> SkipRepeat<TToken, T>(this Parser<TToken, T> parser, int count) =>
+        Enumerable.Repeat(parser, count).Aggregate((a, b) => a.Then(b));
+
+    private static Parser<TToken, Unit> SkipSeparated<TToken, T, U>(this Parser<TToken, T> parser,
+        Parser<TToken, U> separator) =>
+        new SkipSeparatedAtLeastOnceParser<TToken, T, U>(parser, separator)
+            .Or(Parser<TToken>.Return(Unit.Value));
+
+    /// <summary>
+    /// Copy of Pidgin's <c>SeparatedAtLeastOnceParser</c> class, adapted to not return a value.
+    /// </summary>
+    /// <remarks>
+    /// Pidgin does not have <c>SkipSeparated***</c> APIs, but Farkle's parsers consistently do
+    /// not perform any semantic analysis, and we want to make the comparison fair.
+    /// </remarks>
+    private sealed class SkipSeparatedAtLeastOnceParser<TToken, T, U>(
+        Parser<TToken, T> parser,
+        Parser<TToken, U> separator) : Parser<TToken, Unit>
+    {
+        private readonly Parser<TToken, T> _remainderParser = separator.Then(parser);
+
+        public override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, out Unit result)
+        {
+            result = Unit.Value;
+            return parser.TryParse(ref state, ref expecteds, out _) &&
+                   Rest(_remainderParser, ref state, ref expecteds);
+        }
+
+        private static bool Rest(Parser<TToken, T> parser, ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds)
+        {
+            var lastStartingLoc = state.Location;
+            var childExpecteds = new PooledList<Expected<TToken>>(state.Configuration.ArrayPoolProvider.GetArrayPool<Expected<TToken>>());
+            while (parser.TryParse(ref state, ref childExpecteds, out _))
             {
-                var array = new JsonArray();
-                foreach (var el in els)
+                var endingLoc = state.Location;
+                childExpecteds.Clear();
+
+                if (endingLoc <= lastStartingLoc)
                 {
-                    array.Add(el);
+                    childExpecteds.Dispose();
+                    throw new InvalidOperationException("Many() used with a parser which consumed no input");
                 }
 
-                return array;
-            });
+                lastStartingLoc = endingLoc;
+            }
 
-    private static readonly Parser<char, KeyValuePair<string, JsonNode?>> _jsonMember =
-        _string
-            .Before(Char(':').Between(SkipWhitespaces))
-            .Then(_json, (name, val) => new KeyValuePair<string, JsonNode?>(name, val));
+            var lastParserConsumedInput = state.Location > lastStartingLoc;
+            if (lastParserConsumedInput)
+            {
+                expecteds.AddRange(childExpecteds.AsSpan());
+            }
 
-    private static readonly Parser<char, JsonNode?> _jsonObject =
-        _jsonMember.Between(SkipWhitespaces)
-            .Separated(_comma)
-            .Between(Char('{'), Char('}'))
-            .Select<JsonNode?>(xs => new JsonObject(xs));
+            childExpecteds.Dispose();
 
-    public static Result<char, JsonNode?> Parse(string input) => _json.Parse(input);
-
-    public static Result<char, JsonNode?> Parse(TextReader input) => _json.Parse(input);
+            // we fail if the most recent parser failed after consuming input.
+            // it sets state.Error for us
+            return !lastParserConsumedInput;
+        }
+    }
 }

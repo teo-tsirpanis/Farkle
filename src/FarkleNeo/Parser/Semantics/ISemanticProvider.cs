@@ -22,5 +22,4 @@ namespace Farkle.Parser.Semantics;
 /// </para>
 /// </remarks>
 public interface ISemanticProvider<TChar, out T> : ITokenSemanticProvider<TChar>,
-    IProductionSemanticProvider
-{ }
+    IProductionSemanticProvider;

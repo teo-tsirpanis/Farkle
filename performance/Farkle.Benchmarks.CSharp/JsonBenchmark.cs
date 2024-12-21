@@ -47,14 +47,20 @@ public class JsonBenchmark
     [Benchmark, BenchmarkCategory("MemoryInput")]
     public object Farkle7String() => _farkle7Parser.Parse(_jsonText).Value;
 
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    public object PidginString() => PidginJsonParser.Parse(_jsonText).Value;
+
     [Benchmark(Baseline = true), BenchmarkCategory("StreamingInput")]
     public object Farkle6Stream() => _farkle6Runtime.Parse(new StreamReader(new MemoryStream(_jsonBytes, false))).ResultValue;
 
     [Benchmark, BenchmarkCategory("StreamingInput")]
     public object Farkle7Stream() => _farkle7Parser.Parse(new StreamReader(new MemoryStream(_jsonBytes, false))).Value;
 
+    [Benchmark, BenchmarkCategory("StreamingInput")]
+    public object PidginStream() => PidginJsonParser.Parse(new StreamReader(new MemoryStream(_jsonBytes, false))).Value;
+
     [Benchmark(Baseline = true), BenchmarkCategory("Tokenize")]
-    public object Farkle6Tokenize()
+    public bool Farkle6Tokenize()
     {
         var cs = new Farkle6.IO.CharStream(_jsonText);
         while (!_farkle6Tokenizer.GetNextToken(Farkle6.PostProcessors.SyntaxChecker, cs).IsEOF)
@@ -65,7 +71,7 @@ public class JsonBenchmark
     }
 
     [Benchmark, BenchmarkCategory("Tokenize")]
-    public object Farkle7Tokenize()
+    public bool Farkle7Tokenize()
     {
         ParserState state = new();
         var reader = new Parser.ParserInputReader<char>(ref state, _jsonText);

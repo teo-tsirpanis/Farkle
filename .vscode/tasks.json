@@ -6,12 +6,11 @@
         {"label": "🧹CLEAN🧹", "command": "git", "args": ["clean", "-Xdf"], "problemMatcher": []},
         {"label": "🏭GENERATE CODE🏭", "command": "pwsh", "args": ["./build.ps1", "target", "GenerateCode"], "problemMatcher": []},
         {"label": "🔬TEST🔬", "group": {"kind": "test", "isDefault": true}, "command": "pwsh", "args": ["./build.ps1", "target", "Test"]},
-        {"label": "🦕LEGACY TEST🦕", "group": {"kind": "test", "isDefault": true}, "command": "pwsh", "args": ["./build.ps1", "target", "TestLegacy"]},
+        // TODO-FARKLE7: Re-enable once the precompiler is ported.
+        // {"label": "🦕LEGACY TEST🦕", "group": {"kind": "test", "isDefault": true}, "command": "pwsh", "args": ["./build.ps1", "target", "TestLegacy"]},
         {"label": "⚙BUILD TESTS⚙", "group": "build", "presentation": {"reveal": "silent"}, "command": "dotnet", "args": ["build", "tests/Farkle.Tests/Farkle.Tests.fsproj", "-c", "Debug"], "problemMatcher": []},
         {"label": "📦PACK📦", "command": "pwsh", "args": ["./build.ps1", "target", "NuGetPack"], "problemMatcher": []},
         {"label": "⏱BENCHMARK⏱", "command": "pwsh", "args": ["./build.ps1", "target", "Benchmark"], "problemMatcher": []},
         {"label": "📜DOCS📜", "command": "pwsh", "args": ["./build.ps1", "target", "GenerateDocsDebug"], "problemMatcher": []},
-        {"label": "🚀RELEASE🚀", "presentation": {"reveal": "always", "focus": false, "panel": "new", "showReuseMessage": false, "clear": true}, "command": "pwsh", "args": ["./build.ps1", "target", "Release"], "problemMatcher": []},
-        {"label": "📝RELEASE DOCS📝", "presentation": {"reveal": "always", "focus": false, "panel": "new", "showReuseMessage": false, "clear": true}, "command": "pwsh", "args": ["./build.ps1", "target", "ReleaseDocs"], "problemMatcher": []}
     ]
 }

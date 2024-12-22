@@ -1,6 +1,8 @@
 ﻿// Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+// Copied from https://github.com/IronyProject/Irony/blob/master/Irony.Samples/DataGrammars/JsonGrammar.cs
+
 using Irony.Parsing;
 
 namespace Farkle.Benchmarks;

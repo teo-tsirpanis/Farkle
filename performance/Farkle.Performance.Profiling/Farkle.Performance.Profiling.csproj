@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
-    <PackageReference Include="Farkle" Aliases="farkle6" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
   </ItemGroup>
 </Project>

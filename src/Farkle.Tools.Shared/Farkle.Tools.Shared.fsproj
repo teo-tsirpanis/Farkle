@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
-    <Compile Include="../Farkle/Monads.fs" />
+    <Compile Include="Monads.fs" />
     <Compile Include="ResourceLoader.fs" />
     <!-- <Compile Include="PrecompiledAssemblyFileLoader.fs" /> -->
     <Compile Include="Templating/TemplateTypes.fs" />
@@ -27,7 +27,7 @@
     <EmbeddedResource Include="builtin-templates/Html.Style.css" LogicalName="Html.Style.scriban" WithCulture="false" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../FarkleNeo/FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="Serilog" />

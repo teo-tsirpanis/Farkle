@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/FarkleNeo/Farkle.fs"/>
+    <Compile Include="../../src/Farkle/Farkle.fs"/>
     <Compile Include="JSON.fs" />
     <Compile Include="GOLDMetaLanguage.fs" />
     <Compile Include="SimpleMaths.fs" />
@@ -11,6 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" />
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
   </ItemGroup>
 </Project>

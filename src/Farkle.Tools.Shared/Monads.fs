@@ -1,15 +1,9 @@
-// Copyright (c) 2017 Theodore Tsirpanis
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
 
 namespace Farkle.Monads
 
-#if MONADS_PUBLIC
 module Either =
-#else
-module internal Either =
-#endif
 
     let rec doWhile fGuard fBody =
         if fGuard() then

@@ -59,12 +59,12 @@ let documentationConfiguration = DotNet.BuildConfiguration.Debug
 let configurationAsString = sprintf "%A" configuration
 
 let sourceFilesToGenerate = [
-    "./src/ProductionBuilders.scriban", "./src/FarkleNeo/Builder/ProductionBuilders.g.cs"
+    "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.cs"
 ]
 
 let DocumentationAssemblyFramework = "netstandard2.0"
 
-let farkleProject = "./src/Farkle/Farkle.fsproj"
+let farkleProject = "./src/Farkle/Farkle.csproj"
 
 let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
 

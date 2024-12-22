@@ -12,7 +12,6 @@ open Farkle.Tools.Templating
 open Serilog
 open System
 open System.IO
-open System.Runtime.InteropServices
 open System.Text.Json
 
 type Arguments =
@@ -126,7 +125,7 @@ let run json (args: ParseResults<_>) = either {
         | None ->
             let directory = Environment.CurrentDirectory.AsSpan()
             let mutable separatorChar = Path.DirectorySeparatorChar
-            let separator = MemoryMarshal.CreateReadOnlySpan(&separatorChar, 1)
+            let separator = ReadOnlySpan(&separatorChar)
             let fileName =
                 let grammarPath = grammarInput.GrammarPath.AsSpan()
                 if isGrammarExtension (Path.GetExtension grammarPath) then

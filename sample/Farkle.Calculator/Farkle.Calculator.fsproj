@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/FarkleNeo/Farkle.fs"/>
+    <Compile Include="../../src/Farkle/Farkle.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

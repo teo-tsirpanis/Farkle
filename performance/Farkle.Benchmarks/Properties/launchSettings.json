@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Farkle.Benchmarks.CSharp": {
+    "Farkle.Benchmarks": {
       "commandName": "Project",
       "workingDirectory": "./"
     }

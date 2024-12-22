@@ -91,7 +91,7 @@ let localPackagesFolder = "./tests/packages/"
 let projects = !! "**/*.??proj" -- "**/*.shproj"
 
 // The project to be benchmarked
-let benchmarkProject = "./performance/Farkle.Benchmarks.CSharp/Farkle.Benchmarks.CSharp.csproj"
+let benchmarkProject = "./performance/Farkle.Benchmarks/Farkle.Benchmarks.csproj"
 
 // Additional command line arguments passed to BenchmarkDotNet.
 let benchmarkArguments = Environment.environVarOrDefault "FARKLE_BENCHMARK_ARGS" "-f * --memory true -e github json"

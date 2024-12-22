@@ -46,9 +46,9 @@ module CompositePath =
             f.ReadExactly(bytes.AsSpan())
             bytes
             |> ImmutableCollectionsMarshal.AsImmutableArray
-            |> Grammar.Create
+            |> Grammar.Load
         else
-            Grammar.CreateFromGoldParserGrammar f
+            Grammar.ConvertFromGoldParser f
 
     let create path =
         let sep = CompositePath.Separator

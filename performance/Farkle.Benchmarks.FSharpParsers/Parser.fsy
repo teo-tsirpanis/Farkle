@@ -1,6 +1,6 @@
 //This parser has been written with help of "Real world OCaml" book By Yaron Minsky, Anil Madhavapeddy, Jason Hickey (chapter 15)
 %{
-open System.Text.Json.Nodes
+  // TODO: Remove the header once https://github.com/fsprojects/FsLexYacc/pull/228 is shipped.
 %}
 
 %start value

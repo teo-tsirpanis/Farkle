@@ -45,7 +45,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         // storing the start of the outermost group, and the current position was moving forward as the
         // characters inside the group were being read.
         // Farkle 7 simplifies this by tracking only one position, the characters before which can be discarded.
-        // Therefore we have to do some bookkeeping ourselves to keep the position without consuming it and
+        // Therefore, we have to do some bookkeeping ourselves to keep the position without consuming it and
         // throwing it away, and use a local variable to store the remaining characters.
         ReadOnlySpan<TChar> chars = input.RemainingCharacters[groupLength..];
         while (groupStack.Count != 0)

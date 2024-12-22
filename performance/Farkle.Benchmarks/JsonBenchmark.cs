@@ -30,6 +30,8 @@ public class JsonBenchmark
 
     private Parser.Tokenizers.Tokenizer<char> _farkle7Tokenizer;
 
+    private StreamReader JsonStreamReader() => new(new MemoryStream(_jsonBytes, false));
+
     [GlobalSetup]
     public void GlobalSetup()
     {
@@ -47,14 +49,35 @@ public class JsonBenchmark
     [Benchmark, BenchmarkCategory("MemoryInput")]
     public object Farkle7String() => _farkle7Parser.Parse(_jsonText).Value;
 
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    public object PidginString() => PidginJsonParser.Parse(_jsonText).Value;
+
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    public object IronyString() => IronyJsonGrammar.Parse(_jsonText);
+
+    // Testing these two libraries in parsing both strings and
+    // streams is not important; both are suboptimally implemented
+    // in one mode or another: FParsec copies the entire stream in
+    // memory and FsYacc first copies the string to a byte array.
+
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    // FParsec's more optimized "Big Data edition" only supports .NET Framework.
+    public void FParsecString() => FParsec.Json.ParseString(_jsonText, FileName);
+
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    public void FsLexYaccString() => FsLexYacc.Json.ParseString(_jsonText);
+
     [Benchmark(Baseline = true), BenchmarkCategory("StreamingInput")]
-    public object Farkle6Stream() => _farkle6Runtime.Parse(new StreamReader(new MemoryStream(_jsonBytes, false))).ResultValue;
+    public object Farkle6Stream() => _farkle6Runtime.Parse(JsonStreamReader()).ResultValue;
 
     [Benchmark, BenchmarkCategory("StreamingInput")]
-    public object Farkle7Stream() => _farkle7Parser.Parse(new StreamReader(new MemoryStream(_jsonBytes, false))).Value;
+    public object Farkle7Stream() => _farkle7Parser.Parse(JsonStreamReader()).Value;
+
+    [Benchmark, BenchmarkCategory("StreamingInput")]
+    public object PidginStream() => PidginJsonParser.Parse(JsonStreamReader()).Value;
 
     [Benchmark(Baseline = true), BenchmarkCategory("Tokenize")]
-    public object Farkle6Tokenize()
+    public bool Farkle6Tokenize()
     {
         var cs = new Farkle6.IO.CharStream(_jsonText);
         while (!_farkle6Tokenizer.GetNextToken(Farkle6.PostProcessors.SyntaxChecker, cs).IsEOF)
@@ -65,7 +88,7 @@ public class JsonBenchmark
     }
 
     [Benchmark, BenchmarkCategory("Tokenize")]
-    public object Farkle7Tokenize()
+    public bool Farkle7Tokenize()
     {
         ParserState state = new();
         var reader = new Parser.ParserInputReader<char>(ref state, _jsonText);

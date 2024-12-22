@@ -1,13 +1,11 @@
-// Copyright (c) 2021 Theodore Tsirpanis
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
 
-module FParsec.JSON.JSONParser
+module Farkle.Benchmarks.FParsec.Json
 
 open FParsec
 
-// Because FParsec's "grammars" and "post-processors" are
+// Because FParsec's "grammars" and "semantic providers" are
 // tightly coupled, the entire parser has to be rewritten
 // to parse JSON but keep nothing. Code adapted from
 // Chiron's 6.x.x branch.
@@ -73,4 +71,7 @@ let private arrayP =
 
 jsonR.Value <- wspP >>. choice [arrayP; boolP; nullP; numberP; objectP; stringP]
 
-let jsonParser = jsonP
+[<CompiledName("ParseString")>]
+let parseString str filename =
+    runParserOnString jsonP () filename str
+    |> function | Success((), (), _) -> () | Failure(msg, _, _) -> failwith msg

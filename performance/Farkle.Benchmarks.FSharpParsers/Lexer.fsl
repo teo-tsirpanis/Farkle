@@ -1,10 +1,10 @@
 //This lexer has been written with help of "Real world OCaml" book By Yaron Minsky, Anil Madhavapeddy, Jason Hickey (chapter 15)
 {
 
-module FsLexYacc.JSON.Lexer
+module Farkle.Benchmarks.FsLexYacc.JsonImpl.Lexer
 
 open FSharp.Text.Lexing
-open FsLexYacc.JSON.Parser
+open Farkle.Benchmarks.FsLexYacc.JsonImpl.Parser
 
 exception SyntaxError of string
 

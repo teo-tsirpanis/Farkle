@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- Temporarily disabled due to incompatibilities with FSYacc. -->
+    <!-- See https://github.com/fsprojects/FsLexYacc/pull/227. -->
+    <!--<Nullable>enable</Nullable>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <FsYacc Include="Parser.fsy">
+      <OtherFlags>--module Farkle.Benchmarks.FsLexYacc.JsonImpl.Parser</OtherFlags>
+    </FsYacc>
+    <Compile Include="Parser.fs" />
+    <FsLex Include="Lexer.fsl">
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>
+    <Compile Include="Lexer.fs" />
+    <Compile Include="FsLexYacc.fs" />
+    <Compile Include="FParsec.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FParsec" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="FsLexYacc" PrivateAssets="all" />
+    <PackageReference Include="FsLexYacc.Runtime" />
+  </ItemGroup>
+</Project>

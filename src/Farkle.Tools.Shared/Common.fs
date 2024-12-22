@@ -31,11 +31,10 @@ let isAssemblyExtension x =
     || equalsCI x ".exe"
 
 let isGrammarExtension x =
-    // We even include CGT files so that they are fed to the
-    // EGT reader which wil fail with a more specific message.
     equalsCI x ".cgt"
     || equalsCI x ".egt"
     || equalsCI x ".egtn"
+    || equalsCI x ".grammar.dat"
 
 let isElementUnique fBasedOn xs =
     let dict =
@@ -47,7 +46,7 @@ let isElementUnique fBasedOn xs =
             | [|x|]-> Seq.singleton (x, true)
             | xs -> xs |> Seq.map (fun x -> x, false))
         |> readOnlyDict
-    fun x -> dict.[x]
+    fun x -> dict[x]
 
 let private invalidFileNameChars = Path.GetInvalidFileNameChars()
 

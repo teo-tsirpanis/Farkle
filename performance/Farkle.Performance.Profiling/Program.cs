@@ -3,11 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-extern alias farkle6;
 using Farkle.Grammars;
 using Farkle.Parser;
 using Farkle.Parser.Semantics;
-using Farkle6 = farkle6::Farkle;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Performance.Profiling;
@@ -16,17 +14,12 @@ internal static class Program
 {
     private const int IterationCount = 1000;
     private const string JsonPath = "../../tests/resources/big.json";
-    private const string Farkle6GrammarPath = "../../tests/resources/JSON.egtn";
-    private const string Farkle7GrammarPath = "../../tests/resources/JSON.grammar.dat";
+    private const string FarkleGrammarPath = "../../tests/resources/JSON.grammar.dat";
     private static string _jsonData = File.ReadAllText(JsonPath);
-    private static readonly Farkle6.RuntimeFarkle<object?> _syntaxCheck =
-        Farkle6.RuntimeFarkle<object?>.Create(Farkle6.Grammar.EGT.ReadFromFile(Farkle6GrammarPath), Farkle6.PostProcessors.SyntaxChecker);
-    private static readonly CharParser<object?> _syntaxCheck7 =
-        CharParser.CreateSyntaxChecker(Grammar.Load(Farkle7GrammarPath));
-    private static readonly Farkle6.Parser.Tokenizer _tokenizer =
-        new Farkle6.Parser.DefaultTokenizer(_syntaxCheck.GetGrammar());
-    private static readonly Farkle.Parser.Tokenizers.Tokenizer<char> _tokenizer7 =
-        Farkle.Parser.Tokenizers.Tokenizer.Create<char>(_syntaxCheck7.GetGrammar());
+    private static readonly CharParser<object?> _syntaxCheck =
+        CharParser.CreateSyntaxChecker(Grammar.Load(FarkleGrammarPath));
+    private static readonly Farkle.Parser.Tokenizers.Tokenizer<char> _tokenizer =
+        Farkle.Parser.Tokenizers.Tokenizer.Create<char>(_syntaxCheck.GetGrammar());
 
     private static void Execute(Func<bool> f, [CallerArgumentExpression(nameof(f))] string? description = null)
     {
@@ -36,25 +29,13 @@ internal static class Program
             f();
     }
 
-    private static bool ParseFarkle6() => _syntaxCheck.Parse(_jsonData).IsOk;
+    private static bool Parse() => _syntaxCheck.Parse(_jsonData).IsSuccess;
 
-    private static bool ParseFarkle7() => _syntaxCheck7.Parse(_jsonData).IsSuccess;
-
-    private static bool TokenizeFarkle6()
-    {
-        var cs = new Farkle6.IO.CharStream(_jsonData);
-        while (!_tokenizer.GetNextToken(Farkle6.PostProcessors.SyntaxChecker, cs).IsEOF)
-        {
-        }
-
-        return true;
-    }
-
-    private static bool TokenizeFarkle7()
+    private static bool Tokenize()
     {
         ParserState state = new();
         var reader = new ParserInputReader<char>(ref state, _jsonData);
-        while (_tokenizer7.TryGetNextToken(ref reader, DummySemanticProvider<char>.Instance, out var token))
+        while (_tokenizer.TryGetNextToken(ref reader, DummySemanticProvider<char>.Instance, out var token))
         {
             if (!token.IsSuccess)
             {
@@ -69,20 +50,20 @@ internal static class Program
     {
         Console.WriteLine("Warming the JIT up...");
         for (int i = 0; i < 30; i++)
-            if (!(ParseFarkle6() && ParseFarkle7() && TokenizeFarkle6() && TokenizeFarkle7()))
+        {
+            if (!(Parse() && Tokenize()))
             {
                 throw new Exception("Preparing went wrong.");
             }
+        }
     }
 
     internal static void Main()
     {
         Console.WriteLine("This program was made to help profiling Farkle.");
         Prepare();
-        Execute(ParseFarkle6);
-        Execute(ParseFarkle7);
-        Execute(TokenizeFarkle6);
-        Execute(TokenizeFarkle7);
+        Execute(Parse);
+        Execute(Tokenize);
     }
 
     private sealed class DummySemanticProvider<TChar> : ITokenSemanticProvider<TChar>

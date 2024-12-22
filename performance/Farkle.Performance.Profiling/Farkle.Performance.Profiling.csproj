@@ -7,6 +7,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
-    <PackageReference Include="Farkle" Aliases="farkle6" />
   </ItemGroup>
 </Project>

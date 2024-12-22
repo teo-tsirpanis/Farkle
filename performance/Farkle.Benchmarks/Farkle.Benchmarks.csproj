@@ -12,7 +12,6 @@
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="Irony" />
     <PackageReference Include="Pidgin" />
-    <PackageReference Include="Farkle" Aliases="farkle6" />
     <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
     <ProjectReference Include="..\Farkle.Benchmarks.FSharpParsers\Farkle.Benchmarks.FSharpParsers.fsproj" />
   </ItemGroup>

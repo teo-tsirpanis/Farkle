@@ -52,6 +52,9 @@ public class JsonBenchmark
     [Benchmark, BenchmarkCategory("MemoryInput")]
     public object PidginString() => PidginJsonParser.Parse(_jsonText).Value;
 
+    [Benchmark, BenchmarkCategory("MemoryInput")]
+    public object IronyString() => IronyJsonGrammar.Parse(_jsonText);
+
     // Testing these two libraries in parsing both strings and
     // streams is not important; both are suboptimally implemented
     // in one mode or another: FParsec copies the entire stream in

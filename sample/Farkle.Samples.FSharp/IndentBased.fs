@@ -88,8 +88,8 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
 
     // These two fields hold our virtual terminals. They have
     // nothing to do with the virtual terminals we declared above;
-    // they were designtime Farkles and this one is a Farkle.Grammars.Terminal.
-    // Caching them instead of calling Grammar.GetTerminalByName
+    // they were objects of the builder API and this one is from the grammars API.
+    // Caching them instead of calling GetTokenSymbolFromSpecialName every time
     // is a good practice for performance and clarity reasons.
     let blockStart = grammar.GetTokenSymbolFromSpecialName BlockStartSpecialName
     let blockEnd = grammar.GetTokenSymbolFromSpecialName BlockEndSpecialName

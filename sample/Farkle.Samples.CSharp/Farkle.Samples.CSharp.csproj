@@ -5,6 +5,6 @@
     <LangVersion>13</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
   </ItemGroup>
 </Project>

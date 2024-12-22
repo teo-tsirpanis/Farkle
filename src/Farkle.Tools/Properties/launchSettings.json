@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Farkle.Tools": {
+      "commandName": "Project",
+      "commandLineArgs": "new gml.egt",
+      "workingDirectory": "C:\\Users\\teo\\code\\Farkle\\tests\\resources"
+    }
+  }
+}

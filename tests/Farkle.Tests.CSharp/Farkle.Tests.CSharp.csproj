@@ -17,6 +17,6 @@
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="NUnit.Analyzers" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
   </ItemGroup>
 </Project>

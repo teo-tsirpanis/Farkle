@@ -7,14 +7,14 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/FarkleNeo/Farkle.fs" />
+    <Compile Include="../../src/Farkle/Farkle.fs"/>
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />

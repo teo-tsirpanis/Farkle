@@ -8,7 +8,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/FarkleNeo/Farkle.fs" />
+    <Compile Include="../../src/Farkle/Farkle.fs"/>
     <Compile Include="Common.fs" />
     <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
@@ -18,7 +18,7 @@
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\FarkleNeo\FarkleNeo.csproj" />
+    <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <PackageReference Include="Expecto" />

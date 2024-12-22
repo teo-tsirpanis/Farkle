@@ -8,7 +8,6 @@ namespace Farkle.Benchmarks
 open BenchmarkDotNet.Attributes
 open Farkle
 open Farkle.Samples
-open FParsec
 open System
 open System.IO
 open System.Text
@@ -44,12 +43,3 @@ type JsonBenchmark() =
     member _.FarkleString() =
         CharParser.parseString farkleRuntimeSyntaxCheck jsonText
         |> _.Value
-
-    [<Benchmark(Baseline = true)>]
-    // FParsec's more optimized "Big Data edition" only supports .NET Framework.
-    member this.FParsec() =
-        runParserOnString FParsec.JSON.JSONParser.jsonParser () this.FileName jsonText
-        |> function | Success((), _, _) -> () | Failure(_, error, _) -> failwithf "%O" error
-
-    [<Benchmark>]
-    member _.FsLexYacc() = FsLexYacc.JSON.JSONParser.parseString jsonText

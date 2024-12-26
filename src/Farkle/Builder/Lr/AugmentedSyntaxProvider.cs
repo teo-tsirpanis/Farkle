@@ -152,7 +152,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// Represents a terminal or nonterminal symbol in an augmented grammar.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
+#pragma warning disable CS9113 // Parameter is unread.
     public readonly struct Symbol(uint value, AugmentedSyntaxProvider syntax) : IEquatable<Symbol>, IComparable<Symbol>
+#pragma warning restore CS9113 // Parameter is unread.
     {
         private readonly uint _value = value;
 
@@ -241,7 +243,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     }
 
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
+#pragma warning disable CS9113 // Parameter is unread.
     public readonly struct Production(int index, AugmentedSyntaxProvider syntax) : IEquatable<Production>
+#pragma warning restore CS9113 // Parameter is unread.
     {
         public int Index { get; } = index;
 

@@ -37,8 +37,8 @@ let tests = testList "Grammar builder tests" [
 
     test "A grammar that only accepts the empty string indeed accepts it" {
         let symbol = "S" |||= [empty]
-        let runtime = GrammarBuilder.buildSyntaxCheck symbol
-        let result = CharParser.parseString runtime ""
+        let parser = GrammarBuilder.buildSyntaxCheck symbol
+        let result = CharParser.parseString parser ""
 
         expectIsParseSuccess result "Something went wrong"
     }
@@ -64,16 +64,16 @@ let tests = testList "Grammar builder tests" [
     }
 
     testProperty "Farkle can properly read signed integers" (fun num ->
-        let runtime = Terminals.int64 "Signed" |> GrammarBuilder.build
-        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing a signed integer failed")
+        let parser = Terminals.int64 "Signed" |> GrammarBuilder.build
+        Expect.equal (parser.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing a signed integer failed")
 
     testProperty "Farkle can properly read unsigned integers" (fun num ->
-        let runtime = Terminals.uint64 "Unsigned" |> GrammarBuilder.build
-        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
+        let parser = Terminals.uint64 "Unsigned" |> GrammarBuilder.build
+        Expect.equal (parser.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
 
     testProperty "Farkle can properly read floating-point numbers" (fun (NormalFloat num) ->
-        let runtime = Terminals.float "Floating-point" |> GrammarBuilder.build
-        Expect.equal (runtime.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
+        let parser = Terminals.float "Floating-point" |> GrammarBuilder.build
+        Expect.equal (parser.Parse(string num)) (ParserResult.CreateSuccess num) "Parsing an unsigned integer failed")
 
     test "Arithmetic overflows when parsing integers do not cause an exception" {
         // Add a space at the beginning to test position propagation.
@@ -117,41 +117,41 @@ let tests = testList "Grammar builder tests" [
     }
 
     test "Farkle can properly handle line groups" {
-        let runtime =
+        let parser =
             Group.Line("Line Group", "!!", fun _ data -> data.ToString())
             |> GrammarBuilder.build
-        Expect.equal (runtime.Parse "!! No new line") (ParserResult.CreateSuccess "!! No new line")
+        Expect.equal (parser.Parse "!! No new line") (ParserResult.CreateSuccess "!! No new line")
             "Farkle does not properly handle line groups that end on EOF"
-        Expect.equal (runtime.Parse "!! Has new line\n") (ParserResult.CreateSuccess "!! Has new line")
+        Expect.equal (parser.Parse "!! Has new line\n") (ParserResult.CreateSuccess "!! Has new line")
             "Farkle does not properly handle line groups that end on a new line"
     }
 
     test "Terminals named 'Newline' cannot terminate line groups" {
-        let runtime =
+        let parser =
             "X" |||= [!& "newline"; !& "x1" .>> "x2"]
             |> _.AddLineComment("//")
             |> GrammarBuilder.buildSyntaxCheck
         let testString = "// newline\nx1 x2"
 
-        let result = runtime.Parse testString
+        let result = parser.Parse testString
 
         expectIsParseSuccess result "Parsing failed"
     }
 
     test "Farkle can properly handle block groups" {
-        let runtime =
+        let parser =
             Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())
             |> GrammarBuilder.build
 
-        Expect.equal (runtime.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
+        Expect.equal (parser.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }
 
     test "Farkle can properly handle recursive block groups" {
-        let runtime =
+        let parser =
             Group.Block("Block Group", "{", "}", (fun _ data -> data.ToString()), GroupOptions.Recursive)
             |> GrammarBuilder.build
 
-        Expect.equal (runtime.Parse "{{🆙🆙}}") (ParserResult.CreateSuccess "{{🆙🆙}}") "Farkle does not properly handle recursive block groups"
+        Expect.equal (parser.Parse "{{🆙🆙}}") (ParserResult.CreateSuccess "{{🆙🆙}}") "Farkle does not properly handle recursive block groups"
     }
 
     test "Renaming grammar symbols works" {
@@ -254,7 +254,7 @@ let tests = testList "Grammar builder tests" [
     test "Many block groups can be ended by the same symbol" {
         // It doesn't cause a DFA conflict because the
         // end symbols of the different groups are considered equal.
-        let runtime =
+        let parser =
             "Test" |||= [
                 !% Group.Block("Group 1", "{", "}")
                 !% Group.Block("Group 2", "[", "}")
@@ -269,51 +269,51 @@ let tests = testList "Grammar builder tests" [
             |> GrammarBuilder.buildSyntaxCheck
 
         ["{}"; "[}"; "()"; ")"]
-        |> List.iter (fun x -> expectIsParseSuccess (runtime.Parse x) (sprintf "Parsing %s failed" x))
+        |> List.iter (fun x -> expectIsParseSuccess (parser.Parse x) (sprintf "Parsing %s failed" x))
     }
 
     test "Parsing untyped groups works" {
-        let runtime =
+        let parser =
             "Test" ||= [
                 !% Group.Block("Untyped Group", "{", "}") =% ()
             ]
             |> GrammarBuilder.build
 
-        expectIsParseSuccess (runtime.Parse "{test}") "Parsing a test string failed"
+        expectIsParseSuccess (parser.Parse "{test}") "Parsing a test string failed"
     }
 
     test "The many(1) operators work" {
-        let mkRuntime atLeastOne =
+        let mkParser atLeastOne =
             literal "x"
             |> _.Cast()
             |> if atLeastOne then many1 else many
             |> GrammarBuilder.buildSyntaxCheck
-        let runtime = mkRuntime false
-        let runtime1 = mkRuntime true
+        let parser = mkParser false
+        let parser1 = mkParser true
 
         [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
         |> List.iter (fun x ->
             let s = String.replicate x "x"
-            expectIsParseSuccess (runtime.Parse s) (sprintf "Parsing %A with many failed" s)
+            expectIsParseSuccess (parser.Parse s) (sprintf "Parsing %A with many failed" s)
             if x <> 0 then
-                expectIsParseSuccess (runtime1.Parse s) (sprintf "Parsing %A with many1 failed" s))
+                expectIsParseSuccess (parser1.Parse s) (sprintf "Parsing %A with many1 failed" s))
     }
 
     test "The sepBy(1) operators work" {
-        let mkRuntime atLeastOne =
+        let mkParser atLeastOne =
             literal "x"
             |> _.Cast()
             |> (if atLeastOne then sepBy1 else sepBy) (literal ",")
             |> GrammarBuilder.buildSyntaxCheck
-        let runtime = mkRuntime false
-        let runtime1 = mkRuntime true
+        let parser = mkParser false
+        let parser1 = mkParser true
 
         [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 100]
         |> List.iter (fun x ->
             let s = Seq.replicate x "x" |> String.concat ","
-            expectIsParseSuccess (runtime.Parse s) (sprintf "Parsing %A with sepBy failed" s)
+            expectIsParseSuccess (parser.Parse s) (sprintf "Parsing %A with sepBy failed" s)
             if x <> 0 then
-                expectIsParseSuccess (runtime1.Parse s) (sprintf "Parsing %A with sepBy1 failed" s))
+                expectIsParseSuccess (parser1.Parse s) (sprintf "Parsing %A with sepBy1 failed" s))
     }
 
 #if false // TODO-FARKLE7: Reevaluate when codegen is implemented in Farkle 7.
@@ -332,14 +332,14 @@ let tests = testList "Grammar builder tests" [
         let mkTerminal (name, typ: Type, target) =
             let t = typ.GetMethod(name).CreateDelegate<T<char,string>>(target)
             terminal name t (Regex.string name)
-        let runtime =
+        let parser =
             "Test" ||=
                 List.map (fun x -> !@ (mkTerminal x) |> asProduction) testData
             |> DesigntimeFarkle.forceDynamicCodeGen
             |> GrammarBuilder.build
 
         for x, _, _ in testData do
-            Expect.equal (CharParser.parseString runtime x) (ParserResult.CreateSuccess magic) (sprintf "%s was not parsed correctly" x)
+            Expect.equal (CharParser.parseString parser x) (ParserResult.CreateSuccess magic) (sprintf "%s was not parsed correctly" x)
     }
 #endif
 

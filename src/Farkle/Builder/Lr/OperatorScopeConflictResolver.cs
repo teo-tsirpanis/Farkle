@@ -45,7 +45,6 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         for (int i = members.Length - 1; i >= 0; i--)
         {
             ISymbolBase symbol = members[i].Symbol;
-            // TODO: Remove this if block (see #41).
             if (symbol is INonterminal)
             {
                 continue;

@@ -8,6 +8,8 @@ on:
   release:
     types: [published]
 
+permissions: read-all
+
 jobs:
   pack:
     runs-on: ubuntu-latest
@@ -17,7 +19,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 9.0.x
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Pack
@@ -36,6 +38,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
       - name: Download package artifacts
         uses: actions/download-artifact@v4
         with:

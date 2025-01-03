@@ -7,6 +7,7 @@ using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.Dfa;
 
@@ -103,7 +104,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         // successfully produces a DFA that will always fail either way.
 
         var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
-        var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
+        var (leaves, followPos, rootFirstPos, hasError) = @this.BuildRegexTree(caseSensitive);
+        if (hasError)
+        {
+            return null;
+        }
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
         var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
         if (dfaStates is null)
@@ -495,17 +500,19 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return null!;
     }
 
-    private (List<RegexLeaf> Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(bool caseSensitive)
+    private (List<RegexLeaf> Leaves, List<BitSet> FollowPos, BitSet RootFirstPos, bool HasError) BuildRegexTree(bool caseSensitive)
     {
         Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache = [];
         List<RegexLeaf> leaves = [];
         List<BitSet> followPos = [];
         BitSet rootFirstPos = BitSet.Empty;
+        bool hasError = false;
 
         int count = Symbols.SymbolCount;
         for (int i = 0; i < count; i++)
         {
             Regex regex = Symbols.GetRegex(i);
+            RegexCharacteristics characteristics = RegexCharacteristics.None;
             // If the symbol's regex's root is an Alt, we assign each of its children a different priority. This
             // emulates the behavior of GOLD Parser and resolves some nasty indistinguishable symbols errors.
             // Earlier versions of Farkle were flattening nested Alts. Because we are not doing that anymore,
@@ -513,11 +520,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // caring about.
             ReadOnlySpan<Regex> regexes = regex.IsAlt(out var altRegexes) ? altRegexes.AsSpan() : [regex];
             // The regex contains Regex.Void somewhere.
-            bool hasVoid = regexes.IsEmpty;
-            // The entire regex is equivalent to Regex.Void and impossible to match.
-            // We detect that by checking if it's not nullable or its LastPos is empty,
-            // which would make it unable to flow from the root to the end leaf.
-            bool isVoid = true;
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             if (Symbols.GetName(i).Kind == TokenSymbolKind.Noise)
             {
@@ -535,27 +537,31 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     rootFirstPos = rootFirstPos.Set(leafIndex, true);
                 }
                 LinkFollowPos(in info.LastPos, BitSet.Singleton(leafIndex));
-                hasVoid |= info.HasVoid;
-                isVoid &= info.IsVoid;
+                characteristics |= info.Characteristics;
             }
-            // If your regex is void but somehow skips the initial unwrapping of the Alt (such as by
-            // being a failed string regex, which gets expanded to void later), Visit will _be_ void,
-            // but not _have_ void, because the latter gets propagated on concatenations, which means
-            // that the assert does not hold.
-            // Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
-            // Let's emit the same diagnostic for a regex that both is entirely void
-            // or part of it is. This situation is very niche.
-            if (Log.IsEnabled(DiagnosticSeverity.Warning) && isVoid || hasVoid)
+            bool regexHasError = (characteristics & RegexCharacteristics.HasError) != 0;
+            bool hasVoid = regexes.IsEmpty || (characteristics & RegexCharacteristics.HasVoid) != 0;
+            hasError |= regexHasError;
+            if (Log.IsEnabled(DiagnosticSeverity.Warning) && !regexHasError && hasVoid)
             {
                 Log.RegexContainsVoid(Symbols.GetName(i));
             }
+            if ((characteristics & RegexCharacteristics.IsTooComplex) != 0)
+            {
+                Log.RegexTooComplexError(Symbols.GetName(i));
+            }
         }
 
-        return (leaves, followPos, rootFirstPos);
+        return (leaves, followPos, rootFirstPos, hasError);
 
         RegexInfo Visit(in DfaBuild<TChar> @this, int symbolIndex, Regex regex, bool caseSensitive, bool isLowered = false)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
+
+            if (!RuntimeHelpersCompat.TryEnsureSufficientExecutionStack())
+            {
+                return RegexInfo.Error(RegexCharacteristics.IsTooComplex);
+            }
 
             bool isCaseOverriden = false;
             caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
@@ -574,8 +580,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         // for little benefit; the most common usage pattern of string regexes is directly on a terminal,
                         // and not composed in another regex.
                         @this.Log.RegexStringParseError(@this.Symbols.GetName(symbolIndex), error);
-                        regex = Regex.Void;
-                        break;
+                        return RegexInfo.Error();
                 }
                 caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
             }
@@ -756,11 +761,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// </remarks>
         public bool IsVoid => !IsNullable && LastPos.IsEmpty;
 
-        private RegexCharacteristics Characteristics { get; } = Characteristics;
+        public RegexCharacteristics Characteristics { get; } = Characteristics;
 
         public bool HasStar => (Characteristics & RegexCharacteristics.HasStar) != 0;
-
-        public bool HasVoid => (Characteristics & RegexCharacteristics.HasVoid) != 0;
 
         public RegexInfo AsOptional() =>
             new(FirstPos, LastPos, true, Characteristics);
@@ -771,6 +774,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         public static RegexInfo Empty => new(BitSet.Empty, BitSet.Empty, true);
 
         public static RegexInfo Void => new(BitSet.Empty, BitSet.Empty, false);
+
+        public static RegexInfo Error(RegexCharacteristics extraCharacteristics = 0) =>
+            new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasError | extraCharacteristics);
 
         public static RegexInfo Singleton(int index)
         {
@@ -836,7 +842,20 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// <see cref="RegexInfo.IsVoid"/> property.
         /// </para>
         /// </remarks>
-        HasVoid = 2
+        HasVoid = 2,
+        /// <summary>
+        /// Processing of the regex failed for some reason. The builder will continue
+        /// processing the regexes to uncover more errors, but will not emit a DFA.
+        /// </summary>
+        HasError = 4,
+        /// <summary>
+        /// Processing of the regex failed because it is too complex.
+        /// Must be specified alongside <see cref="HasError"/>.
+        /// </summary>
+        /// <remarks>
+        /// This flag exists to report an error only once per symbol.
+        /// </remarks>
+        IsTooComplex = 8
     }
 
     private enum IntervalType : byte

@@ -162,6 +162,9 @@
   <data name="Builder_RegexStringParseError" xml:space="preserve">
     <value>Failed to parse the regex of {0}: {1}</value>
   </data>
+  <data name="Builder_RegexTooComplex" xml:space="preserve">
+    <value>The regex of {0} is too complex</value>
+  </data>
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Building grammar {0}</value>
   </data>

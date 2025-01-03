@@ -246,9 +246,34 @@ let tests = testList "Grammar builder tests" [
             nont.AutoWhitespace(false)
             |> buildWithWarnings
         Expect.hasLength warnings 1 "Building emitted the wrong number of warnings"
-        Expect.equal warnings.[0].Code "FARKLE0004" "The warning was not of the correct type"
+        Expect.equal warnings[0].Code "FARKLE0004" "The warning was not of the correct type"
         Expect.equal grammar.GrammarInfo.Attributes Grammars.GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
         Expect.isFalse (grammar.GetSymbolFromSpecialName("__MySpecialName").HasValue) "The special name should not be present in the grammar file"
+    }
+
+    test "An invalid string regex causes no DFA to be built" {
+        let grammar, errors =
+            Regex.regexString "("
+            |> terminalU "T"
+            |> buildWithWarnings
+        Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
+        Expect.hasLength errors 1 "Building emitted the wrong number of errors"
+        Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
+    }
+
+    test "A deeply nested regex does not cause a stack overflow" {
+        let depth = 10_000
+        let regex =
+            Seq.replicate depth (Regex.string "a")
+            // acc + x would flatten the tree, but concat does not.
+            |> Seq.fold (fun acc x -> Regex.concat [acc; x]) (Regex.string "")
+        let grammar, errors =
+            regex
+            |> terminalU "T"
+            |> buildWithWarnings
+        Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
+        Expect.hasLength errors 1 "Building emitted the wrong number of errors"
+        Expect.equal errors[0].Code "FARKLE0010" "The error was not of the correct type"
     }
 
     test "Many block groups can be ended by the same symbol" {

@@ -7,6 +7,7 @@ using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.Dfa;
 
@@ -545,6 +546,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 Log.RegexContainsVoid(Symbols.GetName(i));
             }
+            if ((characteristics & RegexCharacteristics.IsTooComplex) != 0)
+            {
+                Log.RegexTooComplexError(Symbols.GetName(i));
+            }
         }
 
         return (leaves, followPos, rootFirstPos, hasError);
@@ -552,6 +557,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         RegexInfo Visit(in DfaBuild<TChar> @this, int symbolIndex, Regex regex, bool caseSensitive, bool isLowered = false)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
+
+            if (!RuntimeHelpersCompat.TryEnsureSufficientExecutionStack())
+            {
+                return RegexInfo.Error(RegexCharacteristics.IsTooComplex);
+            }
 
             bool isCaseOverriden = false;
             caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
@@ -570,7 +580,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         // for little benefit; the most common usage pattern of string regexes is directly on a terminal,
                         // and not composed in another regex.
                         @this.Log.RegexStringParseError(@this.Symbols.GetName(symbolIndex), error);
-                        return RegexInfo.Error;
+                        return RegexInfo.Error();
                 }
                 caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
             }
@@ -765,7 +775,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo Void => new(BitSet.Empty, BitSet.Empty, false);
 
-        public static RegexInfo Error => new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasError);
+        public static RegexInfo Error(RegexCharacteristics extraCharacteristics = 0) =>
+            new(BitSet.Empty, BitSet.Empty, false, RegexCharacteristics.HasError | extraCharacteristics);
 
         public static RegexInfo Singleton(int index)
         {
@@ -836,7 +847,15 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// Processing of the regex failed for some reason. The builder will continue
         /// processing the regexes to uncover more errors, but will not emit a DFA.
         /// </summary>
-        HasError = 4
+        HasError = 4,
+        /// <summary>
+        /// Processing of the regex failed because it is too complex.
+        /// Must be specified alongside <see cref="HasError"/>.
+        /// </summary>
+        /// <remarks>
+        /// This flag exists to report an error only once per symbol.
+        /// </remarks>
+        IsTooComplex = 8
     }
 
     private enum IntervalType : byte

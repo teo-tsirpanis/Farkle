@@ -261,6 +261,21 @@ let tests = testList "Grammar builder tests" [
         Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
     }
 
+    test "A deeply nested regex does not cause a stack overflow" {
+        let depth = 10_000
+        let regex =
+            Seq.replicate depth (Regex.string "a")
+            // acc + x would flatten the tree, but concat does not.
+            |> Seq.fold (fun acc x -> Regex.concat [acc; x]) (Regex.string "")
+        let grammar, errors =
+            regex
+            |> terminalU "T"
+            |> buildWithWarnings
+        Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
+        Expect.hasLength errors 1 "Building emitted the wrong number of errors"
+        Expect.equal errors[0].Code "FARKLE0010" "The error was not of the correct type"
+    }
+
     test "Many block groups can be ended by the same symbol" {
         // It doesn't cause a DFA conflict because the
         // end symbols of the different groups are considered equal.

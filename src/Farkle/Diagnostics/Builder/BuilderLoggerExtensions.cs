@@ -38,6 +38,9 @@ internal static class BuilderLoggerExtensions
     public static void RegexStringParseError(in this BuilderLogger logger, in BuilderSymbolName symbolName, object error) =>
         logger.Error("FARKLE0009", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexStringParseError), symbolName, error));
 
+    public static void RegexTooComplexError(in this BuilderLogger logger, in BuilderSymbolName symbolName) =>
+        logger.Error("FARKLE0010", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexTooComplex), symbolName));
+
     public static void InformationLocalized(in this BuilderLogger logger, string resourceKey)
     {
         if (logger.IsEnabled(DiagnosticSeverity.Information))

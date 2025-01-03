@@ -291,6 +291,8 @@ internal static class Resources
 
     public static string Builder_RegexStringParseError => GetResourceString(nameof(Builder_RegexStringParseError));
 
+    public static string Builder_RegexTooComplex => GetResourceString(nameof(Builder_RegexTooComplex));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

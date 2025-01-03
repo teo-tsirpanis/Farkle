@@ -511,7 +511,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         for (int i = 0; i < count; i++)
         {
             Regex regex = Symbols.GetRegex(i);
-            bool regexHasError = false;
+            RegexCharacteristics characteristics = RegexCharacteristics.None;
             // If the symbol's regex's root is an Alt, we assign each of its children a different priority. This
             // emulates the behavior of GOLD Parser and resolves some nasty indistinguishable symbols errors.
             // Earlier versions of Farkle were flattening nested Alts. Because we are not doing that anymore,
@@ -519,11 +519,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // caring about.
             ReadOnlySpan<Regex> regexes = regex.IsAlt(out var altRegexes) ? altRegexes.AsSpan() : [regex];
             // The regex contains Regex.Void somewhere.
-            bool hasVoid = regexes.IsEmpty;
-            // The entire regex is equivalent to Regex.Void and impossible to match.
-            // We detect that by checking if it's not nullable or its LastPos is empty,
-            // which would make it unable to flow from the root to the end leaf.
-            bool isVoid = true;
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             if (Symbols.GetName(i).Kind == TokenSymbolKind.Noise)
             {
@@ -541,18 +536,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     rootFirstPos = rootFirstPos.Set(leafIndex, true);
                 }
                 LinkFollowPos(in info.LastPos, BitSet.Singleton(leafIndex));
-                hasVoid |= info.HasVoid;
-                isVoid &= info.IsVoid;
-                hasError |= regexHasError |= info.HasError;
+                characteristics |= info.Characteristics;
             }
-            // If your regex is void but somehow skips the initial unwrapping of the Alt (such as by
-            // being a failed string regex, which gets expanded to void later), Visit will _be_ void,
-            // but not _have_ void, because the latter gets propagated on concatenations, which means
-            // that the assert does not hold.
-            // Debug.Assert(!isVoid || hasVoid, "Internal error: isVoid => hasVoid does not hold.");
-            // Let's emit the same diagnostic for a regex that both is entirely void
-            // or part of it is. This situation is very niche.
-            if (Log.IsEnabled(DiagnosticSeverity.Warning) && !regexHasError && (isVoid || hasVoid))
+            bool regexHasError = (characteristics & RegexCharacteristics.HasError) != 0;
+            bool hasVoid = regexes.IsEmpty || (characteristics & RegexCharacteristics.HasVoid) != 0;
+            hasError |= regexHasError;
+            if (Log.IsEnabled(DiagnosticSeverity.Warning) && !regexHasError && hasVoid)
             {
                 Log.RegexContainsVoid(Symbols.GetName(i));
             }
@@ -762,13 +751,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// </remarks>
         public bool IsVoid => !IsNullable && LastPos.IsEmpty;
 
-        private RegexCharacteristics Characteristics { get; } = Characteristics;
+        public RegexCharacteristics Characteristics { get; } = Characteristics;
 
         public bool HasStar => (Characteristics & RegexCharacteristics.HasStar) != 0;
-
-        public bool HasVoid => (Characteristics & RegexCharacteristics.HasVoid) != 0;
-
-        public bool HasError => (Characteristics & RegexCharacteristics.HasError) != 0;
 
         public RegexInfo AsOptional() =>
             new(FirstPos, LastPos, true, Characteristics);

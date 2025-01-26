@@ -725,6 +725,16 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
     [<Obsolete("Use GrammarBuilder.buildSyntaxCheck instead.")>]
     let inline buildUntyped df = GrammarBuilder.buildSyntaxCheck df
 
+    // TODO-FARKLE7: Make these obsolete when the precompiler is implemented.
+
+    let inline markForPrecompile (df: IGrammarBuilder<_>) = df
+
+    let inline markForPrecompileU (df: IGrammarBuilder) = df
+
+    let inline buildPrecompiled df = GrammarBuilder.build df
+
+    let inline buildPrecompiledUntyped df = GrammarBuilder.buildSyntaxCheck df
+
 namespace Farkle.Builder
 
 open System

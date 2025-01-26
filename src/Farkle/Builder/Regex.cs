@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -331,6 +332,14 @@ public sealed class Regex
         return new(KindAndFlags.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
+    /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
+    [ExcludeFromCodeCoverage]
+    public static Regex NotOneOf(IEnumerable<char> chars)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(chars);
+        return NotOneOf(chars.Order().ToImmutableArray());
+    }
+
     /// <inheritdoc cref="NotOneOf(ImmutableArray{char})"/>
     [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public static Regex NotOneOf(params char[] chars) => NotOneOf(chars.ToImmutableArrayChecked());
@@ -380,6 +389,14 @@ public sealed class Regex
         }
 
         return new(KindAndFlags.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
+    }
+
+    /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
+    [ExcludeFromCodeCoverage]
+    public static Regex OneOf(IEnumerable<char> chars)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(chars);
+        return OneOf(chars.Order().ToImmutableArray());
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
@@ -639,6 +656,32 @@ public sealed class Regex
         }
         return Choice(left, right);
     }
+
+    /// <summary>
+    /// Concatenates this <see cref="Regex"/> with another one.
+    /// Obsolete, use <see cref="operator +(Regex, Regex)"/> instead.
+    /// </summary>
+    /// <param name="other">The other regex.</param>
+    [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
+    [Obsolete("Use the + operator instead."
+#if NET5_0_OR_GREATER
+        , DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat
+#endif
+    )]
+    public Regex And(Regex other) => this + other;
+
+    /// <summary>
+    /// Combines this <see cref="Regex"/> with another one using an OR operator.
+    /// Obsolete, use <see cref="operator |(Regex, Regex)"/> instead.
+    /// </summary>
+    /// <param name="other">The other regex.</param>
+    [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
+    [Obsolete("Use the | operator instead."
+#if NET5_0_OR_GREATER
+        , DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat
+#endif
+    )]
+    public Regex Or(Regex other) => this | other;
 
     [Flags]
     private enum KindAndFlags : byte

@@ -4,6 +4,7 @@
 #pragma warning disable IDE1006 // Naming Styles
 
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle
 {
@@ -55,6 +56,7 @@ namespace Farkle
         )]
         public class PrecompilableDesigntimeFarkle
         {
+            [ExcludeFromCodeCoverage]
             private protected PrecompilableDesigntimeFarkle() { }
         }
 
@@ -69,6 +71,7 @@ namespace Farkle
         )]
         public sealed class PrecompilableDesigntimeFarkle<T> : PrecompilableDesigntimeFarkle
         {
+            [ExcludeFromCodeCoverage]
             private PrecompilableDesigntimeFarkle() { }
         }
     }

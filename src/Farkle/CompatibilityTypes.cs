@@ -53,9 +53,9 @@ namespace Farkle
         , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
 #endif
         )]
-        public class PrecompilableDesignitmeFarkle
+        public class PrecompilableDesigntimeFarkle
         {
-            private protected PrecompilableDesignitmeFarkle() { }
+            private protected PrecompilableDesigntimeFarkle() { }
         }
 
         /// <summary>
@@ -67,9 +67,9 @@ namespace Farkle
         , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
 #endif
         )]
-        public sealed class PrecompilableDesignitmeFarkle<T> : PrecompilableDesignitmeFarkle
+        public sealed class PrecompilableDesigntimeFarkle<T> : PrecompilableDesigntimeFarkle
         {
-            private PrecompilableDesignitmeFarkle() { }
+            private PrecompilableDesigntimeFarkle() { }
         }
     }
 }

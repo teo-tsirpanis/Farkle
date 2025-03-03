@@ -152,7 +152,7 @@ So I hope you enjoyed this little comparison. If you did, don't forget to give F
 [FParsec]: https://www.quanttec.com/fparsec/
 [FsLexYacc]: https://fsprojects.github.io/FsLexYacc/
 [FParsec-operators]: https://www.quanttec.com/fparsec/reference/operatorprecedenceparser.html
-[Farkle-benchmarks]: https://github.com/teo-tsirpanis/Farkle/tree/master/performance
+[Farkle-benchmarks]: https://github.com/teo-tsirpanis/Farkle/tree/release/6.0/performance
 [Chiron]: https://github.com/xyncro/chiron
 [QSharp-parser]: https://github.com/microsoft/qsharp-compiler/tree/master/src/QsCompiler/TextProcessor
 [FSharp-parser]: https://github.com/dotnet/fsharp/blob/main/src/fsharp/pars.fsy

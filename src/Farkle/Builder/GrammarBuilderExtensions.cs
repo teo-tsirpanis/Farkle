@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
@@ -340,6 +341,30 @@ public static class GrammarBuilderExtensions
         ArgumentNullExceptionCompat.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddLineComment(start));
+    }
+
+    /// <summary>
+    /// Provides compatibility with the precompiler API of Farkle 6.
+    /// </summary>
+    /// <remarks>
+    /// When the precompiler is implemented for Farkle 7, this method will become obsolete and
+    /// migration guidance will be provided.
+    /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
+    public static IGrammarBuilder MarkForPrecompile(this IGrammarBuilder builder, Assembly? asm = null)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        _ = asm;
+        return builder;
+    }
+
+    /// <inheritdoc cref="MarkForPrecompile(IGrammarBuilder, Assembly?)"/>
+    [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
+    public static IGrammarBuilder<T> MarkForPrecompile<T>(this IGrammarBuilder<T> builder, Assembly? asm = null)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        _ = asm;
+        return builder;
     }
 
     /// <summary>

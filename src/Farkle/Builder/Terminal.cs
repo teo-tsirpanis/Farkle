@@ -1,6 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+
 namespace Farkle.Builder;
 
 /// <summary>
@@ -40,6 +43,17 @@ public partial class Terminal
         ArgumentNullExceptionCompat.ThrowIfNull(regex);
         ValidateOptions(options);
         return new Terminal(name, regex, Builder.Transformer.GetIdentity<char, object>(), options);
+    }
+
+    /// <inheritdoc cref="Create{T}(string, Regex, Transformer{char, T}, TerminalOptions)"/>
+    [EditorBrowsable(EditorBrowsableState.Never)] // Compatibility API, not worth obsoleting.
+    [ExcludeFromCodeCoverage]
+    public static IGrammarSymbol<T> Create<T>(string name, Transformer<char, T> transformer, Regex regex)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullExceptionCompat.ThrowIfNull(transformer);
+        ArgumentNullExceptionCompat.ThrowIfNull(regex);
+        return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), TerminalOptions.None);
     }
 
     /// <summary>

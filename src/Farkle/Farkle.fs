@@ -13,7 +13,6 @@ namespace Farkle.Grammars
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal Grammar =
 
-    open System
     open System.Collections.Immutable
     open System.IO
 
@@ -241,6 +240,7 @@ namespace Farkle.Builder
 open System
 open System.Collections
 open System.Collections.Generic
+open System.ComponentModel
 
 module private Internal =
 
@@ -328,6 +328,7 @@ module internal Regex =
 
 /// F# operators to easily create `Regex`es.
 [<AutoOpen>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 module internal RegexCompatibilityOperators =
 
     /// Obsolete operator for Farkle 6 compatibility.
@@ -347,6 +348,7 @@ type internal T<'TChar, 'T> = Transformer<'TChar, 'T>
 /// Types in this module must not be used directly by user code.
 // This module cannot be made internal because of https://github.com/dotnet/fsharp/issues/16762
 [<CompiledName("InternalFSharpProductionBuilders")>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 module FSharpProductionBuilders =
 
     /// Helper interface to enable the `prec` function. Do not use directly.
@@ -677,11 +679,14 @@ module internal Terminals =
 namespace Farkle
 
 open System
+open System.ComponentModel
 
 [<Obsolete("Use CharParser<'T> instead.")>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 type internal RuntimeFarkle<'TResult> = CharParser<'TResult>
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 module internal RuntimeFarkle =
 
     open Farkle.Builder
@@ -720,16 +725,30 @@ customizing tokenizers has substantially changed in Farkle 7.")>]
     [<Obsolete("Use GrammarBuilder.buildSyntaxCheck instead.")>]
     let inline buildUntyped df = GrammarBuilder.buildSyntaxCheck df
 
+    // TODO-FARKLE7: Make these obsolete when the precompiler is implemented.
+
+    let inline markForPrecompile (df: IGrammarBuilder<_>) = df
+
+    let inline markForPrecompileU (df: IGrammarBuilder) = df
+
+    let inline buildPrecompiled df = GrammarBuilder.build df
+
+    let inline buildPrecompiledUntyped df = GrammarBuilder.buildSyntaxCheck df
+
 namespace Farkle.Builder
 
 open System
+open System.ComponentModel
 
 [<Obsolete("Use IGrammarSymbol for individual grammar symbols or IGrammarBuilder for whole grammars instead.")>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 type internal DesigntimeFarkle = IGrammarSymbol
 
 [<Obsolete("Use IGrammarSymbol<'T> for individual grammar symbols or IGrammarBuilder<'T> for whole grammars instead.")>]
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 type internal DesigntimeFarkle<'TResult> = IGrammarSymbol<'TResult>
 
+[<EditorBrowsable(EditorBrowsableState.Never)>]
 module DesigntimeFarkle =
 
     [<Obsolete("Use the WithOperatorScope extension method instead.")>]

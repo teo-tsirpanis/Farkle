@@ -27,8 +27,6 @@ To be able to use a designtime Farkle, we will first give it to a component call
 
 We want to design a grammar that represents mathematical expressions on floating-point numbers. The supported operations will be addition, subtraction, multiplication, division, and unary negation. The operator precedence has to be honored, as well as parentheses.
 
-A similar grammar but on the integers, can be found [here][calculator]
-
 For those that don't know, a context-free grammar is made of _terminals_, _nonterminals_ and _productions_.
 
 * Terminals are elementary symbols that correspond to characters from our source text.
@@ -311,7 +309,6 @@ let _customized =
 So, I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you have any question, found a bug, or want a feature, and want to [open a GitHub issue][githubIssues] as well. I hope that all of you have a wonderful day and to see you soon. Goodbye!
 
 [csharp]: csharp.html
-[calculator]: https://github.com/teo-tsirpanis/Farkle/blob/2ecc66d6b7b43a1b52b889aec78e865c0c5cf325/sample/Farkle.JSON.FSharp/SimpleMaths.fs#L68
 [predefinedSets]: http://goldparser.org/doc/grammars/predefined-sets.htm
 [stringRegexes]: string-regexes.html
 [bnf]: https://en.wikipedia.org/wiki/Backus-Naur_form

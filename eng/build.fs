@@ -306,8 +306,10 @@ Target.create "NuGetPack" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-let referenceDocsTempPath = __SOURCE_DIRECTORY__ @@ "temp/referencedocs-publish"
-let docsOutput = __SOURCE_DIRECTORY__ @@ "output/"
+let repoRoot = Path.getDirectory __SOURCE_DIRECTORY__
+
+let referenceDocsTempPath = repoRoot @@ "temp/referencedocs-publish"
+let docsOutput = repoRoot @@ "output/"
 
 let root isRelease =
     match isRelease with

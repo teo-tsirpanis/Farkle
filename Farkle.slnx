@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/build/">
+    <Project Path="eng/Farkle.Build.fsproj" />
+  </Folder>
+  <Folder Name="/performance/">
+    <Project Path="performance/Farkle.Benchmarks.FSharpParsers/Farkle.Benchmarks.FSharpParsers.fsproj" />
+    <Project Path="performance/Farkle.Benchmarks/Farkle.Benchmarks.csproj" />
+    <Project Path="performance/Farkle.Performance.Profiling/Farkle.Performance.Profiling.csproj" />
+  </Folder>
+  <Folder Name="/sample/">
+    <Project Path="sample/Farkle.Calculator/Farkle.Calculator.fsproj" />
+    <Project Path="sample/Farkle.Samples.CSharp/Farkle.Samples.CSharp.csproj" />
+    <Project Path="sample/Farkle.Samples.FSharp/Farkle.Samples.FSharp.fsproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Farkle.Tools.Shared/Farkle.Tools.Shared.fsproj" />
+    <Project Path="src/Farkle.Tools/Farkle.Tools.fsproj" />
+    <Project Path="src/Farkle/Farkle.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj" />
+    <Project Path="tests/Farkle.Tests/Farkle.Tests.fsproj" />
+    <Project Path="tests/Farkle.Tools.Shared.Tests/Farkle.Tools.Shared.Tests.fsproj" />
+  </Folder>
+</Solution>

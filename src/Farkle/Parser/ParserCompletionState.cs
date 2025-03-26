@@ -46,8 +46,7 @@ public struct ParserCompletionState<T>
     /// <param name="result">The value that will be assigned to
     /// <see cref="Result"/>.</param>
     /// <exception cref="InvalidOperationException">The parsing operation has
-    /// already been completed by a previous invocation of <see cref="SetResult"/>
-    /// or one of the methods in <see cref="ParserCompletionStateExtensions"/>.</exception>
+    /// already been set as completed.</exception>
     public void SetResult(ParserResult<T> result)
     {
         if (IsCompleted)
@@ -59,28 +58,16 @@ public struct ParserCompletionState<T>
 
         static void Fail() => throw new InvalidOperationException(Resources.Parser_ResultAlreadySet);
     }
-}
 
-/// <summary>
-/// Provides convenience extension methods for <see cref="ParserCompletionState{T}"/>.
-/// </summary>
-public static class ParserCompletionStateExtensions
-{
     /// <summary>
     /// Successfully completes a parsing operation.
     /// </summary>
-    /// <param name="state">A reference to the <see cref="ParserCompletionState{T}"/>
-    /// that will hold the result.</param>
     /// <param name="value">The success value.</param>
-    public static void SetSuccess<T>(this ref ParserCompletionState<T> state, T value) =>
-        state.SetResult(ParserResult.CreateSuccess(value));
+    public void SetSuccess(T value) => SetResult(ParserResult.CreateSuccess(value));
 
     /// <summary>
     /// Fails a parsing operation.
     /// </summary>
-    /// <param name="state">A reference to the <see cref="ParserCompletionState{T}"/>
-    /// that will hold the result.</param>
     /// <param name="error">The error value.</param>
-    public static void SetError<T>(this ref ParserCompletionState<T> state, object error) =>
-        state.SetResult(ParserResult.CreateError<T>(error));
+    public void SetError(object error) => SetResult(ParserResult.CreateError<T>(error));
 }

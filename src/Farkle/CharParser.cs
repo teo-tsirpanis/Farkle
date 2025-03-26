@@ -102,6 +102,19 @@ public abstract class CharParser<T> : IParser<char, T>
     public Grammar GetGrammar() => GetGrammarProvider().GetGrammar();
 
     /// <summary>
+    /// Converts a <see cref="CharParser{T}"/> to a syntax checker with a user-defined return type.
+    /// </summary>
+    /// <seealso cref="CharParser.CreateSyntaxChecker{T}(Grammar)"/>
+    public CharParser<TNew?> ToSyntaxChecker<TNew>() where TNew : class? =>
+        WithSemanticProvider(SyntaxChecker<char, TNew>.Instance);
+
+    /// <summary>
+    /// Converts a <see cref="CharParser{T}"/> to a syntax checker.
+    /// </summary>
+    /// <seealso cref="CharParser.CreateSyntaxChecker(Grammar)"/>
+    public CharParser<object?> ToSyntaxChecker() => ToSyntaxChecker<object>();
+
+    /// <summary>
     /// Changes the semantic provider of the <see cref="CharParser{T}"/>
     /// to an <see cref="ISemanticProvider{TChar, T}"/>.
     /// </summary>
@@ -299,18 +312,4 @@ public static class CharParser
     /// <remarks>Syntax checkers always return <see langword="null"/> in case of success.</remarks>
     public static CharParser<object?> CreateSyntaxChecker(Grammar grammar) =>
         CreateSyntaxChecker<object>(grammar);
-
-    /// <summary>
-    /// Converts a <see cref="CharParser{T}"/> to a syntax checker with a user-defined return type.
-    /// </summary>
-    /// <seealso cref="CreateSyntaxChecker{T}(Grammar)"/>
-    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class? =>
-        parser.WithSemanticProvider(SyntaxChecker<char, TNew>.Instance);
-
-    /// <summary>
-    /// Converts a <see cref="CharParser{T}"/> to a syntax checker.
-    /// </summary>
-    /// <seealso cref="CreateSyntaxChecker(Grammar)"/>
-    public static CharParser<object?> ToSyntaxChecker<T>(this CharParser<T> parser) =>
-        parser.ToSyntaxChecker<T, object>();
 }

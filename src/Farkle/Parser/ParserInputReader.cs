@@ -5,6 +5,9 @@
 using System.Runtime.InteropServices;
 #endif
 
+using System.Diagnostics.CodeAnalysis;
+using Farkle.Diagnostics;
+
 namespace Farkle.Parser;
 
 /// <summary>
@@ -131,5 +134,20 @@ public ref struct ParserInputReader<TChar>
         {
             State.CompleteInput();
         }
+    }
+
+    /// <summary>
+    /// Throws a <see cref="ParserApplicationException"/> indicating an error at
+    /// the specified offset in the remaining characters.
+    /// </summary>
+    /// <param name="offset">The number of characters after
+    /// <see cref="ParserState.CurrentPosition"/> at which to throw the exception.</param>
+    /// <param name="message">The object to use as the exception's message.</param>
+    [DoesNotReturn]
+    public readonly void FailAtOffset(int offset, object message)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(message);
+        TextPosition position = State.GetPositionAfter(RemainingCharacters[..offset]);
+        throw new ParserApplicationException(new ParserDiagnostic(position, message), autoSetPosition: false);
     }
 }

@@ -154,12 +154,8 @@ public struct ParserCompletionState<T>
 
     // Will throw if IsCompleted is true.
     public void SetResult(ParserResult<T> result);
-}
-
-public static class ParserCompletionStateExtensions
-{
-    public static void SetSuccess<T>(this ref ParserCompletionState<T> state, T value);
-    public static void SetError<T>(this ref ParserCompletionState<T> state, object error);
+    public void SetSuccess(T value);
+    public void SetError(object error);
 }
 
 public interface IParser<TChar, T> : IServiceProvider
@@ -476,6 +472,10 @@ public abstract class CharParser<T> : IParser<char, T>
     public CharParser<TNew> WithSemanticProvider<TNew>(Func<IGrammarProvider, ISemanticProvider<char, TNew>> semanticProviderFactory);
 
     public CharParser<T> WithTokenizer(Tokenizer<char> tokenizer);
+
+    public static CharParser<object?> ToSyntaxChecker();
+
+    public static CharParser<TNew?> ToSyntaxChecker<TNew>() where TNew : class?;
 }
 
 public static class CharParser
@@ -488,10 +488,6 @@ public static class CharParser
     // Creates a parser that if successful, always returns null of any reference type.
     // Will be useful for the F# API, whose syntax checkers will return unit.
     public static CharParser<T?> CreateSyntaxChecker<T>(Grammar grammar) where T : class;
-
-    public static CharParser<object?> ToSyntaxChecker<T>(this CharParser<T> parser);
-
-    public static CharParser<TNew?> ToSyntaxChecker<T, TNew>(this CharParser<T> parser) where TNew : class;
 }
 ```
 

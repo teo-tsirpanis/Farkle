@@ -8,12 +8,12 @@ using System.Runtime.CompilerServices;
 namespace Farkle.Parser.Tokenizers;
 
 /// <summary>
-/// Provides extension methods on <see cref="ParserState"/> specific to tokenizers.
+/// Provides extension methods on <see cref="ParserInputReader{TChar}"/> specific to tokenizers.
 /// </summary>
 /// <remarks>
 /// Calling these methods outside of a tokenizer is undefined behavior.
 /// </remarks>
-public static class TokenizerExtensions
+public static class ParserInputReaderTokenizerExtensions
 {
     internal static ChainedTokenizerState<TChar>? GetChainedTokenizerStateOrNull<TChar>(this in ParserInputReader<TChar> input)
     {

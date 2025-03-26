@@ -117,11 +117,11 @@ module internal CharParser =
 
     /// Creates a CharParser that performs no semantic actions
     /// and returns unit if successful.
-    let inline createSyntaxCheck grammar = CharParser.CreateSyntaxChecker<unit>(grammar)
+    let inline createSyntaxCheck grammar = CharParser.CreateSyntaxChecker<unit> grammar
 
     /// Converts a CharParser to one that performs no semantic actions
     /// and returns unit if successful.
-    let inline syntaxCheck parser = CharParser.ToSyntaxChecker<'T,unit> parser
+    let inline syntaxCheck (parser: CharParser<'T>) = parser.ToSyntaxChecker<unit>()
 
     /// Changes the semantic provider of a CharParser.
     let inline withSemanticProvider (semanticProvider: ISemanticProvider<char, 'TNew>) (parser: CharParser<'T>) =

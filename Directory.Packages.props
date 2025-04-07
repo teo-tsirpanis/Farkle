@@ -12,8 +12,8 @@
     <PackageVersion Include="Covarsky" Version="1.4.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.25" />
-    <PackageVersion Include="Expecto.FsCheck" Version="10.2.2" />
-    <PackageVersion Include="Expecto" Version="10.2.2" />
+    <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
+    <PackageVersion Include="Expecto" Version="10.2.3" />
     <PackageVersion Include="FParsec" Version="1.1.1" />
     <PackageVersion Include="FSharp.Core" Version="9.0.100" />
     <PackageVersion Include="FsLexYacc.Runtime" Version="11.3.0" />

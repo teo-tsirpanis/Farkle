@@ -259,16 +259,16 @@ module internal Regex =
     open Internal
 
     /// An alias for `Regex.Literal` that takes a character.
-    let char (c: char) = Regex.Literal c
+    let inline char (c: char) = Regex.Literal c
 
     /// An alias for `Regex.OneOf` that takes characters.
-    let chars (str: #seq<char>) =
+    let inline chars (str: #seq<char>) =
         str
         |> makeImmutableArray
         |> Regex.OneOf
 
     /// An alias for `Regex.OneOf` that takes character ranges.
-    let charRanges (str: #seq<struct(char * char)>) =
+    let inline charRanges (str: #seq<struct(char * char)>) =
         str
         |> makeImmutableArray
         |> Regex.OneOf
@@ -277,54 +277,54 @@ module internal Regex =
     let any = Regex.Any
 
     /// An alias for `Regex.NotOneOf` that takes characters.
-    let allButChars  (str: #seq<char>) =
+    let inline allButChars  (str: #seq<char>) =
         str
         |> makeImmutableArray
         |> Regex.NotOneOf
 
     /// An alias for `Regex.NotOneOf` that takes character ranges.
-    let allButCharRanges (str: #seq<struct(char * char)>) =
+    let inline allButCharRanges (str: #seq<struct(char * char)>) =
         str
         |> makeImmutableArray
         |> Regex.NotOneOf
 
     /// An alias for `Regex.Literal` that takes a string.
-    let string (str: string) = Regex.Literal str
+    let inline string (str: string) = Regex.Literal str
 
     /// An alias for `Regex.Join`.
-    let concat (xs: #seq<Regex>) = Regex.Join(makeImmutableArray xs)
+    let inline concat (xs: #seq<Regex>) = Regex.Join(makeImmutableArray xs)
 
     /// An alias for `Regex.Choice`.
-    let choice (xs: #seq<Regex>) = Regex.Choice(makeImmutableArray xs)
+    let inline choice (xs: #seq<Regex>) = Regex.Choice(makeImmutableArray xs)
 
     /// An alias for `Regex.Repeat`.
-    let repeat num (x: Regex) = x.Repeat num
+    let inline repeat num (x: Regex) = x.Repeat num
 
     /// An alias for `Regex.Optional`.
-    let optional (x: Regex) = x.Optional()
+    let inline optional (x: Regex) = x.Optional()
 
     /// An alias for `Regex.Between`.
-    let between from upTo (x: Regex) = x.Between(from, upTo)
+    let inline between from upTo (x: Regex) = x.Between(from, upTo)
 
     /// An alias for `Regex.AtLeast`.
-    let atLeast num (x: Regex) = x.AtLeast num
+    let inline atLeast num (x: Regex) = x.AtLeast num
 
     /// An alias for `Regex.ZeroOrMore`.
     /// The name alludes to the Kleene Star.
-    let star (x: Regex) = x.ZeroOrMore()
+    let inline star (x: Regex) = x.ZeroOrMore()
 
     /// An alias for `atLeast 1`.
     /// The name alludes to the plus symbol of regular expressions.
-    let plus x = atLeast 1 x
+    let inline plus x = atLeast 1 x
 
     /// An alias for `Regex.FromRegexString`.
-    let regexString x = Regex.FromRegexString x
+    let inline regexString x = Regex.FromRegexString x
 
     /// An alias for `Regex.CaseSensitive`.
-    let caseSensitive (x: Regex) = x.CaseSensitive()
+    let inline caseSensitive (x: Regex) = x.CaseSensitive()
 
     /// An alias for `Regex.CaseInsensitive`.
-    let caseInsensitive (x: Regex) = x.CaseInsensitive()
+    let inline caseInsensitive (x: Regex) = x.CaseInsensitive()
 
 /// F# operators to easily create `Regex`es.
 [<AutoOpen>]
@@ -333,11 +333,11 @@ module internal RegexCompatibilityOperators =
 
     /// Obsolete operator for Farkle 6 compatibility.
     [<Obsolete("The <&> operator on regexes is obsolete. Use the + operator or the concat function instead.")>]
-    let (<&>) (x1: Regex) x2 = x1 + x2
+    let inline (<&>) (x1: Regex) x2 = x1 + x2
 
     /// Obsolete operator for Farkle 6 compatibility.
     [<Obsolete("The <|> operator on regexes is obsolete. Use the ||| operator or the choice function instead.")>]
-    let (<|>) (x1: Regex) x2 = x1 ||| x2
+    let inline (<|>) (x1: Regex) x2 = x1 ||| x2
 
 /// An alias to the `Farkle.Builder.Transformer` class.
 /// It is provided with a one-letter name to make it easier to type
@@ -444,11 +444,11 @@ module FSharpProductionBuilders =
 module internal GrammarBuilder =
 
     /// Builds a grammar and returns a parser.
-    let build (x: IGrammarBuilder<_>) = x.Build()
+    let inline build (x: IGrammarBuilder<_>) = x.Build()
 
     /// Builds a grammar and returns a syntax checker.
     /// Syntax checkers do not perform semantic actions.
-    let buildSyntaxCheck (x: IGrammarBuilder) = x.BuildSyntaxCheck<unit>()
+    let inline buildSyntaxCheck (x: IGrammarBuilder) = x.BuildSyntaxCheck<unit>()
 
 /// Functions to set options on grammar symbols.
 /// To set options on the entire grammar, use the extension methods on grammar builders.

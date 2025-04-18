@@ -19,9 +19,11 @@
     <InternalsVisibleTo Include="Farkle.Tests.CSharp" />
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
-    <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="BitCollections" />
     <Using Condition="!$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net8.0'))" Include="Farkle.Compatibility"/>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'netstandard2.1'))">
     <PackageReference Include="Microsoft.Bcl.HashCode" />

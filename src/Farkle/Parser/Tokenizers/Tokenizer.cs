@@ -32,7 +32,7 @@ public abstract class Tokenizer<TChar>
     /// called by the parser, but the consequence is that suspending the tokenizer
     /// has no effect. It should therefore be used by tokenizers that are known to
     /// never suspend. An exception to this is when the tokenizer suspends by calling
-    /// <see cref="TokenizerExtensions.SuspendTokenizer{TChar}(ref ParserInputReader{TChar}, Tokenizer{TChar})"/>
+    /// <see cref="ParserInputReaderTokenizerExtensions.SuspendTokenizer{TChar}(ref ParserInputReader{TChar}, Tokenizer{TChar})"/>
     /// with a resumption point of <see langword="this"/>.
     /// </para>
     /// <para>

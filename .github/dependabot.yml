@@ -1,4 +1,3 @@
-
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -9,3 +8,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # Do not automatically update dependencies that use version $(SystemOobVersion) in Directory.Packages.props.
+      - dependency-name: "System.Collections.Immutable"

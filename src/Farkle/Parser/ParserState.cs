@@ -77,7 +77,7 @@ public struct ParserState
     internal readonly bool TokenizerSupportsSuspending =>
         (Attributes & ParserStateAttributes.TokenizerSupportsSuspending) != 0;
 
-    /// <inheritdoc cref="Tokenizers.TokenizerExtensions.IsSingleTokenizerInChain"/>
+    /// <inheritdoc cref="Tokenizers.ParserInputReaderTokenizerExtensions.IsSingleTokenizerInChain"/>
     internal readonly bool IsSingleTokenizerInChain =>
         (Attributes & ParserStateAttributes.HasMoreThanOneTokenizerInChain) == 0;
 

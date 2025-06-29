@@ -125,7 +125,7 @@ public sealed class PrecedenceOnly : AssociativityGroup
     /// <param name="symbols">The symbols of the group.</param>
     public PrecedenceOnly(params ImmutableArray<object> symbols) : base(AssociativityType.PrecedenceOnly, symbols) { }
 
-    /// <inheritdoc cref="NonAssociative(ImmutableArray{object})"/>
+    /// <inheritdoc cref="PrecedenceOnly(ImmutableArray{object})"/>
     [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public PrecedenceOnly(params object[] symbols) : base(AssociativityType.PrecedenceOnly, symbols.ToImmutableArrayChecked()) { }
 }

@@ -48,7 +48,7 @@ In Farkle's string regexes, you can define character classes mostly in the same 
 * You can define a regex that recognizes all characters in a predefined set -say `Katakana`- by typing `\p{Katakana}`. The predefined sets' names are the same in the [`Farkle.Builder.PredefinedSets` module](reference/farkle-builder-predefinedsets.html). Similarly you can match all characters except of Katakana by typing `\P{Katakana}`. Since Farkle 6.4.0, you can also use the prefedefined set's property name in addition to the GOLD Parser name. For example, you can match the `All Letters` predefined set by typing both `\p{All Letters}` and `\p{AllLetters}`.
 * Decimal digits can be matched by typing `\d`. All characters except of decimal digits can be matched by typing `\D`.
 * Whitespace can be matched by typing `\s`. All characters except of whitespace can be matched by typing `\S`. Carriage return, line feed, space and horizontal tab are considered whitespace.
-* You can match any other character by typing `.`. Just be careful of [the caveats](#The-dot-regex).
+* You can match any other character by typing `.`. Just be careful of [the caveats](#the-dot-regex).
 * You can match a literal sequence of characters by enclosing them into single quotes. For example `'[ADOU].'` will literally match the seven characters inside the single quotes without treating them specially. A single quote can be escaped by typing `''`.
 
 > __Note:__ Prior to Farkle 6.2.0, single quotes could be escaped with `\'`. After that version the regex parser was improved but some constructs like that are no longer possible to maintain unambiguity. `\` is not anymore specially treated in literal strings.

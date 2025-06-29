@@ -1,0 +1,12 @@
+- name: Getting started
+- href: ../index.md
+- href: quickstart.md
+- href: csharp.md
+
+- name: Documentation
+- href: templates.md
+- href: string-regexes.md
+- href: the-precompiler.md
+- href: advanced-features.md
+- name: Diagnostic codes
+  href: ../diagnostics/toc.yml

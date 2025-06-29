@@ -1,15 +1,3 @@
-(**
----
-category: Documentation
-categoryindex: 1
-index: 1
-description: A quick start guide to Farkle.
----
-*)
-(*** hide ***)
-#r "nuget: Farkle, 6.5.1"
-
-(**
 # Quick Start: Creating a calculator
 
 Hello everyone. This guide will help you use Farkle. We will be using F#, but during the process, you will learn some useful things about Farkle itself. There's [another guide that explains what's different with C#][csharp]. Familiarity with context-free grammars and parsing will be very helpful.
@@ -58,29 +46,29 @@ There are three ways to create this terminal, starting from the simplest:
 ---
 
 The `Farkle.Builder.Terminals` has functions that allow you to create some commonly needed terminals, like integers or floating-point numbers. We create our terminal this way:
-*)
 
+```fsharp
 open Farkle
 open Farkle.Builder
 open System
 
 let number = Terminals.genericReal<float> false "Number"
+```
 
-(**
 The boolean parameter specifies whether to allow a minus sign at the beginning (we don't). The last parameter is the terminal's name, used for error reporting.
 
-The `Terminals` module has more functions. You can see them all [in the documentation](reference/farkle-builder-terminals.html).
+The `Terminals` module has more functions. You can see them all [in the documentation](../api/Farkle.Builder.Terminals.yml).
 
 ---
 
 If Farkle doesn't have a ready to use function for your terminal, we have to create the terminal ourselves. The most easy way to do it is to write a regex using a string:
-*)
 
+```fsharp
 let numberStringRegex =
     Regex.regexString @"\d+(\.\d+)?(e[+-]?\d+)?"
     |> terminal "Number" (T(fun _ x -> float (x.ToString())))
+```
 
-(**
 The `regexString` function uses a quite familiar regex syntax. You can learn more about it [at its own documentation page][stringRegexes].
 
 Let's take a look at the `terminal` function. Its last parameter is the regex, which we passed at the beggining for convenience and its first parameter is the terminal's name; nothing unusual here. Its second parameter is called a _transformer_ and is a delegate that converts the characters matched by our regex to an arbitrary object; in our case an integer.
@@ -98,8 +86,8 @@ Speaking of graceful errors, you can raise errors in your transformer by calling
 ---
 
 For the most advanced use cases, Farkle allows you to construct a regex from code. Directly constructing a regex from code is rarely useful for the average user of Farkle, but might come in handy when for example the regex's structure is not known at compile time, or it is complex enough to merit some code reuse.
-*)
 
+```fsharp
 open Farkle.Builder.Regex
 
 let numberConstructedRegex =
@@ -115,8 +103,8 @@ let numberConstructedRegex =
         |> optional
     ]
     |> terminal "Number" (T(fun _ x -> float (x.ToString())))
+```
 
-(**
 You can learn more about the functions above [at the documentation](reference/farkle-builder-regexmodule.html). More character sets of the `Farkle.Builder.PredefinedSets` module can also be found [at the documentation](reference/farkle-builder-predefinedsets.html)
 
 > __Note:__ The regexes' type is `Farkle.Builder.Regex`. They are totally unrelated to .NET's `System.Text.RegularExpressions.Regex`. We can't convert between these two types, or directly match text against Farkle's regexes.
@@ -140,15 +128,15 @@ Say we want to make a very simple calculator that can either add or subtract two
 For those that don't understand the snippet above, we define a nonterminal named `Exp`, that has three productions associated with it, meaning an `Exp` can be made in three ways: either by taking a sequence of the `Number` terminal, either the `+` or the `-` terminal, and another `Number` terminal, or by no symbols at all.
 
 Writing the same thing in Farkle is actually surprisingly simple:
-*)
 
+```fsharp
 let justTwoNumbers = "Exp" ||= [
     !@ number .>> "+" .>>. number => (fun x1 x2 -> x1 + x2)
     !@ number .>> "-" .>>. number => (fun x1 x2 -> x1 - x2)
     empty =% 0.0
 ]
+```
 
-(**
 Let's explain what was going here. With the `||=` operator, we define a nonterminal with its productions. In its left side goes its name, and in its right side go the productions that can produce it.
 
 See these strange symbols inside the list? They chain designtime Farkles together and signify which of them have information we care about. `!@` starts defining a production with its first member carrying significant information (the first operand). To start a production with a designtime Farkle that does not carry significant information, we can use `!%`.
@@ -188,8 +176,8 @@ exp:
 ```
 
 And this is how to implement it in Farkle:
-*)
 
+```fsharp
 open Farkle.Builder.OperatorPrecedence
 
 let expression =
@@ -217,8 +205,8 @@ let expression =
         )
 
     DesigntimeFarkle.withOperatorScope opScope expression
+```
 
-(**
 As you see, our grammar in Farkle looks pretty similar to the one in Bison. Let's take a look at some newly introduced things:
 
 ### Defining recursive nonterminals
@@ -248,11 +236,11 @@ We set this operator scope to our designtime Farkle using the `DesigntimeFarkle.
 With our nonterminals being ready, it's time to create a runtime Farkle that can parse mathematical expressions. The builder will create tables for the parser using the LALR algorithm, and a Deterministic Finite Automaton (DFA) for the tokenizer. It also creates a special object called a _post-processor_ that is responsible for executing the transformers and fusers.
 
 All that stuff can be done with a single line of code:
-*)
 
+```fsharp
 let myMarvelousRuntimeFarkle = RuntimeFarkle.build expression
+```
 
-(**
 ## Using the runtime Farkle
 
 Now that we got it, it's time to put it to action. Farkle supports parsing text from various sources, namely strings, arbitrary character buffers on the heap (like substrings, arrays or parts of arrays) using `System.ReadOnlyMemory<char>`, files and `System.IO.TextReader`s.
@@ -262,8 +250,8 @@ The functions return an F# `Result` type whose error value (if it unfortunately 
 > __Note:__ If a grammar is invalid (has an LALR conflict, two terminals are indistinguishable or something else), building would still succeed, but parsing would fail every time.
 
 Let's look at some some examples:
-*)
 
+```fsharp
 open System.IO
 
 // You can consume the parsing result like this:
@@ -281,8 +269,8 @@ RuntimeFarkle.parseFile myMarvelousRuntimeFarkle "example.txt"
 
 let myStringReader = new StringReader("45 + 198 - 647 + 2 * 478 - 488 + 801 - 248")
 RuntimeFarkle.parseTextReader myMarvelousRuntimeFarkle myStringReader
+```
 
-(**
 ## Customizing our designtime Farkle
 
 Before we finish, let's take a look at one more thing; how to further customize a designtime Farkle.
@@ -296,8 +284,8 @@ Before we finish, let's take a look at one more thing; how to further customize 
 * We can also specify a symbol that will be discarded when encountered by the parser. These symbols are called _noise symbols_ and are defined by regexes.
 
 We will see some customizations as an example:
-*)
 
+```fsharp
 let _customized =
     expression
     // You can add as many types of block or line comments as you want.
@@ -309,20 +297,19 @@ let _customized =
     // Adds an arbitrary symbol that will be ignored by Farkle.
     // It needs a regex, and a name for diagnostics purposes.
     |> DesigntimeFarkle.addNoiseSymbol "Letters" (chars AllLetters)
+```
 
-(**
 > __Note:__ These customizations have to be done at the top-level designtime Farkle that is going to be built (or they will have no effect) and always apply to the entire grammar.
 
 ---
 
 So, I hope you enjoyed this little tutorial. If you did, don't forget to give Farkle a try, and maybe you have any question, found a bug, or want a feature, and want to [open a GitHub issue][githubIssues] as well. I hope that all of you have a wonderful day and to see you soon. Goodbye!
 
-[csharp]: csharp.html
+[csharp]: csharp.md
 [calculator]: https://github.com/teo-tsirpanis/Farkle/blob/2ecc66d6b7b43a1b52b889aec78e865c0c5cf325/sample/Farkle.JSON.FSharp/SimpleMaths.fs#L68
 [predefinedSets]: http://goldparser.org/doc/grammars/predefined-sets.htm
-[stringRegexes]: string-regexes.html
+[stringRegexes]: string-regexes.md
 [bnf]: https://en.wikipedia.org/wiki/Backus-Naur_form
 [bison-calculator]: https://www.gnu.org/software/bison/manual/html_node/Infix-Calc.html
 [bison-assoc-types]: https://www.gnu.org/software/bison/manual/html_node/Using-Precedence.html
 [githubIssues]: https://github.com/teo-tsirpanis/farkle/issues
-*)

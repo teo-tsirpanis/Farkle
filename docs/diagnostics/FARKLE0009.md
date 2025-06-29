@@ -1,9 +1,3 @@
----
-category: Diagnostic codes
-categoryindex: 3
-title: FARKLE0009
-description: FARKLE0009: Regex is too complex
----
 # FARKLE0009: Regex is too complex
 
 This error is emitted when Farkle fails to process a regex because it reached a limitation of the library or the system. In this case no DFA gets built and the grammar cannot be used for tokenizing.

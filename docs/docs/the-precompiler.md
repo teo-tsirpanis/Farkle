@@ -1,15 +1,3 @@
-(**
----
-category: Documentation
-categoryindex: 1
-index: 5
-description: A guide on how to use Farkle's precompiler.
----
-*)
-(*** hide ***)
-#r "nuget: Farkle, 6.5.1"
-
-(**
 # Farkle's precompiler
 
 Every time an app using Farkle starts, it builds the parser tables for its grammars. This process takes some time and it will take even more if the app does not reuse the runtime Farkles it creates.
@@ -20,7 +8,7 @@ What is more, Farkle does not report any grammar error (such as an LALR conflict
 
 One of Farkle's new features that came with version 6 is called _the precompiler_. The precompiler addresses this inherent limitation of Farkle's grammars being objects defined in code. Instead of building them every time, the grammar's parser tables are built _ahead of time_ and stored in the program's assembly when it gets compiled. When that program is executed, instead of building the parser tables, it loads the precompiled grammar from the assembly, which is orders of magnitude faster.
 
-> [__Using the precompiler with Visual Studio for Windows requires extra steps.__](#Building-from-an-IDE)
+> [__Using the precompiler with Visual Studio for Windows requires extra steps.__](#building-from-an-ide)
 
 ## How to use it
 
@@ -29,8 +17,8 @@ Using the precompiler does not differ very much from regularly using Farkle.
 ### Preparing the your code
 
 In F# designtime Farkles can be marked to be precompiled by applying the `RuntimeFarkle.markForPrecompile` function at the end. To build them, instead of using `RuntimeFarkle.build`, you have to use `RuntimeFarkle.buildPrecompiled` like in the example:
-*)
 
+```fsharp
 open Farkle
 open Farkle.Builder
 
@@ -43,15 +31,15 @@ let precompilableDesigntime =
     |> RuntimeFarkle.markForPrecompile
 
 let runtime = RuntimeFarkle.buildPrecompiled precompilableDesigntime
+```
 
-(**
 Untyped designtime Farkles can be marked for precompilation with the `markForPrecompileU` function and can be built using the `RuntimeFarkle.buildPrecompiledUntyped` function.
 
 ---
 
 In C# you have to call the `MarkForPrecompile` extension method and store its result in a field of type `PrecompilableDesigntimeFarkle` like the example:
 
-``` csharp
+```csharp
 using Farkle;
 using Farkle.Builder;
 
@@ -82,7 +70,7 @@ This field can be of any visibility; public, internal, private, it doesn't matte
 
 In addition, the precompilable designtime Farkle must be marked in the assembly it is declared. Let's see a counterexample:
 
-``` csharp
+```csharp
 // Assembly A
 public class AssemblyA {
     public static readonly PrecompilableDesigntimeFarkle<int> Designtime;
@@ -114,7 +102,7 @@ Multiple fields referencing the same precompilable designtime Farkle do not pose
 
 With your designtime Farkles being ready to be precompiled, it's time to prepare your project file. Add a reference to [the `Farkle.Tools.MSBuild` package][msbuild] like that:
 
-``` xml
+```xml
 <ItemGroup>
     <!-- The example's version numbers might be outdated. -->
     <PackageReference Include="Farkle" Version="6.3.0" />
@@ -130,7 +118,7 @@ __If you have marked your designtime Farkles as precompiled, using the precompil
 
 ## Conflict reports
 
-Since Farkle 6.3.0, if a grammar you were going to precompile has LALR conflicts, Farkle will not display each of them as build errors, but will generate an HTML report containing all the parser's states, including their conflicting actions. You can take a look at [a sample conflict report](sample-conflict-report.html) for [the quick start guide's](quickstart.html) mathematical expression grammar, if we had not added operator precedence and associativity.
+Since Farkle 6.3.0, if a grammar you were going to precompile has LALR conflicts, Farkle will not display each of them as build errors, but will generate an HTML report containing all the parser's states, including their conflicting actions. You can take a look at [a sample conflict report](sample-conflict-report.html) for [the quick start guide's](quickstart.md) mathematical expression grammar, if we had not added operator precedence and associativity.
 
 This feature is enabled by default and is expected to make diagnosing grammars with conflicts much easier. However if you want for some reason to disable conflict reports, you can see how to do it on the next section.
 
@@ -140,7 +128,7 @@ The conflict reports are stored in a temporary location and will be cleaned by M
 
 The precompiler's behavior can be customized by the following MSBuild properties you can set in your project file:
 
-``` xml
+```xml
 <PropertyGroup>
     <!-- Set it to false to disable the precompiler. As stated above however,
     disabling it will cause parsing these precompiled grammars to fail. -->
@@ -160,7 +148,7 @@ The precompiler's behavior can be customized by the following MSBuild properties
 </PropertyGroup>
 ```
 
-The `FarkleGenerateHtml` property uses Farkle's templating engine which is described [in its own page](templates.html#Creating-HTML-pages).
+The `FarkleGenerateHtml` property uses Farkle's templating engine which is described [in its own page](templates.md#creating-html-pages).
 
 Furthermore, Farkle's precompiler is based on [Sigourney], which can be globally disabled by setting the `SigourneyEnable` property to false.
 
@@ -171,11 +159,11 @@ Furthermore, Farkle's precompiler is based on [Sigourney], which can be globally
 The name "precompilable designtime Farkle" is a bit misleading, because these objects do not implement the `DesigntimeFarkle` interface. This means that you cannot compose a precompilable designtime Farkle to form a bigger grammar, as you can do with an actual designtime Farkle. This incompatibility ensures that you are using the `markForPrecompile` family of functions correctly, by applying them once at the end.
 
 To get the actual designtime Farkle behind a precompilable one, you have to use the `InnerDesigntimeFarkle` property:
-*)
 
+```fsharp
 let composable = precompilableDesigntime.InnerDesigntimeFarkle
+```
 
-(**
 ### Beware of code execution
 
 Farkle's precompiler executes part of your project's code; the necessary static constructors to create your precompilable designtime Farkles. This code can do literally anything, but it is your responsibility to keep it short and without adverse side-effects. Similarly, it is your responsibility to not build untrusted projects that use the precompiler. Consuming 3rd-party libraries with precompiled grammars however will not execute arbitrary code.
@@ -193,6 +181,7 @@ The `markForPrecompile` family of functions use the `Assembly.GetCallingAssembly
 Farkle 6.5.0 introduced overloads to the `MarkForPrecompile` extension method that allow manually specifying the assembly. Here's how to use them in both languages:
 *)
 
+```fsharp
 type Dummy = class end
 
 let designtime = literal "foo"
@@ -200,10 +189,11 @@ let designtime = literal "foo"
 // We get the assembly of a dummy type we defined. We could have also called Assembly.GetExecutingAssembly().
 // The extension methods are the same in both C# and F#; there are no equivalent curried functions.
 let worksInAot = designtime.MarkForPrecompile(typeof<Dummy>.Assembly)
+```
 
 (**
 
-``` csharp
+```csharp
 using Farkle;
 using Farkle.Builder;
 
@@ -240,7 +230,7 @@ The recommended way to build an app that uses the precompiler is through .NET SD
 
 Rider however can use the .NET edition of MSBuild with a simple workaround. Open its settings, go to "Build, Execution, Deployment", "Toolset and Build", "Use MSBuild version", and select an MSBuild executable from the .NET SDK (it typically has a `.dll` extension).
 
-![The Settings window in JetBrains Rider](img/rider_msbuild_workaround.png)
+![The Settings window in JetBrains Rider](../img/rider_msbuild_workaround.png)
 
 The fact that the precompiler runs on .NET Core doesn't mean that it won't work on projects targeting the .NET Framework. Precompiling a .NET Framework assembly will still load it to the .NET Core-based precompiler. While it sometimes works due to a compatibility shim, don't hold your breath that it will always work and you'd better not precompile designtime Farkles in assemblies that use .NET Framework-only features like ASP.NET Web Forms. In such scenarios you are recommended to move your Farkle-specific code to a separate library targeting .NET Standard.
 
@@ -251,4 +241,3 @@ So I hope you enjoyed this little tutorial. If you did, don't forget to give Far
 [msbuild]: https://www.nuget.org/packages/Farkle.Tools.MSBuild
 [Sigourney]: https://github.com/teo-tsirpanis/Sigourney
 [vs-suggestion]: https://developercommunity2.visualstudio.com/t/Allow-building-SDK-style-projects-with-t/1331985
-*)

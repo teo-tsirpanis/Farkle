@@ -59,7 +59,7 @@ In Farkle the tokenizer and the parser are separate but using them separately to
 
 FParsec and FsYacc support operator precedence and associativity to more intuitively write grammars (and automatically resolve LALR conflicts in the latter case). The former does it [via a special type][FParsec-operators], and the latter has direct support in the grammar definition files.
 
-Farkle added support for operator precedence and associativity in version 6.0.0, through objects named _operator scopes_. [The quick start guide has been updated](quickstart.html#Operator-Precedence) to talk about them.
+Farkle added support for operator precedence and associativity in version 6.0.0, through objects named _operator scopes_. [The quick start guide has been updated](quickstart.md#operator-precedence) to talk about them.
 
 ### Whitespace/comment handling
 
@@ -85,11 +85,11 @@ FParsec does not have any reason to integrate with MSBuild.
 
 FsLexYacc requires a tool to generate the source files for the lexer and the parser (there is a reason it's called a parser _generator_). Fortunately this tool can be integrated with MSBuild and transparently generate the source files when the project is built.
 
-Farkle integrates with MSBuild [to generate the parsing tables for a grammar ahead of time](the-precompiler.html) for increased start-up performance and error checking. It does not generate any source file but serializes the grammar into a binary file which is embedded in the compiled assembly. This feature is totally optional. Moreover, Farkle's MSBuild integration is more robust than FsLexYacc's, using custom MSBuild tasks, instead of FsLexYacc calling external command-line tools. In a future release, more things will be possible with Farkle and MSBuild.
+Farkle integrates with MSBuild [to generate the parsing tables for a grammar ahead of time](the-precompiler.md) for increased start-up performance and error checking. It does not generate any source file but serializes the grammar into a binary file which is embedded in the compiled assembly. This feature is totally optional. Moreover, Farkle's MSBuild integration is more robust than FsLexYacc's, using custom MSBuild tasks, instead of FsLexYacc calling external command-line tools. In a future release, more things will be possible with Farkle and MSBuild.
 
 ### C\# support
 
-While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them [to fluently support C# for creating grammars](csharp.html).
+While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them [to fluently support C# for creating grammars](csharp.md).
 
 It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing, given the tool's exclusive focus on F#.
 

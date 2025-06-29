@@ -86,7 +86,7 @@ The `Build` and `BuildUntyped` extension methods accept an optional `Cancellatio
 
 ### A complete example
 
-Let's take a look at [the calculator we made at the quick start guide](quickstart.html#Writing-more-complex-nonterminals) written in C#:
+Let's take a look at [the calculator we made at the quick start guide](quickstart.md#writing-more-complex-nonterminals) written in C#:
 
 ``` csharp
 using System;
@@ -174,6 +174,6 @@ runtime.ParseFile("foobar.txt");
 
 So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle a try, and maybe you feel especially sharp today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
-[fsharp]: quickstart.html
-[regex]: reference/farkle-builder-regex.html
-[predefinedsets]: reference/farkle-builder-predefinedsets.html
+[fsharp]: quickstart.md
+[regex]: ../api/Farkle.Builder.Regex.yml
+[predefinedsets]: ../api/Farkle.Builder.PredefinedSets.yml

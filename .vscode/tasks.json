@@ -11,6 +11,6 @@
         {"label": "⚙BUILD TESTS⚙", "group": "build", "presentation": {"reveal": "silent"}, "command": "dotnet", "args": ["build", "tests/Farkle.Tests/Farkle.Tests.fsproj", "-c", "Debug"], "problemMatcher": []},
         {"label": "📦PACK📦", "command": "pwsh", "args": ["./build.ps1", "target", "NuGetPack"], "problemMatcher": []},
         {"label": "⏱BENCHMARK⏱", "command": "pwsh", "args": ["./build.ps1", "target", "Benchmark"], "problemMatcher": []},
-        {"label": "📜DOCS📜", "command": "pwsh", "args": ["./build.ps1", "target", "GenerateDocsDebug"], "problemMatcher": []},
+        {"label": "📜SERVE DOCS📜", "command": "pwsh", "args": ["./build.ps1", "target", "ServeDocs"], "problemMatcher": []},
     ]
 }

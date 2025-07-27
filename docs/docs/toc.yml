@@ -1,5 +1,8 @@
-- name: Getting started
 - href: ../index.md
+- name: Release Notes
+  href: ../RELEASE_NOTES.md
+
+- name: Getting started
 - href: quickstart.md
 - href: csharp.md
 

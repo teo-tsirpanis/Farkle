@@ -1,24 +1,56 @@
 # What is Farkle?
 
-Farkle is a text parser library for .NET, featuring the best of both worlds: __LALR parser combinators__. Users define the terminals and nonterminals of their grammars, what to do when each of them is encountered, and Farkle takes care of the rest.
+Farkle is a .NET library that lets you create text parsers. Most projects in this field are either _parser generators_ — which are faster and easier to debug, but require writing a grammar definition in a different language — or _parser combinator libraries_ — which are defined in source code and have a better development experience, but are slower and more error-prone. Farkle however combines both approaches: it uses the same algorithm as generated parsers, while allowing you to define your grammar in source code, providing performance, reliability and ease of use at the same time.
 
-The Farkle library can be <a href="https://nuget.org/packages/Farkle">installed from NuGet</a>:
+Farkle follows the paradigm introduced by [GOLD Parser][gold], which uses a binary file format to serialize grammars. This allows you to write code that introspects your grammars and use them for things like [rendering Scriban templates](./docs/templates.md), but also [precompile your grammars ahead of time](./docs/the-precompiler.md), providing high startup performance and compile-time error checking.
+
+You can [learn more](docs/choosing-a-parser.md) about Farkle's features, compared with other .NET parsers.
+
+## Quick start
+
+Farkle can be [installed from NuGet][nuget]. Afterwards, you can proceed with writing your first parser:
+
+# [C#](#tab/csharp)
+
+```csharp
+using Farkle;
+using Farkle.Builder;
+
+// Define a grammar for simple addition expressions
+var number = Terminals.Int32("Number");
+var addExpression = Nonterminal.Create("Add Expression",
+    number.Extended().Append("+").Extend(number).Finish((n1, n2) => n1 + n2)
+);
+
+// Build the grammar and get a parser object
+var parser = addExpression.Build();
+
+// Parse a simple expression
+var result = parser.Parse("1 + 2"); // Whitespace is ignored by default
+Console.WriteLine(result); // Outputs: 3
 ```
-dotnet add package Farkle
+
+# [F#](#tab/fsharp)
+
+```fsharp
+open Farkle
+open Farkle.Builder
+
+// Define a grammar for simple addition expressions
+let number = Terminals.Int32("Number")
+let addExpression = "Add Expression" ||= [
+    !@ number .>> "+" .>>. number => (fun n1 n2 -> n1 + n2)
+]
+
+// Build the grammar and get a parser object
+let parser = GrammarBuilder.build addExpression
+
+// Parse a simple expression
+let result = CharParser.parseString parser "1 + 2" // Whitespace is ignored by default
+printfn "%O" result // Outputs: 3
 ```
 
-## Features
-
-* __Speed__: Farkle is fast. Its performance is a top priority and lots of time has been invested in its optimization.
-* __Language compatibility__: Farkle is usable from both C# and F#, with an intuitive API for each language. __It even supports C# 8.0's nullable reference types!__
-* __Fast development cycle__: Unlike parser generators, Farkle does not generate any source files. Your grammars are type-safe and created entirely from code, allowing features like IntelliSense and real-time syntax error reporting.
-* __Integration with MSBuild__: Farkle can optionally integrate with MSBuild to enable features like [ahead-of-time grammar building](docs/the-precompiler.md) which drastically reduces startup times and catches grammar errors like LALR conflicts at compile time.
-* __Large file support__: Farkle can parse large files without entirely reading them to memory.
-* __Grammar introspection__: Farkle provides [APIs that allow your grammars to be inspected from code](api/Farkle.Grammars.Grammar.yml).
-* __Wide framework support__: Farkle targets .NET Standard 2.0 at minimum, supporting .NET Framework 4.6.1+, .NET Core 2.0+, Xamarin, UWP and Unity.
-* __Templating__: Farkle supports [creating templated text files from grammars](docs/templates.md) using [Scriban][scriban].
-
-[Learn more](docs/choosing-a-parser.md) about Farkle's features, compared with other .NET parsers.
+---
 
 ## Documentation
 
@@ -44,15 +76,15 @@ The library comes with comprehensible documentation.
 
 The project is hosted on [GitHub][gh] where you can [report issues][issues], fork the project and submit pull requests.
 
-The library is available under the MIT license, which allows modification and
-redistribution for both commercial and non-commercial purposes. For more information see the [License file][license] in the GitHub repository.
+The library is available under the MIT license, which allows modification and redistribution for both commercial and non-commercial purposes. For more information see the [License file][license] in the GitHub repository.
 
-  [nuget]: https://nuget.org/packages/Farkle
-  [scriban]: https://github.com/lunet-io/Scriban
-  [json-csharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.CSharp/JSON.cs
-  [json-fsharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/JSON.fs
-  [simple-maths]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/SimpleMaths.fs
-  [indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs
-  [gh]: https://github.com/teo-tsirpanis/Farkle
-  [issues]: https://github.com/teo-tsirpanis/Farkle/issues
-  [license]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/LICENSE.txt
+[gold]: https://en.wikipedia.org/wiki/GOLD_(parser)
+[nuget]: https://nuget.org/packages/Farkle
+[scriban]: https://github.com/lunet-io/Scriban
+[json-csharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.CSharp/JSON.cs
+[json-fsharp]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/JSON.fs
+[simple-maths]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/SimpleMaths.fs
+[indent-based]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/sample/Farkle.Samples.FSharp/IndentBased.fs
+[gh]: https://github.com/teo-tsirpanis/Farkle
+[issues]: https://github.com/teo-tsirpanis/Farkle/issues
+[license]: https://github.com/teo-tsirpanis/Farkle/blob/mainstream/LICENSE.txt

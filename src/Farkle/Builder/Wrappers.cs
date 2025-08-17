@@ -19,11 +19,18 @@ internal class GrammarBuilderWrapper<T>(in GrammarGlobalOptions options, IGramma
     public new IGrammarBuilder<T> WithOptions(in GrammarGlobalOptions options) => new GrammarBuilderWrapper<T>(options, Symbol);
 }
 
-internal class GrammarSymbolWrapper(ISymbolBase symbol) : IGrammarSymbol<object>
+internal class GrammarSymbolWrapper(in GrammarSymbolOptions options, ISymbolBase symbol) : IGrammarSymbol<object>
 {
+    public readonly GrammarSymbolOptions Options = options;
+
     public string Name => Symbol.Name;
 
     public ISymbolBase Symbol { get; } = symbol;
+
+    public IGrammarSymbol WithOptions(in GrammarSymbolOptions options) => new GrammarSymbolWrapper(options, Symbol);
 }
 
-internal sealed class GrammarSymbolWrapper<T>(ISymbolBase symbol) : GrammarSymbolWrapper(symbol), IGrammarSymbol<T>;
+internal sealed class GrammarSymbolWrapper<T>(in GrammarSymbolOptions options, ISymbolBase symbol) : GrammarSymbolWrapper(options, symbol), IGrammarSymbol<T>
+{
+    public new IGrammarSymbol<T> WithOptions(in GrammarSymbolOptions options) => new GrammarSymbolWrapper<T>(options, Symbol);
+}

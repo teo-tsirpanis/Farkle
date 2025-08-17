@@ -26,18 +26,6 @@ public enum GroupOptions
     /// <seealso cref="TokenSymbolAttributes.Hidden"/>
     Hidden = 2,
     /// <summary>
-    /// The group's container symbol will be added to the grammar's special names table under its
-    /// original name.
-    /// </summary>
-    /// <remarks>
-    /// Because special names in a grammar are unique, if many symbols in a grammar have the same
-    /// special name in the grammar, the builder will create a grammar unusable for parsing. For
-    /// this reason you are recommended to use a special name that is likely to be unique, and
-    /// rename the symbol to a more user-friendly name.
-    /// </remarks>
-    /// <seealso cref="IGrammarProvider.GetSymbolFromSpecialName"/>
-    SpecialName = 4,
-    /// <summary>
     /// The group can appear inside itself. For each time the group starts, it must end
     /// an equal number of times.
     /// </summary>
@@ -45,5 +33,5 @@ public enum GroupOptions
     /// Semantic actions do not run for nested groups.
     /// </remarks>
     /// <seealso cref="Grammars.Group.Nesting"/>
-    Recursive = 8
+    Recursive = 4
 }

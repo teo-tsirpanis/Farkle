@@ -22,27 +22,22 @@ internal static class GrammarBuild
 
     private static readonly Regex WhitespaceNoNewLineRegex = Regex.OneOf('\t', ' ').AtLeast(1);
 
-    private static TokenSymbolAttributes GetTerminalFlags(ISymbolBase symbol, out bool hasSpecialName)
+    private static TokenSymbolAttributes GetTerminalFlags(ISymbolBase symbol)
     {
         switch (symbol)
         {
             case Terminal { Options: var options }:
-                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy,
-                    (uint)TerminalOptions.SpecialName, out hasSpecialName);
+                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy);
             case VirtualTerminal { Options: var options }:
-                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy,
-                    (uint)TerminalOptions.SpecialName, out hasSpecialName);
+                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy);
             case Group { Options: var options }:
-                return MapFlags((uint)options, (uint)GroupOptions.Hidden, (uint)GroupOptions.Noisy,
-                    (uint)GroupOptions.SpecialName, out hasSpecialName);
+                return MapFlags((uint)options, (uint)GroupOptions.Hidden, (uint)GroupOptions.Noisy);
             default:
-                hasSpecialName = false;
                 return TokenSymbolAttributes.Terminal;
         }
 
-        static TokenSymbolAttributes MapFlags(uint flags, uint hiddenFlag, uint noisyFlag, uint specialNameFlag, out bool hasSpecialName)
+        static TokenSymbolAttributes MapFlags(uint flags, uint hiddenFlag, uint noisyFlag)
         {
-            hasSpecialName = (flags & specialNameFlag) != 0;
             return ((flags & hiddenFlag) != 0 ? TokenSymbolAttributes.Hidden : TokenSymbolAttributes.None)
                 | ((flags & noisyFlag) != 0 ? TokenSymbolAttributes.Noise : TokenSymbolAttributes.None)
                 | TokenSymbolAttributes.Terminal;
@@ -86,7 +81,6 @@ internal static class GrammarBuild
         bool literalsCaseInsensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseSensitive;
         var operatorScope = globalOptions.OperatorScope;
         var writer = new GrammarWriter();
-        bool isUnparsable = false;
 
         // Maps symbol handles (terminals or productions) to their representation
         // in the operator scope. We create and populate this only if needed.
@@ -101,8 +95,6 @@ internal static class GrammarBuild
         var symbolMap = new Dictionary<object, EntityHandle>(
             grammarDefinition.Terminals.Count + grammarDefinition.Nonterminals.Count,
             grammarDefinition.SymbolIdentityObjectComparer);
-        Dictionary<string, EntityHandle>? specialNameMap = null;
-        bool writeSpecialNames = true;
 
         // Add terminals.
         GrammarSymbolsProvider? dfaSymbols = ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0)
@@ -117,7 +109,7 @@ internal static class GrammarBuild
         foreach (ISymbolBase terminal in grammarDefinition.Terminals)
         {
             string name = terminal.Name;
-            TokenSymbolAttributes flags = GetTerminalFlags(terminal, out bool hasSpecialName);
+            TokenSymbolAttributes flags = GetTerminalFlags(terminal);
             if (terminal is NewLine && newLineIsNoisy)
             {
                 flags |= TokenSymbolAttributes.Noise;
@@ -141,29 +133,7 @@ internal static class GrammarBuild
                 groups ??= [];
                 groups.Add(group);
             }
-            if (hasSpecialName)
-            {
-                // Add the symbol's _original_ name as a special name.
-                specialNameMap ??= [];
-                if (!specialNameMap.TryAdd(terminal.Name, handle))
-                {
-                    log.DuplicateSpecialName(terminal.Name);
-                    // If there is a duplicate special name, no special names will be written
-                    // to the grammar, and the grammar will be marked as unparsable.
-                    isUnparsable = true;
-                    writeSpecialNames = false;
-                }
-            }
             operatorSymbolMap?.Add(handle, terminal);
-        }
-
-        // Add special names.
-        if (writeSpecialNames && specialNameMap is not null)
-        {
-            foreach (var kvp in specialNameMap)
-            {
-                writer.AddSpecialName(writer.GetOrAddString(kvp.Key), kvp.Value);
-            }
         }
 
         // Add groups.
@@ -231,6 +201,12 @@ internal static class GrammarBuild
             operatorSymbolMap?.Add(handle, production);
         }
 
+        // Add special names.
+        foreach (var kvp in grammarDefinition.SpecialNames)
+        {
+            writer.AddSpecialName(writer.GetOrAddString(kvp.Key), symbolMap[kvp.Value]);
+        }
+
         // Add comments.
         if (globalOptions.Comments is { Count: > 0 } comments)
         {
@@ -295,9 +271,8 @@ internal static class GrammarBuild
         }
 
         // Set grammar info.
-        GrammarAttributes attributes = isUnparsable ? GrammarAttributes.Unparsable : GrammarAttributes.None;
         NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
-        writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, attributes);
+        writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, grammarDefinition.Attributes);
 
         return Grammar.Load(writer.ToImmutableArray());
 

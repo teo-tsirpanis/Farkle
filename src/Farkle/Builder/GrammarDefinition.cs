@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
 using Farkle.Parser;
 
 namespace Farkle.Builder;
@@ -19,6 +20,8 @@ internal sealed class GrammarDefinition
 {
     public readonly GrammarGlobalOptions GlobalOptions;
 
+    public required GrammarAttributes Attributes { get; init; }
+
     /// <summary>
     /// The terminals of the grammar, or the symbols that will become terminals
     /// (literals, groups, etc.).
@@ -28,6 +31,8 @@ internal sealed class GrammarDefinition
     public required List<INonterminal> Nonterminals { get; init; }
 
     public required List<IProduction> Productions { get; init; }
+
+    public required Dictionary<string, ISymbolBase> SpecialNames { get; init; }
 
     public string GrammarName => GlobalOptions.GrammarName ?? StartSymbol.Name;
 
@@ -78,6 +83,8 @@ internal sealed class GrammarDefinition
         var terminals = new List<ISymbolBase>();
         var nonterminals = new List<INonterminal>();
         var productions = new List<IProduction>();
+        var specialNames = new Dictionary<string, ISymbolBase>(StringComparer.Ordinal);
+        bool hasDuplicateSpecialNames = false;
         var visited = new HashSet<object>(Utilities.GetFallbackStringComparer(caseSensitive));
         var nonterminalsToProcess = new Queue<INonterminal>();
 
@@ -101,16 +108,36 @@ internal sealed class GrammarDefinition
             }
         }
 
+        if (hasDuplicateSpecialNames)
+        {
+            // Do not write a half-incorrect table.
+            specialNames.Clear();
+        }
+
         return new(in globalOptions)
         {
+            Attributes = hasDuplicateSpecialNames ? GrammarAttributes.Unparsable : GrammarAttributes.None,
             Terminals = terminals,
             Nonterminals = nonterminals,
             Productions = productions,
+            SpecialNames = specialNames,
         };
 
         void Visit(IGrammarSymbol symbol)
         {
+            ref readonly var options = ref symbol.GetOptions();
             ISymbolBase innerSymbol = symbol.Symbol;
+            foreach (string specialName in options.SpecialNames)
+            {
+                if (!specialNames.TryAdd(specialName, innerSymbol))
+                {
+                    if (specialNames[specialName] != innerSymbol)
+                    {
+                        log.DuplicateSpecialName(specialName);
+                        hasDuplicateSpecialNames = true;
+                    }
+                }
+            }
             if (!visited.Add(GetSymbolIdentityObject(innerSymbol)))
             {
                 return;

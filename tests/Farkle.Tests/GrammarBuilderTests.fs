@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Diagnostics
+open Farkle.Grammars
 open Farkle.Parser
 open FsCheck
 open System
@@ -155,36 +156,34 @@ let tests = testList "Grammar builder tests" [
     }
 
     test "Special names work" {
-        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("MyTerminal")
+        let sym = virtualTerminal "MyTerminal" |> _.AddSpecialName("__MySpecialName")
         let nont = "N" |||= [
             !% sym
         ]
         let grammar, warnings =
-            nont.AutoWhitespace(false)
+            nont.AutoWhitespace false
             |> buildWithWarnings
         let terminal =
             grammar.Terminals
             |> Seq.exactlyOne
-        let terminalFromSpecialName =
-            grammar.GetSymbolFromSpecialName("__MySpecialName")
-            |> Grammars.TokenSymbolHandle.op_Explicit
+        let terminalFromSpecialName = grammar.GetTokenSymbolFromSpecialName "__MySpecialName"
         Expect.isEmpty warnings "Building emitted warnings"
         Expect.equal terminalFromSpecialName terminal.Handle "The terminal could not be retrieved from the special name."
     }
 
     test "Duplicate special names emit an error" {
-        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test")
-        let sym2 = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test 2")
+        let sym = virtualTerminal "Test" |> _.AddSpecialName("__MySpecialName")
+        let sym2 = virtualTerminal "Test 2" |> _.AddSpecialName("__MySpecialName")
         let nont = "N" |||= [
             !% sym
             !% sym2
         ]
         let grammar, warnings =
-            nont.AutoWhitespace(false)
+            nont.AutoWhitespace false
             |> buildWithWarnings
         Expect.hasLength warnings 1 "Building emitted the wrong number of warnings"
         Expect.equal warnings[0].Code "FARKLE0004" "The warning was not of the correct type"
-        Expect.equal grammar.GrammarInfo.Attributes Grammars.GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
+        Expect.equal grammar.GrammarInfo.Attributes GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
         Expect.isFalse (grammar.GetSymbolFromSpecialName("__MySpecialName").HasValue) "The special name should not be present in the grammar file"
     }
 

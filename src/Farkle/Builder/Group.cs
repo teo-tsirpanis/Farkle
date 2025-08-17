@@ -11,7 +11,7 @@ public partial class Group
 {
     private static void ValidateOptions(GroupOptions options)
     {
-        if ((options & ~(GroupOptions.Noisy | GroupOptions.Hidden | GroupOptions.SpecialName | GroupOptions.Recursive)) != 0)
+        if ((options & ~(GroupOptions.Noisy | GroupOptions.Hidden | GroupOptions.Recursive)) != 0)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(options));
         }

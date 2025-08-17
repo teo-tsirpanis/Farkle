@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
+using Farkle.Grammars;
 
 namespace Farkle.Builder;
 
@@ -23,6 +23,23 @@ namespace Farkle.Builder;
 /// </remarks>
 public static class GrammarSymbolExtensions
 {
+    internal static ref readonly GrammarSymbolOptions GetOptions(this IGrammarSymbol builder) =>
+        ref builder is GrammarSymbolWrapper wrapper ? ref wrapper.Options : ref GrammarSymbolOptions.Default;
+
+    private static IGrammarSymbol WithOptions(this IGrammarSymbol symbol, in GrammarSymbolOptions options)
+    {
+        return symbol is GrammarSymbolWrapper wrapper
+            ? wrapper.WithOptions(in options)
+            : new GrammarSymbolWrapper(in options, symbol.Symbol);
+    }
+
+    private static IGrammarSymbol<T> WithOptions<T>(this IGrammarSymbol<T> symbol, in GrammarSymbolOptions options)
+    {
+        return symbol is GrammarSymbolWrapper<T> wrapper
+            ? wrapper.WithOptions(in options)
+            : new GrammarSymbolWrapper<T>(in options, symbol.Symbol);
+    }
+
     /// <summary>
     /// Changes the type of <see cref="IGrammarSymbol"/> to a generic <see cref="IGrammarSymbol{T}"/>
     /// of type <see cref="object"/>, forcing it to return a value.
@@ -38,7 +55,32 @@ public static class GrammarSymbolExtensions
         {
             return b;
         }
-        return new GrammarSymbolWrapper<object?>(symbol.Symbol);
+        return new GrammarSymbolWrapper<object?>(GrammarSymbolOptions.Default, symbol.Symbol);
+    }
+
+    /// <summary>
+    /// Adds a special name to the symbol, which is used to uniquely identify it within the grammar.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If a grammar has multiple symbols with the same special name, building will fail.
+    /// </para>
+    /// <para>
+    /// Calling this method multiple times will add multiple special names to the symbol.
+    /// </para>
+    /// </remarks>
+    /// <seealso cref="IGrammarProvider.GetSymbolFromSpecialName"/>
+    public static IGrammarSymbol AddSpecialName(this IGrammarSymbol symbol, string name)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
+    }
+
+    /// <inheritdoc cref="AddSpecialName(IGrammarSymbol, string)"/>
+    public static IGrammarSymbol<T> AddSpecialName<T>(this IGrammarSymbol<T> symbol, string name)
+    {
+        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
     /// <summary>

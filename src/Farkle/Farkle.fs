@@ -450,17 +450,6 @@ module internal GrammarBuilder =
     /// Syntax checkers do not perform semantic actions.
     let inline buildSyntaxCheck (x: IGrammarBuilder) = x.BuildSyntaxCheck<unit>()
 
-/// Functions to set options on grammar symbols.
-/// To set options on the entire grammar, use the extension methods on grammar builders.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal GrammarSymbol =
-
-    /// Renames a grammar symbol. This is an alias for `GrammarSymbolExtensions.Rename`.
-    let inline rename name (symbol: IGrammarSymbol<_>) = symbol.Rename name
-
-    /// Renames an untyped grammar symbol. This is an alias for `GrammarSymbolExtensions.Rename`.
-    let inline renameU name (symbol: IGrammarSymbol) = symbol.Rename name
-
 /// F# operators and functions to easily work with grammar symbols and productions.
 /// Production builders created by F# operators cannot be used from C# and vice versa,
 /// and support only up to five significant grammar symbols.
@@ -755,9 +744,8 @@ module DesigntimeFarkle =
     let inline withOperatorScope (scope: OperatorPrecedence.OperatorScope) (grammarBuilder: IGrammarBuilder<_>) =
         grammarBuilder.WithOperatorScope scope
 
-    [<Obsolete("Use the GrammarSymbol.rename or renameU functions instead.")>]
-    let inline rename name (symbol: IGrammarSymbol<_>) =
-        symbol.Rename name
+    [<Obsolete("Symbol renaming is not supported in Farkle 7; this function has no effect.")>]
+    let inline rename (_: string) (symbol: IGrammarSymbol<_>) = symbol
 
     [<Obsolete("Use the CaseSensitive extension method instead.")>]
     let inline caseSensitive (flag: bool) (grammarBuilder: IGrammarBuilder<_>) =

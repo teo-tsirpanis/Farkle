@@ -180,8 +180,7 @@ public static class GrammarBuilderExtensions
     /// the <see cref="IGrammarSymbol.Name"/> of the grammar's start symbol.
     /// </remarks>
     /// <seealso cref="IGrammarSymbol.Name"/>
-    /// <seealso cref="Grammars.GrammarInfo.Name"/>
-    /// <seealso cref="GrammarSymbolExtensions.Rename"/>
+    /// <seealso cref="GrammarInfo.Name"/>
     public static IGrammarBuilder WithGrammarName(this IGrammarBuilder builder, string value)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(value);

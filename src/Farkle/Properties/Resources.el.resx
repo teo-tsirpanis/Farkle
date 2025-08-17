@@ -150,9 +150,6 @@
   <data name="Builder_DuplicateOperatorSymbol" xml:space="preserve">
     <value>Το σύμβολο τελεστή {0} ορίστηκε με επίπεδο προτεραιότητας και {1} και {2}.</value>
   </data>
-  <data name="Builder_SymbolMultipleRenames" xml:space="preserve">
-    <value>Το σύμβολο '{0}' μετονομάστηκε και σε '{1}' και σε '{2}'.</value>
-  </data>
   <data name="Builder_RegexStringPredefinedSetsNotSupported" xml:space="preserve">
     <value>Τα προκαθορισμένα σύμβολα χαρακτήρων δεν υποστηρίζονται ξεκινώντας από το Farkle 7</value>
   </data>

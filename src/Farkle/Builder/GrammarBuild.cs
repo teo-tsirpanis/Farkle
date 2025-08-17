@@ -116,7 +116,7 @@ internal static class GrammarBuild
         TokenSymbolHandle newLineHandle = default;
         foreach (ISymbolBase terminal in grammarDefinition.Terminals)
         {
-            string name = grammarDefinition.GetName(terminal);
+            string name = terminal.Name;
             TokenSymbolAttributes flags = GetTerminalFlags(terminal, out bool hasSpecialName);
             if (terminal is NewLine && newLineIsNoisy)
             {
@@ -171,7 +171,7 @@ internal static class GrammarBuild
         {
             foreach (Group group in groups)
             {
-                string name = grammarDefinition.GetName(group);
+                string name = group.Name;
                 (string groupStart, string? groupEndOrNewLine) = group switch
                 {
                     LineGroup x => (x.GroupStart, null),
@@ -205,7 +205,7 @@ internal static class GrammarBuild
         // Add nonterminals.
         foreach (INonterminal nonterminal in grammarDefinition.Nonterminals)
         {
-            string name = grammarDefinition.GetName(nonterminal);
+            string name = nonterminal.Name;
             NonterminalAttributes flags = NonterminalAttributes.None;
             if (GrammarDefinition.IsGenerated(nonterminal))
             {
@@ -439,9 +439,9 @@ internal static class GrammarBuild
 
         public int StartSymbol => 0;
 
-        public string GetTerminalName(int index) => _grammarDefinition.GetName(_grammarDefinition.Terminals[index]);
+        public string GetTerminalName(int index) => _grammarDefinition.Terminals[index].Name;
 
-        public string GetNonterminalName(int index) => _grammarDefinition.GetName(_grammarDefinition.Nonterminals[index]);
+        public string GetNonterminalName(int index) => _grammarDefinition.Nonterminals[index].Name;
 
         public (int FirstProduction, int ProductionCount) GetNonterminalProductions(int index) => _nonterminalProductionBounds[index];
 

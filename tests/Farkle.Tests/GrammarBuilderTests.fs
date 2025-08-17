@@ -194,7 +194,7 @@ let tests = testList "Grammar builder tests" [
             |> buildWithWarnings
         Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
         Expect.hasLength errors 1 "Building emitted the wrong number of errors"
-        Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
+        Expect.equal errors[0].Code "FARKLE0008" "The error was not of the correct type"
     }
 
     test "A deeply nested regex does not cause a stack overflow" {
@@ -209,7 +209,7 @@ let tests = testList "Grammar builder tests" [
             |> buildWithWarnings
         Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
         Expect.hasLength errors 1 "Building emitted the wrong number of errors"
-        Expect.equal errors[0].Code "FARKLE0010" "The error was not of the correct type"
+        Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
     }
 
     test "Many block groups can be ended by the same symbol" {

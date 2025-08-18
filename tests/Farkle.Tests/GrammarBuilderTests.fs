@@ -156,19 +156,28 @@ let tests = testList "Grammar builder tests" [
     }
 
     test "Special names work" {
-        let sym = virtualTerminal "MyTerminal" |> _.AddSpecialName("__MySpecialName")
+        // Test setting special names from multiple instances of the same symbol.
+        let sym = virtualTerminal "MyTerminal"
+        let sym2 = sym.AddSpecialName("__MySpecialName").AddSpecialName("__MySpecialName2")
+        let sym3 = sym2.AddSpecialName("__MySpecialName2").AddSpecialName("__MySpecialName3")
         let nont = "N" |||= [
-            !% sym
+            !% sym .>> sym2 .>> sym3
         ]
         let grammar, warnings =
-            nont.AutoWhitespace false
+            nont.AddSpecialName("__MySpecialName4")
+            |> _.AutoWhitespace(false)
             |> buildWithWarnings
         let terminal =
             grammar.Terminals
             |> Seq.exactlyOne
-        let terminalFromSpecialName = grammar.GetTokenSymbolFromSpecialName "__MySpecialName"
+        let nonterminal =
+            grammar.Nonterminals
+            |> Seq.exactlyOne
         Expect.isEmpty warnings "Building emitted warnings"
-        Expect.equal terminalFromSpecialName terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName2") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName3") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetNonterminalFromSpecialName "__MySpecialName4") nonterminal.Handle "The terminal could not be retrieved from the special name."
     }
 
     test "Duplicate special names emit an error" {

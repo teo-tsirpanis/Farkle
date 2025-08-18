@@ -32,7 +32,8 @@ internal sealed class GrammarDefinition
 
     public required List<IProduction> Productions { get; init; }
 
-    public required Dictionary<string, object> SpecialNames { get; init; }
+    // Use ordered dictionary for determinism.
+    public required OrderedDictionary<string, object> SpecialNames { get; init; }
 
     public string GrammarName => GlobalOptions.GrammarName ?? StartSymbol.Name;
 
@@ -83,7 +84,7 @@ internal sealed class GrammarDefinition
         var terminals = new List<ISymbolBase>();
         var nonterminals = new List<INonterminal>();
         var productions = new List<IProduction>();
-        var specialNames = new Dictionary<string, object>(StringComparer.Ordinal);
+        var specialNames = new OrderedDictionary<string, object>(StringComparer.Ordinal);
         bool hasDuplicateSpecialNames = false;
         var symbolIdentityComparer = Utilities.GetFallbackStringComparer(caseSensitive);
         var visited = new HashSet<object>(symbolIdentityComparer);
@@ -131,8 +132,8 @@ internal sealed class GrammarDefinition
             object innerSymbolIdentity = GetSymbolIdentityObject(innerSymbol);
             foreach (string specialName in options.SpecialNames)
             {
-                if (!specialNames.TryAdd(specialName, innerSymbolIdentity) &&
-                    !symbolIdentityComparer.Equals(specialNames[specialName], innerSymbolIdentity))
+                if (!specialNames.TryAdd(specialName, innerSymbolIdentity, out int existingIdx) &&
+                    !symbolIdentityComparer.Equals(specialNames.GetAt(existingIdx).Value, innerSymbolIdentity))
                 {
                     log.DuplicateSpecialName(specialName);
                     hasDuplicateSpecialNames = true;

@@ -32,7 +32,7 @@ internal sealed class GrammarDefinition
 
     public required List<IProduction> Productions { get; init; }
 
-    public required Dictionary<string, ISymbolBase> SpecialNames { get; init; }
+    public required Dictionary<string, object> SpecialNames { get; init; }
 
     public string GrammarName => GlobalOptions.GrammarName ?? StartSymbol.Name;
 
@@ -83,9 +83,10 @@ internal sealed class GrammarDefinition
         var terminals = new List<ISymbolBase>();
         var nonterminals = new List<INonterminal>();
         var productions = new List<IProduction>();
-        var specialNames = new Dictionary<string, ISymbolBase>(StringComparer.Ordinal);
+        var specialNames = new Dictionary<string, object>(StringComparer.Ordinal);
         bool hasDuplicateSpecialNames = false;
-        var visited = new HashSet<object>(Utilities.GetFallbackStringComparer(caseSensitive));
+        var symbolIdentityComparer = Utilities.GetFallbackStringComparer(caseSensitive);
+        var visited = new HashSet<object>(symbolIdentityComparer);
         var nonterminalsToProcess = new Queue<INonterminal>();
 
         Visit(GetStartSymbol(grammar));
@@ -127,18 +128,17 @@ internal sealed class GrammarDefinition
         {
             ref readonly var options = ref symbol.GetOptions();
             ISymbolBase innerSymbol = symbol.Symbol;
+            object innerSymbolIdentity = GetSymbolIdentityObject(innerSymbol);
             foreach (string specialName in options.SpecialNames)
             {
-                if (!specialNames.TryAdd(specialName, innerSymbol))
+                if (!specialNames.TryAdd(specialName, innerSymbolIdentity) &&
+                    !symbolIdentityComparer.Equals(specialNames[specialName], innerSymbolIdentity))
                 {
-                    if (specialNames[specialName] != innerSymbol)
-                    {
-                        log.DuplicateSpecialName(specialName);
-                        hasDuplicateSpecialNames = true;
-                    }
+                    log.DuplicateSpecialName(specialName);
+                    hasDuplicateSpecialNames = true;
                 }
             }
-            if (!visited.Add(GetSymbolIdentityObject(innerSymbol)))
+            if (!visited.Add(innerSymbolIdentity))
             {
                 return;
             }

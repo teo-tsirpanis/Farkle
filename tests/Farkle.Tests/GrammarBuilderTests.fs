@@ -180,6 +180,24 @@ let tests = testList "Grammar builder tests" [
         Expect.equal (grammar.GetNonterminalFromSpecialName "__MySpecialName4") nonterminal.Handle "The terminal could not be retrieved from the special name."
     }
 
+    test "Special names on literals work" {
+        let sym1 = literal "a" |> _.AddSpecialName("__MySpecialName")
+        let sym2 = literal "A" |> _.AddSpecialName("__MySpecialName")
+        let sym = "N" |||= [
+            !% sym1 .>> sym2
+        ]
+        let grammar, warnings =
+            sym
+            |> _.AutoWhitespace(false)
+            |> _.CaseSensitive(false)
+            |> buildWithWarnings
+        let terminal =
+            grammar.Terminals
+            |> Seq.exactlyOne
+        Expect.isEmpty warnings "Building emitted warnings"
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
+    }
+
     test "Duplicate special names emit an error" {
         let sym = virtualTerminal "Test" |> _.AddSpecialName("__MySpecialName")
         let sym2 = virtualTerminal "Test 2" |> _.AddSpecialName("__MySpecialName")

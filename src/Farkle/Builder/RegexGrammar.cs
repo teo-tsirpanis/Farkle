@@ -242,7 +242,7 @@ internal static class RegexGrammar
             regexQuantified
             .Many<Regex, List<Regex>>(atLeastOnce: true)
             // Do not replace with collection expressions, ToImmutableArray is optimized for Lists.
-            .Select(x => Regex.Join(x.ToImmutableArray()));
+            .Select(x => Regex.Join(x.ToImmutableArray()), "Regex Concatenation");
 
         var regexAlternationBuilder =
             regexConcatenation

@@ -97,7 +97,7 @@ public static class GrammarSymbolExtensions
         where TCollection : ICollection<T>, new()
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} {typeof(TCollection).Name}");
+        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence");
         if (atLeastOnce)
         {
             nont.SetProductions(
@@ -132,7 +132,7 @@ public static class GrammarSymbolExtensions
         where TCollection : ICollection<T>, new()
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} {typeof(TCollection).Name} Separated By {separator.Name}");
+        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence Separated By {separator.Name}");
         if (atLeastOnce)
         {
             nont.SetProductions(
@@ -189,10 +189,12 @@ public static class GrammarSymbolExtensions
     /// <typeparam name="TNew">The type of values the new symbol will return.</typeparam>
     /// <param name="symbol">The symbol to transform.</param>
     /// <param name="selector">The transformation to apply to the value of <paramref name="symbol"/>.</param>
-    public static IGrammarSymbol<TNew> Select<T, TNew>(this IGrammarSymbol<T> symbol, Func<T, TNew> selector)
+    /// <param name="name">The name of the new symbol. If not provided, a default name will be generated.</param>
+    public static IGrammarSymbol<TNew> Select<T, TNew>(this IGrammarSymbol<T> symbol, Func<T, TNew> selector, string? name = null)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
         ArgumentNullExceptionCompat.ThrowIfNull(selector);
-        return Nonterminal.Create($"{symbol.Name} :?> {typeof(TNew).Name}", symbol.Finish(selector));
+        name ??= $"{symbol.Name} Transformed";
+        return Nonterminal.Create(name, symbol.Finish(selector));
     }
 }

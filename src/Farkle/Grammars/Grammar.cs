@@ -76,6 +76,20 @@ public abstract partial class Grammar : IGrammarProvider
     /// </summary>
     public LrStateMachine? LrStateMachine { get; }
 
+    /// <summary>
+    /// A collection of the <see cref="Grammar"/>'s <see cref="SpecialNameDefinition"/>s.
+    /// </summary>
+    /// <remarks>
+    /// This type is intended to be used for presentation purposes only.
+    /// For maximum performance, parsers are strongly recommended to use
+    /// <see cref="IGrammarProvider.GetSymbolFromSpecialName"/>, or one of the
+    /// extension methods in <see cref="GrammarExtensions"/> instead.
+    /// </remarks>
+    /// <seealso cref="IGrammarProvider.GetSymbolFromSpecialName"/>
+    /// <seealso cref="GrammarExtensions.GetTokenSymbolFromSpecialName"/>
+    /// <seealso cref="GrammarExtensions.GetNonterminalFromSpecialName"/>
+    public SpecialNameDefinitionCollection SpecialNameDefinitions => new(this);
+
     private static void ValidateHeader(GrammarHeader header)
     {
         if (header.IsSupported)

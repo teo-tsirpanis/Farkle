@@ -241,15 +241,12 @@ internal static class RegexGrammar
         var regexConcatenation =
             regexQuantified
             .Many<Regex, List<Regex>>(atLeastOnce: true)
-            .Rename("Regex concatenation builder")
             // Do not replace with collection expressions, ToImmutableArray is optimized for Lists.
-            .Select(x => Regex.Join(x.ToImmutableArray()))
-            .Rename("Regex concatenation");
+            .Select(x => Regex.Join(x.ToImmutableArray()), "Regex Concatenation");
 
         var regexAlternationBuilder =
             regexConcatenation
-            .SeparatedBy<Regex, List<Regex>>(Terminal.Literal("|"), atLeastOnce: true)
-            .Rename("Regex alternation builder");
+            .SeparatedBy<Regex, List<Regex>>(Terminal.Literal("|"), atLeastOnce: true);
 
         regex.SetProductions(
             regexAlternationBuilder.Finish(x => Regex.Choice(x.ToImmutableArray()))

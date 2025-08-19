@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Diagnostics
+open Farkle.Grammars
 open Farkle.Parser
 open FsCheck
 open System
@@ -154,100 +155,62 @@ let tests = testList "Grammar builder tests" [
         Expect.equal (parser.Parse "{{🆙🆙}}") (ParserResult.CreateSuccess "{{🆙🆙}}") "Farkle does not properly handle recursive block groups"
     }
 
-    test "Renaming grammar symbols works" {
-        let doTest name (df: IGrammarSymbol) =
-            let expectedName = sprintf "%s Renamed" df.Name
-            let startSymbolName =
-                let grammar = df.Rename(expectedName).BuildSyntaxCheck().GetGrammar()
-                grammar.GrammarInfo.StartSymbol.Name
-            Expect.equal startSymbolName expectedName (sprintf "Renaming a %s had no effect" name)
-
-        terminalU "Number" Regex.any
-        |> doTest "terminal"
-        "Nonterminal" |||= [!% (terminalU "Number" Regex.any)]
-        |> doTest "nonterminal"
-        literal "Literal"
-        |> doTest "literal"
-        Group.Line("Line Group", "//")
-        |> doTest "line group"
-        Group.Block("Block Group", "/*", "*/")
-        |> doTest "block group"
-    }
-
-    test "The renamed name of a symbol gets preferred" {
-        let sym = virtualTerminal "Test"
-        // Test that multiple symbol objects with the same renamed name are accepted.
-        let mkRenamed() = GrammarSymbol.renameU "Test Renamed" sym
-        let nont = "N" |||= [
-            // While traversing the grammar, the builder will see the original symbol first,
-            // but must still pick the renamed one.
-            !% sym
-            !% mkRenamed() .>> mkRenamed()
-        ]
-        let grammar, warnings =
-            nont.AutoWhitespace(false)
-            |> buildWithWarnings
-        Expect.isEmpty warnings "Building emitted warnings"
-        let terminalName =
-            grammar.Terminals
-            |> Seq.exactlyOne
-            |> _.Name
-        Expect.equal terminalName "Test Renamed" "The renamed name of the symbol was not preferred"
-    }
-
-    test "Renaming a symbol twice raises a warning" {
-        let sym = virtualTerminal "Test"
-        let mkRenamed() = GrammarSymbol.renameU "Test Renamed" sym
-        let mkRenamed2() = GrammarSymbol.renameU "Test Renamed 2" sym
-        let nont = "N" |||= [
-            !% sym
-            !% mkRenamed() .>> mkRenamed()
-            !% mkRenamed2() .>> mkRenamed2() .>> mkRenamed2()
-        ]
-        let grammar, warnings =
-            nont.AutoWhitespace(false)
-            |> buildWithWarnings
-        Expect.hasLength warnings 3 "Building emitted the wrong number of warnings"
-        Expect.all warnings (fun x -> x.Code = "FARKLE0008") "Warnings were not of the correct type"
-        let terminalName =
-            grammar.Terminals
-            |> Seq.exactlyOne
-            |> _.Name
-        // We can't know for sure which name will be chosen, but it will not be the original one.
-        Expect.notEqual terminalName "Test" "The original name of a symbol was not preferred"
-    }
-
     test "Special names work" {
-        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("MyTerminal")
+        // Test setting special names from multiple instances of the same symbol.
+        let sym = virtualTerminal "MyTerminal"
+        let sym2 = sym.AddSpecialName("__MySpecialName").AddSpecialName("__MySpecialName2")
+        let sym3 = sym2.AddSpecialName("__MySpecialName2").AddSpecialName("__MySpecialName3")
         let nont = "N" |||= [
-            !% sym
+            !% sym .>> sym2 .>> sym3
         ]
         let grammar, warnings =
-            nont.AutoWhitespace(false)
+            nont.AddSpecialName("__MySpecialName4")
+            |> _.AutoWhitespace(false)
             |> buildWithWarnings
         let terminal =
             grammar.Terminals
             |> Seq.exactlyOne
-        let terminalFromSpecialName =
-            grammar.GetSymbolFromSpecialName("__MySpecialName")
-            |> Grammars.TokenSymbolHandle.op_Explicit
+        let nonterminal =
+            grammar.Nonterminals
+            |> Seq.exactlyOne
         Expect.isEmpty warnings "Building emitted warnings"
-        Expect.equal terminalFromSpecialName terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName2") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName3") terminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetNonterminalFromSpecialName "__MySpecialName4") nonterminal.Handle "The terminal could not be retrieved from the special name."
+    }
+
+    test "Special names on literals work" {
+        let sym1 = literal "a" |> _.AddSpecialName("__MySpecialName")
+        let sym2 = literal "A" |> _.AddSpecialName("__MySpecialName")
+        let sym = "N" |||= [
+            !% sym1 .>> sym2
+        ]
+        let grammar, warnings =
+            sym
+            |> _.AutoWhitespace(false)
+            |> _.CaseSensitive(false)
+            |> buildWithWarnings
+        let terminal =
+            grammar.Terminals
+            |> Seq.exactlyOne
+        Expect.isEmpty warnings "Building emitted warnings"
+        Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
     }
 
     test "Duplicate special names emit an error" {
-        let sym = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test")
-        let sym2 = Terminal.Virtual("__MySpecialName", TerminalOptions.SpecialName).Rename("Test 2")
+        let sym = virtualTerminal "Test" |> _.AddSpecialName("__MySpecialName")
+        let sym2 = virtualTerminal "Test 2" |> _.AddSpecialName("__MySpecialName")
         let nont = "N" |||= [
             !% sym
             !% sym2
         ]
         let grammar, warnings =
-            nont.AutoWhitespace(false)
+            nont.AutoWhitespace false
             |> buildWithWarnings
         Expect.hasLength warnings 1 "Building emitted the wrong number of warnings"
         Expect.equal warnings[0].Code "FARKLE0004" "The warning was not of the correct type"
-        Expect.equal grammar.GrammarInfo.Attributes Grammars.GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
+        Expect.equal grammar.GrammarInfo.Attributes GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
         Expect.isFalse (grammar.GetSymbolFromSpecialName("__MySpecialName").HasValue) "The special name should not be present in the grammar file"
     }
 
@@ -258,7 +221,7 @@ let tests = testList "Grammar builder tests" [
             |> buildWithWarnings
         Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
         Expect.hasLength errors 1 "Building emitted the wrong number of errors"
-        Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
+        Expect.equal errors[0].Code "FARKLE0008" "The error was not of the correct type"
     }
 
     test "A deeply nested regex does not cause a stack overflow" {
@@ -273,7 +236,7 @@ let tests = testList "Grammar builder tests" [
             |> buildWithWarnings
         Expect.isNull grammar.DfaOnChar "The DFA should not have been built"
         Expect.hasLength errors 1 "Building emitted the wrong number of errors"
-        Expect.equal errors[0].Code "FARKLE0010" "The error was not of the correct type"
+        Expect.equal errors[0].Code "FARKLE0009" "The error was not of the correct type"
     }
 
     test "Many block groups can be ended by the same symbol" {

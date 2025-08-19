@@ -13,6 +13,7 @@ namespace Farkle.Builder;
 /// Unlike <see cref="BuilderOptions"/>, these options can and do change the
 /// resulting grammar.
 /// </remarks>
+/// <seealso cref="GrammarSymbolOptions"/>
 internal readonly struct GrammarGlobalOptions
 {
     public string? GrammarName { get; init; } = null;

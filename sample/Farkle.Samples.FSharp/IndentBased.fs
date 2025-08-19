@@ -41,8 +41,8 @@ let grammarBuilder =
     // tokenizer we will write below.
     // These terminals are able to be retrieved by a special name. Unlike regular symbol
     // names, a special name must be unique in a grammar.
-    let blockStart = Terminal.Virtual(BlockStartSpecialName, TerminalOptions.SpecialName).Rename("Block Start")
-    let blockEnd = Terminal.Virtual(BlockEndSpecialName, TerminalOptions.SpecialName).Rename("Block End")
+    let blockStart = virtualTerminal "Block Start" |> _.AddSpecialName(BlockStartSpecialName)
+    let blockEnd = virtualTerminal "Block End" |> _.AddSpecialName(BlockEndSpecialName)
 
     let line =
         // Exclude leading spaces from line tokens.

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
 using Farkle.Parser;
 
 namespace Farkle.Builder;
@@ -19,6 +20,8 @@ internal sealed class GrammarDefinition
 {
     public readonly GrammarGlobalOptions GlobalOptions;
 
+    public required GrammarAttributes Attributes { get; init; }
+
     /// <summary>
     /// The terminals of the grammar, or the symbols that will become terminals
     /// (literals, groups, etc.).
@@ -29,10 +32,10 @@ internal sealed class GrammarDefinition
 
     public required List<IProduction> Productions { get; init; }
 
-    // Maps symbols to their names, if they are renamed.
-    public required Dictionary<ISymbolBase, string> RenamedSymbols { get; init; }
+    // Use ordered dictionary for determinism.
+    public required OrderedDictionary<string, object> SpecialNames { get; init; }
 
-    public string GrammarName => GlobalOptions.GrammarName ?? GetName(StartSymbol);
+    public string GrammarName => GlobalOptions.GrammarName ?? StartSymbol.Name;
 
     public INonterminal StartSymbol => Nonterminals[0];
 
@@ -74,9 +77,6 @@ internal sealed class GrammarDefinition
         return symbol.Symbol is INonterminal ? symbol : new PlaceholderNonterminal(symbol.Name, symbol);
     }
 
-    public string GetName(ISymbolBase symbol) =>
-        RenamedSymbols.TryGetValue(symbol, out string? name) ? name : symbol.Name;
-
     public static GrammarDefinition Create(IGrammarBuilder grammar, BuilderLogger log = default, CancellationToken cancellationToken = default)
     {
         ref readonly var globalOptions = ref grammar.GetOptions();
@@ -84,8 +84,10 @@ internal sealed class GrammarDefinition
         var terminals = new List<ISymbolBase>();
         var nonterminals = new List<INonterminal>();
         var productions = new List<IProduction>();
-        var renamedSymbols = new Dictionary<ISymbolBase, string>();
-        var visited = new HashSet<object>(Utilities.GetFallbackStringComparer(caseSensitive));
+        var specialNames = new OrderedDictionary<string, object>(StringComparer.Ordinal);
+        bool hasDuplicateSpecialNames = false;
+        var symbolIdentityComparer = Utilities.GetFallbackStringComparer(caseSensitive);
+        var visited = new HashSet<object>(symbolIdentityComparer);
         var nonterminalsToProcess = new Queue<INonterminal>();
 
         Visit(GetStartSymbol(grammar));
@@ -108,37 +110,36 @@ internal sealed class GrammarDefinition
             }
         }
 
+        if (hasDuplicateSpecialNames)
+        {
+            // Do not write a half-incorrect table.
+            specialNames.Clear();
+        }
+
         return new(in globalOptions)
         {
+            Attributes = hasDuplicateSpecialNames ? GrammarAttributes.Unparsable : GrammarAttributes.None,
             Terminals = terminals,
             Nonterminals = nonterminals,
             Productions = productions,
-            RenamedSymbols = renamedSymbols
+            SpecialNames = specialNames,
         };
-
-        void HandleRenaming(ISymbolBase symbol, string name)
-        {
-            if (renamedSymbols.TryGetValue(symbol, out string? existingName))
-            {
-                if (existingName != name)
-                {
-                    log.SymbolMultipleRenames(symbol.Name, existingName, name);
-                }
-                return;
-            }
-            renamedSymbols.Add(symbol, name);
-        }
 
         void Visit(IGrammarSymbol symbol)
         {
-            string? renamedName = (symbol as GrammarSymbolWrapper)?.RenamedName;
+            ref readonly var options = ref symbol.GetOptions();
             ISymbolBase innerSymbol = symbol.Symbol;
-            // If the symbol is renamed, add the wrapper to the visited set too, to save time.
-            if (renamedName is not null && visited.Add(symbol))
+            object innerSymbolIdentity = GetSymbolIdentityObject(innerSymbol);
+            foreach (string specialName in options.SpecialNames)
             {
-                HandleRenaming(innerSymbol, renamedName);
+                if (!specialNames.TryAdd(specialName, innerSymbolIdentity, out int existingIdx) &&
+                    !symbolIdentityComparer.Equals(specialNames.GetAt(existingIdx).Value, innerSymbolIdentity))
+                {
+                    log.DuplicateSpecialName(specialName);
+                    hasDuplicateSpecialNames = true;
+                }
             }
-            if (!visited.Add(GetSymbolIdentityObject(innerSymbol)))
+            if (!visited.Add(innerSymbolIdentity))
             {
                 return;
             }

@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
+using Farkle.Grammars;
 
 namespace Farkle.Builder;
 
@@ -23,6 +23,23 @@ namespace Farkle.Builder;
 /// </remarks>
 public static class GrammarSymbolExtensions
 {
+    internal static ref readonly GrammarSymbolOptions GetOptions(this IGrammarSymbol builder) =>
+        ref builder is GrammarSymbolWrapper wrapper ? ref wrapper.Options : ref GrammarSymbolOptions.Default;
+
+    private static IGrammarSymbol WithOptions(this IGrammarSymbol symbol, in GrammarSymbolOptions options)
+    {
+        return symbol is GrammarSymbolWrapper wrapper
+            ? wrapper.WithOptions(in options)
+            : new GrammarSymbolWrapper(in options, symbol.Symbol);
+    }
+
+    private static IGrammarSymbol<T> WithOptions<T>(this IGrammarSymbol<T> symbol, in GrammarSymbolOptions options)
+    {
+        return symbol is GrammarSymbolWrapper<T> wrapper
+            ? wrapper.WithOptions(in options)
+            : new GrammarSymbolWrapper<T>(in options, symbol.Symbol);
+    }
+
     /// <summary>
     /// Changes the type of <see cref="IGrammarSymbol"/> to a generic <see cref="IGrammarSymbol{T}"/>
     /// of type <see cref="object"/>, forcing it to return a value.
@@ -38,47 +55,32 @@ public static class GrammarSymbolExtensions
         {
             return b;
         }
-        return new GrammarSymbolWrapper<object>((symbol as GrammarSymbolWrapper)?.RenamedName, symbol.Symbol);
+        return new GrammarSymbolWrapper<object?>(GrammarSymbolOptions.Default, symbol.Symbol);
     }
 
     /// <summary>
-    /// Renames a grammar symbol.
+    /// Adds a special name to the symbol, which is used to uniquely identify it within the grammar.
     /// </summary>
-    /// <param name="symbol">The symbol to rename.</param>
-    /// <param name="name">The symbol's new name.</param>
     /// <remarks>
     /// <para>
-    /// If a grammar contains the same symbol both in unrenamed and renamed form,
-    /// the symbol will be added once, with the renamed name. If a symbol is renamed
-    /// multiple times within a grammar, the name of the symbol in the grammar is
-    /// unspecified and a warning will be emitted by the builder.
+    /// If a grammar has multiple symbols with the same special name, building will fail.
     /// </para>
     /// <para>
-    /// For the purposes of the previous paragraph, a symbol is considered renamed
-    /// even if this function is called with the same name as the symbol's existing
-    /// name.
+    /// Calling this method multiple times will add multiple special names to the symbol.
     /// </para>
     /// </remarks>
-    /// <seealso cref="IGrammarSymbol.Name"/>
-    public static IGrammarSymbol Rename(this IGrammarSymbol symbol, string name)
+    /// <seealso cref="IGrammarProvider.GetSymbolFromSpecialName"/>
+    public static IGrammarSymbol AddSpecialName(this IGrammarSymbol symbol, string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        Debug.Assert(symbol is GrammarSymbolWrapper or ISymbolBase);
-        if (symbol is GrammarSymbolWrapper wrapper)
-            return wrapper.Rename(name);
-        return new GrammarSymbolWrapper(name, (ISymbolBase)symbol);
+        return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
-    /// <inheritdoc cref="Rename"/>
-    public static IGrammarSymbol<T> Rename<T>(this IGrammarSymbol<T> symbol, string name)
+    /// <inheritdoc cref="AddSpecialName(IGrammarSymbol, string)"/>
+    public static IGrammarSymbol<T> AddSpecialName<T>(this IGrammarSymbol<T> symbol, string name)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        Debug.Assert(symbol is GrammarSymbolWrapper<T> or ISymbolBase);
-        if (symbol is GrammarSymbolWrapper<T> wrapper)
-            return wrapper.Rename(name);
-        return new GrammarSymbolWrapper<T>(name, (ISymbolBase)symbol);
+        return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
     /// <summary>
@@ -95,7 +97,7 @@ public static class GrammarSymbolExtensions
         where TCollection : ICollection<T>, new()
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} {typeof(TCollection).Name}");
+        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence");
         if (atLeastOnce)
         {
             nont.SetProductions(
@@ -130,7 +132,7 @@ public static class GrammarSymbolExtensions
         where TCollection : ICollection<T>, new()
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} {typeof(TCollection).Name} Separated By {separator.Name}");
+        Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence Separated By {separator.Name}");
         if (atLeastOnce)
         {
             nont.SetProductions(
@@ -187,10 +189,12 @@ public static class GrammarSymbolExtensions
     /// <typeparam name="TNew">The type of values the new symbol will return.</typeparam>
     /// <param name="symbol">The symbol to transform.</param>
     /// <param name="selector">The transformation to apply to the value of <paramref name="symbol"/>.</param>
-    public static IGrammarSymbol<TNew> Select<T, TNew>(this IGrammarSymbol<T> symbol, Func<T, TNew> selector)
+    /// <param name="name">The name of the new symbol. If not provided, a default name will be generated.</param>
+    public static IGrammarSymbol<TNew> Select<T, TNew>(this IGrammarSymbol<T> symbol, Func<T, TNew> selector, string? name = null)
     {
         ArgumentNullExceptionCompat.ThrowIfNull(symbol);
         ArgumentNullExceptionCompat.ThrowIfNull(selector);
-        return Nonterminal.Create($"{symbol.Name} :?> {typeof(TNew).Name}", symbol.Finish(selector));
+        name ??= $"{symbol.Name} Transformed";
+        return Nonterminal.Create(name, symbol.Finish(selector));
     }
 }

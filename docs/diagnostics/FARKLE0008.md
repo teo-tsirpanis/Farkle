@@ -2,31 +2,20 @@
 category: Diagnostic codes
 categoryindex: 3
 title: FARKLE0008
-description: FARKLE0008: Symbol renamed more than once
+description: FARKLE0008: Failed to parse regex
 ---
-# FARKLE0008: Symbol renamed more than once
+# FARKLE0008: Failed to parse regex
 
-This warning is emitted when a symbol is renamed multiple times with different names in the same grammar. When a renamed symbol gets encountered in the grammar, Farkle will make sure that its renamed name will be used in the grammar file and all diagnostic messages, but if the symbol is renamed multiple times, it is not certain which is the right name to use, and Farkle will emit this warning. Building the grammar will still succeed, and the symbol's renamed name that prevailed will be unspecified.
+This error is emitted when Farkle fails to parse a string regex that was passed in the `Regex.FromRegexString` method, or the `Regex.regexString` F# function. In this case no DFA gets built and the grammar cannot be used for tokenizing.
 
-To fix this warning, ensure that each symbol is only renamed to one name.
+To fix this error, ensure that the regex string is valid. The error message will help you identify and fix the problem.
 
 ## Example code
 
 ```csharp
-IGrammarSymbol terminal;
 // Non-compliant code
-// terminal's name will be "Renamed 1" or "Renamed 2"
-IGrammarSymbol nonterminal = Nonterminal.CreateUntyped("My Nonterminal",
-    terminal.Appended().Append("x"),
-    terminal.Rename("Renamed 1").Appended().Append("y"),
-    terminal.Rename("Renamed 2").Appended().Append("z")
-);
+Regex r1 = Regex.FromRegexString("[a-z");
 
 // Compliant code
-// terminal's name will always be "Renamed 1"
-IGrammarSymbol nonterminal = Nonterminal.CreateUntyped("My Nonterminal",
-    terminal.Appended().Append("x"),
-    terminal.Rename("Renamed 1").Appended().Append("y"),
-    terminal.Rename("Renamed 1").Appended().Append("z")
-);
+Regex r2 = Regex.FromRegexString("[a-z]");
 ```

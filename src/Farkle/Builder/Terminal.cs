@@ -13,7 +13,7 @@ public partial class Terminal
 {
     private static void ValidateOptions(TerminalOptions options)
     {
-        if ((options & ~(TerminalOptions.Noisy | TerminalOptions.Hidden | TerminalOptions.SpecialName)) != 0)
+        if ((options & ~(TerminalOptions.Noisy | TerminalOptions.Hidden)) != 0)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(options));
         }

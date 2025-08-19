@@ -28,5 +28,6 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
     <PackageReference Include="MedallionShell" PrivateAssets="all" Publish="true" />
+    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
 </Project>

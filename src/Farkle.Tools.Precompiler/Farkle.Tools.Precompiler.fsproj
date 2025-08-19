@@ -10,6 +10,7 @@
     <Compile Include="PrecompilerInProcess.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" />
     <ProjectReference Include="..\Farkle\Farkle.fsproj" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Sigourney" />

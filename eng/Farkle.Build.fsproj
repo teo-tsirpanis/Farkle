@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.Formats.Asn1" />
     <Compile Include="build.fs" />
     <PackageReference Include="Fake.BuildServer.GitHubActions" />
     <PackageReference Include="Fake.Core.ReleaseNotes" />

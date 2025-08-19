@@ -23,6 +23,7 @@ Installing this tool is also required when building a project that uses the prec
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Reflection.MetadataLoadContext" />
+    <PackageReference Include="System.Text.Json" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <!-- <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" /> -->
     <PackageReference Include="Argu" />

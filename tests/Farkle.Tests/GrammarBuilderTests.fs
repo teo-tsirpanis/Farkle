@@ -174,10 +174,11 @@ let tests = testList "Grammar builder tests" [
             grammar.Nonterminals
             |> Seq.exactlyOne
         Expect.isEmpty warnings "Building emitted warnings"
+        Expect.hasLength grammar.SpecialNameDefinitions 4 "The grammar does not have the right number of special name definitions"
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName2") terminal.Handle "The terminal could not be retrieved from the special name."
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName3") terminal.Handle "The terminal could not be retrieved from the special name."
-        Expect.equal (grammar.GetNonterminalFromSpecialName "__MySpecialName4") nonterminal.Handle "The terminal could not be retrieved from the special name."
+        Expect.equal (grammar.GetNonterminalFromSpecialName "__MySpecialName4") nonterminal.Handle "The nonterminal could not be retrieved from the special name."
     }
 
     test "Special names on literals work" {
@@ -195,6 +196,12 @@ let tests = testList "Grammar builder tests" [
             grammar.Terminals
             |> Seq.exactlyOne
         Expect.isEmpty warnings "Building emitted warnings"
+        Expect.hasLength grammar.SpecialNameDefinitions 1 "The grammar does not have the right number of special name definitions"
+        let specialNameDef =
+            grammar.SpecialNameDefinitions
+            |> Seq.exactlyOne
+        Expect.equal specialNameDef.Name "__MySpecialName" "The special name was not set correctly."
+        Expect.equal specialNameDef.Symbol (TokenSymbolHandle.op_Implicit terminal.Handle) "The special name was not set to the correct symbol."
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
     }
 
@@ -210,6 +217,7 @@ let tests = testList "Grammar builder tests" [
             |> buildWithWarnings
         Expect.hasLength warnings 1 "Building emitted the wrong number of warnings"
         Expect.equal warnings[0].Code "FARKLE0004" "The warning was not of the correct type"
+        Expect.isEmpty grammar.SpecialNameDefinitions "The grammar should not have any special name definitions"
         Expect.equal grammar.GrammarInfo.Attributes GrammarAttributes.Unparsable "The grammar was not marked as unparsable"
         Expect.isFalse (grammar.GetSymbolFromSpecialName("__MySpecialName").HasValue) "The special name should not be present in the grammar file"
     }

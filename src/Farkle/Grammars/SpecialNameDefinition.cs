@@ -77,11 +77,6 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
     public override int GetHashCode() => HashCode.Combine(_grammar, Index);
 
     /// <summary>
-    /// Returns a string describing the <see cref="SpecialNameDefinition"/>.
-    /// </summary>
-    public override string ToString() => _grammar is null ? "" : Name;
-
-    /// <summary>
     /// Compares two <see cref="SpecialNameDefinition"/>s for equality.
     /// </summary>
     /// <param name="left">The first special name definition.</param>

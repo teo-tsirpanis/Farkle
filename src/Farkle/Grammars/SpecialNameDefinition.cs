@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars;
 
@@ -21,6 +22,7 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
         Index = tableIndex;
     }
 
+    [ExcludeFromCodeCoverage]
     private string DebuggerDisplay
     {
         get

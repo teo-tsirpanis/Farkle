@@ -197,6 +197,11 @@ let tests = testList "Grammar builder tests" [
             |> Seq.exactlyOne
         Expect.isEmpty warnings "Building emitted warnings"
         Expect.hasLength grammar.SpecialNameDefinitions 1 "The grammar does not have the right number of special name definitions"
+        let specialNameDef =
+            grammar.SpecialNameDefinitions
+            |> Seq.exactlyOne
+        Expect.equal specialNameDef.Name "__MySpecialName" "The special name was not set correctly."
+        Expect.equal specialNameDef.Symbol (TokenSymbolHandle.op_Implicit terminal.Handle) "The special name was not set to the correct symbol."
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
     }
 

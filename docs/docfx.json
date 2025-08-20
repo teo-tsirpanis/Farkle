@@ -30,6 +30,12 @@
                 "exclude": [
                     "_site/**"
                 ]
+            },
+            {
+                "files": [
+                    "RELEASE_NOTES.md"
+                ],
+                "src": "../"
             }
         ],
         "resource": [

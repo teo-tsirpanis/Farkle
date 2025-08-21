@@ -28,8 +28,17 @@
                     "**/toc.yml"
                 ],
                 "exclude": [
+                    "docs/**/*.md",
                     "_site/**"
                 ]
+            },
+            {
+                "files": [
+                    "**/*.md",
+                    "**/toc.yml"
+                ],
+                "src": "docs",
+                "dest": "."
             },
             {
                 "files": [

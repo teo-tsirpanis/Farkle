@@ -84,6 +84,11 @@ public readonly struct Production : IEquatable<Production>
     /// </summary>
     public override string ToString()
     {
+        if (_grammar is null)
+        {
+            return "";
+        }
+
         StringBuilder sb = new();
 
         sb.Append(Head);

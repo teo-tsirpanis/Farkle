@@ -60,7 +60,7 @@ public readonly struct ParserResult<T> : IFormattable
     /// <summary>
     /// Converts the <see cref="ParserResult{T}"/>'s success or error value to a string.
     /// </summary>
-    public override string? ToString() => ToString(null, null);
+    public override string ToString() => ToString(null, null);
 
     /// <summary>
     /// Whether the <see cref="ParserResult{T}"/> represents success.

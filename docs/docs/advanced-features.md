@@ -59,8 +59,6 @@ In F#, we use the `terminalU` function (guess what the U stands for), and in C# 
 
 As you might have seen, the terminal is of type `DesigntimeFarkle`, without a generic parameter at the end. This means it can be normally used from other grammars (even typed), but it cannot be the significant member of a production. You can write for example `!@ W .>> X` (or `W.Extended().Append(X)` in C#), but not `!@ W .>>. X` (or `W.Extended().Extend(X)`).
 
-> If you don't remember how to use an API from C#, [this guide](csharp.md) can help you.
-
 ### Defining untyped nonterminals
 
 The nonterminals use a slightly different approach. Let's see how we would write the nonterminal that recognizes the balanced parentheses:

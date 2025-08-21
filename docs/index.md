@@ -56,11 +56,9 @@ printfn "%O" result // Outputs: 3
 
 The library comes with comprehensible documentation.
 
- * [Quick Start: Creating a calculator](docs/quickstart.md) to get started with writing a simple calculator in F#.
+* [Quick Start: Creating a calculator](docs/quickstart.md) to get started with writing a simple calculator in F#.
 
- * [Using Farkle with C#](docs/csharp.md) to learn what changes when using Farkle in a C# project.
-
- * [API Reference](api/index.md) contains automatically generated documentation for all types, modules and functions in the library.
+* [API Reference](api/index.md) contains automatically generated documentation for all types and functions in the library.
 
 ## Samples
 

@@ -5,7 +5,6 @@
 
 - name: Getting started
 - href: quickstart.md
-- href: csharp.md
 
 - name: Documentation
 - href: templates.md

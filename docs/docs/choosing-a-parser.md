@@ -83,7 +83,7 @@ Farkle integrates with MSBuild [to generate the parsing tables for a grammar ahe
 
 ### C# support
 
-While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them [to fluently support C# for creating grammars](csharp.md).
+While all three libraries support parsing text from C# with a grammar written in F#, Farkle is the only of them to natively support C#.
 
 It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing, given the tool's exclusive focus on F#.
 

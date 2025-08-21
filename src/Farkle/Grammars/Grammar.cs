@@ -330,6 +330,32 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
+    /// Gets a boxed object representing the entity pointed to by the given <see cref="EntityHandle"/>.
+    /// </summary>
+    /// <param name="handle">A handle to the entity.</param>
+    /// <remarks>
+    /// This method must not be called in performance-critical code.
+    /// </remarks>
+    internal object? GetEntity(EntityHandle handle)
+    {
+        if (handle.IsTokenSymbol)
+        {
+            return GetTokenSymbol((TokenSymbolHandle)handle);
+        }
+        if (handle.IsNonterminal)
+        {
+            return GetNonterminal((NonterminalHandle)handle);
+        }
+        if (handle.IsProduction)
+        {
+            return GetProduction((ProductionHandle)handle);
+        }
+
+        Debug.Assert(!handle.HasValue);
+        return null;
+    }
+
+    /// <summary>
     /// Looks up a token symbol or nonterminal with the specified special name.
     /// </summary>
     /// <param name="specialName">The symbol's special name.</param>

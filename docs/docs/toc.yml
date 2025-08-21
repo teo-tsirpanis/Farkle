@@ -6,7 +6,10 @@
 - name: Getting started
 - href: quickstart.md
 
-- name: Documentation
+# - name: How-to guides
+# - href: customizing-grammar.md
+# - href: resolving-conflicts.md
+- name: Reference
 - href: templates.md
 - href: string-regexes.md
 - href: the-precompiler.md

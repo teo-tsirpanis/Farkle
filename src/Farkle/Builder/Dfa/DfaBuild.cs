@@ -519,7 +519,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             // this will slightly change behavior, but the impact is so small that it's not worth proactively
             // caring about.
             ReadOnlySpan<Regex> regexes = regex.IsAlt(out var altRegexes) ? altRegexes.AsSpan() : [regex];
-            // The regex contains Regex.Void somewhere.
             int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
             if (Symbols.GetName(i).Kind == TokenSymbolKind.Noise)
             {

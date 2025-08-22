@@ -67,7 +67,8 @@ internal sealed class DfaStateProxy<TChar>
         }
         if (defaultTransition >= 0)
         {
-            _actions[i++] = new NameValuePair(i > 0 ? "In all other cases" : "Always", $"Goto state {defaultTransition}");
+            string name = i > 0 ? "In all other cases" : "Always";
+            _actions[i++] = new NameValuePair(name, $"Goto state {defaultTransition}");
         }
         foreach (var accept in state.AcceptSymbols)
         {

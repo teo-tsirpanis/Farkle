@@ -13,7 +13,7 @@ namespace Farkle.Builder;
 /// <summary>
 /// Represents a pattern that must be matched by terminals in a grammar.
 /// </summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public sealed class Regex
 {
     /*
@@ -88,39 +88,37 @@ public sealed class Regex
         Debug.Assert(N >= M);
     }
 
-    [DebuggerBrowsable(DebuggerBrowsableState.Never), ExcludeFromCodeCoverage]
-    private string DebuggerDisplay
+    [ExcludeFromCodeCoverage]
+    private string DebuggerDisplay()
     {
-        get
+        RuntimeHelpers.EnsureSufficientExecutionStack();
+        string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
         {
-            string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
-            {
-                KindAndFlags.CaseSensitive => " CaseSensitive",
-                KindAndFlags.CaseInsensitive => " CaseInsensitive",
-                _ => "",
-            };
-            string dataString = Kind switch
-            {
-                KindAndFlags.Any =>
-                    "Any",
-                KindAndFlags.StringLiteral =>
-                    $"\"{_data}\"",
-                KindAndFlags.Chars =>
-                    $"Chars[{(((char, char)[])_data!).Length}]",
-                KindAndFlags.AllButChars =>
-                    $"AllButChars[{(((char, char)[])_data!).Length}]",
-                KindAndFlags.Concat =>
-                    $"Concat[{((Regex[])_data!).Length}]",
-                KindAndFlags.Alt =>
-                    $"Alt[{((Regex[])_data!).Length}]",
-                KindAndFlags.Loop =>
-                    $"{((Regex)_data!).DebuggerDisplay}{{{M},{N}}}",
-                KindAndFlags.RegexString =>
-                    $"\"{_data}\"",
-                _ => ""
-            };
-            return $"{dataString}{caseString}";
-        }
+            KindAndFlags.CaseSensitive => " CaseSensitive",
+            KindAndFlags.CaseInsensitive => " CaseInsensitive",
+            _ => "",
+        };
+        string dataString = Kind switch
+        {
+            KindAndFlags.Any =>
+                "Any",
+            KindAndFlags.StringLiteral =>
+                $"\"{_data}\"",
+            KindAndFlags.Chars =>
+                $"Chars[{(((char, char)[])_data!).Length}]",
+            KindAndFlags.AllButChars =>
+                $"AllButChars[{(((char, char)[])_data!).Length}]",
+            KindAndFlags.Concat =>
+                $"Concat[{((Regex[])_data!).Length}]",
+            KindAndFlags.Alt =>
+                $"Alt[{((Regex[])_data!).Length}]",
+            KindAndFlags.Loop =>
+                $"{((Regex)_data!).DebuggerDisplay()}{{{M},{N}}}",
+            KindAndFlags.RegexString =>
+                $"\"{_data}\"",
+            _ => ""
+        };
+        return $"{dataString}{caseString}";
     }
 
     private Regex Loop(int m, int n)

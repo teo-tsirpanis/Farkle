@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars;
 
 /// <summary>
 /// Points to a table row of a <see cref="Grammar"/>.
 /// </summary>
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct EntityHandle : IEquatable<EntityHandle>
 {
     internal const int ValueSize = 24;
@@ -37,6 +39,9 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
         }
     }
 
+    [ExcludeFromCodeCoverage]
+    private string DebuggerDisplay() => HasValue ? $"{Kind} {TableIndex + 1}" : "<null>";
+
     /// <summary>
     /// Whether this <see cref="EntityHandle"/> has a valid value.
     /// </summary>
@@ -65,11 +70,6 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
 
     /// <inheritdoc/>
     public override int GetHashCode() => _valueAndKind.GetHashCode();
-
-    /// <summary>
-    /// Returns a string describing the the <see cref="EntityHandle"/>.
-    /// </summary>
-    public override string ToString() => HasValue ? $"{Kind} {TableIndex + 1}" : "<null>";
 
     /// <summary>
     /// Checks if two <see cref="EntityHandle"/>s are pointing to the same table row.

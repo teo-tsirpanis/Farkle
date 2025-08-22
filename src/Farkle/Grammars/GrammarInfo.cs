@@ -9,7 +9,7 @@ namespace Farkle.Grammars;
 /// Contains general information about a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.GrammarInfo"/>
-[DebuggerDisplay("Name = {_grammar.GetString(Name)}; StartSymbol = {_grammar.GetNonterminal(StartSymbol)}; Attributes = {Attributes}")]
+[DebuggerDisplay("Name = {Name,nq}; StartSymbol = {StartSymbol}; Attributes = {Attributes}")]
 public readonly struct GrammarInfo
 {
     private readonly Grammar _grammar { get; }

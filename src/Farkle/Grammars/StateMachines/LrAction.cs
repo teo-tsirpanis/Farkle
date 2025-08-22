@@ -111,22 +111,6 @@ public readonly struct LrAction : IEquatable<LrAction>
     /// <inheritdoc/>
     public override int GetHashCode() => Value;
 
-    /// <inheritdoc/>
-    public override string ToString()
-    {
-        if (IsShift)
-        {
-            return $"Shift to state {ShiftState}";
-        }
-
-        if (IsReduce)
-        {
-            return $"Reduce production {ReduceProduction.TableIndex}";
-        }
-
-        return "Error";
-    }
-
     internal string ToString(Grammar grammar)
     {
         if (IsShift)

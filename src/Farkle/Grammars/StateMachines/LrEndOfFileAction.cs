@@ -84,22 +84,6 @@ public readonly struct LrEndOfFileAction : IEquatable<LrEndOfFileAction>
     /// <inheritdoc/>
     public override int GetHashCode() => (int)Value;
 
-    /// <inheritdoc/>
-    public override string ToString()
-    {
-        if (IsReduce)
-        {
-            return $"Reduce production {ReduceProduction.TableIndex}";
-        }
-
-        if (IsAccept)
-        {
-            return "Accept";
-        }
-
-        return "Error";
-    }
-
     internal string ToString(Grammar grammar)
     {
         if (IsReduce)

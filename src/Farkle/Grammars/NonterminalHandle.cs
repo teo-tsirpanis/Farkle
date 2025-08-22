@@ -1,6 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 namespace Farkle.Grammars;
 
 /// <summary>
@@ -11,6 +14,7 @@ namespace Farkle.Grammars;
 /// of use when parsing. To get any information about the nonterminal you have to pass it to the
 /// <see cref="Grammar.GetNonterminal"/> method.</para>
 /// </remarks>
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
 {
     internal uint TableIndex { get; }
@@ -43,6 +47,9 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
     /// <seealso cref="Value"/>
     public bool HasValue => TableIndex != 0;
 
+    [ExcludeFromCodeCoverage]
+    private string DebuggerDisplay() => HasValue ? Value.ToString() : "<null>";
+
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is NonterminalHandle handle && Equals(handle);
 
@@ -51,11 +58,6 @@ public readonly struct NonterminalHandle : IEquatable<NonterminalHandle>
 
     /// <inheritdoc/>
     public override int GetHashCode() => TableIndex.GetHashCode();
-
-    /// <summary>
-    /// Returns a string describing the the <see cref="NonterminalHandle"/>.
-    /// </summary>
-    public override string ToString() => HasValue ? Value.ToString() : "<null>";
 
     /// <summary>
     /// Checks if two <see cref="NonterminalHandle"/>s are pointing to the same row.

@@ -84,6 +84,11 @@ public readonly struct Production : IEquatable<Production>
     /// </summary>
     public override string ToString()
     {
+        if (_grammar is null)
+        {
+            return "";
+        }
+
         StringBuilder sb = new();
 
         sb.Append(Head);
@@ -91,14 +96,7 @@ public readonly struct Production : IEquatable<Production>
         foreach (EntityHandle member in Members)
         {
             sb.Append(' ');
-            if (member.IsTokenSymbol)
-            {
-                sb.Append(_grammar.GetTokenSymbol((TokenSymbolHandle)member));
-            }
-            else
-            {
-                sb.Append(_grammar.GetNonterminal((NonterminalHandle)member));
-            }
+            sb.Append(_grammar.GetEntity(member));
         }
 
         return sb.ToString();

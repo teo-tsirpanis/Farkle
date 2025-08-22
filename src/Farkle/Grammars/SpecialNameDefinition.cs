@@ -9,7 +9,7 @@ namespace Farkle.Grammars;
 /// <summary>
 /// Represents an entry in the <c>SpecialName</c> table of a <see cref="Grammar"/>.
 /// </summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{DebuggerDisplay(),nq}")]
 public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
 {
     private readonly Grammar _grammar;
@@ -23,15 +23,7 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
     }
 
     [ExcludeFromCodeCoverage]
-    private string DebuggerDisplay
-    {
-        get
-        {
-            var symbol = Symbol;
-            string symbolName = symbol.IsTokenSymbol ? _grammar.GetTokenSymbol((TokenSymbolHandle)symbol).ToString() : _grammar.GetNonterminal((NonterminalHandle)symbol).ToString();
-            return $"{Name} → {symbolName}";
-        }
-    }
+    private string DebuggerDisplay() => _grammar is null ? "<null>" : $"Name = {Name}; Symbol = {_grammar.GetEntity(Symbol)}";
 
     [StackTraceHidden]
     private void AssertHasValue()

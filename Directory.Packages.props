@@ -48,7 +48,7 @@
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
-    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.3" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.4" />
 
     <PackageVersion Include="Fake.BuildServer.GitHubActions" Version="$(FakeVersion)" />
     <PackageVersion Include="Fake.Core.ReleaseNotes" Version="$(FakeVersion)" />

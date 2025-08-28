@@ -13,7 +13,7 @@
 - href: templates.md
 - href: string-regexes.md
 - href: the-precompiler.md
-- href: advanced-features.md
+# - href: advanced-features.md
 - name: Diagnostic codes
   href: ../diagnostics/toc.yml
 - name: Migration

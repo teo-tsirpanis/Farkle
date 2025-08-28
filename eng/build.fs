@@ -327,7 +327,7 @@ let generateDocs doWatch isRelease =
     let fsDocsCommand = if doWatch then "watch" else "build"
     let root = root isRelease
 
-    (sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root)
+    sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root
     |> DotNet.exec id "fsdocs"
     |> handleFailure
 

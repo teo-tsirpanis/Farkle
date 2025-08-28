@@ -181,7 +181,7 @@ docs/release-notes.md
 
 docs.zip
 *.nupkg
-output/
+_site/
 **/BenchmarkDotNet.Artifacts/
 temp/
 tmp/

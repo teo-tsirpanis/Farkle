@@ -309,7 +309,7 @@ Target.create "NuGetPack" (fun _ ->
 let repoRoot = Path.getDirectory __SOURCE_DIRECTORY__
 
 let referenceDocsTempPath = repoRoot @@ "temp/referencedocs-publish"
-let docsOutput = repoRoot @@ "output/"
+let docsOutput = repoRoot @@ "_site/"
 
 let root isRelease =
     match isRelease with
@@ -327,7 +327,7 @@ let generateDocs doWatch isRelease =
     let fsDocsCommand = if doWatch then "watch" else "build"
     let root = root isRelease
 
-    (sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root)
+    sprintf "%s --clean --output \"%s\" --properties FsFormatting=true %s" fsDocsCommand docsOutput root
     |> DotNet.exec id "fsdocs"
     |> handleFailure
 
@@ -352,11 +352,7 @@ Target.create "KeepGeneratingDocs" (fun _ ->
 )
 
 Target.description "Generates the website for the project - for release"
-Target.create "GenerateDocs" (fun _ ->
-    generateDocs false true
-    !! (docsOutput @@ "**") |> Zip.zip docsOutput "docs.zip"
-    Trace.publish ImportData.BuildArtifact "docs.zip"
-)
+Target.create "GenerateDocs" (fun _ -> generateDocs false true)
 Target.description "Generates the website for the project - for local use"
 Target.create "GenerateDocsDebug" (fun _ -> generateDocs false false)
 

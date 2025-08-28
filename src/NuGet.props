@@ -3,7 +3,7 @@
     <Authors>Theodore Tsirpanis</Authors>
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://teo-tsirpanis.github.io/Farkle/</PackageProjectUrl>
+    <PackageProjectUrl>https://v6.farkle.dev/</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/teo-tsirpanis/Farkle/master/docs/img/logo.png</PackageIconUrl>
     <PackageIcon>logo.png</PackageIcon>
     <PackageTags>farkle;parser;lalr;gold-parser</PackageTags>

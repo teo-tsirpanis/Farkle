@@ -50,6 +50,7 @@
         "resource": [
             {
                 "files": [
+                    "CNAME",
                     "docs/*.html",
                     "img/**"
                 ]

@@ -91,13 +91,13 @@ Since FParsec is just a library and does not require tooling support, C# users c
 
 ### Maturity
 
-Another tough topic. FParsec and FsLexYacc are mature projects, used in various applications for a long time, and their feature set seems stabilized. Owing to their longevity, they have a community around them. Even Microsoft is using them in some of its products: FParsec in [the parser][QSharp-parser] for the Q# programming language and FsLexYacc in [the parser][FSharp-parser] [and lexer][FSharp-lexer] for F# itself.
+Another tough topic. FParsec and FsLexYacc are mature projects, used in various applications for a long time, and their feature set seems stabilized. Owing to their longevity, they have a community around them. Even Microsoft is using them in some of its products: FParsec in [the parser][QSharp-parser] for the Q# programming language (before they rewrote it in Rust), and FsLexYacc in [the parser][FSharp-parser] [and lexer][FSharp-lexer] for F# itself.
 
 Farkle on the other hand is relatively new. It started being developed in 2017 and did not become a standalone parsing library until version 5.1.0 was released in January 2020. It is still actively developed, with lots of big features slated to arrive. It also means that Farkle's API is still unstable, with minor breaking changes even in minor releases. Its development is a one-man show but other developers are more than welcome to contribute.
 
 ## Some C# parsing projects
 
-To further convince the indecisive C# users to use Farkle, we will also take a brief look at some parsing libraries made for C#.
+To further convince the indecisive C# users to use Farkle, we will also take a brief look at some parsing libraries made for C#. Some of these libraries have been benchmarked against [each other](https://github.com/teo-tsirpanis/Farkle/blob/update-docs/performance/reports/JsonBenchmark.7.0.0-pre.md).
 
 > __Disclaimer__: Not all the libraries below were actually tried. And this is not an objective evaluation, but more of a subjective review. If any comment made is wrong, feel free to open a GitHub issue or pull request to fix it.
 
@@ -109,15 +109,15 @@ The problem with Sprache is that it is slow. Sprache's performance was going to 
 
 ### Pidgin
 
-[Pidgin] is another parser combinator library written in C#, advertising more features than Sprache. It is focused on performance as well, and unpublished benchmarks showed that it's _faster_ than Farkle. A disadvantage of it is that its latest and not-yet-released version will only target .NET 5 or higher.
+[Pidgin] is another parser combinator library written in C#, advertising more features than Sprache. It is focused on performance as well, and was faster than Farkle 6 according to unpublished benchmarks, but remains slower than Farkle 7.
 
 If you develop a project on a modern framework and want a pure parser combinator library go ahead, Pidgin is a fine choice.
 
 ### Irony
 
-[Irony] is interesting. Like Farkle, it uses the LALR algorithm while being a library, not a parser generator, requiring no external tools. Its API is object-oriented; each grammar is a subclass of a `Grammar` class and the initialization is performed at the constructor and takes advantage of overloading the `|` and `+` operators to succinctly define productions, more simply than the admittingly verbose C# API of Farkle. It supports features like comments and operator precedence. The lexer's output can be customized by what Irony calls `Scanner Filters`.
+[Irony] is interesting. Like Farkle, it uses the LALR algorithm while being a library, not a parser generator, requiring no external tools. Its API is object-oriented; each grammar is a subclass of a `Grammar` class and the initialization is performed at the constructor and takes advantage of overloading the `|` and `+` operators to succinctly define productions, more simply than the admittingly verbose C# API of Farkle. It supports features like comments and operator precedence. The lexer's output can be customized by what Irony calls _scanner filters_.
 
-Irony is used by Microsoft to parse Android API definition files and generate the bindings for `Xamarin.Android`.
+Irony is used by Microsoft to parse Android API definition files and generate .NET bindings.
 
 Unlike Farkle however, Irony's grammars are not composable, and unlike all the three libraries, Irony does not support returning strongly-typed objects from grammars. Instead, each nonterminal (not production) can be assigned a delegate via the `AstConfig.NodeCreator` property which forces the user has to manually cast the production's members from object and combine them. Irony's performance was not evaluated for this guide but might be in the future.
 
@@ -128,8 +128,6 @@ A more serious problem with Irony is that its development is fragmented between 
 The Abrams tank of parser generators, [ANTLR] is a tool written in Java but supports generating parsers for other languages including C# but not F#. A very mature and well-known project, it uses a variation of the LL algorithm called Adaptive LL (ALL) that supports left recursion.
 
 ANTLR's problems are the same with any parser generator, mainly looser integration between the grammar and the rest of the program. The language independence ANTLR and other tools offer is good but not really amazing; only large projects would make use of that feature. ANTLR's use of syntax tree listeners and visitors steeps up the learning curve compared to Farkle, FsLexYacc or a parser combinator library. Furthermore, using ANTLR to a .NET project would add a dependency to Java in its build process.
-
-It is this guide's recommendation to use ANTLR only if other parsers are inadequate for the project and after carefully considering the benefits and drawbacks ANTLR would bring.
 
 ### GOLD Parser
 

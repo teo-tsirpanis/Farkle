@@ -1,9 +1,3 @@
----
-category: Diagnostic codes
-categoryindex: 3
-title: FARKLE1004
-description: FARKLE1004: Types have been renamed in Farkle 7
----
 # FARKLE1004: Types have been renamed in Farkle 7
 
 In Farkle 7, some types have been renamed to more intuitive names. Types with the old names are still available, but are marked as obsolete and using them will produce a compiler error. In order to use Farkle 7, you must update your code to use the new type names.

@@ -12,8 +12,6 @@
     <PackageReference Include="Fake.IO.FileSystem" />
     <PackageReference Include="Fake.IO.Zip" />
     <PackageReference Include="Fake.DotNet.Cli" />
-    <PackageReference Include="Fake.DotNet.FsFormatting" />
-    <PackageReference Include="Fake.Tools.Git" />
     <PackageReference Include="MSBuild.StructuredLogger" />
     <PackageReference Include="Scriban" />
   </ItemGroup>

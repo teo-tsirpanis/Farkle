@@ -1,9 +1,3 @@
----
-category: Diagnostic codes
-categoryindex: 3
-title: FARKLE0004
-description: FARKLE0004: Duplicate special name definition
----
 # FARKLE0004: Duplicate special name definition
 
 This error is emitted when the builder detects that multiple symbols in the grammar have the same special name. Special names are used to uniquely identify symbols in the grammar to allow later using them as part of a custom tokenizer for example.

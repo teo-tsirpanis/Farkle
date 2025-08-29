@@ -1,0 +1,22 @@
+- href: ../index.md
+- name: Release Notes
+  href: ../../RELEASE_NOTES.md
+- href: choosing-a-parser.md
+
+- name: Getting started
+- href: quickstart.md
+
+# - name: How-to guides
+# - href: customizing-grammar.md
+# - href: resolving-conflicts.md
+- name: Reference
+- href: templates.md
+- href: string-regexes.md
+- href: the-precompiler.md
+# - href: advanced-features.md
+- name: Diagnostic codes
+  href: ../diagnostics/toc.yml
+- name: Migration
+- href: migration/60-70.md
+- name: Farkle 6.x documentation
+  href: https://v6.farkle.dev

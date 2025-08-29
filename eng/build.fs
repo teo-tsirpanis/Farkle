@@ -14,7 +14,6 @@ open Fake.DotNet
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators
-open Fake.Tools
 open Scriban
 open System
 open System.IO
@@ -32,37 +31,12 @@ Target.initEnvironment()
 
 BuildServer.install [ GitHubActions.Installer ]
 
-// Information about the project are used
-//  - for version and project name in generated AssemblyInfo file
-//  - by the generated NuGet package
-//  - to run tests and to publish documentation on GitHub gh-pages
-
-// The name of the project
-// (used by attributes in AssemblyInfo, name of a NuGet package and directory in 'src')
-let project = "Farkle"
-
-// Short summary of the project
-// (used as description in AssemblyInfo and as a short summary for NuGet package)
-let summary = "A modern and easy-to-use parser library for F#"
-
-// List of author names (for NuGet package)
-let authors = [ "Theodore Tsirpanis" ]
-
-// File system information
-let solutionFile  = "./Farkle.sln"
-
 // Default target configuration
 let configuration = DotNet.BuildConfiguration.Release
-
-// Configuration when building documentation
-let documentationConfiguration = DotNet.BuildConfiguration.Debug
-let configurationAsString = sprintf "%A" configuration
 
 let sourceFilesToGenerate = [
     "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.cs"
 ]
-
-let DocumentationAssemblyFramework = "netstandard2.0"
 
 let farkleProject = "./src/Farkle/Farkle.csproj"
 
@@ -90,8 +64,6 @@ let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuil
 
 let localPackagesFolder = "./tests/packages/"
 
-let projects = !! "**/*.??proj" -- "**/*.shproj"
-
 // The project to be benchmarked
 let benchmarkProject = "./performance/Farkle.Benchmarks/Farkle.Benchmarks.csproj"
 
@@ -104,38 +76,8 @@ let packOutputDirectory = "./bin/"
 
 let nugetPackages = !! "./bin/*.nupkg"
 
-let releaseArtifacts = nugetPackages
-
-// Git configuration (used for publishing documentation in gh-pages branch)
-// The profile where the project is posted
-let gitOwner = "teo-tsirpanis"
-let gitHome = sprintf "%s/%s" "https://github.com" gitOwner
-
-// The name of the project on GitHub
-let gitName = "Farkle"
-
 // Read additional information from the release notes document
 let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
-
-let lastCommitMessage = lazy (Git.CommitMessage.getCommitMessage Environment.CurrentDirectory)
-
-let releaseNotes() =
-    let lines s = seq {
-        use sr = new StringReader(if isNull s then "" else s)
-        let mutable s = ""
-        s <- sr.ReadLine()
-        while not <| isNull s do
-            yield s
-            s <- sr.ReadLine()
-    }
-    match BuildServer.buildServer with
-    | GitHubActions ->
-        sprintf "This is a build from the commit with id: %s from branch %s/%s"
-            GitHubActions.Environment.Sha
-            GitHubActions.Environment.Repository
-            GitHubActions.Environment.Ref
-        :: (lastCommitMessage.Value |> lines |> List.ofSeq)
-    | _ -> releaseInfo.Value.Notes
 
 let nugetVersion =
     let nugetVersion = releaseInfo.Value.NugetVersion
@@ -319,68 +261,36 @@ Target.create "NuGetPack" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
+let docsConfig = Path.GetFullPath "./docs/docfx.json"
 let docsOutput = Path.GetFullPath "_site/"
-let farkle6Repo = "temp/farkle6"
-let farkle6DocsProject = farkle6Repo @@ farkleProject
 
 Target.description "Cleans the output documentation directory"
 Target.create "CleanDocs" (fun _ ->
     Shell.cleanDir docsOutput
 )
 
-let generateDocs doWatch isRelease =
+let generateDocs doWatch =
     let arguments = [
-        if doWatch then "watch" else "build"
-        "--clean"
-        "--projects"
-        Path.GetFullPath farkle6DocsProject
+        docsConfig
+        if doWatch then "--serve"
         "--output"
         docsOutput
-        "--strict"
-        "--properties"
-        $"TargetFramework={DocumentationAssemblyFramework}"
-        if not isRelease then
-            "--parameters"
-            "root"
-            "file://" + docsOutput.Replace("\\", "/")
     ]
 
-    CreateProcess.fromRawCommand "fsdocs" arguments
+    CreateProcess.fromRawCommand "docfx" arguments
     |> CreateProcess.withToolType (ToolType.CreateLocalTool())
-    |> CreateProcess.ensureExitCode
+    |> if not doWatch then CreateProcess.ensureExitCode else id
     |> Proc.run
     |> ignore
 
-Target.description "Prepares the reference documentation generator"
-Target.create "PrepareDocsGeneration" (fun _ ->
-    Git.Repository.cloneSingleBranch "." "https://github.com/teo-tsirpanis/Farkle.git" "release/6.0" farkle6Repo
-    DotNet.build (fun p ->
-        {p with
-            Configuration = documentationConfiguration
-            Framework = Some DocumentationAssemblyFramework
-            MSBuildParams =
-                {p.MSBuildParams with
-                    // The 6.x branch does not use central package management and because
-                    // it is cloned inside the new code, it inherits it. We disable it.
-                    Properties = ("ManagePackageVersionsCentrally", "false") :: p.MSBuildParams.Properties
-                }
-        }
-    ) farkle6DocsProject
+Target.description "Generates the documentation for the project, and launches a local web server that hosts it"
+Target.create "ServeDocs" (fun _ ->
+    generateDocs true
 )
 
-Target.description "Watches the documentation source folder and regenerates it on every file change"
-Target.create "KeepGeneratingDocs" (fun _ ->
-    generateDocs true false
-)
-
-Target.description "Generates the website for the project - for release"
+Target.description "Generates the documentation for the project"
 Target.create "GenerateDocs" (fun _ ->
-    generateDocs false true
-)
-
-Target.description "Generates the website for the project - for local use"
-Target.create "GenerateDocsDebug" (fun _ ->
-    generateDocs false false
+    generateDocs false
 )
 
 let (==>!) x y = x ==> y |> ignore
@@ -390,7 +300,7 @@ let (?=>!) x y = x ?=> y |> ignore
 "Clean"
     ==>! "GenerateCode"
 
-["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"; "PrepareDocsGeneration"]
+["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"]
 |> List.iter (fun target -> "GenerateCode" ==>! target)
 
 ["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
@@ -406,14 +316,8 @@ let (?=>!) x y = x ?=> y |> ignore
 // We used to have "Test" ==>! "NuGetPack".
 // This dependency will be expressed higher at the GitHub Actions level.
 
-[""; "Debug"]
-|> List.iter (fun x ->
-    "CleanDocs"
-        ==> "PrepareDocsGeneration"
-        ==>! (sprintf "GenerateDocs%s" x))
-
-"PrepareDocsGeneration"
-    ==>! "KeepGeneratingDocs"
+"CleanDocs"
+    ==>! "GenerateDocs"
 
 "Clean"
     ==>! "NuGetPack"

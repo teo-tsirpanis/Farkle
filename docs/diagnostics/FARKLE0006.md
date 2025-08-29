@@ -1,9 +1,3 @@
----
-category: Diagnostic codes
-categoryindex: 3
-title: FARKLE0006
-description: FARKLE0006: Operator defined multiple times
----
 # FARKLE0006: Operator defined multiple times
 
 This warning is emitted when a symbol in an `OperatorScope` is defined in multiple associativity groups. In this case, only the first definition will be used, and subsequent definitions will be ignored. Multiple occurrences of the same symbol in the same associativity group will not trigger this warning.

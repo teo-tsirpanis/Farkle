@@ -57,7 +57,5 @@
     <PackageVersion Include="Fake.IO.FileSystem" Version="$(FakeVersion)" />
     <PackageVersion Include="Fake.IO.Zip" Version="$(FakeVersion)" />
     <PackageVersion Include="Fake.DotNet.Cli" Version="$(FakeVersion)" />
-    <PackageVersion Include="Fake.DotNet.FsFormatting" Version="$(FakeVersion)" />
-    <PackageVersion Include="Fake.Tools.Git" Version="$(FakeVersion)" />
   </ItemGroup>
 </Project>

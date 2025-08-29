@@ -47,9 +47,7 @@ let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild
 let sourceProjects = [
     farkleProject
     farkleToolsProject
-#if TODO_PRECOMPILER
     farkleToolsMSBuildProject
-#endif
 ]
 
 // The project to be tested

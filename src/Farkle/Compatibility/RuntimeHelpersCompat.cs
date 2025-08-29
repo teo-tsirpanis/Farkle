@@ -5,9 +5,11 @@
 global using RuntimeHelpersCompat = System.Runtime.CompilerServices.RuntimeHelpers;
 #else
 using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis;
 
 namespace Farkle.Compatibility;
 
+[Embedded]
 internal static class RuntimeHelpersCompat
 {
     public static bool TryEnsureSufficientExecutionStack()

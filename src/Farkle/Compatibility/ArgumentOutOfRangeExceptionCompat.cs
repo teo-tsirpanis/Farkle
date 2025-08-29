@@ -7,9 +7,11 @@ global using ArgumentOutOfRangeExceptionCompat = System.ArgumentOutOfRangeExcept
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis;
 
 namespace Farkle.Compatibility;
 
+[Embedded]
 internal static class ArgumentOutOfRangeExceptionCompat
 {
     [DoesNotReturn, StackTraceHidden]

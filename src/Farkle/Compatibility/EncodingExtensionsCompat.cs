@@ -7,9 +7,11 @@
 #if !NET5_0_OR_GREATER
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 
 namespace System.Text;
 
+[Embedded]
 [ExcludeFromCodeCoverage]
 internal static class EncodingExtensionsCompat
 {

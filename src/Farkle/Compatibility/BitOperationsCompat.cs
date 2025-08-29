@@ -9,9 +9,11 @@ global using BitOperationsCompat = System.Numerics.BitOperations;
 #else
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis;
 
 namespace Farkle.Compatibility;
 
+[Embedded]
 internal static class BitOperationsCompat
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

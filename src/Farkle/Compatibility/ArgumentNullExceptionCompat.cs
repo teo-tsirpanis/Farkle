@@ -7,9 +7,11 @@ global using ArgumentNullExceptionCompat = System.ArgumentNullException;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis;
 
 namespace Farkle.Compatibility;
 
+[Embedded]
 internal static class ArgumentNullExceptionCompat
 {
     [StackTraceHidden]

@@ -5,8 +5,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 #if (NETCOREAPP || NETSTANDARD2_1_OR_GREATER) && !NET7_0_OR_GREATER
+using Microsoft.CodeAnalysis;
+
 namespace System.IO
 {
+    [Embedded]
     internal static class StreamCompat
     {
         public static int ReadAtLeast(this Stream stream, Span<byte> buffer, int minimumLength)

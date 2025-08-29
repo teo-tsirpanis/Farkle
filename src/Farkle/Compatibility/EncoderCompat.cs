@@ -3,9 +3,11 @@
 
 #if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis;
 
 namespace System.Text;
 
+[Embedded]
 internal static class EncoderCompat
 {
     public static unsafe int GetByteCount(this Encoder encoder, ReadOnlySpan<char> chars, bool flush)

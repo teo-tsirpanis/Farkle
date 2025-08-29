@@ -7,9 +7,11 @@
 #if !NET6_0_OR_GREATER
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis;
 
 namespace System
 {
+    [Embedded]
     internal static class HashCodeCompat
     {
         public static void AddBytes(ref this HashCode hashCode, ReadOnlySpan<byte> value)

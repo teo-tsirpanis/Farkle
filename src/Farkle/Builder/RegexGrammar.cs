@@ -12,7 +12,6 @@ namespace Farkle.Builder;
 /// Contains the language specification for string regexes.
 /// </summary>
 /// <seealso cref="Regex.FromRegexString(string)"/>
-/// <seealso cref="Regex.FromRegexString(string, CompatibilityLevel)"/>
 internal static class RegexGrammar
 {
     private static CharParser<Regex> s_parser = null!;

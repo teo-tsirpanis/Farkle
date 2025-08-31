@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <!-- <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks> -->
+    <TargetFramework>netstandard2.1</TargetFramework>
     <IsPackable>false</IsPackable>
     <DefineConstants>$(DefineConstants);MONADS_PUBLIC</DefineConstants>
   </PropertyGroup>

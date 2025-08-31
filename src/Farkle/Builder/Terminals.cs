@@ -311,8 +311,6 @@ public static class Terminals
         ReadOnlySpan<Regex> escapeUnicode = allowEscapeUnicode ?
             [Regex.Join(Regex.Literal('u'), Regex.OneOf(('0', '9'), ('a', 'f'), ('A', 'F')).Repeat(4))] :
             [];
-        var escapeCharsSeq = allowEscapeUnicode ? escapeChars.Where(c => c != 'u') : escapeChars;
-
         var regexDelimiter = Regex.Literal(delimiter);
         var regexBackslash = Regex.Literal('\\');
         var regex =
@@ -325,7 +323,7 @@ public static class Terminals
                         Regex.Choice([
                             regexBackslash,
                             regexDelimiter,
-                            Regex.OneOf(escapeCharsSeq.ToImmutableArray()),
+                            Regex.OneOf(escapeChars.Where(c => c != 'u')),
                             ..escapeUnicode
                         ])
                     )

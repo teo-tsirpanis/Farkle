@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+    <!-- <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks> -->
+    <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.
 
-Building projects that use the precompiler with Visual Studio for Windows or with the .NET Framework-based "msbuild" command also requires a matching version of https://nuget.org/packages/Farkle.Tools to be installed. Learn more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description>
+At this moment, the precompiler has not yet been ported to Farkle 7, so this package does nothing.</Description>
+<!-- Building projects that use the precompiler with Visual Studio for Windows or with the .NET Framework-based "msbuild" command also requires a matching version of https://nuget.org/packages/Farkle.Tools to be installed. Learn more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description> -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
@@ -13,12 +15,12 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
+    <!-- <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
     <Compile Include="FarklePrecompileOutOfProcess.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-    <Compile Include="FarkleGenerateHtml.fs" />
-    <Content Include="build/**" Pack="true" PackagePath="build" />
+    <Compile Include="FarkleGenerateHtml.fs" /> -->
+    <Content Include="build/dummy/**" Pack="true" PackagePath="build" />
   </ItemGroup>
-  <ItemGroup>
+  <!-- <ItemGroup>
     <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
@@ -28,5 +30,5 @@ Building projects that use the precompiler with Visual Studio for Windows or wit
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
     <PackageReference Include="MedallionShell" PrivateAssets="all" Publish="true" />
-  </ItemGroup>
+  </ItemGroup> -->
 </Project>

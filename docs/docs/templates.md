@@ -1,19 +1,16 @@
----
-category: Advanced
-categoryindex: 2
-index: 2
-description: A guide on how to create and use templates with Farkle.
----
 # Templating Reference
 
 Farkle comes with a templating system which further helps developers work with the grammars they create. This system is a more powerful edition of both GOLD Parser's ["Create Webpage"][gold-webpage] and ["Create Skeleton Program"][gold-skeleton] tools. In this guide, we will first see how to create an HTML page describing our grammar, and next we will see how to create our own templates. So, are you ready? Let's do this!
 
+> [!IMPORTANT]
+> The precompiler is not available in early preview versions of Farkle 7.0. Some of the features listed here are not available yet.
+
 ## Preparing ourselves
 
-Before we start, we first have to install [Farkle's CLI tool from NuGet][farkle-tools-nuget] by opening a command prompt and running
+Before we start, we first have to install Farkle's CLI tool from [NuGet][farkle-tools-nuget] by opening a command prompt and running
 
 ```
-dotnet tool install -g Farkle.Tools
+dotnet tool install -g Farkle.Tools --prerelease
 ```
 
 ### Supported input types
@@ -54,22 +51,30 @@ The HTML files will be generated to your project's build output directory and ca
 
 ## Creating your own templates
 
-Instead of GOLD's custom and limited templating language, Farkle's templates use [Scriban], which features a much more powerful templating language. If you want to create your own templates, I recommend to first learn it from [Scriban's official documentation][scriban-doc].
+Instead of GOLD's custom and limited templating language, Farkle's templates use [Scriban], which features a much more powerful templating language. You can learn more about the templating language from [Scriban's official documentation][scriban-doc].
 
 ### Variables
 
 Farkle's templates can use the following Scriban variables:
 
 * `file_extension`: This variable is used to change the default extension of the output file. For example if you are creating an HTML template you would add a `{{ file_extension = ".html" }} at the beginning.
-
 * `farkle.version`: The version of the CLI tool.
+* `grammar`: An object that represents the input grammar. It exposes the following properties of @"Farkle.Grammars.Grammar":
 
-* `grammar`: A Farkle `Grammar` object that represents the input grammar.
-
-  * `grammar.productions_groupped`: A `System.Linq.IGrouping<Nonterminal,Production>` object that groups productions by their head nonterminal.
+|Name|Property|
+|-|-|
+|`grammar_info`|@"Farkle.Grammars.Grammar.GrammarInfo"|
+|`terminals`|@"Farkle.Grammars.Grammar.Terminals"|
+|`token_symbols`|@"Farkle.Grammars.Grammar.TokenSymbols"|
+|`groups`|@"Farkle.Grammars.Grammar.Groups"|
+|`nonterminals`|@"Farkle.Grammars.Grammar.Nonterminals"|
+|`productions`|@"Farkle.Grammars.Grammar.Productions"|
+|`dfa_on_char`|@"Farkle.Grammars.Grammar.DfaOnChar"|
+|`lr_state_machine`|@"Farkle.Grammars.Grammar.LrStateMachine"|
+|`special_name_definitions`|@"Farkle.Grammars.Grammar.SpecialNameDefinitions"|
 
 * `grammar_path`: The path to the given input file; either a grammar file or an assembly. When processing project files this variable will have the project's underlying assembly.
-
+* `is_conflict_report`: Whether the grammar has conflicts in either its DFA, or its LR state machine.
 * `properties`: An object that holds custom properties passed by the `-prop` CLI argument. For example, if you pass `-prop foo bar` to the CLI tool and write `{{ properties.foo }}` in your template, it will be evaluated as `bar`.
 
 Scriban imports all properties of Farkle's objects but changes their names. Take a look at [Farkle's built-in templates][builtin-templates] to get an idea how to write your own template, but keep in mind that the HTML templates use some constructs not available to custom templates, like Scriban's `import` statement and some other internal functions.
@@ -79,20 +84,21 @@ Scriban imports all properties of Farkle's objects but changes their names. Take
 The templates can furthermore use the following functions:
 
 * `to_base_64 <bool>`: Returns the grammar file as a Base64-encoded string. If you pass `true`, it will add line breaks every 76 characters.
-
-> __Note:__ Precompiled grammars from an assembly or project are encoded in a format called EGTneo which is incompatible with GOLD Parser's EGT's format. When creating a template from an EGT file however, the `to_base_64` function will return the Base-64 representation of that file.
-
-* `group_dfa_edge <dfa_state>`: Returns an `IGrouping` object that groups the edges of a DFA state by their action.
-
-* `fmt <terminal or production> <case> <separator>`: Formats a terminal or a production to a string. You can specify the case of the generated string (`upper_case`, `lower_case`, `pascal_case`, `camel_case`), as well as the separator between the members of the production.
+* `grammar.is_terminal <token_symbol_handle>`: Exposes the @"Farkle.Grammars.Grammar.IsTerminal*?displayProperty=nameWithType" method.
+* `grammar.get_object_from_handle <handle>`: Converts a @"Farkle.Grammars.TokenSymbolHandle", a @"Farkle.Grammars.NonterminalHandle", or a @"Farkle.Grammars.ProductionHandle", or an @Farkle.Grammars.EntityHandle", to its respective @"Farkle.Grammars.TokenSymbol", @"Farkle.Grammars.Nonterminal", or @"Farkle.Grammars.Production", object.
+* `group_dfa_edge <dfa_state>`: Returns an `IGrouping` object that groups the edges of a @"Farkle.Grammars.StateMachines.DfaState`1" by their action.
+* `is_terminal <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.Terminal" flag.
+* `is_group_start <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.GroupStart" flag.
+* `is_hidden <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.Hidden" flag.
+* `is_noise <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.Noise" flag.
+* `is_generated <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" or @"Farkle.Grammars.NonterminalAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.Generated" or @"Farkle.Grammars.NonterminalAttributes.Generated" flag, respectively.
+* `is_ends_on_end_of_input <flags>`: Returns whether a @"Farkle.Grammars.GroupAttributes" value contains the @"Farkle.Grammars.GroupAttributes.EndsOnEndOfInput" flag.
+* `is_advance_by_character <flags>`: Returns whether a @"Farkle.Grammars.GroupAttributes" value contains the @"Farkle.Grammars.GroupAttributes.AdvanceByCharacter" flag.
+* `is_keep_end_token <flags>`: Returns whether a @"Farkle.Grammars.GroupAttributes" value contains the @"Farkle.Grammars.GroupAttributes.KeepEndToken" flag.
 
 ### Using custom templates
 
 A custom template can be rendered by writing `farkle new -t MyCustomTemplate.scriban`. Of `farkle new`'s arguments, custom templates only support `-prop`, as explained above.
-
----
-
-So, I hope you enjoyed this little guide. If you did, don't forget to give Farkle.Tools a try, and maybe you feel especially willing to create some templates today, and want to hit the star button as well. I hope that all of you have a wonderful day, and to see you soon. Goodbye!
 
 [gold-webpage]: http://www.goldparser.org/doc/builder-cmd/goldwebpage.htm
 [gold-skeleton]: http://www.goldparser.org/doc/builder-cmd/goldprog.htm

@@ -70,7 +70,7 @@ The grammar file format for Farkle 7 specifies two concepts for terminals that d
 
 The same concepts will be supported for groups. The respective attributes will be applied to the group's container symbol.
 
-## Compatibility levels
+## ~~Compatibility levels~~
 
 This document describes several behavior breaking changes. To allow containing the impact of these changes, we will add a way to specify the version of Farkle the grammar was developed with, and the builder's behavior of that version will be maintained, even if a newer version of the library is used.
 
@@ -80,9 +80,13 @@ Compatibility levels will be introduced with a major or minor version when it br
 
 __Update__: After some consideration, it was decided that a compatibility level for Farkle 6 will not be provided. Given the fundamental changes in places like the DFA builder, and the already extensive API changes, providing behavior compatibility with Farkle 6 would not have any significant benefits. The "latest" compatibility level alias will also not be provided; it would be equivalent to not setting a compatibility level. Because the precompiler already provides this shielding from behavior breaking changes, compatibility levels will be recommended to be explicitly set only in certain scenarios. This feature was very close to being entirely cancelled, but introducing it later would lose some of its purpose.
 
-## P&A for nonterminals
+__Update__: After more consideration, it was decided that compatibility levels will not be added in Farkle 7. As explained above, baking the grammar's behavior at compile time with the precompiler, significantly reduces the need to do the same at run time. The other use case — maintaining syntax compatibility with string regexes specified in reusable libraries, is extremely niche. It's unlikely that the string regex language will get another breaking change, and even if we break it, and want to maintain compatibility with earlier versions, there are other ways to implement this, such as using a Roslyn interceptor to "precompile" calls to `Regex.FromRegexString`.
+
+## ~~P&A for nonterminals~~
 
 _Tracked in [#41](https://github.com/teo-tsirpanis/Farkle/issues/41)._
+
+__Update__: As explained in the issue, this is likely impossible to implement.
 
 ## ~~Uniform F# operators~~
 
@@ -122,9 +126,11 @@ The existing operators will be kept for compatibility reasons and be marked as o
 
 In Farkle 6 the name of a grammar is always equal to the name of its start symbol. This results in either the grammar or the start symbol having a name that does not fit well (good luck with naming your grammar `Compilation Unit`). In Farkle 7 the name of the grammar will be a global option and settable with a separate method from the start symbol's name. If the grammar name has not been set, it will still be equal to the name of the start symbol.
 
-## Better-defined symbol renaming
+## ~~Better-defined symbol renaming~~
 
 In Farkle 6 if you rename a symbol, you must only use its renamed instance throughout your grammar. Otherwise the name of the symbol Farkle will use will be unspecified. To ease this a bit in Farkle 7, if a symbol is used as both its original instance and one renamed instance, the changed name will always be used. If a symbol is being used as multiple renamed instances, one of them will be used, but it will still be unspecified which one.
+
+__Update__: After some consideration, symbol renaming was removed in Farkle 7 altogether. It was introduced to address the precompiler's limitation of requiring all precompiled grammars in an assembly to have unique names, which will not exist in Farkle 7. Besides that, there are no other compelling reasons to rename symbols, and the feature (as well as this refinement) adds some complexity to the builder.
 
 ## Group nesting
 

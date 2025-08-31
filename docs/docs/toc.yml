@@ -10,9 +10,9 @@
 # - href: customizing-grammar.md
 # - href: resolving-conflicts.md
 - name: Reference
-- href: templates.md
 - href: string-regexes.md
 - href: the-precompiler.md
+- href: templates.md
 # - href: advanced-features.md
 - name: Diagnostic codes
   href: ../diagnostics/toc.yml

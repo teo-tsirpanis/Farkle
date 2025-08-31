@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 #if !NET9_0_OR_GREATER
+using Microsoft.CodeAnalysis;
+
 namespace System.Collections.Generic;
 
+[Embedded]
 internal sealed class OrderedDictionary<TKey, TValue>(IEqualityComparer<TKey>? comparer = null) : IEnumerable<KeyValuePair<TKey, TValue>> where TKey : notnull
 {
     private readonly Dictionary<TKey, int> _items = new(comparer);

@@ -23,7 +23,8 @@ type GrammarFunctions(g: GrammarTemplateInput) =
         | "Nonterminals"
         | "Productions"
         | "DfaOnChar"
-        | "LrStateMachine" -> true
+        | "LrStateMachine"
+        | "SpecialNameDefinitions" -> true
         | _ -> false)
 
     let grammarSO =
@@ -42,19 +43,19 @@ type GrammarFunctions(g: GrammarTemplateInput) =
 
     member _.Grammar = grammarSO
 
-    static member is_terminal x = (x &&& TokenSymbolAttributes.Terminal) <> TokenSymbolAttributes.None
-    static member is_group_start x = (x &&& TokenSymbolAttributes.GroupStart) <> TokenSymbolAttributes.None
-    static member is_hidden x = (x &&& TokenSymbolAttributes.Hidden) <> TokenSymbolAttributes.None
-    static member is_noise x = (x &&& TokenSymbolAttributes.Noise) <> TokenSymbolAttributes.None
+    static member is_terminal x = x &&& TokenSymbolAttributes.Terminal <> TokenSymbolAttributes.None
+    static member is_group_start x = x &&& TokenSymbolAttributes.GroupStart <> TokenSymbolAttributes.None
+    static member is_hidden x = x &&& TokenSymbolAttributes.Hidden <> TokenSymbolAttributes.None
+    static member is_noise x = x &&& TokenSymbolAttributes.Noise <> TokenSymbolAttributes.None
     static member is_generated (x: obj) =
         match x with
-        | :? TokenSymbolAttributes as x -> (x &&& TokenSymbolAttributes.Generated) <> TokenSymbolAttributes.None
-        | :? NonterminalAttributes as x -> (x &&& NonterminalAttributes.Generated) <> NonterminalAttributes.None
+        | :? TokenSymbolAttributes as x -> x &&& TokenSymbolAttributes.Generated <> TokenSymbolAttributes.None
+        | :? NonterminalAttributes as x -> x &&& NonterminalAttributes.Generated <> NonterminalAttributes.None
         | _ -> false
 
-    static member is_ends_on_end_of_input x = (x &&& GroupAttributes.EndsOnEndOfInput) <> GroupAttributes.None
-    static member is_advance_by_character x = (x &&& GroupAttributes.AdvanceByCharacter) <> GroupAttributes.None
-    static member is_keep_end_token x = (x &&& GroupAttributes.KeepEndToken) <> GroupAttributes.None
+    static member is_ends_on_end_of_input x = x &&& GroupAttributes.EndsOnEndOfInput <> GroupAttributes.None
+    static member is_advance_by_character x = x &&& GroupAttributes.AdvanceByCharacter <> GroupAttributes.None
+    static member is_keep_end_token x = x &&& GroupAttributes.KeepEndToken <> GroupAttributes.None
 
     static member group_dfa_edges (state: StateMachines.DfaState<char>) =
         state.Edges.ToLookup(_.Target).OrderBy(_.Key)

@@ -3,9 +3,11 @@
 
 #if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 
 namespace System.Collections.Generic
 {
+    [Embedded]
     internal static class StackCompat
     {
         public static bool TryPop<T>(this Stack<T> stack, [MaybeNullWhen(false)] out T result)

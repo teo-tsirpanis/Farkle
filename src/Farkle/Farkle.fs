@@ -653,6 +653,36 @@ module internal Terminals =
     /// Creates a terminal that matches a decimal number.
     let inline decimal name = Terminals.Decimal name
 
+#if NET8_0_OR_GREATER // .NET 7 technically, but the NuGet package has binaries for .NET 8+; targeting an earlier .NET version will fall back to .NET Standard binaries.
+    /// Creates a terminal that matches an unsigned integer, and parses it to the given type.
+    [<RequiresExplicitTypeArguments>]
+    let inline genericUnsigned<'T when Numerics.INumberBase<'T>> name = Terminals.UnsignedInteger<'T> name
+
+    /// Creates a terminal that matches a signed integer, and parses it to the given type.
+    [<RequiresExplicitTypeArguments>]
+    let inline genericSigned<'T when Numerics.ISignedNumber<'T>> name = Terminals.SignedInteger<'T> name
+
+    /// Creates a terminal that matches a floating-point number, and parses it to the given type.
+    /// A leading sign can be optionally allowed.
+    [<RequiresExplicitTypeArguments>]
+    let inline genericReal<'T when Numerics.IFloatingPoint<'T>> allowSign name =
+        if allowSign then
+            Terminals.SignedFloat<'T> name
+        else
+            Terminals.UnsignedFloat<'T> name
+#else
+    [<Obsolete("This function is not supported by this target framework.", true); RequiresExplicitTypeArguments>]
+    let inline genericUnsigned<'T> (name: string) = ignore name; raise <| PlatformNotSupportedException() :> IGrammarSymbol<'T>
+
+    [<Obsolete("This function is not supported by this target framework.", true); RequiresExplicitTypeArguments>]
+    let inline genericSigned<'T> (name: string) = ignore name; raise <| PlatformNotSupportedException() :> IGrammarSymbol<'T>
+
+    [<Obsolete("This function is not supported by this target framework.", true); RequiresExplicitTypeArguments>]
+    let inline genericReal<'T> (allowSign: bool) (name: string) =
+        ignore (allowSign, name)
+        raise <| PlatformNotSupportedException() :> IGrammarSymbol<'T>
+#endif
+
     /// Creates a terminal that matches a single-line C-like string.
     /// See `Terminals.String` for more information.
     let inline string delim name = Terminals.String(name, delim)

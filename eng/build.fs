@@ -44,11 +44,7 @@ let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
 
 let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
 
-let sourceProjects = [
-    farkleProject
-    farkleToolsProject
-    farkleToolsMSBuildProject
-]
+let packProject = "./src/pack.proj"
 
 // The project to be tested
 let testProject = "./tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj"
@@ -84,13 +80,6 @@ let nugetVersion =
         sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
     | _ -> nugetVersion
 
-Target.description "Checks whether the release notes entry has a date"
-Target.create "CheckForReleaseNotesDate" (fun _ ->
-    let releaseInfo = releaseInfo.Value
-    if releaseInfo.Date.IsNone then
-        failwithf "The release notes entry for version %s does not have a date" releaseInfo.NugetVersion
-)
-
 let fReleaseConfiguration x = {x with DotNet.BuildOptions.Configuration = configuration}
 
 let inline fCommonOptions x =
@@ -114,8 +103,6 @@ let dotNetRun proj fx (config: DotNet.BuildConfiguration) buildArgs args =
 let cleanBinObj directory =
     directory @@ "bin" |> Shell.deleteDir
     directory @@ "obj" |> Shell.deleteDir
-
-let pushArtifact x = Trace.publish (ImportData.BuildArtifactWithName <| Path.getFullName x) x
 
 Target.description "Cleans the output directories"
 Target.create "Clean" (fun _ ->
@@ -240,21 +227,14 @@ Target.create "Benchmark" (fun _ ->
 
 Target.description "Builds the NuGet packages"
 Target.create "NuGetPack" (fun _ ->
-    sourceProjects
-    |> Seq.iter (
-        DotNet.pack (fun p ->
-            {p with
-                Configuration = configuration
-                MSBuildParams =
-                    {p.MSBuildParams with
-                        Properties = ("ContinuousIntegrationBuild", "true") :: p.MSBuildParams.Properties
-                    }
-                OutputPath = Some packOutputDirectory
-            }
-            |> fCommonOptions
-        )
+    packProject
+    |> DotNet.pack (fun p ->
+        {p with
+            Configuration = configuration
+            OutputPath = Some packOutputDirectory
+        }
+        |> fCommonOptions
     )
-    Seq.iter pushArtifact nugetPackages
 )
 
 // --------------------------------------------------------------------------------------

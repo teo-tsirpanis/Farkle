@@ -1,0 +1,10 @@
+<Project>
+  <ItemGroup>
+    <PackProject Include="Farkle/Farkle.csproj" />
+    <PackProject Include="Farkle.Tools/Farkle.Tools.fsproj" />
+    <PackProject Include="Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" />
+  </ItemGroup>
+  <Target Name="Pack">
+    <MSBuild Projects="@(PackProject)" Targets="Pack" BuildInParallel="true" />
+  </Target>
+</Project>

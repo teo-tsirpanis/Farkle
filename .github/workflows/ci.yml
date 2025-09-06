@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - mainstream
+      - dev/*
       - release/*
   pull_request:
     paths-ignore:

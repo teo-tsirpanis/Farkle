@@ -3,6 +3,12 @@
 name: CI (dummy)
 
 on:
+  push:
+    branches:
+      - dev/*
+    paths:
+      - '**/*.md'
+      - '**/*.txt'
   pull_request:
     # Paths must be synchronized with ci.yml.
     paths:

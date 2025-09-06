@@ -80,7 +80,8 @@ let releaseInfo = lazy (ReleaseNotes.load "./RELEASE_NOTES.md")
 let nugetVersion =
     let nugetVersion = releaseInfo.Value.NugetVersion
     match BuildServer.buildServer with
-    | GitHubActions -> sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
+    | GitHubActions when GitHubActions.Environment.EventName <> "release" ->
+        sprintf "%s-ci.%s+%s" nugetVersion GitHubActions.Environment.RunNumber GitHubActions.Environment.Sha
     | _ -> nugetVersion
 
 Target.description "Checks whether the release notes entry has a date"

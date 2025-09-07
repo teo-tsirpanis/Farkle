@@ -65,9 +65,9 @@ public abstract class LrStateMachine : IReadOnlyList<LrState>
     }
 
     /// <summary>
-    /// The number of the <see cref="LrStateMachine"/>'s initial state.
+    /// The number of the <see cref="LrStateMachine"/>'s start state.
     /// </summary>
-    public int InitialState => 0;
+    public int StartState => 0;
 
     /// <summary>
     /// The number of states in the <see cref="LrStateMachine"/>.

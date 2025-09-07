@@ -39,7 +39,7 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
     let productions = Array.init count (fun _ -> gw.AddProduction(1))
     Array.iter (TokenSymbolHandle.op_Implicit >> gw.AddProductionMember) tokenSymbols
     do
-        // We need the initial state, the accepting state, and one state
+        // We need the start state, the accepting state, and one state
         // for each token symbol to reduce the corresponding production.
         let lr = LrWriter(count + 2)
         Array.iteri (fun i x -> lr.AddShift(x, i + 2)) tokenSymbols

@@ -47,9 +47,9 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
 
     /// <summary>
-    /// The number of the <see cref="Dfa{TChar}"/>'s initial state.
+    /// The number of the <see cref="Dfa{TChar}"/>'s start state.
     /// </summary>
-    public int InitialState => 0;
+    public int StartState => 0;
 
     /// <summary>
     /// The number of states in the <see cref="Dfa{TChar}"/>.

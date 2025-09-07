@@ -153,7 +153,7 @@ internal readonly struct DefaultParserImplementation<TChar>
 #else
         ValueStack<object?> semanticValueStack = new(InitialStackCapacity);
 #endif
-        stateStack.Push(_lrStateMachine.InitialState);
+        stateStack.Push(_lrStateMachine.StartState);
         semanticValueStack.Push(null);
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         RunResult runResult = Run(ref input, ref stateStack, ref semanticValueStack, out resultValue);
@@ -206,7 +206,7 @@ internal static class DefaultParserImplementation
             {
                 state = new State
                 {
-                    StateStack = CreateStack(lrStateMachine.InitialState),
+                    StateStack = CreateStack(lrStateMachine.StartState),
                     SemanticValueStack = CreateStack<object?>(null)
                 };
                 parserState.SetValue(typeof(State), state);

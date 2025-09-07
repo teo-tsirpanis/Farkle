@@ -292,7 +292,7 @@ The following values are defined for the __Kind__ column:
 |2|Deterministic Finite Automaton (DFA) default transitions on 16-bit character ranges.|
 |3|LR(1) state machine.|
 |4|Generalized LR(1) (GLR(1)) state machine.|
-|5|Deterministic Finite Automaton (DFA) group starting states on 16-bit character ranges.|
+|5|Deterministic Finite Automaton (DFA) group start states on 16-bit character ranges.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -339,7 +339,7 @@ A DFA's representation consists of the following data:
 
 The type `char_t` can be any unsigned integer type.
 
-The DFA's initial state is always the first one.
+The DFA's start state is always the first one.
 
 A state's edges end when the next state's edges begin, or at the end of the edges if this is the last state. If a state and all states after it do not have any edges, its `firstEdge` field MUST be equal to the number of edges in the DFA plus one.
 
@@ -368,15 +368,15 @@ This state machine contains `stateCount` entries of type `state_t` that specify 
 
 If all states have a failing default transition, this state machine SHOULD be omitted to save space.
 
-### Deterministic Finite Automaton (DFA) group starting states
+### Deterministic Finite Automaton (DFA) group start states
 
 When the tokenizer is inside a group with the `AdvanceByCharacter` flag set, it used to repeatedly run the DFA at the start of each character, until it can match either the group's end token, or the start of a nested group. This is very inefficient, because it can lead to characters being processed multiple times. To improve this, we can add extra states to the DFA that will only match the tokens are looking for when inside a group, and start from there.
 
-This state machine contains `groupCount` entries of type `state_t` that specify the starting state of the DFA when the tokenizer is inside a group.
+This state machine contains `groupCount` entries of type `state_t` that specify the start state of the DFA when the tokenizer is inside a group.
 
-If tokenizing all groups starts at the DFA's regular initial state, this state machine SHOULD be omitted to save space.
+If tokenizing all groups starts at the DFA's regular start state, this state machine SHOULD be omitted to save space.
 
-If a group has a non-default starting state, tokenizers MAY assume that any group start token they match will be allowed to nest inside the group, and skip checking the _GroupNesting_ table.
+If a group has a non-default start state, tokenizers MAY assume that any group start token they match will be allowed to nest inside the group, and skip checking the _GroupNesting_ table.
 
 ### LR(1) state machine
 
@@ -419,7 +419,7 @@ The type `eof_action_t` describes the type of the action (reduce, accept, error)
 * An accept action is encoded as `1`.
 * A reduce action to the production with the index `p` is encoded as `p + 1`.
 
-The LR(1) state machine's initial state is always the first one.
+The LR(1) state machine's start state is always the first one.
 
 A state's actions end when the next state's actions begin, or at the end of the actions if this is the last state. If a state and all states after it have no actions, its `firstAction` field MUST be set to the number of all actions in the state machine plus one. The same applies to GOTO actions.
 

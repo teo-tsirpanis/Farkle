@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     /// <summary>
-    /// A lookup table with the next state for each ASCII character, for each starting state.
+    /// A lookup table with the next state for each ASCII character, for each state.
     /// </summary>
     /// <remarks>
     /// This field is populated by <see cref="PrepareForParsing"/>.
@@ -124,7 +124,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         TokenSymbolHandle acceptSymbol = default;
         int acceptSymbolLength = 0;
 
-        int currentState = InitialState;
+        int currentState = StartState;
         int i;
         for (i = 0; i < chars.Length; i++)
         {

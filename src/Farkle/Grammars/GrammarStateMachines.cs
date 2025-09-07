@@ -5,13 +5,14 @@ namespace Farkle.Grammars;
 
 internal readonly struct GrammarStateMachines
 {
-    public readonly GrammarFileSection DfaOnChar, DfaOnCharWithConflicts, DfaOnCharDefaultTransitions;
+    public readonly GrammarFileSection DfaOnChar, DfaOnCharWithConflicts, DfaOnCharDefaultTransitions, DfaOnCharGroupStartStates;
 
     public readonly GrammarFileSection Lr1, Glr1;
 
     public GrammarStateMachines(ReadOnlySpan<byte> grammarFile, in BlobHeap blobHeap, in GrammarTables tables, out bool hasUnknownStateMachines) : this()
     {
-        bool seenDfaOnChar = false, seenDfaOnCharWithConflicts = false, seenDfaOnCharDefaultTransitions = false, seenLr1 = false, seenGlr1 = false;
+        bool seenDfaOnChar = false, seenDfaOnCharWithConflicts = false, seenDfaOnCharDefaultTransitions = false, seenDfaOnCharGroupStartStates = false;
+        bool seenLr1 = false, seenGlr1 = false;
 
         hasUnknownStateMachines = false;
         for (uint i = 1; i <= (uint)tables.StateMachineRowCount; i++)
@@ -28,6 +29,9 @@ internal readonly struct GrammarStateMachines
                     break;
                 case GrammarConstants.DfaOnCharDefaultTransitionsKind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnCharDefaultTransitions, ref seenDfaOnCharDefaultTransitions);
+                    break;
+                case GrammarConstants.DfaOnCharGroupStartStatesKind:
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnCharGroupStartStates, ref seenDfaOnCharGroupStartStates);
                     break;
                 case GrammarConstants.Lr1Kind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref Lr1, ref seenLr1);

@@ -44,6 +44,8 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 
+    internal abstract int GetStartStateForGroupImpl(GroupHandle group);
+
     internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
 
     /// <summary>
@@ -84,6 +86,23 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
             }
             return new(this, index);
         }
+    }
+
+    /// <summary>
+    /// Gets the index of the state of the <see cref="Dfa{TChar}"/> to start from, when tokenizing the given group.
+    /// </summary>
+    /// <param name="group">The group's handle.</param>
+    /// <remarks>
+    /// If <paramref name="group"/> points to a group that does not exist in the grammar, this method will
+    /// not fail, but return <see cref="StartState"/>.
+    /// </remarks>
+    public int GetStartStateForGroup(GroupHandle group)
+    {
+        if (!group.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(group));
+        }
+        return GetStartStateForGroupImpl(group);
     }
 
     /// <summary>

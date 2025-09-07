@@ -36,8 +36,9 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
 
     [SetsRequiredMembers]
-    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
-        : base(grammar, stateCount, edgeCount, tokenSymbolCount, false)
+    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, int groupCount,
+        GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions, GrammarFileSection dfaGroupStartStates)
+        : base(grammar, stateCount, edgeCount, tokenSymbolCount, groupCount, false)
     {
         int expectedSize =
             sizeof(uint) * 2
@@ -56,12 +57,18 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
+        if (dfaGroupStartStates.Length > 0 && dfaGroupStartStates.Length != groupCount * _stateIndexSize)
+        {
+            ThrowHelpers.ThrowInvalidDfaDataSize();
+        }
+
         FirstEdgeBase = dfa.Offset + sizeof(uint) * 2;
         RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
         RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
         EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
         DefaultTransitionBase = dfaDefaultTransitions.Offset;
         AcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
+        GroupStartStateBase = dfaGroupStartStates.Offset;
     }
 
     internal override (int Offset, int Count) GetAcceptSymbolBounds(int state)

@@ -190,7 +190,7 @@ The following rules apply to the _TokenSymbol_ table:
 * A token symbol with the `Terminal` flag set MUST NOT appear after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
 
-### Group table
+### _Group_ table
 
 The _Group_ table contains the following columns:
 
@@ -219,13 +219,13 @@ The following rules apply to the _Group_ table:
 
 > Before accessing the nesting of a group, readers MUST ensure that the group can actually be nested. It is possible for the __FirstNesting__ column to point to a non-existent row if no groups can be nested.
 
-### GroupNesting table
+### _GroupNesting_ table
 
 The _GroupNesting_ table contains the following column:
 
 * __Group__ (an index to the _Group_ table): The group that can be nested inside another group.
 
-### Nonterminal table
+### _Nonterminal_ table
 
 The _Nonterminal_ table contains the following columns:
 
@@ -249,7 +249,7 @@ The following rules apply to the _Nonterminal_ table:
 
 > Before accessing the productions of a nonterminal, readers MUST ensure that the nonterminal actually has productions. Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 
-### Production table
+### _Production_ table
 
 The _Production_ table contains the following columns:
 
@@ -265,7 +265,7 @@ The following rules apply to the _Production_ table:
 
 > Before accessing the members of a production, readers MUST ensure that it actually has members.
 
-### ProductionMember table
+### _ProductionMember_ table
 
 The _ProductionMember_ table contains the following columns:
 
@@ -273,7 +273,7 @@ The _ProductionMember_ table contains the following columns:
 
 If the __Member__ column points to a token symbol, its `Terminal` flag MUST be set.
 
-### StateMachine table
+### _StateMachine_ table
 
 The _StateMachine_ table contains the following columns:
 
@@ -304,7 +304,7 @@ State machines with no states MUST be treated as if they do not exist.
 
 The format of the blob pointed to by the __Data__ column depends on the value of the __Kind__ column and is specified in following sections.
 
-### SpecialName table
+### _SpecialName_ table
 
 The _SpecialName_ table contains the following columns:
 

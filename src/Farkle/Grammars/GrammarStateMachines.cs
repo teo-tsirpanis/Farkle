@@ -5,7 +5,7 @@ namespace Farkle.Grammars;
 
 internal readonly struct GrammarStateMachines
 {
-    public readonly GrammarFileSection DfaOnChar, DfaOnCharWithConflicts, DfaOnCharDefaultTransitions, DfaOnCharGroupStartStates;
+    public readonly Dfa DfaOnChar;
 
     public readonly GrammarFileSection Lr1, Glr1;
 
@@ -22,16 +22,16 @@ internal readonly struct GrammarStateMachines
             switch (kind)
             {
                 case GrammarConstants.DfaOnCharKind:
-                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar, ref seenDfaOnChar);
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar.DfaWithoutConflicts, ref seenDfaOnChar);
                     break;
                 case GrammarConstants.DfaOnCharWithConflictsKind:
-                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnCharWithConflicts, ref seenDfaOnCharWithConflicts);
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar.DfaWithConflicts, ref seenDfaOnCharWithConflicts);
                     break;
                 case GrammarConstants.DfaOnCharDefaultTransitionsKind:
-                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnCharDefaultTransitions, ref seenDfaOnCharDefaultTransitions);
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar.DefaultTransitions, ref seenDfaOnCharDefaultTransitions);
                     break;
                 case GrammarConstants.DfaOnCharGroupStartStatesKind:
-                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnCharGroupStartStates, ref seenDfaOnCharGroupStartStates);
+                    AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar.GroupStartStates, ref seenDfaOnCharGroupStartStates);
                     break;
                 case GrammarConstants.Lr1Kind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref Lr1, ref seenLr1);
@@ -58,5 +58,10 @@ internal readonly struct GrammarStateMachines
 
         static void ThrowDuplicateStream(ulong kind) =>
             ThrowHelpers.ThrowInvalidDataException($"Duplicate state machine {kind:X8}.");
+    }
+
+    public struct Dfa
+    {
+        public GrammarFileSection DfaWithoutConflicts, DfaWithConflicts, DefaultTransitions, GroupStartStates;
     }
 }

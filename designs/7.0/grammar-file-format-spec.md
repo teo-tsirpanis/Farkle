@@ -98,6 +98,8 @@ Each table row is stored as the concatenation of its columns and indexed startin
 * A compressed index to the row of another table. Its length is defined in a following section.
 * A coded index to the row of one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
+> When designing tables, columns with references to structures in state machines should be avoided, since it would introduce a circular reference between tables and state machines.
+
 A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specification states a lower limit.
 
 Table and coded indices are always one-based. An index with a value of zero points to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
@@ -290,6 +292,7 @@ The following values are defined for the __Kind__ column:
 |2|Deterministic Finite Automaton (DFA) default transitions on 16-bit character ranges.|
 |3|LR(1) state machine.|
 |4|Generalized LR(1) (GLR(1)) state machine.|
+|5|Deterministic Finite Automaton (DFA) group starting states on 16-bit character ranges.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -364,6 +367,16 @@ To reduce the size of a DFA, we can factor out the most common transitions of a 
 This state machine contains `stateCount` entries of type `state_t` that specify the default transition for each state. The default transition of a state will be taken if the current input character is not matched by any edge. If it is zero, the tokenization process stops.
 
 If all states have a failing default transition, this state machine SHOULD be omitted to save space.
+
+### Deterministic Finite Automaton (DFA) group starting states
+
+When the tokenizer is inside a group with the `AdvanceByCharacter` flag set, it used to repeatedly run the DFA at the start of each character, until it can match either the group's end token, or the start of a nested group. This is very inefficient, because it can lead to characters being processed multiple times. To improve this, we can add extra states to the DFA that will only match the tokens are looking for when inside a group, and start from there.
+
+This state machine contains `groupCount` entries of type `state_t` that specify the starting state of the DFA when the tokenizer is inside a group.
+
+If tokenizing all groups starts at the DFA's regular initial state, this state machine SHOULD be omitted to save space.
+
+If a group has a non-default starting state, tokenizers MAY assume that any group start token they match will be allowed to nest inside the group, and skip checking the _GroupNesting_ table.
 
 ### LR(1) state machine
 

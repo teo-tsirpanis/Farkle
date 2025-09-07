@@ -34,7 +34,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <returns><see langword="true"/> if a token was found or the tokenizer failed.
     /// <see langword="false"/> if more characters are needed. In the latter case
     /// callers need to suspend.</returns>
-    public bool TokenizeGroup(ref ParserInputReader<TChar> input, bool isNoise, ref ValueStack<uint> groupStack, ref int groupLength, out ParserDiagnostic? error)
+    public bool TokenizeGroup(ref ParserInputReader<TChar> input, bool isNoise, ref ValueStack<GroupHandle> groupStack, ref int groupLength, out ParserDiagnostic? error)
     {
         GrammarTablesHotData hotData = new(_grammar);
 
@@ -48,7 +48,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         // Therefore, we have to do some bookkeeping ourselves to keep the position without consuming it and
         // throwing it away, and use a local variable to store the remaining characters.
         ReadOnlySpan<TChar> chars = input.RemainingCharacters[groupLength..];
-        while (groupStack.TryPeek(out uint currentGroup))
+        while (groupStack.TryPeek(out GroupHandle currentGroup))
         {
             GroupAttributes groupAttributes = hotData.GetGroupFlags(currentGroup);
             // Check if we ran out of input.
@@ -81,7 +81,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             // we cannot accurately determine where the final invalid characters end
             // and the group ending starts. It would be easy because group ends are
             // literal strings (except on line groups which are character groups)
-            // but that's an assumption we'd better not be based on.
+            // but that's an assumption we'd better not make.
             bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
             var (acceptSymbol, charactersRead, _) =
                 _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, ignoreLeadingErrors);
@@ -92,7 +92,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 // A new group begins.
                 if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
-                    uint newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
+                    GroupHandle newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     // The group is allowed to nest into this one.
                     if (hotData.CanGroupNest(currentGroup, newGroup))
                     {
@@ -166,7 +166,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <summary>
     /// Starts tokenizing a group.
     /// </summary>
-    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData, uint group, ref int charactersRead, out ParserDiagnostic? error)
+    private unsafe bool TokenizeGroup(ref ParserInputReader<TChar> input, in GrammarTablesHotData hotData, GroupHandle group, ref int charactersRead, out ParserDiagnostic? error)
     {
         TokenSymbolHandle groupContainerSymbol = hotData.GetGroupContainer(group);
         bool isNoise = !hotData.IsTerminal(groupContainerSymbol);
@@ -179,7 +179,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             input.Consume(charactersRead);
             charactersRead = 0;
         }
-        ValueStack<uint> groupStack = new(stackalloc uint[4]);
+        ValueStack<GroupHandle> groupStack = new(stackalloc GroupHandle[4]);
         groupStack.Push(group);
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         // The compiler cannot prove that the stack pointers of groupStack will not leak to
@@ -200,7 +200,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 
     bool ITokenizerResumptionPoint<TChar, GroupState>.TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, GroupState arg, out TokenizerResult result)
     {
-        ValueStack<uint> groupStack = new(arg.GroupStackState);
+        ValueStack<GroupHandle> groupStack = new(arg.GroupStackState);
         int charactersRead = arg.CharactersRead;
         if (TokenizeGroup(ref input, arg.IsNoise, ref groupStack, ref charactersRead, out ParserDiagnostic? error))
         {
@@ -255,7 +255,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
                 if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
-                    uint group = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
+                    GroupHandle group = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     if (!TokenizeGroup(ref input, in hotData, group, ref charactersRead, out ParserDiagnostic? error))
                     {
                         result = default;
@@ -303,17 +303,15 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// </summary>
     private readonly struct GroupState
     {
-        public ValueStack<uint>.State GroupStackState { get; init; }
+        public ValueStack<GroupHandle>.State GroupStackState { get; init; }
         public TokenSymbolHandle GroupContainerSymbol { get; init; }
         public bool IsNoise { get; init; }
         public int CharactersRead { get; init; }
 
-        private GroupState(GroupState groupState) => this = groupState;
-
-        public static GroupState Create(ref ValueStack<uint> groupStack, TokenSymbolHandle groupContainerSymbol, bool isNoise, int charactersRead)
+        public static GroupState Create(ref ValueStack<GroupHandle> groupStack, TokenSymbolHandle groupContainerSymbol, bool isNoise, int charactersRead)
             => new() { GroupStackState = groupStack.ExportState(), GroupContainerSymbol = groupContainerSymbol, IsNoise = isNoise, CharactersRead = charactersRead };
 
-        public GroupState Update(ref ValueStack<uint> groupStack, int charactersRead)
-            => new(this) { GroupStackState = groupStack.ExportState(), CharactersRead = charactersRead };
+        public GroupState Update(ref ValueStack<GroupHandle> groupStack, int charactersRead)
+            => this with { GroupStackState = groupStack.ExportState(), CharactersRead = charactersRead };
     }
 }

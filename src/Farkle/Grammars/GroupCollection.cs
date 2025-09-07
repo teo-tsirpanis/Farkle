@@ -54,7 +54,7 @@ public readonly struct GroupCollection : IReadOnlyCollection<Group>
                 {
                     ThrowHelpers.ThrowInvalidOperationException();
                 }
-                return new(_collection._grammar, (uint)(_currentIndex + 1));
+                return new(_collection._grammar, new((uint)(_currentIndex + 1)));
             }
         }
 

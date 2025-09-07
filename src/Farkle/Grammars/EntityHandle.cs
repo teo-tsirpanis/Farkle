@@ -53,6 +53,11 @@ public readonly struct EntityHandle : IEquatable<EntityHandle>
     public bool IsTokenSymbol => Kind == TableKind.TokenSymbol;
 
     /// <summary>
+    /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="GroupHandle"/>.
+    /// </summary>
+    public bool IsGroup => Kind == TableKind.Group;
+
+    /// <summary>
     /// Whether this <see cref="EntityHandle"/> can be cast to a <see cref="NonterminalHandle"/>.
     /// </summary>
     public bool IsNonterminal => Kind == TableKind.Nonterminal;

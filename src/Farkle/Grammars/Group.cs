@@ -18,19 +18,22 @@ public readonly struct Group : IEquatable<Group>
 {
     private readonly Grammar _grammar;
 
-    internal uint Index { get; }
+    /// <summary>
+    /// The <see cref="Group"/>'s <see cref="GroupHandle"/>.
+    /// </summary>
+    public GroupHandle Handle { get; }
 
-    internal Group(Grammar grammar, uint tableIndex)
+    internal Group(Grammar grammar, GroupHandle handle)
     {
         _grammar = grammar;
-        Index = tableIndex;
+        Handle = handle;
     }
 
     [StackTraceHidden]
     private void AssertHasValue()
     {
         Debug.Assert(_grammar is not null);
-        if (Index == 0)
+        if (!Handle.HasValue)
         {
             ThrowHelpers.ThrowHandleHasNoValue();
         }
@@ -44,7 +47,7 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            return _grammar.GetGroupName(Index);
+            return _grammar.GetGroupName(Handle);
         }
     }
 
@@ -56,7 +59,7 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            return new(_grammar, _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, Index));
+            return new(_grammar, _grammar.GrammarTables.GetGroupContainer(_grammar.GrammarFile, Handle.TableIndex));
         }
     }
 
@@ -68,7 +71,7 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetGroupFlags(_grammar.GrammarFile, Index);
+            return _grammar.GrammarTables.GetGroupFlags(_grammar.GrammarFile, Handle.TableIndex);
         }
     }
 
@@ -80,7 +83,7 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            return new(_grammar, _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, Index));
+            return new(_grammar, _grammar.GrammarTables.GetGroupStart(_grammar.GrammarFile, Handle.TableIndex));
         }
     }
 
@@ -92,7 +95,7 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            return new(_grammar, _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, Index));
+            return new(_grammar, _grammar.GrammarTables.GetGroupEnd(_grammar.GrammarFile, Handle.TableIndex));
         }
     }
 
@@ -104,19 +107,19 @@ public readonly struct Group : IEquatable<Group>
         get
         {
             AssertHasValue();
-            (uint offset, int count) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Index);
+            (uint offset, int count) = _grammar.GrammarTables.GetGroupNestingBounds(_grammar.GrammarFile, Handle.TableIndex);
             return new(_grammar, offset, count);
         }
     }
 
     /// <inheritdoc/>
-    public bool Equals(Group other) => _grammar == other._grammar && Index == other.Index;
+    public bool Equals(Group other) => _grammar == other._grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is Group other && Equals(other);
 
     /// <inheritdoc/>
-    public override int GetHashCode() => HashCode.Combine(_grammar, Index);
+    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
     /// Returns a string describing the <see cref="Group"/>.

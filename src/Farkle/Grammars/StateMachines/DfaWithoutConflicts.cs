@@ -109,8 +109,28 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return -1;
     }
 
-    internal override (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
-        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = true)
+    /// <summary>
+    /// Uses the <see cref="Dfa{TChar}"/> to match a sequence of characters.
+    /// </summary>
+    /// <param name="grammarFile">A span with the grammar's data</param>
+    /// <param name="chars">The characters to match.</param>
+    /// <param name="isFinal">Whether there will be no more characters in the
+    /// input stream after <paramref name="chars"/>.</param>
+    /// <param name="startState">The state to start matching from.</param>
+    /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
+    /// beginning of <paramref name="chars"/>.</param>
+    /// <returns>
+    /// A tuple with:
+    /// <list type="bullet">
+    /// <item>A <see cref="TokenSymbolHandle"/> containing the token symbol that was found,
+    /// or containing no value in case of a lexical error.</item>
+    /// <item>The number of characters that were read before matching a token or encountering
+    /// a lexical error.</item>
+    /// <item>The state the DFA was at when it stopped.</item>
+    /// </list>
+    /// </returns>
+    internal (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
+        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors = true)
     {
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
@@ -118,7 +138,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         TokenSymbolHandle acceptSymbol = default;
         int acceptSymbolLength = 0;
 
-        int currentState = StartState;
+        int currentState = startState;
         int i;
         for (i = 0; i < chars.Length; i++)
         {
@@ -162,7 +182,11 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return (default, i, currentState);
     }
 
-    internal override void PrepareForParsing()
+    /// <summary>
+    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing.
+    /// This initializes some lookup tables that speed up <see cref="Match"/>.
+    /// </summary>
+    internal void PrepareForParsing()
     {
         _asciiLookup = CreateAsciiLookup();
     }

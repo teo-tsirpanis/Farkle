@@ -166,7 +166,7 @@ internal static class GoldGrammarConverter
         }
         writer.AddStateMachine(lr);
 
-        DfaWriter<char> dfa = new(grammar.DfaStates.Length);
+        DfaWriter<char> dfa = new();
         foreach (DfaState state in grammar.DfaStates)
         {
             foreach ((uint charSet, ushort target) in state.Edges)

@@ -155,7 +155,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeSymbols)
     {
-        DfaWriter<TChar> dfaWriter = new(states.Count);
+        DfaWriter<TChar> dfaWriter = new();
         HashSet<BitSet>? seenConflicts = null;
         BitArrayNeo? conflictsOfState = null;
 
@@ -175,11 +175,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 {
                     dfaWriter.AddEdgeFail(start, end);
                 }
-            }
-
-            if (state.DefaultTransition is { } dt)
-            {
-                dfaWriter.SetDefaultTransition(dt);
             }
 
             if (FindDominantSymbol(state.AcceptSymbols, prioritizeSymbols) is { } sym)
@@ -221,7 +216,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 }
             }
 
-            dfaWriter.FinishState();
+            dfaWriter.FinishState(state.DefaultTransition);
         }
 
         return dfaWriter;

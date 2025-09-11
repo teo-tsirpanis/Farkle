@@ -5,55 +5,44 @@ using Farkle.Buffers;
 using Farkle.Grammars.StateMachines;
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.Writers;
 
 internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 {
-    private int _currentState;
-
-    private readonly int[] _firstEdges;
+    private readonly List<int> _firstEdges = [];
     // We use a tuple instead of DfaEdge to avoid writing our own comparer.
-    private readonly List<(TChar KeyFrom, TChar KeyTo, int TargetState)> _edges = new();
-    private readonly int[] _defaultTransitions;
+    private readonly List<(TChar KeyFrom, TChar KeyTo, int TargetState)> _edges = [];
+    private int _pendingFirstEdge;
 
-    private readonly int[] _firstAccepts;
-    private readonly List<uint> _accepts = new();
+    private readonly List<int> _defaultTransitions = [];
+
+    private readonly List<int> _firstAccepts = [];
+    private readonly List<uint> _accepts = [];
+    private int _pendingFirstAccept;
+
+    private int _maxState;
 
     private uint _maxTokenSymbol;
+
+    private bool HasUnfinishedState => _pendingFirstEdge != _edges.Count || _pendingFirstAccept != _accepts.Count;
 
     public bool HasConflicts { get; private set; }
 
     public bool HasDefaultTransitions { get; private set; }
 
-    public int StateCount { get; }
-
-    public DfaWriter(int stateCount)
-    {
-        if (stateCount <= 0)
-        {
-            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(stateCount));
-        }
-
-        StateCount = stateCount;
-
-        _firstEdges = new int[stateCount];
-        _defaultTransitions = new int[stateCount];
-        _firstAccepts = new int[stateCount];
-    }
+    public int StateCount => _firstEdges.Count;
 
     public void AddAccept(TokenSymbolHandle handle)
     {
-        EnsureNotFinished();
         if (!handle.HasValue)
         {
             return;
         }
 
         _accepts.Add(handle.TableIndex);
-        if (_accepts.Count - _firstAccepts[_currentState] > 1)
+        if (_accepts.Count - _pendingFirstAccept > 1)
         {
             HasConflicts = true;
         }
@@ -65,11 +54,13 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     public void AddEdge(TChar rangeFrom, TChar rangeTo, int targetState)
     {
-        EnsureNotFinished();
-        ValidateState(targetState);
         if (rangeFrom.CompareTo(rangeTo) > 0)
         {
             ThrowHelpers.ThrowArgumentException(nameof(rangeFrom), "Starting character is greater than ending character.");
+        }
+        if (targetState > _maxState)
+        {
+            _maxState = targetState;
         }
 
         _edges.Add((rangeFrom, rangeTo, targetState + 1));
@@ -77,7 +68,6 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     public void AddEdgeFail(TChar rangeFrom, TChar rangeTo)
     {
-        EnsureNotFinished();
         if (rangeFrom.CompareTo(rangeTo) > 0)
         {
             ThrowHelpers.ThrowArgumentException(nameof(rangeFrom), "Starting character is greater than ending character.");
@@ -88,45 +78,37 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     private void EnsureFinished()
     {
-        if (_currentState != StateCount)
+        if (HasUnfinishedState || _maxState > StateCount)
         {
             ThrowHelpers.ThrowInvalidOperationException("Not all states have been written.");
         }
     }
 
-    private void EnsureNotFinished()
+    public void FinishState(int? defaultTransition = null)
     {
-        if (_currentState == StateCount)
+        SortAndValidateEdgeRanges(_pendingFirstEdge, _edges.Count - _pendingFirstEdge);
+        _accepts.Sort(_pendingFirstAccept, _accepts.Count - _pendingFirstAccept, null);
+
+        _firstEdges.Add(_pendingFirstEdge);
+        _pendingFirstEdge = _edges.Count;
+        _firstAccepts.Add(_pendingFirstAccept);
+        _pendingFirstAccept = _accepts.Count;
+
+        if (defaultTransition is { } dt)
         {
-            ThrowHelpers.ThrowInvalidOperationException("All states have already been written.");
+            if (dt > _maxState)
+            {
+                _maxState = dt;
+            }
+
+            HasDefaultTransitions = true;
+            _defaultTransitions.Add(dt + 1);
         }
-    }
-
-    public void FinishState()
-    {
-        EnsureNotFinished();
-        int firstEdge = _firstEdges[_currentState];
-        SortAndValidateEdgeRanges(firstEdge, _edges.Count - firstEdge);
-        int firstAccept = _firstAccepts[_currentState];
-        _accepts.Sort(firstAccept, _accepts.Count - firstAccept, null);
-
-        _currentState++;
-        if (_currentState < StateCount)
+        else
         {
-            _firstEdges[_currentState] = _edges.Count;
-            _firstAccepts[_currentState] = _accepts.Count;
+            _defaultTransitions.Add(0);
         }
-    }
-
-    public void SetDefaultTransition(int targetState)
-    {
-        EnsureNotFinished();
-        ValidateState(targetState);
-
-        if (_defaultTransitions[_currentState] != 0)
-            ThrowHelpers.ThrowInvalidOperationException("Default transition is already set for this state.");
-        HasDefaultTransitions = true;
-        _defaultTransitions[_currentState] = targetState + 1;
+        Debug.Assert(!HasUnfinishedState);
     }
 
     private void SortAndValidateEdgeRanges(int start, int count)
@@ -150,14 +132,6 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
             }
 
             k0 = keyTo;
-        }
-    }
-
-    private void ValidateState(int state, [CallerArgumentExpression(nameof(state))] string? paramName = null)
-    {
-        if ((uint)state >= StateCount)
-        {
-            ThrowHelpers.ThrowArgumentOutOfRangeException(paramName);
         }
     }
 
@@ -211,10 +185,10 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
         }
         else
         {
-            for (int i = 0; i < _firstAccepts.Length; i++)
+            for (int i = 0; i < _firstAccepts.Count; i++)
             {
                 int firstAccept = _firstAccepts[i];
-                int nextFirstAccept = i < _firstAccepts.Length - 1 ? _firstAccepts[i + 1] : _accepts.Count;
+                int nextFirstAccept = i < _firstAccepts.Count - 1 ? _firstAccepts[i + 1] : _accepts.Count;
 
                 uint handle = firstAccept < nextFirstAccept ? _accepts[firstAccept] : 0;
                 writer.WriteVariableSize(handle, tokenSymbolSize);

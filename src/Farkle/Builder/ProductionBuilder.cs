@@ -25,7 +25,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
 
     ImmutableArray<IGrammarSymbol> IProduction.Members => _members.ToImmutableArray();
 
-    Fuser<object?> IProduction.Fuser => (ref ParserState state, Span<object?> input) => null;
+    Fuser<object?> IProduction.Fuser => (ref state, input) => null;
 
     object? IProduction.PrecedenceToken => _precedenceToken;
 

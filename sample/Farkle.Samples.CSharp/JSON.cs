@@ -44,7 +44,7 @@ namespace Farkle.Samples.CSharp
                         OneOf("eE"),
                         OneOf("+-").Optional(),
                         OneOf("0123456789").AtLeast(1)).Optional()),
-                 (ref ParserState _, ReadOnlySpan<char> data) => ToDecimal(data));
+                 (ref _, data) => ToDecimal(data));
             var jsonString = Terminals.String("String", '"', "/bfnrtu", false);
             var jsonObject = Nonterminal.Create<JsonObject>("Object");
             var jsonArray = Nonterminal.Create<JsonArray>("Array");

@@ -168,7 +168,7 @@ internal sealed class GrammarDefinition
         {
             public ImmutableArray<IGrammarSymbol> Members { get; } = [symbol];
 
-            public Fuser<object?> Fuser => (ref ParserState state, Span<object?> input) => input[0];
+            public Fuser<object?> Fuser => (ref state, input) => input[0];
 
             public object? PrecedenceToken => null;
         }

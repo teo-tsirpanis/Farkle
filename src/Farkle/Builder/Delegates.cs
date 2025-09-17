@@ -24,7 +24,7 @@ internal delegate T Fuser<out T>(ref ParserState state, Span<object?> input);
 internal static class Transformer
 {
     public static Transformer<TChar, T?> GetIdentity<TChar, T>() where T : class? =>
-        (ref ParserState state, ReadOnlySpan<TChar> input) => default;
+        (ref state, input) => default;
 
     public static Transformer<TChar, object?> Box<TChar, T>(Transformer<TChar, T> transformer)
     {
@@ -35,6 +35,6 @@ internal static class Transformer
         // T is a reference type.
         if (transformer is Transformer<TChar, object?> alreadyCasted)
             return alreadyCasted;
-        return (ref ParserState state, ReadOnlySpan<TChar> input) => transformer(ref state, input)!;
+        return (ref state, input) => transformer(ref state, input)!;
     }
 }

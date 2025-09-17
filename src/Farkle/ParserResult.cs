@@ -123,7 +123,7 @@ public static class ParserResult
     /// is <see langword="null"/>.</exception>
     public static ParserResult<T> CreateError<T>(object error)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(error);
         return new(default!, error);
     }
 }

@@ -46,7 +46,7 @@ public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<P
     /// <inheritdoc/>
     public ProductionBuilder<{{ type_params n}}> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), {{ type_indices n }}, _precedenceToken);
     }
 
@@ -59,7 +59,7 @@ public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<P
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<{{ type_params n + 1}}> Extend<T{{ n + 1 }}>(IGrammarSymbol<T{{ n + 1 }}> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), {{ type_indices n }}, _members.Count, _precedenceToken);
     }
 
@@ -71,7 +71,7 @@ public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<P
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<{{ type_params n }}, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         {{~ # By explicitly declaring the variables the closure will not capture `_members`. ~}}
         {{ for i in 1..n; $"int idx{i} = _idx{i};"; if !for.last; " "; end; end }}
         object? fBoxed(ref ParserState state, Span<object?> args) =>
@@ -100,7 +100,7 @@ public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<P
     /// <inheritdoc/>
     public ProductionBuilder<{{ type_params n}}> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, {{ type_indices n }}, precedenceToken);
     }
 }

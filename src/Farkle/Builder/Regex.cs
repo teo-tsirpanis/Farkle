@@ -254,7 +254,7 @@ public sealed class Regex
     /// </summary>
     public static Regex Literal(string s)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(s);
+        ArgumentNullException.ThrowIfNull(s);
 
         if (s.Length == 0)
         {
@@ -274,7 +274,7 @@ public sealed class Regex
     /// </remarks>
     public static Regex FromRegexString(string pattern)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(pattern);
+        ArgumentNullException.ThrowIfNull(pattern);
         return new(KindAndFlags.RegexString, RegexStringHolder.Create(pattern));
     }
 
@@ -286,7 +286,7 @@ public sealed class Regex
     public static Regex NotOneOf(params ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(chars));
 
         if (arrayUnsafe.Length == 0)
         {
@@ -300,7 +300,7 @@ public sealed class Regex
     [ExcludeFromCodeCoverage]
     public static Regex NotOneOf(IEnumerable<char> chars)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(chars);
+        ArgumentNullException.ThrowIfNull(chars);
         return NotOneOf(chars.Order().ToImmutableArray());
     }
 
@@ -318,7 +318,7 @@ public sealed class Regex
     public static Regex NotOneOf(params ImmutableArray<(char Start, char End)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(ranges));
         ValidateCharacterRange(arrayUnsafe.AsSpan());
 
         if (arrayUnsafe.Length == 0)
@@ -345,7 +345,7 @@ public sealed class Regex
     public static Regex OneOf(params ImmutableArray<char> chars)
     {
         char[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(chars);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(chars));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(chars));
 
         if (arrayUnsafe.Length == 0)
         {
@@ -359,7 +359,7 @@ public sealed class Regex
     [ExcludeFromCodeCoverage]
     public static Regex OneOf(IEnumerable<char> chars)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(chars);
+        ArgumentNullException.ThrowIfNull(chars);
         return OneOf(chars.Order().ToImmutableArray());
     }
 
@@ -382,7 +382,7 @@ public sealed class Regex
     public static Regex OneOf(params ImmutableArray<(char, char)> ranges)
     {
         (char, char)[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(ranges);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(ranges));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(ranges));
         ValidateCharacterRange(arrayUnsafe.AsSpan());
 
         if (arrayUnsafe.Length == 0)
@@ -404,9 +404,9 @@ public sealed class Regex
     public static Regex Join(params ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(regexes));
         foreach (Regex regex in arrayUnsafe)
-            ArgumentNullExceptionCompat.ThrowIfNull(regex, nameof(regexes));
+            ArgumentNullException.ThrowIfNull(regex, nameof(regexes));
 
         return arrayUnsafe switch
         {
@@ -432,9 +432,9 @@ public sealed class Regex
     public static Regex Choice(params ImmutableArray<Regex> regexes)
     {
         Regex[]? arrayUnsafe = ImmutableCollectionsMarshal.AsArray(regexes);
-        ArgumentNullExceptionCompat.ThrowIfNull(arrayUnsafe, nameof(regexes));
+        ArgumentNullException.ThrowIfNull(arrayUnsafe, nameof(regexes));
         foreach (Regex regex in arrayUnsafe)
-            ArgumentNullExceptionCompat.ThrowIfNull(regex, nameof(regexes));
+            ArgumentNullException.ThrowIfNull(regex, nameof(regexes));
 
         return arrayUnsafe switch
         {
@@ -466,7 +466,7 @@ public sealed class Regex
     /// is negative, or equal to <see cref="int.MaxValue"/>.</exception>
     public Regex Repeat(int n)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(n);
+        ArgumentOutOfRangeException.ThrowIfNegative(n);
         return N switch
         {
             0 => Empty,
@@ -493,7 +493,7 @@ public sealed class Regex
     /// <see cref="int.MaxValue"/>.</exception>
     public Regex Between(int m, int n)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(m);
+        ArgumentOutOfRangeException.ThrowIfNegative(m);
         if (m > n)
         {
             throw new ArgumentException(Resources.Builder_RegexLoopRangeReverseOrder);
@@ -513,7 +513,7 @@ public sealed class Regex
     /// <param name="m">The minimum number of times to repeat the regex, inclusive.</param>
     public Regex AtLeast(int m)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(m);
+        ArgumentOutOfRangeException.ThrowIfNegative(m);
         return Loop(m, int.MaxValue);
     }
 
@@ -545,8 +545,8 @@ public sealed class Regex
     /// <seealso cref="Join(ImmutableArray{Regex})"/>
     public static Regex operator +(Regex left, Regex right)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(left);
-        ArgumentNullExceptionCompat.ThrowIfNull(right);
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
 
         // Try to optimize for certain patterns.
         // We can't safely do that if the regexes have different flags.
@@ -588,8 +588,8 @@ public sealed class Regex
     /// <seealso cref="Choice(ImmutableArray{Regex})"/>
     public static Regex operator |(Regex left, Regex right)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(left);
-        ArgumentNullExceptionCompat.ThrowIfNull(right);
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
 
         if (HaveSameFlags(left, right))
         {

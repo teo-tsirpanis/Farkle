@@ -39,8 +39,8 @@ public partial class Terminal
     /// <param name="options">Options to configure the terminal. Optional.</param>
     public static IGrammarSymbol Create(string name, Regex regex, TerminalOptions options = TerminalOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(regex);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regex);
         ValidateOptions(options);
         return new Terminal(name, regex, Builder.Transformer.GetIdentity<char, object>(), options);
     }
@@ -50,9 +50,9 @@ public partial class Terminal
     [ExcludeFromCodeCoverage]
     public static IGrammarSymbol<T> Create<T>(string name, Transformer<char, T> transformer, Regex regex)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(transformer);
-        ArgumentNullExceptionCompat.ThrowIfNull(regex);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(transformer);
+        ArgumentNullException.ThrowIfNull(regex);
         return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), TerminalOptions.None);
     }
 
@@ -67,9 +67,9 @@ public partial class Terminal
     public static IGrammarSymbol<T> Create<T>(string name, Regex regex, Transformer<char, T> transformer,
         TerminalOptions options = TerminalOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(regex);
-        ArgumentNullExceptionCompat.ThrowIfNull(transformer);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regex);
+        ArgumentNullException.ThrowIfNull(transformer);
         ValidateOptions(options);
         return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), options);
     }
@@ -91,7 +91,7 @@ public partial class Terminal
     /// <seealso cref="ProductionBuilderExtensions.Append"/>
     public static IGrammarSymbol Literal(string value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(value);
         return new Literal(value);
     }
 
@@ -103,7 +103,7 @@ public partial class Terminal
     /// <param name="options">Options to configure the terminal. Optional.</param>
     public static IGrammarSymbol Virtual(string name, TerminalOptions options = TerminalOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         return new VirtualTerminal(name, options);
     }
 }

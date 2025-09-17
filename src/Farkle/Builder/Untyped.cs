@@ -54,7 +54,7 @@ public sealed class Nonterminal : INonterminal
     [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public void SetProductions(params ProductionBuilder[] productions)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(productions);
+        ArgumentNullException.ThrowIfNull(productions);
         SetProductions(productions.ToImmutableArray());
     }
 

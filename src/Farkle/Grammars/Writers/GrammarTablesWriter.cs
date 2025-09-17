@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.Writers;
@@ -159,7 +160,7 @@ internal struct GrammarTablesWriter
             ThrowHelpers.ThrowArgumentException(nameof(start), "Cannot start group with this token symbol, either it has been used to start another group or its GroupStart flag is not set.");
         }
         ValidateHandle(end, nameof(end));
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(nestingCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(nestingCount);
 
         _pendingGroupStarts.Remove(start);
         var groups = _groups ??= new();
@@ -189,7 +190,7 @@ internal struct GrammarTablesWriter
     public NonterminalHandle AddNonterminal(StringHandle name, NonterminalAttributes flags, int productionCount)
     {
         ValidateRowCount(_nonterminals, TableKind.Nonterminal, GrammarTables.MaxSymbolRowCount);
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(productionCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(productionCount);
 
         var nonterminals = _nonterminals ??= new();
         nonterminals.Add(new() { Name = name, Flags = flags, ProductionCount = productionCount });
@@ -204,7 +205,7 @@ internal struct GrammarTablesWriter
     public ProductionHandle AddProduction(int memberCount)
     {
         ValidateRowCount(_productions, TableKind.Production);
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(memberCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(memberCount);
 
         var productions = _productions;
         if (productions is not { Count: int count } || count >= _requiredProductions)
@@ -331,7 +332,7 @@ internal struct GrammarTablesWriter
         byte symbolCodedIndexSize = GetBinaryCodedIndexSize(tokenSymbolRows, nonterminalRows);
 
         TableKinds presentTables = PresentTables;
-        int presentTableCount = BitOperationsCompat.PopCount((ulong)presentTables);
+        int presentTableCount = BitOperations.PopCount((ulong)presentTables);
 
         writer.Write((ulong)presentTables);
 

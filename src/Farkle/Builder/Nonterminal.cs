@@ -21,7 +21,7 @@ public static class Nonterminal
     /// <seealso cref="Nonterminal{T}.SetProductions(ImmutableArray{IProduction{T}})"/>
     public static Nonterminal<T> Create<T>(string name)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         return new(name);
     }
 
@@ -34,7 +34,7 @@ public static class Nonterminal
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
     public static IGrammarSymbol<T> Create<T>(string name, params ImmutableArray<IProduction<T>> productions)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         if (productions.IsDefault)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(productions));
@@ -60,7 +60,7 @@ public static class Nonterminal
     /// <seealso cref="Untyped.Nonterminal.SetProductions(ImmutableArray{ProductionBuilder})"/>
     public static Untyped.Nonterminal CreateUntyped(string name)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         return new(name);
     }
 
@@ -73,7 +73,7 @@ public static class Nonterminal
     /// <exception cref="ArgumentException"><paramref name="productions"/> is empty.</exception>
     public static IGrammarSymbol CreateUntyped(string name, params ImmutableArray<ProductionBuilder> productions)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         if (productions.IsDefault)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(productions));
@@ -129,7 +129,7 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
     public void SetProductions(params IProduction<T>[] productions)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(productions);
+        ArgumentNullException.ThrowIfNull(productions);
         SetProductions(productions.ToImmutableArrayChecked());
     }
 

@@ -25,8 +25,8 @@ public partial class Group
     /// <param name="options">Options to configure the group. Optional.</param>
     public static IGrammarSymbol Line(string name, string start, GroupOptions options = GroupOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(start);
         ValidateOptions(options);
         return new LineGroup(name, start, Builder.Transformer.GetIdentity<char, object>(), options);
     }
@@ -41,9 +41,9 @@ public partial class Group
     /// <param name="options">Options to configure the group. Optional.</param>
     public static IGrammarSymbol<T> Line<T>(string name, string start, Transformer<char, T> transformer, GroupOptions options = GroupOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
-        ArgumentNullExceptionCompat.ThrowIfNull(transformer);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(transformer);
         ValidateOptions(options);
         return new LineGroup<T>(name, start, Builder.Transformer.Box(transformer), options);
     }
@@ -57,9 +57,9 @@ public partial class Group
     /// <param name="options">Options to configure the group. Optional.</param>
     public static IGrammarSymbol Block(string name, string start, string end, GroupOptions options = GroupOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
-        ArgumentNullExceptionCompat.ThrowIfNull(end);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
         ValidateOptions(options);
         return new BlockGroup(name, start, end, Builder.Transformer.GetIdentity<char, object>(), options);
     }
@@ -75,10 +75,10 @@ public partial class Group
     /// <param name="options">Options to configure the group. Optional.</param>
     public static IGrammarSymbol<T> Block<T>(string name, string start, string end, Transformer<char, T> transformer, GroupOptions options = GroupOptions.None)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
-        ArgumentNullExceptionCompat.ThrowIfNull(end);
-        ArgumentNullExceptionCompat.ThrowIfNull(transformer);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
+        ArgumentNullException.ThrowIfNull(transformer);
         ValidateOptions(options);
         return new BlockGroup<T>(name, start, end, Builder.Transformer.Box(transformer), options);
     }

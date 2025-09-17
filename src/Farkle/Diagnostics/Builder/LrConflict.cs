@@ -200,7 +200,7 @@ public sealed class LrConflict : IFormattable
     public static LrConflict CreateShiftReduce(Grammar grammar, int stateIndex, TokenSymbolHandle terminal,
         int shiftState, ProductionHandle reduceProduction)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        ArgumentNullException.ThrowIfNull(grammar);
         if (!terminal.HasValue)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(terminal));
@@ -233,7 +233,7 @@ public sealed class LrConflict : IFormattable
     public static LrConflict CreateReduceReduce(Grammar grammar, int stateIndex, TokenSymbolHandle terminalOrEndOfInput,
         ProductionHandle reduceProduction, ProductionHandle reduceProduction2)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        ArgumentNullException.ThrowIfNull(grammar);
         if (!reduceProduction.HasValue)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction));
@@ -261,7 +261,7 @@ public sealed class LrConflict : IFormattable
     /// <param name="reduceProduction">The production to reduce.</param>
     public static LrConflict CreateAcceptReduce(Grammar grammar, int stateIndex, ProductionHandle reduceProduction)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        ArgumentNullException.ThrowIfNull(grammar);
         if (!reduceProduction.HasValue)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(reduceProduction));

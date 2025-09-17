@@ -50,7 +50,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
 
     private ref Segment GetOrAllocateSegment(int sizeHint)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(sizeHint);
+        ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
         Segment[] segments = _segments ??= InitializeSegments(sizeHint);
         ref Segment segment = ref segments[_activeSegmentIndex];
         int remaining = segment.Remaining;
@@ -75,7 +75,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
 
     public PooledSegmentBufferWriter(int initialCapacity)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(initialCapacity);
+        ArgumentOutOfRangeException.ThrowIfNegative(initialCapacity);
         if (initialCapacity > 0)
         {
             _segments = InitializeSegments(initialCapacity);

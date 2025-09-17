@@ -26,7 +26,7 @@ public sealed class UnexpectedEndOfInputInGroupError : IFormattable
     /// <exception cref="ArgumentNullException"><paramref name="groupName"/> is <see langword="null"/>.</exception>
     public UnexpectedEndOfInputInGroupError(string groupName)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(groupName);
+        ArgumentNullException.ThrowIfNull(groupName);
         GroupName = groupName;
     }
 

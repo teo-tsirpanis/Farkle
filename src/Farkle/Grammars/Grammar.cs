@@ -166,7 +166,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// <exception cref="InvalidDataException">The grammar contains invalid data.</exception>
     public static Grammar Load(string path)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(path);
         byte[] data;
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         // If the file is very big, read only a part of it to make
@@ -201,7 +201,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// </remarks>
     public static Grammar ConvertFromGoldParser(Stream grammarFile)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammarFile);
+        ArgumentNullException.ThrowIfNull(grammarFile);
         GoldGrammar grammar = GoldGrammarReader.ReadGrammar(grammarFile);
         ImmutableArray<byte> data;
         try
@@ -229,7 +229,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// </remarks>
     public static Grammar ConvertFromGoldParser(string path)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(path);
         using Stream grammarFile = File.OpenRead(path);
         return ConvertFromGoldParser(grammarFile);
     }
@@ -375,7 +375,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// had a value of <see langword="true"/>.</exception>
     public EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(specialName);
+        ArgumentNullException.ThrowIfNull(specialName);
 
         ReadOnlySpan<byte> grammarFile = GrammarFile;
         if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is { } nameHandle)

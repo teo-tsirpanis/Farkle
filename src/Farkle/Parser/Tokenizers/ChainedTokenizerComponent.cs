@@ -31,7 +31,7 @@ public readonly struct ChainedTokenizerComponent<TChar>
     /// <param name="tokenizer">The tokenizer to use.</param>
     public static ChainedTokenizerComponent<TChar> Create(Tokenizer<TChar> tokenizer)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizer);
+        ArgumentNullException.ThrowIfNull(tokenizer);
         return new(tokenizer);
     }
 
@@ -42,7 +42,7 @@ public readonly struct ChainedTokenizerComponent<TChar>
     /// from an <see cref="IGrammarProvider"/>.</param>
     public static ChainedTokenizerComponent<TChar> Create(Func<IGrammarProvider, Tokenizer<TChar>> tokenizerFactory)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
+        ArgumentNullException.ThrowIfNull(tokenizerFactory);
         return new(tokenizerFactory);
     }
 

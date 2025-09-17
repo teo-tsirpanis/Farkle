@@ -22,7 +22,7 @@ public static class ProductionBuilderExtensions
     /// <seealso cref="Terminal.Literal"/>
     public static T Append<T>(this T builder, string literal) where T : IProductionBuilder<T>
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(literal);
+        ArgumentNullException.ThrowIfNull(literal);
         return builder.Append(Terminal.Literal(literal));
     }
 

@@ -41,7 +41,7 @@ public sealed class OperatorScope : IEnumerable<AssociativityGroup>
     {
         for (int i = 0; i < associativityGroups.Length; i++)
         {
-            ArgumentNullExceptionCompat.ThrowIfNull(associativityGroups[i]);
+            ArgumentNullException.ThrowIfNull(associativityGroups[i]);
         }
         CanResolveReduceReduceConflicts = canResolveReduceReduceConflicts;
         AssociativityGroups = associativityGroups;

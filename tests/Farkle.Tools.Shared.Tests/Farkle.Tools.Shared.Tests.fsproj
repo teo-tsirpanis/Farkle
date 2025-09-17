@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -10,7 +10,6 @@
     <Compile Include="../../src/Farkle/Farkle.fs"/>
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
-    <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

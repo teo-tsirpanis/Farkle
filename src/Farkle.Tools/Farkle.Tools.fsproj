@@ -5,6 +5,7 @@
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <RollForward>LatestMajor</RollForward>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
     <ToolCommandName>farkle</ToolCommandName>
     <Title>The Farkle Command Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>

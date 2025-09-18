@@ -126,7 +126,8 @@ Target.create "GenerateCode" (fun _ ->
             let templateText = File.readAsString src
             let template = Template.Parse(templateText, src)
             let tc = TemplateContext()
-            let generatedSource = template.Render(tc)
+            tc.LoopLimit <- 0
+            let generatedSource = template.Render tc
             File.WriteAllText(dest, generatedSource)
     )
 )

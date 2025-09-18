@@ -102,7 +102,7 @@ public static class ParserExtensions
     /// <exception cref="ArgumentNullException"><paramref name="parser"/> is <see langword="null"/>.</exception>
     public static ParserResult<T> Parse<TChar, T>(this IParser<TChar, T> parser, ReadOnlySpan<TChar> s)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(parser);
         return parser.ParseCore(s);
     }
 
@@ -117,8 +117,8 @@ public static class ParserExtensions
     /// <see langword="null"/>.</exception>
     public static ParserResult<T> Parse<T>(this IParser<char, T> parser, string s)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
-        ArgumentNullExceptionCompat.ThrowIfNull(s);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(s);
         return parser.ParseCore(s.AsSpan());
     }
 
@@ -137,8 +137,8 @@ public static class ParserExtensions
     /// </remarks>
     public static ParserResult<T> Parse<T>(this IParser<char, T> parser, TextReader reader)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
-        ArgumentNullExceptionCompat.ThrowIfNull(reader);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(reader);
 
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
         return RunContext(context, reader, keepReaderOpen: true);
@@ -158,8 +158,8 @@ public static class ParserExtensions
     /// </remarks>
     public static ParserResult<T> ParseFile<T>(this IParser<char, T> parser, string path)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
-        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(path);
 
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
         context.State.InputName = path;
@@ -194,8 +194,8 @@ public static class ParserExtensions
     public static ValueTask<ParserResult<T>> ParseAsync<T>(this IParser<char, T> parser, TextReader reader,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
-        ArgumentNullExceptionCompat.ThrowIfNull(reader);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(reader);
 
         if (cancellationToken.IsCancellationRequested)
         {
@@ -234,8 +234,8 @@ public static class ParserExtensions
     public static ValueTask<ParserResult<T>> ParseFileAsync<T>(this IParser<char, T> parser, string path,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
-        ArgumentNullExceptionCompat.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(path);
 
         if (cancellationToken.IsCancellationRequested)
         {

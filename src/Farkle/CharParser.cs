@@ -74,7 +74,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// </remarks>
     public object? GetService(Type serviceType)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(serviceType);
+        ArgumentNullException.ThrowIfNull(serviceType);
         return GetServiceCore(serviceType);
     }
 
@@ -126,7 +126,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// is <see langword="null"/>.</exception>
     public CharParser<TNew> WithSemanticProvider<TNew>(ISemanticProvider<char, TNew> semanticProvider)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(semanticProvider);
+        ArgumentNullException.ThrowIfNull(semanticProvider);
         return WithSemanticProviderCore(semanticProvider);
     }
 
@@ -147,7 +147,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// </remarks>
     public CharParser<TNew> WithSemanticProvider<TNew>(Func<IGrammarProvider, ISemanticProvider<char, TNew>> semanticProviderFactory)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(semanticProviderFactory);
+        ArgumentNullException.ThrowIfNull(semanticProviderFactory);
         return WithSemanticProviderCore(semanticProviderFactory);
     }
 
@@ -166,7 +166,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// </remarks>
     public CharParser<T> WithTokenizer(Tokenizer<char> tokenizer)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizer);
+        ArgumentNullException.ThrowIfNull(tokenizer);
         return WithTokenizerCore(tokenizer);
     }
 
@@ -185,7 +185,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// </remarks>
     public CharParser<T> WithTokenizer(Func<IGrammarProvider, Tokenizer<char>> tokenizerFactory)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(tokenizerFactory);
+        ArgumentNullException.ThrowIfNull(tokenizerFactory);
         return WithTokenizerChain(ChainedTokenizerComponent<char>.Create(tokenizerFactory));
     }
 
@@ -206,7 +206,7 @@ public abstract class CharParser<T> : IParser<char, T>
     /// <inheritdoc cref="WithTokenizerChain(ReadOnlySpan{ChainedTokenizerComponent{char}})"/>
     public CharParser<T> WithTokenizerChain(params ChainedTokenizerComponent<char>[] components)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(components);
+        ArgumentNullException.ThrowIfNull(components);
         return WithTokenizerChain(components.AsSpan());
     }
 }
@@ -239,8 +239,8 @@ public static class CharParser
     internal static CharParser<T> Create<T>(Grammar grammar, Tokenizer<char> tokenizer, ISemanticProvider<char, T> semanticProvider, object? customError)
 #pragma warning restore CS1573 // Parameter has no matching param tag in the XML comment (but other parameters do)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
-        ArgumentNullExceptionCompat.ThrowIfNull(semanticProvider);
+        ArgumentNullException.ThrowIfNull(grammar);
+        ArgumentNullException.ThrowIfNull(semanticProvider);
 
         if (grammar.IsUnparsable(out string? errorKey))
         {
@@ -280,7 +280,7 @@ public static class CharParser
     /// </remarks>
     public static CharParser<T> CreateReloadable<T>(Func<CharParser<T>> parserFactory)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parserFactory);
+        ArgumentNullException.ThrowIfNull(parserFactory);
 
 #if NET6_0_OR_GREATER
         // DeclaringType can be null in dynamic methods or the rare module-global methods.

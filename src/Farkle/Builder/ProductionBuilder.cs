@@ -25,7 +25,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
 
     ImmutableArray<IGrammarSymbol> IProduction.Members => _members.ToImmutableArray();
 
-    Fuser<object?> IProduction.Fuser => (ref ParserState state, Span<object?> input) => null;
+    Fuser<object?> IProduction.Fuser => (ref state, input) => null;
 
     object? IProduction.PrecedenceToken => _precedenceToken;
 
@@ -51,7 +51,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <see cref="char"/>.</exception>
     public ProductionBuilder(params object[] members)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(members);
+        ArgumentNullException.ThrowIfNull(members);
 
         var membersList = ImmutableList.CreateBuilder<IGrammarSymbol>();
         for (int i = 0; i < members.Length; i++)
@@ -81,7 +81,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <inheritdoc/>
     public ProductionBuilder Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _precedenceToken);
     }
 
@@ -93,7 +93,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1> Extend<T1>(IGrammarSymbol<T1> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _members.Count, _precedenceToken);
     }
 
@@ -124,7 +124,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <inheritdoc/>
     public ProductionBuilder WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, precedenceToken);
     }
 }

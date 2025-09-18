@@ -33,7 +33,7 @@ public readonly struct BuilderDiagnostic : IFormattable
     /// is <see langword="null"/>.</exception>
     public BuilderDiagnostic(DiagnosticSeverity severity, object message, string? code = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(message);
         Severity = severity;
         Message = message;
         Code = code;

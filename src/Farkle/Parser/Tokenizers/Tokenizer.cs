@@ -151,7 +151,7 @@ public static class Tokenizer
     internal static Tokenizer<TChar> Create<TChar>(Grammar grammar, bool throwIfError, object? customError = null)
         where TChar : unmanaged, IComparable<TChar>
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(grammar);
+        ArgumentNullException.ThrowIfNull(grammar);
         if (grammar.IsUnparsable(out string? errorKey))
         {
             return Fail(errorKey);

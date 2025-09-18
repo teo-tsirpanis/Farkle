@@ -32,7 +32,7 @@ internal sealed class GrammarWriter
 
     public StringHandle GetOrAddString(string str)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(str);
+        ArgumentNullException.ThrowIfNull(str);
 
         return _stringHeapWriter.Add(str);
     }

@@ -118,8 +118,8 @@ public struct ParserState
     /// <paramref name="value"/> is <see langword="null"/>.</exception>
     public void SetValue(object key, object value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(key);
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(value);
         (_stateDictionary ??= new())[key] = value;
     }
 
@@ -135,7 +135,7 @@ public struct ParserState
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
     public readonly bool TryGetValue(object key, [MaybeNullWhen(false)] out object value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(key);
         value = null;
         return _stateDictionary?.TryGetValue(key, out value) ?? false;
     }
@@ -149,7 +149,7 @@ public struct ParserState
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
     public bool RemoveValue(object key)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(key);
         return _stateDictionary?.Remove(key) ?? false;
     }
 }

@@ -4,6 +4,7 @@
 using Farkle.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using static Farkle.Grammars.GrammarUtilities;
 
@@ -168,7 +169,7 @@ internal readonly struct GrammarTables
             ThrowHelpers.ThrowInvalidDataException("Grammar table is missing.");
         }
 
-        int tableCount = BitOperationsCompat.PopCount((ulong)presentTables);
+        int tableCount = BitOperations.PopCount((ulong)presentTables);
         int tableHeaderSizeUnaligned =
             // TablesPresent
             sizeof(ulong)
@@ -203,7 +204,7 @@ internal readonly struct GrammarTables
         _heapSizes = (GrammarHeapSizes)grammarFile[section.Offset + tableHeaderSizeUnaligned - 1];
         while (remainingTables != 0)
         {
-            int currentTable = BitOperationsCompat.TrailingZeroCount(remainingTables);
+            int currentTable = BitOperations.TrailingZeroCount(remainingTables);
 
             int rowCount = grammarFile.ReadInt32(rowCountsBase + i * sizeof(int));
             int rowLimit = (TableKind)currentTable switch

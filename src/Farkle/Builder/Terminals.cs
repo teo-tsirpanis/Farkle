@@ -304,8 +304,8 @@ public static class Terminals
     /// </remarks>
     public static IGrammarSymbol<string> String(string name, char delimiter, string escapeChars, bool multiLine)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(escapeChars);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(escapeChars);
 
         bool allowEscapeUnicode = escapeChars.Contains('u');
         ReadOnlySpan<Regex> escapeUnicode = allowEscapeUnicode ?

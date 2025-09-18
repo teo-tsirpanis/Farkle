@@ -30,7 +30,7 @@ public sealed class ParserDiagnostic : IFormattable
     /// is <see langword="null"/>.</exception>
     public ParserDiagnostic(TextPosition position, object message)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(message);
         Position = position;
         Message = message;
     }

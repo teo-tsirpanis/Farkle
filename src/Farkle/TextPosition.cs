@@ -45,8 +45,8 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     /// or <paramref name="column"/> are smaller than zero.</exception>
     public static TextPosition Create0(int line, int column)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(line);
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(column);
+        ArgumentOutOfRangeException.ThrowIfNegative(line);
+        ArgumentOutOfRangeException.ThrowIfNegative(column);
         return new(line, column);
     }
 

@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Numerics;
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;
 using Farkle.Diagnostics;
@@ -340,7 +341,7 @@ internal static class GrammarBuild
         private readonly Dictionary<string, int> _symbolKinds = new(sizeHint);
 
         private bool ShouldDisambiguate(string name) =>
-            _symbolKinds.TryGetValue(name, out int kind) && !BitOperationsCompat.IsPow2(kind);
+            _symbolKinds.TryGetValue(name, out int kind) && !BitOperations.IsPow2(kind);
 
         public void Add(Regex regex, TokenSymbolHandle handle, string name, TokenSymbolKind kind)
         {

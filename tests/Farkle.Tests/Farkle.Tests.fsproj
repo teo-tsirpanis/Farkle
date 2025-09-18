@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- Test the dummy Farkle.Tools.MSBuild package this way, without having to set up the whole infrastructure now. -->
   <Import Project="../../src/Farkle.Tools.MSBuild/build/dummy/Farkle.Tools.MSBuild.props" />
   <PropertyGroup>
@@ -16,7 +16,6 @@
     <Compile Include="Generators.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
-    <Compile Include="Program.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

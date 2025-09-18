@@ -4,6 +4,9 @@
     <PackProject Include="Farkle.Tools/Farkle.Tools.fsproj" />
     <PackProject Include="Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" />
   </ItemGroup>
+  <Target Name="Restore">
+    <MSBuild Projects="@(PackProject)" Targets="Restore" BuildInParallel="true" />
+  </Target>
   <Target Name="Pack">
     <MSBuild Projects="@(PackProject)" Targets="Pack" BuildInParallel="true" />
   </Target>

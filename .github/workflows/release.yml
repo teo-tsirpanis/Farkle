@@ -19,7 +19,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
+          dotnet-quality: preview
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Pack
@@ -39,7 +40,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
+          dotnet-quality: preview
       - name: Download package artifacts
         uses: actions/download-artifact@v5
         with:

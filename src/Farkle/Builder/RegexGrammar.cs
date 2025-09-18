@@ -50,7 +50,7 @@ internal static class RegexGrammar
     /// We need this to protect from patterns that would throw in code-based regexes, like <c>x{4,2}</c>.
     /// </remarks>
     private static Func<Regex, Regex> ProtectQuantifier(Func<Regex, Regex> f) =>
-        (Regex r) =>
+        r =>
         {
             try
             {
@@ -159,11 +159,11 @@ internal static class RegexGrammar
         // abc? as (abc)? instead of ab(c)?.
         var anyCharacter = Terminal.Create("Any character",
             Regex.NotOneOf(specialCharacters),
-            (ref ParserState state, ReadOnlySpan<char> data) => Regex.Literal(data[0]));
+            (ref state, data) => Regex.Literal(data[0]));
 
         var escapedCharacter = Terminal.Create("Escaped character",
             Regex.Literal('\\') + Regex.OneOf(specialCharacters),
-            (ref ParserState _, ReadOnlySpan<char> data) => Regex.Literal(data[1]));
+            (ref _, data) => Regex.Literal(data[1]));
 
         var predefinedSet = MakePredefinedSet("Predefined set (unsupported)", @"\p{");
         var allButPredefinedSet = MakePredefinedSet("All but Predefined set (unsupported)", @"\P{");
@@ -178,29 +178,29 @@ internal static class RegexGrammar
 
         var quantRepeat = Terminal.Create("Repeat quantifier",
             Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal('}')),
-            (ref ParserState _, ReadOnlySpan<char> data) =>
+            (ref _, data) =>
             {
                 var count = ParseInt(data[1..^1]);
-                return ProtectQuantifier((Regex r) => r.Repeat(count));
+                return ProtectQuantifier(r => r.Repeat(count));
             });
 
         var quantAtLeast = Terminal.Create("At least quantifier",
             Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal(",}")),
-            (ref ParserState _, ReadOnlySpan<char> data) =>
+            (ref _, data) =>
             {
                 var count = ParseInt(data[1..^2]);
-                return ProtectQuantifier((Regex r) => r.AtLeast(count));
+                return ProtectQuantifier(r => r.AtLeast(count));
             });
 
         var quantBetween = Terminal.Create("Between quantifier",
             Regex.Join(Regex.Literal('{'), numbersRegex, Regex.Literal(','), numbersRegex, Regex.Literal('}')),
-            (ref ParserState _, ReadOnlySpan<char> data) =>
+            (ref _, data) =>
             {
                 data = data[1..^1];
                 var commaPos = data.IndexOf(',');
                 var numFrom = ParseInt(data[..commaPos]);
                 var numTo = ParseInt(data[(commaPos + 1)..]);
-                return ProtectQuantifier((Regex r) => r.Between(numFrom, numTo));
+                return ProtectQuantifier(r => r.Between(numFrom, numTo));
             });
 
         var regex = Nonterminal.Create<Regex>("Regex");
@@ -256,7 +256,7 @@ internal static class RegexGrammar
         static IGrammarSymbol<Regex> MakePredefinedSet(string name, string start) =>
             Terminal.Create<Regex>(name,
                 Regex.Join(Regex.Literal(start), Regex.NotOneOf('{', '}').AtLeast(1), Regex.Literal('}')),
-                (ref ParserState _, ReadOnlySpan<char> _) =>
+                (ref _, _) =>
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringPredefinedSetsNotSupported)),
                 TerminalOptions.Hidden);
 
@@ -265,7 +265,7 @@ internal static class RegexGrammar
                 // According to https://www.regular-expressions.info/unicode.html,
                 // this syntax accepts only single-letter categories.
                 Regex.Literal(start) + Regex.OneOf(('A', 'Z')),
-                (ref ParserState _, ReadOnlySpan<char> _) =>
+                (ref _, _) =>
                     throw CreateLocalizedException(nameof(Resources.Builder_RegexStringUnicodeCategoriesNotSupported)),
                 TerminalOptions.Hidden);
 
@@ -292,8 +292,7 @@ internal static class RegexGrammar
                     ).ZeroOrMore(),
                     Regex.Literal(']')
                 ),
-                (ref ParserState state, ReadOnlySpan<char> data) =>
-                    fChars(ParseCharacterSet(in state, data, start.Length)));
+                (ref state, data) => fChars(ParseCharacterSet(in state, data, start.Length)));
         }
     }
 

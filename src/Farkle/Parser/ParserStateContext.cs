@@ -199,7 +199,7 @@ public static class ParserStateContext
     /// <exception cref="ArgumentNullException"><paramref name="parser"/> is <see langword="null"/>.</exception>
     public static ParserStateContext<TChar, T> Create<TChar, T>(IParser<TChar, T> parser, ParserStateContextOptions? options = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(parser);
+        ArgumentNullException.ThrowIfNull(parser);
 
         if (parser.GetService(typeof(IParserStateContextFactory<TChar, T>)) is IParserStateContextFactory<TChar, T> factory)
         {

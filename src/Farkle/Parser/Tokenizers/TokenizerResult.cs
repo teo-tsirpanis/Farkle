@@ -66,7 +66,7 @@ public readonly struct TokenizerResult
     /// <exception cref="ArgumentNullException"><paramref name="error"/> is <see langword="null"/>.</exception>
     public static TokenizerResult CreateError(object error)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(error);
+        ArgumentNullException.ThrowIfNull(error);
         return new TokenizerResult() { Data = error };
     }
 }

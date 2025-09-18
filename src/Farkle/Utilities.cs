@@ -23,7 +23,7 @@ internal static class Utilities
     public static Span<T> AsSpanChecked<T>([NotNull] this T[]? array,
         [CallerArgumentExpression((nameof(array)))] string? paramName = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(array, paramName);
+        ArgumentNullException.ThrowIfNull(array, paramName);
         return array.AsSpan();
     }
 
@@ -33,7 +33,7 @@ internal static class Utilities
     public static ImmutableArray<T> ToImmutableArrayChecked<T>([NotNull] this T[]? array,
         [CallerArgumentExpression((nameof(array)))] string? paramName = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(array, paramName);
+        ArgumentNullException.ThrowIfNull(array, paramName);
         return ImmutableArray.Create(array);
     }
 

@@ -1,10 +1,11 @@
 <Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" Condition="'' != $([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' != ''">
-    <VSTestCollect>XPlat Code Coverage%3BFormat=opencover</VSTestCollect>
-    <VSTestLogger>GitHubActions</VSTestLogger>
+    <!--TODO: Add back when it gets MTP support.-->
+    <!--<VSTestLogger>GitHubActions</VSTestLogger>-->
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="GitHubActionsTestLogger" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <!--<PackageReference Include="GitHubActionsTestLogger" />-->
   </ItemGroup>
 </Project>

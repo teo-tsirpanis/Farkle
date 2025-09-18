@@ -50,7 +50,7 @@ public static class GrammarSymbolExtensions
     /// object will be <see langword="null"/>.</returns>
     public static IGrammarSymbol<object?> Cast(this IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         if (symbol is IGrammarSymbol<object?> b)
         {
             return b;
@@ -72,14 +72,14 @@ public static class GrammarSymbolExtensions
     /// <seealso cref="IGrammarProvider.GetSymbolFromSpecialName"/>
     public static IGrammarSymbol AddSpecialName(this IGrammarSymbol symbol, string name)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
     /// <inheritdoc cref="AddSpecialName(IGrammarSymbol, string)"/>
     public static IGrammarSymbol<T> AddSpecialName<T>(this IGrammarSymbol<T> symbol, string name)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
@@ -96,7 +96,7 @@ public static class GrammarSymbolExtensions
         this IGrammarSymbol<T> symbol, bool atLeastOnce = false)
         where TCollection : ICollection<T>, new()
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence");
         if (atLeastOnce)
         {
@@ -131,7 +131,7 @@ public static class GrammarSymbolExtensions
         this IGrammarSymbol<T> symbol, IGrammarSymbol separator, bool atLeastOnce = false)
         where TCollection : ICollection<T>, new()
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence Separated By {separator.Name}");
         if (atLeastOnce)
         {
@@ -160,7 +160,7 @@ public static class GrammarSymbolExtensions
     public static IGrammarSymbol<T?> Nullable<T>(this IGrammarSymbol<T> symbol)
         where T : struct
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return Nonterminal.Create($"{symbol.Name} Maybe",
             symbol.Finish(x => (T?)x),
             ProductionBuilder.Empty.FinishConstant<T?>(null)
@@ -174,7 +174,7 @@ public static class GrammarSymbolExtensions
     /// <seealso cref="Nullable"/>
     public static IGrammarSymbol<T?> Optional<T>(this IGrammarSymbol<T> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return Nonterminal.Create($"{symbol.Name} Maybe",
             (IProduction<T?>)symbol.AsProduction(),
             ProductionBuilder.Empty.FinishConstant<T?>(default)
@@ -192,8 +192,8 @@ public static class GrammarSymbolExtensions
     /// <param name="name">The name of the new symbol. If not provided, a default name will be generated.</param>
     public static IGrammarSymbol<TNew> Select<T, TNew>(this IGrammarSymbol<T> symbol, Func<T, TNew> selector, string? name = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
-        ArgumentNullExceptionCompat.ThrowIfNull(selector);
+        ArgumentNullException.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(selector);
         name ??= $"{symbol.Name} Transformed";
         return Nonterminal.Create(name, symbol.Finish(selector));
     }

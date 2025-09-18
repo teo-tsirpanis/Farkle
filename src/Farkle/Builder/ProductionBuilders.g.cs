@@ -32,7 +32,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, _idx16, _precedenceToken);
     }
 
@@ -43,7 +43,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11; int idx12 = _idx12; int idx13 = _idx13; int idx14 = _idx14; int idx15 = _idx15; int idx16 = _idx16;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!, (T12)args[idx12]!, (T13)args[idx13]!, (T14)args[idx14]!, (T15)args[idx15]!, (T16)args[idx16]!);
@@ -54,7 +54,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, _idx16, precedenceToken);
     }
 }
@@ -79,7 +79,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, _precedenceToken);
     }
 
@@ -91,7 +91,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Extend<T16>(IGrammarSymbol<T16> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, _members.Count, _precedenceToken);
     }
 
@@ -102,7 +102,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11; int idx12 = _idx12; int idx13 = _idx13; int idx14 = _idx14; int idx15 = _idx15;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!, (T12)args[idx12]!, (T13)args[idx13]!, (T14)args[idx14]!, (T15)args[idx15]!);
@@ -113,7 +113,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, precedenceToken);
     }
 }
@@ -138,7 +138,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _precedenceToken);
     }
 
@@ -150,7 +150,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Extend<T15>(IGrammarSymbol<T15> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _members.Count, _precedenceToken);
     }
 
@@ -161,7 +161,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11; int idx12 = _idx12; int idx13 = _idx13; int idx14 = _idx14;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!, (T12)args[idx12]!, (T13)args[idx13]!, (T14)args[idx14]!);
@@ -172,7 +172,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, precedenceToken);
     }
 }
@@ -197,7 +197,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _precedenceToken);
     }
 
@@ -209,7 +209,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Extend<T14>(IGrammarSymbol<T14> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _members.Count, _precedenceToken);
     }
 
@@ -220,7 +220,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11; int idx12 = _idx12; int idx13 = _idx13;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!, (T12)args[idx12]!, (T13)args[idx13]!);
@@ -231,7 +231,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, precedenceToken);
     }
 }
@@ -256,7 +256,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _precedenceToken);
     }
 
@@ -268,7 +268,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Extend<T13>(IGrammarSymbol<T13> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _members.Count, _precedenceToken);
     }
 
@@ -279,7 +279,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11; int idx12 = _idx12;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!, (T12)args[idx12]!);
@@ -290,7 +290,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, precedenceToken);
     }
 }
@@ -315,7 +315,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _precedenceToken);
     }
 
@@ -327,7 +327,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Extend<T12>(IGrammarSymbol<T12> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _members.Count, _precedenceToken);
     }
 
@@ -338,7 +338,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10; int idx11 = _idx11;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!, (T11)args[idx11]!);
@@ -349,7 +349,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, precedenceToken);
     }
 }
@@ -374,7 +374,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _precedenceToken);
     }
 
@@ -386,7 +386,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Extend<T11>(IGrammarSymbol<T11> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _members.Count, _precedenceToken);
     }
 
@@ -397,7 +397,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9; int idx10 = _idx10;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!, (T10)args[idx10]!);
@@ -408,7 +408,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, precedenceToken);
     }
 }
@@ -433,7 +433,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IPro
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _precedenceToken);
     }
 
@@ -445,7 +445,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IPro
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Extend<T10>(IGrammarSymbol<T10> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _members.Count, _precedenceToken);
     }
 
@@ -456,7 +456,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IPro
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8; int idx9 = _idx9;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!, (T9)args[idx9]!);
@@ -467,7 +467,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IPro
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, precedenceToken);
     }
 }
@@ -492,7 +492,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProduct
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _precedenceToken);
     }
 
@@ -504,7 +504,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProduct
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> Extend<T9>(IGrammarSymbol<T9> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _members.Count, _precedenceToken);
     }
 
@@ -515,7 +515,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProduct
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7; int idx8 = _idx8;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!, (T8)args[idx8]!);
@@ -526,7 +526,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProduct
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, precedenceToken);
     }
 }
@@ -551,7 +551,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionB
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _precedenceToken);
     }
 
@@ -563,7 +563,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionB
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> Extend<T8>(IGrammarSymbol<T8> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _members.Count, _precedenceToken);
     }
 
@@ -574,7 +574,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionB
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T7, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6; int idx7 = _idx7;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!, (T7)args[idx7]!);
@@ -585,7 +585,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionB
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, precedenceToken);
     }
 }
@@ -610,7 +610,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuild
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _precedenceToken);
     }
 
@@ -622,7 +622,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuild
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> Extend<T7>(IGrammarSymbol<T7> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _members.Count, _precedenceToken);
     }
 
@@ -633,7 +633,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuild
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T6, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5; int idx6 = _idx6;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!, (T6)args[idx6]!);
@@ -644,7 +644,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuild
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, precedenceToken);
     }
 }
@@ -669,7 +669,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<P
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _precedenceToken);
     }
 
@@ -681,7 +681,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<P
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5, T6> Extend<T6>(IGrammarSymbol<T6> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _idx5, _members.Count, _precedenceToken);
     }
 
@@ -692,7 +692,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<P
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T5, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4; int idx5 = _idx5;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!, (T5)args[idx5]!);
@@ -703,7 +703,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<P
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4, T5> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, _idx5, precedenceToken);
     }
 }
@@ -728,7 +728,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<Produ
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _precedenceToken);
     }
 
@@ -740,7 +740,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<Produ
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4, T5> Extend<T5>(IGrammarSymbol<T5> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _idx4, _members.Count, _precedenceToken);
     }
 
@@ -751,7 +751,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<Produ
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T4, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3; int idx4 = _idx4;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!, (T4)args[idx4]!);
@@ -762,7 +762,7 @@ public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<Produ
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3, T4> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, _idx4, precedenceToken);
     }
 }
@@ -787,7 +787,7 @@ public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<Productio
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _precedenceToken);
     }
 
@@ -799,7 +799,7 @@ public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<Productio
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3, T4> Extend<T4>(IGrammarSymbol<T4> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _idx3, _members.Count, _precedenceToken);
     }
 
@@ -810,7 +810,7 @@ public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<Productio
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T3, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2; int idx3 = _idx3;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!, (T3)args[idx3]!);
@@ -821,7 +821,7 @@ public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<Productio
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2, T3> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, _idx3, precedenceToken);
     }
 }
@@ -846,7 +846,7 @@ public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBui
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _precedenceToken);
     }
 
@@ -858,7 +858,7 @@ public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBui
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2, T3> Extend<T3>(IGrammarSymbol<T3> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _idx2, _members.Count, _precedenceToken);
     }
 
@@ -869,7 +869,7 @@ public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBui
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T2, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1; int idx2 = _idx2;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!, (T2)args[idx2]!);
@@ -880,7 +880,7 @@ public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBui
     /// <inheritdoc/>
     public ProductionBuilder<T1, T2> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, _idx2, precedenceToken);
     }
 }
@@ -905,7 +905,7 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <inheritdoc/>
     public ProductionBuilder<T1> Append(IGrammarSymbol symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _precedenceToken);
     }
 
@@ -917,7 +917,7 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <returns>A production builder with <paramref name="symbol"/> added to its end as a significant member.</returns>
     public ProductionBuilder<T1, T2> Extend<T2>(IGrammarSymbol<T2> symbol)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(symbol);
         return new(_members.Add(symbol), _idx1, _members.Count, _precedenceToken);
     }
 
@@ -928,7 +928,7 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <param name="fuser">The function to apply to the significant members.</param>
     public IProduction<T> Finish<T>(Func<T1, T> fuser)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(fuser);
+        ArgumentNullException.ThrowIfNull(fuser);
         int idx1 = _idx1;
         object? fBoxed(ref ParserState state, Span<object?> args) =>
             fuser((T1)args[idx1]!);
@@ -954,7 +954,7 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <inheritdoc/>
     public ProductionBuilder<T1> WithPrecedence(object precedenceToken)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(precedenceToken);
+        ArgumentNullException.ThrowIfNull(precedenceToken);
         return new(_members, _idx1, precedenceToken);
     }
 }

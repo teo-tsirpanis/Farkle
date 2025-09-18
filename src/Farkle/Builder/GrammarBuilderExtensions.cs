@@ -69,7 +69,7 @@ public static class GrammarBuilderExtensions
     /// object will be <see langword="null"/>.</returns>
     public static IGrammarBuilder<object?> Cast(this IGrammarBuilder builder)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(builder);
         if (builder is IGrammarBuilder<object?> b)
         {
             return b;
@@ -183,7 +183,7 @@ public static class GrammarBuilderExtensions
     /// <seealso cref="GrammarInfo.Name"/>
     public static IGrammarBuilder WithGrammarName(this IGrammarBuilder builder, string value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(value);
 
         return value == builder.GetOptions().GrammarName
             ? builder
@@ -193,7 +193,7 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="WithGrammarName"/>
     public static IGrammarBuilder<T> WithGrammarName<T>(this IGrammarBuilder<T> builder, string value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(value);
 
         return value == builder.GetOptions().GrammarName
             ? builder
@@ -213,7 +213,7 @@ public static class GrammarBuilderExtensions
     /// </remarks>
     public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params OperatorScope value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(value);
 
         return value == builder.GetOptions().OperatorScope
             ? builder
@@ -233,7 +233,7 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, OperatorScope)"/>
     public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params OperatorScope value)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(value);
 
         return value == builder.GetOptions().OperatorScope
             ? builder
@@ -254,8 +254,8 @@ public static class GrammarBuilderExtensions
     /// <param name="regex">The regular expression that matches the noise symbol.</param>
     public static IGrammarBuilder AddNoiseSymbol(this IGrammarBuilder builder, string name, Regex regex)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(regex);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regex);
 
         return builder.WithOptions(builder.GetOptions().AddNoiseSymbol(name, regex));
     }
@@ -263,8 +263,8 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="AddNoiseSymbol"/>
     public static IGrammarBuilder<T> AddNoiseSymbol<T>(this IGrammarBuilder<T> builder, string name, Regex regex)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(name);
-        ArgumentNullExceptionCompat.ThrowIfNull(regex);
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regex);
 
         return builder.WithOptions(builder.GetOptions().AddNoiseSymbol(name, regex));
     }
@@ -277,7 +277,7 @@ public static class GrammarBuilderExtensions
     /// <param name="end">The sequence of characters that ends the comment.</param>
     public static IGrammarBuilder AddBlockComment(this IGrammarBuilder builder, string start, string end)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddBlockComment(start, end));
     }
@@ -285,7 +285,7 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="AddBlockComment"/>
     public static IGrammarBuilder<T> AddBlockComment<T>(this IGrammarBuilder<T> builder, string start, string end)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddBlockComment(start, end));
     }
@@ -298,7 +298,7 @@ public static class GrammarBuilderExtensions
     /// <param name="start">The sequence of characters that starts the comment.</param>
     public static IGrammarBuilder AddLineComment(this IGrammarBuilder builder, string start)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddLineComment(start));
     }
@@ -306,7 +306,7 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="AddLineComment"/>
     public static IGrammarBuilder<T> AddLineComment<T>(this IGrammarBuilder<T> builder, string start)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(start);
 
         return builder.WithOptions(builder.GetOptions().AddLineComment(start));
     }
@@ -321,7 +321,7 @@ public static class GrammarBuilderExtensions
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
     public static IGrammarBuilder MarkForPrecompile(this IGrammarBuilder builder, Assembly? asm = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(builder);
         _ = asm;
         return builder;
     }
@@ -330,7 +330,7 @@ public static class GrammarBuilderExtensions
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
     public static IGrammarBuilder<T> MarkForPrecompile<T>(this IGrammarBuilder<T> builder, Assembly? asm = null)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(builder);
         _ = asm;
         return builder;
     }
@@ -346,7 +346,7 @@ public static class GrammarBuilderExtensions
     private static BuilderResult<T> BuildImpl<T>(this IGrammarBuilder builder, BuilderArtifacts artifacts,
         BuilderOptions? options = null, bool isSyntaxCheck = false)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(builder);
 
         options ??= BuilderOptions.Default;
 

@@ -32,7 +32,7 @@ internal ref struct ValueStack<T>
 
     public ValueStack(int initialCapacity)
     {
-        ArgumentOutOfRangeExceptionCompat.ThrowIfNegative(initialCapacity);
+        ArgumentOutOfRangeException.ThrowIfNegative(initialCapacity);
         _items = _pooledArray = ArrayPool<T>.Shared.Rent(initialCapacity);
         _count = 0;
     }

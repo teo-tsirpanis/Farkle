@@ -99,7 +99,7 @@ public ref struct ParserInputReader<TChar>
     /// </remarks>
     public ParserInputReader(IParserStateBox stateBox, ReadOnlySpan<TChar> characters, bool isFinal = true)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(stateBox);
+        ArgumentNullException.ThrowIfNull(stateBox);
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         this = new(ref stateBox.State, characters, isFinal);
 #else
@@ -146,7 +146,7 @@ public ref struct ParserInputReader<TChar>
     [DoesNotReturn]
     public readonly void FailAtOffset(int offset, object message)
     {
-        ArgumentNullExceptionCompat.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(message);
         TextPosition position = State.GetPositionAfter(RemainingCharacters[..offset]);
         throw new ParserApplicationException(new ParserDiagnostic(position, message), autoSetPosition: false);
     }

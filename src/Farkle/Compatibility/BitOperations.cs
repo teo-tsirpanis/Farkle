@@ -4,17 +4,15 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-#if NETCOREAPP3_0_OR_GREATER
-global using BitOperationsCompat = System.Numerics.BitOperations;
-#else
+#if !NETCOREAPP3_0_OR_GREATER
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 
-namespace Farkle.Compatibility;
+namespace System.Numerics;
 
 [Embedded]
-internal static class BitOperationsCompat
+internal static class BitOperations
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsPow2(int value) => (value & (value - 1)) == 0 && value > 0;
@@ -54,12 +52,12 @@ internal static class BitOperationsCompat
         var lo => TrailingZeroCount(lo),
     };
 
-    private static ReadOnlySpan<byte> TrailingZeroCountDeBruijn => new byte[32]
-    {
+    private static ReadOnlySpan<byte> TrailingZeroCountDeBruijn =>
+    [
         00, 01, 28, 02, 29, 14, 24, 03,
         30, 22, 20, 15, 25, 17, 04, 08,
         31, 27, 13, 23, 21, 19, 16, 07,
         26, 12, 18, 06, 11, 05, 10, 09
-    };
+    ];
 }
 #endif

@@ -38,6 +38,8 @@ let sourceFilesToGenerate = [
     "./src/ProductionBuilders.scriban", "./src/Farkle/Builder/ProductionBuilders.g.cs"
 ]
 
+let farkleSolution = "./Farkle.slnx"
+
 let farkleProject = "./src/Farkle/Farkle.csproj"
 
 let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
@@ -45,14 +47,6 @@ let farkleToolsProject = "./src/Farkle.Tools/Farkle.Tools.fsproj"
 let farkleToolsMSBuildProject = "./src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj"
 
 let packProject = "./src/pack.proj"
-
-// The project to be tested
-let testProject = "./tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj"
-
-let fsharpTestProjects = [
-    "./tests/Farkle.Tests/Farkle.Tests.fsproj"
-    "./tests/Farkle.Tools.Shared.Tests/Farkle.Tools.Shared.Tests.fsproj"
-]
 
 let msBuildTestProject = "./tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj"
 
@@ -137,16 +131,12 @@ Target.create "GenerateCode" (fun _ ->
     )
 )
 
-Target.description "Runs the C# unit tests"
-Target.create "RunCSharpUnitTests" (fun _ ->
-    testProject
-    |> DotNet.test id
-)
-
-Target.description "Runs the F# unit tests"
-Target.create "RunFSharpUnitTests" (fun _ ->
-    fsharpTestProjects
-    |> List.iter (DotNet.test id)
+Target.description "Runs the unit tests"
+Target.create "RunUnitTests" (fun _ ->
+    CreateProcess.fromRawCommand "dotnet" ["test"; "--solution"; farkleSolution; "--coverage"; "--coverage-output-format"; "xml"]
+    |> CreateProcess.ensureExitCode
+    |> Proc.run
+    |> _.Result
 )
 
 Target.description "Prepares the MSBuild integration tests"
@@ -290,7 +280,7 @@ let (?=>!) x y = x ?=> y |> ignore
 "RunMSBuildTestsNetFramework"
     =?>! ("TestLegacy", OperatingSystem.IsWindows())
 
-"Test" <== ["RunCSharpUnitTests"; "RunFSharpUnitTests"]
+"Test" <== ["RunUnitTests"]
 
 // We used to have "Test" ==>! "NuGetPack".
 // This dependency will be expressed higher at the GitHub Actions level.

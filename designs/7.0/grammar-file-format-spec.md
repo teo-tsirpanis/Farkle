@@ -221,6 +221,49 @@ The following rules apply to the _Group_ table:
 
 > Before accessing the nesting of a group, readers MUST ensure that the group can actually be nested. It is possible for the __FirstNesting__ column to point to a non-existent row if no groups can be nested.
 
+#### Parsing groups
+
+The following algorithm describes how to parse groups:
+
+```
+Let groupStack be a stack of the groups the tokenizer is currently inside.
+Let input be a sequence of all remaining characters to tokenize. Characters are removed (consumed) from the start of the sequence as they are being processed.
+
+While groupStack is not empty:
+    Let currentGroup be the group on the top of groupStack.
+    If there are no more characters in the input:
+        If currentGroup has the EndsOnEndOfInput flag set:
+            Pop from groupStack.
+            Continue loop.
+        Else:
+            Fail with a syntax error.
+        End If
+    End If
+    Run the DFA from currentGroup's start state.
+    If the DFA accepted a token:
+        If the accepted token's symbol has the GroupStart flag set:
+            Let newGroup be the group whose Start column points to the accepted token's symbol.
+            If the rows in the GroupNesting table that correspond to currentGroup contain newGroup:
+                Consume as many characters as the DFA read before accepting the token.
+                Push newGroup onto groupStack.
+                Continue loop.
+            End If
+        Else If the accepted token's symbol is equal to currentGroup's End column:
+            If currentGroup does not have the KeepEndToken flag set:
+                Consume as many characters as the DFA read before accepting the token.
+            End If
+            Pop from groupStack.
+            Continue loop.
+        End If
+    End If
+    If currentGroup has the AdvanceByCharacter flag set:
+        Consume one character from the input.
+    Else:
+        Consume as many characters as the DFA read before accepting a token or failing.
+    End If
+End While
+```
+
 ### _GroupNesting_ table
 
 The _GroupNesting_ table contains the following column:

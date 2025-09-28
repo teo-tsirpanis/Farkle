@@ -16,11 +16,11 @@ internal class GrammarTests
     {
         var buffer = File.ReadAllBytes(TestUtilities.GetResourceFile(fileName));
         var header = GrammarHeader.Read(buffer);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(header.IsSupported, Is.False);
             Assert.That(header.FileType, Is.EqualTo(fileType));
-        });
+        }
     }
 
     [TestCaseSource(typeof(TestUtilities), nameof(TestUtilities.GoldParserGrammars))]
@@ -50,7 +50,7 @@ internal class GrammarTests
 
         var grammar = Grammar.Load(filePath);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(grammar.HasUnknownData, Is.False);
             Assert.That(grammar.GrammarInfo.Name, Is.Not.Empty);
@@ -112,7 +112,7 @@ internal class GrammarTests
                 }
                 Assert.That(count, Is.EqualTo(lr.Count));
             }
-        });
+        }
     }
 
     [TestCase("gml.grammar.dat")] // Only test grammar with more than one group
@@ -139,7 +139,7 @@ internal class GrammarTests
 
 #pragma warning disable CS1718 // Comparison made to same variable
 #pragma warning disable NUnit2010 // Use EqualConstraint for better assertion messages in case of failure
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             // Same object from same grammar is equal
             Assert.That(term1 == term1);
@@ -159,7 +159,7 @@ internal class GrammarTests
             Assert.That(prod1 == prod1);
             Assert.That(prod1 != prod2);
             Assert.That(prod1 != prod3);
-        });
+        }
 #pragma warning restore NUnit2010 // Use EqualConstraint for better assertion messages in case of failure
 #pragma warning restore CS1718 // Comparison made to same variable
     }

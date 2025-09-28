@@ -13,7 +13,7 @@ internal class EntityHandleTests
         var tokenSymbolHandle = new TokenSymbolHandle(137);
         var nonterminalHandle = new NonterminalHandle(184);
         var productionHandle = new ProductionHandle(475);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(((EntityHandle)tokenSymbolHandle).IsTokenSymbol);
             Assert.That(((EntityHandle)nonterminalHandle).IsNonterminal);
@@ -21,7 +21,7 @@ internal class EntityHandleTests
             Assert.That(((EntityHandle)tokenSymbolHandle).IsNonterminal, Is.False);
             Assert.That(((EntityHandle)nonterminalHandle).IsProduction, Is.False);
             Assert.That(((EntityHandle)productionHandle).IsTokenSymbol, Is.False);
-        });
+        }
     }
 
     [Test]
@@ -30,12 +30,12 @@ internal class EntityHandleTests
         var tokenSymbolHandle = new TokenSymbolHandle(137);
         var nonterminalHandle = new NonterminalHandle(184);
         var productionHandle = new ProductionHandle(475);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That((TokenSymbolHandle)(EntityHandle)tokenSymbolHandle, Is.EqualTo(tokenSymbolHandle));
             Assert.That((NonterminalHandle)(EntityHandle)nonterminalHandle, Is.EqualTo(nonterminalHandle));
             Assert.That((ProductionHandle)(EntityHandle)productionHandle, Is.EqualTo(productionHandle));
-        });
+        }
     }
 
     [Test]
@@ -44,12 +44,12 @@ internal class EntityHandleTests
         var tokenSymbolHandle = new TokenSymbolHandle(137);
         var nonterminalHandle = new NonterminalHandle(184);
         var productionHandle = new ProductionHandle(475);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(() => (NonterminalHandle)(EntityHandle)tokenSymbolHandle, Throws.InstanceOf<InvalidCastException>());
             Assert.That(() => (ProductionHandle)(EntityHandle)nonterminalHandle, Throws.InstanceOf<InvalidCastException>());
             Assert.That(() => (TokenSymbolHandle)(EntityHandle)productionHandle, Throws.InstanceOf<InvalidCastException>());
-        });
+        }
     }
 
     [Test]
@@ -58,7 +58,7 @@ internal class EntityHandleTests
         TokenSymbolHandle tokenSymbolHandle = default;
         NonterminalHandle nonterminalHandle = default;
         ProductionHandle productionHandle = default;
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(() => tokenSymbolHandle.Value, Throws.InstanceOf<InvalidOperationException>());
             Assert.That(() => nonterminalHandle.Value, Throws.InstanceOf<InvalidOperationException>());
@@ -69,6 +69,6 @@ internal class EntityHandleTests
             Assert.That(((EntityHandle)tokenSymbolHandle).IsTokenSymbol, Is.False);
             Assert.That(((EntityHandle)nonterminalHandle).IsNonterminal, Is.False);
             Assert.That(((EntityHandle)productionHandle).IsProduction, Is.False);
-        });
+        }
     }
 }

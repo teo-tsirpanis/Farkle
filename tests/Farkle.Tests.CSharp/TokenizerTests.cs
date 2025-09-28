@@ -22,7 +22,7 @@ namespace Farkle.Tests.CSharp
         {
             var grammar = TestUtilities.LoadGrammarFromResource("JSON.grammar.dat");
             var tokenizer = Tokenizer.Create<char>(grammar);
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
 #pragma warning disable CS0618 // Type or member is obsolete
                 var stateBox = new ParserStateBox();
@@ -33,7 +33,7 @@ namespace Farkle.Tests.CSharp
                 Assert.That(token.IsSuccess);
                 Assert.That(token.Position, Is.EqualTo(TextPosition.Initial));
                 Assert.That(grammar.GetTokenSymbol(token.Symbol).Name, Is.EqualTo(tokenName));
-            });
+            }
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace Farkle.Tests.CSharp
         {
             var grammar = TestUtilities.LoadGrammarFromResource("JSON.grammar.dat");
             var tokenizer = Tokenizer.Create<char>(grammar);
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
 #pragma warning disable CS0618 // Type or member is obsolete
                 var stateBox = new ParserStateBox();
@@ -78,7 +78,7 @@ namespace Farkle.Tests.CSharp
                 ParserInputReader<char> reader = new(stateBox, text.AsSpan());
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess, Is.False);
-            });
+            }
         }
     }
 }

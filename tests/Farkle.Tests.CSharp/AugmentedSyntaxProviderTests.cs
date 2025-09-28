@@ -14,11 +14,11 @@ internal class AugmentedSyntaxProviderTests
         // it gets used only for debugger displaying.
         var symbol = Symbol.Create((index, isTerminal), default);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(symbol.IsTerminal, Is.EqualTo(isTerminal));
             Assert.That(symbol.Index, Is.EqualTo(index));
-        });
+        }
     }
 
     [Test]

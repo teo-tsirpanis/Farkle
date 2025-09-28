@@ -130,11 +130,11 @@ internal class HotReloadTests
         WriteSpan(context2, "bbb");
         context2.CompleteInput();
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(context1.Result, TestUtilities.IsParserSuccess);
             Assert.That(context2.Result, TestUtilities.IsParserSuccess);
-        });
+        }
 
         static void WriteSpan(IBufferWriter<char> bufferWriter, string str)
         {

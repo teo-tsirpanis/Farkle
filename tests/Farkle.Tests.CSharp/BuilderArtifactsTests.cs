@@ -24,7 +24,7 @@ internal class BuilderArtifactsTests
         // this way we don't have to specify them twice in the test cases.
         builtArtifacts |= requestedArtifacts;
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             AssertNullIf(result.Grammar, GrammarSummary);
             AssertNullIf(result?.Grammar?.LrStateMachine, GrammarLrStateMachine);
@@ -32,7 +32,7 @@ internal class BuilderArtifactsTests
             AssertNullIf(result?.TokenizerOnChar, TokenizerOnChar);
             AssertNullIf(result?.SemanticProviderOnChar, SemanticProviderOnChar);
             AssertNullIf(result?.CharParser, BuilderArtifacts.CharParser);
-        });
+        }
 
         void AssertNullIf(object? obj, BuilderArtifacts artifact)
         {

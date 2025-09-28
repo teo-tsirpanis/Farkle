@@ -21,14 +21,14 @@ internal class StringHeapTests
         StringHandle aaaHandle = builder.Add("aaa");
         StringHandle bbbHandle = builder.Add("bbb");
         StringHandle cccHandle = builder.Add("ccc");
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(() => builder.Add("Hello\0"), Throws.ArgumentException);
             Assert.That(builder.Add("aaa"), Is.EqualTo(aaaHandle));
             Assert.That(emptyHandle.IsEmpty);
             Assert.That(bbbHandle, Is.Not.EqualTo(aaaHandle));
             Assert.That(cccHandle, Is.Not.EqualTo(aaaHandle));
-        });
+        }
 
         byte[] actualHeap;
         using (var bufferWriter = new PooledSegmentBufferWriter<byte>())
@@ -40,7 +40,7 @@ internal class StringHeapTests
         Assert.That(actualHeap, Is.EqualTo("\0aaa\0bbb\0ccc\0"u8.ToArray()));
 
         var heap = new StringHeap(actualHeap, new(0, actualHeap.Length));
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(heap.GetString(actualHeap, default), Is.Empty);
             Assert.That(heap.GetString(actualHeap, aaaHandle), Is.EqualTo("aaa"));
@@ -54,41 +54,41 @@ internal class StringHeapTests
             Assert.That(heap.LookupString(actualHeap, "bbb".AsSpan()), Is.EqualTo(bbbHandle));
             Assert.That(heap.LookupString(actualHeap, "ccc".AsSpan()), Is.EqualTo(cccHandle));
             Assert.That(heap.LookupString(actualHeap, "ddd".AsSpan()), Is.Null);
-        });
+        }
     }
 
     [Test]
     public void TestEmptyHeap()
     {
         var heap = new StringHeap(default, GrammarFileSection.Empty);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(heap.GetString(default, default), Is.EqualTo(""));
             Assert.That(() => heap.GetString(default, new StringHandle(184)), Throws.InstanceOf<ArgumentOutOfRangeException>());
-        });
+        }
     }
 
     [Test]
     public void TestAddInvalidStrings()
     {
         StringHeapWriter builder = new();
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(() => builder.Add("\0"), Throws.ArgumentException);
             Assert.That(() => builder.Add("\uD8B8"), Throws.ArgumentException);
-        });
+        }
     }
 
     [Test]
     public void TestInvalidHeaps()
     {
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             // No leading zero.
             Test("abc\0"u8);
             // No trailing zero.
             Test("\0abc"u8);
-        });
+        }
 
         static unsafe void Test(ReadOnlySpan<byte> heap)
         {
@@ -108,7 +108,7 @@ internal class StringHeapTests
     }
 
     [Test]
-    public unsafe void TestHeapSizeReached([Values(true, false)] bool reachExactly)
+    public unsafe void TestHeapSizeReached([Values] bool reachExactly)
     {
 #if NET
         StringHeapWriter builder = new();
@@ -124,12 +124,12 @@ internal class StringHeapTests
 
         // The max size of the string heap, minus the leading and trailing nulls.
         const int MaxSingleStringLength = (int)GrammarConstants.MaxHeapSize - 2;
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             IConstraint stringLengthConstraint = reachExactly ? Is.EqualTo(MaxSingleStringLength) : Is.GreaterThan(MaxSingleStringLength);
             Assert.That(Encoding.UTF8.GetByteCount(hugeString), stringLengthConstraint);
             Assert.That(() => builder.Add(hugeString), Throws.InstanceOf<OutOfMemoryException>());
-        });
+        }
 #else
         Assert.Ignore("Skipped on .NET Framework because of poor performance.");
 #endif

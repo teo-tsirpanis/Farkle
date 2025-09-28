@@ -10,10 +10,10 @@ internal class ParserResultTests
     {
         ParserResult<int> success = ParserResult.CreateSuccess(42);
         ParserResult<int> failure = ParserResult.CreateError<int>("error");
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(success.ToString(), Is.EqualTo("42"));
             Assert.That(failure.ToString(), Is.EqualTo("error"));
-        });
+        }
     }
 }

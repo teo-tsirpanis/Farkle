@@ -37,13 +37,13 @@ internal class GrammarTablesTests
         Assert.That(buffer.ToArray(), Is.EqualTo(expectedData));
 
         var tables = new GrammarTables(expectedData, new(0, expectedData.Length), out bool hasUnknownTables);
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(hasUnknownTables, Is.False);
             Assert.That(tables.GetGrammarName(expectedData), Is.EqualTo(DummyStringHandle));
             Assert.That(tables.GetGrammarStartSymbol(expectedData), Is.EqualTo(startSymbol));
             Assert.That(tables.GetGrammarFlags(expectedData), Is.EqualTo(GrammarAttributes.None));
-        });
+        }
     }
 
     [Test]

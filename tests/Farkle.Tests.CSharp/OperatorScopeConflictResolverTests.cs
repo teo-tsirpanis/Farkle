@@ -85,11 +85,11 @@ internal class OperatorScopeConflictResolverTests
 
         LrConflictResolverDecision decision = resolver.ResolveReduceReduceConflict(_production1Handle, _production2Handle);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(operators.CanResolveReduceReduceConflicts);
             Assert.That(decision, Is.EqualTo(expectedDecision));
-        });
+        }
     }
 
     [Test]
@@ -100,11 +100,11 @@ internal class OperatorScopeConflictResolverTests
 
         LrConflictResolverDecision decision = resolver.ResolveReduceReduceConflict(_production1Handle, _production2Handle);
 
-        Assert.Multiple(() =>
+        using (Assert.EnterMultipleScope())
         {
             Assert.That(operators.CanResolveReduceReduceConflicts, Is.False);
             Assert.That(decision, Is.EqualTo(LrConflictResolverDecision.CannotChoose));
-        });
+        }
     }
 
     [Test]

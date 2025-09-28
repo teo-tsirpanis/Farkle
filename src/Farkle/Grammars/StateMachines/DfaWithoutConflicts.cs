@@ -119,24 +119,14 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     /// <param name="startState">The state to start matching from.</param>
     /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
     /// beginning of <paramref name="chars"/>.</param>
-    /// <returns>
-    /// A tuple with:
-    /// <list type="bullet">
-    /// <item>A <see cref="TokenSymbolHandle"/> containing the token symbol that was found,
-    /// or containing no value in case of a lexical error.</item>
-    /// <item>The number of characters that were read before matching a token or encountering
-    /// a lexical error.</item>
-    /// <item>The state the DFA was at when it stopped.</item>
-    /// </list>
-    /// </returns>
-    internal (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
-        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors = true)
+    internal DfaMatchResult Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors = true)
     {
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
 
-        TokenSymbolHandle acceptSymbol = default;
+        TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, startState);
         int acceptSymbolLength = 0;
+        int acceptSymbolState = startState;
 
         int currentState = startState;
         int i;
@@ -156,6 +146,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;
+                    acceptSymbolState = currentState;
                 }
             }
             else if (!ignoreLeadingErrors)
@@ -171,15 +162,15 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // accept it, because there is no way for a longer token to be formed.
         if (!(isFinal || this[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
         {
-            acceptSymbol = default;
+            return DfaMatchResult.CreateNeedsMoreChars(acceptSymbol, acceptSymbolState, acceptSymbolLength);
         }
 
     Return:
         if (acceptSymbol.HasValue)
         {
-            return (acceptSymbol, acceptSymbolLength, currentState);
+            return DfaMatchResult.CreateSuccess(acceptSymbol, currentState, acceptSymbolLength);
         }
-        return (default, i, currentState);
+        return DfaMatchResult.CreateError(currentState, i);
     }
 
     /// <summary>

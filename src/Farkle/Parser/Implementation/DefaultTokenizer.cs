@@ -83,10 +83,18 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             // literal strings (except on line groups which are character groups)
             // but that's an assumption we'd better not make.
             bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
-            var (acceptSymbol, charactersRead, dfaStateNew) =
+            var matchResult =
                 _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, dfaState, ignoreLeadingErrors);
+            // The DFA found nothing of value and reached the end; we have to suspend and wait for more input.
+            if (matchResult.NeedsMoreChars)
+            {
+                groupLength = input.RemainingCharacters.Length - chars.Length;
+                dfaState = matchResult.DfaState;
+                error = null;
+                return false;
+            }
             // The DFA found something.
-            if (acceptSymbol.HasValue)
+            if (matchResult.AcceptSymbol is { HasValue: true } acceptSymbol)
             {
                 TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
                 // A new group begins.
@@ -96,7 +104,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     GroupHandle newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     if (hotData.CanGroupNest(currentGroup, newGroup))
                     {
-                        ConsumeInput(ref input, ref chars, charactersRead, flags);
+                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
                         groupStack.Push(newGroup);
                         continue;
                     }
@@ -106,23 +114,15 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 {
                     if ((groupAttributes & GroupAttributes.KeepEndToken) == 0)
                     {
-                        ConsumeInput(ref input, ref chars, charactersRead, flags);
+                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
                     }
                     groupStack.Pop();
                     continue;
                 }
             }
-            // If the DFA found nothing of value and reached the end, we have to suspend and wait for more input.
-            if (!input.IsFinalBlock && charactersRead == chars.Length)
-            {
-                groupLength = input.RemainingCharacters.Length - chars.Length;
-                dfaState = dfaStateNew;
-                error = null;
-                return false;
-            }
             // The existing group is continuing.
             bool consumeCharsRead = (flags & GroupStateFlags.HasCustomDfaStartState) != 0 || (groupAttributes & GroupAttributes.AdvanceByCharacter) == 0;
-            ConsumeInput(ref input, ref chars, consumeCharsRead ? charactersRead : 1, flags);
+            ConsumeInput(ref input, ref chars, consumeCharsRead ? matchResult.CharactersRead : 1, flags);
         }
 
         groupLength = input.RemainingCharacters.Length - chars.Length;
@@ -241,11 +241,19 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 return false;
             }
 
-            var (acceptSymbol, charactersRead, dfaState) =
+            var matchResult =
                 _dfa.Match(hotData.GrammarFile, input.RemainingCharacters, input.IsFinalBlock, _dfa.StartState, ignoreLeadingErrors: false);
 
-            if (acceptSymbol.HasValue)
+            if (matchResult.NeedsMoreChars)
             {
+                input.SuspendTokenizer(this);
+                result = default;
+                return false;
+            }
+
+            if (matchResult.AcceptSymbol is { HasValue: true } acceptSymbol)
+            {
+                int charactersRead = matchResult.CharactersRead;
                 if (hotData.IsTerminal(acceptSymbol))
                 {
                     result = CreateToken(ref input, semanticProvider, acceptSymbol, charactersRead);
@@ -282,17 +290,10 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 return false;
             }
 
-            if (!input.IsFinalBlock && charactersRead == input.RemainingCharacters.Length)
-            {
-                input.SuspendTokenizer(this);
-                result = default;
-                return false;
-            }
-
-            ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..charactersRead];
+            ReadOnlySpan<TChar> lexeme = input.RemainingCharacters[..matchResult.CharactersRead];
             string errorText = ParserUtilities.GetAbbreviatedLexicalErrorText(lexeme);
             result = TokenizerResult.CreateError(new ParserDiagnostic(state.CurrentPosition,
-                new LexicalError(errorText, dfaState)));
+                new LexicalError(errorText, matchResult.DfaState)));
             return true;
         }
     }

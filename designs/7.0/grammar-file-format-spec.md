@@ -240,6 +240,7 @@ While groupStack is not empty:
         End If
     End If
     Run the DFA from currentGroup's start state.
+Label CheckDfaResult:
     If the DFA accepted a token:
         If the accepted token's symbol has the GroupStart flag set:
             Let newGroup be the group whose Start column points to the accepted token's symbol.
@@ -255,6 +256,12 @@ While groupStack is not empty:
             Pop from groupStack.
             Continue loop.
         End If
+    End If
+Label CheckDfaResultEnd:
+    If currentGroup's start state is not the same as the DFA's ordinary start state:
+        Consume as many characters as the DFA read before accepting a token or failing.
+        Run the DFA from its ordinary start state.
+        // Copy the code between labels CheckDfaResult and CheckDfaResultEnd here.
     End If
     If currentGroup has the AdvanceByCharacter flag set:
         Consume one character from the input.
@@ -415,7 +422,11 @@ If all states have a failing default transition, this state machine SHOULD be om
 
 When the tokenizer is inside a group with the `AdvanceByCharacter` flag set, it used to repeatedly run the DFA at the start of each character, until it can match either the group's end token, or the start of a nested group. This is very inefficient, because it can lead to characters being processed multiple times. To improve this, we can add extra states to the DFA that will only match the tokens are looking for when inside a group, and start from there.
 
-This state machine contains `groupCount` entries of type `state_t` that specify the start state of the DFA when the tokenizer is inside a group.
+This state machine contains `groupCount` entries of type `state_t` that are used according to the [group parsing algorithm](#parsing-groups). A group has a custom start state if its corresponding entry in this state machine is not equal to the DFA's regular start state.
+
+In order for parsers to know the precise start of a nested group, a custom group start state MUST NOT end up accepting a token symbol with the `GroupStart` flag set.
+
+In order for parsers to be able to extract the token that ended a group, a custom group start state for a group with the `KeepEndToken` flag set MUST NOT end up accepting the token symbol specified in the group's __End__ column.
 
 If tokenizing all groups starts at the DFA's regular start state, this state machine SHOULD be omitted to save space.
 

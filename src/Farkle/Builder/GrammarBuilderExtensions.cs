@@ -211,7 +211,7 @@ public static class GrammarBuilderExtensions
     /// scope. The reason for this change is that the previous behavior had limited utility and lots
     /// of edge cases that were difficult to define and handle.
     /// </remarks>
-    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params OperatorScope value)
+    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, OperatorScope value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -219,19 +219,9 @@ public static class GrammarBuilderExtensions
             ? builder
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
-
-    /// <summary>
-    /// Changes the <see cref="OperatorScope"/> used to resolve parser conflicts in the grammar.
-    /// </summary>
-    /// <param name="builder">The grammar builder.</param>
-    /// <param name="associativityGroups">The <see cref="AssociativityGroup"/>s that will comprise the scope,
-    /// in ascending order of precedence.</param>
-    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
-    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params AssociativityGroup[] associativityGroups) =>
-        builder.WithOperatorScope(new OperatorScope(associativityGroups));
 
     /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, OperatorScope)"/>
-    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, params OperatorScope value)
+    public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, OperatorScope value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -239,11 +229,6 @@ public static class GrammarBuilderExtensions
             ? builder
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
-
-    /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, AssociativityGroup[])"/>
-    [ExcludeFromCodeCoverage, OverloadResolutionPriority(-1)]
-    public static IGrammarBuilder WithOperatorScope(this IGrammarBuilder builder, params AssociativityGroup[] associativityGroups) =>
-        builder.WithOperatorScope(new OperatorScope(associativityGroups));
 
     /// <summary>
     /// Adds a noise symbol to the grammar that will be ignored if it is encountered in the input.

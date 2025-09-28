@@ -29,11 +29,11 @@ namespace Farkle.Samples.CSharp
                 expression.Extended().Append("^").Extend(expression).Finish(Math.Pow),
                 "(".Appended().Extend(expression).Append(")").AsProduction());
 
-            Builder = expression.WithOperatorScope(
+            Builder = expression.WithOperatorScope([
                 new LeftAssociative("+", "-"),
                 new LeftAssociative("*", "/"),
                 new PrecedenceOnly(NEG),
-                new RightAssociative("^"));
+                new RightAssociative("^")]);
             Parser = Builder.Build();
         }
     }

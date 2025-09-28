@@ -292,11 +292,11 @@ expression.SetProductions(
     "(".Appended().Extend(expression).Append(")").AsProduction(),
     number.AsProduction());
 
-IGrammarBuilder<double> expressionWithOperators = expression.WithOperatorScope(
+IGrammarBuilder<double> expressionWithOperators = expression.WithOperatorScope([
     new LeftAssociative("+", "-"),
     new LeftAssociative("*", "/"),
     new PrecedenceOnly(NEG),
-    new RightAssociative("^"));
+    new RightAssociative("^")]);
 
 CharParser<double> parser = expressionWithOperators.Build();
 
@@ -329,11 +329,11 @@ expression.SetProductions(
     !@ number |> asProduction)
 
 let expressionWithOperators =
-    expression.WithOperatorScope(
+    expression.WithOperatorScope(OperatorScope(
         LeftAssociative("+", "-"),
         LeftAssociative("*", "/"),
         PrecedenceOnly(NEG),
-        RightAssociative("^"))
+        RightAssociative("^")))
 
 let parser = GrammarBuilder.build expressionWithOperators
 
@@ -376,11 +376,11 @@ expression.SetProductions(
     "(".Appended().Extend(expression).Append(")").AsProduction(),
     number.AsProduction());
 
-IGrammarBuilder<double> expressionWithOperators = expression.WithOperatorScope(
+IGrammarBuilder<double> expressionWithOperators = expression.WithOperatorScope([
     new LeftAssociative("+", "-"),
     new LeftAssociative("*", "/"),
     new PrecedenceOnly(NEG),
-    new RightAssociative("^"));
+    new RightAssociative("^")]);
 
 CharParser<double> parser = expressionWithOperators.Build();
 
@@ -418,11 +418,11 @@ let expressionWithOperators =
         !& "-" .>>. expression |> prec NEG => (fun x -> -x),
         !& "(" .>>. expression .>> ")" |> asProduction)
 
-    expression.WithOperatorScope(
+    expression.WithOperatorScope(OperatorScope(
         new LeftAssociative("+", "-"),
         new LeftAssociative("*", "/"),
         new PrecedenceOnly(NEG),
-        new RightAssociative("^"))
+        new RightAssociative("^")))
 
 let parser = GrammarBuilder.build expressionWithOperators
 

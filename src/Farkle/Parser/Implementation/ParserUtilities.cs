@@ -39,15 +39,18 @@ internal static class ParserUtilities
 #endif
     }
 
-    public static unsafe string GetAbbreviatedLexicalErrorText<TChar>(ReadOnlySpan<TChar> chars)
+    public static string GetAbbreviatedLexicalErrorText<TChar>(ReadOnlySpan<TChar> chars)
     {
-        if (typeof(TChar) == typeof(char))
+        unsafe
         {
+            if (typeof(TChar) == typeof(char))
+            {
 #if NET9_0_OR_GREATER
-            return GetAbbreviatedLexicalErrorText(Unsafe.BitCast<ReadOnlySpan<TChar>, ReadOnlySpan<char>>(chars));
+                return GetAbbreviatedLexicalErrorText(Unsafe.BitCast<ReadOnlySpan<TChar>, ReadOnlySpan<char>>(chars));
 #else
-            return GetAbbreviatedLexicalErrorText(*(ReadOnlySpan<char>*)&chars);
+                return GetAbbreviatedLexicalErrorText(*(ReadOnlySpan<char>*)&chars);
 #endif
+            }
         }
         throw new NotImplementedException();
     }

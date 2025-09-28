@@ -5,6 +5,9 @@ using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
+#if NET9_0_OR_GREATER
+using System.Runtime.CompilerServices;
+#endif
 
 namespace Farkle.Parser.Implementation;
 
@@ -40,7 +43,11 @@ internal static class ParserUtilities
     {
         if (typeof(TChar) == typeof(char))
         {
+#if NET9_0_OR_GREATER
+            return GetAbbreviatedLexicalErrorText(Unsafe.BitCast<ReadOnlySpan<TChar>, ReadOnlySpan<char>>(chars));
+#else
             return GetAbbreviatedLexicalErrorText(*(ReadOnlySpan<char>*)&chars);
+#endif
         }
         throw new NotImplementedException();
     }

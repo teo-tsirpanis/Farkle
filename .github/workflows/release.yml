@@ -33,6 +33,8 @@ jobs:
   release:
     needs: pack
     environment: ${{ github.event_name == 'release' && 'release' || 'nightly' }}
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
@@ -42,10 +44,16 @@ jobs:
         with:
           dotnet-version: 10.0.x
           dotnet-quality: preview
+      - name: Obtain NuGet API token
+        uses: nuget/login@v1
+        id: nuget-login
+        with:
+          user: ${{ vars.NUGET_USER }}
+        if: vars.NUGET_USER != ''
       - name: Download package artifacts
         uses: actions/download-artifact@v5
         with:
           name: nuget-packages
           path: ./bin
       - name: Publish
-        run: dotnet nuget push ./bin/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source ${{ vars.NUGET_FEED }}
+        run: dotnet nuget push ./bin/*.nupkg --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY || secrets.NUGET_KEY }} --source ${{ vars.NUGET_FEED }}

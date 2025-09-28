@@ -1,28 +1,27 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-global using RuntimeHelpersCompat = System.Runtime.CompilerServices.RuntimeHelpers;
-#else
+#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
 using System.Runtime.CompilerServices;
-using Microsoft.CodeAnalysis;
 
-namespace Farkle.Compatibility;
+namespace Farkle;
 
-[Embedded]
-internal static class RuntimeHelpersCompat
+internal static partial class Compatibility
 {
-    public static bool TryEnsureSufficientExecutionStack()
+    extension(RuntimeHelpers)
     {
-        try
+        public static bool TryEnsureSufficientExecutionStack()
         {
-            RuntimeHelpers.EnsureSufficientExecutionStack();
+            try
+            {
+                RuntimeHelpers.EnsureSufficientExecutionStack();
+            }
+            catch (InsufficientExecutionStackException)
+            {
+                return false;
+            }
+            return true;
         }
-        catch (InsufficientExecutionStackException)
-        {
-            return false;
-        }
-        return true;
     }
 }
 #endif

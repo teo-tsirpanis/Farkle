@@ -557,7 +557,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
-            if (!RuntimeHelpersCompat.TryEnsureSufficientExecutionStack())
+            if (!RuntimeHelpers.TryEnsureSufficientExecutionStack())
             {
                 return RegexInfo.Error(RegexCharacteristics.IsTooComplex);
             }

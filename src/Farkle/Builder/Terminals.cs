@@ -307,10 +307,6 @@ public static class Terminals
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(escapeChars);
 
-        bool allowEscapeUnicode = escapeChars.Contains('u');
-        ReadOnlySpan<Regex> escapeUnicode = allowEscapeUnicode ?
-            [Regex.Join(Regex.Literal('u'), Regex.OneOf(('0', '9'), ('a', 'f'), ('A', 'F')).Repeat(4))] :
-            [];
         var regexDelimiter = Regex.Literal(delimiter);
         var regexBackslash = Regex.Literal('\\');
         var regex =
@@ -320,12 +316,17 @@ public static class Terminals
                     Regex.NotOneOf(multiLine ? ['\n', '\r', '\\', delimiter] : ['\\', delimiter]),
                     Regex.Join(
                         regexBackslash,
-                        Regex.Choice([
+                        Regex.Choice(
                             regexBackslash,
                             regexDelimiter,
                             Regex.OneOf(escapeChars.Where(c => c != 'u')),
-                            ..escapeUnicode
-                        ])
+                            escapeChars.Contains('u')
+                                ? Regex.Join(
+                                    Regex.Literal('u'),
+                                    Regex.OneOf(('0', '9'), ('a', 'f'), ('A', 'F')).Repeat(4)
+                                )
+                                : Regex.Void
+                        )
                     )
                 ).ZeroOrMore(),
                 regexDelimiter

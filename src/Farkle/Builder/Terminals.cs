@@ -19,9 +19,11 @@ namespace Farkle.Builder;
 /// </summary>
 public static class Terminals
 {
-    private static readonly Regex s_unsignedIntRegex = Regex.OneOf(('0', '9')).AtLeast(1);
+    private static readonly Regex s_optionalMinus = Regex.OneOf(('-', '-')).Optional().CaseSensitive();
 
-    private static readonly Regex s_intRegex = Regex.OneOf(('-', '-')).Optional() + s_unsignedIntRegex;
+    private static readonly Regex s_unsignedIntRegex = Regex.OneOf(('0', '9')).AtLeast(1).CaseSensitive();
+
+    private static readonly Regex s_intRegex = s_optionalMinus + s_unsignedIntRegex;
 
     private static readonly Regex s_unsignedFloatRegex = Regex.Join(
         Regex.OneOf(('-', '-')).Optional(),
@@ -33,9 +35,9 @@ public static class Terminals
             Regex.OneOf('+', '-').Optional(),
             s_unsignedIntRegex
         ).Optional()
-    );
+    ).CaseSensitive();
 
-    private static readonly Regex s_signedFloatRegex = Regex.OneOf('-', '-').Optional() + s_unsignedFloatRegex;
+    private static readonly Regex s_signedFloatRegex = s_optionalMinus + s_unsignedFloatRegex;
 
     // Helper method that returns either a string or a ReadOnlySpan<char> depending on the target framework.
     // This method is intended to be used for the framework's parsing methods.

@@ -17,11 +17,11 @@ namespace Farkle.Builder;
 /// </summary>
 internal static class GrammarBuild
 {
-    private static readonly Regex NewLineRegex = Regex.Choice(Regex.OneOf('\n', '\r'), Regex.Literal("\r\n"));
+    private static readonly Regex NewLineRegex = Regex.Choice(Regex.OneOf('\n', '\r'), Regex.Literal("\r\n")).CaseSensitive();
 
-    private static readonly Regex WhitespaceRegex = Regex.OneOf('\t', '\n', '\r', ' ').AtLeast(1);
+    private static readonly Regex WhitespaceRegex = Regex.OneOf('\t', '\n', '\r', ' ').AtLeast(1).CaseSensitive();
 
-    private static readonly Regex WhitespaceNoNewLineRegex = Regex.OneOf('\t', ' ').AtLeast(1);
+    private static readonly Regex WhitespaceNoNewLineRegex = Regex.OneOf('\t', ' ').AtLeast(1).CaseSensitive();
 
     private static TokenSymbolAttributes GetTerminalFlags(ISymbolBase symbol)
     {

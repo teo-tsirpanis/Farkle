@@ -34,7 +34,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <returns><see langword="true"/> if a token was found or the tokenizer failed.
     /// <see langword="false"/> if more characters are needed. In the latter case
     /// callers need to suspend.</returns>
-    private bool TokenizeGroup(ref ParserInputReader<TChar> input, GroupStateFlags flags, ref ValueStack<GroupHandle> groupStack, ref int groupLength, ref int dfaState, out ParserDiagnostic? error)
+    private bool TokenizeGroup(ref ParserInputReader<TChar> input, GroupStateFlags flags, ref ValueStack<GroupHandle> groupStack,
+        ref int groupLength, ref SuspendedDfaState suspendedDfaState, out ParserDiagnostic? error)
     {
         GrammarTablesHotData hotData = new(_grammar);
 
@@ -71,25 +72,55 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     return true;
                 }
                 // If this is not the final block, we have to update the group's length and suspend.
+                // This lets callers know how many characters we consumed.
                 groupLength = input.RemainingCharacters.Length - chars.Length;
                 error = null;
                 return false;
             }
-            // When inside token groups, we ignore invalid characters at
-            // the beginning to avoid discarding just one and repeat the loop.
-            // We limit this optimization to those that keep the end token because
-            // we cannot accurately determine where the final invalid characters end
-            // and the group ending starts. It would be easy because group ends are
-            // literal strings (except on line groups which are character groups)
-            // but that's an assumption we'd better not make.
-            bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
-            var matchResult =
-                _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, dfaState, ignoreLeadingErrors);
-            // The DFA found nothing of value and reached the end; we have to suspend and wait for more input.
+            int groupDfaState = suspendedDfaState.TryGetState(out int state) ? state : _dfa.GetStartStateForGroupImpl(currentGroup);
+            DfaMatchResult matchResult = default;
+            bool usedCustomDfaState = false;
+            if (suspendedDfaState.HasState || groupDfaState != _dfa.StartState)
+            {
+                matchResult = _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, groupDfaState);
+                usedCustomDfaState = true;
+                if (matchResult.NeedsMoreChars)
+                {
+                    // If the DFA had reached an accept state, consume all characters up to that point.
+                    // This lets us keep track of only the DFA's state; we will resume from the first
+                    // unconsumed character, and the last accept symbol is that of the DFA state.
+                    // Some characters will be given to the DFA multiple times, which might be a concern
+                    // since the purpose of the custom group start states is to avoid that, but this is
+                    // not expected to happen as groups start and end with literals.
+                    int charsToConsume = matchResult.AcceptSymbol.HasValue ? matchResult.CharactersRead : chars.Length;
+                    ConsumeInput(ref input, ref chars, charsToConsume, flags);
+                    groupLength = input.RemainingCharacters.Length - chars.Length;
+                    suspendedDfaState = SuspendedDfaState.Create(matchResult.DfaState);
+                    error = null;
+                    return false;
+                }
+                suspendedDfaState = SuspendedDfaState.None;
+                if (!matchResult.AcceptSymbol.HasValue)
+                {
+                    // Consume the characters only if the tokenizer failed. Otherwise,
+                    // they will be taken care of later.
+                    ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
+                }
+            }
+            if (!matchResult.AcceptSymbol.HasValue)
+            {
+                // When inside token groups, we ignore invalid characters at
+                // the beginning to avoid discarding just one and repeat the loop.
+                // We limit this optimization to those that keep the end token because
+                // we cannot accurately determine where the final invalid characters end
+                // and the group ending starts.
+                bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;
+                matchResult = _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, _dfa.StartState, ignoreLeadingErrors);
+                usedCustomDfaState = false;
+            }
             if (matchResult.NeedsMoreChars)
             {
                 groupLength = input.RemainingCharacters.Length - chars.Length;
-                dfaState = matchResult.DfaState;
                 error = null;
                 return false;
             }
@@ -98,8 +129,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             {
                 TokenSymbolAttributes symbolAttributes = hotData.GetTokenSymbolFlags(acceptSymbol);
                 // A new group begins.
-                // Per the grammar format spec, we can skip checking the group nesting.
-                if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0 && (flags & GroupStateFlags.HasCustomDfaStartState) == 0)
+                if ((symbolAttributes & TokenSymbolAttributes.GroupStart) != 0)
                 {
                     GroupHandle newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     if (hotData.CanGroupNest(currentGroup, newGroup))
@@ -121,7 +151,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 }
             }
             // The existing group is continuing.
-            bool consumeCharsRead = (flags & GroupStateFlags.HasCustomDfaStartState) != 0 || (groupAttributes & GroupAttributes.AdvanceByCharacter) == 0;
+            bool consumeCharsRead = usedCustomDfaState || (groupAttributes & GroupAttributes.AdvanceByCharacter) == 0;
             ConsumeInput(ref input, ref chars, consumeCharsRead ? matchResult.CharactersRead : 1, flags);
         }
 
@@ -175,10 +205,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         }
         ValueStack<GroupHandle> groupStack = new(stackalloc GroupHandle[4]);
         groupStack.Push(group);
-        int dfaState = _dfa.GetStartStateForGroupImpl(group);
-        GroupStateFlags flags =
-            (isNoise ? GroupStateFlags.IsNoise : 0) |
-            (dfaState != _dfa.StartState ? GroupStateFlags.HasCustomDfaStartState : 0);
+        SuspendedDfaState dfaState = SuspendedDfaState.None;
+        GroupStateFlags flags = isNoise ? GroupStateFlags.IsNoise : 0;
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         // The compiler cannot prove that the stack pointers of groupStack will not leak to
         // input, so it raises an error. We convert it to a warning with the use of unsafe,
@@ -200,7 +228,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     {
         ValueStack<GroupHandle> groupStack = new(arg.GroupStackState);
         int charactersRead = arg.CharactersRead;
-        int dfaState = arg.DfaState;
+        SuspendedDfaState dfaState = arg.DfaState;
         if (TokenizeGroup(ref input, arg.Flags, ref groupStack, ref charactersRead, ref dfaState, out ParserDiagnostic? error))
         {
             groupStack.Dispose();
@@ -307,13 +335,25 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         public TokenSymbolHandle GroupContainerSymbol { get; init; }
         public GroupStateFlags Flags { get; init; }
         public int CharactersRead { get; init; }
-        public int DfaState { get; init; }
+        public SuspendedDfaState DfaState { get; init; }
 
-        public static GroupState Create(ref ValueStack<GroupHandle> groupStack, TokenSymbolHandle groupContainerSymbol, GroupStateFlags flags, int charactersRead, int dfaState)
-            => new() { GroupStackState = groupStack.ExportState(), GroupContainerSymbol = groupContainerSymbol, Flags = flags, CharactersRead = charactersRead, DfaState = dfaState };
+        public static GroupState Create(ref ValueStack<GroupHandle> groupStack, TokenSymbolHandle groupContainerSymbol,
+            GroupStateFlags flags, int charactersRead, SuspendedDfaState dfaState) => new()
+            {
+                GroupStackState = groupStack.ExportState(),
+                GroupContainerSymbol = groupContainerSymbol,
+                Flags = flags,
+                CharactersRead = charactersRead,
+                DfaState = dfaState,
+            };
 
-        public GroupState Update(ref ValueStack<GroupHandle> groupStack, int charactersRead, int dfaState)
-            => this with { GroupStackState = groupStack.ExportState(), CharactersRead = charactersRead, DfaState = dfaState };
+        public GroupState Update(ref ValueStack<GroupHandle> groupStack, int charactersRead,
+            SuspendedDfaState dfaState) => this with
+            {
+                GroupStackState = groupStack.ExportState(),
+                CharactersRead = charactersRead,
+                DfaState = dfaState,
+            };
     }
 
     [Flags]
@@ -321,6 +361,31 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     {
         None = 0,
         IsNoise = 1,
-        HasCustomDfaStartState = 2,
+    }
+
+    private readonly struct SuspendedDfaState
+    {
+        private readonly int _value;
+
+        private SuspendedDfaState(int value)
+        {
+            _value = value;
+        }
+
+        public static SuspendedDfaState None => new(-1);
+
+        public bool HasState => _value >= 0;
+
+        public static SuspendedDfaState Create(int state)
+        {
+            Debug.Assert(state >= 0);
+            return new(state);
+        }
+
+        public bool TryGetState(out int state)
+        {
+            state = _value;
+            return _value >= 0;
+        }
     }
 }

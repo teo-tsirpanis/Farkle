@@ -34,7 +34,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     /// <returns><see langword="true"/> if a token was found or the tokenizer failed.
     /// <see langword="false"/> if more characters are needed. In the latter case
     /// callers need to suspend.</returns>
-    private bool TokenizeGroup(ref ParserInputReader<TChar> input, GroupStateFlags flags, ref ValueStack<GroupHandle> groupStack,
+    private bool TokenizeGroup(ref ParserInputReader<TChar> input, bool isNoise, ref ValueStack<GroupHandle> groupStack,
         ref int groupLength, ref SuspendedDfaState suspendedDfaState, out ParserDiagnostic? error)
     {
         GrammarTablesHotData hotData = new(_grammar);
@@ -93,7 +93,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     // since the purpose of the custom group start states is to avoid that, but this is
                     // not expected to happen as groups start and end with literals.
                     int charsToConsume = matchResult.AcceptSymbol.HasValue ? matchResult.CharactersRead : chars.Length;
-                    ConsumeInput(ref input, ref chars, charsToConsume, flags);
+                    ConsumeInput(ref input, ref chars, charsToConsume, isNoise);
                     groupLength = input.RemainingCharacters.Length - chars.Length;
                     suspendedDfaState = SuspendedDfaState.Create(matchResult.DfaState);
                     error = null;
@@ -104,7 +104,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 {
                     // Consume the characters only if the tokenizer failed. Otherwise,
                     // they will be taken care of later.
-                    ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
+                    ConsumeInput(ref input, ref chars, matchResult.CharactersRead, isNoise);
                 }
             }
             if (!matchResult.AcceptSymbol.HasValue)
@@ -134,7 +134,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     GroupHandle newGroup = hotData.GetTokenSymbolStartedGroup(acceptSymbol);
                     if (hotData.CanGroupNest(currentGroup, newGroup))
                     {
-                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
+                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, isNoise);
                         groupStack.Push(newGroup);
                         continue;
                     }
@@ -144,7 +144,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 {
                     if ((groupAttributes & GroupAttributes.KeepEndToken) == 0)
                     {
-                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, flags);
+                        ConsumeInput(ref input, ref chars, matchResult.CharactersRead, isNoise);
                     }
                     groupStack.Pop();
                     continue;
@@ -152,18 +152,18 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             }
             // The existing group is continuing.
             bool consumeCharsRead = usedCustomDfaState || (groupAttributes & GroupAttributes.AdvanceByCharacter) == 0;
-            ConsumeInput(ref input, ref chars, consumeCharsRead ? matchResult.CharactersRead : 1, flags);
+            ConsumeInput(ref input, ref chars, consumeCharsRead ? matchResult.CharactersRead : 1, isNoise);
         }
 
         groupLength = input.RemainingCharacters.Length - chars.Length;
         error = null;
         return true;
 
-        static void ConsumeInput(ref ParserInputReader<TChar> input, ref ReadOnlySpan<TChar> chars, int count, GroupStateFlags flags)
+        static void ConsumeInput(ref ParserInputReader<TChar> input, ref ReadOnlySpan<TChar> chars, int count, bool isNoise)
         {
             chars = chars[count..];
             // If the outermost group is a noise group, we actually consume the input, to support discarding the characters.
-            if ((flags & GroupStateFlags.IsNoise) != 0)
+            if (isNoise)
             {
                 input.Consume(count);
                 Debug.Assert(input.RemainingCharacters == chars);
@@ -206,12 +206,11 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         ValueStack<GroupHandle> groupStack = new(stackalloc GroupHandle[4]);
         groupStack.Push(group);
         SuspendedDfaState dfaState = SuspendedDfaState.None;
-        GroupStateFlags flags = isNoise ? GroupStateFlags.IsNoise : 0;
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         // The compiler cannot prove that the stack pointers of groupStack will not leak to
         // input, so it raises an error. We convert it to a warning with the use of unsafe,
         // and suppress the warning.
-        bool finished = TokenizeGroup(ref input, flags, ref groupStack, ref charactersRead, ref dfaState, out error);
+        bool finished = TokenizeGroup(ref input, isNoise, ref groupStack, ref charactersRead, ref dfaState, out error);
 #pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
         if (finished)
         {
@@ -219,7 +218,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         }
         else
         {
-            input.SuspendTokenizer(this, GroupState.Create(ref groupStack, groupContainerSymbol, flags, charactersRead, dfaState));
+            input.SuspendTokenizer(this, GroupState.Create(ref groupStack, groupContainerSymbol, isNoise, charactersRead, dfaState));
         }
         return finished;
     }
@@ -229,7 +228,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         ValueStack<GroupHandle> groupStack = new(arg.GroupStackState);
         int charactersRead = arg.CharactersRead;
         SuspendedDfaState dfaState = arg.DfaState;
-        if (TokenizeGroup(ref input, arg.Flags, ref groupStack, ref charactersRead, ref dfaState, out ParserDiagnostic? error))
+        if (TokenizeGroup(ref input, arg.IsNoise, ref groupStack, ref charactersRead, ref dfaState, out ParserDiagnostic? error))
         {
             groupStack.Dispose();
             if (error is not null)
@@ -240,7 +239,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             // The group had been a noise group.
             // We either return false to give a chance to the other tokenizers in the chain
             // to run, or return to the regular tokenizer logic if we are the only tokenizer.
-            if ((arg.Flags & GroupStateFlags.IsNoise) != 0)
+            if (arg.IsNoise)
             {
                 if (input.IsSingleTokenizerInChain())
                 {
@@ -333,16 +332,16 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     {
         public ValueStack<GroupHandle>.State GroupStackState { get; init; }
         public TokenSymbolHandle GroupContainerSymbol { get; init; }
-        public GroupStateFlags Flags { get; init; }
+        public bool IsNoise { get; init; }
         public int CharactersRead { get; init; }
         public SuspendedDfaState DfaState { get; init; }
 
         public static GroupState Create(ref ValueStack<GroupHandle> groupStack, TokenSymbolHandle groupContainerSymbol,
-            GroupStateFlags flags, int charactersRead, SuspendedDfaState dfaState) => new()
+            bool isNoise, int charactersRead, SuspendedDfaState dfaState) => new()
             {
                 GroupStackState = groupStack.ExportState(),
                 GroupContainerSymbol = groupContainerSymbol,
-                Flags = flags,
+                IsNoise = isNoise,
                 CharactersRead = charactersRead,
                 DfaState = dfaState,
             };
@@ -354,13 +353,6 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                 CharactersRead = charactersRead,
                 DfaState = dfaState,
             };
-    }
-
-    [Flags]
-    private enum GroupStateFlags : byte
-    {
-        None = 0,
-        IsNoise = 1,
     }
 
     private readonly struct SuspendedDfaState

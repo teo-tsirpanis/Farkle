@@ -48,9 +48,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
         // Therefore, we have to do some bookkeeping ourselves to keep the position without consuming it and
         // throwing it away, and use a local variable to store the remaining characters.
         ReadOnlySpan<TChar> chars = input.RemainingCharacters[groupLength..];
-        while (groupStack.Count != 0)
+        while (groupStack.TryPeek(out uint currentGroup))
         {
-            uint currentGroup = groupStack.Peek();
             GroupAttributes groupAttributes = hotData.GetGroupFlags(currentGroup);
             // Check if we ran out of input.
             if (chars.IsEmpty)

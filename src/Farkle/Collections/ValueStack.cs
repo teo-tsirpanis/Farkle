@@ -3,6 +3,8 @@
 
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.CompilerServices;
 #endif
@@ -145,6 +147,17 @@ internal ref struct ValueStack<T>
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(indexFromTheEnd));
         }
         return _items[_count - 1 - indexFromTheEnd];
+    }
+
+    public readonly bool TryPeek([MaybeNullWhen(false)] out T item)
+    {
+        if (_count == 0)
+        {
+            item = default;
+            return false;
+        }
+        item = _items[_count - 1];
+        return true;
     }
 
     public readonly Span<T> PeekMany(int itemsToPeek)

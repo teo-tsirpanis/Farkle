@@ -29,7 +29,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             return (char)(object)c;
         }
 
-        throw new NotSupportedException();
+        ThrowHelpers.ThrowUnsupportedCharacterException();
+        return default;
     }
 
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;

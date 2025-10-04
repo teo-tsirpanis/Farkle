@@ -52,15 +52,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     {
         if (typeof(TChar) == typeof(char))
         {
-            if (regex.IsChars(out var chars_, out isInverted))
-            {
-                ranges = (ImmutableArray<(TChar, TChar)>)(object)chars_;
-                return true;
-            }
+            bool result = regex.IsChars(out var chars, out isInverted);
+            ranges = Unsafe.BitCast<ImmutableArray<(char, char)>, ImmutableArray<(TChar, TChar)>>(chars);
+            return result;
         }
-        ranges = default;
-        isInverted = false;
-        return false;
+        ThrowHelpers.ThrowUnsupportedCharacterException();
+        throw null;
     }
 
     private static TChar PreviousChar(TChar c) => (TChar)(object)(char)((char)(object)c - 1);
@@ -75,7 +72,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     {
         if (typeof(TChar) != typeof(char))
         {
-            throw new NotSupportedException("Unsupported character type. Currently only char is supported.");
+            ThrowHelpers.ThrowUnsupportedCharacterException();
         }
 
         Symbols = symbols;
@@ -497,6 +494,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         }
 
         // We should not be reaching this point; the constructor would have thrown.
+        ThrowHelpers.ThrowUnsupportedCharacterException();
         return null!;
     }
 

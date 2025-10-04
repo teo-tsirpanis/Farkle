@@ -52,7 +52,8 @@ internal static class ParserUtilities
 #endif
             }
         }
-        throw new NotImplementedException();
+        ThrowHelpers.ThrowUnsupportedCharacterException();
+        return null!;
     }
 
     public static ImmutableArray<string?> GetExpectedSymbols(Grammar grammar, LrState state)

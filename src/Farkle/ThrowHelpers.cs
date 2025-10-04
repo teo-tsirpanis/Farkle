@@ -76,6 +76,10 @@ internal static class ThrowHelpers
         throw new OutOfMemoryException(message);
 
     [DoesNotReturn]
+    public static void ThrowUnsupportedCharacterException() =>
+        ThrowNotSupportedException("Unsupported character type. Currently only char is supported.");
+
+    [DoesNotReturn]
     public static void ThrowSpecialNameNotFound(string specialName) =>
         ThrowKeyNotFoundException(Resources.Format(null, nameof(Resources.Grammar_SpecialNameNotFound), specialName));
 }

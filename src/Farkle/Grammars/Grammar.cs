@@ -251,7 +251,8 @@ public abstract partial class Grammar : IGrammarProvider
         {
             return DfaOnChar as Dfa<TChar>;
         }
-        throw new NotSupportedException();
+        ThrowHelpers.ThrowUnsupportedCharacterException();
+        return null;
     }
 
     /// <summary>

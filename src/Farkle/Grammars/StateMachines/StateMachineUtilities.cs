@@ -52,7 +52,7 @@ internal static class StateMachineUtilities
             return;
         }
 
-        throw new NotSupportedException();
+        ThrowHelpers.ThrowUnsupportedCharacterException();
     }
 
     public static T CastUInt<T>(uint value) where T : unmanaged

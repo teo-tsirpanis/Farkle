@@ -85,8 +85,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// </summary>
     /// <param name="symbols">The symbols of the grammar.</param>
     /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
-    /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by assigning a priority
-    /// to symbols based on their prioerties.</param>
+    /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by prioritizing symbols.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <param name="log">Used to log events in the building process.</param>
     /// <param name="cancellationToken">Used to cancel the building process.</param>
@@ -101,8 +100,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         // successfully produces a DFA that will always fail either way.
 
         var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
-        var (leaves, followPos, rootFirstPos, hasError) = @this.BuildRegexTree(caseSensitive);
-        if (hasError)
+        var (leaves, followPos, rootFirstPos) = @this.BuildRegexTree(caseSensitive);
+        if (leaves is null)
         {
             return null;
         }
@@ -123,7 +122,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             case [(_, var symbol)]: return symbol;
         }
 
-        acceptSymbols.Sort((x1, x2) => -x1.Priority.CompareTo(x2.Priority));
+        acceptSymbols.Sort(static (x1, x2) => -x1.Priority.CompareTo(x2.Priority));
 
         var (firstPriority, firstSymbol) = acceptSymbols[0];
 
@@ -493,7 +492,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return null!;
     }
 
-    private (List<RegexLeaf> Leaves, List<BitSet> FollowPos, BitSet RootFirstPos, bool HasError) BuildRegexTree(bool caseSensitive)
+    private (List<RegexLeaf>? Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(bool caseSensitive)
     {
         Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache = [];
         List<RegexLeaf> leaves = [];
@@ -532,19 +531,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 characteristics |= info.Characteristics;
             }
             bool regexHasError = (characteristics & RegexCharacteristics.HasError) != 0;
-            bool hasVoid = regexes.IsEmpty || (characteristics & RegexCharacteristics.HasVoid) != 0;
             hasError |= regexHasError;
-            if (Log.IsEnabled(DiagnosticSeverity.Warning) && !regexHasError && hasVoid)
-            {
-                Log.RegexContainsVoid(Symbols.GetName(i));
-            }
             if ((characteristics & RegexCharacteristics.IsTooComplex) != 0)
             {
                 Log.RegexTooComplexError(Symbols.GetName(i));
             }
         }
 
-        return (leaves, followPos, rootFirstPos, hasError);
+        return (hasError ? null : leaves, followPos, rootFirstPos);
 
         RegexInfo Visit(in DfaBuild<TChar> @this, int symbolIndex, Regex regex, bool caseSensitive, bool isLowered = false)
         {
@@ -743,16 +737,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public bool IsNullable { get; } = IsNullable;
 
-        /// <summary>
-        /// Whether the regex cannot be followed by any character.
-        /// </summary>
-        /// <remarks>
-        /// This is usually undesirable. The builder will
-        /// emit a warning if the regex of a terminal has
-        /// this characteristic.
-        /// </remarks>
-        public bool IsVoid => !IsNullable && LastPos.IsEmpty;
-
         public RegexCharacteristics Characteristics { get; } = Characteristics;
 
         public bool HasStar => (Characteristics & RegexCharacteristics.HasStar) != 0;
@@ -778,17 +762,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo operator +(in RegexInfo left, in RegexInfo right)
         {
-            // We can skip checking if left is void because when processing a concatenation of regexes,
-            // left starts to be RegexInfo.Empty and right gets passed all the regexes eventually,
-            // so we don't miss anything.
-            RegexCharacteristics hasVoidMaybe = right.IsVoid
-                ? RegexCharacteristics.HasVoid
-                : RegexCharacteristics.None;
             return new RegexInfo(
                 left.IsNullable ? BitSet.Union(in left.FirstPos, in right.FirstPos) : left.FirstPos,
                 right.IsNullable ? BitSet.Union(in left.LastPos, in right.LastPos) : right.LastPos,
                 left.IsNullable && right.IsNullable,
-                left.Characteristics | right.Characteristics | hasVoidMaybe);
+                left.Characteristics | right.Characteristics);
         }
 
         public static RegexInfo operator |(in RegexInfo left, in RegexInfo right)
@@ -820,26 +798,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// </summary>
         HasStar = 1,
         /// <summary>
-        /// The regex contains <see cref="Regex.Void"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This is usually undesirable. The builder will
-        /// emit a warning if the regex of a terminal has
-        /// this characteristic.
-        /// </para>
-        /// <para>
-        /// This characteristic gets originated when a <see cref="RegexInfo"/>
-        /// gets concatenated on the right with one that has the
-        /// <see cref="RegexInfo.IsVoid"/> property.
-        /// </para>
-        /// </remarks>
-        HasVoid = 2,
-        /// <summary>
         /// Processing of the regex failed for some reason. The builder will continue
         /// processing the regexes to uncover more errors, but will not emit a DFA.
         /// </summary>
-        HasError = 4,
+        HasError = 2,
         /// <summary>
         /// Processing of the regex failed because it is too complex.
         /// Must be specified alongside <see cref="HasError"/>.
@@ -847,7 +809,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// <remarks>
         /// This flag exists to report an error only once per symbol.
         /// </remarks>
-        IsTooComplex = 8
+        IsTooComplex = 4
     }
 
     private enum IntervalType : byte

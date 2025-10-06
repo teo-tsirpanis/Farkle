@@ -25,23 +25,33 @@ internal static class GrammarBuild
 
     private static TokenSymbolAttributes GetTerminalFlags(ISymbolBase symbol)
     {
-        switch (symbol)
+        return symbol switch
         {
-            case Terminal { Options: var options }:
-                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy);
-            case VirtualTerminal { Options: var options }:
-                return MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy);
-            case Group { Options: var options }:
-                return MapFlags((uint)options, (uint)GroupOptions.Hidden, (uint)GroupOptions.Noisy);
-            default:
-                return TokenSymbolAttributes.Terminal;
-        }
+            Terminal { Options: var options } =>
+                MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy),
+            VirtualTerminal { Options: var options } =>
+                MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy),
+            Group { Options: var options } =>
+                MapFlags((uint)options, (uint)GroupOptions.Hidden, (uint)GroupOptions.Noisy),
+            _ => TokenSymbolAttributes.Terminal,
+        };
 
         static TokenSymbolAttributes MapFlags(uint flags, uint hiddenFlag, uint noisyFlag)
         {
             return ((flags & hiddenFlag) != 0 ? TokenSymbolAttributes.Hidden : TokenSymbolAttributes.None)
                 | ((flags & noisyFlag) != 0 ? TokenSymbolAttributes.Noise : TokenSymbolAttributes.None)
                 | TokenSymbolAttributes.Terminal;
+        }
+    }
+
+    private static void CheckUnmatchedSymbols(GrammarSymbolsProvider symbols, HashSet<TokenSymbolHandle> writtenSymbols, in BuilderLogger log)
+    {
+        for (int i = 0; i < symbols.SymbolCount; i++)
+        {
+            if (!writtenSymbols.Contains(symbols.GetTokenSymbolHandle(i)))
+            {
+                log.SymbolCannotBeMatched(symbols.GetName(i));
+            }
         }
     }
 
@@ -252,12 +262,16 @@ internal static class GrammarBuild
         }
 
         // Build state machines if they are requested.
-        bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
         if (dfaSymbols is not null)
         {
+            bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
             var dfaWriter = DfaBuild<char>.Build(dfaSymbols, isCaseSensitive, true, options.MaxTokenizerStates, log, options.CancellationToken);
             if (dfaWriter is not null)
             {
+                if (log.IsEnabled(DiagnosticSeverity.Warning))
+                {
+                    CheckUnmatchedSymbols(dfaSymbols, [.. dfaWriter.EnumerateAcceptSymbols()], log);
+                }
                 writer.AddStateMachine(dfaWriter);
             }
         }

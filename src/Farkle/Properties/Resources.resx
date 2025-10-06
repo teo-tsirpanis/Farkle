@@ -99,8 +99,8 @@
   <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
     <value>Cannot distinguish between symbols: {0}</value>
   </data>
-  <data name="Builder_RegexContainsVoid" xml:space="preserve">
-    <value>Regex for symbol {0} (or part of it) cannot be matched by any character</value>
+  <data name="Builder_SymbolCannotBeMatched" xml:space="preserve">
+    <value>Symbol {0} cannot be matched by any string</value>
   </data>
   <data name="Builder_SymbolKind_Terminal" xml:space="preserve">
     <value>terminal</value>

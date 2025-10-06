@@ -34,6 +34,14 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     public int StateCount => _firstEdges.Count;
 
+    public IEnumerable<TokenSymbolHandle> EnumerateAcceptSymbols()
+    {
+        foreach (var accept in _accepts)
+        {
+            yield return new(accept);
+        }
+    }
+
     public void AddAccept(TokenSymbolHandle handle)
     {
         if (!handle.HasValue)

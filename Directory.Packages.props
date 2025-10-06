@@ -26,7 +26,7 @@
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.10.2" />
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="1.9.0" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.8.4" />

@@ -68,7 +68,7 @@ internal static class GoldGrammarConverter
         {
             foreach (ushort nestedGroup in group.Nesting)
             {
-                writer.AddGroupNesting(nestedGroup);
+                writer.AddGroupNesting(new(nestedGroup));
             }
         }
 

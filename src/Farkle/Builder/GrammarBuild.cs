@@ -171,10 +171,10 @@ internal static class GrammarBuild
                     flags = GroupAttributes.AdvanceByCharacter;
                 }
                 bool isRecursive = (group.Options & GroupOptions.Recursive) != 0;
-                uint groupIndex = writer.AddGroup(writer.GetOrAddString(name), container, flags, startHandle, endHandle, isRecursive ? 1 : 0);
+                GroupHandle groupHandle = writer.AddGroup(writer.GetOrAddString(name), container, flags, startHandle, endHandle, isRecursive ? 1 : 0);
                 if (isRecursive)
                 {
-                    writer.AddGroupNesting(groupIndex);
+                    writer.AddGroupNesting(groupHandle);
                 }
             }
         }

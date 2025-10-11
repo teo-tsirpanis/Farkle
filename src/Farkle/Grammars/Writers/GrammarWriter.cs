@@ -30,6 +30,8 @@ internal sealed class GrammarWriter
         + (_stringHeapWriter.LengthSoFar > 0 ? 1 : 0)
         + (_blobHeapWriter.LengthSoFar > 0 ? 1 : 0);
 
+    public int TokenSymbolCount => _tablesWriter.TokenSymbolRowCount;
+
     public StringHandle GetOrAddString(string str)
     {
         ArgumentNullException.ThrowIfNull(str);

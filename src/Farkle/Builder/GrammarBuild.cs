@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Collections.Immutable;
 using System.Numerics;
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;
@@ -41,17 +42,6 @@ internal static class GrammarBuild
             return ((flags & hiddenFlag) != 0 ? TokenSymbolAttributes.Hidden : TokenSymbolAttributes.None)
                 | ((flags & noisyFlag) != 0 ? TokenSymbolAttributes.Noise : TokenSymbolAttributes.None)
                 | TokenSymbolAttributes.Terminal;
-        }
-    }
-
-    private static void CheckUnmatchedSymbols(GrammarSymbolsProvider symbols, HashSet<TokenSymbolHandle> writtenSymbols, in BuilderLogger log)
-    {
-        for (int i = 0; i < symbols.SymbolCount; i++)
-        {
-            if (!writtenSymbols.Contains(symbols.GetTokenSymbolHandle(i)))
-            {
-                log.SymbolCannotBeMatched(symbols.GetName(i));
-            }
         }
     }
 
@@ -108,9 +98,13 @@ internal static class GrammarBuild
             grammarDefinition.SymbolIdentityObjectComparer);
 
         // Add terminals.
-        GrammarSymbolsProvider? dfaSymbols = ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0)
-            ? new(grammarDefinition.Terminals.Count)
-            : null;
+        SymbolNameProvider? dfaSymbols = null;
+        ImmutableArray<Regex>.Builder? regexBuilder = null;
+        if ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0)
+        {
+            dfaSymbols = new(grammarDefinition.Terminals.Count);
+            regexBuilder = ImmutableArray.CreateBuilder<Regex>(grammarDefinition.Terminals.Count);
+        }
         // We must add the groups' start and end symbols after the terminals.
         // Keep the groups in this list to process them later.
         List<Group>? groups = null;
@@ -131,9 +125,10 @@ internal static class GrammarBuild
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), flags);
             symbolMap.Add(GrammarDefinition.GetSymbolIdentityObject(terminal), handle);
+            dfaSymbols?.Add(handle, name, TokenSymbolKind.Terminal);
             if (GetTerminalRegex(terminal) is { } regex)
             {
-                dfaSymbols?.Add(regex, handle, name, TokenSymbolKind.Terminal);
+                regexBuilder?.Add(Regex.Accept(regex, handle, lowestPriority: false));
             }
             if (terminal is NewLine)
             {
@@ -161,7 +156,8 @@ internal static class GrammarBuild
                 };
                 TokenSymbolHandle container = (TokenSymbolHandle)symbolMap[group];
                 TokenSymbolHandle startHandle = writer.AddTokenSymbol(writer.GetOrAddString(groupStart), TokenSymbolAttributes.GroupStart);
-                dfaSymbols?.Add(GetRegexForLiteral(groupStart), startHandle, groupStart, TokenSymbolKind.GroupStart);
+                dfaSymbols?.Add(startHandle, groupStart, TokenSymbolKind.GroupStart);
+                regexBuilder?.Add(Regex.Accept(GetRegexForLiteral(groupStart), startHandle, lowestPriority: false));
                 TokenSymbolHandle endHandle;
                 GroupAttributes flags;
                 if (groupEndOrNewLine is null)
@@ -225,7 +221,8 @@ internal static class GrammarBuild
             foreach ((string start, string? endOrNewLine) in comments)
             {
                 TokenSymbolHandle groupStart = writer.AddTokenSymbol(writer.GetOrAddString(start), TokenSymbolAttributes.GroupStart);
-                dfaSymbols?.Add(GetRegexForLiteral(start), groupStart, start, TokenSymbolKind.GroupStart);
+                dfaSymbols?.Add(groupStart, start, TokenSymbolKind.GroupStart);
+                regexBuilder?.Add(Regex.Accept(GetRegexForLiteral(start), groupStart, lowestPriority: false));
                 TokenSymbolHandle groupEnd;
                 GroupAttributes flags;
                 if (endOrNewLine is null)
@@ -251,27 +248,27 @@ internal static class GrammarBuild
             const string WhitespaceName = "Whitespace";
             TokenSymbolHandle whitespaceHandle = writer.AddTokenSymbol(writer.GetOrAddString(WhitespaceName),
                 TokenSymbolAttributes.Noise | TokenSymbolAttributes.Generated);
-            dfaSymbols?.Add(whitespaceRegex, whitespaceHandle, WhitespaceName, TokenSymbolKind.Noise);
+            dfaSymbols?.Add(whitespaceHandle, WhitespaceName, TokenSymbolKind.Noise);
+            regexBuilder?.Add(Regex.Accept(whitespaceRegex, whitespaceHandle, lowestPriority: true));
         }
 
         // Add miscellaneous noise symbols.
         foreach ((string name, Regex regex) in globalOptions.NoiseSymbols)
         {
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(name), TokenSymbolAttributes.Noise);
-            dfaSymbols?.Add(regex, handle, name, TokenSymbolKind.Noise);
+            dfaSymbols?.Add(handle, name, TokenSymbolKind.Noise);
+            regexBuilder?.Add(Regex.Accept(regex, handle, lowestPriority: true));
         }
 
         // Build state machines if they are requested.
         if (dfaSymbols is not null)
         {
+            Regex regex = Regex.Choice(regexBuilder!.DrainToImmutable());
             bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
-            var dfaWriter = DfaBuild<char>.Build(dfaSymbols, isCaseSensitive, true, options.MaxTokenizerStates, log, options.CancellationToken);
+            var dfaBuild = new DfaBuild<char>(dfaSymbols.GetName, writer.TokenSymbolCount, log, options.CancellationToken);
+            var dfaWriter = dfaBuild.Build(regex, isCaseSensitive, true, options.MaxTokenizerStates);
             if (dfaWriter is not null)
             {
-                if (log.IsEnabled(DiagnosticSeverity.Warning))
-                {
-                    CheckUnmatchedSymbols(dfaSymbols, [.. dfaWriter.EnumerateAcceptSymbols()], log);
-                }
                 writer.AddStateMachine(dfaWriter);
             }
         }
@@ -308,7 +305,8 @@ internal static class GrammarBuild
                 return (TokenSymbolHandle)existingHandle;
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(content), TokenSymbolAttributes.None);
-            dfaSymbols?.Add(GetRegexForLiteral(content), handle, content, TokenSymbolKind.GroupEnd);
+            dfaSymbols?.Add(handle, content, TokenSymbolKind.GroupEnd);
+            regexBuilder?.Add(Regex.Accept(GetRegexForLiteral(content), handle, lowestPriority: false));
             symbolMap.Add(content, handle);
             return handle;
         }
@@ -341,44 +339,38 @@ internal static class GrammarBuild
                 string name = NewLine.Instance.Name;
                 newLineHandle = writer.AddTokenSymbol(writer.GetOrAddString(name),
                     autoWhitespace ? TokenSymbolAttributes.Noise : TokenSymbolAttributes.None);
-                dfaSymbols?.Add(NewLineRegex, newLineHandle, name,
-                    autoWhitespace ? TokenSymbolKind.Noise : TokenSymbolKind.GroupEnd);
+                dfaSymbols?.Add(newLineHandle, name, autoWhitespace ? TokenSymbolKind.Noise : TokenSymbolKind.GroupEnd);
+                regexBuilder?.Add(Regex.Accept(NewLineRegex, newLineHandle, lowestPriority: false));
             }
             return newLineHandle;
         }
     }
 
-    private sealed class GrammarSymbolsProvider(int sizeHint) : IGrammarSymbolsProvider
+    private sealed class SymbolNameProvider(int sizeHint)
     {
-        private readonly List<(Regex Regex, TokenSymbolHandle Handle, string Name, TokenSymbolKind Kind)> _symbols = new(sizeHint);
+        private readonly Dictionary<TokenSymbolHandle, (string Name, TokenSymbolKind Kind)> _symbolNames = new(sizeHint);
 
-        private readonly Dictionary<string, int> _symbolKinds = new(sizeHint);
+        private readonly Dictionary<string, int> _nameKinds = new(sizeHint);
 
         private bool ShouldDisambiguate(string name) =>
-            _symbolKinds.TryGetValue(name, out int kind) && !BitOperations.IsPow2(kind);
+            _nameKinds.TryGetValue(name, out int kind) && !BitOperations.IsPow2(kind);
 
-        public void Add(Regex regex, TokenSymbolHandle handle, string name, TokenSymbolKind kind)
+        public void Add(TokenSymbolHandle handle, string name, TokenSymbolKind kind)
         {
-            _symbols.Add((regex, handle, name, kind));
-            if (_symbolKinds.TryGetValue(name, out int existingKind))
+            _symbolNames.Add(handle, (name, kind));
+            if (_nameKinds.TryGetValue(name, out int existingKind))
             {
-                _symbolKinds[name] = existingKind | (1 << (int)kind);
+                _nameKinds[name] = existingKind | (1 << (int)kind);
             }
             else
             {
-                _symbolKinds[name] = 1 << (int)kind;
+                _nameKinds[name] = 1 << (int)kind;
             }
         }
 
-        public int SymbolCount => _symbols.Count;
-
-        public Regex GetRegex(int index) => _symbols[index].Regex;
-
-        public TokenSymbolHandle GetTokenSymbolHandle(int index) => _symbols[index].Handle;
-
-        public BuilderSymbolName GetName(int index)
+        public BuilderSymbolName GetName(TokenSymbolHandle symbol)
         {
-            (_, _, string name, TokenSymbolKind kind) = _symbols[index];
+            var (name, kind) = _symbolNames[symbol];
             return new(name, kind, ShouldDisambiguate(name));
         }
     }

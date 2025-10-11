@@ -32,8 +32,7 @@ let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> wi
 /// symbols.
 let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
     let gw = GrammarWriter()
-    let regexes = Array.ofList regexes
-    let count = Array.length regexes
+    let count = Seq.length regexes
     let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
     let rootNonterminal = gw.AddNonterminal(gw.GetOrAddString("S"), NonterminalAttributes.None, count)
     let productions = Array.init count (fun _ -> gw.AddProduction(1))
@@ -49,14 +48,14 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
         lr.FinishState()
         Array.iter (fun p -> lr.AddEofReduce(p); lr.FinishState()) productions
         gw.AddStateMachine lr
-    let symbolsProvider = {new IGrammarSymbolsProvider with
-        member _.SymbolCount = regexes.Length
-        member _.GetRegex i = regexes[i]
-        member _.GetTokenSymbolHandle i = tokenSymbols[i]
-        member _.GetName i = BuilderSymbolName($"Token{i}", TokenSymbolKind.Terminal, false)}
-    DfaBuild<char>.Build(symbolsProvider, caseSensitive, prioritizeSymbols, Int32.MaxValue)
-    |> ValueOption.ofObj
-    |> ValueOption.iter gw.AddStateMachine
+    let regex =
+        (regexes, tokenSymbols)
+        ||> Seq.map2 (fun r t -> Regex.Accept(r, t, false))
+        |> Regex.choice
+    let dfaWriter = DfaWriter<char>()
+    let dfaBuild = DfaBuild<char>((fun x -> BuilderSymbolName($"Token{x.Value}", TokenSymbolKind.Terminal, false)), count)
+    if dfaBuild.Build(regex, dfaWriter, caseSensitive, prioritizeSymbols, Int32.MaxValue) then
+        gw.AddStateMachine dfaWriter
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
     gw.ToImmutableArray()
     |> Grammar.ofBytes

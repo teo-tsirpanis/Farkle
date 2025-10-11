@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Farkle.Grammars;
 
 namespace Farkle.Builder;
 
@@ -77,15 +78,17 @@ public sealed class Regex
             case (KindAndFlags.StringLiteral, string):
             case (KindAndFlags.Chars or KindAndFlags.AllButChars, (char, char)[]):
             case (KindAndFlags.Concat or KindAndFlags.Alt, Regex[]):
-            case (KindAndFlags.Loop, Regex):
             case (KindAndFlags.RegexString, RegexStringHolder):
+            case (KindAndFlags.Accept, Regex):
+                break;
+            case (KindAndFlags.Loop, Regex):
+                Debug.Assert(M >= 0);
+                Debug.Assert(N >= M);
                 break;
             default:
                 Debug.Fail("Invalid regex data.");
                 break;
         }
-        Debug.Assert(M >= 0);
-        Debug.Assert(N >= M);
     }
 
     [ExcludeFromCodeCoverage]
@@ -116,6 +119,8 @@ public sealed class Regex
                 $"{((Regex)_data!).DebuggerDisplay()}{{{M},{N}}}",
             KindAndFlags.RegexString =>
                 $"\"{_data}\"",
+            KindAndFlags.Accept =>
+                $"Accept #{M}{(N != 0 ? " (Lowest Priority)" : "")} {((Regex)_data!).DebuggerDisplay()}",
             _ => ""
         };
         return $"{dataString}{caseString}";
@@ -200,6 +205,19 @@ public sealed class Regex
         return false;
     }
 
+    internal bool IsAccept([MaybeNullWhen(false)] out Regex regex, out TokenSymbolHandle symbol, out bool lowestPriority)
+    {
+        symbol = new((uint)M + 1);
+        lowestPriority = N != 0;
+        if (Kind == KindAndFlags.Accept)
+        {
+            regex = (Regex)_data!;
+            return true;
+        }
+        regex = null;
+        return false;
+    }
+
     /// <summary>
     /// Effects the case sensitivity override of this <see cref="Regex"/>, after considering
     /// the state of the DFA builder.
@@ -229,6 +247,22 @@ public sealed class Regex
         return existingIsCaseSensitive;
     }
 
+    internal bool TryGetCaseSensitivity(out bool isCaseSensitive)
+    {
+        switch (_kindAndFlags & KindAndFlags.CaseMask)
+        {
+            case KindAndFlags.CaseSensitive:
+                isCaseSensitive = true;
+                return true;
+            case KindAndFlags.CaseInsensitive:
+                isCaseSensitive = false;
+                return true;
+            default:
+                isCaseSensitive = false;
+                return false;
+        }
+    }
+
     /// <summary>
     /// A <see cref="Regex"/> that matches any character.
     /// </summary>
@@ -243,6 +277,24 @@ public sealed class Regex
     /// A <see cref="Regex"/> that does not match anything.
     /// </summary>
     internal static Regex Void { get; } = new(KindAndFlags.Alt, (Regex[])[]);
+
+    /// <summary>
+    /// Creates a <see cref="Regex"/> that causes the DFA to accept a token symbol
+    /// after matching the given <see cref="Regex"/>.
+    /// </summary>
+    /// <param name="regex"></param>
+    /// <param name="symbol">A handle to the token symbol to accept.</param>
+    /// <param name="lowestPriority">Whether <paramref name="symbol"/> is given the lowest
+    /// priority when resolving conflicts. Conflicts between symbols with the lowest priority
+    /// get randomly resolved.</param>
+    /// <remarks>
+    /// Accept nodes are only used internally by the builder.
+    /// </remarks>
+    internal static Regex Accept(Regex regex, TokenSymbolHandle symbol, bool lowestPriority)
+    {
+        Debug.Assert(symbol.HasValue);
+        return new(KindAndFlags.Accept, regex, symbol.Value, lowestPriority ? 1 : 0);
+    }
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
@@ -708,6 +760,16 @@ public sealed class Regex
         /// <see cref="_data"/> must be a <see cref="RegexStringHolder"/>.
         /// </remarks>
         RegexString = 7,
+        /// <summary>
+        /// The regex represents accepting a token symbol after matching another regex.
+        /// This kind is only used internally by the builder.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="_data"/> must be a <see cref="Regex"/>.
+        /// <see cref="M"/> contains the token symbol's <see cref="TokenSymbolHandle.TableIndex"/>,
+        /// and <see cref="N"/> contains whether the symbol has a lowest accept priority.
+        /// </remarks>
+        Accept = 8,
         /// <summary>
         /// A mask for the regex kind bits.
         /// </summary>

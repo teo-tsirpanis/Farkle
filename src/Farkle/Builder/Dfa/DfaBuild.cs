@@ -81,10 +81,12 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     /// Builds a DFA that matches a <see cref="Regex"/>.
     /// </summary>
     /// <param name="regex">The regex to build.</param>
+    /// <param name="dfaWriter">The <see cref="DfaWriter{TChar}"/> to write the DFA's states to.</param>
     /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
     /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by prioritizing symbols.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
-    public DfaWriter<TChar>? Build(Regex regex, bool caseSensitive = false, bool prioritizeSymbols = true,
+    /// <returns>Whether building succeeded.</returns>
+    public bool Build(Regex regex, DfaWriter<TChar> dfaWriter, bool caseSensitive = false, bool prioritizeSymbols = true,
         int maxTokenizerStates = -1)
     {
         if (typeof(TChar) != typeof(char))
@@ -101,15 +103,16 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         var (leaves, followPos, rootFirstPos) = BuildRegexTree(regex, caseSensitive);
         if (leaves is null)
         {
-            return null;
+            return false;
         }
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
         var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
         if (dfaStates is null)
         {
-            return null;
+            return false;
         }
-        return WriteDfa(dfaStates, prioritizeSymbols);
+        WriteDfa(dfaStates, dfaWriter, prioritizeSymbols);
+        return true;
     }
 
     private static TokenSymbolHandle FindDominantSymbol(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols, bool prioritizeSymbols)
@@ -150,9 +153,8 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         return firstSymbol;
     }
 
-    private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeSymbols)
+    private void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, bool prioritizeSymbols)
     {
-        DfaWriter<TChar> dfaWriter = new();
         HashSet<BitSet>? seenConflicts = null;
         BitArrayNeo? conflictsOfState = null;
 
@@ -215,8 +217,6 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
             dfaWriter.FinishState(state.DefaultTransition);
         }
-
-        return dfaWriter;
     }
 
     private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)

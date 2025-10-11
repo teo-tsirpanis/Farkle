@@ -266,8 +266,8 @@ internal static class GrammarBuild
             Regex regex = Regex.Choice(regexBuilder!.DrainToImmutable());
             bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
             var dfaBuild = new DfaBuild<char>(dfaSymbols.GetName, writer.TokenSymbolCount, log, options.CancellationToken);
-            var dfaWriter = dfaBuild.Build(regex, isCaseSensitive, true, options.MaxTokenizerStates);
-            if (dfaWriter is not null)
+            var dfaWriter = new DfaWriter<char>();
+            if (dfaBuild.Build(regex, dfaWriter, isCaseSensitive, true, options.MaxTokenizerStates))
             {
                 writer.AddStateMachine(dfaWriter);
             }

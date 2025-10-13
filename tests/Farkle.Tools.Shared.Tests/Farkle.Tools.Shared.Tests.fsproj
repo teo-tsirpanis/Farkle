@@ -13,6 +13,7 @@
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <PackageReference Include="Expecto" />

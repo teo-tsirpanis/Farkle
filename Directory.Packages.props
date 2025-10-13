@@ -30,7 +30,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="1.9.0" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.8.4" />
-    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.59" />
+    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.71" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.10.0" />
     <PackageVersion Include="NUnit" Version="4.4.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="5.1.0" />

@@ -82,11 +82,10 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     /// </summary>
     /// <param name="regex">The regex to build.</param>
     /// <param name="dfaWriter">The <see cref="DfaWriter{TChar}"/> to write the DFA's states to.</param>
-    /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
-    /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by prioritizing symbols.</param>
+    /// <param name="options">Options to customize the building process.</param>
     /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
     /// <returns>Whether building succeeded.</returns>
-    public bool Build(Regex regex, DfaWriter<TChar> dfaWriter, bool caseSensitive = false, bool prioritizeSymbols = true,
+    public bool Build(Regex regex, DfaWriter<TChar> dfaWriter, DfaBuildOptions options = DfaBuildOptions.None,
         int maxTokenizerStates = -1)
     {
         if (typeof(TChar) != typeof(char))
@@ -100,7 +99,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         // but there is no failure here; the grammar has no symbols and the builder
         // successfully produces a DFA that will always fail either way.
 
-        var (leaves, followPos, rootFirstPos) = BuildRegexTree(regex, caseSensitive);
+        var (leaves, followPos, rootFirstPos) = BuildRegexTree(regex, options);
         if (leaves is null)
         {
             return false;
@@ -111,11 +110,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         {
             return false;
         }
-        WriteDfa(dfaStates, dfaWriter, prioritizeSymbols);
+        WriteDfa(dfaStates, dfaWriter, options);
         return true;
     }
 
-    private static TokenSymbolHandle FindDominantSymbol(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols, bool prioritizeSymbols)
+    private static TokenSymbolHandle FindDominantSymbol(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols, DfaBuildOptions options)
     {
         switch (acceptSymbols)
         {
@@ -132,7 +131,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
             var (priority, symbol) = acceptSymbols[i];
             if (firstSymbol != symbol)
             {
-                if (prioritizeSymbols)
+                if ((options & DfaBuildOptions.PrioritizeSymbols) != 0)
                 {
                     if (firstPriority > priority)
                     {
@@ -153,7 +152,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         return firstSymbol;
     }
 
-    private void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, bool prioritizeSymbols)
+    private void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, DfaBuildOptions options)
     {
         HashSet<BitSet>? seenConflicts = null;
         BitArrayNeo? conflictsOfState = null;
@@ -176,7 +175,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 }
             }
 
-            if (FindDominantSymbol(state.AcceptSymbols, prioritizeSymbols) is { HasValue: true } sym)
+            if (FindDominantSymbol(state.AcceptSymbols, options) is { HasValue: true } sym)
             {
                 dfaWriter.AddAccept(sym);
             }
@@ -489,18 +488,23 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         return null!;
     }
 
-    private (List<RegexLeaf>? Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(Regex regex, bool caseSensitive)
+    private (List<RegexLeaf>? Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(Regex regex, DfaBuildOptions options)
     {
         Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache = [];
         List<RegexLeaf> leaves = [];
         List<BitSet> followPos = [];
 
-        RegexInfo info = Visit(in this, default, regex, caseSensitive, isLowered: false);
+        VisitFlags flags = VisitFlags.None;
+        if ((options & DfaBuildOptions.CaseSensitive) != 0)
+        {
+            flags |= VisitFlags.CaseSensitive;
+        }
+        RegexInfo info = Visit(in this, default, regex, flags);
         bool hasError = (info.Characteristics & RegexCharacteristics.HasError) != 0;
 
         return (hasError ? null : leaves, followPos, info.FirstPos);
 
-        RegexInfo Visit(in DfaBuild<TChar> @this, TokenSymbolHandle symbol, Regex regex, bool caseSensitive, bool isLowered)
+        RegexInfo Visit(in DfaBuild<TChar> @this, TokenSymbolHandle symbol, Regex regex, VisitFlags flags)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
@@ -509,8 +513,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 return RegexInfo.Error(RegexCharacteristics.IsTooComplex);
             }
 
-            bool isCaseOverriden = false;
-            caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
+            flags = AdjustCaseSensitivity(regex, flags);
 
             while (regex.IsRegexString(out RegexStringHolder? regexString))
             {
@@ -528,7 +531,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                         @this.Log.RegexStringParseError(@this.GetSymbolName(symbol), error);
                         return RegexInfo.Error();
                 }
-                caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
+                flags = AdjustCaseSensitivity(regex, flags);
             }
 
             if (regex.IsAccept(out Regex? rAccepted, out var sAccepted, out var lowestPriority))
@@ -549,7 +552,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 bool isVoid = false;
                 foreach (var r in alternatives)
                 {
-                    var nextInfo = Visit(in @this, symbol, r, caseSensitive, isLowered);
+                    var nextInfo = Visit(in @this, symbol, r, flags);
                     int leafIndex = nextInfo.HasStar
                         ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
                         : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
@@ -574,7 +577,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Empty;
                 foreach (var r in regexes)
                 {
-                    RegexInfo nextResult = Visit(in @this, symbol, r, caseSensitive, isLowered);
+                    RegexInfo nextResult = Visit(in @this, symbol, r, flags);
                     LinkFollowPos(in info.LastPos, in nextResult.FirstPos);
                     info += nextResult;
                 }
@@ -586,7 +589,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Void;
                 foreach (var r in regexes)
                 {
-                    info |= Visit(in @this, symbol, r, caseSensitive, isLowered);
+                    info |= Visit(in @this, symbol, r, flags);
                 }
                 return info;
             }
@@ -596,14 +599,14 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Empty;
                 for (int i = 0; i < m; i++)
                 {
-                    RegexInfo nextInfo = Visit(in @this, symbol, loopItem, caseSensitive, isLowered);
+                    RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags);
                     LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                     info += nextInfo;
                 }
 
                 if (n == int.MaxValue)
                 {
-                    RegexInfo starInfo = Visit(in @this, symbol, loopItem, caseSensitive, isLowered).AsStar();
+                    RegexInfo starInfo = Visit(in @this, symbol, loopItem, flags).AsStar();
                     LinkFollowPos(in starInfo.LastPos, in starInfo.FirstPos);
                     LinkFollowPos(in info.LastPos, in starInfo.FirstPos);
                     info += starInfo;
@@ -612,7 +615,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 {
                     for (int i = m; i < n; i++)
                     {
-                        RegexInfo nextInfo = Visit(in @this, symbol, loopItem, caseSensitive, isLowered).AsNullable();
+                        RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags).AsNullable();
                         LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                         info += nextInfo;
                     }
@@ -620,9 +623,9 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 return info;
             }
 
-            if (!isLowered)
+            if ((flags & VisitFlags.Lowered) == 0)
             {
-                regex = LowerRegex(regex, caseSensitive, loweredRegexCache);
+                regex = LowerRegex(regex, (flags & VisitFlags.CaseSensitive) != 0, loweredRegexCache);
             }
 
             if (regex.IsAny())
@@ -635,9 +638,9 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, isInverted)));
             }
 
-            if (!isLowered)
+            if ((flags & VisitFlags.Lowered) == 0)
             {
-                return Visit(in @this, symbol, regex, caseSensitive, isLowered: true);
+                return Visit(in @this, symbol, regex, flags | VisitFlags.Lowered);
             }
 
             throw new InvalidOperationException("Internal error: unrecognized form of lowered regex.");
@@ -655,6 +658,23 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 {
                     followPos[i] = BitSet.Union(followPos[i], in destination);
                 }
+            }
+
+            static VisitFlags AdjustCaseSensitivity(Regex regex, VisitFlags flags)
+            {
+                if ((flags & VisitFlags.CaseOverridden) == 0 && regex.TryGetCaseSensitivity(out bool isCaseSensitive))
+                {
+                    flags |= VisitFlags.CaseOverridden;
+                    if (isCaseSensitive)
+                    {
+                        return flags | VisitFlags.CaseSensitive;
+                    }
+                    else
+                    {
+                        return flags & ~VisitFlags.CaseSensitive;
+                    }
+                }
+                return flags;
             }
         }
     }
@@ -808,6 +828,15 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         /// This flag exists to report an error only once per symbol.
         /// </remarks>
         IsTooComplex = 4
+    }
+
+    [Flags]
+    private enum VisitFlags : byte
+    {
+        None = 0,
+        CaseSensitive = 1,
+        CaseOverridden = 2,
+        Lowered = 4,
     }
 
     private enum IntervalType : byte

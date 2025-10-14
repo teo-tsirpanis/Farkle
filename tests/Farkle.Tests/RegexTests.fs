@@ -8,6 +8,7 @@ module Farkle.Tests.RegexTests
 open Expecto
 open Farkle
 open Farkle.Builder
+open Farkle.Builder.Dfa
 open Farkle.Tests
 open FsCheck
 open System
@@ -70,7 +71,7 @@ let tests = testList "Regex tests" [
             literals
             |> List.map Regex.string
             |> (fun xs -> ident :: xs)
-            |> buildSimpleRegexMatcherEx true true
+            |> buildSimpleRegexMatcherEx (DfaBuildOptions.CaseSensitive ||| DfaBuildOptions.PrioritizeSymbols)
         literals
         |> Seq.indexed
         |> Seq.forall (fun (i, str) ->

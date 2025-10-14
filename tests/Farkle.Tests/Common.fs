@@ -30,7 +30,7 @@ let private terminalIndexSemanticProvider = {new ISemanticProvider<char, int> wi
 /// constructs the LR state machine.
 /// This is an advanced overload that also allows you to prioritize
 /// symbols.
-let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
+let buildSimpleRegexMatcherEx options regexes =
     let gw = GrammarWriter()
     let count = Seq.length regexes
     let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
@@ -54,7 +54,7 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
         |> Regex.choice
     let dfaWriter = DfaWriter<char>()
     let dfaBuild = DfaBuild<char>((fun x -> BuilderSymbolName($"Token{x.Value}", TokenSymbolKind.Terminal, false)), count)
-    if dfaBuild.Build(regex, dfaWriter, caseSensitive, prioritizeSymbols, Int32.MaxValue) then
+    if dfaBuild.Build(regex, dfaWriter, options, Int32.MaxValue) then
         gw.AddStateMachine dfaWriter
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
     gw.ToImmutableArray()
@@ -65,7 +65,8 @@ let buildSimpleRegexMatcherEx caseSensitive prioritizeSymbols regexes =
 /// Until the LALR builder gets implemented, this function manually
 /// constructs the LR state machine.
 let buildSimpleRegexMatcher caseSensitive regexes =
-    buildSimpleRegexMatcherEx caseSensitive false regexes
+    let options = if caseSensitive then DfaBuildOptions.CaseSensitive else DfaBuildOptions.None
+    buildSimpleRegexMatcherEx options regexes
 
 let getResourceFile fileName = Path.Combine(AppContext.BaseDirectory, fileName)
 

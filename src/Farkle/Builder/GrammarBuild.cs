@@ -264,10 +264,14 @@ internal static class GrammarBuild
         if (dfaSymbols is not null)
         {
             Regex regex = Regex.Choice(regexBuilder!.DrainToImmutable());
-            bool isCaseSensitive = globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive;
+            DfaBuildOptions dfaBuildOptions = DfaBuildOptions.PrioritizeSymbols;
+            if (globalOptions.CaseSensitivity is not CaseSensitivity.CaseInsensitive)
+            {
+                dfaBuildOptions |= DfaBuildOptions.CaseSensitive;
+            }
             var dfaBuild = new DfaBuild<char>(dfaSymbols.GetName, writer.TokenSymbolCount, log, options.CancellationToken);
             var dfaWriter = new DfaWriter<char>();
-            if (dfaBuild.Build(regex, dfaWriter, isCaseSensitive, true, options.MaxTokenizerStates))
+            if (dfaBuild.Build(regex, dfaWriter, dfaBuildOptions, options.MaxTokenizerStates))
             {
                 writer.AddStateMachine(dfaWriter);
             }

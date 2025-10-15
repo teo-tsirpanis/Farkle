@@ -23,4 +23,8 @@ internal enum DfaBuildOptions : uint
     /// Conflicts will be attempted to be resolved by prioritizing symbols.
     /// </summary>
     PrioritizeSymbols = 2,
+    /// <summary>
+    /// The generated DFA will stop as soon as it reaches an accept state.
+    /// </summary>
+    LazyMatching = 4,
 }

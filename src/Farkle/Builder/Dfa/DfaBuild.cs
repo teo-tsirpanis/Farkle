@@ -105,7 +105,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
             return false;
         }
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
-        var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
+        var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates, options);
         if (dfaStates is null)
         {
             return false;
@@ -218,7 +218,8 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         }
     }
 
-    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
+    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId,
+        int maxStates, DfaBuildOptions options)
     {
         Dictionary<BitSet, DfaState> states = [];
         List<DfaState> stateList = [];
@@ -277,6 +278,15 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                         }
                         break;
                 }
+            }
+
+            // TODO: This can lead to duplicate states if lazy matching gets used with
+            // more complex regexes in the future. Ideally we would filter out non-ending
+            // leaves before calling GetOrAddState, if a state has an ending leaf, but the
+            // logic will become more complex, so let's not do this right now.
+            if ((options & DfaBuildOptions.LazyMatching) != 0 && S.AcceptSymbols.Count > 0)
+            {
+                continue;
             }
 
             stateIntervals.Sort();

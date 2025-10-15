@@ -511,4 +511,27 @@ public static class GrammarBuilderExtensions
     ), EditorBrowsable(EditorBrowsableState.Never)]
     public static CharParser<object?> BuildUntyped(this IGrammarBuilder builder) =>
         builder.BuildSyntaxCheck();
+
+    /// <summary>
+    /// Creates an <see cref="ISemanticProvider{TChar, T}"/> for the given <see cref="IGrammarBuilder{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The return type of the semantic provider.</typeparam>
+    /// <param name="builder">The grammar to build.</param>
+    /// <remarks>
+    /// By not building a whole grammar, some expensive steps are skipped, and
+    /// by using this function instead of <see cref="Build{T}(IGrammarBuilder{T}, BuilderArtifacts, BuilderOptions?)"/>,
+    /// most of the grammar building code can be trimmed away. This function is
+    /// useful only in some very limited scenarios, such as having many grammar
+    /// builders with an identical grammar but different semantic providers.
+    /// </remarks>
+    /// <seealso cref="CharParser{T}.WithSemanticProvider{TNew}(ISemanticProvider{char, TNew})"/>
+    public static ISemanticProvider<char, T> BuildSemanticProvider<T>(this IGrammarBuilder<T> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        // Building a semantic provider does not produce meaningful diagnostics,
+        // and does not take more than linear time. Therefore we don't have to
+        // accept GrammarOptions for logging and cancellation.
+        var grammarDefinition = GrammarDefinition.Create(builder);
+        return SemanticProviderBuild.Build<T>(grammarDefinition);
+    }
 }

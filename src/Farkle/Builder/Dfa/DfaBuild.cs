@@ -57,11 +57,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     /// </summary>
     private const int LiteralPriority = 1;
 
-    private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out bool isInverted)
+    private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out Regex.CharsFlags flags)
     {
         if (typeof(TChar) == typeof(char))
         {
-            bool result = regex.IsChars(out var chars, out isInverted);
+            bool result = regex.IsChars(out var chars, out flags);
             ranges = Unsafe.BitCast<ImmutableArray<(char, char)>, ImmutableArray<(TChar, TChar)>>(chars);
             return result;
         }
@@ -265,16 +265,19 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                         S.AcceptSymbols.Add((priority, symbolIndex));
                         break;
                     case RegexLeaf.Chars x:
+                        IntervalType startInterval = IntervalType.Start, endInterval = IntervalType.End;
                         if (x.IsInverted)
                         {
+                            startInterval = x.IsHighPriorityInverted ? IntervalType.HighPriorityInvertedStart : IntervalType.InvertedStart;
+                            endInterval = x.IsHighPriorityInverted ? IntervalType.HighPriorityInvertedEnd : IntervalType.InvertedEnd;
                             presentLeaves[i] = true;
                             emitDefaultTransition = true;
                             invertedCount++;
                         }
                         foreach (var (start, end) in x.Ranges)
                         {
-                            stateIntervals.Add((start, x.IsInverted ? IntervalType.InvertedStart : IntervalType.Start, i));
-                            stateIntervals.Add((end, x.IsInverted ? IntervalType.InvertedEnd : IntervalType.End, i));
+                            stateIntervals.Add((start, startInterval, i));
+                            stateIntervals.Add((end, endInterval, i));
                         }
                         break;
                 }
@@ -295,10 +298,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
             bool previousIsStart = false;
             int depth = 0;
             int invertedDepth = 0;
+            int highPriorityInvertedDepth = 0;
 
             foreach (var (c, type, leaf) in stateIntervals)
             {
-                bool isStart = type is IntervalType.Start or IntervalType.InvertedStart;
+                bool isStart = type is IntervalType.Start or IntervalType.InvertedStart or IntervalType.HighPriorityInvertedStart;
                 // We first see if we should attempt emitting a transition, which is if:
                 // 1. We are inside a range (this implies that we have seen a character before).
                 // 2. Either:
@@ -346,7 +350,6 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                     // Don't emit a transition if the range start is greater than the range end.
                     // This can occur when we have three leaves with ranges [a-b], [a-a] and [b-b],
                     // causing failures later when writing the DFA.
-                    // This if statement fixed this and FsCheck has not reported any other failures.
                     if (transitionRangeStart.CompareTo(transitionRangeEnd) <= 0)
                     {
                         // We must emit an explicit failure if we are inside all the inverted leaves
@@ -354,9 +357,10 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                         // The presence of Any leaves will cause the above to never hold, because
                         // Any leaves are inverted Chars leaves with no ranges, which means that
                         // some inverted leaves will never be entered.
+                        bool insideHighPriorityInvertedRanges = highPriorityInvertedDepth > 0;
                         bool insideAllInvertedRanges = invertedDepth == invertedCount;
                         bool insideOnlyInvertedRanges = invertedDepth == depth;
-                        bool shouldEmitFailure = insideAllInvertedRanges && insideOnlyInvertedRanges;
+                        bool shouldEmitFailure = insideHighPriorityInvertedRanges || (insideAllInvertedRanges && insideOnlyInvertedRanges);
                         // We are inside all the inverted leaves, and also inside some regular leaves.
                         // We must emit a failure.
                         int? transitionState = shouldEmitFailure ? null : GetOrAddState(FollowLeaves(presentLeaves));
@@ -374,6 +378,12 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 bool switchValue;
                 switch (type)
                 {
+                    case IntervalType.HighPriorityInvertedStart:
+                        depth++;
+                        invertedDepth++;
+                        highPriorityInvertedDepth++;
+                        switchValue = false;
+                        break;
                     case IntervalType.Start:
                         depth++;
                         switchValue = true;
@@ -387,10 +397,16 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                         depth--;
                         switchValue = false;
                         break;
-                    default:
-                        Debug.Assert(type is IntervalType.InvertedEnd);
+                    case IntervalType.InvertedEnd:
                         depth--;
                         invertedDepth--;
+                        switchValue = true;
+                        break;
+                    default:
+                        Debug.Assert(type is IntervalType.HighPriorityInvertedEnd);
+                        depth--;
+                        invertedDepth--;
+                        highPriorityInvertedDepth--;
                         switchValue = true;
                         break;
                 }
@@ -468,7 +484,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 }
                 result = Regex.Join(builder.MoveToImmutable());
             }
-            else if (regex.IsChars(out var chars, out bool isInverted))
+            else if (regex.IsChars(out var chars, out var flags))
             {
                 if (caseSensitive && RegexRangeCanonicalizer.IsCanonical(chars.AsSpan()))
                 {
@@ -477,10 +493,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 else
                 {
                     chars = RegexRangeCanonicalizer.Canonicalize(chars.AsSpan(), caseSensitive);
-                    result = isInverted ? Regex.NotOneOf(chars) : Regex.OneOf(chars);
+                    result = Regex.Chars(chars, flags);
                 }
                 // If the regex has been canonicalized into a set of all/none characters
                 // and is/isn't inverted, change it to Regex.Void.
+                bool isInverted = (flags & Regex.CharsFlags.Inverted) != 0;
                 if ((chars, isInverted) is ([], false) or ([(char.MinValue, char.MaxValue)], true))
                 {
                     result = Regex.Void;
@@ -643,9 +660,9 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 return RegexInfo.Singleton(AddLeaf(RegexLeaf.Any));
             }
 
-            if (IsRegexChars(regex, out var chars, out bool isInverted))
+            if (IsRegexChars(regex, out var chars, out var charsFlags))
             {
-                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, isInverted)));
+                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, charsFlags)));
             }
 
             if ((flags & VisitFlags.Lowered) == 0)
@@ -739,13 +756,16 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
     private abstract class RegexLeaf
     {
-        public static Chars Any { get; } = new Chars([], true);
+        public static Chars Any { get; } = new Chars([], Regex.CharsFlags.Inverted);
 
-        public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, bool isInverted) : RegexLeaf
+        public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, Regex.CharsFlags flags) : RegexLeaf
         {
             public ImmutableArray<(TChar Start, TChar End)> Ranges { get; } = ranges;
 
-            public bool IsInverted { get; } = isInverted;
+            public bool IsInverted => (flags & Regex.CharsFlags.Inverted) != 0;
+
+            public bool IsHighPriorityInverted =>
+                (flags & Regex.CharsFlags.HighPriorityInverted) == Regex.CharsFlags.HighPriorityInverted;
         }
 
         public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf
@@ -837,7 +857,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         /// <remarks>
         /// This flag exists to report an error only once per symbol.
         /// </remarks>
-        IsTooComplex = 4
+        IsTooComplex = 4,
     }
 
     [Flags]
@@ -852,9 +872,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     private enum IntervalType : byte
     {
         // It is important that the Start values are before the End values.
+        HighPriorityInvertedStart,
         Start,
         InvertedStart,
         InvertedEnd,
-        End
+        End,
+        HighPriorityInvertedEnd,
     }
 }

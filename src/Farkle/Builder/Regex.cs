@@ -76,7 +76,7 @@ public sealed class Regex
         {
             case (KindAndFlags.Any, null):
             case (KindAndFlags.StringLiteral, string):
-            case (KindAndFlags.Chars or KindAndFlags.AllButChars, (char, char)[]):
+            case (KindAndFlags.Chars, (char, char)[]):
             case (KindAndFlags.Concat or KindAndFlags.Alt, Regex[]):
             case (KindAndFlags.RegexString, RegexStringHolder):
             case (KindAndFlags.Accept, Regex):
@@ -95,6 +95,12 @@ public sealed class Regex
     private string DebuggerDisplay()
     {
         RuntimeHelpers.EnsureSufficientExecutionStack();
+        string invertedString = (_kindAndFlags & KindAndFlags.HighPriorityInverted) switch
+        {
+            KindAndFlags.HighPriorityInverted => "HighPriorityAllBut",
+            KindAndFlags.Inverted => "AllBut",
+            _ => "",
+        };
         string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
         {
             KindAndFlags.CaseSensitive => " CaseSensitive",
@@ -108,9 +114,7 @@ public sealed class Regex
             KindAndFlags.StringLiteral =>
                 $"\"{_data}\"",
             KindAndFlags.Chars =>
-                $"Chars[{(((char, char)[])_data!).Length}]",
-            KindAndFlags.AllButChars =>
-                $"AllButChars[{(((char, char)[])_data!).Length}]",
+                $"{invertedString}Chars[{(((char, char)[])_data!).Length}]",
             KindAndFlags.Concat =>
                 $"Concat[{((Regex[])_data!).Length}]",
             KindAndFlags.Alt =>
@@ -146,16 +150,15 @@ public sealed class Regex
         return false;
     }
 
-    internal bool IsChars(out ImmutableArray<(char, char)> chars, out bool isInverted)
+    internal bool IsChars(out ImmutableArray<(char, char)> chars, out CharsFlags flags)
     {
-        if (Kind is KindAndFlags.Chars or KindAndFlags.AllButChars)
+        flags = (CharsFlags)_kindAndFlags & CharsFlags.All;
+        if (Kind is KindAndFlags.Chars)
         {
-            isInverted = Kind == KindAndFlags.AllButChars;
             chars = ImmutableCollectionsMarshal.AsImmutableArray(((char, char)[])_data!);
             return true;
         }
         chars = [];
-        isInverted = false;
         return false;
     }
 
@@ -297,6 +300,21 @@ public sealed class Regex
     }
 
     /// <summary>
+    /// Creates a <see cref="Regex"/> that matches some specific characters.
+    /// </summary>
+    /// <param name="chars">The character ranges to match, or to avoid matching.</param>
+    /// <param name="flags">Flags to customize the regex's matching behavior.</param>
+    /// <seealso cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    /// <seealso cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    internal static Regex Chars(ImmutableArray<(char, char)> chars, CharsFlags flags)
+    {
+        Debug.Assert(!chars.IsDefault);
+        Debug.Assert((flags & ~CharsFlags.All) == 0);
+        KindAndFlags regexFlags = KindAndFlags.Chars | (KindAndFlags)flags;
+        return new(regexFlags, ImmutableCollectionsMarshal.AsArray(chars));
+    }
+
+    /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
     /// </summary>
     public static Regex Literal(char c) => OneOf((c, c));
@@ -345,7 +363,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
@@ -378,7 +396,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.AllButChars, arrayUnsafe);
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe);
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
@@ -660,12 +678,12 @@ public sealed class Regex
                     break;
             }
             // Optimize [abc]|[def] to [abcdef].
-            // Farkle 6 also optimized patterns with AllButChars, but that would
+            // Farkle 6 also optimized patterns with inverted Chars, but that would
             // involve intersecting or taking the difference of the two sets, and
             // it's not likely to occur either way.
-            if (left.IsChars(out var leftChars, out var leftIsInverted) &&
-                right.IsChars(out var rightChars, out var rightIsInverted) &&
-                !(leftIsInverted || rightIsInverted))
+            if (left.IsChars(out var leftChars, out var leftFlags) &&
+                right.IsChars(out var rightChars, out var rightFlags) &&
+                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
             {
                 return OneOf([.. leftChars, .. rightChars]);
             }
@@ -717,19 +735,13 @@ public sealed class Regex
         /// </remarks>
         StringLiteral = 1,
         /// <summary>
-        /// The regex matches a list of character ranges.
+        /// The regex matches certain character ranges.
         /// </summary>
         /// <remarks>
         /// <see cref="_data"/> must be an array of value 2-tuples of <see cref="char"/>.
         /// </remarks>
         Chars = 2,
-        /// <summary>
-        /// The regex matches any character except those in a list of character ranges.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="_data"/> must be an array of value 2-tuples of <see cref="char"/>.
-        /// </remarks>
-        AllButChars = 3,
+        // Unused = 3,
         /// <summary>
         /// The regex matches a concatenation of other regexes.
         /// </summary>
@@ -775,6 +787,30 @@ public sealed class Regex
         /// </summary>
         KindMask = 0x0F,
         /// <summary>
+        /// The regex will match any character except those specified. Valid only in regexes of
+        /// kind <see cref="Chars"/>.
+        /// </summary>
+        Inverted = 0x10,
+        /// <summary>
+        /// The regex will match any character except those specified, but also force failing the
+        /// tokenizer if one of those characters is encountered, even if another regex can match it.
+        /// Implies <see cref="Inverted"/>. Valid only in regexes of kind <see cref="Chars"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Usually, when there are more than one regexes that can be advanced by a character at a
+        /// given DFA state (e.g. <c>aaa|abb</c>), the DFA will match both at the same time, and a
+        /// conflict will occur if the same state ends up accepting more than one token symbol.
+        /// </para>
+        /// <para>
+        /// However, in a pattern like <c>aaa|[^a]</c>, the DFA can either advance the first alternative
+        /// when encountering <c>a</c>, or fail matching per the second alternative. By default, Farkle
+        /// will prefer advancing the first alternative, but if the second alternative had this flag, it
+        /// will emit a failing transition for the <c>a</c> character.
+        /// </para>
+        /// </remarks>
+        HighPriorityInverted = 0x30,
+        /// <summary>
         /// The regex is forced to be case-sensitive.
         /// </summary>
         CaseSensitive = 0x40,
@@ -785,6 +821,23 @@ public sealed class Regex
         /// <summary>
         /// A mask for the case-sensitivity bits.
         /// </summary>
-        CaseMask = 0xC0
+        CaseMask = 0xC0,
+        /// <summary>
+        /// A mask for all regex flag bits.
+        /// </summary>
+        FlagsMask = 0xF0,
+    }
+
+    /// <summary>
+    /// Contains flags to customize the matching behavior of a regex of kind <see cref="KindAndFlags.Chars"/>.
+    /// </summary>
+    /// <seealso cref="Chars"/>
+    [Flags]
+    internal enum CharsFlags : byte
+    {
+        None = 0,
+        Inverted = KindAndFlags.Inverted,
+        HighPriorityInverted = KindAndFlags.HighPriorityInverted,
+        All = Inverted | HighPriorityInverted,
     }
 }

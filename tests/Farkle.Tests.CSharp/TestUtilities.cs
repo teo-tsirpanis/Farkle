@@ -23,5 +23,5 @@ public static class TestUtilities
     public static Grammar LoadGrammarFromResource(string fileName) =>
         Grammar.Load(GetResourceFile(fileName));
 
-    public static ReusableConstraint IsParserSuccess { get; } = Has.Property(nameof(ParserResult<int>.IsSuccess)).True;
+    public static ReusableConstraint IsParserSuccess { get; } = Has.Property(nameof(ParserResult<>.IsSuccess)).True;
 }

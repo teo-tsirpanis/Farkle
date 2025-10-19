@@ -32,6 +32,26 @@ internal class DfaBuildTests
         }
     }
 
+    [TestCase("foo", "     foofoo", 8)]
+    [TestCase("foo|foobar", "      foo bar   foobar", 9)]
+    [TestCase("foo|foobar", "    foobar   foobar", 10)]
+    public void TestBreakOnAccept(string pattern, string input, int? expectedTokenLength)
+    {
+        var regex = Regex.Chars([], Regex.CharsFlags.Inverted | Regex.CharsFlags.BreakOnAccept).ZeroOrMore() + Regex.FromRegexString(pattern);
+        var tokenizer = BuildLengthReturningTokenizer(regex);
+
+        var result = GetTokenLength(tokenizer, input);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result, Has.Property(nameof(ParserResult<>.IsSuccess)).EqualTo(expectedTokenLength is not null));
+            if (expectedTokenLength is { } l)
+            {
+                Assert.That(result, Has.Property(nameof(ParserResult<>.Value)).EqualTo(l));
+            }
+        }
+    }
+
     static Tokenizer<char> BuildLengthReturningTokenizer(Regex regex)
     {
         var parser = Terminal.Create("S", regex).AutoWhitespace(false).BuildSyntaxCheck();

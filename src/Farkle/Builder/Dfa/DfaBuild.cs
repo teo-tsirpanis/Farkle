@@ -229,6 +229,8 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         BitArrayNeo presentLeaves = new(leaves.Count);
         List<BitSet> followPosUnionCache = [];
 
+        bool breakOnAcceptExists = leaves.Exists(x => x is RegexLeaf.Chars { IsBreakOnAccept: true });
+
         _ = GetOrAddState(rootStateId);
         while (unmarkedStates.TryPop(out int stateIdx))
         {
@@ -436,7 +438,31 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
             {
                 followPosUnionCache.Add(followPos[i]);
             }
-            return BitSet.UnionMany(followPosUnionCache);
+            var followedSet = BitSet.UnionMany(followPosUnionCache);
+
+            // We order the ANDs from least to most likely to be true.
+            // It's rare for BoA leaves to exist in a build in the first place,
+            // but if they do, they are expected to appear pretty much everywhere,
+            // based on their current usage within Farkle.
+            // TODO: This can be further optimized, although some optimizations
+            // would need new APIs to BitCollections.
+            if (breakOnAcceptExists
+                && followedSet.Any(i => leaves[i] is RegexLeaf.End)
+                && presentLeaves.Any(i => leaves[i] is RegexLeaf.Chars { IsBreakOnAccept: true }))
+            {
+                followPosUnionCache.Clear();
+                foreach (var i in presentLeaves)
+                {
+                    if (leaves[i] is RegexLeaf.Chars { IsBreakOnAccept: true })
+                    {
+                        continue;
+                    }
+                    followPosUnionCache.Add(followPos[i]);
+                }
+                followedSet = BitSet.UnionMany(followPosUnionCache);
+            }
+
+            return followedSet;
         }
 
         int GetOrAddState(BitSet stateId)
@@ -766,6 +792,8 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
             public bool IsHighPriorityInverted =>
                 (flags & Regex.CharsFlags.HighPriorityInverted) == Regex.CharsFlags.HighPriorityInverted;
+
+            public bool IsBreakOnAccept => (flags & Regex.CharsFlags.BreakOnAccept) != 0;
         }
 
         public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf

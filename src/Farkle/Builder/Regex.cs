@@ -718,7 +718,7 @@ public sealed class Regex
     public Regex Or(Regex other) => this | other;
 
     [Flags]
-    private enum KindAndFlags : byte
+    private enum KindAndFlags : uint
     {
         /// <summary>
         /// The regex matches any character.
@@ -787,10 +787,21 @@ public sealed class Regex
         /// </summary>
         KindMask = 0x0F,
         /// <summary>
+        /// The regex will stop being propagated to accepting DFA states.
+        /// </summary>
+        /// <remarks>
+        /// Specifically, this means that in the DFA builder, when taking the <c>followPos</c> of a
+        /// set of leaves, if one of the input leaves has this flag, and one of the output leaves is
+        /// an <c>End</c> leaf, the <c>followPos</c> will be computed again, but excluding the leaves
+        /// with this flag from the input. This new set of leaves will be used, even if it does not
+        /// contain an <c>End</c> leaf.
+        /// </remarks>
+        BreakOnAccept = 0x08000000,
+        /// <summary>
         /// The regex will match any character except those specified. Valid only in regexes of
         /// kind <see cref="Chars"/>.
         /// </summary>
-        Inverted = 0x10,
+        Inverted = 0x10000000,
         /// <summary>
         /// The regex will match any character except those specified, but also force failing the
         /// tokenizer if one of those characters is encountered, even if another regex can match it.
@@ -809,23 +820,23 @@ public sealed class Regex
         /// will emit a failing transition for the <c>a</c> character.
         /// </para>
         /// </remarks>
-        HighPriorityInverted = 0x30,
+        HighPriorityInverted = 0x30000000,
         /// <summary>
         /// The regex is forced to be case-sensitive.
         /// </summary>
-        CaseSensitive = 0x40,
+        CaseSensitive = 0x40000000,
         /// <summary>
         /// The regex is forced to be case-insensitive.
         /// </summary>
-        CaseInsensitive = 0x80,
+        CaseInsensitive = 0x80000000,
         /// <summary>
         /// A mask for the case-sensitivity bits.
         /// </summary>
-        CaseMask = 0xC0,
+        CaseMask = 0xC0000000,
         /// <summary>
         /// A mask for all regex flag bits.
         /// </summary>
-        FlagsMask = 0xF0,
+        FlagsMask = 0xF8000000,
     }
 
     /// <summary>
@@ -833,11 +844,12 @@ public sealed class Regex
     /// </summary>
     /// <seealso cref="Chars"/>
     [Flags]
-    internal enum CharsFlags : byte
+    internal enum CharsFlags : uint
     {
         None = 0,
+        BreakOnAccept = KindAndFlags.BreakOnAccept,
         Inverted = KindAndFlags.Inverted,
         HighPriorityInverted = KindAndFlags.HighPriorityInverted,
-        All = Inverted | HighPriorityInverted,
+        All = BreakOnAccept | Inverted | HighPriorityInverted,
     }
 }

@@ -44,7 +44,7 @@ internal sealed class ChainedTokenizer<TChar> : Tokenizer<TChar>
         // operation but this is not a supported scenario.
         input.State.Attributes =
             ParserStateAttributes.TokenizerSupportsSuspending
-            | (Components.Length >= 1 ? ParserStateAttributes.HasMoreThanOneTokenizerInChain : 0);
+            | (Components.Length > 1 ? ParserStateAttributes.HasMoreThanOneTokenizerInChain : 0);
         // Get the state of the chained tokenizer. If we have not suspended before,
         // it will be null.
         var tokenizerState = input.GetChainedTokenizerStateOrNull();

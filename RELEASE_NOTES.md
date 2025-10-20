@@ -1,8 +1,10 @@
 #### 7.0.0-preview.2
 The following changes were made after 7.0.0-preview.1:
+* __Breaking change:__ Removed `params` from parameters of type `OperatorScope`.
+* Added `BuildSemanticProvider` extension method to `IGrammarBuilder<T>`.
 * Fixed referencing the Farkle package in F# Interactive.
 * Fixed failures when rendering templates from very large grammars.
-* __Breaking change:__ Removed `params` from parameters of type `OperatorScope`.
+* Fixed a bug where the `IsSingleTokenizerInChain` extension method would return wrong results.
 
 #### 7.0.0-preview.1 - 06-09-2025
 * Farkle was rewritten in C#, and features performance improvements across the board, as well as an improved and extensible architecture.

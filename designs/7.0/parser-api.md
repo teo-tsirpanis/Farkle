@@ -115,6 +115,9 @@ public sealed class ParserStateBox : IParserStateBox
 
 In frameworks that do not support ref fields, we have to use an interface and put the `ParserState` on the heap. A `ParserStateBox` class is provided for convenience and will be marked as obsolete on .NET 7.0+ to encourage the more efficient alternative.
 
+> [!NOTE]
+> Later in Farkle 7's development cycle, it was decided to drop support for .NET Standard 2.0. This makes the `IParserStateBox` and related types unnecessary, and they were removed from the public API. This also means that third-party code cannot create a `ParserInputReader` on frameworks that do not support ref fields, which was deemed acceptable.
+
 The `Consume` method will update the `TokenStartPosition` and `TotalCharactersConsumed` properties of `ParserState`. If the character type is `char` or `byte`, the column will be updated according to any CR or LF characters encountered. Otherwise only the row number will be updated.
 
 ### The parser

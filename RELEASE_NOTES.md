@@ -1,6 +1,7 @@
 #### 7.0.0-preview.2
 The following changes were made after 7.0.0-preview.1:
 * __Breaking change:__ Removed `params` from parameters of type `OperatorScope`.
+* __Breaking change:__ Removed the `IParserStateBox` interface and related APIs.
 * Added `BuildSemanticProvider` extension method to `IGrammarBuilder<T>`.
 * Fixed referencing the Farkle package in F# Interactive.
 * Fixed failures when rendering templates from very large grammars.

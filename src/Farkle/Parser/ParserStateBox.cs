@@ -21,14 +21,16 @@ namespace Farkle.Parser;
     "In .NET 7+ use a ParserState and pass it to the ParserInputReader's constructor by reference instead.")]
 [EditorBrowsable(EditorBrowsableState.Never)]
 #endif
-public sealed class ParserStateBox : IParserStateBox
+// No reason to make it public, if we won't support .NET Standard 2.0.
+// public
+sealed class ParserStateBox : IParserStateBox
 {
     private ParserState _state;
 
     /// <summary>
     /// Creates a <see cref="ParserStateBox"/>.
     /// </summary>
-    public ParserStateBox() {}
+    public ParserStateBox() { }
 
     /// <inheritdoc/>
     public ref ParserState State => ref _state;

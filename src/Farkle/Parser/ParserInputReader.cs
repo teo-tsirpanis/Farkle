@@ -97,7 +97,10 @@ public ref struct ParserInputReader<TChar>
     /// Callers should not assume that the <paramref name="stateBox"/> instance will be
     /// kept alive by the garbage collector on all frameworks.
     /// </remarks>
-    public ParserInputReader(IParserStateBox stateBox, ReadOnlySpan<TChar> characters, bool isFinal = true)
+    // No reason to make it public, if we won't support .NET Standard 2.0.
+    // public
+    internal
+        ParserInputReader(IParserStateBox stateBox, ReadOnlySpan<TChar> characters, bool isFinal = true)
     {
         ArgumentNullException.ThrowIfNull(stateBox);
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER

@@ -11,7 +11,9 @@ namespace Farkle.Parser;
 /// values on frameworks that do not support ref fields. It is implemented by
 /// <see cref="ParserStateBox"/> and <see cref="ParserStateContext{TChar}"/>.
 /// </remarks>
-public interface IParserStateBox
+// No reason to make it public, if we won't support .NET Standard 2.0.
+// public
+    interface IParserStateBox
 {
     /// <summary>
     /// A reference to a <see cref="ParserState"/>.

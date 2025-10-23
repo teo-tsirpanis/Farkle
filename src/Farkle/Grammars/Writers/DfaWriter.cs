@@ -52,28 +52,27 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
         }
     }
 
-    public void AddEdge(TChar rangeFrom, TChar rangeTo, int targetState)
+    public void AddEdge(TChar rangeFrom, TChar rangeTo, int? targetState)
     {
         if (rangeFrom.CompareTo(rangeTo) > 0)
         {
             ThrowHelpers.ThrowArgumentException(nameof(rangeFrom), "Starting character is greater than ending character.");
         }
-        if (targetState > _maxState)
+        int stateNumber;
+        if (targetState is { } s)
         {
-            _maxState = targetState;
+            if (targetState > _maxState)
+            {
+                _maxState = s;
+            }
+            stateNumber = s + 1;
+        }
+        else
+        {
+            stateNumber = 0;
         }
 
-        _edges.Add((rangeFrom, rangeTo, targetState + 1));
-    }
-
-    public void AddEdgeFail(TChar rangeFrom, TChar rangeTo)
-    {
-        if (rangeFrom.CompareTo(rangeTo) > 0)
-        {
-            ThrowHelpers.ThrowArgumentException(nameof(rangeFrom), "Starting character is greater than ending character.");
-        }
-
-        _edges.Add((rangeFrom, rangeTo, 0));
+        _edges.Add((rangeFrom, rangeTo, stateNumber));
     }
 
     private void EnsureFinished()

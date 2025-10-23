@@ -156,6 +156,9 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     {
         HashSet<BitSet>? seenConflicts = null;
         BitArrayNeo? conflictsOfState = null;
+        // If there are already states in the DFA writer, adjust the numbers
+        // of all the new ones.
+        int stateNumberAdjustment = dfaWriter.StateCount;
 
         foreach (var state in states)
         {
@@ -165,14 +168,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 {
                     continue;
                 }
-                if (target is { } t)
-                {
-                    dfaWriter.AddEdge(start, end, t);
-                }
-                else
-                {
-                    dfaWriter.AddEdgeFail(start, end);
-                }
+                dfaWriter.AddEdge(start, end, target is { } t ? t + stateNumberAdjustment : null);
             }
 
             if (FindDominantSymbol(state.AcceptSymbols, options) is { HasValue: true } sym)
@@ -214,7 +210,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 }
             }
 
-            dfaWriter.FinishState(state.DefaultTransition);
+            dfaWriter.FinishState(state.DefaultTransition is { } dt ? dt + stateNumberAdjustment : null);
         }
     }
 

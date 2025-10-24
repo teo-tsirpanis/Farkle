@@ -430,8 +430,6 @@ In order for parsers to be able to extract the token that ended a group, a custo
 
 If tokenizing all groups starts at the DFA's regular start state, this state machine SHOULD be omitted to save space.
 
-If a group has a non-default start state, tokenizers MAY assume that any group start token they match will be allowed to nest inside the group, and skip checking the _GroupNesting_ table.
-
 ### LR(1) state machine
 
 An LR(1) state machine's representation consists of the following data:

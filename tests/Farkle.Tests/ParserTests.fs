@@ -36,13 +36,12 @@ let testParser grammarFile displayName text =
     let testImpl streamMode useStaticBlock =
         let description = $"Grammar \"{grammarFile}\" parses %s{displayName} successfully in {streamMode} block mode"
         test description {
-            let rf = loadCharParser grammarFile
+            let parser = loadCharParser grammarFile
             let result =
                 if useStaticBlock then
-                    CharParser.parseString rf text
+                    CharParser.parseString parser text
                 else
-                    use sr = new StringReader(text)
-                    CharParser.parseTextReader rf sr
+                    parseGradual 10 parser text
                 |> ParserResult.toResult
             Expect.isOk result "Parsing failed"
         }

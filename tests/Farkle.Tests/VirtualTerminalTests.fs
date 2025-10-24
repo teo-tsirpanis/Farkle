@@ -25,7 +25,7 @@ USS Oriskany
 
         ["static"; "dynamic"]
         |> List.iter (fun mode ->
-            let result = if mode = "static" then parser.Parse rendered else parseGradual parser rendered
+            let result = if mode = "static" then parser.Parse rendered else parseGradual 1 parser rendered
             let result = expectWantParseSuccess result $"Parsing in {mode} block mode failed"
 
             Expect.equal result code "The parsed IndentCode is different from the original"

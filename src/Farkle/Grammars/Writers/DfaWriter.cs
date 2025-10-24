@@ -26,11 +26,15 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
     private uint _maxTokenSymbol;
 
+    private readonly List<int> _groupStartStates = [];
+
     private bool HasUnfinishedState => _pendingFirstEdge != _edges.Count || _pendingFirstAccept != _accepts.Count;
 
     public bool HasConflicts { get; private set; }
 
     public bool HasDefaultTransitions { get; private set; }
+
+    public bool HasCustomGroupStartStates { get; private set; }
 
     public int StateCount => _firstEdges.Count;
 
@@ -73,6 +77,15 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
         }
 
         _edges.Add((rangeFrom, rangeTo, stateNumber));
+    }
+
+    public void AddGroupStartState(int state)
+    {
+        _groupStartStates.Add(state + 1);
+        if (state > 0)
+        {
+            HasCustomGroupStartStates = true;
+        }
     }
 
     private void EnsureFinished()
@@ -205,6 +218,25 @@ internal class DfaWriter<TChar> where TChar : unmanaged, IComparable<TChar>
 
         byte stateTargetSize = GetCompressedIndexSize(StateCount);
         foreach (int state in _defaultTransitions)
+        {
+            writer.WriteVariableSize((uint)state, stateTargetSize);
+        }
+    }
+
+    public void WriteGroupStartStates(IBufferWriter<byte> writer, int groupCount)
+    {
+        if (!HasCustomGroupStartStates)
+        {
+            ThrowHelpers.ThrowInvalidOperationException("DFA has no custom group start states");
+        }
+
+        if (_groupStartStates.Count != 0 && _groupStartStates.Count != groupCount)
+        {
+            ThrowHelpers.ThrowInvalidOperationException("Not all group start states were written");
+        }
+
+        byte stateTargetSize = GetCompressedIndexSize(StateCount);
+        foreach (int state in _groupStartStates)
         {
             writer.WriteVariableSize((uint)state, stateTargetSize);
         }

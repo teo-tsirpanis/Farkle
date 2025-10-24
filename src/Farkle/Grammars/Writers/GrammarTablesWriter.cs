@@ -48,6 +48,8 @@ internal struct GrammarTablesWriter
 
     public readonly int ProductionCount => _productions?.Count ?? 0;
 
+    public readonly int GroupCount => _groups?.Count ?? 0;
+
     private static uint EncodeSymbolCodedIndex(EntityHandle handle)
     {
         if (handle.IsTokenSymbol)

@@ -104,6 +104,13 @@ internal sealed class GrammarWriter
             dfa.WriteDefaultTransitions(buffer);
             AddStateMachine(GrammarConstants.DfaOnCharDefaultTransitionsKind, GetOrAddBlob(buffer));
         }
+
+        if (dfa.HasCustomGroupStartStates)
+        {
+            buffer.Clear();
+            dfa.WriteGroupStartStates(buffer, _tablesWriter.GroupCount);
+            AddStateMachine(GrammarConstants.DfaOnCharGroupStartStatesKind, GetOrAddBlob(buffer));
+        }
     }
 
     public void AddStateMachine(LrWriter lr)

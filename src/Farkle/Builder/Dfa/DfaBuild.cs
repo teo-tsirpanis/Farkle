@@ -105,7 +105,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
             return false;
         }
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
-        var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates, options);
+        var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
         if (dfaStates is null)
         {
             return false;
@@ -214,8 +214,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         }
     }
 
-    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId,
-        int maxStates, DfaBuildOptions options)
+    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
     {
         Dictionary<BitSet, DfaState> states = [];
         List<DfaState> stateList = [];

@@ -215,7 +215,6 @@ internal static class GrammarBuild
         {
             foreach (Group group in groups)
             {
-                string name = group.Name;
                 string? groupEndOrNewLine = group switch
                 {
                     BlockGroup g => g.GroupEnd,

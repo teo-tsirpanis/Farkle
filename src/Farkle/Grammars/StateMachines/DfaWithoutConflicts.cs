@@ -119,7 +119,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     /// <param name="startState">The state to start matching from.</param>
     /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
     /// beginning of <paramref name="chars"/>.</param>
-    internal DfaMatchResult Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors = true)
+    internal DfaMatchResult Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors)
     {
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);

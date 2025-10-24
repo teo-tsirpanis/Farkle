@@ -82,7 +82,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             bool usedCustomDfaState = false;
             if (suspendedDfaState.HasState || groupDfaState != _dfa.StartState)
             {
-                matchResult = _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, groupDfaState);
+                matchResult = _dfa.Match(hotData.GrammarFile, chars, input.IsFinalBlock, groupDfaState, ignoreLeadingErrors: false);
                 usedCustomDfaState = true;
                 if (matchResult.NeedsMoreChars)
                 {
@@ -105,6 +105,10 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
                     // Consume the characters only if the tokenizer failed. Otherwise,
                     // they will be taken care of later.
                     ConsumeInput(ref input, ref chars, matchResult.CharactersRead, isNoise);
+                    if (chars.IsEmpty)
+                    {
+                        continue;
+                    }
                 }
             }
             if (!matchResult.AcceptSymbol.HasValue)

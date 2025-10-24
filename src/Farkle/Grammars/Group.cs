@@ -112,6 +112,10 @@ public readonly struct Group : IEquatable<Group>
         }
     }
 
+#pragma warning disable IDE0051 // Remove unused private members
+    private int? DfaStartStateOnChar => _grammar.DfaOnChar?.GetStartStateForGroup(Handle);
+#pragma warning restore IDE0051 // Remove unused private members
+
     /// <inheritdoc/>
     public bool Equals(Group other) => _grammar == other._grammar && Handle == other.Handle;
 

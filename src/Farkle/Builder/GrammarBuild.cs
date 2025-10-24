@@ -207,7 +207,7 @@ internal static class GrammarBuild
         // Add groups.
         int groupCount = groups?.Count ?? 0 + grammarDefinition.GlobalOptions.Comments?.Count ?? 0;
         List<Regex?>? groupDfaRegexes = null;
-        if ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0 && groupCount > 0)
+        if (options.EmitGroupOptimizedDfa && (artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0 && groupCount > 0)
         {
             groupDfaRegexes = new List<Regex?>(groupCount);
         }

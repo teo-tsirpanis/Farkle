@@ -95,18 +95,6 @@ public sealed class Regex
     private string DebuggerDisplay()
     {
         RuntimeHelpers.EnsureSufficientExecutionStack();
-        string invertedString = (_kindAndFlags & KindAndFlags.HighPriorityInverted) switch
-        {
-            KindAndFlags.HighPriorityInverted => "HighPriorityAllBut",
-            KindAndFlags.Inverted => "AllBut",
-            _ => "",
-        };
-        string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
-        {
-            KindAndFlags.CaseSensitive => " CaseSensitive",
-            KindAndFlags.CaseInsensitive => " CaseInsensitive",
-            _ => "",
-        };
         string dataString = Kind switch
         {
             KindAndFlags.Any =>
@@ -114,7 +102,7 @@ public sealed class Regex
             KindAndFlags.StringLiteral =>
                 $"\"{_data}\"",
             KindAndFlags.Chars =>
-                $"{invertedString}Chars[{(((char, char)[])_data!).Length}]",
+                $"Chars[{(((char, char)[])_data!).Length}]",
             KindAndFlags.Concat =>
                 $"Concat[{((Regex[])_data!).Length}]",
             KindAndFlags.Alt =>
@@ -127,7 +115,37 @@ public sealed class Regex
                 $"Accept #{M}{(N != 0 ? " (Lowest Priority)" : "")} {((Regex)_data!).DebuggerDisplay()}",
             _ => ""
         };
-        return $"{dataString}{caseString}";
+        return $"{dataString}{FormatFlags(_kindAndFlags)}";
+
+        static string FormatFlags(KindAndFlags flags)
+        {
+            flags &= KindAndFlags.FlagsMask;
+            List<string> strings = [];
+            switch (flags & KindAndFlags.CaseMask)
+            {
+                case KindAndFlags.CaseSensitive:
+                    strings.Add(nameof(KindAndFlags.CaseSensitive));
+                    break;
+                case KindAndFlags.CaseInsensitive:
+                    strings.Add(nameof(KindAndFlags.CaseInsensitive));
+                    break;
+            }
+            switch (flags & KindAndFlags.HighPriorityInverted)
+            {
+                case KindAndFlags.HighPriorityInverted:
+                    strings.Add(nameof(KindAndFlags.HighPriorityInverted));
+                    break;
+                case KindAndFlags.Inverted:
+                    strings.Add(nameof(KindAndFlags.Inverted));
+                    break;
+            }
+            if ((flags & KindAndFlags.BreakOnAccept) != 0)
+            {
+                strings.Add(nameof(KindAndFlags.BreakOnAccept));
+            }
+
+            return strings is [] ? "" : $" ({string.Join(", ", strings)})";
+        }
     }
 
     private Regex Loop(int m, int n)

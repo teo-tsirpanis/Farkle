@@ -114,8 +114,8 @@ internal readonly struct GrammarTables
         new(ReadTableIndex(grammarFile, index, ProductionRowCount));
 
     // These table kinds won't be exposed to users and don't need their own handle type.
-    private uint ReadGroupHandle(ReadOnlySpan<byte> grammarFile, int index) =>
-        ReadTableIndex(grammarFile, index, GroupRowCount);
+    private GroupHandle ReadGroupHandle(ReadOnlySpan<byte> grammarFile, int index) =>
+        new(ReadTableIndex(grammarFile, index, GroupRowCount));
 
     private uint ReadGroupNestingHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         ReadTableIndex(grammarFile, index, GroupNestingRowCount);
@@ -359,18 +359,18 @@ internal readonly struct GrammarTables
     public TokenSymbolAttributes GetTokenSymbolFlags(ReadOnlySpan<byte> grammarFile, uint index) =>
         (TokenSymbolAttributes)grammarFile.ReadUInt32(GetTableCellOffset(TokenSymbolFlagsBase, TokenSymbolRowCount, TokenSymbolRowSize, index));
 
-    public uint GetTokenSymbolStartedGroup(ReadOnlySpan<byte> grammarFile, uint index)
+    public GroupHandle GetTokenSymbolStartedGroup(ReadOnlySpan<byte> grammarFile, uint index)
     {
-        for (int i = 1; i <= GroupRowCount; i++)
+        for (uint i = 1; i <= GroupRowCount; i++)
         {
-            var groupStart = GetGroupStart(grammarFile, (uint)i).TableIndex;
+            var groupStart = GetGroupStart(grammarFile, i).TableIndex;
             if (groupStart == index)
             {
-                return (uint)i;
+                return new(i);
             }
         }
 
-        return 0;
+        return default;
     }
 
     public StringHandle GetGroupName(ReadOnlySpan<byte> grammarFile, uint index) =>
@@ -391,7 +391,7 @@ internal readonly struct GrammarTables
     public uint GetGroupFirstNesting(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadGroupNestingHandle(grammarFile, GetTableCellOffset(GroupFirstNestingBase, GroupRowCount, GroupRowSize, index));
 
-    public uint GetGroupNestingGroup(ReadOnlySpan<byte> grammarFile, uint index) =>
+    public GroupHandle GetGroupNestingGroup(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadGroupHandle(grammarFile, GetTableCellOffset(GroupNestingGroupBase, GroupNestingRowCount, GroupNestingRowSize, index));
 
     public (uint Offset, int Count) GetGroupNestingBounds(ReadOnlySpan<byte> grammarFile, uint index) =>
@@ -402,8 +402,8 @@ internal readonly struct GrammarTables
         (uint offset, int count) = GetGroupNestingBounds(grammarFile, outerIndex);
         for (uint i = offset; i < offset + (uint)count; i++)
         {
-            uint nesting = GetGroupNestingGroup(grammarFile, i);
-            if (nesting == innerIndex)
+            GroupHandle nesting = GetGroupNestingGroup(grammarFile, i);
+            if (nesting.TableIndex == innerIndex)
             {
                 return true;
             }
@@ -511,7 +511,7 @@ internal readonly struct GrammarTables
         }
         for (uint i = 1; i <= (uint)GroupNestingRowCount; i++)
         {
-            ValidateHandle(GetGroupNestingGroup(grammarFile, i), GroupRowCount);
+            ValidateHandle(GetGroupNestingGroup(grammarFile, i));
         }
 
         if (NonterminalRowCount != 0)
@@ -596,6 +596,8 @@ internal readonly struct GrammarTables
     }
 
     internal void ValidateHandle(TokenSymbolHandle handle) => ValidateHandle(handle.TableIndex, TokenSymbolRowCount);
+
+    internal void ValidateHandle(GroupHandle handle) => ValidateHandle(handle.TableIndex, GroupRowCount);
 
     internal void ValidateHandle(NonterminalHandle handle) => ValidateHandle(handle.TableIndex, NonterminalRowCount);
 

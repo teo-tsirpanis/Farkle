@@ -30,6 +30,8 @@ internal sealed class GrammarWriter
         + (_stringHeapWriter.LengthSoFar > 0 ? 1 : 0)
         + (_blobHeapWriter.LengthSoFar > 0 ? 1 : 0);
 
+    public int TokenSymbolCount => _tablesWriter.TokenSymbolRowCount;
+
     public StringHandle GetOrAddString(string str)
     {
         ArgumentNullException.ThrowIfNull(str);
@@ -56,7 +58,7 @@ internal sealed class GrammarWriter
         return _tablesWriter.AddTokenSymbol(name, flags);
     }
 
-    public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
+    public GroupHandle AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
     {
         _stringHeapWriter.ValidateHandle(name);
         ValidateTableIndex(container.TableIndex, nameof(container));
@@ -65,10 +67,10 @@ internal sealed class GrammarWriter
         return _tablesWriter.AddGroup(name, container, flags, start, end, nestingCount);
     }
 
-    public void AddGroupNesting(uint groupIndex)
+    public void AddGroupNesting(GroupHandle group)
     {
-        ValidateTableIndex(groupIndex, nameof(groupIndex));
-        _tablesWriter.AddGroupNesting(groupIndex);
+        ValidateTableIndex(group.TableIndex, nameof(group));
+        _tablesWriter.AddGroupNesting(group);
     }
 
     public NonterminalHandle AddNonterminal(StringHandle name, NonterminalAttributes flags, int productionCount)
@@ -101,6 +103,13 @@ internal sealed class GrammarWriter
             buffer.Clear();
             dfa.WriteDefaultTransitions(buffer);
             AddStateMachine(GrammarConstants.DfaOnCharDefaultTransitionsKind, GetOrAddBlob(buffer));
+        }
+
+        if (dfa.HasCustomGroupStartStates)
+        {
+            buffer.Clear();
+            dfa.WriteGroupStartStates(buffer, _tablesWriter.GroupCount);
+            AddStateMachine(GrammarConstants.DfaOnCharGroupStartStatesKind, GetOrAddBlob(buffer));
         }
     }
 

@@ -98,41 +98,45 @@ internal static class StateMachineUtilities
         return ~low;
     }
 
-    private static DfaWithoutConflicts<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
+    private static DfaWithoutConflicts<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines.Dfa dfa) where TChar : unmanaged, IComparable<TChar>
     {
-        if (dfa.Length < sizeof(uint) * 2)
+        int offset = dfa.DfaWithoutConflicts.Offset, length = dfa.DfaWithoutConflicts.Length;
+
+        if (length < sizeof(uint) * 2)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int stateCount = (int)grammarFile.ReadUInt32(dfa.Offset);
-        int edgeCount = (int)grammarFile.ReadUInt32(dfa.Offset + sizeof(uint));
+        int stateCount = (int)grammarFile.ReadUInt32(offset);
+        int edgeCount = (int)grammarFile.ReadUInt32(offset + sizeof(uint));
 
         if (stateCount == 0)
         {
             return null;
         }
 
-        return new DfaWithoutConflicts<TChar>(grammar, stateCount, edgeCount, grammar.GrammarTables.TokenSymbolRowCount, dfa, dfaDefaultTransitions);
+        return new DfaWithoutConflicts<TChar>(grammar, stateCount, edgeCount, in dfa);
     }
 
-    private static DfaWithConflicts<TChar>? CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions) where TChar : unmanaged, IComparable<TChar>
+    private static DfaWithConflicts<TChar>? CreateDfaWithConflicts<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines.Dfa dfa) where TChar : unmanaged, IComparable<TChar>
     {
-        if (dfa.Length < sizeof(uint) * 3)
+        int offset = dfa.DfaWithConflicts.Offset, length = dfa.DfaWithConflicts.Length;
+
+        if (length < sizeof(uint) * 3)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        int stateCount = (int)grammarFile.ReadUInt32(dfa.Offset);
-        int edgeCount = (int)grammarFile.ReadUInt32(dfa.Offset + sizeof(uint));
-        int acceptCount = (int)grammarFile.ReadUInt32(dfa.Offset + sizeof(uint) * 2);
+        int stateCount = (int)grammarFile.ReadUInt32(offset);
+        int edgeCount = (int)grammarFile.ReadUInt32(offset + sizeof(uint));
+        int acceptCount = (int)grammarFile.ReadUInt32(offset + sizeof(uint) * 2);
 
         if (stateCount == 0)
         {
             return null;
         }
 
-        return new DfaWithConflicts<TChar>(grammar, stateCount, edgeCount, acceptCount, grammar.GrammarTables.TokenSymbolRowCount, dfa, dfaDefaultTransitions);
+        return new DfaWithConflicts<TChar>(grammar, stateCount, edgeCount, acceptCount, in dfa);
     }
 
     private static LrWithoutConflicts? CreateLr(Grammar grammar, ReadOnlySpan<byte> grammarFile, GrammarFileSection lr)
@@ -178,14 +182,14 @@ internal static class StateMachineUtilities
     {
         Dfa<char>? dfaOnChar = null;
 
-        if (!stateMachines.DfaOnChar.IsEmpty)
+        if (!stateMachines.DfaOnChar.DfaWithoutConflicts.IsEmpty)
         {
-            dfaOnChar = CreateDfa<char>(grammar, grammarFile, stateMachines.DfaOnChar, stateMachines.DfaOnCharDefaultTransitions);
+            dfaOnChar = CreateDfa<char>(grammar, grammarFile, in stateMachines.DfaOnChar);
         }
 
-        if (dfaOnChar is null && !stateMachines.DfaOnCharWithConflicts.IsEmpty)
+        if (dfaOnChar is null && !stateMachines.DfaOnChar.DfaWithConflicts.IsEmpty)
         {
-            dfaOnChar = CreateDfaWithConflicts<char>(grammar, grammarFile, stateMachines.DfaOnCharWithConflicts, stateMachines.DfaOnCharDefaultTransitions);
+            dfaOnChar = CreateDfaWithConflicts<char>(grammar, grammarFile, in stateMachines.DfaOnChar);
         }
 
         LrStateMachine? lr = null;

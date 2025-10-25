@@ -98,6 +98,8 @@ Each table row is stored as the concatenation of its columns and indexed startin
 * A compressed index to the row of another table. Its length is defined in a following section.
 * A coded index to the row of one of a set of `n` possible tables. It is encoded as `e << log2(n) | tag`, where `e` is the index to the table and `tag` is a number from zero to `n - 1` that identifies the table `e` is referring to. The length of the coded index is one or two bytes if all possible tables have a row count less than 2<sup>8 - log2(n)</sup> or 2<sup>16 - log2(n)</sup> respectively, and four bytes otherwise. A table with all possible kinds of coded indices will be provided later in the specification.
 
+> When designing tables, columns with references to structures in state machines should be avoided, since it would introduce a circular reference between tables and state machines.
+
 A table MUST NOT have more than 2<sup>24</sup> - 1 rows, unless its specification states a lower limit.
 
 Table and coded indices are always one-based. An index with a value of zero points to no row. Such indices MUST NOT be present in the grammar unless they are explicitly allowed.
@@ -190,7 +192,7 @@ The following rules apply to the _TokenSymbol_ table:
 * A token symbol with the `Terminal` flag set MUST NOT appear after a token symbol without the `Terminal` flag set.
 * A token symbol MUST NOT have both the `Terminal` and `GroupStart` flags set.
 
-### Group table
+### _Group_ table
 
 The _Group_ table contains the following columns:
 
@@ -219,13 +221,63 @@ The following rules apply to the _Group_ table:
 
 > Before accessing the nesting of a group, readers MUST ensure that the group can actually be nested. It is possible for the __FirstNesting__ column to point to a non-existent row if no groups can be nested.
 
-### GroupNesting table
+#### Parsing groups
+
+The following algorithm describes how to parse groups:
+
+```
+Let groupStack be a stack of the groups the tokenizer is currently inside.
+Let input be a sequence of all remaining characters to tokenize. Characters are removed (consumed) from the start of the sequence as they are being processed.
+
+While groupStack is not empty:
+    Let currentGroup be the group on the top of groupStack.
+    If there are no more characters in the input:
+        If currentGroup has the EndsOnEndOfInput flag set:
+            Pop from groupStack.
+            Continue loop.
+        Else:
+            Fail with a syntax error.
+        End If
+    End If
+    Run the DFA from currentGroup's start state.
+Label CheckDfaResult:
+    If the DFA accepted a token:
+        If the accepted token's symbol has the GroupStart flag set:
+            Let newGroup be the group whose Start column points to the accepted token's symbol.
+            If the rows in the GroupNesting table that correspond to currentGroup contain newGroup:
+                Consume as many characters as the DFA read before accepting the token.
+                Push newGroup onto groupStack.
+                Continue loop.
+            End If
+        Else If the accepted token's symbol is equal to currentGroup's End column:
+            If currentGroup does not have the KeepEndToken flag set:
+                Consume as many characters as the DFA read before accepting the token.
+            End If
+            Pop from groupStack.
+            Continue loop.
+        End If
+    End If
+Label CheckDfaResultEnd:
+    If currentGroup's start state is not the same as the DFA's ordinary start state:
+        Consume as many characters as the DFA read before accepting a token or failing.
+        Run the DFA from its ordinary start state.
+        // Copy the code between labels CheckDfaResult and CheckDfaResultEnd here.
+    End If
+    If currentGroup has the AdvanceByCharacter flag set:
+        Consume one character from the input.
+    Else:
+        Consume as many characters as the DFA read before accepting a token or failing.
+    End If
+End While
+```
+
+### _GroupNesting_ table
 
 The _GroupNesting_ table contains the following column:
 
 * __Group__ (an index to the _Group_ table): The group that can be nested inside another group.
 
-### Nonterminal table
+### _Nonterminal_ table
 
 The _Nonterminal_ table contains the following columns:
 
@@ -249,7 +301,7 @@ The following rules apply to the _Nonterminal_ table:
 
 > Before accessing the productions of a nonterminal, readers MUST ensure that the nonterminal actually has productions. Typically nonterminals with no productions are not allowed, but the format supports encoding grammars that cannot be used for parsing.
 
-### Production table
+### _Production_ table
 
 The _Production_ table contains the following columns:
 
@@ -265,7 +317,7 @@ The following rules apply to the _Production_ table:
 
 > Before accessing the members of a production, readers MUST ensure that it actually has members.
 
-### ProductionMember table
+### _ProductionMember_ table
 
 The _ProductionMember_ table contains the following columns:
 
@@ -273,7 +325,7 @@ The _ProductionMember_ table contains the following columns:
 
 If the __Member__ column points to a token symbol, its `Terminal` flag MUST be set.
 
-### StateMachine table
+### _StateMachine_ table
 
 The _StateMachine_ table contains the following columns:
 
@@ -290,6 +342,7 @@ The following values are defined for the __Kind__ column:
 |2|Deterministic Finite Automaton (DFA) default transitions on 16-bit character ranges.|
 |3|LR(1) state machine.|
 |4|Generalized LR(1) (GLR(1)) state machine.|
+|5|Deterministic Finite Automaton (DFA) group start states on 16-bit character ranges.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -304,7 +357,7 @@ State machines with no states MUST be treated as if they do not exist.
 
 The format of the blob pointed to by the __Data__ column depends on the value of the __Kind__ column and is specified in following sections.
 
-### SpecialName table
+### _SpecialName_ table
 
 The _SpecialName_ table contains the following columns:
 
@@ -336,7 +389,7 @@ A DFA's representation consists of the following data:
 
 The type `char_t` can be any unsigned integer type.
 
-The DFA's initial state is always the first one.
+The DFA's start state is always the first one.
 
 A state's edges end when the next state's edges begin, or at the end of the edges if this is the last state. If a state and all states after it do not have any edges, its `firstEdge` field MUST be equal to the number of edges in the DFA plus one.
 
@@ -364,6 +417,18 @@ To reduce the size of a DFA, we can factor out the most common transitions of a 
 This state machine contains `stateCount` entries of type `state_t` that specify the default transition for each state. The default transition of a state will be taken if the current input character is not matched by any edge. If it is zero, the tokenization process stops.
 
 If all states have a failing default transition, this state machine SHOULD be omitted to save space.
+
+### Deterministic Finite Automaton (DFA) group start states
+
+When the tokenizer is inside a group with the `AdvanceByCharacter` flag set, it used to repeatedly run the DFA at the start of each character, until it can match either the group's end token, or the start of a nested group. This is very inefficient, because it can lead to characters being processed multiple times. To improve this, we can add extra states to the DFA that will only match the tokens are looking for when inside a group, and start from there.
+
+This state machine contains `groupCount` entries of type `state_t` that are used according to the [group parsing algorithm](#parsing-groups). A group has a custom start state if its corresponding entry in this state machine is not equal to the DFA's regular start state.
+
+In order for parsers to know the precise start of a nested group, a custom group start state MUST NOT end up accepting a token symbol with the `GroupStart` flag set.
+
+In order for parsers to be able to extract the token that ended a group, a custom group start state for a group with the `KeepEndToken` flag set MUST NOT end up accepting the token symbol specified in the group's __End__ column.
+
+If tokenizing all groups starts at the DFA's regular start state, this state machine SHOULD be omitted to save space.
 
 ### LR(1) state machine
 
@@ -406,7 +471,7 @@ The type `eof_action_t` describes the type of the action (reduce, accept, error)
 * An accept action is encoded as `1`.
 * A reduce action to the production with the index `p` is encoded as `p + 1`.
 
-The LR(1) state machine's initial state is always the first one.
+The LR(1) state machine's start state is always the first one.
 
 A state's actions end when the next state's actions begin, or at the end of the actions if this is the last state. If a state and all states after it have no actions, its `firstAction` field MUST be set to the number of all actions in the state machine plus one. The same applies to GOTO actions.
 

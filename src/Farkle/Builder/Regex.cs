@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Farkle.Grammars;
 
 namespace Farkle.Builder;
 
@@ -75,29 +76,25 @@ public sealed class Regex
         {
             case (KindAndFlags.Any, null):
             case (KindAndFlags.StringLiteral, string):
-            case (KindAndFlags.Chars or KindAndFlags.AllButChars, (char, char)[]):
+            case (KindAndFlags.Chars, (char, char)[]):
             case (KindAndFlags.Concat or KindAndFlags.Alt, Regex[]):
-            case (KindAndFlags.Loop, Regex):
             case (KindAndFlags.RegexString, RegexStringHolder):
+            case (KindAndFlags.Accept, Regex):
+                break;
+            case (KindAndFlags.Loop, Regex):
+                Debug.Assert(M >= 0);
+                Debug.Assert(N >= M);
                 break;
             default:
                 Debug.Fail("Invalid regex data.");
                 break;
         }
-        Debug.Assert(M >= 0);
-        Debug.Assert(N >= M);
     }
 
     [ExcludeFromCodeCoverage]
     private string DebuggerDisplay()
     {
         RuntimeHelpers.EnsureSufficientExecutionStack();
-        string caseString = (_kindAndFlags & KindAndFlags.CaseMask) switch
-        {
-            KindAndFlags.CaseSensitive => " CaseSensitive",
-            KindAndFlags.CaseInsensitive => " CaseInsensitive",
-            _ => "",
-        };
         string dataString = Kind switch
         {
             KindAndFlags.Any =>
@@ -106,8 +103,6 @@ public sealed class Regex
                 $"\"{_data}\"",
             KindAndFlags.Chars =>
                 $"Chars[{(((char, char)[])_data!).Length}]",
-            KindAndFlags.AllButChars =>
-                $"AllButChars[{(((char, char)[])_data!).Length}]",
             KindAndFlags.Concat =>
                 $"Concat[{((Regex[])_data!).Length}]",
             KindAndFlags.Alt =>
@@ -116,9 +111,41 @@ public sealed class Regex
                 $"{((Regex)_data!).DebuggerDisplay()}{{{M},{N}}}",
             KindAndFlags.RegexString =>
                 $"\"{_data}\"",
+            KindAndFlags.Accept =>
+                $"Accept #{M}{(N != 0 ? " (Lowest Priority)" : "")} {((Regex)_data!).DebuggerDisplay()}",
             _ => ""
         };
-        return $"{dataString}{caseString}";
+        return $"{dataString}{FormatFlags(_kindAndFlags)}";
+
+        static string FormatFlags(KindAndFlags flags)
+        {
+            flags &= KindAndFlags.FlagsMask;
+            List<string> strings = [];
+            switch (flags & KindAndFlags.CaseMask)
+            {
+                case KindAndFlags.CaseSensitive:
+                    strings.Add(nameof(KindAndFlags.CaseSensitive));
+                    break;
+                case KindAndFlags.CaseInsensitive:
+                    strings.Add(nameof(KindAndFlags.CaseInsensitive));
+                    break;
+            }
+            switch (flags & KindAndFlags.HighPriorityInverted)
+            {
+                case KindAndFlags.HighPriorityInverted:
+                    strings.Add(nameof(KindAndFlags.HighPriorityInverted));
+                    break;
+                case KindAndFlags.Inverted:
+                    strings.Add(nameof(KindAndFlags.Inverted));
+                    break;
+            }
+            if ((flags & KindAndFlags.BreakOnAccept) != 0)
+            {
+                strings.Add(nameof(KindAndFlags.BreakOnAccept));
+            }
+
+            return strings is [] ? "" : $" ({string.Join(", ", strings)})";
+        }
     }
 
     private Regex Loop(int m, int n)
@@ -141,16 +168,15 @@ public sealed class Regex
         return false;
     }
 
-    internal bool IsChars(out ImmutableArray<(char, char)> chars, out bool isInverted)
+    internal bool IsChars(out ImmutableArray<(char, char)> chars, out CharsFlags flags)
     {
-        if (Kind is KindAndFlags.Chars or KindAndFlags.AllButChars)
+        flags = (CharsFlags)_kindAndFlags & CharsFlags.All;
+        if (Kind is KindAndFlags.Chars)
         {
-            isInverted = Kind == KindAndFlags.AllButChars;
             chars = ImmutableCollectionsMarshal.AsImmutableArray(((char, char)[])_data!);
             return true;
         }
         chars = [];
-        isInverted = false;
         return false;
     }
 
@@ -200,6 +226,19 @@ public sealed class Regex
         return false;
     }
 
+    internal bool IsAccept([MaybeNullWhen(false)] out Regex regex, out TokenSymbolHandle symbol, out bool lowestPriority)
+    {
+        symbol = new((uint)M + 1);
+        lowestPriority = N != 0;
+        if (Kind == KindAndFlags.Accept)
+        {
+            regex = (Regex)_data!;
+            return true;
+        }
+        regex = null;
+        return false;
+    }
+
     /// <summary>
     /// Effects the case sensitivity override of this <see cref="Regex"/>, after considering
     /// the state of the DFA builder.
@@ -229,6 +268,22 @@ public sealed class Regex
         return existingIsCaseSensitive;
     }
 
+    internal bool TryGetCaseSensitivity(out bool isCaseSensitive)
+    {
+        switch (_kindAndFlags & KindAndFlags.CaseMask)
+        {
+            case KindAndFlags.CaseSensitive:
+                isCaseSensitive = true;
+                return true;
+            case KindAndFlags.CaseInsensitive:
+                isCaseSensitive = false;
+                return true;
+            default:
+                isCaseSensitive = false;
+                return false;
+        }
+    }
+
     /// <summary>
     /// A <see cref="Regex"/> that matches any character.
     /// </summary>
@@ -243,6 +298,39 @@ public sealed class Regex
     /// A <see cref="Regex"/> that does not match anything.
     /// </summary>
     internal static Regex Void { get; } = new(KindAndFlags.Alt, (Regex[])[]);
+
+    /// <summary>
+    /// Creates a <see cref="Regex"/> that causes the DFA to accept a token symbol
+    /// after matching the given <see cref="Regex"/>.
+    /// </summary>
+    /// <param name="regex"></param>
+    /// <param name="symbol">A handle to the token symbol to accept.</param>
+    /// <param name="lowestPriority">Whether <paramref name="symbol"/> is given the lowest
+    /// priority when resolving conflicts. Conflicts between symbols with the lowest priority
+    /// get randomly resolved.</param>
+    /// <remarks>
+    /// Accept nodes are only used internally by the builder.
+    /// </remarks>
+    internal static Regex Accept(Regex regex, TokenSymbolHandle symbol, bool lowestPriority)
+    {
+        Debug.Assert(symbol.HasValue);
+        return new(KindAndFlags.Accept, regex, symbol.Value, lowestPriority ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Regex"/> that matches some specific characters.
+    /// </summary>
+    /// <param name="chars">The character ranges to match, or to avoid matching.</param>
+    /// <param name="flags">Flags to customize the regex's matching behavior.</param>
+    /// <seealso cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    /// <seealso cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
+    internal static Regex Chars(ImmutableArray<(char, char)> chars, CharsFlags flags)
+    {
+        Debug.Assert(!chars.IsDefault);
+        Debug.Assert((flags & ~CharsFlags.All) == 0);
+        KindAndFlags regexFlags = KindAndFlags.Chars | (KindAndFlags)flags;
+        return new(regexFlags, ImmutableCollectionsMarshal.AsArray(chars));
+    }
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
@@ -293,7 +381,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.AllButChars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe.Select(c => (c, c)).ToArray());
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
@@ -326,7 +414,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.AllButChars, arrayUnsafe);
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe);
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
@@ -608,12 +696,12 @@ public sealed class Regex
                     break;
             }
             // Optimize [abc]|[def] to [abcdef].
-            // Farkle 6 also optimized patterns with AllButChars, but that would
+            // Farkle 6 also optimized patterns with inverted Chars, but that would
             // involve intersecting or taking the difference of the two sets, and
             // it's not likely to occur either way.
-            if (left.IsChars(out var leftChars, out var leftIsInverted) &&
-                right.IsChars(out var rightChars, out var rightIsInverted) &&
-                !(leftIsInverted || rightIsInverted))
+            if (left.IsChars(out var leftChars, out var leftFlags) &&
+                right.IsChars(out var rightChars, out var rightFlags) &&
+                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
             {
                 return OneOf([.. leftChars, .. rightChars]);
             }
@@ -648,7 +736,7 @@ public sealed class Regex
     public Regex Or(Regex other) => this | other;
 
     [Flags]
-    private enum KindAndFlags : byte
+    private enum KindAndFlags : uint
     {
         /// <summary>
         /// The regex matches any character.
@@ -665,19 +753,13 @@ public sealed class Regex
         /// </remarks>
         StringLiteral = 1,
         /// <summary>
-        /// The regex matches a list of character ranges.
+        /// The regex matches certain character ranges.
         /// </summary>
         /// <remarks>
         /// <see cref="_data"/> must be an array of value 2-tuples of <see cref="char"/>.
         /// </remarks>
         Chars = 2,
-        /// <summary>
-        /// The regex matches any character except those in a list of character ranges.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="_data"/> must be an array of value 2-tuples of <see cref="char"/>.
-        /// </remarks>
-        AllButChars = 3,
+        // Unused = 3,
         /// <summary>
         /// The regex matches a concatenation of other regexes.
         /// </summary>
@@ -709,20 +791,83 @@ public sealed class Regex
         /// </remarks>
         RegexString = 7,
         /// <summary>
+        /// The regex represents accepting a token symbol after matching another regex.
+        /// This kind is only used internally by the builder.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="_data"/> must be a <see cref="Regex"/>.
+        /// <see cref="M"/> contains the token symbol's <see cref="TokenSymbolHandle.TableIndex"/>,
+        /// and <see cref="N"/> contains whether the symbol has a lowest accept priority.
+        /// </remarks>
+        Accept = 8,
+        /// <summary>
         /// A mask for the regex kind bits.
         /// </summary>
         KindMask = 0x0F,
         /// <summary>
+        /// The regex will stop being propagated to accepting DFA states.
+        /// </summary>
+        /// <remarks>
+        /// Specifically, this means that in the DFA builder, when taking the <c>followPos</c> of a
+        /// set of leaves, if one of the input leaves has this flag, and one of the output leaves is
+        /// an <c>End</c> leaf, the <c>followPos</c> will be computed again, but excluding the leaves
+        /// with this flag from the input. This new set of leaves will be used, even if it does not
+        /// contain an <c>End</c> leaf.
+        /// </remarks>
+        BreakOnAccept = 0x08000000,
+        /// <summary>
+        /// The regex will match any character except those specified. Valid only in regexes of
+        /// kind <see cref="Chars"/>.
+        /// </summary>
+        Inverted = 0x10000000,
+        /// <summary>
+        /// The regex will match any character except those specified, but also force failing the
+        /// tokenizer if one of those characters is encountered, even if another regex can match it.
+        /// Implies <see cref="Inverted"/>. Valid only in regexes of kind <see cref="Chars"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Usually, when there are more than one regexes that can be advanced by a character at a
+        /// given DFA state (e.g. <c>aaa|abb</c>), the DFA will match both at the same time, and a
+        /// conflict will occur if the same state ends up accepting more than one token symbol.
+        /// </para>
+        /// <para>
+        /// However, in a pattern like <c>aaa|[^a]</c>, the DFA can either advance the first alternative
+        /// when encountering <c>a</c>, or fail matching per the second alternative. By default, Farkle
+        /// will prefer advancing the first alternative, but if the second alternative had this flag, it
+        /// will emit a failing transition for the <c>a</c> character.
+        /// </para>
+        /// </remarks>
+        HighPriorityInverted = 0x30000000,
+        /// <summary>
         /// The regex is forced to be case-sensitive.
         /// </summary>
-        CaseSensitive = 0x40,
+        CaseSensitive = 0x40000000,
         /// <summary>
         /// The regex is forced to be case-insensitive.
         /// </summary>
-        CaseInsensitive = 0x80,
+        CaseInsensitive = 0x80000000,
         /// <summary>
         /// A mask for the case-sensitivity bits.
         /// </summary>
-        CaseMask = 0xC0
+        CaseMask = 0xC0000000,
+        /// <summary>
+        /// A mask for all regex flag bits.
+        /// </summary>
+        FlagsMask = 0xF8000000,
+    }
+
+    /// <summary>
+    /// Contains flags to customize the matching behavior of a regex of kind <see cref="KindAndFlags.Chars"/>.
+    /// </summary>
+    /// <seealso cref="Chars"/>
+    [Flags]
+    internal enum CharsFlags : uint
+    {
+        None = 0,
+        BreakOnAccept = KindAndFlags.BreakOnAccept,
+        Inverted = KindAndFlags.Inverted,
+        HighPriorityInverted = KindAndFlags.HighPriorityInverted,
+        All = BreakOnAccept | Inverted | HighPriorityInverted,
     }
 }

@@ -278,10 +278,27 @@ public abstract partial class Grammar : IGrammarProvider
         return new(this, handle);
     }
 
-    internal Group GetGroup(uint index)
+    /// <summary>
+    /// Gets the <see cref="Group"/> pointed by the given <see cref="GroupHandle"/>.
+    /// </summary>
+    /// <param name="handle">A handle to the group.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
+    /// <see cref="GroupHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
+    /// points to a group that does not exist.</exception>
+    public Group GetGroup(GroupHandle handle)
     {
-        Debug.Assert(index > 0 && index <= GrammarTables.GroupRowCount);
-        return new(this, index);
+        if (!handle.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(handle));
+        }
+
+        if (handle.Value >= GrammarTables.GroupRowCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(handle));
+        }
+
+        return new(this, handle);
     }
 
     /// <summary>
@@ -342,6 +359,10 @@ public abstract partial class Grammar : IGrammarProvider
         if (handle.IsTokenSymbol)
         {
             return GetTokenSymbol((TokenSymbolHandle)handle);
+        }
+        if (handle.IsGroup)
+        {
+            return GetGroup((GroupHandle)handle);
         }
         if (handle.IsNonterminal)
         {

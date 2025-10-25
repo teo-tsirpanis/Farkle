@@ -15,8 +15,8 @@ internal unsafe sealed class DfaWithConflicts<TChar> : DfaImplementationBase<TCh
     internal required int FirstAcceptBase { get; init; }
 
     [SetsRequiredMembers]
-    public DfaWithConflicts(Grammar grammar, int stateCount, int edgeCount, int acceptCount, int tokenSymbolCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
-        : base(grammar, stateCount, edgeCount, tokenSymbolCount, true)
+    public DfaWithConflicts(Grammar grammar, int stateCount, int edgeCount, int acceptCount, in GrammarStateMachines.Dfa dfa)
+        : base(grammar, stateCount, edgeCount, in dfa, true)
     {
         _acceptIndexSize = GrammarUtilities.GetCompressedIndexSize(acceptCount);
         _acceptCount = acceptCount;
@@ -29,21 +29,15 @@ internal unsafe sealed class DfaWithConflicts<TChar> : DfaImplementationBase<TCh
             + stateCount * _acceptIndexSize
             + acceptCount * _tokenSymbolIndexSize;
 
-        if (dfa.Length != expectedSize)
+        if (dfa.DfaWithConflicts.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
-        {
-            ThrowHelpers.ThrowInvalidDfaDataSize();
-        }
-
-        FirstEdgeBase = dfa.Offset + sizeof(uint) * 3;
+        FirstEdgeBase = dfa.DfaWithConflicts.Offset + sizeof(uint) * 3;
         RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
         RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
         EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
-        DefaultTransitionBase = dfaDefaultTransitions.Offset;
         FirstAcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
         AcceptBase = FirstAcceptBase + stateCount * _acceptIndexSize;
     }

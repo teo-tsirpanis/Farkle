@@ -50,13 +50,13 @@ public partial class Grammar
         return n;
     }
 
-    internal string GetGroupName(uint index)
+    internal string GetGroupName(GroupHandle handle)
     {
-        ref string? name = ref GetTableNameReference(ref _groupNames, GrammarTables.GroupRowCount, index);
+        ref string? name = ref GetTableNameReference(ref _groupNames, GrammarTables.GroupRowCount, handle.TableIndex);
         if (Volatile.Read(ref name) is not { } n)
         {
             ReadOnlySpan<byte> grammarFile = GrammarFile;
-            StringHandle nameHandle = GrammarTables.GetGroupName(grammarFile, index);
+            StringHandle nameHandle = GrammarTables.GetGroupName(grammarFile, handle.TableIndex);
             string newName = StringHeap.GetString(grammarFile, nameHandle);
             Interlocked.CompareExchange(ref name, newName, null);
             n = name;

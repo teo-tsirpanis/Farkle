@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 using BitCollections;
-using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -21,13 +21,22 @@ namespace Farkle.Builder.Dfa;
 /// The algorithm is a substantially modified edition of the one found at §3.9.5 in
 /// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi &amp; Ullman.
 /// </remarks>
-internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TChar>
+/// <param name="symbolNameProvider">A delegate that provides diagnostic information about token symbols.</param>
+/// <param name="tokenSymbolCount">The number of token symbols in the grammar.</param>
+/// <param name="cancellationToken">Used to cancel the building process.</param>
+/// <param name="log">Used to log events in the building process.</param>
+internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbolNameProvider,
+    int tokenSymbolCount, BuilderLogger log = default, CancellationToken cancellationToken = default)
+    where TChar : unmanaged, IComparable<TChar>
 {
-    private readonly IGrammarSymbolsProvider Symbols { get; }
+    private int TokenSymbolCount { get; } = tokenSymbolCount;
 
-    private readonly CancellationToken CancellationToken { get; }
+    private CancellationToken CancellationToken { get; } = cancellationToken;
 
-    private readonly BuilderLogger Log;
+    private readonly BuilderLogger Log = log;
+
+    private BuilderSymbolName GetSymbolName(TokenSymbolHandle symbol) =>
+        symbol.HasValue ? symbolNameProvider(symbol) : new("", TokenSymbolKind.Terminal, false);
 
     // Priorities. The higher the number, the higher the priority.
 
@@ -48,11 +57,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
     /// </summary>
     private const int LiteralPriority = 1;
 
-    private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out bool isInverted)
+    private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out Regex.CharsFlags flags)
     {
         if (typeof(TChar) == typeof(char))
         {
-            bool result = regex.IsChars(out var chars, out isInverted);
+            bool result = regex.IsChars(out var chars, out flags);
             ranges = Unsafe.BitCast<ImmutableArray<(char, char)>, ImmutableArray<(TChar, TChar)>>(chars);
             return result;
         }
@@ -68,62 +77,52 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
 
-    private DfaBuild(IGrammarSymbolsProvider symbols, BuilderLogger log, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Builds a DFA that matches a <see cref="Regex"/>.
+    /// </summary>
+    /// <param name="regex">The regex to build.</param>
+    /// <param name="dfaWriter">The <see cref="DfaWriter{TChar}"/> to write the DFA's states to.</param>
+    /// <param name="options">Options to customize the building process.</param>
+    /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
+    /// <returns>Whether building succeeded.</returns>
+    public bool Build(Regex regex, DfaWriter<TChar> dfaWriter, DfaBuildOptions options = DfaBuildOptions.None,
+        int maxTokenizerStates = -1)
     {
         if (typeof(TChar) != typeof(char))
         {
             ThrowHelpers.ThrowUnsupportedCharacterException();
         }
 
-        Symbols = symbols;
-        Log = log;
-        CancellationToken = cancellationToken;
-    }
-
-    /// <summary>
-    /// Builds a DFA that matches the symbols of a grammar.
-    /// </summary>
-    /// <param name="symbols">The symbols of the grammar.</param>
-    /// <param name="caseSensitive">Whether the DFA will match characters case-sensitively.</param>
-    /// <param name="prioritizeSymbols">Whether to try to resolve conflicts by assigning a priority
-    /// to symbols based on their prioerties.</param>
-    /// <param name="maxTokenizerStates">The value of <see cref="BuilderOptions.MaxTokenizerStates"/>.</param>
-    /// <param name="log">Used to log events in the building process.</param>
-    /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static DfaWriter<TChar>? Build(IGrammarSymbolsProvider symbols, bool caseSensitive = false,
-        bool prioritizeSymbols = true, int maxTokenizerStates = -1, BuilderLogger log = default,
-        CancellationToken cancellationToken = default)
-    {
         // If there are no symbols, the algorithm will run normally and produce a DFA
         // with one state and no edges. The alternative would be to produce no DFA at
         // all, but it was rejected because it would set the IsFailing flag in the parser,
         // but there is no failure here; the grammar has no symbols and the builder
         // successfully produces a DFA that will always fail either way.
 
-        var @this = new DfaBuild<TChar>(symbols, log, cancellationToken);
-        var (leaves, followPos, rootFirstPos, hasError) = @this.BuildRegexTree(caseSensitive);
-        if (hasError)
+        var (leaves, followPos, rootFirstPos) = BuildRegexTree(regex, options);
+        if (leaves is null)
         {
-            return null;
+            return false;
         }
         maxTokenizerStates = BuilderOptions.GetMaxTokenizerStates(maxTokenizerStates, leaves.Count);
-        var dfaStates = @this.BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
+        var dfaStates = BuildDfaStates(leaves, followPos, rootFirstPos, maxTokenizerStates);
         if (dfaStates is null)
         {
-            return null;
+            return false;
         }
-        return @this.WriteDfa(dfaStates, prioritizeSymbols);
+        WriteDfa(dfaStates, dfaWriter, options);
+        return true;
     }
 
-    private static int? FindDominantSymbol(List<(int Priority, int SymbolIndex)> acceptSymbols, bool prioritizeSymbols)
+    private static TokenSymbolHandle FindDominantSymbol(List<(int Priority, TokenSymbolHandle Symbol)> acceptSymbols, DfaBuildOptions options)
     {
         switch (acceptSymbols)
         {
-            case []: return null;
+            case []: return default;
             case [(_, var symbol)]: return symbol;
         }
 
-        acceptSymbols.Sort((x1, x2) => -x1.Priority.CompareTo(x2.Priority));
+        acceptSymbols.Sort(static (x1, x2) => -x1.Priority.CompareTo(x2.Priority));
 
         var (firstPriority, firstSymbol) = acceptSymbols[0];
 
@@ -132,7 +131,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             var (priority, symbol) = acceptSymbols[i];
             if (firstSymbol != symbol)
             {
-                if (prioritizeSymbols)
+                if ((options & DfaBuildOptions.PrioritizeSymbols) != 0)
                 {
                     if (firstPriority > priority)
                     {
@@ -145,7 +144,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         continue;
                     }
                 }
-                return null;
+                return default;
             }
         }
 
@@ -153,11 +152,13 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         return firstSymbol;
     }
 
-    private DfaWriter<TChar> WriteDfa(List<DfaState> states, bool prioritizeSymbols)
+    private void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, DfaBuildOptions options)
     {
-        DfaWriter<TChar> dfaWriter = new(states.Count);
         HashSet<BitSet>? seenConflicts = null;
         BitArrayNeo? conflictsOfState = null;
+        // If there are already states in the DFA writer, adjust the numbers
+        // of all the new ones.
+        int stateNumberAdjustment = dfaWriter.StateCount;
 
         foreach (var state in states)
         {
@@ -167,24 +168,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 {
                     continue;
                 }
-                if (target is { } t)
-                {
-                    dfaWriter.AddEdge(start, end, t);
-                }
-                else
-                {
-                    dfaWriter.AddEdgeFail(start, end);
-                }
+                dfaWriter.AddEdge(start, end, target is { } t ? t + stateNumberAdjustment : null);
             }
 
-            if (state.DefaultTransition is { } dt)
+            if (FindDominantSymbol(state.AcceptSymbols, options) is { HasValue: true } sym)
             {
-                dfaWriter.SetDefaultTransition(dt);
-            }
-
-            if (FindDominantSymbol(state.AcceptSymbols, prioritizeSymbols) is { } sym)
-            {
-                dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(sym));
+                dfaWriter.AddAccept(sym);
             }
             else
             {
@@ -194,17 +183,17 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 if (state.AcceptSymbols is not [])
                 {
                     seenConflicts ??= [];
-                    conflictsOfState ??= new BitArrayNeo(Symbols.SymbolCount);
+                    conflictsOfState ??= new BitArrayNeo(TokenSymbolCount);
                     conflictsOfState.SetAll(false);
                     var namesBuilder = ImmutableArray.CreateBuilder<string>(state.AcceptSymbols.Count);
                     var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(state.AcceptSymbols.Count);
                     foreach (var (_, symbol) in state.AcceptSymbols)
                     {
-                        if (!conflictsOfState.Set(symbol, true))
+                        if (!conflictsOfState.Set(symbol.Value, true))
                         {
                             continue;
                         }
-                        var name = Symbols.GetName(symbol);
+                        var name = GetSymbolName(symbol);
                         namesBuilder.Add(name.Name);
                         symbolInfoBuilder.Add((name.Kind, name.ShouldDisambiguate));
                     }
@@ -217,14 +206,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 }
                 foreach (var (_, symbol) in state.AcceptSymbols)
                 {
-                    dfaWriter.AddAccept(Symbols.GetTokenSymbolHandle(symbol));
+                    dfaWriter.AddAccept(symbol);
                 }
             }
 
-            dfaWriter.FinishState();
+            dfaWriter.FinishState(state.DefaultTransition is { } dt ? dt + stateNumberAdjustment : null);
         }
-
-        return dfaWriter;
     }
 
     private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
@@ -236,6 +223,8 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         List<(TChar, IntervalType, int)> stateIntervals = [];
         BitArrayNeo presentLeaves = new(leaves.Count);
         List<BitSet> followPosUnionCache = [];
+
+        bool breakOnAcceptExists = leaves.Exists(x => x is RegexLeaf.Chars { IsBreakOnAccept: true });
 
         _ = GetOrAddState(rootStateId);
         while (unmarkedStates.TryPop(out int stateIdx))
@@ -269,20 +258,23 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 switch (leaves[i])
                 {
-                    case RegexLeaf.End { SymbolIndex: int symbolIndex, Priority: int priority }:
+                    case RegexLeaf.End { Symbol: TokenSymbolHandle symbolIndex, Priority: int priority }:
                         S.AcceptSymbols.Add((priority, symbolIndex));
                         break;
                     case RegexLeaf.Chars x:
+                        IntervalType startInterval = IntervalType.Start, endInterval = IntervalType.End;
                         if (x.IsInverted)
                         {
+                            startInterval = x.IsHighPriorityInverted ? IntervalType.HighPriorityInvertedStart : IntervalType.InvertedStart;
+                            endInterval = x.IsHighPriorityInverted ? IntervalType.HighPriorityInvertedEnd : IntervalType.InvertedEnd;
                             presentLeaves[i] = true;
                             emitDefaultTransition = true;
                             invertedCount++;
                         }
                         foreach (var (start, end) in x.Ranges)
                         {
-                            stateIntervals.Add((start, x.IsInverted ? IntervalType.InvertedStart : IntervalType.Start, i));
-                            stateIntervals.Add((end, x.IsInverted ? IntervalType.InvertedEnd : IntervalType.End, i));
+                            stateIntervals.Add((start, startInterval, i));
+                            stateIntervals.Add((end, endInterval, i));
                         }
                         break;
                 }
@@ -294,10 +286,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             bool previousIsStart = false;
             int depth = 0;
             int invertedDepth = 0;
+            int highPriorityInvertedDepth = 0;
 
             foreach (var (c, type, leaf) in stateIntervals)
             {
-                bool isStart = type is IntervalType.Start or IntervalType.InvertedStart;
+                bool isStart = type is IntervalType.Start or IntervalType.InvertedStart or IntervalType.HighPriorityInvertedStart;
                 // We first see if we should attempt emitting a transition, which is if:
                 // 1. We are inside a range (this implies that we have seen a character before).
                 // 2. Either:
@@ -345,7 +338,6 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                     // Don't emit a transition if the range start is greater than the range end.
                     // This can occur when we have three leaves with ranges [a-b], [a-a] and [b-b],
                     // causing failures later when writing the DFA.
-                    // This if statement fixed this and FsCheck has not reported any other failures.
                     if (transitionRangeStart.CompareTo(transitionRangeEnd) <= 0)
                     {
                         // We must emit an explicit failure if we are inside all the inverted leaves
@@ -353,9 +345,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         // The presence of Any leaves will cause the above to never hold, because
                         // Any leaves are inverted Chars leaves with no ranges, which means that
                         // some inverted leaves will never be entered.
+                        bool insideHighPriorityInvertedRanges = highPriorityInvertedDepth > 0;
                         bool insideAllInvertedRanges = invertedDepth == invertedCount;
                         bool insideOnlyInvertedRanges = invertedDepth == depth;
-                        bool shouldEmitFailure = insideAllInvertedRanges && insideOnlyInvertedRanges;
+                        bool shouldEmitFailure = insideHighPriorityInvertedRanges || (insideAllInvertedRanges && insideOnlyInvertedRanges);
                         // We are inside all the inverted leaves, and also inside some regular leaves.
                         // We must emit a failure.
                         int? transitionState = shouldEmitFailure ? null : GetOrAddState(FollowLeaves(presentLeaves));
@@ -373,6 +366,12 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 bool switchValue;
                 switch (type)
                 {
+                    case IntervalType.HighPriorityInvertedStart:
+                        depth++;
+                        invertedDepth++;
+                        highPriorityInvertedDepth++;
+                        switchValue = false;
+                        break;
                     case IntervalType.Start:
                         depth++;
                         switchValue = true;
@@ -386,10 +385,16 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         depth--;
                         switchValue = false;
                         break;
-                    default:
-                        Debug.Assert(type is IntervalType.InvertedEnd);
+                    case IntervalType.InvertedEnd:
                         depth--;
                         invertedDepth--;
+                        switchValue = true;
+                        break;
+                    default:
+                        Debug.Assert(type is IntervalType.HighPriorityInvertedEnd);
+                        depth--;
+                        invertedDepth--;
+                        highPriorityInvertedDepth--;
                         switchValue = true;
                         break;
                 }
@@ -419,7 +424,31 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             {
                 followPosUnionCache.Add(followPos[i]);
             }
-            return BitSet.UnionMany(followPosUnionCache);
+            var followedSet = BitSet.UnionMany(followPosUnionCache);
+
+            // We order the ANDs from least to most likely to be true.
+            // It's rare for BoA leaves to exist in a build in the first place,
+            // but if they do, they are expected to appear pretty much everywhere,
+            // based on their current usage within Farkle.
+            // TODO: This can be further optimized, although some optimizations
+            // would need new APIs to BitCollections.
+            if (breakOnAcceptExists
+                && followedSet.Any(i => leaves[i] is RegexLeaf.End)
+                && presentLeaves.Any(i => leaves[i] is RegexLeaf.Chars { IsBreakOnAccept: true }))
+            {
+                followPosUnionCache.Clear();
+                foreach (var i in presentLeaves)
+                {
+                    if (leaves[i] is RegexLeaf.Chars { IsBreakOnAccept: true })
+                    {
+                        continue;
+                    }
+                    followPosUnionCache.Add(followPos[i]);
+                }
+                followedSet = BitSet.UnionMany(followPosUnionCache);
+            }
+
+            return followedSet;
         }
 
         int GetOrAddState(BitSet stateId)
@@ -467,7 +496,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 }
                 result = Regex.Join(builder.MoveToImmutable());
             }
-            else if (regex.IsChars(out var chars, out bool isInverted))
+            else if (regex.IsChars(out var chars, out var flags))
             {
                 if (caseSensitive && RegexRangeCanonicalizer.IsCanonical(chars.AsSpan()))
                 {
@@ -476,10 +505,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 else
                 {
                     chars = RegexRangeCanonicalizer.Canonicalize(chars.AsSpan(), caseSensitive);
-                    result = isInverted ? Regex.NotOneOf(chars) : Regex.OneOf(chars);
+                    result = Regex.Chars(chars, flags);
                 }
                 // If the regex has been canonicalized into a set of all/none characters
                 // and is/isn't inverted, change it to Regex.Void.
+                bool isInverted = (flags & Regex.CharsFlags.Inverted) != 0;
                 if ((chars, isInverted) is ([], false) or ([(char.MinValue, char.MaxValue)], true))
                 {
                     result = Regex.Void;
@@ -493,65 +523,27 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
             return result;
         }
 
-        // We should not be reaching this point; the constructor would have thrown.
         ThrowHelpers.ThrowUnsupportedCharacterException();
         return null!;
     }
 
-    private (List<RegexLeaf> Leaves, List<BitSet> FollowPos, BitSet RootFirstPos, bool HasError) BuildRegexTree(bool caseSensitive)
+    private (List<RegexLeaf>? Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(Regex regex, DfaBuildOptions options)
     {
         Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache = [];
         List<RegexLeaf> leaves = [];
         List<BitSet> followPos = [];
-        BitSet rootFirstPos = BitSet.Empty;
-        bool hasError = false;
 
-        int count = Symbols.SymbolCount;
-        for (int i = 0; i < count; i++)
+        VisitFlags flags = VisitFlags.None;
+        if ((options & DfaBuildOptions.CaseSensitive) != 0)
         {
-            Regex regex = Symbols.GetRegex(i);
-            RegexCharacteristics characteristics = RegexCharacteristics.None;
-            // If the symbol's regex's root is an Alt, we assign each of its children a different priority. This
-            // emulates the behavior of GOLD Parser and resolves some nasty indistinguishable symbols errors.
-            // Earlier versions of Farkle were flattening nested Alts. Because we are not doing that anymore,
-            // this will slightly change behavior, but the impact is so small that it's not worth proactively
-            // caring about.
-            ReadOnlySpan<Regex> regexes = regex.IsAlt(out var altRegexes) ? altRegexes.AsSpan() : [regex];
-            int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
-            if (Symbols.GetName(i).Kind == TokenSymbolKind.Noise)
-            {
-                endLeafIndexTerminal = endLeafIndexLiteral = AddLeaf(new RegexLeaf.End(i, NoisePriority));
-            }
-            foreach (var r in regexes)
-            {
-                var info = Visit(in this, i, r, caseSensitive);
-                rootFirstPos = BitSet.Union(in rootFirstPos, in info.FirstPos);
-                int leafIndex = info.HasStar
-                    ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(i, TerminalPriority))
-                    : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(i, LiteralPriority));
-                if (info.IsNullable)
-                {
-                    rootFirstPos = rootFirstPos.Set(leafIndex, true);
-                }
-                LinkFollowPos(in info.LastPos, BitSet.Singleton(leafIndex));
-                characteristics |= info.Characteristics;
-            }
-            bool regexHasError = (characteristics & RegexCharacteristics.HasError) != 0;
-            bool hasVoid = regexes.IsEmpty || (characteristics & RegexCharacteristics.HasVoid) != 0;
-            hasError |= regexHasError;
-            if (Log.IsEnabled(DiagnosticSeverity.Warning) && !regexHasError && hasVoid)
-            {
-                Log.RegexContainsVoid(Symbols.GetName(i));
-            }
-            if ((characteristics & RegexCharacteristics.IsTooComplex) != 0)
-            {
-                Log.RegexTooComplexError(Symbols.GetName(i));
-            }
+            flags |= VisitFlags.CaseSensitive;
         }
+        RegexInfo info = Visit(in this, default, regex, flags);
+        bool hasError = (info.Characteristics & RegexCharacteristics.HasError) != 0;
 
-        return (leaves, followPos, rootFirstPos, hasError);
+        return (hasError ? null : leaves, followPos, info.FirstPos);
 
-        RegexInfo Visit(in DfaBuild<TChar> @this, int symbolIndex, Regex regex, bool caseSensitive, bool isLowered = false)
+        RegexInfo Visit(in DfaBuild<TChar> @this, TokenSymbolHandle symbol, Regex regex, VisitFlags flags)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
@@ -560,8 +552,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 return RegexInfo.Error(RegexCharacteristics.IsTooComplex);
             }
 
-            bool isCaseOverriden = false;
-            caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
+            flags = AdjustCaseSensitivity(regex, flags);
 
             while (regex.IsRegexString(out RegexStringHolder? regexString))
             {
@@ -576,10 +567,48 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                         // We could add checks to ensure the error is logged only once, but it would get quite complicated
                         // for little benefit; the most common usage pattern of string regexes is directly on a terminal,
                         // and not composed in another regex.
-                        @this.Log.RegexStringParseError(@this.Symbols.GetName(symbolIndex), error);
+                        @this.Log.RegexStringParseError(@this.GetSymbolName(symbol), error);
                         return RegexInfo.Error();
                 }
-                caseSensitive = regex.AdjustCaseSensitivityFlag(caseSensitive, ref isCaseOverriden);
+                flags = AdjustCaseSensitivity(regex, flags);
+            }
+
+            if (regex.IsAccept(out Regex? rAccepted, out var sAccepted, out var lowestPriority))
+            {
+                symbol = sAccepted;
+                RegexInfo info = RegexInfo.Void;
+                // If the symbol's regex's root is an Alt, we assign each of its children a different priority. This
+                // emulates the behavior of GOLD Parser and resolves some nasty indistinguishable symbols errors.
+                // Earlier versions of Farkle were flattening nested Alts. Because we are not doing that anymore,
+                // this will slightly change behavior, but the impact is so small that it's not worth proactively
+                // caring about.
+                ReadOnlySpan<Regex> alternatives = rAccepted.IsAlt(out var altRegexes) ? altRegexes.AsSpan() : [rAccepted];
+                int? endLeafIndexTerminal = null, endLeafIndexLiteral = null;
+                if (lowestPriority)
+                {
+                    endLeafIndexTerminal = endLeafIndexLiteral = AddLeaf(new RegexLeaf.End(symbol, NoisePriority));
+                }
+                bool isVoid = false;
+                foreach (var r in alternatives)
+                {
+                    var nextInfo = Visit(in @this, symbol, r, flags);
+                    int leafIndex = nextInfo.HasStar
+                        ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
+                        : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
+                    RegexInfo acceptLeaf = RegexInfo.Singleton(leafIndex).AsNullable();
+                    LinkFollowPos(in nextInfo.LastPos, acceptLeaf.FirstPos);
+                    isVoid &= nextInfo.LastPos.IsEmpty && !nextInfo.IsNullable;
+                    info |= nextInfo + acceptLeaf;
+                }
+                if ((info.Characteristics & RegexCharacteristics.IsTooComplex) != 0)
+                {
+                    @this.Log.RegexTooComplexError(@this.GetSymbolName(symbol));
+                }
+                if (isVoid && @this.Log.IsEnabled(Diagnostics.DiagnosticSeverity.Warning))
+                {
+                    @this.Log.SymbolCannotBeMatched(@this.GetSymbolName(symbol));
+                }
+                return info;
             }
 
             if (regex.IsConcat(out ImmutableArray<Regex> regexes))
@@ -587,7 +616,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Empty;
                 foreach (var r in regexes)
                 {
-                    RegexInfo nextResult = Visit(in @this, symbolIndex, r, caseSensitive, isLowered);
+                    RegexInfo nextResult = Visit(in @this, symbol, r, flags);
                     LinkFollowPos(in info.LastPos, in nextResult.FirstPos);
                     info += nextResult;
                 }
@@ -599,7 +628,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Void;
                 foreach (var r in regexes)
                 {
-                    info |= Visit(in @this, symbolIndex, r, caseSensitive, isLowered);
+                    info |= Visit(in @this, symbol, r, flags);
                 }
                 return info;
             }
@@ -609,14 +638,14 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 RegexInfo info = RegexInfo.Empty;
                 for (int i = 0; i < m; i++)
                 {
-                    RegexInfo nextInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered);
+                    RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags);
                     LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                     info += nextInfo;
                 }
 
                 if (n == int.MaxValue)
                 {
-                    RegexInfo starInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered).AsStar();
+                    RegexInfo starInfo = Visit(in @this, symbol, loopItem, flags).AsStar();
                     LinkFollowPos(in starInfo.LastPos, in starInfo.FirstPos);
                     LinkFollowPos(in info.LastPos, in starInfo.FirstPos);
                     info += starInfo;
@@ -625,7 +654,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 {
                     for (int i = m; i < n; i++)
                     {
-                        RegexInfo nextInfo = Visit(in @this, symbolIndex, loopItem, caseSensitive, isLowered).AsOptional();
+                        RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags).AsNullable();
                         LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                         info += nextInfo;
                     }
@@ -633,9 +662,9 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 return info;
             }
 
-            if (!isLowered)
+            if ((flags & VisitFlags.Lowered) == 0)
             {
-                regex = LowerRegex(regex, caseSensitive, loweredRegexCache);
+                regex = LowerRegex(regex, (flags & VisitFlags.CaseSensitive) != 0, loweredRegexCache);
             }
 
             if (regex.IsAny())
@@ -643,31 +672,48 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
                 return RegexInfo.Singleton(AddLeaf(RegexLeaf.Any));
             }
 
-            if (IsRegexChars(regex, out var chars, out bool isInverted))
+            if (IsRegexChars(regex, out var chars, out var charsFlags))
             {
-                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, isInverted)));
+                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, charsFlags)));
             }
 
-            if (!isLowered)
+            if ((flags & VisitFlags.Lowered) == 0)
             {
-                return Visit(in @this, symbolIndex, regex, caseSensitive, isLowered: true);
+                return Visit(in @this, symbol, regex, flags | VisitFlags.Lowered);
             }
 
             throw new InvalidOperationException("Internal error: unrecognized form of lowered regex.");
-        }
 
-        int AddLeaf(RegexLeaf leaf)
-        {
-            leaves.Add(leaf);
-            followPos.Add(BitSet.Empty);
-            return leaves.Count - 1;
-        }
-
-        void LinkFollowPos(in BitSet source, in BitSet destination)
-        {
-            foreach (var i in source)
+            int AddLeaf(RegexLeaf leaf)
             {
-                followPos[i] = BitSet.Union(followPos[i], in destination);
+                leaves.Add(leaf);
+                followPos.Add(BitSet.Empty);
+                return leaves.Count - 1;
+            }
+
+            void LinkFollowPos(in BitSet source, in BitSet destination)
+            {
+                foreach (var i in source)
+                {
+                    followPos[i] = BitSet.Union(followPos[i], in destination);
+                }
+            }
+
+            static VisitFlags AdjustCaseSensitivity(Regex regex, VisitFlags flags)
+            {
+                if ((flags & VisitFlags.CaseOverridden) == 0 && regex.TryGetCaseSensitivity(out bool isCaseSensitive))
+                {
+                    flags |= VisitFlags.CaseOverridden;
+                    if (isCaseSensitive)
+                    {
+                        return flags | VisitFlags.CaseSensitive;
+                    }
+                    else
+                    {
+                        return flags & ~VisitFlags.CaseSensitive;
+                    }
+                }
+                return flags;
             }
         }
     }
@@ -682,7 +728,7 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public int? DefaultTransition { get; set; }
 
-        public List<(int Priority, int SymbolIndex)> AcceptSymbols { get; } = [];
+        public List<(int Priority, TokenSymbolHandle Symbol)> AcceptSymbols { get; } = [];
 
         /// <summary>
         /// Returns whether the transitions of this state cover all
@@ -722,18 +768,23 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
     private abstract class RegexLeaf
     {
-        public static Chars Any { get; } = new Chars([], true);
+        public static Chars Any { get; } = new Chars([], Regex.CharsFlags.Inverted);
 
-        public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, bool isInverted) : RegexLeaf
+        public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, Regex.CharsFlags flags) : RegexLeaf
         {
             public ImmutableArray<(TChar Start, TChar End)> Ranges { get; } = ranges;
 
-            public bool IsInverted { get; } = isInverted;
+            public bool IsInverted => (flags & Regex.CharsFlags.Inverted) != 0;
+
+            public bool IsHighPriorityInverted =>
+                (flags & Regex.CharsFlags.HighPriorityInverted) == Regex.CharsFlags.HighPriorityInverted;
+
+            public bool IsBreakOnAccept => (flags & Regex.CharsFlags.BreakOnAccept) != 0;
         }
 
-        public sealed class End(int symbolIndex, int priority) : RegexLeaf
+        public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf
         {
-            public int SymbolIndex { get; } = symbolIndex;
+            public TokenSymbolHandle Symbol { get; } = symbol;
 
             public int Priority { get; } = priority;
         }
@@ -748,21 +799,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public bool IsNullable { get; } = IsNullable;
 
-        /// <summary>
-        /// Whether the regex cannot be followed by any character.
-        /// </summary>
-        /// <remarks>
-        /// This is usually undesirable. The builder will
-        /// emit a warning if the regex of a terminal has
-        /// this characteristic.
-        /// </remarks>
-        public bool IsVoid => !IsNullable && LastPos.IsEmpty;
-
         public RegexCharacteristics Characteristics { get; } = Characteristics;
 
         public bool HasStar => (Characteristics & RegexCharacteristics.HasStar) != 0;
 
-        public RegexInfo AsOptional() =>
+        public RegexInfo AsNullable() =>
             new(FirstPos, LastPos, true, Characteristics);
 
         public RegexInfo AsStar() =>
@@ -783,17 +824,11 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
 
         public static RegexInfo operator +(in RegexInfo left, in RegexInfo right)
         {
-            // We can skip checking if left is void because when processing a concatenation of regexes,
-            // left starts to be RegexInfo.Empty and right gets passed all the regexes eventually,
-            // so we don't miss anything.
-            RegexCharacteristics hasVoidMaybe = right.IsVoid
-                ? RegexCharacteristics.HasVoid
-                : RegexCharacteristics.None;
             return new RegexInfo(
                 left.IsNullable ? BitSet.Union(in left.FirstPos, in right.FirstPos) : left.FirstPos,
                 right.IsNullable ? BitSet.Union(in left.LastPos, in right.LastPos) : right.LastPos,
                 left.IsNullable && right.IsNullable,
-                left.Characteristics | right.Characteristics | hasVoidMaybe);
+                left.Characteristics | right.Characteristics);
         }
 
         public static RegexInfo operator |(in RegexInfo left, in RegexInfo right)
@@ -825,26 +860,10 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// </summary>
         HasStar = 1,
         /// <summary>
-        /// The regex contains <see cref="Regex.Void"/>.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This is usually undesirable. The builder will
-        /// emit a warning if the regex of a terminal has
-        /// this characteristic.
-        /// </para>
-        /// <para>
-        /// This characteristic gets originated when a <see cref="RegexInfo"/>
-        /// gets concatenated on the right with one that has the
-        /// <see cref="RegexInfo.IsVoid"/> property.
-        /// </para>
-        /// </remarks>
-        HasVoid = 2,
-        /// <summary>
         /// Processing of the regex failed for some reason. The builder will continue
         /// processing the regexes to uncover more errors, but will not emit a DFA.
         /// </summary>
-        HasError = 4,
+        HasError = 2,
         /// <summary>
         /// Processing of the regex failed because it is too complex.
         /// Must be specified alongside <see cref="HasError"/>.
@@ -852,15 +871,26 @@ internal readonly struct DfaBuild<TChar> where TChar : unmanaged, IComparable<TC
         /// <remarks>
         /// This flag exists to report an error only once per symbol.
         /// </remarks>
-        IsTooComplex = 8
+        IsTooComplex = 4,
+    }
+
+    [Flags]
+    private enum VisitFlags : byte
+    {
+        None = 0,
+        CaseSensitive = 1,
+        CaseOverridden = 2,
+        Lowered = 4,
     }
 
     private enum IntervalType : byte
     {
         // It is important that the Start values are before the End values.
+        HighPriorityInvertedStart,
         Start,
         InvertedStart,
         InvertedEnd,
-        End
+        End,
+        HighPriorityInvertedEnd,
     }
 }

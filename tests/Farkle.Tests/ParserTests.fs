@@ -36,13 +36,12 @@ let testParser grammarFile displayName text =
     let testImpl streamMode useStaticBlock =
         let description = $"Grammar \"{grammarFile}\" parses %s{displayName} successfully in {streamMode} block mode"
         test description {
-            let rf = loadCharParser grammarFile
+            let parser = loadCharParser grammarFile
             let result =
                 if useStaticBlock then
-                    CharParser.parseString rf text
+                    CharParser.parseString parser text
                 else
-                    use sr = new StringReader(text)
-                    CharParser.parseTextReader rf sr
+                    parseGradual 10 parser text
                 |> ParserResult.toResult
             Expect.isOk result "Parsing failed"
         }
@@ -145,8 +144,13 @@ let tests = testList "Parser tests" [
         Expect.equal num parsedExpr.Value "The directly calculated value of the expression differs from the parsed one"
     )
 
-    test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well" {
+    test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well in static block mode" {
         let result = GOLDMetaLanguage.parser.Parse gmlSourceContent |> ParserResult.toResult
+        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
+    }
+
+    test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well in dynamic block mode" {
+        let result = parseGradual 10 GOLDMetaLanguage.parser gmlSourceContent |> ParserResult.toResult
         Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
     }
 

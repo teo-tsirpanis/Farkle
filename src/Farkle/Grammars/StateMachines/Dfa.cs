@@ -44,12 +44,14 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal virtual bool StateHasConflicts(int state) => GetAcceptSymbolBounds(state).Count > 1;
 
+    internal abstract int GetStartStateForGroupImpl(GroupHandle group);
+
     internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
 
     /// <summary>
-    /// The number of the <see cref="Dfa{TChar}"/>'s initial state.
+    /// The number of the <see cref="Dfa{TChar}"/>'s start state.
     /// </summary>
-    public int InitialState => 0;
+    public int StartState => 0;
 
     /// <summary>
     /// The number of states in the <see cref="Dfa{TChar}"/>.
@@ -87,35 +89,21 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
     }
 
     /// <summary>
-    /// Uses the <see cref="Dfa{TChar}"/> to match a sequence of characters.
+    /// Gets the index of the state of the <see cref="Dfa{TChar}"/> to start from, when tokenizing the given group.
     /// </summary>
-    /// <param name="grammarFile">A span with the grammar's data</param>
-    /// <param name="chars">The characters to match.</param>
-    /// <param name="isFinal">Whether there will be no more characters in the
-    /// input stream after <paramref name="chars"/>.</param>
-    /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
-    /// beginning of <paramref name="chars"/>.</param>
-    /// <returns>
-    /// A tuple with:
-    /// <list type="bullet">
-    /// <item>A <see cref="TokenSymbolHandle"/> containing the token symbol that was found,
-    /// or containing no value in case of a lexical error.</item>
-    /// <item>The number of characters that were read before matching a token or encountering
-    /// a lexical error.</item>
-    /// <item>The state the DFA was at when it stopped..</item>
-    /// </list>
-    /// </returns>
-    internal virtual (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
-        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = true)
+    /// <param name="group">The group's handle.</param>
+    /// <remarks>
+    /// If <paramref name="group"/> points to a group that does not exist in the grammar, this method will
+    /// not fail, but return <see cref="StartState"/>.
+    /// </remarks>
+    public int GetStartStateForGroup(GroupHandle group)
     {
-        throw new NotSupportedException();
+        if (!group.HasValue)
+        {
+            ThrowHelpers.ThrowArgumentNullException(nameof(group));
+        }
+        return GetStartStateForGroupImpl(group);
     }
-
-    /// <summary>
-    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing.
-    /// This initializes some lookup tables that speed up <see cref="Match"/>.
-    /// </summary>
-    internal virtual void PrepareForParsing() { }
 
     /// <summary>
     /// Gets the enumerator of the <see cref="Dfa{TChar}"/>'s states.

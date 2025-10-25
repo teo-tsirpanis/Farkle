@@ -32,9 +32,11 @@ type GrammarFunctions(g: GrammarTemplateInput) =
         so.Import(grammarObj, filter = grammarMemberFilter)
         so.Import("get_object_from_handle", Func<obj,_>(function
             | :? EntityHandle as h when h.IsTokenSymbol -> TokenSymbolHandle.op_Explicit h |> grammarObj.GetTokenSymbol |> box
+            | :? EntityHandle as h when h.IsGroup -> GroupHandle.op_Explicit h |> grammarObj.GetGroup |> box
             | :? EntityHandle as h when h.IsNonterminal -> NonterminalHandle.op_Explicit h |> grammarObj.GetNonterminal |> box
             | :? EntityHandle as h when h.IsProduction -> ProductionHandle.op_Explicit h |> grammarObj.GetProduction |> box
             | :? TokenSymbolHandle as h -> grammarObj.GetTokenSymbol h |> box
+            | :? GroupHandle as h -> grammarObj.GetGroup h |> box
             | :? NonterminalHandle as h -> grammarObj.GetNonterminal h |> box
             | :? ProductionHandle as h -> grammarObj.GetProduction h |> box
             | x -> failwith $"invlid object '{x.GetType()}'; must be a grammar object handle or EntityHandle"))

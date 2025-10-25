@@ -10,7 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     /// <summary>
-    /// A lookup table with the next state for each ASCII character, for each starting state.
+    /// A lookup table with the next state for each ASCII character, for each state.
     /// </summary>
     /// <remarks>
     /// This field is populated by <see cref="PrepareForParsing"/>.
@@ -36,8 +36,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
 
     [SetsRequiredMembers]
-    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, GrammarFileSection dfa, GrammarFileSection dfaDefaultTransitions)
-        : base(grammar, stateCount, edgeCount, tokenSymbolCount, false)
+    public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, in GrammarStateMachines.Dfa dfa)
+        : base(grammar, stateCount, edgeCount, in dfa, false)
     {
         int expectedSize =
             sizeof(uint) * 2
@@ -46,21 +46,15 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             + edgeCount * _stateIndexSize
             + stateCount * _tokenSymbolIndexSize;
 
-        if (dfa.Length != expectedSize)
+        if (dfa.DfaWithoutConflicts.Length != expectedSize)
         {
             ThrowHelpers.ThrowInvalidDfaDataSize();
         }
 
-        if (dfaDefaultTransitions.Length > 0 && dfaDefaultTransitions.Length != stateCount * _stateIndexSize)
-        {
-            ThrowHelpers.ThrowInvalidDfaDataSize();
-        }
-
-        FirstEdgeBase = dfa.Offset + sizeof(uint) * 2;
+        FirstEdgeBase = dfa.DfaWithoutConflicts.Offset + sizeof(uint) * 2;
         RangeFromBase = FirstEdgeBase + stateCount * _edgeIndexSize;
         RangeToBase = RangeFromBase + edgeCount * sizeof(TChar);
         EdgeTargetBase = RangeToBase + edgeCount * sizeof(TChar);
-        DefaultTransitionBase = dfaDefaultTransitions.Offset;
         AcceptBase = EdgeTargetBase + edgeCount * _stateIndexSize;
     }
 
@@ -115,16 +109,26 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return -1;
     }
 
-    internal override (TokenSymbolHandle AcceptSymbol, int CharactersRead, int TokenizerState)
-        Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, bool ignoreLeadingErrors = true)
+    /// <summary>
+    /// Uses the <see cref="Dfa{TChar}"/> to match a sequence of characters.
+    /// </summary>
+    /// <param name="grammarFile">A span with the grammar's data</param>
+    /// <param name="chars">The characters to match.</param>
+    /// <param name="isFinal">Whether there will be no more characters in the
+    /// input stream after <paramref name="chars"/>.</param>
+    /// <param name="startState">The state to start matching from.</param>
+    /// <param name="ignoreLeadingErrors">Whether to ignore lexical errors at the
+    /// beginning of <paramref name="chars"/>.</param>
+    internal DfaMatchResult Match(ReadOnlySpan<byte> grammarFile, ReadOnlySpan<TChar> chars, bool isFinal, int startState, bool ignoreLeadingErrors)
     {
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
 
-        TokenSymbolHandle acceptSymbol = default;
+        TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, startState);
         int acceptSymbolLength = 0;
+        int acceptSymbolState = startState;
 
-        int currentState = InitialState;
+        int currentState = startState;
         int i;
         for (i = 0; i < chars.Length; i++)
         {
@@ -142,6 +146,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;
+                    acceptSymbolState = currentState;
                 }
             }
             else if (!ignoreLeadingErrors)
@@ -157,18 +162,22 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // accept it, because there is no way for a longer token to be formed.
         if (!(isFinal || this[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
         {
-            acceptSymbol = default;
+            return DfaMatchResult.CreateNeedsMoreChars(acceptSymbol, acceptSymbolState, acceptSymbolLength);
         }
 
     Return:
         if (acceptSymbol.HasValue)
         {
-            return (acceptSymbol, acceptSymbolLength, currentState);
+            return DfaMatchResult.CreateSuccess(acceptSymbol, currentState, acceptSymbolLength);
         }
-        return (default, i, currentState);
+        return DfaMatchResult.CreateError(currentState, i);
     }
 
-    internal override void PrepareForParsing()
+    /// <summary>
+    /// Prepares the <see cref="Dfa{TChar}"/> to be used for parsing.
+    /// This initializes some lookup tables that speed up <see cref="Match"/>.
+    /// </summary>
+    internal void PrepareForParsing()
     {
         _asciiLookup = CreateAsciiLookup();
     }

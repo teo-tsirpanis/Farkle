@@ -38,7 +38,7 @@ internal readonly ref struct GrammarTablesHotData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public uint GetTokenSymbolStartedGroup(TokenSymbolHandle symbol)
+    public GroupHandle GetTokenSymbolStartedGroup(TokenSymbolHandle symbol)
     {
         Debug.Assert((GetTokenSymbolFlags(symbol) & TokenSymbolAttributes.GroupStart) != 0);
         return GrammarTables.GetTokenSymbolStartedGroup(GrammarFile, symbol.TableIndex);
@@ -48,44 +48,44 @@ internal readonly ref struct GrammarTablesHotData
     public bool IsTerminal(TokenSymbolHandle symbol) => GrammarTables.IsTerminal(symbol);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public GroupAttributes GetGroupFlags(uint group)
+    public GroupAttributes GetGroupFlags(GroupHandle group)
     {
-        Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(group.TableIndex != 0 && group.TableIndex <= (uint)GrammarTables.GroupRowCount);
 
-        return GrammarTables.GetGroupFlags(GrammarFile, group);
+        return GrammarTables.GetGroupFlags(GrammarFile, group.TableIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TokenSymbolHandle GetGroupContainer(uint group)
+    public TokenSymbolHandle GetGroupContainer(GroupHandle group)
     {
-        Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(group.TableIndex != 0 && group.TableIndex <= (uint)GrammarTables.GroupRowCount);
 
-        return GrammarTables.GetGroupContainer(GrammarFile, group);
+        return GrammarTables.GetGroupContainer(GrammarFile, group.TableIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TokenSymbolHandle GetGroupStart(uint group)
+    public TokenSymbolHandle GetGroupStart(GroupHandle group)
     {
-        Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(group.TableIndex != 0 && group.TableIndex <= (uint)GrammarTables.GroupRowCount);
 
-        return GrammarTables.GetGroupStart(GrammarFile, group);
+        return GrammarTables.GetGroupStart(GrammarFile, group.TableIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TokenSymbolHandle GetGroupEnd(uint group)
+    public TokenSymbolHandle GetGroupEnd(GroupHandle group)
     {
-        Debug.Assert(group != 0 && group <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(group.TableIndex != 0 && group.TableIndex <= (uint)GrammarTables.GroupRowCount);
 
-        return GrammarTables.GetGroupEnd(GrammarFile, group);
+        return GrammarTables.GetGroupEnd(GrammarFile, group.TableIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool CanGroupNest(uint outerGroup, uint innerGroup)
+    public bool CanGroupNest(GroupHandle outerGroup, GroupHandle innerGroup)
     {
-        Debug.Assert(outerGroup != 0 && outerGroup <= (uint)GrammarTables.GroupRowCount);
-        Debug.Assert(innerGroup != 0 && innerGroup <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(outerGroup.TableIndex != 0 && outerGroup.TableIndex <= (uint)GrammarTables.GroupRowCount);
+        Debug.Assert(innerGroup.TableIndex != 0 && innerGroup.TableIndex <= (uint)GrammarTables.GroupRowCount);
 
-        return GrammarTables.CanGroupNest(GrammarFile, outerGroup, innerGroup);
+        return GrammarTables.CanGroupNest(GrammarFile, outerGroup.TableIndex, innerGroup.TableIndex);
     }
 
     public NonterminalHandle GetProductionHead(ProductionHandle production)

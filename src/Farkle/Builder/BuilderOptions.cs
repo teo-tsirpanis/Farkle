@@ -30,6 +30,8 @@ public sealed class BuilderOptions
     /// </remarks>
     public int MaxTokenizerStates { get; set; } = -1;
 
+    internal bool EmitGroupOptimizedDfa { get; set; } = true;
+
     internal BuilderLogger Log = new() { LogLevel = DiagnosticSeverity.Information };
 
     internal static readonly BuilderOptions Default = new();

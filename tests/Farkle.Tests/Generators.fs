@@ -79,7 +79,7 @@ type RegexStringPair = RegexStringPair of Regex * string
 
 let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexRegexString|) (r: Regex) =
     let mutable chars = Unchecked.defaultof<_>
-    let mutable isInverted = false
+    let mutable charsFlags = Regex.CharsFlags.None
     let mutable stringLiteral = Unchecked.defaultof<_>
     let mutable regexes = Unchecked.defaultof<_>
     let mutable inner = null
@@ -88,8 +88,8 @@ let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexR
     let mutable regexString = Unchecked.defaultof<_>
     if r.IsAny() then
         RegexAny
-    elif r.IsChars(&chars, &isInverted) then
-        if isInverted then
+    elif r.IsChars(&chars, &charsFlags) then
+        if charsFlags.HasFlag Regex.CharsFlags.Inverted then
             RegexAllButChars chars
         else
             RegexChars chars

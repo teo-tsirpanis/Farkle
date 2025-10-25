@@ -17,8 +17,8 @@ internal static class BuilderLoggerExtensions
     public static void IndistinguishableSymbols(in this BuilderLogger logger, IndistinguishableSymbolsError error) =>
         logger.Error("FARKLE0002", error);
 
-    public static void RegexContainsVoid(in this BuilderLogger logger, in BuilderSymbolName symbolName) =>
-        logger.Warning("FARKLE0003", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexContainsVoid), symbolName));
+    public static void SymbolCannotBeMatched(in this BuilderLogger logger, in BuilderSymbolName symbolName) =>
+        logger.Warning("FARKLE0003", LocalizedDiagnostic.Create(nameof(Resources.Builder_SymbolCannotBeMatched), symbolName));
 
     public static void DuplicateSpecialName(in this BuilderLogger logger, string specialName) =>
         logger.Error("FARKLE0004", LocalizedDiagnostic.Create(nameof(Resources.Builder_DuplicateSpecialName), specialName));

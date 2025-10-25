@@ -48,6 +48,8 @@ internal struct GrammarTablesWriter
 
     public readonly int ProductionCount => _productions?.Count ?? 0;
 
+    public readonly int GroupCount => _groups?.Count ?? 0;
+
     private static uint EncodeSymbolCodedIndex(EntityHandle handle)
     {
         if (handle.IsTokenSymbol)
@@ -62,12 +64,16 @@ internal struct GrammarTablesWriter
     }
 
     [MemberNotNull(nameof(_tokenSymbols))]
-    private void ValidateHandle(TokenSymbolHandle handle, string parameterName) =>
+    private readonly void ValidateHandle(TokenSymbolHandle handle, string parameterName) =>
         ValidateHandle(handle.TableIndex, _tokenSymbols, parameterName);
 
     [MemberNotNull(nameof(_nonterminals))]
-    private void ValidateHandle(NonterminalHandle handle, string parameterName) =>
+    private readonly void ValidateHandle(NonterminalHandle handle, string parameterName) =>
         ValidateHandle(handle.TableIndex, _nonterminals, parameterName);
+
+    [MemberNotNull(nameof(_groups))]
+    private readonly void ValidateHandle(GroupHandle handle, string parameterName) =>
+        ValidateHandle(handle.TableIndex, _groups, parameterName);
 
     private static void ValidateHandle<T>(uint handle, [NotNull] List<T>? list, string parameterName)
     {
@@ -150,7 +156,7 @@ internal struct GrammarTablesWriter
         return handle;
     }
 
-    public uint AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
+    public GroupHandle AddGroup(StringHandle name, TokenSymbolHandle container, GroupAttributes flags, TokenSymbolHandle start, TokenSymbolHandle end, int nestingCount)
     {
         ValidateRowCount(_groups, TableKind.Group);
         ValidateHandle(container, nameof(container));
@@ -170,13 +176,13 @@ internal struct GrammarTablesWriter
             _groupNestings ??= new();
         }
         _requiredGroupNestings += nestingCount;
-        return (uint)groups.Count;
+        return new((uint)groups.Count);
     }
 
-    public void AddGroupNesting(uint group)
+    public void AddGroupNesting(GroupHandle group)
     {
         ValidateRowCount(_groupNestings, TableKind.GroupNesting);
-        ValidateHandle(group, _groups, nameof(group));
+        ValidateHandle(group, nameof(group));
 
         var groupNestingGroups = _groupNestings;
         if (groupNestingGroups is not { Count: int count } || count >= _requiredGroupNestings)
@@ -394,7 +400,7 @@ internal struct GrammarTablesWriter
         {
             foreach (var row in _groupNestings)
             {
-                writer.WriteVariableSize(row.Group, groupIndexSize);
+                writer.WriteVariableSize(row.Group.TableIndex, groupIndexSize);
             }
         }
 
@@ -512,7 +518,7 @@ internal struct GrammarTablesWriter
 
     private readonly struct GroupNestingRow
     {
-        public required uint Group { get; init; }
+        public required GroupHandle Group { get; init; }
     }
 
     private readonly struct NonterminalRow

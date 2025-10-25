@@ -13,6 +13,8 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
 
     protected readonly int _edgeCount;
 
+    private readonly int _groupCount;
+
     public required int FirstEdgeBase { get; init; }
 
     public required int RangeFromBase { get; init; }
@@ -21,17 +23,33 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
 
     public required int EdgeTargetBase { get; init; }
 
-    public required int DefaultTransitionBase { get; init; }
-
     public required int AcceptBase { get; init; }
 
-    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, int tokenSymbolCount, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
+    public int DefaultTransitionBase { get; }
+
+    public int GroupStartStateBase { get; }
+
+    protected DfaImplementationBase(Grammar grammar, int stateCount, int edgeCount, in GrammarStateMachines.Dfa dfa, bool hasConflicts) : base(grammar, stateCount, hasConflicts)
     {
         _stateIndexSize = GrammarUtilities.GetCompressedIndexSize(stateCount);
         _edgeIndexSize = GrammarUtilities.GetCompressedIndexSize(edgeCount);
-        _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(tokenSymbolCount);
+        _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount);
 
         _edgeCount = edgeCount;
+        _groupCount = grammar.GrammarTables.GroupRowCount;
+
+        if (dfa.DefaultTransitions.Length > 0 && dfa.DefaultTransitions.Length != stateCount * _stateIndexSize)
+        {
+            ThrowHelpers.ThrowInvalidDfaDataSize();
+        }
+
+        if (dfa.GroupStartStates.Length > 0 && dfa.GroupStartStates.Length != _groupCount * _stateIndexSize)
+        {
+            ThrowHelpers.ThrowInvalidDfaDataSize();
+        }
+
+        DefaultTransitionBase = dfa.DefaultTransitions.Offset;
+        GroupStartStateBase = dfa.GroupStartStates.Offset;
     }
 
     protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
@@ -64,6 +82,11 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
         return new(cFrom, cTo, target);
     }
 
+    private int GetGroupStartStateUnsafe(ReadOnlySpan<byte> grammarFile, uint groupIndex)
+    {
+        return ReadState(grammarFile, GroupStartStateBase, (int)groupIndex - 1);
+    }
+
     internal sealed override int GetDefaultTransition(int state)
     {
         ValidateStateIndex(state);
@@ -87,6 +110,19 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
         }
         return GetEdgeAtUnsafe(Grammar.GrammarFile, index);
+    }
+
+    internal sealed override int GetStartStateForGroupImpl(GroupHandle group)
+    {
+        if (group.TableIndex > (uint)_groupCount)
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(group));
+        }
+        if (GroupStartStateBase == 0)
+        {
+            return StartState;
+        }
+        return GetGroupStartStateUnsafe(Grammar.GrammarFile, group.TableIndex);
     }
 
     internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
@@ -129,6 +165,15 @@ internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where T
             {
                 int defaultTransition = GetDefaultTransitionUnsafe(grammarFile, i);
                 ValidateEdgeTarget(defaultTransition);
+            }
+        }
+
+        if (GroupStartStateBase != 0)
+        {
+            for (uint i = 1; i <= _groupCount; i++)
+            {
+                int groupStartState = GetGroupStartStateUnsafe(grammarFile, i);
+                ValidateStateIndex(groupStartState);
             }
         }
 

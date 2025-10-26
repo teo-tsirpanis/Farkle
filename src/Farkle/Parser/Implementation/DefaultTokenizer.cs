@@ -115,7 +115,7 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
             {
                 // When inside token groups, we ignore invalid characters at
                 // the beginning to avoid discarding just one and repeat the loop.
-                // We limit this optimization to those that keep the end token because
+                // We limit this optimization to those that consume the end token because
                 // we cannot accurately determine where the final invalid characters end
                 // and the group ending starts.
                 bool ignoreLeadingErrors = (groupAttributes & (GroupAttributes.AdvanceByCharacter | GroupAttributes.KeepEndToken)) == 0;

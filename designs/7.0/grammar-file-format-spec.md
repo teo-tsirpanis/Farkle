@@ -7,6 +7,7 @@ The current version of the format is __7.0__.
 ## Ground rules
 
 * The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119].
+* Non-normative text is written in blockquotes.
 * Numbers are stored in little-endian format.
 * The total size of a grammar file MUST NOT exceed 2<sup>31</sup> - 1 bytes.
 
@@ -38,7 +39,7 @@ A grammar file starts with the following data:
 * If the value of the __MajorVersion__ field is outside the range of the major versions the reader supports, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
 * If the value of the __MajorVersion__ field is equal to the latest supported major version, and the value of the __MinorVersion__ field is larger than the latest supported major version, the grammar file MUST NOT be used for parsing.
 
-A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
+> A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
 
 ### Stream Definition
 
@@ -218,8 +219,8 @@ The following bit values are defined for the __Flags__ column:
 |Bit|Name|Description|
 |---|----|-----------|
 |0|`EndsOnEndOfInput`|The group can also end when the end of the input is reached, without encountering the token symbol specified in the __End__ column.|
-|1|`AdvanceByCharacter`|When inside this group, the parser should read the input without invoking the regular tokenizer.|
-|2|`KeepEndToken`|When the group ends, the parser should keep the token that ended the group in the input stream.|
+|1|`AdvanceByCharacter`|When inside this group, the parser must read the input without invoking the regular tokenizer.|
+|2|`KeepEndToken`|When the group ends, the parser must keep the token that ended the group in the input stream.|
 
 The following rules apply to the _Group_ table:
 
@@ -325,7 +326,7 @@ The following rules apply to the _Production_ table:
 * The value of the __FirstMember__ column of the first production MUST be equal to one.
 * If a production and all productions after it does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
 
-> Before accessing the members of a production, readers MUST ensure that it actually has members.
+> Before accessing the members of a production, readers MUST ensure that the production actually has members.
 
 ### _ProductionMember_ table
 
@@ -379,7 +380,7 @@ The following rules apply to the _SpecialName_ table:
 * The __Symbol__ column MUST NOT contain duplicate values.
 * The __Name__ column MUST NOT contain duplicate values.
 
-> The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since in Farkle symbols can be renamed and many can have the same name within a grammar, the special name provides a stable way to identify them (it sticks to the symbol's original name and duplicate names would cause build failures).
+> The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since many symbols can have the same name within a grammar, the special name provides a guaranteed unique way to identify them.
 
 ## State machines
 

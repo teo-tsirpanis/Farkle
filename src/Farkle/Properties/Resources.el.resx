@@ -72,6 +72,9 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή περιέχει δεδομένα που δεν αναγνωρίζονται από αυτήν την έκδοση του Farkle</value>
   </data>
+  <data name="Parser_UnparsableGrammar_TooNewFormat" xml:space="preserve">
+    <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ή λεκτική ανάλυση επειδή η έκδοση μορφής της είναι πολύ νέα</value>
+  </data>
   <data name="Parser_GrammarLrMissing" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για συντακτική ανάλυση επειδή δεν έχει πίνακα καταστάσεων LR</value>
   </data>

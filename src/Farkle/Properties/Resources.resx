@@ -72,6 +72,9 @@
   <data name="Parser_UnparsableGrammar_Critical" xml:space="preserve">
     <value>The grammar cannot be used for parsing or tokenizing because it contains data not recognized by this version of Farkle</value>
   </data>
+  <data name="Parser_UnparsableGrammar_TooNewFormat" xml:space="preserve">
+    <value>The grammar cannot be used for parsing or tokenizing because its format version is too new</value>
+  </data>
   <data name="Parser_GrammarLrMissing" xml:space="preserve">
     <value>The grammar cannot be used for parsing because it does not contain an LR state table</value>
   </data>

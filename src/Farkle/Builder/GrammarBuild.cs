@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Numerics;
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;
@@ -50,6 +51,10 @@ internal static class GrammarBuild
         // Support only the subset of regexes the builder currently supports to start and end groups.
         // If we want to generalize groups in the future and have them be bounded by arbitrary regexes,
         // we might need to somehow run this inside the DFA builder.
+        while (regex.IsAccept(out Regex? r, out _, out _))
+        {
+            regex = r;
+        }
         if (regex == NewLineRegex)
         {
             return "\n\r";
@@ -67,9 +72,10 @@ internal static class GrammarBuild
     /// for when the tokenizer is inside a group. If a custom DFA cannot be used,
     /// this function will return <see langword="null"/>.
     /// </summary>
-    private static Regex? GetGroupRegex(string start, Regex endRegex, TokenSymbolHandle endSymbol, bool isRecursive,
-        GroupAttributes groupAttributes)
+    private static Regex? GetGroupRegex(string start, Regex endRegexWithAccept, bool isRecursive,
+        GroupAttributes groupAttributes, out bool addEndRegexToMainDfa)
     {
+        addEndRegexToMainDfa = true;
         if ((groupAttributes & GroupAttributes.AdvanceByCharacter) == 0)
         {
             // Token groups cannot use a custom DFA starting state by definition.
@@ -93,7 +99,7 @@ internal static class GrammarBuild
         bool keepEndToken = (groupAttributes & GroupAttributes.KeepEndToken) != 0;
         if (keepEndToken)
         {
-            prohibitedCharacters = prohibitedCharacters.AddRange(ExtractFirstPossibleCharacters(endRegex));
+            prohibitedCharacters = prohibitedCharacters.AddRange(ExtractFirstPossibleCharacters(endRegexWithAccept));
         }
         // Set HighPriorityInverted because, if a recursive group starts and ends with the same character,
         // we must fail and leave it to the main DFA to determine which of the two (or none) happened.
@@ -101,7 +107,8 @@ internal static class GrammarBuild
         Regex result = Regex.Chars(prohibitedCharacters, Regex.CharsFlags.HighPriorityInverted | Regex.CharsFlags.BreakOnAccept).ZeroOrMore();
         if (!keepEndToken)
         {
-            result += Regex.Accept(endRegex, endSymbol, lowestPriority: false);
+            result += endRegexWithAccept;
+            addEndRegexToMainDfa = false;
         }
         return result;
     }
@@ -352,7 +359,8 @@ internal static class GrammarBuild
             }
             else
             {
-                endHandle = GetOrCreateGroupEndLiteral(endOrNewLine, out endRegex);
+                endRegex = GetRegexForLiteral(endOrNewLine);
+                endHandle = GetOrCreateGroupEndLiteral(endOrNewLine);
             }
             bool isRecursive = (options & GroupOptions.Recursive) != 0;
             GroupHandle groupHandle = writer.AddGroup(writer.GetOrAddString(name), container, flags, startHandle, endHandle, isRecursive ? 1 : 0);
@@ -360,7 +368,18 @@ internal static class GrammarBuild
             {
                 writer.AddGroupNesting(groupHandle);
             }
-            groupDfaRegexes?.Add(GetGroupRegex(start, endRegex, endHandle, isRecursive, flags));
+            if (regexBuilder is not null)
+            {
+                Regex endRegexWithAccept = Regex.Accept(endRegex, endHandle, lowestPriority: false);
+                bool addEndRegexToMainDfa = true;
+                groupDfaRegexes?.Add(GetGroupRegex(start, endRegexWithAccept, isRecursive, flags, out addEndRegexToMainDfa));
+                if (addEndRegexToMainDfa)
+                {
+                    // The regex might be added multiple times, but it's OK since all accept
+                    // the same symbol, and won't cause any conflicts.
+                    regexBuilder.Add(endRegexWithAccept);
+                }
+            }
         }
 
         // Gets the handle to a group end literal symbol, creating it if it does not exist.
@@ -373,16 +392,14 @@ internal static class GrammarBuild
         // bookkeeping ourselves. By storing the strings inside the general symbol map, we
         // also avoid conflicts between group end symbols and literals, which was not possible
         // before.
-        TokenSymbolHandle GetOrCreateGroupEndLiteral(string content, out Regex regex)
+        TokenSymbolHandle GetOrCreateGroupEndLiteral(string content)
         {
-            regex = GetRegexForLiteral(content);
             if (symbolMap.TryGetValue(content, out EntityHandle existingHandle))
             {
                 return (TokenSymbolHandle)existingHandle;
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(content), TokenSymbolAttributes.None);
             dfaSymbols?.Add(handle, content, TokenSymbolKind.GroupEnd);
-            regexBuilder?.Add(Regex.Accept(regex, handle, lowestPriority: false));
             symbolMap.Add(content, handle);
             return handle;
         }

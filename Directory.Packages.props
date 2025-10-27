@@ -2,7 +2,7 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
-    <FakeVersion>6.1.3</FakeVersion>
+    <FakeVersion>6.1.4</FakeVersion>
     <!-- The version of out-of-band BCL packages that are referenced by shipping library projects.
     Keep in line with the earliest supported .NET version. -->
     <SystemOobVersion>8.0.0</SystemOobVersion>

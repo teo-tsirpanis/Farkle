@@ -2,11 +2,21 @@
 
 This document describes the binary format of Farkle 7's grammars. It is heavily inspired by the Common Language Infrastructure metadata format described in [ECMA-335][ecma].
 
+The current version of the format is __7.0__.
+
 ## Ground rules
 
 * The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119].
 * Numbers are stored in little-endian format.
 * The total size of a grammar file MUST NOT exceed 2<sup>31</sup> - 1 bytes.
+
+## Implementation requirements
+
+Implementations of this specification are divided into three categories:
+
+* _Writers_ create grammar files. They MUST implement the subset of the specification that is necessary to create valid grammar files according to the specification and their use case.
+* _Readers_ read grammar files for the purpose of displaying their content to users. They MAY ignore parts of the specification that dictate the behavior of parsers, or data structure specifications that they don't need to display.
+  * _Parsers_ are a subset of readers, and read grammar files for the purpose of parsing input according to the grammar's specification, either directly, or by generating code that performs the parsing. They are REQUIRED to implement the entire specification, unless specified otherwise. They MAY forgo implementing parts of the specification that they don't need, as long as they report an error when encountering data that would require such parts to be implemented.
 
 ## Abstract file structure
 
@@ -25,8 +35,8 @@ A grammar file starts with the following data:
 
 * If the first eight bits of the file are different than the __Magic__ field's expected value, readers MUST NOT read past them and MUST report an error.
     > Note that the magic code ends with two zeroes. It will prevent [GOLD Parser][gold] grammar file readers from continuing reading it.
-* If the value of the __MajorVersion__ field is larger than the expected one or smaller than `7`, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
-    * When and if a file version after 7 gets specified, if the version of the file is smaller than the latest the reader supports, it MAY keep compatibility with the older format, or report an error.
+* If the value of the __MajorVersion__ field is outside the range of the major versions the reader supports, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
+* If the value of the __MajorVersion__ field is equal to the latest supported major version, and the value of the __MinorVersion__ field is larger than the latest supported major version, the grammar file MUST NOT be used for parsing.
 
 A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
 
@@ -511,6 +521,19 @@ Readers SHOULD expose an API that indicates whether a grammar file contains data
 * A __MinorVersion__ field that is greater than the latest __MinorVersion__ field the reader knows.
 * A state machine whose __Kind__ is not known to the reader.
 * A table whose kind is not specified in this specification.
+
+### Summary of extensibility mechanisms
+
+The following table summarizes the extensibility mechanisms provided by the format, and whether third parties can use them:
+
+|I want to|How to achieve it|Available to third parties|
+|-|-|-|
+|Extend the format with data that does not affect parsing behavior and can be safely ignored|Add a custom stream|Yes|
+|Extend the format with data that might affect parsing behavior|Add a custom state machine|Yes|
+|Extend the format with data that might affect parsing behavior|Add a custom table|No|
+|Instruct parsers to refuse parsing if they do not understand your format extensions|Set the `Critical` flag in the _Grammar_ table|Yes|
+|Instruct parsers to refuse parsing if they do not understand your format extensions, while keeping the `Critical` flag available for third parties to use|Increase the __MinorVersion__ field in the file header|No|
+|Substantially change the format in a way incompatible for both readers and parsers|Increase the __MajorVersion__ field in the file header|No|
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

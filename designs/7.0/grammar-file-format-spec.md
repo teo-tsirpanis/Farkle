@@ -354,6 +354,10 @@ The following values are defined for the __Kind__ column:
 |3|LR(1) state machine.|
 |4|Generalized LR(1) (GLR(1)) state machine.|
 |5|Deterministic Finite Automaton (DFA) group start states on 16-bit character ranges.|
+|6|Deterministic Finite Automaton (DFA) on 8-bit character ranges.|
+|7|Deterministic Finite Automaton (DFA) on 8-bit character ranges with conflicts.|
+|8|Deterministic Finite Automaton (DFA) default transitions on 8-bit character ranges.|
+|9|Deterministic Finite Automaton (DFA) group start states on 8-bit character ranges.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -361,8 +365,9 @@ The following values are defined for the __Kind__ column:
 The following rules apply to the _StateMachine_ table:
 
 * The __Kind__ column MUST NOT contain duplicate values.
-* If both state machines of __Kind__ 0 and 1, or 3 and 4 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
-* If a state machine of __Kind__ 2 exists, a state machine of __Kind__ 0 or 1 MUST also exist.
+* If both state machines of __Kind__ 0 and 1, 3 and 4, or 6 and 7 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
+* If state machines of __Kind__ 2 or 5 exist, a state machine of __Kind__ 0 or 1 MUST also exist.
+* If state machines of __Kind__ 8 or 9 exist, a state machine of __Kind__ 6 or 7 MUST also exist.
 
 State machines with no states MUST be treated as if they do not exist.
 

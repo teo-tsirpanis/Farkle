@@ -4,7 +4,7 @@ The following changes were made after 7.0.0-preview.1:
 * __Breaking change:__ Removed the `IParserStateBox` interface and related APIs.
 * Added `BuildSemanticProvider` extension method to `IGrammarBuilder<T>`.
 * Added structures to the grammar file format that can make parsing groups two times faster or more. (https://github.com/teo-tsirpanis/Farkle/issues/153)
-* Updated the version compatibility rules of the grammar file format specification.
+* Updated the grammar file format specification to improve its version compatibility rules, and add specification for potential future features.
 * Fixed referencing the Farkle package in F# Interactive.
 * Fixed failures when rendering templates from very large grammars.
 * Fixed a bug where the `IsSingleTokenizerInChain` extension method would return wrong results.

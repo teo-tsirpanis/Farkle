@@ -45,19 +45,18 @@ internal static class GrammarBuild
         }
     }
 
-    private static ImmutableArray<(char, char)> ExtractFirstPossibleCharacters(Regex regex)
+    private static string ExtractFirstPossibleCharacters(Regex regex)
     {
         // Support only the subset of regexes the builder currently supports to start and end groups.
         // If we want to generalize groups in the future and have them be bounded by arbitrary regexes,
         // we might need to somehow run this inside the DFA builder.
         if (regex == NewLineRegex)
         {
-            return [('\n', '\n'), ('\r', '\r')];
+            return "\n\r";
         }
         if (regex.IsStringLiteral(out string? s))
         {
-            char c = s[0];
-            return [(c, c)];
+            return s[0].ToString();
         }
         ThrowHelpers.ThrowNotSupportedException();
         return default;
@@ -79,11 +78,11 @@ internal static class GrammarBuild
         // Get the list of characters that will immediately stop the DFA when inside the group.
         // If the group is not nested, all characters are allowed, otherwise it's the characters
         // that might start startRegex.
-        ImmutableArray<(char, char)> prohibitedCharacters;
+        ImmutableArray<char> prohibitedCharacters;
         if (isRecursive)
         {
             char c = start[0];
-            prohibitedCharacters = [(c, c)];
+            prohibitedCharacters = [c];
         }
         else
         {

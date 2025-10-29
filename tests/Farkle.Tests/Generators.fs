@@ -77,56 +77,47 @@ type Regexes = Regexes of Regex list * (string * int) list
 
 type RegexStringPair = RegexStringPair of Regex * string
 
-let (|RegexAny|RegexChars|RegexAllButChars|RegexAlt|RegexConcat|RegexLoop|RegexRegexString|) (r: Regex) =
-    let mutable chars = Unchecked.defaultof<_>
-    let mutable charsFlags = Regex.CharsFlags.None
-    let mutable stringLiteral = Unchecked.defaultof<_>
-    let mutable regexes = Unchecked.defaultof<_>
-    let mutable inner = null
-    let mutable m = 0
-    let mutable n = 0
-    let mutable regexString = Unchecked.defaultof<_>
-    if r.IsAny() then
-        RegexAny
-    elif r.IsChars(&chars, &charsFlags) then
-        if charsFlags.HasFlag Regex.CharsFlags.Inverted then
-            RegexAllButChars chars
-        else
-            RegexChars chars
-    // We can't add another case; F# supports only 7 cases in active patterns.
-    // To add more, we will have to make a dedicated doscriminated union type
-    // for regexes.
-    elif r.IsStringLiteral(&stringLiteral) then
-        stringLiteral
-        |> Seq.map Regex.char
-        |> _.ToImmutableArray()
-        |> Choice5Of7 // RegexConcat but there is a bug in the compiler.
-    elif r.IsAlt(&regexes) then
-        RegexAlt regexes
-    elif r.IsConcat(&regexes) then
-        RegexConcat regexes
-    elif r.IsLoop(&inner, &m, &n) then
-        RegexLoop(inner, m, n)
-    elif r.IsRegexString(&regexString) then
-        RegexRegexString regexString.Pattern
-    else
-        failwith "Impossible"
+let (|RegexAny|_|) (r: Regex) = r.IsAny()
+
+let (|RegexChars|_|) (r: Regex) =
+    match r.IsChars() with
+    | true, chars, flags -> ValueSome(chars, flags.HasFlag Regex.CharsFlags.Inverted)
+    | false, _, _ -> ValueNone
+
+let (|RegexCharRanges|_|) (r: Regex) =
+    match r.IsCharRanges() with
+    | true, ranges, flags -> ValueSome(ranges, flags.HasFlag Regex.CharsFlags.Inverted)
+    | false, _, _ -> ValueNone
+
+let (|RegexStringLiteral|_|) (r: Regex) =
+    match r.IsStringLiteral() with
+    | true, str -> ValueSome str
+    | false, _ -> ValueNone
+
+let (|RegexAlt|_|) (r: Regex) =
+    match r.IsAlt() with
+    | true, regexes -> ValueSome regexes
+    | false, _ -> ValueNone
+
+let (|RegexConcat|_|) (r: Regex) =
+    match r.IsConcat() with
+    | true, regexes -> ValueSome regexes
+    | false, _ -> ValueNone
+
+let (|RegexLoop|_|) (r: Regex) =
+    match r.IsLoop() with
+    | true, inner, m, n -> ValueSome(inner, m, n)
+    | false, _, _, _ -> ValueNone
 
 let genRegexString regex =
-    let containsInRanges xs x = xs |> Seq.exists (fun struct(a, b) -> a <= x && x <= b)
     let rec impl (sb: StringBuilder) regex = gen {
         match regex with
         | RegexAny ->
             let! c = Arb.generate<char>
-            do sb.Append(c) |> ignore
-        | RegexChars x ->
-            let! c = Arb.generate |> Gen.filter (containsInRanges x)
-            do sb.Append(c) |> ignore
-        | RegexAllButChars x ->
-            // This is our best shot here; creating the
-            // complement is probably not a good idea.
-            let! c = Arb.generate |> Gen.filter (containsInRanges x >> not)
-            do sb.Append(c) |> ignore
+            sb.Append c |> ignore
+        | RegexChars (xs, isInverted) ->
+            let! c = Arb.generate |> Gen.filter (fun c -> xs.Span.Contains c <> isInverted)
+            sb.Append c |> ignore
         | RegexAlt xs ->
             let! x = Gen.elements xs
             do! impl sb x
@@ -136,13 +127,12 @@ let genRegexString regex =
         | RegexLoop(x, m, n) ->
             for __ = 0 to m - 1 do
                 do! impl sb x
-            let! (NonNegativeInt len) =
+            let! NonNegativeInt len =
                 Arb.generate
                 |> if n = Int32.MaxValue then id else Gen.filter (fun (NonNegativeInt x) -> x <= n - m)
             for __ = 0 to len - 1 do
                 do! impl sb x
-        // Regex strings are never created by the generator.
-        | RegexRegexString _ -> ()
+        | _ -> failwith "Unsupported regex type in generator"
     }
     gen {
         let sb = StringBuilder()

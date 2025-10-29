@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using BitCollections;
+using Farkle.Buffers;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
 using Farkle.Grammars.Writers;
@@ -57,12 +58,24 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     /// </summary>
     private const int LiteralPriority = 1;
 
-    private static bool IsRegexChars(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out Regex.CharsFlags flags)
+    private static bool IsRegexChars(Regex regex, out ImmutableBuffer<TChar> chars, out Regex.CharsFlags flags)
     {
         if (typeof(TChar) == typeof(char))
         {
-            bool result = regex.IsChars(out var chars, out flags);
-            ranges = Unsafe.BitCast<ImmutableArray<(char, char)>, ImmutableArray<(TChar, TChar)>>(chars);
+            bool result = regex.IsChars(out var c, out flags);
+            chars = Unsafe.BitCast<ImmutableBuffer<char>, ImmutableBuffer<TChar>>(c);
+            return result;
+        }
+        ThrowHelpers.ThrowUnsupportedCharacterException();
+        throw null;
+    }
+
+    private static bool IsRegexCharRanges(Regex regex, out ImmutableArray<(TChar, TChar)> ranges, out Regex.CharsFlags flags)
+    {
+        if (typeof(TChar) == typeof(char))
+        {
+            bool result = regex.IsCharRanges(out var r, out flags);
+            ranges = Unsafe.BitCast<ImmutableArray<(char, char)>, ImmutableArray<(TChar, TChar)>>(r);
             return result;
         }
         ThrowHelpers.ThrowUnsupportedCharacterException();
@@ -261,7 +274,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                     case RegexLeaf.End { Symbol: TokenSymbolHandle symbolIndex, Priority: int priority }:
                         S.AcceptSymbols.Add((priority, symbolIndex));
                         break;
-                    case RegexLeaf.Chars x:
+                    case RegexLeaf.CharsBase x:
                         IntervalType startInterval = IntervalType.Start, endInterval = IntervalType.End;
                         if (x.IsInverted)
                         {
@@ -271,10 +284,22 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                             emitDefaultTransition = true;
                             invertedCount++;
                         }
-                        foreach (var (start, end) in x.Ranges)
+                        switch (x)
                         {
-                            stateIntervals.Add((start, startInterval, i));
-                            stateIntervals.Add((end, endInterval, i));
+                            case RegexLeaf.Chars y:
+                                foreach (var c in y.Characters)
+                                {
+                                    stateIntervals.Add((c, startInterval, i));
+                                    stateIntervals.Add((c, endInterval, i));
+                                }
+                                break;
+                            case RegexLeaf.CharRanges y:
+                                foreach (var (start, end) in y.Ranges)
+                                {
+                                    stateIntervals.Add((start, startInterval, i));
+                                    stateIntervals.Add((end, endInterval, i));
+                                }
+                                break;
                         }
                         break;
                 }
@@ -482,37 +507,54 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 var builder = ImmutableArray.CreateBuilder<Regex>(stringLiteral.Length);
                 foreach (var c in stringLiteral)
                 {
-                    ImmutableArray<(char, char)> ranges;
                     if (caseSensitive)
                     {
-                        ranges = [(c, c)];
+                        builder.Add(Regex.Literal(c));
                     }
                     else
                     {
-                        ranges = RegexRangeCanonicalizer.Canonicalize([(c, c)], false);
+                        builder.Add(Regex.OneOf(RegexRangeCanonicalizer.Canonicalize([(c, c)], false)));
                     }
-
-                    builder.Add(Regex.OneOf(ranges));
                 }
                 result = Regex.Join(builder.MoveToImmutable());
             }
             else if (regex.IsChars(out var chars, out var flags))
             {
-                if (caseSensitive && RegexRangeCanonicalizer.IsCanonical(chars.AsSpan()))
+                var charsSpan = chars.Span;
+                if (caseSensitive && RegexRangeCanonicalizer.IsCanonical(charsSpan))
+                {
+                    // If the regex has been canonicalized into a set of all/none characters
+                    // and is/isn't inverted, change it to Regex.Void.
+                    bool isInverted = (flags & Regex.CharsFlags.Inverted) != 0;
+                    unsafe
+                    {
+                        int lengthThatTurnsToVoid = isInverted ? (1 << (sizeof(TChar) * 8)) - 1 : 0;
+                        if (charsSpan.Length == lengthThatTurnsToVoid)
+                        {
+                            result = Regex.Void;
+                        }
+                        else
+                        {
+                            result = regex;
+                        }
+                    }
+                }
+                else
+                {
+                    var rangesCanonicalized = RegexRangeCanonicalizer.Canonicalize(charsSpan, caseSensitive);
+                    result = MaybeReduceToVoid(rangesCanonicalized, flags);
+                }
+            }
+            else if (regex.IsCharRanges(out var ranges, out flags))
+            {
+                if (caseSensitive && RegexRangeCanonicalizer.IsCanonical(ranges.AsSpan()))
                 {
                     result = regex;
                 }
                 else
                 {
-                    chars = RegexRangeCanonicalizer.Canonicalize(chars.AsSpan(), caseSensitive);
-                    result = Regex.Chars(chars, flags);
-                }
-                // If the regex has been canonicalized into a set of all/none characters
-                // and is/isn't inverted, change it to Regex.Void.
-                bool isInverted = (flags & Regex.CharsFlags.Inverted) != 0;
-                if ((chars, isInverted) is ([], false) or ([(char.MinValue, char.MaxValue)], true))
-                {
-                    result = Regex.Void;
+                    var rangesCanonicalized = RegexRangeCanonicalizer.Canonicalize(ranges.AsSpan(), caseSensitive);
+                    result = MaybeReduceToVoid(rangesCanonicalized, flags);
                 }
             }
             else
@@ -525,6 +567,18 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
         ThrowHelpers.ThrowUnsupportedCharacterException();
         return null!;
+
+        static Regex MaybeReduceToVoid(ImmutableArray<(char, char)> ranges, Regex.CharsFlags flags)
+        {
+            bool isInverted = (flags & Regex.CharsFlags.Inverted) != 0;
+            // If the regex has been canonicalized into a set of all/none characters
+            // and is/isn't inverted, change it to Regex.Void.
+            if ((ranges, isInverted) is ([], false) or ([(char.MinValue, char.MaxValue)], true))
+            {
+                return Regex.Void;
+            }
+            return Regex.CharRanges(ranges, flags);
+        }
     }
 
     private (List<RegexLeaf>? Leaves, List<BitSet> FollowPos, BitSet RootFirstPos) BuildRegexTree(Regex regex, DfaBuildOptions options)
@@ -677,6 +731,11 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 return RegexInfo.Singleton(AddLeaf(new RegexLeaf.Chars(chars, charsFlags)));
             }
 
+            if (IsRegexCharRanges(regex, out var ranges, out charsFlags))
+            {
+                return RegexInfo.Singleton(AddLeaf(new RegexLeaf.CharRanges(ranges, charsFlags)));
+            }
+
             if ((flags & VisitFlags.Lowered) == 0)
             {
                 return Visit(in @this, symbol, regex, flags | VisitFlags.Lowered);
@@ -770,16 +829,24 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     {
         public static Chars Any { get; } = new Chars([], Regex.CharsFlags.Inverted);
 
-        public sealed class Chars(ImmutableArray<(TChar Start, TChar End)> ranges, Regex.CharsFlags flags) : RegexLeaf
+        public abstract class CharsBase(Regex.CharsFlags flags) : RegexLeaf
         {
-            public ImmutableArray<(TChar Start, TChar End)> Ranges { get; } = ranges;
-
             public bool IsInverted => (flags & Regex.CharsFlags.Inverted) != 0;
 
             public bool IsHighPriorityInverted =>
                 (flags & Regex.CharsFlags.HighPriorityInverted) == Regex.CharsFlags.HighPriorityInverted;
 
             public bool IsBreakOnAccept => (flags & Regex.CharsFlags.BreakOnAccept) != 0;
+        }
+
+        public sealed class Chars(ImmutableBuffer<TChar> chars, Regex.CharsFlags flags) : CharsBase(flags)
+        {
+            public ReadOnlySpan<TChar> Characters => chars.Span;
+        }
+
+        public sealed class CharRanges(ImmutableArray<(TChar Start, TChar End)> ranges, Regex.CharsFlags flags) : CharsBase(flags)
+        {
+            public ImmutableArray<(TChar Start, TChar End)> Ranges { get; } = ranges;
         }
 
         public sealed class End(TokenSymbolHandle symbol, int priority) : RegexLeaf

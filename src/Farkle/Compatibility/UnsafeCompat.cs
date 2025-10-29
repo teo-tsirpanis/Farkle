@@ -10,8 +10,8 @@ internal partial class Compatibility
 {
     extension(Unsafe)
     {
-        // Because "allows ref struct" cannot be polyfilled, bitcasting ref structs still has to
-        // be done with an ifdef, and pointer casting for frameworks prior to .NET 9.
+        // Because "allows ref struct" cannot be polyfilled, bitcasting ref structs will have
+        // to be done with Utilities.BitCastSpan.
         public static TTo BitCast<TFrom, TTo>(TFrom source) => Unsafe.As<TFrom, TTo>(ref source);
     }
 }

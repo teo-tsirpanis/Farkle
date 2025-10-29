@@ -110,28 +110,14 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal TextPosition Advance<T>(ReadOnlySpan<T> span)
     {
-        unsafe
+        // Because of lack of language support, we have to do some duplication here.
+        if (typeof(T) == typeof(char))
         {
-            // Because of lack of language support, we have to do some duplication here.
-            // We cast the span with pointers because it's a ref struct and we cannot box it.
-            if (typeof(T) == typeof(char))
-            {
-#if NET9_0_OR_GREATER
-                var roSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<char>>(span);
-#else
-                var roSpan = *(ReadOnlySpan<char>*)&span;
-#endif
-                return AdvanceCore(roSpan, '\r', '\n');
-            }
-            if (typeof(T) == typeof(byte))
-            {
-#if NET9_0_OR_GREATER
-                var roSpan = Unsafe.BitCast<ReadOnlySpan<T>, ReadOnlySpan<byte>>(span);
-#else
-                var roSpan = *(ReadOnlySpan<byte>*)&span;
-#endif
-                return AdvanceCore(roSpan, (byte)'\r', (byte)'\n');
-            }
+            return AdvanceCore(Utilities.BitCastSpan<T, char>(span), '\r', '\n');
+        }
+        if (typeof(T) == typeof(byte))
+        {
+            return AdvanceCore(Utilities.BitCastSpan<T, byte>(span), (byte)'\r', (byte)'\n');
         }
         // For any other type, we will just advance the column number by the length of the span.
         return Create0(_line, _column + span.Length);

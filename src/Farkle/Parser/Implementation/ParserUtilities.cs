@@ -45,11 +45,7 @@ internal static class ParserUtilities
         {
             if (typeof(TChar) == typeof(char))
             {
-#if NET9_0_OR_GREATER
-                return GetAbbreviatedLexicalErrorText(Unsafe.BitCast<ReadOnlySpan<TChar>, ReadOnlySpan<char>>(chars));
-#else
-                return GetAbbreviatedLexicalErrorText(*(ReadOnlySpan<char>*)&chars);
-#endif
+                return GetAbbreviatedLexicalErrorText(Utilities.BitCastSpan<TChar, char>(chars));
             }
         }
         ThrowHelpers.ThrowUnsupportedCharacterException();

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Farkle.Buffers;
 using Farkle.Grammars;
 
 namespace Farkle.Builder;
@@ -76,7 +77,8 @@ public sealed class Regex
         {
             case (KindAndFlags.Any, null):
             case (KindAndFlags.StringLiteral, string):
-            case (KindAndFlags.Chars, (char, char)[]):
+            case (KindAndFlags.Chars, char[] or string):
+            case (KindAndFlags.CharRanges, (char, char)[]):
             case (KindAndFlags.Concat or KindAndFlags.Alt, Regex[]):
             case (KindAndFlags.RegexString, RegexStringHolder):
             case (KindAndFlags.Accept, Regex):
@@ -102,6 +104,8 @@ public sealed class Regex
             KindAndFlags.StringLiteral =>
                 $"\"{_data}\"",
             KindAndFlags.Chars =>
+                $"Chars[{new ImmutableBuffer<char>(_data).Length}]",
+            KindAndFlags.CharRanges =>
                 $"Chars[{(((char, char)[])_data!).Length}]",
             KindAndFlags.Concat =>
                 $"Concat[{((Regex[])_data!).Length}]",
@@ -168,10 +172,22 @@ public sealed class Regex
         return false;
     }
 
-    internal bool IsChars(out ImmutableArray<(char, char)> chars, out CharsFlags flags)
+    internal bool IsChars(out ImmutableBuffer<char> chars, out CharsFlags flags)
     {
         flags = (CharsFlags)_kindAndFlags & CharsFlags.All;
         if (Kind is KindAndFlags.Chars)
+        {
+            chars = new(_data);
+            return true;
+        }
+        chars = [];
+        return false;
+    }
+
+    internal bool IsCharRanges(out ImmutableArray<(char, char)> chars, out CharsFlags flags)
+    {
+        flags = (CharsFlags)_kindAndFlags & CharsFlags.All;
+        if (Kind is KindAndFlags.CharRanges)
         {
             chars = ImmutableCollectionsMarshal.AsImmutableArray(((char, char)[])_data!);
             return true;
@@ -320,22 +336,36 @@ public sealed class Regex
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches some specific characters.
     /// </summary>
+    /// <param name="chars">The characters to match, or to avoid matching.</param>
+    /// <param name="flags">Flags to customize the regex's matching behavior.</param>
+    /// <seealso cref="OneOf(ImmutableArray{char})"/>
+    /// <seealso cref="NotOneOf(ImmutableArray{char})"/>
+    internal static Regex Chars(ImmutableBuffer<char> chars, CharsFlags flags)
+    {
+        Debug.Assert((flags & ~CharsFlags.All) == 0);
+        KindAndFlags regexFlags = KindAndFlags.Chars | (KindAndFlags)flags;
+        return new(regexFlags, chars.RawValue);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Regex"/> that matches some specific character ranges.
+    /// </summary>
     /// <param name="chars">The character ranges to match, or to avoid matching.</param>
     /// <param name="flags">Flags to customize the regex's matching behavior.</param>
     /// <seealso cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
     /// <seealso cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
-    internal static Regex Chars(ImmutableArray<(char, char)> chars, CharsFlags flags)
+    internal static Regex CharRanges(ImmutableArray<(char, char)> chars, CharsFlags flags)
     {
         Debug.Assert(!chars.IsDefault);
         Debug.Assert((flags & ~CharsFlags.All) == 0);
-        KindAndFlags regexFlags = KindAndFlags.Chars | (KindAndFlags)flags;
+        KindAndFlags regexFlags = KindAndFlags.CharRanges | (KindAndFlags)flags;
         return new(regexFlags, ImmutableCollectionsMarshal.AsArray(chars));
     }
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific character.
     /// </summary>
-    public static Regex Literal(char c) => OneOf((c, c));
+    public static Regex Literal(char c) => OneOf(c);
 
     /// <summary>
     /// A <see cref="Regex"/> that matches a specific string of characters.
@@ -381,15 +411,22 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe);
     }
 
-    /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
+    /// <inheritdoc cref="NotOneOf(ImmutableArray{char})"/>
     [ExcludeFromCodeCoverage]
     public static Regex NotOneOf(IEnumerable<char> chars)
     {
         ArgumentNullException.ThrowIfNull(chars);
-        return NotOneOf(chars.Order().ToImmutableArray());
+
+        var charsBuffer = chars is string s ? ImmutableBuffer.Create(s) : ImmutableBuffer.Create(chars.ToImmutableArray());
+        if (charsBuffer.IsEmpty)
+        {
+            return Any;
+        }
+
+        return new(KindAndFlags.Chars | KindAndFlags.Inverted, charsBuffer.RawValue);
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{char})"/>
@@ -414,7 +451,7 @@ public sealed class Regex
             return Any;
         }
 
-        return new(KindAndFlags.Chars | KindAndFlags.Inverted, arrayUnsafe);
+        return new(KindAndFlags.CharRanges | KindAndFlags.Inverted, arrayUnsafe);
     }
 
     /// <inheritdoc cref="NotOneOf(ImmutableArray{ValueTuple{char, char}})"/>
@@ -440,15 +477,21 @@ public sealed class Regex
             return Void;
         }
 
-        return new(KindAndFlags.Chars, arrayUnsafe.Select(c => (c, c)).ToArray());
+        return new(KindAndFlags.Chars, arrayUnsafe);
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
-    [ExcludeFromCodeCoverage]
     public static Regex OneOf(IEnumerable<char> chars)
     {
         ArgumentNullException.ThrowIfNull(chars);
-        return OneOf(chars.Order().ToImmutableArray());
+
+        var charsBuffer = chars is string s ? ImmutableBuffer.Create(s) : ImmutableBuffer.Create(chars.ToImmutableArray());
+        if (charsBuffer.IsEmpty)
+        {
+            return Void;
+        }
+
+        return new(KindAndFlags.Chars, charsBuffer.RawValue);
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{char})"/>
@@ -478,7 +521,7 @@ public sealed class Regex
             return Void;
         }
 
-        return new(KindAndFlags.Chars, arrayUnsafe);
+        return new(KindAndFlags.CharRanges, arrayUnsafe);
     }
 
     /// <inheritdoc cref="OneOf(ImmutableArray{ValueTuple{char, char}})"/>
@@ -703,7 +746,13 @@ public sealed class Regex
                 right.IsChars(out var rightChars, out var rightFlags) &&
                 !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
             {
-                return OneOf([.. leftChars, .. rightChars]);
+                return OneOf([.. leftChars.Span, .. rightChars.Span]);
+            }
+            if (left.IsCharRanges(out var leftRanges, out leftFlags) &&
+                right.IsCharRanges(out var rightRanges, out rightFlags) &&
+                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
+            {
+                return OneOf([.. leftRanges, .. rightRanges]);
             }
         }
         return Choice(left, right);
@@ -753,13 +802,19 @@ public sealed class Regex
         /// </remarks>
         StringLiteral = 1,
         /// <summary>
+        /// The regex matches certain characters.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="_data"/> must be a <see cref="string"/>, or an array of <see cref="char"/>.
+        /// </remarks>
+        Chars = 2,
+        /// <summary>
         /// The regex matches certain character ranges.
         /// </summary>
         /// <remarks>
         /// <see cref="_data"/> must be an array of value 2-tuples of <see cref="char"/>.
         /// </remarks>
-        Chars = 2,
-        // Unused = 3,
+        CharRanges = 3,
         /// <summary>
         /// The regex matches a concatenation of other regexes.
         /// </summary>
@@ -858,9 +913,9 @@ public sealed class Regex
     }
 
     /// <summary>
-    /// Contains flags to customize the matching behavior of a regex of kind <see cref="KindAndFlags.Chars"/>.
+    /// Contains flags to customize the matching behavior of a regex of kinds
+    /// <see cref="KindAndFlags.Chars"/> or <see cref="KindAndFlags.CharRanges"/>.
     /// </summary>
-    /// <seealso cref="Chars"/>
     [Flags]
     internal enum CharsFlags : uint
     {

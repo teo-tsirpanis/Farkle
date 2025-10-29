@@ -9,19 +9,38 @@ namespace Farkle.Builder.Dfa;
 internal static class RegexRangeCanonicalizer
 {
     /// <summary>
+    /// Checks if the content of <paramref name="chars"/> is sorted and non-adjacent.
+    /// </summary>
+    public static bool IsCanonical(ReadOnlySpan<char> chars)
+    {
+        if (chars.IsEmpty)
+        {
+            return true;
+        }
+
+        char previous = chars[0];
+        foreach (var c in chars[1..])
+        {
+            if (c - previous <= 1)
+            {
+                return false;
+            }
+            previous = c;
+        }
+        return true;
+    }
+
+    /// <summary>
     /// Checks if the content of <paramref name="ranges"/> is sorted, non-adjacent and non-overlapping.
     /// </summary>
     public static bool IsCanonical(ReadOnlySpan<(char, char)> ranges)
     {
-        char previousEnd;
-        switch (ranges)
+        if (ranges.IsEmpty)
         {
-            case []: return true;
-            case [(_, var x), ..]:
-                previousEnd = x;
-                break;
+            return true;
         }
 
+        (_, char previousEnd) = ranges[0];
         foreach (var (start, end) in ranges[1..])
         {
             // This is checked at the time of the regex's construction.
@@ -33,6 +52,40 @@ internal static class RegexRangeCanonicalizer
             previousEnd = end;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Sorts the given characters and coalesces them into ranges, while optionally
+    /// making them case-insensitive.
+    /// </summary>
+    public static ImmutableArray<(char, char)> Canonicalize(ReadOnlySpan<char> chars, bool caseSensitive)
+    {
+        if (chars.IsEmpty)
+        {
+            return [];
+        }
+
+        List<(char, IntervalType)> intervals = [];
+        foreach (var c in chars)
+        {
+            intervals.Add((c, IntervalType.Single));
+            if (!caseSensitive)
+            {
+                char cLower = char.ToLowerInvariant(c);
+                char cUpper = char.ToUpperInvariant(c);
+                if (cLower != c)
+                {
+                    intervals.Add((cLower, IntervalType.Single));
+                }
+                if (cUpper != c)
+                {
+                    intervals.Add((cUpper, IntervalType.Single));
+                }
+            }
+        }
+        intervals.Sort();
+
+        return MergeIntervals(intervals);
     }
 
     /// <summary>

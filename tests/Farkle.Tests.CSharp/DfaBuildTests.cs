@@ -17,7 +17,7 @@ internal class DfaBuildTests
     [TestCase(Regex.CharsFlags.HighPriorityInverted, "bar", false)]
     public void TestHighPriorityInverted(Regex.CharsFlags flags, string input, bool expectedSuccess)
     {
-        var regex = Regex.Chars([('b', 'b')], flags) | Regex.FromRegexString("fooo|bar");
+        var regex = Regex.Chars(['b'], flags) | Regex.FromRegexString("fooo|bar");
         var tokenizer = BuildLengthReturningTokenizer(regex);
 
         var result = GetTokenLength(tokenizer, input);

@@ -152,7 +152,7 @@ internal static class RegexGrammar
 
     internal static IGrammarBuilder<Regex> GetGrammarBuilder()
     {
-        var specialCharacters = "\\.[{()|?*+".ToImmutableArray();
+        var specialCharacters = "\\.[{()|?*+";
 
         // For a moment this was matching as many characters as possible to create a
         // single string literal node, but this is not correct, because it matched

@@ -10,25 +10,39 @@ open Farkle
 open Farkle.Builder
 open Farkle.Builder.Regex
 open Farkle.Tests
+open System.Text
 
-let seqToString x =
+let escapeChar sb c =
+    match c with
+    | '\\' | ']' | '^' | '-' -> Printf.bprintf sb "\\%c" c
+    | _ -> sb.Append c |> ignore
+
+let formatChars x =
+    let sb = StringBuilder()
+    Seq.iter (escapeChar sb) x
+    sb.ToString()
+
+let formatRanges x =
+    let sb = StringBuilder()
     x
-    |> Seq.map (fun struct(cFrom, cTo) ->
-        let escape c =
-            match c with
-            | '\\' | ']' | '^' | '-' -> $"\\{c}"
-            | _ -> Operators.string c
+    |> Seq.iter(fun struct(cFrom, cTo) ->
         if cFrom = cTo then
-            escape cFrom
+            escapeChar sb cFrom
         else
-            $"{escape cFrom}-{escape cTo}")
-    |> String.concat ""
+            escapeChar sb cFrom
+            sb.Append '-' |> ignore
+            escapeChar sb cTo
+    )
+    sb.ToString()
 
 let rec formatRegex =
     function
     | RegexAny -> "."
-    | RegexChars x -> $"[{seqToString x}]"
-    | RegexAllButChars x -> $"[^{seqToString x}]"
+    | RegexChars(x, false) -> $"[{formatChars x}]"
+    | RegexChars(x, true) -> $"[^{formatChars x}]"
+    | RegexCharRanges(x, false) -> $"[{formatRanges x}]"
+    | RegexCharRanges(x, true) -> $"[^{formatRanges x}]"
+    | RegexStringLiteral str -> str |> Seq.map Regex.char |> Regex.concat |> formatRegex
     | RegexAlt x -> x |> Seq.map formatRegex |> String.concat "|"
     | RegexLoop(x, 0, 1) -> $"{formatQuantifiedRegex x}?"
     | RegexLoop(x, 0, int.MaxValue) -> $"{formatQuantifiedRegex x}*"
@@ -39,7 +53,7 @@ let rec formatRegex =
         x
         |> Seq.map (function | RegexAlt _ as x -> "(" + formatRegex x + ")" | x -> formatRegex x)
         |> String.concat ""
-    | RegexRegexString pattern -> $"({pattern})"
+    | _ -> failwith "Unexpected regex type"
 
 and formatQuantifiedRegex =
     function

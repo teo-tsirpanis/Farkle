@@ -26,7 +26,7 @@ public static class Terminals
     private static readonly Regex s_intRegex = s_optionalMinus + s_unsignedIntRegex;
 
     private static readonly Regex s_unsignedFloatRegex = Regex.Join(
-        Regex.OneOf(('-', '-')).Optional(),
+        Regex.OneOf('-').Optional(),
         s_unsignedIntRegex,
         Regex.OneOf('.'),
         s_unsignedIntRegex,

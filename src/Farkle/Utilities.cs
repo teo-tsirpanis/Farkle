@@ -17,6 +17,16 @@ internal static class Utilities
         return Unsafe.As<T>(o);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static unsafe ReadOnlySpan<TTo> BitCastSpan<TFrom, TTo>(ReadOnlySpan<TFrom> source)
+    {
+#if NET9_0_OR_GREATER
+        return Unsafe.BitCast<ReadOnlySpan<TFrom>, ReadOnlySpan<TTo>>(source);
+#else
+        return *(ReadOnlySpan<TTo>*)&source;
+#endif
+    }
+
     /// <summary>
     /// Converts an array to a span, while throwing if it is null.
     /// </summary>

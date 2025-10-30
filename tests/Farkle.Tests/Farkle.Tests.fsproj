@@ -10,7 +10,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/Farkle/Farkle.fs"/>
+    <Compile Include="../../src/Farkle/Farkle.fs" />
     <Compile Include="Common.fs" />
     <!-- <Compile Include="GOLDParserBridge.fs" /> -->
     <Compile Include="Generators.fs" />
@@ -25,6 +25,8 @@
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" />
   </ItemGroup>
 </Project>

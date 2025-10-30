@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithoutConflicts : LrImplementationBase
+internal sealed class LrWithoutConflicts : LrImplementationBase
 {
     private Dictionary<TokenSymbolHandle, LrAction>[]? _actionLookup;
 

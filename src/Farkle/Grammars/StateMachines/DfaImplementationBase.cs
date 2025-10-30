@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
+internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     protected readonly byte _stateIndexSize, _edgeIndexSize, _tokenSymbolIndexSize;
 

@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class LrWithConflicts : LrImplementationBase
+internal sealed class LrWithConflicts : LrImplementationBase
 {
     private readonly byte _eofActionIndexSize;
 

@@ -41,12 +41,9 @@ internal static class ParserUtilities
 
     public static string GetAbbreviatedLexicalErrorText<TChar>(ReadOnlySpan<TChar> chars)
     {
-        unsafe
+        if (typeof(TChar) == typeof(char))
         {
-            if (typeof(TChar) == typeof(char))
-            {
-                return GetAbbreviatedLexicalErrorText(Utilities.BitCastSpan<TChar, char>(chars));
-            }
+            return GetAbbreviatedLexicalErrorText(Utilities.BitCastSpan<TChar, char>(chars));
         }
         ThrowHelpers.ThrowUnsupportedCharacterException();
         return null!;

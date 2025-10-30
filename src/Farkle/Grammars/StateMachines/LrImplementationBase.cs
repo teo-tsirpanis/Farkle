@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe abstract class LrImplementationBase : LrStateMachine
+internal abstract class LrImplementationBase : LrStateMachine
 {
     protected readonly byte _stateIndexSize, _actionIndexSize, _gotoIndexSize, _actionSize, _eofActionSize, _tokenSymbolIndexSize, _nonterminalIndexSize;
 

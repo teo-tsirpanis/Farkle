@@ -186,10 +186,10 @@ internal class GrammarTests
     {
         var grammar = TestUtilities.LoadGrammarFromResource(grammarFile, modifications);
 
-        bool expectedIsParsable = expectedError is not null;
+        bool expectedIsUnparsable = expectedError is not null;
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(grammar.IsUnparsable(out string? error), Is.EqualTo(expectedIsParsable));
+            Assert.That(grammar.IsUnparsable(out string? error), Is.EqualTo(expectedIsUnparsable));
             Assert.That(error, Is.EqualTo(expectedError));
         }
     }

@@ -149,11 +149,11 @@ let tests = testList "Grammar builder tests" [
         let group = grammar.Groups |> Seq.exactlyOne
         let dfa = grammar.DfaOnChar
         Expect.isNotNull dfa "The grammar does not have a DFA"
-        let groupEndOccurences =
+        let groupEndOccurrences =
             dfa
             |> Seq.collect (fun state -> state.AcceptSymbols)
             |> Seq.filter (fun handle -> handle = group.End)
-        Expect.hasLength groupEndOccurences 1 "The DFA does not contain the group end symbol exactly once"
+        Expect.hasLength groupEndOccurrences 1 "The DFA does not contain the group end symbol exactly once"
 
         Expect.equal (parser.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }

@@ -1,4 +1,4 @@
-#### 7.0.0-preview.2
+#### 7.0.0-preview.2 - 30-10-2025
 The following changes were made after 7.0.0-preview.1:
 * __Breaking change:__ Removed `params` from parameters of type `OperatorScope`.
 * __Breaking change:__ Removed the `IParserStateBox` interface and related APIs.

@@ -227,6 +227,8 @@ internal static class Resources
 
     public static string Parser_UnparsableGrammar_Critical => GetResourceString(nameof(Parser_UnparsableGrammar_Critical));
 
+    public static string Parser_UnparsableGrammar_TooNewFormat => GetResourceString(nameof(Parser_UnparsableGrammar_TooNewFormat));
+
     public static string Parser_GrammarLrMissing => GetResourceString(nameof(Parser_GrammarLrMissing));
 
     public static string Parser_GrammarLrProblem => GetResourceString(nameof(Parser_GrammarLrProblem));

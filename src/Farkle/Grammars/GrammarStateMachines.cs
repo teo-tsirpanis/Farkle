@@ -33,6 +33,12 @@ internal readonly struct GrammarStateMachines
                 case GrammarConstants.DfaOnCharGroupStartStatesKind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref DfaOnChar.GroupStartStates, ref seenDfaOnCharGroupStartStates);
                     break;
+                case GrammarConstants.DfaOnByteKind:
+                case GrammarConstants.DfaOnByteWithConflictsKind:
+                case GrammarConstants.DfaOnByteDefaultTransitionsKind:
+                case GrammarConstants.DfaOnByteGroupStartStatesKind:
+                    // We don't currently support DFAs on bytes; ignore them but don't set HasUnknownData.
+                    break;
                 case GrammarConstants.Lr1Kind:
                     AssignStateMachine(grammarFile, in blobHeap, kind, data, ref Lr1, ref seenLr1);
                     break;

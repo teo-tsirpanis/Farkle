@@ -22,6 +22,11 @@ internal static class GrammarConstants
     public const uint DfaOnCharDefaultTransitionsKind = 2;
     public const uint DfaOnCharGroupStartStatesKind = 5;
 
+    public const uint DfaOnByteKind = 6;
+    public const uint DfaOnByteWithConflictsKind = 7;
+    public const uint DfaOnByteDefaultTransitionsKind = 8;
+    public const uint DfaOnByteGroupStartStatesKind = 9;
+
     public const uint Lr1Kind = 3;
     public const uint Glr1Kind = 4;
 

@@ -163,4 +163,34 @@ internal class GrammarTests
 #pragma warning restore NUnit2010 // Use EqualConstraint for better assertion messages in case of failure
 #pragma warning restore CS1718 // Comparison made to same variable
     }
+
+    [TestCase("gml.grammar.dat", (int[])[], false)] // Test success case
+    [TestCase("gml.grammar.dat", (int[])[0xB, 0xFF], true)] // Too big minor version
+    [TestCase("gml.grammar.dat", (int[])[0x10, 0xFF], false)] // Unknown stream does not set HasUnknownData
+    [TestCase("gml.grammar.dat", (int[])[0x957, 0x02, 0xB19, 0xFF], true)] // Unknown state machine
+    [TestCase("gml.grammar.dat", (int[])[0x924, 0x01, 0x927, 0x3F], true)] // Unknown tables (move the last 6 tables into higher unassigned numbers)
+    public void TestHasUnknownData(string grammarFile, int[] modifications, bool expectedResult)
+    {
+        // Some modified grammars fail content validation.
+        var grammar = TestUtilities.LoadGrammarFromResource(grammarFile, modifications, loadUnsafe: true);
+
+        Assert.That(grammar.HasUnknownData, Is.EqualTo(expectedResult));
+    }
+
+    [TestCase("gml.grammar.dat", (int[])[], null)] // Test success case
+    [TestCase("gml.grammar.dat", (int[])[0x957, 0x01], nameof(Resources.Parser_UnparsableGrammar))]
+    [TestCase("gml.grammar.dat", (int[])[0xB, 0xFF], nameof(Resources.Parser_UnparsableGrammar_TooNewFormat))]
+    [TestCase("gml.grammar.dat", (int[])[0x957, 0x02], null)] // Just Critical flag should not make grammar unparsable.
+    [TestCase("gml.grammar.dat", (int[])[0x957, 0x02, 0xB19, 0xFF], nameof(Resources.Parser_UnparsableGrammar_Critical))] // Critical flag + unknown state machine
+    public void TestIsUnparsable(string grammarFile, int[] modifications, string? expectedError)
+    {
+        var grammar = TestUtilities.LoadGrammarFromResource(grammarFile, modifications);
+
+        bool expectedIsParsable = expectedError is not null;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(grammar.IsUnparsable(out string? error), Is.EqualTo(expectedIsParsable));
+            Assert.That(error, Is.EqualTo(expectedError));
+        }
+    }
 }

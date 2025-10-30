@@ -2,11 +2,22 @@
 
 This document describes the binary format of Farkle 7's grammars. It is heavily inspired by the Common Language Infrastructure metadata format described in [ECMA-335][ecma].
 
+The current version of the format is __7.0__.
+
 ## Ground rules
 
 * The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC2119].
+* Non-normative text is written in blockquotes.
 * Numbers are stored in little-endian format.
 * The total size of a grammar file MUST NOT exceed 2<sup>31</sup> - 1 bytes.
+
+## Implementation requirements
+
+Implementations of this specification are divided into three categories:
+
+* _Writers_ create grammar files. They MUST implement the subset of the specification that is necessary to create valid grammar files according to the specification and their use case.
+* _Readers_ read grammar files for the purpose of displaying their content to users. They MAY ignore parts of the specification that dictate the behavior of parsers, or data structure specifications that they don't need to display.
+  * _Parsers_ are a subset of readers, and read grammar files for the purpose of parsing input according to the grammar's specification, either directly, or by generating code that performs the parsing. They are REQUIRED to implement the entire specification, unless specified otherwise. They MAY forgo implementing parts of the specification that they don't need, as long as they report an error when encountering data that would require such parts to be implemented.
 
 ## Abstract file structure
 
@@ -25,10 +36,10 @@ A grammar file starts with the following data:
 
 * If the first eight bits of the file are different than the __Magic__ field's expected value, readers MUST NOT read past them and MUST report an error.
     > Note that the magic code ends with two zeroes. It will prevent [GOLD Parser][gold] grammar file readers from continuing reading it.
-* If the value of the __MajorVersion__ field is larger than the expected one or smaller than `7`, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
-    * When and if a file version after 7 gets specified, if the version of the file is smaller than the latest the reader supports, it MAY keep compatibility with the older format, or report an error.
+* If the value of the __MajorVersion__ field is outside the range of the major versions the reader supports, readers MUST NOT read past the __MinorVersion__ field and MUST report an error.
+* If the value of the __MajorVersion__ field is equal to the latest supported major version, and the value of the __MinorVersion__ field is larger than the latest supported major version, the grammar file MUST NOT be used for parsing.
 
-A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
+> A different than expected __MajorVersion__ field indicates that the file cannot be read at all. A different than expected __MinorVersion__ field indicates that the file can be read, but might be incorrectly interpreted.
 
 ### Stream Definition
 
@@ -208,8 +219,8 @@ The following bit values are defined for the __Flags__ column:
 |Bit|Name|Description|
 |---|----|-----------|
 |0|`EndsOnEndOfInput`|The group can also end when the end of the input is reached, without encountering the token symbol specified in the __End__ column.|
-|1|`AdvanceByCharacter`|When inside this group, the parser should read the input without invoking the regular tokenizer.|
-|2|`KeepEndToken`|When the group ends, the parser should keep the token that ended the group in the input stream.|
+|1|`AdvanceByCharacter`|When inside this group, the parser must read the input without invoking the regular tokenizer.|
+|2|`KeepEndToken`|When the group ends, the parser must keep the token that ended the group in the input stream.|
 
 The following rules apply to the _Group_ table:
 
@@ -315,7 +326,7 @@ The following rules apply to the _Production_ table:
 * The value of the __FirstMember__ column of the first production MUST be equal to one.
 * If a production and all productions after it does not have any members, its __FirstMember__ column MUST be equal to the number of rows in the _ProductionMember_ table plus one.
 
-> Before accessing the members of a production, readers MUST ensure that it actually has members.
+> Before accessing the members of a production, readers MUST ensure that the production actually has members.
 
 ### _ProductionMember_ table
 
@@ -343,6 +354,10 @@ The following values are defined for the __Kind__ column:
 |3|LR(1) state machine.|
 |4|Generalized LR(1) (GLR(1)) state machine.|
 |5|Deterministic Finite Automaton (DFA) group start states on 16-bit character ranges.|
+|6|Deterministic Finite Automaton (DFA) on 8-bit character ranges.|
+|7|Deterministic Finite Automaton (DFA) on 8-bit character ranges with conflicts.|
+|8|Deterministic Finite Automaton (DFA) default transitions on 8-bit character ranges.|
+|9|Deterministic Finite Automaton (DFA) group start states on 8-bit character ranges.|
 |_anything else_|Reserved for future use by the Farkle project.|
 
 > Instead of GLR(1) we could have called it "LR(1) state machine with conflicts" for symmetry, but this kind of state machine has an established name. Currently there are no plans to support GLR parsing in the Farkle project.
@@ -350,8 +365,9 @@ The following values are defined for the __Kind__ column:
 The following rules apply to the _StateMachine_ table:
 
 * The __Kind__ column MUST NOT contain duplicate values.
-* If both state machines of __Kind__ 0 and 1, or 3 and 4 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
-* If a state machine of __Kind__ 2 exists, a state machine of __Kind__ 0 or 1 MUST also exist.
+* If both state machines of __Kind__ 0 and 1, 3 and 4, or 6 and 7 exist, they MUST describe the same state machine, with their only difference being in the preferred values in case of conflicts.
+* If state machines of __Kind__ 2 or 5 exist, a state machine of __Kind__ 0 or 1 MUST also exist.
+* If state machines of __Kind__ 8 or 9 exist, a state machine of __Kind__ 6 or 7 MUST also exist.
 
 State machines with no states MUST be treated as if they do not exist.
 
@@ -369,7 +385,7 @@ The following rules apply to the _SpecialName_ table:
 * The __Symbol__ column MUST NOT contain duplicate values.
 * The __Name__ column MUST NOT contain duplicate values.
 
-> The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since in Farkle symbols can be renamed and many can have the same name within a grammar, the special name provides a stable way to identify them (it sticks to the symbol's original name and duplicate names would cause build failures).
+> The use case for this table is to help custom code that integrates with parsers such as tokenizers. Since many symbols can have the same name within a grammar, the special name provides a guaranteed unique way to identify them.
 
 ## State machines
 
@@ -511,6 +527,19 @@ Readers SHOULD expose an API that indicates whether a grammar file contains data
 * A __MinorVersion__ field that is greater than the latest __MinorVersion__ field the reader knows.
 * A state machine whose __Kind__ is not known to the reader.
 * A table whose kind is not specified in this specification.
+
+### Summary of extensibility mechanisms
+
+The following table summarizes the extensibility mechanisms provided by the format, and whether third parties can use them:
+
+|I want to|How to achieve it|Available to third parties|
+|-|-|-|
+|Extend the format with data that does not affect parsing behavior and can be safely ignored|Add a custom stream|Yes|
+|Extend the format with data that might affect parsing behavior|Add a custom state machine|Yes|
+|Extend the format with data that might affect parsing behavior|Add a custom table|No|
+|Instruct parsers to refuse parsing if they do not understand your format extensions|Set the `Critical` flag in the _Grammar_ table|Yes|
+|Instruct parsers to refuse parsing if they do not understand your format extensions, while keeping the `Critical` flag available for third parties to use|Increase the __MinorVersion__ field in the file header|No|
+|Substantially change the format in a way incompatible for both readers and parsers|Increase the __MajorVersion__ field in the file header|No|
 
 [ecma]: https://www.ecma-international.org/publications-and-standards/standards/ecma-335/
 [rfc2119]: https://www.rfc-editor.org/rfc/rfc2119

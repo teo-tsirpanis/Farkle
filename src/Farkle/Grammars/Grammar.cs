@@ -24,6 +24,16 @@ public abstract partial class Grammar : IGrammarProvider
     internal readonly GrammarTables GrammarTables;
 
     /// <summary>
+    /// The grammar file's format major version.
+    /// </summary>
+    public ushort FormatVersionMajor { get; }
+
+    /// <summary>
+    /// The grammar file's format minor version.
+    /// </summary>
+    public ushort FormatVersionMinor { get; }
+
+    /// <summary>
     /// A read-only buffer to the <see cref="Grammar"/>'s binary data.
     /// </summary>
     public ReadOnlySpan<byte> Data => GrammarFile;
@@ -112,6 +122,8 @@ public abstract partial class Grammar : IGrammarProvider
     {
         GrammarHeader header = GrammarHeader.Read(grammarFile);
         ValidateHeader(header);
+        FormatVersionMajor = header.VersionMajor;
+        FormatVersionMinor = header.VersionMinor;
 
         GrammarStreams streams = new(grammarFile, header.StreamCount);
 
@@ -431,6 +443,11 @@ public abstract partial class Grammar : IGrammarProvider
         if ((flags & GrammarAttributes.Unparsable) != 0)
         {
             errorResourceKey = nameof(Resources.Parser_UnparsableGrammar);
+            return true;
+        }
+        if (FormatVersionMajor == GrammarConstants.VersionMajor && FormatVersionMinor > GrammarConstants.VersionMinor)
+        {
+            errorResourceKey = nameof(Resources.Parser_UnparsableGrammar_TooNewFormat);
             return true;
         }
         if (HasUnknownData && (flags & GrammarAttributes.Critical) != 0)

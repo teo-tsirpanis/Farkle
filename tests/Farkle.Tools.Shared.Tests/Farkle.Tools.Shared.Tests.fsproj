@@ -7,7 +7,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/Farkle/Farkle.fs"/>
+    <Compile Include="../../src/Farkle/Farkle.fs" />
     <!-- The test source files do not depend on each other, so why not? -->
     <Compile Include="./*Tests.fs" />
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
@@ -19,6 +19,8 @@
     <PackageReference Include="Expecto.FsCheck" />
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" />
   </ItemGroup>
 </Project>

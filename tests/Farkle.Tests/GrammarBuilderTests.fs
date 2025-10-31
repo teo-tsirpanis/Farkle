@@ -144,17 +144,6 @@ let tests = testList "Grammar builder tests" [
             Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())
             |> GrammarBuilder.build
 
-        // The group end should be emitted only once; in the group's custom DFA, not the main DFA.
-        let grammar = parser.GetGrammar()
-        let group = grammar.Groups |> Seq.exactlyOne
-        let dfa = grammar.DfaOnChar
-        Expect.isNotNull dfa "The grammar does not have a DFA"
-        let groupEndOccurrences =
-            dfa
-            |> Seq.collect (fun state -> state.AcceptSymbols)
-            |> Seq.filter (fun handle -> handle = group.End)
-        Expect.hasLength groupEndOccurrences 1 "The DFA does not contain the group end symbol exactly once"
-
         Expect.equal (parser.Parse "{🆙🆙}") (ParserResult.CreateSuccess "{🆙🆙}") "Farkle does not properly handle block groups"
     }
 

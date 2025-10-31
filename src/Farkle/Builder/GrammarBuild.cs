@@ -73,9 +73,8 @@ internal static class GrammarBuild
     /// this function will return <see langword="null"/>.
     /// </summary>
     private static Regex? GetGroupRegex(string start, Regex endRegexWithAccept, bool isRecursive,
-        GroupAttributes groupAttributes, out bool addEndRegexToMainDfa)
+        GroupAttributes groupAttributes)
     {
-        addEndRegexToMainDfa = true;
         if ((groupAttributes & GroupAttributes.AdvanceByCharacter) == 0)
         {
             // Token groups cannot use a custom DFA starting state by definition.
@@ -108,7 +107,6 @@ internal static class GrammarBuild
         if (!keepEndToken)
         {
             result += endRegexWithAccept;
-            addEndRegexToMainDfa = false;
         }
         return result;
     }
@@ -371,14 +369,15 @@ internal static class GrammarBuild
             if (regexBuilder is not null)
             {
                 Regex endRegexWithAccept = Regex.Accept(endRegex, endHandle, lowestPriority: false);
-                bool addEndRegexToMainDfa = true;
-                groupDfaRegexes?.Add(GetGroupRegex(start, endRegexWithAccept, isRecursive, flags, out addEndRegexToMainDfa));
-                if (addEndRegexToMainDfa)
-                {
-                    // The regex might be added multiple times, but it's OK since all accept
-                    // the same symbol, and won't cause any conflicts.
-                    regexBuilder.Add(endRegexWithAccept);
-                }
+                groupDfaRegexes?.Add(GetGroupRegex(start, endRegexWithAccept, isRecursive, flags));
+                // We must always add the group end to the main DFA, because it might be removed
+                // by the high-priority inverted characters regex when building the group's DFA,
+                // if a nested group starts with the same character as the group's end.
+                // There is no way to reliably detect this at this moment, besides relying on
+                // groups starting with literals, which is not an option.
+                // The regex might be added multiple times, but it's OK since all accept
+                // the same symbol, and won't cause any conflicts.
+                regexBuilder.Add(endRegexWithAccept);
             }
         }
 

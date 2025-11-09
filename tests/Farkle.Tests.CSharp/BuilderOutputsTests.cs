@@ -3,11 +3,11 @@
 
 using Farkle.Builder;
 
-using static Farkle.Builder.BuilderArtifacts;
+using static Farkle.Builder.BuilderOutputs;
 
 namespace Farkle.Tests.CSharp;
 
-internal class BuilderArtifactsTests
+internal class BuilderOutputsTests
 {
     [TestCase(None, None)]
     [TestCase(GrammarSummary, GrammarSummary)]
@@ -15,14 +15,14 @@ internal class BuilderArtifactsTests
     [TestCase(GrammarDfaOnChar, GrammarSummary)]
     [TestCase(TokenizerOnChar, GrammarDfaOnChar | GrammarSummary)]
     [TestCase(SemanticProviderOnChar, None)]
-    [TestCase(BuilderArtifacts.CharParser, SemanticProviderOnChar | TokenizerOnChar | GrammarDfaOnChar | GrammarLrStateMachine | GrammarSummary)]
-    public void TestBuildArtifacts(BuilderArtifacts requestedArtifacts, BuilderArtifacts builtArtifacts)
+    [TestCase(BuilderOutputs.CharParser, SemanticProviderOnChar | TokenizerOnChar | GrammarDfaOnChar | GrammarLrStateMachine | GrammarSummary)]
+    public void TestBuildOutputs(BuilderOutputs requestedOutputs, BuilderOutputs builtOutputs)
     {
-        var result = Terminals.Int32("Number").Build(requestedArtifacts);
+        var result = Terminals.Int32("Number").Build(requestedOutputs);
 
-        // It is obvious that the requested artifacts will get built;
+        // It is obvious that the requested outputs will get built;
         // this way we don't have to specify them twice in the test cases.
-        builtArtifacts |= requestedArtifacts;
+        builtOutputs |= requestedOutputs;
 
         using (Assert.EnterMultipleScope())
         {
@@ -31,13 +31,13 @@ internal class BuilderArtifactsTests
             AssertNullIf(result?.Grammar?.DfaOnChar, GrammarDfaOnChar);
             AssertNullIf(result?.TokenizerOnChar, TokenizerOnChar);
             AssertNullIf(result?.SemanticProviderOnChar, SemanticProviderOnChar);
-            AssertNullIf(result?.CharParser, BuilderArtifacts.CharParser);
+            AssertNullIf(result?.CharParser, BuilderOutputs.CharParser);
         }
 
-        void AssertNullIf(object? obj, BuilderArtifacts artifact)
+        void AssertNullIf(object? obj, BuilderOutputs output)
         {
-            bool hasArtifact = (builtArtifacts & artifact) != 0;
-            Assert.That(obj, hasArtifact ? Is.Not.Null : Is.Null);
+            bool hasOutput = (builtOutputs & output) != 0;
+            Assert.That(obj, hasOutput ? Is.Not.Null : Is.Null);
         }
     }
 }

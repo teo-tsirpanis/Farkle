@@ -8,11 +8,11 @@ using Farkle.Parser.Tokenizers;
 namespace Farkle.Builder;
 
 /// <summary>
-/// Represents the possible artifacts that the builder can produce.
+/// Represents the possible outputs that the builder can produce.
 /// </summary>
 /// <seealso cref="BuilderResult{T}"/>
 [Flags]
-public enum BuilderArtifacts {
+public enum BuilderOutputs {
     /// <summary>
     /// Nothing gets built.
     /// </summary>

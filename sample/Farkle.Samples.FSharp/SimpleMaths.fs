@@ -88,7 +88,6 @@ let mathExpression =
             (mkExpr Multiply)
             (mkExpr Divide)
             (Negate >> MathExpression.Create)
-        |> _.Build(BuilderArtifacts.SemanticProviderOnChar)
-        |> _.SemanticProviderOnChar
+        |> _.BuildSemanticProvider()
     int
     |> CharParser.withSemanticProvider semanticProvider

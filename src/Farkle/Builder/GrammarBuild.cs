@@ -115,17 +115,17 @@ internal static class GrammarBuild
     /// Builds a <see cref="Grammar"/> object from a <see cref="GrammarDefinition"/>.
     /// </summary>
     /// <param name="grammarDefinition">The grammar definition.</param>
-    /// <param name="artifacts">The artifacts to build. Only <see cref="BuilderArtifacts.GrammarLrStateMachine"/>
-    /// and <see cref="BuilderArtifacts.GrammarDfaOnChar"/> are considered.</param>
+    /// <param name="outputs">The outputs to build. Only <see cref="BuilderOutputs.GrammarLrStateMachine"/>
+    /// and <see cref="BuilderOutputs.GrammarDfaOnChar"/> are considered.</param>
     /// <param name="options">Options to control the building process.</param>
     /// <param name="errors">An optional collection to store diagnostics of
     /// severity <see cref="DiagnosticSeverity.Error"/>.</param>
-    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderArtifacts artifacts, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
+    public static Grammar Build(GrammarDefinition grammarDefinition, BuilderOutputs outputs, BuilderOptions options, ICollection<BuilderDiagnostic>? errors = null)
     {
         var log = options.Log.WithRedirectErrors(errors);
         string grammarName = grammarDefinition.GrammarName;
         log.InformationLocalized(nameof(Resources.Builder_BuildingStarted), grammarName);
-        Grammar grammar = Build(grammarDefinition, artifacts, options, in log);
+        Grammar grammar = Build(grammarDefinition, outputs, options, in log);
         // Get conflicts and log them. Skip the computation if no errors are logged
         // (i.e. the log has no listeners at all).
         if (log.IsEnabled(DiagnosticSeverity.Error))
@@ -140,7 +140,7 @@ internal static class GrammarBuild
         return grammar;
     }
 
-    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderArtifacts artifacts, BuilderOptions options, in BuilderLogger log)
+    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderOutputs outputs, BuilderOptions options, in BuilderLogger log)
     {
         ref readonly GrammarGlobalOptions globalOptions = ref grammarDefinition.GlobalOptions;
         bool autoWhitespace = globalOptions.AutoWhitespace;
@@ -166,7 +166,7 @@ internal static class GrammarBuild
         // Add terminals.
         SymbolNameProvider? dfaSymbols = null;
         ImmutableArray<Regex>.Builder? regexBuilder = null;
-        if ((artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0)
+        if ((outputs & BuilderOutputs.GrammarDfaOnChar) != 0)
         {
             dfaSymbols = new(grammarDefinition.Terminals.Count);
             regexBuilder = ImmutableArray.CreateBuilder<Regex>(grammarDefinition.Terminals.Count);
@@ -211,7 +211,7 @@ internal static class GrammarBuild
         // Add groups.
         int groupCount = groups?.Count ?? 0 + grammarDefinition.GlobalOptions.Comments?.Count ?? 0;
         List<Regex?>? groupDfaRegexes = null;
-        if (options.EmitGroupOptimizedDfa && (artifacts & BuilderArtifacts.GrammarDfaOnChar) != 0 && groupCount > 0)
+        if (options.EmitGroupOptimizedDfa && (outputs & BuilderOutputs.GrammarDfaOnChar) != 0 && groupCount > 0)
         {
             groupDfaRegexes = new List<Regex?>(groupCount);
         }
@@ -325,7 +325,7 @@ internal static class GrammarBuild
             }
         }
 
-        if ((artifacts & BuilderArtifacts.GrammarLrStateMachine) != 0)
+        if ((outputs & BuilderOutputs.GrammarLrStateMachine) != 0)
         {
             var conflictResolver = operatorScope is not null
                 ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)

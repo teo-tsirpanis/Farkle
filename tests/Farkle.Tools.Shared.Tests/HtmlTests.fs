@@ -47,7 +47,7 @@ let tests = testList "HTML tests" [
     test "A grammar with no state machines can be rendered" {
         let grammar =
             literal "hello"
-            |> _.BuildSyntaxCheck(BuilderArtifacts.GrammarSummary)
+            |> _.BuildSyntaxCheck(BuilderOutputs.GrammarSummary)
             |> _.Grammar
             |> nonNull
         let rendered = renderHtml grammar

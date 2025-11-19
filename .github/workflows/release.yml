@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          dotnet-quality: preview
       - name: Restore .NET local tools
         run: dotnet tool restore
       - name: Pack
@@ -43,7 +42,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-          dotnet-quality: preview
       - name: Obtain NuGet API token
         uses: nuget/login@v1
         id: nuget-login

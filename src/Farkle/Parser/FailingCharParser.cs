@@ -10,12 +10,12 @@ namespace Farkle.Parser;
 internal sealed class FailingCharParser<T> : CharParser<T>
 {
     private readonly object _error;
-    private readonly Grammar _grammar;
+    private readonly IGrammarProvider _grammar;
 
-    public FailingCharParser(object error, Grammar grammar)
+    public FailingCharParser(object error, IGrammarProvider? grammar)
     {
         _error = error;
-        _grammar = grammar;
+        _grammar = grammar ?? new FailingGrammarProvider(error);
         IsFailing = true;
     }
 
@@ -35,4 +35,12 @@ internal sealed class FailingCharParser<T> : CharParser<T>
     private protected override CharParser<T> WithTokenizerCore(Tokenizer<char> tokenizer) => this;
 
     private protected override CharParser<T> WithTokenizerChainCore(ReadOnlySpan<ChainedTokenizerComponent<char>> components) => this;
+
+    private sealed class FailingGrammarProvider(object error) : IGrammarProvider
+    {
+        public Grammar GetGrammar() => throw new InvalidOperationException(error.ToString());
+
+        public EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false) =>
+            throw new InvalidOperationException(error.ToString());
+    }
 }

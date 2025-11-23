@@ -87,6 +87,9 @@
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
     <value>The grammar cannot be used for parsing because its DFA has a problem</value>
   </data>
+  <data name="Parser_MustPrecompile" xml:space="preserve">
+    <value>The grammar must be precompiled. Make sure the precompiler has ran successfully, and see https://farkle.dev/the-precompiler for further information.</value>
+  </data>
   <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
     <value>Character range is in reverse order.</value>
   </data>

@@ -299,6 +299,24 @@ public static class CharParser
     }
 
     /// <summary>
+    /// Creates a placeholder <see cref="CharParser{T}"/> that always fails with a message
+    /// suggesting that the percompiler has not ran.
+    /// </summary>
+    /// <typeparam name="T">The parser's return type.</typeparam>
+    /// <remarks>
+    /// <para>
+    /// This method is intended to be called in methods that have the <see cref="Builder.PrecompilerOutputAttribute"/>
+    /// applied, as an alternative to throwing an exception. This preserves the parser API's design principle of
+    /// deferring error reporting on build failures.
+    /// </para>
+    /// <para>
+    /// Trying to get the returned parser's <see cref="Grammar"/> will throw an exception.
+    /// </para>
+    /// </remarks>
+    public static CharParser<T> MustPrecompile<T>() =>
+        new FailingCharParser<T>(LocalizedDiagnostic.Create(nameof(Resources.Parser_MustPrecompile)), null);
+
+    /// <summary>
     /// Creates a <see cref="CharParser{T}"/> that does not perform any semantic analysis.
     /// </summary>
     /// <typeparam name="T">The type of objects the syntax checker will return in case of success.

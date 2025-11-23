@@ -87,6 +87,9 @@
   <data name="Parser_GrammarDfaProblem" xml:space="preserve">
     <value>Η γραμματική δεν μπορεί να χρησιμοποιηθεί για λεκτική ανάλυση επειδή το αυτόματο DFA έχει κάποιο πρόβλημα</value>
   </data>
+  <data name="Parser_MustPrecompile" xml:space="preserve">
+    <value>Η γραμματική πρέπει να προμεταγλωττιστεί. Βεβαιώσου ότι ο προμεταγλωττιστής έχει εκτελεστεί με επιτυχία, και δες το https://farkle.dev/the-precompiler για περισσότερες πληροφορίες.</value>
+  </data>
   <data name="Builder_RegexCharacterRangeReverseOrder" xml:space="preserve">
     <value>Το εύρος χαρακτήρων είναι σε αντεστραμμένη σειρά.</value>
   </data>

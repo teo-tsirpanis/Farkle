@@ -119,6 +119,11 @@ module internal CharParser =
     /// and returns unit if successful.
     let inline createSyntaxCheck grammar = CharParser.CreateSyntaxChecker<unit> grammar
 
+    /// Creates a placeholder CharParser that always fails with a message
+    /// suggesting that the precompiler has not ran.
+    [<RequiresExplicitTypeArguments>]
+    let inline mustPrecompile<'T> = CharParser.MustPrecompile<'T>()
+
     /// Converts a CharParser to one that performs no semantic actions
     /// and returns unit if successful.
     let inline syntaxCheck (parser: CharParser<'T>) = parser.ToSyntaxChecker<unit>()

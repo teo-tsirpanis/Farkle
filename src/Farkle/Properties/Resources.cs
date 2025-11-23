@@ -225,6 +225,8 @@ internal static class Resources
 
     public static string Parser_GrammarDfaProblem => GetResourceString(nameof(Parser_GrammarDfaProblem));
 
+    public static string Parser_MustPrecompile => GetResourceString(nameof(Parser_MustPrecompile));
+
     public static string Builder_RegexCharacterRangeReverseOrder => GetResourceString(nameof(Builder_RegexCharacterRangeReverseOrder));
 
     public static string Builder_RegexLoopRangeReverseOrder => GetResourceString(nameof(Builder_RegexLoopRangeReverseOrder));

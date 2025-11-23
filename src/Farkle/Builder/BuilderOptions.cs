@@ -20,7 +20,7 @@ public sealed class BuilderOptions
     public CancellationToken CancellationToken { get; set; }
 
     /// <summary>
-    /// The maximum number of states that the tokenizer can have.
+    /// The maximum number of states that the grammar's tokenizer can have.
     /// </summary>
     /// <remarks>
     /// This value can be used to prevent exponential blowup of the tokenizer
@@ -72,5 +72,11 @@ public sealed class BuilderOptions
         }
 
         return Math.Max(256, (int)limit);
+    }
+
+    internal void UpdateFrom(PrecompilerInputAttribute attr)
+    {
+        MaxTokenizerStates = attr.MaxTokenizerStates;
+        EmitGroupOptimizedDfa = attr.EmitGroupOptimizedDfa;
     }
 }

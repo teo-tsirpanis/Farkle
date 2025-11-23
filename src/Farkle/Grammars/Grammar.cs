@@ -484,4 +484,13 @@ public abstract partial class Grammar : IGrammarProvider
             }
         }
     }
+
+    internal unsafe sealed class PrecompiledGrammar(byte* data, int length, RuntimeTypeHandle keepAlive) : Grammar(new ReadOnlySpan<byte>(data, length))
+    {
+        // data points to an assembly's RVA field.
+        // Keep type alive to prevent unloading it.
+        private readonly RuntimeTypeHandle _keepAlive = keepAlive;
+
+        internal override ReadOnlySpan<byte> GrammarFile => new(data, length);
+    }
 }

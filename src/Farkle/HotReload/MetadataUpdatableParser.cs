@@ -141,6 +141,6 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
 
 internal static class MetadataUpdatableParser
 {
-    public static MetadataUpdatableParser<T, T> Create<T>(Type metadataUpdateKey, Func<CharParser<T>> parserFactory) =>
-        new(metadataUpdateKey, parserFactory, p => p, p => p, parserFactory());
+    public static MetadataUpdatableParser<T, T> Create<T>(Type metadataUpdateKey, Func<CharParser<T>> parserFactory, CharParser<T>? initialParser = null) =>
+        new(metadataUpdateKey, parserFactory, p => p, p => p, initialParser ?? parserFactory());
 }

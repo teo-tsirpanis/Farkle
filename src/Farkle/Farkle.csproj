@@ -13,6 +13,7 @@
     <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />
     <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/any" BuildAction="Compile" />
     <Content Include="Farkle.fsx" Pack="true" PackagePath="content" />
     <InternalsVisibleTo Include="Farkle.Benchmarks" />

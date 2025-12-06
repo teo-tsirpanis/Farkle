@@ -41,6 +41,12 @@ public abstract partial class Grammar : IGrammarProvider
     internal abstract ReadOnlySpan<byte> GrammarFile { get; }
 
     /// <summary>
+    /// Returns an <see cref="ImmutableArray{T}"/> with the grammar's binary data.
+    /// Depending on how the grammar was loaded, an existing array might be returned.
+    /// </summary>
+    internal virtual ImmutableArray<byte> ToImmutableArray() => GrammarFile.ToImmutableArray();
+
+    /// <summary>
     /// Whether the <see cref="Grammar"/> contains data that are not recognized by this version of Farkle.
     /// </summary>
     public bool HasUnknownData { get; }
@@ -483,6 +489,8 @@ public abstract partial class Grammar : IGrammarProvider
                 return _grammarFile.AsSpan();
             }
         }
+
+        internal override ImmutableArray<byte> ToImmutableArray() => _grammarFile;
     }
 
     internal unsafe sealed class PrecompiledGrammar(byte* data, int length, RuntimeTypeHandle keepAlive) : Grammar(new ReadOnlySpan<byte>(data, length))

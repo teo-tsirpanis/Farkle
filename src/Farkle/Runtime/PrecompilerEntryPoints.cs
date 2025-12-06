@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 using System.ComponentModel;
+using ComSharp;
 using Farkle.Builder;
 using Farkle.Grammars;
+using Farkle.Builder.Precompiler;
+using System.Diagnostics.CodeAnalysis;
+
 
 #if NET6_0_OR_GREATER
 using System.Reflection;
@@ -159,4 +163,23 @@ public static class PrecompilerEntryPoints
 
         return result;
     }
+
+    /// <summary>
+    /// Returns a COM# object that implements the precompiler interface.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Most of the precompiler is implemented in the <c>Farkle</c> assembly, and part of it in
+    /// <c>Farkle.Tools.MSBuild</c> (known as the <i>precompiler host</i>). The precompiler interface is the
+    /// contract between the Farkle library and the precompiler host.
+    /// </para>
+    /// <para>
+    /// This method gets called by the precompiler host via reflection. The COM# interfaces implemented by the
+    /// returned object are an implementation detail that can change at any time, and should not be used by
+    /// third-party code. This method's return type might also change in the future.
+    /// </para>
+    /// </remarks>
+    [RequiresUnreferencedCode(PrecompilerImplementation.RequiresUnreferencedCodeMessage)]
+    internal static ComSharpObject GetPrecompilerInterface() =>
+        PrecompilerInterfaceWrappers.Instance.ConvertToComSharp(new PrecompilerImplementation());
 }

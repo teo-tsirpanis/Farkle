@@ -19,11 +19,11 @@ internal enum OutputType
 [Embedded]
 internal enum DiagnosticSeverity
 {
-    Verbose,
-    Debug,
-    Information,
-    Warning,
-    Error,
+    Verbose = Farkle.Diagnostics.DiagnosticSeverity.Verbose,
+    Debug = Farkle.Diagnostics.DiagnosticSeverity.Debug,
+    Information = Farkle.Diagnostics.DiagnosticSeverity.Information,
+    Warning = Farkle.Diagnostics.DiagnosticSeverity.Warning,
+    Error = Farkle.Diagnostics.DiagnosticSeverity.Error,
 }
 
 [Embedded]

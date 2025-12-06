@@ -163,7 +163,7 @@ internal class BlockGroup(string name, string groupStart, string groupEnd, Trans
 }
 
 /// <summary>
-/// Represents a production in a grammar to be built that produces a value.
+/// Represents a production in a grammar to be built.
 /// </summary>
 /// <remarks>
 /// This interface cannot be implemented by user code and is not directly accepted by any API.
@@ -193,7 +193,7 @@ internal sealed class LineGroup<T>(string name, string groupStart, Transformer<c
 internal sealed class BlockGroup<T>(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer, GroupOptions options) : BlockGroup(name, groupStart, groupEnd, transformer, options), IGrammarSymbol<T>;
 
 /// <summary>
-/// Represents a production in a grammar to be built that produces a value.
+/// Represents a production in a grammar to be built, that produces a value.
 /// </summary>
 /// <typeparam name="T">The type of values the production will produce.</typeparam>
 /// <remarks>

@@ -46,7 +46,7 @@ internal readonly struct ImmutableBuffer<T> : IEnumerable<T>
     public static implicit operator ImmutableBuffer<T>(ImmutableArray<T> array) =>
         ImmutableBuffer.Create(array);
 
-    public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>?)(RawValue) ?? []).GetEnumerator();
+    public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>?)RawValue ?? []).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -55,7 +55,7 @@ internal readonly struct ImmutableBuffer<T> : IEnumerable<T>
     public int Length => Span.Length;
 }
 
-internal static partial class ImmutableBuffer
+internal static class ImmutableBuffer
 {
     public static ImmutableBuffer<T> Create<T>(ImmutableArray<T> array) => new(ImmutableCollectionsMarshal.AsArray(array));
 

@@ -29,11 +29,11 @@ internal static class GrammarBuild
     {
         return symbol switch
         {
-            Terminal { Options: var options } =>
+            TerminalBase { Options: var options } =>
                 MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy),
             VirtualTerminal { Options: var options } =>
                 MapFlags((uint)options, (uint)TerminalOptions.Hidden, (uint)TerminalOptions.Noisy),
-            Group { Options: var options } =>
+            GroupBase { Options: var options } =>
                 MapFlags((uint)options, (uint)GroupOptions.Hidden, (uint)GroupOptions.Noisy),
             _ => TokenSymbolAttributes.Terminal,
         };
@@ -173,7 +173,7 @@ internal static class GrammarBuild
         }
         // We must add the groups' start and end symbols after the terminals.
         // Keep the groups in this list to process them later.
-        List<Group>? groups = null;
+        List<GroupBase>? groups = null;
         // NewLine might appear as either a terminal, or the end of a line group.
         // Keep it here if it is encountered to reuse the symbol in the grammar.
         TokenSymbolHandle newLineHandle = default;
@@ -200,7 +200,7 @@ internal static class GrammarBuild
             {
                 newLineHandle = handle;
             }
-            if (terminal is Group group)
+            if (terminal is GroupBase group)
             {
                 groups ??= [];
                 groups.Add(group);
@@ -217,7 +217,7 @@ internal static class GrammarBuild
         }
         if (groups is not null)
         {
-            foreach (Group group in groups)
+            foreach (GroupBase group in groups)
             {
                 string? groupEndOrNewLine = group switch
                 {
@@ -407,7 +407,7 @@ internal static class GrammarBuild
         {
             return symbol switch
             {
-                Terminal terminal => terminal.Regex,
+                TerminalBase terminal => terminal.Regex,
                 Literal literal => GetRegexForLiteral(literal.Value),
                 NewLine => NewLineRegex,
                 _ => null

@@ -9,7 +9,7 @@ namespace Farkle.Builder;
 /// <summary>
 /// Provides factory methods to define terminals.
 /// </summary>
-public partial class Terminal
+public static class Terminal
 {
     private static void ValidateOptions(TerminalOptions options)
     {
@@ -42,7 +42,7 @@ public partial class Terminal
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(regex);
         ValidateOptions(options);
-        return new Terminal(name, regex, Builder.Transformer.GetIdentity<char, object>(), options);
+        return new TerminalBase(name, regex, Transformer.GetIdentity<char, object>(), options);
     }
 
     /// <inheritdoc cref="Create{T}(string, Regex, Transformer{char, T}, TerminalOptions)"/>
@@ -53,7 +53,7 @@ public partial class Terminal
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(transformer);
         ArgumentNullException.ThrowIfNull(regex);
-        return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), TerminalOptions.None);
+        return new Terminal<T>(name, regex, Transformer.Box(transformer), TerminalOptions.None);
     }
 
     /// <summary>
@@ -71,7 +71,7 @@ public partial class Terminal
         ArgumentNullException.ThrowIfNull(regex);
         ArgumentNullException.ThrowIfNull(transformer);
         ValidateOptions(options);
-        return new Terminal<T>(name, regex, Builder.Transformer.Box(transformer), options);
+        return new Terminal<T>(name, regex, Transformer.Box(transformer), options);
     }
 
     /// <summary>

@@ -98,27 +98,16 @@ public interface IGrammarSymbol<out T> : IGrammarBuilder<T>, IGrammarSymbol;
 /// </summary>
 internal interface ISymbolBase : IGrammarSymbol;
 
-// Terminal also contains public factory methods so it is public and partial.
-// No public API must return objects of type Terminal, only IGrammarSymbol(<T>).
-public partial class Terminal : ISymbolBase
+// We can't call it `Terminal`, because it collides with the public static class.
+internal class TerminalBase(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : ISymbolBase
 {
-    internal string Name { get; }
+    public string Name { get; } = name;
 
-    internal Regex Regex { get; }
+    public Regex Regex { get; } = regex;
 
-    internal Transformer<char, object?> Transformer { get; }
+    public Transformer<char, object?> Transformer { get; } = transformer;
 
-    internal TerminalOptions Options { get; }
-
-    internal Terminal(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options)
-    {
-        Name = name;
-        Regex = regex;
-        Transformer = transformer;
-        Options = options;
-    }
-
-    string IGrammarSymbol.Name => Name;
+    public TerminalOptions Options { get; } = options;
 
     ISymbolBase IGrammarBuilder.Symbol => this;
 }
@@ -152,34 +141,23 @@ internal sealed class NewLine : ISymbolBase
     private NewLine() { }
 }
 
-// Group is a similar case to Terminal, so it is public and partial.
-// No public API must return objects of type Group, only IGrammarSymbol(<T>).
-public abstract partial class Group : ISymbolBase
+// We can't call it `Group`, because it collides with the public static class.
+internal abstract class GroupBase(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : ISymbolBase
 {
-    internal string Name { get; }
+    public string Name { get; } = name;
 
-    internal string GroupStart { get; }
+    public string GroupStart { get; } = groupStart;
 
-    internal Transformer<char, object?> Transformer { get; }
+    public Transformer<char, object?> Transformer { get; } = transformer;
 
-    internal GroupOptions Options { get; }
-
-    private protected Group(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options)
-    {
-        Name = name;
-        GroupStart = groupStart;
-        Transformer = transformer;
-        Options = options;
-    }
-
-    string IGrammarSymbol.Name => Name;
+    public GroupOptions Options { get; } = options;
 
     ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
-internal class LineGroup(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : Group(name, groupStart, transformer, options);
+internal class LineGroup(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : GroupBase(name, groupStart, transformer, options);
 
-internal class BlockGroup(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer, GroupOptions options) : Group(name, groupStart, transformer, options)
+internal class BlockGroup(string name, string groupStart, string groupEnd, Transformer<char, object?> transformer, GroupOptions options) : GroupBase(name, groupStart, transformer, options)
 {
     public string GroupEnd { get; } = groupEnd;
 }
@@ -208,7 +186,7 @@ internal interface INonterminal : ISymbolBase
     ImmutableArray<IProduction> FreezeAndGetProductions();
 }
 
-internal sealed class Terminal<T>(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : Terminal(name, regex, transformer, options), IGrammarSymbol<T>;
+internal sealed class Terminal<T>(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : TerminalBase(name, regex, transformer, options), IGrammarSymbol<T>;
 
 internal sealed class LineGroup<T>(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : LineGroup(name, groupStart, transformer, options), IGrammarSymbol<T>;
 

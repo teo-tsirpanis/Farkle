@@ -20,8 +20,8 @@ internal static class SemanticProviderBuild
         foreach (var terminal in terminals)
         {
             Transformer<char, object?> transformer = terminal switch {
-                Terminal x => x.Transformer,
-                Group x => x.Transformer,
+                TerminalBase x => x.Transformer,
+                GroupBase x => x.Transformer,
                 _ => Transformer.GetIdentity<char, object?>()
             };
             builder.Add(transformer);

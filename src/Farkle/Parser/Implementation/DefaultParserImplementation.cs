@@ -27,19 +27,17 @@ internal readonly struct DefaultParserImplementation<TChar>
     private ITokenSemanticProvider<TChar> TokenSemanticProvider => Utilities.UnsafeCast<ITokenSemanticProvider<TChar>>(_semanticProvider);
     private IProductionSemanticProvider ProductionSemanticProvider => Utilities.UnsafeCast<IProductionSemanticProvider>(_semanticProvider);
 
-    private DefaultParserImplementation(Grammar grammar, LrStateMachine lrStateMachine, object semanticProvider, Tokenizer<TChar> tokenizer)
+    private DefaultParserImplementation(Grammar grammar, LrWithoutConflicts lrStateMachine, object semanticProvider, Tokenizer<TChar> tokenizer)
     {
-        Debug.Assert(!lrStateMachine.HasConflicts);
         Grammar = grammar;
-        _lrStateMachine = (LrWithoutConflicts)lrStateMachine;
+        _lrStateMachine = lrStateMachine;
         _lrStateMachine.PrepareForParsing();
         _semanticProvider = semanticProvider;
         Tokenizer = tokenizer;
     }
 
-    public static DefaultParserImplementation<TChar> Create<T>(Grammar grammar, LrStateMachine lrStateMachine, ISemanticProvider<TChar, T> semanticProvider, Tokenizer<TChar> tokenizer)
+    public static DefaultParserImplementation<TChar> Create<T>(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<TChar, T> semanticProvider, Tokenizer<TChar> tokenizer)
     {
-        Debug.Assert(!lrStateMachine.HasConflicts);
         return new(grammar, lrStateMachine, semanticProvider, tokenizer);
     }
 

@@ -7,6 +7,8 @@ using Farkle.Parser;
 using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
+using Farkle.Grammars.StateMachines;
+
 #if NET6_0_OR_GREATER
 using System.Reflection.Metadata;
 using Farkle.HotReload;
@@ -246,13 +248,16 @@ public static class CharParser
         {
             return Fail(errorKey);
         }
-        if (grammar.LrStateMachine is not { } lrStateMachine)
+        LrWithoutConflicts lrStateMachine;
+        switch (grammar.LrStateMachine)
         {
-            return Fail(nameof(Resources.Parser_GrammarLrMissing));
-        }
-        if (lrStateMachine.HasConflicts)
-        {
-            return Fail(nameof(Resources.Parser_GrammarLrProblem));
+            case null:
+                return Fail(nameof(Resources.Parser_GrammarLrMissing));
+            case LrWithoutConflicts x:
+                lrStateMachine = x;
+                break;
+            default:
+                return Fail(nameof(Resources.Parser_GrammarLrProblem));
         }
 
         return new DefaultParser<T>(grammar, lrStateMachine, semanticProvider, tokenizer);

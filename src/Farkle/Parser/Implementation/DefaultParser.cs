@@ -19,7 +19,7 @@ internal sealed class DefaultParser<T> : CharParser<T>
         IsFailing = implementation.Tokenizer.IsFailing;
     }
 
-    public DefaultParser(Grammar grammar, LrStateMachine lrStateMachine, ISemanticProvider<char, T> semanticProvider, Tokenizer<char> tokenizer)
+    public DefaultParser(Grammar grammar, LrWithoutConflicts lrStateMachine, ISemanticProvider<char, T> semanticProvider, Tokenizer<char> tokenizer)
         : this(DefaultParserImplementation<char>.Create(grammar, lrStateMachine, semanticProvider, ChainedTokenizer<char>.Create(tokenizer)))
     {
     }
@@ -46,5 +46,5 @@ internal sealed class DefaultParser<T> : CharParser<T>
         new DefaultParser<TNew>(_implementation.WithSemanticProvider(semanticProvider));
 
     private protected override CharParser<T> WithTokenizerCore(Tokenizer<char> tokenizer) =>
-       new DefaultParser<T>(_implementation.WithTokenizer(ChainedTokenizer<char>.Create(tokenizer)));
+        new DefaultParser<T>(_implementation.WithTokenizer(ChainedTokenizer<char>.Create(tokenizer)));
 }

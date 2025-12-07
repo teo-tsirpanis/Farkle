@@ -16,11 +16,11 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
     private readonly Grammar _grammar;
     private readonly DfaWithoutConflicts<TChar> _dfa;
 
-    public DefaultTokenizer(Grammar grammar, Dfa<TChar> dfa)
+    public DefaultTokenizer(Grammar grammar, DfaWithoutConflicts<TChar> dfa)
     {
-        Debug.Assert(!dfa.HasConflicts);
+        Debug.Assert(dfa[0].AcceptSymbols.Count == 0);
         _grammar = grammar;
-        _dfa = (DfaWithoutConflicts<TChar>)dfa;
+        _dfa = dfa;
         _dfa.PrepareForParsing();
         // If a grammar does not have any groups, we will suspend only to return
         // to the main tokenizer entry point. Without a wrapping, it would be called

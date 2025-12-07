@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Farkle.Diagnostics;
 using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 
@@ -156,13 +157,16 @@ public static class Tokenizer
         {
             return Fail(errorKey);
         }
-        if (grammar.GetDfa<TChar>() is not { } dfa)
+        DfaWithoutConflicts<TChar> dfa;
+        switch (grammar.GetDfa<TChar>())
         {
-            return Fail(nameof(Resources.Parser_GrammarDfaMissing));
-        }
-        if (dfa.HasConflicts || dfa[0].AcceptSymbols.Count > 0)
-        {
-            return Fail(nameof(Resources.Parser_GrammarDfaProblem));
+            case null:
+                return Fail(nameof(Resources.Parser_GrammarDfaMissing));
+            case DfaWithoutConflicts<TChar> x when x[0].AcceptSymbols.Count == 0:
+                dfa = x;
+                break;
+            default:
+                return Fail(nameof(Resources.Parser_GrammarDfaProblem));
         }
         return ChainedTokenizer<TChar>.Create(new DefaultTokenizer<TChar>(grammar, dfa));
 

@@ -76,7 +76,7 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
         {
             if (_inputMethod is not null)
             {
-                // TODO: Log error
+                log.DuplicatePrecompilerInputMethodKey(method.DeclaringType!, FormatKey(inputAttribute.Key));
                 // Even if we've found an eligible input method before, make the final validation immediately fail,
                 // and don't try to build the grammar.
                 _canCallInputMethod = false;
@@ -88,22 +88,22 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             // DeclaringType will always be non-null, because we got the method from a type.
             if (method.IsGenericMethod || method.DeclaringType!.IsGenericType)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodGeneric), method);
                 _canCallInputMethod = false;
             }
             if (!method.IsStatic)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodNotStatic), method);
                 _canCallInputMethod = false;
             }
             if (method.GetParameters().Length > 0)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodNotParameterless), method);
                 _canCallInputMethod = false;
             }
             if (!method.ReturnType.IsAssignableTo(typeof(IGrammarBuilder)))
             {
-                // TODO: Log error
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodInvalidInputReturnType), method);
                 _canCallInputMethod = false;
             }
             if (!_canCallInputMethod)
@@ -124,22 +124,22 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             // DeclaringType will always be non-null, because we got the method from a type.
             if (method.IsGenericMethod || method.DeclaringType!.IsGenericType)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodGeneric), method);
                 eligible = false;
             }
             if (!method.IsStatic)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodNotStatic), method);
                 eligible = false;
             }
             if (method.GetParameters().Length > 0)
             {
-                // TODO: Log error
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodNotParameterless), method);
                 eligible = false;
             }
             if (!IsEligibleOutputMethodReturnType(method.ReturnType))
             {
-                // TODO: Log error
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodInvalidOutputReturnType), method);
                 eligible = false;
             }
             if (!eligible)
@@ -156,7 +156,15 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             {
                 if (!IsCompatibleOutputMethodReturnType(x.Method.ReturnType, x.Attribute.SyntaxCheck, out OutputType outputType))
                 {
-                    // TODO: Log error
+                    var parserReturnType = x.Method.ReturnType.GetGenericArguments()[0];
+                    if (outputType == OutputType.CharParserSyntaxChecker)
+                    {
+                        log.SyntaxCheckerPrecompilerOutputMethodMustBeClass(parserReturnType);
+                    }
+                    else
+                    {
+                        log.InvalidPrecompilerOutputMethodParserReturnType(x.Method, parserReturnType, _grammarBuilderReturnType!);
+                    }
                     continue;
                 }
                 result.Add((x.Method.MetadataToken, outputType));
@@ -168,7 +176,10 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
         {
             if (_inputMethod is null)
             {
-                // TODO: Log error
+                foreach (var x in _outputMethods)
+                {
+                    log.PrecompilerOutputMethodKeyNotFound(x.Method, FormatKey(x.Attribute.Key));
+                }
                 return null;
             }
             if (!_canCallInputMethod)
@@ -180,21 +191,21 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             var builderOptions = new BuilderOptions { CancellationToken = ct, Log = log };
             builderOptions.UpdateFrom(_inputAttribute);
             IGrammarBuilder? builderObject;
+            Func<IGrammarBuilder?> fInputMethod = _inputMethod.CreateDelegate<Func<IGrammarBuilder?>>();
             try
             {
-                builderObject = (IGrammarBuilder?)_inputMethod.Invoke(null, null);
+                builderObject = fInputMethod();
+                if (builderObject is null)
+                {
+                    throw new NullReferenceException();
+                }
             }
-            catch (TargetInvocationException)
+            catch (Exception e)
             {
-                // TODO: Log error
+                log.PrecompilerInputMethodException(_inputMethod, e.InnerException);
                 return null;
             }
-            if (builderObject is null)
-            {
-                // TODO: Log error
-                return null;
-            }
-            // TODO: Log info "Precompiling {grammarName}..."
+            log.InformationLocalized(nameof(Resources.Precompiler_PrecompilingInfo), builderObject.GetGrammarName());
             var output = builderObject.BuildSyntaxCheck(BuilderOutputs.GrammarDfaOnChar | BuilderOutputs.GrammarLrStateMachine, builderOptions);
             return new PrecompiledGrammar
             {
@@ -215,26 +226,27 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
 
         private bool IsCompatibleOutputMethodReturnType(Type type, bool isForcedSyntaxCheck, out OutputType outputType)
         {
-            outputType = OutputType.Grammar;
             if (type == typeof(Grammar))
             {
+                outputType = OutputType.Grammar;
                 return true;
             }
-            if (type.HasSameMetadataDefinitionAs(typeof(CharParser<>)))
+            // At this point, IsEligibleOutputMethodReturnType has been previously called returned true.
+            Debug.Assert(type.HasSameMetadataDefinitionAs(typeof(CharParser<>)));
+            var parserReturnType = type.GetGenericArguments()[0];
+            if (isForcedSyntaxCheck || _grammarBuilderReturnType is null)
             {
-                var parserReturnType = type.GetGenericArguments()[0];
-                if (isForcedSyntaxCheck || _grammarBuilderReturnType is null)
-                {
-                    outputType = OutputType.CharParserSyntaxChecker;
-                    return !parserReturnType.IsValueType;
-                }
-                outputType = OutputType.CharParser;
-                // We could check for nullability here, but we don't have enough information on whether
-                // nullable warnings are enabled or not. Better have an analyzer do it.
-                return _grammarBuilderReturnType.IsAssignableTo(parserReturnType);
+                outputType = OutputType.CharParserSyntaxChecker;
+                return !parserReturnType.IsValueType;
             }
-            return false;
+            outputType = OutputType.CharParser;
+            // We could check for nullability here, but we don't have enough information on whether
+            // nullable warnings are enabled or not. Better have an analyzer do it.
+            return _grammarBuilderReturnType.IsAssignableTo(parserReturnType);
         }
+
+        private static string FormatKey(string? key) =>
+            key is null ? "<null>" : $"\"{key}\"";
     }
 
     private sealed class PrecompiledGrammar : IPrecompiledGrammar

@@ -8,6 +8,8 @@ namespace Farkle.Builder;
 /// <summary>
 /// Enables accessing the outputs of a precompiled grammar defined with
 /// <see cref="PrecompilerInputAttribute"/>.
+/// Methods with this attribute applied are called <em>precompiler output methods</em>,
+/// or just <em>output methods</em>.
 /// </summary>
 /// <remarks>
 /// <para>

@@ -67,6 +67,9 @@
             "_appTitle": "Farkle",
             "_enableSearch": true,
             "pdf": false
-        }
+        },
+        "xref": [
+            "https://learn.microsoft.com/en-us/dotnet/.xrefmap.json"
+        ]
     }
 }

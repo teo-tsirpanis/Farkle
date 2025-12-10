@@ -283,6 +283,28 @@ internal static class Resources
 
     public static string Builder_RegexTooComplex => GetResourceString(nameof(Builder_RegexTooComplex));
 
+    public static string Precompiler_MethodNotStatic => GetResourceString(nameof(Precompiler_MethodNotStatic));
+
+    public static string Precompiler_MethodGeneric => GetResourceString(nameof(Precompiler_MethodGeneric));
+
+    public static string Precompiler_MethodNotParameterless => GetResourceString(nameof(Precompiler_MethodNotParameterless));
+
+    public static string Precompiler_MethodInvalidInputReturnType => GetResourceString(nameof(Precompiler_MethodInvalidInputReturnType));
+
+    public static string Precompiler_MethodInvalidOutputReturnType => GetResourceString(nameof(Precompiler_MethodInvalidOutputReturnType));
+
+    public static string Precompiler_DuplicateInputMethodKey => GetResourceString(nameof(Precompiler_DuplicateInputMethodKey));
+
+    public static string Precompiler_MethodIncompatibleCharParserReturnType => GetResourceString(nameof(Precompiler_MethodIncompatibleCharParserReturnType));
+
+    public static string Precompiler_InputMethodException => GetResourceString(nameof(Precompiler_InputMethodException));
+
+    public static string Precompiler_PrecompilingInfo => GetResourceString(nameof(Precompiler_PrecompilingInfo));
+
+    public static string Precompiler_OutputMethodKeyNotFound => GetResourceString(nameof(Precompiler_OutputMethodKeyNotFound));
+
+    public static string Precompiler_MethodSyntaxCheckerNotClass => GetResourceString(nameof(Precompiler_MethodSyntaxCheckerNotClass));
+
     public static string Warning => GetResourceString(nameof(Warning));
 
     public static string Error => GetResourceString(nameof(Error));

@@ -1,6 +1,8 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Reflection;
+
 namespace Farkle.Diagnostics.Builder;
 
 internal static class BuilderLoggerExtensions
@@ -38,6 +40,27 @@ internal static class BuilderLoggerExtensions
     public static void RegexTooComplexError(in this BuilderLogger logger, in BuilderSymbolName symbolName) =>
         logger.Error("FARKLE0009", LocalizedDiagnostic.Create(nameof(Resources.Builder_RegexTooComplex), symbolName));
 
+    public static void InvalidPrecompilerInputAttributeUsage<TArg>(in this BuilderLogger logger, string resourceKey, TArg arg) =>
+        logger.Error("FARKLE0010", LocalizedDiagnostic.Create(resourceKey, arg));
+
+    public static void InvalidPrecompilerOutputAttributeUsage<TArg>(in this BuilderLogger logger, string resourceKey, TArg arg) =>
+        logger.Error("FARKLE0011", LocalizedDiagnostic.Create(resourceKey, arg));
+
+    public static void InvalidPrecompilerOutputMethodParserReturnType(in this BuilderLogger logger, MethodInfo outputMethod, Type parserType, Type builderType) =>
+        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodIncompatibleCharParserReturnType), outputMethod, parserType, builderType));
+
+    public static void SyntaxCheckerPrecompilerOutputMethodMustBeClass(in this BuilderLogger logger, Type parserType) =>
+        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodSyntaxCheckerNotClass), parserType));
+
+    public static void DuplicatePrecompilerInputMethodKey(in this BuilderLogger logger, Type containingType, string key) =>
+        logger.Error("FARKLE0013", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_DuplicateInputMethodKey), containingType, key));
+
+    public static void PrecompilerOutputMethodKeyNotFound(in this BuilderLogger logger, MethodInfo outputMethod, string key) =>
+        logger.Error("FARKLE0014", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_OutputMethodKeyNotFound), outputMethod, key));
+
+    public static void PrecompilerInputMethodException(in this BuilderLogger logger, MethodInfo inputMethod, Exception? exception) =>
+        logger.Error("FARKLE0015", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_InputMethodException), inputMethod, exception));
+
     public static void InformationLocalized(in this BuilderLogger logger, string resourceKey)
     {
         if (logger.IsEnabled(DiagnosticSeverity.Information))
@@ -70,7 +93,7 @@ internal static class BuilderLoggerExtensions
         }
     }
 
-    public static void InformationLocalized(in this BuilderLogger logger, string resourceKey, params object[] args)
+    public static void InformationLocalized(in this BuilderLogger logger, string resourceKey, params ReadOnlySpan<object> args)
     {
         if (logger.IsEnabled(DiagnosticSeverity.Information))
         {

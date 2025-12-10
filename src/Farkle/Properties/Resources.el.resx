@@ -174,6 +174,39 @@
   <data name="Builder_BuildingFinished" xml:space="preserve">
     <value>Επιτυχές χτίσιμο γραμματικής {0}: {1} τερματικά, {2} μη τερματικά, {3} παραγωγές, {4} καταστάσεις LR, {5} καταστάσεις DFA</value>
   </data>
+  <data name="Precompiler_MethodNotStatic" xml:space="preserve">
+    <value>Η μέθοδος {0} πρέπει να είναι στατική.</value>
+  </data>
+  <data name="Precompiler_MethodGeneric" xml:space="preserve">
+    <value>Η μέθοδος {0} δεν πρέπει να είναι γενική, ή να δηλωθεί σε έναν γενικό τύπο.</value>
+  </data>
+  <data name="Precompiler_MethodNotParameterless" xml:space="preserve">
+    <value>Η μέθοδος {0} δεν πρέπει να δέχεται καμία παράμετρο.</value>
+  </data>
+  <data name="Precompiler_MethodInvalidInputReturnType" xml:space="preserve">
+    <value>Η μέθοδος {0} πρέπει να επιστρέφει έναν τύπο συμβατό με τον IGrammarBuilder.</value>
+  </data>
+  <data name="Precompiler_MethodInvalidOutputReturnType" xml:space="preserve">
+    <value>Η μέθοδος {0} πρέπει να επιστρέφει τον τύπο Grammar ή CharParser&lt;T&gt;.</value>
+  </data>
+  <data name="Precompiler_DuplicateInputMethodKey" xml:space="preserve">
+    <value>Ο τύπος {0} δεν πρέπει να περιέχει πολλαπλές μεθόδους εισόδου προμεταγλωττιστή με κλειδί {1}.</value>
+  </data>
+  <data name="Precompiler_InputMethodException" xml:space="preserve">
+    <value>Εξαίρεση κατά την κλήση της μεθόδου {0}:{1}</value>
+  </data>
+  <data name="Precompiler_PrecompilingInfo" xml:space="preserve">
+    <value>Προμεταγλωττίζεται η γραμματική {0}...</value>
+  </data>
+  <data name="Precompiler_OutputMethodKeyNotFound" xml:space="preserve">
+    <value>Η μέθοδος εξόδου προμεταγλωττιστή {0} έχει κλειδί '{1}', αλλά δεν βρέθηκε αντίστοιχη μέθοδος εισόδου.</value>
+  </data>
+  <data name="Precompiler_MethodIncompatibleCharParserReturnType" xml:space="preserve">
+    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}) δεν είναι συμβατός με τον τύπο {2} (που επιστρέφεται από τον IGrammarBuilder&lt;T&gt; της μεθόδου εισόδου).</value>
+  </data>
+  <data name="Precompiler_MethodSyntaxCheckerNotClass" xml:space="preserve">
+    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}) πρέπει να είναι κλάση, επειδή η μέθοδος επιστρέφει έναν συντακτικό ελεγκτή.</value>
+  </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>
   </data>

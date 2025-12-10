@@ -5,6 +5,8 @@ namespace Farkle.Builder;
 
 /// <summary>
 /// Marks an <see cref="IGrammarBuilder"/> factory method to be precompiled.
+/// Methods with this attribute applied are called <em>precompiler input methods</em>,
+/// or just <em>input methods</em>.
 /// </summary>
 /// <remarks>
 /// This attribute must be applied on non-generic, static, parameterless

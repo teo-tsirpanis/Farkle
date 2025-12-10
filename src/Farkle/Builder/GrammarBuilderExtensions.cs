@@ -59,6 +59,9 @@ public static class GrammarBuilderExtensions
         return builder is IGrammarSymbol symbol ? symbol : ((GrammarBuilderWrapper)builder).Symbol;
     }
 
+    internal static string GetGrammarName(this IGrammarBuilder builder) =>
+        builder.GetOptions().GrammarName ?? builder.Unwrap().Name;
+
     /// <summary>
     /// Changes the type of <see cref="IGrammarBuilder"/> to a generic <see cref="IGrammarBuilder{T}"/>
     /// of type <see cref="object"/>, forcing it to return a value.

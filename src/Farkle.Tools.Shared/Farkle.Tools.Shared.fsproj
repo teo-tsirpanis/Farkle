@@ -1,15 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks> -->
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <DefineConstants>$(DefineConstants);MONADS_PUBLIC</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="Monads.fs" />
     <Compile Include="ResourceLoader.fs" />
-    <!-- <Compile Include="PrecompiledAssemblyFileLoader.fs" /> -->
+    <Compile Include="PrecompiledAssemblyFileLoader.fs" />
     <Compile Include="Templating/TemplateTypes.fs" />
     <Compile Include="Templating/GrammarFunctions.fs" />
     <Compile Include="Templating/HtmlFunctions.fs" />
@@ -32,6 +30,5 @@
     <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Scriban" />
     <PackageReference Include="Serilog" />
-    <PackageReference Include="System.Reflection.MetadataLoadContext" />
   </ItemGroup>
 </Project>

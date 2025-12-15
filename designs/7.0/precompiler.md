@@ -132,8 +132,6 @@ Farkle 6's precompiler embeds each precompiled grammar as a manifest resource in
 
 In Farkle 7 we will embed the grammar in an RVA field, and patch the output method to call a special API to load the grammar from it. At the cost of slightly more complex IL weaving, this will satisfy both the requirement to not use reflection, and to allow trimming unused grammars away.
 
-The API to load a grammar from an RVA field will look like this:
-
 The following APIs will be defined for the precompiler-generated code to call:
 
 ```csharp

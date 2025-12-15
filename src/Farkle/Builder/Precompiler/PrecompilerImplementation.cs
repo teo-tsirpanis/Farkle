@@ -194,15 +194,11 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             Func<IGrammarBuilder?> fInputMethod = _inputMethod.CreateDelegate<Func<IGrammarBuilder?>>();
             try
             {
-                builderObject = fInputMethod();
-                if (builderObject is null)
-                {
-                    throw new NullReferenceException();
-                }
+                builderObject = fInputMethod() ?? throw new NullReferenceException();
             }
             catch (Exception e)
             {
-                log.PrecompilerInputMethodException(_inputMethod, e.InnerException);
+                log.PrecompilerInputMethodException(_inputMethod, e);
                 return null;
             }
             log.InformationLocalized(nameof(Resources.Precompiler_PrecompilingInfo), builderObject.GetGrammarName());
@@ -231,7 +227,7 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
                 outputType = OutputType.Grammar;
                 return true;
             }
-            // At this point, IsEligibleOutputMethodReturnType has been previously called returned true.
+            // At this point, IsEligibleOutputMethodReturnType has been previously called and returned true.
             Debug.Assert(type.HasSameMetadataDefinitionAs(typeof(CharParser<>)));
             var parserReturnType = type.GetGenericArguments()[0];
             if (isForcedSyntaxCheck || _grammarBuilderReturnType is null)

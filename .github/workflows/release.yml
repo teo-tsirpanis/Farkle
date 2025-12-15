@@ -25,7 +25,7 @@ jobs:
       - name: Pack
         run: dotnet run --project eng/Farkle.Build.fsproj -- -t NuGetPack
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: nuget-packages
           path: ./bin

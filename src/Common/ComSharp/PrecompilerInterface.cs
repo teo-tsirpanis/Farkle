@@ -32,7 +32,9 @@ internal partial interface IPrecompiledGrammar
 {
     string? Key { get; }
 
-    ImmutableArray<byte> GrammarFile { get; }
+    // The array is not allowed to be modified. We cannot use ImmutableArray<byte> in the precompiler
+    // interface, because a user might depend on a newer version than the SDK, which would cause errors.
+    byte[]? GrammarFile { get; }
 
     int InputMethodMetadataToken { get; }
 

@@ -49,7 +49,7 @@ partial class PrecompilerInterfaceWrappers
 partial class PrecompilerInterfaceWrappers
 {
     private string? IPrecompiledGrammar_get_Key(object obj) => ((IPrecompiledGrammar)obj).Key;
-    private ImmutableArray<byte> IPrecompiledGrammar_get_GrammarFile(object obj) => ((IPrecompiledGrammar)obj).GrammarFile;
+    private byte[]? IPrecompiledGrammar_get_GrammarFile(object obj) => ((IPrecompiledGrammar)obj).GrammarFile;
     private int IPrecompiledGrammar_get_InputMethodMetadataToken(object obj) => ((IPrecompiledGrammar)obj).InputMethodMetadataToken;
     private IReadOnlyList<(int, int)> IPrecompiledGrammar_get_OutputMethods(object obj) =>
         CollectionMarshaller.Marshal(((IPrecompiledGrammar)obj).OutputMethods, x => (x.MetadataToken, (int)x.Type));
@@ -105,12 +105,12 @@ file sealed class IPrecompiledGrammar_Wrapper(ComSharpWrappers wrappers, object 
     : WrappedObject(wrappers, sourceObject, vtable), IPrecompiledGrammar
 {
     private readonly Func<object, string?> f_Key = (Func<object, string?>)vtable[1];
-    private readonly Func<object, ImmutableArray<byte>> f_GrammarFile = (Func<object, ImmutableArray<byte>>)vtable[2];
+    private readonly Func<object, byte[]?> f_GrammarFile = (Func<object, byte[]?>)vtable[2];
     private readonly Func<object, int> f_InputMethodMetadataToken = (Func<object, int>)vtable[3];
     private readonly Func<object, IReadOnlyList<(int, int)>> f_OutputMethods = (Func<object, IReadOnlyList<(int, int)>>)vtable[4];
 
     public string? Key => f_Key(SourceObject);
-    public ImmutableArray<byte> GrammarFile => f_GrammarFile(SourceObject);
+    public byte[]? GrammarFile => f_GrammarFile(SourceObject);
     public int InputMethodMetadataToken => f_InputMethodMetadataToken(SourceObject);
     public IReadOnlyList<(int MetadataToken, OutputType Type)> OutputMethods =>
         CollectionMarshaller.Marshal(f_OutputMethods(SourceObject), x => (x.Item1, (OutputType)x.Item2));

@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Collections.Immutable;
 using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Build.Utilities;
@@ -26,7 +25,6 @@ internal sealed class PrecompilerLoadContext : AssemblyLoadContext
         switch (assemblyName.Name)
         {
             case "mscorlib" or "System.Private.CoreLib" or "System.Runtime" or "netstandard": return null;
-            case "System.Collections.Immutable": return typeof(ImmutableArray<>).Assembly;
         }
         if (_references.TryGetValue(assemblyName.FullName, out string? path))
         {

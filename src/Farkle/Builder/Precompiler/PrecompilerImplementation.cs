@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using ComSharp;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
@@ -250,6 +251,8 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
         public required string? Key { get; init; }
 
         public required ImmutableArray<byte> GrammarFile { get; init; }
+
+        byte[]? IPrecompiledGrammar.GrammarFile => ImmutableCollectionsMarshal.AsArray(GrammarFile);
 
         public required int InputMethodMetadataToken { get; init; }
 

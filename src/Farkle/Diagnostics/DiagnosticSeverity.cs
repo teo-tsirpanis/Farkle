@@ -1,8 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Diagnostics.Builder;
-
 namespace Farkle.Diagnostics;
 
 /// <summary>
@@ -31,7 +29,7 @@ public enum DiagnosticSeverity
     /// </summary>
     /// <remarks>
     /// Diagnostics produced by Farkle's builder with this severity are
-    /// localizable and have a <see cref="BuilderDiagnostic.Code"/>.
+    /// localizable and have a <see cref="Builder.BuilderDiagnostic.Code"/>.
     /// </remarks>
     Warning,
     /// <summary>
@@ -39,7 +37,7 @@ public enum DiagnosticSeverity
     /// </summary>
     /// <remarks>
     /// Diagnostics produced by Farkle's builder with this severity are
-    /// localizable and have a <see cref="BuilderDiagnostic.Code"/>.
+    /// localizable and have a <see cref="Builder.BuilderDiagnostic.Code"/>.
     /// </remarks>
     Error
 }

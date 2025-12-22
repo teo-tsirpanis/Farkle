@@ -6,11 +6,6 @@
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <UsingTask
-      Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) != Core"
-      TaskName="Farkle.Tools.MSBuild.FarklePrecompileOutOfProcess"
-      AssemblyFile="$(FarkleTaskAssembly)"/>
-
-  <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
       TaskName="Farkle.Tools.MSBuild.FarkleGenerateHtml"
       AssemblyFile="$(FarkleTaskAssembly)"/>
@@ -61,17 +56,6 @@
       <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
       <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
     </FarklePrecompileInProcess>
-
-    <FarklePrecompileOutOfProcess
-        Condition="$(MSBuildRuntimeType) != Core"
-        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
-        Configuration="@(SigourneyConfiguration)"
-        CustomWorkerPath="$(FarkleCustomPrecompilerWorkerPath)"
-        SkipConflictReport="$(_SkipConflictReport)"
-        ErrorMode="$(FarklePrecompilerErrorMode)">
-      <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
-      <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
-    </FarklePrecompileOutOfProcess>
   </Target>
 
   <Target

@@ -1,6 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <!-- Test the dummy Farkle.Tools.MSBuild package this way, without having to set up the whole infrastructure now. -->
-  <Import Project="../../src/Farkle.Tools.MSBuild/build/dummy/Farkle.Tools.MSBuild.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>

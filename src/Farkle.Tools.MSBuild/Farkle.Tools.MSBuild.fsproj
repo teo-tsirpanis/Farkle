@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
-    <!-- <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks> -->
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.
 
 At this moment, the precompiler has not yet been ported to Farkle 7, so this package does nothing.</Description>
@@ -15,20 +14,21 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <!-- <Compile Include="FarklePrecompileInProcess.fs" Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'" />
-    <Compile Include="FarklePrecompileOutOfProcess.fs" Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'" />
-    <Compile Include="FarkleGenerateHtml.fs" /> -->
-    <Content Include="build/dummy/**" Pack="true" PackagePath="build" />
+    <Compile Include="../Farkle/Farkle.fs" />
+    <Compile Include="FarklePrecompileInProcess.fs" />
+    <Compile Include="FarkleGenerateHtml.fs" />
+    <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>
-  <!-- <ItemGroup>
-    <ProjectReference Include="..\Farkle\Farkle.fsproj" PrivateAssets="all" />
+  <ItemGroup>
+    <ProjectReference Include="..\Farkle\Farkle.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
-    <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Farkle.Tools.PrecompilerNeo\Farkle.Tools.PrecompilerNeo.csproj" PrivateAssets="all" />
     <PackageReference Include="FSharp.Core" PrivateAssets="all" Publish="true" />
     <PackageReference Include="Sigourney" PrivateAssets="all" Publish="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" PrivateAssets="all" />
+    <PackageReference Include="Sigourney" PrivateAssets="all" />
     <PackageReference Include="Sigourney.Build" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="MedallionShell" PrivateAssets="all" Publish="true" />
-  </ItemGroup> -->
 </Project>

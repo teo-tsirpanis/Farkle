@@ -5,7 +5,9 @@
 
 namespace Farkle.Tools.MSBuild
 
+open Farkle.Grammars
 open Farkle.Tools.Precompiler
+open Farkle.Tools.Precompiler.Weaver
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
@@ -19,11 +21,37 @@ open System.Threading
 /// Can only run from .NET Core editions of MSBuild.
 type FarklePrecompileInProcess() as this =
     inherit MSBuildWeaver()
-    do this.WeaverName <- PrecompilerCommon.weaverName
+    do this.WeaverName <- typeof<PrecompilerWeaver>.Assembly.GetName().Name
 
-    let mutable precompiledGrammars = []
+    let mutable precompiledGrammars = null
 
     let cts = new CancellationTokenSource()
+
+    static let tryParseErrorMode (x: string) =
+        match Enum.TryParse<ConflictReportMode>(x, true) with
+        | true, errorMode ->
+            if Enum.IsDefined errorMode then
+                errorMode
+                |> ValueSome
+            else
+                ValueNone
+        | _ -> ValueNone
+
+    let precompileAssemblyFromPath fCreateConflictReport errorMode assemblyPath =
+        let options = PrecompilerOptions()
+        options.CancellationToken <- cts.Token
+        options.ConflictReportMode <- errorMode
+        options.Logger <- this.Log
+        options.add_OnGrammarConflict <| Action<_> fCreateConflictReport
+
+        this.Log.LogMessage(MessageImportance.Low, "References:")
+        this.AssemblyReferences
+        |> Seq.filter (fun x -> not x.IsReferenceAssembly)
+        |> Seq.iter (fun x ->
+            this.Log.LogMessage(MessageImportance.Low, "{0}: '{1}'", x.AssemblyName.FullName, x.FileName)
+            options.AssemblyReferences.Add(x.AssemblyName.FullName, x.FileName))
+
+        PrecompilerHost.PrecompileAssemblyFromPath(assemblyPath, options)
 
     member val SkipConflictReport = false with get, set
 
@@ -36,14 +64,25 @@ type FarklePrecompileInProcess() as this =
         try
             let generatedConflictReports = ResizeArray()
             let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
-            let errorMode = PrecompilerCommon.getErrorMode this.Log2.Warning this.SkipConflictReport this.ErrorMode
+            let errorMode =
+                let fromSkipConflictReport =
+                    if this.SkipConflictReport then ConflictReportMode.ErrorsOnly else ConflictReportMode.ReportOnly
+                if String.IsNullOrWhiteSpace this.ErrorMode then
+                    fromSkipConflictReport
+                else
+                    match tryParseErrorMode this.ErrorMode with
+                    | ValueSome x -> x
+                    | ValueNone ->
+                        // TODO: Localize message
+                        this.Log.LogWarning "Could not recognize the value of FarklePrecompilerErrorMode, defaulting to ReportOnly."
+                        ConflictReportMode.ReportOnly
 
             let fCreateConflictReport =
+                Grammar.ofBytes >>
                 TemplateEngine.createConflictReport
                     generatedConflictReports this.Log2 conflictReportOutDir
             let grammars =
-                PrecompilerInProcess.precompileAssemblyFromPath
-                    cts.Token this.Log2 fCreateConflictReport errorMode this.AssemblyReferences this.AssemblyPath
+                precompileAssemblyFromPath fCreateConflictReport errorMode this.AssemblyPath
 
             this.GeneratedConflictReports <-
                 generatedConflictReports
@@ -51,7 +90,9 @@ type FarklePrecompileInProcess() as this =
                 |> Array.ofSeq
 
             if this.GeneratedConflictReports.Length <> 0 then
-                this.Log2.Information(PrecompilerCommon.conflictReportHint)
+                // TODO: Localize message
+                this.Log.LogMessage(MessageImportance.High, "Instead of creating an HTML report, the individual conflicts \
+can be shown as errors by setting the 'FarklePrecompilerErrorMode' MSbuild property to 'Both' or 'ErrorsOnly'.")
 
             precompiledGrammars <- grammars
 
@@ -61,6 +102,8 @@ type FarklePrecompileInProcess() as this =
             && base.Execute()
         with
         | :? OperationCanceledException as oce when oce.CancellationToken = cts.Token -> false
-    override _.DoWeave asm = PrecompilerInProcess.weaveGrammars asm precompiledGrammars
+    override _.DoWeave asm =
+        PrecompilerWeaver.Weave(asm.MainModule, this.AssemblyReferences, precompiledGrammars)
+        precompiledGrammars.Count > 0
     interface ICancelableTask with
         member _.Cancel() = cts.Cancel()

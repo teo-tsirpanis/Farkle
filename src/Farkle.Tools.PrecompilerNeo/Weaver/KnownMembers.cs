@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 using Mono.Cecil;
+using Sigourney;
 
 namespace Farkle.Tools.Precompiler.Weaver;
 
-internal sealed class KnownMembers(IDependencyResolver dependencyResolver, ModuleDefinition module)
+internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> references, ModuleDefinition module)
 {
     private static readonly string[] _systemAssemblies = ["System.Runtime", "netstandard", "mscorlib"];
 
@@ -13,11 +14,11 @@ internal sealed class KnownMembers(IDependencyResolver dependencyResolver, Modul
     {
         foreach (var asmName in assemblyNames)
         {
-            if (dependencyResolver.Resolve(asmName) is not { } assemblyName)
+            if (references.FirstOrDefault(x => x.AssemblyName.Name == asmName) is not { } reference)
             {
                 continue;
             }
-            AssemblyDefinition asm = module.AssemblyResolver.Resolve(assemblyName);
+            AssemblyDefinition asm = module.AssemblyResolver.Resolve(reference.AssemblyName);
             if (asm.MainModule.GetType(@namespace, name) is { } type)
             {
                 return type;
@@ -50,7 +51,10 @@ internal sealed class KnownMembers(IDependencyResolver dependencyResolver, Modul
             && p2.ParameterType == String);
 
     public AssemblyDefinition Farkle => field ??=
-        dependencyResolver.Resolve("Farkle") is { } farkleAsmName ? module.AssemblyResolver.Resolve(farkleAsmName) : module.Assembly;
+        references.FirstOrDefault(x => x.AssemblyName.Name is "Farkle") is { } farkleRef
+            ? module.AssemblyResolver.Resolve(farkleRef.AssemblyName)
+            // Farkle is embedded to the input assembly.
+            : module.Assembly;
 
     public TypeDefinition IGrammarBuilder => field ??=
         GetType("Farkle.Builder", "IGrammarBuilder", Farkle);

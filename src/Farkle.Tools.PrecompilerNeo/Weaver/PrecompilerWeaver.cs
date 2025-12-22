@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using Sigourney;
 
 namespace Farkle.Tools.Precompiler.Weaver;
 
@@ -22,9 +23,9 @@ public sealed class PrecompilerWeaver
         return new(name.Name, name.Version);
     }
 
-    private PrecompilerWeaver(ModuleDefinition module, IDependencyResolver resolver)
+    private PrecompilerWeaver(ModuleDefinition module, IReadOnlyCollection<AssemblyReference> references)
     {
-        _knownMembers = new(resolver, module);
+        _knownMembers = new(references, module);
     }
 
     private static TypeReference GetOrCreateRvaFieldSizeType(TypeDefinition baseType, int size)
@@ -159,9 +160,9 @@ public sealed class PrecompilerWeaver
         }
     }
 
-    public static void Weave(ModuleDefinition module, IDependencyResolver resolver, IReadOnlyCollection<PrecompiledGrammar> grammars)
+    public static void Weave(ModuleDefinition module, IReadOnlyCollection<AssemblyReference> references, IReadOnlyCollection<PrecompiledGrammar> grammars)
     {
-        var weaver = new PrecompilerWeaver(module, resolver);
+        var weaver = new PrecompilerWeaver(module, references);
         weaver.Weave(module, grammars);
     }
 }

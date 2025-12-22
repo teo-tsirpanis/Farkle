@@ -90,7 +90,7 @@ public sealed class PrecompilerHost
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private PrecompilerResult PrecompileAssemblyFromPathImpl(string assemblyPath, out WeakReference alcWeakRef)
+    private List<PrecompiledGrammar> PrecompileAssemblyFromPathImpl(string assemblyPath, out WeakReference alcWeakRef)
     {
         var alc = new PrecompilerLoadContext(Options.AssemblyReferences, Log);
         alcWeakRef = new(alc);
@@ -100,10 +100,7 @@ public sealed class PrecompilerHost
             var farkleAssembly = LoadFarkleAssembly(alc, userAssembly);
             var precompilerInterface = CreatePrecompilerInterface(farkleAssembly, isEmbeddedFarkleAssembly: userAssembly == farkleAssembly);
 
-            var result = new PrecompilerResult()
-            {
-                FarkleAssemblyName = farkleAssembly.GetName(),
-            };
+            List<PrecompiledGrammar> grammars = [];
             if (precompilerInterface is not null)
             {
                 bool doEmitReport = Options.ConflictReportMode != ConflictReportMode.ErrorsOnly;
@@ -115,7 +112,7 @@ public sealed class PrecompilerHost
                 foreach (var x in precompilerInterface.DiscoverAndPrecompile(userAssembly, options))
                 {
                     var grammar = new PrecompiledGrammar(x);
-                    result.Grammars.Add(grammar);
+                    grammars.Add(grammar);
 
                     if (conflictTracker?.ConflictCount is { } conflictCount && conflictCount != 0)
                     {
@@ -131,7 +128,7 @@ public sealed class PrecompilerHost
                     conflictTracker?.Reset();
                 }
             }
-            return result;
+            return grammars;
         }
         finally
         {
@@ -139,7 +136,7 @@ public sealed class PrecompilerHost
         }
     }
 
-    public static PrecompilerResult PrecompileAssemblyFromPath(string assemblyPath, PrecompilerOptions options)
+    public static List<PrecompiledGrammar> PrecompileAssemblyFromPath(string assemblyPath, PrecompilerOptions options)
     {
         var host = new PrecompilerHost(options);
         var result = host.PrecompileAssemblyFromPathImpl(assemblyPath, out var alcWeakRef);

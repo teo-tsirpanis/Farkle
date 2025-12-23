@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -15,7 +15,7 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Farkle/Farkle.fs" />
-    <Compile Include="FarklePrecompileInProcess.fs" />
+    <Compile Include="FarklePrecompilerTask.fs" />
     <Compile Include="FarkleGenerateHtml.fs" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
   </ItemGroup>

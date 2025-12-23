@@ -16,10 +16,7 @@ open System
 open System.IO
 open System.Threading
 
-/// An MSBuild task that precompiles the grammars
-/// of an assembly from the same MSBuild process.
-/// Can only run from .NET Core editions of MSBuild.
-type FarklePrecompileInProcess() as this =
+type FarklePrecompilerTask() as this =
     inherit MSBuildWeaver()
     do this.WeaverName <- typeof<PrecompilerWeaver>.Assembly.GetName().Name
 

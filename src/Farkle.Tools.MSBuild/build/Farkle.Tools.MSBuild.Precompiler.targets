@@ -2,7 +2,7 @@
 
   <UsingTask
       Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
-      TaskName="Farkle.Tools.MSBuild.FarklePrecompileInProcess"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompilerTask"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <UsingTask
@@ -47,7 +47,7 @@
       <_SkipConflictReport Condition="$(FarkleGenerateConflictReport) == false">true</_SkipConflictReport>
     </PropertyGroup>
 
-    <FarklePrecompileInProcess
+    <FarklePrecompilerTask
         Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
@@ -55,7 +55,7 @@
         ErrorMode="$(FarklePrecompilerErrorMode)">
       <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
       <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
-    </FarklePrecompileInProcess>
+    </FarklePrecompilerTask>
   </Target>
 
   <Target

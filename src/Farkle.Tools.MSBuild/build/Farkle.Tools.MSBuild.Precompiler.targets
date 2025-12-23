@@ -26,20 +26,6 @@
   </Target>
 
   <Target
-    Name="FarkleWarnPackageVersionMismatch"
-    Condition="$(FarkleCheckPackageVersionMismatch) != false"
-    BeforeTargets="FarkleRunPrecompiler">
-    <PropertyGroup>
-      <_FarkleVersion Condition="'%(PackageReference.Identity)' == 'Farkle'">%(PackageReference.Version)</_FarkleVersion>
-      <_FarkleToolsMSBuildVersion Condition="'%(PackageReference.Identity)' == 'Farkle.Tools.MSBuild'">%(PackageReference.Version)</_FarkleToolsMSBuildVersion>
-    </PropertyGroup>
-
-    <Warning
-        Condition="'$(_FarkleVersion)' != '' AND '$(_FarkleToolsMSBuildVersion)' != '' AND $(_FarkleVersion) != $(_FarkleToolsMSBuildVersion)"
-        Text="The versions of the Farkle ($(_FarkleVersion)) and Farkle.Tools.MSBuild ($(_FarkleToolsMSBuildVersion)) packages must be the same, or unexpected bugs might occur."/>
-  </Target>
-
-  <Target
       Name="FarkleRunPrecompiler"
       Condition="$(FarkleEnablePrecompiler) != false"
       DependsOnTargets="FarkleCheckSupportedMSBuildVersion">

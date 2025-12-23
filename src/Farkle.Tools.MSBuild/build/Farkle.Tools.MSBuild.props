@@ -1,6 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <SigourneyRegisteredTargetFiles>$(SigourneyRegisteredTargetFiles);$(MSBuildThisFileDirectory)Farkle.Tools.MSBuild.Precompiler.targets</SigourneyRegisteredTargetFiles>
     <SigourneyRegisteredTargets>$(SigourneyRegisteredTargets);FarkleRunPrecompiler</SigourneyRegisteredTargets>
   </PropertyGroup>
 

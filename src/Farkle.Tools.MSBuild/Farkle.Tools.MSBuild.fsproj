@@ -6,12 +6,16 @@
 
 At this moment, the precompiler has not yet been ported to Farkle 7, so this package does nothing.</Description>
 <!-- Building projects that use the precompiler with Visual Studio for Windows or with the .NET Framework-based "msbuild" command also requires a matching version of https://nuget.org/packages/Farkle.Tools to be installed. Learn more in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</Description> -->
-    <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
-    <SigourneyPublish>true</SigourneyPublish>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateDependencyFile>true</GenerateDependencyFile>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+    <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Farkle/Farkle.fs" />
@@ -23,12 +27,29 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
     <ProjectReference Include="..\Farkle\Farkle.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.PrecompilerNeo\Farkle.Tools.PrecompilerNeo.csproj" PrivateAssets="all" />
-    <PackageReference Include="FSharp.Core" PrivateAssets="all" Publish="true" />
-    <PackageReference Include="Sigourney" PrivateAssets="all" Publish="true" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" PrivateAssets="all" />
     <PackageReference Include="Sigourney" PrivateAssets="all" />
     <PackageReference Include="Sigourney.Build" />
   </ItemGroup>
+  <Target
+      Name="AddBuildDependencyFileToBuiltProjectOutputGroupOutput"
+      BeforeTargets="BuiltProjectOutputGroup">
+    <ItemGroup>
+      <BuiltProjectOutputGroupOutput
+        Include="$(ProjectDepsFilePath)"
+        TargetPath="$(ProjectDepsFileName)"
+        FinalOutputPath="$(ProjectDepsFilePath)" />
+    </ItemGroup>
+  </Target>
+  <Target
+    Name="CopyProjectReferencesToPackage"
+    DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+        <BuildOutputInPackage
+            Include="@(ReferenceCopyLocalPaths)"
+            TargetPath="%(ReferenceCopyLocalPaths.DestinationSubPath)" />
+    </ItemGroup>
+  </Target>
 </Project>

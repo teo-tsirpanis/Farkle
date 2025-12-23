@@ -1,11 +1,66 @@
-<Project TreatAsLocalProperty="MSBuildMajorVersion">
+<Project TreatAsLocalProperty="_MSBuildMajorVersion;_RiderWarning2;_SkipConflictReport">
   <PropertyGroup>
-    <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
+    <_MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</_MSBuildMajorVersion>
   </PropertyGroup>
+
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompilerTask"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
+
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+      TaskName="Farkle.Tools.MSBuild.FarkleGenerateHtml"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <Target Name="FarkleCheckSupportedMSBuildVersion">
     <Error
-      Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 17)"
+      Condition="('$(_MSBuildMajorVersion)' == '') OR ($(_MSBuildMajorVersion) &lt; 17)"
       Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 6 SDK."/>
+  </Target>
+
+  <Target
+      Name="FarkleWarnNetFrameworkPrecompiler"
+      Condition="$(MSBuildRuntimeType) != Core AND $(BuildingInsideVisualStudio) != true"
+      BeforeTargets="FarkleRunPrecompiler">
+    <PropertyGroup>
+      <_RiderWarning2>You can learn how to enable it in https://teo-tsirpanis.github.io/Farkle/the-precompiler.html#Building-from-an-IDE</_RiderWarning2>
+    </PropertyGroup>
+    <Warning
+        Condition="$(BuildingByReSharper) == true"
+        Text="Farkle's precompiler works best on Rider when using an MSBuild installation from the .NET SDK. $(_RiderWarning2)"/>
+    <Warning
+        Condition="$(BuildingByReSharper) != true"
+        Text="Farkle's precompiler works best when using modern .NET SDK commands, like 'dotnet build' or 'dotnet msbuild' instead of 'msbuild'."/>
+  </Target>
+
+  <Target
+      Name="FarkleRunPrecompiler"
+      Condition="$(FarkleEnablePrecompiler) != false"
+      DependsOnTargets="FarkleCheckSupportedMSBuildVersion">
+    <PropertyGroup>
+      <_SkipConflictReport Condition="$(FarkleGenerateConflictReport) == false">true</_SkipConflictReport>
+    </PropertyGroup>
+
+    <FarklePrecompilerTask
+        Condition="$(MSBuildRuntimeType) == Core"
+        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+        Configuration="@(SigourneyConfiguration)"
+        SkipConflictReport="$(_SkipConflictReport)"
+        ErrorMode="$(FarklePrecompilerErrorMode)">
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
+    </FarklePrecompilerTask>
+  </Target>
+
+  <Target
+    Name="FarkleRunHtmlGenerator"
+    Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+    AfterTargets="SigourneyEntryPoint">
+    <FarkleGenerateHtml
+      AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+      OutputDirectory="$(OutputPath)">
+      <Output TaskParameter="GeneratedFiles" ItemName="FileWrites"/>
+    </FarkleGenerateHtml>
   </Target>
 </Project>

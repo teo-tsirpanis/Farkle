@@ -4,8 +4,9 @@
   </PropertyGroup>
 
   <UsingTask
-      Condition="$(FarkleEnablePrecompiler) != false AND $(MSBuildRuntimeType) == Core"
+      Condition="$(FarkleEnablePrecompiler) != false"
       TaskName="Farkle.Tools.MSBuild.FarklePrecompilerTask"
+      Runtime="$(FarklePrecompilerTaskRuntime)"
       AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <UsingTask
@@ -16,7 +17,7 @@
   <Target Name="FarkleCheckSupportedMSBuildVersion">
     <Error
       Condition="('$(_MSBuildMajorVersion)' == '') OR ($(_MSBuildMajorVersion) &lt; 17)"
-      Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 6 SDK."/>
+      Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 8 SDK."/>
   </Target>
 
   <Target
@@ -43,7 +44,6 @@
     </PropertyGroup>
 
     <FarklePrecompilerTask
-        Condition="$(MSBuildRuntimeType) == Core"
         AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
         Configuration="@(SigourneyConfiguration)"
         SkipConflictReport="$(_SkipConflictReport)"

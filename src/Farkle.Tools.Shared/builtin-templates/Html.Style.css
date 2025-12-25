@@ -28,7 +28,7 @@ nav>a:hover {
     color: firebrick;
 }
 
-html>footer {
+body>footer {
     border-top: 1px solid lightgray;
     text-align: center;
     font-size: 0.75em;

@@ -16,9 +16,7 @@ internal static class Resources
 {
     private static readonly bool s_usingResourceKeys = AppContext.TryGetSwitch("System.Resources.UseSystemResourceKeys", out bool usingResourceKeys) && usingResourceKeys;
 
-    private static ResourceManager? s_resourceManager;
-
-    public static ResourceManager ResourceManager => s_resourceManager ??= new ResourceManager("Farkle.Resources", typeof(Resources).Assembly);
+    public static ResourceManager ResourceManager => field ??= new ResourceManager("Farkle.Resources", typeof(Resources).Assembly);
 
     // This method is used to decide if we need to append the exception message
     // parameters to the message when calling SR.Format. By default it returns

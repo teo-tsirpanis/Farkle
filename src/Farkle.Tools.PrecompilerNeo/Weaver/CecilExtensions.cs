@@ -7,6 +7,9 @@ namespace Farkle.Tools.Precompiler.Weaver;
 
 internal static class CecilExtensions
 {
+    public static AssemblyNameReference GetAssemblyName(this IMetadataScope scope) =>
+        scope as AssemblyNameReference ?? ((ModuleDefinition) scope).Assembly.Name;
+
     public static MethodReference GetDelegateConstructor(this TypeReference @delegate)
     {
         var typeSystem = @delegate.Module.TypeSystem;
@@ -25,4 +28,21 @@ internal static class CecilExtensions
         }
         return result;
     }
+
+    public static MethodReference MakeMethodReference(this TypeReference type, bool isInstance, string name,
+        TypeReference returnType, ReadOnlySpan<TypeReference> parameterTypes)
+    {
+        var result = new MethodReference(name, returnType, type)
+        {
+            HasThis = isInstance
+        };
+        foreach (var p in parameterTypes)
+        {
+            result.Parameters.Add(new(p));
+        }
+
+        return result;
+    }
+
+    public static PointerType MakePointerType(this TypeReference type) => new(type);
 }

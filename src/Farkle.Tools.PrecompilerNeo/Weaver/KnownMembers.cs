@@ -2,81 +2,132 @@
 // SPDX-License-Identifier: MIT
 
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 using Sigourney;
 
 namespace Farkle.Tools.Precompiler.Weaver;
 
 internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> references, ModuleDefinition module)
 {
-    private static readonly string[] _systemAssemblies = ["System.Runtime", "netstandard", "mscorlib"];
-
-    private TypeDefinition? TryGetType(string @namespace, string name, ReadOnlySpan<string> assemblyNames)
+    private IMetadataScope FindAssembly(ReadOnlySpan<string> assemblyNames)
     {
         foreach (var asmName in assemblyNames)
         {
-            if (references.FirstOrDefault(x => x.AssemblyName.Name == asmName) is not { } reference)
+            if (references.FirstOrDefault(x => x.AssemblyName.Name == asmName) is { } reference)
             {
-                continue;
-            }
-            AssemblyDefinition asm = module.AssemblyResolver.Resolve(reference.AssemblyName);
-            if (asm.MainModule.GetType(@namespace, name) is { } type)
-            {
-                return type;
+                return reference.AssemblyName;
             }
         }
-        return module.GetType(@namespace, name);
+        return module;
     }
 
-    private TypeDefinition GetType(string @namespace, string name, ReadOnlySpan<string> assemblyNames) =>
-        TryGetType(@namespace, name, assemblyNames)
-        ?? throw new InvalidOperationException($"Missing required type {@namespace}.{name}");
+    private TypeReference GetType(string @namespace, string name, IMetadataScope scope, bool isValueType = false, int genericParameterCount = 0)
+    {
+        // Set module to null and import later, in order to canonicalize the
+        // scope, and prevent mysterious exceptions when writing.
+        var result = new TypeReference(@namespace, name, null, scope, isValueType);
+        for (int i = 0; i < genericParameterCount; i++)
+        {
+            result.GenericParameters.Add(new(result));
+        }
+        return module.ImportReference(result);
+    }
 
-    private TypeDefinition GetType(string @namespace, string name, AssemblyDefinition assembly) =>
-        assembly.MainModule.Types.First(x => x.Namespace == @namespace && x.Name == name)
-        ?? throw new InvalidOperationException($"Missing required type {@namespace}.{name}");
+    public IMetadataScope CoreLib => field ??=
+        FindAssembly(["System.Runtime", "netstandard", "mscorlib"]);
 
-    public TypeReference String { get; } = module.TypeSystem.String;
+    public TypeReference Byte => module.TypeSystem.Byte;
 
-    public TypeDefinition GeneratedCodeAttribute => field ??=
-        GetType("System.CodeDom.Compiler", "GeneratedCodeAttribute", _systemAssemblies);
+    public TypeReference String => module.TypeSystem.String;
 
-    public TypeDefinition Func_1 => field ??=
-        GetType("System", "Func`1", _systemAssemblies);
+    public TypeReference Void => module.TypeSystem.Void;
 
-    public MethodDefinition GeneratedCodeAttribute_Ctor => field ??=
-        GeneratedCodeAttribute.Methods.First(x => !x.IsStatic
-            && x.IsConstructor
-            && x.Parameters is [var p1, var p2]
-            && p1.ParameterType == String
-            && p2.ParameterType == String);
+    public TypeReference Func_1 => field ??=
+        GetType("System", "Func`1", CoreLib, genericParameterCount: 1);
 
-    public AssemblyDefinition Farkle => field ??=
-        references.FirstOrDefault(x => x.AssemblyName.Name is "Farkle") is { } farkleRef
-            ? module.AssemblyResolver.Resolve(farkleRef.AssemblyName)
-            // Farkle is embedded to the input assembly.
-            : module.Assembly;
+    public TypeReference GeneratedCodeAttribute => field ??=
+        GetType("System.CodeDom.Compiler", "GeneratedCodeAttribute", CoreLib);
 
-    public TypeDefinition IGrammarBuilder => field ??=
+    public MethodReference GeneratedCodeAttribute_Ctor => field ??=
+        GeneratedCodeAttribute.MakeMethodReference(true, ".ctor", Void, [String, String]);
+
+    public TypeReference RuntimeTypeHandle => field ??=
+        GetType("System", "RuntimeTypeHandle", CoreLib, isValueType: true);
+
+    public TypeReference ValueType => field ??=
+        GetType("System", "ValueType", CoreLib);
+
+    public IMetadataScope Farkle => field ??=
+        FindAssembly(["Farkle"]);
+
+    public TypeReference CharParser_1 => field ??=
+        GetType("Farkle", "CharParser`1", Farkle, genericParameterCount: 1);
+
+    public TypeReference Grammar => field ??=
+        GetType("Farkle.Grammars", "Grammar", Farkle);
+
+    public TypeReference IGrammarBuilder => field ??=
         GetType("Farkle.Builder", "IGrammarBuilder", Farkle);
 
-    public TypeDefinition IGrammarBuilder_1 => field ??=
-        GetType("Farkle.Builder", "IGrammarBuilder`1", Farkle);
+    public TypeReference IGrammarBuilder_1 => field ??=
+        GetType("Farkle.Builder", "IGrammarBuilder`1", Farkle, genericParameterCount: 1);
 
-    public TypeDefinition PrecompilerEntryPoints => field ??=
+    public TypeReference PrecompilerEntryPoints => field ??=
         GetType("Farkle.Runtime", "PrecompilerEntryPoints", Farkle);
 
-    public MethodDefinition PrecompilerEntryPoints_LoadGrammar => field ??=
-        PrecompilerEntryPoints.Methods.Single(x => x.Name == "LoadGrammar");
+    private TypeReference[] LoadGrammarPreamble => field ??=
+        [Byte.MakePointerType(), module.TypeSystem.Int32, RuntimeTypeHandle];
 
-    public MethodDefinition PrecompilerEntryPoints_LoadCharParser => field ??=
-        PrecompilerEntryPoints.Methods.Single(x => x.Name == "LoadCharParser");
-
-    public MethodDefinition PrecompilerEntryPoints_LoadCharParserSyntaxChecker => field ??=
-        PrecompilerEntryPoints.Methods.Single(x => x.Name == "LoadCharParserSyntaxChecker");
-
-    public TypeDefinition PrecompiledGrammarAttribute => field ??=
+    public TypeReference PrecompiledGrammarAttribute => field ??=
         GetType("Farkle.Runtime", "PrecompiledGrammarAttribute", Farkle);
 
-    public MethodDefinition PrecompiledGrammarAttribute_Ctor => field ??=
-        PrecompiledGrammarAttribute.Methods.Single(x => !x.IsStatic && x.IsConstructor);
+    public MethodReference PrecompiledGrammarAttribute_Ctor => field ??=
+        PrecompiledGrammarAttribute.MakeMethodReference(true, ".ctor", Void, []);
+
+    public MethodReference PrecompilerEntryPoints_LoadGrammar => field ??=
+        PrecompilerEntryPoints.MakeMethodReference(false, "LoadGrammar", Grammar, LoadGrammarPreamble);
+
+    public MethodReference PrecompilerEntryPoints_LoadCharParser
+    {
+        get
+        {
+            return field ??= CreateValue();
+
+            MethodReference CreateValue()
+            {
+                var result = new MethodReference("LoadCharParser", Void, PrecompilerEntryPoints);
+                var genericParam = new GenericParameter(result);
+                result.GenericParameters.Add(genericParam);
+                result.ReturnType = CharParser_1.MakeGenericInstanceType(genericParam);
+                foreach (var t in LoadGrammarPreamble)
+                {
+                    result.Parameters.Add(new(t));
+                }
+                result.Parameters.Add(new(Func_1.MakeGenericInstanceType(IGrammarBuilder_1.MakeGenericInstanceType(genericParam))));
+                return result;
+            }
+        }
+    }
+
+    public MethodReference PrecompilerEntryPoints_LoadCharParserSyntaxChecker
+    {
+        get
+        {
+            return field ??= CreateValue();
+
+            MethodReference CreateValue()
+            {
+                var result = new MethodReference("LoadCharParserSyntaxChecker", Void, PrecompilerEntryPoints);
+                var genericParam = new GenericParameter(result);
+                result.GenericParameters.Add(genericParam);
+                result.ReturnType = CharParser_1.MakeGenericInstanceType(genericParam);
+                foreach (var t in LoadGrammarPreamble)
+                {
+                    result.Parameters.Add(new(t));
+                }
+                result.Parameters.Add(new(Func_1.MakeGenericInstanceType(IGrammarBuilder)));
+                return result;
+            }
+        }
+    }
 }

@@ -8,6 +8,7 @@ open Sigourney
 open System
 
 type FarklePrecompilerTask() =
+    // Inherit from MSBuildWeaver to get identical task properties.
     inherit MSBuildWeaver()
 
     member val SkipConflictReport = false with get, set
@@ -18,7 +19,6 @@ type FarklePrecompilerTask() =
     member val GeneratedConflictReports = Array.Empty<ITaskItem>() with get, set
 
     override this.Execute() =
-        // TODO: Localize message
-        this.Log.LogError("Farkle's precompiler is not compatible with Visual Studio 2022 or earlier.")
+        Logging.UnsupportedVS this.Log
         false
     override _.DoWeave _ = false

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Precompiler_IncompatiblePrecompilerInterface" xml:space="preserve">
+    <value>Incompatible precompiler interface. Make sure that the versions of the 'Farkle' and 'Farkle.Tools.MSBuild' packages match.</value>
+  </data>
+  <data name="Precompiler_FailedToUnloadAssembly" xml:space="preserve">
+    <value>The precompiler could not unload the assembly. This can lead to memory leaks in the build environment.</value>
+  </data>
+  <data name="Precompiler_LrConflicts_Singular" xml:space="preserve">
+    <value>There was one LR conflict in the grammar.</value>
+  </data>
+  <data name="Precompiler_LrConflicts_Plural" xml:space="preserve">
+    <value>There were {0} LR conflicts in the grammar.</value>
+  </data>
+</root>

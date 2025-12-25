@@ -1,4 +1,4 @@
-﻿// Copyright © Theodore Tsirpanis and Contributors.
+// Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
 using System.Reflection;
@@ -11,7 +11,7 @@ namespace Farkle.Tools.Precompiler;
 
 /// <summary>
 /// Contains logic to load an asssembly into an isolated context, find
-/// an implementation of the rpecompiler interface, and invoke it.
+/// an implementation of the precompiler interface, and invoke it.
 /// </summary>
 public sealed class PrecompilerHost
 {
@@ -40,7 +40,7 @@ public sealed class PrecompilerHost
         }
         else
         {
-            // TODO: Log warning
+            Log?.FailedToUnloadAssembly();
         }
     }
 
@@ -76,14 +76,14 @@ public sealed class PrecompilerHost
             else
             {
                 // The external Farkle assembly should always have the precompiler interface factory.
-                // TODO: Log error
+                Log?.IncompatiblePrecompilerInterface();
             }
             return null;
         }
         if (precompilerInterfaceFactory.Invoke(null, null) is not ComSharpObject intfComSharp
             || !PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intfComSharp).IsComSharp(out IPrecompilerInterface? intf))
         {
-            // TODO: Log error
+            Log?.IncompatiblePrecompilerInterface();
             return null;
         }
         return intf;
@@ -118,7 +118,7 @@ public sealed class PrecompilerHost
                     {
                         if (!doEmitConflictErrors)
                         {
-                            // TODO: Log error
+                            Log?.LrConflicts(conflictCount);
                         }
                         Options.GrammarConflict(grammar.GrammarFile);
                     }

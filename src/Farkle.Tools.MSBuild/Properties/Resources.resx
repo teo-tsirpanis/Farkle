@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Precompiler_UnsupportedVS" xml:space="preserve">
+    <value>The precompiler is not supported in Visual Studio versions earlier than 2026.</value>
+  </data>
+  <data name="Precompiler_UnrecognizedErrorMode" xml:space="preserve">
+    <value>Could not recognize the value of 'FarklePrecompilerErrorMode' property, defaulting to 'ReportOnly'.</value>
+  </data>
+  <data name="Precompiler_ConflictReport" xml:space="preserve">
+    <value>An HTML file detailing these conflicts was created at {0}</value>
+  </data>
+  <data name="Precompiler_ConflictReportAdvice" xml:space="preserve">
+    <value>Instead of creating an HTML report, the individual conflicts can be logged as errors, by setting the 'FarklePrecompilerErrorMode' MSBuild property to 'Both' or 'ErrorsOnly'.</value>
+  </data>
+  <data name="Precompiler_WritingHtml" xml:space="preserve">
+    <value>Writing documentation of grammar {0} at {1}</value>
+  </data>
+</root>

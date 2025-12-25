@@ -14,4 +14,7 @@
     <PackageReference Include="Microsoft.Build.Utilities.Core" />
     <PackageReference Include="Sigourney" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Tools.Precompiler.%(Filename)" />
+  </ItemGroup>
 </Project>

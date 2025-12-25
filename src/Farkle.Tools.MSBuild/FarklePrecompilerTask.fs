@@ -59,7 +59,7 @@ type FarklePrecompilerTask() as this =
 
     override this.Execute() =
         try
-            let generatedConflictReports = ResizeArray()
+            let generatedConflictReports = ResizeArray<ITaskItem>()
             let conflictReportOutDir = Path.GetDirectoryName this.AssemblyPath
             let errorMode =
                 let fromSkipConflictReport =
@@ -70,26 +70,23 @@ type FarklePrecompilerTask() as this =
                     match tryParseErrorMode this.ErrorMode with
                     | ValueSome x -> x
                     | ValueNone ->
-                        // TODO: Localize message
-                        this.Log.LogWarning "Could not recognize the value of FarklePrecompilerErrorMode, defaulting to ReportOnly."
+                        Logging.UnrecognizedErrorMode this.Log
                         ConflictReportMode.ReportOnly
 
-            let fCreateConflictReport =
-                Grammar.ofBytes >>
-                TemplateEngine.createConflictReport
-                    generatedConflictReports this.Log2 conflictReportOutDir
+            let fCreateConflictReport grammar =
+                grammar
+                |> Grammar.ofBytes
+                |> TemplateEngine.createConflictReport this.Log2 conflictReportOutDir
+                |> ValueOption.iter (fun path ->
+                    Logging.ConflictReport this.Log path
+                    generatedConflictReports.Add <| TaskItem path)
             let grammars =
                 precompileAssemblyFromPath fCreateConflictReport errorMode this.AssemblyPath
 
-            this.GeneratedConflictReports <-
-                generatedConflictReports
-                |> Seq.map (fun x -> TaskItem x :> ITaskItem)
-                |> Array.ofSeq
+            this.GeneratedConflictReports <- Array.ofSeq generatedConflictReports
 
             if this.GeneratedConflictReports.Length <> 0 then
-                // TODO: Localize message
-                this.Log.LogMessage(MessageImportance.High, "Instead of creating an HTML report, the individual conflicts \
-can be shown as errors by setting the 'FarklePrecompilerErrorMode' MSbuild property to 'Both' or 'ErrorsOnly'.")
+                Logging.ConflictReportAdvice this.Log
 
             precompiledGrammars <- grammars
 

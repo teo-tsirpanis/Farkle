@@ -17,6 +17,9 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
     <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Logging.fs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <Compile Include="../Farkle/Farkle.fs" />
     <Compile Include="FarklePrecompilerTask.fs" />
@@ -28,6 +31,7 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
   </ItemGroup>
   <ItemGroup>
     <Content Include="build/**" Pack="true" PackagePath="build" />
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Tools.MSBuild.%(Filename)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <ProjectReference Include="..\Farkle\Farkle.csproj" PrivateAssets="all" />

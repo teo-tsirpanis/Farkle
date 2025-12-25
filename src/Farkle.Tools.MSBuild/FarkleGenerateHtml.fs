@@ -44,11 +44,12 @@ type FarkleGenerateHtml() =
             let htmlPath =
                 Path.Combine(this.OutputDirectory, Path.ChangeExtension(grammarName, output.FileExtension))
                 |> Path.GetFullPath
-            log.Information("Writing documentation of {GrammarName:l} at {HtmlPath}...", grammarName, htmlPath)
+            Logging.WritingHtml this.Log grammarName htmlPath
             File.WriteAllText(htmlPath, output.Content)
 
             generatedHtmlFiles.Add(TaskItem htmlPath)
         | Error() ->
+            // Internal error; fine to not localize.
             log.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
     override this.Execute() =

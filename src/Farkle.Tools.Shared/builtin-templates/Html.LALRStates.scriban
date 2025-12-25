@@ -34,25 +34,35 @@ https://opensource.org/licenses/MIT -}}
             <caption>State {{for.index}}{{if $state.has_conflicts; " (has conflicts)"; end}}</caption>
             <thead><tr><th>Symbol</th><th>Action</th></tr></thead>
             <tbody>
-                {{~for $action in $state.actions~}}
-                    {{~if !is_conflict_report~}}
+                {{~
+                    $last_action_name = null
+                    # Copy actions to an array, to allow random access.
+                    $actions = []
+                    for $action in $state.actions
+                        $actions = array.add $actions $action
+                    end
+                ~}}
+                {{~for $action in $actions~}}
                 <tr>
-                    <td class="terminal">{{html.escape $action.key.name}}</td>
-                    {{gen_action_row $action.value~}}
-                </tr>
-                    {{~else~}}
-                        {{~$actions = $action.value~}}
-                        {{~$actions_size = array.size $actions~}}
-                <tr>
-                    <td {{if $actions_size != 1}}rowspan="{{$actions_size}}" {{end}}class="terminal">{{html.escape $action.key.name}}</td>
-                    {{gen_action_row $actions[0] ($actions_size != 1)}}
-                </tr>
-                        {{~for $i in 1..<$actions_size~}}
-                <tr>
-                    {{gen_action_row $actions[$i] ($actions_size != 1)~}}
-                </tr>
-                        {{~end~}}
+                    {{~if !$last_action_name || $last_action_name != $action.key.name~}}
+                        {{~
+                            # Actions on the same symbol are adjacent. When we see a new symbol,
+                            # count how many actions after it belong to the same symbol, to determine
+                            # rowspan.
+                            $rowspan = 0
+                            for $i in for.index..<(array.size $state.actions)
+                                if $actions[$i].key == $action.key
+                                    $rowspan = $rowspan + 1
+                                else
+                                    break
+                                end
+                            end
+                        ~}}
+                    <td {{if $rowspan != 1}}rowspan="{{$rowspan}}" {{end}}class="terminal">{{html.escape $action.key.name}}</td>
                     {{~end~}}
+                    {{gen_action_row $action.value ($rowspan != 1)}}
+                </tr>
+                {{~$last_action_name = $action.key.name~}}
                 {{~end~}}
                 {{~$eofactions = $state.end_of_file_actions~}}
                 {{~$has_eof_conflicts = (array.size $eofactions) != 1~}}

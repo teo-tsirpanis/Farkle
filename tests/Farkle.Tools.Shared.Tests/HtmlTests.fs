@@ -55,4 +55,22 @@ let tests = testList "HTML tests" [
         doc.LoadHtml(rendered)
         Expect.isEmpty doc.ParseErrors "Document has parse errors"
     }
+
+    test "A grammar with conflicts can be rendered" {
+        let grammar =
+            let expr = nonterminalU "Expr"
+            expr.SetProductions(
+                !% expr .>> "+" .>> expr,
+                !% expr .>> "-" .>> expr
+            )
+            expr
+            |> _.BuildSyntaxCheck(BuilderOutputs.GrammarLrStateMachine)
+            |> _.Grammar
+            |> nonNull
+        Expect.isTrue grammar.LrStateMachine.HasConflicts "Grammar should have conflicts"
+        let rendered = renderHtml grammar
+        let doc = HtmlDocument()
+        doc.LoadHtml(rendered)
+        Expect.isEmpty doc.ParseErrors "Document has parse errors"
+    }
 ]

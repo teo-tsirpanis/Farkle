@@ -10,8 +10,7 @@
     <Compile Include="../Farkle/Obsoletions.cs" LinkBase="Farkle" />
     <Compile Include="../Farkle/Diagnostics/DiagnosticSeverity.cs" LinkBase="Farkle" />
     <Compile Include="../Farkle/Compatibility/EmbeddedAttribute.cs" LinkBase="Farkle/Compatibility" />
-    <!-- <ProjectReference Include="..\Farkle\Farkle.csproj" /> -->
-    <PackageReference Include="Microsoft.Build.Utilities.Core" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="runtime" />
     <PackageReference Include="Sigourney" />
   </ItemGroup>
   <ItemGroup>

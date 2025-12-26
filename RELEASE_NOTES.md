@@ -1,6 +1,7 @@
 #### 7.0.0-preview.3
 The following changes were made after 7.0.0-preview.2:
 * __Breaking change:__ The type `BuilderArtifacts` was renamed to `BuilderOutputs`.
+* Displaying localized text always uses the language specified in `CultureInfo.CurrentUICulture`. Previously, it used the `IFormatProvider` argument if specified, which could lead to inconsistencies, particularly when `CurrentCulture` and `CurrentUICulture` are different.
 
 #### 7.0.0-preview.2 - 30-10-2025
 The following changes were made after 7.0.0-preview.1:

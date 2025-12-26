@@ -57,21 +57,19 @@ public sealed class LexicalError : IFormattable, IParserStateInfoSupplier
 
     private string ToString(IFormatProvider? formatProvider)
     {
-        string eofString = Resources.GetEofString(formatProvider);
         return Resources.Format(formatProvider,
             nameof(Resources.Parser_UnrecognizedToken),
             TokenText,
-            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbol.FormatName));
     }
 
 #if NET8_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
-        string eofString = Resources.GetEofString(provider);
         return Resources.TryWrite(destination, provider,
             nameof(Resources.Parser_UnrecognizedToken), out charsWritten,
             TokenText,
-            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbol.FormatName));
     }
 #endif
 

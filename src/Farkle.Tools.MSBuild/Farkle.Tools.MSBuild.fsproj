@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
@@ -40,6 +40,7 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" PrivateAssets="all" />
+    <PackageReference Include="Serilog.Sinks.MSBuild" PrivateAssets="all" />
     <PackageReference Include="Sigourney" PrivateAssets="all" />
     <PackageReference Include="Sigourney.Build" />
   </ItemGroup>

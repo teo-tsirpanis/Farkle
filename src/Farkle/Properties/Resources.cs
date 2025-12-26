@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Resources;
 #if NET8_0_OR_GREATER
 using System.Runtime.CompilerServices;
@@ -27,14 +26,14 @@ internal static class Resources
     // when the application is being trimmed.
     internal static bool UsingResourceKeys() => s_usingResourceKeys;
 
-    public static string GetResourceString(string resourceKey, IFormatProvider? formatProvider = null, string? defaultValue = null)
+    public static string GetResourceString(string resourceKey, string? defaultValue = null)
     {
         if (UsingResourceKeys())
         {
             return defaultValue ?? resourceKey;
         }
 
-        return ResourceManager.GetString(resourceKey, formatProvider as CultureInfo)!;
+        return ResourceManager.GetString(resourceKey)!;
     }
 
 #if NET8_0_OR_GREATER
@@ -53,7 +52,7 @@ internal static class Resources
             return destination.TryWrite(formatProvider, $"{resourceKey}, {arg}", out charsWritten);
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg);
     }
 
@@ -64,7 +63,7 @@ internal static class Resources
             return destination.TryWrite(formatProvider, $"{resourceKey}, {arg1}, {arg2}", out charsWritten);
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2);
     }
 
@@ -75,7 +74,7 @@ internal static class Resources
             return destination.TryWrite(formatProvider, $"{resourceKey}, {arg1}, {arg2}, {arg3}", out charsWritten);
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, arg1, arg2, arg3);
     }
 
@@ -97,7 +96,7 @@ internal static class Resources
             return destination.TryWrite(ref handler, out charsWritten);
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, args);
     }
 
@@ -116,7 +115,7 @@ internal static class Resources
 #endif
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), arg);
     }
 
@@ -131,7 +130,7 @@ internal static class Resources
 #endif
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2);
     }
 
@@ -146,7 +145,7 @@ internal static class Resources
 #endif
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), arg1, arg2, arg3);
     }
 
@@ -172,17 +171,8 @@ internal static class Resources
             return sb.ToString();
         }
 
-        string msg = ResourceManager.GetString(resourceKey, culture: formatProvider as CultureInfo)!;
+        string msg = ResourceManager.GetString(resourceKey)!;
         return string.Format(formatProvider, GetCompositeFormat(msg), args);
-    }
-
-    public static string GetEofString(IFormatProvider? formatProvider)
-    {
-        if (UsingResourceKeys())
-        {
-            return "(EOF)";
-        }
-        return GetResourceString(nameof(Parser_Eof), formatProvider);
     }
 
     public static string Grammar_TooNewFormat => GetResourceString(nameof(Grammar_TooNewFormat));
@@ -219,7 +209,7 @@ internal static class Resources
 
     public static string Parser_UnexpectedToken => GetResourceString(nameof(Parser_UnexpectedToken));
 
-    public static string Parser_Eof => GetResourceString(nameof(Parser_Eof));
+    public static string Parser_Eof => GetResourceString(nameof(Parser_Eof), "(EOF)");
 
     public static string Parser_UnparsableGrammar => GetResourceString(nameof(Parser_UnparsableGrammar));
 

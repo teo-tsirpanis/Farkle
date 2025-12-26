@@ -43,8 +43,8 @@ public readonly struct BuilderDiagnostic : IFormattable
     {
         string severity = Severity switch
         {
-            DiagnosticSeverity.Warning => Resources.GetResourceString(nameof(Resources.Warning), formatProvider),
-            DiagnosticSeverity.Error => Resources.GetResourceString(nameof(Resources.Error), formatProvider),
+            DiagnosticSeverity.Warning => Resources.Warning,
+            DiagnosticSeverity.Error => Resources.Error,
             _ => ""
         };
         string severityPadding = severity.Length > 0 ? " " : "";

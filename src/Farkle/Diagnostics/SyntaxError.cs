@@ -58,7 +58,7 @@ public sealed class SyntaxError : IFormattable
 
     private string ToString(IFormatProvider? formatProvider)
     {
-        string eofString = Resources.GetEofString(formatProvider);
+        string eofString = Resources.Parser_Eof;
         return Resources.Format(formatProvider,
             nameof(Resources.Parser_UnexpectedToken),
             ActualTokenName ?? eofString,
@@ -68,7 +68,7 @@ public sealed class SyntaxError : IFormattable
 #if NET8_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
-        string eofString = Resources.GetEofString(provider);
+        string eofString = Resources.Parser_Eof;
         return Resources.TryWrite(destination, provider,
             nameof(Resources.Parser_UnexpectedToken), out charsWritten,
             ActualTokenName ?? eofString,

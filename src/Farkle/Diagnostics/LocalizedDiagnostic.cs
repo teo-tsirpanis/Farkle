@@ -13,7 +13,7 @@ internal static class LocalizedDiagnostic
     // is a static string.
     {
         string IFormattable.ToString(string? format, IFormatProvider? formatProvider) =>
-            Resources.GetResourceString(resourceKey, formatProvider);
+            Resources.GetResourceString(resourceKey);
 
         public override string ToString() =>
             Resources.GetResourceString(resourceKey);

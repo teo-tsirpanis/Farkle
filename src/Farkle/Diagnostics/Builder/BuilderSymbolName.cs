@@ -37,10 +37,10 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
     {
         return kind switch
         {
-            TokenSymbolKind.Terminal => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Terminal), formatProvider, "terminal"),
-            TokenSymbolKind.Noise => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Noise), formatProvider, "noise"),
-            TokenSymbolKind.GroupStart => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupStart), formatProvider, "group start"),
-            TokenSymbolKind.GroupEnd => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupEnd), formatProvider, "group end"),
+            TokenSymbolKind.Terminal => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Terminal), "terminal"),
+            TokenSymbolKind.Noise => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_Noise), "noise"),
+            TokenSymbolKind.GroupStart => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupStart), "group start"),
+            TokenSymbolKind.GroupEnd => Resources.GetResourceString(nameof(Resources.Builder_SymbolKind_GroupEnd), "group end"),
             _ => throw new ArgumentOutOfRangeException(nameof(kind))
         };
     }

@@ -41,7 +41,7 @@ public sealed class LrConflict : IFormattable
 
     private string GetTerminalNameLocalized(IFormatProvider? provider) => TerminalOrEndOfInput.HasValue
         ? Grammar.GetTokenSymbol(TerminalOrEndOfInput).ToString()
-        : Resources.GetEofString(provider);
+        : Resources.Parser_Eof;
 
     private LrConflict() { }
 

@@ -31,7 +31,8 @@ type Logging =
         Logging.LogWarningLocalized(log, "FARKLE0019", "Precompiler_UnrecognizedErrorMode")
 
     static member ConflictReport log (file: string) =
-        Logging.LogMesssageLocalized(log, MessageImportance.High, "Precompiler_ConflictReport", file)
+        // Use error to make it visible in the build output.
+        Logging.LogErrorLocalized(log, "FARKLE0007", "Precompiler_ConflictReport", file)
 
     static member ConflictReportAdvice log =
         Logging.LogMesssageLocalized(log, MessageImportance.High, "Precompiler_ConflictReportAdvice")

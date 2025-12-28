@@ -22,6 +22,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj" />
     <Project Path="tests/Farkle.Tests/Farkle.Tests.fsproj" />
+    <Project Path="tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj" />
     <Project Path="tests/Farkle.Tools.Shared.Tests/Farkle.Tools.Shared.Tests.fsproj" />
   </Folder>
 </Solution>

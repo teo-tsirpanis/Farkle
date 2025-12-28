@@ -3,32 +3,31 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-using System;
-using System.IO;
+using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 using HtmlAgilityPack;
-using Xunit;
+using NUnit.Framework;
 
-namespace Farkle.Tools.MSBuild.Tests
+namespace Farkle.Tools.MSBuild.Tests;
+
+public static class HtmlChecker
 {
-    public static class HtmlChecker
+    public static void Check(Grammar grammar)
     {
-        public static void Check(Grammars.Grammar grammar)
+        var grammarName = grammar.GrammarInfo.Name;
+        var htmlPath = Path.ChangeExtension(Path.Join(AppContext.BaseDirectory, grammarName), ".html");
+        Assert.That(htmlPath, Does.Exist);
+
+        var doc = new HtmlDocument();
+        doc.Load(htmlPath);
+
+        using (Assert.EnterMultipleScope())
         {
-            var grammarName = grammar.Properties.Name;
-            var htmlPath = Path.ChangeExtension(Path.Join(AppContext.BaseDirectory, grammarName), ".html");
-            Assert.True(File.Exists(htmlPath), $"File '{htmlPath}' does not exist.");
-
-            var doc = new HtmlDocument();
-            doc.Load(htmlPath);
-
-            Assert.Empty(doc.ParseErrors);
-
-            Assert.All(grammar.Symbols.Nonterminals, x => AssertHasId($"n{x.Index}"));
-            Assert.All(grammar.Productions, x => AssertHasId($"prod{x.Index}"));
-            Assert.All(grammar.LALRStates, x => AssertHasId($"lalr{x.Index}"));
-            Assert.All(grammar.DFAStates, x => AssertHasId($"dfa{x.Index}"));
-
-            void AssertHasId(string id) => Assert.NotNull(doc.GetElementbyId(id));
+            Assert.That(doc.ParseErrors, Is.Empty);
+            Assert.That(grammar.Nonterminals, Has.All.Matches<Nonterminal>(x => doc.GetElementbyId($"n{x.Handle.Value}") is not null));
+            Assert.That(grammar.Productions, Has.All.Matches<Production>(x => doc.GetElementbyId($"prod{x.Handle.Value}") is not null));
+            Assert.That(grammar.LrStateMachine, Is.Not.Null.And.All.Matches<LrState>(x => doc.GetElementbyId($"lalr{x.StateIndex}") is not null));
+            Assert.That(grammar.DfaOnChar, Is.Not.Null.And.All.Matches<DfaState<char>>(x => doc.GetElementbyId($"dfa{x.StateIndex}") is not null));
         }
     }
 }

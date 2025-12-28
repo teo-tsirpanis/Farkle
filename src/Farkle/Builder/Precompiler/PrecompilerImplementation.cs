@@ -22,10 +22,17 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
 
     public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(Assembly assembly, IPrecompilerOptions? options)
     {
-        CancellationToken ct = options?.CancellationToken ?? CancellationToken.None;
         BuilderLogger log = CreateBuilderLogger(options?.Logger);
+        CancellationToken ct = options?.CancellationToken ?? CancellationToken.None;
+        return DiscoverAndPrecompile(assembly.GetTypes(), log, ct);
+    }
+
+    // Does not use COM# types in order to make it easier to call from tests.
+    // TODO: Update tests to use COM# through PrecompilerEntryPoints.GetPrecompilerInterface.
+    public static IEnumerable<PrecompiledGrammar> DiscoverAndPrecompile(Type[] types, BuilderLogger log, CancellationToken ct = default)
+    {
         CandidateGrammarDictionary candidateGrammars = new();
-        foreach (Type type in assembly.GetTypes())
+        foreach (Type type in types)
         {
             foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
             {
@@ -173,7 +180,7 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             return result;
         }
 
-        public IPrecompiledGrammar? Precompile(in BuilderLogger log, CancellationToken ct)
+        public PrecompiledGrammar? Precompile(in BuilderLogger log, CancellationToken ct)
         {
             if (_inputMethod is null)
             {
@@ -246,7 +253,7 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             key is null ? "<null>" : $"\"{key}\"";
     }
 
-    private sealed class PrecompiledGrammar : IPrecompiledGrammar
+    internal sealed class PrecompiledGrammar : IPrecompiledGrammar
     {
         public required string? Key { get; init; }
 

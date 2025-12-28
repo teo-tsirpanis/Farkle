@@ -2,11 +2,20 @@
 // SPDX-License-Identifier: MIT
 
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Farkle.Tools.Precompiler.Weaver;
 
 internal static class CecilExtensions
 {
+    public static void Clear(this MethodDebugInformation debugInformation)
+    {
+        debugInformation.Scope = null;
+        debugInformation.SequencePoints.Clear();
+        debugInformation.CustomDebugInformations.Clear();
+        debugInformation.StateMachineKickOffMethod = null;
+    }
+
     public static AssemblyNameReference GetAssemblyName(this IMetadataScope scope) =>
         scope as AssemblyNameReference ?? ((ModuleDefinition) scope).Assembly.Name;
 

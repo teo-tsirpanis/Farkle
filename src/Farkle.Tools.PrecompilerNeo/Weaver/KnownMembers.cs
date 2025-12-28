@@ -42,6 +42,12 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
 
     public TypeReference Void => module.TypeSystem.Void;
 
+    public TypeReference DebuggerStepThroughAttribute => field ??=
+        GetType("System.Diagnostics", "DebuggerStepThroughAttribute", CoreLib);
+
+    public MethodReference DebuggerStepThroughAttribute_Ctor => field ??=
+        DebuggerStepThroughAttribute.MakeMethodReference(true, ".ctor", Void, []);
+
     public TypeReference Func_1 => field ??=
         GetType("System", "Func`1", CoreLib, genericParameterCount: 1);
 

@@ -1,4 +1,4 @@
-// Copyright © Theodore Tsirpanis and Contributors.
+﻿// Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
 using System.Runtime.InteropServices;
@@ -106,6 +106,8 @@ public sealed class PrecompilerWeaver
             foreach (var x in grammar.OutputMethods)
             {
                 var outputMethod = (MethodDefinition)module.LookupToken(x.MetadataToken);
+                // Setting DebugInformation to null won't work, because accessing it again will recreate it.
+                outputMethod.DebugInformation.Clear();
                 var body = new MethodBody(outputMethod);
                 var il = body.GetILProcessor();
 
@@ -148,6 +150,7 @@ public sealed class PrecompilerWeaver
                 }
 
                 outputMethod.Body = body;
+                outputMethod.CustomAttributes.Add(new(_knownMembers.DebuggerStepThroughAttribute_Ctor));
                 outputMethod.CustomAttributes.Add(CreateGeneratedCodeCustomAttribute(_weaverAssemblyName));
 
                 void EmitLoadGrammarPreamble()

@@ -192,6 +192,10 @@ internal static class WrappedObjectExtensions
     [return: NotNullIfNotNull(nameof(obj))]
     public static T? AsComSharp<T>(this object? obj) where T : class
     {
+        if (obj is null)
+        {
+            return null;
+        }
         if (!obj.IsComSharp(out T? result))
         {
             throw new InvalidCastException();

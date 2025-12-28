@@ -1,9 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 
 namespace ComSharp;
 
@@ -90,8 +88,8 @@ partial class PrecompilerInterfaceWrappers
 
 partial class PrecompilerInterfaceWrappers
 {
-    private IEnumerable<ComSharpObject> IPrecompilerInterface_DiscoverAndPrecompile(object obj, Assembly assembly, ComSharpObject options) =>
-        CollectionMarshaller.Marshal(((IPrecompilerInterface)obj).DiscoverAndPrecompile(assembly, Unmarshal<IPrecompilerOptions>(options)), Marshal);
+    private IEnumerable<ComSharpObject> IPrecompilerInterface_DiscoverAndPrecompile(object obj, IReadOnlyCollection<Type> types, ComSharpObject options) =>
+        CollectionMarshaller.Marshal(((IPrecompilerInterface)obj).DiscoverAndPrecompile(types, Unmarshal<IPrecompilerOptions>(options)), Marshal);
 
     private ComSharpVtable IPrecompilerInterface_Vtable => field ??= [
         QueryInterface,
@@ -139,9 +137,9 @@ file sealed class IPrecompilerOptions_Wrapper(ComSharpWrappers wrappers, object 
 file sealed class IPrecompilerInterface_Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
     : WrappedObject(wrappers, sourceObject, vtable), IPrecompilerInterface
 {
-    private readonly Func<object, Assembly, ComSharpObject, IEnumerable<ComSharpObject>> f_DiscoverAndPrecompile = (Func<object, Assembly, ComSharpObject, IEnumerable<ComSharpObject>>)vtable[1];
+    private readonly Func<object, IReadOnlyCollection<Type>, ComSharpObject, IEnumerable<ComSharpObject>> f_DiscoverAndPrecompile = (Func<object, IReadOnlyCollection<Type>, ComSharpObject, IEnumerable<ComSharpObject>>)vtable[1];
 
-    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(Assembly assembly, IPrecompilerOptions? options) =>
-        CollectionMarshaller.Marshal(f_DiscoverAndPrecompile(SourceObject, assembly, Wrappers.Marshal(options)), Wrappers.Unmarshal<IPrecompiledGrammar>);
+    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options) =>
+        CollectionMarshaller.Marshal(f_DiscoverAndPrecompile(SourceObject, types, Wrappers.Marshal(options)), Wrappers.Unmarshal<IPrecompiledGrammar>);
 }
 #endregion

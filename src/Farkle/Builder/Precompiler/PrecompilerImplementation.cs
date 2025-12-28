@@ -20,17 +20,10 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
 {
     internal const string RequiresUnreferencedCodeMessage = "Methods that are searched by the precompiler might be removed.";
 
-    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(Assembly assembly, IPrecompilerOptions? options)
+    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options)
     {
         BuilderLogger log = CreateBuilderLogger(options?.Logger);
         CancellationToken ct = options?.CancellationToken ?? CancellationToken.None;
-        return DiscoverAndPrecompile(assembly.GetTypes(), log, ct);
-    }
-
-    // Does not use COM# types in order to make it easier to call from tests.
-    // TODO: Update tests to use COM# through PrecompilerEntryPoints.GetPrecompilerInterface.
-    public static IEnumerable<PrecompiledGrammar> DiscoverAndPrecompile(Type[] types, BuilderLogger log, CancellationToken ct = default)
-    {
         CandidateGrammarDictionary candidateGrammars = new();
         foreach (Type type in types)
         {

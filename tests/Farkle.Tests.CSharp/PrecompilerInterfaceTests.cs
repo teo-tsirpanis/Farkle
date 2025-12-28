@@ -2,27 +2,39 @@
 // SPDX-License-Identifier: MIT
 
 using System.Reflection;
+using ComSharp;
 using Farkle.Builder;
-using Farkle.Builder.Precompiler;
-using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
+using Farkle.Runtime;
+using DiagnosticSeverity = ComSharp.DiagnosticSeverity;
 using Grammar = Farkle.Grammars.Grammar;
 
 namespace Farkle.Tests.CSharp;
 
 internal class PrecompilerInterfaceTests
 {
+    private IPrecompilerInterface _precompilerInterface;
+
+    [SetUp]
+    public void Setup()
+    {
+        var intf = PrecompilerEntryPoints.GetPrecompilerInterface();
+        _precompilerInterface = PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intf).AsComSharp<IPrecompilerInterface>()!;
+        Assert.That(_precompilerInterface, Is.Not.Null);
+    }
+
     [TestCaseSource(nameof(DiscovererTestCases))]
     public void TestDiscoverer(Type type, string[] expectedDiagnostics, int expectedGrammars, int expectedOutputMethods)
     {
         List<string?> diagnostics = [];
-        BuilderLogger log = new() { LogLevel = DiagnosticSeverity.Warning };
+        BuilderLogger log = new() { LogLevel = Diagnostics.DiagnosticSeverity.Warning };
         log.OnDiagnostic += x =>
         {
             diagnostics.Add(x.Code);
         };
 
-        var grammars = PrecompilerImplementation.DiscoverAndPrecompile([type], log).ToList();
+        var options = new PrecompilerOptions(log);
+        var grammars = _precompilerInterface.DiscoverAndPrecompile([type], options).ToList();
         var inputMethods = grammars.Select(x => type.Module.ResolveMethod(x.InputMethodMetadataToken)).ToList();
         var outputMethods = grammars.SelectMany(x => x.OutputMethods).Select(x => type.Module.ResolveMethod(x.MetadataToken)).ToList();
 
@@ -247,5 +259,19 @@ internal class PrecompilerInterfaceTests
         public int ExpectedGrammars { get; set; } = -1;
 
         public int ExpectedOutputMethods { get; set; } = -1;
+    }
+
+    private sealed class PrecompilerOptions(BuilderLogger log) : IPrecompilerOptions, ILogger
+    {
+        public CancellationToken CancellationToken => CancellationToken.None;
+
+        public ILogger Logger => this;
+
+        public DiagnosticSeverity LogLevel => (DiagnosticSeverity)log.LogLevel;
+
+        public void Log(DiagnosticSeverity severity, object message, string? code)
+        {
+            log.Log((Diagnostics.DiagnosticSeverity)severity, message, code);
+        }
     }
 }

@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using Microsoft.CodeAnalysis;
-using System.Collections.Immutable;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace ComSharp;
@@ -63,7 +61,7 @@ internal partial interface IPrecompilerOptions
 [Guid("483E7343-4A3F-47E9-8722-43905CAE86D9")]
 internal partial interface IPrecompilerInterface
 {
-    IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(Assembly assembly, IPrecompilerOptions? options);
+    IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options);
 }
 
 [Embedded]

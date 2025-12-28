@@ -109,7 +109,7 @@ public sealed class PrecompilerHost
 
                 var options = new ComSharpPrecompilerOptions(conflictTracker, Options.CancellationToken);
 
-                foreach (var x in precompilerInterface.DiscoverAndPrecompile(userAssembly, options))
+                foreach (var x in precompilerInterface.DiscoverAndPrecompile(userAssembly.GetTypes(), options))
                 {
                     var grammar = new PrecompiledGrammar(x);
                     grammars.Add(grammar);

@@ -137,12 +137,21 @@ public sealed class PrecompilerWeaver
                             factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
                         }
                         EmitLoadGrammarPreamble();
-                        // TODO: If we are making a syntax checker, use MetadataUpdater.IsSupported if it exists,
-                        // to skip constructing the delegate.
-                        il.Emit(OpCodes.Ldnull);
+                        var loadDelegateTargetInstr = il.Create(OpCodes.Ldnull);
+                        var callFactoryMethodInstr = il.Create(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
+                        if (syntaxCheck && _knownMembers.MetadataUpdater_get_IsSupported is { } isHotReloadSupported)
+                        {
+                            // If Hot Reload is known to not be supported, we can skip creating the delegate for the
+                            // input method, which will allow trimming it away.
+                            il.Emit(OpCodes.Call, isHotReloadSupported);
+                            il.Emit(OpCodes.Brtrue_S, loadDelegateTargetInstr);
+                            il.Emit(OpCodes.Ldnull);
+                            il.Emit(OpCodes.Br_S, callFactoryMethodInstr);
+                        }
+                        il.Append(loadDelegateTargetInstr);
                         il.Emit(OpCodes.Ldftn, inputMethod);
                         il.Emit(OpCodes.Newobj, delegateFactoryType.GetDelegateConstructor());
-                        il.Emit(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
+                        il.Append(callFactoryMethodInstr);
                         il.Emit(OpCodes.Ret);
                         break;
                     default:

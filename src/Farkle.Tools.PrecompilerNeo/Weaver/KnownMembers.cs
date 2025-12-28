@@ -33,6 +33,25 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         return module.ImportReference(result);
     }
 
+    private static T? CheckIfExists<T>(T member, ref CheckedState checkedState) where T : MemberReference
+    {
+        switch (checkedState)
+        {
+            case CheckedState.NotChecked:
+                if (member.Resolve() is null)
+                {
+                    checkedState = CheckedState.DoesNotExist;
+                    return null;
+                }
+                checkedState = CheckedState.Exists;
+                return member;
+            case CheckedState.Exists:
+                return member;
+            default:
+                return null;
+        }
+    }
+
     public IMetadataScope CoreLib => field ??=
         FindAssembly(["System.Runtime", "netstandard", "mscorlib"]);
 
@@ -62,6 +81,18 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
 
     public TypeReference ValueType => field ??=
         GetType("System", "ValueType", CoreLib);
+
+    public IMetadataScope SystemRuntimeLoader => field ??=
+        FindAssembly(["System.Runtime.Loader"]);
+
+    public TypeReference MetadataUpdater => field ??=
+        GetType("System.Reflection.Metadata", "MetadataUpdater", SystemRuntimeLoader);
+
+    private CheckedState MetadataUpdater_get_IsSupported_checkedState;
+
+    public MethodReference? MetadataUpdater_get_IsSupported => CheckIfExists(field ??=
+        MetadataUpdater.MakeMethodReference(false, "get_IsSupported", module.TypeSystem.Boolean, []),
+        ref MetadataUpdater_get_IsSupported_checkedState);
 
     public IMetadataScope Farkle => field ??=
         FindAssembly(["Farkle"]);
@@ -135,5 +166,12 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
                 return result;
             }
         }
+    }
+
+    private enum CheckedState : byte
+    {
+        NotChecked,
+        Exists,
+        DoesNotExist,
     }
 }

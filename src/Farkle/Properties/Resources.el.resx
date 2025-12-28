@@ -202,10 +202,10 @@
     <value>Η μέθοδος εξόδου προμεταγλωττιστή {0} έχει κλειδί '{1}', αλλά δεν βρέθηκε αντίστοιχη μέθοδος εισόδου.</value>
   </data>
   <data name="Precompiler_MethodIncompatibleCharParserReturnType" xml:space="preserve">
-    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}) δεν είναι συμβατός με τον τύπο {2} (που επιστρέφεται από τον IGrammarBuilder&lt;T&gt; της μεθόδου εισόδου).</value>
+    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}.{2}) δεν είναι συμβατός με τον τύπο {3} (που επιστρέφεται από τον IGrammarBuilder&lt;T&gt; της μεθόδου εισόδου).</value>
   </data>
   <data name="Precompiler_MethodSyntaxCheckerNotClass" xml:space="preserve">
-    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}) πρέπει να είναι κλάση, επειδή η μέθοδος επιστρέφει έναν συντακτικό ελεγκτή.</value>
+    <value>Ο τύπος {0} (που επιστρέφεται από τον CharParser&lt;T&gt; της μεθόδου {1}.{2}) πρέπει να είναι κλάση, επειδή η μέθοδος επιστρέφει έναν συντακτικό ελεγκτή.</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>Προειδοποίηση</value>

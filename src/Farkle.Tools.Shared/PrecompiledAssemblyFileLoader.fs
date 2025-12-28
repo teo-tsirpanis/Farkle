@@ -33,7 +33,7 @@ with
 module PrecompiledAssemblyFileLoader =
 
     [<Literal>]
-    let private PrecompiledGrammarAttributeNamespace = "PrecompiledGrammarAttribute"
+    let private PrecompiledGrammarAttributeNamespace = "Farkle.Runtime"
 
     [<Literal>]
     let private PrecompiledGrammarAttributeName = "PrecompiledGrammarAttribute"

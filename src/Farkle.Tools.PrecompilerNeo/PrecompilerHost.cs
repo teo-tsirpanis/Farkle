@@ -10,7 +10,7 @@ using Microsoft.Build.Utilities;
 namespace Farkle.Tools.Precompiler;
 
 /// <summary>
-/// Contains logic to load an asssembly into an isolated context, find
+/// Contains logic to load an assembly into an isolated context, find
 /// an implementation of the precompiler interface, and invoke it.
 /// </summary>
 public sealed class PrecompilerHost
@@ -34,7 +34,7 @@ public sealed class PrecompilerHost
             GC.WaitForPendingFinalizers();
             n--;
         }
-        if (weakReference.IsAlive)
+        if (!weakReference.IsAlive)
         {
             Log?.LogMessage("Assembly unloaded after {0} garbage collections.", NumberOfTries - n);
         }
@@ -114,7 +114,7 @@ public sealed class PrecompilerHost
                     var grammar = new PrecompiledGrammar(x);
                     grammars.Add(grammar);
 
-                    if (conflictTracker?.ConflictCount is { } conflictCount && conflictCount != 0)
+                    if (doEmitReport && conflictTracker?.ConflictCount is { } conflictCount && conflictCount != 0)
                     {
                         if (!doEmitConflictErrors)
                         {

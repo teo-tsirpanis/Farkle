@@ -46,11 +46,11 @@ internal static class BuilderLoggerExtensions
     public static void InvalidPrecompilerOutputAttributeUsage<TArg>(in this BuilderLogger logger, string resourceKey, TArg arg) =>
         logger.Error("FARKLE0011", LocalizedDiagnostic.Create(resourceKey, arg));
 
-    public static void InvalidPrecompilerOutputMethodParserReturnType(in this BuilderLogger logger, MethodInfo outputMethod, Type parserType, Type builderType) =>
-        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodIncompatibleCharParserReturnType), outputMethod, parserType, builderType));
+    public static void InvalidPrecompilerOutputMethodParserReturnType(in this BuilderLogger logger, Type parserType, MethodInfo outputMethod, Type builderType) =>
+        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodIncompatibleCharParserReturnType), parserType, outputMethod.DeclaringType?.FullName ?? "<global>", outputMethod.Name, builderType));
 
-    public static void SyntaxCheckerPrecompilerOutputMethodMustBeClass(in this BuilderLogger logger, Type parserType) =>
-        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodSyntaxCheckerNotClass), parserType));
+    public static void SyntaxCheckerPrecompilerOutputMethodMustBeClass(in this BuilderLogger logger, Type parserType, MethodInfo outputMethod) =>
+        logger.Error("FARKLE0012", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_MethodSyntaxCheckerNotClass), parserType, outputMethod.DeclaringType?.FullName ?? "<global>", outputMethod.Name));
 
     public static void DuplicatePrecompilerInputMethodKey(in this BuilderLogger logger, Type containingType, string key) =>
         logger.Error("FARKLE0013", LocalizedDiagnostic.Create(nameof(Resources.Precompiler_DuplicateInputMethodKey), containingType, key));

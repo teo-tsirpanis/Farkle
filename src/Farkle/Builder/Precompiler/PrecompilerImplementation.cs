@@ -167,11 +167,11 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
                     var parserReturnType = x.Method.ReturnType.GetGenericArguments()[0];
                     if (outputType == OutputType.CharParserSyntaxChecker)
                     {
-                        log.SyntaxCheckerPrecompilerOutputMethodMustBeClass(parserReturnType);
+                        log.SyntaxCheckerPrecompilerOutputMethodMustBeClass(parserReturnType, x.Method);
                     }
                     else
                     {
-                        log.InvalidPrecompilerOutputMethodParserReturnType(x.Method, parserReturnType, _grammarBuilderReturnType!);
+                        log.InvalidPrecompilerOutputMethodParserReturnType(parserReturnType, x.Method, _grammarBuilderReturnType!);
                     }
                     continue;
                 }
@@ -221,8 +221,14 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
         }
 
         [UnconditionalSuppressMessage("Trimming", "IL2070:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.", Justification = "We are searching for a user-provided interface type that should be available.")]
-        private static Type[] GetInterfacesWithSameMetadataDefinitionAs(Type type, Type interfaceType) =>
-            type.FindInterfaces(static (t, obj) => t.HasSameMetadataDefinitionAs((MemberInfo)obj!), interfaceType);
+        private static Type[] GetInterfacesWithSameMetadataDefinitionAs(Type type, Type interfaceType)
+        {
+            if (type.HasSameMetadataDefinitionAs(interfaceType))
+            {
+                return [type];
+            }
+            return type.FindInterfaces(static (t, obj) => t.HasSameMetadataDefinitionAs((MemberInfo)obj!), interfaceType);
+        }
 
         private static bool IsEligibleOutputMethodReturnType(Type type) =>
             type.IsAssignableTo(typeof(Grammar))

@@ -28,7 +28,7 @@ public sealed class PrecompilerWeaver
         _knownMembers = new(references, module);
     }
 
-    private static TypeReference GetOrCreateRvaFieldSizeType(TypeDefinition baseType, int size)
+    private TypeReference GetOrCreateRvaFieldSizeType(TypeDefinition baseType, int size)
     {
         var module = baseType.Module;
         switch (size)
@@ -40,15 +40,15 @@ public sealed class PrecompilerWeaver
         }
 
         string name = $"{MangledNamePrefix}StaticArrayInitTypeSize=${size}";
-        TypeDefinition? existingType = baseType.NestedTypes.First(x => x.Name == name);
+        TypeDefinition? existingType = baseType.NestedTypes.FirstOrDefault(x => x.Name == name);
         if (existingType is not null)
         {
             return existingType;
         }
-        var type = new TypeDefinition("", name, TypeAttributes.NestedPrivate)
+        var type = new TypeDefinition("", name, TypeAttributes.NestedPrivate, _knownMembers.ValueType)
         {
-            IsValueType = true,
-            ClassSize = size
+            ClassSize = size,
+            PackingSize = 1,
         };
         baseType.NestedTypes.Add(type);
         return type;
@@ -118,7 +118,7 @@ public sealed class PrecompilerWeaver
                         break;
                     case OutputType.CharParser or OutputType.CharParserSyntaxChecker:
                         bool syntaxCheck = x.Type == OutputType.CharParserSyntaxChecker;
-                        var parserOutputType = outputMethod.ReturnType.GenericParameters[0];
+                        var parserOutputType = ((GenericInstanceType)outputMethod.ReturnType).GenericArguments[0];
                         TypeReference delegateFactoryType;
                         MethodReference factoryMethodRef;
                         if (!syntaxCheck)
@@ -127,18 +127,18 @@ public sealed class PrecompilerWeaver
                             // to pass to Farkle.
                             var grammarBuilderType = _knownMembers.IGrammarBuilder_1.MakeGenericInstanceType(parserOutputType);
                             delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(grammarBuilderType);
-                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
+                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParser;
                         }
                         else
                         {
                             delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(_knownMembers.IGrammarBuilder);
-                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParser;
+                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
                         }
                         EmitLoadGrammarPreamble();
                         // TODO: If we are making a syntax checker, use MetadataUpdater.IsSupported if it exists,
                         // to skip constructing the delegate.
-                        il.Emit(OpCodes.Ldftn, inputMethod);
                         il.Emit(OpCodes.Ldnull);
+                        il.Emit(OpCodes.Ldftn, inputMethod);
                         il.Emit(OpCodes.Newobj, delegateFactoryType.GetDelegateConstructor());
                         il.Emit(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
                         il.Emit(OpCodes.Ret);

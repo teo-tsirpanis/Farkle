@@ -202,10 +202,10 @@
     <value>Precompiler output method {0} has key '{1}', but no corresponding input method was found in the same type.</value>
   </data>
   <data name="Precompiler_MethodIncompatibleCharParserReturnType" xml:space="preserve">
-    <value>Type {0} (returned by output method {1}'s CharParser&lt;T&gt;) is not compatible with type {2} (returned by the input method's IGrammarBuilder&lt;T&gt;).</value>
+    <value>Type {0} (returned by output method {1}.{2}'s CharParser&lt;T&gt;) is not compatible with type {3} (returned by the input method's IGrammarBuilder&lt;T&gt;).</value>
   </data>
   <data name="Precompiler_MethodSyntaxCheckerNotClass" xml:space="preserve">
-    <value>Type {0} (returned by output method {1}'s CharParser&lt;T&gt;) must be a class, because the method returns a syntax checker.</value>
+    <value>Type {0} (returned by output method {1}.{2}'s CharParser&lt;T&gt;) must be a class, because the method returns a syntax checker.</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>

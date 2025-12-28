@@ -1,4 +1,4 @@
-# FARKLE0012: Invalid parser return type of precompiler output method
+# FARKLE0012: Incompatible parser return type of precompiler output method
 
 This error is emitted when a method marked with @"Farkle.Builder.PrecompilerOutputAttribute" returns a @"Farkle.CharParser`1" whose type parameter is not allowed, as determined by the options set in the attribute, and the return type of the corresponding [input method](xref:Farkle.Builder.PrecompilerInputAttribute).
 

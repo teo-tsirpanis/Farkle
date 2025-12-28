@@ -38,9 +38,6 @@ internal sealed class ComSharpLoggerAdapter : ComSharp.ILogger
             case DiagnosticSeverity.Warning:
                 _log.LogWarning(subcategory: null, code, null, helpLink, null, 0, 0, 0, 0, messageString);
                 return;
-            case DiagnosticSeverity.Information:
-                _log.LogError(subcategory: null, code, null, helpLink, null, 0, 0, 0, 0, messageString);
-                break;
         }
         MessageImportance importance = severity switch
         {
@@ -48,6 +45,6 @@ internal sealed class ComSharpLoggerAdapter : ComSharp.ILogger
             DiagnosticSeverity.Debug => MessageImportance.Normal,
             _ => MessageImportance.Low,
         };
-        _log.LogMessage(subcategory: null, code, null, helpLink, 0, 0, 0, 0, importance, messageString);
+        _log.LogMessage(subcategory: null, code, null, null, 0, 0, 0, 0, importance, messageString);
     }
 }

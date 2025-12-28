@@ -13,10 +13,7 @@ internal static class CecilExtensions
     public static MethodReference GetDelegateConstructor(this TypeReference @delegate)
     {
         var typeSystem = @delegate.Module.TypeSystem;
-        var ctor = new MethodReference(".ctor", typeSystem.Void, @delegate);
-        ctor.Parameters.Add(new(typeSystem.IntPtr));
-        ctor.Parameters.Add(new(typeSystem.Object));
-        return ctor;
+        return @delegate.MakeMethodReference(true, ".ctor", typeSystem.Void, [typeSystem.Object, typeSystem.IntPtr]);
     }
 
     public static GenericInstanceMethod MakeGenericMethod(this MethodReference method, ReadOnlySpan<TypeReference> typeArguments)

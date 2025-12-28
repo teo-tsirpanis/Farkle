@@ -234,6 +234,19 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             type.IsAssignableTo(typeof(Grammar))
             || type.HasSameMetadataDefinitionAs(typeof(CharParser<>));
 
+        /// <summary>
+        /// Returns whether <paramref name="type"/> can be substituted for <paramref name="targetType"/>
+        /// in a covariant generic parameter.
+        /// </summary>
+        private static bool AreTypesCompatible(Type type, Type targetType)
+        {
+            if (type.IsValueType)
+            {
+                return type == targetType;
+            }
+            return targetType.IsAssignableFrom(type);
+        }
+
         private bool IsCompatibleOutputMethodReturnType(Type type, bool isForcedSyntaxCheck, out OutputType outputType)
         {
             if (type == typeof(Grammar))
@@ -252,7 +265,7 @@ internal sealed class PrecompilerImplementation : IPrecompilerInterface
             outputType = OutputType.CharParser;
             // We could check for nullability here, but we don't have enough information on whether
             // nullable warnings are enabled or not. Better have an analyzer do it.
-            return _grammarBuilderReturnType.IsAssignableTo(parserReturnType);
+            return AreTypesCompatible(_grammarBuilderReturnType, parserReturnType);
         }
 
         private static string FormatKey(string? key) =>

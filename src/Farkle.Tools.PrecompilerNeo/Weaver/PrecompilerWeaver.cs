@@ -118,28 +118,40 @@ public sealed class PrecompilerWeaver
                         il.Emit(OpCodes.Call, _knownMembers.PrecompilerEntryPoints_LoadGrammar);
                         il.Emit(OpCodes.Ret);
                         break;
-                    case OutputType.CharParser or OutputType.CharParserSyntaxChecker:
-                        bool syntaxCheck = x.Type == OutputType.CharParserSyntaxChecker;
+                    case OutputType.CharParser:
                         var parserOutputType = ((GenericInstanceType)outputMethod.ReturnType).GenericArguments[0];
-                        TypeReference delegateFactoryType;
-                        MethodReference factoryMethodRef;
-                        if (!syntaxCheck)
+                        var inputMethodOutputType = ((GenericInstanceType)inputMethod.ReturnType).GenericArguments[0];
+                        // The output method returns CharParser<T>. We want to construct a Func<IGrammarBuilder<T>>
+                        // to pass to Farkle.
+                        var grammarBuilderType = _knownMembers.IGrammarBuilder_1.MakeGenericInstanceType(inputMethodOutputType);
+                        var delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(grammarBuilderType);
+                        var factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParser;
+                        EmitLoadGrammarPreamble();
+                        il.Emit(OpCodes.Ldnull);
+                        il.Emit(OpCodes.Ldftn, inputMethod);
+                        il.Emit(OpCodes.Newobj, delegateFactoryType.GetDelegateConstructor());
+                        // We support implicit covariant conversions from the grammar builder's output type to the
+                        // parser's output type. The check is being made at method AreTypesCompatible in
+                        // PrecompilerImplementation.cs, but it is not certain that it is 100% correct. So, if the
+                        // types are not the same, add an explicit cast as a precaution. If the conversion is valid,
+                        // it's likely the cast will be optimized away.
+                        if (!parserOutputType.Equals(inputMethodOutputType))
                         {
-                            // The output method returns CharParser<T>. We want to construct a Func<IGrammarBuilder<T>>
-                            // to pass to Farkle.
-                            var grammarBuilderType = _knownMembers.IGrammarBuilder_1.MakeGenericInstanceType(parserOutputType);
-                            delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(grammarBuilderType);
-                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParser;
+                            var outputGrammarBuilderType = _knownMembers.IGrammarBuilder_1.MakeGenericInstanceType(parserOutputType);
+                            var outputDelegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(outputGrammarBuilderType);
+                            il.Emit(OpCodes.Castclass, outputDelegateFactoryType);
                         }
-                        else
-                        {
-                            delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(_knownMembers.IGrammarBuilder);
-                            factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
-                        }
+                        il.Emit(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
+                        il.Emit(OpCodes.Ret);
+                        break;
+                    case OutputType.CharParserSyntaxChecker:
+                        parserOutputType = ((GenericInstanceType) outputMethod.ReturnType).GenericArguments[0];
+                        delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(_knownMembers.IGrammarBuilder);
+                        factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
                         EmitLoadGrammarPreamble();
                         var loadDelegateTargetInstr = il.Create(OpCodes.Ldnull);
                         var callFactoryMethodInstr = il.Create(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
-                        if (syntaxCheck && _knownMembers.MetadataUpdater_get_IsSupported is { } isHotReloadSupported)
+                        if (_knownMembers.MetadataUpdater_get_IsSupported is { } isHotReloadSupported)
                         {
                             // If Hot Reload is known to not be supported, we can skip creating the delegate for the
                             // input method, which will allow trimming it away.

@@ -11,6 +11,9 @@ type FarklePrecompilerTask() =
     // Inherit from MSBuildWeaver to get identical task properties.
     inherit MSBuildWeaver()
 
+    [<Required>]
+    member val RuntimeDependencies: ITaskItem[] = Array.Empty() with get, set
+
     member val SkipConflictReport = false with get, set
 
     member val ErrorMode = "" with get, set

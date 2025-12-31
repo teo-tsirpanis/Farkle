@@ -12,7 +12,7 @@ public sealed class PrecompilerOptions
 
     public TaskLoggingHelper? Logger { get; set; }
 
-    public Dictionary<string, string> AssemblyReferences { get; } = [];
+    public IReadOnlyCollection<string> RuntimeDependencies { get; set; } = [];
 
     public ConflictReportMode ConflictReportMode { get; set; }
 

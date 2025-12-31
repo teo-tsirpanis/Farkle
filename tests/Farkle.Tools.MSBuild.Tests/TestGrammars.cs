@@ -11,6 +11,9 @@ public static class TestGrammars
     [PrecompilerInput]
     public static IGrammarBuilder<double> GrammarBuilderFactory()
     {
+        // Force resolving a dependency from a package with ref assemblies during precompilation.
+        GC.KeepAlive(Microsoft.Data.SqlClient.SqlClientFactory.Instance);
+
         var expr = Nonterminal.Create<double>("Expression");
         expr.SetProductions(
             Terminals.UnsignedInteger<double>("Integer").AsProduction(),

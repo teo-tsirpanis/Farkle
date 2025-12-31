@@ -92,7 +92,7 @@ public sealed class PrecompilerHost
     [MethodImpl(MethodImplOptions.NoInlining)]
     private List<PrecompiledGrammar> PrecompileAssemblyFromPathImpl(string assemblyPath, out WeakReference alcWeakRef)
     {
-        var alc = new PrecompilerLoadContext(Options.AssemblyReferences, Log);
+        var alc = new PrecompilerLoadContext(Options.RuntimeDependencies, Log);
         alcWeakRef = new(alc);
         try
         {

@@ -29,6 +29,7 @@
     <ProjectReference Include="../../src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" ReferenceOutputAssembly="false" />
     <PackageReference Include="Sigourney.Build" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />

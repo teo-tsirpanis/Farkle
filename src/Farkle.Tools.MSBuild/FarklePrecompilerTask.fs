@@ -39,16 +39,13 @@ type FarklePrecompilerTask() as this =
         options.CancellationToken <- cts.Token
         options.ConflictReportMode <- errorMode
         options.Logger <- this.Log
+        options.RuntimeDependencies <- this.RuntimeDependencies |> Array.map (fun x -> x.ItemSpec)
         options.add_OnGrammarConflict <| Action<_> fCreateConflictReport
 
-        this.Log.LogMessage(MessageImportance.Low, "References:")
-        this.AssemblyReferences
-        |> Seq.filter (fun x -> not x.IsReferenceAssembly)
-        |> Seq.iter (fun x ->
-            this.Log.LogMessage(MessageImportance.Low, "{0}: '{1}'", x.AssemblyName.FullName, x.FileName)
-            options.AssemblyReferences.Add(x.AssemblyName.FullName, x.FileName))
-
         PrecompilerHost.PrecompileAssemblyFromPath(assemblyPath, options)
+
+    [<Required>]
+    member val RuntimeDependencies: ITaskItem[] = Array.Empty() with get, set
 
     member val SkipConflictReport = false with get, set
 

@@ -11,12 +11,12 @@ internal sealed class PrecompilerLoadContext : AssemblyLoadContext
 {
     private readonly TaskLoggingHelper? _log;
 
-    private readonly IReadOnlyDictionary<string, string> _references;
+    private readonly IReadOnlyCollection<string> _runtimeDependencies;
 
-    public PrecompilerLoadContext(IReadOnlyDictionary<string, string> references, TaskLoggingHelper? log) :
-        base($"Farkle.Tools.Precompiler.{nameof(PrecompilerLoadContext)}", isCollectible: true)
+    public PrecompilerLoadContext(IReadOnlyCollection<string> runtimeDependencies, TaskLoggingHelper? log) :
+        base("Farkle.Tools.Precompiler.PrecompilerLoadContext", isCollectible: true)
     {
-        _references = references;
+        _runtimeDependencies = runtimeDependencies;
         _log = log;
     }
 
@@ -26,7 +26,8 @@ internal sealed class PrecompilerLoadContext : AssemblyLoadContext
         {
             case "mscorlib" or "System.Private.CoreLib" or "System.Runtime" or "netstandard": return null;
         }
-        if (_references.TryGetValue(assemblyName.FullName, out string? path))
+        if (_runtimeDependencies.FirstOrDefault(path =>
+                Path.GetFileNameWithoutExtension(path.AsSpan()).Equals(assemblyName.Name, StringComparison.OrdinalIgnoreCase)) is { } path)
         {
             _log?.LogMessage("Loading assembly from '{0}'", path);
             return LoadFromAssemblyPath(path);

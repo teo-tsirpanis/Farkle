@@ -93,7 +93,7 @@ public sealed class PrecompilerHost
     private List<PrecompiledGrammar> PrecompileAssemblyFromPathImpl(string assemblyPath, out WeakReference alcWeakRef)
     {
         var alc = new PrecompilerLoadContext(Options.RuntimeDependencies, Log);
-        alcWeakRef = new(alc);
+        alcWeakRef = new(alc, trackResurrection: true);
         try
         {
             var userAssembly = alc.LoadFromAssemblyPathInMemory(assemblyPath);

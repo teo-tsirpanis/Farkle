@@ -1,4 +1,4 @@
-﻿// Copyright © Theodore Tsirpanis and Contributors.
+// Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
 using System.Reflection;
@@ -39,7 +39,7 @@ public class UnloadabilityTests
         static Grammar LoadAssemblyAndGetGrammar(out WeakReference alcWeakRef)
         {
             var alc = new TestAssemblyLoadContext();
-            alcWeakRef = new WeakReference(alc);
+            alcWeakRef = new WeakReference(alc, trackResurrection: true);
             var asm = alc.LoadFromAssemblyPathInMemory(typeof(UnloadabilityTests).Assembly.Location);
             var type = asm.GetType(typeof(TestGrammars).FullName!, throwOnError: true)!;
             var method = type.GetMethod(nameof(TestGrammars.GrammarFactory))!;

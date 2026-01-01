@@ -14,7 +14,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" />
-    <Project Path="src/Farkle.Tools.PrecompilerNeo/Farkle.Tools.PrecompilerNeo.csproj" />
+    <Project Path="src/Farkle.Tools.Precompiler/Farkle.Tools.Precompiler.csproj" />
     <Project Path="src/Farkle.Tools.Shared/Farkle.Tools.Shared.fsproj" />
     <Project Path="src/Farkle.Tools/Farkle.Tools.fsproj" />
     <Project Path="src/Farkle/Farkle.csproj" />

@@ -36,7 +36,7 @@ At this moment, the precompiler has not yet been ported to Farkle 7, so this pac
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <ProjectReference Include="..\Farkle\Farkle.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
-    <ProjectReference Include="..\Farkle.Tools.PrecompilerNeo\Farkle.Tools.PrecompilerNeo.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.csproj" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" PrivateAssets="all" />

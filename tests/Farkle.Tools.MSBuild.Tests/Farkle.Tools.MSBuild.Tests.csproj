@@ -1,27 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../../src/Farkle.Tools.MSBuild/build/Farkle.Tools.MSBuild.props" />
-  <Choose>
-    <When Condition="$(MSBuildRuntimeType) == Core OR ('$(MSBuildVersion)' != '' AND $([System.Version]::Parse($(MSBuildVersion)).Major) &gt;= 18)">
-      <PropertyGroup>
-        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../../src/Farkle.Tools.MSBuild/bin/$(Configuration)/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
-      </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../../src/Farkle.Tools.MSBuild/bin/$(Configuration)/netstandard2.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
-
+  <Import Project="../../eng/integration-test-setup.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
-    <!-- Load the precompiler tasks in a separate (ephemeral) process, to avoid locking the assembly
-    files during development. -->
-    <FarklePrecompilerTaskFactory>TaskHostFactory</FarklePrecompilerTaskFactory>
   </PropertyGroup>
 
   <ItemGroup>

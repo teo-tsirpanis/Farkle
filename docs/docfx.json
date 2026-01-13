@@ -6,7 +6,7 @@
                 {
                     "src": "../src",
                     "files": [
-                        "**/*.csproj"
+                        "Farkle/Farkle.csproj"
                     ]
                 }
             ],

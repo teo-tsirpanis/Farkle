@@ -5,7 +5,7 @@
     <FakeVersion>6.1.4</FakeVersion>
     <!-- The version of out-of-band BCL packages that are referenced by shipping library projects.
     Keep in line with the earliest supported .NET version. -->
-    <SystemOobVersion>8.0.0</SystemOobVersion>
+    <SystemOobVersion>10.0.2</SystemOobVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Argu" Version="6.2.5" />

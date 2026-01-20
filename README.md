@@ -7,14 +7,13 @@
 
 # Farkle
 
-<!--"Modern" is a marketing catchphrase, but keep in mind that FsLexYacc is definitely not "modern"-->
-Farkle is a modern and easy-to-use parser library for F# and C#, that creates [LALR parsers][lalr] from composable [parser combinator][combinator]-like objects.
+Farkle is a modern and easy-to-use parser library for F# and C#, that creates [LALR parsers][lalr], using an API that resembles [parser combinators][combinator].
 
 ## Documentation
 
-* [Quick Start: Creating a calculator](https://teo-tsirpanis.github.io/Farkle/quickstart.html)
-* [Using Farkle with C#](https://teo-tsirpanis.github.io/Farkle/csharp.html)
-* [API Reference](https://teo-tsirpanis.github.io/Farkle/reference/index.html)
+* [Quick Start: Creating a calculator](https://farkle.dev/quickstart.html)
+* [Migrating to Farkle 7](https://farkle.dev/migration/60-70.html)
+* [API Reference](https://farkle.dev/api/index.html)
 
 ## Maintainer(s)
 

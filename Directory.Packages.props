@@ -5,7 +5,7 @@
     <FakeVersion>6.1.4</FakeVersion>
     <!-- The version of out-of-band BCL packages that are referenced by shipping library projects.
     Keep in line with the earliest supported .NET version. -->
-    <SystemOobVersion>8.0.0</SystemOobVersion>
+    <SystemOobVersion>10.0.2</SystemOobVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Argu" Version="6.2.5" />
@@ -28,7 +28,7 @@
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="$(SystemOobVersion)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.4.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.1.0" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.113" />

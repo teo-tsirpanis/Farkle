@@ -40,7 +40,7 @@
     <PackageVersion Include="Scriban" Version="6.5.2" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.MSBuild" Version="1.6.0" />
-    <PackageVersion Include="Serilog" Version="4.3.0" />
+    <PackageVersion Include="Serilog" Version="4.3.1" />
     <PackageVersion Include="Sigourney.Build" Version="0.4.2" />
     <PackageVersion Include="Sigourney" Version="0.4.2" />
     <PackageVersion Include="System.Buffers" Version="4.6.0" />

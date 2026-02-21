@@ -300,12 +300,12 @@ public static class GrammarBuilderExtensions
     }
 
     /// <summary>
-    /// Provides compatibility with the precompiler API of Farkle 6.
+    /// Obsolete. Upgrade your code to use the new precompiler APIs. See
+    /// <see href="https://farkle.dev/migration/60-70.html?tabs=csharp#changes-to-the-precompiler"/> for further guidance.
     /// </summary>
-    /// <remarks>
-    /// When the precompiler is implemented for Farkle 7, this method will become obsolete and
-    /// migration guidance will be provided.
-    /// </remarks>
+    /// <seealso cref="PrecompilerInputAttribute"/>
+    /// <seealso cref="PrecompilerOutputAttribute"/>
+    [Obsolete("Upgrade your code to use the new precompiler API. See https://farkle.dev/migration/60-70.html?tabs=csharp#changes-to-the-precompiler for further guidance.", error: true)]
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
     public static IGrammarBuilder MarkForPrecompile(this IGrammarBuilder builder, Assembly? asm = null)
     {
@@ -315,6 +315,7 @@ public static class GrammarBuilderExtensions
     }
 
     /// <inheritdoc cref="MarkForPrecompile(IGrammarBuilder, Assembly?)"/>
+    [Obsolete("Upgrade your code to use the new precompiler API. See https://farkle.dev/migration/60-70.html?tabs=csharp#changes-to-the-precompiler for further guidance.", error: true)]
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
     public static IGrammarBuilder<T> MarkForPrecompile<T>(this IGrammarBuilder<T> builder, Assembly? asm = null)
     {

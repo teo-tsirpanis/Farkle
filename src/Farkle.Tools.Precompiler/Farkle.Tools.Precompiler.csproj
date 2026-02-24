@@ -4,6 +4,8 @@
     <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- This assembly runs from inside an MSBuild task, and it's not possible at the moment to instrument it for code coverage. -->
+    <ExcludeFromCodeCoverage>true</ExcludeFromCodeCoverage>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />

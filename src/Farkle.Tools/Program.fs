@@ -47,7 +47,7 @@ For internal use only."
 [<EntryPoint>]
 let main argv =
     // The legacy precompiler worker was a special case; it did not use
-    // the regular logging mechanism and reports catastrophic exceptions
+    // the regular logging mechanism and reported catastrophic exceptions
     // to stderr. That's why it is given its time to shine at the very
     // beginning, even outside Argu.
     if Array.length argv >= 1 && argv[0] = "precompiler-worker" then

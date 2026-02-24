@@ -3,8 +3,6 @@
 
 // This file contains core types for COM# interop.
 
-// This file contains core types for the COM# interop system.
-
 global using ComSharpVtable = System.Collections.Generic.IReadOnlyList<System.Delegate>;
 global using ComSharpObject = (object? SourceObject, System.Collections.Generic.IReadOnlyList<System.Delegate> Vtable);
 
@@ -31,7 +29,7 @@ internal abstract class ComSharpWrappers
         {
             return null;
         }
-        if (!type.IsAssignableFrom(source.GetType()))
+        if (!type.IsInstanceOfType(source))
         {
             return null;
         }

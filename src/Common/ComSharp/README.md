@@ -1,4 +1,4 @@
-This directory contains the precompiler's interface definition, as well as COM interop code.
+This directory contains the precompiler's interface definition, as well as COM# interop code.
 
 Each project that wants to interoperate with COM# must directly include these files by itself. In order to enforce this, all types defined in these files have either `file` visibility, or `internal` visibility with `EmbeddedAttribute` applied.
 

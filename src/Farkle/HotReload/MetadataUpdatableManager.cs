@@ -63,7 +63,7 @@ internal static class MetadataUpdatableManager
             {
                 foreach (var type in types)
                 {
-                    reloaded?.TryAdd(type, null);
+                    reloaded.TryAdd(type, null);
                 }
             }
         }

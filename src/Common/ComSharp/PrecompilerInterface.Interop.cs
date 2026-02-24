@@ -46,10 +46,10 @@ partial class PrecompilerInterfaceWrappers
 #region COM# callable wrappers
 partial class PrecompilerInterfaceWrappers
 {
-    private string? IPrecompiledGrammar_get_Key(object obj) => ((IPrecompiledGrammar)obj).Key;
-    private byte[]? IPrecompiledGrammar_get_GrammarFile(object obj) => ((IPrecompiledGrammar)obj).GrammarFile;
-    private int IPrecompiledGrammar_get_InputMethodMetadataToken(object obj) => ((IPrecompiledGrammar)obj).InputMethodMetadataToken;
-    private IReadOnlyList<(int, int)> IPrecompiledGrammar_get_OutputMethods(object obj) =>
+    private static string? IPrecompiledGrammar_get_Key(object obj) => ((IPrecompiledGrammar)obj).Key;
+    private static byte[]? IPrecompiledGrammar_get_GrammarFile(object obj) => ((IPrecompiledGrammar)obj).GrammarFile;
+    private static int IPrecompiledGrammar_get_InputMethodMetadataToken(object obj) => ((IPrecompiledGrammar)obj).InputMethodMetadataToken;
+    private static IReadOnlyList<(int, int)> IPrecompiledGrammar_get_OutputMethods(object obj) =>
         CollectionMarshaller.Marshal(((IPrecompiledGrammar)obj).OutputMethods, x => (x.MetadataToken, (int)x.Type));
 
     private ComSharpVtable IPrecompiledGrammar_Vtable => field ??= [
@@ -63,7 +63,7 @@ partial class PrecompilerInterfaceWrappers
 
 partial class PrecompilerInterfaceWrappers
 {
-    private int ILogger_get_LogLevel(object obj) => (int)((ILogger)obj).LogLevel;
+    private static int ILogger_get_LogLevel(object obj) => (int)((ILogger)obj).LogLevel;
     private void ILogger_Log(object obj, int severity, object message, string code)
         => ((ILogger)obj).Log((DiagnosticSeverity)severity, message, code);
 
@@ -76,7 +76,7 @@ partial class PrecompilerInterfaceWrappers
 
 partial class PrecompilerInterfaceWrappers
 {
-    private CancellationToken IPrecompilerOptions_get_CancellationToken(object obj) => ((IPrecompilerOptions)obj).CancellationToken;
+    private static CancellationToken IPrecompilerOptions_get_CancellationToken(object obj) => ((IPrecompilerOptions)obj).CancellationToken;
     private ComSharpObject IPrecompilerOptions_get_Logger(object obj) => Marshal(((IPrecompilerOptions)obj).Logger);
 
     private ComSharpVtable IPrecompilerOptions_Vtable => field ??= [

@@ -9,11 +9,13 @@ namespace Farkle.Tools.Precompiler.Weaver;
 
 internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> references, ModuleDefinition module)
 {
+    private readonly Dictionary<string, AssemblyReference> _assemblyCache = references.ToDictionary(x => x.AssemblyName.Name, StringComparer.Ordinal);
+
     private IMetadataScope FindAssembly(ReadOnlySpan<string> assemblyNames)
     {
         foreach (var asmName in assemblyNames)
         {
-            if (references.FirstOrDefault(x => x.AssemblyName.Name == asmName) is { } reference)
+            if (_assemblyCache.TryGetValue(asmName, out var reference))
             {
                 return reference.AssemblyName;
             }
@@ -21,7 +23,43 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         return module;
     }
 
-    private TypeReference GetType(string @namespace, string name, IMetadataScope scope, bool isValueType = false, int genericParameterCount = 0)
+    /// <summary>
+    /// Searches for a type with the specified name in the given assembly references, or the input module.
+    /// Returns null if the type is not found.
+    /// </summary>
+    private TypeReference? TryGetType(string @namespace, string name, ReadOnlySpan<string> assemblyNames)
+    {
+        TypeDefinition? result = null;
+        foreach (var asmName in assemblyNames)
+        {
+            if (!_assemblyCache.TryGetValue(asmName, out var reference))
+            {
+                continue;
+            }
+            AssemblyDefinition asm = module.AssemblyResolver.Resolve(reference.AssemblyName);
+            if (asm.MainModule.GetType(@namespace, name) is { } type)
+            {
+                result = type;
+                break;
+            }
+        }
+        result ??= module.GetType(@namespace, name);
+        return module.ImportReference(result);
+    }
+
+    private TypeReference GetType(string @namespace, string name, ReadOnlySpan<string> assemblyNames) =>
+        TryGetType(@namespace, name, assemblyNames)
+        ?? throw new InvalidOperationException($"Missing required type {@namespace}.{name}");
+
+    /// <summary>
+    /// Returns a <see cref="TypeReference"/> to the specified type.
+    /// </summary>
+    /// <remarks>
+    /// The type must be assumed to exist, otherwise a type load exception will be thrown when running the weaved
+    /// assembly. For this reason, it should only be used for types that are known to be present, like Farkle's own
+    /// types. For system types, use <see cref="TryGetType"/> instead.
+    /// </remarks>
+    private TypeReference MakeTypeReference(string @namespace, string name, IMetadataScope scope, bool isValueType = false, int genericParameterCount = 0)
     {
         // Set module to null and import later, in order to canonicalize the
         // scope, and prevent mysterious exceptions when writing.
@@ -33,12 +71,12 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         return module.ImportReference(result);
     }
 
-    private static T? CheckIfExists<T>(T member, ref CheckedState checkedState) where T : MemberReference
+    private static T? CheckIfExists<T>(T? member, ref CheckedState checkedState) where T : MemberReference
     {
         switch (checkedState)
         {
             case CheckedState.NotChecked:
-                if (member.Resolve() is null)
+                if (member?.Resolve() is null)
                 {
                     checkedState = CheckedState.DoesNotExist;
                     return null;
@@ -52,8 +90,7 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         }
     }
 
-    public IMetadataScope CoreLib => field ??=
-        FindAssembly(["System.Runtime", "netstandard", "mscorlib"]);
+    private static string[] CoreLib { get; } = ["System.Runtime", "netstandard", "mscorlib"];
 
     public TypeReference Byte => module.TypeSystem.Byte;
 
@@ -68,7 +105,7 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         DebuggerStepThroughAttribute.MakeMethodReference(true, ".ctor", Void, []);
 
     public TypeReference Func_1 => field ??=
-        GetType("System", "Func`1", CoreLib, genericParameterCount: 1);
+        GetType("System", "Func`1", CoreLib);
 
     public TypeReference GeneratedCodeAttribute => field ??=
         GetType("System.CodeDom.Compiler", "GeneratedCodeAttribute", CoreLib);
@@ -77,46 +114,45 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
         GeneratedCodeAttribute.MakeMethodReference(true, ".ctor", Void, [String, String]);
 
     public TypeReference RuntimeTypeHandle => field ??=
-        GetType("System", "RuntimeTypeHandle", CoreLib, isValueType: true);
+        GetType("System", "RuntimeTypeHandle", CoreLib);
 
     public TypeReference ValueType => field ??=
         GetType("System", "ValueType", CoreLib);
 
-    public IMetadataScope SystemRuntimeLoader => field ??=
-        FindAssembly(["System.Runtime.Loader"]);
+    private static string[] SystemRuntimeLoader { get; } = ["System.Runtime.Loader"];
 
-    public TypeReference MetadataUpdater => field ??=
-        GetType("System.Reflection.Metadata", "MetadataUpdater", SystemRuntimeLoader);
+    public TypeReference? MetadataUpdater => field ??=
+        TryGetType("System.Reflection.Metadata", "MetadataUpdater", SystemRuntimeLoader);
 
     private CheckedState MetadataUpdater_get_IsSupported_checkedState;
 
     public MethodReference? MetadataUpdater_get_IsSupported => CheckIfExists(field ??=
-        MetadataUpdater.MakeMethodReference(false, "get_IsSupported", module.TypeSystem.Boolean, []),
+        MetadataUpdater?.MakeMethodReference(false, "get_IsSupported", module.TypeSystem.Boolean, []),
         ref MetadataUpdater_get_IsSupported_checkedState);
 
     public IMetadataScope Farkle => field ??=
         FindAssembly(["Farkle"]);
 
     public TypeReference CharParser_1 => field ??=
-        GetType("Farkle", "CharParser`1", Farkle, genericParameterCount: 1);
+        MakeTypeReference("Farkle", "CharParser`1", Farkle, genericParameterCount: 1);
 
     public TypeReference Grammar => field ??=
-        GetType("Farkle.Grammars", "Grammar", Farkle);
+        MakeTypeReference("Farkle.Grammars", "Grammar", Farkle);
 
     public TypeReference IGrammarBuilder => field ??=
-        GetType("Farkle.Builder", "IGrammarBuilder", Farkle);
+        MakeTypeReference("Farkle.Builder", "IGrammarBuilder", Farkle);
 
     public TypeReference IGrammarBuilder_1 => field ??=
-        GetType("Farkle.Builder", "IGrammarBuilder`1", Farkle, genericParameterCount: 1);
+        MakeTypeReference("Farkle.Builder", "IGrammarBuilder`1", Farkle, genericParameterCount: 1);
 
     public TypeReference PrecompilerEntryPoints => field ??=
-        GetType("Farkle.Runtime", "PrecompilerEntryPoints", Farkle);
+        MakeTypeReference("Farkle.Runtime", "PrecompilerEntryPoints", Farkle);
 
     private TypeReference[] LoadGrammarPreamble => field ??=
         [Byte.MakePointerType(), module.TypeSystem.Int32, RuntimeTypeHandle];
 
     public TypeReference PrecompiledGrammarAttribute => field ??=
-        GetType("Farkle.Runtime", "PrecompiledGrammarAttribute", Farkle);
+        MakeTypeReference("Farkle.Runtime", "PrecompiledGrammarAttribute", Farkle);
 
     public MethodReference PrecompiledGrammarAttribute_Ctor => field ??=
         PrecompiledGrammarAttribute.MakeMethodReference(true, ".ctor", Void, []);

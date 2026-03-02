@@ -49,7 +49,7 @@ jobs:
           user: ${{ vars.NUGET_USER }}
         if: vars.NUGET_USER != ''
       - name: Download package artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: nuget-packages
           path: ./bin

@@ -15,9 +15,6 @@
   <data name="Precompiler_IncompatiblePrecompilerInterface" xml:space="preserve">
     <value>Μη συμβατή διεπαφή προμεταγλωττιστή. Βεβαιώσου ότι οι εκδόσεις των πακέτων 'Farkle' και 'Farkle.Tools.MSBuild' ταιριάζουν.</value>
   </data>
-  <data name="Precompiler_FailedToUnloadAssembly" xml:space="preserve">
-    <value>Ο προμεταγλωττιστής δεν μπόρεσε να αποφορτώσει τη συγκρότηση. Αυτό μπορεί να οδηγήσει σε διαρροές μνήμης στο περιβάλλον ανάπτυξης.</value>
-  </data>
   <data name="Precompiler_LrConflicts_Singular" xml:space="preserve">
     <value>Υπήρξε μία σύγκρουση LR στη γραμματική.</value>
   </data>

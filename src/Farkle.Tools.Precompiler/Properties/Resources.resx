@@ -15,9 +15,6 @@
   <data name="Precompiler_IncompatiblePrecompilerInterface" xml:space="preserve">
     <value>Incompatible precompiler interface. Make sure that the versions of the 'Farkle' and 'Farkle.Tools.MSBuild' packages match.</value>
   </data>
-  <data name="Precompiler_FailedToUnloadAssembly" xml:space="preserve">
-    <value>The precompiler could not unload the assembly. This can lead to memory leaks in the build environment.</value>
-  </data>
   <data name="Precompiler_LrConflicts_Singular" xml:space="preserve">
     <value>There was one LR conflict in the grammar.</value>
   </data>

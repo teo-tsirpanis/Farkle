@@ -21,16 +21,7 @@ internal static class TaskLoggingHelperExtensions
             log.LogError(subcategory: null, code, null, helpLink, null, 0, 0, 0, 0, message, args);
         }
 
-        private void LogWarningLocalized(string code, string resourceKey, params object[] args)
-        {
-            string helpLink = string.Format(Obsoletions.SharedUrlFormat, code);
-            string message = GetResourceString(resourceKey);
-            log.LogWarning(subcategory: null, code, null, helpLink, null, 0, 0, 0, 0, message, args);
-        }
-
         public void IncompatiblePrecompilerInterface() => log.LogErrorLocalized("FARKLE0016", "Precompiler_IncompatiblePrecompilerInterface");
-
-        public void FailedToUnloadAssembly() => log.LogWarningLocalized("FARKLE0017", "Precompiler_FailedToUnloadAssembly");
 
         public void LrConflicts(int conflictCount)
         {

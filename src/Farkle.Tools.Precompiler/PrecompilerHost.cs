@@ -26,7 +26,7 @@ public sealed class PrecompilerHost
 
     private void EnsureGarbageCollected(WeakReference weakReference)
     {
-        const int NumberOfTries = 10;
+        const int NumberOfTries = 5;
         int n = NumberOfTries;
         while (n > 0 && weakReference.IsAlive)
         {
@@ -40,7 +40,7 @@ public sealed class PrecompilerHost
         }
         else
         {
-            Log?.FailedToUnloadAssembly();
+            Log?.LogMessage("Failed to unload assembly after {0} garbage collections.", NumberOfTries);
         }
     }
 

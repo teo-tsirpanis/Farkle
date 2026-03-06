@@ -49,7 +49,7 @@ internal static class ParserUtilities
         return null!;
     }
 
-    public static ImmutableArray<string?> GetExpectedSymbols(Grammar grammar, LrState state)
+    public static ImmutableArray<string?> GetExpectedSymbols(LrState state)
     {
         var builder = ImmutableArray.CreateBuilder<string?>();
         foreach (var action in state.Actions)
@@ -69,16 +69,14 @@ internal static class ParserUtilities
         return builder.ToImmutable();
     }
 
-    internal static object SupplyParserStateInfo(object diagnostic, Grammar grammar, LrStateMachine lr, int parserState)
+    internal static object SupplyParserStateInfo(object diagnostic, LrState state)
     {
         return diagnostic switch
         {
-            IParserStateInfoSupplier x => x.WithParserStateInfo(GetExpectedTokenNames(), parserState),
+            IParserStateInfoSupplier x => x.WithParserStateInfo(GetExpectedSymbols(state), state.StateIndex),
             ParserDiagnostic { Message: IParserStateInfoSupplier x, Position: var position } =>
-                new ParserDiagnostic(position, x.WithParserStateInfo(GetExpectedTokenNames(), parserState)),
+                new ParserDiagnostic(position, x.WithParserStateInfo(GetExpectedSymbols(state), state.StateIndex)),
             _ => diagnostic
         };
-
-        ImmutableArray<string?> GetExpectedTokenNames() => GetExpectedSymbols(grammar, lr[parserState]);
     }
 }

@@ -54,7 +54,7 @@ internal static class ParserUtilities
         var builder = ImmutableArray.CreateBuilder<string?>();
         foreach (var action in state.Actions)
         {
-            TokenSymbol symbol = action.Key;
+            TokenSymbolDefinition symbol = action.Key;
             // TODO: Add a test once we add the builder and can define hidden terminals.
             if ((symbol.Attributes & TokenSymbolAttributes.Hidden) != 0)
             {

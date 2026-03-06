@@ -6,23 +6,23 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a nonterminal of a <see cref="Grammar"/>.
+/// Provides information about a nonterminal of a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
 /// A nonterminal is a composite symbol that can be derived
 /// from a sequence of terminals and other nonterminals, as
 /// specified by its <see cref="Productions"/>.
 /// </remarks>
-public readonly struct Nonterminal : IEquatable<Nonterminal>
+public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
 {
     private readonly Grammar _grammar;
 
     /// <summary>
-    /// The <see cref="Nonterminal"/>'s <see cref="NonterminalHandle"/>.
+    /// The <see cref="NonterminalDefinition"/>'s <see cref="NonterminalHandle"/>.
     /// </summary>
     public NonterminalHandle Handle { get; }
 
-    internal Nonterminal(Grammar grammar, NonterminalHandle handle)
+    internal NonterminalDefinition(Grammar grammar, NonterminalHandle handle)
     {
         _grammar = grammar;
         Handle = handle;
@@ -39,7 +39,7 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     }
 
     /// <summary>
-    /// The <see cref="Nonterminal"/>'s name.
+    /// The <see cref="NonterminalDefinition"/>'s name.
     /// </summary>
     public string Name
     {
@@ -51,7 +51,7 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     }
 
     /// <summary>
-    /// The <see cref="Nonterminal"/>'s <see cref="NonterminalAttributes"/>.
+    /// The <see cref="NonterminalDefinition"/>'s <see cref="NonterminalAttributes"/>.
     /// </summary>
     public NonterminalAttributes Attributes
     {
@@ -63,9 +63,9 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     }
 
     /// <summary>
-    /// The <see cref="Production"/>s that have this <see cref="Nonterminal"/> as their <see cref="Production.Head"/>.
+    /// The <see cref="ProductionDefinition"/>s that have this <see cref="NonterminalDefinition"/> as their <see cref="ProductionDefinition.Head"/>.
     /// </summary>
-    public ProductionCollection Productions
+    public ProductionDefinitionCollection Productions
     {
         get
         {
@@ -76,30 +76,30 @@ public readonly struct Nonterminal : IEquatable<Nonterminal>
     }
 
     /// <inheritdoc/>
-    public bool Equals(Nonterminal other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(NonterminalDefinition other) => _grammar == other._grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is Nonterminal other && Equals(other);
+    public override bool Equals(object? obj) => obj is NonterminalDefinition other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the <see cref="Nonterminal"/>.
+    /// Returns a string describing the <see cref="NonterminalDefinition"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : $"<{Name}>";
 
     /// <summary>
-    /// Compares two <see cref="Nonterminal"/>s for equality.
+    /// Compares two <see cref="NonterminalDefinition"/>s for equality.
     /// </summary>
     /// <param name="left">The first nonterminal.</param>
     /// <param name="right">The second nonterminal.</param>
-    public static bool operator ==(Nonterminal left, Nonterminal right) => left.Equals(right);
+    public static bool operator ==(NonterminalDefinition left, NonterminalDefinition right) => left.Equals(right);
 
     /// <summary>
-    /// Compares two <see cref="Nonterminal"/>s for inequality.
+    /// Compares two <see cref="NonterminalDefinition"/>s for inequality.
     /// </summary>
     /// <param name="left">The first nonterminal.</param>
     /// <param name="right">The second nonterminal.</param>
-    public static bool operator !=(Nonterminal left, Nonterminal right) => !left.Equals(right);
+    public static bool operator !=(NonterminalDefinition left, NonterminalDefinition right) => !left.Equals(right);
 }

@@ -11,7 +11,7 @@ namespace Farkle.Grammars;
 internal class DfaProxy<TChar>(Dfa<TChar> dfa) : FlatCollectionProxy<DfaState<TChar>, Dfa<TChar>>(dfa);
 
 [ExcludeFromCodeCoverage]
-internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbol, DfaState<TChar>.AcceptSymbolCollection>(collection);
+internal class DfaAcceptSymbolsProxy<TChar>(DfaState<TChar>.AcceptSymbolCollection collection) : FlatCollectionProxy<TokenSymbolDefinition, DfaState<TChar>.AcceptSymbolCollection>(collection);
 
 [ExcludeFromCodeCoverage]
 internal class DfaEdgesProxy<TChar>(DfaState<TChar>.EdgeCollection collection) : FlatCollectionProxy<DfaEdge<TChar>, DfaState<TChar>.EdgeCollection>(collection);

@@ -2,6 +2,7 @@
 The following changes were made after 7.0.0-preview.2:
 * __Breaking change:__ The type `BuilderArtifacts` was renamed to `BuilderOutputs`.
 * __Breaking change:__ The `ParserExtensions.ParseAsync` family of methods was updated to return a `Task<T>` instead of a `ValueTask<T>`. This change was made to avoid returning a potentially large value type, and align with the upcoming runtime async feature, after which `Task<T>` will be recommended in most cases.
+* __Breaking change:__ Multiple types in the `Farkle.Grammars` namespace were renamed to avoid collisions with types in the `Farkle.Builder` namespace. For example, `Farkle.Grammars.Nonterminal` was renamed to `Farkle.Grammars.NonterminalDefinition`.
 * Added the [precompiler](https://farkle.dev/the-precompiler.html).
 * Displaying localized text always uses the language specified in `CultureInfo.CurrentUICulture`. Previously, it used the `IFormatProvider` argument if specified, which could lead to inconsistencies, particularly when `CurrentCulture` and `CurrentUICulture` are different.
 

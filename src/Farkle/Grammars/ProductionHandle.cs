@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Points to a <see cref="Production"/> of a <see cref="Grammar"/>.
+/// Points to a <see cref="ProductionDefinition"/> of a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
 /// <para>This type is lightweight, storing just a number without a <see cref="Grammar"/> object and can be

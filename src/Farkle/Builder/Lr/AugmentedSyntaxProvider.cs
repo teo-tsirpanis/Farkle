@@ -271,7 +271,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
                     string name = _debugOnlySyntax.GetTerminalName(member.Index);
                     if (member.Index != EndSymbolIndex)
                     {
-                        name = TokenSymbol.FormatName(name);
+                        name = TokenSymbolDefinition.FormatName(name);
                     }
                     sb.Append(name);
                 }

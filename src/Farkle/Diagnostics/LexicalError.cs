@@ -60,7 +60,7 @@ public sealed class LexicalError : IFormattable, IParserStateInfoSupplier
         return Resources.Format(formatProvider,
             nameof(Resources.Parser_UnrecognizedToken),
             TokenText,
-            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbolDefinition.FormatName));
     }
 
 #if NET8_0_OR_GREATER
@@ -69,7 +69,7 @@ public sealed class LexicalError : IFormattable, IParserStateInfoSupplier
         return Resources.TryWrite(destination, provider,
             nameof(Resources.Parser_UnrecognizedToken), out charsWritten,
             TokenText,
-            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", Resources.Parser_Eof, TokenSymbolDefinition.FormatName));
     }
 #endif
 

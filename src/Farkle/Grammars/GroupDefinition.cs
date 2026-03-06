@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a group in a <see cref="Grammar"/>.
+/// Provides information about a group in a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
 /// <para>Groups are lexical constructs that begin and end
@@ -14,16 +14,16 @@ namespace Farkle.Grammars;
 /// or nested groups and are contained in one token symbol.</para>
 /// <para>A typical use of groups is in implementing comments.</para>
 /// </remarks>
-public readonly struct Group : IEquatable<Group>
+public readonly struct GroupDefinition : IEquatable<GroupDefinition>
 {
     private readonly Grammar _grammar;
 
     /// <summary>
-    /// The <see cref="Group"/>'s <see cref="GroupHandle"/>.
+    /// The <see cref="GroupDefinition"/>'s <see cref="GroupHandle"/>.
     /// </summary>
     public GroupHandle Handle { get; }
 
-    internal Group(Grammar grammar, GroupHandle handle)
+    internal GroupDefinition(Grammar grammar, GroupHandle handle)
     {
         _grammar = grammar;
         Handle = handle;
@@ -40,7 +40,7 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// The <see cref="Group"/>'s name.
+    /// The <see cref="GroupDefinition"/>'s name.
     /// </summary>
     public string Name
     {
@@ -52,9 +52,9 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// The token symbol that represents the <see cref="Group"/>'s content.
+    /// The token symbol that represents the <see cref="GroupDefinition"/>'s content.
     /// </summary>
-    public TokenSymbol Container
+    public TokenSymbolDefinition Container
     {
         get
         {
@@ -64,7 +64,7 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// The <see cref="Group"/>'s <see cref="GroupAttributes"/>.
+    /// The <see cref="GroupDefinition"/>'s <see cref="GroupAttributes"/>.
     /// </summary>
     public GroupAttributes Attributes
     {
@@ -76,9 +76,9 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// The token symbol that starts this <see cref="Group"/>.
+    /// The token symbol that starts this <see cref="GroupDefinition"/>.
     /// </summary>
-    public TokenSymbol Start
+    public TokenSymbolDefinition Start
     {
         get
         {
@@ -88,9 +88,9 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// The token symbol that ends this <see cref="Group"/>.
+    /// The token symbol that ends this <see cref="GroupDefinition"/>.
     /// </summary>
-    public TokenSymbol End
+    public TokenSymbolDefinition End
     {
         get
         {
@@ -100,7 +100,7 @@ public readonly struct Group : IEquatable<Group>
     }
 
     /// <summary>
-    /// A collection of the <see cref="Group"/>s that can be nested inside this <see cref="Group"/>.
+    /// A collection of the <see cref="GroupDefinition"/>s that can be nested inside this <see cref="GroupDefinition"/>.
     /// </summary>
     public GroupNestingCollection Nesting
     {
@@ -117,30 +117,30 @@ public readonly struct Group : IEquatable<Group>
 #pragma warning restore IDE0051 // Remove unused private members
 
     /// <inheritdoc/>
-    public bool Equals(Group other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(GroupDefinition other) => _grammar == other._grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is Group other && Equals(other);
+    public override bool Equals(object? obj) => obj is GroupDefinition other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the <see cref="Group"/>.
+    /// Returns a string describing the <see cref="GroupDefinition"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : Name;
 
     /// <summary>
-    /// Compares two <see cref="Group"/>s for equality.
+    /// Compares two <see cref="GroupDefinition"/>s for equality.
     /// </summary>
     /// <param name="left">The first group.</param>
     /// <param name="right">The second group.</param>
-    public static bool operator ==(Group left, Group right) => left.Equals(right);
+    public static bool operator ==(GroupDefinition left, GroupDefinition right) => left.Equals(right);
 
     /// <summary>
-    /// Compares two <see cref="Group"/>s for inequality.
+    /// Compares two <see cref="GroupDefinition"/>s for inequality.
     /// </summary>
     /// <param name="left">The first group.</param>
     /// <param name="right">The second group.</param>
-    public static bool operator !=(Group left, Group right) => !left.Equals(right);
+    public static bool operator !=(GroupDefinition left, GroupDefinition right) => !left.Equals(right);
 }

@@ -7,13 +7,13 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains <see cref="TokenSymbol"/>s of a <see cref="Grammar"/>.
+/// Contains <see cref="TokenSymbolDefinition"/>s of a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.Terminals"/>
 /// <seealso cref="Grammar.TokenSymbols"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<TokenSymbol, TokenSymbolCollection>))]
-public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<TokenSymbolDefinition, TokenSymbolCollection>))]
+public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbolDefinition>
 {
     private readonly Grammar _grammar;
 
@@ -31,13 +31,13 @@ public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<TokenSymbol> IEnumerable<TokenSymbol>.GetEnumerator() => GetEnumerator();
+    IEnumerator<TokenSymbolDefinition> IEnumerable<TokenSymbolDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     /// Used to enumerate a <see cref="TokenSymbolCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<TokenSymbol>
+    public struct Enumerator : IEnumerator<TokenSymbolDefinition>
     {
         private readonly TokenSymbolCollection _collection;
         private int _currentIndex = -1;
@@ -48,7 +48,7 @@ public readonly struct TokenSymbolCollection : IReadOnlyCollection<TokenSymbol>
         }
 
         /// <inheritdoc/>
-        public TokenSymbol Current
+        public TokenSymbolDefinition Current
         {
             get
             {

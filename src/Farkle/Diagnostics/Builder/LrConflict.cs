@@ -25,13 +25,13 @@ public sealed class LrConflict : IFormattable
 
     private object GetConflictDescription()
     {
-        Production reduceProduction = Grammar.GetProduction(ReduceProduction);
+        ProductionDefinition reduceProduction = Grammar.GetProduction(ReduceProduction);
         switch (Kind)
         {
             case LrConflictKind.ShiftReduce:
                 return LocalizedDiagnostic.Create(nameof(Resources.Builder_ShiftReduceConflict), ShiftState, reduceProduction);
             case LrConflictKind.ReduceReduce:
-                Production reduceProduction2 = Grammar.GetProduction(ReduceProduction2);
+                ProductionDefinition reduceProduction2 = Grammar.GetProduction(ReduceProduction2);
                 return LocalizedDiagnostic.Create(nameof(Resources.Builder_ReduceReduceConflict), reduceProduction, reduceProduction2);
             default:
                 Debug.Assert(Kind == LrConflictKind.AcceptReduce);

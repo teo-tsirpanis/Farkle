@@ -32,6 +32,6 @@ public enum GroupOptions
     /// <remarks>
     /// Semantic actions do not run for nested groups.
     /// </remarks>
-    /// <seealso cref="Grammars.Group.Nesting"/>
+    /// <seealso cref="GroupDefinition.Nesting"/>
     Recursive = 4
 }

@@ -7,21 +7,21 @@ using System.Text;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a production of a <see cref="Grammar"/>.
+/// Provides information about a production of a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
-/// A production is a rule of the form <c>A ::= b</c>, where <c>A</c> (the <see cref="Head"/>) is a <see cref="Nonterminal"/>
+/// A production is a rule of the form <c>A ::= b</c>, where <c>A</c> (the <see cref="Head"/>) is a <see cref="NonterminalDefinition"/>
 /// and b (the <see cref="Members"/>) is a possibly empty sequence of terminals or nonterminals such that when the right-hand
 /// side symbols are encountered, they can derive and be substituted by the left-hand side symbol.
 /// </remarks>
 /// <seealso cref="Grammar.Productions"/>
-/// <seealso cref="Nonterminal.Productions"/>
-public readonly struct Production : IEquatable<Production>
+/// <seealso cref="NonterminalDefinition.Productions"/>
+public readonly struct ProductionDefinition : IEquatable<ProductionDefinition>
 {
     private readonly Grammar _grammar;
 
     /// <summary>
-    /// The <see cref="Production"/>'s <see cref="ProductionHandle"/>.
+    /// The <see cref="ProductionDefinition"/>'s <see cref="ProductionHandle"/>.
     /// </summary>
     /// <remarks>
     /// In earlier versions of Farkle the <c>Handle</c> property referred
@@ -29,7 +29,7 @@ public readonly struct Production : IEquatable<Production>
     /// </remarks>
     public ProductionHandle Handle { get; }
 
-    internal Production(Grammar grammar, ProductionHandle handle)
+    internal ProductionDefinition(Grammar grammar, ProductionHandle handle)
     {
         _grammar = grammar;
         Handle = handle;
@@ -46,9 +46,9 @@ public readonly struct Production : IEquatable<Production>
     }
 
     /// <summary>
-    /// The nonterminal on the <see cref="Production"/>'s left-hand side.
+    /// The nonterminal on the <see cref="ProductionDefinition"/>'s left-hand side.
     /// </summary>
-    public Nonterminal Head
+    public NonterminalDefinition Head
     {
         get
         {
@@ -58,7 +58,7 @@ public readonly struct Production : IEquatable<Production>
     }
 
     /// <summary>
-    /// The terminals or nonterminals on the <see cref="Production"/>'s right-hand side.
+    /// The terminals or nonterminals on the <see cref="ProductionDefinition"/>'s right-hand side.
     /// </summary>
     public ProductionMemberList Members
     {
@@ -71,16 +71,16 @@ public readonly struct Production : IEquatable<Production>
     }
 
     /// <inheritdoc/>
-    public bool Equals(Production other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(ProductionDefinition other) => _grammar == other._grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is Production other && Equals(other);
+    public override bool Equals(object? obj) => obj is ProductionDefinition other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the <see cref="Production"/>.
+    /// Returns a string describing the <see cref="ProductionDefinition"/>.
     /// </summary>
     public override string ToString()
     {
@@ -103,16 +103,16 @@ public readonly struct Production : IEquatable<Production>
     }
 
     /// <summary>
-    /// Compares two <see cref="Production"/>s for equality.
+    /// Compares two <see cref="ProductionDefinition"/>s for equality.
     /// </summary>
     /// <param name="left">The first production.</param>
     /// <param name="right">The second production.</param>
-    public static bool operator ==(Production left, Production right) => left.Equals(right);
+    public static bool operator ==(ProductionDefinition left, ProductionDefinition right) => left.Equals(right);
 
     /// <summary>
-    /// Compares two <see cref="Production"/>s for inequality.
+    /// Compares two <see cref="ProductionDefinition"/>s for inequality.
     /// </summary>
     /// <param name="left">The first production.</param>
     /// <param name="right">The second production.</param>
-    public static bool operator !=(Production left, Production right) => !left.Equals(right);
+    public static bool operator !=(ProductionDefinition left, ProductionDefinition right) => !left.Equals(right);
 }

@@ -62,7 +62,7 @@ public sealed class SyntaxError : IFormattable
         return Resources.Format(formatProvider,
             nameof(Resources.Parser_UnexpectedToken),
             ActualTokenName ?? eofString,
-            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbolDefinition.FormatName));
     }
 
 #if NET8_0_OR_GREATER
@@ -72,7 +72,7 @@ public sealed class SyntaxError : IFormattable
         return Resources.TryWrite(destination, provider,
             nameof(Resources.Parser_UnexpectedToken), out charsWritten,
             ActualTokenName ?? eofString,
-            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbol.FormatName));
+            new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbolDefinition.FormatName));
     }
 #endif
 

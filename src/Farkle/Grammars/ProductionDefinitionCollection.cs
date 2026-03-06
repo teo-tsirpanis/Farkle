@@ -7,12 +7,12 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the members of a <see cref="Production"/>.
+/// Contains the members of a <see cref="ProductionDefinition"/>.
 /// </summary>
-/// <seealso cref="Production.Members"/>
+/// <seealso cref="ProductionDefinition.Members"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<Production, ProductionCollection>))]
-public readonly struct ProductionCollection : IReadOnlyCollection<Production>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<ProductionDefinition, ProductionDefinitionCollection>))]
+public readonly struct ProductionDefinitionCollection : IReadOnlyCollection<ProductionDefinition>
 {
     private readonly Grammar _grammar;
 
@@ -21,7 +21,7 @@ public readonly struct ProductionCollection : IReadOnlyCollection<Production>
     /// <inheritdoc/>
     public int Count { get; }
 
-    internal ProductionCollection(Grammar grammar, uint offset, int count)
+    internal ProductionDefinitionCollection(Grammar grammar, uint offset, int count)
     {
         _grammar = grammar;
         _offset = offset;
@@ -33,24 +33,24 @@ public readonly struct ProductionCollection : IReadOnlyCollection<Production>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<Production> IEnumerable<Production>.GetEnumerator() => GetEnumerator();
+    IEnumerator<ProductionDefinition> IEnumerable<ProductionDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Used to enumerate a <see cref="ProductionCollection"/>.
+    /// Used to enumerate a <see cref="ProductionDefinitionCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<Production>
+    public struct Enumerator : IEnumerator<ProductionDefinition>
     {
-        private readonly ProductionCollection _collection;
+        private readonly ProductionDefinitionCollection _collection;
         private int _currentIndex = -1;
 
-        internal Enumerator(ProductionCollection collection)
+        internal Enumerator(ProductionDefinitionCollection collection)
         {
             _collection = collection;
         }
 
         /// <inheritdoc/>
-        public Production Current
+        public ProductionDefinition Current
         {
             get
             {

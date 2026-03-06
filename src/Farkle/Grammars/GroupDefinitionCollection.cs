@@ -7,19 +7,19 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the <see cref="Group"/>s of a <see cref="Grammar"/>.
+/// Contains the <see cref="GroupDefinition"/>s of a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.Groups"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<Group, GroupCollection>))]
-public readonly struct GroupCollection : IReadOnlyCollection<Group>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<GroupDefinition, GroupDefinitionCollection>))]
+public readonly struct GroupDefinitionCollection : IReadOnlyCollection<GroupDefinition>
 {
     private readonly Grammar _grammar;
 
     /// <inheritdoc/>
     public int Count => _grammar.GrammarTables.GroupRowCount;
 
-    internal GroupCollection(Grammar grammar)
+    internal GroupDefinitionCollection(Grammar grammar)
     {
         _grammar = grammar;
     }
@@ -29,24 +29,24 @@ public readonly struct GroupCollection : IReadOnlyCollection<Group>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<Group> IEnumerable<Group>.GetEnumerator() => GetEnumerator();
+    IEnumerator<GroupDefinition> IEnumerable<GroupDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
-    /// Used to enumerate a <see cref="GroupCollection"/>.
+    /// Used to enumerate a <see cref="GroupDefinitionCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<Group>
+    public struct Enumerator : IEnumerator<GroupDefinition>
     {
-        private readonly GroupCollection _collection;
+        private readonly GroupDefinitionCollection _collection;
         private int _currentIndex = -1;
 
-        internal Enumerator(GroupCollection collection)
+        internal Enumerator(GroupDefinitionCollection collection)
         {
             _collection = collection;
         }
 
         /// <inheritdoc/>
-        public Group Current
+        public GroupDefinition Current
         {
             get
             {

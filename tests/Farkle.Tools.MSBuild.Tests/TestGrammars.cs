@@ -3,6 +3,7 @@
 
 using Farkle.Builder;
 using Farkle.Builder.OperatorPrecedence;
+using Farkle.Grammars;
 
 namespace Farkle.Tools.MSBuild.Tests;
 
@@ -34,7 +35,7 @@ public static class TestGrammars
     }
 
     [PrecompilerOutput]
-    public static Grammars.Grammar GrammarFactory() => throw new NotSupportedException();
+    public static Grammar GrammarFactory() => throw new NotSupportedException();
 
     [PrecompilerOutput]
     public static CharParser<double> ParserFactory() => CharParser.MustPrecompile<double>();

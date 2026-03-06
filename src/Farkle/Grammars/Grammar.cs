@@ -57,30 +57,30 @@ public abstract partial class Grammar : IGrammarProvider
     public GrammarInfo GrammarInfo => new(this);
 
     /// <summary>
-    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s
+    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbolDefinition"/>s
     /// that have the <see cref="TokenSymbolAttributes.Terminal"/> flag set.
     /// </summary>
     public TokenSymbolCollection Terminals => new(this, GrammarTables.TerminalCount);
 
     /// <summary>
-    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbol"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="TokenSymbolDefinition"/>s.
     /// </summary>
     public TokenSymbolCollection TokenSymbols => new(this, GrammarTables.TokenSymbolRowCount);
 
     /// <summary>
-    /// A collection of the <see cref="Grammar"/>'s <see cref="Group"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="GroupDefinition"/>s.
     /// </summary>
-    public GroupCollection Groups => new(this);
+    public GroupDefinitionCollection Groups => new(this);
 
     /// <summary>
-    /// A collection of the <see cref="Grammar"/>'s <see cref="Nonterminal"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="NonterminalDefinition"/>s.
     /// </summary>
     public NonterminalCollection Nonterminals => new(this);
 
     /// <summary>
-    /// A collection of the <see cref="Grammar"/>'s <see cref="Production"/>s.
+    /// A collection of the <see cref="Grammar"/>'s <see cref="ProductionDefinition"/>s.
     /// </summary>
-    public ProductionCollection Productions => new(this, 1, GrammarTables.ProductionRowCount);
+    public ProductionDefinitionCollection Productions => new(this, 1, GrammarTables.ProductionRowCount);
 
     /// <summary>
     /// The <see cref="Grammar"/>'s <see cref="Dfa{T}"/> on <see cref="char"/>, if it exists.
@@ -274,14 +274,14 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Gets the <see cref="TokenSymbol"/> pointed by the given <see cref="TokenSymbolHandle"/>.
+    /// Gets the <see cref="TokenSymbolDefinition"/> pointed by the given <see cref="TokenSymbolHandle"/>.
     /// </summary>
     /// <param name="handle">A handle to the token symbol.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
     /// <see cref="TokenSymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
     /// points to a token symbol that does not exist.</exception>
-    public TokenSymbol GetTokenSymbol(TokenSymbolHandle handle)
+    public TokenSymbolDefinition GetTokenSymbol(TokenSymbolHandle handle)
     {
         if (!handle.HasValue)
         {
@@ -297,14 +297,14 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Gets the <see cref="Group"/> pointed by the given <see cref="GroupHandle"/>.
+    /// Gets the <see cref="GroupDefinition"/> pointed by the given <see cref="GroupHandle"/>.
     /// </summary>
     /// <param name="handle">A handle to the group.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
     /// <see cref="GroupHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
     /// points to a group that does not exist.</exception>
-    public Group GetGroup(GroupHandle handle)
+    public GroupDefinition GetGroup(GroupHandle handle)
     {
         if (!handle.HasValue)
         {
@@ -320,14 +320,14 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Gets the <see cref="Nonterminal"/> pointed by the given <see cref="NonterminalHandle"/>.
+    /// Gets the <see cref="NonterminalDefinition"/> pointed by the given <see cref="NonterminalHandle"/>.
     /// </summary>
     /// <param name="handle">A handle to the nonterminal.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
     /// <see cref="NonterminalHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
     /// points to a nonterminal that does not exist.</exception>
-    public Nonterminal GetNonterminal(NonterminalHandle handle)
+    public NonterminalDefinition GetNonterminal(NonterminalHandle handle)
     {
         if (!handle.HasValue)
         {
@@ -343,14 +343,14 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Gets the <see cref="Production"/> pointed by the given <see cref="ProductionHandle"/>.
+    /// Gets the <see cref="ProductionDefinition"/> pointed by the given <see cref="ProductionHandle"/>.
     /// </summary>
     /// <param name="handle">A handle to the production.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
     /// <see cref="TokenSymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
     /// points to a production that does not exist.</exception>
-    public Production GetProduction(ProductionHandle handle)
+    public ProductionDefinition GetProduction(ProductionHandle handle)
     {
         if (!handle.HasValue)
         {

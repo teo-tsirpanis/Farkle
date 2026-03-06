@@ -7,9 +7,9 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the members of a <see cref="Production"/>.
+/// Contains the members of a <see cref="ProductionDefinition"/>.
 /// </summary>
-/// <seealso cref="Production.Members"/>
+/// <seealso cref="ProductionDefinition.Members"/>
 [DebuggerDisplay("Count = {Count}")]
 [DebuggerTypeProxy(typeof(FlatCollectionProxy<EntityHandle, ProductionMemberList>))]
 public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>

@@ -57,8 +57,8 @@ public readonly struct LrState
     /// Contains the terminals an <see cref="LrState"/> accepts,
     /// along with their respective <see cref="LrAction"/>.
     /// </summary>
-    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbol, LrAction>, ActionCollection>))]
-    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbol, LrAction>>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<TokenSymbolDefinition, LrAction>, ActionCollection>))]
+    public readonly struct ActionCollection : IReadOnlyCollection<KeyValuePair<TokenSymbolDefinition, LrAction>>
     {
         private readonly LrStateMachine _lr;
 
@@ -78,15 +78,15 @@ public readonly struct LrState
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<KeyValuePair<TokenSymbol, LrAction>>
-            IEnumerable<KeyValuePair<TokenSymbol, LrAction>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<TokenSymbolDefinition, LrAction>>
+            IEnumerable<KeyValuePair<TokenSymbolDefinition, LrAction>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate an <see cref="ActionCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbol, LrAction>>
+        public struct Enumerator : IEnumerator<KeyValuePair<TokenSymbolDefinition, LrAction>>
         {
             private readonly ActionCollection _collection;
 
@@ -98,7 +98,7 @@ public readonly struct LrState
             }
 
             /// <inheritdoc/>
-            public KeyValuePair<TokenSymbol, LrAction> Current
+            public KeyValuePair<TokenSymbolDefinition, LrAction> Current
             {
                 get
                 {
@@ -209,8 +209,8 @@ public readonly struct LrState
     /// <summary>
     /// Contains pairs of <see cref="NonterminalHandle"/>s and their respective GOTO destination states.
     /// </summary>
-    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<Nonterminal, int>, GotoCollection>))]
-    public readonly struct GotoCollection : IReadOnlyCollection<KeyValuePair<Nonterminal, int>>
+    [DebuggerTypeProxy(typeof(FlatCollectionProxy<KeyValuePair<NonterminalDefinition, int>, GotoCollection>))]
+    public readonly struct GotoCollection : IReadOnlyCollection<KeyValuePair<NonterminalDefinition, int>>
     {
         private readonly LrStateMachine _lr;
 
@@ -230,15 +230,15 @@ public readonly struct LrState
         /// </summary>
         public Enumerator GetEnumerator() => new(this);
 
-        IEnumerator<KeyValuePair<Nonterminal, int>>
-            IEnumerable<KeyValuePair<Nonterminal, int>>.GetEnumerator() => GetEnumerator();
+        IEnumerator<KeyValuePair<NonterminalDefinition, int>>
+            IEnumerable<KeyValuePair<NonterminalDefinition, int>>.GetEnumerator() => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <summary>
         /// Used to enumerate a <see cref="GotoCollection"/>.
         /// </summary>
-        public struct Enumerator : IEnumerator<KeyValuePair<Nonterminal, int>>
+        public struct Enumerator : IEnumerator<KeyValuePair<NonterminalDefinition, int>>
         {
             private readonly GotoCollection _collection;
 
@@ -250,7 +250,7 @@ public readonly struct LrState
             }
 
             /// <inheritdoc/>
-            public KeyValuePair<Nonterminal, int> Current
+            public KeyValuePair<NonterminalDefinition, int> Current
             {
                 get
                 {

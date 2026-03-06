@@ -6,7 +6,7 @@ namespace Farkle.Builder;
 /// <summary>
 /// Provides factory methods to define lexical groups.
 /// </summary>
-/// <seealso cref="Grammars.Group"/>
+/// <seealso cref="Grammars.GroupDefinition"/>
 public static class Group
 {
     private static void ValidateOptions(GroupOptions options)

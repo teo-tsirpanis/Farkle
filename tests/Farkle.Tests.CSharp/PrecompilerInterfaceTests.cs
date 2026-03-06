@@ -4,10 +4,10 @@
 using System.Reflection;
 using ComSharp;
 using Farkle.Builder;
+using Farkle.Grammars;
 using Farkle.Diagnostics.Builder;
 using Farkle.Runtime;
 using DiagnosticSeverity = ComSharp.DiagnosticSeverity;
-using Grammar = Farkle.Grammars.Grammar;
 
 namespace Farkle.Tests.CSharp;
 

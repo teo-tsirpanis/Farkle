@@ -1,35 +1,33 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using System.Diagnostics;
-
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Represents a token symbol in a <see cref="Grammar"/>.
+/// Provides information about a token symbol in a <see cref="Grammar"/>.
 /// </summary>
 /// <remarks>
 /// Token symbols are produced by tokenizers, usually powered by a DFA.
 /// </remarks>
 /// <seealso cref="Grammar.Terminals"/>
 /// <seealso cref="Grammar.TokenSymbols"/>
-public readonly struct TokenSymbol : IEquatable<TokenSymbol>
+public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
 {
     private readonly Grammar _grammar;
 
     /// <summary>
-    /// The <see cref="TokenSymbol"/>'s <see cref="TokenSymbolHandle"/>.
+    /// The <see cref="TokenSymbolDefinition"/>'s <see cref="TokenSymbolHandle"/>.
     /// </summary>
     public TokenSymbolHandle Handle { get; }
 
-    internal TokenSymbol(Grammar grammar, TokenSymbolHandle handle)
+    internal TokenSymbolDefinition(Grammar grammar, TokenSymbolHandle handle)
     {
         _grammar = grammar;
         Handle = handle;
     }
 
     /// <summary>
-    /// The <see cref="TokenSymbol"/>'s name.
+    /// The <see cref="TokenSymbolDefinition"/>'s name.
     /// </summary>
     public string Name
     {
@@ -81,30 +79,30 @@ public readonly struct TokenSymbol : IEquatable<TokenSymbol>
     }
 
     /// <inheritdoc/>
-    public bool Equals(TokenSymbol other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(TokenSymbolDefinition other) => _grammar == other._grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is TokenSymbol other && Equals(other);
+    public override bool Equals(object? obj) => obj is TokenSymbolDefinition other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
 
     /// <summary>
-    /// Returns a string describing the <see cref="TokenSymbol"/>.
+    /// Returns a string describing the <see cref="TokenSymbolDefinition"/>.
     /// </summary>
     public override string ToString() => _grammar is null ? "" : FormatName(Name);
 
     /// <summary>
-    /// Compares two <see cref="TokenSymbol"/>s for equality.
+    /// Compares two <see cref="TokenSymbolDefinition"/>s for equality.
     /// </summary>
     /// <param name="left">The first token symbol.</param>
     /// <param name="right">The second token symbol.</param>
-    public static bool operator ==(TokenSymbol left, TokenSymbol right) => left.Equals(right);
+    public static bool operator ==(TokenSymbolDefinition left, TokenSymbolDefinition right) => left.Equals(right);
 
     /// <summary>
-    /// Compares two <see cref="TokenSymbol"/>s for inequality.
+    /// Compares two <see cref="TokenSymbolDefinition"/>s for inequality.
     /// </summary>
     /// <param name="left">The first token symbol.</param>
     /// <param name="right">The second token symbol.</param>
-    public static bool operator !=(TokenSymbol left, TokenSymbol right) => !left.Equals(right);
+    public static bool operator !=(TokenSymbolDefinition left, TokenSymbolDefinition right) => !left.Equals(right);
 }

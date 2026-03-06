@@ -7,12 +7,12 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the <see cref="Group"/>s that can be nested inside a <see cref="Group"/>.
+/// Contains the <see cref="GroupDefinition"/>s that can be nested inside a <see cref="GroupDefinition"/>.
 /// </summary>
-/// <seealso cref="Group.Nesting"/>
+/// <seealso cref="GroupDefinition.Nesting"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<Group, GroupCollection>))]
-public readonly struct GroupNestingCollection : IReadOnlyCollection<Group>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<GroupDefinition, GroupDefinitionCollection>))]
+public readonly struct GroupNestingCollection : IReadOnlyCollection<GroupDefinition>
 {
     private readonly Grammar _grammar;
 
@@ -33,13 +33,13 @@ public readonly struct GroupNestingCollection : IReadOnlyCollection<Group>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<Group> IEnumerable<Group>.GetEnumerator() => GetEnumerator();
+    IEnumerator<GroupDefinition> IEnumerable<GroupDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     /// Used to enumerate a <see cref="GroupNestingCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<Group>
+    public struct Enumerator : IEnumerator<GroupDefinition>
     {
         private readonly GroupNestingCollection _collection;
         private int _currentIndex = -1;
@@ -50,7 +50,7 @@ public readonly struct GroupNestingCollection : IReadOnlyCollection<Group>
         }
 
         /// <inheritdoc/>
-        public Group Current
+        public GroupDefinition Current
         {
             get
             {

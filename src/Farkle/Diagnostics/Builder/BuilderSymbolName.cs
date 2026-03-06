@@ -56,9 +56,9 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
             case (false, true):
                 return destination.TryWrite(provider, $"({Name}) ({GetTokenSymbolKindName(Kind, provider)})", out charsWritten);
             case (true, false):
-                return destination.TryWrite(provider, $"({TokenSymbol.FormatName(Name)})", out charsWritten);
+                return destination.TryWrite(provider, $"({TokenSymbolDefinition.FormatName(Name)})", out charsWritten);
             case (true, true):
-                return destination.TryWrite(provider, $"({TokenSymbol.FormatName(Name)}) ({GetTokenSymbolKindName(Kind, provider)})", out charsWritten);
+                return destination.TryWrite(provider, $"({TokenSymbolDefinition.FormatName(Name)}) ({GetTokenSymbolKindName(Kind, provider)})", out charsWritten);
         }
     }
 #endif
@@ -73,9 +73,9 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
             case (false, true):
                 return $"({Name}) ({GetTokenSymbolKindName(Kind, provider)})";
             case (true, false):
-                return TokenSymbol.FormatName(Name);
+                return TokenSymbolDefinition.FormatName(Name);
             case (true, true):
-                return $"{TokenSymbol.FormatName(Name)} ({GetTokenSymbolKindName(Kind, provider)})";
+                return $"{TokenSymbolDefinition.FormatName(Name)} ({GetTokenSymbolKindName(Kind, provider)})";
         }
     }
 }

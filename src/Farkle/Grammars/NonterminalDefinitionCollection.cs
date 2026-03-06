@@ -7,12 +7,12 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Contains the <see cref="Nonterminal"/>s of a <see cref="Grammar"/>.
+/// Contains the <see cref="NonterminalDefinition"/>s of a <see cref="Grammar"/>.
 /// </summary>
 /// <seealso cref="Grammar.Nonterminals"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<Nonterminal, NonterminalCollection>))]
-public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<NonterminalDefinition, NonterminalCollection>))]
+public readonly struct NonterminalCollection : IReadOnlyCollection<NonterminalDefinition>
 {
     private readonly Grammar _grammar;
 
@@ -29,13 +29,13 @@ public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<Nonterminal> IEnumerable<Nonterminal>.GetEnumerator() => GetEnumerator();
+    IEnumerator<NonterminalDefinition> IEnumerable<NonterminalDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     /// Used to enumerate a <see cref="NonterminalCollection"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<Nonterminal>
+    public struct Enumerator : IEnumerator<NonterminalDefinition>
     {
         private readonly NonterminalCollection _collection;
         private int _currentIndex = -1;
@@ -46,7 +46,7 @@ public readonly struct NonterminalCollection : IReadOnlyCollection<Nonterminal>
         }
 
         /// <inheritdoc/>
-        public Nonterminal Current
+        public NonterminalDefinition Current
         {
             get
             {

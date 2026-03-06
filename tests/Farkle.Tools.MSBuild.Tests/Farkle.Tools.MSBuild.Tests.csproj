@@ -1,18 +1,28 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../src/Farkle.Tools.MSBuild/build/Farkle.Tools.MSBuild.props" />
+  <Import Project="../../eng/integration-test-setup.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <LangVersion>14</LangVersion>
     <FarkleGenerateHtml>true</FarkleGenerateHtml>
   </PropertyGroup>
+
   <ItemGroup>
-    <ProjectReference Include="../../src/Farkle/Farkle.fsproj" />
-    <ProjectReference Include="../../sample/Farkle.Samples.FSharp/Farkle.Samples.FSharp.fsproj" />
-    <!-- <PackageReference Include="Farkle.Tools.MSBuild" VersionOverride="0.0.0-local" /> -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" />
+    <ProjectReference Include="../../src/Farkle/Farkle.csproj" />
+    <ProjectReference Include="../../src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" ReferenceOutputAssembly="false" />
+    <PackageReference Include="Sigourney.Build" />
     <PackageReference Include="HtmlAgilityPack" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="NUnit.Analyzers" PrivateAssets="all" />
   </ItemGroup>
+
+  <Import Project="../../src/Farkle.Tools.MSBuild/build/Farkle.Tools.MSBuild.targets" />
 </Project>

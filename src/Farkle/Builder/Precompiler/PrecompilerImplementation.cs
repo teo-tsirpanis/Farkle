@@ -1,0 +1,322 @@
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using ComSharp;
+using Farkle.Diagnostics.Builder;
+using Farkle.Grammars;
+
+namespace Farkle.Builder.Precompiler;
+
+/// <summary>
+/// Contains logic to discover and build precompiled grammars.
+/// </summary>
+[RequiresUnreferencedCode(RequiresUnreferencedCodeMessage)]
+internal sealed class PrecompilerImplementation : IPrecompilerInterface
+{
+    internal const string RequiresUnreferencedCodeMessage = "Methods that are searched by the precompiler might be removed.";
+
+    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options)
+    {
+        BuilderLogger log = CreateBuilderLogger(options?.Logger);
+        CancellationToken ct = options?.CancellationToken ?? CancellationToken.None;
+        CandidateGrammarDictionary candidateGrammars = new();
+        foreach (Type type in types)
+        {
+            foreach (MethodInfo method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
+            {
+                ct.ThrowIfCancellationRequested();
+                if (method.GetCustomAttribute<PrecompilerInputAttribute>() is { } inputAttribute)
+                {
+                    candidateGrammars.GetOrAdd(inputAttribute.Key).AddInputMethod(method, inputAttribute, in log);
+                }
+                if (method.GetCustomAttribute<PrecompilerOutputAttribute>() is { } outputAttribute)
+                {
+                    candidateGrammars.GetOrAdd(outputAttribute.Key).AddOutputMethod(method, outputAttribute, in log);
+                }
+            }
+
+            foreach (var x in candidateGrammars)
+            {
+                if (x.Precompile(in log, ct) is { } grammar)
+                {
+                    yield return grammar;
+                }
+            }
+            candidateGrammars.Clear();
+        }
+    }
+
+    private static BuilderLogger CreateBuilderLogger(ILogger? logger)
+    {
+        BuilderLogger builderLogger = new();
+
+        if (logger is not null)
+        {
+            builderLogger.LogLevel = (Diagnostics.DiagnosticSeverity)logger.LogLevel;
+            builderLogger.OnDiagnostic += d => logger.Log((DiagnosticSeverity)d.Severity, d.Message, d.Code);
+        }
+
+        return builderLogger;
+    }
+
+    private sealed class CandidateGrammar
+    {
+        private MethodInfo? _inputMethod;
+        private PrecompilerInputAttribute? _inputAttribute;
+        private bool _canCallInputMethod;
+        private Type? _grammarBuilderReturnType;
+
+        private readonly List<(MethodInfo Method, PrecompilerOutputAttribute Attribute)> _outputMethods = [];
+
+        public void AddInputMethod(MethodInfo method, PrecompilerInputAttribute inputAttribute, in BuilderLogger log)
+        {
+            if (_inputMethod is not null)
+            {
+                log.DuplicatePrecompilerInputMethodKey(method.DeclaringType!, FormatKey(inputAttribute.Key));
+                // Even if we've found an eligible input method before, make the final validation immediately fail,
+                // and don't try to build the grammar.
+                _canCallInputMethod = false;
+                return;
+            }
+            _inputMethod = method;
+            _inputAttribute = inputAttribute;
+            _canCallInputMethod = true;
+            // DeclaringType will always be non-null, because we got the method from a type.
+            if (method.IsGenericMethod || method.DeclaringType!.IsGenericType)
+            {
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodGeneric), method);
+                _canCallInputMethod = false;
+            }
+            if (!method.IsStatic)
+            {
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodNotStatic), method);
+                _canCallInputMethod = false;
+            }
+            if (method.GetParameters().Length > 0)
+            {
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodNotParameterless), method);
+                _canCallInputMethod = false;
+            }
+            if (!method.ReturnType.IsAssignableTo(typeof(IGrammarBuilder)))
+            {
+                log.InvalidPrecompilerInputAttributeUsage(nameof(Resources.Precompiler_MethodInvalidInputReturnType), method);
+                _canCallInputMethod = false;
+            }
+            if (!_canCallInputMethod)
+            {
+                return;
+            }
+            // This will throw if the input method returns a type that implements IGrammarBuilder<T> more than once,
+            // but we aren't doing that, and this interface cannot be implemented by user code.
+            _grammarBuilderReturnType =
+                GetInterfacesWithSameMetadataDefinitionAs(method.ReturnType, typeof(IGrammarBuilder<>))
+                .Select(t => t.GetGenericArguments()[0])
+                .SingleOrDefault();
+        }
+
+        public void AddOutputMethod(MethodInfo method, PrecompilerOutputAttribute outputAttribute, in BuilderLogger log)
+        {
+            bool eligible = true;
+            // DeclaringType will always be non-null, because we got the method from a type.
+            if (method.IsGenericMethod || method.DeclaringType!.IsGenericType)
+            {
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodGeneric), method);
+                eligible = false;
+            }
+            if (!method.IsStatic)
+            {
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodNotStatic), method);
+                eligible = false;
+            }
+            if (method.GetParameters().Length > 0)
+            {
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodNotParameterless), method);
+                eligible = false;
+            }
+            if (!IsEligibleOutputMethodReturnType(method.ReturnType))
+            {
+                log.InvalidPrecompilerOutputAttributeUsage(nameof(Resources.Precompiler_MethodInvalidOutputReturnType), method);
+                eligible = false;
+            }
+            if (!eligible)
+            {
+                return;
+            }
+            _outputMethods.Add((method, outputAttribute));
+        }
+
+        private List<(int MetadataToken, OutputType Type)> GetOutputMethods(in BuilderLogger log)
+        {
+            var result = new List<(int, OutputType)>(_outputMethods.Count);
+            foreach (var x in _outputMethods)
+            {
+                if (!IsCompatibleOutputMethodReturnType(x.Method.ReturnType, x.Attribute.SyntaxCheck, out OutputType outputType))
+                {
+                    var parserReturnType = x.Method.ReturnType.GetGenericArguments()[0];
+                    if (outputType == OutputType.CharParserSyntaxChecker)
+                    {
+                        log.SyntaxCheckerPrecompilerOutputMethodMustBeClass(parserReturnType, x.Method);
+                    }
+                    else
+                    {
+                        log.InvalidPrecompilerOutputMethodParserReturnType(parserReturnType, x.Method, _grammarBuilderReturnType!);
+                    }
+                    continue;
+                }
+                result.Add((x.Method.MetadataToken, outputType));
+            }
+            return result;
+        }
+
+        public PrecompiledGrammar? Precompile(in BuilderLogger log, CancellationToken ct)
+        {
+            if (_inputMethod is null)
+            {
+                foreach (var x in _outputMethods)
+                {
+                    log.PrecompilerOutputMethodKeyNotFound(x.Method, FormatKey(x.Attribute.Key));
+                }
+                return null;
+            }
+            if (!_canCallInputMethod)
+            {
+                return null;
+            }
+            Debug.Assert(_inputAttribute is not null);
+            var outputMethods = GetOutputMethods(in log);
+            var builderOptions = new BuilderOptions { CancellationToken = ct, Log = log };
+            builderOptions.UpdateFrom(_inputAttribute);
+            IGrammarBuilder? builderObject;
+            Func<IGrammarBuilder?> fInputMethod = _inputMethod.CreateDelegate<Func<IGrammarBuilder?>>();
+            try
+            {
+                builderObject = fInputMethod() ?? throw new NullReferenceException();
+            }
+            catch (Exception e)
+            {
+                log.PrecompilerInputMethodException(_inputMethod, e);
+                return null;
+            }
+            log.InformationLocalized(nameof(Resources.Precompiler_PrecompilingInfo), builderObject.GetGrammarName());
+            var output = builderObject.BuildSyntaxCheck(BuilderOutputs.GrammarDfaOnChar | BuilderOutputs.GrammarLrStateMachine, builderOptions);
+            return new PrecompiledGrammar
+            {
+                Key = _inputAttribute.Key,
+                GrammarFile = output.Grammar!.ToImmutableArray(),
+                InputMethodMetadataToken = _inputMethod.MetadataToken,
+                OutputMethods = outputMethods,
+            };
+        }
+
+        [UnconditionalSuppressMessage("Trimming", "IL2070:'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The parameter of method does not have matching annotations.", Justification = "We are searching for a user-provided interface type that should be available.")]
+        private static Type[] GetInterfacesWithSameMetadataDefinitionAs(Type type, Type interfaceType)
+        {
+            if (type.HasSameMetadataDefinitionAs(interfaceType))
+            {
+                return [type];
+            }
+            return type.FindInterfaces(static (t, obj) => t.HasSameMetadataDefinitionAs((MemberInfo)obj!), interfaceType);
+        }
+
+        private static bool IsEligibleOutputMethodReturnType(Type type) =>
+            type.IsAssignableTo(typeof(Grammar))
+            || type.HasSameMetadataDefinitionAs(typeof(CharParser<>));
+
+        /// <summary>
+        /// Returns whether <paramref name="type"/> can be substituted for <paramref name="targetType"/>
+        /// in a covariant generic parameter.
+        /// </summary>
+        private static bool AreTypesCompatible(Type type, Type targetType)
+        {
+            if (type.IsValueType)
+            {
+                return type == targetType;
+            }
+            return targetType.IsAssignableFrom(type);
+        }
+
+        private bool IsCompatibleOutputMethodReturnType(Type type, bool isForcedSyntaxCheck, out OutputType outputType)
+        {
+            if (type == typeof(Grammar))
+            {
+                outputType = OutputType.Grammar;
+                return true;
+            }
+            // At this point, IsEligibleOutputMethodReturnType has been previously called and returned true.
+            Debug.Assert(type.HasSameMetadataDefinitionAs(typeof(CharParser<>)));
+            var parserReturnType = type.GetGenericArguments()[0];
+            if (isForcedSyntaxCheck || _grammarBuilderReturnType is null)
+            {
+                outputType = OutputType.CharParserSyntaxChecker;
+                return !parserReturnType.IsValueType;
+            }
+            outputType = OutputType.CharParser;
+            // We could check for nullability here, but we don't have enough information on whether
+            // nullable warnings are enabled or not. Better have an analyzer do it.
+            return AreTypesCompatible(_grammarBuilderReturnType, parserReturnType);
+        }
+
+        private static string FormatKey(string? key) =>
+            key is null ? "<null>" : $"\"{key}\"";
+    }
+
+    internal sealed class PrecompiledGrammar : IPrecompiledGrammar
+    {
+        public required string? Key { get; init; }
+
+        public required ImmutableArray<byte> GrammarFile { get; init; }
+
+        byte[]? IPrecompiledGrammar.GrammarFile => ImmutableCollectionsMarshal.AsArray(GrammarFile);
+
+        public required int InputMethodMetadataToken { get; init; }
+
+        public required IReadOnlyList<(int MetadataToken, OutputType Type)> OutputMethods { get; init; }
+    }
+
+    private struct CandidateGrammarDictionary
+    {
+        private CandidateGrammar? _defaultGrammar;
+        private Dictionary<string, CandidateGrammar>? _namedGrammars;
+
+        public void Clear()
+        {
+            _defaultGrammar = null;
+            _namedGrammars?.Clear();
+        }
+
+        public readonly IEnumerator<CandidateGrammar> GetEnumerator()
+        {
+            if (_defaultGrammar is not null)
+            {
+                yield return _defaultGrammar;
+            }
+            if (_namedGrammars is not null)
+            {
+                foreach (var x in _namedGrammars.Values)
+                {
+                    yield return x;
+                }
+            }
+        }
+
+        public CandidateGrammar GetOrAdd(string? key)
+        {
+            if (key is null)
+            {
+                return _defaultGrammar ??= new CandidateGrammar();
+            }
+            _namedGrammars ??= [];
+            if (!_namedGrammars.TryGetValue(key, out var grammar))
+            {
+                grammar = new CandidateGrammar();
+                _namedGrammars.Add(key, grammar);
+            }
+            return grammar;
+        }
+    }
+}

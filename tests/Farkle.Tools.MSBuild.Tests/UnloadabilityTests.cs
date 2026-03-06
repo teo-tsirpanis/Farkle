@@ -1,61 +1,67 @@
-// Copyright (c) 2021 Theodore Tsirpanis
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
 
-using Farkle.Builder;
-using System;
-using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
-using Xunit;
+using Farkle.Grammars;
+using NUnit.Framework;
 
-namespace Farkle.Tools.MSBuild.Tests
+namespace Farkle.Tools.MSBuild.Tests;
+
+public class UnloadabilityTests
 {
-    public class UnloadabilityTests
+    [Test]
+    public void TestPrecompiledGrammarKeepsAlcAlive()
     {
-        [Fact]
-        public void Test()
+        var grammar = TestGrammars.GrammarFactory();
+        var grammarFromExternalAlc = LoadAssemblyAndGetGrammar(out var alcWeakRef);
+
+        using (Assert.EnterMultipleScope())
         {
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            static WeakReference DoTest()
-            {
-                var ctx = new AssemblyLoadContext(nameof(UnloadabilityTests), true);
-                try
-                {
-                    var asm = ctx.LoadFromAssemblyPath(typeof(UnloadabilityTests).Assembly.Location);
-                    Assert.NotSame(asm, typeof(UnloadabilityTests).Assembly);
+            Assert.That(grammar, Is.Not.SameAs(grammarFromExternalAlc));
+            Assert.That(grammar.Data != grammarFromExternalAlc.Data);
+            Assert.That(grammar.Data.SequenceEqual(grammarFromExternalAlc.Data));
+        }
 
-                    var allPrecompiled =
-                        asm.GetType(typeof(PrecompilableGrammars).FullName!, true)
-                            ?.GetProperty(nameof(PrecompilableGrammars.All))
-                            ?.GetValue(null) as PrecompilableDesigntimeFarkle [];
-                    // With Assert.NotNull the compiler would not
-                    // shut up about allPrecompiled maybe being null.
-                    if (allPrecompiled == null)
-                        throw new ArgumentNullException(nameof(allPrecompiled));
+        int i;
+        for (i = 0; i < 10 && alcWeakRef.IsAlive; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
 
-                    Assert.Equal(PrecompilableGrammars.All.Length, allPrecompiled.Length);
-                    Assert.All(allPrecompiled, pcdf => Assert.Same(asm, pcdf.Assembly));
-                    Assert.Equal(PrecompilableGrammars.All.Length, PrecompiledGrammar.GetAllFromAssembly(asm).Count);
-                    return new WeakReference(allPrecompiled.First());
-                }
-                finally
-                {
-                    ctx.Unload();
-                }
-            }
+        Assert.That(alcWeakRef.IsAlive, $"ALC was unloaded after {i} iterations.");
 
-            var wr = DoTest();
-            for (int i = 0; wr.IsAlive && i < 10; i++)
-            {
-                GC.Collect(2, GCCollectionMode.Forced, true);
-                GC.WaitForPendingFinalizers();
-                GC.Collect(2, GCCollectionMode.Forced, true);
-            }
-            // Placing breakpoints before that final assert makes the tests
-            // fail because the debugger will hold the weak reference's target.
-            Assert.False(wr.IsAlive, "The assembly load context could not be unloaded");
+        GC.KeepAlive(grammarFromExternalAlc);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static Grammar LoadAssemblyAndGetGrammar(out WeakReference alcWeakRef)
+        {
+            var alc = new TestAssemblyLoadContext();
+            alcWeakRef = new WeakReference(alc, trackResurrection: true);
+            var asm = alc.LoadFromAssemblyPathInMemory(typeof(UnloadabilityTests).Assembly.Location);
+            var type = asm.GetType(typeof(TestGrammars).FullName!, throwOnError: true)!;
+            var method = type.GetMethod(nameof(TestGrammars.GrammarFactory))!;
+            Assert.That(method, Is.Not.Null);
+            var grammar = (Grammar)method.Invoke(null, null)!;
+            alc.Unload();
+            return grammar;
+        }
+    }
+
+    private sealed class TestAssemblyLoadContext() : AssemblyLoadContext(isCollectible: true)
+    {
+        protected override Assembly? Load(AssemblyName assemblyName) => assemblyName.Name switch
+        {
+            "Farkle" => typeof(Grammar).Assembly,
+            _ => base.Load(assemblyName),
+        };
+
+        public Assembly LoadFromAssemblyPathInMemory(string path)
+        {
+            using var stream = File.OpenRead(path);
+            return LoadFromStream(stream);
         }
     }
 }

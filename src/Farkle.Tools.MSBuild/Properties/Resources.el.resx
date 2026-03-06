@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Precompiler_UnsupportedVS" xml:space="preserve">
+    <value>Ο προμεταγλωττιστής δεν υποστηρίζεται σε εκδόσεις του Visual Studio πριν από το 2026.</value>
+  </data>
+  <data name="Precompiler_UnrecognizedErrorMode" xml:space="preserve">
+    <value>Δεν αναγνωρίστηκε η τιμή της ιδιότητας 'FarklePrecompilerErrorMode', χρησιμοποιείται η προεπιλογή 'ReportOnly'.</value>
+  </data>
+  <data name="Precompiler_ConflictReport" xml:space="preserve">
+    <value>Ένα αρχείο HTML που περιγράφει αυτές τις συγκρούσεις δημιουργήθηκε στο {0}</value>
+  </data>
+  <data name="Precompiler_ConflictReportAdvice" xml:space="preserve">
+    <value>Αντί για τη δημιουργία αναφοράς HTML, οι μεμονομένες συγκρούσεις μπορούν να καταγραφούν ως σφάλματα, θέτοντας την ιδιότητα MSBuild 'FarklePrecompilerErrorMode' σε 'Both' ή 'ErrorsOnly'.</value>
+  </data>
+  <data name="Precompiler_WritingHtml" xml:space="preserve">
+    <value>Γράφεται η τεκμηρίωση της γραμματικής {0} στο {1}</value>
+  </data>
+</root>

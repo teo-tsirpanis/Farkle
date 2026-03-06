@@ -1,13 +1,19 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <SigourneyRegisteredTargetFiles>$(SigourneyRegisteredTargetFiles);$(MSBuildThisFileDirectory)Farkle.Tools.MSBuild.Precompiler.targets</SigourneyRegisteredTargetFiles>
     <SigourneyRegisteredTargets>$(SigourneyRegisteredTargets);FarkleRunPrecompiler</SigourneyRegisteredTargets>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$(MSBuildRuntimeType) == Core">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
-  </PropertyGroup>
-  <PropertyGroup Condition="$(MSBuildRuntimeType) != Core">
-    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netstandard2.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
-  </PropertyGroup>
+  <Choose>
+    <When Condition="$(MSBuildRuntimeType) == Core OR ('$(MSBuildVersion)' != '' AND $([System.Version]::Parse($(MSBuildVersion)).Major) &gt;= 18)">
+      <PropertyGroup>
+        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+        <FarklePrecompilerTaskRuntime>NET</FarklePrecompilerTaskRuntime>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../tools/netstandard2.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
 </Project>

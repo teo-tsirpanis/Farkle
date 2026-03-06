@@ -22,15 +22,16 @@
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.4.1" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageVersion Include="Irony" Version="1.5.3" />
-    <PackageVersion Include="MedallionShell" Version="1.6.2" />
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.11.2" />
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.10.46" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="$(SystemOobVersion)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.3.2" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.1.0" />
+    <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.113" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.11.2" />
     <PackageVersion Include="NUnit" Version="4.5.0" />
@@ -46,11 +47,13 @@
     <PackageVersion Include="System.Buffers" Version="4.6.0" />
     <PackageVersion Include="System.Collections.Immutable" Version="$(SystemOobVersion)" />
     <PackageVersion Include="System.Memory" Version="4.6.0" />
-    <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.5" />
+
+    <!-- Test-only dependencies. -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.3" />
 
     <PackageVersion Include="Fake.BuildServer.GitHubActions" Version="$(FakeVersion)" />
     <PackageVersion Include="Fake.Core.ReleaseNotes" Version="$(FakeVersion)" />

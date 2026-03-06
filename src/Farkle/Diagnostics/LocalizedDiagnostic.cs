@@ -99,5 +99,5 @@ internal static class LocalizedDiagnostic
 
     public static object Create<TArg1, TArg2, TArg3>(string resourceKey, TArg1 arg1, TArg2 arg2, TArg3 arg3) => new Composite<TArg1, TArg2, TArg3>(resourceKey, arg1, arg2, arg3);
 
-    public static object Create(string resourceKey, params object[] args) => new Composite(resourceKey, args);
+    public static object Create(string resourceKey, params ReadOnlySpan<object> args) => new Composite(resourceKey, args.ToArray());
 }

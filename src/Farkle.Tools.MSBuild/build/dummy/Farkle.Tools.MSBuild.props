@@ -1,5 +1,0 @@
-<Project>
-  <!-- Using Farkle 7 will cause the Farkle 6 precompiler to crash and burn. In order to avoid this
-  until the precompiler gets ported to 7, Farkle.Tools.MSBuild will get new versions that do nothing,
-  thus encouraging users to update to it alongside the main Farkle library. -->
-</Project>

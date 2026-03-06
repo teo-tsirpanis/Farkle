@@ -4,7 +4,6 @@
 using System.Collections.Immutable;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
-using Farkle.Parser;
 
 namespace Farkle.Builder;
 

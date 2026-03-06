@@ -3,15 +3,16 @@
   href: ../../RELEASE_NOTES.md
 - href: choosing-a-parser.md
 
-- name: Getting started
-- href: quickstart.md
+- name: Tutorials
+- name: Creating a calculator
+  href: quickstart.md
 
-# - name: How-to guides
+- name: How-to guides
+- href: the-precompiler.md
 # - href: customizing-grammar.md
 # - href: resolving-conflicts.md
 - name: Reference
 - href: string-regexes.md
-- href: the-precompiler.md
 - href: templates.md
 # - href: advanced-features.md
 - name: Diagnostic codes

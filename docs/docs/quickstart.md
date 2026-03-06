@@ -416,7 +416,8 @@ let expressionWithOperators =
         !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
         !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
         !& "-" .>>. expression |> prec NEG => (fun x -> -x),
-        !& "(" .>>. expression .>> ")" |> asProduction)
+        !& "(" .>>. expression .>> ")" |> asProduction,
+        !@ number |> asProduction)
 
     expression.WithOperatorScope(OperatorScope(
         new LeftAssociative("+", "-"),
@@ -442,6 +443,126 @@ repl parser
 ```
 
 ---
+
+## Bonus: Precompiling the grammar
+
+Every time we run the program above, it will spend some time at startup building the grammar. We can drastically reduce this time by using the precompiler, which will build it once at compile time, and embed it to the assembly, so that at runtime, the parsing tables will not have to be computed again.
+
+The steps to use the precompiler are as follows:
+
+1. Install the [`Farkle.Tools.MSBuild` NuGet package](https://www.nuget.org/packages/Farkle.Tools.MSBuild) to your project.
+2. Make sure your code is constructing the @"Farkle.Builder.IGrammarBuilder`1" from a static factory method, so that the precompiler can call it.
+   * Mark that method with @"Farkle.Builder.PrecompilerInputAttribute".
+3. Create a static factory method that returns a @"Farkle.CharParser`1", so that the precompiler can patch to load the precompiled grammar.
+   * That method is recommended to simply call @"Farkle.CharParser.MustPrecompile``1", to make sure that the precompiler has run successfully.
+   * Mark that method with @"Farkle.Builder.PrecompilerOutputAttribute".
+
+Here's the program above, modified to use the prpecompiler:
+
+# [C#](#tab/csharp)
+
+```csharp
+using System.Globalization;
+using Farkle;
+using Farkle.Builder;
+using Farkle.Builder.OperatorPrecedence;
+using Farkle.Parser;
+
+CharParser<double> parser = GetParser();
+
+Console.WriteLine("This is a simple mathematical expression parser powered by Farkle.");
+Console.WriteLine("Insert your expression and press enter.");
+
+while (Console.ReadLine() is { } input)
+{
+    Console.WriteLine(parser.Parse(input));
+}
+
+[PrecompilerInput]
+static IGrammarBuilder<double> GetGrammarBuilder()
+{
+   IGrammarSymbol<double> number = Terminal.Create("Number", Regex.FromRegexString(@"[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?"),
+       (ref ParserState _, ReadOnlySpan<byte> input) => double.Parse(input, CultureInfo.InvariantCulture));
+
+   Nonterminal<double> expression = Nonterminal.Create<double>("Expression");
+   expression.SetProductions(
+       expression.Extended().Append("+").Extend(expression).Finish((x1, x2) => x1 + x2),
+       expression.Extended().Append("-").Extend(expression).Finish((x1, x2) => x1 - x2),
+       expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
+       expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
+       expression.Extended().Append("^").Extend(expression).Finish((x1, x2) => Math.Pow(x1, x2)),
+       "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
+       "(".Appended().Extend(expression).Append(")").AsProduction(),
+       number.AsProduction());
+
+   IGrammarBuilder<double> expressionWithOperators = expression.WithOperatorScope([
+       new LeftAssociative("+", "-"),
+       new LeftAssociative("*", "/"),
+       new PrecedenceOnly(NEG),
+       new RightAssociative("^")]);
+
+    return expressionWithOperators;
+}
+
+[PrecompilerOutput]
+static CharParser<double> GetParser() => CharParser.MustPrecompile<double>();
+```
+
+# [F#](#tab/fsharp)
+
+```fsharp
+open System
+open System.Globalization
+open Farkle
+open Farkle.Builder
+open Farkle.Builder.OperatorPrecedence
+open Farkle.Parser
+
+[<PrecompilerInput>]
+let expressionWithOperators() =
+    let number =
+        Regex.regexString "[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?"
+        |> terminal (T(fun _ input -> Double.Parse(input, CultureInfo.InvariantCulture)))
+
+    let expression = nonterminal "Expression"
+    expression.SetProductions(
+        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2),
+        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2),
+        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2),
+        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
+        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
+        !& "-" .>>. expression |> prec NEG => (fun x -> -x),
+        !& "(" .>>. expression .>> ")" |> asProduction,
+        !@ number |> asProduction)
+
+    expression.WithOperatorScope(OperatorScope(
+        new LeftAssociative("+", "-"),
+        new LeftAssociative("*", "/"),
+        new PrecedenceOnly(NEG),
+        new RightAssociative("^")))
+
+[<PrecompilerOutput>]
+let parser() = CharParser.mustPrecompile<float>
+
+printfn "This is a simple mathematical expression parser powered by Farkle."
+printfn "Insert your expression and press enter."
+
+let rec repl parser =
+    match Console.ReadLine() with
+    | null -> ()
+    | input ->
+        input
+        |> CharParser.parseString parser
+        |> printfn "%O"
+        repl parser
+
+repl <| parser()
+```
+
+---
+
+> [!NOTE]
+> You can learn more about the precompiler in its own [documentation page](the-precompiler.md).
 
 ## Conclusion
 

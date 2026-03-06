@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- This assembly runs from inside an MSBuild task, and it's not possible at the moment to instrument it for code coverage. -->
+    <ExcludeFromCodeCoverage>true</ExcludeFromCodeCoverage>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />
+    <Compile Include="../Farkle/Obsoletions.cs" LinkBase="Farkle" />
+    <Compile Include="../Farkle/Diagnostics/DiagnosticSeverity.cs" LinkBase="Farkle" />
+    <Compile Include="../Farkle/Compatibility/EmbeddedAttribute.cs" LinkBase="Farkle/Compatibility" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="runtime" />
+    <PackageReference Include="Sigourney" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Tools.Precompiler.%(Filename)" />
+  </ItemGroup>
+</Project>

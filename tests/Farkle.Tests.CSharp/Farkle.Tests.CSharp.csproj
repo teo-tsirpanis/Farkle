@@ -11,6 +11,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Common/ComSharp/**/*.cs" LinkBase="ComSharp" />
+    <Compile Include="../../src/Farkle/Compatibility/EmbeddedAttribute.cs" LinkBase="Farkle/Compatibility" />
     <Content Include="../resources/**" LinkBase="resources" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>

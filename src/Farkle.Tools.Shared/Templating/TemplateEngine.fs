@@ -74,7 +74,7 @@ module TemplateEngine =
         }
     }
 
-    let private createConflictReportImpl log outputDir grammar =
+    let createConflictReport log outputDir grammar =
         let templateInput = {Grammar = grammar; GrammarPath = ""}
         let templateType = GrammarHtml(templateInput, HtmlOptions.Default)
         match renderTemplate log templateType with
@@ -82,15 +82,7 @@ module TemplateEngine =
             let fileName = sanitizeUnsafeFileName log grammar.GrammarInfo.Name + gt.FileExtension
             let path = sprintf "%s%c%s" outputDir Path.DirectorySeparatorChar fileName
             File.WriteAllText(path, gt.Content)
-            log.Error("An HTML file detailing these conflicts was created at {ConflictReportPath:l}.", path)
-            Some path
+            ValueSome path
         | _ ->
             log.Error("Internal error: failed to render the conflict report. Please open a GitHub issue.")
-            None
-
-    let createConflictReport (generatedConflictReports: _ ResizeArray) log outputDir grammar =
-        createConflictReportImpl log outputDir grammar
-        |> function
-        | Some path ->
-            generatedConflictReports.Add path
-        | None -> ()
+            ValueNone

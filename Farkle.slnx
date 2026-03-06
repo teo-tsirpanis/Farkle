@@ -13,6 +13,8 @@
     <Project Path="sample/Farkle.Samples.FSharp/Farkle.Samples.FSharp.fsproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Farkle.Tools.MSBuild/Farkle.Tools.MSBuild.fsproj" />
+    <Project Path="src/Farkle.Tools.Precompiler/Farkle.Tools.Precompiler.csproj" />
     <Project Path="src/Farkle.Tools.Shared/Farkle.Tools.Shared.fsproj" />
     <Project Path="src/Farkle.Tools/Farkle.Tools.fsproj" />
     <Project Path="src/Farkle/Farkle.csproj" />
@@ -20,6 +22,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Farkle.Tests.CSharp/Farkle.Tests.CSharp.csproj" />
     <Project Path="tests/Farkle.Tests/Farkle.Tests.fsproj" />
+    <Project Path="tests/Farkle.Tools.MSBuild.Tests/Farkle.Tools.MSBuild.Tests.csproj" />
     <Project Path="tests/Farkle.Tools.Shared.Tests/Farkle.Tools.Shared.Tests.fsproj" />
   </Folder>
 </Solution>

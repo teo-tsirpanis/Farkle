@@ -5,7 +5,6 @@
 
 namespace Farkle.Tools.MSBuild
 
-open Farkle.Grammars
 open Farkle.Tools
 open Farkle.Tools.Templating
 open Microsoft.Build.Framework
@@ -14,10 +13,10 @@ open Serilog
 open Serilog.Sinks.MSBuild
 open System
 open System.IO
+open System.Reflection.PortableExecutable
 
 /// An MSBuild task that generated HTML files from
 /// the precompiled grammars of an assembly.
-/// Can run in all editions of MSBuild.
 type FarkleGenerateHtml() =
     inherit Task()
 
@@ -41,15 +40,16 @@ type FarkleGenerateHtml() =
         let templateType = GrammarHtml(grammarInput, htmlOptions)
         match TemplateEngine.renderTemplate log templateType with
         | Ok output ->
-            let grammarName = sanitizeUnsafeFileName log grammar.Properties.Name
+            let grammarName = sanitizeUnsafeFileName log grammar.GrammarInfo.Name
             let htmlPath =
                 Path.Combine(this.OutputDirectory, Path.ChangeExtension(grammarName, output.FileExtension))
                 |> Path.GetFullPath
-            log.Information("Writing documentation of {GrammarName:l} at {HtmlPath}...", grammarName, htmlPath)
+            Logging.WritingHtml this.Log grammarName htmlPath
             File.WriteAllText(htmlPath, output.Content)
 
             generatedHtmlFiles.Add(TaskItem htmlPath)
         | Error() ->
+            // Internal error; fine to not localize.
             log.Error("There was an error with the HTML generator. Please report it on GitHub.")
 
     override this.Execute() =
@@ -60,10 +60,11 @@ type FarkleGenerateHtml() =
                 .CreateLogger()
         let log = logRaw.ForContext(MSBuildProperties.File, this.AssemblyPath)
 
-        use loader = new PrecompiledAssemblyFileLoader(this.AssemblyPath)
+        use peReader = new PEReader(File.OpenRead this.AssemblyPath)
+        let grammars = PrecompiledAssemblyFileLoader.loadAll peReader
         let generatedHtmlFiles = ResizeArray()
-        for kvp in loader.Grammars do
-            this.DoGenerateHtml log generatedHtmlFiles (kvp.Value.GetGrammar())
+        for x in grammars do
+            this.DoGenerateHtml log generatedHtmlFiles (x.LoadGrammar())
         this.GeneratedFiles <- generatedHtmlFiles.ToArray()
 
         not this.Log.HasLoggedErrors

@@ -9,23 +9,18 @@
     <ToolCommandName>farkle</ToolCommandName>
     <Title>The Farkle Command Line Tools</Title>
     <PackageId>Farkle.Tools</PackageId>
-    <Description>Farkle's command line helper tool. It can list the precompiled grammars of an assembly and create templated text like HTML pages from them.
-
-Installing this tool is also required when building a project that uses the precompiler from Visual Studio for Windows, or with the classic "msbuild" command.</Description>
+    <Description>Farkle's command line helper tool. It can list the precompiled grammars of an assembly and create templated text like HTML pages from them.</Description>
     <PackageTags>$(PackageTags);cli-tool</PackageTags>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
-    <!-- <Compile Include="LogSinkBuildEngine.fs" /> -->
     <!-- <Compile Include="Commands/*.fs" /> -->
     <Compile Include="Commands/New.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Reflection.MetadataLoadContext" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
-    <!-- <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.fsproj" /> -->
     <PackageReference Include="Argu" />
     <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" />

@@ -132,72 +132,13 @@ Target.create "GenerateCode" (fun _ ->
     )
 )
 
-Target.description "Runs the unit tests"
-Target.create "RunUnitTests" (fun _ ->
+Target.description "Runs all tests"
+Target.create "Test" (fun _ ->
     CreateProcess.fromRawCommand "dotnet" ["test"; "--solution"; farkleSolution; "--coverage"; "--coverage-output-format"; "xml"]
     |> CreateProcess.ensureExitCode
     |> Proc.run
     |> _.Result
 )
-
-Target.description "Prepares the MSBuild integration tests"
-Target.create "PrepareMSBuildTests" (fun _ ->
-    Shell.cleanDir localPackagesFolder
-    Directory.ensure localPackagesFolder
-    farkleToolsMSBuildProject
-    |> DotNet.pack (fun p ->
-        {p with
-            OutputPath = Some localPackagesFolder
-            MSBuildParams = {p.MSBuildParams with Properties = ("Version", "0.0.0-local") :: p.MSBuildParams.Properties}
-        }
-    )
-)
-
-Target.description "Runs the MSBuild integration tests on .NET Framework editions of MSBuild"
-Target.create "RunMSBuildTestsNetFramework" (fun _ ->
-    DotNet.build id farkleToolsProject
-
-    let testProjectDirectory = Path.getDirectory msBuildTestProject
-    let customWorkerPath = Path.getFullName "./src/Farkle.Tools/bin/Release/net8.0/Farkle.Tools.dll"
-    // dotnet clean sometimes fails; this is faster and cleans only this project.
-    cleanBinObj testProjectDirectory
-    msBuildTestProject
-    |> MSBuild.build (fun x ->
-        {x with
-            DoRestore = true
-            Properties = ("FarkleCustomPrecompilerWorkerPath", customWorkerPath) :: x.Properties
-            Targets = ["Build"]
-            Verbosity = Some MSBuildVerbosity.Minimal
-            NodeReuse = false
-        }
-    )
-
-    msBuildTestProject
-    |> DotNet.test (fun p ->
-        {p with
-            NoBuild = true
-            ResultsDirectory = Some testProjectDirectory
-        }
-    )
-)
-
-Target.description "Runs the MSBuild integration tests on .NET Core editions of MSBuild"
-Target.create "RunMSBuildTestsNetCore" (fun _ ->
-    let testProjectDirectory = Path.getDirectory msBuildTestProject
-    cleanBinObj testProjectDirectory
-    msBuildTestProject
-    |> DotNet.test (fun p ->
-        {p with
-            ResultsDirectory = Some testProjectDirectory
-        }
-    )
-)
-
-Target.description "Runs all tests of the legacy F# codebase"
-Target.create "TestLegacy" ignore
-
-Target.description "Runs all tests on the C# codebase"
-Target.create "Test" ignore
 
 Target.description "Runs all benchmarks"
 Target.create "Benchmark" (fun _ ->
@@ -270,18 +211,8 @@ let (?=>!) x y = x ?=> y |> ignore
 "Clean"
     ==>! "GenerateCode"
 
-["PrepareMSBuildTests"; "NuGetPack"; "Benchmark"]
+["Test"; "NuGetPack"; "Benchmark"]
 |> List.iter (fun target -> "GenerateCode" ==>! target)
-
-["RunMSBuildTestsNetCore"; "RunMSBuildTestsNetFramework"]
-|> List.iter (fun target -> "PrepareMSBuildTests" ==>! target)
-
-"TestLegacy" <== ["RunMSBuildTestsNetCore"]
-
-"RunMSBuildTestsNetFramework"
-    =?>! ("TestLegacy", OperatingSystem.IsWindows())
-
-"Test" <== ["RunUnitTests"]
 
 // We used to have "Test" ==>! "NuGetPack".
 // This dependency will be expressed higher at the GitHub Actions level.

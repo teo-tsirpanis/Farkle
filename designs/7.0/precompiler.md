@@ -132,8 +132,6 @@ Farkle 6's precompiler embeds each precompiled grammar as a manifest resource in
 
 In Farkle 7 we will embed the grammar in an RVA field, and patch the output method to call a special API to load the grammar from it. At the cost of slightly more complex IL weaving, this will satisfy both the requirement to not use reflection, and to allow trimming unused grammars away.
 
-The API to load a grammar from an RVA field will look like this:
-
 The following APIs will be defined for the precompiler-generated code to call:
 
 ```csharp
@@ -180,10 +178,6 @@ namespace Farkle.Runtime;
 [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
 public sealed class PrecompiledGrammarAttribute : Attribute
 {
-    public PrecompiledGrammarAttribute(Type containingType);
-
-    public Type ContainingType { get; }
-
     public string? Key { get; set; }
 }
 ```
@@ -193,6 +187,8 @@ The following conditions must hold for each field that has this attribute:
 * The field must have the `FieldAttributes.HasFieldRVA` flag set.
 * The field's signature must refer to a value type defined with an index to a `TypeDef` metadata table. In other words, the field's type must be a value type declared in the same assembly.
 * The field's type must have an entry in the `ClassLayout` metadata table, with a non-zero `ClassSize` column.
+
+The field will be defined in the same type where the precompiled grammar was defined. The attribute's `Key` property will correspond to the `Key` property of the input and output attributes.
 
 The attribute's type must be either defined in the same assembly as the field, or referenced from the `Farkle` assembly. An assembly must not contain attribute instances from more than one source.
 

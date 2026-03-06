@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      Old VS versions won't be used during development, so no need for the conditions
+      to select the netstandard2.0 assembly.
+    -->
+    <FarkleTaskAssembly>$(MSBuildThisFileDirectory)../src/Farkle.Tools.MSBuild/bin/$(Configuration)/net8.0/Farkle.Tools.MSBuild.dll</FarkleTaskAssembly>
+    <!-- Load the precompiler tasks in a separate (ephemeral) process, to avoid locking the assembly
+    files during development. -->
+    <FarklePrecompilerTaskFactory>TaskHostFactory</FarklePrecompilerTaskFactory>
+  </PropertyGroup>
+</Project>

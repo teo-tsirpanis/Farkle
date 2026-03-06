@@ -46,13 +46,13 @@ For internal use only."
 
 [<EntryPoint>]
 let main argv =
-#if TODO_PRECOMPILER
-    // The precompiler worker is a special case, it does not use the regular
-    // logging mechanism and reports catastrophic exceptions to stderr.
-    // That's why it is given its time to shine at the very beginning,
-    // even outside Argu.
-    PrecompilerWorker.runIfRequested argv
-#endif
+    // The legacy precompiler worker was a special case; it did not use
+    // the regular logging mechanism and reported catastrophic exceptions
+    // to stderr. That's why it is given its time to shine at the very
+    // beginning, even outside Argu.
+    if Array.length argv >= 1 && argv[0] = "precompiler-worker" then
+        eprintfn "This version of Farkle.Tools does not support the Farkle 6.x precompiler."
+        exit 1
 
     let parser = ArgumentParser.Create("farkle", "Help was requested.", errorHandler = FarkleCLIExiter())
     let results = parser.Parse()

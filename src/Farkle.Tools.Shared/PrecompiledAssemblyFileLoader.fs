@@ -1,21 +1,164 @@
-// Copyright (c) 2020 Theodore Tsirpanis
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
 
 namespace Farkle.Tools
 
-open Farkle.Builder
-open System
+open Farkle.Grammars
+open System.Collections.Immutable
 open System.Reflection
+open System.Reflection.Metadata
+open System.Reflection.Metadata.Ecma335
+open System.Reflection.PortableExecutable
 
-/// Loads the precompiled grammars from an assembly file.
-type PrecompiledAssemblyFileLoader(path) =
-    let resolver = PathAssemblyResolver([path; typeof<obj>.Assembly.Location])
-    let loadContext = new MetadataLoadContext(resolver, typeof<obj>.Assembly.GetName().Name)
-    let asm = loadContext.LoadFromAssemblyPath(path)
-    let grammars = PrecompiledGrammar.GetAllFromAssembly asm
+type PrecompiledGrammar = private {
+    PEFile: PEReader
+    MetadataReader: MetadataReader
+    RVA: int
+    Size: int
+    Field: FieldDefinitionHandle
+    DeclaringType: TypeDefinitionHandle
+    Key: string | null
+}
+with
+    member x.LoadGrammar() : Grammar =
+        x.PEFile.GetSectionData(x.RVA).GetContent(0, x.Size)
+        |> Grammar.Load
+    member x.ContainingTypeName =
+        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
+        x.MetadataReader.GetString typeDef.Name
+    member x.ContainingTypeNamespace =
+        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
+        x.MetadataReader.GetString typeDef.Namespace
 
-    member _.Grammars = grammars
-    interface IDisposable with
-        member _.Dispose() = loadContext.Dispose()
+module PrecompiledAssemblyFileLoader =
+
+    [<Literal>]
+    let private PrecompiledGrammarAttributeNamespace = "Farkle.Runtime"
+
+    [<Literal>]
+    let private PrecompiledGrammarAttributeName = "PrecompiledGrammarAttribute"
+
+    [<Literal>]
+    let private ConstructorAttributes = MethodAttributes.SpecialName ||| MethodAttributes.RTSpecialName
+
+    let private findPrecompiledGrammarAttributeConstructor(mr: MetadataReader) =
+        let tryFindFromMemberReference() =
+            mr.MemberReferences
+            |> Seq.tryFind (fun m ->
+                let m = mr.GetMemberReference m
+                m.GetKind() = MemberReferenceKind.Method
+                && mr.StringComparer.Equals(m.Name, ".ctor")
+                && m.Parent.Kind = HandleKind.TypeReference
+                && (let typeRef = TypeReferenceHandle.op_Explicit m.Parent |> mr.GetTypeReference
+                    typeRef.ResolutionScope.Kind = HandleKind.AssemblyReference
+                    && mr.StringComparer.Equals(mr.GetAssemblyReference(AssemblyReferenceHandle.op_Explicit typeRef.ResolutionScope).Name, "Farkle")
+                    && mr.StringComparer.Equals(typeRef.Namespace, PrecompiledGrammarAttributeNamespace)
+                    && mr.StringComparer.Equals(typeRef.Name, PrecompiledGrammarAttributeName)))
+            |> Option.map (fun x -> MemberReferenceHandle.op_Implicit x : EntityHandle)
+            |> Option.defaultValue Unchecked.defaultof<_>
+        let tryFindFromSameType() =
+            mr.MethodDefinitions
+            |> Seq.tryFind (fun m ->
+                let m = mr.GetMethodDefinition m
+                m.Attributes &&& ConstructorAttributes = ConstructorAttributes
+                && mr.StringComparer.Equals(m.Name, ".ctor")
+                && (let declType = m.GetDeclaringType() |> mr.GetTypeDefinition
+                    mr.StringComparer.Equals(declType.Namespace, PrecompiledGrammarAttributeNamespace)
+                    && mr.StringComparer.Equals(declType.Name, PrecompiledGrammarAttributeName)))
+            |> Option.map (fun x -> MethodDefinitionHandle.op_Implicit x : EntityHandle)
+            |> Option.defaultValue Unchecked.defaultof<_>
+        // Per the spec, the PrecompiledGrammarAttribute type can be declared at either
+        // a Farkle assembly reference, or the input assembly itself.
+        tryFindFromMemberReference()
+        |> fun x -> if x.IsNil then tryFindFromSameType() else x
+
+    // Decodes a signature by reading the layout size of a value type.
+    // Returns 0 if the type is not supported.
+    let private getStructSizeSignatureDecoder = {new ISignatureTypeProvider<int, unit> with
+        member _.GetPrimitiveType typeCode: int =
+            match typeCode with
+            | PrimitiveTypeCode.Boolean | PrimitiveTypeCode.Byte | PrimitiveTypeCode.SByte -> 1
+            | PrimitiveTypeCode.Char | PrimitiveTypeCode.Int16 | PrimitiveTypeCode.UInt16 -> 2
+            | PrimitiveTypeCode.Int32 | PrimitiveTypeCode.UInt32 | PrimitiveTypeCode.Single -> 4
+            | PrimitiveTypeCode.Int64 | PrimitiveTypeCode.UInt64 | PrimitiveTypeCode.Double -> 8
+            | _ -> 0
+        member _.GetTypeFromDefinition (reader, handle, rawTypeKind) =
+            let kind = reader.ResolveSignatureTypeKind(handle, rawTypeKind)
+            if kind = SignatureTypeKind.ValueType then
+                reader.GetTypeDefinition(handle).GetLayout().Size
+            else
+                0
+        member _.GetTypeFromReference (_, _, _) = 0
+        member _.GetSZArrayType _ = 0
+        member _.GetGenericInstantiation (_, _) = 0
+        member _.GetArrayType (_, _) = 0
+        member _.GetByReferenceType _ = 0
+        member _.GetPointerType _ = 0
+        member _.GetFunctionPointerType _ = 0
+        member _.GetGenericMethodParameter (_, _) = 0
+        member _.GetGenericTypeParameter (_, _) = 0
+        member _.GetModifiedType (_, _, _) = 0
+        member _.GetPinnedType _ = 0
+        member _.GetTypeFromSpecification (_, _, _, _) = 0
+    }
+
+    exception StopCustomAttributeDecodeException
+
+    let private dummyAttributeTypeProvider = {new ICustomAttributeTypeProvider<bool> with
+        member _.GetPrimitiveType _ = false
+        member _.GetTypeFromDefinition (_, _, _) = false
+        member _.GetTypeFromReference (_, _, _) = false
+        member _.GetSZArrayType _ = false
+        member _.GetSystemType() = true
+        member _.IsSystemType x = x
+        member _.GetUnderlyingEnumType _ = raise StopCustomAttributeDecodeException
+        member _.GetTypeFromSerializedName _ : bool = false
+    }
+
+    let private decodeNamedArguments (ca: CustomAttribute) =
+        try
+            ca.DecodeValue(dummyAttributeTypeProvider).NamedArguments
+        with
+        | StopCustomAttributeDecodeException -> ImmutableArray.Empty
+
+    let loadAll (pe: PEReader) =
+        if not pe.HasMetadata then
+            []
+        else
+            let mr = pe.GetMetadataReader()
+            let attrConstructor = findPrecompiledGrammarAttributeConstructor mr
+            if attrConstructor.IsNil then
+                []
+            else
+                mr.CustomAttributes
+                |> Seq.choose (fun ca ->
+                    let ca = mr.GetCustomAttribute ca
+                    let interesting =
+                        ca.Constructor = attrConstructor
+                        && ca.Parent.Kind = HandleKind.FieldDefinition
+                        && (let fld = FieldDefinitionHandle.op_Explicit ca.Parent |> mr.GetFieldDefinition
+                            fld.Attributes &&& FieldAttributes.HasFieldRVA <> enum 0)
+                    if not interesting then
+                        None
+                    else
+                        let fldHandle = FieldDefinitionHandle.op_Explicit ca.Parent
+                        let fld = mr.GetFieldDefinition fldHandle
+                        let size = fld.DecodeSignature(getStructSizeSignatureDecoder, ())
+                        if size = 0 then
+                            None
+                        else
+                            let key =
+                                decodeNamedArguments ca
+                                |> Seq.tryFind (fun x -> x.Kind = CustomAttributeNamedArgumentKind.Property && x.Name = "Key" && x.Value :? string)
+                                |> Option.map (fun x -> x.Value :?> string)
+                                |> Option.toObj
+                            Some {
+                                PEFile = pe
+                                MetadataReader = mr
+                                RVA = fld.GetRelativeVirtualAddress()
+                                Size = size
+                                Field = fldHandle
+                                DeclaringType = fld.GetDeclaringType()
+                                Key = key
+                            })
+                |> List.ofSeq

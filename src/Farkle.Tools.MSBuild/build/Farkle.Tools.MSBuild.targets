@@ -1,11 +1,72 @@
-<Project TreatAsLocalProperty="MSBuildMajorVersion">
+<Project TreatAsLocalProperty="_MSBuildMajorVersion;_RiderWarning2;_SkipConflictReport">
   <PropertyGroup>
-    <MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</MSBuildMajorVersion>
+    <_MSBuildMajorVersion Condition="'$(MSBuildVersion)' != ''">$([System.Version]::Parse($(MSBuildVersion)).Major)</_MSBuildMajorVersion>
+    <!--
+      The precompiler is going to execute the compiled assembly, so make sure that runtime
+      dependencies are available, even when building libraries, which don't enable this.
+    -->
+    <CopyLocalLockFileAssemblies Condition="'$(CopyLocalLockFileAssemblies)' == '' AND '$(FarkleEnablePrecompiler)' != 'false'">true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false"
+      TaskName="Farkle.Tools.MSBuild.FarklePrecompilerTask"
+      Runtime="$(FarklePrecompilerTaskRuntime)"
+      TaskFactory="$(FarklePrecompilerTaskFactory)"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
+
+  <UsingTask
+      Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+      TaskName="Farkle.Tools.MSBuild.FarkleGenerateHtml"
+      Runtime="$(FarklePrecompilerTaskRuntime)"
+      TaskFactory="$(FarklePrecompilerTaskFactory)"
+      AssemblyFile="$(FarkleTaskAssembly)"/>
 
   <Target Name="FarkleCheckSupportedMSBuildVersion">
     <Error
-      Condition="('$(MSBuildMajorVersion)' == '') OR ($(MsBuildMajorVersion) &lt; 17)"
-      Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 6 SDK."/>
+      Condition="('$(_MSBuildMajorVersion)' == '') OR ($(_MSBuildMajorVersion) &lt; 17)"
+      Text="Farkle.Tools.MSBuild is only supported on MSBuild 17 and above. Current version is $(MSBuildVersion). Make sure that you use Visual Studio 2022 or the .NET 8 SDK."/>
+  </Target>
+
+  <Target
+      Name="FarkleRunPrecompiler"
+      Condition="$(FarkleEnablePrecompiler) != false"
+      DependsOnTargets="FarkleCheckSupportedMSBuildVersion">
+    <PropertyGroup>
+      <_SkipConflictReport Condition="$(FarkleGenerateConflictReport) == false">true</_SkipConflictReport>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- This seems to include most runtime dependencies from NuGet. Some others are included from the items below. -->
+      <_PrecompilerRuntimeDependencies Include="@(ReferenceCopyLocalPaths)" Condition="'%(ReferenceCopyLocalPaths.AssetType)' == 'runtime' AND '%(ReferenceCopyLocalPaths.RuntimeIdentifier)' == ''" />
+      <!-- These two are taken from target _ComputeUserRuntimeAssemblies. -->
+      <_PrecompilerRuntimeDependencies Include="@(ReferencePath)" Condition="'%(ReferencePath.IncludeRuntimeDependency)' == 'true' OR '%(ReferencePath.CopyLocal)' == 'true'" />
+      <_PrecompilerRuntimeDependencies Include="@(ReferenceDependencyPaths)" Condition="'%(ReferenceDependencyPaths.IncludeRuntimeDependency)' == 'true' OR '%(ReferenceDependencyPaths.CopyLocal)' == 'true'" />
+    </ItemGroup>
+
+    <FarklePrecompilerTask
+        AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+        Configuration="@(SigourneyConfiguration)"
+        RuntimeDependencies="@(_PrecompilerRuntimeDependencies->'%(FullPath)')"
+        SkipConflictReport="$(_SkipConflictReport)"
+        ErrorMode="$(FarklePrecompilerErrorMode)">
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FarkleGeneratedConflictReports"/>
+      <Output TaskParameter="GeneratedConflictReports" ItemName="FileWrites"/>
+    </FarklePrecompilerTask>
+
+    <ItemGroup>
+      <_PrecompilerRuntimeDependencies Remove="@(_PrecompilerRuntimeDependencies)" />
+    </ItemGroup>
+  </Target>
+
+  <Target
+    Name="FarkleRunHtmlGenerator"
+    Condition="$(FarkleEnablePrecompiler) != false AND $(FarkleGenerateHtml) == true"
+    AfterTargets="SigourneyEntryPoint">
+    <FarkleGenerateHtml
+      AssemblyPath="@(IntermediateAssembly->'%(FullPath)')"
+      OutputDirectory="$(OutputPath)">
+      <Output TaskParameter="GeneratedFiles" ItemName="FileWrites"/>
+    </FarkleGenerateHtml>
   </Target>
 </Project>

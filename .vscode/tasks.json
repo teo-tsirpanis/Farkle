@@ -6,8 +6,6 @@
         {"label": "🧹CLEAN🧹", "command": "git", "args": ["clean", "-Xdf"], "problemMatcher": []},
         {"label": "🏭GENERATE CODE🏭", "command": "pwsh", "args": ["./build.ps1", "target", "GenerateCode"], "problemMatcher": []},
         {"label": "🔬TEST🔬", "group": {"kind": "test", "isDefault": true}, "command": "pwsh", "args": ["./build.ps1", "target", "Test"]},
-        // TODO-FARKLE7: Re-enable once the precompiler is ported.
-        // {"label": "🦕LEGACY TEST🦕", "group": {"kind": "test", "isDefault": true}, "command": "pwsh", "args": ["./build.ps1", "target", "TestLegacy"]},
         {"label": "⚙BUILD TESTS⚙", "group": "build", "presentation": {"reveal": "silent"}, "command": "dotnet", "args": ["build", "tests/Farkle.Tests/Farkle.Tests.fsproj", "-c", "Debug"], "problemMatcher": []},
         {"label": "📦PACK📦", "command": "pwsh", "args": ["./build.ps1", "target", "NuGetPack"], "problemMatcher": []},
         {"label": "⏱BENCHMARK⏱", "command": "pwsh", "args": ["./build.ps1", "target", "Benchmark"], "problemMatcher": []},

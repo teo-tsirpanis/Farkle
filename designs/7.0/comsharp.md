@@ -32,15 +32,15 @@ COM# interfaces cannot be generic.
 
 Each assembly has its own definition of a COM# interface, which means that two assemblies cannot directly exchange objects implementing COM# interfaces. Instead, they have to convert them to a COM# object.
 
-A COM# object is an interoperable representation of an object that implements one or more COM# interfaces. It is defined as a `ValueTuple<object, Delegate[]>`. The first member of the tuple is called the _source object_, and the second member is a [virtual method table][vtable], called the _vtable_.
+A COM# object is an interoperable representation of an object that implements one or more COM# interfaces. It is defined as a `ValueTuple<object?, IReadOnlyList<Delegate>>`. The first member of the tuple is called the _source object_, and the second member is a [virtual method table][vtable], called the _vtable_.
 
-The source object is what gives the COM# object its identity; two COM# objects are equal if and only if their source objects are equal.
+The source object is what gives the COM# object its identity; two COM# objects are considered equal if and only if their source objects are equal. A COM# object with a `null` source object is considered a null COM# object.
 
 The vtable is an array of delegates that allow calling the methods defined in a COM# interface. The following sections detail how the vtable is constructed.
 
-The first delegate of a vtable is called the _query interface function_, and is always a `Func<object, Guid, Delegate[]?>` which is used to query whether the source object implements a COM# interface with a given IID. If the object implements the requested interface, the delegate returns a vtable for that interface; otherwise, it returns `null`. The subsequent delegates correspond to the interface methods, in the order they are declared in the interface.
+The first delegate of a vtable is called the _query interface function_, and is always a `Func<object?, Guid, IReadOnlyList<Delegate>?>` which is used to query whether the source object implements a COM# interface with a given IID. If the object implements the requested interface, the delegate returns a vtable for that interface; otherwise, it returns `null`. The subsequent delegates correspond to the interface methods, in the order they are declared in the interface.
 
-Vtables are immutable and must not be modified after creation. A vtable does not signify which interface it implements, but this is not a problem, because consumers of any COM# object can use the query interface function to obtain the vtable for any interface they want.
+A vtable does not signify which interface it implements, but this is not a problem, because consumers of any COM# object can use the query interface function to obtain the vtable for any interface they want.
 
 ### Shared assemblies
 
@@ -71,7 +71,9 @@ The following types are supported as parameters and return types in COM# interfa
 * Unmanaged pointers of any type are marshalled as `IntPtr`.
 * By-reference parameters of a type declared in a shared assembly — closed under generic specializations, arrays, and function pointers — are marshalled as spans of that type, that contain the reference. If the parameter is an `in` parameter, it is marshalled as `ReadOnlySpan<T>`, otherwise as `Span<T>`.
 * Tuples (both reference and value tuples) are marshalled as tuples of the same kind and arity, with each element being [marshalled](#type-marshalling) recursively.
-* Generic collection interfaces (`IEnumerable<T>`, `IEnumerator<T>`, `IList<T>`, `ICollection<T>`, `IReadOnlyList<T>`, `IReadOnlyCollection<T>`) where `T` does not belong to a shared assembly, are marshalled as the respective collection interface, containing values of the [marshalled type](#type-marshalling) of `T`. Each method of the collection interface will have its parameters and return types [marshalled](#type-marshalling) recursively.
+* Generic collection interfaces (`IEnumerable<T>`, `IEnumerator<T>`, `IList<T>`, `ICollection<T>`, and their async and read-only counterparts) where `T` does not belong to a shared assembly, are marshalled as the respective collection interface, containing values of the [marshalled type](#type-marshalling) of `T`. Each method of the collection interface will have its parameters and return types [marshalled](#type-marshalling) recursively. Any inherited non-generic collection interfaces (`IEnumerable`, `IEnumerator`) are marshalled in such a way that they behave consistently with the generic counterparts.
+
+When marshalling reference types, `null` is marshalled as `null` of the respective marshalled type.
 
 Marshalling any other type is not supported.
 
@@ -82,7 +84,7 @@ Marshalling any other type is not supported.
 
 Changes to a COM# interface after publication must maintain binary compatibility. Binary-incompatible changes include but are not limited to:
 
-* Making any change to the interface that results in a different vtable representation, e.g. adding, removing, reordering members, or changing the signature of a member. Renaming a member or parameter is allowed, as well as changing a parameter in a way that marshalls to the same type as before.
+* Making any change to the interface that results in a different vtable representation, e.g. adding, removing, reordering members, or changing the signature of a member. Renaming a member or parameter is allowed, as well as changing a parameter in a way that marshals to the same type as before.
 * Updating a member to accept or return a COM# interface with a different IID.
 
 In such cases, the COM# interface is considered a different interface, and as such its IID must be changed.

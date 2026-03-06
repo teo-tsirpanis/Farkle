@@ -29,66 +29,46 @@ public static class ParserExtensions
         return completionState.Result;
     }
 
-    private static ParserResult<T> RunContext<T>(ParserStateContext<char, T> context, TextReader reader, bool keepReaderOpen)
+    private static ParserResult<T> RunContext<T>(ParserStateContext<char, T> context, TextReader reader)
     {
-        try
+        while (!context.IsCompleted)
         {
-            while (!context.IsCompleted)
-            {
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-                int read = reader.Read(context.GetSpan());
+            int read = reader.Read(context.GetSpan());
 #else
-                ArraySegment<char> segment = context.GetArraySegment();
-                int read = reader.Read(segment.Array, segment.Offset, segment.Count);
+            ArraySegment<char> segment = context.GetArraySegment();
+            int read = reader.Read(segment.Array, segment.Offset, segment.Count);
 #endif
-                if (read == 0)
-                {
-                    context.CompleteInput();
-                    break;
-                }
-                context.Advance(read);
-            }
-            return context.Result;
-        }
-        finally
-        {
-            if (!keepReaderOpen)
+            if (read == 0)
             {
-                reader.Dispose();
+                context.CompleteInput();
+                break;
             }
+            context.Advance(read);
         }
+        return context.Result;
     }
 
-    private static async ValueTask<ParserResult<T>> RunContextAsync<T>(ParserStateContext<char, T> context, TextReader reader, bool keepReaderOpen, CancellationToken cancellationToken)
+    private static async Task<ParserResult<T>> RunContextAsync<T>(ParserStateContext<char, T> context, TextReader reader, CancellationToken cancellationToken)
     {
-        try
+        while (!context.IsCompleted)
         {
-            while (!context.IsCompleted)
-            {
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-                int read = await reader.ReadAsync(context.GetMemory(), cancellationToken);
+            int read = await reader.ReadAsync(context.GetMemory(), cancellationToken);
 #else
-                ArraySegment<char> segment = context.GetArraySegment();
-                int read = await (cancellationToken.IsCancellationRequested ?
-                    Task.FromCanceled<int>(cancellationToken) :
-                    reader.ReadAsync(segment.Array, segment.Offset, segment.Count));
+            ArraySegment<char> segment = context.GetArraySegment();
+            int read = await (cancellationToken.IsCancellationRequested ?
+                Task.FromCanceled<int>(cancellationToken) :
+                reader.ReadAsync(segment.Array, segment.Offset, segment.Count));
 #endif
-                if (read == 0)
-                {
-                    context.CompleteInput();
-                    break;
-                }
-                context.Advance(read);
-            }
-            return context.Result;
-        }
-        finally
-        {
-            if (!keepReaderOpen)
+            if (read == 0)
             {
-                reader.Dispose();
+                context.CompleteInput();
+                break;
             }
+            context.Advance(read);
         }
+        return context.Result;
     }
 
     /// <summary>
@@ -141,7 +121,7 @@ public static class ParserExtensions
         ArgumentNullException.ThrowIfNull(reader);
 
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
-        return RunContext(context, reader, keepReaderOpen: true);
+        return RunContext(context, reader);
     }
 
     /// <summary>
@@ -164,8 +144,8 @@ public static class ParserExtensions
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
         context.State.InputName = path;
         // We don't need buffering in the FileStream; both the context and the StreamReader have.
-        TextReader reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1));
-        return RunContext(context, reader, keepReaderOpen: false);
+        using TextReader reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1));
+        return RunContext(context, reader);
     }
 
     /// <summary>
@@ -175,38 +155,24 @@ public static class ParserExtensions
     /// <param name="parser">The <see cref="IParser{TChar, T}"/> to use.</param>
     /// <param name="reader">The <see cref="TextReader"/> to read the characters from.</param>
     /// <param name="cancellationToken">Used to cancel the parsing operation. Optional.</param>
-    /// <returns>A <see cref="ValueTask{TResult}"/> that will return a <see cref="ParserResult{T}"/>
+    /// <returns>A <see cref="Task{TResult}"/> that will return a <see cref="ParserResult{T}"/>
     /// containing the result of the parsing operation.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="parser"/> or <paramref name="reader"/> is
     /// <see langword="null"/>.</exception>
     /// <remarks>
-    /// <para>
     /// <paramref name="reader"/> will be read from until it ends or the parsing operation fails.
     /// <paramref name="reader"/> will not be automatically disposed.
-    /// </para>
-    /// <para>
-    /// On frameworks not compatible with .NET Standard 2.1, cancelling the operation will not
-    /// have effect until the next time the characters are read. This is due to
-    /// <see cref="TextReader"/> not supporting passing a <see cref="CancellationToken"/> to its
-    /// <c>ReadAsync</c> method.
-    /// </para>
     /// </remarks>
-    public static ValueTask<ParserResult<T>> ParseAsync<T>(this IParser<char, T> parser, TextReader reader,
+    public static async Task<ParserResult<T>> ParseAsync<T>(this IParser<char, T> parser, TextReader reader,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(parser);
         ArgumentNullException.ThrowIfNull(reader);
 
-        if (cancellationToken.IsCancellationRequested)
-        {
-            // ValueTask.FromCanceled is not available in all frameworks.
-            // We use Task.FromCanceled and wrap it in a ValueTask, which
-            // is equivalent.
-            return new(Task.FromCanceled<ParserResult<T>>(cancellationToken));
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
-        return RunContextAsync(context, reader, keepReaderOpen: true, cancellationToken: cancellationToken);
+        return await RunContextAsync(context, reader, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -216,36 +182,25 @@ public static class ParserExtensions
     /// <param name="parser">The <see cref="IParser{TChar, T}"/> to use.</param>
     /// <param name="path">The path to the file to parse.</param>
     /// <param name="cancellationToken">Used to cancel the parsing operation. Optional.</param>
-    /// <returns>A <see cref="ValueTask{TResult}"/> that will return a <see cref="ParserResult{T}"/>
+    /// <returns>A <see cref="Task{TResult}"/> that will return a <see cref="ParserResult{T}"/>
     /// containing the result of the parsing operation.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="parser"/> or <paramref name="path"/> is
     /// <see langword="null"/>.</exception>
     /// <remarks>
-    /// <para>
     /// The file will be read from until it ends or until the parsing operation fails.
-    /// </para>
-    /// <para>
-    /// On frameworks not compatible with .NET Standard 2.1, cancelling the operation will not
-    /// have effect until the next time the characters are read. This is due to
-    /// <see cref="TextReader"/> not supporting passing a <see cref="CancellationToken"/> to its
-    /// <c>ReadAsync</c> method.
-    /// </para>
     /// </remarks>
-    public static ValueTask<ParserResult<T>> ParseFileAsync<T>(this IParser<char, T> parser, string path,
+    public static async Task<ParserResult<T>> ParseFileAsync<T>(this IParser<char, T> parser, string path,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(parser);
         ArgumentNullException.ThrowIfNull(path);
 
-        if (cancellationToken.IsCancellationRequested)
-        {
-            return new(Task.FromCanceled<ParserResult<T>>(cancellationToken));
-        }
+        cancellationToken.ThrowIfCancellationRequested();
 
         ParserStateContext<char, T> context = ParserStateContext.Create(parser);
         context.State.InputName = path;
         // We don't need buffering in the FileStream; both the context and the StreamReader have.
-        TextReader reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1, true));
-        return RunContextAsync(context, reader, keepReaderOpen: false, cancellationToken: cancellationToken);
+        using TextReader reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1, true));
+        return await RunContextAsync(context, reader, cancellationToken: cancellationToken);
     }
 }

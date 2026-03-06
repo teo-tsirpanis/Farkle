@@ -172,21 +172,13 @@ module internal CharParser =
     /// Asynchronously parses characters from a text reader.
     let asyncParseTextReader (parser: IParser<_, 'T>) x = async {
         let! ct = Async.CancellationToken
-        let vt = parser.ParseAsync(x, ct)
-        if vt.IsCompleted then
-            return vt.Result
-        else
-            return! vt.AsTask() |> Async.AwaitTask
+        return! parser.ParseAsync(x, ct) |> Async.AwaitTask
     }
 
     /// Asynchronously parses characters from a file.
     let asyncParseFile (parser: IParser<_, 'T>) x = async {
         let! ct = Async.CancellationToken
-        let vt = parser.ParseFileAsync(x, ct)
-        if vt.IsCompleted then
-            return vt.Result
-        else
-            return! vt.AsTask() |> Async.AwaitTask
+        return! parser.ParseFileAsync(x, ct) |> Async.AwaitTask
     }
 
 namespace Farkle.Diagnostics

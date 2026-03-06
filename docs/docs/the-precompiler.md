@@ -164,7 +164,7 @@ Precompiler ouptut methods must return one of the following types:
 * If the output method builds a [syntax-checking parser](#creating-syntax-checking-parsers):
   * @"Farkle.CharParser`1". The type argument of the parser must be a reference type.
 
-Precompiler output methods are advised to call @"Farkle.CharParser.MustPrecompile`1"
+Precompiler output methods are advised to call @"Farkle.CharParser.MustPrecompile``1?displayProperty=nameWithType"
 
 ### Defining multiple grammars in the same type
 

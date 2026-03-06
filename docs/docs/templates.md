@@ -85,7 +85,7 @@ The templates can furthermore use the following functions:
 
 * `to_base_64 <bool>`: Returns the grammar file as a Base64-encoded string. If you pass `true`, it will add line breaks every 76 characters.
 * `grammar.is_terminal <token_symbol_handle>`: Exposes the @"Farkle.Grammars.Grammar.IsTerminal*?displayProperty=nameWithType" method.
-* `grammar.get_object_from_handle <handle>`: Converts a @"Farkle.Grammars.TokenSymbolHandle", a @"Farkle.Grammars.GroupHandle", a @"Farkle.Grammars.NonterminalHandle", a @"Farkle.Grammars.ProductionHandle", or an @Farkle.Grammars.EntityHandle", to its respective @"Farkle.Grammars.TokenSymbolDefinition", @"Farkle.Grammars.NonterminalDefinition", or @"Farkle.Grammars.ProductionDefinition", object.
+* `grammar.get_object_from_handle <handle>`: Converts a @"Farkle.Grammars.TokenSymbolHandle", a @"Farkle.Grammars.GroupHandle", a @"Farkle.Grammars.NonterminalHandle", a @"Farkle.Grammars.ProductionHandle", or an @Farkle.Grammars.EntityHandle", to its respective @"Farkle.Grammars.TokenSymbolDefinition", @"Farkle.Grammars.NonterminalDefinition", or @"Farkle.Grammars.ProductionDefinition" object.
 * `group_dfa_edge <dfa_state>`: Returns an `IGrouping` object that groups the edges of a @"Farkle.Grammars.StateMachines.DfaState`1" by their action.
 * `is_terminal <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.Terminal" flag.
 * `is_group_start <flags>`: Returns whether a @"Farkle.Grammars.TokenSymbolAttributes" value contains the @"Farkle.Grammars.TokenSymbolAttributes.GroupStart" flag.

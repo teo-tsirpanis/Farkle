@@ -17,6 +17,7 @@
     <Content Include="../resources/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" VersionOverride="10.0.5" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.CSharp\Farkle.Samples.CSharp.csproj" />
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />

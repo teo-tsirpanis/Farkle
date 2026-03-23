@@ -43,6 +43,7 @@ module TemplateEngine =
         let tc = TemplateContext()
         tc.StrictVariables <- true
         tc.LoopLimit <- 0
+        tc.LimitToString <- 0
 
         let so = Utilities.createDefaultScriptObject()
         match templateType with

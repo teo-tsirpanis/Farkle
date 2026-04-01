@@ -147,3 +147,6 @@ dotnet_style_qualification_for_event = false:silent
 
 # CS8500: This takes the address of, gets the size of, or declares a pointer to a managed type
 dotnet_diagnostic.CS8500.severity = none
+
+# IDE0073: Require file header
+dotnet_diagnostic.IDE0073.severity = error

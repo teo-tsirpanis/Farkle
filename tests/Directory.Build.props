@@ -2,6 +2,7 @@
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" Condition="'' != $([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
   <ItemGroup>
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="GitHubActionsTestLogger" />
+    <!-- It fails on F# projects for some reason. -->
+    <PackageReference Condition="'$(Language)' != 'F#'" Include="GitHubActionsTestLogger" />
   </ItemGroup>
 </Project>

@@ -49,7 +49,7 @@
     <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
-    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.5" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
 
     <!-- Test-only dependencies. -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.3" />

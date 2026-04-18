@@ -60,7 +60,21 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     public static TextPosition Create1(int line, int column) =>
         Create0(line - 1, column - 1);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal TextPosition AdvanceCore<T>(ReadOnlySpan<T> span, T cr, T lf)
+        where T : struct, IEquatable<T>
+    {
+        // Fast path: most tokens (identifiers, keywords, punctuation, numbers)
+        // contain no newlines. Avoid the loop and Create0 validation overhead.
+        int nlPos = span.IndexOfAny(lf, cr);
+        if (nlPos < 0)
+        {
+            return new(_line, _column + span.Length);
+        }
+        return AdvanceCoreSlow(span, cr, lf, nlPos);
+    }
+
+    private TextPosition AdvanceCoreSlow<T>(ReadOnlySpan<T> span, T cr, T lf, int nlPos)
         where T : struct, IEquatable<T>
     {
         // We advance the line number if:
@@ -68,43 +82,40 @@ public readonly struct TextPosition : IEquatable<TextPosition>
         // 2. We found an LF.
         // 3. We found a CRLF sequence.
         int line = _line, column = _column;
-        while (true)
+        do
         {
-            switch (span.IndexOfAny(lf, cr))
+            // CR or LF found.
+            bool foundCr = span[nlPos].Equals(cr);
+            // If the character is a CR, and it is the last character in the span,
+            // advance the column number by the number of characters before it.
+            if (foundCr && nlPos == span.Length - 1)
             {
-                case -1:
-                    // No CR or LF found. Advance the column number by the remaining
-                    // characters and return.
-                    return Create0(line, column + span.Length);
-                case int nlPos:
-                    // CR or LF found.
-                    bool foundCr = span[nlPos].Equals(cr);
-                    // If the character is a CR, and it is the last character in the span,
-                    // advance the column number by the number of characters before it.
-                    if (foundCr && nlPos == span.Length - 1)
-                    {
-                        column += nlPos;
-                    }
-                    // Otherwise (LF or CR not at the end of the span), advance the line number.
-                    else
-                    {
-                        line++;
-                        column = 0;
-                    }
-                    // We will continue searching from the character after the CR or LF we found above.
-                    int nextChar = nlPos + 1;
-                    // But, if the character was a CR, it was not the last character in the span,
-                    // and the character after it is an LF, we will skip the LF; we have already
-                    // advanced the line number for the CRLF sequence.
-                    if (foundCr && nextChar < span.Length && span[nextChar].Equals(lf))
-                    {
-                        nextChar++;
-                    }
-                    // Slice the span to the remaining characters.
-                    span = span[nextChar..];
-                    break;
+                column += nlPos;
             }
+            // Otherwise (LF or CR not at the end of the span), advance the line number.
+            else
+            {
+                line++;
+                column = 0;
+            }
+            // We will continue searching from the character after the CR or LF we found above.
+            int nextChar = nlPos + 1;
+            // But, if the character was a CR, it was not the last character in the span,
+            // and the character after it is an LF, we will skip the LF; we have already
+            // advanced the line number for the CRLF sequence.
+            if (foundCr && nextChar < span.Length && span[nextChar].Equals(lf))
+            {
+                nextChar++;
+            }
+            // Slice the span to the remaining characters.
+            span = span[nextChar..];
+            nlPos = span.IndexOfAny(lf, cr);
         }
+        while (nlPos >= 0);
+
+        // No more CR or LF found. Advance the column number by the remaining
+        // characters and return.
+        return new(line, column + span.Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,7 +131,7 @@ public readonly struct TextPosition : IEquatable<TextPosition>
             return AdvanceCore(Utilities.BitCastSpan<T, byte>(span), (byte)'\r', (byte)'\n');
         }
         // For any other type, we will just advance the column number by the length of the span.
-        return Create0(_line, _column + span.Length);
+        return new(_line, _column + span.Length);
     }
 
     internal TextPosition NextLine() => new(_line + 1, 0);

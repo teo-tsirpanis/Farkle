@@ -17,6 +17,21 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     /// </remarks>
     private int[][]? _asciiLookup;
 
+    /// <summary>
+    /// A lookup table with the accept symbol for each state.
+    /// </summary>
+    /// <remarks>
+    /// The values are <see cref="TokenSymbolHandle.TableIndex"/> values.
+    /// A zero value means the state is not an accepting state.
+    /// This field is populated by <see cref="PrepareForParsing"/>.
+    /// </remarks>
+    // TODO-CODEGEN: Consider removing this optimization when codegen is implemented.
+    // Unlike the ASCII lookup, the accept symbols are already stored in an optimal way in the grammar file.
+    // Profiling has shown that this lookup table improves performance, but it still does not feel very right.
+    // After codegen is implemented, the grammar-based parsing logic will have less reasons to be super-optimized,
+    // so we can save some memory and switch back to reading the accept symbols directly from the grammar file.
+    private TokenSymbolHandle[]? _acceptSymbolLookup;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static char CastChar(TChar c)
     {
@@ -123,8 +138,9 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     {
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
+        Debug.Assert(_acceptSymbolLookup is not null);
 
-        TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, startState);
+        TokenSymbolHandle acceptSymbol = _acceptSymbolLookup[startState];
         int acceptSymbolLength = 0;
         int acceptSymbolState = startState;
 
@@ -142,7 +158,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             {
                 ignoreLeadingErrors = false;
                 currentState = nextState;
-                if (ReadAcceptSymbol(grammarFile, currentState) is { HasValue: true } s)
+                if (_acceptSymbolLookup[currentState] is { HasValue: true } s)
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;
@@ -180,6 +196,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     internal void PrepareForParsing()
     {
         _asciiLookup = CreateAsciiLookup();
+        _acceptSymbolLookup = CreateAcceptSymbolLookup();
     }
 
     internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)
@@ -197,6 +214,17 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     }
 
     internal override bool StateHasConflicts(int state) => false;
+
+    private TokenSymbolHandle[] CreateAcceptSymbolLookup()
+    {
+        var acceptSymbols = new TokenSymbolHandle[Count];
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
+        for (int i = 0; i < acceptSymbols.Length; i++)
+        {
+            acceptSymbols[i] = ReadAcceptSymbol(grammarFile, i);
+        }
+        return acceptSymbols;
+    }
 
     private int[][] CreateAsciiLookup()
     {

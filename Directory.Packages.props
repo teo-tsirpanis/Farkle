@@ -31,7 +31,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.2.1" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.2.1" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
-    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.154" />
+    <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.178" />
     <PackageVersion Include="NuGet.Packaging" Version="7.3.1" />
     <PackageVersion Include="NuGet.Protocol" Version="7.3.1" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.12.0" />

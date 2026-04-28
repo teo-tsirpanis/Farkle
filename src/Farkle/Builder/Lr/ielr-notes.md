@@ -87,23 +87,18 @@ By moving this computation to phase 0, we don't have to compute the successor fo
 
 ### Phase 2: Compute Annotations
 
-> [!NOTE]
-> This section was written by a large language model, after being fed the IELR paper and the notes from previous phases. A human review and rewrite are pending.
-
-Phase 2's job is to find every conflict in the LALR(1) tables, trace each conflict backwards through predecessor states, and annotate the visited states with information about how they contribute to the conflict. Phase 3 will later use these annotations to decide which states need to be split.
-
 #### Inadequacy lists
 
 First, phase 2 identifies all conflicts in the LALR(1) tables. For each conflicted state, it records each conflict as an _inadequacy manifestation description_: a tuple of the conflicted state, the conflicted token, and the list of contributions (shift or reduce actions) that conflict on that token.
 
 #### Item lookahead sets (on demand)
 
-The efficient LALR(1) data structure does not store item lookahead sets (it only stores reduction lookahead sets). But phase 2 needs to trace conflicted tokens along the detailed lookahead propagation paths. To do this, it computes item lookahead sets _on demand_ for the specific kernel items that lie on the propagation paths of conflicted tokens, and caches them.
+So far we have not needed to compute the lookahead sets of all kernel items, because they were not needed for LALR(1). But since we need them for phase 2, we can compute them on demand.
 
-A kernel item's lookahead set is computed recursively:
+A kernel item's lookahead set is computed recursively, by taking the union of the lookahead sets of all items in the item's predecessor states, with the dot being one position to the left. The recursion terminates when the item has only one symbol before the dot, in which case its lookahead set is the union of the [goto follows](#compute-goto-follows) sets of the gotos on the item's LHS nonterminal in each predecessor state.
 
-* If the dot is past position 1 (i.e. the item is not at the beginning of the RHS), the lookahead set comes from the same item with the dot one position to the left in each predecessor state.
-* If the dot is at position 2, the lookahead set comes from the goto follows of the gotos on the item's LHS nonterminal in each predecessor state. This is where the recursion bottoms out, using the goto follows already computed in phase 0.
+> [!IMPORTANT]
+> Don't forget to use memoization here!
 
 #### Annotation lists
 
@@ -111,27 +106,27 @@ For each conflict, phase 2 traces backwards along all lanes leading to the confl
 
 The contribution matrix has one row per conflict contribution (shift or reduce action) and one column per kernel item in the annotated state. Each row can be in one of three states:
 
-* **Undefined (always contribution):** Any isocore that might be split from this state is _guaranteed_ to make this contribution, regardless of its kernel item lookahead sets. This happens for shift contributions (which depend only on the core, not lookaheads), or for reduce contributions from empty-RHS productions whose conflicted token is in the goto's _always follows_ set.
+* **Undefined (always contribution):** Any isocore that might be split from this state is _guaranteed_ to make this contribution, regardless of its kernel item lookahead sets.
 * **A Boolean sequence (potential or never contribution):** For each kernel item, the Boolean is true if that kernel item's lookahead set contains the conflicted token _and_ the goto follows of the relevant goto depend on that kernel item (via `follow_kernel_items`). An isocore split from this state makes this contribution if and only if at least one true-flagged kernel item's lookahead set contains the conflicted token in the isocore.
     * If at least one Boolean is true, the contribution is a _potential contribution_ — some isocores will make it, some won't.
     * If all Booleans are false, it is a _never contribution_ — no isocore can ever make it.
 
 ##### Annotating conflicted states (`annotate_manifestation`)
 
-For the conflicted state itself:
+For each contribution in a conflict:
 
-* Each shift contribution gets an undefined (always) row — shifts depend on the core, not lookaheads.
-* Each reduce contribution from a non-empty RHS production gets a Boolean row with a single true entry at the kernel item whose core matches the completed item.
+* Each shift contribution gets an undefined (always) row.
+* Each reduce contribution from a non-empty RHS production gets a Boolean row with a single true entry at the kernel item whose production matches the reduce action.
 * Each reduce contribution from an empty RHS production is handled by `compute_lhs_contributions`: if the conflicted token is in the always follows of the goto on the production's LHS, the row is undefined (always); otherwise the row's Booleans are set based on `follow_kernel_items` and whether the conflicted token appears in each kernel item's lookahead set.
 
 ##### Annotating predecessor states (`annotate_predecessor`)
 
-Phase 2 then walks backwards from each annotated state to its predecessors, computing a new annotation for each predecessor. For each contribution row in the successor's matrix:
+Phase 2 then walks backwards from each annotated state to its predecessors, computing a new annotation for each predecessor. The annotation has the same inadequacy manifestation description and a contribution matrix with the same number of rows, but re-expressed in terms of the predecessor state's kernel items. For each contribution row in the successor's matrix:
 
 * If the row was already undefined (always), it stays undefined in the predecessor.
-* Otherwise, for each kernel item in the successor that has a true Boolean:
-    * If the dot in that kernel item is past position 2, we look for the matching kernel item (same production, dot one position left) in the predecessor, and check whether the conflicted token is in that predecessor kernel item's lookahead set.
-    * If the dot is at position 2, the lookahead came from a goto follow. We call `compute_lhs_contributions` for the predecessor on the kernel item's LHS nonterminal. If that returns undefined (the token is in always follows), the whole row becomes undefined. Otherwise, we take the Booleans from `compute_lhs_contributions`.
+* Otherwise, for each kernel item in the successor that had a true value in the row:
+    * If the dot in that kernel item was past position 2, we look for the matching kernel item (same production, dot one position to the left) in the predecessor, and set the corresponding value in the predecessor's row to true, if the conflicted token is in the predecessor kernel item's lookahead set.
+    * If the dot was at position 2, the lookahead came from a goto follow. We call `compute_lhs_contributions` (described above) for the predecessor state, the conflicted token, and the kernel item's LHS nonterminal. If that returns undefined, the whole predecessor's row becomes undefined. Otherwise, we `OR` the function's result into the row.
 
 This backward iteration continues until either:
 
@@ -140,13 +135,12 @@ This backward iteration continues until either:
 
 #### Split-stable dominant contributions (optimization)
 
-An annotation is _useless_ if its contribution matrix specifies a _split-stable dominant contribution_. This means that no matter how we split the annotated state into isocores, they would all make the same dominant contribution to the conflict. When this happens, splitting this state cannot help eliminate the inadequacy.
+We can discard annotations and stop iterating along a lane if we find that an annotation is _useless_. This happens when the annotation's contribution matrix specifies a _split-stable dominant contribution_ — a contribution that would be dominant regardless of how the annotated state is split.
 
-The simplest case: if every row in the matrix is either undefined (always) or all-false (never), then the set of contributions is fixed for all possible isocores, so the dominant contribution cannot change — it is split-stable.
+An annotation matrix specifies a split-stable dominant contribution if, an always contribution gets picked over any potential contributions by the grammar's conflict resolution mechanism. This trivially holds if the matrix contains only always or never contributions, which we can check for if the grammar does not employ conflict resolution.
 
-More generally, split-stable dominance depends on the conflict resolution function Δ. Even if some contributions are potential (might or might not be present), if removing them never changes which contribution Δ selects as dominant, the annotation is still useless.
-
-When phase 2 computes a useless annotation, it can discard it and stop iterating along that lane. This is an important optimization: for example, if a grammar uses no precedence/associativity declarations and a S/R conflict always resolves to shift, then the shift is always the dominant contribution regardless of which reduces are present, making annotations along the entire lane useless. Phase 3 would then have no reason to split any states.
+> [!NOTE]
+> If conflict resolution chooses none of the contributions given to it (due to the use of non-associative operators), we should not consider the annotation as useless.
 
 ### Phase 3: Split States
 

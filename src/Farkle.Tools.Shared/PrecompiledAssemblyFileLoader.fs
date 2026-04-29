@@ -10,7 +10,7 @@ open System.Reflection.Metadata
 open System.Reflection.Metadata.Ecma335
 open System.Reflection.PortableExecutable
 
-type PrecompiledGrammar = private {
+type PrecompiledGrammar = {
     PEFile: PEReader
     MetadataReader: MetadataReader
     RVA: int

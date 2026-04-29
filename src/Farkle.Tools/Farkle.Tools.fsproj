@@ -17,6 +17,7 @@
     <Compile Include="CompositePath.fs" />
     <!-- <Compile Include="Commands/*.fs" /> -->
     <Compile Include="Commands/New.fs" />
+    <Compile Include="Commands/List.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

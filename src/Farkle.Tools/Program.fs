@@ -24,8 +24,8 @@ type Arguments =
     | [<Inherit>] Json
     | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of LogEventLevel
     | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
-#if TODO_PRECOMPILER
     | [<CliPrefix(CliPrefix.None)>] List of ParseResults<List.Arguments>
+#if TODO_PRECOMPILER
     | [<AltCommandLine("generate-predefined-sets"); Hidden>] GeneratePredefinedSets of ParseResults<GeneratePredefinedSets.Arguments>
 #endif
 with
@@ -38,8 +38,8 @@ with
 No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
-#if TODO_PRECOMPILER
             | List _ -> "List all precompiled grammars of an assembly."
+#if TODO_PRECOMPILER
             | GeneratePredefinedSets _ -> "Generate an F# source file with GOLD Parser's predefined sets. \
 For internal use only."
 #endif
@@ -81,8 +81,8 @@ let main argv =
                 | New args -> New.run json args
 #if TODO_PRECOMPILER
                 | GeneratePredefinedSets args -> GeneratePredefinedSets.run args
-                | List args -> List.run json args
 #endif
+                | List args -> List.run json args
                 | Version | Json | Verbosity _ | ``Explain-composite-paths`` -> Ok ()
                 |> function | Ok () -> 0 | Error () -> 1
         with

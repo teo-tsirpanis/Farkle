@@ -11,6 +11,7 @@ open Farkle.Tools
 open Serilog
 open System
 open System.IO
+open System.Reflection.PortableExecutable
 open System.Text.Json
 
 type Arguments =
@@ -52,19 +53,32 @@ let run json (args: ParseResults<_>) = either {
     let! resolvedAssembly =
         getAssemblyFile projectOptions input
 
-    let allGrammarNames =
-        use loader = new PrecompiledAssemblyFileLoader(resolvedAssembly)
-        Array.ofSeq loader.Grammars.Keys
+    let allGrammars =
+        use f = File.OpenRead resolvedAssembly
+        use pe = new PEReader(f)
+        PrecompiledAssemblyFileLoader.loadAll pe
+        |> Seq.map (fun g ->
+            let grammar = g.LoadGrammar()
+            {|
+                ContainingTypeNamespace = g.ContainingTypeNamespace
+                ContainingTypeName = g.ContainingTypeName
+                Name = grammar.GrammarInfo.Name
+                Size = g.Size
+                Key = g.Key
+            |}
+        )
+        |> Array.ofSeq
+        |> fun xs -> xs |> Array.sortInPlaceBy (fun x -> x.ContainingTypeNamespace, x.ContainingTypeName); xs
 
     if json then
-        JsonSerializer.Serialize(allGrammarNames)
+        JsonSerializer.Serialize allGrammars
         |> printfn "%s"
     else
-        match allGrammarNames with
-        | [||] ->
-            Log.Information("No precompiled grammars were found.")
-        | _ ->
-            Log.Information("Found {GrammarCount} precompiled grammars.", allGrammarNames.Length)
-            for x in allGrammarNames do
-                Log.Information("{GrammarName}", x)
+        if Array.isEmpty allGrammars then
+            Log.Information "No precompiled grammars were found."
+        for x in allGrammars do
+            let mapIfHasValue f x = if x = "" then x else f x
+            let ns = x.ContainingTypeNamespace |> mapIfHasValue (sprintf ".%s")
+            let key = x.Key |> mapIfHasValue (sprintf ", Key = %s")
+            printfn "%s%s: Name = %s, Size = %d%s" ns x.ContainingTypeName x.Name x.Size key
 }

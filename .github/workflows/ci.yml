@@ -55,6 +55,6 @@ jobs:
 
   full_ci_passed:
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - run: exit 0

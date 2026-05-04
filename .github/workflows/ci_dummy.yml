@@ -19,6 +19,6 @@ permissions: read-all
 
 jobs:
   full_ci_passed:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - run: exit 0

@@ -34,7 +34,7 @@ jobs:
     environment: ${{ github.event_name == 'release' && 'release' || 'nightly' }}
     permissions:
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Check out the repository
         uses: actions/checkout@v6

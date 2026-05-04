@@ -34,7 +34,7 @@
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.178" />
     <PackageVersion Include="NuGet.Packaging" Version="7.3.1" />
     <PackageVersion Include="NuGet.Protocol" Version="7.3.1" />
-    <PackageVersion Include="NUnit.Analyzers" Version="4.12.0" />
+    <PackageVersion Include="NUnit.Analyzers" Version="4.13.0" />
     <PackageVersion Include="NUnit" Version="4.6.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />

@@ -19,7 +19,7 @@
     <PackageVersion Include="FSharp.Core" Version="9.0.100" />
     <PackageVersion Include="FsLexYacc.Runtime" Version="11.3.0" />
     <PackageVersion Include="FsLexYacc" Version="11.3.0" />
-    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.3" />
+    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.4" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageVersion Include="Irony" Version="1.5.3" />
     <PackageVersion Include="Microsoft.Bcl.HashCode" Version="6.0.0" />

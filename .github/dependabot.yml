@@ -8,6 +8,17 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      test:
+        patterns:
+          - "Expecto"
+          - "Expecto.*"
+          - "Microsoft.NET.Test.Sdk"
+          - "Microsoft.Testing.*"
+          - "NUnit"
+          - "NUnit3TestAdapter"
+          - "NUnit.*"
+          - "YoloDev.Expecto.TestSdk"
     ignore:
       # Do not automatically update dependencies that use version $(SystemOobVersion) in Directory.Packages.props.
       - dependency-name: "System.Collections.Immutable"

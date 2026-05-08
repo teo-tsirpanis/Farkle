@@ -29,9 +29,9 @@ internal struct CharacterBufferManager<TChar>(int initialBufferSize)
             _usedCharacterStart = 0;
             return;
         }
-        int newSize = Math.Max(_buffer.Length * 2, _buffer.Length + minRequiredCharacters);
+        int newSize = (int)Math.Clamp((long)_buffer.Length + minRequiredCharacters, _buffer.Length * 2, int.MaxValue);
         TChar[] newBuffer = ArrayPool<TChar>.Shared.Rent(newSize);
-        _buffer.CopyTo(newBuffer, _usedCharacterStart);
+        Array.Copy(_buffer, _usedCharacterStart, newBuffer, 0, _usedCharacterEnd - _usedCharacterStart);
         ArrayPool<TChar>.Shared.Return(_buffer);
         _buffer = newBuffer;
         _usedCharacterEnd -= _usedCharacterStart;

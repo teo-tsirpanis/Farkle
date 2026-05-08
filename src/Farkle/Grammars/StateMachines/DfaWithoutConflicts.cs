@@ -107,8 +107,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
                 edge = Math.Min(~edge, edgeLength - 1);
             }
 
-            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(char));
-            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(char));
+            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(TChar));
+            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(TChar));
 
             if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
             {

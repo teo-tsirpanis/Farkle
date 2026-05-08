@@ -300,8 +300,8 @@ internal static class GoldGrammarReader
                     {
                         Debug.Assert(symbols is not null);
                         DecrementRemainingRecord(ref remainingProductions);
-                        int index = reader.ReadUInt16();
-                        ushort headIndex = reader.ReadUInt16();
+                        int index = reader.ReadIndex(productions.Length);
+                        ushort headIndex = reader.ReadIndex(symbols.Length);
                         reader.SkipEntry();
                         ImmutableArray<ushort> members = reader.ReadIndexArray(reader.RemainingEntries, symbols.Length);
 
@@ -325,6 +325,10 @@ internal static class GoldGrammarReader
                         int index = reader.ReadIndex(dfaStates.Length);
                         bool isAccept = reader.ReadBoolean();
                         ushort acceptIndex = reader.ReadUInt16();
+                        if (isAccept && acceptIndex >= symbols!.Length)
+                        {
+                            ThrowHelpers.ThrowInvalidDataException();
+                        }
                         reader.SkipEntry();
 
                         int edgeCount = Math.DivRem(reader.RemainingEntries, 3, out int leftoverEntries);

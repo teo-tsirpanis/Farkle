@@ -122,6 +122,12 @@ internal sealed class GrammarBinaryReader
     // won't ever be another thing, but still.
     public void SkipEntry()
     {
+        if (RemainingEntries == 0)
+        {
+            ThrowHelpers.ThrowInvalidDataException("Record is out of entries, call NextRecord() first.");
+        }
+        RemainingEntries--;
+
         switch ((char)_reader.ReadByte())
         {
             case 'E':
@@ -139,7 +145,6 @@ internal sealed class GrammarBinaryReader
                 ThrowHelpers.ThrowInvalidDataException(UnexpectedEntryTypeMessage);
                 break;
         }
-        RemainingEntries--;
     }
 
     public void SkipString()

@@ -75,7 +75,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                     result = null;
                     return RunResult.NeedsMoreInput;
                 }
-                int reduceCount = 0;
             RetryEof:
                 LrEndOfFileAction eofAction = _lrStateMachine.GetEndOfFileAction(currentState);
                 if (eofAction.IsAccept)
@@ -85,12 +84,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (eofAction.IsReduce)
                 {
-                    if (reduceCount++ > _lrStateMachine.Count)
-                    {
-                        // This should happen only if LR state machine in the grammar file is specially crafted to have a cycle.
-                        // Throw an exception like in all invalid grammar errors; we don't have to gracefully fail with a named diagnostic.
-                        ThrowHelpers.ThrowInvalidDataException("Encountered too many consecutive reductions; the grammar file might be malformed.");
-                    }
                     try
                     {
                         currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, eofAction.ReduceProduction);
@@ -110,7 +103,6 @@ internal readonly struct DefaultParserImplementation<TChar>
             }
             else
             {
-                int reduceCount = 0;
             RetryToken:
                 LrAction action = _lrStateMachine.GetAction(currentState, token.Symbol);
                 if (action.IsShift)
@@ -123,12 +115,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                 }
                 if (action.IsReduce)
                 {
-                    if (reduceCount++ > _lrStateMachine.Count)
-                    {
-                        // This should happen only if LR state machine in the grammar file is specially crafted to have a cycle.
-                        // Throw an exception like in all invalid grammar errors; we don't have to gracefully fail with a named diagnostic.
-                        ThrowHelpers.ThrowInvalidDataException("Encountered too many consecutive reductions; the grammar file might be malformed.");
-                    }
                     try
                     {
                         currentState = Reduce(ref input, in hotData, ref stateStack, ref semanticValueStack, action.ReduceProduction);

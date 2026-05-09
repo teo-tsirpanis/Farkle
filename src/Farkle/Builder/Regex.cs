@@ -598,7 +598,7 @@ public sealed class Regex
     public Regex Repeat(int n)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(n);
-        return N switch
+        return n switch
         {
             0 => Empty,
             1 => this,
@@ -744,13 +744,13 @@ public sealed class Regex
             // it's not likely to occur either way.
             if (left.IsChars(out var leftChars, out var leftFlags) &&
                 right.IsChars(out var rightChars, out var rightFlags) &&
-                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
+                ((leftFlags | rightFlags) & CharsFlags.Inverted) == 0)
             {
                 return OneOf([.. leftChars.Span, .. rightChars.Span]);
             }
             if (left.IsCharRanges(out var leftRanges, out leftFlags) &&
                 right.IsCharRanges(out var rightRanges, out rightFlags) &&
-                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
+                ((leftFlags | rightFlags) & CharsFlags.Inverted) == 0)
             {
                 return OneOf([.. leftRanges, .. rightRanges]);
             }

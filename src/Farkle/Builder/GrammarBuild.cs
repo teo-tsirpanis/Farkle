@@ -338,7 +338,13 @@ internal static class GrammarBuild
         NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
         writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, grammarDefinition.Attributes);
 
-        return Grammar.Load(writer.ToImmutableArray());
+        // Farkle's builder can be trusted to not produce malformed grammars, so we can skip content validation.
+        // We still do it in DEBUG mode for testing coverage.
+        var grammar = Grammar.LoadUnsafe(writer.ToImmutableArray());
+#if DEBUG
+        grammar.ValidateContent();
+#endif
+        return grammar;
 
         void HandleGroup(string name, string start, string? endOrNewLine, GroupOptions options, TokenSymbolHandle container)
         {

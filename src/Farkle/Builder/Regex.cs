@@ -592,17 +592,17 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches this regex a specific number
     /// of times.
     /// </summary>
-    /// <param name="n">The number of times to repeat the regex.</param>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="n"/>
+    /// <param name="times">The number of times to repeat the regex.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="times"/>
     /// is negative, or equal to <see cref="int.MaxValue"/>.</exception>
-    public Regex Repeat(int n)
+    public Regex Repeat(int times)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(n);
-        return N switch
+        ArgumentOutOfRangeException.ThrowIfNegative(times);
+        return times switch
         {
             0 => Empty,
             1 => this,
-            _ => Between(n, n)
+            _ => Between(times, times)
         };
     }
 
@@ -616,36 +616,36 @@ public sealed class Regex
     /// Creates a <see cref="Regex"/> that matches this regex a number of times
     /// within a range.
     /// </summary>
-    /// <param name="m">The minimum number of times to repeat the regex, inclusive.</param>
-    /// <param name="n">The maximum number of times to repeat the regex, inclusive.</param>
-    /// <exception cref="ArgumentOutOfRangeException"><paramref name="m"/> or
-    /// <paramref name="n"/> is negative, <paramref name="m"/> is greater than
-    /// <paramref name="n"/>, or <paramref name="n"/> is equal to
+    /// <param name="minTimes">The minimum number of times to repeat the regex, inclusive.</param>
+    /// <param name="maxTimes">The maximum number of times to repeat the regex, inclusive.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="minTimes"/> or
+    /// <paramref name="maxTimes"/> is negative, <paramref name="minTimes"/> is greater than
+    /// <paramref name="maxTimes"/>, or <paramref name="maxTimes"/> is equal to
     /// <see cref="int.MaxValue"/>.</exception>
-    public Regex Between(int m, int n)
+    public Regex Between(int minTimes, int maxTimes)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(m);
-        if (m > n)
+        ArgumentOutOfRangeException.ThrowIfNegative(minTimes);
+        if (minTimes > maxTimes)
         {
             throw new ArgumentException(Resources.Builder_RegexLoopRangeReverseOrder);
         }
-        if (n == int.MaxValue)
+        if (maxTimes == int.MaxValue)
         {
             throw new ArgumentException(Resources.Builder_RegexLoopMaxTooBig);
         }
 
-        return Loop(m, n);
+        return Loop(minTimes, maxTimes);
     }
 
     /// <summary>
     /// Creates a <see cref="Regex"/> that matches this regex at least a specific
     /// number of times.
     /// </summary>
-    /// <param name="m">The minimum number of times to repeat the regex, inclusive.</param>
-    public Regex AtLeast(int m)
+    /// <param name="minTimes">The minimum number of times to repeat the regex, inclusive.</param>
+    public Regex AtLeast(int minTimes)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(m);
-        return Loop(m, int.MaxValue);
+        ArgumentOutOfRangeException.ThrowIfNegative(minTimes);
+        return Loop(minTimes, int.MaxValue);
     }
 
     private Regex WithCase(KindAndFlags @case)
@@ -744,13 +744,13 @@ public sealed class Regex
             // it's not likely to occur either way.
             if (left.IsChars(out var leftChars, out var leftFlags) &&
                 right.IsChars(out var rightChars, out var rightFlags) &&
-                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
+                ((leftFlags | rightFlags) & CharsFlags.Inverted) == 0)
             {
                 return OneOf([.. leftChars.Span, .. rightChars.Span]);
             }
             if (left.IsCharRanges(out var leftRanges, out leftFlags) &&
                 right.IsCharRanges(out var rightRanges, out rightFlags) &&
-                !(((leftFlags | rightFlags) & CharsFlags.Inverted) == 0))
+                ((leftFlags | rightFlags) & CharsFlags.Inverted) == 0)
             {
                 return OneOf([.. leftRanges, .. rightRanges]);
             }

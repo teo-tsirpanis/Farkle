@@ -209,7 +209,7 @@ internal static class GrammarBuild
         }
 
         // Add groups.
-        int groupCount = groups?.Count ?? 0 + grammarDefinition.GlobalOptions.Comments?.Count ?? 0;
+        int groupCount = (groups?.Count ?? 0) + (grammarDefinition.GlobalOptions.Comments?.Count ?? 0);
         List<Regex?>? groupDfaRegexes = null;
         if (options.EmitGroupOptimizedDfa && (outputs & BuilderOutputs.GrammarDfaOnChar) != 0 && groupCount > 0)
         {

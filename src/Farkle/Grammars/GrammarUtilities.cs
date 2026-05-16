@@ -17,6 +17,12 @@ namespace Farkle.Grammars
         };
 
         /// <summary>
+        /// Gets a bitmask for the valid bits of a compressed index of the given size.
+        /// </summary>
+        /// <param name="indexSize">The size of the compressed index in bytes.</param>
+        public static uint GetMaskForCompressedIndexSize(byte indexSize) => (1u << (indexSize * 8)) - 1;
+
+        /// <summary>
         /// Gets the size in bytes of a coded index to two tables.
         /// </summary>
         public static byte GetBinaryCodedIndexSize(int row1Count, int row2Count) => (row1Count | row2Count) switch

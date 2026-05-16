@@ -10,6 +10,7 @@ namespace Farkle.Grammars.StateMachines;
 internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : unmanaged, IComparable<TChar>
 {
     protected readonly byte _stateIndexSize, _edgeIndexSize, _tokenSymbolIndexSize;
+    protected readonly uint _stateIndexMask, _edgeIndexMask, _tokenSymbolIndexMask;
 
     protected readonly int _edgeCount;
 
@@ -35,6 +36,10 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
         _edgeIndexSize = GrammarUtilities.GetCompressedIndexSize(edgeCount);
         _tokenSymbolIndexSize = GrammarUtilities.GetCompressedIndexSize(grammar.GrammarTables.TokenSymbolRowCount);
 
+        _stateIndexMask = GrammarUtilities.GetMaskForCompressedIndexSize(_stateIndexSize);
+        _edgeIndexMask = GrammarUtilities.GetMaskForCompressedIndexSize(_edgeIndexSize);
+        _tokenSymbolIndexMask = GrammarUtilities.GetMaskForCompressedIndexSize(_tokenSymbolIndexSize);
+
         _edgeCount = edgeCount;
         _groupCount = grammar.GrammarTables.GroupRowCount;
 
@@ -52,14 +57,17 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
         GroupStartStateBase = dfa.GroupStartStates.Offset;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSizeBranchless(FirstEdgeBase + state * _edgeIndexSize, _edgeIndexSize);
+        (int)(grammarFile.ReadUInt32(FirstEdgeBase + state * _edgeIndexSize) & _edgeIndexMask);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
-        (int)grammarFile.ReadUIntVariableSizeBranchless(@base + index * _stateIndexSize, _stateIndexSize) - 1;
+        (int)(grammarFile.ReadUInt32(@base + index * _stateIndexSize) & _stateIndexMask) - 1;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadUIntVariableSizeBranchless(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
+        new(grammarFile.ReadUInt32(AcceptBase + index * _tokenSymbolIndexSize) & _tokenSymbolIndexMask);
 
     protected int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {

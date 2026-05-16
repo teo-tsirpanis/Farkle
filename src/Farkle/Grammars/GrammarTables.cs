@@ -96,13 +96,13 @@ internal readonly struct GrammarTables
     }
 
     private static uint ReadTableIndex(ReadOnlySpan<byte> grammarFile, int index, int rowCount) =>
-        grammarFile.ReadUIntVariableSizeBranchless(index, GetCompressedIndexSize(rowCount));
+        grammarFile.ReadUIntVariableSize(index, GetCompressedIndexSize(rowCount));
 
     private StringHandle ReadStringHandle(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadUIntVariableSizeBranchless(index, StringHeapIndexSize));
+        new(grammarFile.ReadUIntVariableSize(index, StringHeapIndexSize));
 
     private BlobHandle ReadBlobHandle(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadUIntVariableSizeBranchless(index, BlobHeapIndexSize));
+        new(grammarFile.ReadUIntVariableSize(index, BlobHeapIndexSize));
 
     private TokenSymbolHandle ReadTokenSymbolHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         new(ReadTableIndex(grammarFile, index, TokenSymbolRowCount));
@@ -126,7 +126,7 @@ internal readonly struct GrammarTables
     private EntityHandle ReadSymbolHandle(ReadOnlySpan<byte> grammarFile, int index)
     {
         byte indexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
-        uint codedIndex = grammarFile.ReadUIntVariableSizeBranchless(index, indexSize);
+        uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
 
         // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.
         ReadOnlySpan<TableKind> tableKinds = [TableKind.TokenSymbol, TableKind.Nonterminal];

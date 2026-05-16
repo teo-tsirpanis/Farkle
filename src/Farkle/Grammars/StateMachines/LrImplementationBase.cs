@@ -195,7 +195,7 @@ internal abstract class LrImplementationBase : LrStateMachine
             }
 
             (int gotoOffset, int gotoCount) = GetGotoBoundsUnsafe(grammarFile, i);
-            if (GotoCount > 0)
+            if (gotoCount > 0)
             {
                 uint previousGotoNonterminal = GetGotoAtUnsafe(grammarFile, gotoOffset).Key.TableIndex;
                 for (int j = 0; j < gotoCount; j++)

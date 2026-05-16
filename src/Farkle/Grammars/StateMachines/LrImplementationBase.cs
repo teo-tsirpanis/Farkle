@@ -62,7 +62,7 @@ internal abstract class LrImplementationBase : LrStateMachine
         (int)ReadUIntVariableSizeFromArray(grammarFile, GotoStateBase, index, _stateIndexSize);
 
     protected static uint ReadUIntVariableSizeFromArray(ReadOnlySpan<byte> grammarFile, int @base, int index, byte indexSize) =>
-        grammarFile.ReadUIntVariableSize(@base + index * indexSize, indexSize);
+        grammarFile.ReadUIntVariableSizeBranchless(@base + index * indexSize, indexSize);
 
     internal override void PrepareForParsing()
     {

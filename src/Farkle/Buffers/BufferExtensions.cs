@@ -86,6 +86,15 @@ internal static class BufferExtensions
         }
     }
 
+    // Similar to ReadUIntVariableSize, but always reads 4 bytes and then masks off the unused bits according
+    // to dataSize. This reduces branching, but requires that 4 bytes are available to read, which is guaranteed
+    // by the grammar file format.
+    public static uint ReadUIntVariableSizeBranchless(this ReadOnlySpan<byte> buffer, int index, byte dataSize)
+    {
+        uint mask = (1u << (dataSize * 8)) - 1;
+        return buffer.ReadUInt32(index) & mask;
+    }
+
     public static void WriteBlobLength(this IBufferWriter<byte> buffer, int value)
     {
         switch ((uint)value)

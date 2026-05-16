@@ -43,7 +43,7 @@ internal unsafe sealed class DfaWithConflicts<TChar> : DfaImplementationBase<TCh
     }
 
     private int ReadFirstAccept(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize(FirstAcceptBase + state * _acceptIndexSize, _acceptIndexSize);
+        (int)grammarFile.ReadUIntVariableSizeBranchless(FirstAcceptBase + state * _acceptIndexSize, _acceptIndexSize);
 
     private (int Offset, int Count) GetAcceptSymbolBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {

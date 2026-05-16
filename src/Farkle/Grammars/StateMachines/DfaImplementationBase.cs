@@ -53,13 +53,13 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
     }
 
     protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
-        (int)grammarFile.ReadUIntVariableSize(FirstEdgeBase + state * _edgeIndexSize, _edgeIndexSize);
+        (int)grammarFile.ReadUIntVariableSizeBranchless(FirstEdgeBase + state * _edgeIndexSize, _edgeIndexSize);
 
     protected int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
-        (int)grammarFile.ReadUIntVariableSize(@base + index * _stateIndexSize, _stateIndexSize) - 1;
+        (int)grammarFile.ReadUIntVariableSizeBranchless(@base + index * _stateIndexSize, _stateIndexSize) - 1;
 
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
-        new(grammarFile.ReadUIntVariableSize(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
+        new(grammarFile.ReadUIntVariableSizeBranchless(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
 
     protected int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {

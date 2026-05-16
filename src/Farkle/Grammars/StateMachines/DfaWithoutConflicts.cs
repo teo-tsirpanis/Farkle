@@ -27,7 +27,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     /// </remarks>
     // TODO-CODEGEN: Consider removing this optimization when codegen is implemented.
     // Unlike the ASCII lookup, the accept symbols are already stored in an optimal way in the grammar file.
-    // Profiling has shown that this lookup table improves performance, but it still does not feel very right.
+    // Benchmarking has shown that this lookup table improves performance by around 18,8%, but it still does
+    // not feel very right.
     // After codegen is implemented, the grammar-based parsing logic will have less reasons to be super-optimized,
     // so we can save some memory and switch back to reading the accept symbols directly from the grammar file.
     private TokenSymbolHandle[]? _acceptSymbolLookup;

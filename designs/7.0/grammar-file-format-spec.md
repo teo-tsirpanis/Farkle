@@ -53,6 +53,12 @@ A grammar file starts with the following data:
 * Each stream definition MUST be unique based on its __Identifier__ field.
 * The __Offset__ and __Length__ fields MUST NOT be less than zero.
 
+### Padding
+
+A grammar file MUST end with at least 7 bytes that are not contained in any stream. These bytes SHOULD be set to zero, and are OPTIONAL if the grammar file contains zero streams.
+
+> The purpose of these bytes is to allow reading up to an 8-byte integer from any position within a stream, without having to handle out-of-bounds errors. This allows branchless reading of variable-sized integers, which are common in the format.
+
 ## Streams
 
 This specification defines three stream types. After their name, the value of their corresponding __Identifier__ field in ASCII will appear in parentheses.

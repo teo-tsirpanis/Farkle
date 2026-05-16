@@ -30,6 +30,7 @@ internal readonly struct GrammarStreams
     public GrammarStreams(ReadOnlySpan<byte> grammarFile, uint streamCount)
     {
         bool seenStringHeap = false, seenBlobHeap = false, seenTableStream = false;
+        int maxReachableOffset = 0;
 
         if ((uint)grammarFile.Length < StreamDefinitionsOffset + streamCount * StreamDefinitionSize)
         {
@@ -45,6 +46,7 @@ internal readonly struct GrammarStreams
             {
                 ThrowHelpers.ThrowInvalidDataException("Invalid stream bounds.");
             }
+            maxReachableOffset = Math.Max(maxReachableOffset, offset + length);
             GrammarFileSection section = new GrammarFileSection(offset, length);
             switch (identifier)
             {
@@ -66,6 +68,11 @@ internal readonly struct GrammarStreams
 
         if (!seenTableStream)
             ThrowHelpers.ThrowInvalidDataException("Missing table stream.");
+
+        if (maxReachableOffset + GrammarConstants.MinPaddingBytes > grammarFile.Length)
+        {
+            ThrowHelpers.ThrowInvalidDataException("Missing padding after streams.");
+        }
     }
 
     private static void AssignStream(ulong identifier, GrammarFileSection section, ref GrammarFileSection sectionAddress, ref bool seen)

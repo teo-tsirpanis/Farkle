@@ -190,6 +190,8 @@ internal sealed class GrammarWriter
         }
 
         tablesBuffer.WriteTo(ref writer);
+
+        writer.Write(0, GrammarConstants.MinPaddingBytes);
     }
 
     public ImmutableArray<byte> ToImmutableArray()

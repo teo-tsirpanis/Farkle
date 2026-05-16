@@ -4,6 +4,7 @@
 using Farkle.Grammars;
 using Farkle.Grammars.GoldParser;
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 
 namespace Farkle.Tests.CSharp;
 
@@ -113,6 +114,22 @@ internal class GrammarTests
                 Assert.That(count, Is.EqualTo(lr.Count));
             }
         }
+    }
+
+    [TestCaseSource(typeof(TestUtilities), nameof(TestUtilities.Farkle7Grammars))]
+    public void TestGrammarUnpadded(string grammarFile)
+    {
+        var filePath = TestUtilities.GetResourceFile(grammarFile);
+
+        ImmutableArray<byte> grammarData;
+        using (var stream = File.OpenRead(filePath))
+        {
+            byte[] buffer = new byte[stream.Length - GrammarConstants.MinPaddingBytes];
+            stream.Read(buffer, 0, buffer.Length);
+            grammarData = ImmutableCollectionsMarshal.AsImmutableArray(buffer);
+        }
+
+        Assert.That(() => Grammar.Load(grammarData), Throws.InstanceOf<InvalidDataException>());
     }
 
     [TestCase("gml.grammar.dat")] // Only test grammar with more than one group

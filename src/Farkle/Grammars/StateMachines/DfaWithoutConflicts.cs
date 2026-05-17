@@ -128,7 +128,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
 
-        TokenSymbolHandle acceptSymbol = GetAcceptSymbol(startState);
+        TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, startState);
         int acceptSymbolLength = 0;
         int acceptSymbolState = startState;
 
@@ -146,7 +146,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             {
                 ignoreLeadingErrors = false;
                 currentState = nextState;
-                if (GetAcceptSymbol(currentState) is { HasValue: true } s)
+                if (ReadAcceptSymbol(grammarFile, currentState) is { HasValue: true } s)
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;

@@ -77,7 +77,7 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
     {
         TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + index * sizeof(char));
         TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + index * sizeof(char));
-        int target = ReadState(grammarFile, EdgeTargetBase, + index);
+        int target = ReadState(grammarFile, EdgeTargetBase, index);
 
         return new(cFrom, cTo, target);
     }

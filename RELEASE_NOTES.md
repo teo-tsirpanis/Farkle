@@ -1,4 +1,4 @@
-#### 7.0.0-preview.3
+#### 7.0.0-preview.3 - 18-05-2026
 The following changes were made after 7.0.0-preview.2:
 * __Breaking change:__ Minimum target framework was increased from .NET Standard 2.1 to .NET 8, and will from now on follow the .NET support lifecycle.
 * __Breaking change:__ The type `BuilderArtifacts` was renamed to `BuilderOutputs`.
@@ -6,6 +6,7 @@ The following changes were made after 7.0.0-preview.2:
 * __Breaking change:__ Multiple types in the `Farkle.Grammars` namespace were renamed to avoid collisions with types in the `Farkle.Builder` namespace. For example, `Farkle.Grammars.Nonterminal` was renamed to `Farkle.Grammars.NonterminalDefinition`.
 * Added the [precompiler](https://farkle.dev/the-precompiler.html).
 * Displaying localized text always uses the language specified in `CultureInfo.CurrentUICulture`. Previously, it used the `IFormatProvider` argument if specified, which could lead to inconsistencies, particularly when `CurrentCulture` and `CurrentUICulture` are different.
+* Fixed bugs and improved performance.
 
 #### 7.0.0-preview.2 - 30-10-2025
 The following changes were made after 7.0.0-preview.1:

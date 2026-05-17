@@ -62,7 +62,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     {
         ValidateStateIndex(state);
 
-        if (GetAcceptSymbol(state).HasValue)
+        if (ReadAcceptSymbol(Grammar.GrammarFile, state).HasValue)
         {
             return (state, 1);
         }
@@ -70,12 +70,11 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return (0, 0);
     }
 
-    internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
-
-    private TokenSymbolHandle GetAcceptSymbol(int state)
+    internal override TokenSymbolHandle GetAcceptSymbolAt(int index)
     {
-        ValidateStateIndex(state);
-        return ReadAcceptSymbol(Grammar.GrammarFile, state);
+        ValidateStateIndex(index);
+
+        return ReadAcceptSymbol(Grammar.GrammarFile, index);
     }
 
     private int NextStateSlow(ReadOnlySpan<byte> grammarFile, int state, TChar c)
@@ -124,7 +123,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // PrepareForParsing must have been called before this method.
         Debug.Assert(_asciiLookup is not null);
 
-        TokenSymbolHandle acceptSymbol = GetAcceptSymbol(startState);
+        TokenSymbolHandle acceptSymbol = ReadAcceptSymbol(grammarFile, startState);
         int acceptSymbolLength = 0;
         int acceptSymbolState = startState;
 
@@ -142,7 +141,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
             {
                 ignoreLeadingErrors = false;
                 currentState = nextState;
-                if (GetAcceptSymbol(currentState) is { HasValue: true } s)
+                if (ReadAcceptSymbol(grammarFile, currentState) is { HasValue: true } s)
                 {
                     acceptSymbol = s;
                     acceptSymbolLength = i + 1;

@@ -61,12 +61,12 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
 
-    private int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    protected int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         return ReadState(grammarFile, DefaultTransitionBase, state);
     }
 
-    private (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    protected (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int nextEdgeOffset = state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount;

@@ -94,6 +94,11 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return ReadAcceptSymbol(Grammar.GrammarFile, state);
     }
 
+    private bool StateHasEdges(ReadOnlySpan<byte> grammarFile, int state)
+    {
+        return GetEdgeBoundsUnsafe(grammarFile, state).Count > 0 || GetDefaultTransitionUnsafe(grammarFile, state) >= 0;
+    }
+
     private int NextStateSlow(ReadOnlySpan<byte> grammarFile, int state, TChar c)
     {
         int edgeOffset = ReadFirstEdge(grammarFile, state);
@@ -177,7 +182,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         // end of the input block. We cannot accept it, there could be more digits after it that
         // were not yet read. By contrast, if we had found `true` at the end of the block, we can
         // accept it, because there is no way for a longer token to be formed.
-        if (!(isFinal || this[currentState] is { Edges.Count: 0 } and { DefaultTransition: < 0 }))
+        if (!isFinal && StateHasEdges(grammarFile, currentState))
         {
             return DfaMatchResult.CreateNeedsMoreChars(acceptSymbol, acceptSymbolState, acceptSymbolLength);
         }

@@ -61,12 +61,16 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
         new(grammarFile.ReadUIntVariableSize(AcceptBase + index * _tokenSymbolIndexSize, _tokenSymbolIndexSize));
 
-    private int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    protected int GetDefaultTransitionUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
+        if (DefaultTransitionBase == 0)
+        {
+            return -1;
+        }
         return ReadState(grammarFile, DefaultTransitionBase, state);
     }
 
-    private (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
+    protected (int Offset, int Count) GetEdgeBoundsUnsafe(ReadOnlySpan<byte> grammarFile, int state)
     {
         int edgeOffset = ReadFirstEdge(grammarFile, state);
         int nextEdgeOffset = state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount;
@@ -90,10 +94,6 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
     internal sealed override int GetDefaultTransition(int state)
     {
         ValidateStateIndex(state);
-        if (DefaultTransitionBase == 0)
-        {
-            return -1;
-        }
         return GetDefaultTransitionUnsafe(Grammar.GrammarFile, state);
     }
 

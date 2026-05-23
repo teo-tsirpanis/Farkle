@@ -78,7 +78,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     {
         ValidateStateIndex(state);
 
-        if (GetAcceptSymbol(state).HasValue)
+        if (ReadAcceptSymbol(Grammar.GrammarFile, state).HasValue)
         {
             return (state, 1);
         }
@@ -86,12 +86,11 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return (0, 0);
     }
 
-    internal override TokenSymbolHandle GetAcceptSymbolAt(int index) => GetAcceptSymbol(index);
-
-    private TokenSymbolHandle GetAcceptSymbol(int state)
+    internal override TokenSymbolHandle GetAcceptSymbolAt(int index)
     {
-        ValidateStateIndex(state);
-        return ReadAcceptSymbol(Grammar.GrammarFile, state);
+        ValidateStateIndex(index);
+
+        return ReadAcceptSymbol(Grammar.GrammarFile, index);
     }
 
     private bool StateHasEdges(ReadOnlySpan<byte> grammarFile, int state)
@@ -235,7 +234,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     private int[][] CreateAsciiLookup()
     {
         int[][] states = new int[Count][];
-        for (int i = 0; i <states.Length; i++)
+        for (int i = 0; i < states.Length; i++)
         {
             DfaState<TChar> state = this[i];
             bool failsOnAllAscii =

@@ -25,12 +25,6 @@ with
     member x.LoadGrammar() : Grammar =
         x.PEFile.GetSectionData(x.RVA).GetContent(0, x.Size)
         |> Grammar.Load
-    member x.ContainingTypeName =
-        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
-        x.MetadataReader.GetString typeDef.Name
-    member x.ContainingTypeNamespace =
-        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
-        x.MetadataReader.GetString typeDef.Namespace
 
 module PrecompiledAssemblyFileLoader =
 
@@ -52,8 +46,8 @@ module PrecompiledAssemblyFileLoader =
     let private isNested flags =
         match flags &&& TypeAttributes.VisibilityMask with
         | TypeAttributes.NotPublic
-        | TypeAttributes.Public -> true
-        | _ -> false
+        | TypeAttributes.Public -> false
+        | _ -> true
 
     let getTypeFullName grammar =
         let md = grammar.MetadataReader

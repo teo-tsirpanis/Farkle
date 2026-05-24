@@ -24,9 +24,6 @@ type Arguments =
     | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of LogEventLevel
     | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
     | [<CliPrefix(CliPrefix.None)>] List of ParseResults<List.Arguments>
-#if TODO_PRECOMPILER
-    | [<AltCommandLine("generate-predefined-sets"); Hidden>] GeneratePredefinedSets of ParseResults<GeneratePredefinedSets.Arguments>
-#endif
 with
     interface IArgParserTemplate with
         member x.Usage =
@@ -37,10 +34,6 @@ No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
             | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
             | List _ -> "List all precompiled grammars of an assembly."
-#if TODO_PRECOMPILER
-            | GeneratePredefinedSets _ -> "Generate an F# source file with GOLD Parser's predefined sets. \
-For internal use only."
-#endif
 
 [<EntryPoint>]
 let main argv =
@@ -71,9 +64,6 @@ let main argv =
             else
                 match results.GetSubCommand() with
                 | New args -> New.run json args
-#if TODO_PRECOMPILER
-                | GeneratePredefinedSets args -> GeneratePredefinedSets.run args
-#endif
                 | List args -> List.run json args
                 | Version | Json | Verbosity _ -> Ok ()
                 |> function | Ok () -> 0 | Error () -> 1

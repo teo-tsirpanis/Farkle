@@ -36,18 +36,6 @@ let isGrammarExtension x =
     || equalsCI x ".egtn"
     || equalsCI x ".grammar.dat"
 
-let isElementUnique fBasedOn xs =
-    let dict =
-        xs
-        |> Seq.groupBy fBasedOn
-        |> Seq.collect (fun (_, xs) ->
-            match Array.ofSeq xs with
-            | [| |] -> Seq.empty
-            | [|x|]-> Seq.singleton (x, true)
-            | xs -> xs |> Seq.map (fun x -> x, false))
-        |> readOnlyDict
-    fun x -> dict[x]
-
 let private invalidFileNameChars = Path.GetInvalidFileNameChars()
 
 let sanitizeUnsafeFileName (log: ILogger) (path: string) =

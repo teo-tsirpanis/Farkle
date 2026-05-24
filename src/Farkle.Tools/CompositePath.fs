@@ -11,7 +11,6 @@ open Farkle.Tools.Templating
 open System
 open System.Buffers.Binary
 open System.IO
-open System.Reflection.Metadata
 open System.Reflection.PortableExecutable
 open System.Runtime.InteropServices
 open Serilog
@@ -74,7 +73,7 @@ module CompositePath =
                 let grammarType = path.AsSpan(ranges[1]).Trim().ToString()
                 let key =
                     if rangeCount = 2 then
-                        ""
+                        null
                     else
                         path.AsSpan(ranges[2].Start).ToString()
                 CompositePath(filePath, Some <| GrammarSelector(grammarType, key))

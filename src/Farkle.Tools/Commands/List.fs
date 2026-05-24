@@ -76,7 +76,7 @@ let run json (args: ParseResults<_>) = either {
         if Array.isEmpty allGrammars then
             Log.Information "No precompiled grammars were found."
         for x in allGrammars do
-            let mapIfHasValue f x = if x = "" then x else f x
+            let mapIfHasValue f x = if isNull x then x else f x
             let key = x.Key |> mapIfHasValue (sprintf "::%s")
-            printfn "%s%s: Name = %s, Size = %d" x.ContainingTypeName key x.Name x.Size
+            printfn "%s%s, Name = %s, Size = %d" x.ContainingTypeName key x.Name x.Size
 }

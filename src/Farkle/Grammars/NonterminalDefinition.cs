@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Provides information about a nonterminal of a <see cref="Grammar"/>.
+/// Provides information about a nonterminal of a <see cref="Grammars.Grammar"/>.
 /// </summary>
 /// <remarks>
 /// A nonterminal is a composite symbol that can be derived
@@ -15,7 +15,7 @@ namespace Farkle.Grammars;
 /// </remarks>
 public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
 {
-    private readonly Grammar _grammar;
+    internal Grammar Grammar { get; }
 
     /// <summary>
     /// The <see cref="NonterminalDefinition"/>'s <see cref="NonterminalHandle"/>.
@@ -24,14 +24,14 @@ public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
 
     internal NonterminalDefinition(Grammar grammar, NonterminalHandle handle)
     {
-        _grammar = grammar;
+        Grammar = grammar;
         Handle = handle;
     }
 
     [StackTraceHidden]
     private void AssertHasValue()
     {
-        Debug.Assert(_grammar is not null);
+        Debug.Assert(Grammar is not null);
         if (!Handle.HasValue)
         {
             ThrowHelpers.ThrowHandleHasNoValue();
@@ -46,7 +46,7 @@ public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
         get
         {
             AssertHasValue();
-            return _grammar.GetNonterminalName(Handle);
+            return Grammar.GetNonterminalName(Handle);
         }
     }
 
@@ -58,7 +58,7 @@ public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetNonterminalFlags(_grammar.GrammarFile, Handle.TableIndex);
+            return Grammar.GrammarTables.GetNonterminalFlags(Grammar.GrammarFile, Handle.TableIndex);
         }
     }
 
@@ -70,24 +70,24 @@ public readonly struct NonterminalDefinition : IEquatable<NonterminalDefinition>
         get
         {
             AssertHasValue();
-            (uint offset, int count) =_grammar.GrammarTables.GetNonterminalProductionBounds(_grammar.GrammarFile, Handle.TableIndex);
-            return new(_grammar, offset, count);
+            (uint offset, int count) = Grammar.GrammarTables.GetNonterminalProductionBounds(Grammar.GrammarFile, Handle.TableIndex);
+            return new(Grammar, offset, count);
         }
     }
 
     /// <inheritdoc/>
-    public bool Equals(NonterminalDefinition other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(NonterminalDefinition other) => Grammar == other.Grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is NonterminalDefinition other && Equals(other);
 
     /// <inheritdoc/>
-    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
+    public override int GetHashCode() => HashCode.Combine(Grammar, Handle);
 
     /// <summary>
     /// Returns a string describing the <see cref="NonterminalDefinition"/>.
     /// </summary>
-    public override string ToString() => _grammar is null ? "" : $"<{Name}>";
+    public override string ToString() => Grammar is null ? "" : $"<{Name}>";
 
     /// <summary>
     /// Compares two <see cref="NonterminalDefinition"/>s for equality.

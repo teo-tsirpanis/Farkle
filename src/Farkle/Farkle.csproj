@@ -2,7 +2,8 @@
   <Import Project="../NuGet.props" />
   <PropertyGroup>
     <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
-    <LangVersion>14</LangVersion>
+    <!-- TODO-CSHARP15: Switch to C# 15 when available. -->
+    <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Nullable Condition="'$(TargetFramework)' == 'netstandard2.0'">annotations</Nullable>

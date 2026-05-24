@@ -4,7 +4,7 @@
 namespace Farkle.Grammars;
 
 /// <summary>
-/// Provides information about a token symbol in a <see cref="Grammar"/>.
+/// Provides information about a token symbol in a <see cref="Grammars.Grammar"/>.
 /// </summary>
 /// <remarks>
 /// Token symbols are produced by tokenizers, usually powered by a DFA.
@@ -13,7 +13,7 @@ namespace Farkle.Grammars;
 /// <seealso cref="Grammar.TokenSymbols"/>
 public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
 {
-    private readonly Grammar _grammar;
+    internal Grammar Grammar { get; }
 
     /// <summary>
     /// The <see cref="TokenSymbolDefinition"/>'s <see cref="TokenSymbolHandle"/>.
@@ -22,7 +22,7 @@ public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
 
     internal TokenSymbolDefinition(Grammar grammar, TokenSymbolHandle handle)
     {
-        _grammar = grammar;
+        Grammar = grammar;
         Handle = handle;
     }
 
@@ -37,7 +37,7 @@ public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
             {
                 ThrowHelpers.ThrowHandleHasNoValue();
             }
-            return _grammar.GetTokenSymbolName(Handle);
+            return Grammar.GetTokenSymbolName(Handle);
         }
     }
 
@@ -52,7 +52,7 @@ public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
             {
                 ThrowHelpers.ThrowHandleHasNoValue();
             }
-            return _grammar.GrammarTables.GetTokenSymbolFlags(_grammar.GrammarFile, Handle.TableIndex);
+            return Grammar.GrammarTables.GetTokenSymbolFlags(Grammar.GrammarFile, Handle.TableIndex);
         }
     }
 
@@ -79,18 +79,18 @@ public readonly struct TokenSymbolDefinition : IEquatable<TokenSymbolDefinition>
     }
 
     /// <inheritdoc/>
-    public bool Equals(TokenSymbolDefinition other) => _grammar == other._grammar && Handle == other.Handle;
+    public bool Equals(TokenSymbolDefinition other) => Grammar == other.Grammar && Handle == other.Handle;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is TokenSymbolDefinition other && Equals(other);
 
     /// <inheritdoc/>
-    public override int GetHashCode() => HashCode.Combine(_grammar, Handle);
+    public override int GetHashCode() => HashCode.Combine(Grammar, Handle);
 
     /// <summary>
     /// Returns a string describing the <see cref="TokenSymbolDefinition"/>.
     /// </summary>
-    public override string ToString() => _grammar is null ? "" : FormatName(Name);
+    public override string ToString() => Grammar is null ? "" : FormatName(Name);
 
     /// <summary>
     /// Compares two <see cref="TokenSymbolDefinition"/>s for equality.

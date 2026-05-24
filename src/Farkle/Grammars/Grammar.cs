@@ -333,7 +333,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// </summary>
     /// <param name="handle">A handle to the production.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
-    /// <see cref="TokenSymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <see cref="ProductionHandle.HasValue"/> property is <see langword="false"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
     /// points to a production that does not exist.</exception>
     public ProductionDefinition GetProduction(ProductionHandle handle)

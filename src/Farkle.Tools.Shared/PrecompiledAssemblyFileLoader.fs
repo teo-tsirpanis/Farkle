@@ -4,11 +4,13 @@
 namespace Farkle.Tools
 
 open Farkle.Grammars
+open System
 open System.Collections.Immutable
 open System.Reflection
 open System.Reflection.Metadata
 open System.Reflection.Metadata.Ecma335
 open System.Reflection.PortableExecutable
+open System.Text
 
 type PrecompiledGrammar = {
     PEFile: PEReader
@@ -31,6 +33,47 @@ with
         x.MetadataReader.GetString typeDef.Namespace
 
 module PrecompiledAssemblyFileLoader =
+
+    let private typeNameCharactersToEscape = "\\[]+*&,"
+
+    let escapeTypeName name =
+        String.length name |> ignore
+        if name.AsSpan().IndexOf typeNameCharactersToEscape >= 0 then
+            let sb = StringBuilder()
+            name
+            |> String.iter (fun c ->
+                if typeNameCharactersToEscape.Contains c then
+                    sb.Append '\\' |> ignore
+                sb.Append c |> ignore)
+            sb.ToString()
+        else
+            name
+
+    let private isNested flags =
+        match flags &&& TypeAttributes.VisibilityMask with
+        | TypeAttributes.NotPublic
+        | TypeAttributes.Public -> true
+        | _ -> false
+
+    let getTypeFullName grammar =
+        let md = grammar.MetadataReader
+        grammar.DeclaringType
+        |> List.unfold (fun t ->
+            if t = Unchecked.defaultof<_> then
+                None
+            else
+                let typ = md.GetTypeDefinition t
+                let nextTyp = if isNested typ.Attributes then typ.GetDeclaringType() else Unchecked.defaultof<_>
+                let ns = md.GetString typ.Namespace |> escapeTypeName
+                let name = md.GetString typ.Name |> escapeTypeName
+                if String.IsNullOrEmpty ns then
+                    name
+                else
+                    $"{ns}.{name}"
+                |> fun x -> x, nextTyp
+                |> Some)
+        |> List.rev
+        |> String.concat "+"
 
     [<Literal>]
     let private PrecompiledGrammarAttributeNamespace = "Farkle.Runtime"

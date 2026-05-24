@@ -60,15 +60,14 @@ let run json (args: ParseResults<_>) = either {
         |> Seq.map (fun g ->
             let grammar = g.LoadGrammar()
             {|
-                ContainingTypeNamespace = g.ContainingTypeNamespace
-                ContainingTypeName = g.ContainingTypeName
+                ContainingTypeName = PrecompiledAssemblyFileLoader.getTypeFullName g
                 Name = grammar.GrammarInfo.Name
                 Size = g.Size
                 Key = g.Key
             |}
         )
         |> Array.ofSeq
-        |> fun xs -> xs |> Array.sortInPlaceBy (fun x -> x.ContainingTypeNamespace, x.ContainingTypeName); xs
+        |> fun xs -> xs |> Array.sortInPlaceBy (fun x -> x.ContainingTypeName); xs
 
     if json then
         JsonSerializer.Serialize allGrammars
@@ -78,7 +77,6 @@ let run json (args: ParseResults<_>) = either {
             Log.Information "No precompiled grammars were found."
         for x in allGrammars do
             let mapIfHasValue f x = if x = "" then x else f x
-            let ns = x.ContainingTypeNamespace |> mapIfHasValue (sprintf ".%s")
-            let key = x.Key |> mapIfHasValue (sprintf ", Key = %s")
-            printfn "%s%s: Name = %s, Size = %d%s" ns x.ContainingTypeName x.Name x.Size key
+            let key = x.Key |> mapIfHasValue (sprintf "::%s")
+            printfn "%s%s: Name = %s, Size = %d" x.ContainingTypeName key x.Name x.Size
 }

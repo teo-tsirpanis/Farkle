@@ -48,7 +48,7 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
     }
 
     /// <summary>
-    /// The
+    /// A handle to the symbol associated with the <see cref="SpecialNameDefinition"/>.
     /// </summary>
     public EntityHandle Symbol
     {

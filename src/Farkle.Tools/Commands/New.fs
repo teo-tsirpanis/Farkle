@@ -50,7 +50,7 @@ The source's namespace and language can be adjusted by the respective arguments.
 infer it based on the project files in the current directory; otherwise it will use F#."
             | Namespace _ -> "The skeleton source file's namespace. \
 If not specified, the input file's name will be used."
-            | TemplateFile _ -> "Generate a file using this custom Scriban template. See more in https://teo-tsirpanis.github.io/Farkle/templating.html."
+            | TemplateFile _ -> "Generate a file using this custom Scriban template. See more in https://farkle.dev/templating.html."
             | Property _ -> "Additional properties to be passed to your custom template \
 via the 'properties.myproperty' Scriban variable."
 

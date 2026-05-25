@@ -502,11 +502,8 @@ public static class GrammarBuilderExtensions
     /// <summary>
     /// Obsolete. Use <see cref="BuildSyntaxCheck(IGrammarBuilder, BuilderOptions?)"/> instead.
     /// </summary>
-    [Obsolete(Obsoletions.BuildUntypedMessage
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.BuildUntypedCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    ), EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete(Obsoletions.BuildUntypedMessage, DiagnosticId = Obsoletions.BuildUntypedCode, UrlFormat = Obsoletions.SharedUrlFormat)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static CharParser<object?> BuildUntyped(this IGrammarBuilder builder) =>
         builder.BuildSyntaxCheck();
 

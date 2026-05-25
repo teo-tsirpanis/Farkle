@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-#if NET6_0_OR_GREATER
 using System.Collections;
 using System.Runtime.CompilerServices;
 
@@ -31,4 +30,3 @@ internal sealed class ConditionalWeakList<T> : IEnumerable<T> where T : class
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
-#endif

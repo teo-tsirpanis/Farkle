@@ -1,11 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-#if NET6_0_OR_GREATER
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
-#endif
 using System.Buffers;
 using Farkle.Builder;
 using Farkle.HotReload;
@@ -16,7 +14,6 @@ namespace Farkle.Tests.CSharp;
 
 internal class HotReloadTests
 {
-#if NET6_0_OR_GREATER
     [Test]
     public void TestAssemblyAttributes()
     {
@@ -85,7 +82,6 @@ internal class HotReloadTests
     private sealed class DummyType1;
 
     private sealed class DummyType2;
-#endif
 
     [Test]
     public void TestMetadataUpdatableParser()

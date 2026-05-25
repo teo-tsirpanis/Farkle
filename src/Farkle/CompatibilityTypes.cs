@@ -12,11 +12,7 @@ namespace Farkle
     /// Obsolete, use <see cref="CharParser{T}"/> instead.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [Obsolete("Use CharParser<T>.", error: true
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    )]
+    [Obsolete("Use CharParser<T>.", error: true, DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat)]
     public sealed class RuntimeFarkle<T>;
 
     namespace Builder
@@ -26,11 +22,8 @@ namespace Farkle
         /// or <see cref="IGrammarBuilder"/> for whole grammars instead.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use IGrammarSymbol for individual grammar symbols or IGrammarBuilder for whole grammars instead.", error: true
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    )]
+        [Obsolete("Use IGrammarSymbol for individual grammar symbols or IGrammarBuilder for whole grammars instead.", error: true,
+            DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat)]
         public interface DesigntimeFarkle { }
 
         /// <summary>
@@ -38,22 +31,15 @@ namespace Farkle
         /// or <see cref="IGrammarBuilder{T}"/> for whole grammars instead.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use IGrammarSymbol<T> for individual grammar symbols or IGrammarBuilder<T> for whole grammars instead.", error: true
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-        )]
+        [Obsolete("Use IGrammarSymbol<T> for individual grammar symbols or IGrammarBuilder<T> for whole grammars instead.", error: true,
+            DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat)]
         public interface DesigntimeFarkle<out T> : DesigntimeFarkle { }
 
         /// <summary>
         /// Obsolete, use <see cref="IGrammarBuilder"/> instead.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use IGrammarBuilder instead.", error: true
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-        )]
+        [Obsolete("Use IGrammarBuilder instead.", error: true, DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat)]
         public class PrecompilableDesigntimeFarkle
         {
             [ExcludeFromCodeCoverage]
@@ -64,11 +50,7 @@ namespace Farkle
         /// Obsolete, use <see cref="IGrammarBuilder{T}"/> instead.
         /// </summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Use IGrammarBuilder<T> instead.", error: true
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-        )]
+        [Obsolete("Use IGrammarBuilder<T> instead.", error: true, DiagnosticId = Obsoletions.CompatibilityTypesCode, UrlFormat = Obsoletions.SharedUrlFormat)]
         public sealed class PrecompilableDesigntimeFarkle<T> : PrecompilableDesigntimeFarkle
         {
             [ExcludeFromCodeCoverage]

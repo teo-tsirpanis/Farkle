@@ -145,11 +145,8 @@ public static class ProductionBuilderExtensions
     /// <summary>
     /// Obsolete, use <see cref="AsProduction"/> instead.
     /// </summary>
-    [Obsolete(Obsoletions.AsIsApiMessage
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    ), EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete(Obsoletions.AsIsApiMessage, DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public static IProduction<T> AsIs<T>(this IGrammarSymbol<T> symbol) =>
         symbol.AsProduction();
 }

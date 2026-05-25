@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Reflection.Metadata;
 using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Parser;
@@ -8,11 +9,7 @@ using Farkle.Parser.Implementation;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 using Farkle.Grammars.StateMachines;
-
-#if NET6_0_OR_GREATER
-using System.Reflection.Metadata;
 using Farkle.HotReload;
-#endif
 
 namespace Farkle;
 
@@ -287,13 +284,11 @@ public static class CharParser
     {
         ArgumentNullException.ThrowIfNull(parserFactory);
 
-#if NET6_0_OR_GREATER
         // DeclaringType can be null in dynamic methods or the rare module-global methods.
         if (MetadataUpdater.IsSupported && parserFactory.Method.DeclaringType is {} declaringType)
         {
             return MetadataUpdatableParser.Create(declaringType, parserFactory);
         }
-#endif
 
         return parserFactory();
     }

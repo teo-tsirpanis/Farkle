@@ -92,9 +92,7 @@ internal sealed class MetadataUpdatableParser<T, TOriginal> : CharParser<T>, IMe
         {
             _parser = Tuple.Create(originalParser, TransformParser(originalParser));
         }
-#if NET6_0_OR_GREATER
         MetadataUpdatableManager.Register(metadataUpdateKey, this);
-#endif
     }
 
     public override void Run(ref ParserInputReader<char> input, ref ParserCompletionState<T> completionState) =>

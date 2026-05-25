@@ -9,9 +9,7 @@ using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 using System.Collections.Immutable;
 using System.Diagnostics;
-#if NET8_0_OR_GREATER
 using System.Runtime.CompilerServices;
-#endif
 
 using static Farkle.Parser.Implementation.DefaultParserImplementation;
 
@@ -145,12 +143,9 @@ internal readonly struct DefaultParserImplementation<TChar>
     private unsafe RunResult RunOneShot(ref ParserInputReader<TChar> input, out object? resultValue)
     {
         ValueStack<int> stateStack = new(stackalloc int[InitialStackCapacity]);
-#if NET8_0_OR_GREATER
         ObjectBuffer semanticValueBuffer = default;
         ValueStack<object?> semanticValueStack = new(semanticValueBuffer);
-#else
-        ValueStack<object?> semanticValueStack = new(InitialStackCapacity);
-#endif
+
         stateStack.Push(_lrStateMachine.StartState);
         semanticValueStack.Push(null);
 #pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
@@ -220,13 +215,11 @@ internal static class DefaultParserImplementation
         }
     }
 
-#if NET8_0_OR_GREATER
     [InlineArray(InitialStackCapacity)]
     public struct ObjectBuffer
     {
         private object? _x;
     }
-#endif
 
     public enum RunResult
     {

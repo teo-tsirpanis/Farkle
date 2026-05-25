@@ -11,22 +11,14 @@ namespace Farkle.Grammars;
 /// </summary>
 internal readonly ref struct GrammarTablesHotData
 {
-#if NET7_0_OR_GREATER
     public readonly ref readonly GrammarTables GrammarTables;
-#else
-    private readonly Grammar _grammar;
-    public ref readonly GrammarTables GrammarTables => ref _grammar.GrammarTables;
-#endif
+
     public readonly ReadOnlySpan<byte> GrammarFile;
 
     public GrammarTablesHotData(Grammar grammar)
     {
         GrammarFile = grammar.GrammarFile;
-#if NET7_0_OR_GREATER
         GrammarTables = ref grammar.GrammarTables;
-#else
-        _grammar = grammar;
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

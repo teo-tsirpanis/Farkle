@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 using System.ComponentModel;
-using ComSharp;
-using Farkle.Builder;
-using Farkle.Grammars;
-using Farkle.Builder.Precompiler;
 using System.Diagnostics.CodeAnalysis;
-
-
-#if NET6_0_OR_GREATER
 using System.Reflection;
 using System.Reflection.Metadata;
+using ComSharp;
+using Farkle.Builder;
+using Farkle.Builder.Precompiler;
+using Farkle.Grammars;
 using Farkle.HotReload;
-#endif
 
 namespace Farkle.Runtime;
 
@@ -82,7 +78,6 @@ public static class PrecompilerEntryPoints
         var semanticProvider = precompilerInputFunction().BuildSemanticProvider();
         var result = CharParser.Create(grammar, semanticProvider);
 
-#if NET6_0_OR_GREATER
         if (MetadataUpdater.IsSupported)
         {
             var containingTypeObj = Type.GetTypeFromHandle(containingType)!;
@@ -101,7 +96,6 @@ public static class PrecompilerEntryPoints
                 return builder.Build(builderOptions);
             }
         }
-#endif
 
         return result;
     }
@@ -140,7 +134,6 @@ public static class PrecompilerEntryPoints
         var grammar = LoadGrammar(data, length, containingType);
         var result = CharParser.CreateSyntaxChecker<T>(grammar);
 
-#if NET6_0_OR_GREATER
         if (MetadataUpdater.IsSupported && precompilerInputFunction is not null)
         {
             var containingTypeObj = Type.GetTypeFromHandle(containingType)!;
@@ -159,7 +152,6 @@ public static class PrecompilerEntryPoints
                 return builder.BuildSyntaxCheck<T>(builderOptions);
             }
         }
-#endif
 
         return result;
     }

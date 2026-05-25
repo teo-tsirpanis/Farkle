@@ -145,21 +145,18 @@ public sealed class PrecompilerWeaver
                         il.Emit(OpCodes.Ret);
                         break;
                     case OutputType.CharParserSyntaxChecker:
-                        parserOutputType = ((GenericInstanceType) outputMethod.ReturnType).GenericArguments[0];
+                        parserOutputType = ((GenericInstanceType)outputMethod.ReturnType).GenericArguments[0];
                         delegateFactoryType = _knownMembers.Func_1.MakeGenericInstanceType(_knownMembers.IGrammarBuilder);
                         factoryMethodRef = _knownMembers.PrecompilerEntryPoints_LoadCharParserSyntaxChecker;
                         EmitLoadGrammarPreamble();
                         var loadDelegateTargetInstr = il.Create(OpCodes.Ldnull);
                         var callFactoryMethodInstr = il.Create(OpCodes.Call, factoryMethodRef.MakeGenericMethod([parserOutputType]));
-                        if (_knownMembers.MetadataUpdater_get_IsSupported is { } isHotReloadSupported)
-                        {
-                            // If Hot Reload is known to not be supported, we can skip creating the delegate for the
-                            // input method, which will allow trimming it away.
-                            il.Emit(OpCodes.Call, isHotReloadSupported);
-                            il.Emit(OpCodes.Brtrue_S, loadDelegateTargetInstr);
-                            il.Emit(OpCodes.Ldnull);
-                            il.Emit(OpCodes.Br_S, callFactoryMethodInstr);
-                        }
+                        // If Hot Reload is known to not be supported, we can skip creating the delegate for the
+                        // input method, which will allow trimming it away.
+                        il.Emit(OpCodes.Call, _knownMembers.MetadataUpdater_get_IsSupported);
+                        il.Emit(OpCodes.Brtrue_S, loadDelegateTargetInstr);
+                        il.Emit(OpCodes.Ldnull);
+                        il.Emit(OpCodes.Br_S, callFactoryMethodInstr);
                         il.Append(loadDelegateTargetInstr);
                         il.Emit(OpCodes.Ldftn, inputMethod);
                         il.Emit(OpCodes.Newobj, delegateFactoryType.GetDelegateConstructor());

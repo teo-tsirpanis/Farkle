@@ -5,9 +5,6 @@ using Farkle.Diagnostics;
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;
 using System.Collections.Immutable;
-#if NET9_0_OR_GREATER
-using System.Runtime.CompilerServices;
-#endif
 
 namespace Farkle.Parser.Implementation;
 
@@ -32,11 +29,7 @@ internal static class ParserUtilities
         {
             return chars.ToString();
         }
-#if NET6_0_OR_GREATER
         return $"{chars}…";
-#else
-        return $"{chars.ToString()}…";
-#endif
     }
 
     public static string GetAbbreviatedLexicalErrorText<TChar>(ReadOnlySpan<TChar> chars)

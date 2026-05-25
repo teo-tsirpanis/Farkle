@@ -54,11 +54,7 @@ public sealed class IndistinguishableSymbolsError : IFormattable
     /// <inheritdoc/>
     public override string ToString() => ToString(null);
 
-    [ExcludeFromCodeCoverage(
-#if NET5_0_OR_GREATER
-        Justification = "Diagnostics-only code"
-#endif
-    )]
+    [ExcludeFromCodeCoverage(Justification = "Diagnostics-only code")]
     private readonly struct DelimitedSymbolNames(IndistinguishableSymbolsError error) : IFormattable
 #if NET6_0_OR_GREATER
         , ISpanFormattable

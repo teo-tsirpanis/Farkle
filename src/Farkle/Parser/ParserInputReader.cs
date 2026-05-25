@@ -1,10 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-#if (NETCOREAPP && !NET7_0_OR_GREATER) || NETSTANDARD2_1_OR_GREATER
-using System.Runtime.InteropServices;
-#endif
-
 using System.Diagnostics.CodeAnalysis;
 using Farkle.Diagnostics;
 
@@ -23,21 +19,12 @@ namespace Farkle.Parser;
 /// </remarks>
 public ref struct ParserInputReader<TChar>
 {
-#if NET7_0_OR_GREATER
     private readonly ref ParserState _state;
-#else
-    private readonly Span<ParserState> _state;
-#endif
 
     /// <summary>
     /// The parser's state.
     /// </summary>
-    public readonly ref ParserState State =>
-#if NET7_0_OR_GREATER
-        ref _state;
-#else
-        ref MemoryMarshal.GetReference(_state);
-#endif
+    public readonly ref ParserState State => ref _state;
 
     /// <summary>
     /// The remaining available characters.
@@ -62,20 +49,9 @@ public ref struct ParserInputReader<TChar>
     /// <param name="state">A reference to the reader's <see cref="ParserState"/>.</param>
     /// <param name="characters">The value that will be assigned to <see cref="RemainingCharacters"/>.</param>
     /// <param name="isFinal">The value that will be assigned to <see cref="IsFinalBlock"/>.</param>
-#if NET7_0_OR_GREATER
-    public
-#else
-    // On frameworks earlier than .NET 7 we cannot be sure that the ref
-    // safety rules are enforced and therefore cannot make it public.
-    internal
-#endif
-        ParserInputReader(ref ParserState state, ReadOnlySpan<TChar> characters, bool isFinal = true)
+    public ParserInputReader(ref ParserState state, ReadOnlySpan<TChar> characters, bool isFinal = true)
     {
-#if NET7_0_OR_GREATER
         _state = ref state;
-#else
-        _state = MemoryMarshal.CreateSpan(ref state, 1);
-#endif
         RemainingCharacters = characters;
         IsFinalBlock = isFinal;
     }

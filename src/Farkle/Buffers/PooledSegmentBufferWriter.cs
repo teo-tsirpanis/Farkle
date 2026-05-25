@@ -131,7 +131,7 @@ internal sealed class PooledSegmentBufferWriter<T> : IBufferWriter<T>, IDisposab
     {
         if (WrittenCount == 0)
         {
-            return Array.Empty<T>();
+            return [];
         }
 
         int length = (int)WrittenCount;

@@ -118,7 +118,7 @@ internal struct CharacterBufferManager<TChar>(int initialBufferSize)
         if (isCompleted || (_usedCharacterStart == _usedCharacterEnd && IsInputCompleted))
         {
             ArrayPool<TChar>.Shared.Return(_buffer);
-            _buffer = Array.Empty<TChar>();
+            _buffer = [];
             IsInputCompleted = true;
         }
     }

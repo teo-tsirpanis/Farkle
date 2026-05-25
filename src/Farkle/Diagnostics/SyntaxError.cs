@@ -46,7 +46,7 @@ public sealed class SyntaxError : IFormattable, ISpanFormattable
     {
         if (expectedTokenNames.IsDefault)
         {
-            expectedTokenNames = ImmutableArray<string?>.Empty;
+            expectedTokenNames = [];
         }
         ActualTokenName = actualTokenName;
         ExpectedTokenNames = expectedTokenNames;

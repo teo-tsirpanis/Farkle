@@ -37,7 +37,7 @@ public static class PrecompilerEntryPoints
             ArgumentNullException.ThrowIfNull(data);
             ArgumentOutOfRangeException.ThrowIfNegative(length);
         }
-        if ((nint)containingType.Value == 0)
+        if (containingType.Value == 0)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(containingType));
         }
@@ -68,7 +68,7 @@ public static class PrecompilerEntryPoints
             ArgumentNullException.ThrowIfNull(data);
             ArgumentOutOfRangeException.ThrowIfNegative(length);
         }
-        if ((nint)containingType.Value == 0)
+        if (containingType.Value == 0)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(containingType));
         }
@@ -126,7 +126,7 @@ public static class PrecompilerEntryPoints
             ArgumentNullException.ThrowIfNull(data);
             ArgumentOutOfRangeException.ThrowIfNegative(length);
         }
-        if ((nint)containingType.Value == 0)
+        if (containingType.Value == 0)
         {
             ThrowHelpers.ThrowArgumentNullException(nameof(containingType));
         }

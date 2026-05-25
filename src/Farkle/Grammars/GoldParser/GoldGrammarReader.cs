@@ -60,7 +60,7 @@ internal static class GoldGrammarReader
     {
         if (chars.Length == 0)
         {
-            return ImmutableArray<(char, char)>.Empty;
+            return [];
         }
 
         var builder = ImmutableArray.CreateBuilder<(char, char)>();
@@ -154,8 +154,8 @@ internal static class GoldGrammarReader
         ushort startSymbol = 0;
         ImmutableArray<(char Start, char End)>[]? characterSets = null;
         Symbol[]? symbols = null;
-        GoldGrammar.Group[]? groups = null;
-        GoldGrammar.Production[]? productions = null;
+        Group[]? groups = null;
+        Production[]? productions = null;
         DfaState[]? dfaStates = null;
         ImmutableArray<LalrAction>[]? lalrStates = null;
 
@@ -264,7 +264,7 @@ internal static class GoldGrammarReader
                         CreateArray(ref productions, remainingProductions = reader.ReadUInt16());
                         CreateArray(ref dfaStates, remainingDfaStates = reader.ReadUInt16());
                         CreateArray(ref lalrStates, remainingLalrStates = reader.ReadUInt16());
-                        groups = Array.Empty<GoldGrammar.Group>();
+                        groups = [];
                     }
                     break;
                 case ('C', false) when characterSets is not null:

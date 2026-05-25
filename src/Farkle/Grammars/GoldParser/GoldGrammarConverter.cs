@@ -18,7 +18,7 @@ internal static class GoldGrammarConverter
         Production[] productions = grammar.Productions;
         Group[] groups = grammar.Groups;
 
-        EntityHandle[] symbolMapping = new EntityHandle[symbols.Length];
+        SymbolHandle[] symbolMapping = new SymbolHandle[symbols.Length];
         ProductionHandle[] productionMapping = new ProductionHandle[productions.Length];
 
         // We add the token symbols. Terminals must come first.
@@ -52,13 +52,13 @@ internal static class GoldGrammarConverter
                 ThrowHelpers.ThrowNotSupportedException("Group does not end with a GroupEnd or a newline. Please open an issue on GitHub.");
             }
             StringHandle name = writer.GetOrAddString(group.Name);
-            TokenSymbolHandle container = (TokenSymbolHandle)symbolMapping[group.ContainerIndex];
+            TokenSymbolHandle container = WantTokenSymbol(symbolMapping[group.ContainerIndex]);
             GroupAttributes flags =
                 (group.AdvanceByChar ? GroupAttributes.AdvanceByCharacter : 0)
                 | (group.KeepEndToken ? GroupAttributes.KeepEndToken : 0)
                 | (isNewLine ? GroupAttributes.EndsOnEndOfInput : 0);
-            TokenSymbolHandle start = (TokenSymbolHandle)symbolMapping[group.StartIndex];
-            TokenSymbolHandle end = (TokenSymbolHandle)symbolMapping[group.EndIndex];
+            TokenSymbolHandle start = WantTokenSymbol(symbolMapping[group.StartIndex]);
+            TokenSymbolHandle end = WantTokenSymbol(symbolMapping[group.EndIndex]);
             int nestingCount = group.Nesting.Length;
 
             writer.AddGroup(name, container, flags, start, end, nestingCount);
@@ -138,17 +138,17 @@ internal static class GoldGrammarConverter
                 switch (action.Kind, symbols[action.SymbolIndex].Kind)
                 {
                     case (LalrActionKind.Shift, SymbolKind.Terminal):
-                        lr.AddShift((TokenSymbolHandle)symbolMapping[action.SymbolIndex], action.TargetIndex);
+                        lr.AddShift(WantTokenSymbol(symbolMapping[action.SymbolIndex]), action.TargetIndex);
                         break;
                     case (LalrActionKind.Reduce, SymbolKind.Terminal):
                         ProductionHandle production = productionMapping[action.TargetIndex];
-                        lr.AddReduce((TokenSymbolHandle)symbolMapping[action.SymbolIndex], production);
+                        lr.AddReduce(WantTokenSymbol(symbolMapping[action.SymbolIndex]), production);
                         break;
                     case (LalrActionKind.Reduce, SymbolKind.EndOfFile):
                         lr.AddEofReduce(productionMapping[action.TargetIndex]);
                         break;
                     case (LalrActionKind.Goto, SymbolKind.Nonterminal):
-                        lr.AddGoto((NonterminalHandle)symbolMapping[action.SymbolIndex], action.TargetIndex);
+                        lr.AddGoto(WantNonterminal(symbolMapping[action.SymbolIndex]), action.TargetIndex);
                         break;
                     case (LalrActionKind.Accept, SymbolKind.EndOfFile):
                         lr.AddEofAccept();
@@ -178,7 +178,7 @@ internal static class GoldGrammarConverter
             }
             if (state.AcceptIndex is ushort acceptIndex)
             {
-                dfa.AddAccept((TokenSymbolHandle)symbolMapping[acceptIndex]);
+                dfa.AddAccept(WantTokenSymbol(symbolMapping[acceptIndex]));
             }
             dfa.FinishState();
         }
@@ -188,12 +188,30 @@ internal static class GoldGrammarConverter
 
         // We leave the grammar information for the end.
         StringHandle grammarNameHandle = writer.GetOrAddString(grammar.Name);
-        NonterminalHandle startSymbol = (NonterminalHandle)symbolMapping[grammar.StartSymbolIndex];
+        NonterminalHandle startSymbol = WantNonterminal(symbolMapping[grammar.StartSymbolIndex]);
         writer.SetGrammarInfo(grammarNameHandle, startSymbol, 0);
 
         // And finally write the converted grammar.
         using PooledSegmentBufferWriter<byte> bufferWriter = new();
         writer.WriteTo(bufferWriter);
         return bufferWriter.ToImmutableArray();
+
+        static TokenSymbolHandle WantTokenSymbol(SymbolHandle handle)
+        {
+            if (!handle.TryGetValue(out TokenSymbolHandle tokenSymbolHandle))
+            {
+                ThrowHelpers.ThrowInvalidDataException("Expected a token symbol.");
+            }
+            return tokenSymbolHandle;
+        }
+
+        static NonterminalHandle WantNonterminal(SymbolHandle handle)
+        {
+            if (!handle.TryGetValue(out NonterminalHandle nonterminalHandle))
+            {
+                ThrowHelpers.ThrowInvalidDataException("Expected a nonterminal.");
+            }
+            return nonterminalHandle;
+        }
     }
 }

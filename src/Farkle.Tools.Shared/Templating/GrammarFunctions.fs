@@ -39,6 +39,7 @@ type GrammarFunctions(g: GrammarTemplateInput) =
             | :? GroupHandle as h -> grammarObj.GetGroup h |> box
             | :? NonterminalHandle as h -> grammarObj.GetNonterminal h |> box
             | :? ProductionHandle as h -> grammarObj.GetProduction h |> box
+            | :? SymbolHandle as h -> grammarObj.GetSymbol(h).Value
             | x -> failwith $"invlid object '{x.GetType()}'; must be a grammar object handle or EntityHandle"))
         so.Import("is_terminal", Func<_,_>(fun x -> grammarObj.IsTerminal x))
         so

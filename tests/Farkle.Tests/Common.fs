@@ -36,7 +36,7 @@ let buildSimpleRegexMatcherEx options regexes =
     let tokenSymbols = Array.init count (fun i -> gw.AddTokenSymbol(gw.GetOrAddString($"Token{i}"), TokenSymbolAttributes.Terminal))
     let rootNonterminal = gw.AddNonterminal(gw.GetOrAddString("S"), NonterminalAttributes.None, count)
     let productions = Array.init count (fun _ -> gw.AddProduction(1))
-    Array.iter (TokenSymbolHandle.op_Implicit >> gw.AddProductionMember) tokenSymbols
+    tokenSymbols |> Array.iter (fun x -> x |> SymbolHandle |> gw.AddProductionMember)
     do
         // We need the start state, the accepting state, and one state
         // for each token symbol to reduce the corresponding production.

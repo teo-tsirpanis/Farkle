@@ -22,5 +22,5 @@ public interface IGrammarProvider
     Grammar GetGrammar();
 
     /// <inheritdoc cref="Grammar.GetSymbolFromSpecialName"/>
-    EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false);
+    SymbolHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false);
 }

@@ -11,8 +11,8 @@ namespace Farkle.Grammars;
 /// </summary>
 /// <seealso cref="ProductionDefinition.Members"/>
 [DebuggerDisplay("Count = {Count}")]
-[DebuggerTypeProxy(typeof(FlatCollectionProxy<EntityHandle, ProductionMemberList>))]
-public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
+[DebuggerTypeProxy(typeof(FlatCollectionProxy<SymbolDefinition, ProductionMemberList>))]
+public readonly struct ProductionMemberList : IReadOnlyList<SymbolDefinition>
 {
     private readonly Grammar _grammar;
 
@@ -25,7 +25,7 @@ public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
     /// Gets the production member at the specified index.
     /// </summary>
     /// <param name="index">The index of the production member.</param>
-    public EntityHandle this[int index]
+    public SymbolDefinition this[int index]
     {
         get
         {
@@ -34,7 +34,8 @@ public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
                 ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(index));
             }
 
-            return _grammar.GrammarTables.GetProductionMemberMember(_grammar.GrammarFile, (uint)index + _offset);
+            var memberHandle = _grammar.GrammarTables.GetProductionMemberMember(_grammar.GrammarFile, (uint)index + _offset);
+            return new(_grammar, memberHandle);
         }
     }
 
@@ -50,13 +51,13 @@ public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
     /// </summary>
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<EntityHandle> IEnumerable<EntityHandle>.GetEnumerator() => GetEnumerator();
+    IEnumerator<SymbolDefinition> IEnumerable<SymbolDefinition>.GetEnumerator() => GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>
     /// Used to enumerate a <see cref="ProductionMemberList"/>.
     /// </summary>
-    public struct Enumerator : IEnumerator<EntityHandle>
+    public struct Enumerator : IEnumerator<SymbolDefinition>
     {
         private readonly ProductionMemberList _collection;
         private int _currentIndex = -1;
@@ -67,7 +68,7 @@ public readonly struct ProductionMemberList : IReadOnlyList<EntityHandle>
         }
 
         /// <inheritdoc/>
-        public EntityHandle Current
+        public SymbolDefinition Current
         {
             get
             {

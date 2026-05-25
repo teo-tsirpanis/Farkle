@@ -93,10 +93,10 @@ public readonly struct ProductionDefinition : IEquatable<ProductionDefinition>
 
         sb.Append(Head);
         sb.Append(" ::=");
-        foreach (EntityHandle member in Members)
+        foreach (SymbolDefinition member in Members)
         {
             sb.Append(' ');
-            sb.Append(_grammar.GetEntity(member));
+            sb.Append(member);
         }
 
         return sb.ToString();

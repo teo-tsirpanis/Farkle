@@ -74,7 +74,7 @@ let checkLALRStateTableEquivalence (productionMap: Dictionary<_, _>) (farkleGram
             Expect.hasLength actionsJoined goldState.Actions.Count "Some terminals do not have a matching LALR action"
             for aFarkle, aGold in actionsJoined do
                 checkActionEquivalence aFarkle aGold
-                
+
             Expect.hasLength farkleState.Gotos goldState.Gotos.Count "There are not the same number of LALR GOTO actions"
             let gotoJoined =
                 farkleState.Gotos.Join(
@@ -126,11 +126,10 @@ let recreateSyntaxFromGrammar (g: Grammar) =
         g.Nonterminals
         |> Seq.map (fun n -> n.Name |> nonterminalU)
         |> Array.ofSeq
-    let getSymbol (x: EntityHandle) =
-        if x.IsTokenSymbol then
-            terminals[TokenSymbolHandle.op_Explicit(x).Value]
-        else
-            nonterminals[NonterminalHandle.op_Explicit(x).Value]
+    let getSymbol x =
+        match x with
+        | SymbolTokenSymbol x -> terminals[x.Handle.Value]
+        | SymbolNonterminal x -> nonterminals[x.Handle.Value]
     g.Nonterminals
     |> Seq.iteri (fun idx nont ->
         nont.Productions

@@ -17,20 +17,20 @@ public readonly struct SymbolHandle : IEquatable<SymbolHandle>
     , IUnion
 #endif
 {
-    internal const int KindSize = 1;
-    internal const int ValueSize = 24;
-    internal const uint ValueMask = (1 << (ValueSize + KindSize)) - 1;
+    private const int KindSize = 1;
+    private const int ValueSize = 24;
+    private const uint ValueMask = (1 << (ValueSize + KindSize)) - 1;
 
-    internal readonly uint _codedIndex;
+    private readonly uint _codedIndex;
 
     internal uint TableIndex => _codedIndex >> KindSize;
 
-    internal bool IsTokenSymbol => (_codedIndex & 1) == 0;
+    private bool IsTokenSymbol => (_codedIndex & 1) == 0;
 
     /// <summary>
     /// The <see cref="TableKind"/> of this handle.
     /// </summary>
-    internal TableKind Kind => IsTokenSymbol ? TableKind.TokenSymbol : TableKind.Nonterminal;
+    private TableKind Kind => IsTokenSymbol ? TableKind.TokenSymbol : TableKind.Nonterminal;
 
     internal SymbolHandle(uint codedIndex)
     {
@@ -61,6 +61,8 @@ public readonly struct SymbolHandle : IEquatable<SymbolHandle>
 
     [ExcludeFromCodeCoverage]
     private string DebuggerDisplay() => HasValue ? $"{Kind} {TableIndex + 1}" : "<null>";
+
+    internal uint GetCodedIndex() => _codedIndex;
 
     /// <summary>
     /// Whether this <see cref="SymbolHandle"/> has a valid value.
@@ -125,6 +127,24 @@ public readonly struct SymbolHandle : IEquatable<SymbolHandle>
 
     /// <inheritdoc/>
     public override int GetHashCode() => _codedIndex.GetHashCode();
+
+    internal TokenSymbolHandle AsTokenSymbol()
+    {
+        if (!TryGetValue(out TokenSymbolHandle tokenSymbolHandle))
+        {
+            ThrowHelpers.ThrowInvalidCastException();
+        }
+        return tokenSymbolHandle;
+    }
+
+    internal NonterminalHandle AsNonterminal()
+    {
+        if (!TryGetValue(out NonterminalHandle nonterminalHandle))
+        {
+            ThrowHelpers.ThrowInvalidCastException();
+        }
+        return nonterminalHandle;
+    }
 
     /// <summary>
     /// Checks if two <see cref="SymbolHandle"/>s are pointing to the same table row.

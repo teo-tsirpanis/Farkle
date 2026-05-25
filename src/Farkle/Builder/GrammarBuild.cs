@@ -158,7 +158,7 @@ internal static class GrammarBuild
         // The keys must be obtained from the GrammarDefinition.GetSymbolIdentityObject method,
         // unless we know for sure that the symbol is not a literal, in which case we can directly
         // pass the ISymbolBase object.
-        var symbolMap = new Dictionary<object, EntityHandle>(
+        var symbolMap = new Dictionary<object, SymbolHandle>(
             grammarDefinition.Terminals.Count + grammarDefinition.Nonterminals.Count,
             grammarDefinition.SymbolIdentityObjectComparer);
 
@@ -224,7 +224,7 @@ internal static class GrammarBuild
                     LineGroup => null,
                     _ => throw new NotSupportedException(),
                 };
-                TokenSymbolHandle container = (TokenSymbolHandle)symbolMap[group];
+                TokenSymbolHandle container = symbolMap[group].AsTokenSymbol();
                 HandleGroup(group.Name, group.GroupStart, groupEndOrNewLine, group.Options, container);
             }
         }
@@ -249,7 +249,7 @@ internal static class GrammarBuild
             ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
-                EntityHandle memberHandle = symbolMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
+                SymbolHandle memberHandle = symbolMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
                 writer.AddProductionMember(memberHandle);
             }
             operatorSymbolMap?.Add(handle, production);
@@ -293,7 +293,7 @@ internal static class GrammarBuild
         }
 
         // Set grammar info.
-        NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
+        NonterminalHandle startSymbol = symbolMap[grammarDefinition.StartSymbol].AsNonterminal();
         writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, grammarDefinition.Attributes);
 
         // Build state machines if they are requested.
@@ -394,9 +394,9 @@ internal static class GrammarBuild
         // before.
         TokenSymbolHandle GetOrCreateGroupEndLiteral(string content)
         {
-            if (symbolMap.TryGetValue(content, out EntityHandle existingHandle))
+            if (symbolMap.TryGetValue(content, out SymbolHandle existingHandle))
             {
-                return (TokenSymbolHandle)existingHandle;
+                return existingHandle.AsTokenSymbol();
             }
             TokenSymbolHandle handle = writer.AddTokenSymbol(writer.GetOrAddString(content), TokenSymbolAttributes.None);
             dfaSymbols?.Add(handle, content, TokenSymbolKind.GroupEnd);

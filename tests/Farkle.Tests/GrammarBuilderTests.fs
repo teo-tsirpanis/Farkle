@@ -201,7 +201,7 @@ let tests = testList "Grammar builder tests" [
             grammar.SpecialNameDefinitions
             |> Seq.exactlyOne
         Expect.equal specialNameDef.Name "__MySpecialName" "The special name was not set correctly."
-        Expect.equal specialNameDef.Symbol (TokenSymbolHandle.op_Implicit terminal.Handle) "The special name was not set to the correct symbol."
+        Expect.equal specialNameDef.Symbol (SymbolDefinition terminal) "The special name was not set to the correct symbol."
         Expect.equal (grammar.GetTokenSymbolFromSpecialName "__MySpecialName") terminal.Handle "The terminal could not be retrieved from the special name."
     }
 

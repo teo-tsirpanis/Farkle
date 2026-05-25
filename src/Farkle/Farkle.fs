@@ -28,6 +28,20 @@ module internal Grammar =
     /// Converts a GOLD Parser grammar to a Farkle grammar.
     let inline ofGoldParserFile (path: string) = Grammar.ConvertFromGoldParser path
 
+/// Contains active patterns for types in the Farkle.Grammars namespace.
+/// This module is automatically opened.
+[<AutoOpen>]
+module internal ActivePatterns =
+
+    let inline (|SymbolTokenSymbol|SymbolNonterminal|) (x: SymbolDefinition) =
+        let mutable ts = Unchecked.defaultof<TokenSymbolDefinition>
+        let mutable nont = Unchecked.defaultof<NonterminalDefinition>
+        if x.TryGetValue &ts then
+            SymbolTokenSymbol ts
+        else
+            x.TryGetValue &nont |> ignore
+            SymbolNonterminal nont
+
 namespace Farkle.Grammars.StateMachines
 
 /// Contains active patterns for types in the Farkle.Grammars.StateMachines namespace.

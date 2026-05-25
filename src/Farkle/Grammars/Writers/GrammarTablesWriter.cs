@@ -56,19 +56,6 @@ internal struct GrammarTablesWriter
 
     public GrammarTablesWriter() { }
 
-    private static uint EncodeSymbolCodedIndex(EntityHandle handle)
-    {
-        if (handle.IsTokenSymbol)
-        {
-            return handle.TableIndex << 1 | 0;
-        }
-        else
-        {
-            Debug.Assert(handle.IsNonterminal);
-            return handle.TableIndex << 1 | 1;
-        }
-    }
-
     [MemberNotNull(nameof(_tokenSymbols))]
     private readonly void ValidateHandle(TokenSymbolHandle handle, string parameterName) =>
         ValidateHandle(handle.TableIndex, _tokenSymbols, parameterName);
@@ -240,25 +227,24 @@ internal struct GrammarTablesWriter
         return new((uint)productions.Count);
     }
 
-    public void AddProductionMember(EntityHandle member)
+    public void AddProductionMember(SymbolHandle member)
     {
         ValidateRowCount(_productionMembers, TableKind.ProductionMember);
-        if (member.IsTokenSymbol)
+        switch (member)
         {
-            var tokenSymbol = (TokenSymbolHandle)member;
-            ValidateHandle(tokenSymbol, nameof(member));
-            if ((_tokenSymbols[(int)tokenSymbol.TableIndex - 1].Flags & TokenSymbolAttributes.Terminal) == 0)
-            {
-                ThrowHelpers.ThrowArgumentException(nameof(member), "Token symbols must have the Terminal flag set.");
-            }
-        }
-        else if (member.IsNonterminal)
-        {
-            ValidateHandle((NonterminalHandle)member, nameof(member));
-        }
-        else
-        {
-            ThrowHelpers.ThrowArgumentException(nameof(member), "A production member must be a token symbol or nonterminal.");
+            case TokenSymbolHandle tokenSymbol:
+                ValidateHandle(tokenSymbol, nameof(member));
+                if ((_tokenSymbols[(int)tokenSymbol.TableIndex - 1].Flags & TokenSymbolAttributes.Terminal) == 0)
+                {
+                    ThrowHelpers.ThrowArgumentException(nameof(member), "Token symbols must have the Terminal flag set.");
+                }
+                break;
+            case NonterminalHandle nonterminal:
+                ValidateHandle(nonterminal, nameof(member));
+                break;
+            case null:
+                ThrowHelpers.ThrowArgumentException(nameof(member), "Symbol handle must have a value.");
+                break;
         }
 
         var productionMembers = _productionMembers;
@@ -282,20 +268,20 @@ internal struct GrammarTablesWriter
         (_stateMachines ??= new()).Add(new() { Kind = kind, Data = data });
     }
 
-    public void AddSpecialName(StringHandle name, EntityHandle symbol)
+    public void AddSpecialName(StringHandle name, SymbolHandle symbol)
     {
         ValidateRowCount(_specialNames, TableKind.SpecialName);
-        if (symbol.IsTokenSymbol)
+        switch (symbol)
         {
-            ValidateHandle((TokenSymbolHandle)symbol, nameof(symbol));
-        }
-        else if (symbol.IsNonterminal)
-        {
-            ValidateHandle((NonterminalHandle)symbol, nameof(symbol));
-        }
-        else
-        {
-            ThrowHelpers.ThrowArgumentException(nameof(symbol), "A special name must be assigned to a token symbol or nonterminal.");
+            case TokenSymbolHandle tokenSymbolHandle:
+                ValidateHandle(tokenSymbolHandle, nameof(symbol));
+                break;
+            case NonterminalHandle nonterminalHandle:
+                ValidateHandle(nonterminalHandle, nameof(symbol));
+                break;
+            case null:
+                ThrowHelpers.ThrowArgumentException(nameof(symbol), "Symbol handle must have a value.");
+                break;
         }
 
         if (!(_presentSpecialNames ??= new()).Add(name))
@@ -337,7 +323,7 @@ internal struct GrammarTablesWriter
         return (row.Head, row.FirstMember);
     }
 
-    public readonly EntityHandle GetProductionMember(int index)
+    public readonly SymbolHandle GetProductionMember(int index)
     {
         Debug.Assert(_productionMembers is not null);
         return _productionMembers[index].Member;
@@ -465,7 +451,7 @@ internal struct GrammarTablesWriter
         {
             foreach (var row in _productionMembers)
             {
-                writer.WriteVariableSize(EncodeSymbolCodedIndex(row.Member), symbolCodedIndexSize);
+                writer.WriteVariableSize(row.Member.GetCodedIndex(), symbolCodedIndexSize);
             }
         }
 
@@ -483,7 +469,7 @@ internal struct GrammarTablesWriter
             foreach (var row in _specialNames)
             {
                 WriteStringHandle(row.Name);
-                writer.WriteVariableSize(EncodeSymbolCodedIndex(row.Symbol), symbolCodedIndexSize);
+                writer.WriteVariableSize(row.Symbol.GetCodedIndex(), symbolCodedIndexSize);
             }
         }
 
@@ -546,7 +532,7 @@ internal struct GrammarTablesWriter
 
     private readonly struct ProductionMemberRow
     {
-        public required EntityHandle Member { get; init; }
+        public required SymbolHandle Member { get; init; }
     }
 
     private readonly struct StateMachineRow
@@ -558,6 +544,6 @@ internal struct GrammarTablesWriter
     private readonly struct SpecialNameRow
     {
         public required StringHandle Name { get; init; }
-        public required EntityHandle Symbol { get; init; }
+        public required SymbolHandle Symbol { get; init; }
     }
 }

@@ -40,7 +40,7 @@ internal sealed class FailingCharParser<T> : CharParser<T>
     {
         public Grammar GetGrammar() => throw new InvalidOperationException(error.ToString());
 
-        public EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false) =>
+        public SymbolHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false) =>
             throw new InvalidOperationException(error.ToString());
     }
 }

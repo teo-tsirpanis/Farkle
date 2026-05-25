@@ -124,17 +124,12 @@ internal readonly struct GrammarTables
     private uint ReadProductionMemberHandle(ReadOnlySpan<byte> grammarFile, int index) =>
         ReadTableIndex(grammarFile, index, ProductionMemberRowCount);
 
-    private EntityHandle ReadSymbolHandle(ReadOnlySpan<byte> grammarFile, int index)
+    private SymbolHandle ReadSymbolHandle(ReadOnlySpan<byte> grammarFile, int index)
     {
         byte indexSize = GetBinaryCodedIndexSize(TokenSymbolRowCount, NonterminalRowCount);
         uint codedIndex = grammarFile.ReadUIntVariableSize(index, indexSize);
 
-        // TableKind is byte-sized so the compiler optimizes away the array allocation on all frameworks.
-        ReadOnlySpan<TableKind> tableKinds = [TableKind.TokenSymbol, TableKind.Nonterminal];
-        TableKind kind = tableKinds[(int)codedIndex & 1];
-
-        uint indexValue = codedIndex >> 1;
-        return new(indexValue, kind);
+        return new(codedIndex);
     }
 
     private int CountTerminalsFast(ReadOnlySpan<byte> grammarFile)
@@ -433,7 +428,7 @@ internal readonly struct GrammarTables
     internal (uint Offset, int Count) GetProductionMemberBounds(ReadOnlySpan<byte> grammarFile, uint index) =>
         GetTableBounds(grammarFile, ProductionFirstMemberBase, ProductionRowCount, ProductionRowSize, ProductionMemberRowCount, index);
 
-    public EntityHandle GetProductionMemberMember(ReadOnlySpan<byte> grammarFile, uint index) =>
+    public SymbolHandle GetProductionMemberMember(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadSymbolHandle(grammarFile, GetTableCellOffset(ProductionMemberMemberBase, ProductionMemberRowCount, ProductionMemberRowSize, index));
 
     public ulong GetStateMachineKind(ReadOnlySpan<byte> grammarFile, uint index) =>
@@ -445,7 +440,7 @@ internal readonly struct GrammarTables
     public StringHandle GetSpecialNameName(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadStringHandle(grammarFile, GetTableCellOffset(SpecialNameNameBase, SpecialNameRowCount, SpecialNameRowSize, index));
 
-    public EntityHandle GetSpecialNameSymbol(ReadOnlySpan<byte> grammarFile, uint index) =>
+    public SymbolHandle GetSpecialNameSymbol(ReadOnlySpan<byte> grammarFile, uint index) =>
         ReadSymbolHandle(grammarFile, GetTableCellOffset(SpecialNameSymbolBase, SpecialNameRowCount, SpecialNameRowSize, index));
 
     public void ValidateContent(ReadOnlySpan<byte> grammarFile, in StringHeap stringHeap, in BlobHeap blobHeap)
@@ -553,16 +548,16 @@ internal readonly struct GrammarTables
 
         for (uint i = 1; i <= (uint)ProductionMemberRowCount; i++)
         {
-            EntityHandle member = GetProductionMemberMember(grammarFile, i);
+            SymbolHandle member = GetProductionMemberMember(grammarFile, i);
             Assert(member.HasValue);
-            if (member.IsTokenSymbol)
+            switch (member)
             {
-                Assert(IsTerminal((TokenSymbolHandle)member), "Token symbols in productions must have the Terminal flag set.");
-                ValidateHandle((TokenSymbolHandle)member);
-            }
-            else
-            {
-                ValidateHandle((NonterminalHandle)member);
+                case TokenSymbolHandle tokenSymbolHandle:
+                    ValidateHandle(tokenSymbolHandle);
+                    break;
+                case NonterminalHandle nonterminalHandle:
+                    ValidateHandle(nonterminalHandle);
+                    break;
             }
         }
 
@@ -574,15 +569,16 @@ internal readonly struct GrammarTables
         for (uint i = 1; i <= (uint)SpecialNameRowCount; i++)
         {
             _ = stringHeap.GetStringSection(grammarFile, GetSpecialNameName(grammarFile, i));
-            EntityHandle member = GetSpecialNameSymbol(grammarFile, i);
-            Assert(member.HasValue);
-            if (member.IsTokenSymbol)
+            SymbolHandle symbol = GetSpecialNameSymbol(grammarFile, i);
+            Assert(symbol.HasValue);
+            switch (symbol)
             {
-                ValidateHandle((TokenSymbolHandle)member);
-            }
-            else
-            {
-                ValidateHandle((NonterminalHandle)member);
+                case TokenSymbolHandle tokenSymbolHandle:
+                    ValidateHandle(tokenSymbolHandle);
+                    break;
+                case NonterminalHandle nonterminalHandle:
+                    ValidateHandle(nonterminalHandle);
+                    break;
             }
         }
 

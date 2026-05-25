@@ -23,7 +23,7 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
     }
 
     [ExcludeFromCodeCoverage]
-    private string DebuggerDisplay() => _grammar is null ? "<null>" : $"Name = {Name}; Symbol = {_grammar.GetEntity(Symbol)}";
+    private string DebuggerDisplay() => _grammar is null ? "<null>" : $"Name = {Name}; Symbol = {Symbol}";
 
     [StackTraceHidden]
     private void AssertHasValue()
@@ -50,12 +50,12 @@ public readonly struct SpecialNameDefinition : IEquatable<SpecialNameDefinition>
     /// <summary>
     /// A handle to the symbol associated with the <see cref="SpecialNameDefinition"/>.
     /// </summary>
-    public EntityHandle Symbol
+    public SymbolDefinition Symbol
     {
         get
         {
             AssertHasValue();
-            return _grammar.GrammarTables.GetSpecialNameSymbol(_grammar.GrammarFile, Index);
+            return new(_grammar, _grammar.GrammarTables.GetSpecialNameSymbol(_grammar.GrammarFile, Index));
         }
     }
 

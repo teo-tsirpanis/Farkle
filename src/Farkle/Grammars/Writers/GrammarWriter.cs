@@ -101,7 +101,7 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         return _tablesWriter.AddProduction(memberCount);
     }
 
-    public void AddProductionMember(EntityHandle member)
+    public void AddProductionMember(SymbolHandle member)
     {
         ValidateTableIndex(member.TableIndex, nameof(member));
         _tablesWriter.AddProductionMember(member);
@@ -145,7 +145,7 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         _tablesWriter.AddStateMachine(kind, data);
     }
 
-    public void AddSpecialName(StringHandle name, EntityHandle symbol)
+    public void AddSpecialName(StringHandle name, SymbolHandle symbol)
     {
         _stringHeapWriter.ValidateHandle(name);
         ValidateTableIndex(symbol.TableIndex, nameof(symbol));
@@ -241,6 +241,6 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
     (int SymbolIndex, bool IsTerminal) IGrammarSyntaxProvider.GetProductionMember(int index)
     {
         var member = _tablesWriter.GetProductionMember(index);
-        return ((int)(member.TableIndex - 1), member.IsTokenSymbol);
+        return ((int)(member.TableIndex - 1), member is TokenSymbolHandle);
     }
 }

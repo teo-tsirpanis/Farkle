@@ -352,33 +352,26 @@ public abstract partial class Grammar : IGrammarProvider
     }
 
     /// <summary>
-    /// Gets a boxed object representing the entity pointed to by the given <see cref="EntityHandle"/>.
+    /// Gets the <see cref="SymbolDefinition"/> pointed to by the given <see cref="SymbolHandle"/>.
     /// </summary>
-    /// <param name="handle">A handle to the entity.</param>
-    /// <remarks>
-    /// This method must not be called in performance-critical code.
-    /// </remarks>
-    internal object? GetEntity(EntityHandle handle)
+    /// <param name="handle">A handle to the symbol.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handle"/>'s
+    /// <see cref="SymbolHandle.HasValue"/> property is <see langword="false"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="handle"/>
+    /// points to a symbol that does not exist.</exception>
+    public SymbolDefinition GetSymbol(SymbolHandle handle)
     {
-        if (handle.IsTokenSymbol)
+        if (!handle.HasValue)
         {
-            return GetTokenSymbol((TokenSymbolHandle)handle);
-        }
-        if (handle.IsGroup)
-        {
-            return GetGroup((GroupHandle)handle);
-        }
-        if (handle.IsNonterminal)
-        {
-            return GetNonterminal((NonterminalHandle)handle);
-        }
-        if (handle.IsProduction)
-        {
-            return GetProduction((ProductionHandle)handle);
+            ThrowHelpers.ThrowArgumentNullException(nameof(handle));
         }
 
-        Debug.Assert(!handle.HasValue);
-        return null;
+        return handle switch
+        {
+            TokenSymbolHandle tokenSymbolHandle => GetTokenSymbol(tokenSymbolHandle),
+            NonterminalHandle nonterminalHandle => GetNonterminal(nonterminalHandle),
+            _ => default,// unreachable
+        };
     }
 
     /// <summary>
@@ -387,8 +380,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// <param name="specialName">The symbol's special name.</param>
     /// <param name="throwIfNotFound">Whether to throw an exception if the symbol was not found.
     /// Defaults to <see true="false"/>.</param>
-    /// <returns>An <see cref="EntityHandle"/> containing either a <see cref="TokenSymbolHandle"/>
-    /// or a <see cref="NonterminalHandle"/> pointing to the symbol with the specified special name,
+    /// <returns>A <see cref="SymbolHandle"/> pointing to the symbol with the specified special name,
     /// or pointing to nothing if the symbol was not found and <paramref name="throwIfNotFound"/>
     /// has a value of <see langword="false"/>.</returns>
     /// <remarks>
@@ -399,7 +391,7 @@ public abstract partial class Grammar : IGrammarProvider
     /// <exception cref="ArgumentNullException"><paramref name="specialName"/> is <see langword="null"/>.</exception>
     /// <exception cref="KeyNotFoundException">The symbol was not found and <paramref name="throwIfNotFound"/>
     /// had a value of <see langword="true"/>.</exception>
-    public EntityHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false)
+    public SymbolHandle GetSymbolFromSpecialName(string specialName, bool throwIfNotFound = false)
     {
         ArgumentNullException.ThrowIfNull(specialName);
 

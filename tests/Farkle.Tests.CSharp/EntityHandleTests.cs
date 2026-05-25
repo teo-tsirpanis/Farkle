@@ -5,6 +5,7 @@ using Farkle.Grammars;
 
 namespace Farkle.Tests.CSharp;
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Assertion", "NUnit2010:Use EqualConstraint for better assertion messages in case of failure", Justification = "We specifically want to test union matching to null.")]
 internal class EntityHandleTests
 {
     [Test]
@@ -15,7 +16,7 @@ internal class EntityHandleTests
         var productionHandle = new ProductionHandle(475);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(((EntityHandle)tokenSymbolHandle).IsTokenSymbol);
+            Assert.That(((SymbolHandle)tokenSymbolHandle) is TokenSymbolHandle);
             Assert.That(((EntityHandle)nonterminalHandle).IsNonterminal);
             Assert.That(((EntityHandle)productionHandle).IsProduction);
             Assert.That(((EntityHandle)tokenSymbolHandle).IsNonterminal, Is.False);
@@ -25,16 +26,18 @@ internal class EntityHandleTests
     }
 
     [Test]
-    public void TestSuccessfulCast()
+    public void TestMatching()
     {
-        var tokenSymbolHandle = new TokenSymbolHandle(137);
-        var nonterminalHandle = new NonterminalHandle(184);
-        var productionHandle = new ProductionHandle(475);
+        SymbolHandle tokenSymbolHandle = new TokenSymbolHandle(137);
+        SymbolHandle nonterminalHandle = new NonterminalHandle(184);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That((TokenSymbolHandle)(EntityHandle)tokenSymbolHandle, Is.EqualTo(tokenSymbolHandle));
-            Assert.That((NonterminalHandle)(EntityHandle)nonterminalHandle, Is.EqualTo(nonterminalHandle));
-            Assert.That((ProductionHandle)(EntityHandle)productionHandle, Is.EqualTo(productionHandle));
+            Assert.That(tokenSymbolHandle is TokenSymbolHandle);
+            Assert.That(tokenSymbolHandle is not NonterminalHandle);
+            Assert.That(tokenSymbolHandle is not null);
+            Assert.That(nonterminalHandle is NonterminalHandle);
+            Assert.That(nonterminalHandle is not TokenSymbolHandle);
+            Assert.That(nonterminalHandle is not null);
         }
     }
 
@@ -55,20 +58,17 @@ internal class EntityHandleTests
     [Test]
     public void TestNullCast()
     {
-        TokenSymbolHandle tokenSymbolHandle = default;
-        NonterminalHandle nonterminalHandle = default;
-        ProductionHandle productionHandle = default;
+        SymbolHandle defaultHandle = default;
+        SymbolHandle fromTokenSymbol = new((TokenSymbolHandle)default);
+        SymbolHandle fromNonterminal = new((NonterminalHandle)default);
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(() => tokenSymbolHandle.Value, Throws.InstanceOf<InvalidOperationException>());
-            Assert.That(() => nonterminalHandle.Value, Throws.InstanceOf<InvalidOperationException>());
-            Assert.That(() => productionHandle.Value, Throws.InstanceOf<InvalidOperationException>());
-            Assert.That((EntityHandle)tokenSymbolHandle, Is.EqualTo(default(EntityHandle)));
-            Assert.That((EntityHandle)nonterminalHandle, Is.EqualTo(default(EntityHandle)));
-            Assert.That((EntityHandle)productionHandle, Is.EqualTo(default(EntityHandle)));
-            Assert.That(((EntityHandle)tokenSymbolHandle).IsTokenSymbol, Is.False);
-            Assert.That(((EntityHandle)nonterminalHandle).IsNonterminal, Is.False);
-            Assert.That(((EntityHandle)productionHandle).IsProduction, Is.False);
+            Assert.That(defaultHandle.Value, Is.Null);
+            Assert.That(fromTokenSymbol.Value, Is.Null);
+            Assert.That(fromNonterminal.Value, Is.Null);
+            Assert.That(defaultHandle is null);
+            Assert.That(fromTokenSymbol is null);
+            Assert.That(fromNonterminal is null);
         }
     }
 }

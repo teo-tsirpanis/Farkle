@@ -4,10 +4,8 @@
 using Farkle.Buffers;
 using Farkle.Grammars;
 using Farkle.Grammars.Writers;
-#if NET
 using NUnit.Framework.Constraints;
 using System.Text;
-#endif
 
 namespace Farkle.Tests.CSharp;
 
@@ -108,9 +106,8 @@ internal class StringHeapTests
     }
 
     [Test]
-    public unsafe void TestHeapSizeReached([Values] bool reachExactly)
+    public void TestHeapSizeReached([Values] bool reachExactly)
     {
-#if NET
         StringHeapWriter builder = new();
         // Warning, this might crash the debugger.
         string hugeString = string.Create(0x0FFFFFFF, reachExactly, static (buffer, reachExactly) =>
@@ -130,8 +127,5 @@ internal class StringHeapTests
             Assert.That(Encoding.UTF8.GetByteCount(hugeString), stringLengthConstraint);
             Assert.That(() => builder.Add(hugeString), Throws.InstanceOf<OutOfMemoryException>());
         }
-#else
-        Assert.Ignore("Skipped on .NET Framework because of poor performance.");
-#endif
     }
 }

@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-#if NET6_0_OR_GREATER
 using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using Farkle.Collections;
@@ -74,4 +73,3 @@ internal static class MetadataUpdatableManager
         }
     }
 }
-#endif

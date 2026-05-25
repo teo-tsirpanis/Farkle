@@ -121,14 +121,11 @@ internal sealed class KnownMembers(IReadOnlyCollection<AssemblyReference> refere
 
     private static string[] SystemRuntimeLoader { get; } = ["System.Runtime.Loader"];
 
-    public TypeReference? MetadataUpdater => field ??=
-        TryGetType("System.Reflection.Metadata", "MetadataUpdater", SystemRuntimeLoader);
+    public TypeReference MetadataUpdater => field ??=
+        GetType("System.Reflection.Metadata", "MetadataUpdater", SystemRuntimeLoader);
 
-    private CheckedState MetadataUpdater_get_IsSupported_checkedState;
-
-    public MethodReference? MetadataUpdater_get_IsSupported => CheckIfExists(field ??=
-        MetadataUpdater?.MakeMethodReference(false, "get_IsSupported", module.TypeSystem.Boolean, []),
-        ref MetadataUpdater_get_IsSupported_checkedState);
+    public MethodReference MetadataUpdater_get_IsSupported => field ??=
+        MetadataUpdater.MakeMethodReference(false, "get_IsSupported", module.TypeSystem.Boolean, []);
 
     public IMetadataScope Farkle => field ??=
         FindAssembly(["Farkle"]);

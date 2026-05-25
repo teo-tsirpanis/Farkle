@@ -944,11 +944,8 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     /// <summary>
     /// Obsolete, use <see cref="AsProduction"/> instead.
     /// </summary>
-    [Obsolete(Obsoletions.AsIsApiMessage
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    ), EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete(Obsoletions.AsIsApiMessage, DiagnosticId = Obsoletions.AsIsApiCode, UrlFormat = Obsoletions.SharedUrlFormat)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public IProduction<T1> AsIs() => AsProduction();
 
     /// <inheritdoc/>

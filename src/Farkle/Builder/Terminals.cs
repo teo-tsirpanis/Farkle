@@ -4,13 +4,8 @@
 using Farkle.Parser;
 using System.Collections.Immutable;
 using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Text;
-#if NET7_0_OR_GREATER
 using System.Numerics;
-#else
-using System.Diagnostics;
-#endif
+using System.Text;
 
 namespace Farkle.Builder;
 
@@ -82,7 +77,6 @@ public static class Terminals
         return sb.ToString();
     }
 
-#if NET7_0_OR_GREATER
     private static T TransformInteger<T>(ref ParserState state, ReadOnlySpan<char> str) where T : INumberBase<T>
     {
         try
@@ -106,71 +100,7 @@ public static class Terminals
             throw new ParserApplicationException(ex.Message);
         }
     }
-#else
-    private static T TransformInteger<T>(ref ParserState state, ReadOnlySpan<char> str)
-    {
-        try
-        {
-            var characters = ToCharacters(str);
-            if (typeof(T) == typeof(int))
-            {
-                return (T)(object)int.Parse(characters, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            if (typeof(T) == typeof(uint))
-            {
-                return (T)(object)uint.Parse(characters, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            if (typeof(T) == typeof(long))
-            {
-                return (T)(object)long.Parse(characters, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            if (typeof(T) == typeof(ulong))
-            {
-                return (T)(object)ulong.Parse(characters, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            Debug.Fail("Unknown generic type");
-            return default;
-        }
-        catch (Exception ex)
-        {
-            throw new ParserApplicationException(ex.Message);
-        }
-    }
 
-    private static T TransformFloat<T>(ref ParserState state, ReadOnlySpan<char> str)
-    {
-        try
-        {
-            var characters = ToCharacters(str);
-            if (typeof(T) == typeof(float))
-            {
-                return (T)(object)float.Parse(characters, NumberStyles.Float, CultureInfo.InvariantCulture);
-            }
-            if (typeof(T) == typeof(double))
-            {
-                return (T)(object)double.Parse(characters, NumberStyles.Float, CultureInfo.InvariantCulture);
-            }
-            if (typeof(T) == typeof(decimal))
-            {
-                return (T)(object)decimal.Parse(characters, NumberStyles.Float, CultureInfo.InvariantCulture);
-            }
-            Debug.Fail("Unknown generic type");
-            return default;
-        }
-        catch (Exception ex)
-        {
-            throw new ParserApplicationException(ex.Message);
-        }
-    }
-#endif
-
-#if !NET7_0_OR_GREATER
-    // We use shared documentation for frameworks both with and without generic math.
-    // INumberBase<TSelf> and co. do not exist prior to .NET 7, but on these frameworks the
-    // link to this interface will not even be presented, because the public methods are not
-    // generic.
-#pragma warning disable CS1574 // XML comment has cref attribute that could not be resolved
-#endif
     /// <summary>
     /// Creates a terminal that matches an unsigned integer.
     /// </summary>
@@ -179,11 +109,7 @@ public static class Terminals
     /// <remarks>
     /// This terminal matches non-empty sequences of decimal digits. Leading zeroes are not prohibited.
     /// </remarks>
-#if NET7_0_OR_GREATER
     public static IGrammarSymbol<T> UnsignedInteger<T>(string name) where T : INumberBase<T> =>
-#else
-    private static IGrammarSymbol<T> UnsignedInteger<T>(string name) =>
-#endif
         Terminal.Create(name, s_unsignedIntRegex, TransformInteger<T>);
 
     /// <summary>
@@ -195,14 +121,9 @@ public static class Terminals
     /// This terminal matches non-empty sequences of decimal digits. Leading zeroes are not prohibited.
     /// A leading minus sign is also allowed.
     /// </remarks>
-#if NET7_0_OR_GREATER
     public static IGrammarSymbol<T> SignedInteger<T>(string name) where T : ISignedNumber<T> =>
-#else
-    private static IGrammarSymbol<T> SignedInteger<T>(string name) =>
-#endif
         Terminal.Create(name, s_intRegex, TransformInteger<T>);
 
-#if NET7_0_OR_GREATER
     /// <summary>
     /// Creates a terminal that matches an unsigned floating-point number.
     /// </summary>
@@ -221,7 +142,6 @@ public static class Terminals
     /// </remarks>
     public static IGrammarSymbol<T> UnsignedFloat<T>(string name) where T : IFloatingPoint<T> =>
         Terminal.Create(name, s_unsignedFloatRegex, TransformFloat<T>);
-#endif
 
     /// <summary>
     /// Creates a terminal that matches a signed floating-point number.
@@ -239,15 +159,8 @@ public static class Terminals
     /// conflicts. Making them mandatory avoids these conflicts and improves simplicity and predictability.
     /// </para>
     /// </remarks>
-#if NET7_0_OR_GREATER
     public static IGrammarSymbol<T> SignedFloat<T>(string name) where T : IFloatingPoint<T> =>
-#else
-    private static IGrammarSymbol<T> SignedFloat<T>(string name) =>
-#endif
         Terminal.Create(name, s_signedFloatRegex, TransformFloat<T>);
-#if !NET7_0_OR_GREATER
-#pragma warning restore CS1574 // XML comment has cref attribute that could not be resolved
-#endif
 
     /// <inheritdoc cref="SignedInteger{T}(string)"/>
     public static IGrammarSymbol<int> Int32(string name) => SignedInteger<int>(name);

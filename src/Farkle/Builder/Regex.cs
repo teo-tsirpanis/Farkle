@@ -764,11 +764,7 @@ public sealed class Regex
     /// </summary>
     /// <param name="other">The other regex.</param>
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
-    [Obsolete("Use the + operator instead."
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    )]
+    [Obsolete("Use the + operator instead.", DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat)]
     public Regex And(Regex other) => this + other;
 
     /// <summary>
@@ -777,11 +773,7 @@ public sealed class Regex
     /// </summary>
     /// <param name="other">The other regex.</param>
     [EditorBrowsable(EditorBrowsableState.Never), ExcludeFromCodeCoverage]
-    [Obsolete("Use the | operator instead."
-#if NET5_0_OR_GREATER
-        , DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat
-#endif
-    )]
+    [Obsolete("Use the | operator instead.", DiagnosticId = Obsoletions.RegexAndOrCode, UrlFormat = Obsoletions.SharedUrlFormat)]
     public Regex Or(Regex other) => this | other;
 
     [Flags]

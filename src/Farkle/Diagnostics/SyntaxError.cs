@@ -12,10 +12,7 @@ namespace Farkle.Diagnostics;
 /// <remarks>
 /// A syntax error occurs when the parser encounters a token in an unexpected place.
 /// </remarks>
-public sealed class SyntaxError : IFormattable
-#if NET8_0_OR_GREATER
-    , ISpanFormattable
-#endif
+public sealed class SyntaxError : IFormattable, ISpanFormattable
 {
     /// <summary>
     /// The name of the token found by the parser, or <see langword="null"/> if the end of the input was reached.
@@ -65,7 +62,6 @@ public sealed class SyntaxError : IFormattable
             new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbolDefinition.FormatName));
     }
 
-#if NET8_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
         string eofString = Resources.Parser_Eof;
@@ -74,7 +70,6 @@ public sealed class SyntaxError : IFormattable
             ActualTokenName ?? eofString,
             new DelimitedString(ExpectedTokenNames, ", ", eofString, TokenSymbolDefinition.FormatName));
     }
-#endif
 
     string IFormattable.ToString(string? format, IFormatProvider? formatProvider) => ToString(formatProvider);
 

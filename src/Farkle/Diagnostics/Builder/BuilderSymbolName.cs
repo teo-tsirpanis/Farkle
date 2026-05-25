@@ -11,10 +11,7 @@ namespace Farkle.Diagnostics.Builder;
 /// <param name="Name">The value of <see cref="Name"/>.</param>
 /// <param name="Kind">The value of <see cref="Kind"/>.</param>
 /// <param name="ShouldDisambiguate">The value of <see cref="ShouldDisambiguate"/>.</param>
-internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) : IFormattable
-#if NET6_0_OR_GREATER
-    , ISpanFormattable
-#endif
+internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) : IFormattable, ISpanFormattable
 {
     /// <summary>
     /// The token symbol's name.
@@ -33,7 +30,7 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
     /// </summary>
     public bool ShouldDisambiguate { get; } = ShouldDisambiguate;
 
-    private static string GetTokenSymbolKindName(TokenSymbolKind kind, IFormatProvider? formatProvider)
+    private static string GetTokenSymbolKindName(TokenSymbolKind kind)
     {
         return kind switch
         {
@@ -45,7 +42,6 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
         };
     }
 
-#if NET6_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
         bool shouldQuote = Kind is TokenSymbolKind.Terminal;
@@ -54,14 +50,13 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
             case (false, false):
                 return destination.TryWrite(provider, $"({Name})", out charsWritten);
             case (false, true):
-                return destination.TryWrite(provider, $"({Name}) ({GetTokenSymbolKindName(Kind, provider)})", out charsWritten);
+                return destination.TryWrite(provider, $"({Name}) ({GetTokenSymbolKindName(Kind)})", out charsWritten);
             case (true, false):
                 return destination.TryWrite(provider, $"({TokenSymbolDefinition.FormatName(Name)})", out charsWritten);
             case (true, true):
-                return destination.TryWrite(provider, $"({TokenSymbolDefinition.FormatName(Name)}) ({GetTokenSymbolKindName(Kind, provider)})", out charsWritten);
+                return destination.TryWrite(provider, $"({TokenSymbolDefinition.FormatName(Name)}) ({GetTokenSymbolKindName(Kind)})", out charsWritten);
         }
     }
-#endif
 
     string IFormattable.ToString(string? format, IFormatProvider? provider)
     {
@@ -71,11 +66,11 @@ internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bo
             case (false, false):
                 return $"({Name})";
             case (false, true):
-                return $"({Name}) ({GetTokenSymbolKindName(Kind, provider)})";
+                return $"({Name}) ({GetTokenSymbolKindName(Kind)})";
             case (true, false):
                 return TokenSymbolDefinition.FormatName(Name);
             case (true, true):
-                return $"{TokenSymbolDefinition.FormatName(Name)} ({GetTokenSymbolKindName(Kind, provider)})";
+                return $"{TokenSymbolDefinition.FormatName(Name)} ({GetTokenSymbolKindName(Kind)})";
         }
     }
 }

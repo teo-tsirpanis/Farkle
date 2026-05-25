@@ -19,17 +19,12 @@ internal static class LocalizedDiagnostic
             Resources.GetResourceString(resourceKey);
     }
 
-    internal sealed class Composite<TArg>(string resourceKey, TArg arg) : IFormattable
-#if NET8_0_OR_GREATER
-        , ISpanFormattable
-#endif
+    internal sealed class Composite<TArg>(string resourceKey, TArg arg) : IFormattable, ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
-#if NET8_0_OR_GREATER
         bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
             Resources.TryWrite(destination, provider, ResourceKey, out charsWritten, arg);
-#endif
 
         public string ToString(string? format, IFormatProvider? formatProvider) =>
             Resources.Format(formatProvider, ResourceKey, arg);
@@ -37,17 +32,12 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite<TArg1, TArg2>(string resourceKey, TArg1 arg1, TArg2 arg2) : IFormattable
-#if NET8_0_OR_GREATER
-        , ISpanFormattable
-#endif
+    internal sealed class Composite<TArg1, TArg2>(string resourceKey, TArg1 arg1, TArg2 arg2) : IFormattable, ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
-#if NET8_0_OR_GREATER
         bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
             Resources.TryWrite(destination, provider, ResourceKey, out charsWritten, arg1, arg2);
-#endif
 
         public string ToString(string? format, IFormatProvider? formatProvider) =>
             Resources.Format(formatProvider, ResourceKey, arg1, arg2);
@@ -55,17 +45,12 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite<TArg1, TArg2, TArg3>(string resourceKey, TArg1 arg1, TArg2 arg2, TArg3 arg3) : IFormattable
-#if NET8_0_OR_GREATER
-        , ISpanFormattable
-#endif
+    internal sealed class Composite<TArg1, TArg2, TArg3>(string resourceKey, TArg1 arg1, TArg2 arg2, TArg3 arg3) : IFormattable, ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
-#if NET8_0_OR_GREATER
         bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
             Resources.TryWrite(destination, provider, ResourceKey, out charsWritten, arg1, arg2, arg3);
-#endif
 
         public string ToString(string? format, IFormatProvider? formatProvider) =>
             Resources.Format(formatProvider, ResourceKey, arg1, arg2, arg3);
@@ -73,17 +58,12 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite(string resourceKey, object[] args) : IFormattable
-#if NET8_0_OR_GREATER
-        , ISpanFormattable
-#endif
+    internal sealed class Composite(string resourceKey, object[] args) : IFormattable, ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
-#if NET8_0_OR_GREATER
         bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
             Resources.TryWrite(destination, provider, ResourceKey, out charsWritten, args);
-#endif
 
         public string ToString(string? format, IFormatProvider? formatProvider) =>
             Resources.Format(formatProvider, ResourceKey, args);

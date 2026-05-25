@@ -3,9 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Resources;
-#if NET8_0_OR_GREATER
 using System.Runtime.CompilerServices;
-#endif
 using System.Text;
 
 namespace Farkle;
@@ -36,7 +34,6 @@ internal static class Resources
         return ResourceManager.GetString(resourceKey)!;
     }
 
-#if NET8_0_OR_GREATER
     // Relying on reference equality of strings is usually discouraged, but here
     // we rely on an implementation detail of ResourceManager that caches the strings
     // it returns, so that we can cache the parsed CompositeFormat instances.
@@ -100,19 +97,11 @@ internal static class Resources
         return destination.TryWrite(formatProvider, GetCompositeFormat(msg), out charsWritten, args);
     }
 
-#else
-    public static string GetCompositeFormat(string x) => x;
-#endif
-
     public static string Format<T>(IFormatProvider? formatProvider, string resourceKey, T arg)
     {
         if (UsingResourceKeys())
         {
-#if NET6_0_OR_GREATER
             return string.Create(formatProvider, $"{resourceKey}, {arg}");
-#else
-            return ((FormattableString)$"{resourceKey}, {arg}").ToString(formatProvider);
-#endif
         }
 
         string msg = ResourceManager.GetString(resourceKey)!;
@@ -123,11 +112,7 @@ internal static class Resources
     {
         if (UsingResourceKeys())
         {
-#if NET6_0_OR_GREATER
             return string.Create(formatProvider, $"{resourceKey}, {arg1}, {arg2}");
-#else
-            return ((FormattableString)$"{resourceKey}, {arg1}, {arg2}").ToString(formatProvider);
-#endif
         }
 
         string msg = ResourceManager.GetString(resourceKey)!;
@@ -138,11 +123,7 @@ internal static class Resources
     {
         if (UsingResourceKeys())
         {
-#if NET6_0_OR_GREATER
             return string.Create(formatProvider, $"{resourceKey}, {arg1}, {arg2}, {arg3}");
-#else
-            return ((FormattableString)$"{resourceKey}, {arg1}, {arg2}, {arg3}").ToString(formatProvider);
-#endif
         }
 
         string msg = ResourceManager.GetString(resourceKey)!;
@@ -158,11 +139,7 @@ internal static class Resources
             sb.Append(", ");
             for (int i = 0; i < args.Length; i++)
             {
-#if NET6_0_OR_GREATER
                 sb.Append(formatProvider, $"{args[i]}");
-#else
-                sb.AppendFormat(formatProvider, "{0}", args[i]);
-#endif
                 if (i < args.Length - 1)
                 {
                     sb.Append(", ");

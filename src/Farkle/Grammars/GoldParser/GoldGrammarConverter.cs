@@ -15,8 +15,8 @@ internal static class GoldGrammarConverter
     {
         GrammarWriter writer = new();
         Symbol[] symbols = grammar.Symbols;
-        GoldGrammar.Production[] productions = grammar.Productions;
-        GoldGrammar.Group[] groups = grammar.Groups;
+        Production[] productions = grammar.Productions;
+        Group[] groups = grammar.Groups;
 
         EntityHandle[] symbolMapping = new EntityHandle[symbols.Length];
         ProductionHandle[] productionMapping = new ProductionHandle[productions.Length];
@@ -43,7 +43,7 @@ internal static class GoldGrammarConverter
         // Then come the groups.
         for (int i = 0; i < groups.Length; i++)
         {
-            GoldGrammar.Group group = groups[i];
+            Group group = groups[i];
             SymbolKind endKind = symbols[group.EndIndex].Kind;
             bool isNewLine = symbols[group.EndIndex].Name.Equals("NewLine", StringComparison.OrdinalIgnoreCase);
             if (endKind != SymbolKind.GroupEnd && !(isNewLine && endKind is SymbolKind.Terminal or SymbolKind.Noise))
@@ -64,7 +64,7 @@ internal static class GoldGrammarConverter
             writer.AddGroup(name, container, flags, start, end, nestingCount);
         }
         // After all groups are added we add their nestings.
-        foreach (GoldGrammar.Group group in groups)
+        foreach (Group group in groups)
         {
             foreach (ushort nestedGroup in group.Nesting)
             {
@@ -87,7 +87,7 @@ internal static class GoldGrammarConverter
         }
         // Now that we know how many terminals we have, we count how many productions each has.
         int[] productionCounts = new int[nonterminalCount];
-        foreach (GoldGrammar.Production production in productions)
+        foreach (Production production in productions)
         {
             productionCounts[nonterminalMapping[production.HeadIndex]]++;
         }
@@ -107,18 +107,18 @@ internal static class GoldGrammarConverter
         // O(n²) so our only solution is to sort the productions by head. But first we have
         // to create a mapping between the productions' original and new positions.
         // Using a dictionary is easier; with an int[] we would need a custom sorting algorithm.
-        Dictionary<GoldGrammar.Production, int> productionOriginalPositions = new();
+        Dictionary<Production, int> productionOriginalPositions = new();
         for (int i = 0; i < productions.Length; i++)
         {
             productionOriginalPositions[productions[i]] = i;
         }
         // We could have sorted the original array but let's not; it's supposed to be immutable.
-        GoldGrammar.Production[] sortedProductions = productions.AsSpan().ToArray();
+        Production[] sortedProductions = productions.AsSpan().ToArray();
         // Because the nonterminals were added in increasing order of appearance,
         // sorting by their original head index is the same as sorting by their mapped index.
         // The algorithm does not need to be stable.
         Array.Sort(sortedProductions, (x1, x2) => x1.HeadIndex.CompareTo(x2.HeadIndex));
-        foreach (GoldGrammar.Production production in sortedProductions)
+        foreach (Production production in sortedProductions)
         {
             productionMapping[productionOriginalPositions[production]] =
                 writer.AddProduction(production.Members.Length);

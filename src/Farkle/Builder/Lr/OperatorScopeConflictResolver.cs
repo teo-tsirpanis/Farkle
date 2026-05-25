@@ -172,11 +172,8 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
             _ => x
         };
 
-#pragma warning disable CS8604 // Possible null reference argument.
-        // In .NET Standard 2.1 Equals' parameters are not marked as nullable.
         public new bool Equals(object? x, object? y) =>
             _comparer.Equals(GetBuilderIdentityObject(x), GetBuilderIdentityObject(y));
-#pragma warning restore CS8604 // Possible null reference argument.
 
         public int GetHashCode(object obj) =>
             _comparer.GetHashCode(GetBuilderIdentityObject(obj));

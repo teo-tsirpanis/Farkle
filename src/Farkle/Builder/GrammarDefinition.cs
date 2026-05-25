@@ -12,7 +12,7 @@ namespace Farkle.Builder;
 /// and productions.
 /// </summary>
 /// <remarks>
-/// This class can be used to build a <see cref="Grammars.Grammar"/> or an
+/// This class can be used to build a <see cref="Grammar"/> or an
 /// <see cref="Parser.Semantics.ISemanticProvider{TChar, T}"/>.
 /// </remarks>
 internal sealed class GrammarDefinition

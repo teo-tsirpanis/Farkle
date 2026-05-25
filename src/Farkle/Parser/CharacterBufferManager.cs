@@ -87,14 +87,6 @@ internal struct CharacterBufferManager<TChar>(int initialBufferSize)
         return _buffer.AsMemory(_usedCharacterEnd);
     }
 
-#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
-    public ArraySegment<TChar> GetArraySegment(int sizeHint)
-    {
-        EnsureWriteBufferSize(sizeHint);
-        return new ArraySegment<TChar>(_buffer, _usedCharacterEnd, _buffer.Length - _usedCharacterEnd);
-    }
-#endif
-
     public void Reset()
     {
         if (_buffer is not [])

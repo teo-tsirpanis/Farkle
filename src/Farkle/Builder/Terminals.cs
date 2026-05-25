@@ -39,15 +39,6 @@ public static class Terminals
 
     private static readonly Regex s_signedFloatRegex = s_optionalMinus + s_unsignedFloatRegex;
 
-    // Helper method that returns either a string or a ReadOnlySpan<char> depending on the target framework.
-    // This method is intended to be used for the framework's parsing methods.
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    internal static ReadOnlySpan<char> ToCharacters(ReadOnlySpan<char> chars) => chars;
-#else
-    internal static string ToCharacters(ReadOnlySpan<char> chars) => chars.ToString();
-#endif
-
     private static string TransformString(ref ParserState state, ReadOnlySpan<char> str)
     {
         str = str[1..^1];
@@ -79,7 +70,7 @@ public static class Terminals
                         'n' => '\n',
                         'r' => '\r',
                         't' => '\t',
-                        'u' => (char)ushort.Parse(ToCharacters(str.Slice(backslashIdx + 2, 4)), NumberStyles.HexNumber),
+                        'u' => (char)ushort.Parse(str.Slice(backslashIdx + 2, 4), NumberStyles.HexNumber),
                         'v' => '\v',
                         _ => charAtBackslash
                     };

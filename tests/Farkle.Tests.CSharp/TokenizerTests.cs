@@ -24,10 +24,8 @@ namespace Farkle.Tests.CSharp
             var tokenizer = Tokenizer.Create<char>(grammar);
             using (Assert.EnterMultipleScope())
             {
-#pragma warning disable CS0618 // Type or member is obsolete
-                var stateBox = new ParserStateBox();
-#pragma warning restore CS0618 // Type or member is obsolete
-                ParserInputReader<char> reader = new(stateBox, text.AsSpan());
+                var state = new ParserState();
+                ParserInputReader<char> reader = new(ref state, text.AsSpan());
 
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess);
@@ -51,10 +49,8 @@ namespace Farkle.Tests.CSharp
         {
             var grammar = TestUtilities.LoadGrammarFromResource("JSON.grammar.dat");
             var tokenizer = Tokenizer.Create<char>(grammar);
-#pragma warning disable CS0618 // Type or member is obsolete
-            var stateBox = new ParserStateBox();
-#pragma warning restore CS0618 // Type or member is obsolete
-            ParserInputReader<char> reader = new(stateBox, text.AsSpan(), isFinal: false);
+            var state = new ParserState();
+            ParserInputReader<char> reader = new(ref state, text.AsSpan(), isFinal: false);
             Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out _), Is.EqualTo(shouldFindToken));
         }
 
@@ -72,10 +68,8 @@ namespace Farkle.Tests.CSharp
             var tokenizer = Tokenizer.Create<char>(grammar);
             using (Assert.EnterMultipleScope())
             {
-#pragma warning disable CS0618 // Type or member is obsolete
-                var stateBox = new ParserStateBox();
-#pragma warning restore CS0618 // Type or member is obsolete
-                ParserInputReader<char> reader = new(stateBox, text.AsSpan());
+                var state = new ParserState();
+                ParserInputReader<char> reader = new(ref state, text.AsSpan());
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess, Is.False);
             }

@@ -4,10 +4,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
 using System.Runtime.CompilerServices;
-#endif
 
 namespace Farkle.Collections;
 
@@ -24,13 +21,7 @@ internal ref struct ValueStack<T>
     private const int InitialCapacity = 4;
 
     private static bool ShouldResetItems =>
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         RuntimeHelpers.IsReferenceOrContainsReferences<T>();
-#else
-        // On .NET Standard 2.0 it might return false positives but that's fine.
-        // We will use this value only for optimizations.
-        !typeof(T).IsPrimitive;
-#endif
 
     public ValueStack(int initialCapacity)
     {

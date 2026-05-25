@@ -17,13 +17,8 @@ public static class ParserExtensions
 {
     private static ParserResult<T> ParseCore<TChar, T>(this IParser<TChar, T> parser, ReadOnlySpan<TChar> s)
     {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         ParserState state = new();
         ParserInputReader<TChar> inputReader = new(ref state, s, true);
-#else
-        ParserStateBox stateBox = new();
-        ParserInputReader<TChar> inputReader = new(stateBox, s, true);
-#endif
         ParserCompletionState<T> completionState = new();
         parser.Run(ref inputReader, ref completionState);
         return completionState.Result;
@@ -33,12 +28,7 @@ public static class ParserExtensions
     {
         while (!context.IsCompleted)
         {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             int read = reader.Read(context.GetSpan());
-#else
-            ArraySegment<char> segment = context.GetArraySegment();
-            int read = reader.Read(segment.Array, segment.Offset, segment.Count);
-#endif
             if (read == 0)
             {
                 context.CompleteInput();
@@ -53,14 +43,7 @@ public static class ParserExtensions
     {
         while (!context.IsCompleted)
         {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
             int read = await reader.ReadAsync(context.GetMemory(), cancellationToken);
-#else
-            ArraySegment<char> segment = context.GetArraySegment();
-            int read = await (cancellationToken.IsCancellationRequested ?
-                Task.FromCanceled<int>(cancellationToken) :
-                reader.ReadAsync(segment.Array, segment.Offset, segment.Count));
-#endif
             if (read == 0)
             {
                 context.CompleteInput();

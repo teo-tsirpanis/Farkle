@@ -12,11 +12,7 @@ open Farkle.Builder
 
 let toDecimal (x: ReadOnlySpan<char>) =
     Decimal.Parse(
-    #if NETCOREAPP
         x,
-    #else
-        x.ToString(),
-    #endif
         NumberStyles.Float, CultureInfo.InvariantCulture)
         |> JsonValue.Create
         :> JsonNode

@@ -262,6 +262,8 @@ internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResu
 
     public override bool TryGetNextToken(ref ParserInputReader<TChar> input, ITokenSemanticProvider<TChar> semanticProvider, out TokenizerResult result)
     {
+        ArgumentNullException.ThrowIfNull(semanticProvider);
+
         GrammarTablesHotData hotData = new(_grammar);
         ref ParserState state = ref input.State;
         while (true)

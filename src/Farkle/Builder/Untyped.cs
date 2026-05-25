@@ -34,8 +34,6 @@ public sealed class Nonterminal : INonterminal
     /// <inheritdoc/>
     public string Name { get; }
 
-    ISymbolBase IGrammarBuilder.Symbol => this;
-
     internal Nonterminal(string name, ImmutableArray<IProduction> productions = default)
     {
         Name = name;

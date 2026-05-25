@@ -113,8 +113,6 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
     /// <inheritdoc/>
     public string Name => _innerNonterminal.Name;
 
-    ISymbolBase IGrammarBuilder.Symbol => this;
-
     internal Nonterminal(string name, ImmutableArray<IProduction> productions = default) =>
         _innerNonterminal = new(name, productions);
 

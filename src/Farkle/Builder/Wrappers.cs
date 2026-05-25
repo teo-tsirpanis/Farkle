@@ -9,8 +9,6 @@ internal class GrammarBuilderWrapper(in GrammarGlobalOptions options, IGrammarSy
 
     public IGrammarSymbol Symbol { get; } = symbol;
 
-    ISymbolBase IGrammarBuilder.Symbol => Symbol.Symbol;
-
     public IGrammarBuilder WithOptions(in GrammarGlobalOptions options) => new GrammarBuilderWrapper(options, Symbol);
 }
 

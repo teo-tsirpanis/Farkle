@@ -1,7 +1,6 @@
-// Copyright (c) 2021 Theodore Tsirpanis
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
 
 using Farkle.Grammars;
 using Farkle.Grammars.StateMachines;

@@ -18,14 +18,8 @@ namespace Farkle.Samples.CSharp
     {
         private static JsonValue ToDecimal(ReadOnlySpan<char> data)
         {
-            var data2 =
-#if NETCOREAPP
-                data;
-#else
-                data.ToString();
-#endif
             var num =
-                decimal.Parse(data2, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
+                decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
             return JsonValue.Create(num);
         }
 

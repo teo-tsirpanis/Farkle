@@ -186,7 +186,6 @@ public abstract partial class Grammar : IGrammarProvider
     {
         ArgumentNullException.ThrowIfNull(path);
         byte[] data;
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
         // If the file is very big, read only a part of it to make
         // sure it has a valid header, before reading the entire file.
         using (Stream file = File.OpenRead(path))
@@ -202,9 +201,6 @@ public abstract partial class Grammar : IGrammarProvider
             data = new byte[file.Length];
             file.ReadExactly(data);
         }
-#else
-        data = File.ReadAllBytes(path);
-#endif
         return Load(ImmutableCollectionsMarshal.AsImmutableArray(data));
     }
 

@@ -30,7 +30,7 @@ internal static class RegexGrammar
     {
         try
         {
-            return int.Parse(Terminals.ToCharacters(span));
+            return int.Parse(span);
         }
         catch (Exception ex)
         {

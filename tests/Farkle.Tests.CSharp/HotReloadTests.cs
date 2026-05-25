@@ -125,25 +125,15 @@ internal class HotReloadTests
         mdUpdatableParser.ClearCache();
         var context2 = ParserStateContext.Create(mdUpdatableParser);
 
-        WriteSpan(context1, "aaa");
+        context1.Write("aaa");
         context1.CompleteInput();
-        WriteSpan(context2, "bbb");
+        context2.Write("bbb");
         context2.CompleteInput();
 
         using (Assert.EnterMultipleScope())
         {
             Assert.That(context1.Result, TestUtilities.IsParserSuccess);
             Assert.That(context2.Result, TestUtilities.IsParserSuccess);
-        }
-
-        static void WriteSpan(IBufferWriter<char> bufferWriter, string str)
-        {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-            bufferWriter.Write(str);
-#else
-            str.AsSpan().CopyTo(bufferWriter.GetSpan(str.Length));
-            bufferWriter.Advance(str.Length);
-#endif
         }
     }
 }

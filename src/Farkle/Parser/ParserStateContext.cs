@@ -30,7 +30,7 @@ namespace Farkle.Parser;
 /// </remarks>
 /// <seealso cref="ParserStateContext{TChar, T}"/>
 /// <seealso cref="ParserStateContext.Create"/>
-public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter<TChar>
+public abstract class ParserStateContext<TChar> : IBufferWriter<TChar>
 {
     private ParserState _state;
     private CharacterBufferManager<TChar> _bufferManager;
@@ -42,7 +42,7 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
     }
 
     private protected ParserInputReader<TChar> GetInputReader() =>
-        new(this, _bufferManager.UsedCharacters, _bufferManager.IsInputCompleted);
+        new(ref _state, _bufferManager.UsedCharacters, _bufferManager.IsInputCompleted);
 
     private protected void UpdateBufferState(long totalCharactersConsumed, bool isCompleted) =>
         _bufferManager.UpdateStateFromParser(totalCharactersConsumed, isCompleted);
@@ -82,10 +82,6 @@ public abstract class ParserStateContext<TChar> : IParserStateBox, IBufferWriter
 
     /// <inheritdoc/>
     public Span<TChar> GetSpan(int sizeHint = 0) => _bufferManager.GetSpan(sizeHint);
-
-#if !(NETCOREAPP || NETSTANDARD2_1_OR_GREATER)
-    internal ArraySegment<TChar> GetArraySegment(int sizeHint = 0) => _bufferManager.GetArraySegment(sizeHint);
-#endif
 
     /// <inheritdoc/>
     public void Advance(int count)

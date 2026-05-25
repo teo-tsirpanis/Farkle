@@ -25,10 +25,8 @@ public ref struct ParserInputReader<TChar>
 {
 #if NET7_0_OR_GREATER
     private readonly ref ParserState _state;
-#elif NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    private readonly Span<ParserState> _state;
 #else
-    private readonly IParserStateBox _stateBox;
+    private readonly Span<ParserState> _state;
 #endif
 
     /// <summary>
@@ -37,10 +35,8 @@ public ref struct ParserInputReader<TChar>
     public readonly ref ParserState State =>
 #if NET7_0_OR_GREATER
         ref _state;
-#elif NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        ref MemoryMarshal.GetReference(_state);
 #else
-        ref _stateBox.State;
+        ref MemoryMarshal.GetReference(_state);
 #endif
 
     /// <summary>
@@ -60,7 +56,6 @@ public ref struct ParserInputReader<TChar>
     /// </summary>
     public readonly bool IsEndOfInput => RemainingCharacters.IsEmpty && IsFinalBlock;
 
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
     /// <summary>
     /// Creates a <see cref="ParserInputReader{TChar}"/>.
     /// </summary>
@@ -83,33 +78,6 @@ public ref struct ParserInputReader<TChar>
 #endif
         RemainingCharacters = characters;
         IsFinalBlock = isFinal;
-    }
-#endif
-
-    /// <summary>
-    /// Creates a <see cref="ParserInputReader{TChar}"/>.
-    /// </summary>
-    /// <param name="stateBox">An <see cref="IParserStateBox"/> containing a reference to the
-    /// reader's <see cref="ParserState"/>.</param>
-    /// <param name="characters">The value that will be assigned to <see cref="RemainingCharacters"/>.</param>
-    /// <param name="isFinal">The value that will be assigned to <see cref="IsFinalBlock"/>.</param>
-    /// <remarks>
-    /// Callers should not assume that the <paramref name="stateBox"/> instance will be
-    /// kept alive by the garbage collector on all frameworks.
-    /// </remarks>
-    // No reason to make it public, if we won't support .NET Standard 2.0.
-    // public
-    internal
-        ParserInputReader(IParserStateBox stateBox, ReadOnlySpan<TChar> characters, bool isFinal = true)
-    {
-        ArgumentNullException.ThrowIfNull(stateBox);
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        this = new(ref stateBox.State, characters, isFinal);
-#else
-        _stateBox = stateBox;
-        RemainingCharacters = characters;
-        IsFinalBlock = isFinal;
-#endif
     }
 
     /// <summary>

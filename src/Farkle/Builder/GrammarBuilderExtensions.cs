@@ -53,14 +53,8 @@ public static class GrammarBuilderExtensions
             : new GrammarBuilderWrapper<T>(in options, (IGrammarSymbol<T>)builder);
     }
 
-    internal static IGrammarSymbol Unwrap(this IGrammarBuilder builder)
-    {
-        Debug.Assert(builder is IGrammarSymbol or GrammarBuilderWrapper);
-        return builder is IGrammarSymbol symbol ? symbol : ((GrammarBuilderWrapper)builder).Symbol;
-    }
-
     internal static string GetGrammarName(this IGrammarBuilder builder) =>
-        builder.GetOptions().GrammarName ?? builder.Unwrap().Name;
+        builder.GetOptions().GrammarName ?? builder.Symbol.Name;
 
     /// <summary>
     /// Changes the type of <see cref="IGrammarBuilder"/> to a generic <see cref="IGrammarBuilder{T}"/>
@@ -77,7 +71,7 @@ public static class GrammarBuilderExtensions
         {
             return b;
         }
-        return new GrammarBuilderWrapper<object>(in builder.GetOptions(), builder.Unwrap());
+        return new GrammarBuilderWrapper<object>(in builder.GetOptions(), builder.Symbol);
     }
 
     /// <summary>

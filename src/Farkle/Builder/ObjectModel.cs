@@ -23,11 +23,7 @@ namespace Farkle.Builder;
 /// <seealso cref="GrammarBuilderExtensions"/>
 public interface IGrammarBuilder
 {
-    // TODO-NS2.0: Change this to return IGrammarSymbol, and add a property to IGrammarSymbol to
-    // return ISymbolBase. We could do it now, but it will introduce lots of duplication because
-    // we would have to add two properties for each class. Better do it when we target exclusively
-    // frameworks that support DIMs.
-    internal ISymbolBase Symbol { get; }
+    internal IGrammarSymbol Symbol { get; }
 }
 
 /// <summary>
@@ -70,6 +66,10 @@ public interface IGrammarSymbol : IGrammarBuilder
     /// symbols with the same name.
     /// </remarks>
     string Name { get; }
+
+    IGrammarSymbol IGrammarBuilder.Symbol => this;
+
+    internal new ISymbolBase Symbol { get; }
 }
 
 /// <summary>
@@ -96,7 +96,10 @@ public interface IGrammarSymbol<out T> : IGrammarBuilder<T>, IGrammarSymbol;
 /// Marker interface for the types of concrete symbols in a grammar to be built,
 /// as opposed to wrapper classes that change configuration options.
 /// </summary>
-internal interface ISymbolBase : IGrammarSymbol;
+internal interface ISymbolBase : IGrammarSymbol
+{
+    ISymbolBase IGrammarSymbol.Symbol => this;
+}
 
 // We can't call it `Terminal`, because it collides with the public static class.
 internal class TerminalBase(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : ISymbolBase
@@ -108,8 +111,6 @@ internal class TerminalBase(string name, Regex regex, Transformer<char, object?>
     public Transformer<char, object?> Transformer { get; } = transformer;
 
     public TerminalOptions Options { get; } = options;
-
-    ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
 internal sealed class VirtualTerminal(string name, TerminalOptions options) : ISymbolBase
@@ -117,8 +118,6 @@ internal sealed class VirtualTerminal(string name, TerminalOptions options) : IS
     public string Name { get; } = name;
 
     public TerminalOptions Options { get; } = options;
-
-    ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
 internal sealed class Literal(string value) : ISymbolBase
@@ -126,8 +125,6 @@ internal sealed class Literal(string value) : ISymbolBase
     public string Name => Value;
 
     public string Value { get; } = value;
-
-    ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
 internal sealed class NewLine : ISymbolBase
@@ -135,8 +132,6 @@ internal sealed class NewLine : ISymbolBase
     public static NewLine Instance { get; } = new();
 
     public string Name => nameof(NewLine);
-
-    ISymbolBase IGrammarBuilder.Symbol => this;
 
     private NewLine() { }
 }
@@ -151,8 +146,6 @@ internal abstract class GroupBase(string name, string groupStart, Transformer<ch
     public Transformer<char, object?> Transformer { get; } = transformer;
 
     public GroupOptions Options { get; } = options;
-
-    ISymbolBase IGrammarBuilder.Symbol => this;
 }
 
 internal class LineGroup(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : GroupBase(name, groupStart, transformer, options);

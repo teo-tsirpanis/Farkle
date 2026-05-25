@@ -9,10 +9,7 @@ namespace Farkle;
 /// <summary>
 /// Represents the position of a character in text.
 /// </summary>
-public readonly struct TextPosition : IEquatable<TextPosition>
-#if NET6_0_OR_GREATER
-    , ISpanFormattable
-#endif
+public readonly struct TextPosition : IEquatable<TextPosition>, ISpanFormattable
 {
     private readonly int _line, _column;
 
@@ -137,19 +134,13 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     internal TextPosition NextLine() => new(_line + 1, 0);
 
     private string ToString(IFormatProvider? formatProvider) =>
-#if NET6_0_OR_GREATER
         string.Create(formatProvider, stackalloc char[32], $"({Line}, {Column})");
-#else
-        ((FormattableString)$"({Line}, {Column})").ToString(formatProvider);
-#endif
 
-#if NET6_0_OR_GREATER
     string IFormattable.ToString(string? format, IFormatProvider? formatProvider) =>
         ToString(formatProvider);
 
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
         destination.TryWrite(provider, $"({Line}, {Column})", out charsWritten);
-#endif
 
     /// <summary>
     /// Checks two <see cref="TextPosition"/>s for equality.

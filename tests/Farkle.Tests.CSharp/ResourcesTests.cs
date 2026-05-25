@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Globalization;
-#if NET8_0_OR_GREATER
 using System.Text;
-#endif
 
 namespace Farkle.Tests.CSharp;
 
@@ -32,8 +30,6 @@ internal class ResourcesTests
         }
     }
 
-// CompositeFormat was introduced in .NET 8.
-#if NET8_0_OR_GREATER
     [TestCase(null)]
     [TestCase("el-GR")]
     public void TestAllStringResourcesAreValidFormatStrings(string? cultureOrInvariant)
@@ -58,5 +54,4 @@ internal class ResourcesTests
             }
         }
     }
-#endif
 }

@@ -14,10 +14,7 @@ namespace Farkle.Diagnostics.Builder;
 /// </summary>
 // Unlike earlier versions of Farkle, we will not include the
 // reason for the conflict. This can be retrieved by logging.
-public sealed class LrConflict : IFormattable
-#if NET8_0_OR_GREATER
-    , ISpanFormattable
-#endif
+public sealed class LrConflict : IFormattable, ISpanFormattable
 {
     private readonly int _shiftState;
 
@@ -276,11 +273,9 @@ public sealed class LrConflict : IFormattable
         };
     }
 
-#if NET8_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         => Resources.TryWrite(destination, provider, nameof(Resources.Builder_ConflictDescription), out charsWritten,
             GetConflictDescription(), GetTerminalNameLocalized(provider), StateIndex);
-#endif
 
     private string ToString(IFormatProvider? formatProvider) =>
         Resources.Format(formatProvider, nameof(Resources.Builder_ConflictDescription),

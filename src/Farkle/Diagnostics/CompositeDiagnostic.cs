@@ -30,11 +30,7 @@ internal sealed class CompositeDiagnostic<T>(ImmutableArray<T> diagnostics) : IR
         var sb = new StringBuilder();
         foreach (T diagnostic in Diagnostics)
         {
-#if NET6_0_OR_GREATER
             sb.AppendLine(formatProvider, $"{diagnostic}");
-#else
-            sb.AppendFormat(formatProvider, "{0}", diagnostic).AppendLine();
-#endif
         }
         return sb.ToString();
     }

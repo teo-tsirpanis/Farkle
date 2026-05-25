@@ -18,10 +18,7 @@ namespace Farkle.Diagnostics.Builder;
 /// same name appears in symbols of different kind.
 /// </remarks>
 /// <seealso href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/docs/diagnostics/FARKLE0002.md"/>
-public sealed class IndistinguishableSymbolsError : IFormattable
-#if NET8_0_OR_GREATER
-    , ISpanFormattable
-#endif
+public sealed class IndistinguishableSymbolsError : IFormattable, ISpanFormattable
 {
     private ImmutableArray<(TokenSymbolKind, bool ShouldDisambiguate)> SymbolDiagnosticInfo { get; }
 
@@ -46,23 +43,17 @@ public sealed class IndistinguishableSymbolsError : IFormattable
 
     string IFormattable.ToString(string? format, IFormatProvider? provider) => ToString(provider);
 
-#if NET8_0_OR_GREATER
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
         Resources.TryWrite(destination, provider, nameof(Resources.Builder_IndistinguishableSymbols), out charsWritten, new DelimitedSymbolNames(this));
-#endif
 
     /// <inheritdoc/>
     public override string ToString() => ToString(null);
 
     [ExcludeFromCodeCoverage(Justification = "Diagnostics-only code")]
-    private readonly struct DelimitedSymbolNames(IndistinguishableSymbolsError error) : IFormattable
-#if NET6_0_OR_GREATER
-        , ISpanFormattable
-#endif
+    private readonly struct DelimitedSymbolNames(IndistinguishableSymbolsError error) : IFormattable, ISpanFormattable
     {
         public IndistinguishableSymbolsError Error { get; } = error;
 
-#if NET6_0_OR_GREATER
         bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         {
             // The counts don't matter much with this handler anyway.
@@ -92,7 +83,6 @@ public sealed class IndistinguishableSymbolsError : IFormattable
             }
             return destination.TryWrite(provider, ref sb, out charsWritten);
         }
-#endif
 
         string IFormattable.ToString(string? format, IFormatProvider? provider)
         {
@@ -112,11 +102,7 @@ public sealed class IndistinguishableSymbolsError : IFormattable
                 }
                 string name = names.Current;
                 (TokenSymbolKind kind, bool shouldDisambiguate) = info.Current;
-#if NET6_0_OR_GREATER
                 sb.Append(provider, $"{new BuilderSymbolName(name, kind, shouldDisambiguate)}");
-#else
-                sb.Append(((FormattableString)$"{new BuilderSymbolName(name, kind, shouldDisambiguate)}").ToString(provider));
-#endif
             }
             return sb.ToString();
         }

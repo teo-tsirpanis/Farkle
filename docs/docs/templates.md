@@ -3,7 +3,7 @@
 Farkle comes with a templating system which further helps developers work with the grammars they create. This system is a more powerful edition of both GOLD Parser's ["Create Webpage"][gold-webpage] and ["Create Skeleton Program"][gold-skeleton] tools. In this guide, we will first see how to create an HTML page describing our grammar, and next we will see how to create our own templates. So, are you ready? Let's do this!
 
 > [!IMPORTANT]
-> The precompiler is not available in early preview versions of Farkle 7.0. Some of the features listed here are not available yet.
+> The CLI tool does not support grammars in precompiled assemblies in early preview versions of Farkle 7.0. Some of the features listed here are not available yet.
 
 ## Preparing ourselves
 

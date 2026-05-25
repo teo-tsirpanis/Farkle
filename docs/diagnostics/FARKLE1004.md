@@ -19,4 +19,4 @@ The types with the old names will be completely removed in a future version of F
 ## Notes
 
 1. The `DesigntimeFarkle` type does not have a direct replacement. Instead, you should use `IGrammarSymbol` to store individual grammar symbols, and `IGrammarBuilder` to store the whole grammar to be built. The same applies to the types' generic counterparts.
-2. The precompiler is not available in the first preview releases of Farkle 7. You must change references of `PrecompilableDesigntimeFarkle` to `IGrammarBuilder`, and when it becomes available, further guidance will be provided.
+2. Consult the [migration guide](../docs/migration/60-70.md#changes-to-the-precompiler) for moving your precompiled grammars to Farkle 7.

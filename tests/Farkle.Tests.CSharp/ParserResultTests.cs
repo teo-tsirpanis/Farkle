@@ -1,5 +1,6 @@
-// Copyright 2023 Theodore Tsirpanis.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
 
 namespace Farkle.Tests.CSharp;
 

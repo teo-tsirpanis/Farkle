@@ -5,6 +5,7 @@ namespace Farkle.Tools
 
 open Farkle.Grammars
 open System
+open System.Buffers
 open System.Collections.Immutable
 open System.Reflection
 open System.Reflection.Metadata
@@ -28,11 +29,11 @@ with
 
 module PrecompiledAssemblyFileLoader =
 
-    let private typeNameCharactersToEscape = "\\[]+*&,"
+    let private typeNameCharactersToEscape = SearchValues.Create "\\[]+*&,"
 
     let escapeTypeName name =
         String.length name |> ignore
-        if name.AsSpan().IndexOf typeNameCharactersToEscape >= 0 then
+        if name.AsSpan().ContainsAny typeNameCharactersToEscape then
             let sb = StringBuilder()
             name
             |> String.iter (fun c ->

@@ -8,6 +8,7 @@ module Farkle.Tools.Common
 
 open Serilog
 open System
+open System.Buffers
 open System.IO
 open System.Reflection
 open System.Text
@@ -36,15 +37,15 @@ let isGrammarExtension x =
     || equalsCI x ".egtn"
     || equalsCI x ".grammar.dat"
 
-let private invalidFileNameChars = Path.GetInvalidFileNameChars()
+let private invalidFileNameChars = SearchValues.Create(Path.GetInvalidFileNameChars())
 
 let sanitizeUnsafeFileName (log: ILogger) (path: string) =
-    match path.IndexOfAny(invalidFileNameChars) with
+    match path.AsSpan().IndexOfAny(invalidFileNameChars) with
     | -1 -> path
     | _ ->
         log.Warning("{FileName} contains characters that cannot appear in a file name. They will be removed from the output file name.", path)
         let sb = StringBuilder(path.Length)
         for c in path do
-            if not (Array.contains c invalidFileNameChars) then
+            if not (invalidFileNameChars.Contains c) then
                 sb.Append(c) |> ignore
         sb.ToString()

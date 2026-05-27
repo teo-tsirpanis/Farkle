@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.Commands.New
+module Farkle.Tools.Commands.Render
 
 open Argu
 open Farkle.Monads.Either
@@ -33,8 +33,9 @@ with
     interface IArgParserTemplate with
         member x.Usage =
             match x with
-            | GrammarFile _ -> "A composite path of the file to process. It can be a grammar, a .NET assembly or \
-a .NET SDK project. Run 'farkle --explain-composite-paths' to learn their syntax."
+            | GrammarFile _ -> "The path to the file to process. It can be a grammar, or a precompiled grammar in a .NET assembly or \
+a .NET SDK project. If the assembly or project contains multiple grammars, add '::<type-name>' after the path. If the type contains multiple \
+grammars, add '::<key>' after the type name, to reference a grammar with a key."
             | OutputFile _ -> "The path the output file will be stored. \
 Defaults to the input file's name, with an extension set by the template, which defaults to '.out.txt'."
             | Configuration _ -> "The configuration the project will be evaluated with. The default for most projects is Debug."

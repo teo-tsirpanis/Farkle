@@ -1,16 +1,19 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Tools
+namespace rec Farkle.Tools
 
 open Farkle.Grammars
+open System
+open System.Buffers
 open System.Collections.Immutable
 open System.Reflection
 open System.Reflection.Metadata
 open System.Reflection.Metadata.Ecma335
 open System.Reflection.PortableExecutable
+open System.Text
 
-type PrecompiledGrammar = private {
+type PrecompiledGrammar = {
     PEFile: PEReader
     MetadataReader: MetadataReader
     RVA: int
@@ -23,14 +26,54 @@ with
     member x.LoadGrammar() : Grammar =
         x.PEFile.GetSectionData(x.RVA).GetContent(0, x.Size)
         |> Grammar.Load
-    member x.ContainingTypeName =
-        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
-        x.MetadataReader.GetString typeDef.Name
-    member x.ContainingTypeNamespace =
-        let typeDef = x.MetadataReader.GetTypeDefinition x.DeclaringType
-        x.MetadataReader.GetString typeDef.Namespace
+    member x.GetDisplayName() =
+        let fullName = PrecompiledAssemblyFileLoader.getTypeFullName x
+        if isNull x.Key then
+            fullName
+        else
+            $"{fullName}::{x.Key}"
 
 module PrecompiledAssemblyFileLoader =
+
+    let private typeNameCharactersToEscape = SearchValues.Create "\\[]+*&,"
+
+    let escapeTypeName (name: string) =
+        if name.AsSpan().ContainsAny typeNameCharactersToEscape then
+            let sb = StringBuilder()
+            name
+            |> String.iter (fun c ->
+                if typeNameCharactersToEscape.Contains c then
+                    sb.Append '\\' |> ignore
+                sb.Append c |> ignore)
+            sb.ToString()
+        else
+            name
+
+    let private isNested flags =
+        match flags &&& TypeAttributes.VisibilityMask with
+        | TypeAttributes.NotPublic
+        | TypeAttributes.Public -> false
+        | _ -> true
+
+    let getTypeFullName grammar =
+        let md = grammar.MetadataReader
+        grammar.DeclaringType
+        |> List.unfold (fun t ->
+            if t = Unchecked.defaultof<_> then
+                None
+            else
+                let typ = md.GetTypeDefinition t
+                let nextTyp = if isNested typ.Attributes then typ.GetDeclaringType() else Unchecked.defaultof<_>
+                let ns = md.GetString typ.Namespace |> escapeTypeName
+                let name = md.GetString typ.Name |> escapeTypeName
+                if String.IsNullOrEmpty ns then
+                    name
+                else
+                    $"{ns}.{name}"
+                |> fun x -> x, nextTyp
+                |> Some)
+        |> List.rev
+        |> String.concat "+"
 
     [<Literal>]
     let private PrecompiledGrammarAttributeNamespace = "Farkle.Runtime"

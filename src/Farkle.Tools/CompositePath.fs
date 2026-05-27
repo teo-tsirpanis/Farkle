@@ -11,15 +11,18 @@ open Farkle.Tools.Templating
 open System
 open System.Buffers.Binary
 open System.IO
+open System.Reflection.PortableExecutable
 open System.Runtime.InteropServices
 open Serilog
 
+type GrammarSelector = GrammarSelector of typeName: string * key: string
+
 /// A special kind of file path that also specifies the name of a precompiled grammar.
-/// The format is `filePath::grammarName`. The double colons and the second part can be
+/// The format is `filePath(::typeName(::key)?)?`. The double colons and the second part can be
 /// omitted if the file has only one precompiled grammar. The file in the first path can
 /// be either an assembly or a project file. If it is ommitted, a suitable project file
 /// will be searched in the current directory.
-type CompositePath = CompositePath of filePath: string option * grammarName: string option
+type CompositePath = CompositePath of filePath: string option * GrammarSelector option
 with
     static member Separator = "::"
 
@@ -27,11 +30,11 @@ module CompositePath =
 
     let private defaultCompositePath = CompositePath(None, None)
 
-    let private checkForWhitespace (x: string) =
-        if String.IsNullOrWhiteSpace(x) then
+    let private checkForWhitespace (x: ReadOnlySpan<char>) =
+        if x.IsEmpty || x.IsWhiteSpace() then
             None
         else
-            Some x
+            Some <| x.ToString()
 
     // Loads a file either as a Farkle grammar or as a GOLD Parser grammar, depending on its signature.
     let private loadGrammar path =
@@ -50,6 +53,10 @@ module CompositePath =
         else
             Grammar.ConvertFromGoldParser f
 
+    let isGrammarCompatible (GrammarSelector(typeName, key)) (grammar: PrecompiledGrammar) =
+        PrecompiledAssemblyFileLoader.getTypeFullName grammar = typeName
+        && grammar.Key = key
+
     let create path =
         let sep = CompositePath.Separator
         match path with
@@ -58,18 +65,20 @@ module CompositePath =
             String.IsNullOrWhiteSpace(path)
             || path.AsSpan().Trim().Equals(sep.AsSpan(), StringComparison.Ordinal) -> defaultCompositePath
         | Some path ->
-            match path.IndexOf(sep) with
-            | -1 -> CompositePath(Some path, None)
-            | doubleColonPos ->
-                let filePath =
-                    path.Substring(0, doubleColonPos)
-                    |> checkForWhitespace
-                let grammarName =
-                    path.Substring(doubleColonPos + sep.Length)
-                    |> Some
-                CompositePath(filePath, grammarName)
+            let ranges = Array.zeroCreate 3
+            match path.AsSpan().Split(ranges.AsSpan(), CompositePath.Separator) with
+            | 1 -> CompositePath(Some path, None)
+            | rangeCount ->
+                let filePath = checkForWhitespace(path.AsSpan(ranges[0]))
+                let grammarType = path.AsSpan(ranges[1]).Trim().ToString()
+                let key =
+                    if rangeCount = 2 then
+                        null
+                    else
+                        path.AsSpan(ranges[2].Start).ToString()
+                CompositePath(filePath, Some <| GrammarSelector(grammarType, key))
 
-    let rec private resolveGrammar projectOptions grammarName originalPath (filePath: string) = either {
+    let rec private resolveGrammar projectOptions grammarSelector originalPath (filePath: string) = either {
         let ext = Path.GetExtension(filePath.AsSpan())
         if isProjectExtension ext then
             do! ProjectResolver.registerMSBuild()
@@ -78,39 +87,39 @@ module CompositePath =
                 // We will recurse to follow the assembly file logic.
                 // Thanks to the originalPath parameter, any error will be attributed
                 // to the project, not its assembly, for increased user-friendliness.
-                return! resolveGrammar projectOptions grammarName filePath assemblyPath
+                return! resolveGrammar projectOptions grammarSelector filePath assemblyPath
             else
                 // But for the very unlikely case that the project loops again, we should fail.
                 Log.Fatal("An infinite loop was detected in the composite path resolver. Please report a bug on GitHub.")
                 return! Error()
-#if TODO_PRECOMPILER
         elif isAssemblyExtension ext then
-            use loader = new PrecompiledAssemblyFileLoader(filePath)
-            match grammarName with
+            use f = File.OpenRead filePath
+            use pe = new PEReader(f)
+            let grammars = PrecompiledAssemblyFileLoader.loadAll pe
+            match grammarSelector with
             | None ->
-                match loader.Grammars.Count with
-                | 0 ->
+                match grammars with
+                | [] ->
                     Log.Error("The assembly of {Path} has no precompiled grammars.", originalPath)
                     return! Error()
-                | 1 ->
-                    return GrammarTemplateInput.Create ((Seq.exactlyOne loader.Grammars.Values).GetGrammar()) filePath
+                | [g] ->
+                    return GrammarTemplateInput.Create (g.LoadGrammar()) filePath
                 | _ ->
-                    Log.Error("The assembly of {Path} has more than one precompiled grammar:", originalPath)
-                    for x in loader.Grammars.Keys do
-                        Log.Information("{GrammarName:l}", x)
+                    Log.Error("The assembly of {Path} has more than one precompiled grammar.", originalPath)
+                    for x in grammars do
+                        Log.Information("{GrammarName:l}", x.GetDisplayName())
 
                     Log.Information("You can explicitly choose the precompiled grammar you \
-want by appending {CompositePathSuffixHint} to the input file.", "::<grammar-name>")
+want by appending {CompositePathSuffixHint} to the input file.", "::<type-name>[::<key>]")
                     return! Error()
-            | Some grammarName ->
-                match loader.Grammars.TryGetValue(grammarName) with
-                | true, grammar -> return GrammarTemplateInput.Create (grammar.GetGrammar()) filePath
-                | false, _ ->
-                    Log.Error("The assembly of {Path} does not have a precompiled grammar named {GrammarName}.", originalPath, grammarName)
+            | Some selector ->
+                match Seq.tryFind (isGrammarCompatible selector) grammars with
+                | Some g -> return GrammarTemplateInput.Create (g.LoadGrammar()) filePath
+                | None ->
+                    Log.Error("The assembly of {Path} does not contain a precompiled grammar meeting the specified criteria.", originalPath)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()
-#endif
         elif isGrammarExtension ext then
             return GrammarTemplateInput.Create (loadGrammar filePath) filePath
         else

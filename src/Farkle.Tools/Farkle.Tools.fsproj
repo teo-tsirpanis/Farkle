@@ -15,8 +15,7 @@
   <ItemGroup>
     <Compile Include="ProjectResolver.fs" />
     <Compile Include="CompositePath.fs" />
-    <!-- <Compile Include="Commands/*.fs" /> -->
-    <Compile Include="Commands/New.fs" />
+    <Compile Include="Commands/*.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

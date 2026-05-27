@@ -98,7 +98,7 @@ type IndentCodeTokenizer(grammar: IGrammarProvider) as this =
     // The line end character is included.
     let getNextLine (buffer: ReadOnlySpan<char>) =
         // We try to find either a carriage return or a line feed.
-        match buffer.IndexOfAny("\r\n".AsSpan()) with
+        match buffer.IndexOfAny('\r', '\n') with
         // If we didn't find it, it might mean that only part of
         // the line is loaded in memory. We simply return the entire buffer.
         | -1 -> buffer

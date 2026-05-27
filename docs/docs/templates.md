@@ -33,11 +33,11 @@ You can see the names of all precompiled grammars with the `farkle list` command
 
 ## Creating HTML pages
 
-For the rest of this guide, we will assume that we have a project with a precompiled grammar next to us. Once we build it, we can create an HTML page by running `farkle new`.
+For the rest of this guide, we will assume that we have a project with a precompiled grammar next to us. Once we build it, we can create an HTML page by running `farkle render`.
 
 If everything went well, we will see a file named like `MyAwesomeGrammar.html`. It describes the grammar's syntax, its LALR states, its DFA states and more. If you are just watching, take a look at a sample [HTML file generated for a JSON grammar](JSON-generated.html) to get a better idea.
 
-These HTML files can be customized by omitting the state tables, the CSS styling, or by adding custom content at the end if their `<head>`. Run `farkle new --help` to get all the available options.
+These HTML files can be customized by omitting the state tables, the CSS styling, or by adding custom content at the end if their `<head>`. Run `farkle render --help` to get all the available options.
 
 You can automatically generate an HTML file from your project's precompiled grammars by adding the following lines in it:
 
@@ -98,7 +98,7 @@ The templates can furthermore use the following functions:
 
 ### Using custom templates
 
-A custom template can be rendered by writing `farkle new -t MyCustomTemplate.scriban`. Of `farkle new`'s arguments, custom templates only support `-prop`, as explained above.
+A custom template can be rendered by writing `farkle render -t MyCustomTemplate.scriban`. Of `farkle render`'s arguments, custom templates only support `-prop`, as explained above.
 
 [gold-webpage]: http://www.goldparser.org/doc/builder-cmd/goldwebpage.htm
 [gold-skeleton]: http://www.goldparser.org/doc/builder-cmd/goldprog.htm

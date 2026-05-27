@@ -1,3 +1,8 @@
+#### 7.0.0-preview.4
+The following changes were made after 7.0.0-preview.3:
+* Ported support for reading precompiled grammars in the CLI tool.
+* Rendering grammars in the CLI tool is now done with the `farkle render` command instead of `farkle new`. The latter is still supported for compatibility.
+
 #### 7.0.0-preview.3 - 18-05-2026
 The following changes were made after 7.0.0-preview.2:
 * __Breaking change:__ Minimum target framework was increased from .NET Standard 2.1 to .NET 8, and will from now on follow the .NET support lifecycle.

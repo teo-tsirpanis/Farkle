@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-namespace Farkle.Tools
+namespace rec Farkle.Tools
 
 open Farkle.Grammars
 open System
@@ -26,6 +26,12 @@ with
     member x.LoadGrammar() : Grammar =
         x.PEFile.GetSectionData(x.RVA).GetContent(0, x.Size)
         |> Grammar.Load
+    member x.GetDisplayName() =
+        let fullName = PrecompiledAssemblyFileLoader.getTypeFullName x
+        if isNull x.Key then
+            fullName
+        else
+            $"{fullName}::{x.Key}"
 
 module PrecompiledAssemblyFileLoader =
 

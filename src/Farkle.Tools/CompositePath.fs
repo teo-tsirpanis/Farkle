@@ -107,10 +107,10 @@ module CompositePath =
                 | _ ->
                     Log.Error("The assembly of {Path} has more than one precompiled grammar.", originalPath)
                     for x in grammars do
-                        Log.Information("{GrammarName:l}", x)
+                        Log.Information("{GrammarName:l}", x.GetDisplayName())
 
                     Log.Information("You can explicitly choose the precompiled grammar you \
-want by appending {CompositePathSuffixHint} to the input file.", "::<type-name>::<key-opt>")
+want by appending {CompositePathSuffixHint} to the input file.", "::<type-name>[::<key>]")
                     return! Error()
             | Some selector ->
                 match Seq.tryFind (isGrammarCompatible selector) grammars with

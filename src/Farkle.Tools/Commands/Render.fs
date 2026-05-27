@@ -3,7 +3,7 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-module Farkle.Tools.Commands.New
+module Farkle.Tools.Commands.Render
 
 open Argu
 open Farkle.Monads.Either

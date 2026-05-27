@@ -22,7 +22,8 @@ type Arguments =
     | Version
     | [<Inherit>] Json
     | [<Inherit; AltCommandLine("-v"); Unique>] Verbosity of LogEventLevel
-    | [<CliPrefix(CliPrefix.None)>] New of ParseResults<New.Arguments>
+    | [<CliPrefix(CliPrefix.None)>] Render of ParseResults<Render.Arguments>
+    | [<CliPrefix(CliPrefix.None); Hidden>] New of ParseResults<Render.Arguments>
     | [<CliPrefix(CliPrefix.None)>] List of ParseResults<List.Arguments>
 with
     interface IArgParserTemplate with
@@ -32,7 +33,7 @@ with
             | Json -> "Encode output in JSON and print it in a single line in stdout. \
 No files will be created and only errors will be logged by default."
             | Verbosity _ -> "Set the verbosity of the tool's logs."
-            | New _ -> "Generate a skeleton program from a grammar file and a Scriban template."
+            | New _ | Render _ -> "Render an HTML page or a custom Scriban template from a grammar file."
             | List _ -> "List all precompiled grammars of an assembly."
 
 [<EntryPoint>]
@@ -63,7 +64,10 @@ let main argv =
                 0
             else
                 match results.GetSubCommand() with
-                | New args -> New.run json args
+                | New args ->
+                    Log.Warning("The {Subcommand:l} subcommand is deprecated. Use {Replacement:l} instead.", "new", "render")
+                    Render.run json args
+                | Render args -> Render.run json args
                 | List args -> List.run json args
                 | Version | Json | Verbosity _ -> Ok ()
                 |> function | Ok () -> 0 | Error () -> 1

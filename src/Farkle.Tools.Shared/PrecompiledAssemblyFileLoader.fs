@@ -37,8 +37,7 @@ module PrecompiledAssemblyFileLoader =
 
     let private typeNameCharactersToEscape = SearchValues.Create "\\[]+*&,"
 
-    let escapeTypeName name =
-        String.length name |> ignore
+    let escapeTypeName (name: string) =
         if name.AsSpan().ContainsAny typeNameCharactersToEscape then
             let sb = StringBuilder()
             name

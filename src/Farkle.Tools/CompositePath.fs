@@ -116,7 +116,7 @@ want by appending {CompositePathSuffixHint} to the input file.", "::<type-name>[
                 match Seq.tryFind (isGrammarCompatible selector) grammars with
                 | Some g -> return GrammarTemplateInput.Create (g.LoadGrammar()) filePath
                 | None ->
-                    Log.Error("The assembly of {Path} does not contain a precompiled grammar meeting the specified criteris.", originalPath)
+                    Log.Error("The assembly of {Path} does not contain a precompiled grammar meeting the specified criteria.", originalPath)
 
                     Log.Information("Hint: Run {CommandHint} to list all precompiled grammars of a project's assembly.", "farkle list")
                     return! Error()

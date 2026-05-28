@@ -82,7 +82,7 @@ public static class ParserExtensions
     {
         ArgumentNullException.ThrowIfNull(parser);
         ArgumentNullException.ThrowIfNull(s);
-        return parser.ParseCore(s.AsSpan());
+        return parser.ParseCore(s);
     }
 
     /// <summary>

@@ -5,7 +5,7 @@ namespace Farkle.Collections;
 
 internal sealed class StringDictionary<TValue> : SpanDictionaryBase<char, string, TValue>
 {
-    protected override ReadOnlySpan<char> AsSpan(string container) => container.AsSpan();
+    protected override ReadOnlySpan<char> AsSpan(string container) => container;
 
     protected override int GetHashCode(ReadOnlySpan<char> key) => string.GetHashCode(key);
 

@@ -8,6 +8,8 @@ namespace Farkle.Tests.CSharp;
 
 internal class RegexRangeCanonicalizerTests
 {
+    private RegexRangeCanonicalizer _reusableRangeCanonicalizer;
+
     private static (T, T)[] MakePairs<T>(ReadOnlySpan<T> data)
     {
         Debug.Assert(data.Length % 2 == 0);
@@ -47,7 +49,7 @@ internal class RegexRangeCanonicalizerTests
     public void TestCanonicalize(string data, bool caseSensitive, string expectedResult)
     {
         var pairs = MakePairs(data.AsSpan());
-        var result = RegexRangeCanonicalizer.Canonicalize(pairs, caseSensitive);
+        var result = _reusableRangeCanonicalizer.Canonicalize(pairs, caseSensitive);
         Assert.That(result, Is.EqualTo(MakePairs(expectedResult.AsSpan())).AsCollection);
     }
 }

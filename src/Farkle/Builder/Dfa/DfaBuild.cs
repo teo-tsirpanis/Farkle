@@ -26,7 +26,7 @@ namespace Farkle.Builder.Dfa;
 /// <param name="tokenSymbolCount">The number of token symbols in the grammar.</param>
 /// <param name="cancellationToken">Used to cancel the building process.</param>
 /// <param name="log">Used to log events in the building process.</param>
-internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbolNameProvider,
+internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbolNameProvider,
     int tokenSymbolCount, BuilderLogger log = default, CancellationToken cancellationToken = default)
     where TChar : unmanaged, IComparable<TChar>
 {
@@ -35,6 +35,8 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
     private CancellationToken CancellationToken { get; } = cancellationToken;
 
     private readonly BuilderLogger Log = log;
+
+    private RegexRangeCanonicalizer ReusableRangeCanonicalizer = new();
 
     private BuilderSymbolName GetSymbolName(TokenSymbolHandle symbol) =>
         symbol.HasValue ? symbolNameProvider(symbol) : new("", TokenSymbolKind.Terminal, false);
@@ -492,7 +494,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         }
     }
 
-    private static Regex LowerRegex(Regex regex, bool caseSensitive, Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache)
+    private Regex LowerRegex(Regex regex, bool caseSensitive, Dictionary<(Regex, bool CaseSensitive), Regex> loweredRegexCache)
     {
         if (loweredRegexCache.TryGetValue((regex, caseSensitive), out var lowered))
         {
@@ -513,7 +515,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                     }
                     else
                     {
-                        builder.Add(Regex.OneOf(RegexRangeCanonicalizer.Canonicalize([(c, c)], false)));
+                        builder.Add(Regex.OneOf(ReusableRangeCanonicalizer.Canonicalize([(c, c)], false)));
                     }
                 }
                 result = Regex.Join(builder.MoveToImmutable());
@@ -541,7 +543,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 }
                 else
                 {
-                    var rangesCanonicalized = RegexRangeCanonicalizer.Canonicalize(charsSpan, caseSensitive);
+                    var rangesCanonicalized = ReusableRangeCanonicalizer.Canonicalize(charsSpan, caseSensitive);
                     result = MaybeReduceToVoid(rangesCanonicalized, flags);
                 }
             }
@@ -553,7 +555,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 }
                 else
                 {
-                    var rangesCanonicalized = RegexRangeCanonicalizer.Canonicalize(ranges.AsSpan(), caseSensitive);
+                    var rangesCanonicalized = ReusableRangeCanonicalizer.Canonicalize(ranges.AsSpan(), caseSensitive);
                     result = MaybeReduceToVoid(rangesCanonicalized, flags);
                 }
             }
@@ -592,12 +594,12 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
         {
             flags |= VisitFlags.CaseSensitive;
         }
-        RegexInfo info = Visit(in this, default, regex, flags);
+        RegexInfo info = Visit(ref this, default, regex, flags);
         bool hasError = (info.Characteristics & RegexCharacteristics.HasError) != 0;
 
         return (hasError ? null : leaves, followPos, info.FirstPos);
 
-        RegexInfo Visit(in DfaBuild<TChar> @this, TokenSymbolHandle symbol, Regex regex, VisitFlags flags)
+        RegexInfo Visit(ref DfaBuild<TChar> @this, TokenSymbolHandle symbol, Regex regex, VisitFlags flags)
         {
             @this.CancellationToken.ThrowIfCancellationRequested();
 
@@ -645,7 +647,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 bool isVoid = false;
                 foreach (var r in alternatives)
                 {
-                    var nextInfo = Visit(in @this, symbol, r, flags);
+                    var nextInfo = Visit(ref @this, symbol, r, flags);
                     int leafIndex = nextInfo.HasStar
                         ? endLeafIndexTerminal ??= AddLeaf(new RegexLeaf.End(symbol, TerminalPriority))
                         : endLeafIndexLiteral ??= AddLeaf(new RegexLeaf.End(symbol, LiteralPriority));
@@ -670,7 +672,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Empty;
                 foreach (var r in regexes)
                 {
-                    RegexInfo nextResult = Visit(in @this, symbol, r, flags);
+                    RegexInfo nextResult = Visit(ref @this, symbol, r, flags);
                     LinkFollowPos(in info.LastPos, in nextResult.FirstPos);
                     info += nextResult;
                 }
@@ -682,7 +684,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Void;
                 foreach (var r in regexes)
                 {
-                    info |= Visit(in @this, symbol, r, flags);
+                    info |= Visit(ref @this, symbol, r, flags);
                 }
                 return info;
             }
@@ -692,14 +694,14 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 RegexInfo info = RegexInfo.Empty;
                 for (int i = 0; i < m; i++)
                 {
-                    RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags);
+                    RegexInfo nextInfo = Visit(ref @this, symbol, loopItem, flags);
                     LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                     info += nextInfo;
                 }
 
                 if (n == int.MaxValue)
                 {
-                    RegexInfo starInfo = Visit(in @this, symbol, loopItem, flags).AsStar();
+                    RegexInfo starInfo = Visit(ref @this, symbol, loopItem, flags).AsStar();
                     LinkFollowPos(in starInfo.LastPos, in starInfo.FirstPos);
                     LinkFollowPos(in info.LastPos, in starInfo.FirstPos);
                     info += starInfo;
@@ -708,7 +710,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
                 {
                     for (int i = m; i < n; i++)
                     {
-                        RegexInfo nextInfo = Visit(in @this, symbol, loopItem, flags).AsNullable();
+                        RegexInfo nextInfo = Visit(ref @this, symbol, loopItem, flags).AsNullable();
                         LinkFollowPos(in info.LastPos, in nextInfo.FirstPos);
                         info += nextInfo;
                     }
@@ -718,7 +720,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
             if ((flags & VisitFlags.Lowered) == 0)
             {
-                regex = LowerRegex(regex, (flags & VisitFlags.CaseSensitive) != 0, loweredRegexCache);
+                regex = @this.LowerRegex(regex, (flags & VisitFlags.CaseSensitive) != 0, loweredRegexCache);
             }
 
             if (regex.IsAny())
@@ -738,7 +740,7 @@ internal readonly struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolNa
 
             if ((flags & VisitFlags.Lowered) == 0)
             {
-                return Visit(in @this, symbol, regex, flags | VisitFlags.Lowered);
+                return Visit(ref @this, symbol, regex, flags | VisitFlags.Lowered);
             }
 
             throw new InvalidOperationException("Internal error: unrecognized form of lowered regex.");

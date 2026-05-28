@@ -6,8 +6,20 @@ using System.Diagnostics;
 
 namespace Farkle.Builder.Dfa;
 
-internal static class RegexRangeCanonicalizer
+internal struct RegexRangeCanonicalizer
 {
+    private List<(char, IntervalType)>? _intervals;
+
+    private List<(char, IntervalType)> GetReusableIntervalsList()
+    {
+        if (_intervals is null)
+        {
+            return _intervals = [];
+        }
+        _intervals.Clear();
+        return _intervals;
+    }
+
     /// <summary>
     /// Checks if the content of <paramref name="chars"/> is sorted and non-adjacent.
     /// </summary>
@@ -58,14 +70,14 @@ internal static class RegexRangeCanonicalizer
     /// Sorts the given characters and coalesces them into ranges, while optionally
     /// making them case-insensitive.
     /// </summary>
-    public static ImmutableArray<(char, char)> Canonicalize(ReadOnlySpan<char> chars, bool caseSensitive)
+    public ImmutableArray<(char, char)> Canonicalize(ReadOnlySpan<char> chars, bool caseSensitive)
     {
         if (chars.IsEmpty)
         {
             return [];
         }
 
-        List<(char, IntervalType)> intervals = [];
+        List<(char, IntervalType)> intervals = GetReusableIntervalsList();
         foreach (var c in chars)
         {
             intervals.Add((c, IntervalType.Single));
@@ -92,14 +104,14 @@ internal static class RegexRangeCanonicalizer
     /// Makes the given character ranges sorted, non-adjacent and non-overlapping,
     /// while optionally making them case-insensitive.
     /// </summary>
-    public static ImmutableArray<(char, char)> Canonicalize(ReadOnlySpan<(char, char)> ranges, bool caseSensitive)
+    public ImmutableArray<(char, char)> Canonicalize(ReadOnlySpan<(char, char)> ranges, bool caseSensitive)
     {
         if (ranges.IsEmpty)
         {
             return [];
         }
 
-        List<(char, IntervalType)> intervals = [];
+        List<(char, IntervalType)> intervals = GetReusableIntervalsList();
         foreach (var (start, end) in ranges)
         {
             if (start > end)
@@ -192,7 +204,7 @@ internal static class RegexRangeCanonicalizer
         return rangesBuilder.ToImmutable();
     }
 
-    private enum IntervalType
+    private enum IntervalType : byte
     {
         Start,
         Single,

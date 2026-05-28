@@ -414,7 +414,7 @@ public abstract partial class Grammar : IGrammarProvider
         ArgumentNullException.ThrowIfNull(specialName);
 
         ReadOnlySpan<byte> grammarFile = GrammarFile;
-        if (StringHeap.LookupString(grammarFile, specialName.AsSpan()) is { } nameHandle)
+        if (StringHeap.LookupString(grammarFile, specialName) is { } nameHandle)
         {
             for (uint i = 1; i <= GrammarTables.SpecialNameRowCount; i++)
             {

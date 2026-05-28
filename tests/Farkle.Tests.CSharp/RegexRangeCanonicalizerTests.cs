@@ -33,7 +33,7 @@ internal class RegexRangeCanonicalizerTests
     public void TestIsCanonical(string data, bool expectedResult)
     {
         var pairs = MakePairs(data.AsSpan());
-        Assert.That(RegexRangeCanonicalizer.IsCanonical(pairs.AsSpan()), Is.EqualTo(expectedResult));
+        Assert.That(RegexRangeCanonicalizer.IsCanonical(pairs), Is.EqualTo(expectedResult));
     }
 
     [TestCase("", true, "")]

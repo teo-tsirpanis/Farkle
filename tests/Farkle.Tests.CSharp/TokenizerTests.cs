@@ -25,7 +25,7 @@ namespace Farkle.Tests.CSharp
             using (Assert.EnterMultipleScope())
             {
                 var state = new ParserState();
-                ParserInputReader<char> reader = new(ref state, text.AsSpan());
+                ParserInputReader<char> reader = new(ref state, text);
 
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess);
@@ -50,7 +50,7 @@ namespace Farkle.Tests.CSharp
             var grammar = TestUtilities.LoadGrammarFromResource("JSON.grammar.dat");
             var tokenizer = Tokenizer.Create<char>(grammar);
             var state = new ParserState();
-            ParserInputReader<char> reader = new(ref state, text.AsSpan(), isFinal: false);
+            ParserInputReader<char> reader = new(ref state, text, isFinal: false);
             Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out _), Is.EqualTo(shouldFindToken));
         }
 
@@ -69,7 +69,7 @@ namespace Farkle.Tests.CSharp
             using (Assert.EnterMultipleScope())
             {
                 var state = new ParserState();
-                ParserInputReader<char> reader = new(ref state, text.AsSpan());
+                ParserInputReader<char> reader = new(ref state, text);
                 Assert.That(tokenizer.TryGetNextToken(ref reader, SyntaxChecker<char, object?>.Instance, out var token));
                 Assert.That(token.IsSuccess, Is.False);
             }

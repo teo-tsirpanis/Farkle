@@ -44,7 +44,7 @@ internal struct StringHeapWriter
 
         // We will lookup twice in the dictionary; this way we
         // avoid counting the bytes if the string exists.
-        if (_stringHandles.TryGetValue(str.AsSpan(), out var handle))
+        if (_stringHandles.TryGetValue(str, out var handle))
         {
             return handle;
         }
@@ -92,7 +92,7 @@ internal struct StringHeapWriter
 
         foreach (var str in _strings)
         {
-            Utf8EncodingStrict.Instance.GetBytes(str.AsSpan(), writer);
+            Utf8EncodingStrict.Instance.GetBytes(str, writer);
             writer.Write((byte)0);
         }
     }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Farkle;
@@ -58,22 +59,24 @@ public readonly struct TextPosition : IEquatable<TextPosition>, ISpanFormattable
         Create0(line - 1, column - 1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal TextPosition AdvanceCore<T>(ReadOnlySpan<T> span, T cr, T lf)
-        where T : struct, IEquatable<T>
+    internal TextPosition AdvanceCore<T>(ReadOnlySpan<T> span)
+        where T : struct, INumberBase<T>
     {
         // Fast path: most tokens (identifiers, keywords, punctuation, numbers)
         // contain no newlines. Avoid the loop and Create0 validation overhead.
-        int nlPos = span.IndexOfAny(lf, cr);
+        int nlPos = span.IndexOfAny(T.CreateChecked('\n'), T.CreateChecked('\r'));
         if (nlPos < 0)
         {
             return new(_line, _column + span.Length);
         }
-        return AdvanceCoreSlow(span, cr, lf, nlPos);
+        return AdvanceCoreSlow(span, nlPos);
     }
 
-    private TextPosition AdvanceCoreSlow<T>(ReadOnlySpan<T> span, T cr, T lf, int nlPos)
-        where T : struct, IEquatable<T>
+    private TextPosition AdvanceCoreSlow<T>(ReadOnlySpan<T> span, int nlPos)
+        where T : struct, INumberBase<T>
     {
+        T cr = T.CreateChecked('\r');
+        T lf = T.CreateChecked('\n');
         // We advance the line number if:
         // 1. We found a CR and it is not the last character in the span.
         // 2. We found an LF.
@@ -121,11 +124,11 @@ public readonly struct TextPosition : IEquatable<TextPosition>, ISpanFormattable
         // Because of lack of language support, we have to do some duplication here.
         if (typeof(T) == typeof(char))
         {
-            return AdvanceCore(Utilities.BitCastSpan<T, char>(span), '\r', '\n');
+            return AdvanceCore(Utilities.BitCastSpan<T, char>(span));
         }
         if (typeof(T) == typeof(byte))
         {
-            return AdvanceCore(Utilities.BitCastSpan<T, byte>(span), (byte)'\r', (byte)'\n');
+            return AdvanceCore(Utilities.BitCastSpan<T, byte>(span));
         }
         // For any other type, we will just advance the column number by the length of the span.
         return new(_line, _column + span.Length);

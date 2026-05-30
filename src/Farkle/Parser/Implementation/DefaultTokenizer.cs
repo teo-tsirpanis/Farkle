@@ -8,10 +8,11 @@ using Farkle.Grammars.StateMachines;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace Farkle.Parser.Implementation;
 
-internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResumptionPoint<TChar, DefaultTokenizer<TChar>.GroupState> where TChar : unmanaged, IComparable<TChar>
+internal sealed class DefaultTokenizer<TChar> : Tokenizer<TChar>, ITokenizerResumptionPoint<TChar, DefaultTokenizer<TChar>.GroupState> where TChar : unmanaged, IComparable<TChar>, INumberBase<TChar>
 {
     private readonly Grammar _grammar;
     private readonly DfaWithoutConflicts<TChar> _dfa;

@@ -225,7 +225,7 @@ public static class CharParser
     /// is <see langword="null"/>.</exception>
     public static CharParser<T> Create<T>(Grammar grammar, ISemanticProvider<char, T> semanticProvider)
     {
-        Tokenizer<char> tokenizer = Tokenizer.Create<char>(grammar, throwIfError: false);
+        Tokenizer<char> tokenizer = Tokenizer.Create(grammar, throwIfError: false);
         return Create(grammar, tokenizer, semanticProvider, null);
     }
 

@@ -3,8 +3,8 @@
 
 using Farkle.Buffers;
 using System.Buffers;
+using System.Numerics;
 using System.Runtime.CompilerServices;
-using static Farkle.Grammars.GrammarUtilities;
 
 namespace Farkle.Grammars.StateMachines;
 
@@ -98,7 +98,7 @@ internal static class StateMachineUtilities
         return ~low;
     }
 
-    private static DfaWithoutConflicts<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines.Dfa dfa) where TChar : unmanaged, IComparable<TChar>
+    private static DfaWithoutConflicts<TChar>? CreateDfa<TChar>(Grammar grammar, ReadOnlySpan<byte> grammarFile, in GrammarStateMachines.Dfa dfa) where TChar : unmanaged, IComparable<TChar>, INumberBase<TChar>
     {
         int offset = dfa.DfaWithoutConflicts.Offset, length = dfa.DfaWithoutConflicts.Length;
 

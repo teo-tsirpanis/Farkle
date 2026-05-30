@@ -8,6 +8,7 @@ using Farkle.Grammars;
 using Farkle.Grammars.Writers;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Farkle.Builder.Dfa;
@@ -28,7 +29,7 @@ namespace Farkle.Builder.Dfa;
 /// <param name="log">Used to log events in the building process.</param>
 internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbolNameProvider,
     int tokenSymbolCount, BuilderLogger log = default, CancellationToken cancellationToken = default)
-    where TChar : unmanaged, IComparable<TChar>
+    where TChar : unmanaged, IComparable<TChar>, IMinMaxValue<TChar>, INumberBase<TChar>
 {
     private int TokenSymbolCount { get; } = tokenSymbolCount;
 
@@ -83,14 +84,6 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
         ThrowHelpers.ThrowUnsupportedCharacterException();
         throw null;
     }
-
-    private static TChar PreviousChar(TChar c) => (TChar)(object)(char)((char)(object)c - 1);
-
-    private static TChar NextChar(TChar c) => (TChar)(object)(char)((char)(object)c + 1);
-
-    private static TChar MinCharValue => (TChar)(object)char.MinValue;
-
-    private static TChar MaxCharValue => (TChar)(object)char.MaxValue;
 
     /// <summary>
     /// Builds a DFA that matches a <see cref="Regex"/>.
@@ -351,7 +344,7 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
                         // character value and this path be entered at the same time.
                         // A range that is before the last one cannot end at the maximum
                         // character value.
-                        transitionRangeStart = NextChar(transitionRangeStart);
+                        transitionRangeStart++;
                     }
                     TChar transitionRangeEnd = c;
                     if (isStart)
@@ -359,7 +352,7 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
                         // This cannot underflow because to enter this path, a range must
                         // have already started, and only the first item in the list can
                         // have a NUL character.
-                        transitionRangeEnd = PreviousChar(transitionRangeEnd);
+                        transitionRangeEnd--;
                     }
 
                     // Don't emit a transition if the range start is greater than the range end.
@@ -804,7 +797,7 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
             switch (Transitions)
             {
                 case [(var start, var end, _), ..]:
-                    if (start.CompareTo(MinCharValue) > 0)
+                    if (start.CompareTo(TChar.MinValue) > 0)
                     {
                         return false;
                     }
@@ -816,14 +809,14 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
             for (int i = 1; i < Transitions.Count; i++)
             {
                 var (start, end, _) = Transitions[i];
-                if (lastEnd.CompareTo(PreviousChar(start)) != 0)
+                if (lastEnd.CompareTo(start - TChar.One) != 0)
                 {
                     return false;
                 }
                 lastEnd = end;
             }
 
-            return lastEnd.CompareTo(MaxCharValue) == 0;
+            return lastEnd.CompareTo(TChar.MaxValue) == 0;
         }
     }
 

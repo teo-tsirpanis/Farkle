@@ -3,11 +3,11 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+using System.Numerics;
 
 namespace Farkle.Grammars.StateMachines;
 
-internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>
+internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<TChar> where TChar : unmanaged, IComparable<TChar>, INumberBase<TChar>
 {
     /// <summary>
     /// A lookup table with the next state for each ASCII character, for each state.
@@ -33,23 +33,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
     // so we can save some memory and switch back to reading the accept symbols directly from the grammar file.
     private TokenSymbolHandle[]? _acceptSymbolLookup;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static char CastChar(TChar c)
-    {
-        if (typeof(TChar) == typeof(byte))
-        {
-            return (char)(byte)(object)c;
-        }
-        if (typeof(TChar) == typeof(char))
-        {
-            return (char)(object)c;
-        }
-
-        ThrowHelpers.ThrowUnsupportedCharacterException();
-        return default;
-    }
-
-    private static bool IsAscii(TChar c) => CastChar(c) < StateMachineUtilities.AsciiCharacterCount;
+    private static bool IsAscii(TChar c) => c.CompareTo(TChar.CreateChecked(128)) < 0;
 
     [SetsRequiredMembers]
     public DfaWithoutConflicts(Grammar grammar, int stateCount, int edgeCount, in GrammarStateMachines.Dfa dfa)
@@ -157,7 +141,7 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
 
             // Try fast path if the character is ASCII.
             int[] stateArray = _asciiLookup[currentState];
-            int nextState = CastChar(c) < stateArray.Length ? stateArray[CastChar(c)] : NextStateSlow(grammarFile, currentState, c);
+            int nextState = int.CreateChecked(c) < stateArray.Length ? stateArray[int.CreateChecked(c)] : NextStateSlow(grammarFile, currentState, c);
 
             if (nextState >= 0)
             {
@@ -255,8 +239,8 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
                     {
                         break;
                     }
-                    int kFrom = CastChar(edge.KeyFrom);
-                    int kTo = Math.Min((int)CastChar(edge.KeyTo), StateMachineUtilities.AsciiCharacterCount - 1);
+                    int kFrom = int.CreateChecked(edge.KeyFrom);
+                    int kTo = Math.Min(int.CreateChecked(edge.KeyTo), StateMachineUtilities.AsciiCharacterCount - 1);
                     arr.AsSpan(kFrom, kTo - kFrom + 1).Fill(edge.Target);
                 }
                 states[i] = arr;

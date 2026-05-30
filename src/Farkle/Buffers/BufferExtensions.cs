@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace Farkle.Buffers;
 
@@ -105,12 +106,6 @@ internal static class BufferExtensions
         }
     }
 
-    public static void Write(this IBufferWriter<byte> buffer, byte value)
-    {
-        buffer.GetSpan()[0] = value;
-        buffer.Advance(sizeof(byte));
-    }
-
     public static void Write(this IBufferWriter<byte> buffer, byte value, int count)
     {
         while (count > 0)
@@ -123,65 +118,30 @@ internal static class BufferExtensions
         }
     }
 
-    public static void Write(this IBufferWriter<byte> buffer, ushort value)
+    public static void Write<T>(this IBufferWriter<byte> buffer, T value) where T : unmanaged, IBinaryInteger<T>
     {
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer.GetSpan(sizeof(ushort)), value);
-        buffer.Advance(sizeof(ushort));
-    }
-
-    public static void Write(this IBufferWriter<byte> buffer, int value)
-    {
-        BinaryPrimitives.WriteInt32LittleEndian(buffer.GetSpan(sizeof(int)), value);
-        buffer.Advance(sizeof(int));
-    }
-
-    public static void Write(this IBufferWriter<byte> buffer, uint value)
-    {
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.GetSpan(sizeof(uint)), value);
-        buffer.Advance(sizeof(uint));
-    }
-
-    public static void Write(this IBufferWriter<byte> buffer, ulong value)
-    {
-        BinaryPrimitives.WriteUInt64LittleEndian(buffer.GetSpan(sizeof(ulong)), value);
-        buffer.Advance(sizeof(ulong));
+        unsafe
+        {
+            Span<byte> span = buffer.GetSpan(sizeof(T));
+            buffer.Advance(value.WriteLittleEndian(span));
+        }
     }
 
     public static void WriteVariableSize(this IBufferWriter<byte> buffer, int value, byte dataSize)
     {
-        switch (dataSize)
-        {
-            case 1:
-                Debug.Assert(value == (sbyte)value);
-                buffer.Write((byte)(sbyte)value);
-                break;
-            case 2:
-                Debug.Assert(value == (short)value);
-                buffer.Write((ushort)(short)value);
-                break;
-            default:
-                Debug.Assert(dataSize == 4);
-                buffer.Write(value);
-                break;
-        }
+        Debug.Assert((dataSize, value) is (1, >= sbyte.MinValue and <= sbyte.MaxValue) or
+                                      (2, >= short.MinValue and <= short.MaxValue) or
+                                      (4, _));
+        Span<byte> span = buffer.GetSpan(sizeof(int));
+        BinaryPrimitives.WriteInt32LittleEndian(span, value);
+        buffer.Advance(dataSize);
     }
 
     public static void WriteVariableSize(this IBufferWriter<byte> buffer, uint value, byte dataSize)
     {
-        switch (dataSize)
-        {
-            case 1:
-                Debug.Assert(value <= byte.MaxValue);
-                buffer.Write((byte)value);
-                break;
-            case 2:
-                Debug.Assert(value <= ushort.MaxValue);
-                buffer.Write((ushort)value);
-                break;
-            default:
-                Debug.Assert(dataSize == 4);
-                buffer.Write(value);
-                break;
-        }
+        Debug.Assert((dataSize, value) is (1, <= byte.MaxValue) or (2, <= ushort.MaxValue) or (4, _));
+        Span<byte> span = buffer.GetSpan(sizeof(uint));
+        BinaryPrimitives.WriteUInt32LittleEndian(span, value);
+        buffer.Advance(dataSize);
     }
 }

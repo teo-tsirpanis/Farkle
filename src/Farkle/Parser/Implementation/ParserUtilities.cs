@@ -39,7 +39,7 @@ internal static class ParserUtilities
             return GetAbbreviatedLexicalErrorText(Utilities.BitCastSpan<TChar, char>(chars));
         }
         ThrowHelpers.ThrowUnsupportedCharacterException();
-        return null!;
+        return null;
     }
 
     public static ImmutableArray<string?> GetExpectedSymbols(LrState state)

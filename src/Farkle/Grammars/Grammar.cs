@@ -259,16 +259,6 @@ public abstract partial class Grammar : IGrammarProvider
     //    reading the first eight bytes of the file to see if it's a Farkle grammar, and try to convert it otherwise.
     //    Such code is available in the CLI tool's sources at CompositePath.fs.
 
-    internal Dfa<TChar>? GetDfa<TChar>()
-    {
-        if (typeof(TChar) == typeof(char))
-        {
-            return DfaOnChar as Dfa<TChar>;
-        }
-        ThrowHelpers.ThrowUnsupportedCharacterException();
-        return null;
-    }
-
     /// <summary>
     /// Gets the <see cref="TokenSymbolDefinition"/> pointed by the given <see cref="TokenSymbolHandle"/>.
     /// </summary>

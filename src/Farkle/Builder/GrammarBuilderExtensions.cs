@@ -372,7 +372,7 @@ public static class GrammarBuilderExtensions
                 // give confusing messages when a failing tokenizer gets swapped with a
                 // working one. We can fix this by providing a separate custom error for the
                 // tokenizer.
-                tokenizer = Tokenizer.Create<char>(grammar!, false, customError);
+                tokenizer = Tokenizer.Create(grammar!, false, customError);
             }
 
             if ((outputs & BuilderOutputs.SemanticProviderOnChar) != 0)

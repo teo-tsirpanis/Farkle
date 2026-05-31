@@ -11,7 +11,7 @@ namespace Farkle.Diagnostics.Builder;
 /// <param name="Name">The value of <see cref="Name"/>.</param>
 /// <param name="Kind">The value of <see cref="Kind"/>.</param>
 /// <param name="ShouldDisambiguate">The value of <see cref="ShouldDisambiguate"/>.</param>
-internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) : IFormattable, ISpanFormattable
+internal readonly struct BuilderSymbolName(string Name, TokenSymbolKind Kind, bool ShouldDisambiguate) : ISpanFormattable
 {
     /// <summary>
     /// The token symbol's name.

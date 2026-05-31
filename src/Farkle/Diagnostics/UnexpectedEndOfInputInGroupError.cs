@@ -6,7 +6,7 @@ namespace Farkle.Diagnostics;
 /// <summary>
 /// Contains information about a tokenizer error where input ended inside a group.
 /// </summary>
-public sealed class UnexpectedEndOfInputInGroupError : IFormattable, ISpanFormattable
+public sealed class UnexpectedEndOfInputInGroupError : ISpanFormattable
 {
     /// <summary>
     /// The name of the group that was left open at the time input ended.

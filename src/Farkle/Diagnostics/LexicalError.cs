@@ -12,7 +12,7 @@ namespace Farkle.Diagnostics;
 /// <remarks>
 /// A lexical error occurs when the tokenizer cannot recognize some characters as part of a token.
 /// </remarks>
-public sealed class LexicalError : IFormattable, IParserStateInfoSupplier, ISpanFormattable
+public sealed class LexicalError : IParserStateInfoSupplier, ISpanFormattable
 {
     /// <summary>
     /// The characters of the token that caused the error.

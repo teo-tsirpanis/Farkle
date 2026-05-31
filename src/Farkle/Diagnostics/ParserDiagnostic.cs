@@ -6,7 +6,7 @@ namespace Farkle.Diagnostics;
 /// <summary>
 /// Represents a diagnostic message from the parser.
 /// </summary>
-public sealed class ParserDiagnostic : IFormattable, ISpanFormattable
+public sealed class ParserDiagnostic : ISpanFormattable
 {
     /// <summary>
     /// The position the message was reported at.

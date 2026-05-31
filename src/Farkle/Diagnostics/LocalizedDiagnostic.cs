@@ -8,18 +8,13 @@ namespace Farkle.Diagnostics;
 /// </summary>
 internal static class LocalizedDiagnostic
 {
-    private sealed class Simple(string resourceKey) : IFormattable
-    // It does not have to implement ISpanFormattable because its message
-    // is a static string.
+    private sealed class Simple(string resourceKey)
     {
-        string IFormattable.ToString(string? format, IFormatProvider? formatProvider) =>
-            Resources.GetResourceString(resourceKey);
-
         public override string ToString() =>
             Resources.GetResourceString(resourceKey);
     }
 
-    internal sealed class Composite<TArg>(string resourceKey, TArg arg) : IFormattable, ISpanFormattable
+    internal sealed class Composite<TArg>(string resourceKey, TArg arg) : ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
@@ -32,7 +27,7 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite<TArg1, TArg2>(string resourceKey, TArg1 arg1, TArg2 arg2) : IFormattable, ISpanFormattable
+    internal sealed class Composite<TArg1, TArg2>(string resourceKey, TArg1 arg1, TArg2 arg2) : ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
@@ -45,7 +40,7 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite<TArg1, TArg2, TArg3>(string resourceKey, TArg1 arg1, TArg2 arg2, TArg3 arg3) : IFormattable, ISpanFormattable
+    internal sealed class Composite<TArg1, TArg2, TArg3>(string resourceKey, TArg1 arg1, TArg2 arg2, TArg3 arg3) : ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 
@@ -58,7 +53,7 @@ internal static class LocalizedDiagnostic
         public override string ToString() => ToString(null, null);
     }
 
-    internal sealed class Composite(string resourceKey, object[] args) : IFormattable, ISpanFormattable
+    internal sealed class Composite(string resourceKey, object[] args) : ISpanFormattable
     {
         public string ResourceKey { get; } = resourceKey;
 

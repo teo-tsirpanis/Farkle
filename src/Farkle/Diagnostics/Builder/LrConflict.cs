@@ -14,7 +14,7 @@ namespace Farkle.Diagnostics.Builder;
 /// </summary>
 // Unlike earlier versions of Farkle, we will not include the
 // reason for the conflict. This can be retrieved by logging.
-public sealed class LrConflict : IFormattable, ISpanFormattable
+public sealed class LrConflict : ISpanFormattable
 {
     private readonly int _shiftState;
 

@@ -12,7 +12,7 @@ namespace Farkle;
 /// </summary>
 /// <typeparam name="T">The type of values held by successful parser
 /// results.</typeparam>
-public readonly struct ParserResult<T> : IFormattable, ISpanFormattable
+public readonly struct ParserResult<T> : ISpanFormattable
 {
     private readonly T _value;
 

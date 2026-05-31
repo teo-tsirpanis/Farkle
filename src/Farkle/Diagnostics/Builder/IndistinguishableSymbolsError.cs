@@ -18,7 +18,7 @@ namespace Farkle.Diagnostics.Builder;
 /// same name appears in symbols of different kind.
 /// </remarks>
 /// <seealso href="https://github.com/teo-tsirpanis/Farkle/blob/mainstream/docs/diagnostics/FARKLE0002.md"/>
-public sealed class IndistinguishableSymbolsError : IFormattable, ISpanFormattable
+public sealed class IndistinguishableSymbolsError : ISpanFormattable
 {
     private ImmutableArray<(TokenSymbolKind, bool ShouldDisambiguate)> SymbolDiagnosticInfo { get; }
 
@@ -50,7 +50,7 @@ public sealed class IndistinguishableSymbolsError : IFormattable, ISpanFormattab
     public override string ToString() => ToString(null);
 
     [ExcludeFromCodeCoverage(Justification = "Diagnostics-only code")]
-    private readonly struct DelimitedSymbolNames(IndistinguishableSymbolsError error) : IFormattable, ISpanFormattable
+    private readonly struct DelimitedSymbolNames(IndistinguishableSymbolsError error) : ISpanFormattable
     {
         public IndistinguishableSymbolsError Error { get; } = error;
 

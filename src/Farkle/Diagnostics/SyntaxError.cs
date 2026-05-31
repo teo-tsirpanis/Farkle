@@ -12,7 +12,7 @@ namespace Farkle.Diagnostics;
 /// <remarks>
 /// A syntax error occurs when the parser encounters a token in an unexpected place.
 /// </remarks>
-public sealed class SyntaxError : IFormattable, ISpanFormattable
+public sealed class SyntaxError : ISpanFormattable
 {
     /// <summary>
     /// The name of the token found by the parser, or <see langword="null"/> if the end of the input was reached.

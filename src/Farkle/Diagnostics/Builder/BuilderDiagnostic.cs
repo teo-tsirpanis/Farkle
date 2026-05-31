@@ -50,8 +50,7 @@ public readonly struct BuilderDiagnostic : IFormattable
         string severityPadding = severity.Length > 0 ? " " : "";
         string code = Code is null ? "" : Code;
         string codePadding = code.Length > 0 ? " " : "";
-        string message = (Message as IFormattable)?.ToString(null, formatProvider) ?? Message.ToString() ?? "";
-        return $"{severity}{severityPadding}{code}{codePadding}{message}";
+        return string.Create(formatProvider, $"{severity}{severityPadding}{code}{codePadding}{Message}");
     }
 
     /// <inheritdoc/>

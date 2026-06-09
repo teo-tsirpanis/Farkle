@@ -2,18 +2,23 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Buffers;
+using Farkle.Builder;
 using System.Buffers;
 using System.Collections.Immutable;
 
 namespace Farkle.Grammars.Writers;
 
-internal sealed class GrammarWriter
+internal sealed class GrammarWriter : IGrammarSyntaxProvider
 {
     private StringHeapWriter _stringHeapWriter = new();
 
     private BlobHeapWriter _blobHeapWriter = new();
 
     private GrammarTablesWriter _tablesWriter = new();
+
+#if DEBUG
+    private readonly Dictionary<StringHandle, string> _stringReverseLookup = new() { [default] = "" };
+#endif
 
     private static void ValidateTableIndex(uint tableIndex, string paramName)
     {
@@ -32,11 +37,23 @@ internal sealed class GrammarWriter
 
     public int TokenSymbolCount => _tablesWriter.TokenSymbolRowCount;
 
+    int IGrammarSyntaxProvider.TerminalCount => _tablesWriter.TerminalCount;
+
+    int IGrammarSyntaxProvider.NonterminalCount => _tablesWriter.NonterminalCount;
+
+    int IGrammarSyntaxProvider.ProductionCount => _tablesWriter.ProductionCount;
+
+    int IGrammarSyntaxProvider.StartSymbol => _tablesWriter.StartSymbol.Value;
+
     public StringHandle GetOrAddString(string str)
     {
         ArgumentNullException.ThrowIfNull(str);
 
-        return _stringHeapWriter.Add(str);
+        var handle = _stringHeapWriter.Add(str);
+#if DEBUG
+        _ = _stringReverseLookup.TryAdd(handle, str);
+#endif
+        return handle;
     }
 
     public BlobHandle GetOrAddBlob(PooledSegmentBufferWriter<byte> blob) =>
@@ -197,5 +214,33 @@ internal sealed class GrammarWriter
         using var buffer = new PooledSegmentBufferWriter<byte>();
         WriteTo(buffer);
         return buffer.ToImmutableArray();
+    }
+
+#if DEBUG
+    string IGrammarSyntaxProvider.GetTerminalName(int index) => _stringReverseLookup[_tablesWriter.GetTokenSymbolName(index)];
+
+    string IGrammarSyntaxProvider.GetNonterminalName(int index) => _stringReverseLookup[_tablesWriter.GetNonterminalInfo(index).Name];
+#endif
+
+    (int FirstProduction, int ProductionCount) IGrammarSyntaxProvider.GetNonterminalProductions(int index)
+    {
+        int firstProduction = _tablesWriter.GetNonterminalInfo(index).FirstProduction.Value;
+        int firstProductionOfNext = index == _tablesWriter.NonterminalCount - 1 ? _tablesWriter.ProductionCount : _tablesWriter.GetNonterminalInfo(index + 1).FirstProduction.Value;
+        return (firstProduction, firstProductionOfNext - firstProduction);
+    }
+
+    int IGrammarSyntaxProvider.GetProductionHead(int index) => _tablesWriter.GetProductionInfo(index).Head.Value;
+
+    (int FirstMember, int MemberCount) IGrammarSyntaxProvider.GetProductionMembers(int index)
+    {
+        int firstMember = (int)(_tablesWriter.GetProductionInfo(index).FirstMember - 1);
+        int firstMemberOfNext = index == _tablesWriter.ProductionCount - 1 ? _tablesWriter.ProductionMemberCount : (int)(_tablesWriter.GetProductionInfo(index + 1).FirstMember - 1);
+        return (firstMember, firstMemberOfNext - firstMember);
+    }
+
+    (int SymbolIndex, bool IsTerminal) IGrammarSyntaxProvider.GetProductionMember(int index)
+    {
+        var member = _tablesWriter.GetProductionMember(index);
+        return ((int)(member.TableIndex - 1), member.IsTokenSymbol);
     }
 }

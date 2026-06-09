@@ -49,7 +49,11 @@ internal struct GrammarTablesWriter
 
     public readonly int ProductionCount => _productions?.Count ?? 0;
 
+    public readonly int ProductionMemberCount => _productionMembers?.Count ?? 0;
+
     public readonly int GroupCount => _groups?.Count ?? 0;
+
+    public readonly NonterminalHandle StartSymbol => _grammarStartSymbol;
 
     public GrammarTablesWriter() { }
 
@@ -313,6 +317,32 @@ internal struct GrammarTablesWriter
         | (_productionMembers is { Count: > 0 } ? TableKinds.ProductionMember : 0)
         | (_stateMachines is { Count: > 0 } ? TableKinds.StateMachine : 0)
         | (_specialNames is { Count: > 0 } ? TableKinds.SpecialName : 0);
+
+    public readonly StringHandle GetTokenSymbolName(int index)
+    {
+        Debug.Assert(_tokenSymbols is not null);
+        return _tokenSymbols[index].Name;
+    }
+
+    public readonly (StringHandle Name, ProductionHandle FirstProduction) GetNonterminalInfo(int index)
+    {
+        Debug.Assert(_nonterminals is not null);
+        NonterminalRow row = _nonterminals[index];
+        return (row.Name, row.FirstProduction);
+    }
+
+    public readonly (NonterminalHandle Head, uint FirstMember) GetProductionInfo(int index)
+    {
+        Debug.Assert(_productions is not null);
+        ProductionRow row = _productions[index];
+        return (row.Head, row.FirstMember);
+    }
+
+    public readonly EntityHandle GetProductionMember(int index)
+    {
+        Debug.Assert(_productionMembers is not null);
+        return _productionMembers[index].Member;
+    }
 
     public readonly void WriteTo(IBufferWriter<byte> writer, GrammarHeapSizes heapSizes)
     {

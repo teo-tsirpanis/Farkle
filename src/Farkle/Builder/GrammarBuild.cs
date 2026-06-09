@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Numerics;
 using Farkle.Builder.Dfa;
 using Farkle.Builder.Lr;

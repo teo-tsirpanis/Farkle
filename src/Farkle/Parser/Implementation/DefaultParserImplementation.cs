@@ -8,7 +8,6 @@ using Farkle.Grammars.StateMachines;
 using Farkle.Parser.Semantics;
 using Farkle.Parser.Tokenizers;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using static Farkle.Parser.Implementation.DefaultParserImplementation;

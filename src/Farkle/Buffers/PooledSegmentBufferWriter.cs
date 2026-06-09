@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using Farkle.Collections;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;

@@ -40,6 +40,7 @@ internal interface IGrammarSyntaxProvider
     /// </summary>
     int StartSymbol { get; }
 
+#if DEBUG
     /// <summary>
     /// Gets the name of a terminal.
     /// </summary>
@@ -57,6 +58,7 @@ internal interface IGrammarSyntaxProvider
     /// The nonterminal's name, without any quoting or formatting.
     /// </returns>
     string GetNonterminalName(int index);
+#endif
 
     /// <summary>
     /// Gets the indices of the productions that have a certain nonterminal at

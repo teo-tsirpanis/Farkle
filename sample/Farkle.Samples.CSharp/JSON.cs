@@ -8,7 +8,6 @@ using System;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Collections.Immutable;
-using Farkle.Parser;
 
 // ReSharper disable once CheckNamespace
 namespace Farkle.Samples.CSharp

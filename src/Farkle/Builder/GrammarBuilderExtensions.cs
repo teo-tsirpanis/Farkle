@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;

@@ -85,7 +85,7 @@ internal struct BlobHeapWriter
 
     public void ValidateHandle(BlobHandle handle)
     {
-        if (handle.Value < (uint)LengthSoFar)
+        if (handle.IsEmpty || handle.Value < (uint)LengthSoFar)
         {
             return;
         }

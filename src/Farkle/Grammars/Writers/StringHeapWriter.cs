@@ -76,7 +76,7 @@ internal struct StringHeapWriter
 
     public void ValidateHandle(StringHandle handle)
     {
-        if (handle.Value < (uint)LengthSoFar)
+        if (handle.IsEmpty || handle.Value < (uint)LengthSoFar)
         {
             return;
         }

@@ -5,6 +5,7 @@ using Farkle.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static Farkle.Grammars.GrammarUtilities;
 
@@ -548,7 +549,6 @@ internal readonly struct GrammarTables
                 previousFirstMember = firstMember;
                 ValidateHandle(firstMember, ProductionMemberRowCount + 1);
             }
-            Assert(currentHead == NonterminalRowCount);
         }
 
         for (uint i = 1; i <= (uint)ProductionMemberRowCount; i++)
@@ -586,7 +586,8 @@ internal readonly struct GrammarTables
             }
         }
 
-        static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        [StackTraceHidden]
+        static void Assert([DoesNotReturnIf(false)] bool condition, [CallerArgumentExpression(nameof(condition))] string? message = null)
         {
             if (!condition)
             {

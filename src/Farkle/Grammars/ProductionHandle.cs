@@ -20,6 +20,8 @@ public readonly struct ProductionHandle : IEquatable<ProductionHandle>
     internal uint TableIndex { get; }
     internal ProductionHandle(uint tableIndex) => TableIndex = tableIndex;
 
+    internal static ProductionHandle FromZeroBasedValue(int value) => new((uint)(value + 1));
+
     /// <summary>
     /// Gets the production's index in the grammar.
     /// </summary>

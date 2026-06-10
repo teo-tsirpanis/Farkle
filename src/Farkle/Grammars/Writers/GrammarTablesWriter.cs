@@ -29,6 +29,7 @@ internal struct GrammarTablesWriter
 
     private List<ProductionRow>? _productions;
     private int _requiredProductions;
+    private uint _currentProductionHead = 1;
 
     private List<ProductionMemberRow>? _productionMembers;
     private int _requiredProductionMembers;
@@ -47,7 +48,13 @@ internal struct GrammarTablesWriter
 
     public readonly int ProductionCount => _productions?.Count ?? 0;
 
+    public readonly int ProductionMemberCount => _productionMembers?.Count ?? 0;
+
     public readonly int GroupCount => _groups?.Count ?? 0;
+
+    public readonly NonterminalHandle StartSymbol => _grammarStartSymbol;
+
+    public GrammarTablesWriter() { }
 
     private static uint EncodeSymbolCodedIndex(EntityHandle handle)
     {
@@ -168,7 +175,7 @@ internal struct GrammarTablesWriter
 
         _pendingGroupStarts.Remove(start);
         var groups = _groups ??= new();
-        groups.Add(new() { Name = name, Container = container, Flags = flags, Start = start, End = end, NestingCount = nestingCount });
+        groups.Add(new() { Name = name, Container = container, Flags = flags, Start = start, End = end, FirstNesting = (uint)(_requiredGroupNestings + 1) });
         if (nestingCount > 0)
         {
             _groupNestings ??= new();
@@ -197,7 +204,8 @@ internal struct GrammarTablesWriter
         ArgumentOutOfRangeException.ThrowIfNegative(productionCount);
 
         var nonterminals = _nonterminals ??= new();
-        nonterminals.Add(new() { Name = name, Flags = flags, ProductionCount = productionCount });
+        var firstProduction = ProductionHandle.FromZeroBasedValue(_requiredProductions);
+        nonterminals.Add(new() { Name = name, Flags = flags, FirstProduction = firstProduction });
         if (productionCount > 0)
         {
             _productions ??= new();
@@ -212,12 +220,18 @@ internal struct GrammarTablesWriter
         ArgumentOutOfRangeException.ThrowIfNegative(memberCount);
 
         var productions = _productions;
-        if (productions is not { Count: int count } || count >= _requiredProductions)
+        if (productions is not { Count: int count } || count >= _requiredProductions || _nonterminals is not { Count: > 0 })
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot add more productions; please add a nonterminal first.");
         }
+        Debug.Assert(_nonterminals is not null); // Is implied by productions not being null.
 
-        productions.Add(new() { MemberCount = memberCount });
+        while (_currentProductionHead < _nonterminals.Count && _nonterminals[(int)_currentProductionHead].FirstProduction.TableIndex - 1 <= productions.Count)
+        {
+            _currentProductionHead++;
+        }
+
+        productions.Add(new() { Head = new(_currentProductionHead), FirstMember = (uint)(_requiredProductionMembers + 1) });
         if (memberCount > 0)
         {
             _productionMembers ??= new();
@@ -303,6 +317,32 @@ internal struct GrammarTablesWriter
         | (_stateMachines is { Count: > 0 } ? TableKinds.StateMachine : 0)
         | (_specialNames is { Count: > 0 } ? TableKinds.SpecialName : 0);
 
+    public readonly StringHandle GetTokenSymbolName(int index)
+    {
+        Debug.Assert(_tokenSymbols is not null);
+        return _tokenSymbols[index].Name;
+    }
+
+    public readonly (StringHandle Name, ProductionHandle FirstProduction) GetNonterminalInfo(int index)
+    {
+        Debug.Assert(_nonterminals is not null);
+        NonterminalRow row = _nonterminals[index];
+        return (row.Name, row.FirstProduction);
+    }
+
+    public readonly (NonterminalHandle Head, uint FirstMember) GetProductionInfo(int index)
+    {
+        Debug.Assert(_productions is not null);
+        ProductionRow row = _productions[index];
+        return (row.Head, row.FirstMember);
+    }
+
+    public readonly EntityHandle GetProductionMember(int index)
+    {
+        Debug.Assert(_productionMembers is not null);
+        return _productionMembers[index].Member;
+    }
+
     public readonly void WriteTo(IBufferWriter<byte> writer, GrammarHeapSizes heapSizes)
     {
         ValidateRequiredRowCount(_groupNestings, _requiredGroupNestings, "Not enough group nestings have been added.");
@@ -383,7 +423,6 @@ internal struct GrammarTablesWriter
 
         if (_groups is not null)
         {
-            uint firstNesting = 1;
             foreach (var row in _groups)
             {
                 WriteStringHandle(row.Name);
@@ -391,8 +430,7 @@ internal struct GrammarTablesWriter
                 writer.Write((ushort)row.Flags);
                 writer.WriteVariableSize(row.Start.TableIndex, tokenSymbolIndexSize);
                 writer.WriteVariableSize(row.End.TableIndex, tokenSymbolIndexSize);
-                writer.WriteVariableSize(firstNesting, groupNestingIndexSize);
-                firstNesting += (uint)row.NestingCount;
+                writer.WriteVariableSize(row.FirstNesting, groupNestingIndexSize);
             }
         }
 
@@ -406,48 +444,20 @@ internal struct GrammarTablesWriter
 
         if (_nonterminals is not null)
         {
-            uint firstProduction = 1;
             foreach (var row in _nonterminals)
             {
                 WriteStringHandle(row.Name);
                 writer.Write((ushort)row.Flags);
-                writer.WriteVariableSize(firstProduction, productionIndexSize);
-                firstProduction += (uint)row.ProductionCount;
+                writer.WriteVariableSize(row.FirstProduction.TableIndex, productionIndexSize);
             }
         }
 
         if (_productions is not null)
         {
-            List<NonterminalRow>? nonterminals = _nonterminals;
-            Debug.Assert(nonterminals is not null);
-
-            int currentNonterminal = 0;
-            int remainingProductions = nonterminals[currentNonterminal].ProductionCount;
-            UpdateRemainingProductions();
-
-            uint firstMember = 1;
             foreach (var row in _productions)
             {
-                // currentNonterminal is zero-based, we have to increment it by one to write it.
-                writer.WriteVariableSize((uint)currentNonterminal + 1, nonterminalIndexSize);
-                writer.WriteVariableSize(firstMember, productionMemberIndexSize);
-                firstMember += (uint)row.MemberCount;
-                remainingProductions--;
-                UpdateRemainingProductions();
-            }
-            Debug.Assert(remainingProductions == 0 && currentNonterminal == nonterminals.Count - 1);
-
-            // We track the head nonterminal by counting how many productions we have written
-            // and how many productions are left in the current nonterminal. When we have finished
-            // writing all productions for the current nonterminal, we move to the next nonterminal,
-            // while skipping those with no productions.
-            void UpdateRemainingProductions()
-            {
-                while (remainingProductions == 0 && currentNonterminal < nonterminals.Count - 1)
-                {
-                    currentNonterminal++;
-                    remainingProductions = nonterminals[currentNonterminal].ProductionCount;
-                }
+                writer.WriteVariableSize(row.Head.TableIndex, nonterminalIndexSize);
+                writer.WriteVariableSize(row.FirstMember, productionMemberIndexSize);
             }
         }
 
@@ -513,7 +523,7 @@ internal struct GrammarTablesWriter
         public required GroupAttributes Flags { get; init; }
         public required TokenSymbolHandle Start { get; init; }
         public required TokenSymbolHandle End { get; init; }
-        public required int NestingCount { get; init; }
+        public required uint FirstNesting { get; init; }
     }
 
     private readonly struct GroupNestingRow
@@ -525,12 +535,13 @@ internal struct GrammarTablesWriter
     {
         public required StringHandle Name { get; init; }
         public required NonterminalAttributes Flags { get; init; }
-        public required int ProductionCount { get; init; }
+        public required ProductionHandle FirstProduction { get; init; }
     }
 
     private readonly struct ProductionRow
     {
-        public required int MemberCount { get; init; }
+        public required NonterminalHandle Head { get; init; }
+        public required uint FirstMember { get; init; }
     }
 
     private readonly struct ProductionMemberRow

@@ -244,15 +244,12 @@ internal static class GrammarBuild
         }
 
         // Add productions.
-        // Keep a flattened list of production members; it will be needed by the syntax provider.
-        List<EntityHandle> productionMembers = [];
         foreach (IProduction production in grammarDefinition.Productions)
         {
             ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
                 EntityHandle memberHandle = symbolMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
-                productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
             }
             operatorSymbolMap?.Add(handle, production);
@@ -295,6 +292,10 @@ internal static class GrammarBuild
             regexBuilder?.Add(Regex.Accept(regex, handle, lowestPriority: true));
         }
 
+        // Set grammar info.
+        NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
+        writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, grammarDefinition.Attributes);
+
         // Build state machines if they are requested.
         if (dfaSymbols is not null)
         {
@@ -329,13 +330,8 @@ internal static class GrammarBuild
             var conflictResolver = operatorScope is not null
                 ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
                 : null;
-            var syntaxProvider = new GrammarSyntaxProvider(grammarDefinition, productionMembers);
-            writer.AddStateMachine(LalrBuild.Build(syntaxProvider, conflictResolver, log, options.CancellationToken));
+            writer.AddStateMachine(LalrBuild.Build(writer, conflictResolver, log, options.CancellationToken));
         }
-
-        // Set grammar info.
-        NonterminalHandle startSymbol = (NonterminalHandle)symbolMap[grammarDefinition.StartSymbol];
-        writer.SetGrammarInfo(writer.GetOrAddString(grammarDefinition.GrammarName), startSymbol, grammarDefinition.Attributes);
 
         // Farkle's builder can be trusted to not produce malformed grammars, so we can skip content validation.
         // We still do it in DEBUG mode for testing coverage.
@@ -469,69 +465,6 @@ internal static class GrammarBuild
         {
             var (name, kind) = _symbolNames[symbol];
             return new(name, kind, ShouldDisambiguate(name));
-        }
-    }
-
-    private sealed class GrammarSyntaxProvider : IGrammarSyntaxProvider
-    {
-        private readonly GrammarDefinition _grammarDefinition;
-
-        private readonly (int FirstProduction, int ProductionCount)[] _nonterminalProductionBounds;
-
-        private readonly int[] _productionHeads;
-
-        private readonly (int FirstMember, int MemberCount)[] _productionMemberBounds;
-
-        private readonly List<EntityHandle> _productionMembers;
-
-        public GrammarSyntaxProvider(GrammarDefinition grammarDefinition, List<EntityHandle> productionMembers)
-        {
-            _grammarDefinition = grammarDefinition;
-            _nonterminalProductionBounds = new (int, int)[grammarDefinition.Nonterminals.Count];
-            _productionHeads = new int[grammarDefinition.Productions.Count];
-            _productionMemberBounds = new (int, int)[grammarDefinition.Productions.Count];
-            _productionMembers = productionMembers;
-
-            int productionIndex = 0;
-            for (int i = 0; i < _nonterminalProductionBounds.Length; i++)
-            {
-                int productionCount = _grammarDefinition.Nonterminals[i].FreezeAndGetProductions().Length;
-                _nonterminalProductionBounds[i] = (productionIndex, productionCount);
-                _productionHeads.AsSpan(productionIndex, productionCount).Fill(i);
-                productionIndex += productionCount;
-            }
-
-            int productionMemberIndex = 0;
-            for (int i = 0; i < _productionMemberBounds.Length; i++)
-            {
-                int memberCount = _grammarDefinition.Productions[i].Members.Length;
-                _productionMemberBounds[i] = (productionMemberIndex, memberCount);
-                productionMemberIndex += memberCount;
-            }
-        }
-
-        public int TerminalCount => _grammarDefinition.Terminals.Count;
-
-        public int NonterminalCount => _grammarDefinition.Nonterminals.Count;
-
-        public int ProductionCount => _grammarDefinition.Productions.Count;
-
-        public int StartSymbol => 0;
-
-        public string GetTerminalName(int index) => _grammarDefinition.Terminals[index].Name;
-
-        public string GetNonterminalName(int index) => _grammarDefinition.Nonterminals[index].Name;
-
-        public (int FirstProduction, int ProductionCount) GetNonterminalProductions(int index) => _nonterminalProductionBounds[index];
-
-        public int GetProductionHead(int index) => _productionHeads[index];
-
-        public (int FirstMember, int MemberCount) GetProductionMembers(int index) => _productionMemberBounds[index];
-
-        public (int SymbolIndex, bool IsTerminal) GetProductionMember(int index)
-        {
-            EntityHandle member = _productionMembers[index];
-            return ((int)(member.TableIndex - 1), member.Kind == TableKind.TokenSymbol);
         }
     }
 }

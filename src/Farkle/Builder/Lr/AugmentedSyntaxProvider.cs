@@ -65,9 +65,11 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
 
+#if DEBUG
     public string GetTerminalName(int index) => index == 0 ? "#" : _provider.GetTerminalName(index - 1);
 
     public string GetNonterminalName(int index) => index == 0 ? "S'" : _provider.GetNonterminalName(index - 1);
+#endif
 
     private (int FirstProduction, int ProductionCount) GetNonterminalProductions(int nonterminalIndex)
     {

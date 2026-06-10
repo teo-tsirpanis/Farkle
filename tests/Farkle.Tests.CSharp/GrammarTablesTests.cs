@@ -65,4 +65,31 @@ internal class GrammarTablesTests
         // We can add up to 2^20 - 1 token symbols.
         Assert.That(() => writer.AddTokenSymbol(DummyStringHandle, TokenSymbolAttributes.None), Throws.InvalidOperationException);
     }
+
+    [Test]
+    public void TestNonterminalsWithNoProductions()
+    {
+        var writer = new GrammarTablesWriter();
+        using var buffer = new PooledSegmentBufferWriter<byte>();
+
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 1);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 2);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 1);
+        writer.AddNonterminal(default, NonterminalAttributes.None, 0);
+        writer.AddProduction(0);
+        writer.AddProduction(0);
+        writer.AddProduction(0);
+        writer.AddProduction(0);
+        writer.WriteTo(buffer, 0);
+        var bytes = buffer.ToArray();
+
+        var tables = new GrammarTables(bytes, new(0, bytes.Length), out _);
+        tables.ValidateContent(bytes, default, default);
+    }
 }

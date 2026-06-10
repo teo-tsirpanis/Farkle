@@ -228,16 +228,17 @@ internal struct GrammarTablesWriter
         }
         Debug.Assert(_nonterminals is not null); // Is implied by productions not being null.
 
+        while (_currentProductionHead < _nonterminals.Count && _nonterminals[(int)_currentProductionHead].FirstProduction.TableIndex - 1 <= productions.Count)
+        {
+            _currentProductionHead++;
+        }
+
         productions.Add(new() { Head = new(_currentProductionHead), FirstMember = (uint)(_requiredProductionMembers + 1) });
         if (memberCount > 0)
         {
             _productionMembers ??= new();
         }
         _requiredProductionMembers += memberCount;
-        while (_currentProductionHead < _nonterminals.Count && _nonterminals[(int)_currentProductionHead].FirstProduction.TableIndex - 1 <= productions.Count)
-        {
-            _currentProductionHead++;
-        }
         return new((uint)productions.Count);
     }
 

@@ -244,15 +244,12 @@ internal static class GrammarBuild
         }
 
         // Add productions.
-        // Keep a flattened list of production members; it will be needed by the syntax provider.
-        List<EntityHandle> productionMembers = [];
         foreach (IProduction production in grammarDefinition.Productions)
         {
             ProductionHandle handle = writer.AddProduction(production.Members.Length);
             foreach (IGrammarSymbol member in production.Members)
             {
                 EntityHandle memberHandle = symbolMap[GrammarDefinition.GetSymbolIdentityObject(member.Symbol)];
-                productionMembers.Add(memberHandle);
                 writer.AddProductionMember(memberHandle);
             }
             operatorSymbolMap?.Add(handle, production);

@@ -454,9 +454,6 @@ internal struct GrammarTablesWriter
 
         if (_productions is not null)
         {
-            List<NonterminalRow>? nonterminals = _nonterminals;
-            Debug.Assert(nonterminals is not null);
-
             foreach (var row in _productions)
             {
                 writer.WriteVariableSize(row.Head.TableIndex, nonterminalIndexSize);

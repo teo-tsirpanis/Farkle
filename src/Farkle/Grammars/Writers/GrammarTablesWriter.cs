@@ -15,7 +15,6 @@ internal struct GrammarTablesWriter
     private StringHandle _grammarName;
     private NonterminalHandle _grammarStartSymbol;
     private GrammarAttributes _grammarFlags;
-    private bool _isGrammarRowSet;
 
     private List<TokenSymbolRow>? _tokenSymbols;
     private bool _rejectTerminals;
@@ -110,7 +109,7 @@ internal struct GrammarTablesWriter
 
     public void SetGrammarInfo(StringHandle name, NonterminalHandle startSymbol, GrammarAttributes flags)
     {
-        if (_isGrammarRowSet)
+        if (_grammarStartSymbol.HasValue)
         {
             ThrowHelpers.ThrowInvalidOperationException("Cannot set grammar info more than once.");
         }
@@ -120,7 +119,6 @@ internal struct GrammarTablesWriter
         _grammarName = name;
         _grammarStartSymbol = startSymbol;
         _grammarFlags = flags;
-        _isGrammarRowSet = true;
     }
 
     public TokenSymbolHandle AddTokenSymbol(StringHandle name, TokenSymbolAttributes flags)
@@ -307,10 +305,6 @@ internal struct GrammarTablesWriter
 
     public readonly void WriteTo(IBufferWriter<byte> writer, GrammarHeapSizes heapSizes)
     {
-        if (!_isGrammarRowSet)
-        {
-            ThrowHelpers.ThrowInvalidOperationException("Grammar info have not been set.");
-        }
         ValidateRequiredRowCount(_groupNestings, _requiredGroupNestings, "Not enough group nestings have been added.");
         ValidateRequiredRowCount(_productions, _requiredProductions, "Not enough productions have been added.");
         ValidateRequiredRowCount(_productionMembers, _requiredProductionMembers, "Not enough production members have been added.");
@@ -324,6 +318,11 @@ internal struct GrammarTablesWriter
         int productionMemberRows = _productionMembers?.Count ?? 0;
         int stateMachineRows = _stateMachines?.Count ?? 0;
         int specialNameRows = _specialNames?.Count ?? 0;
+
+        if (nonterminalRows is 0)
+        {
+            ThrowHelpers.ThrowInvalidOperationException("At least one nonterminal must be defined.");
+        }
 
         byte blobHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.BlobHeapSmall) != 0 ? 2 : 4);
         byte stringHeapIndexSize = (byte)((heapSizes & GrammarHeapSizes.StringHeapSmall) != 0 ? 2 : 4);
@@ -368,7 +367,8 @@ internal struct GrammarTablesWriter
 
         {
             WriteStringHandle(_grammarName);
-            writer.WriteVariableSize(_grammarStartSymbol.TableIndex, nonterminalIndexSize);
+            // Set start symbol to first nonterminal if not specified by the user. This would make test code simpler.
+            writer.WriteVariableSize(Math.Max(_grammarStartSymbol.TableIndex, 1), nonterminalIndexSize);
             writer.Write((ushort)_grammarFlags);
         }
 

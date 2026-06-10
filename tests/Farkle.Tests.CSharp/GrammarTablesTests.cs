@@ -19,7 +19,6 @@ internal class GrammarTablesTests
 
         var startSymbol = writer.AddNonterminal(DummyStringHandle, NonterminalAttributes.None, 0);
 
-        Assert.That(() => writer.WriteTo(buffer, GrammarHeapSizes.StringHeapSmall), Throws.InvalidOperationException);
         writer.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None);
         Assert.That(() => writer.SetGrammarInfo(DummyStringHandle, startSymbol, GrammarAttributes.None), Throws.InvalidOperationException);
         writer.WriteTo(buffer, GrammarHeapSizes.StringHeapSmall);

@@ -4,6 +4,9 @@ This software is released under the MIT License.
 https://opensource.org/licenses/MIT ~}}
 <section id="dfa-states">
     <h2>DFA States</h2>
+    {{~if $1.has_conflicts~}}
+    <p><span class="conflicting-state">States with conflicts</span> and <span class="conflicting-action">conflicting actions</span> are highlighted.</p>
+    {{~end~}}
     <div class="flex-container">
         {{~for $state in $1~}}
         <table id="dfa{{for.index}}"{{if $state.has_conflicts}} class="conflicting-state"{{end}}>

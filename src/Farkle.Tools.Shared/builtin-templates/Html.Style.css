@@ -40,6 +40,11 @@ body>footer {
     justify-content: space-around;
 }
 
+#conflicts {
+    column-gap: 1em;
+    justify-content: flex-start;
+}
+
 a {
     text-decoration: none;
 }

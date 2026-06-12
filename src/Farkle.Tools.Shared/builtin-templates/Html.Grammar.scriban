@@ -20,7 +20,38 @@ end
 ~}}
 <main>
     <h1>{{if is_conflict_report; "Conflict report for "; end}}{{html.escape grammar_name}}</h1>
-    {{~ # TODO: Add a list of conflicting LR and DFA states. ~}}
+    {{~ if is_conflict_report ~}}
+    <div id="conflicts" class="flex-container">
+        {{~ if !no_lalrstates && grammar.lr_state_machine.has_conflicts
+            has_conflicts(state) = state.has_conflicts;
+            $conflicted_lr_states = grammar.lr_state_machine | array.filter @has_conflicts | array.map "state_index";
+            $state_states = string.pluralize (array.size $conflicted_lr_states) "state" "states";
+            $has_have = string.pluralize (array.size $conflicted_lr_states) "has" "have"; ~}}
+        <section id="lr-conflicts">
+            <p><strong>{{ array.size $conflicted_lr_states }}</strong> LALR {{ $state_states }} {{ $has_have }} conflicts:</p>
+            <ul>
+                {{~ for conflict in $conflicted_lr_states ~}}
+                <li><a href="#lalr{{ conflict }}">State {{ conflict }}</a></li>
+                {{~ end ~}}
+            </ul>
+        </section>
+        {{~ end ~}}
+        {{~ if !no_dfastates && grammar.dfa_on_char.has_conflicts
+            has_conflicts(state) = state.has_conflicts;
+            $conflicted_dfa_states = grammar.dfa_on_char | array.filter @has_conflicts | array.map "state_index";
+            $state_states = string.pluralize (array.size $conflicted_dfa_states) "state" "states";
+            $has_have = string.pluralize (array.size $conflicted_dfa_states) "has" "have"; ~}}
+        <section id="dfa-conflicts">
+            <p><strong>{{ array.size $conflicted_dfa_states }}</strong> DFA {{ $state_states }} {{ $has_have }} conflicts:</p>
+            <ul>
+                {{~ for conflict in $conflicted_dfa_states ~}}
+                <li><a href="#dfa{{ conflict }}">State {{ conflict }}</a></li>
+                {{~ end ~}}
+            </ul>
+        </section>
+        {{~ end ~}}
+    </div>
+    {{~ end ~}}
     <section id="properties">
         <h2>Properties</h2>
         {{~

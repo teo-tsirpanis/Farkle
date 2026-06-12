@@ -2,7 +2,5 @@
   <Import Project="$(MSBuildThisFileDirectory)eng/common.props" />
   <PropertyGroup>
     <RepositoryUrl>https://github.com/teo-tsirpanis/Farkle</RepositoryUrl>
-    <EnableNUnitRunner>true</EnableNUnitRunner>
-    <EnableExpectoTestingPlatformIntegration>true</EnableExpectoTestingPlatformIntegration>
   </PropertyGroup>
 </Project>

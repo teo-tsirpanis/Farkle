@@ -13,7 +13,6 @@ updates:
         patterns:
           - "Expecto"
           - "Expecto.*"
-          - "Microsoft.NET.Test.Sdk"
           - "Microsoft.Testing.*"
           - "NUnit"
           - "NUnit3TestAdapter"

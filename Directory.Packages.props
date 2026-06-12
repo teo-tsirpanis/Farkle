@@ -16,6 +16,7 @@
     <PackageVersion Include="Expecto.FsCheck" Version="11.0.0" />
     <PackageVersion Include="Expecto" Version="11.0.0" />
     <PackageVersion Include="FParsec" Version="1.1.1" />
+    <PackageVersion Include="FsCheck" Version="3.3.3" />
     <PackageVersion Include="FSharp.Core" Version="9.0.100" />
     <PackageVersion Include="FsLexYacc.Runtime" Version="11.3.0" />
     <PackageVersion Include="FsLexYacc" Version="11.3.0" />

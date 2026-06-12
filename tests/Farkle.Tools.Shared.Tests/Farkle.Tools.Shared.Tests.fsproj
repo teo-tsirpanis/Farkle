@@ -16,7 +16,6 @@
     <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
     <ProjectReference Include="..\..\src\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" />
     <PackageReference Include="Expecto" />
-    <PackageReference Include="Expecto.FsCheck" />
     <PackageReference Include="HtmlAgilityPack" />
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />

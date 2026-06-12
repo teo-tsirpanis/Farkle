@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\sample\Farkle.Samples.FSharp\Farkle.Samples.FSharp.fsproj" />
     <PackageReference Include="Expecto" />
     <PackageReference Include="Expecto.FsCheck" />
+    <PackageReference Include="FsCheck" />
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
     <PackageReference Include="Microsoft.Testing.Platform.MSBuild" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" />

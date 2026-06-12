@@ -14,23 +14,25 @@ open Farkle
 open Farkle.Builder
 open Farkle.Samples.FSharp.SimpleMaths
 open FsCheck
+open FsCheck.FSharp
 open System.Collections.Generic
 open System.Text.Json.Nodes
 
-let nonEmptyString = Arb.generate |> Gen.map (fun (NonEmptyString x) -> x)
+let nonEmptyString = ArbMap.defaults |> ArbMap.generate |> Gen.map (fun (NonEmptyString x) -> x)
 
 let textPositionGen =
-    Arb.generate
+    ArbMap.defaults
+    |> ArbMap.generate
     |> Gen.two
     |> Gen.map (fun (line, col) -> TextPosition.Create0(line, col))
 
 let JsonGen =
     let leaves =
         Gen.oneof [
-            Arb.generate |> Gen.map JsonValue.Create<bool>
+            ArbMap.defaults |> ArbMap.generate |> Gen.map JsonValue.Create<bool>
             Gen.constant <| null
-            Arb.generate |> Gen.map JsonValue.Create<decimal>
-            Arb.generate |> Gen.map (fun (NonNull str) -> JsonValue.Create<string> str)
+            ArbMap.defaults |> ArbMap.generate |> Gen.map JsonValue.Create<decimal>
+            ArbMap.defaults |> ArbMap.generate |> Gen.map (fun (NonNull str) -> JsonValue.Create<string> str)
         ]
         |> Gen.map (fun x -> x :> JsonNode)
     let branches items =
@@ -113,10 +115,10 @@ let genRegexString regex =
     let rec impl (sb: StringBuilder) regex = gen {
         match regex with
         | RegexAny ->
-            let! c = Arb.generate<char>
+            let! c = ArbMap.defaults |> ArbMap.generate<char>
             sb.Append c |> ignore
         | RegexChars (xs, isInverted) ->
-            let! c = Arb.generate |> Gen.filter (fun c -> xs.Span.Contains c <> isInverted)
+            let! c = ArbMap.defaults |> ArbMap.generate |> Gen.filter (fun c -> xs.Span.Contains c <> isInverted)
             sb.Append c |> ignore
         | RegexAlt xs ->
             let! x = Gen.elements xs
@@ -128,7 +130,8 @@ let genRegexString regex =
             for __ = 0 to m - 1 do
                 do! impl sb x
             let! NonNegativeInt len =
-                Arb.generate
+                ArbMap.defaults
+                |> ArbMap.generate
                 |> if n = Int32.MaxValue then id else Gen.filter (fun (NonNegativeInt x) -> x <= n - m)
             for __ = 0 to len - 1 do
                 do! impl sb x
@@ -142,17 +145,17 @@ let genRegexString regex =
 
 let regexesGen = gen {
     let! regexSpec =
-        Arb.generate
+        regexGen
         |> Gen.nonEmptyListOf
     let! strings =
         regexSpec
         |> List.mapi (fun i x -> x |> genRegexString |> Gen.map (fun x -> x, i))
-        |> Gen.sequence
+        |> Gen.sequenceToList
     return Regexes(regexSpec, strings)
 }
 
 let regexStringPairGen = gen {
-    let! regex = Arb.generate
+    let! regex = regexGen
     let! str = genRegexString regex
     return RegexStringPair(regex, str)
 }
@@ -160,7 +163,7 @@ let regexStringPairGen = gen {
 let simpleMathsASTGen =
     let rec impl size =
         if size <= 1 then
-            Arb.generate |> Gen.map (Number >> MathExpression.Create)
+            ArbMap.defaults |> ArbMap.generate |> Gen.map (Number >> MathExpression.Create)
         else gen {
             let! leftExprSize = Gen.choose(1, size)
             let rightExprSize = size - leftExprSize

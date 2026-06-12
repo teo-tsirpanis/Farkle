@@ -24,15 +24,6 @@
     <PackageReference Include="PolySharp" PrivateAssets="all" />
     <PackageReference Include="BitCollections" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETCoreApp'">
-    <PackageReference Include="System.Collections.Immutable" />
-  </ItemGroup>
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'netstandard2.1'))">
-    <PackageReference Include="Microsoft.Bcl.HashCode" />
-    <PackageReference Include="System.Buffers" />
-    <PackageReference Include="System.Memory" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" />
-  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />
     <EmbeddedResource Include="ILLink.Substitutions.xml" LogicalName="ILLink.Substitutions.xml" />

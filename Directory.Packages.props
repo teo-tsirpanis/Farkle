@@ -45,10 +45,6 @@
     <PackageVersion Include="Serilog" Version="4.3.1" />
     <PackageVersion Include="Sigourney.Build" Version="0.5.0" />
     <PackageVersion Include="Sigourney" Version="0.5.0" />
-    <PackageVersion Include="System.Buffers" Version="4.6.0" />
-    <PackageVersion Include="System.Collections.Immutable" Version="$(SystemOobVersion)" />
-    <PackageVersion Include="System.Memory" Version="4.6.0" />
-    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
     <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />

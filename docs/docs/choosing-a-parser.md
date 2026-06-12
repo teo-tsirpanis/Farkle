@@ -6,14 +6,12 @@ Besides Farkle, there are many other general-purpose parsing projects for the .N
 
 The comparison between Farkle, [FParsec] and [FsLexYacc] is outlined in the following table. A more detailed explanation is following.
 
-> __Note:__ All projects we will discuss support .NET Standard.
-
 | |Farkle|FParsec|FsLexYacc|
 |-|-|-|-|
 |Type|Library|Library|Parser generator|
 |Grammar definition language|Code|Code|Separate files|
 |Parsing algorithm|LALR|Recursive descent|LALR|
-|Lexer|Less decoupled|No|More decoupled|
+|Separate lexing step|Less decoupled|No|More decoupled|
 |Lexing algorithm|DFAs|N/A|DFAs|
 |Left recursion support|Yes|No|Yes|
 |Operator precedence support|Yes|Yes|Yes|
@@ -21,6 +19,7 @@ The comparison between Farkle, [FParsec] and [FsLexYacc] is outlined in the foll
 |Parsing speed|Good|Good|Subpar|
 |MSBuild integration|Optional|N/A|Required|
 |Supported languages|C#, F#|F#|F#|
+|Supported frameworks|.NET|.NET Standard 2.0+|.NET Standard 2.0+|
 |Maturity|Ever-evolving|Mature|Mature|
 
 ### Grammar definition language
@@ -53,7 +52,7 @@ In Farkle the tokenizer and the parser are separate but using them separately to
 
 FParsec and FsYacc support operator precedence and associativity to more intuitively write grammars (and automatically resolve LALR conflicts in the latter case). The former does it [via a special type][FParsec-operators], and the latter has direct support in the grammar definition files.
 
-Farkle added support for operator precedence and associativity <!-- TODO: Add page? --> in version 6.0.0.
+Farkle added support for [operator precedence and associativity](quickstart.md#operator-precedence-and-associativity) in version 6.0.0.
 
 ### Whitespace/comment handling
 
@@ -88,6 +87,10 @@ While all three libraries support parsing text from C# with a grammar written in
 It is impossible to generate C# code from FsLexYacc without substantially modifying the tool and it almost certainly is not a feature worth implementing, given the tool's exclusive focus on F#.
 
 Since FParsec is just a library and does not require tooling support, C# users can theoretically write an FParsec parser but the sheer amount of F# custom operators and idiomatisms it uses would definitely result in very unreadable code.
+
+### Supported frameworks
+
+While FParsec and FsLexYacc support all frameworks compatible with .NET Standard 2.0, Farkle supports only modern .NET versions, following the .NET support lifecycle. Being a newer project than the other two, Farkle is able to better take advantage of modern framework and language features in order to deliver improved performance, developer productivity, but also be easier to maintain. With recent developments in the broader .NET ecosystem, the need to target older frameworks in your projects is becoming increasingly less common.
 
 ### Maturity
 

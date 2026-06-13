@@ -9,6 +9,7 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Builder.Dfa
+open Farkle.Diagnostics.Builder
 open Farkle.Tests
 open FsCheck
 open System
@@ -148,17 +149,21 @@ let tests = testList "Regex tests" [
         Expect.isFalse parser.IsFailing "Building the grammar failed"
     }
 
-#if false // TODO-FARKLE7: Reevaluate when the builder is implemented in Farkle 7.
     test "DFA conflict messages come with a correct example word" {
         let impl regex1 regex2 exampleWord =
-            let term1 = Terminal(0u, "A") |> Choice1Of4
-            let term2 = Terminal(1u, "B") |> Choice1Of4
-            let dfaErrors =
-                DFABuild.buildRegexesToDFA false true [Regex.regexString regex1, term1; Regex.regexString regex2, term2]
-                |> Flip.Expect.wantError (sprintf "The regexes %s and %s do not conflict" regex1 regex2)
-            let expectedErrors =
-                [BuildError.IndistinguishableSymbols2(set [term1; term2], exampleWord)]
-            Expect.sequenceEqual dfaErrors expectedErrors "The DFA did not contain the expected error"
+            let termA = Regex.regexString regex1 |> terminalU "A"
+            let termB = Regex.regexString regex2 |> terminalU "B"
+            let warnings =
+                "S" |||= [
+                    !% termA
+                    !% termB
+                ]
+                |> _.AutoWhitespace(false)
+                |> buildWithWarnings
+                |> snd
+            Expect.hasLength warnings 1 "Building did not report one error"
+            let error = warnings[0].Message :?> IndistinguishableSymbolsError
+            Expect.equal (List.ofSeq error.SymbolNames, error.ExampleWord) ([termA.Name; termB.Name], exampleWord) $"The regexes {regex1} and {regex2} do not conflict"
 
         [
             ".\d", ".[0-5]", "a0"
@@ -169,5 +174,4 @@ let tests = testList "Regex tests" [
         ]
         |> List.iter ((<|||) impl)
     }
-#endif
 ]

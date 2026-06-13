@@ -46,6 +46,8 @@ public abstract class Dfa<TChar> : IReadOnlyList<DfaState<TChar>>
 
     internal abstract int GetStartStateForGroupImpl(GroupHandle group);
 
+    internal abstract bool HasEdge(int state, TChar c);
+
     internal abstract void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables);
 
     /// <summary>

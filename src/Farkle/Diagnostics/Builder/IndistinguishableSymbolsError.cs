@@ -5,6 +5,8 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 
 namespace Farkle.Diagnostics.Builder;
 
@@ -27,24 +29,77 @@ public sealed class IndistinguishableSymbolsError : ISpanFormattable
     /// </summary>
     public ImmutableArray<string> SymbolNames { get; }
 
-    internal IndistinguishableSymbolsError(ImmutableArray<string> symbolNames, ImmutableArray<(TokenSymbolKind, bool ShouldDisambiguate)> symbolDiagnosticInfo)
+    /// <summary>
+    /// An example word that leads to the conflict between the symbols in <see cref="SymbolNames"/>.
+    /// </summary>
+    public string ExampleWord { get; }
+
+    internal static IEnumerable<IndistinguishableSymbolsError> GetErrors(Grammar grammar, ISymbolNameProvider? symbolNameProvider)
+    {
+        if (grammar.DfaOnChar is { HasConflicts: true } dfa)
+        {
+            // If a DFA was built, the symbol name provider should have been provided as well.
+            Debug.Assert(symbolNameProvider is not null);
+            foreach (var error in GetErrors(dfa, symbolNameProvider))
+            {
+                yield return error;
+            }
+        }
+    }
+
+    internal static IEnumerable<IndistinguishableSymbolsError> GetErrors(Dfa<char> dfa, ISymbolNameProvider symbolNameProvider)
+    {
+        var wordGenerator = new DfaWordGenerator<char>(dfa);
+        var seenConflicts = new HashSet<int>(new DfaAcceptSymbolComparer<char>(dfa));
+        for (int i = 0; i < dfa.Count; i++)
+        {
+            var state = dfa[i];
+            if (!state.HasConflicts)
+            {
+                continue;
+            }
+            // Do not log the same set of indistinguishable symbols twice.
+            if (!seenConflicts.Add(i))
+            {
+                continue;
+            }
+            var exampleWord = wordGenerator.GenerateWordAsString(i);
+            if (exampleWord is null)
+            {
+                continue;
+            }
+            int count = state.AcceptSymbols.Count;
+            var namesBuilder = ImmutableArray.CreateBuilder<string>(count);
+            var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(count);
+            foreach (var acceptSymbol in state.AcceptSymbols)
+            {
+                var name = symbolNameProvider.GetName(acceptSymbol.Handle);
+                namesBuilder.Add(name.Name);
+                symbolInfoBuilder.Add((name.Kind, name.ShouldDisambiguate));
+            }
+            yield return new IndistinguishableSymbolsError(namesBuilder.MoveToImmutable(), symbolInfoBuilder.MoveToImmutable(), exampleWord);
+        }
+    }
+
+    internal IndistinguishableSymbolsError(ImmutableArray<string> symbolNames, ImmutableArray<(TokenSymbolKind, bool ShouldDisambiguate)> symbolDiagnosticInfo, string exampleWord)
     {
         if (symbolDiagnosticInfo.Length != symbolNames.Length)
         {
-            throw new ArgumentException("Symbol names and diagnostic info arrays do not have the same length", nameof(symbolDiagnosticInfo));
+            throw new ArgumentException("Symbol nameσ and diagnostic info arrays do not have the same length", nameof(symbolDiagnosticInfo));
         }
         Debug.Assert(symbolDiagnosticInfo.Length == symbolNames.Length);
         SymbolNames = symbolNames;
         SymbolDiagnosticInfo = symbolDiagnosticInfo;
+        ExampleWord = exampleWord;
     }
 
     private string ToString(IFormatProvider? formatProvider) =>
-        Resources.Format(formatProvider, nameof(Resources.Builder_IndistinguishableSymbols), new DelimitedSymbolNames(this));
+        Resources.Format(formatProvider, nameof(Resources.Builder_IndistinguishableSymbols), new DelimitedSymbolNames(this), ExampleWord);
 
     string IFormattable.ToString(string? format, IFormatProvider? provider) => ToString(provider);
 
     bool ISpanFormattable.TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider) =>
-        Resources.TryWrite(destination, provider, nameof(Resources.Builder_IndistinguishableSymbols), out charsWritten, new DelimitedSymbolNames(this));
+        Resources.TryWrite(destination, provider, nameof(Resources.Builder_IndistinguishableSymbols), out charsWritten, new DelimitedSymbolNames(this), ExampleWord);
 
     /// <inheritdoc/>
     public override string ToString() => ToString(null);
@@ -105,6 +160,45 @@ public sealed class IndistinguishableSymbolsError : ISpanFormattable
                 sb.Append(provider, $"{new BuilderSymbolName(name, kind, shouldDisambiguate)}");
             }
             return sb.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Compares two state indices of a <see cref="Dfa{TChar}"/> to determine if they have the same accept symbols.
+    /// </summary>
+    private sealed class DfaAcceptSymbolComparer<TChar>(Dfa<TChar> dfa) : IEqualityComparer<int>
+    {
+        public bool Equals(int x, int y)
+        {
+            var acceptSymbolsX = dfa[x].AcceptSymbols;
+            var acceptSymbolsY = dfa[y].AcceptSymbols;
+            if (acceptSymbolsX.Count != acceptSymbolsY.Count)
+            {
+                return false;
+            }
+            var iterX = acceptSymbolsX.GetEnumerator();
+            var iterY = acceptSymbolsY.GetEnumerator();
+            while (iterX.MoveNext() && iterY.MoveNext())
+            {
+                // The accept symbols are sorted by index.
+                if (iterX.Current.Handle != iterY.Current.Handle)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public int GetHashCode(int obj)
+        {
+            var acceptSymbols = dfa[obj].AcceptSymbols;
+            var hc = new HashCode();
+            hc.Add(acceptSymbols.Count);
+            foreach (var symbol in acceptSymbols)
+            {
+                hc.Add(symbol.Handle);
+            }
+            return hc.ToHashCode();
         }
     }
 }

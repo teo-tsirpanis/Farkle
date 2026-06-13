@@ -2,9 +2,6 @@
 
 Farkle comes with a templating system which further helps developers work with the grammars they create. This system is a more powerful edition of both GOLD Parser's ["Create Webpage"][gold-webpage] and ["Create Skeleton Program"][gold-skeleton] tools. In this guide, we will first see how to create an HTML page describing our grammar, and next we will see how to create our own templates. So, are you ready? Let's do this!
 
-> [!IMPORTANT]
-> The CLI tool does not support grammars in precompiled assemblies in early preview versions of Farkle 7.0. Some of the features listed here are not available yet.
-
 ## Preparing ourselves
 
 Before we start, we first have to install Farkle's CLI tool from [NuGet][farkle-tools-nuget] by opening a command prompt and running
@@ -25,9 +22,9 @@ If we don't explicitly specify an input, the CLI tool will try to find a project
 
 ### Dealing with multiple precompiled grammars
 
-If the assembly or project passed to the CLI tool has only one precompiled grammar, it will be automatically used. If it has more than one however, we can tell it which one to use by adding a `::MyGrammar` to the end of the input path.
+If the assembly or project passed to the CLI tool has only one precompiled grammar, it will be automatically used. If it has more than one however, we can specify the fully qualified name of the type where the grammar was declared at, by adding a `::Namespace.MyType` to the end of the input path. If multiple grammars are declared in the same type, we can specify the grammar's @"Farkle.Builder.PrecompilerInputAttribute.Key" as well by writing `::Namespace.MyType::MyGrammarKey`.
 
-To see an example, if you want to pick a specific grammar from an assembly or project, you can do it by writing `MyAssembly.dll::MyGrammar` or `MyProject.csproj::MyGrammar` respectively. If the current directory has only one project and you are bored to type it, you can write `::MyGrammar`.
+To see an example, if you want to pick a specific grammar from an assembly or project, you can do it by writing `MyAssembly.dll::Namespace.MyType` or `MyProject.csproj::Namespace.MyType` respectively. If the current directory has only one project and you are bored to type it, you can write `::Namespace.MyType`.
 
 You can see the names of all precompiled grammars with the `farkle list` command which also takes an assembly, a project, or tries to find one on its own.
 
@@ -83,7 +80,6 @@ Scriban imports all properties of Farkle's objects but changes their names. Take
 
 The templates can furthermore use the following functions:
 
-* `to_base_64 <bool>`: Returns the grammar file as a Base64-encoded string. If you pass `true`, it will add line breaks every 76 characters.
 * `grammar.is_terminal <token_symbol_handle>`: Exposes the @"Farkle.Grammars.Grammar.IsTerminal*?displayProperty=nameWithType" method.
 * `grammar.get_object_from_handle <handle>`: Converts a @"Farkle.Grammars.TokenSymbolHandle", a @"Farkle.Grammars.GroupHandle", a @"Farkle.Grammars.NonterminalHandle", a @"Farkle.Grammars.ProductionHandle", or an @Farkle.Grammars.EntityHandle", to its respective @"Farkle.Grammars.TokenSymbolDefinition", @"Farkle.Grammars.NonterminalDefinition", or @"Farkle.Grammars.ProductionDefinition" object.
 * `group_dfa_edge <dfa_state>`: Returns an `IGrouping` object that groups the edges of a @"Farkle.Grammars.StateMachines.DfaState`1" by their action.

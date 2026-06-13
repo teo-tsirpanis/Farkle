@@ -1,5 +1,8 @@
 # Farkle's roadmap
 
+> [!NOTE]
+> This document is not updated anymore. For an up-to-date plan of Farkle's development, please consult the [GitHub issues](https://github.com/teo-tsirpanis/Farkle/issues) page.
+
 This document outlines the features that are planned for Farkle's future releases.
 
 Each feature is grouped by release, and is assigned an estimated difficulty and time to completion.
@@ -48,11 +51,12 @@ Farkle's Endgame (tentative title) will be a new project based on Farkle. More d
 
 ## Long-term ideas
 
-* Further optimization of the DFA generator ✳️
+* ~~Further optimization of the DFA generator ✳️~~ Done in Farkle 7
     * Algorithmically challenging
 * Direct UTF-8 support ❇️
     * Farkle's main unit of text is the UTF-16 `char`; it will become `byte`
     * A __very big__ change; it must be evaluated whether it's worthwhile
+    * Parsing bytes is mostly supported in Farkle 7, although these codepaths are inactive, until support for UTF-8 in the builder is added.
 * Support for creating parser tables using the [IELR algorithm](https://www.sciencedirect.com/science/article/pii/S0167642309001191) ❇️
     * Will eliminate potential unexplained LALR conflicts, increasing usability
     * The LALR builder APIs will need refactoring

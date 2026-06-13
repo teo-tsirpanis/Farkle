@@ -2,6 +2,9 @@
   <Folder Name="/build/">
     <Project Path="eng/Farkle.Build.fsproj" />
   </Folder>
+  <Folder Name="/eng/">
+    <Project Path="eng/Farkle.Build.Tasks/Farkle.Build.Tasks.csproj" />
+  </Folder>
   <Folder Name="/performance/">
     <Project Path="performance/Farkle.Benchmarks.FSharpParsers/Farkle.Benchmarks.FSharpParsers.fsproj" />
     <Project Path="performance/Farkle.Benchmarks/Farkle.Benchmarks.csproj" />

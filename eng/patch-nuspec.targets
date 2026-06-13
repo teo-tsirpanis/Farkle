@@ -1,0 +1,12 @@
+<Project>
+  <UsingTask
+    TaskName="Farkle.Build.Tasks.PatchNupkgDependencyGroups"
+    AssemblyFile="$(MSBuildThisFileDirectory)Farkle.Build.Tasks\bin\$(Configuration)\netstandard2.0\Farkle.Build.Tasks.dll" />
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Farkle.Build.Tasks\Farkle.Build.Tasks.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="PatchNuspec" AfterTargets="GenerateNuspec">
+    <PatchNupkgDependencyGroups
+      InputPackages="@(NugetPackOutput)" />
+  </Target>
+</Project>

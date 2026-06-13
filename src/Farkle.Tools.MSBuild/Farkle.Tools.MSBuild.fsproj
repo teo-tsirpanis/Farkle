@@ -6,6 +6,7 @@
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
+    <PatchNuspecDependencies>true</PatchNuspecDependencies>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -34,12 +35,13 @@
     <ProjectReference Include="..\Farkle\Farkle.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Shared\Farkle.Tools.Shared.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Farkle.Tools.Precompiler\Farkle.Tools.Precompiler.csproj" PrivateAssets="all" />
+    <!-- Include all exported dependencies here. A task will remove the framework attribute from the nuspec. -->
+    <PackageReference Include="Sigourney.Build" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.Core" PrivateAssets="all" />
     <PackageReference Include="Serilog.Sinks.MSBuild" PrivateAssets="all" />
     <PackageReference Include="Sigourney" PrivateAssets="all" />
-    <PackageReference Include="Sigourney.Build" />
   </ItemGroup>
   <Target
       Name="AddBuildDependencyFileToBuiltProjectOutputGroupOutput"

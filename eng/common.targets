@@ -2,4 +2,5 @@
   <ItemGroup Condition="$(ExcludeFromCodeCoverage) == true">
     <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
   </ItemGroup>
+  <Import Condition="$(PatchNuspecDependencies) == true" Project="$(MSBuildThisFileDirectory)patch-nuspec.targets" />
 </Project>

@@ -139,6 +139,27 @@ let tests = testList "Grammar builder tests" [
         expectIsParseSuccess result "Parsing failed"
     }
 
+    test "Hidden terminals do not show up in syntax error messages" {
+        let parser =
+            let term = Terminal.Create("A", Regex.string "A", TerminalOptions.Hidden)
+            "X" |||= [!% term; !& "B" .>> "C"]
+            |> GrammarBuilder.buildSyntaxCheck
+        let error = expectWantParseFailure (CharParser.parseString parser "C") "Parsing should have failed"
+        match error with
+        | ParserDiagnostic(TextPosition(1, 1), SyntaxError(tokens, ValueSome "C")) ->
+            Expect.sequenceEqual tokens [ValueSome "B"] "Unexpected expected tokens"
+        | _ -> failtest $"Unexpected parser error {error}"
+    }
+
+    test "Noisy terminals are ignored in unexpected locations" {
+        let parser =
+            let term = Terminal.Create("A", Regex.string "A", TerminalOptions.Noisy)
+            "X" |||= [!% term; !& "B" .>> "C"]
+            |> GrammarBuilder.buildSyntaxCheck
+        expectIsParseSuccess (CharParser.parseString parser "AAAA") "Parsing failed"
+        expectIsParseSuccess (CharParser.parseString parser "BAAACA") "Parsing failed"
+    }
+
     test "Farkle can properly handle block groups" {
         let parser =
             Group.Block("Block Group", "{", "}", fun _ data -> data.ToString())

@@ -48,7 +48,6 @@ internal static class ParserUtilities
         foreach (var action in state.Actions)
         {
             TokenSymbolDefinition symbol = action.Key;
-            // TODO: Add a test once we add the builder and can define hidden terminals.
             if ((symbol.Attributes & TokenSymbolAttributes.Hidden) != 0)
             {
                 continue;

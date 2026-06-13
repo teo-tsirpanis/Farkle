@@ -124,7 +124,6 @@ internal readonly struct DefaultParserImplementation<TChar>
                     goto RetryToken;
                 }
                 TokenSymbolAttributes flags = hotData.GetTokenSymbolFlags(token.Symbol);
-                // TODO: Add a test once we add the builder and can define noise terminals.
                 if ((flags & TokenSymbolAttributes.Noise) != 0)
                 {
                     foundToken = Tokenizer.TryGetNextToken(ref input, TokenSemanticProvider, out token);

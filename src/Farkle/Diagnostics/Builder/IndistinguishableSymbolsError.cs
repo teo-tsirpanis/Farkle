@@ -38,6 +38,7 @@ public sealed class IndistinguishableSymbolsError : ISpanFormattable
     {
         if (grammar.DfaOnChar is { HasConflicts: true } dfa)
         {
+            // If a DFA was built, the symbol name provider should have been provided as well.
             Debug.Assert(symbolNameProvider is not null);
             foreach (var error in GetErrors(dfa, symbolNameProvider))
             {
@@ -84,7 +85,7 @@ public sealed class IndistinguishableSymbolsError : ISpanFormattable
     {
         if (symbolDiagnosticInfo.Length != symbolNames.Length)
         {
-            throw new ArgumentException("Symbol name and diagnostic info arrays do not have the same length", nameof(symbolDiagnosticInfo));
+            throw new ArgumentException("Symbol nameσ and diagnostic info arrays do not have the same length", nameof(symbolDiagnosticInfo));
         }
         Debug.Assert(symbolDiagnosticInfo.Length == symbolNames.Length);
         SymbolNames = symbolNames;

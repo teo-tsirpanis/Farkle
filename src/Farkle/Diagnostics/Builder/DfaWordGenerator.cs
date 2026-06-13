@@ -28,7 +28,6 @@ internal sealed class DfaWordGenerator<TChar>(Dfa<TChar> dfa) where TChar : unma
     private static IEnumerable<TChar> EnumerateGaps(DfaState<TChar> state)
     {
         TChar gapStart = TChar.MinValue;
-        bool hasLastCharacter = false;
         foreach (var edge in state.Edges)
         {
             if (edge.KeyFrom != gapStart)
@@ -38,14 +37,14 @@ internal sealed class DfaWordGenerator<TChar>(Dfa<TChar> dfa) where TChar : unma
                 yield return gapStart;
                 yield return edge.KeyFrom - TChar.One;
             }
+            if (edge.KeyTo == TChar.MaxValue)
+            {
+                yield break;
+            }
             gapStart = edge.KeyTo + TChar.One;
-            hasLastCharacter = edge.KeyTo == TChar.MaxValue;
         }
-        if (!hasLastCharacter)
-        {
-            yield return gapStart;
-            yield return TChar.MaxValue;
-        }
+        yield return gapStart;
+        yield return TChar.MaxValue;
     }
 
     private static TChar GetUnassignedCharacter(DfaState<TChar> state)
@@ -108,7 +107,7 @@ internal sealed class DfaWordGenerator<TChar>(Dfa<TChar> dfa) where TChar : unma
         return statePredecessors;
     }
 
-    public int GetDistanceToAcceptingState(int stateIndex)
+    public int GetDistanceFromStartState(int stateIndex)
     {
         int distance = 0;
         while (stateIndex != _dfa.StartState)
@@ -142,7 +141,7 @@ internal static class DfaWordGenerator
     {
         public string? GenerateWordAsString(int stateIndex)
         {
-            int length = generator.GetDistanceToAcceptingState(stateIndex);
+            int length = generator.GetDistanceFromStartState(stateIndex);
             if (length == -1)
             {
                 return null;

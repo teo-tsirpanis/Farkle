@@ -82,37 +82,6 @@ internal unsafe sealed class DfaWithoutConflicts<TChar> : DfaImplementationBase<
         return GetEdgeBoundsUnsafe(grammarFile, state).Count > 0 || GetDefaultTransitionUnsafe(grammarFile, state) >= 0;
     }
 
-    private int NextStateSlow(ReadOnlySpan<byte> grammarFile, int state, TChar c)
-    {
-        int edgeOffset = ReadFirstEdge(grammarFile, state);
-        int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
-
-        if (edgeLength != 0)
-        {
-            int edge = StateMachineUtilities.BufferBinarySearch(grammarFile, RangeToBase + edgeOffset * sizeof(TChar), edgeLength, c);
-
-            if (edge < 0)
-            {
-                edge = Math.Min(~edge, edgeLength - 1);
-            }
-
-            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(TChar));
-            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(TChar));
-
-            if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
-            {
-                return ReadState(grammarFile, EdgeTargetBase, edgeOffset + edge);
-            }
-        }
-
-        if (DefaultTransitionBase != 0)
-        {
-            return ReadState(grammarFile, DefaultTransitionBase, state);
-        }
-
-        return -1;
-    }
-
     /// <summary>
     /// Uses the <see cref="Dfa{TChar}"/> to match a sequence of characters.
     /// </summary>

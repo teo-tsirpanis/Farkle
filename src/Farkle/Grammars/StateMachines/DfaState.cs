@@ -90,6 +90,17 @@ public readonly struct DfaState<TChar>
     public bool HasConflicts => _dfa.StateHasConflicts(StateIndex);
 
     /// <summary>
+    /// Returns whether the given character appears in the range of one of the state's edges.
+    /// </summary>
+    /// <param name="c">The character to check.</param>
+    /// <remarks>
+    /// This method will return <see langword="true"/> even if the transition is a failing one.
+    /// Matching <paramref name="c"/> through <see cref="DefaultTransition"/> is not considered
+    /// by this method.
+    /// </remarks>
+    internal bool HasEdge(TChar c) => _dfa.HasEdge(StateIndex, c);
+
+    /// <summary>
     /// Contains the edges of a <see cref="DfaState{TChar}"/>.
     /// </summary>
     [DebuggerTypeProxy(typeof(DfaEdgesProxy<>))]

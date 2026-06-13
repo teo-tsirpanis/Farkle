@@ -52,10 +52,10 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
         GroupStartStateBase = dfa.GroupStartStates.Offset;
     }
 
-    protected int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
+    private int ReadFirstEdge(ReadOnlySpan<byte> grammarFile, int state) =>
         (int)grammarFile.ReadUIntVariableSize(FirstEdgeBase + state * _edgeIndexSize, _edgeIndexSize);
 
-    protected int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
+    private int ReadState(ReadOnlySpan<byte> grammarFile, int @base, int index) =>
         (int)grammarFile.ReadUIntVariableSize(@base + index * _stateIndexSize, _stateIndexSize) - 1;
 
     protected TokenSymbolHandle ReadAcceptSymbol(ReadOnlySpan<byte> grammarFile, int index) =>
@@ -91,6 +91,37 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
         return ReadState(grammarFile, GroupStartStateBase, (int)groupIndex - 1);
     }
 
+    protected unsafe int NextStateSlow(ReadOnlySpan<byte> grammarFile, int state, TChar c)
+    {
+        int edgeOffset = ReadFirstEdge(grammarFile, state);
+        int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
+
+        if (edgeLength != 0)
+        {
+            int edge = StateMachineUtilities.BufferBinarySearch(grammarFile, RangeToBase + edgeOffset * sizeof(TChar), edgeLength, c);
+
+            if (edge < 0)
+            {
+                edge = Math.Min(~edge, edgeLength - 1);
+            }
+
+            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(TChar));
+            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(TChar));
+
+            if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
+            {
+                return ReadState(grammarFile, EdgeTargetBase, edgeOffset + edge);
+            }
+        }
+
+        if (DefaultTransitionBase != 0)
+        {
+            return ReadState(grammarFile, DefaultTransitionBase, state);
+        }
+
+        return -1;
+    }
+
     internal sealed override int GetDefaultTransition(int state)
     {
         ValidateStateIndex(state);
@@ -123,6 +154,33 @@ internal abstract class DfaImplementationBase<TChar> : Dfa<TChar> where TChar : 
             return StartState;
         }
         return GetGroupStartStateUnsafe(Grammar.GrammarFile, group.TableIndex);
+    }
+
+    internal sealed override unsafe bool HasEdge(int state, TChar c)
+    {
+        ReadOnlySpan<byte> grammarFile = Grammar.GrammarFile;
+        int edgeOffset = ReadFirstEdge(grammarFile, state);
+        int edgeLength = (state != Count - 1 ? ReadFirstEdge(grammarFile, state + 1) : _edgeCount) - edgeOffset;
+
+        if (edgeLength != 0)
+        {
+            int edge = StateMachineUtilities.BufferBinarySearch(grammarFile, RangeToBase + edgeOffset * sizeof(TChar), edgeLength, c);
+
+            if (edge < 0)
+            {
+                edge = Math.Min(~edge, edgeLength - 1);
+            }
+
+            TChar cFrom = StateMachineUtilities.Read<TChar>(grammarFile, RangeFromBase + (edgeOffset + edge) * sizeof(TChar));
+            TChar cTo = StateMachineUtilities.Read<TChar>(grammarFile, RangeToBase + (edgeOffset + edge) * sizeof(TChar));
+
+            if (cFrom.CompareTo(c) <= 0 && c.CompareTo(cTo) <= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal override void ValidateContent(ReadOnlySpan<byte> grammarFile, in GrammarTables grammarTables)

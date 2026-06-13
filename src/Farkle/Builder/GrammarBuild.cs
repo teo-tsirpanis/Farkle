@@ -124,7 +124,7 @@ internal static class GrammarBuild
         var log = options.Log.WithRedirectErrors(errors);
         string grammarName = grammarDefinition.GrammarName;
         log.InformationLocalized(nameof(Resources.Builder_BuildingStarted), grammarName);
-        Grammar grammar = Build(grammarDefinition, outputs, options, in log);
+        var (grammar, symbolNameProvider) = Build(grammarDefinition, outputs, options, in log);
         // Get conflicts and log them. Skip the computation if no errors are logged
         // (i.e. the log has no listeners at all).
         if (log.IsEnabled(DiagnosticSeverity.Error))
@@ -133,13 +133,17 @@ internal static class GrammarBuild
             {
                 log.LrConflict(conflict);
             }
+            foreach (IndistinguishableSymbolsError error in IndistinguishableSymbolsError.GetErrors(grammar, symbolNameProvider))
+            {
+                log.IndistinguishableSymbols(error);
+            }
         }
         log.InformationLocalized(nameof(Resources.Builder_BuildingFinished), grammarName, grammar.TokenSymbols.Count,
             grammar.Nonterminals.Count, grammar.Productions.Count, grammar.LrStateMachine?.Count ?? 0, grammar.DfaOnChar?.Count ?? 0);
         return grammar;
     }
 
-    private static Grammar Build(GrammarDefinition grammarDefinition, BuilderOutputs outputs, BuilderOptions options, in BuilderLogger log)
+    private static (Grammar, ISymbolNameProvider?) Build(GrammarDefinition grammarDefinition, BuilderOutputs outputs, BuilderOptions options, in BuilderLogger log)
     {
         ref readonly GrammarGlobalOptions globalOptions = ref grammarDefinition.GlobalOptions;
         bool autoWhitespace = globalOptions.AutoWhitespace;
@@ -305,7 +309,7 @@ internal static class GrammarBuild
             {
                 dfaBuildOptions |= DfaBuildOptions.CaseSensitive;
             }
-            var dfaBuild = new DfaBuild<char>(dfaSymbols.GetName, writer.TokenSymbolCount, log, options.CancellationToken);
+            var dfaBuild = new DfaBuild<char>(dfaSymbols, log, options.CancellationToken);
             var dfaWriter = new DfaWriter<char>();
             if (dfaBuild.Build(regex, dfaWriter, dfaBuildOptions, options.MaxTokenizerStates))
             {
@@ -339,7 +343,7 @@ internal static class GrammarBuild
 #if DEBUG
         grammar.ValidateContent();
 #endif
-        return grammar;
+        return (grammar, dfaSymbols);
 
         void HandleGroup(string name, string start, string? endOrNewLine, GroupOptions options, TokenSymbolHandle container)
         {
@@ -439,7 +443,7 @@ internal static class GrammarBuild
         }
     }
 
-    private sealed class SymbolNameProvider(int sizeHint)
+    private sealed class SymbolNameProvider(int sizeHint) : ISymbolNameProvider
     {
         private readonly Dictionary<TokenSymbolHandle, (string Name, TokenSymbolKind Kind)> _symbolNames = new(sizeHint);
 

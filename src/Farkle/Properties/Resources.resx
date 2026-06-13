@@ -103,7 +103,7 @@
     <value>DFA has exceeded the limit of {0} states</value>
   </data>
   <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
-    <value>Cannot distinguish between symbols: {0}</value>
+    <value>Cannot distinguish between symbols: {0}. They can all match '{1}' for example.</value>
   </data>
   <data name="Builder_SymbolCannotBeMatched" xml:space="preserve">
     <value>Symbol {0} cannot be matched by any string</value>

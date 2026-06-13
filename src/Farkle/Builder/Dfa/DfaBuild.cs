@@ -23,24 +23,21 @@ namespace Farkle.Builder.Dfa;
 /// The algorithm is a substantially modified edition of the one found at §3.9.5 in
 /// "Compilers: Principles, Techniques and Tools" by Aho, Lam, Sethi &amp; Ullman.
 /// </remarks>
-/// <param name="symbolNameProvider">A delegate that provides diagnostic information about token symbols.</param>
-/// <param name="tokenSymbolCount">The number of token symbols in the grammar.</param>
+/// <param name="symbolNameProvider">An object that provides diagnostic information about token symbols.</param>
 /// <param name="cancellationToken">Used to cancel the building process.</param>
 /// <param name="log">Used to log events in the building process.</param>
-internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbolNameProvider,
-    int tokenSymbolCount, BuilderLogger log = default, CancellationToken cancellationToken = default)
+internal struct DfaBuild<TChar>(ISymbolNameProvider symbolNameProvider,
+    BuilderLogger log = default, CancellationToken cancellationToken = default)
     where TChar : unmanaged, IComparable<TChar>, IMinMaxValue<TChar>, INumberBase<TChar>
 {
-    private int TokenSymbolCount { get; } = tokenSymbolCount;
-
     private CancellationToken CancellationToken { get; } = cancellationToken;
 
     private readonly BuilderLogger Log = log;
 
     private RegexRangeCanonicalizer ReusableRangeCanonicalizer = new();
 
-    private BuilderSymbolName GetSymbolName(TokenSymbolHandle symbol) =>
-        symbol.HasValue ? symbolNameProvider(symbol) : new("", TokenSymbolKind.Terminal, false);
+    private readonly BuilderSymbolName GetSymbolName(TokenSymbolHandle symbol) =>
+        symbol.HasValue ? symbolNameProvider.GetName(symbol) : new("", TokenSymbolKind.Terminal, false);
 
     // Priorities. The higher the number, the higher the priority.
 
@@ -160,10 +157,8 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
         return firstSymbol;
     }
 
-    private void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, DfaBuildOptions options)
+    private static void WriteDfa(List<DfaState> states, DfaWriter<TChar> dfaWriter, DfaBuildOptions options)
     {
-        HashSet<BitSet>? seenConflicts = null;
-        BitArrayNeo? conflictsOfState = null;
         // If there are already states in the DFA writer, adjust the numbers
         // of all the new ones.
         int stateNumberAdjustment = dfaWriter.StateCount;
@@ -188,30 +183,6 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
                 // FindDominantSymbol returning null means either:
                 // 1. There are no accept symbols so we add nothing.
                 // 2. There are multiple accept symbols so we add them all.
-                if (state.AcceptSymbols is not [])
-                {
-                    seenConflicts ??= [];
-                    conflictsOfState ??= new BitArrayNeo(TokenSymbolCount);
-                    conflictsOfState.SetAll(false);
-                    var namesBuilder = ImmutableArray.CreateBuilder<string>(state.AcceptSymbols.Count);
-                    var symbolInfoBuilder = ImmutableArray.CreateBuilder<(TokenSymbolKind, bool ShouldDisambiguate)>(state.AcceptSymbols.Count);
-                    foreach (var (_, symbol) in state.AcceptSymbols)
-                    {
-                        if (!conflictsOfState.Set(symbol.Value, true))
-                        {
-                            continue;
-                        }
-                        var name = GetSymbolName(symbol);
-                        namesBuilder.Add(name.Name);
-                        symbolInfoBuilder.Add((name.Kind, name.ShouldDisambiguate));
-                    }
-                    Debug.Assert(namesBuilder.Count > 1);
-                    // Do not log the same set of indistunguishable symbols twice.
-                    if (seenConflicts.Add(conflictsOfState.ToBitSet()))
-                    {
-                        Log.IndistinguishableSymbols(new(namesBuilder.DrainToImmutable(), symbolInfoBuilder.DrainToImmutable()));
-                    }
-                }
                 foreach (var (_, symbol) in state.AcceptSymbols)
                 {
                     dfaWriter.AddAccept(symbol);
@@ -222,7 +193,7 @@ internal struct DfaBuild<TChar>(Func<TokenSymbolHandle, BuilderSymbolName> symbo
         }
     }
 
-    private List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
+    private readonly List<DfaState>? BuildDfaStates(List<RegexLeaf> leaves, List<BitSet> followPos, BitSet rootStateId, int maxStates)
     {
         Dictionary<BitSet, DfaState> states = [];
         List<DfaState> stateList = [];

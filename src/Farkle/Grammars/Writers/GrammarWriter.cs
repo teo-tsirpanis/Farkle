@@ -35,8 +35,6 @@ internal sealed class GrammarWriter : IGrammarSyntaxProvider
         + (_stringHeapWriter.LengthSoFar > 0 ? 1 : 0)
         + (_blobHeapWriter.LengthSoFar > 0 ? 1 : 0);
 
-    public int TokenSymbolCount => _tablesWriter.TokenSymbolRowCount;
-
     int IGrammarSyntaxProvider.TerminalCount => _tablesWriter.TerminalCount;
 
     int IGrammarSyntaxProvider.NonterminalCount => _tablesWriter.NonterminalCount;

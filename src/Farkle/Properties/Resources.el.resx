@@ -103,7 +103,7 @@
     <value>Το DFA έχει υπερβεί το όριο των {0} καταστάσεων</value>
   </data>
   <data name="Builder_IndistinguishableSymbols" xml:space="preserve">
-    <value>Δε μπορεί να γίνει διάκριση μεταξύ των συμβόλων: {0}</value>
+    <value>Δε μπορεί να γίνει διάκριση μεταξύ των συμβόλων: {0}. Όλα μπορούν να ταιριάξουν με τη λέξη '{1}' για παράδειγμα.</value>
   </data>
   <data name="Builder_SymbolCannotBeMatched" xml:space="preserve">
     <value>Το σύμβολο {0} δεν μπορεί να αντιστοιχηθεί από καμία συμβολοσειρά</value>

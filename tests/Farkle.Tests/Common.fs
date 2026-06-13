@@ -53,8 +53,7 @@ let buildSimpleRegexMatcherEx options regexes =
         ||> Seq.map2 (fun r t -> Regex.Accept(r, t, false))
         |> Regex.choice
     let dfaWriter = DfaWriter<char>()
-    let dfaBuild = DfaBuild<char>((fun x -> BuilderSymbolName($"Token{x.Value}", TokenSymbolKind.Terminal, false)), count)
-    if dfaBuild.Build(regex, dfaWriter, options, Int32.MaxValue) then
+    if DfaBuild<char>().Build(regex, dfaWriter, options, Int32.MaxValue) then
         gw.AddStateMachine dfaWriter
     gw.SetGrammarInfo(gw.GetOrAddString("SimpleGrammar"), rootNonterminal, GrammarAttributes.None)
     gw.ToImmutableArray()

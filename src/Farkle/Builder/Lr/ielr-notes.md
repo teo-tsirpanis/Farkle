@@ -60,14 +60,14 @@ Lookahead sets form on a non-kernel item from the goto follows of the goto that 
 
 This is simple. For each state, compute the set of its immediate predecessors.
 
-#### Goto follows from kernel items
+#### Goto follows from kernel items (`follow_kernel_items`)
 
 For each goto, and for each kernel item in the goto's state, this relation holds if:
 
 * You can go from the goto to the goto of the kernel item, by following zero or more internal dependencies.
 * The sequence of symbols one position after the dot in the kernel item is nullable.
 
-> I am 99% sure that a goto on a kernel item has this property in the symbols after the kernel item's dot are nullable, and that it propagates with internal dependencies. If this is true, then it becomes surprisingly simple to compute.
+This can be computed surprisingly simply, by setting this property to gotos on kernel items whose symbols after the dot are nullable, and propagating it with internal dependencies.
 
 #### Always follows
 
@@ -144,19 +144,6 @@ An annotation matrix specifies a split-stable dominant contribution if, an alway
 
 ### Phase 3: Split States
 
-> [!NOTE]
-> This section was written by a large language model, after being fed the IELR paper and the notes from previous phases. A human review and rewrite are pending.
-
-Phase 3 recomputes the parser states, using the LALR(1) state cores from phase 0 as a skeleton, but with a stricter state compatibility test informed by phase 2's annotations. The result is a set of states where all LR(1)-relative inadequacies have been eliminated.
-
-#### How it works (high level)
-
-Phase 3 works similarly to the LR(0) construction from phase 0 step 1: it computes successor states recursively starting from the start state, and along the way merges each new state with an existing isocore if they pass a compatibility test. The key differences from LALR(1) are:
-
-* LALR(1) merges all isocores unconditionally. Phase 3 uses a stricter test based on phase 2's annotations.
-* Phase 3 does not recompute state cores or transitions — it reuses the ones from the LALR(1) tables.
-* Phase 3 does not compute full lookahead sets. It only propagates the _filtered_ lookaheads that appear in phase 2's annotations, since those are the only ones that influence the compatibility test.
-
 #### Tracking isocores
 
 Phase 3 maintains several bookkeeping tables:
@@ -165,14 +152,16 @@ Phase 3 maintains several bookkeeping tables:
 * **`isocore_nexts`**: A circularly linked list connecting all isocores of each LALR(1) state, so phase 3 can quickly iterate through them when searching for a compatible merge target.
 * **`lookaheads_recomputed`**: A Boolean per state, initially false. Set to true once phase 3 has propagated lookaheads from at least one predecessor. A state whose lookaheads have not been recomputed is always considered compatible (it's just a placeholder waiting for its first set of lookaheads).
 
-#### Lookahead propagation
+#### Lookahead propagation (`propagate_lookaheads`)
 
-Phase 3 does not propagate all lookaheads — only the ones that matter for the compatibility test. It uses two helper concepts:
+Phase 3 propageates lookaheads from a state to its successors (subject to filtering described below). For each kernel item of a successor state:
 
-* **`lookahead_set_filters`**: For each kernel item in a state, the set of tokens that appear in any annotation on that state's LALR(1) isocore as part of a potential contribution depending on that kernel item. Only these tokens are propagated.
-* **`propagate_lookaheads`**: Computes the filtered lookaheads to propagate from a state to a given successor. For each kernel item in the successor:
-    * If the dot is past position 2, the lookahead comes from the matching kernel item (same production, dot one position left) in the predecessor, intersected with the successor's filter.
-    * If the dot is at position 2, the lookahead comes from a recomputed goto follow set for the predecessor, intersected with the successor's filter. The goto follow set is computed using `always_follows` plus contributions from `follow_kernel_items` and the predecessor's own `item_lookahead_sets`.
+* If the dot is past position 2, the item's lookahead set is equal to the lookahead set of the matching kernel item (same production, dot one position to the left) in the predecessor.
+* If the dot is at position 2, the lookahead comes from a goto follow. In this case, let `g` be the goto on the item's LHS nonterminal in the predecessor state's LALR(1) isocore. The item's lookahead set is equal to the union of:
+  * The always follows set of `g`.
+  * For each true value in the `follow_kernel_items` set of `g`, the lookahead set of the matching kernel item in the predecessor.
+
+In either case, phase 3 does not propagate all lookaheads. The lookahead set of each kernel item in a state needs to contain only the tokens that appear in an annotation of the state's LALR(1) isocore, with a potential contribution that has a true value for that kernel item.
 
 #### State compatibility test
 
@@ -183,37 +172,13 @@ Phase 3 considers two isocores compatible (`is_compatible`) if any of the follow
     1. Both states make the same dominant contribution to the referenced inadequacy.
     2. One or both states make _no_ contributions to the referenced inadequacy (the conflict is irrelevant from their perspective).
 
-The dominant contribution is computed by `dominant_contribution`: given a state, an annotation, and a set of lookaheads, it assembles the set of contributions the state would make (always contributions are always included; potential contributions are included only if the conflicted token appears in the relevant kernel item lookahead sets), and then applies Δ to select the dominant one.
+The dominant contribution is computed by `dominant_contribution`: given a state, an annotation, and a set of lookaheads, it assembles the set of contributions the state would make (always contributions are always included; potential contributions are included only if the conflicted token appears in kernel item lookahead sets with a true value in the matrix), and then applies Δ to select the dominant one.
 
-The key insight is: if two isocores make the same dominant contribution, merging them cannot change the dominant contribution (assuming Δ is _merge-stable_), so the merge is safe — it cannot introduce a mysterious conflict.
-
-#### Merge stability
-
-The compatibility test assumes that Δ is _merge-stable_: if two subsets of contributions independently select the same dominant contribution, their union also selects that same dominant contribution. Bison's Δ is always merge-stable. If a different implementation's Δ is not merge-stable, adjustments to phases 2, 3, and 5 are needed (see section 3.5.3 of the paper for details).
+Because unlike the IELR paper, Farkle's Δ can return answers of "cannot choose" or "choose neither", two "choose neither" answers are considered compatible, while two "cannot choose" answers are _not_ considered compatible. We could be more precise if we kept track of all conflicting contributions and directly compared them.
 
 #### The algorithm (`split_states`)
 
-The algorithm is a breadth-first iteration over all states:
-
-1. Initialize: mark all LALR(1) states as having unrecomputed lookaheads.
-2. For each state _s_ (in order, including newly created states), for each transition from _s_ to a successor _s'_:
-    * Compute the filtered lookaheads _K_ to propagate from _s_ to _s'_.
-    * Search the isocore list of _s'_ for a compatible state _i_ (using `is_compatible(i, K)`).
-    * If no compatible isocore exists: create a new state (a copy of _s'_'s LALR(1) isocore), set its lookaheads to _K_, add it to the isocore list, and redirect the transition from _s_ to point to it.
-    * If _s'_ itself hasn't had its lookaheads recomputed yet: set _s'_'s lookaheads to _K_ and mark it as recomputed.
-    * Otherwise: redirect the transition to point to the compatible isocore _i_, and merge _K_ into _i_'s existing lookaheads. If _K_ adds any new tokens, recursively propagate the updated lookaheads to _i_'s successors (via `merge_lookaheads`).
-
-The recursive propagation in `merge_lookaheads` is important: when new lookaheads are merged into a state, they must be pushed forward to all successors whose lookaheads have already been computed, because the new tokens might affect compatibility tests further down the lane. The recursion stops when it encounters a successor whose lookaheads haven't been recomputed yet (those will be handled later by the main loop).
-
-#### Suboptimum state merging
-
-Phase 3 is a greedy algorithm — it merges with the first compatible isocore it finds. This is locally optimal but not necessarily globally optimal. Three sources of suboptimality exist:
-
-* **Phase 3 orphans**: When a state is redirected to a different isocore, the old isocore might retain lookaheads that no longer have a source. These orphaned lookaheads can cause unnecessary compatibility failures.
-* **Phase 5 orphans**: Conflict resolution in phase 5 can remove transitions, orphaning lookaheads or annotations that phases 2–3 relied on.
-* **Greedy merging**: The first compatible merge found might not lead to the smallest overall table. A globally optimal solution would require considering the effects of each merge on all future merges across entire lanes.
-
-In practice, these issues rarely matter — IELR(1) generates tables nearly as small as LALR(1) for real-world grammars. Unreachable states (from orphans) can be cleaned up in phase 6.
+The IELR paper includes pseudocode for phase 3's main algorithm. No further elaboration is necessary here.
 
 ### Phase 4: Compute Reduction Lookaheads
 

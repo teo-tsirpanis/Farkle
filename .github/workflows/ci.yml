@@ -46,6 +46,10 @@ jobs:
       - name: Run tests
         run: |
           dotnet run --project eng/Farkle.Build.fsproj -- -t Test
+      - name: Run package validation
+        if: runner.os == 'Linux'
+        run: |
+          dotnet pack --project src/pack.proj
       - name: End SonarCloud scanning
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

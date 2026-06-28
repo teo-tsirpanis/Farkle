@@ -360,6 +360,8 @@ internal readonly struct LalrBuild
             }
             starts.Add(i);
         }
+        // S' → S is not nullable, because of the implicit trailing end symbol.
+        starts[StartProductionIndex] = Syntax.GetProductionMembers(Syntax.StartProduction).Count;
         Log.Debug("Computed production nullable starts");
         return starts.MoveToImmutable();
     }
@@ -401,7 +403,6 @@ internal readonly struct LalrBuild
                     bool isProductionNullable = true;
                     foreach (Symbol s in Syntax.GetProductionMembers(p))
                     {
-                        // The only nullable terminal is the end symbol, which is not encountered in syntax.
                         if (s.IsTerminal)
                         {
                             isProductionNullable = false;
@@ -423,6 +424,9 @@ internal readonly struct LalrBuild
                 }
             }
         } while (changed);
+        // The implicit end symbol at the end of S' → S makes the start symbol in the augmented
+        // grammar never nullable.
+        nullable[StartSymbolIndex] = false;
         if (Log.IsEnabled(DiagnosticSeverity.Debug))
         {
             Log.Debug($"Computed nullable nonterminals after {iterations} iterations");

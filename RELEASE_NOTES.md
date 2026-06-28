@@ -4,6 +4,7 @@ The following changes were made after 7.0.0-preview.3:
 * Rendering grammars in the CLI tool is now done with the `farkle render` command instead of `farkle new`. The latter is still supported for compatibility.
 * HTML templates display a list of LR and DFA states with conflicts, if there are any.
 * Indistinguishable symbol errors now include an example word that can be matched by all the indistinguishable symbols. This feature was present in Farkle 6.
+* Fixed an edge-case bug in the LALR builder, which affected grammars that accept the empty string as input.
 
 #### 7.0.0-preview.3 - 18-05-2026
 The following changes were made after 7.0.0-preview.2:

@@ -1,4 +1,15 @@
-#### 7.0.0-preview.4
+#### 7.0.0 - 29-06-2026
+* Farkle was rewritten in C#, and features performance improvements across the board, as well as an improved and extensible architecture.
+  * There are several breaking changes; please consult the [migration guide](https://farkle.dev/migration/60-70.html) for more details.
+  * The precompiler is not yet supported; it will be ported in a subsequent preview version.
+* The parser became faster and allocation-free (allocations happen only in semantic analysis, fka post-processing), and supports parsing text from `ReadOnlySpan<char>`, as well as parsing streaming input asynchronously.
+* The grammar format was redesigned to be extensible and have a significantly reduced reading overhead. Building grammars is also significantly faster as well. Take a look at the [benchmarks](https://github.com/teo-tsirpanis/Farkle/blob/rel-notes/performance/reports/GrammarReaderBenchmark.7.0.0-pre-builder.md) for more information.
+  * Reading GOLD Parser grammars is still supported, and works by converting them to the new format.
+  * Also added support for reading CGT grammars, used in early GOLD Parser versions.
+* Diagnostic messages are localizable, with English and Greek translations being provided.
+* Terminals can now be defined as [hidden](https://farkle.dev/api/Farkle.Builder.TerminalOptions.html), which means that they will not appear in the expected symbol list of syntax error messages.
+* Terminals can now be defined as [noisy](https://farkle.dev/api/Farkle.Builder.TerminalOptions.html), which means that they will be ignored if they appear in an unexpected position.
+
 The following changes were made after 7.0.0-preview.3:
 * Ported support for reading precompiled grammars in the CLI tool.
 * Rendering grammars in the CLI tool is now done with the `farkle render` command instead of `farkle new`. The latter is still supported for compatibility.
@@ -35,6 +46,7 @@ The following changes were made after 7.0.0-preview.1:
 * The grammar format was redesigned to be extensible and have a significantly reduced reading overhead. Building grammars is also significantly faster as well. Take a look at the [benchmarks](https://github.com/teo-tsirpanis/Farkle/blob/rel-notes/performance/reports/GrammarReaderBenchmark.7.0.0-pre-builder.md) for more information.
   * Reading GOLD Parser grammars is still supported, and works by converting them to the new format.
   * Also added support for reading CGT grammars, used in early GOLD Parser versions.
+* Diagnostic messages are localizable, with English and Greek translations being provided.
 * Terminals can now be defined as [hidden](https://farkle.dev/api/Farkle.Builder.TerminalOptions.html), which means that they will not appear in the expected symbol list of syntax error messages.
 * Terminals can now be defined as [noisy](https://farkle.dev/api/Farkle.Builder.TerminalOptions.html), which means that they will be ignored if they appear in an unexpected position.
 

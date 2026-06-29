@@ -17,7 +17,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Common/ComSharp/**/*.cs" LinkBase="ComSharp" />
-    <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/any" BuildAction="Compile" />
+    <!-- Use the earliest supported framework. We can't use "any", because the package would be installable
+    even on frameworks we don't provide binaries for. -->
+    <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/net8.0" BuildAction="Compile" />
     <Content Include="Farkle.fsx" Pack="true" PackagePath="content" />
     <InternalsVisibleTo Include="Farkle.Benchmarks" />
     <InternalsVisibleTo Include="Farkle.Tests" />

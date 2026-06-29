@@ -1,3 +1,6 @@
+#### 7.0.1
+* Fixed a bug where installing the `Farkle` NuGet package on unsupported frameworks did not fail.
+
 #### 7.0.0 - 29-06-2026
 * Farkle was rewritten in C#, and features performance improvements across the board, as well as an improved and extensible architecture.
   * There are several breaking changes; please consult the [migration guide](https://farkle.dev/migration/60-70.html) for more details.

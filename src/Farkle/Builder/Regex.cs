@@ -420,7 +420,7 @@ public sealed class Regex
     {
         ArgumentNullException.ThrowIfNull(chars);
 
-        var charsBuffer = chars is string s ? ImmutableBuffer.Create(s) : ImmutableBuffer.Create(chars.ToImmutableArray());
+        var charsBuffer = ImmutableBuffer.Create(chars);
         if (charsBuffer.IsEmpty)
         {
             return Any;
@@ -485,7 +485,7 @@ public sealed class Regex
     {
         ArgumentNullException.ThrowIfNull(chars);
 
-        var charsBuffer = chars is string s ? ImmutableBuffer.Create(s) : ImmutableBuffer.Create(chars.ToImmutableArray());
+        var charsBuffer = ImmutableBuffer.Create(chars);
         if (charsBuffer.IsEmpty)
         {
             return Void;

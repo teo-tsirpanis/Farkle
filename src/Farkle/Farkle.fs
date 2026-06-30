@@ -259,9 +259,8 @@ module internal Regex =
     let inline char (c: char) = Regex.Literal c
 
     /// An alias for `Regex.OneOf` that takes characters.
-    let inline chars (str: #seq<char>) =
+    let inline chars (str: seq<char>) =
         str
-        |> makeImmutableArray
         |> Regex.OneOf
 
     /// An alias for `Regex.OneOf` that takes character ranges.
@@ -274,9 +273,8 @@ module internal Regex =
     let any = Regex.Any
 
     /// An alias for `Regex.NotOneOf` that takes characters.
-    let inline allButChars  (str: #seq<char>) =
+    let inline allButChars  (str: seq<char>) =
         str
-        |> makeImmutableArray
         |> Regex.NotOneOf
 
     /// An alias for `Regex.NotOneOf` that takes character ranges.

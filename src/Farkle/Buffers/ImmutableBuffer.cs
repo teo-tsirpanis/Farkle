@@ -59,6 +59,19 @@ internal static class ImmutableBuffer
 {
     public static ImmutableBuffer<T> Create<T>(ImmutableArray<T> array) => new(ImmutableCollectionsMarshal.AsArray(array));
 
+    public static ImmutableBuffer<T> Create<T>(IEnumerable<T> enumerable)
+    {
+        if (typeof(T) == typeof(char) && enumerable is string s)
+        {
+            return new(s);
+        }
+        if (enumerable is ImmutableArray<T> array)
+        {
+            return Create(array);
+        }
+        return new(enumerable.ToArray());
+    }
+
     public static ImmutableBuffer<char> Create(string? s) => new(s);
 
     public static ImmutableBuffer<T> Create<T>(ReadOnlySpan<T> span) => new(span.ToArray());

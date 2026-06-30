@@ -41,7 +41,7 @@ public static class Nonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(productions), nameof(Resources.Builder_Nonterminal_EmptyProductions));
         }
         return new Nonterminal<T>(name, ImmutableArray<IProduction>.CastUp(productions));
     }
@@ -80,7 +80,7 @@ public static class Nonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(productions), nameof(Resources.Builder_Nonterminal_EmptyProductions));
         }
         return new Untyped.Nonterminal(name, ImmutableArray<IProduction>.CastUp(productions));
     }
@@ -147,7 +147,7 @@ public sealed class Nonterminal<T> : INonterminal, IGrammarSymbol<T>
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(productions), nameof(Resources.Builder_Nonterminal_EmptyProductions));
         }
         _innerNonterminal.SetProductions(ImmutableArray<IProduction>.CastUp(productions));
     }

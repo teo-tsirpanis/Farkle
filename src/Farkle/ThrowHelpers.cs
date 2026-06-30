@@ -13,11 +13,11 @@ internal static class ThrowHelpers
 {
     [DoesNotReturn]
     public static void ThrowArgumentException(string? parameterName, string? message = null, Exception? innerException = null)
-        => throw new ArgumentException(parameterName, message, innerException);
+        => throw new ArgumentException(message, parameterName, innerException);
 
     [DoesNotReturn]
     public static void ThrowArgumentExceptionLocalized(string? parameterName, string resourceKey, Exception? innerException = null) =>
-        throw new ArgumentException(parameterName, Resources.GetResourceString(resourceKey), innerException);
+        throw new ArgumentException(Resources.GetResourceString(resourceKey), parameterName, innerException);
 
     [DoesNotReturn]
     public static void ThrowArgumentNullException(string? parameterName, string? message = null)

@@ -76,7 +76,7 @@ public sealed class Nonterminal : INonterminal
         }
         if (productions.IsEmpty)
         {
-            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(Resources.Builder_Nonterminal_EmptyProductions), nameof(productions));
+            ThrowHelpers.ThrowArgumentExceptionLocalized(nameof(productions), nameof(Resources.Builder_Nonterminal_EmptyProductions));
         }
         if (!ImmutableInterlocked.InterlockedInitialize(ref _productions, ImmutableArray<IProduction>.CastUp(productions)))
         {

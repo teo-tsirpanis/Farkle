@@ -252,12 +252,12 @@ open Farkle.Builder
 // number terminal defined above
 
 let expression = nonterminal "Expression"
-expression.SetProductions(
-    !@ expression .>> "+" .>>. number => (fun x1 x2 -> x1 + x2),
-    !@ expression .>> "-" .>>. number => (fun x1 x2 -> x1 - x2),
-    !@ expression .>> "*" .>>. number => (fun x1 x2 -> x1 * x2),
-    !@ expression .>> "/" .>>. number => (fun x1 x2 -> x1 / x2),
-    !@ number |> asProduction)
+setProductions expression [
+    !@ expression .>> "+" .>>. number => (fun x1 x2 -> x1 + x2)
+    !@ expression .>> "-" .>>. number => (fun x1 x2 -> x1 - x2)
+    !@ expression .>> "*" .>>. number => (fun x1 x2 -> x1 * x2)
+    !@ expression .>> "/" .>>. number => (fun x1 x2 -> x1 / x2)
+    !@ number |> asProduction]
 
 let parser = GrammarBuilder.build expression
 
@@ -318,15 +318,15 @@ open Farkle.Builder.OperatorPrecedence
 let NEG = obj()
 
 let expression = nonterminal "Expression"
-expression.SetProductions(
-    !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2),
-    !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2),
-    !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2),
-    !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
-    !@ expression .>> "^" .>>. expression => (fun x1 x2 -> System.Math.Pow(x1, x2)),
-    !@ expression .>> "-" |> prec NEG => (fun x -> -x),
-    !& "(" .>>. expression .>> ")" |> asProduction,
-    !@ number |> asProduction)
+setProductions expression [
+    !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2)
+    !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2)
+    !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2)
+    !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2)
+    !@ expression .>> "^" .>>. expression => (fun x1 x2 -> System.Math.Pow(x1, x2))
+    !@ expression .>> "-" |> prec NEG => (fun x -> -x)
+    !& "(" .>>. expression .>> ")" |> asProduction
+    !@ number |> asProduction]
 
 let expressionWithOperators =
     expression.WithOperatorScope(OperatorScope(
@@ -409,15 +409,15 @@ let expressionWithOperators =
         |> terminal (T(fun _ input -> Double.Parse(input, CultureInfo.InvariantCulture)))
 
     let expression = nonterminal "Expression"
-    expression.SetProductions(
-        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2),
-        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2),
-        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2),
-        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
-        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
-        !& "-" .>>. expression |> prec NEG => (fun x -> -x),
-        !& "(" .>>. expression .>> ")" |> asProduction,
-        !@ number |> asProduction)
+    setProductions expression [
+        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2)
+        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2)
+        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2)
+        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2)
+        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2))
+        !& "-" .>>. expression |> prec NEG => (fun x -> -x)
+        !& "(" .>>. expression .>> ")" |> asProduction
+        !@ number |> asProduction]
 
     expression.WithOperatorScope(OperatorScope(
         new LeftAssociative("+", "-"),
@@ -525,15 +525,15 @@ let expressionWithOperators() =
         |> terminal (T(fun _ input -> Double.Parse(input, CultureInfo.InvariantCulture)))
 
     let expression = nonterminal "Expression"
-    expression.SetProductions(
-        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2),
-        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2),
-        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2),
-        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2),
-        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2)),
-        !& "-" .>>. expression |> prec NEG => (fun x -> -x),
-        !& "(" .>>. expression .>> ")" |> asProduction,
-        !@ number |> asProduction)
+    setProductions expression [
+        !@ expression .>> "+" .>>. expression => (fun x1 x2 -> x1 + x2)
+        !@ expression .>> "-" .>>. expression => (fun x1 x2 -> x1 - x2)
+        !@ expression .>> "*" .>>. expression => (fun x1 x2 -> x1 * x2)
+        !@ expression .>> "/" .>>. expression => (fun x1 x2 -> x1 / x2)
+        !@ expression .>> "^" .>>. expression => (fun x1 x2 -> Math.Pow(x1, x2))
+        !& "-" .>>. expression |> prec NEG => (fun x -> -x)
+        !& "(" .>>. expression .>> ")" |> asProduction
+        !@ number |> asProduction]
 
     expression.WithOperatorScope(OperatorScope(
         new LeftAssociative("+", "-"),

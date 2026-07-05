@@ -19,7 +19,7 @@ internal class PrecompilerInterfaceTests
     public void Setup()
     {
         var intf = PrecompilerEntryPoints.GetPrecompilerInterface();
-        _precompilerInterface = PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intf).AsComSharp<IPrecompilerInterface>()!;
+        _precompilerInterface = (IPrecompilerInterface)PrecompilerInterfaceWrappers.Instance.ConvertToDotNet(intf)!;
         Assert.That(_precompilerInterface, Is.Not.Null);
     }
 

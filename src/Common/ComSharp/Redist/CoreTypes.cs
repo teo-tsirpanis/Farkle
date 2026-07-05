@@ -8,6 +8,8 @@ global using ComSharpObject = (object? SourceObject, System.Collections.Generic.
 
 using Microsoft.CodeAnalysis;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace ComSharp;
 
@@ -19,7 +21,7 @@ internal abstract class ComSharpWrappers
 {
     private readonly ComSharpVtable _defaultVtable;
 
-    public ComSharpVtable? QueryInterface(object? source, Guid iid)
+    protected ComSharpVtable? QueryInterface(object? source, Guid iid)
     {
         if (source is null)
         {
@@ -43,10 +45,12 @@ internal abstract class ComSharpWrappers
 
     protected abstract bool TryGetInterfaceInfo(Guid iid, [NotNullWhen(true)] out Type? type, [NotNullWhen(true)] out ComSharpVtable? vtable);
 
-    public abstract object? CreateObject(Type targetType, object sourceObject, ComSharpVtable vtable);
+    protected abstract RuntimeTypeHandle GetDotNetWrapperImplementation(RuntimeTypeHandle interfaceType);
 
-// Because COM# objects are value tuples, they can't work with nullable reference types.
-// In order to avoid !s in marshalling code, mark method signatures as nullable-oblivious.
+    protected abstract DotNetWrapper CreateDotNetWrapper(object sourceObject, ComSharpVtable vtable);
+
+    // Because COM# objects are value tuples, they can't work with nullable reference types.
+    // In order to avoid !s in marshalling code, mark method signatures as nullable-oblivious.
 #nullable disable annotations
 
     /// <summary>
@@ -62,8 +66,8 @@ internal abstract class ComSharpWrappers
         {
             case null:
                 return (null, _defaultVtable);
-            case WrappedObject wrapped:
-                return (wrapped.SourceObject, wrapped.Vtable);
+            case DotNetWrapper wrapped:
+                return (wrapped.SourceObject, wrapped.QueryInterface(typeof(T).GUID)!);
         }
         if (!TryGetInterfaceInfo(typeof(T).GUID, out _, out var vtable))
         {
@@ -86,7 +90,7 @@ internal abstract class ComSharpWrappers
             case null: return null;
             case T x: return x;
         }
-        if (CreateObject(typeof(T), obj.SourceObject, obj.Vtable) is not T wrapped)
+        if (CreateDotNetWrapper(obj.SourceObject, obj.Vtable) is not T wrapped)
         {
             throw new InvalidOperationException("Cannot create .NET wrapper for this interface");
         }
@@ -110,11 +114,7 @@ internal abstract class ComSharpWrappers
     /// </remarks>
     public ComSharpObject ConvertToComSharp(object? source)
     {
-        if (source is WrappedObject wrapped)
-        {
-            return (wrapped.SourceObject, wrapped.Vtable);
-        }
-        return (source, _defaultVtable);
+        return ((source as DotNetWrapper)?.SourceObject ?? source, _defaultVtable);
     }
 
     /// <summary>
@@ -122,9 +122,8 @@ internal abstract class ComSharpWrappers
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The returned object supports being casted through methods in the <see cref="WrappedObjectExtensions"/>
-    /// class, to any interface known to this <see cref="ComSharpWrappers"/> instance, that is implemented by
-    /// <paramref name="obj"/>.
+    /// The returned object supports being casted to any interface known to this <see cref="ComSharpWrappers"/>
+    /// instance, that is implemented by <paramref name="obj"/>.
     /// </para>
     /// <para>
     /// This method is the "entry point" from the COM# to the .NET type systems. It is intended to be called
@@ -137,67 +136,69 @@ internal abstract class ComSharpWrappers
         {
             return null;
         }
-        return new WrappedObject(this, obj.SourceObject, obj.Vtable);
+        return CreateDotNetWrapper(obj.SourceObject, obj.Vtable);
+    }
+
+    // This is an abstract class. Each ComSharpWrappers universe will return its own subclass from
+    // CreateDotNetWrapper, in order to avoid interference in the runtime's IDIC cache across universes.
+    protected abstract class DotNetWrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable) : IDynamicInterfaceCastable, IDotNetWrapper
+    {
+        public ComSharpWrappers Wrappers { get; } = wrappers;
+
+        public object SourceObject { get; } = sourceObject;
+
+        private readonly Func<object?, Guid, ComSharpVtable?> _queryInterfaceFunc = (Func<object?, Guid, ComSharpVtable?>)vtable[0];
+
+        public ComSharpVtable? QueryInterface(Guid iid) => _queryInterfaceFunc(SourceObject, iid);
+
+        bool IDynamicInterfaceCastable.IsInterfaceImplemented(RuntimeTypeHandle interfaceType, bool throwIfNotImplemented)
+        {
+            var guid = Type.GetTypeFromHandle(interfaceType)!.GUID;
+            bool isImplemented = QueryInterface(guid) is not null;
+            if (!isImplemented && throwIfNotImplemented)
+            {
+                ThrowIfNotImplemented();
+            }
+            return isImplemented;
+
+            [StackTraceHidden]
+            static void ThrowIfNotImplemented()
+            {
+                throw new InvalidCastException();
+            }
+        }
+
+        RuntimeTypeHandle IDynamicInterfaceCastable.GetInterfaceImplementation(RuntimeTypeHandle interfaceType) =>
+            Wrappers.GetDotNetWrapperImplementation(interfaceType);
+
+        public override bool Equals(object? obj) => Equals(SourceObject, (obj as DotNetWrapper)?.SourceObject ?? obj);
+
+        public override int GetHashCode() => SourceObject.GetHashCode();
+
+        public override string? ToString() => SourceObject.ToString();
     }
 }
 
 [Embedded]
-internal class WrappedObject(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
+internal interface IDotNetWrapper
 {
-    protected ComSharpWrappers Wrappers { get; } = wrappers;
+    ComSharpWrappers Wrappers { get; }
 
-    public object SourceObject { get; } = sourceObject;
+    object SourceObject { get; }
 
-    public ComSharpVtable Vtable { get; } = vtable;
-
-    private ComSharpVtable? QueryInterface(Guid iid) => ((Func<object?, Guid, ComSharpVtable?>)Vtable[0])(SourceObject, iid);
-
-    public bool Is<T>([NotNullWhen(true)] out T? result) where T : class
-    {
-        result = null;
-        if (QueryInterface(typeof(T).GUID) is not { } newVtable)
-        {
-            return false;
-        }
-        if (Wrappers.CreateObject(typeof(T), SourceObject, newVtable) is not T x)
-        {
-            return false;
-        }
-        result = x;
-        return result is not null;
-    }
-
-    public override bool Equals(object? obj) => obj is WrappedObject other && Equals(SourceObject, other.SourceObject);
-
-    public override int GetHashCode() => SourceObject.GetHashCode();
-
-    public override string? ToString() => SourceObject.ToString();
+    ComSharpVtable? QueryInterface(Guid iid);
 }
 
 [Embedded]
-internal static class WrappedObjectExtensions
+internal static class DotNetWrapperExtensions
 {
-    public static bool IsComSharp<T>([NotNullWhen(true)] this object? obj, [NotNullWhen(true)] out T? result) where T : class
+    extension(IDotNetWrapper provider)
     {
-        result = null;
-        if (obj is not WrappedObject wrapped)
+        public TDelegate GetFunction<TInterface, TDelegate>(int idx)
+            where TInterface : class
+            where TDelegate : Delegate
         {
-            return false;
+            return (TDelegate)provider.QueryInterface(typeof(TInterface).GUID)![idx];
         }
-        return wrapped.Is(out result);
-    }
-
-    [return: NotNullIfNotNull(nameof(obj))]
-    public static T? AsComSharp<T>(this object? obj) where T : class
-    {
-        if (obj is null)
-        {
-            return null;
-        }
-        if (!obj.IsComSharp(out T? result))
-        {
-            throw new InvalidCastException();
-        }
-        return result;
     }
 }

@@ -52,13 +52,15 @@ let grammarBuilder =
     let indentCodeBody = nonterminal "IndentCode Body"
     let indentCodeBlock = nonterminal "IndentCode Block"
 
-    indentCodeBody.SetProductions(
-        !@ line |> asProduction,
-        !% blockStart .>>. indentCodeBlock .>> blockEnd => Block)
-    indentCodeBlock.SetProductions(
-        !@ indentCodeBody .>> newline .>>. indentCodeBlock => (fun x xs -> x :: xs),
-        !@ indentCodeBody => List.singleton,
-        empty =% [])
+    setProductions indentCodeBody [
+        !@ line |> asProduction
+        !% blockStart .>>. indentCodeBlock .>> blockEnd => Block
+    ]
+    setProductions indentCodeBlock [
+        !@ indentCodeBody .>> newline .>>. indentCodeBlock => fun x xs -> x :: xs
+        !@ indentCodeBody => List.singleton
+        empty =% []
+    ]
 
     indentCodeBody
     // Redefine whitespace to not include tabs.

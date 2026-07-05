@@ -196,7 +196,7 @@ let designtimeFarkleGen =
         let productionGen =
             Gen.oneof [
                 Gen.elements terminals
-                Gen.elements nonterminals |> Gen.map (fun x -> x :> DesigntimeFarkle)
+                Gen.elements nonterminals |> Gen.map (fun x -> x :> IGrammarSymbol)
             ]
             |> Gen.listOf
         for i = 0 to nonterminals.Length - 1 do
@@ -209,11 +209,11 @@ let designtimeFarkleGen =
             | xs when i = 0 ->
                 // We will force the grammar to derive at least one terminal
                 // this way. GOLD Parser raises an error.
-                nont.SetProductions(empty .>> terminals.[0], Array.ofList xs)
-            | x :: xs ->
-                nont.SetProductions(x, Array.ofList xs)
+                setProductionsU nont <| (empty .>> terminals[0]) ::xs
+            | _ :: _ ->
+                setProductionsU nont productions
             | [] -> failwith "Impossible; the list was requested not to be empty."
-        return nonterminals.[0] :> DesigntimeFarkle
+        return nonterminals.[0] :> IGrammarSymbol
     }
     Gen.sized impl
     // As the size of agrammar increases, it becomes more

@@ -59,10 +59,10 @@ let tests = testList "HTML tests" [
     test "A grammar with conflicts can be rendered" {
         let grammar =
             let expr = nonterminalU "Expr"
-            expr.SetProductions(
-                !% expr .>> "+" .>> expr,
+            setProductionsU expr [
+                !% expr .>> "+" .>> expr
                 !% expr .>> "-" .>> expr
-            )
+            ]
             expr
             |> _.BuildSyntaxCheck(BuilderOutputs.GrammarLrStateMachine)
             |> _.Grammar

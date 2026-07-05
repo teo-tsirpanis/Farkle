@@ -36,15 +36,15 @@ let tests = testList "Regression tests" [
             let nont1 = nonterminalU "N1"
             let nont2 = nonterminalU "N2"
 
-            nont1.SetProductions(
-                !% term1,
+            setProductionsU nont1 [
+                !% term1
                 !% term2 .>> nont2 .>> term2
-            )
-            nont2.SetProductions(
-                !% nont1 .>> nont2,
-                !% nont1,
+            ]
+            setProductionsU nont2 [
+                !% nont1 .>> nont2
+                !% nont1
                 empty
-            )
+            ]
             nont1
             |> GrammarBuilder.buildSyntaxCheck
             |> _.GetGrammar()

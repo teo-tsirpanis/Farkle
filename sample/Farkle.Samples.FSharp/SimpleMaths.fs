@@ -52,15 +52,15 @@ let makeGrammarBuilder fNumber fAdd fSub fMul fDiv fNeg =
 
     let negatePrec = obj()
 
-    expression.SetProductions(
-        !@ expression .>> "+" .>>. expression => fAdd,
-        !@ expression .>> "-" .>>. expression => fSub,
-        !@ expression .>> "*" .>>. expression => fMul,
-        !@ expression .>> "/" .>>. expression => fDiv,
-        !& "-" .>>. expression |> prec negatePrec => fNeg,
-        !& "(" .>>. expression .>> ")" |> asProduction,
+    setProductions expression [
+        !@ expression .>> "+" .>>. expression => fAdd
+        !@ expression .>> "-" .>>. expression => fSub
+        !@ expression .>> "*" .>>. expression => fMul
+        !@ expression .>> "/" .>>. expression => fDiv
+        !& "-" .>>. expression |> prec negatePrec => fNeg
+        !& "(" .>>. expression .>> ")" |> asProduction
         !@ number |> asProduction
-    )
+    ]
 
     let opScope =
         OperatorScope(

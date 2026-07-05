@@ -50,26 +50,26 @@ let builder =
         !& "null" =% null
     ]
     let arrayReversed: Nonterminal<JsonArray> = nonterminal "Array Reversed"
-    arrayReversed.SetProductions(
-        !@ arrayReversed .>> "," .>>. value => (fun xs x -> xs.Add x; xs),
-        !@ value => (fun x -> let xs = JsonArray() in xs.Add(x); xs)
-    )
+    setProductions arrayReversed [
+        !@ arrayReversed .>> "," .>>. value => fun xs x -> xs.Add x; xs
+        !@ value => fun x -> let xs = JsonArray() in xs.Add x; xs
+    ]
     let arrayOptional = "Array Optional" ||= [
         !@ arrayReversed |> asProduction
-        empty => (fun () -> JsonArray())
+        empty => fun () -> JsonArray()
     ]
-    array.SetProductions(!& "[" .>>. arrayOptional .>> "]" => (fun x -> x :> JsonNode))
+    setProductions array [!& "[" .>>. arrayOptional .>> "]" => fun x -> x :> JsonNode]
 
     let objectElement: Nonterminal<JsonObject> = nonterminal "Object Element"
-    objectElement.SetProductions(
-        !@ objectElement .>> "," .>>. string .>> ":" .>>. value => (fun xs k v -> xs.Add(k, v); xs),
-        !@ string .>> ":" .>>. value => (fun k v -> let obj = JsonObject() in obj.Add(k, v); obj)
-    )
+    setProductions objectElement [
+        !@ objectElement .>> "," .>>. string .>> ":" .>>. value => fun xs k v -> xs.Add(k, v); xs
+        !@ string .>> ":" .>>. value => fun k v -> let obj = JsonObject() in obj.Add(k, v); obj
+    ]
     let objectOptional = "Object Optional" ||= [
         !@ objectElement |> asProduction
-        empty => (fun () -> JsonObject())
+        empty => fun () -> JsonObject()
     ]
-    object.SetProductions(!& "{" .>>. objectOptional .>> "}" => (fun x -> x :> JsonNode))
+    setProductions object [!& "{" .>>. objectOptional .>> "}" => fun x -> x :> JsonNode]
 
     value
     |> _.CaseSensitive(true)

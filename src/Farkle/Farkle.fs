@@ -480,7 +480,7 @@ module internal GrammarBuilderOperators =
     let private symbolName (symbol: IGrammarSymbol) = symbol.Name
 
     /// Creates a terminal.
-    let inline terminal name (fTransform: T<_,_>) regex = Terminal.Create(name, regex, fTransform)
+    let inline terminal<'a> name (fTransform: T<_,'a>) regex = Terminal.Create(name, regex, fTransform)
 
     /// Creates a terminal that does not perform any semantic actions.
     let inline terminalU name regex = Terminal.Create(name, regex)
@@ -496,14 +496,31 @@ module internal GrammarBuilderOperators =
     let inline newline<'a> = Terminal.NewLine
 
     /// Creates a `Nonterminal` whose productions must be
-    /// later set with `SetProductions`, or it will raise an
-    /// error on building. Useful for recursive productions.
-    let inline nonterminal name = Nonterminal.Create name
+    /// later set with `setProductions`. Useful for recursive
+    /// productions.
+    /// If you don't set productions, it will result in an error
+    /// when building the grammar.
+    let inline nonterminal<'a> name = Nonterminal.Create<'a> name
+
+    /// Sets the productions of a `Nonterminal`.
+    let inline setProductions (nonterminal: Nonterminal<_>) (productions: #seq<_>) =
+        productions
+        |> Internal.makeImmutableArray
+        |> nonterminal.SetProductions
 
     /// Creates an `Untyped.Nonterminal` whose productions must be
-    /// later set with `SetProductions`, or it will raise an
-    /// error on building. Useful for recursive productions.
+    /// later set with `setProductionsU`. Useful for recursive
+    /// productions.
+    /// If you don't set productions, it will result in an error
+    /// when building the grammar.
     let inline nonterminalU name = Nonterminal.CreateUntyped name
+
+    /// Sets the productions of an `Untyped.Nonterminal`.
+    let setProductionsU (nonterminal: Untyped.Nonterminal) (productions: seq<FSharpProductionBuilders.ProductionBuilder>) =
+        productions
+        |> Seq.map FSharpProductionBuilders.ProductionBuilder.op_Implicit
+        |> ImmutableArray.CreateRange
+        |> nonterminal.SetProductions
 
     /// Raises a `ParserApplicationException` with the given errror object.
     /// This exception will be caught by Farkle and gracefully fail the parsing operation.

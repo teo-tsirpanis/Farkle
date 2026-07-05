@@ -66,11 +66,11 @@ let tests = testList "Operator precedence tests" [
         let parser =
             let number = Terminals.int "Number"
             let expr = nonterminal "Expr"
-            expr.SetProductions(
-                !@ expr .>> "+" .>>. expr => (+),
-                !@ expr .>> "*" .>>. expr => ( * ),
+            setProductions expr [
+                !@ expr .>> "+" .>>. expr => (+)
+                !@ expr .>> "*" .>>. expr => ( * )
                 !@ number |> asProduction
-            )
+            ]
 
             // Both the string literal and the grammar symbol literal should be equivalent.
             let opScope = OperatorScope(LeftAssociative("+"), NonAssociative(literal "*"))

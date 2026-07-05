@@ -107,14 +107,14 @@ let tests = testList "Grammar builder tests" [
 
     test "The productions of typed nonterminals can only be set once." {
         let nont = nonterminal "N"
-        nont.SetProductions(empty =% 0)
-        Expect.throws (fun () -> nont.SetProductions(empty =% 0, empty =% 1)) "SetProductions can be set more than once."
+        setProductions nont [empty =% 0]
+        Expect.throws (fun () -> setProductions nont [empty =% 0; empty =% 1]) "SetProductions can be set more than once."
     }
 
     test "The productions of untyped nonterminals can only be set once." {
         let nont = nonterminalU "N"
-        nont.SetProductions(empty)
-        Expect.throws (fun () -> nont.SetProductions(empty, empty)) "SetProductions can be set more than once."
+        setProductionsU nont [empty]
+        Expect.throws (fun () -> setProductionsU nont [empty; empty]) "SetProductions can be set more than once."
     }
 
     test "Farkle can properly handle line groups" {
@@ -384,8 +384,8 @@ let tests = testList "Grammar builder tests" [
         let nonterminals = Array.init depth (sprintf "N%d" >> nonterminalU)
 
         for i = 0 to nonterminals.Length - 2 do
-            nonterminals.[i].SetProductions(!% nonterminals.[i + 1])
-        nonterminals.[nonterminals.Length - 1].SetProductions(!& "x")
+            setProductionsU nonterminals[i] [!% nonterminals.[i + 1]]
+        setProductionsU nonterminals[nonterminals.Length - 1] [!& "x"]
 
         let grammar =
             GrammarBuilder.buildSyntaxCheck nonterminals[0]

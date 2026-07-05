@@ -13,6 +13,7 @@ open Farkle.Parser.Semantics
 open Farkle.Samples
 open Farkle.Samples.FSharp
 open Farkle.Tests
+open System
 open System.IO
 open System.Text.Json.Nodes
 
@@ -145,13 +146,21 @@ let tests = testList "Parser tests" [
     )
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well in static block mode" {
-        let result = GOLDMetaLanguage.parser.Parse gmlSourceContent |> ParserResult.toResult
-        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
+        let result =
+            CharParser.parseString GOLDMetaLanguage.parser gmlSourceContent
+            |> ParserResult.toResult
+            |> Flip.Expect.wantOk "Parsing the GOLD Meta-Language file describing itself failed"
+        let builtParser = result.BuildSyntaxCheck()
+        Expect.isFalse builtParser.IsFailing "Building a parser for the GOLD Meta-Language from its own definition failed"
     }
 
     test "The Farkle-built grammar that recognizes the GOLD Meta-Language works well in dynamic block mode" {
-        let result = parseGradual 10 GOLDMetaLanguage.parser gmlSourceContent |> ParserResult.toResult
-        Expect.isOk result "Parsing the GOLD Meta-Language file describing itself failed"
+        let result =
+            parseGradual 10 GOLDMetaLanguage.parser gmlSourceContent
+            |> ParserResult.toResult
+            |> Flip.Expect.wantOk "Parsing the GOLD Meta-Language file describing itself failed"
+        let builtParser = result.BuildSyntaxCheck()
+        Expect.isFalse builtParser.IsFailing "Building a parser for the GOLD Meta-Language from its own definition failed"
     }
 
     test "Windows line endings inside block groups are correctly handled" {

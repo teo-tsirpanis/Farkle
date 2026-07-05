@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace ComSharp;
 
@@ -33,14 +34,21 @@ partial class PrecompilerInterfaceWrappers
         return false;
     }
 
-    public override object? CreateObject(Type targetType, object sourceObject, ComSharpVtable vtable)
+    protected override RuntimeTypeHandle GetDotNetWrapperImplementation(RuntimeTypeHandle interfaceType)
     {
-        if (targetType == typeof(IPrecompiledGrammar)) return new IPrecompiledGrammar_Wrapper(this, sourceObject, vtable);
-        if (targetType == typeof(ILogger)) return new ILogger_Wrapper(this, sourceObject, vtable);
-        if (targetType == typeof(IPrecompilerOptions)) return new IPrecompilerOptions_Wrapper(this, sourceObject, vtable);
-        if (targetType == typeof(IPrecompilerInterface)) return new IPrecompilerInterface_Wrapper(this, sourceObject, vtable);
-        return null;
+        var type = Type.GetTypeFromHandle(interfaceType);
+        if (type == typeof(IPrecompiledGrammar)) return typeof(IPrecompiledGrammar_Wrapper).TypeHandle;
+        if (type == typeof(ILogger)) return typeof(ILogger_Wrapper).TypeHandle;
+        if (type == typeof(IPrecompilerOptions)) return typeof(IPrecompilerOptions_Wrapper).TypeHandle;
+        if (type == typeof(IPrecompilerInterface)) return typeof(IPrecompilerInterface_Wrapper).TypeHandle;
+        return default;
     }
+
+    protected override DotNetWrapper CreateDotNetWrapper(object sourceObject, ComSharpVtable vtable)
+        => new Wrapper(this, sourceObject, vtable);
+
+    private sealed class Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
+        : DotNetWrapper(wrappers, sourceObject, vtable);
 }
 
 #region COM# callable wrappers
@@ -99,47 +107,49 @@ partial class PrecompilerInterfaceWrappers
 #endregion
 
 #region .NET callable wrappers
-file sealed class IPrecompiledGrammar_Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
-    : WrappedObject(wrappers, sourceObject, vtable), IPrecompiledGrammar
+#pragma warning disable CA2256 // All members declared in parent interfaces must have an implementation in a DynamicInterfaceCastableImplementation-attributed interface
+// We get the implementation of IDotNetWrapper from the .NET wrapper object.
+[DynamicInterfaceCastableImplementation]
+file interface IPrecompiledGrammar_Wrapper : IPrecompiledGrammar, IDotNetWrapper
 {
-    private readonly Func<object, string?> f_Key = (Func<object, string?>)vtable[1];
-    private readonly Func<object, byte[]?> f_GrammarFile = (Func<object, byte[]?>)vtable[2];
-    private readonly Func<object, int> f_InputMethodMetadataToken = (Func<object, int>)vtable[3];
-    private readonly Func<object, IReadOnlyList<(int, int)>> f_OutputMethods = (Func<object, IReadOnlyList<(int, int)>>)vtable[4];
+    string? IPrecompiledGrammar.Key =>
+        this.GetFunction<IPrecompiledGrammar, Func<object, string?>>(1)(SourceObject);
 
-    public string? Key => f_Key(SourceObject);
-    public byte[]? GrammarFile => f_GrammarFile(SourceObject);
-    public int InputMethodMetadataToken => f_InputMethodMetadataToken(SourceObject);
-    public IReadOnlyList<(int MetadataToken, OutputType Type)> OutputMethods =>
-        CollectionMarshaller.Marshal(f_OutputMethods(SourceObject), x => (x.Item1, (OutputType)x.Item2));
+    byte[]? IPrecompiledGrammar.GrammarFile =>
+        this.GetFunction<IPrecompiledGrammar, Func<object, byte[]?>>(2)(SourceObject);
+
+    int IPrecompiledGrammar.InputMethodMetadataToken =>
+        this.GetFunction<IPrecompiledGrammar, Func<object, int>>(3)(SourceObject);
+
+    IReadOnlyList<(int MetadataToken, OutputType Type)> IPrecompiledGrammar.OutputMethods =>
+        CollectionMarshaller.Marshal(this.GetFunction<IPrecompiledGrammar, Func<object, IReadOnlyList<(int, int)>>>(4)(SourceObject), x => (x.Item1, (OutputType)x.Item2));
 }
 
-file sealed class ILogger_Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable) :
-    WrappedObject(wrappers, sourceObject, vtable), ILogger
+[DynamicInterfaceCastableImplementation]
+file interface ILogger_Wrapper : ILogger, IDotNetWrapper
 {
-    private readonly Func<object, int> f_LogLevel = (Func<object, int>)vtable[1];
-    private readonly Action<object, int, object, string?> f_Log = (Action<object, int, object, string?>)vtable[2];
+    DiagnosticSeverity ILogger.LogLevel =>
+        (DiagnosticSeverity)this.GetFunction<ILogger, Func<object, int>>(1)(SourceObject);
 
-    public DiagnosticSeverity LogLevel => (DiagnosticSeverity)f_LogLevel(SourceObject);
-    public void Log(DiagnosticSeverity severity, object message, string? code) => f_Log(SourceObject, (int)severity, message, code);
+    void ILogger.Log(DiagnosticSeverity severity, object message, string? code) =>
+        this.GetFunction<ILogger, Action<object, int, object, string?>>(2)(SourceObject, (int)severity, message, code);
 }
 
-file sealed class IPrecompilerOptions_Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
-    : WrappedObject(wrappers, sourceObject, vtable), IPrecompilerOptions
+[DynamicInterfaceCastableImplementation]
+file interface IPrecompilerOptions_Wrapper : IPrecompilerOptions, IDotNetWrapper
 {
-    private readonly Func<object, CancellationToken> f_CancellationToken = (Func<object, CancellationToken>)vtable[1];
-    private readonly Func<object, ComSharpObject> f_Logger = (Func<object, ComSharpObject>)vtable[2];
+    CancellationToken IPrecompilerOptions.CancellationToken =>
+        this.GetFunction<IPrecompilerOptions, Func<object, CancellationToken>>(1)(SourceObject);
 
-    public CancellationToken CancellationToken => f_CancellationToken(SourceObject);
-    public ILogger Logger => Wrappers.Unmarshal<ILogger>(f_Logger(SourceObject));
+    ILogger IPrecompilerOptions.Logger =>
+        Wrappers.Unmarshal<ILogger>(this.GetFunction<IPrecompilerOptions, Func<object, ComSharpObject>>(2)(SourceObject));
 }
 
-file sealed class IPrecompilerInterface_Wrapper(ComSharpWrappers wrappers, object sourceObject, ComSharpVtable vtable)
-    : WrappedObject(wrappers, sourceObject, vtable), IPrecompilerInterface
+[DynamicInterfaceCastableImplementation]
+file interface IPrecompilerInterface_Wrapper : IPrecompilerInterface, IDotNetWrapper
 {
-    private readonly Func<object, IReadOnlyCollection<Type>, ComSharpObject, IEnumerable<ComSharpObject>> f_DiscoverAndPrecompile = (Func<object, IReadOnlyCollection<Type>, ComSharpObject, IEnumerable<ComSharpObject>>)vtable[1];
-
-    public IEnumerable<IPrecompiledGrammar> DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options) =>
-        CollectionMarshaller.Marshal(f_DiscoverAndPrecompile(SourceObject, types, Wrappers.Marshal(options)), Wrappers.Unmarshal<IPrecompiledGrammar>);
+    IEnumerable<IPrecompiledGrammar> IPrecompilerInterface.DiscoverAndPrecompile(IReadOnlyCollection<Type> types, IPrecompilerOptions? options) =>
+        CollectionMarshaller.Marshal(this.GetFunction<IPrecompilerInterface, Func<object, IReadOnlyCollection<Type>, ComSharpObject, IEnumerable<ComSharpObject>>>(1)(SourceObject, types, Wrappers.Marshal(options)), Wrappers.Unmarshal<IPrecompiledGrammar>);
 }
+#pragma warning restore CA2256 // All members declared in parent interfaces must have an implementation in a DynamicInterfaceCastableImplementation-attributed interface
 #endregion

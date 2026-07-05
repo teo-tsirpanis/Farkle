@@ -7,6 +7,7 @@ open Microsoft.Build.Framework
 open Microsoft.Build.Utilities
 open System
 
+[<MSBuildMultiThreadableTask>]
 type FarkleGenerateHtml() =
     inherit Task()
 

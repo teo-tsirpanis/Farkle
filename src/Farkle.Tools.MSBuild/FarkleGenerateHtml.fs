@@ -43,6 +43,7 @@ type FarkleGenerateHtml() =
             let grammarName = sanitizeUnsafeFileName log grammar.GrammarInfo.Name
             let htmlPath =
                 Path.Combine(this.OutputDirectory, Path.ChangeExtension(grammarName, output.FileExtension))
+                // TODO: Remove when we update MSBuild, and enable the task to support multi-threaded execution.
                 |> Path.GetFullPath
             Logging.WritingHtml this.Log grammarName htmlPath
             File.WriteAllText(htmlPath, output.Content)

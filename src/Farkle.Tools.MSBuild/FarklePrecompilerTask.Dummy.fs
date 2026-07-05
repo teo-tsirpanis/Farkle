@@ -7,6 +7,7 @@ open Microsoft.Build.Framework
 open Sigourney
 open System
 
+[<MSBuildMultiThreadableTask>]
 type FarklePrecompilerTask() =
     // Inherit from MSBuildWeaver to get identical task properties.
     inherit MSBuildWeaver()

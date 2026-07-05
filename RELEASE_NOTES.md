@@ -5,6 +5,7 @@
 * Improved ergonomics of the F# API:
   * The `nonterminal` function supports explicitly specifying its type parameter, in case the compiler cannot infer it.
   * Added `setProductions` function, as a shortcut for the `SetProductions` method of `Nonterminal<'T>`. Also added `setProductionsU` for untyped nonterminals.
+* Updated the precompiler to be compatible with MSBuild's upcoming multi-threaded task execution model. This will result in increased performance when using new .NET SDK versions.
 
 #### 7.0.0 - 29-06-2026
 * Farkle was rewritten in C#, and features performance improvements across the board, as well as an improved and extensible architecture.

@@ -16,6 +16,7 @@ open System
 open System.IO
 open System.Threading
 
+[<MSBuildMultiThreadableTask>]
 type FarklePrecompilerTask() as this =
     inherit MSBuildWeaver()
     do this.WeaverName <- typeof<PrecompilerWeaver>.Assembly.GetName().Name

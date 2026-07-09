@@ -1,4 +1,4 @@
-#### 7.0.1
+#### 7.0.1 - 09-07-2026
 * Fixed a bug where installing the `Farkle` NuGet package on unsupported frameworks did not fail.
 * Reduced allocations when creating regexes that match characters specified in an `ImmutableArray<char>` or a string.
 * Fixed incorrect or unlocalized exception messages under certain circumstances.

@@ -37,4 +37,6 @@ public interface IProductionBuilder<TSelf> where TSelf : IProductionBuilder<TSel
     /// <returns>A production builder with the precedence token changed to
     /// <paramref name="precedenceToken"/>.</returns>
     TSelf WithPrecedence(object precedenceToken);
+    /// <inheritdoc cref="Runtime.ProductionBuilderMarshal.Create"/>
+    internal static abstract TSelf Create(ReadOnlySpan<IGrammarSymbol> members, ReadOnlySpan<int> significantMemberIndices);
 }

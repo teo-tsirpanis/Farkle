@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Analyze Farkle.Samples.CSharp": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\sample\\Farkle.Samples.CSharp\\Farkle.Samples.CSharp.csproj"
+    }
+  }
+}

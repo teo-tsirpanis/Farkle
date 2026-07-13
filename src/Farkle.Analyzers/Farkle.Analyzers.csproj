@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Farkle/Compatibility/Compatibility.cs" Link="Compatibility\Compatibility.cs" />
+    <Compile Include="../Farkle/Compatibility/HashCode.cs" Link="Compatibility\HashCode.cs" />
+    <Compile Include="../Farkle/Compatibility/Enumerable.cs" Link="Compatibility\Enumerable.cs" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

@@ -21,12 +21,18 @@
     even on frameworks we don't provide binaries for. -->
     <Content Include="Farkle.fs" Pack="true" PackagePath="contentFiles/fs/net8.0" BuildAction="Compile" />
     <Content Include="Farkle.fsx" Pack="true" PackagePath="content" />
+    <None Include="../Farkle.Analyzers/bin/$(Configuration)/netstandard2.0/Farkle.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <InternalsVisibleTo Include="Farkle.Benchmarks" />
     <InternalsVisibleTo Include="Farkle.Tests" />
     <InternalsVisibleTo Include="Farkle.Tests.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="all" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
     <PackageReference Include="BitCollections" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\Farkle.Analyzers\Farkle.Analyzers.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />

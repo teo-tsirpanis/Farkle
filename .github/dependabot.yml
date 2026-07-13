@@ -19,6 +19,6 @@ updates:
           - "NUnit3TestAdapter"
           - "NUnit.*"
           - "YoloDev.Expecto.TestSdk"
-    # ignore:
-    #   # Do not automatically update dependencies that use version $(SystemOobVersion) in Directory.Packages.props.
-    #   - dependency-name: "System.Collections.Immutable"
+    ignore:
+      # Do not automatically update Roslyn.
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp"

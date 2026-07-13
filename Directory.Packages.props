@@ -27,9 +27,9 @@
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.11.2" />
     <PackageVersion Include="Microsoft.Build" Version="17.3.2" />
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.10.46" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.2.3" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.3.2" />
+    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.3.2" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="MSBuild.StructuredLogger" Version="2.3.204" />
     <PackageVersion Include="NuGet.Packaging" Version="7.6.0" />
@@ -47,7 +47,7 @@
     <PackageVersion Include="Sigourney" Version="0.5.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
-    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.15.6" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.0" />
 
     <!-- Test-only dependencies. -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.3" />

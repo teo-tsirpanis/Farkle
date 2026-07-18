@@ -21,7 +21,7 @@ public static class DiagnosticDescriptors
 
     public static readonly DiagnosticDescriptor ProductionFactoryRequiresEnhancedSyntax = Create(
         id: "FARKLE1005",
-        title: "Invalid usage of Farkle.Builder.Production factory method",
+        title: "API requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
         messageFormat: "Using class 'Farkle.Builder.Production' requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,

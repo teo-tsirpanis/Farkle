@@ -4,12 +4,30 @@
 using System.Collections.Immutable;
 using Farkle.Analyzers.Models;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Farkle.Analyzers.EnhancedSyntax;
 
 public static class ProductionFactoryGeneratorShared
 {
+    public static bool CanHaveUseEnhancedSyntaxAttribute(SyntaxNode node, CancellationToken cancellationToken = default) => node
+        is ClassDeclarationSyntax
+        or StructDeclarationSyntax
+        or RecordDeclarationSyntax
+        or InterfaceDeclarationSyntax
+        or BaseMethodDeclarationSyntax
+        or BaseFieldDeclarationSyntax
+        or BasePropertyDeclarationSyntax
+        or AccessorDeclarationSyntax;
+
+    public static SyntaxNode AddAttributeLists(SyntaxNode node, params AttributeListSyntax[] attributeLists) => node switch
+    {
+        MemberDeclarationSyntax memberDeclaration => memberDeclaration.AddAttributeLists(attributeLists),
+        AccessorDeclarationSyntax accessorDeclaration => accessorDeclaration.AddAttributeLists(attributeLists),
+        _ => throw new InvalidOperationException($"Cannot add attribute lists to node of kind {node.Kind()}."),
+    };
+
     public static void AnalyzeInvocation(GeneratorOrAnalyzerContext<ProductionFactoryInvocation> context,
         ProductionFactorySymbols symbols, InvocationExpressionSyntax invocation, CancellationToken cancellationToken)
     {

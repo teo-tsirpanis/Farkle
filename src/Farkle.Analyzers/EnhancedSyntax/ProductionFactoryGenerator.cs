@@ -199,15 +199,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
 
         var invocations = context.SyntaxProvider.ForAttributeWithMetadataName(
             Constants.UseEnhancedSyntaxAttributeName,
-            static (node, _) => node
-                is ClassDeclarationSyntax
-                or StructDeclarationSyntax
-                or RecordDeclarationSyntax
-                or InterfaceDeclarationSyntax
-                or BaseMethodDeclarationSyntax
-                or BaseFieldDeclarationSyntax
-                or BasePropertyDeclarationSyntax
-                or AccessorDeclarationSyntax,
+            ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute,
             FindProductionFactoryInvocations)
             .SelectMany((invocations, _) => invocations.ToImmutableArray())
             .Collect()

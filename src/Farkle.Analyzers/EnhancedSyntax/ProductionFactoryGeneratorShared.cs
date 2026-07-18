@@ -19,12 +19,14 @@ public static class ProductionFactoryGeneratorShared
         or BaseMethodDeclarationSyntax
         or BaseFieldDeclarationSyntax
         or BasePropertyDeclarationSyntax
-        or AccessorDeclarationSyntax;
+        or AccessorDeclarationSyntax
+        or LocalFunctionStatementSyntax;
 
     public static SyntaxNode AddAttributeLists(SyntaxNode node, params AttributeListSyntax[] attributeLists) => node switch
     {
         MemberDeclarationSyntax memberDeclaration => memberDeclaration.AddAttributeLists(attributeLists),
         AccessorDeclarationSyntax accessorDeclaration => accessorDeclaration.AddAttributeLists(attributeLists),
+        LocalFunctionStatementSyntax localFunctionStatement => localFunctionStatement.AddAttributeLists(attributeLists),
         _ => throw new InvalidOperationException($"Cannot add attribute lists to node of kind {node.Kind()}."),
     };
 

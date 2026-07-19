@@ -12,11 +12,15 @@ public sealed class ProductionFactorySymbols
     /// </summary>
     public required IMethodSymbol ProductionCreateBoilerplate { get; init; }
     /// <summary>
+    /// <see cref="string"/>
+    /// </summary>
+    public required INamedTypeSymbol String { get; init; }
+    /// <summary>
     /// <c>Farkle.Builder.IGrammarSymbol</c>
     /// </summary>
     public required INamedTypeSymbol? IGrammarSymbol { get; init; }
     /// <summary>
-    /// <c>Farkle.Builder.IGrammarSymbol`1</c>
+    /// <c>Farkle.Builder.IGrammarSymbol&lt;T&gt;</c>
     /// </summary>
     public required INamedTypeSymbol? IGrammarSymbol1 { get; init; }
 
@@ -38,9 +42,10 @@ public sealed class ProductionFactorySymbols
 
         return new ProductionFactorySymbols()
         {
+            ProductionCreateBoilerplate = productionCreateMethod,
+            String = compilation.GetSpecialType(SpecialType.System_String),
             IGrammarSymbol = compilation.GetTypeByMetadataName("Farkle.Builder.IGrammarSymbol"),
             IGrammarSymbol1 = compilation.GetTypeByMetadataName("Farkle.Builder.IGrammarSymbol`1"),
-            ProductionCreateBoilerplate = productionCreateMethod,
         };
     }
 }

@@ -69,26 +69,32 @@ public static class ProductionFactoryGeneratorShared
             var typeInfo = semanticModel.GetTypeInfo(arg.Expression, cancellationToken);
             if (typeInfo.Type is null or IErrorTypeSymbol)
             {
-                return;
+                hasError = true;
+                continue;
             }
 
-            if (typeInfo.Type.SpecialType == SpecialType.System_String)
+            if (IsSymbolAssignableToGeneric(typeInfo.Type, symbols.IGrammarSymbol1))
             {
-                argumentTypes?.Add(ProductionMemberType.String);
-            }
-            else if (IsSymbolAssignableToGeneric(typeInfo.Type, symbols.IGrammarSymbol1))
-            {
-                argumentTypes?.Add(ProductionMemberType.IGrammarSymbol);
-                arity++;
-                if (arity == MaxGenericParametersSupported + 1)
+                if (arity == MaxGenericParametersSupported)
                 {
                     context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols, invocation.GetLocation(), MaxGenericParametersSupported));
                     hasError = true;
+                    continue;
                 }
+                argumentTypes?.Add(ProductionMemberType.IGrammarSymbol);
+                arity++;
             }
             else if (IsSymbolAssignableToGeneric(typeInfo.Type, symbols.IGrammarSymbol))
             {
                 argumentTypes?.Add(ProductionMemberType.IGrammarSymbolUntyped);
+            }
+            // Only string supports implicit conversion from other types, because IGrammarSymbol is an interface.
+            // In practice, no type will be implicitly convertible to both string and IGrammarSymbol, because IGrammarSymbol
+            // cannot be implemented by user code, nor can a Farkle class implementing it can be inherited by user code.
+            // We should detect this case and fail if thhe conversion can become ambiguous in the future.
+            else if (semanticModel.Compilation.ClassifyConversion(typeInfo.Type, symbols.String).IsImplicit)
+            {
+                argumentTypes?.Add(ProductionMemberType.String);
             }
             else
             {

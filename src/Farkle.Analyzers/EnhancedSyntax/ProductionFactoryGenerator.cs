@@ -23,14 +23,9 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
         var builder = ImmutableArray.CreateBuilder<ProductionFactoryInvocation>();
         var resultContext = new GeneratorOrAnalyzerContext<ProductionFactoryInvocation>(builder.Add, context.SemanticModel);
 
-        foreach (var reference in context.TargetSymbol.DeclaringSyntaxReferences)
+        foreach (var invocation in context.TargetNode.DescendantNodes().OfType<InvocationExpressionSyntax>())
         {
-            var node = reference.GetSyntax(cancellationToken);
-            foreach (var invocation in node.DescendantNodes().OfType<InvocationExpressionSyntax>())
-            {
-                ProductionFactoryGeneratorShared.AnalyzeInvocation(resultContext, symbols, invocation, cancellationToken);
-                continue;
-            }
+            ProductionFactoryGeneratorShared.AnalyzeInvocation(resultContext, symbols, invocation, cancellationToken);
         }
 
         return builder.DrainToEquatable();
@@ -177,9 +172,10 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
             /// enhanced syntax features of the Farkle API.
             /// </summary>
             /// <remarks>
-            /// At this moment, this includes using  factory methods in the <see cref="Production"/>
-            /// class. A source generator will detect calls to the <c>Production.Create</c> method, and generate overloads
-            /// that return a production builder with the specific number of significant members.
+            /// At this moment, this includes using factory methods in the <see cref="Production"/>
+            /// class. A source generator will detect calls to the <c>Production.Create</c> method,
+            /// and generate overloads that return a production builder with the specific number of
+            /// significant members.
             /// </remarks>
             [global::Microsoft.CodeAnalysis.EmbeddedAttribute]
             [global::System.AttributeUsage(
@@ -191,7 +187,8 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
                 global::System.AttributeTargets.Field |
                 global::System.AttributeTargets.Event |
                 global::System.AttributeTargets.Interface,
-                Inherited = false, AllowMultiple = false)]
+                Inherited = false, AllowMultiple = true)]
+            [global::System.Diagnostics.Conditional("FARKLE_USE_ENHANCED_SYNTAX")]
             internal sealed class UseEnhancedSyntaxAttribute : global::System.Attribute { }
 
             """);

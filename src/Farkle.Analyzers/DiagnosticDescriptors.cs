@@ -47,4 +47,14 @@ public static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
+
+    public static readonly DiagnosticDescriptor UseEnhancedSyntaxAttributeUnnecessary = Create(
+        id: "FARKLE1007",
+        title: "Unnecessary use of 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
+        messageFormat: "'Farkle.Builder.UseEnhancedSyntaxAttribute' is unnecessary on this type or member",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: "The 'UseEnhancedSyntaxAttribute' attribute is unnecessary on this type or member, as no code in it requires its use.",
+        customTags: [WellKnownDiagnosticTags.Unnecessary]);
 }

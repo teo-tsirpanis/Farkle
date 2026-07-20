@@ -17,6 +17,7 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
         DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax,
         DiagnosticDescriptors.ProductionFactoryUnsupportedType,
         DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols,
+        DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary,
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -25,7 +26,7 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
         {
             context.EnableConcurrentExecution();
         }
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.ReportDiagnostics);
 
         context.RegisterCompilationStartAction(context =>
         {
@@ -52,31 +53,108 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
-            context.RegisterSyntaxNodeAction(context =>
+            context.RegisterSemanticModelAction(context =>
             {
-                var invocation = (InvocationExpressionSyntax)context.Node;
-                var semanticModel = context.SemanticModel;
+                var root = context.FilterTree.GetRoot(context.CancellationToken);
 
-                var symbolInfo = semanticModel.GetSymbolInfo(invocation.Expression, context.CancellationToken);
-                if (!SymbolEqualityComparer.Default.Equals(symbolInfo.Symbol?.ContainingType, productionSymbol))
+                new UseEnhancedSyntaxAttributeDetector(context)
                 {
-                    return;
-                }
-
-                var enclosingSymbol = semanticModel.GetEnclosingSymbol(invocation.SpanStart, context.CancellationToken);
-
-                while (enclosingSymbol is not null)
-                {
-                    if (enclosingSymbol.GetAttributes().Select(x => x.AttributeClass).Contains(useEnhancedSyntaxAttributeSymbol, SymbolEqualityComparer.Default))
-                    {
-                        return;
-                    }
-
-                    enclosingSymbol = enclosingSymbol.ContainingSymbol;
-                }
-
-                context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, invocation.GetLocation()));
-            }, SyntaxKind.InvocationExpression);
+                    UseEnhancedSyntaxAttributeSymbol = useEnhancedSyntaxAttributeSymbol,
+                    ProductionSymbol = productionSymbol,
+                }.Visit(root);
+            });
         });
+    }
+
+    private sealed class UseEnhancedSyntaxAttributeDetector(SemanticModelAnalysisContext context) : CSharpSyntaxWalker
+    {
+        public required INamedTypeSymbol UseEnhancedSyntaxAttributeSymbol { get; init; }
+
+        public required INamedTypeSymbol ProductionSymbol { get; init; }
+
+        private int _attributeLevel, _minAttributeLevelWithInvocation;
+
+        private void ReportUnnecessaryUseEnhancedSyntaxAttribute(AttributeSyntax attribute)
+        {
+            if (!context.IsGeneratedCode)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary, attribute.GetLocation()));
+            }
+        }
+
+        public override void DefaultVisit(SyntaxNode node)
+        {
+            if (context.FilterSpan is { } filterSpan && !filterSpan.OverlapsWith(node.Span))
+            {
+                return;
+            }
+
+            if (!ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(node))
+            {
+                base.DefaultVisit(node);
+                return;
+            }
+
+            AttributeSyntax? firstAttribute = null;
+            foreach (var attributeList in node.ChildNodes().OfType<AttributeListSyntax>())
+            {
+                foreach (var attribute in attributeList.Attributes)
+                {
+                    var typeInfo = context.SemanticModel.GetTypeInfo(attribute, context.CancellationToken);
+                    if (SymbolEqualityComparer.Default.Equals(typeInfo.Type, UseEnhancedSyntaxAttributeSymbol))
+                    {
+                        if (firstAttribute != null)
+                        {
+                            // This level already has a UseEnhancedSyntaxAttribute.
+                            ReportUnnecessaryUseEnhancedSyntaxAttribute(attribute);
+                        }
+                        else
+                        {
+                            firstAttribute = attribute;
+                        }
+                    }
+                }
+            }
+
+            if (firstAttribute is null)
+            {
+                base.DefaultVisit(node);
+                return;
+            }
+
+            _attributeLevel++;
+            int oldMinAttributeLevelWithInvocation = _minAttributeLevelWithInvocation;
+            bool isUsedAtThisLevel = false;
+            foreach (var n in node.ChildNodes().Where(static n => n is not AttributeListSyntax))
+            {
+                _minAttributeLevelWithInvocation = int.MaxValue;
+                Visit(n);
+                if (_minAttributeLevelWithInvocation == _attributeLevel)
+                {
+                    isUsedAtThisLevel = true;
+                }
+            }
+            if (!isUsedAtThisLevel)
+            {
+                ReportUnnecessaryUseEnhancedSyntaxAttribute(firstAttribute);
+            }
+            _minAttributeLevelWithInvocation = oldMinAttributeLevelWithInvocation;
+            _attributeLevel--;
+        }
+
+        public override void VisitInvocationExpression(InvocationExpressionSyntax node)
+        {
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(node.Expression, context.CancellationToken);
+            if (SymbolEqualityComparer.Default.Equals(symbolInfo.Symbol?.ContainingType, ProductionSymbol))
+            {
+                _minAttributeLevelWithInvocation = Math.Min(_minAttributeLevelWithInvocation, _attributeLevel);
+                if (_attributeLevel == 0)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, node.GetLocation()));
+                }
+            }
+
+            base.VisitInvocationExpression(node);
+        }
     }
 }

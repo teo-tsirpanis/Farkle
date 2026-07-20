@@ -6,3 +6,4 @@ Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 FARKLE1005 | Usage | Error | DiagnosticDescriptors
 FARKLE1006 | Usage | Error | DiagnosticDescriptors
+FARKLE1007 | Usage | Info | DiagnosticDescriptors

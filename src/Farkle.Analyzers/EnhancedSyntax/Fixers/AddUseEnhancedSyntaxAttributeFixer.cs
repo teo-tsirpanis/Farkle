@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Simplification;
+using Microsoft.CodeAnalysis.Editing;
 
 namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
 
@@ -18,8 +18,47 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
         DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax.Id,
     ];
 
-    // TODO: We could make a better fix all provider that adds the attribute to say only the whole class instead of every member, if they are many.
-    public override FixAllProvider? GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
+    private const string AddOnDeclaringMemberKey = "AddUseEnhancedSyntaxAttribute";
+
+    private const string AddOnDeclaringTypeKey = "AddUseEnhancedSyntaxAttributeOnDeclaringType";
+
+    public override FixAllProvider GetFixAllProvider() => FixAllProvider.Create(async (context, document, diagnostics) =>
+    {
+        var root = await document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
+        if (root is null)
+        {
+            return document;
+        }
+
+        bool addOnMember = context.CodeActionEquivalenceKey == AddOnDeclaringMemberKey;
+        if (context.Scope == (addOnMember ? FixAllScope.ContainingMember : FixAllScope.ContainingType))
+        {
+            // If the fix's attribute placement is the same as the fix's scope, there is only one attribute to add,
+            // so we can just look at the first diagnostic.
+            var declaringNode = GetParentToAddAttribute(root.FindNode(diagnostics[0].Location.SourceSpan));
+            return await AddUseEnhancedSyntaxAttributeAsync(document, root, declaringNode, context.CancellationToken).ConfigureAwait(false);
+        }
+
+        var editor = new SyntaxEditor(root, document.Project.Solution.Services);
+        var modifiedNodes = new HashSet<SyntaxNode>();
+
+        foreach (var diagnostic in diagnostics)
+        {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            var declaringNode = GetParentToAddAttribute(root.FindNode(diagnostic.Location.SourceSpan));
+            if (modifiedNodes.Add(declaringNode))
+            {
+                editor.AddUseEnhancedSyntaxAttribute(declaringNode);
+            }
+        }
+
+        return document.WithSyntaxRoot(editor.GetChangedRoot());
+
+        SyntaxNode GetParentToAddAttribute(SyntaxNode node) =>
+            node.AncestorsAndSelf().First(x =>
+                ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(x)
+                && (addOnMember || SyntaxFacts.IsTypeDeclaration(x.Kind())));
+    }, Utilities.DefaultFixAllScopes);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {
@@ -29,10 +68,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
             return;
         }
 
-        var diagnostic = context.Diagnostics.First();
-        var diagnosticSpan = diagnostic.Location.SourceSpan;
-
-        var declaringMember = root.FindNode(diagnosticSpan).Ancestors().FirstOrDefault(x => ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(x));
+        var declaringMember = root.FindNode(context.Span).FirstAncestorOrSelf<SyntaxNode>(ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute);
         if (declaringMember is null)
         {
             return;
@@ -41,21 +77,27 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
         context.RegisterCodeFix(
             CodeAction.Create(
                 "Add [UseEnhancedSyntax]",
-                cancellationToken => AddUseEnhancedSyntaxAttributeAsync(context.Document, declaringMember, cancellationToken),
-                nameof(AddUseEnhancedSyntaxAttributeFixer)),
-            diagnostic);
-    }
+                cancellationToken => AddUseEnhancedSyntaxAttributeAsync(context.Document, root, declaringMember, cancellationToken),
+                AddOnDeclaringMemberKey),
+            context.Diagnostics);
 
-    private static async Task<Document> AddUseEnhancedSyntaxAttributeAsync(Document document, SyntaxNode declaringMember, CancellationToken cancellationToken)
-    {
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        if (root is null)
+        var declaringType = declaringMember.FirstAncestorOrSelf<SyntaxNode>(x => SyntaxFacts.IsTypeDeclaration(x.Kind()));
+        if (declaringType is null)
         {
-            return document;
+            return;
         }
 
-        var attribute = SyntaxFactory.Attribute(SyntaxFactory.ParseName("global::Farkle.Builder.UseEnhancedSyntax"));
-        var attributeList = SyntaxFactory.AttributeList([attribute]).WithAdditionalAnnotations(Simplifier.Annotation);
+        context.RegisterCodeFix(
+            CodeAction.Create(
+                "Add [UseEnhancedSyntax] on declaring type",
+                cancellationToken => AddUseEnhancedSyntaxAttributeAsync(context.Document, root, declaringType, cancellationToken),
+                AddOnDeclaringTypeKey),
+            context.Diagnostics);
+    }
+
+    private static async Task<Document> AddUseEnhancedSyntaxAttributeAsync(Document document, SyntaxNode root, SyntaxNode declaringMember, CancellationToken cancellationToken)
+    {
+        var attributeList = SyntaxFactory.AttributeList([Utilities.UseEnhancedSyntaxAttributeNode]);
         var declaringMemberWithAttribute = ProductionFactoryGeneratorShared.AddAttributeLists(declaringMember, attributeList);
         var newRoot = root.ReplaceNode(declaringMember, declaringMemberWithAttribute);
         return document.WithSyntaxRoot(newRoot);

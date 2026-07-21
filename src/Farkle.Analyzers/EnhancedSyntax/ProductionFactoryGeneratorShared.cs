@@ -11,7 +11,7 @@ namespace Farkle.Analyzers.EnhancedSyntax;
 
 public static class ProductionFactoryGeneratorShared
 {
-    public static bool CanHaveUseEnhancedSyntaxAttribute(SyntaxNode node, CancellationToken cancellationToken = default) => node
+    public static bool CanHaveUseEnhancedSyntaxAttribute(SyntaxNode node) => node
         is ClassDeclarationSyntax
         or StructDeclarationSyntax
         or RecordDeclarationSyntax

@@ -29,7 +29,7 @@ public sealed class RemoveUnnecessaryAttributeFixer : CodeFixProvider
 
         var newRoot = new RemoveAttributesRewriter(diagnostics.Select(d => d.Location.SourceSpan), context.CancellationToken).Visit(root);
         return document.WithSyntaxRoot(newRoot);
-    });
+    }, Utilities.DefaultFixAllScopes);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
     {

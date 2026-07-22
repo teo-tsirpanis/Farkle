@@ -172,13 +172,20 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
             /// enhanced syntax features of the Farkle API.
             /// </summary>
             /// <remarks>
+            /// <para>
             /// At this moment, this includes using factory methods in the <see cref="Production"/>
             /// class. A source generator will detect calls to the <c>Production.Create</c> method,
             /// and generate overloads that return a production builder with the specific number of
             /// significant members.
+            /// </para>
+            /// <para>
+            /// Applying this attribute to <see langword="module"/> has effect on the entire source
+            /// file where the attribute is applied. This is useful for top-level statements.
+            /// </para>
             /// </remarks>
             [global::Microsoft.CodeAnalysis.EmbeddedAttribute]
             [global::System.AttributeUsage(
+                global::System.AttributeTargets.Module |
                 global::System.AttributeTargets.Class |
                 global::System.AttributeTargets.Struct |
                 global::System.AttributeTargets.Constructor |

@@ -97,9 +97,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
 
     private static async Task<Document> AddUseEnhancedSyntaxAttributeAsync(Document document, SyntaxNode root, SyntaxNode declaringMember, CancellationToken cancellationToken)
     {
-        var attributeList = SyntaxFactory.AttributeList([Utilities.UseEnhancedSyntaxAttributeNode]);
-        var declaringMemberWithAttribute = ProductionFactoryGeneratorShared.AddAttributeLists(declaringMember, attributeList);
-        var newRoot = root.ReplaceNode(declaringMember, declaringMemberWithAttribute);
+        var newRoot = root.ReplaceNode(declaringMember, declaringMember.AddUseEnhancedSyntaxAttribute());
         return document.WithSyntaxRoot(newRoot);
     }
 }

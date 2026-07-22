@@ -13,9 +13,16 @@ namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
 
 public static class Utilities
 {
-    public static readonly AttributeSyntax UseEnhancedSyntaxAttributeNode =
-        SyntaxFactory.Attribute(SyntaxFactory.ParseName($"global::{Constants.UseEnhancedSyntaxAttributeName}")
-            .WithAdditionalAnnotations(Simplifier.Annotation));
+    private static readonly AttributeListSyntax UseEnhancedSyntaxAttributeNode =
+        SyntaxFactory.AttributeList([
+            SyntaxFactory.Attribute(
+                SyntaxFactory.ParseName($"global::{Constants.UseEnhancedSyntaxAttributeName}")
+                    .WithAdditionalAnnotations(Simplifier.Annotation)
+            )
+        ]);
+
+    private static readonly AttributeListSyntax UseEnhancedSyntaxAttributeOnModuleNode =
+        UseEnhancedSyntaxAttributeNode.WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.ModuleKeyword)));
 
     public static readonly ImmutableArray<FixAllScope> DefaultFixAllScopes = [
         FixAllScope.Document,
@@ -25,11 +32,20 @@ public static class Utilities
         FixAllScope.ContainingType,
     ];
 
+    extension(SyntaxNode node)
+    {
+        public SyntaxNode AddUseEnhancedSyntaxAttribute()
+        {
+            var attributeNode = node.IsKind(SyntaxKind.CompilationUnit) ? UseEnhancedSyntaxAttributeOnModuleNode : UseEnhancedSyntaxAttributeNode;
+            return ProductionFactoryGeneratorShared.AddAttributeLists(node, attributeNode);
+        }
+    }
+
     extension(SyntaxEditor editor)
     {
         public void AddUseEnhancedSyntaxAttribute(SyntaxNode node)
         {
-            editor.AddAttribute(node, UseEnhancedSyntaxAttributeNode);
+            editor.ReplaceNode(node, (n, _) => n.AddUseEnhancedSyntaxAttribute());
         }
     }
 }

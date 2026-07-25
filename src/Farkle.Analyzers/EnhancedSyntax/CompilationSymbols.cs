@@ -44,8 +44,8 @@ public sealed class ProductionFactorySymbols
         {
             ProductionCreateBoilerplate = productionCreateMethod,
             String = compilation.GetSpecialType(SpecialType.System_String),
-            IGrammarSymbol = compilation.GetTypeByMetadataName("Farkle.Builder.IGrammarSymbol"),
-            IGrammarSymbol1 = compilation.GetTypeByMetadataName("Farkle.Builder.IGrammarSymbol`1"),
+            IGrammarSymbol = compilation.GetTypeByMetadataName(Constants.IGrammarSymbolName),
+            IGrammarSymbol1 = compilation.GetTypeByMetadataName(Constants.IGrammarSymbol1Name),
         };
     }
 }

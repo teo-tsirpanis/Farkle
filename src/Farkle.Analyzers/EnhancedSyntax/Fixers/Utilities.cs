@@ -16,7 +16,7 @@ public static class Utilities
     private static readonly AttributeListSyntax UseEnhancedSyntaxAttributeNode =
         SyntaxFactory.AttributeList([
             SyntaxFactory.Attribute(
-                SyntaxFactory.ParseName($"global::{Constants.UseEnhancedSyntaxAttributeName}")
+                SyntaxFactory.ParseName($"{Constants.GlobalAlias}{Constants.UseEnhancedSyntaxAttributeName}")
                     .WithAdditionalAnnotations(Simplifier.Annotation)
             )
         ]);

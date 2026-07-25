@@ -26,7 +26,7 @@ public static class DiagnosticDescriptors
         category: "Usage",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "To ensure high performance for the production factory source generator, using a method in the 'Farkle.Builder.Production' class requires applying 'UseEnhancedSyntaxAttribute'. The attribute can be applied to either the member using the production factory, or to its containing type.",
+        description: "To ensure high performance for the production factory source generator, using a method in the 'Farkle.Builder.Production' class requires applying 'UseEnhancedSyntaxAttribute'.",
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
     public static readonly DiagnosticDescriptor ProductionFactoryUnsupportedType = Create(
@@ -56,5 +56,15 @@ public static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         description: "The 'UseEnhancedSyntaxAttribute' attribute is unnecessary on this type or member, as no code in it requires its use.",
+        customTags: [WellKnownDiagnosticTags.Unnecessary]);
+
+    public static readonly DiagnosticDescriptor SwitchToProductionFactories = Create(
+        id: "FARKLE1008",
+        title: "Use 'Production.Create' to create production builder",
+        messageFormat: "Use 'Production.Create' instead of 'Append'/'Extend' methods to create production builder",
+        category: "Maintainability",
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: "Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.",
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
 }

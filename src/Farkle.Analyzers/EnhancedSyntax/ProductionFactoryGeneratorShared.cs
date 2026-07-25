@@ -114,16 +114,16 @@ public static class ProductionFactoryGeneratorShared
             return;
         }
         context.AddItem?.Invoke(new(argumentTypes!.DrainToEquatable()));
+    }
 
-        static bool IsSymbolAssignableToGeneric(ITypeSymbol symbol, ITypeSymbol? targetType)
-        {
-            symbol = symbol.OriginalDefinition;
-            // Type is the target type.
-            return symbol.Equals(targetType, SymbolEqualityComparer.Default) ||
-            // Type implements the target type.
-            symbol.AllInterfaces.Any(x => x.OriginalDefinition.Equals(targetType, SymbolEqualityComparer.Default)) ||
-            // Type is a generic type parameter constrained to the target type.
-            (symbol is ITypeParameterSymbol { ConstraintTypes: var constraints } && constraints.Any(x => IsSymbolAssignableToGeneric(x, targetType)));
-        }
+    public static bool IsSymbolAssignableToGeneric(ITypeSymbol symbol, ITypeSymbol? targetType)
+    {
+        symbol = symbol.OriginalDefinition;
+        // Type is the target type.
+        return symbol.Equals(targetType, SymbolEqualityComparer.Default) ||
+        // Type implements the target type.
+        symbol.AllInterfaces.Any(x => x.OriginalDefinition.Equals(targetType, SymbolEqualityComparer.Default)) ||
+        // Type is a generic type parameter constrained to the target type.
+        (symbol is ITypeParameterSymbol { ConstraintTypes: var constraints } && constraints.Any(x => IsSymbolAssignableToGeneric(x, targetType)));
     }
 }

@@ -7,7 +7,7 @@ namespace Farkle.Analyzers;
 
 internal static partial class Compatibility
 {
-    extension (IncrementalGeneratorPostInitializationContext context)
+    extension(IncrementalGeneratorPostInitializationContext context)
     {
         // TODO-NET8: Remove when we update to Roslyn 5.x
         public void AddEmbeddedAttributeDefinition()

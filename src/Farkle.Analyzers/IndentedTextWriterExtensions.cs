@@ -7,7 +7,7 @@ namespace Farkle.Analyzers;
 
 internal static class IndentedTextWriterExtensions
 {
-    extension (IndentedTextWriter writer)
+    extension(IndentedTextWriter writer)
     {
         public BlockScope EnterBlock() => new(writer, "{", "}");
 

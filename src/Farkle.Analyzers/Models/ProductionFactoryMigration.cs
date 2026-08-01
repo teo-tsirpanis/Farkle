@@ -103,4 +103,16 @@ public enum ProductionFactoryParameterOptions
     /// The parameter needs to be cast to <c>Farkle.Builder.IGrammarSymbol</c>.
     /// </summary>
     CastToUntypedIGrammarSymbol = 1,
+
+    /// <summary>
+    /// <see cref="CastToUntypedIGrammarSymbol"/>, but also the type in the cast needs to be
+    /// fully qualified because plain <c>IGrammarSymbol</c> is ambiguous.
+    /// </summary>
+    /// <remarks>
+    /// The fixer cannot use a simplfier annotation to remove the redundant namespace qualification,
+    /// because the cast itself is redundant and the simplifier will remove it, resulting different
+    /// semantics from before the migration. The cast will still be shown as redundant in the IDE,
+    /// but the user will see the errors after removing it.
+    /// </remarks>
+    EmitFullyQualifiedName = 2 | CastToUntypedIGrammarSymbol,
 }

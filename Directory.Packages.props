@@ -9,6 +9,7 @@
     <!-- The version of Roslyn that is referenced by analyzer projects.
     Keep in line with the version shipped in the earliest feature band of the earliest supported .NET SDK. -->
     <RoslynVersion>4.12.0</RoslynVersion>
+    <RoslynSdkVersion>1.1.4</RoslynSdkVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Argu" Version="6.2.5" />
@@ -32,6 +33,9 @@
     <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="17.10.46" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(RoslynVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="$(RoslynSdkVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="$(RoslynSdkVersion)" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing" Version="$(RoslynSdkVersion)" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.3.3" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.3.3" />

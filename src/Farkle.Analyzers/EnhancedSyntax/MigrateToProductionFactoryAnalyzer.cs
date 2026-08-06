@@ -120,20 +120,21 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
                     break;
                 }
                 arg = operation.Arguments[^1];
-                IInvocationOperation parent;
+                IInvocationOperation? parent;
                 // Operation is of the form ExtensionMethod(parent, arg)
-                if (operation is { Parent: IArgumentOperation { Parent: IInvocationOperation x }, })
+                if (operation is { Parent: IArgumentOperation { Parent: IInvocationOperation x } })
                 {
                     parent = x;
                 }
                 // Operation is of the form parent.ExtensionMethod(arg)
-                else if (operation is { Parent: IInvocationOperation x2, })
+                else if (operation is { Parent: IInvocationOperation x2 })
                 {
                     parent = x2;
                 }
+                // Operation is something else. Do not continue the chain after this member.
                 else
                 {
-                    break;
+                    parent = null;
                 }
 
                 bool isAppend;

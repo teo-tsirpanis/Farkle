@@ -104,7 +104,7 @@ public class ProductionFactoryAnalyzerTests
 
         static partial class C
         {
-            static void M() => {|#1:Production.Create()|};
+            static void M() => {|#1:Production.Create|}();
         }
 
         static partial class C2
@@ -115,7 +115,7 @@ public class ProductionFactoryAnalyzerTests
 
         static partial class C2
         {
-            static partial void M2() => {|#3:Production.Create()|};
+            static partial void M2() => {|#3:Production.Create|}();
         }
         """,
         VerifyCS.Diagnostic(DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary).WithLocation(0),

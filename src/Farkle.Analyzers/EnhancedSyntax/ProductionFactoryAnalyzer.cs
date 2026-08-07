@@ -85,7 +85,7 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
                 MarkAttributeAsUsed();
                 if (!IsUnderAttribute)
                 {
-                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, node.GetLocation()));
+                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, node.Expression.GetLocation()));
                 }
             }
 

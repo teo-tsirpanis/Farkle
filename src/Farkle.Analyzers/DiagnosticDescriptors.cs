@@ -67,4 +67,9 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true,
         description: "Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.",
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
+
+    public static readonly SuppressionDescriptor IGrammarSymbolUpcastSuppressor = new(
+        id: "FARKLE2001",
+        suppressedDiagnosticId: "IDE0004",
+        justification: "Cast to IGrammarSymbol is not unnecessary, since removing it would cause the production factory generator to emit a different overload.");
 }

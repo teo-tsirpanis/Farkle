@@ -23,8 +23,6 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
 
     private const string ProductionBuilderExtensions = "Farkle.Builder.ProductionBuilderExtensions";
 
-    private static readonly TypeSyntax s_IGrammarSymbolUnqualifiedName = SyntaxFactory.ParseTypeName("IGrammarSymbol");
-
     public override void Initialize(AnalysisContext context)
     {
         if (!Debugger.IsAttached)
@@ -37,7 +35,6 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
         {
             var useEnhancedSyntaxAttributeSymbol = context.Compilation.GetTypeByMetadataName(Constants.UseEnhancedSyntaxAttributeName);
             var productionBuilderExtensionsSymbol = context.Compilation.GetTypeByMetadataName(ProductionBuilderExtensions);
-            var iGrammarSymbolSymbol = context.Compilation.GetTypeByMetadataName(Constants.IGrammarSymbolName);
             var iGrammarSymbol1Symbol = context.Compilation.GetTypeByMetadataName(Constants.IGrammarSymbol1Name);
             if (useEnhancedSyntaxAttributeSymbol is null || productionBuilderExtensionsSymbol is null || iGrammarSymbol1Symbol is null)
             {
@@ -60,7 +57,6 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
                 var visitor = new AttributeVisitor(context, useEnhancedSyntaxAttributeSymbol)
                 {
                     StartingMembers = startingMembers,
-                    IGrammarSymbol = iGrammarSymbolSymbol,
                     IGrammarSymbol1 = iGrammarSymbol1Symbol,
                 };
 
@@ -72,8 +68,6 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
     private sealed class AttributeVisitor(SemanticModelAnalysisContext context, INamedTypeSymbol attributeSymbol) : AttributeUsageWalker(context, attributeSymbol)
     {
         public required ImmutableHashSet<IMethodSymbol?> StartingMembers { get; init; }
-
-        public required INamedTypeSymbol? IGrammarSymbol { get; init; }
 
         public required INamedTypeSymbol IGrammarSymbol1 { get; init; }
 
@@ -165,13 +159,6 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
                 if (needsCast)
                 {
                     parameterOptions |= ProductionFactoryParameterOptions.CastToUntypedIGrammarSymbol;
-                    // Check if "IGrammarSymbol" is in scope, and if not, instruct the fixer to emit the fully
-                    // qualified name for the cast to avoid ambiguity.
-                    var symbolForIGrammarSymbolName = Context.SemanticModel.GetSpeculativeTypeInfo(arg.Syntax.SpanStart, s_IGrammarSymbolUnqualifiedName, SpeculativeBindingOption.BindAsTypeOrNamespace).Type;
-                    if (!SymbolEqualityComparer.Default.Equals(symbolForIGrammarSymbolName, IGrammarSymbol))
-                    {
-                        parameterOptions |= ProductionFactoryParameterOptions.EmitFullyQualifiedName;
-                    }
                 }
                 migration.Parameters.Add(new(arg.Syntax.Span, parameterOptions));
 

@@ -17,12 +17,9 @@ namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MigrateToProductionFactoryFixer)), Shared]
 public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
 {
-    // Do not add Simplifier.Annotation, because the simplifier will remove the whole cast.
     private static readonly TypeSyntax s_iGrammarSymbolNode =
-        SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.IGrammarSymbolName}");
-
-    private static readonly TypeSyntax s_iGrammarSymbolNodeUnqualified =
-        SyntaxFactory.ParseTypeName("IGrammarSymbol");
+        SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.IGrammarSymbolName}")
+            .WithAdditionalAnnotations(Simplifier.Annotation);
 
     private static readonly TypeSyntax s_productionFactoryCreateNode =
         SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.ProductionFactoryCreateMethodFullName}")
@@ -107,10 +104,7 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
                 }
                 if ((parameter.Options & ProductionFactoryParameterOptions.CastToUntypedIGrammarSymbol) != 0)
                 {
-                    TypeSyntax nameNode = (parameter.Options & ProductionFactoryParameterOptions.EmitFullyQualifiedName) == ProductionFactoryParameterOptions.EmitFullyQualifiedName
-                        ? s_iGrammarSymbolNode
-                        : s_iGrammarSymbolNodeUnqualified;
-                    paramNode = SyntaxFactory.CastExpression(nameNode, paramNode.WithoutTrivia()).WithTriviaFrom(paramNode);
+                    paramNode = SyntaxFactory.CastExpression(s_iGrammarSymbolNode, paramNode.WithoutTrivia()).WithTriviaFrom(paramNode);
                 }
                 b.Add(SyntaxFactory.Argument(paramNode));
             }

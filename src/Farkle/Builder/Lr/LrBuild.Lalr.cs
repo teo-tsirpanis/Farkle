@@ -18,7 +18,7 @@ namespace Farkle.Builder.Lr;
 /// Contains the logic for building an LALR(1) state machine from a set of
 /// syntax rules.
 /// </summary>
-internal readonly struct LalrBuild
+internal readonly partial struct LrBuild
 {
     private readonly AugmentedSyntaxProvider Syntax;
 
@@ -26,7 +26,7 @@ internal readonly struct LalrBuild
 
     private readonly BuilderLogger Log;
 
-    private LalrBuild(IGrammarSyntaxProvider syntax, BuilderLogger log, CancellationToken cancellationToken)
+    private LrBuild(IGrammarSyntaxProvider syntax, BuilderLogger log, CancellationToken cancellationToken)
     {
         Syntax = new(syntax);
         CancellationToken = cancellationToken;
@@ -42,7 +42,7 @@ internal readonly struct LalrBuild
     /// <param name="cancellationToken">Used to cancel the building process.</param>
     public static LrWriter Build(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default)
     {
-        var @this = new LalrBuild(syntax, log, cancellationToken);
+        var @this = new LrBuild(syntax, log, cancellationToken);
         var lr0StateMachine = @this.ComputeLr0StateMachine();
         var nullableNonterminals = @this.ComputeNullableNonterminals();
         var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);
@@ -566,9 +566,9 @@ internal readonly struct LalrBuild
     private sealed class DefaultLrStateMachine(Lr0StateMachine states,
         ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads) : LrStateMachine
     {
-        private Lr0StateMachine Lr0StateMachine { get; } = states;
+        public Lr0StateMachine Lr0StateMachine { get; } = states;
 
-        private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ReductionLookaheads { get; } = reductionLookaheads;
+        public ImmutableArray<Dictionary<Production, BitArrayNeo>?> ReductionLookaheads { get; } = reductionLookaheads;
 
         public override int StateCount => Lr0StateMachine.States.Length;
 
@@ -790,7 +790,7 @@ internal readonly struct LalrBuild
     /// </summary>
     [DebuggerDisplay("Count = {Count}")]
     [DebuggerTypeProxy(typeof(FlatCollectionProxy<Lr0Item, KernelItemSet>))]
-    private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyCollection<Lr0Item>
+    private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyList<Lr0Item>
     {
         private readonly List<Lr0Item> _items;
 
@@ -805,6 +805,8 @@ internal readonly struct LalrBuild
         }
 
         public int Count => _items.Count;
+
+        public Lr0Item this[int index] => _items[index];
 
         public List<Lr0Item>.Enumerator GetEnumerator() => _items.GetEnumerator();
 

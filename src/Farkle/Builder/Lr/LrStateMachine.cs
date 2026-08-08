@@ -16,7 +16,7 @@ namespace Farkle.Builder.Lr;
 /// a primary source, or transform existing state machines.
 /// </remarks>
 /// <seealso cref="ConflictResolvingLrStateMachine"/>
-/// <seealso cref="LalrBuild.DefaultLrStateMachine"/>
+/// <seealso cref="LrBuild.DefaultLrStateMachine"/>
 internal abstract class LrStateMachine
 {
     /// <summary>

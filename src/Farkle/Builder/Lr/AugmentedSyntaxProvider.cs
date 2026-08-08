@@ -3,8 +3,10 @@
 
 using System.Collections;
 using System.Diagnostics;
+#if DEBUG
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+#endif
 using Farkle.Grammars;
 
 namespace Farkle.Builder.Lr;
@@ -245,14 +247,12 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     }
 
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-#pragma warning disable CS9113 // Parameter is unread.
-    internal readonly struct Production(int index, AugmentedSyntaxProvider syntax) : IEquatable<Production>
-#pragma warning restore CS9113 // Parameter is unread.
+    internal readonly struct Production(int index) : IEquatable<Production>
     {
         public int Index { get; } = index;
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax = syntax;
+        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
         [ExcludeFromCodeCoverage]
         public readonly string GetDebuggerDisplay(int dotPosition = -1)
@@ -289,10 +289,17 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             return sb.ToString();
         }
 
-        private readonly string DebuggerDisplay => GetDebuggerDisplay();
+        public readonly string DebuggerDisplay => GetDebuggerDisplay();
 #else
-    private readonly string DebuggerDisplay => "Production " + Index;
+        public readonly string DebuggerDisplay => "Production " + Index;
 #endif
+
+        public Production(int index, AugmentedSyntaxProvider syntax) : this(index)
+        {
+#if DEBUG
+            _debugOnlySyntax = syntax;
+#endif
+        }
 
         public bool Equals(Production other) => Index == other.Index;
 

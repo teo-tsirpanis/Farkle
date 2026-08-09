@@ -75,6 +75,7 @@ public static class ProductionFactoryGeneratorShared
             var typeInfo = semanticModel.GetTypeInfo(arg.Expression, cancellationToken);
             if (typeInfo.Type is null or IErrorTypeSymbol)
             {
+                context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type?.ToDisplayString() ?? "<null>"));
                 hasError = true;
                 continue;
             }

@@ -8,3 +8,4 @@ FARKLE1005 | Usage | Error | DiagnosticDescriptors
 FARKLE1006 | Usage | Error | DiagnosticDescriptors
 FARKLE1007 | Usage | Info | DiagnosticDescriptors
 FARKLE1008 | Maintainability | Info | DiagnosticDescriptors
+FARKLE1009 | Usage | Warning | DiagnosticDescriptors

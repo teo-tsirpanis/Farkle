@@ -18,6 +18,7 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
         DiagnosticDescriptors.ProductionFactoryUnsupportedType,
         DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols,
         DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary,
+        DiagnosticDescriptors.CannotInferProductionFactoryParameters,
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -86,6 +87,10 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
                 if (!IsUnderAttribute)
                 {
                     Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, node.Expression.GetLocation()));
+                }
+                else if (node.ArgumentList.Arguments.Count > 0 && symbolInfo.Symbol is IMethodSymbol { Parameters: [{ IsParams: true}] })
+                {
+                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.CannotInferProductionFactoryParameters, node.Expression.GetLocation()));
                 }
             }
 

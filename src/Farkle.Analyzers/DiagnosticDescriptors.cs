@@ -68,6 +68,15 @@ public static class DiagnosticDescriptors
         description: "Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.",
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
 
+    public static readonly DiagnosticDescriptor CannotInferProductionFactoryParameters = Create(
+        id: "FARKLE1009",
+        title: "Cannot infer types of production factory arguments",
+        messageFormat: "Cannot infer type of production factory arguments. Consider explicitly specifying the types of variables involved in the factory call.",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "The production factory source generator failed to infer the type of some of the arguments. You can resolve this by explicitly specifying the types of the variables involved in the factory call.");
+
     public static readonly SuppressionDescriptor IGrammarSymbolUpcastSuppressor = new(
         id: "FARKLE2001",
         suppressedDiagnosticId: "IDE0004",

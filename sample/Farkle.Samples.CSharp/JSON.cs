@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-
 using Farkle.Builder;
 using static Farkle.Builder.Regex;
 using System;
@@ -25,6 +24,7 @@ namespace Farkle.Samples.CSharp
 
         public static readonly CharParser<JsonNode?> Parser;
 
+        [UseEnhancedSyntax]
         static JSON()
         {
             var number = Terminal.Create("Number",
@@ -51,7 +51,7 @@ namespace Farkle.Samples.CSharp
 
             var arrayReversed = Nonterminal.Create<JsonArray>("Array Reversed");
             arrayReversed.SetProductions(
-                arrayReversed.Extended().Append(",").Extend(value).Finish((xs, x) =>
+                Production.Create(arrayReversed, ",", value).Finish((xs, x) =>
                 {
                     xs.Add(x);
                     return xs;
@@ -60,22 +60,22 @@ namespace Farkle.Samples.CSharp
             var arrayOptional = Nonterminal.Create("Array Optional",
                 arrayReversed.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonArray()));
-            jsonArray.SetProductions("[".Appended().Extend(arrayOptional).Append("]").AsProduction());
+            jsonArray.SetProductions(Production.Create("[", arrayOptional, "]").AsProduction());
 
             var objectElement = Nonterminal.Create<JsonObject>("Object Element");
             objectElement.SetProductions(
-                objectElement.Extended().Append(",").Extend(jsonString).Append(":").Extend(value)
+                Production.Create(objectElement, ",", jsonString, ":", value)
                     .Finish((xs, k, v) =>
                     {
                         xs.Add(k, v);
                         return xs;
                     }),
-                jsonString.Extended().Append(":").Extend(value)
+                Production.Create(jsonString, ":", value)
                     .Finish((k, v) => new JsonObject { { k, v } }));
             var objectOptional = Nonterminal.Create("Object Optional",
                 objectElement.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonObject()));
-            jsonObject.SetProductions("{".Appended().Extend(objectOptional).Append("}").AsProduction());
+            jsonObject.SetProductions(Production.Create("{", objectOptional, "}").AsProduction());
 
             Builder = value.CaseSensitive();
             Parser = Builder.Build();

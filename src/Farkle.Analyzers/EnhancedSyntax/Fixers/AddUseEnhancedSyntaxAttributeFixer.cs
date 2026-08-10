@@ -18,9 +18,9 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
         DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax.Id,
     ];
 
-    private const string AddOnDeclaringMemberKey = "AddUseEnhancedSyntaxAttribute";
+    public const string AddOnDeclaringMemberKey = "AddUseEnhancedSyntaxAttribute";
 
-    private const string AddOnDeclaringTypeKey = "AddUseEnhancedSyntaxAttributeOnDeclaringType";
+    public const string AddOnDeclaringTypeKey = "AddUseEnhancedSyntaxAttributeOnDeclaringType";
 
     public override FixAllProvider GetFixAllProvider() => FixAllProvider.Create(async (context, document, diagnostics) =>
     {

@@ -23,18 +23,23 @@ public static class ProductionFactoryGeneratorShared
         or AccessorDeclarationSyntax
         or LocalFunctionStatementSyntax;
 
-    public static SyntaxNode AddAttributeLists(SyntaxNode node, params AttributeListSyntax[] attributeLists) => node switch
+    public static SyntaxNode AddAttributeLists(SyntaxNode node, params AttributeListSyntax[] attributeLists)
     {
-        // Make sure that the syntax node types match the ones in CanHaveUseEnhancedSyntaxAttribute.
-        // The syntax node singleton for [UseEnhancedSyntax] is declared in Fixers/Utilities.cs,
-        // because it's using a simplifier annotation from the Workspaces assembly, and only code
-        // in Fixers subdirectories is allowed to use APIs from there.
-        CompilationUnitSyntax compilationUnit => compilationUnit.AddAttributeLists(attributeLists),
-        MemberDeclarationSyntax memberDeclaration => memberDeclaration.AddAttributeLists(attributeLists),
-        AccessorDeclarationSyntax accessorDeclaration => accessorDeclaration.AddAttributeLists(attributeLists),
-        LocalFunctionStatementSyntax localFunctionStatement => localFunctionStatement.AddAttributeLists(attributeLists),
-        _ => throw new InvalidOperationException($"Cannot add attribute lists to node of kind {node.Kind()}."),
-    };
+        // Move the node's leading trivia to the attribute. This places the attribute after XML documentation.
+        SyntaxNode nodeWithAttribute = node.WithoutLeadingTrivia() switch
+        {
+            // Make sure that the syntax node types match the ones in CanHaveUseEnhancedSyntaxAttribute.
+            // The syntax node singleton for [UseEnhancedSyntax] is declared in Fixers/Utilities.cs,
+            // because it's using a simplifier annotation from the Workspaces assembly, and only code
+            // in Fixers subdirectories is allowed to use APIs from there.
+            CompilationUnitSyntax compilationUnit => compilationUnit.AddAttributeLists(attributeLists),
+            MemberDeclarationSyntax memberDeclaration => memberDeclaration.AddAttributeLists(attributeLists),
+            AccessorDeclarationSyntax accessorDeclaration => accessorDeclaration.AddAttributeLists(attributeLists),
+            LocalFunctionStatementSyntax localFunctionStatement => localFunctionStatement.AddAttributeLists(attributeLists),
+            _ => throw new InvalidOperationException($"Cannot add attribute lists to node of kind {node.Kind()}."),
+        };
+        return nodeWithAttribute.WithLeadingTrivia(node.GetLeadingTrivia());
+    }
 
     public static void AnalyzeInvocation(GeneratorOrAnalyzerContext<ProductionFactoryInvocation> context,
         ProductionFactorySymbols symbols, InvocationExpressionSyntax invocation, CancellationToken cancellationToken)

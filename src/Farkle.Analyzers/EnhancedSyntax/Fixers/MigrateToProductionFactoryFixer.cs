@@ -21,8 +21,8 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
         SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.IGrammarSymbolName}")
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
-    private static readonly TypeSyntax s_productionFactoryCreateNode =
-        SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.ProductionFactoryCreateMethodFullName}")
+    private static readonly ExpressionSyntax s_productionFactoryCreateNode =
+        SyntaxFactory.ParseExpression($"{Constants.GlobalAlias}{Constants.ProductionFactoryCreateMethodFullName}")
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
     public override ImmutableArray<string> FixableDiagnosticIds { get; } = [

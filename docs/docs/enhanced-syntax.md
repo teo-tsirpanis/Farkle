@@ -35,7 +35,7 @@ internal static partial class Production
 }
 ```
 
-Production factories support objects of all the types that can be passed to the `Append` and `Extend` methods of production builders; namely @"Farkle.Builder.IGrammarSymbol" and @System.String". If the type of an argument implements @"Farkle.Builder.IGrammarSymbol`1", the generated overload will have a generic type parameter corresponding to that member, and the return type of the overload will be a generic `ProductionBuilder` with the same number of type parameters. If an argument is a string, it will be converted to a literal symbol by calling @"Farkle.Builder.Terminal.Literal(System.String)?displayProperty=nameWithType".
+Production factories support objects of all the types that can be passed to the `Append` and `Extend` methods of production builders; namely @"Farkle.Builder.IGrammarSymbol" and @"System.String". If the type of an argument implements @"Farkle.Builder.IGrammarSymbol`1", the generated overload will have a generic type parameter corresponding to that member, and the return type of the overload will be a generic `ProductionBuilder` with the same number of type parameters. If an argument is a string, it will be converted to a literal symbol by calling @"Farkle.Builder.Terminal.Literal(System.String)?displayProperty=nameWithType".
 
 ### Where to put the attribute
 

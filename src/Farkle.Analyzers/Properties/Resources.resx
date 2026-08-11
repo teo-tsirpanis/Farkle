@@ -22,7 +22,7 @@
     <value>To ensure high performance for the production factory source generator, using a method in the 'Farkle.Builder.Production' class requires applying 'UseEnhancedSyntaxAttribute'.</value>
   </data>
   <data name="FARKLE1006_Common_Title" xml:space="preserve">
-    <value>API requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'</value>
+    <value>Invalid usage of 'Farkle.Builder.Production' factory method</value>
   </data>
   <data name="ProductionFactoryUnsupportedType_MessageFormat" xml:space="preserve">
     <value>Argument {0}: cannot convert from '{1}' to 'string' or 'Farkle.Builder.IGrammarSymbol'</value>

@@ -19,7 +19,7 @@ public static class MyGrammar
     {
         IGrammarSymbol<int> number = Terminals.Int32("Number");
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number, (a, b) => a + b));
+            Production.Create(number, "+", number).Finish((a, b) => a + b));
     }
 }
 
@@ -30,7 +30,7 @@ public static partial class MyGrammar
     {
         IGrammarSymbol<int> number = Terminals.Int32("Number");
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number, (a, b) => a + b));
+            Production.Create(number, "+", number).Finish((a, b) => a + b));
     }
 }
 [UseEnhancedSyntax]
@@ -44,7 +44,7 @@ public static class MyGrammar
     {
         IGrammarSymbol<int> number = Terminals.Int32("Number");
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number, (a, b) => a + b));
+            Production.Create(number, "+", number).Finish((a, b) => a + b));
     }
 }
 
@@ -56,7 +56,7 @@ public static class MyGrammar
     {
         IGrammarSymbol<int> number = Terminals.Int32("Number");
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number, (a, b) => a + b));
+            Production.Create(number, "+", number).Finish((a, b) => a + b));
     }
 }
 ```

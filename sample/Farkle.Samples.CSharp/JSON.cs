@@ -7,13 +7,14 @@ using System;
 using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Collections.Immutable;
+using Farkle.Parser;
 
 // ReSharper disable once CheckNamespace
 namespace Farkle.Samples.CSharp
 {
     public static class JSON
     {
-        private static JsonValue ToDecimal(ReadOnlySpan<char> data)
+        private static JsonValue ToDecimal(ref ParserState state, ReadOnlySpan<char> data)
         {
             var num =
                 decimal.Parse(data, NumberStyles.AllowExponent | NumberStyles.Float, CultureInfo.InvariantCulture);
@@ -36,7 +37,7 @@ namespace Farkle.Samples.CSharp
                         OneOf("eE"),
                         OneOf("+-").Optional(),
                         OneOf("0123456789").AtLeast(1)).Optional()),
-                 (ref _, data) => ToDecimal(data));
+                ToDecimal);
             var jsonString = Terminals.String("String", '"', "/bfnrtu", false);
             var jsonObject = Nonterminal.Create<JsonObject>("Object");
             var jsonArray = Nonterminal.Create<JsonArray>("Array");

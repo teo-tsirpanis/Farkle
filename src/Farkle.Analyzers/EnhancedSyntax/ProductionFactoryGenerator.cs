@@ -78,7 +78,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
                     }
                     var type = x.MemberTypes[i];
                     w.Write(GetTypeName(type, genericIdx));
-                    w.Write($" member{i}");
+                    w.Write($" member{i + 1}");
                     if (type == ProductionMemberType.IGrammarSymbol)
                     {
                         genericIdx++;
@@ -100,10 +100,10 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
                         {
                             case ProductionMemberType.IGrammarSymbol:
                             case ProductionMemberType.IGrammarSymbolUntyped:
-                                w.Write($"member{i}");
+                                w.Write($"member{i + 1}");
                                 break;
                             case ProductionMemberType.String:
-                                w.Write($"Terminal.Literal(member{i})");
+                                w.Write($"Terminal.Literal(member{i + 1})");
                                 break;
                         }
                     }
@@ -156,7 +156,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
             [global::Microsoft.CodeAnalysis.EmbeddedAttribute]
             internal static partial class Production
             {
-                public static ProductionBuilder Create(params global::System.ReadOnlySpan<object> members) => new(members);
+                public static ProductionBuilder Create(params object[] members) => new(members);
             }
 
             """);

@@ -91,6 +91,11 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     static ProductionBuilder IProductionBuilder<ProductionBuilder>.Create(ReadOnlySpan<IGrammarSymbol> members, ReadOnlySpan<int> significantMemberIndices)
     {
         ArgumentOutOfRangeException.ThrowIfNotEqual(significantMemberIndices.Length, 0);
+
+        if (members.IsEmpty)
+        {
+            return Empty;
+        }
 #if NET9_0_OR_GREATER // ReadOnlySpan is not covariant prior to .NET 9
         return new(members);
 #else

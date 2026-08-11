@@ -70,10 +70,8 @@ public static class ProductionFactoryGeneratorShared
         }
 
         var argumentTypes = context.AddItem is { } ? ImmutableArray.CreateBuilder<ProductionMemberType>(arguments.Count) : null;
-
         int arity = 0;
         const int MaxGenericParametersSupported = 16;
-        bool hasError = false;
         for (int i = 0; i < arguments.Count; i++)
         {
             ArgumentSyntax arg = arguments[i];
@@ -81,7 +79,7 @@ public static class ProductionFactoryGeneratorShared
             if (typeInfo.Type is null or IErrorTypeSymbol)
             {
                 context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type?.ToDisplayString() ?? "<null>"));
-                hasError = true;
+                argumentTypes = null;
                 continue;
             }
 
@@ -90,7 +88,7 @@ public static class ProductionFactoryGeneratorShared
                 if (arity == MaxGenericParametersSupported)
                 {
                     context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols, invocation.GetLocation(), MaxGenericParametersSupported));
-                    hasError = true;
+                    argumentTypes = null;
                     continue;
                 }
                 argumentTypes?.Add(ProductionMemberType.IGrammarSymbol);
@@ -103,7 +101,7 @@ public static class ProductionFactoryGeneratorShared
             // Only string supports implicit conversion from other types, because IGrammarSymbol is an interface.
             // In practice, no type will be implicitly convertible to both string and IGrammarSymbol, because IGrammarSymbol
             // cannot be implemented by user code, nor can a Farkle class implementing it can be inherited by user code.
-            // We should detect this case and fail if thhe conversion can become ambiguous in the future.
+            // We should detect this case and fail if the conversion can become ambiguous in the future.
             else if (semanticModel.Compilation.ClassifyConversion(typeInfo.Type, symbols.String).IsImplicit)
             {
                 argumentTypes?.Add(ProductionMemberType.String);
@@ -111,15 +109,14 @@ public static class ProductionFactoryGeneratorShared
             else
             {
                 context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type.ToDisplayString()));
-                hasError = true;
+                argumentTypes = null;
             }
         }
 
-        if (hasError)
+        if (argumentTypes is not null)
         {
-            return;
+            context.AddItem!.Invoke(new(argumentTypes.DrainToEquatable()));
         }
-        context.AddItem?.Invoke(new(argumentTypes!.DrainToEquatable()));
     }
 
     public static bool IsSymbolAssignableToGeneric(ITypeSymbol symbol, ITypeSymbol? targetType)

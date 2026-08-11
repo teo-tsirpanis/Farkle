@@ -54,7 +54,7 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
             {
                 var root = context.FilterTree.GetRoot(context.CancellationToken);
 
-                var visitor = new AttributeVisitor(context, useEnhancedSyntaxAttributeSymbol)
+                var visitor = new ProductionBuilderChainVisitor(context, useEnhancedSyntaxAttributeSymbol)
                 {
                     StartingMembers = startingMembers,
                     IGrammarSymbol1 = iGrammarSymbol1Symbol,
@@ -65,7 +65,7 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private sealed class AttributeVisitor(SemanticModelAnalysisContext context, INamedTypeSymbol attributeSymbol) : AttributeUsageWalker(context, attributeSymbol)
+    private sealed class ProductionBuilderChainVisitor(SemanticModelAnalysisContext context, INamedTypeSymbol attributeSymbol) : AttributeUsageWalker(context, attributeSymbol)
     {
         public required ImmutableHashSet<IMethodSymbol?> StartingMembers { get; init; }
 

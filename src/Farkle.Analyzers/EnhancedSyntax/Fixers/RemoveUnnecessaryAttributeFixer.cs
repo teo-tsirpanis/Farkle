@@ -47,7 +47,7 @@ public sealed class RemoveUnnecessaryAttributeFixer : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                "Remove unnecessary attribute",
+                Resources.RemoveUnnecessaryAttributeFixer_Title,
                 cancellationToken => RemoveUseEnhancedSyntaxAttributeAsync(context.Document, root, attributeSyntax, cancellationToken),
                 nameof(RemoveUnnecessaryAttributeFixer)),
             context.Diagnostics);

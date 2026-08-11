@@ -19,66 +19,72 @@ public static class DiagnosticDescriptors
             id, title, messageFormat, category, defaultSeverity, isEnabledByDefault, description,
             helpLinkUri: $"https://farkle.dev/diagnostics/{id}.html", customTags);
 
+    private static LocalizableResourceString Localize(string resourceName) => new(resourceName, Resources.ResourceManager, typeof(Resources));
+
+    private const string CategoryUsage = "Usage";
+
+    private const string CategoryMaintainability = "Maintainability";
+
     public static readonly DiagnosticDescriptor ProductionFactoryRequiresEnhancedSyntax = Create(
         id: "FARKLE1005",
-        title: "API requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
-        messageFormat: "Using class 'Farkle.Builder.Production' requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
-        category: "Usage",
+        title: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_Title)),
+        messageFormat: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_MessageFormat)),
+        category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "To ensure high performance for the production factory source generator, using a method in the 'Farkle.Builder.Production' class requires applying 'UseEnhancedSyntaxAttribute'.",
+        description: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_Description)),
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
     public static readonly DiagnosticDescriptor ProductionFactoryUnsupportedType = Create(
         id: "FARKLE1006",
-        title: "Invalid usage of Farkle.Builder.Production factory method",
-        messageFormat: "Argument {0}: cannot convert from '{1}' to 'string' or 'Farkle.Builder.IGrammarSymbol'",
-        category: "Usage",
+        title: Localize(nameof(Resources.FARKLE1006_Common_Title)),
+        messageFormat: Localize(nameof(Resources.ProductionFactoryUnsupportedType_MessageFormat)),
+        category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: "Production factory methods only support arguments of type 'string' or 'Farkle.Builder.IGrammarSymbol'.",
+        description: Localize(nameof(Resources.ProductionFactoryUnsupportedType_Description)),
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
     public static readonly DiagnosticDescriptor ProductionFactoryTooManyTypedGrammarSymbols = Create(
         id: "FARKLE1006",
-        title: "Invalid usage of Farkle.Builder.Production factory method",
-        messageFormat: "Production factory method cannot contain more than {0} arguments of type 'Farkle.Builder.IGrammarSymbol<T>'",
-        category: "Usage",
+        title: Localize(nameof(Resources.FARKLE1006_Common_Title)),
+        messageFormat: Localize(nameof(Resources.ProductionFactoryTooManyTypedSymbols_MessageFormat)),
+        category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
     public static readonly DiagnosticDescriptor UseEnhancedSyntaxAttributeUnnecessary = Create(
         id: "FARKLE1007",
-        title: "Unnecessary use of 'Farkle.Builder.UseEnhancedSyntaxAttribute'",
-        messageFormat: "'Farkle.Builder.UseEnhancedSyntaxAttribute' is unnecessary on this type or member",
-        category: "Usage",
+        title: Localize(nameof(Resources.UseEnhancedSyntaxAttributeUnnecessary_Title)),
+        messageFormat: Localize(nameof(Resources.UseEnhancedSyntaxAttributeUnnecessary_MessageFormat)),
+        category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "The 'UseEnhancedSyntaxAttribute' attribute is unnecessary on this type or member, as no code in it requires its use.",
+        description: Localize(nameof(Resources.UseEnhancedSyntaxAttributeUnnecessary_Description)),
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
 
     public static readonly DiagnosticDescriptor SwitchToProductionFactories = Create(
         id: "FARKLE1008",
-        title: "Use 'Production.Create' to create production builder",
-        messageFormat: "Use 'Production.Create' instead of 'Append'/'Extend' methods to create production builder",
-        category: "Maintainability",
+        title: Localize(nameof(Resources.SwitchToProductionFactories_Title)),
+        messageFormat: Localize(nameof(Resources.SwitchToProductionFactories_MessageFormat)),
+        category: CategoryMaintainability,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true,
-        description: "Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.",
+        description: Localize(nameof(Resources.SwitchToProductionFactories_Description)),
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
 
     public static readonly DiagnosticDescriptor CannotInferProductionFactoryParameters = Create(
         id: "FARKLE1009",
-        title: "Cannot infer types of production factory arguments",
-        messageFormat: "Cannot infer type of production factory arguments. Consider explicitly specifying the types of variables involved in the factory call.",
-        category: "Usage",
+        title: Localize(nameof(Resources.CannotInferProductionFactoryParameters_Title)),
+        messageFormat: Localize(nameof(Resources.CannotInferProductionFactoryParameters_MessageFormat)),
+        category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "The production factory source generator failed to infer the type of some of the arguments. You can resolve this by explicitly specifying the types of the variables involved in the factory call.");
+        description: Localize(nameof(Resources.CannotInferProductionFactoryParameters_Description)));
 
     public static readonly SuppressionDescriptor IGrammarSymbolUpcastSuppressor = new(
         id: "FARKLE2001",
         suppressedDiagnosticId: "IDE0004",
-        justification: "Cast to IGrammarSymbol is not unnecessary, since removing it would cause the production factory generator to emit a different overload.");
+        justification: Localize(nameof(Resources.IGrammarSymbolUpcastSuppressor_Justification)));
 }

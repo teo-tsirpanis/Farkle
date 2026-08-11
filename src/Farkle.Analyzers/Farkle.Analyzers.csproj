@@ -15,4 +15,15 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="PolySharp" PrivateAssets="all" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Analyzers.%(Filename)" />
+    <EmbeddedResource Update="Properties/Resources.resx">
+      <Generator>MSBuild:Compile</Generator>
+      <StronglyTypedFileName>$(IntermediateOutputPath)/Resources.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Farkle.Analyzers</StronglyTypedNamespace>
+      <StronglyTypedClassName>Resources</StronglyTypedClassName>
+    </EmbeddedResource>
+    <Compile Condition="$(DesignTimeBuild) == true" Include="$(IntermediateOutputPath)/Resources.Designer.cs" />
+  </ItemGroup>
 </Project>

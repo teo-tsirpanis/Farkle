@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ProductionFactoryRequiresEnhancedSyntax_Title" xml:space="preserve">
+    <value>API requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'</value>
+  </data>
+  <data name="ProductionFactoryRequiresEnhancedSyntax_MessageFormat" xml:space="preserve">
+    <value>Using class 'Farkle.Builder.Production' requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'</value>
+  </data>
+  <data name="ProductionFactoryRequiresEnhancedSyntax_Description" xml:space="preserve">
+    <value>To ensure high performance for the production factory source generator, using a method in the 'Farkle.Builder.Production' class requires applying 'UseEnhancedSyntaxAttribute'.</value>
+  </data>
+  <data name="FARKLE1006_Common_Title" xml:space="preserve">
+    <value>API requires applying 'Farkle.Builder.UseEnhancedSyntaxAttribute'</value>
+  </data>
+  <data name="ProductionFactoryUnsupportedType_MessageFormat" xml:space="preserve">
+    <value>Argument {0}: cannot convert from '{1}' to 'string' or 'Farkle.Builder.IGrammarSymbol'</value>
+  </data>
+  <data name="ProductionFactoryUnsupportedType_Description" xml:space="preserve">
+    <value>Production factory methods only support arguments of type 'string' or 'Farkle.Builder.IGrammarSymbol'.</value>
+  </data>
+  <data name="ProductionFactoryTooManyTypedSymbols_MessageFormat" xml:space="preserve">
+    <value>Production factory method cannot contain more than {0} arguments of type 'Farkle.Builder.IGrammarSymbol&lt;T&gt;'</value>
+  </data>
+  <data name="UseEnhancedSyntaxAttributeUnnecessary_Title" xml:space="preserve">
+    <value>Unnecessary use of 'Farkle.Builder.UseEnhancedSyntaxAttribute'</value>
+  </data>
+  <data name="UseEnhancedSyntaxAttributeUnnecessary_MessageFormat" xml:space="preserve">
+    <value>'Farkle.Builder.UseEnhancedSyntaxAttribute' is unnecessary on this type or member</value>
+  </data>
+  <data name="UseEnhancedSyntaxAttributeUnnecessary_Description" xml:space="preserve">
+    <value>The 'UseEnhancedSyntaxAttribute' attribute is unnecessary on this type or member, as no code in it requires its use.</value>
+  </data>
+  <data name="SwitchToProductionFactories_Title" xml:space="preserve">
+    <value>Use 'Production.Create' to create production builder</value>
+  </data>
+  <data name="SwitchToProductionFactories_MessageFormat" xml:space="preserve">
+    <value>Use 'Production.Create' instead of 'Append'/'Extend' methods to create production builder</value>
+  </data>
+  <data name="SwitchToProductionFactories_Description" xml:space="preserve">
+    <value>Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.</value>
+  </data>
+  <data name="CannotInferProductionFactoryParameters_Title" xml:space="preserve">
+    <value>Cannot infer types of production factory arguments</value>
+  </data>
+  <data name="CannotInferProductionFactoryParameters_MessageFormat" xml:space="preserve">
+    <value>Cannot infer type of production factory arguments. Consider explicitly specifying the types of variables involved in the factory call.</value>
+  </data>
+  <data name="CannotInferProductionFactoryParameters_Description" xml:space="preserve">
+    <value>The production factory source generator failed to infer the type of some of the arguments. You can resolve this by explicitly specifying the types of the variables involved in the factory call.</value>
+  </data>
+  <data name="IGrammarSymbolUpcastSuppressor_Justification" xml:space="preserve">
+    <value>Cast to IGrammarSymbol is not unnecessary, since removing it would cause the production factory generator to emit a different overload.</value>
+  </data>
+  <data name="AddUseEnhancedSyntaxAttribute_Title" xml:space="preserve">
+    <value>Add [UseEnhancedSyntax]</value>
+  </data>
+  <data name="AddUseEnhancedSyntaxAttributeOnDeclaringType_Title" xml:space="preserve">
+    <value>Add [UseEnhancedSyntax] on declaring type</value>
+  </data>
+  <data name="MigrateToProductionFactoryFixer_Title" xml:space="preserve">
+    <value>Convert to production factory</value>
+  </data>
+  <data name="RemoveUnnecessaryAttributeFixer_Title" xml:space="preserve">
+    <value>Remove unnecessary attribute</value>
+  </data>
+</root>

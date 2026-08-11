@@ -76,7 +76,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                "Add [UseEnhancedSyntax]",
+                Resources.AddUseEnhancedSyntaxAttribute_Title,
                 cancellationToken => AddUseEnhancedSyntaxAttributeAsync(context.Document, root, declaringMember, cancellationToken),
                 AddOnDeclaringMemberKey),
             context.Diagnostics);
@@ -89,7 +89,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                "Add [UseEnhancedSyntax] on declaring type",
+                Resources.AddUseEnhancedSyntaxAttributeOnDeclaringType_Title,
                 cancellationToken => AddUseEnhancedSyntaxAttributeAsync(context.Document, root, declaringType, cancellationToken),
                 AddOnDeclaringTypeKey),
             context.Diagnostics);

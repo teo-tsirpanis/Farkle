@@ -50,7 +50,7 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                "Migrate to production factory",
+                Resources.MigrateToProductionFactoryFixer_Title,
                 cancellationToken => ApplyMigrationAsync(context.Document, root, context.Diagnostics, cancellationToken),
                 nameof(MigrateToProductionFactoryFixer)),
             context.Diagnostics);

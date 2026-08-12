@@ -39,7 +39,7 @@ public class RemoveUnnecessaryAttributeFixerTests
             """,
             """
             return;
-            
+
             [UseEnhancedSyntax]
             void f()
             {

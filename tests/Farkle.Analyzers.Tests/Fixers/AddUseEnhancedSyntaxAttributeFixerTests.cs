@@ -107,7 +107,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             {
                 public ProductionBuilder MyProduction => {|FARKLE1005:Production.Create|}("a");
             }
-            
+
             /// <summary>
             /// My grammar class 2.
             /// </summary>
@@ -119,7 +119,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             """,
             FixedCode = """
             return;
-            
+
             /// <summary>
             /// My grammar class.
             /// </summary>
@@ -128,7 +128,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             {
                 public ProductionBuilder MyProduction => Production.Create("a");
             }
-            
+
             /// <summary>
             /// My grammar class 2.
             /// </summary>

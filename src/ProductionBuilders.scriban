@@ -30,15 +30,21 @@ SPDX-License-Identifier: MIT ~}}
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<ProductionBuilder<{{ type_params n}}>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int {{ type_indices n }};
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, {{ type_indices_params n }}, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, {{ type_indices_params n }}, object? precedenceToken)
     {
         _members = members;
         {{ for i in 1..n; $"_idx{i} = idx{i};"; if !for.last; " "; end; end }}
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<{{ type_params n}}> IProductionBuilder<ProductionBuilder<{{ type_params n}}>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, {{ n }}, symbols.Length);
+        return new([.. symbols], {{ for i in 1..n; $"indices[{i - 1}]"; if !for.last; ", "; end; end }}, null);
     }
 
     void IProductionBuilder<ProductionBuilder<{{ type_params n}}>>.MustNotImplement() { }
@@ -109,6 +115,7 @@ public sealed class ProductionBuilder<{{ type_params n}}> : IProductionBuilder<P
 namespace Farkle.Builder.ProductionBuilders;
 
 using Farkle.Builder;
+using Farkle.Collections;
 using Farkle.Parser;
 using System;
 using System.Collections.Immutable;
@@ -118,3 +125,15 @@ using System.ComponentModel;
     for i in (1..capacity) reversed
         gen_builder i
     end ~}}
+file static class Utilities
+{
+    public static void ValidateIndices(ReadOnlySpan<int> indices, int expectedIndexCount, int memberCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNotEqual(indices.Length, expectedIndexCount);
+        foreach (var index in indices)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(index);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, memberCount);
+        }
+    }
+}

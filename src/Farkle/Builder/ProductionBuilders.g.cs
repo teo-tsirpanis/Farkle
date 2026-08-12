@@ -7,6 +7,7 @@
 namespace Farkle.Builder.ProductionBuilders;
 
 using Farkle.Builder;
+using Farkle.Collections;
 using Farkle.Parser;
 using System;
 using System.Collections.Immutable;
@@ -16,15 +17,21 @@ using System.ComponentModel;
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15, _idx16;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, int idx15, int idx16, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, int idx15, int idx16, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11; _idx12 = idx12; _idx13 = idx13; _idx14 = idx14; _idx15 = idx15; _idx16 = idx16;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 16, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], indices[11], indices[12], indices[13], indices[14], indices[15], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>.MustNotImplement() { }
@@ -63,15 +70,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14, _idx15;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, int idx15, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, int idx15, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11; _idx12 = idx12; _idx13 = idx13; _idx14 = idx14; _idx15 = idx15;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 15, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], indices[11], indices[12], indices[13], indices[14], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>.MustNotImplement() { }
@@ -122,15 +135,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13, _idx14;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, int idx14, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11; _idx12 = idx12; _idx13 = idx13; _idx14 = idx14;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 14, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], indices[11], indices[12], indices[13], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>.MustNotImplement() { }
@@ -181,15 +200,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12, _idx13;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, int idx13, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11; _idx12 = idx12; _idx13 = idx13;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 13, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], indices[11], indices[12], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>.MustNotImplement() { }
@@ -240,15 +265,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11, _idx12;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, int idx12, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11; _idx12 = idx12;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 12, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], indices[11], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>.MustNotImplement() { }
@@ -299,15 +330,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10, _idx11;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, int idx11, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10; _idx11 = idx11;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 11, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], indices[10], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>.MustNotImplement() { }
@@ -358,15 +395,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9, _idx10;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, int idx10, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9; _idx10 = idx10;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 10, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], indices[9], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>.MustNotImplement() { }
@@ -417,15 +460,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8, _idx9;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, int idx9, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8; _idx9 = idx9;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 9, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], indices[8], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.MustNotImplement() { }
@@ -476,15 +525,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IPro
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7, _idx8;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, int idx8, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7; _idx8 = idx8;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 8, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], indices[7], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8>>.MustNotImplement() { }
@@ -535,15 +590,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7, T8> : IProduct
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6, _idx7;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, int idx7, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6; _idx7 = idx7;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 7, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], indices[6], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6, T7>>.MustNotImplement() { }
@@ -594,15 +655,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6, T7> : IProductionB
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5, _idx6;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5; _idx6 = idx6;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5, T6> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 6, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], indices[5], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5, T6>>.MustNotImplement() { }
@@ -653,15 +720,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5, T6> : IProductionBuild
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4, _idx5;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, int idx5, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4; _idx5 = idx5;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4, T5> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 5, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], indices[4], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4, T5>>.MustNotImplement() { }
@@ -712,15 +785,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4, T5> : IProductionBuilder<P
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<ProductionBuilder<T1, T2, T3, T4>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3, _idx4;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, int idx4, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3; _idx4 = idx4;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3, T4> IProductionBuilder<ProductionBuilder<T1, T2, T3, T4>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 4, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], indices[3], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3, T4>>.MustNotImplement() { }
@@ -771,15 +850,21 @@ public sealed class ProductionBuilder<T1, T2, T3, T4> : IProductionBuilder<Produ
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<ProductionBuilder<T1, T2, T3>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2, _idx3;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, int idx3, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, int idx3, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2; _idx3 = idx3;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2, T3> IProductionBuilder<ProductionBuilder<T1, T2, T3>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 3, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], indices[2], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2, T3>>.MustNotImplement() { }
@@ -830,15 +915,21 @@ public sealed class ProductionBuilder<T1, T2, T3> : IProductionBuilder<Productio
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBuilder<T1, T2>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1, _idx2;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, int idx2, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, int idx2, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1; _idx2 = idx2;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1, T2> IProductionBuilder<ProductionBuilder<T1, T2>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 2, symbols.Length);
+        return new([.. symbols], indices[0], indices[1], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1, T2>>.MustNotImplement() { }
@@ -889,15 +980,21 @@ public sealed class ProductionBuilder<T1, T2> : IProductionBuilder<ProductionBui
 /// <seealso cref="ProductionBuilder"/>
 public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder<T1>>
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
     private readonly object? _precedenceToken;
     private readonly int _idx1;
 
-    internal ProductionBuilder(ImmutableList<IGrammarSymbol> members, int idx1, object? precedenceToken)
+    internal ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, int idx1, object? precedenceToken)
     {
         _members = members;
         _idx1 = idx1;
         _precedenceToken = precedenceToken;
+    }
+
+    static ProductionBuilder<T1> IProductionBuilder<ProductionBuilder<T1>>.Create(ReadOnlySpan<IGrammarSymbol> symbols, ReadOnlySpan<int> indices)
+    {
+        Utilities.ValidateIndices(indices, 1, symbols.Length);
+        return new([.. symbols], indices[0], null);
     }
 
     void IProductionBuilder<ProductionBuilder<T1>>.MustNotImplement() { }
@@ -956,3 +1053,15 @@ public sealed class ProductionBuilder<T1> : IProductionBuilder<ProductionBuilder
     }
 }
 
+file static class Utilities
+{
+    public static void ValidateIndices(ReadOnlySpan<int> indices, int expectedIndexCount, int memberCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNotEqual(indices.Length, expectedIndexCount);
+        foreach (var index in indices)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(index);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, memberCount);
+        }
+    }
+}

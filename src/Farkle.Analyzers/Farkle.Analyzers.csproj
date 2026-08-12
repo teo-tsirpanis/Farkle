@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Farkle/Compatibility/Compatibility.cs" Link="Compatibility\Compatibility.cs" />
+    <Compile Include="../Farkle/Compatibility/HashCode.cs" Link="Compatibility\HashCode.cs" />
+    <Compile Include="../Farkle/Compatibility/Enumerable.cs" Link="Compatibility\Enumerable.cs" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+    <PackageReference Include="PolySharp" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Analyzers.%(Filename)" />
+    <EmbeddedResource Update="Properties/Resources.resx">
+      <Generator>MSBuild:Compile</Generator>
+      <StronglyTypedFileName>$(IntermediateOutputPath)/Resources.Designer.cs</StronglyTypedFileName>
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedNamespace>Farkle.Analyzers</StronglyTypedNamespace>
+      <StronglyTypedClassName>Resources</StronglyTypedClassName>
+    </EmbeddedResource>
+    <Compile Condition="$(DesignTimeBuild) == true" Include="$(IntermediateOutputPath)/Resources.Designer.cs" />
+  </ItemGroup>
+</Project>

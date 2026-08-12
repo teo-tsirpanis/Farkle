@@ -1,7 +1,6 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-
 using System;
 using Farkle.Builder;
 using Farkle.Builder.OperatorPrecedence;
@@ -13,6 +12,7 @@ namespace Farkle.Samples.CSharp
         public static readonly IGrammarBuilder<double> Builder;
         public static readonly CharParser<double> Parser;
 
+        [UseEnhancedSyntax]
         static SimpleMaths()
         {
             var number = Terminals.Double("Number");
@@ -20,13 +20,13 @@ namespace Farkle.Samples.CSharp
             var expression = Nonterminal.Create<double>("Expression");
             expression.SetProductions(
                 number.AsProduction(),
-                expression.Extended().Append("+").Extend(expression).Finish((x1, x2) => x1 + x2),
-                expression.Extended().Append("-").Extend(expression).Finish((x1, x2) => x1 - x2),
-                expression.Extended().Append("*").Extend(expression).Finish((x1, x2) => x1 * x2),
-                expression.Extended().Append("/").Extend(expression).Finish((x1, x2) => x1 / x2),
-                "-".Appended().Extend(expression).WithPrecedence(out var NEG).Finish(x => -x),
-                expression.Extended().Append("^").Extend(expression).Finish(Math.Pow),
-                "(".Appended().Extend(expression).Append(")").AsProduction());
+                Production.Create(expression, "+", expression).Finish((x1, x2) => x1 + x2),
+                Production.Create(expression, "-", expression).Finish((x1, x2) => x1 - x2),
+                Production.Create(expression, "*", expression).Finish((x1, x2) => x1 * x2),
+                Production.Create(expression, "/", expression).Finish((x1, x2) => x1 / x2),
+                Production.Create("-", expression).WithPrecedence(out var NEG).Finish(x => -x),
+                Production.Create(expression, "^", expression).Finish(Math.Pow),
+                Production.Create("(", expression, ")").AsProduction());
 
             Builder = expression.WithOperatorScope([
                 new LeftAssociative("+", "-"),

@@ -1,3 +1,6 @@
+#### 7.1.0
+* Added [enhanced syntax](./docs/docs/enhanced-syntax.md), which is a set of convenience APIs powered by source generators. At this moment, they provide a simpler way to create production builders.
+
 #### 7.0.1 - 09-07-2026
 * Fixed a bug where installing the `Farkle` NuGet package on unsupported frameworks did not fail.
 * Reduced allocations when creating regexes that match characters specified in an `ImmutableArray<char>` or a string.

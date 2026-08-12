@@ -2,9 +2,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <LangVersion>14</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Farkle.Analyzers\Farkle.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <ProjectReference Include="..\..\src\Farkle\Farkle.csproj" />
   </ItemGroup>
 </Project>

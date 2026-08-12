@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using Farkle.Builder.ProductionBuilders;
+using Farkle.Collections;
 using Farkle.Parser;
 
 namespace Farkle.Builder;
@@ -19,7 +21,7 @@ namespace Farkle.Builder;
 /// </remarks>
 public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, IProduction
 {
-    private readonly ImmutableList<IGrammarSymbol> _members;
+    private readonly ImmutableArrayOrList<IGrammarSymbol> _members;
 
     private readonly object? _precedenceToken;
 
@@ -34,9 +36,9 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <summary>
     /// A production builder with no members.
     /// </summary>
-    public static ProductionBuilder Empty { get; } = new();
+    public static ProductionBuilder Empty { get; } = new(ImmutableArrayOrList<IGrammarSymbol>.Empty);
 
-    private ProductionBuilder(ImmutableList<IGrammarSymbol> members, object? precedenceToken = null)
+    private ProductionBuilder(ImmutableArrayOrList<IGrammarSymbol> members, object? precedenceToken = null)
     {
         _members = members;
         _precedenceToken = precedenceToken;
@@ -49,11 +51,19 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <exception cref="ArgumentException"><paramref name="members"/> has an item
     /// whose type is not <see cref="IGrammarSymbol"/>, <see cref="string"/> or
     /// <see cref="char"/>.</exception>
-    public ProductionBuilder(params object[] members)
-    {
-        ArgumentNullException.ThrowIfNull(members);
+    [ExcludeFromCodeCoverage]
+    public ProductionBuilder(params object[] members) : this(members.AsSpanChecked()) { }
 
-        var membersList = ImmutableList.CreateBuilder<IGrammarSymbol>();
+    /// <summary>
+    /// Creates a production builder with the given members.
+    /// </summary>
+    /// <param name="members">An array of the production's members.</param>
+    /// <exception cref="ArgumentException"><paramref name="members"/> has an item
+    /// whose type is not <see cref="IGrammarSymbol"/>, <see cref="string"/> or
+    /// <see cref="char"/>.</exception>
+    public ProductionBuilder(params ReadOnlySpan<object> members)
+    {
+        var membersList = ImmutableArray.CreateBuilder<IGrammarSymbol>(members.Length);
         for (int i = 0; i < members.Length; i++)
         {
             switch (members[i])
@@ -75,7 +85,22 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
                 ThrowHelpers.ThrowArgumentExceptionLocalized($"{nameof(members)}[{i}]", nameof(Resources.Builder_ProductionBuilderInvalidMemberObject));
         }
 
-        _members = membersList.ToImmutable();
+        _members = new(membersList.ToImmutable());
+    }
+
+    static ProductionBuilder IProductionBuilder<ProductionBuilder>.Create(ReadOnlySpan<IGrammarSymbol> members, ReadOnlySpan<int> significantMemberIndices)
+    {
+        ArgumentOutOfRangeException.ThrowIfNotEqual(significantMemberIndices.Length, 0);
+
+        if (members.IsEmpty)
+        {
+            return Empty;
+        }
+#if NET9_0_OR_GREATER // ReadOnlySpan is not covariant prior to .NET 9
+        return new(members);
+#else
+        return new(members.ToArray());
+#endif
     }
 
     /// <inheritdoc/>

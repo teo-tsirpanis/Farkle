@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
@@ -28,9 +27,8 @@ public sealed class RemoveUnnecessaryAttributeFixer : CodeFixProvider
             return document;
         }
 
-        var syntaxEditor = new SyntaxEditor(root, document.Project.Solution.Services);
-        new RemoveAttributesVisitor(syntaxEditor, diagnostics.Select(d => d.Location.SourceSpan), context.CancellationToken).Visit(root);
-        return document.WithSyntaxRoot(syntaxEditor.GetChangedRoot());
+        var newRoot = new RemoveAttributesRewriter(diagnostics.Select(d => d.Location.SourceSpan), context.CancellationToken).Visit(root);
+        return document.WithSyntaxRoot(newRoot);
     }, Utilities.DefaultFixAllScopes);
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -59,27 +57,22 @@ public sealed class RemoveUnnecessaryAttributeFixer : CodeFixProvider
     {
         var parent = (AttributeListSyntax)attributeSyntax.Parent!;
 
-        (SyntaxNode nodeToRemove, SyntaxRemoveOptions removeOptions) = parent.Attributes is [_]
-            ? ((SyntaxNode)parent, SyntaxRemoveOptions.KeepExteriorTrivia)
-            : (attributeSyntax, SyntaxRemoveOptions.KeepNoTrivia);
+        SyntaxNode nodeToRemove = parent.Attributes is [_] ? parent : attributeSyntax;
 
-        var newRoot = root.RemoveNode(nodeToRemove, removeOptions)!;
+        var newRoot = root.RemoveNode(nodeToRemove, SyntaxRemoveOptions.KeepNoTrivia)!;
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private sealed class RemoveAttributesVisitor : CSharpSyntaxWalker
+    private sealed class RemoveAttributesRewriter : CSharpSyntaxRewriter
     {
-        private readonly SyntaxEditor _syntaxEditor;
-
         private readonly HashSet<TextSpan> _spansToRemove;
 
         private readonly TextSpan _maxSpanToRemove;
 
         private readonly CancellationToken _cancellationToken;
 
-        public RemoveAttributesVisitor(SyntaxEditor editor, IEnumerable<TextSpan> spansToRemove, CancellationToken cancellationToken)
+        public RemoveAttributesRewriter(IEnumerable<TextSpan> spansToRemove, CancellationToken cancellationToken)
         {
-            _syntaxEditor = editor;
             _spansToRemove = [.. spansToRemove];
             _maxSpanToRemove = GetMaxSpan(_spansToRemove);
             _cancellationToken = cancellationToken;
@@ -92,27 +85,26 @@ public sealed class RemoveUnnecessaryAttributeFixer : CodeFixProvider
             return TextSpan.FromBounds(minStart, maxEnd);
         }
 
-        public override void DefaultVisit(SyntaxNode node)
+        public override SyntaxNode? DefaultVisit(SyntaxNode node)
         {
             if (!node.Span.OverlapsWith(_maxSpanToRemove))
             {
                 // Do not recurse into nodes that don't contain any of the spans to remove.
-                return;
+                return node;
             }
-            base.DefaultVisit(node);
+            return base.DefaultVisit(node);
         }
 
-        public override void VisitAttributeList(AttributeListSyntax node)
+        public override SyntaxNode? VisitAttributeList(AttributeListSyntax node)
         {
             _cancellationToken.ThrowIfCancellationRequested();
             var attributesToKeep = SyntaxFactory.SeparatedList(node.Attributes.Where(a => !_spansToRemove.Contains(a.Span)));
             if (attributesToKeep.Count == 0)
             {
-                _syntaxEditor.RemoveNode(node, SyntaxRemoveOptions.KeepExteriorTrivia);
-                return;
+                return null;
             }
 
-            _syntaxEditor.ReplaceNode(node, node.WithAttributes(attributes: attributesToKeep));
+            return node.WithAttributes(attributes: attributesToKeep);
         }
     }
 }

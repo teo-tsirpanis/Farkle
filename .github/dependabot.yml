@@ -22,3 +22,4 @@ updates:
     ignore:
       # Do not automatically update Roslyn.
       - dependency-name: "Microsoft.CodeAnalysis.CSharp"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp.Workspaces"

@@ -32,7 +32,7 @@
     <PackageReference Include="BitCollections" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Farkle.Analyzers\Farkle.Analyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Farkle.Analyzers\Farkle.Analyzers.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.%(Filename)" />

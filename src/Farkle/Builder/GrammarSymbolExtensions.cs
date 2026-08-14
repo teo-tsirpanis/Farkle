@@ -92,7 +92,6 @@ public static class GrammarSymbolExtensions
     /// <param name="symbol">The symbol to match multiple times.</param>
     /// <param name="atLeastOnce">Whether <paramref name="symbol"/> must be matched
     /// at least once. Optional, defaults to <see langword="false"/></param>
-    [UseEnhancedSyntax]
     public static IGrammarSymbol<TCollection> Many<T, TCollection>(
         this IGrammarSymbol<T> symbol, bool atLeastOnce = false)
         where TCollection : ICollection<T>, new()
@@ -103,14 +102,14 @@ public static class GrammarSymbolExtensions
         {
             nont.SetProductions(
                 symbol.Finish(x => new TCollection { x }),
-                Production.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         else
         {
             nont.SetProductions(
                 ProductionBuilder.Empty.Finish(() => new TCollection()),
-                Production.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         return nont;
@@ -128,7 +127,6 @@ public static class GrammarSymbolExtensions
     /// <paramref name="symbol"/>.</param>
     /// <param name="atLeastOnce">Whether <paramref name="symbol"/> must be matched
     /// at least once. Optional, defaults to <see langword="false"/></param>
-    [UseEnhancedSyntax]
     public static IGrammarSymbol<TCollection> SeparatedBy<T, TCollection>(
         this IGrammarSymbol<T> symbol, IGrammarSymbol separator, bool atLeastOnce = false)
         where TCollection : ICollection<T>, new()
@@ -139,7 +137,7 @@ public static class GrammarSymbolExtensions
         {
             nont.SetProductions(
                 symbol.Finish(x => new TCollection { x }),
-                Production.Create(nont, separator, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Create(nont, separator, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         else

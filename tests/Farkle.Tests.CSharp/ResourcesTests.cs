@@ -1,0 +1,57 @@
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
+using System.Globalization;
+using System.Text;
+
+namespace Farkle.Tests.CSharp;
+
+internal class ResourcesTests
+{
+    [Test]
+    public void TestAllGreekResourcesAreDefined()
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            var greek = new CultureInfo("el-GR");
+            var resourceManager = Resources.ResourceManager;
+            foreach (var property in typeof(Resources).GetProperties())
+            {
+                if (property.PropertyType != typeof(string))
+                {
+                    continue;
+                }
+                var value = resourceManager.GetString(property.Name, CultureInfo.InvariantCulture);
+                Assert.That(value, Is.Not.Null.And.Not.Empty);
+                var greekValue = resourceManager.GetString(property.Name, greek);
+                Assert.That(greekValue, Is.Not.Null.And.Not.Empty.And.Not.EqualTo(value),
+                    $"String {property.Name} is not translated to Greek.");
+            }
+        }
+    }
+
+    [TestCase(null)]
+    [TestCase("el-GR")]
+    public void TestAllStringResourcesAreValidFormatStrings(string? cultureOrInvariant)
+    {
+        using (Assert.EnterMultipleScope())
+        {
+            var culture = cultureOrInvariant is not null ? new CultureInfo(cultureOrInvariant) : CultureInfo.InvariantCulture;
+            var resourceManager = Resources.ResourceManager;
+            foreach (var property in typeof(Resources).GetProperties())
+            {
+                if (property.PropertyType != typeof(string))
+                {
+                    continue;
+                }
+                var value = resourceManager.GetString(property.Name, culture);
+                if (value is null)
+                {
+                    continue;
+                }
+                Assert.That(() => CompositeFormat.Parse(value), Throws.Nothing,
+                    $"String {property.Name} is not a valid format string");
+            }
+        }
+    }
+}

@@ -25,6 +25,6 @@ Contributions are appreciated to the following areas:
 
 ### Localization
 
-Farkle's diagnostic messages can be localized. If you know a language and want to translate Farkle to it, you can join us [on Crowdin](https://crowdin.com/project/farkle-parser)!
+Farkle's diagnostic messages can be localized. The officially supported languages are English and Greek. If you know any other language and want to translate them, it would be great!
 
-The officially supported languages are English and Greek. If you want to add a new language, please open an issue or leave a message on Discord.
+To do so you need to find the `.resx` files in the repository, and create a new one corresponding to your language's culture name.

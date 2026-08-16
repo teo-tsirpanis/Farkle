@@ -1,0 +1,393 @@
+// Copyright © Theodore Tsirpanis and Contributors.
+// SPDX-License-Identifier: MIT
+
+using System.Collections.Immutable;
+using System.Diagnostics;
+using BitCollections;
+using Farkle.Diagnostics;
+using Farkle.Diagnostics.Builder;
+using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
+
+namespace Farkle.Builder.Lr;
+
+partial struct LrBuild
+{
+    private InadequacyAnnotationList ComputeAnnotations(Lr0StateMachine stateMachine,
+        ImmutableArray<ConflictDescription> conflicts, ImmutableArray<BitArrayNeo> gotoFollows,
+        ImmutableArray<BitArrayNeo> alwaysFollows, ImmutableArray<BitArrayNeo> predecessors,
+        ImmutableArray<BitSet> gotoFollowKernelItems)
+    {
+        Log.Debug("Computing IELR annotations");
+
+        var annotations = new HashSet<InadequacyAnnotation>();
+        var annotationsToProcess = new Queue<InadequacyAnnotation>();
+        var lookaheadSetCache = new ItemLookaheadSetCache(Syntax, stateMachine, gotoFollows, predecessors, CancellationToken);
+
+        // Add annotations for each conflict (annotate_manifestations).
+        for (int i = 0; i < conflicts.Length; i++)
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+            var conflict = conflicts[i];
+
+            var builder = new InadequacyContributionMatrix.Builder(conflict.Contributions.Length);
+            foreach (var contribution in conflict.Contributions)
+            {
+                if (contribution.IsShift(out _))
+                {
+                    builder.Add(null);
+                }
+                else if (contribution.IsReduce(out var production))
+                {
+                    var memberCount = Syntax.GetProductionMembers(production).Count;
+                    if (memberCount == 0)
+                    {
+                        var head = Syntax.GetProductionHead(production.Index);
+                        builder.Add(ComputeLeftHandContributions(conflict.StateIndex, head, conflict.Symbol, lookaheadSetCache));
+                    }
+                    else
+                    {
+                        int kernelItemIndex = stateMachine.States[conflict.StateIndex].KernelItems.IndexOf(new Lr0Item(production, memberCount));
+                        Debug.Assert(kernelItemIndex >= 0);
+                        builder.Add(BitSet.Singleton(kernelItemIndex));
+                    }
+                }
+            }
+
+            AddAnnotation(new InadequacyAnnotation(conflict.StateIndex, i, builder.Build()));
+        }
+
+        // Propagate annotations to predecessor states (annotate_predecessor).
+        while (annotationsToProcess.TryDequeue(out var annotation))
+        {
+            CancellationToken.ThrowIfCancellationRequested();
+
+            var conflict = conflicts[annotation.ConflictIndex];
+
+            foreach (var predecessor in predecessors[annotation.StateIndex])
+            {
+                var builder = new InadequacyContributionMatrix.Builder(annotation.ContributionMatrix.Count);
+                foreach (BitSet? x in annotation.ContributionMatrix)
+                {
+                    if (x is not { } row)
+                    {
+                        builder.Add(null);
+                        continue;
+                    }
+                    var newRow = BitSet.Empty;
+                    foreach (var itemIndex in row)
+                    {
+                        var item = stateMachine.States[annotation.StateIndex].KernelItems[itemIndex];
+                        Debug.Assert(item.DotPosition > 0);
+                        switch (item.DotPosition)
+                        {
+                            case 1:
+                                var head = Syntax.GetProductionHead(item.Production.Index);
+                                var lhsContributions = ComputeLeftHandContributions(predecessor, head, conflict.Symbol, lookaheadSetCache);
+                                if (lhsContributions is null)
+                                {
+                                    builder.Add(null);
+                                    // TODO-CSHARP15: Use labeled continue.
+                                    goto NextRow;
+                                }
+                                newRow = BitSet.Union(newRow, lhsContributions.Value);
+                                break;
+                            default:
+                                var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
+                                int previousItemIndex = stateMachine.States[predecessor].KernelItems.IndexOf(previousItem);
+                                if (lookaheadSetCache.GetLookaheadSet(predecessor, previousItemIndex)[conflict.Symbol.Index])
+                                {
+                                    newRow = newRow.Set(previousItemIndex, true);
+                                }
+
+                                break;
+                        }
+                    }
+                    builder.Add(newRow);
+                NextRow:;
+                }
+
+                AddAnnotation(new InadequacyAnnotation(predecessor, annotation.ConflictIndex, builder.Build()));
+            }
+        }
+
+        if (Log.IsEnabled(DiagnosticSeverity.Debug))
+        {
+            Log.Debug($"Computed {annotations.Count} IELR annotations");
+        }
+
+        return new(stateMachine.States.Length, annotations);
+
+        void AddAnnotation(InadequacyAnnotation annotation)
+        {
+            if (IsSplitStableDominantContribution(annotation))
+            {
+                return;
+            }
+            if (annotations.Add(annotation))
+            {
+                annotationsToProcess.Enqueue(annotation);
+            }
+        }
+
+        BitSet? ComputeLeftHandContributions(int stateIndex, Symbol productionHead, Symbol conflictSymbol,
+            in ItemLookaheadSetCache lookaheadSetCache)
+        {
+            int gotoIndex = stateMachine.States[stateIndex].Transitions[productionHead];
+            if (alwaysFollows[gotoIndex][conflictSymbol.Index])
+            {
+                return null;
+            }
+            BitSet result = BitSet.Empty;
+            var kernelItems = stateMachine.States[stateIndex].KernelItems;
+            for (int i = 0; i < kernelItems.Count; i++)
+            {
+                if (gotoFollowKernelItems[gotoIndex][i] && lookaheadSetCache.GetLookaheadSet(stateIndex, i)[conflictSymbol.Index])
+                {
+                    result = result.Set(i, true);
+                }
+            }
+            return result;
+        }
+    }
+
+    private static bool IsSplitStableDominantContribution(InadequacyAnnotation annotation)
+    {
+        // An annotation specifies a split-stable dominant contribution if all of its contributions are either "always" or "never".
+        // TODO: Consider conflict resolution if available.
+        foreach (BitSet? row in annotation.ContributionMatrix)
+        {
+            if (ClassifyContribution(row) == InadequacyContributionClassification.Potential)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static InadequacyContributionClassification ClassifyContribution(BitSet? contribution) => contribution switch
+    {
+        null => InadequacyContributionClassification.Always,
+        { IsEmpty: true } => InadequacyContributionClassification.Never,
+        _ => InadequacyContributionClassification.Potential,
+    };
+
+    private readonly struct InadequacyAnnotationList
+    {
+        private readonly ImmutableArray<InadequacyAnnotation> _annotations;
+
+        private readonly int[] _firstAnnotationOfState;
+
+        public InadequacyAnnotationList(int stateCount, IReadOnlyCollection<InadequacyAnnotation> annotations)
+        {
+            var annotationsBuilder = ImmutableArray.CreateBuilder<InadequacyAnnotation>(annotations.Count);
+            annotationsBuilder.AddRange(annotations);
+            annotationsBuilder.Sort(static (a, b) => a.StateIndex.CompareTo(b.StateIndex));
+            _annotations = annotationsBuilder.MoveToImmutable();
+
+            _firstAnnotationOfState = new int[stateCount];
+            int currentStateIndex = 0;
+            for (int i = 0; i < _annotations.Length; i++)
+            {
+                int stateIndex = _annotations[i].StateIndex;
+                Debug.Assert(currentStateIndex <= stateIndex);
+                while (currentStateIndex < stateIndex)
+                {
+                    _firstAnnotationOfState[currentStateIndex++] = i;
+                }
+            }
+        }
+
+        public ReadOnlySpan<InadequacyAnnotation> GetAnnotations(int stateIndex)
+        {
+            int firstAnnotation = _firstAnnotationOfState[stateIndex];
+            int firstAnnotationOfNext = stateIndex + 1 < _firstAnnotationOfState.Length ? _firstAnnotationOfState[stateIndex + 1] : _annotations.Length;
+            return _annotations.AsSpan()[firstAnnotation..(firstAnnotationOfNext - firstAnnotation)];
+        }
+    }
+
+    private sealed class InadequacyAnnotation(int stateIndex, int conflictIndex, InadequacyContributionMatrix contributionMatrix) : IEquatable<InadequacyAnnotation>
+    {
+        public int StateIndex { get; } = stateIndex;
+
+        public int ConflictIndex { get; } = conflictIndex;
+
+        public InadequacyContributionMatrix ContributionMatrix { get; } = contributionMatrix;
+
+        public bool Equals(InadequacyAnnotation? other) =>
+            other is not null
+            && StateIndex == other.StateIndex
+            && ConflictIndex == other.ConflictIndex
+            && ContributionMatrix.Equals(other.ContributionMatrix);
+
+        public override bool Equals(object? obj) => obj is InadequacyAnnotation other && Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(StateIndex, ConflictIndex, ContributionMatrix);
+    }
+
+    private readonly struct InadequacyContributionMatrix(ImmutableArray<BitSet> matrix, BitSet definedRows) : IEquatable<InadequacyContributionMatrix>
+    {
+        private readonly ImmutableArray<BitSet> _matrix = matrix;
+
+        private readonly BitSet _definedRows = definedRows;
+
+        public int Count => _matrix.Length;
+
+        public BitSet? this[int index] => _definedRows[index] ? _matrix[index] : null;
+
+        public Enumerator GetEnumerator() => new(this);
+
+        public bool Equals(InadequacyContributionMatrix other) => _definedRows.Equals(other._definedRows) && _matrix.SequenceEqual(other._matrix);
+
+        public override bool Equals(object? obj) => obj is InadequacyContributionMatrix other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(_definedRows);
+            hash.Add(_matrix.Length);
+            foreach (var row in _matrix)
+            {
+                hash.Add(row);
+            }
+            return hash.ToHashCode();
+        }
+
+        public struct Builder(int contributionsCount)
+        {
+            private readonly ImmutableArray<BitSet>.Builder _matrix = ImmutableArray.CreateBuilder<BitSet>(contributionsCount);
+
+            private BitSet _definedRows = BitSet.Empty;
+
+            public void Add(BitSet? row)
+            {
+                if (row is not null)
+                {
+                    _definedRows = _definedRows.Set(_matrix.Count, true);
+                }
+                _matrix.Add(row ?? BitSet.Empty);
+            }
+
+            public readonly InadequacyContributionMatrix Build() => new(_matrix.MoveToImmutable(), _definedRows);
+        }
+
+        public struct Enumerator(InadequacyContributionMatrix matrix)
+        {
+            private int _index = -1;
+
+            public readonly BitSet? Current => matrix[_index];
+
+            public bool MoveNext()
+            {
+                if (_index == matrix.Count)
+                {
+                    return false;
+                }
+                _index++;
+                return true;
+            }
+        }
+    }
+
+    private enum InadequacyContributionClassification
+    {
+        Always,
+        Potential,
+        Never,
+    }
+
+    /// <summary>
+    /// Contains the logic to compute kernel item lookahead sets.
+    /// </summary>
+    /// <remarks>
+    /// This type employs memoization to avoid repeated computations, so
+    /// you should reuse the same instance for performance reasons.
+    /// </remarks>
+    private readonly struct ItemLookaheadSetCache(AugmentedSyntaxProvider syntax, Lr0StateMachine stateMachine,
+        ImmutableArray<BitArrayNeo> gotoFollows, ImmutableArray<BitArrayNeo> predecessors, CancellationToken cancellationToken)
+    {
+        private readonly BitArrayNeo?[]?[] _cache = new BitArrayNeo?[stateMachine.States.Length][];
+
+        private readonly Stack<(int StateIndex, int ItemIndex, BitArrayNeo ResultAccumulator)> _stack = [];
+
+        private BitArrayNeo NewResultArray() => new(syntax.TerminalCount);
+
+        /// <summary>
+        /// Computes the lookahead set of specified kernel item in the specified state.
+        /// </summary>
+        public BitArrayNeo GetLookaheadSet(int stateIndex, int itemIndex)
+        {
+            if (_cache[stateIndex]?[itemIndex] is { } result)
+            {
+                return result;
+            }
+
+            Debug.Assert(_stack.Count == 0);
+
+            _stack.Push((stateIndex, itemIndex, NewResultArray()));
+
+            while (_stack.TryPeek(out var top))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Set is already computed; nothing to do here.
+                if (_cache[top.StateIndex]?[top.ItemIndex] is not null)
+                {
+                    _stack.Pop();
+                    continue;
+                }
+
+                var item = stateMachine.States[top.StateIndex].KernelItems[top.ItemIndex];
+                bool hasResult = true;
+                switch (item.DotPosition)
+                {
+                    // The only kernel item with a dot at the beginning is <S'> → • <S> and has an empty lookahead set.
+                    // We won't normally encounter this case, but we handle it for completeness.
+                    case 0:
+                        break;
+                    // The item's dot is one position after the beginning. We accumulate the follow sets of
+                    // the GOTOs in the predecessor states that transition to the item's production head.
+                    case 1:
+                        var productionHead = syntax.GetProductionHead(item.Production.Index);
+                        foreach (var predecessor in predecessors[top.StateIndex])
+                        {
+                            int gotoIdx = stateMachine.States[predecessor].Transitions[productionHead];
+                            top.ResultAccumulator.Or(gotoFollows[gotoIdx]);
+                        }
+                        break;
+                    // The item's dot is later in the production.
+                    // We accumulate the lookahead sets of the kernel items in the predecessor states with the same
+                    // production and the dot one position earlier.
+                    case > 1:
+                        var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
+                        foreach (var predecessor in predecessors[top.StateIndex])
+                        {
+                            var itemIdx = stateMachine.States[predecessor].KernelItems.IndexOf(previousItem);
+                            Debug.Assert(itemIdx >= 0);
+                            if (_cache[predecessor]?[itemIdx] is not { } lookaheadSet)
+                            {
+                                // The predecessor is not yet computed. Push it to the stack, without popping the
+                                // current item, so that we resume here after the predecessors are computed.
+                                _stack.Push((predecessor, itemIdx, NewResultArray()));
+                                hasResult = false;
+                                continue;
+                            }
+                            // There will be some duplicate ORs if we are resuming a previous computation, but that's
+                            // fine; the result will still be correct, and the performance impact does not seem terrible.
+                            top.ResultAccumulator.Or(lookaheadSet);
+                        }
+                        break;
+                }
+                if (hasResult)
+                {
+                    BitArrayNeo?[] stateCache = _cache[top.StateIndex] ??= new BitArrayNeo[stateMachine.States[top.StateIndex].KernelItems.Count];
+                    stateCache[top.ItemIndex] = top.ResultAccumulator;
+                    _stack.Pop();
+                }
+            }
+
+            result = _cache[stateIndex]?[itemIndex];
+            Debug.Assert(result is not null);
+            return result;
+        }
+    }
+}

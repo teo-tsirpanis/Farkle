@@ -808,6 +808,8 @@ internal readonly partial struct LrBuild
 
         public Lr0Item this[int index] => _items[index];
 
+        public int IndexOf(Lr0Item x) => _items.IndexOf(x);
+
         public List<Lr0Item>.Enumerator GetEnumerator() => _items.GetEnumerator();
 
         IEnumerator<Lr0Item> IEnumerable<Lr0Item>.GetEnumerator() => _items.GetEnumerator();

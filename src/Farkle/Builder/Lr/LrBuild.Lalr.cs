@@ -725,26 +725,48 @@ internal readonly partial struct LrBuild
     /// Contains detailed information about a GOTO transition.
     /// </summary>
     [DebuggerDisplay("{FromState} → {ToState} ({_symbol})")]
-    private readonly struct GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
+    private readonly struct GotoInfo
     {
         // Even though it's always a nonterminal, we use a full symbol to take
         // advantage of better debugger display.
-        private readonly Symbol _symbol = Symbol.CreateNonterminal(nonterminal, syntax);
+        private readonly Symbol _symbol;
+
+        private GotoInfo(int fromState, int toState, Symbol symbol)
+        {
+            _symbol = symbol;
+            FromState = fromState;
+            ToState = toState;
+        }
+
+        public GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
+            : this(fromState, toState, Symbol.CreateNonterminal(nonterminal, syntax))
+        {
+        }
 
         /// <summary>
         /// The state from which the GOTO originates.
         /// </summary>
-        public int FromState { get; } = fromState;
+        public int FromState { get; }
 
         /// <summary>
         /// The state to which the GOTO leads.
         /// </summary>
-        public int ToState { get; } = toState;
+        public int ToState { get; }
 
         /// <summary>
         /// The index of the nonterminal that triggers the GOTO.
         /// </summary>
         public int NonterminalIndex => _symbol.Index;
+
+        /// <summary>
+        /// Returns a new <see cref="GotoInfo"/> with a different <see cref="FromState"/>.
+        /// </summary>
+        public GotoInfo WithFromState(int fromState) => new(fromState, ToState, _symbol);
+
+        /// <summary>
+        /// Returns a new <see cref="GotoInfo"/> with a different <see cref="ToState"/>.
+        /// </summary>
+        public GotoInfo WithToState(int toState) => new(FromState, toState, _symbol);
     }
 
     /// <summary>
@@ -759,7 +781,8 @@ internal readonly partial struct LrBuild
         public KernelItemSet KernelItems { get; } = kernelItems;
 
         /// <summary>
-        /// The transitions from this state to other states. Do not modify.
+        /// The transitions from this state to other states. Do not modify after returning in
+        /// an <see cref="Lr0StateMachine"/>.
         /// </summary>
         /// <remarks>
         /// IMPORTANT: If the key is a terminal, the value is an index in <see cref="Lr0StateMachine.States"/>,
@@ -767,6 +790,12 @@ internal readonly partial struct LrBuild
         /// </remarks>
         /// <seealso cref="FollowTransition"/>
         public Dictionary<Symbol, int> Transitions { get; } = transitions;
+
+        /// <summary>
+        /// Creates a copy of the <see cref="Lr0State"/>. Changes to <see cref="Transitions"/> in the cloned
+        /// state do not affect the original state.
+        /// </summary>
+        public Lr0State Clone() => new(KernelItems, new(Transitions));
 
         /// <summary>
         /// Follows a transition from this state.

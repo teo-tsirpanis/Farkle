@@ -36,7 +36,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" Version="$(RoslynSdkVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" Version="$(RoslynSdkVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing" Version="$(RoslynSdkVersion)" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.9.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.3.3" />
     <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.3.3" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
@@ -56,7 +56,7 @@
     <PackageVersion Include="Sigourney" Version="0.5.0" />
     <PackageVersion Include="xunit" Version="2.7.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.7" />
-    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.0" />
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
 
     <!-- Test-only dependencies. -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.3" />

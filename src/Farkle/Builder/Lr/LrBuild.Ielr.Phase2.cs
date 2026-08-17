@@ -1,6 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using BitCollections;
@@ -264,7 +265,7 @@ partial struct LrBuild
         public override int GetHashCode() => HashCode.Combine(StateIndex, ConflictIndex, ContributionMatrix);
     }
 
-    private readonly struct InadequacyContributionMatrix(ImmutableArray<BitSet> matrix, BitSet definedRows) : IEquatable<InadequacyContributionMatrix>
+    private readonly struct InadequacyContributionMatrix(ImmutableArray<BitSet> matrix, BitSet definedRows) : IEquatable<InadequacyContributionMatrix>, IReadOnlyCollection<BitSet?>
     {
         private readonly ImmutableArray<BitSet> _matrix = matrix;
 
@@ -275,6 +276,10 @@ partial struct LrBuild
         public BitSet? this[int index] => _definedRows[index] ? _matrix[index] : null;
 
         public Enumerator GetEnumerator() => new(this);
+
+        IEnumerator<BitSet?> IEnumerable<BitSet?>.GetEnumerator() => GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public bool Equals(InadequacyContributionMatrix other) => _definedRows.Equals(other._definedRows) && _matrix.SequenceEqual(other._matrix);
 
@@ -310,11 +315,15 @@ partial struct LrBuild
             public readonly InadequacyContributionMatrix Build() => new(_matrix.MoveToImmutable(), _definedRows);
         }
 
-        public struct Enumerator(InadequacyContributionMatrix matrix)
+        public struct Enumerator(InadequacyContributionMatrix matrix) : IEnumerator<BitSet?>
         {
             private int _index = -1;
 
             public readonly BitSet? Current => matrix[_index];
+
+            readonly object? IEnumerator.Current => Current;
+
+            public readonly void Dispose() { }
 
             public bool MoveNext()
             {
@@ -325,6 +334,8 @@ partial struct LrBuild
                 _index++;
                 return true;
             }
+
+            public void Reset() => _index = -1;
         }
     }
 

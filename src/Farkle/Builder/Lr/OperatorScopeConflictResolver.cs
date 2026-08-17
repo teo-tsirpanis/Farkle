@@ -59,8 +59,7 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         return false;
     }
 
-    private bool TryGetPrecedenceInfo(EntityHandle symbol,
-        out int precedence, out AssociativityType associativity)
+    private bool TryGetPrecedenceInfo(EntityHandle symbol, out int precedence, out AssociativityType associativity)
     {
         if (!TryGetSymbolObject(symbol, out object? symbolObject) || !_precedenceMap.TryGetValue(symbolObject, out precedence))
         {

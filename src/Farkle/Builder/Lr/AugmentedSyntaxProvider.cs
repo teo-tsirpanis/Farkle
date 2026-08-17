@@ -176,16 +176,14 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// Represents a terminal or nonterminal symbol in an augmented grammar.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-#pragma warning disable CS9113 // Parameter is unread.
-    public readonly struct Symbol(uint value, AugmentedSyntaxProvider syntax) : IEquatable<Symbol>, IComparable<Symbol>
-#pragma warning restore CS9113 // Parameter is unread.
+    public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>
     {
-        private readonly uint _value = value;
+        private readonly uint _value;
 
         private const uint ValueMask = 0x80000000;
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax = syntax;
+        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
         private string DebuggerDisplay => IsTerminal ?
             _debugOnlySyntax.GetTerminalName(Index) :
@@ -195,6 +193,14 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             $"Terminal {Index}" :
             $"Nonterminal {Index}";
 #endif
+
+        public Symbol(uint value, AugmentedSyntaxProvider syntax)
+        {
+            _value = value;
+#if DEBUG
+            _debugOnlySyntax = syntax;
+#endif
+        }
 
         public bool IsTerminal => _value < ValueMask;
 
@@ -267,9 +273,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     }
 
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    internal readonly struct Production(int index) : IEquatable<Production>
+    internal readonly struct Production : IEquatable<Production>
     {
-        public int Index { get; } = index;
+        public int Index { get; }
 
 #if DEBUG
         private readonly AugmentedSyntaxProvider _debugOnlySyntax;
@@ -314,8 +320,9 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         public readonly string DebuggerDisplay => "Production " + Index;
 #endif
 
-        public Production(int index, AugmentedSyntaxProvider syntax) : this(index)
+        public Production(int index, AugmentedSyntaxProvider syntax)
         {
+            Index = index;
 #if DEBUG
             _debugOnlySyntax = syntax;
 #endif

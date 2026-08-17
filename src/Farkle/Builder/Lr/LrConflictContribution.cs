@@ -8,19 +8,18 @@ namespace Farkle.Builder.Lr;
 
 /// <summary>
 /// Represents an action to be taken by an LR state machine, that
-/// contributes to a conflict in a state. The symbol that triggers
-/// the action is not included.
+/// contributes to a conflict in a state (shift or reduce). The
+/// symbol that triggers the action is not included.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
+// TODO-CSHARP15: Make this a union of int and Production.
 internal readonly struct LrConflictContribution
 {
-    // The action to be taken.
+    // An integer encoding the action to be taken.
     // It is:
-    // *
-    // * an encoded LrAction for actions on terminals
-    // * the destination state for Goto actions
-    // * an encoded LrEndOfFileAction for actions on EOF
-    private readonly int _action;
+    // * A positive integer for Shift actions, which is the destination state + 1.
+    // * A negative integer for Reduce actions, which is the production index negated.
+    // * Zero for Accept actions, which is equivalent to a Reduce action of the start production.
     public int Value { get; }
 
 #if DEBUG

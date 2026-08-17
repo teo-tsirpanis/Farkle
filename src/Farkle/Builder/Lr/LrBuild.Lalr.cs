@@ -15,20 +15,24 @@ using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 namespace Farkle.Builder.Lr;
 
 /// <summary>
-/// Contains the logic for building an LALR(1) state machine from a set of
+/// Contains the logic for building an LR(1) state machine from a set of
 /// syntax rules.
 /// </summary>
 internal readonly partial struct LrBuild
 {
     private readonly AugmentedSyntaxProvider Syntax;
 
+    private readonly LrConflictResolver? ConflictResolver;
+
     private readonly CancellationToken CancellationToken;
 
     private readonly BuilderLogger Log;
 
-    private LrBuild(IGrammarSyntaxProvider syntax, BuilderLogger log, CancellationToken cancellationToken)
+    private LrBuild(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver, BuilderLogger log,
+        CancellationToken cancellationToken)
     {
         Syntax = new(syntax);
+        ConflictResolver = conflictResolver;
         CancellationToken = cancellationToken;
         Log = log;
     }
@@ -42,7 +46,7 @@ internal readonly partial struct LrBuild
     /// <param name="cancellationToken">Used to cancel the building process.</param>
     public static LrWriter Build(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default)
     {
-        var @this = new LrBuild(syntax, log, cancellationToken);
+        var @this = new LrBuild(syntax, conflictResolver, log, cancellationToken);
         var lr0StateMachine = @this.ComputeLr0StateMachine();
         var nullableNonterminals = @this.ComputeNullableNonterminals();
         var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);

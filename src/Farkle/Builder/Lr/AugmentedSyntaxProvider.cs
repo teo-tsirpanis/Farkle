@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 #endif
 using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 
 namespace Farkle.Builder.Lr;
 
@@ -86,7 +87,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         }
     }
 
-    // Converts indices of the Builder API to indices of the Grammars API.
+    // Converts types of the Builder API to types of the Grammars API.
     public static TokenSymbolHandle TranslateTerminalIndex(int index)
     {
         Debug.Assert(index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
@@ -112,6 +113,25 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
         return new((uint)index);
+    }
+
+    /// <summary>
+    /// Translates a <see cref="LrConflictContribution"/> to an <see cref="LrAction"/>.
+    /// This also converts indices from the augmented grammar to the original grammar.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="contribution"/> must not be an Accept contribution.
+    /// </remarks>
+    public static LrAction TranslateConflictContribution(LrConflictContribution contribution)
+    {
+        Debug.Assert(!contribution.IsAccept, "Accept contributions should be filtered out before translating to LrAction");
+        // The internal representations of LrConflictContribution and LrAction happen to match with each other
+        // in shift and reduce cases, after accounting for symbol index translation.
+        var translated = new LrAction(contribution.Value);
+        Debug.Assert(translated.IsShift || translated.IsReduce);
+        Debug.Assert(!contribution.IsShift(out int shiftState) || (translated.IsShift && translated.ShiftState == shiftState));
+        Debug.Assert(!contribution.IsReduce(out Production production) || (translated.IsReduce && translated.ReduceProduction == TranslateProductionIndex(production.Index)));
+        return translated;
     }
 
     public ProductionCollection EnumerateNonterminalProductions(int nonterminalIndex)

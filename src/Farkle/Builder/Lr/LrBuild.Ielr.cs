@@ -10,6 +10,30 @@ namespace Farkle.Builder.Lr;
 
 partial struct LrBuild
 {
+    /// <summary>
+    /// Resolves a conflict between two contributions when encountering the given symbol.
+    /// </summary>
+    /// <remarks>
+    /// This method is intended to be used inside the IELR algorithm. For the final conflict
+    /// resolution at the end of building a grammar, use <see cref="ConflictResolvingLrStateMachine"/>.
+    /// </remarks>
+    private LrConflictResolverDecision ResolveConflict(Symbol conflictSymbol, LrConflictContribution contribution1, LrConflictContribution contribution2)
+    {
+        Debug.Assert(conflictSymbol.IsTerminal);
+        if (ConflictResolver is null)
+        {
+            return LrConflictResolverDecision.CannotChoose;
+        }
+        if (contribution1.IsAccept || contribution2.IsAccept)
+        {
+            Debug.Assert(!(contribution1.IsAccept && contribution2.IsAccept), "Accept/Accept conflict is not possible");
+            // Accept/Reduce conflicts cannot be resolved.
+            return LrConflictResolverDecision.CannotChoose;
+        }
+        return ConflictResolver.ResolveConflict(TranslateTerminalIndex(conflictSymbol.Index),
+            TranslateConflictContribution(contribution1), TranslateConflictContribution(contribution2));
+    }
+
     private ImmutableArray<BitArrayNeo> ComputePredecessors(Lr0StateMachine stateMachine)
     {
         int stateCount = stateMachine.States.Length;

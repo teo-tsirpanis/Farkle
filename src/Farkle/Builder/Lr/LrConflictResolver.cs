@@ -1,7 +1,9 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
+using System.Diagnostics;
 using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 
 namespace Farkle.Builder.Lr;
 
@@ -28,4 +30,38 @@ internal abstract class LrConflictResolver
     /// taken into account.
     /// </remarks>
     public abstract LrConflictResolverDecision ResolveReduceReduceConflict(ProductionHandle production1, ProductionHandle production2);
+
+    public LrConflictResolverDecision ResolveConflict(TokenSymbolHandle terminal, LrAction action1, LrAction action2)
+    {
+        switch (action1.IsShift, action2.IsShift)
+        {
+            case (true, true):
+                Debug.Fail("Shift/Shift conflict is not possible");
+                return LrConflictResolverDecision.ChooseOption1;
+            case (true, false):
+                return ResolveShiftReduceConflict(terminal, action2.ReduceProduction);
+            case (false, true):
+                return Invert(ResolveShiftReduceConflict(terminal, action1.ReduceProduction));
+            case (false, false):
+                return ResolveReduceReduceConflict(action1.ReduceProduction, action2.ReduceProduction);
+        }
+
+        static LrConflictResolverDecision Invert(LrConflictResolverDecision decision) => decision switch
+        {
+            LrConflictResolverDecision.ChooseOption1 => LrConflictResolverDecision.ChooseOption2,
+            LrConflictResolverDecision.ChooseOption2 => LrConflictResolverDecision.ChooseOption1,
+            _ => decision
+        };
+    }
+
+    public LrConflictResolverDecision ResolveEndOfFileConflict(LrEndOfFileAction action1, LrEndOfFileAction action2)
+    {
+        if (action1.IsAccept || action2.IsAccept)
+        {
+            Debug.Assert(!(action1.IsAccept && action2.IsAccept), "Accept/Accept conflict is not possible");
+            // Accept/Reduce conflicts cannot be resolved.
+            return LrConflictResolverDecision.CannotChoose;
+        }
+        return ResolveReduceReduceConflict(action1.ReduceProduction, action2.ReduceProduction);
+    }
 }

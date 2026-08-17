@@ -21,14 +21,15 @@ internal readonly struct LrConflictContribution
     // * the destination state for Goto actions
     // * an encoded LrEndOfFileAction for actions on EOF
     private readonly int _action;
+    public int Value { get; }
 
 #if DEBUG
     private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 #endif
 
-    private LrConflictContribution(int action, AugmentedSyntaxProvider syntax)
+    private LrConflictContribution(int value, AugmentedSyntaxProvider syntax)
     {
-        _action = action;
+        Value = value;
 #if DEBUG
         _debugOnlySyntax = syntax;
 #endif
@@ -53,11 +54,13 @@ internal readonly struct LrConflictContribution
     public static LrConflictContribution CreateReduce(Production production, AugmentedSyntaxProvider syntax) =>
         new(-production.Index, syntax);
 
+    public bool IsAccept => Value == 0;
+
     public bool IsShift(out int state)
     {
-        if (_action > 0)
+        if (Value > 0)
         {
-            state = _action - 1;
+            state = Value - 1;
             return true;
         }
         state = 0;
@@ -66,10 +69,10 @@ internal readonly struct LrConflictContribution
 
     public bool IsReduce(out Production production)
     {
-        if (_action <= 0)
+        if (Value <= 0)
         {
 #if DEBUG
-            production = new(-_action, _debugOnlySyntax);
+            production = new(-Value, _debugOnlySyntax);
 #else
             production = new(-_action);
 #endif

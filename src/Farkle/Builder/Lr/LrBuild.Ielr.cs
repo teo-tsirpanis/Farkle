@@ -62,9 +62,9 @@ partial struct LrBuild
     // Use BitSet because it's allocation-free on small sets, and the assumption is that
     // each state has "few" kernel items.
     private ImmutableArray<BitSet> ComputeGotoFollowKernelItems(Lr0StateMachine stateMachine,
-        ReadOnlySpan<int> productionNullableStarts, ReadOnlySpan<GotoFollowDependency> dependencies)
+        ImmutableArray<int> productionNullableStarts, ImmutableArray<GotoFollowDependency> dependencies)
     {
-        var gotos = stateMachine.Gotos.AsSpan();
+        var gotos = stateMachine.Gotos;
         var followKernelItems = ImmutableArray.CreateBuilder<BitSet>(gotos.Length);
         for (int i = 0; i < gotos.Length; i++)
         {
@@ -123,7 +123,8 @@ partial struct LrBuild
         return followKernelItems.MoveToImmutable();
     }
 
-    private ImmutableArray<ConflictDescription> ComputeConflicts(DefaultLrStateMachine stateMachine)
+    private ImmutableArray<ConflictDescription> ComputeConflicts(Lr0StateMachine stateMachine,
+        ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads)
     {
         var conflicts = ImmutableArray.CreateBuilder<ConflictDescription>();
         var seenTerminals = new BitArrayNeo(Syntax.TerminalCount);
@@ -131,16 +132,16 @@ partial struct LrBuild
 
         // Traverse all actions of each state to find terminals with conflicting actions,
         // and then traverse the conflicting terminals to collect the contributions of each conflict.
-        for (int i = 0; i < stateMachine.StateCount; i++)
+        for (int i = 0; i < stateMachine.States.Length; i++)
         {
             CancellationToken.ThrowIfCancellationRequested();
 
             seenTerminals.SetAll(false);
             conflictingTerminals.SetAll(false);
 
-            var state = stateMachine.Lr0StateMachine.States[i];
+            var state = stateMachine.States[i];
             // A state with no reduce actions cannot have conflicts.
-            if (stateMachine.ReductionLookaheads[i] is not { } lookaheads)
+            if (reductionLookaheads[i] is not { } lookaheads)
             {
                 continue;
             }

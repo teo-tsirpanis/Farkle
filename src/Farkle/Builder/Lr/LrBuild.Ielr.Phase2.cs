@@ -212,7 +212,7 @@ partial struct LrBuild
         _ => InadequacyContributionClassification.Potential,
     };
 
-    private readonly struct InadequacyAnnotationList
+    private readonly struct InadequacyAnnotationList : IReadOnlyCollection<InadequacyAnnotation>
     {
         private readonly ImmutableArray<InadequacyAnnotation> _annotations;
 
@@ -237,6 +237,12 @@ partial struct LrBuild
                 }
             }
         }
+
+        public int Count => _annotations.Length;
+
+        public IEnumerator<InadequacyAnnotation> GetEnumerator() => ((IEnumerable<InadequacyAnnotation>)_annotations).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_annotations).GetEnumerator();
 
         public ReadOnlySpan<InadequacyAnnotation> GetAnnotations(int stateIndex)
         {

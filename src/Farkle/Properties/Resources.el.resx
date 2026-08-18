@@ -171,6 +171,9 @@
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Χτίζεται η γραμματική {0}</value>
   </data>
+  <data name="Builder_FoundConflictsSwitchingToIelr" xml:space="preserve">
+    <value>Εντοπίστηκαν {0} συγκρούσεις. Γίνεται προσπάθεια επίλυσής τους με τον αλγόριθμο IELR(1).</value>
+  </data>
   <data name="Builder_BuildingFinished" xml:space="preserve">
     <value>Επιτυχές χτίσιμο γραμματικής {0}: {1} τερματικά, {2} μη τερματικά, {3} παραγωγές, {4} καταστάσεις LR, {5} καταστάσεις DFA</value>
   </data>

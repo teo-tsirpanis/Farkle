@@ -16,6 +16,13 @@ partial struct LrBuild
         ImmutableArray<ConflictDescription> conflicts, ImmutableArray<BitArrayNeo> alwaysFollows,
         ImmutableArray<BitSet> followKernelItems)
     {
+        if (annotationList.Count == 0)
+        {
+            // If there are no annotations, no lookaheads would be propagated and all isocores would be compatible,
+            // so we can entirely skip this step.
+            return stateMachine;
+        }
+
         Log.Debug("Splitting LALR states");
 
         var terminalCount = Syntax.TerminalCount;
@@ -236,7 +243,7 @@ partial struct LrBuild
                 var resultRow = result[i];
                 var filter = filters[i];
 
-                // The only kernel item with the dot at the start is in the start state, which cannot be toState.
+                // The only kernel item with the dot at the start is in the start state, which cannot occur in toState.
                 Debug.Assert(item.DotPosition > 0);
                 if (item.DotPosition == 1)
                 {

@@ -222,7 +222,7 @@ public static class GrammarBuilderExtensions
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
     }
 
-    /// <inheritdoc cref="WithOperatorScope{T}(IGrammarBuilder{T}, OperatorScope)"/>
+    /// <inheritdoc cref="WithOperatorScope"/>
     public static IGrammarBuilder<T> WithOperatorScope<T>(this IGrammarBuilder<T> builder, OperatorScope value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -230,6 +230,35 @@ public static class GrammarBuilderExtensions
         return value == builder.GetOptions().OperatorScope
             ? builder
             : builder.WithOptions(builder.GetOptions() with { OperatorScope = value });
+    }
+
+    /// <summary>
+    /// Changes the <see cref="ParserGenerationAlgorithm"/> used to build the grammar's parsing tables.
+    /// </summary>
+    /// <param name="builder">The grammar builder.</param>
+    /// <param name="value">The <see cref="ParserGenerationAlgorithm"/> to use.</param>
+    /// <remarks>
+    /// Its default value is <see cref="ParserGenerationAlgorithm.Ielr1"/>.
+    /// </remarks>
+    public static IGrammarBuilder WithParserGenerationAlgorithm(this IGrammarBuilder builder, ParserGenerationAlgorithm value)
+    {
+        if (!Enum.IsDefined(value))
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
+        }
+
+        return builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
+    }
+
+    /// <inheritdoc cref="WithParserGenerationAlgorithm"/>
+    public static IGrammarBuilder<T> WithParserGenerationAlgorithm<T>(this IGrammarBuilder<T> builder, ParserGenerationAlgorithm value)
+    {
+        if (!Enum.IsDefined(value))
+        {
+            ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
+        }
+
+        return builder.WithOptions(builder.GetOptions() with { ParserGenerationAlgorithm = value });
     }
 
     /// <summary>

@@ -9,66 +9,12 @@ using BitCollections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.StateMachines;
-using Farkle.Grammars.Writers;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
 
-/// <summary>
-/// Contains the logic for building an LR(1) state machine from a set of
-/// syntax rules.
-/// </summary>
 internal readonly partial struct LrBuild
 {
-    private readonly AugmentedSyntaxProvider Syntax;
-
-    private readonly LrConflictResolver? ConflictResolver;
-
-    private readonly CancellationToken CancellationToken;
-
-    private readonly BuilderLogger Log;
-
-    private LrBuild(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver, BuilderLogger log,
-        CancellationToken cancellationToken)
-    {
-        Syntax = new(syntax);
-        ConflictResolver = conflictResolver;
-        CancellationToken = cancellationToken;
-        Log = log;
-    }
-
-    /// <summary>
-    /// Builds an LR(1) state machine that can parse the syntax of a grammar.
-    /// </summary>
-    /// <param name="syntax">The syntax of the grammar.</param>
-    /// <param name="conflictResolver">The conflict resolver to use. Optional.</param>
-    /// <param name="log">Used to log events in the building process.</param>
-    /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static LrWriter Build(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default)
-    {
-        var @this = new LrBuild(syntax, conflictResolver, log, cancellationToken);
-        var lr0StateMachine = @this.ComputeLr0StateMachine();
-        var nullableNonterminals = @this.ComputeNullableNonterminals();
-        var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);
-        var gotoFollowDependencies = @this.ComputeGotoFollowDependencies(lr0StateMachine, nullableNonterminals, productionNullableStarts.AsSpan());
-        var gotoFollows = @this.ComputeInitialGotoFollows(lr0StateMachine);
-        // The rule is, after taking a successor dependency, no internal dependency can be followed.
-        // We can propagate all successor dependencies first, but can also propagate internal dependencies
-        // at the same time. This has an equivalent effect according to §3.3.3 of the IELR paper.
-        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, gotoFollows);
-        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
-        var reductionLookaheads = @this.ComputeReductionLookaheads(lr0StateMachine, gotoFollows.AsSpan());
-
-        LrStateMachine stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
-        if (conflictResolver is not null)
-        {
-            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, conflictResolver);
-        }
-        return stateMachine.ToLrWriter();
-    }
-
     /// <summary>
     /// Computes the reduction lookahead sets of each state.
     /// </summary>
@@ -83,7 +29,7 @@ internal readonly partial struct LrBuild
     /// If a dictionary for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
     private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ComputeReductionLookaheads(
-        Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
+        Lr0StateMachine stateMachine, ImmutableArray<BitArrayNeo> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
@@ -139,10 +85,10 @@ internal readonly partial struct LrBuild
     /// <param name="dependencyKindsToPropagate">The kinds of dependencies to propagate.</param>
     /// <param name="follows">The existing GOTO follow sets that will be propagated in-place.</param>
     private void PropagateGotoFollows(Lr0StateMachine stateMachine,
-        ReadOnlySpan<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
+        ImmutableArray<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
         ImmutableArray<BitArrayNeo> follows)
     {
-        var gotos = stateMachine.Gotos.AsSpan();
+        var gotos = stateMachine.Gotos;
         Debug.Assert(follows.Length == gotos.Length);
 
         Log.Debug($"Propagating {dependencyKindsToPropagate} GOTO follow dependencies");
@@ -217,7 +163,7 @@ internal readonly partial struct LrBuild
     /// Computes the dependencies between the follow sets of GOTO transitions.
     /// </summary>
     private ImmutableArray<GotoFollowDependency> ComputeGotoFollowDependencies(Lr0StateMachine stateMachine,
-        BitArrayNeo nullableNonterminals, ReadOnlySpan<int> productionNullableStarts)
+        BitArrayNeo nullableNonterminals, ImmutableArray<int> productionNullableStarts)
     {
         Log.Debug("Computing GOTO follow dependencies");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
@@ -686,7 +632,7 @@ internal readonly partial struct LrBuild
         /// <summary>
         /// Gets the exact kind of the dependency, which requires the table with the GOTOs.
         /// </summary>
-        public GotoFollowDependencyKinds GetDependencyKind(ReadOnlySpan<GotoInfo> gotos)
+        public GotoFollowDependencyKinds GetDependencyKind(ImmutableArray<GotoInfo> gotos)
         {
             if (IsSuccessor)
             {
@@ -849,21 +795,7 @@ internal readonly partial struct LrBuild
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public bool Equals(KernelItemSet other)
-        {
-            if (Count != other.Count)
-            {
-                return false;
-            }
-            for (int i = 0; i < Count; i++)
-            {
-                if (!_items[i].Equals(other._items[i]))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+        public bool Equals(KernelItemSet other) => _items.SequenceEqual(other._items);
 
         public override bool Equals(object? obj) => obj is KernelItemSet x && Equals(x);
 

@@ -250,6 +250,8 @@ internal static class Resources
 
     public static string Builder_BuildingStarted => GetResourceString(nameof(Builder_BuildingStarted));
 
+    public static string Builder_FoundConflictsSwitchingToIelr => GetResourceString(nameof(Builder_FoundConflictsSwitchingToIelr));
+
     public static string Builder_BuildingFinished => GetResourceString(nameof(Builder_BuildingFinished));
 
     public static string Builder_RegexStringPredefinedSetsNotSupported => GetResourceString(nameof(Builder_RegexStringPredefinedSetsNotSupported));

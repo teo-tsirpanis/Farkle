@@ -30,6 +30,8 @@ internal readonly struct GrammarGlobalOptions
 
     public ImmutableList<(string Start, string? EndOrNewLine)> Comments { get; init; } = [];
 
+    public ParserGenerationAlgorithm ParserGenerationAlgorithm { get; init; } = ParserGenerationAlgorithm.Ielr1;
+
     public GrammarGlobalOptions() { }
 
     public static readonly GrammarGlobalOptions Default = new();

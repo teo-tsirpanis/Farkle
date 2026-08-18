@@ -4,6 +4,8 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using BitCollections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
@@ -14,8 +16,8 @@ namespace Farkle.Builder.Lr;
 partial struct LrBuild
 {
     private InadequacyAnnotationList ComputeAnnotations(Lr0StateMachine stateMachine,
-        ImmutableArray<ConflictDescription> conflicts, ImmutableArray<BitArrayNeo> gotoFollows,
-        ImmutableArray<BitArrayNeo> alwaysFollows, ImmutableArray<BitArrayNeo> predecessors,
+        ImmutableArray<ConflictDescription> conflicts, ImmutableArray<TerminalSet> gotoFollows,
+        ImmutableArray<TerminalSet> alwaysFollows, ImmutableArray<BitArrayNeo> predecessors,
         ImmutableArray<BitSet> gotoFollowKernelItems)
     {
         Log.Debug("Computing IELR annotations");
@@ -95,7 +97,7 @@ partial struct LrBuild
                             default:
                                 var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
                                 int previousItemIndex = stateMachine.States[predecessor].KernelItems.IndexOf(previousItem);
-                                if (lookaheadSetCache.GetLookaheadSet(predecessor, previousItemIndex)[conflict.Symbol.Index])
+                                if (lookaheadSetCache.GetLookaheadSet(predecessor, previousItemIndex)[conflict.Symbol])
                                 {
                                     newRow = newRow.Set(previousItemIndex, true);
                                 }
@@ -134,7 +136,7 @@ partial struct LrBuild
             in ItemLookaheadSetCache lookaheadSetCache)
         {
             int gotoIndex = stateMachine.States[stateIndex].Transitions[productionHead];
-            if (alwaysFollows[gotoIndex][conflictSymbol.Index])
+            if (alwaysFollows[gotoIndex][conflictSymbol])
             {
                 return null;
             }
@@ -142,7 +144,7 @@ partial struct LrBuild
             var kernelItems = stateMachine.States[stateIndex].KernelItems;
             for (int i = 0; i < kernelItems.Count; i++)
             {
-                if (gotoFollowKernelItems[gotoIndex][i] && lookaheadSetCache.GetLookaheadSet(stateIndex, i)[conflictSymbol.Index])
+                if (gotoFollowKernelItems[gotoIndex][i] && lookaheadSetCache.GetLookaheadSet(stateIndex, i)[conflictSymbol])
                 {
                     result = result.Set(i, true);
                 }
@@ -271,6 +273,7 @@ partial struct LrBuild
         public override int GetHashCode() => HashCode.Combine(StateIndex, ConflictIndex, ContributionMatrix);
     }
 
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     private readonly struct InadequacyContributionMatrix(ImmutableArray<BitSet> matrix, BitSet definedRows) : IEquatable<InadequacyContributionMatrix>, IReadOnlyCollection<BitSet?>
     {
         private readonly ImmutableArray<BitSet> _matrix = matrix;
@@ -280,6 +283,36 @@ partial struct LrBuild
         public int Count => _matrix.Length;
 
         public BitSet? this[int index] => _definedRows[index] ? _matrix[index] : null;
+
+        [ExcludeFromCodeCoverage]
+        private string GetDebuggerDisplay()
+        {
+            var sb = new StringBuilder();
+            for (int i = 0; i < Count; i++)
+            {
+                var row = this[i];
+                if (row is not { } r)
+                {
+                    MaybeAddSeparator();
+                    sb.Append($"γ[{i}] = undef");
+                    continue;
+                }
+                foreach (var column in r)
+                {
+                    MaybeAddSeparator();
+                    sb.Append($"γ[{i}][{column}] = true");
+                }
+            }
+            return sb.ToString();
+
+            void MaybeAddSeparator()
+            {
+                if (sb.Length > 0)
+                {
+                    sb.Append(", ");
+                }
+            }
+        }
 
         public Enumerator GetEnumerator() => new(this);
 
@@ -360,20 +393,20 @@ partial struct LrBuild
     /// you should reuse the same instance for performance reasons.
     /// </remarks>
     private readonly struct ItemLookaheadSetCache(AugmentedSyntaxProvider syntax, Lr0StateMachine stateMachine,
-        ImmutableArray<BitArrayNeo> gotoFollows, ImmutableArray<BitArrayNeo> predecessors, CancellationToken cancellationToken)
+        ImmutableArray<TerminalSet> gotoFollows, ImmutableArray<BitArrayNeo> predecessors, CancellationToken cancellationToken)
     {
-        private readonly BitArrayNeo?[]?[] _cache = new BitArrayNeo?[stateMachine.States.Length][];
+        private readonly TerminalSet[]?[] _cache = new TerminalSet[stateMachine.States.Length][];
 
-        private readonly Stack<(int StateIndex, int ItemIndex, BitArrayNeo ResultAccumulator)> _stack = [];
+        private readonly Stack<(int StateIndex, int ItemIndex, TerminalSet ResultAccumulator)> _stack = [];
 
-        private BitArrayNeo NewResultArray() => new(syntax.TerminalCount);
+        private TerminalSet NewResultArray() => new(syntax);
 
         /// <summary>
         /// Computes the lookahead set of specified kernel item in the specified state.
         /// </summary>
-        public BitArrayNeo GetLookaheadSet(int stateIndex, int itemIndex)
+        public TerminalSet GetLookaheadSet(int stateIndex, int itemIndex)
         {
-            if (_cache[stateIndex]?[itemIndex] is { } result)
+            if (_cache[stateIndex]?[itemIndex] is { IsDefault: false } result)
             {
                 return result;
             }
@@ -387,7 +420,7 @@ partial struct LrBuild
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // Set is already computed; nothing to do here.
-                if (_cache[top.StateIndex]?[top.ItemIndex] is not null)
+                if (!(_cache[top.StateIndex]?[top.ItemIndex] ?? default).IsDefault)
                 {
                     _stack.Pop();
                     continue;
@@ -420,7 +453,7 @@ partial struct LrBuild
                         {
                             var itemIdx = stateMachine.States[predecessor].KernelItems.IndexOf(previousItem);
                             Debug.Assert(itemIdx >= 0);
-                            if (_cache[predecessor]?[itemIdx] is not { } lookaheadSet)
+                            if (_cache[predecessor]?[itemIdx] is not { IsDefault: false } lookaheadSet)
                             {
                                 // The predecessor is not yet computed. Push it to the stack, without popping the
                                 // current item, so that we resume here after the predecessors are computed.
@@ -436,14 +469,14 @@ partial struct LrBuild
                 }
                 if (hasResult)
                 {
-                    BitArrayNeo?[] stateCache = _cache[top.StateIndex] ??= new BitArrayNeo[stateMachine.States[top.StateIndex].KernelItems.Count];
+                    TerminalSet[] stateCache = _cache[top.StateIndex] ??= new TerminalSet[stateMachine.States[top.StateIndex].KernelItems.Count];
                     stateCache[top.ItemIndex] = top.ResultAccumulator;
                     _stack.Pop();
                 }
             }
 
-            result = _cache[stateIndex]?[itemIndex];
-            Debug.Assert(result is not null);
+            result = _cache[stateIndex]?[itemIndex] ?? default;
+            Debug.Assert(!result.IsDefault);
             return result;
         }
     }

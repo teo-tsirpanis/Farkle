@@ -124,11 +124,11 @@ partial struct LrBuild
     }
 
     private ImmutableArray<ConflictDescription> ComputeConflicts(Lr0StateMachine stateMachine,
-        ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads)
+        ImmutableArray<Dictionary<Production, TerminalSet>?> reductionLookaheads)
     {
         var conflicts = ImmutableArray.CreateBuilder<ConflictDescription>();
-        var seenTerminals = new BitArrayNeo(Syntax.TerminalCount);
-        var conflictingTerminals = new BitArrayNeo(Syntax.TerminalCount);
+        var seenTerminals = new TerminalSet(Syntax);
+        var conflictingTerminals = new TerminalSet(Syntax);
 
         // Traverse all actions of each state to find terminals with conflicting actions,
         // and then traverse the conflicting terminals to collect the contributions of each conflict.
@@ -153,7 +153,7 @@ partial struct LrBuild
                     continue;
                 }
                 // Shift actions are unique per terminal, so we don't need to check for duplicates.
-                seenTerminals[s.Index] = true;
+                seenTerminals[s] = true;
             }
             foreach (var x in lookaheads.Values)
             {
@@ -169,11 +169,10 @@ partial struct LrBuild
 
             foreach (var t in conflictingTerminals)
             {
-                var symbol = Symbol.CreateTerminal(t, Syntax);
                 // Conflicts are usually between two contributions.
                 var contributions = ImmutableArray.CreateBuilder<LrConflictContribution>(2);
 
-                if (state.Transitions.TryGetValue(symbol, out int shiftState))
+                if (state.Transitions.TryGetValue(t, out int shiftState))
                 {
                     contributions.Add(LrConflictContribution.CreateShift(shiftState, Syntax));
                 }
@@ -185,7 +184,7 @@ partial struct LrBuild
                     }
                 }
 
-                conflicts.Add(new(i, symbol, contributions.DrainToImmutable()));
+                conflicts.Add(new(i, t, contributions.DrainToImmutable()));
             }
         }
         return conflicts.DrainToImmutable();

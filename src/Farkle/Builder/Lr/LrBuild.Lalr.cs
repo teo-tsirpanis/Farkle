@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using BitCollections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
@@ -28,13 +29,13 @@ internal readonly partial struct LrBuild
     /// </list>
     /// If a dictionary for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
-    private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ComputeReductionLookaheads(
-        Lr0StateMachine stateMachine, ImmutableArray<BitArrayNeo> gotoFollows)
+    private ImmutableArray<Dictionary<Production, TerminalSet>?> ComputeReductionLookaheads(
+        Lr0StateMachine stateMachine, ImmutableArray<TerminalSet> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = new Dictionary<Production, BitArrayNeo>?[states.Length];
+        var reductionLookaheads = new Dictionary<Production, TerminalSet>?[states.Length];
         // For each GOTO in the grammar, we take its follow set and push it through the productions
         // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
         // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
@@ -54,7 +55,7 @@ internal readonly partial struct LrBuild
         return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
 
         void PropagateLookaheads(in AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
-            int state, int nonterminal, BitArrayNeo lookahead)
+            int state, int nonterminal, TerminalSet lookahead)
         {
             foreach (Production p in syntax.EnumerateNonterminalProductions(nonterminal))
             {
@@ -64,7 +65,7 @@ internal readonly partial struct LrBuild
                     currentState = states[currentState].FollowTransition(s, gotos);
                 }
                 var dict = reductionLookaheads[currentState] ??= [];
-                if (!dict.TryGetValue(p, out BitArrayNeo? existingLookahead))
+                if (!dict.TryGetValue(p, out TerminalSet existingLookahead))
                 {
                     dict.Add(p, new(lookahead));
                 }
@@ -86,7 +87,7 @@ internal readonly partial struct LrBuild
     /// <param name="follows">The existing GOTO follow sets that will be propagated in-place.</param>
     private void PropagateGotoFollows(Lr0StateMachine stateMachine,
         ImmutableArray<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
-        ImmutableArray<BitArrayNeo> follows)
+        ImmutableArray<TerminalSet> follows)
     {
         var gotos = stateMachine.Gotos;
         Debug.Assert(follows.Length == gotos.Length);
@@ -113,9 +114,9 @@ internal readonly partial struct LrBuild
             Log.Debug($"Propagated after {iterations} iterations");
             if (Log.IsEnabled(DiagnosticSeverity.Verbose))
             {
-                foreach (BitArrayNeo x in follows)
+                foreach (TerminalSet x in follows)
                 {
-                    Log.Verbose($"{x}");
+                    Log.Verbose($"{x.GetDebuggerDisplay()}");
                 }
             }
         }
@@ -131,26 +132,26 @@ internal readonly partial struct LrBuild
     /// as well, and they can be computed by propagating the follow sets using
     /// <see cref="PropagateGotoFollows"/>.
     /// </remarks>
-    private ImmutableArray<BitArrayNeo> ComputeInitialGotoFollows(Lr0StateMachine stateMachine)
+    private ImmutableArray<TerminalSet> ComputeInitialGotoFollows(Lr0StateMachine stateMachine)
     {
         var gotos = stateMachine.Gotos.AsSpan();
-        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
+        var follows = ImmutableArray.CreateBuilder<TerminalSet>(gotos.Length);
         Log.Debug("Generating initial GOTO follow sets");
         // The first GOTO is the one on <S'> → • <S>, and its follow set consists of only the end symbol.
         // This happens because the reducing the start production means accepting, and we can only accept
         // at the end of input.
-        var initialFollow = new BitArrayNeo(Syntax.TerminalCount);
-        initialFollow[EndSymbolIndex] = true;
+        var initialFollow = new TerminalSet(Syntax);
+        initialFollow[Syntax.EndSymbol] = true;
         follows.Add(initialFollow);
         // Add the follow sets of the rest of the GOTOs.
         foreach (ref readonly var @goto in gotos[1..])
         {
-            var follow = new BitArrayNeo(Syntax.TerminalCount);
+            var follow = new TerminalSet(Syntax);
             foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
             {
                 if (s.IsTerminal)
                 {
-                    follow.Set(s.Index, true);
+                    follow.Set(s, true);
                 }
             }
             follows.Add(follow);
@@ -514,11 +515,11 @@ internal readonly partial struct LrBuild
     }
 
     private sealed class DefaultLrStateMachine(Lr0StateMachine states,
-        ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads) : LrStateMachine
+        ImmutableArray<Dictionary<Production, TerminalSet>?> reductionLookaheads) : LrStateMachine
     {
         public Lr0StateMachine Lr0StateMachine { get; } = states;
 
-        public ImmutableArray<Dictionary<Production, BitArrayNeo>?> ReductionLookaheads { get; } = reductionLookaheads;
+        public ImmutableArray<Dictionary<Production, TerminalSet>?> ReductionLookaheads { get; } = reductionLookaheads;
 
         public override int StateCount => Lr0StateMachine.States.Length;
 
@@ -541,28 +542,28 @@ internal readonly partial struct LrBuild
             {
                 yield break;
             }
-            foreach ((var p, BitArrayNeo lookahead) in lookaheads)
+            foreach ((var p, TerminalSet lookahead) in lookaheads)
             {
                 if (p.Index == StartProductionIndex)
                 {
-                    foreach (int terminal in lookahead)
+                    foreach (Symbol terminal in lookahead)
                     {
-                        Debug.Assert(terminal == EndSymbolIndex);
+                        Debug.Assert(terminal.Index == EndSymbolIndex);
                         yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.Accept);
                     }
                 }
                 else
                 {
                     var productionHandle = TranslateProductionIndex(p.Index);
-                    foreach (int terminal in lookahead)
+                    foreach (Symbol terminal in lookahead)
                     {
-                        if (terminal == EndSymbolIndex)
+                        if (terminal.Index == EndSymbolIndex)
                         {
                             yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.CreateReduce(productionHandle));
                         }
                         else
                         {
-                            yield return LrStateEntry.Create(TranslateTerminalIndex(terminal), LrAction.CreateReduce(productionHandle));
+                            yield return LrStateEntry.Create(TranslateTerminalIndex(terminal.Index), LrAction.CreateReduce(productionHandle));
                         }
                     }
                 }
@@ -767,7 +768,7 @@ internal readonly partial struct LrBuild
     /// Represents a set of LR(0) items. This is a transparent wrapper around a
     /// <see cref="List{T}"/> that provides structural equality semantics.
     /// </summary>
-    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     [DebuggerTypeProxy(typeof(FlatCollectionProxy<Lr0Item, KernelItemSet>))]
     private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyList<Lr0Item>
     {
@@ -781,6 +782,24 @@ internal readonly partial struct LrBuild
         {
             items.Sort();
             _items = items;
+        }
+
+        private string GetDebuggerDisplay()
+        {
+            var sb = new StringBuilder();
+            sb.Append('{');
+            bool hasElement = false;
+            foreach (var x in _items)
+            {
+                if (hasElement)
+                {
+                    sb.Append(", ");
+                }
+                hasElement = true;
+                sb.Append(x.GetDebuggerDisplay());
+            }
+            sb.Append('}');
+            return sb.ToString();
         }
 
         public int Count => _items.Count;
@@ -811,7 +830,7 @@ internal readonly partial struct LrBuild
         }
     }
 
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     private readonly struct Lr0Item(Production production, int dotPosition) : IEquatable<Lr0Item>, IComparable<Lr0Item>
     {
         public Production Production { get; } = production;
@@ -819,9 +838,9 @@ internal readonly partial struct LrBuild
         public int DotPosition { get; } = dotPosition;
 
 #if DEBUG
-        private string DebuggerDisplay => Production.GetDebuggerDisplay(DotPosition);
+        public string GetDebuggerDisplay() => Production.GetDebuggerDisplay(DotPosition);
 #else
-        private string DebuggerDisplay => $"Production {Production.Index} @ {DotPosition}";
+        public string GetDebuggerDisplay() => $"Production {Production.Index} @ {DotPosition}";
 #endif
 
         public bool Equals(Lr0Item other) => Production.Equals(other.Production) && DotPosition == other.DotPosition;

@@ -3,8 +3,8 @@
 
 using System.Collections;
 using System.Diagnostics;
-#if DEBUG
 using System.Diagnostics.CodeAnalysis;
+#if DEBUG
 using System.Text;
 #endif
 using Farkle.Grammars;
@@ -38,7 +38,13 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public const int StartSymbolIndex = 0;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public Symbol StartSymbol => Symbol.CreateNonterminal(StartSymbolIndex, this);
+
+    /// <summary>
+    /// The index of <see cref="EndSymbol"/>.
+    /// </summary>
+    public const int EndSymbolIndex = 0;
 
     /// <summary>
     /// The index of the symbol signifying the end of the input.
@@ -47,7 +53,8 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// This symbol does not appear in productions. It emerges in the follow set of
     /// <see cref="StartProduction"/>'s GOTO, and gets propagated from there.
     /// </remarks>
-    public const int EndSymbolIndex = 0;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    public Symbol EndSymbol => Symbol.CreateTerminal(EndSymbolIndex, this);
 
     /// <summary>
     /// The index of <see cref="StartProduction"/>.
@@ -64,6 +71,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// on the end of input are not possible, and the current scheme is
     /// simpler to implement and requires taking fewer special cases.
     /// </remarks>
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public Production StartProduction => new(StartProductionIndex, this);
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
@@ -175,7 +183,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// <summary>
     /// Represents a terminal or nonterminal symbol in an augmented grammar.
     /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>
     {
         private readonly uint _value;
@@ -185,11 +193,11 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 #if DEBUG
         private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
-        private string DebuggerDisplay => IsTerminal ?
+        public string GetDebuggerDisplay() => IsTerminal ?
             _debugOnlySyntax.GetTerminalName(Index) :
             $"<{_debugOnlySyntax.GetNonterminalName(Index)}>";
 #else
-        private string DebuggerDisplay => IsTerminal ?
+        public string GetDebuggerDisplay() => IsTerminal ?
             $"Terminal {Index}" :
             $"Nonterminal {Index}";
 #endif
@@ -272,7 +280,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         public void Reset() => _index = -1;
     }
 
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     internal readonly struct Production : IEquatable<Production>
     {
         public int Index { get; }
@@ -314,10 +322,8 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             }
             return sb.ToString();
         }
-
-        public readonly string DebuggerDisplay => GetDebuggerDisplay();
 #else
-        public readonly string DebuggerDisplay => "Production " + Index;
+        public readonly string GetDebuggerDisplay() => "Production " + Index;
 #endif
 
         public Production(int index, AugmentedSyntaxProvider syntax)

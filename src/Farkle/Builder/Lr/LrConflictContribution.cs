@@ -11,7 +11,7 @@ namespace Farkle.Builder.Lr;
 /// contributes to a conflict in a state (shift or reduce). The
 /// symbol that triggers the action is not included.
 /// </summary>
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
+[DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
 // TODO-CSHARP15: Make this a union of int and Production.
 internal readonly struct LrConflictContribution
 {
@@ -34,17 +34,14 @@ internal readonly struct LrConflictContribution
 #endif
     }
 
-    private string DebuggerDisplay
+    private string GetDebuggerDisplay()
     {
-        get
+        if (IsShift(out int state))
         {
-            if (IsShift(out int state))
-            {
-                return $"Shift {state}";
-            }
-            _ = IsReduce(out Production production);
-            return $"Reduce {production.DebuggerDisplay}";
+            return $"Shift {state}";
         }
+        _ = IsReduce(out Production production);
+        return $"Reduce {production.GetDebuggerDisplay()}";
     }
 
     public static LrConflictContribution CreateShift(int state, AugmentedSyntaxProvider syntax) =>
@@ -73,7 +70,7 @@ internal readonly struct LrConflictContribution
 #if DEBUG
             production = new(-Value, _debugOnlySyntax);
 #else
-            production = new(-_action);
+            production = new(-Value, default);
 #endif
             return true;
         }

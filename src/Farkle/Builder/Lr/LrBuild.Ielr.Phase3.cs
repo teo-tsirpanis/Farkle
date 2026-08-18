@@ -13,7 +13,7 @@ namespace Farkle.Builder.Lr;
 partial struct LrBuild
 {
     private Lr0StateMachine SplitStates(Lr0StateMachine stateMachine, InadequacyAnnotationList annotationList,
-        ImmutableArray<ConflictDescription> conflicts, ImmutableArray<BitArrayNeo> alwaysFollows,
+        ImmutableArray<ConflictDescription> conflicts, ImmutableArray<TerminalSet> alwaysFollows,
         ImmutableArray<BitSet> followKernelItems)
     {
         if (annotationList.Count == 0)
@@ -25,7 +25,7 @@ partial struct LrBuild
 
         Log.Debug("Splitting LALR states");
 
-        var terminalCount = Syntax.TerminalCount;
+        var syntax = Syntax;
         var newStates = ImmutableArray.CreateBuilder<Lr0State>();
         foreach (var state in stateMachine.States)
         {
@@ -34,16 +34,16 @@ partial struct LrBuild
         var newGotos = ImmutableArray.CreateBuilder<GotoInfo>();
         newGotos.AddRange(stateMachine.Gotos);
 
-        // Lookahead sets are represented as BitArrayNeo[]?; one BitArrayNeo per kernel item.
-        // The array is null if all lookahead sets are empty.
-        BitArrayNeo[]?[] lookaheadFiltersCache = new BitArrayNeo[stateMachine.States.Length][];
+        // Lookahead sets are represented as TerminalSet[]?; one set per kernel item.
+        // The array is null if all lookahead sets of a state are empty.
+        TerminalSet[]?[] lookaheadFiltersCache = new TerminalSet[stateMachine.States.Length][];
         // Reusable lists for state compatibility tests.
         var stateContributions = new List<LrConflictContribution>();
         var candidateContributions = new List<LrConflictContribution>();
 
         var lalrIsocores = new List<int>();
         var isocoreNexts = new List<int>();
-        var itemLookaheadSets = new List<BitArrayNeo[]?>();
+        var itemLookaheadSets = new List<TerminalSet[]?>();
         var lookaheadsRecomputed = new List<bool>();
         for (int i = 0; i < stateMachine.States.Length; i++)
         {
@@ -63,7 +63,7 @@ partial struct LrBuild
                 {
                     CancellationToken.ThrowIfCancellationRequested();
 
-                    var lookaheads = PropagateLookaheads(in this, next.FromState, next.ToState);
+                    var lookaheads = PropagateLookaheads(next.FromState, next.ToState);
 
                     var found = false;
                     var compatibleState = next.ToState;
@@ -102,7 +102,7 @@ partial struct LrBuild
 
         return new Lr0StateMachine(newStates.DrainToImmutable(), newGotos.DrainToImmutable());
 
-        void MergeLookaheads(int state, BitArrayNeo[]? lookaheads)
+        void MergeLookaheads(int state, TerminalSet[]? lookaheads)
         {
             if (lookaheads is null)
             {
@@ -138,7 +138,7 @@ partial struct LrBuild
             }
         }
 
-        bool IsCompatible(in LrBuild @this, int state, BitArrayNeo[]? candidateLookaheads)
+        bool IsCompatible(in LrBuild @this, int state, TerminalSet[]? candidateLookaheads)
         {
             if (!lookaheadsRecomputed[state])
             {
@@ -161,7 +161,7 @@ partial struct LrBuild
             return true;
         }
 
-        bool TryFillDominantContributions(in LrBuild @this, InadequacyAnnotation annotation, BitArrayNeo[]? lookaheads, List<LrConflictContribution> result)
+        bool TryFillDominantContributions(in LrBuild @this, InadequacyAnnotation annotation, TerminalSet[]? lookaheads, List<LrConflictContribution> result)
         {
             Debug.Assert(result.Count == 0);
             var conflict = conflicts[annotation.ConflictIndex];
@@ -208,7 +208,7 @@ partial struct LrBuild
             }
             return hasResult;
 
-            static bool FilterContribution(BitSet? row, Symbol conflictSymbol, BitArrayNeo[]? lookaheads)
+            static bool FilterContribution(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
             {
                 if (row is null)
                 {
@@ -216,7 +216,7 @@ partial struct LrBuild
                 }
                 foreach (var column in row.Value)
                 {
-                    if (lookaheads?[column][conflictSymbol.Index] ?? false)
+                    if (lookaheads?[column][conflictSymbol] ?? false)
                     {
                         return true;
                     }
@@ -225,7 +225,7 @@ partial struct LrBuild
             }
         }
 
-        BitArrayNeo[]? PropagateLookaheads(in LrBuild @this, int fromState, int toState)
+        TerminalSet[]? PropagateLookaheads(int fromState, int toState)
         {
             var filters = GetLookaheadFilters(toState);
             if (filters is null)
@@ -247,7 +247,7 @@ partial struct LrBuild
                 Debug.Assert(item.DotPosition > 0);
                 if (item.DotPosition == 1)
                 {
-                    var productionHead = @this.Syntax.GetProductionHead(item.Production.Index);
+                    var productionHead = syntax.GetProductionHead(item.Production.Index);
                     FillGotoFollowSet(fromState, productionHead, resultRow);
                 }
                 else
@@ -263,7 +263,7 @@ partial struct LrBuild
             return result;
         }
 
-        void FillGotoFollowSet(int state, Symbol productionHead, BitArrayNeo result)
+        void FillGotoFollowSet(int state, Symbol productionHead, TerminalSet result)
         {
             Debug.Assert(!productionHead.IsTerminal);
             state = lalrIsocores[state];
@@ -280,7 +280,7 @@ partial struct LrBuild
             }
         }
 
-        BitArrayNeo[]? GetLookaheadFilters(int state)
+        TerminalSet[]? GetLookaheadFilters(int state)
         {
             state = lalrIsocores[state];
             if (lookaheadFiltersCache[state] is { } filters)
@@ -304,7 +304,7 @@ partial struct LrBuild
                     }
                     foreach (var column in row.Value)
                     {
-                        filters[column][conflictSymbol.Index] = true;
+                        filters[column][conflictSymbol] = true;
                     }
                 }
             }
@@ -313,17 +313,17 @@ partial struct LrBuild
         }
 
         // TODO: Consider reusing bit arrays of merged candidate lookahead sets.
-        BitArrayNeo[] NewLookaheadSet(int kernelItemCount)
+        TerminalSet[] NewLookaheadSet(int kernelItemCount)
         {
-            var lookaheadSet = new BitArrayNeo[kernelItemCount];
+            var lookaheadSet = new TerminalSet[kernelItemCount];
             for (int i = 0; i < kernelItemCount; i++)
             {
-                lookaheadSet[i] = new BitArrayNeo(terminalCount);
+                lookaheadSet[i] = new TerminalSet(syntax);
             }
             return lookaheadSet;
         }
 
-        int AddState(int originalState, BitArrayNeo[]? lookaheads)
+        int AddState(int originalState, TerminalSet[]? lookaheads)
         {
             int newStateIndex = newStates.Count;
             var newState = newStates[originalState].Clone();

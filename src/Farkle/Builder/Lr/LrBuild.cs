@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Collections.Immutable;
-using BitCollections;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.Writers;
 
@@ -103,9 +102,9 @@ internal readonly partial struct LrBuild
         }
         return stateMachine.ToLrWriter();
 
-        static ImmutableArray<BitArrayNeo> Clone(ImmutableArray<BitArrayNeo> array)
+        static ImmutableArray<TerminalSet> Clone(ImmutableArray<TerminalSet> array)
         {
-            var builder = ImmutableArray.CreateBuilder<BitArrayNeo>(array.Length);
+            var builder = ImmutableArray.CreateBuilder<TerminalSet>(array.Length);
             foreach (var x in array)
             {
                 builder.Add(new(x));

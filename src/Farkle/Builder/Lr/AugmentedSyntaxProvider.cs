@@ -96,31 +96,33 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     }
 
     // Converts types of the Builder API to types of the Grammars API.
-    public static TokenSymbolHandle TranslateTerminalIndex(int index)
+    public static TokenSymbolHandle TranslateTerminal(Symbol symbol)
     {
-        Debug.Assert(index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
+        Debug.Assert(symbol.IsTerminal);
+        Debug.Assert(symbol.Index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)symbol.Index);
     }
 
-    public static NonterminalHandle TranslateNonterminalIndex(int index)
+    public static NonterminalHandle TranslateNonterminal(Symbol symbol)
     {
-        Debug.Assert(index != StartSymbolIndex, "No grammar should ever have a GOTO on the start symbol");
+        Debug.Assert(!symbol.IsTerminal);
+        Debug.Assert(symbol.Index != StartSymbolIndex, "No grammar should ever have a GOTO on the start symbol");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)symbol.Index);
     }
 
-    public static ProductionHandle TranslateProductionIndex(int index)
+    public static ProductionHandle TranslateProduction(Production production)
     {
-        Debug.Assert(index != StartProductionIndex, "Reducing the start production should be filtered earlier as accepting");
+        Debug.Assert(production.Index != StartProductionIndex, "Reducing the start production should be filtered earlier as accepting");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)production.Index);
     }
 
     /// <summary>
@@ -138,7 +140,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         var translated = new LrAction(contribution.Value);
         Debug.Assert(translated.IsShift || translated.IsReduce);
         Debug.Assert(!contribution.IsShift(out int shiftState) || (translated.IsShift && translated.ShiftState == shiftState));
-        Debug.Assert(!contribution.IsReduce(out Production production) || (translated.IsReduce && translated.ReduceProduction == TranslateProductionIndex(production.Index)));
+        Debug.Assert(!contribution.IsReduce(out Production production) || (translated.IsReduce && translated.ReduceProduction == TranslateProduction(production)));
         return translated;
     }
 

@@ -527,14 +527,13 @@ internal readonly partial struct LrBuild
         {
             foreach (var transition in Lr0StateMachine.States[state].Transitions)
             {
-                switch (transition.Key)
+                if (transition.Key.IsTerminal)
                 {
-                    case { IsTerminal: true, Index: int idx }:
-                        yield return LrStateEntry.Create(TranslateTerminalIndex(idx), LrAction.CreateShift(transition.Value));
-                        break;
-                    case { IsTerminal: false, Index: int idx }:
-                        yield return LrStateEntry.CreateGoto(TranslateNonterminalIndex(idx), Lr0StateMachine.Gotos[transition.Value].ToState);
-                        break;
+                    yield return LrStateEntry.Create(TranslateTerminal(transition.Key), LrAction.CreateShift(transition.Value));
+                }
+                else
+                {
+                    yield return LrStateEntry.CreateGoto(TranslateNonterminal(transition.Key), Lr0StateMachine.Gotos[transition.Value].ToState);
                 }
             }
 
@@ -554,7 +553,7 @@ internal readonly partial struct LrBuild
                 }
                 else
                 {
-                    var productionHandle = TranslateProductionIndex(p.Index);
+                    var productionHandle = TranslateProduction(p);
                     foreach (Symbol terminal in lookahead)
                     {
                         if (terminal.Index == EndSymbolIndex)
@@ -563,7 +562,7 @@ internal readonly partial struct LrBuild
                         }
                         else
                         {
-                            yield return LrStateEntry.Create(TranslateTerminalIndex(terminal.Index), LrAction.CreateReduce(productionHandle));
+                            yield return LrStateEntry.Create(TranslateTerminal(terminal), LrAction.CreateReduce(productionHandle));
                         }
                     }
                 }

@@ -13,7 +13,7 @@ namespace Farkle.Builder.Lr;
 /// </summary>
 [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
 // TODO-CSHARP15: Make this a union of int and Production.
-internal readonly struct LrConflictContribution
+internal readonly struct LrConflictContribution : IComparable<LrConflictContribution>
 {
     // An integer encoding the action to be taken.
     // It is:
@@ -77,4 +77,9 @@ internal readonly struct LrConflictContribution
         production = default;
         return false;
     }
+
+    public int CompareTo(LrConflictContribution other) =>
+        // This is used in IELR state compatibility test, to sort the lists of the state and candidate contributions.
+        // The order doesn't really matter, as long as it is total.
+        Value.CompareTo(other.Value);
 }

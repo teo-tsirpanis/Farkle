@@ -24,6 +24,7 @@ partial struct LrBuild
 
         var annotations = new HashSet<InadequacyAnnotation>();
         var annotationsToProcess = new Queue<InadequacyAnnotation>();
+        int discardedAnnotations = 0;
         var lookaheadSetCache = new ItemLookaheadSetCache(Syntax, stateMachine, gotoFollows, predecessors, CancellationToken);
 
         // Add annotations for each conflict (annotate_manifestations).
@@ -115,7 +116,7 @@ partial struct LrBuild
 
         if (Log.IsEnabled(DiagnosticSeverity.Debug))
         {
-            Log.Debug($"Computed {annotations.Count} IELR annotations");
+            Log.Debug($"Computed {annotations.Count} IELR annotations (discarded {discardedAnnotations})");
         }
 
         return new(stateMachine.States.Length, annotations);
@@ -124,6 +125,7 @@ partial struct LrBuild
         {
             if (@this.IsSplitStableDominantContribution(annotation, conflicts[annotation.ConflictIndex]))
             {
+                discardedAnnotations++;
                 return;
             }
             if (annotations.Add(annotation))
@@ -228,15 +230,19 @@ partial struct LrBuild
             _annotations = annotationsBuilder.MoveToImmutable();
 
             _firstAnnotationOfState = new int[stateCount];
-            int currentStateIndex = 0;
-            for (int i = 0; i < _annotations.Length; i++)
+            int previousStateIndex = 0;
+            int i;
+            for (i = 0; i < _annotations.Length; i++)
             {
                 int stateIndex = _annotations[i].StateIndex;
-                Debug.Assert(currentStateIndex <= stateIndex);
-                while (currentStateIndex < stateIndex)
+                while (previousStateIndex < stateIndex + 1)
                 {
-                    _firstAnnotationOfState[currentStateIndex++] = i;
+                    _firstAnnotationOfState[previousStateIndex++] = i;
                 }
+            }
+            while (previousStateIndex < _firstAnnotationOfState.Length)
+            {
+                _firstAnnotationOfState[previousStateIndex++] = i;
             }
         }
 
@@ -250,7 +256,8 @@ partial struct LrBuild
         {
             int firstAnnotation = _firstAnnotationOfState[stateIndex];
             int firstAnnotationOfNext = stateIndex + 1 < _firstAnnotationOfState.Length ? _firstAnnotationOfState[stateIndex + 1] : _annotations.Length;
-            return _annotations.AsSpan()[firstAnnotation..(firstAnnotationOfNext - firstAnnotation)];
+            int annotationCount = firstAnnotationOfNext - firstAnnotation;
+            return annotationCount == 0 ? [] : _annotations.AsSpan().Slice(firstAnnotation, annotationCount);
         }
     }
 
@@ -366,7 +373,7 @@ partial struct LrBuild
 
             public bool MoveNext()
             {
-                if (_index == matrix.Count)
+                if (_index == matrix.Count - 1)
                 {
                     return false;
                 }
@@ -440,8 +447,12 @@ partial struct LrBuild
                         var productionHead = syntax.GetProductionHead(item.Production.Index);
                         foreach (var predecessor in predecessors[top.StateIndex])
                         {
-                            int gotoIdx = stateMachine.States[predecessor].Transitions[productionHead];
-                            top.ResultAccumulator.Or(gotoFollows[gotoIdx]);
+                            if (!stateMachine.States[predecessor].Transitions.TryGetValue(productionHead, out int gotoIndex))
+                            {
+                                Debug.Assert(productionHead.Equals(syntax.StartSymbol));
+                                continue;
+                            }
+                            top.ResultAccumulator.Or(gotoFollows[gotoIndex]);
                         }
                         break;
                     // The item's dot is later in the production.

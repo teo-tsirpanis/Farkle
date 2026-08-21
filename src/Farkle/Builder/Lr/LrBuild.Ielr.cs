@@ -30,7 +30,11 @@ partial struct LrBuild
             // Accept/Reduce conflicts cannot be resolved.
             return LrConflictResolverDecision.CannotChoose;
         }
-        return ConflictResolver.ResolveConflict(TranslateTerminalIndex(conflictSymbol.Index),
+        if (conflictSymbol.Index == EndSymbolIndex)
+        {
+            return ConflictResolver.ResolveEndOfFileConflict(TranslateEndOfFileConflictContribution(contribution1), TranslateEndOfFileConflictContribution(contribution2));
+        }
+        return ConflictResolver.ResolveConflict(TranslateTerminal(conflictSymbol),
             TranslateConflictContribution(contribution1), TranslateConflictContribution(contribution2));
     }
 
@@ -84,7 +88,7 @@ partial struct LrBuild
                 // Skip items whose dot is at the end (they won't have a transition),
                 // or whose symbols after the dot are not all nullable.
                 if (item.DotPosition == productionMembers.Count
-                    || productionNullableStarts[item.Production.Index] < item.DotPosition)
+                    || item.DotPosition < productionNullableStarts[item.Production.Index])
                 {
                     continue;
                 }

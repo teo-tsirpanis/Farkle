@@ -138,10 +138,22 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         // The internal representations of LrConflictContribution and LrAction happen to match with each other
         // in shift and reduce cases, after accounting for symbol index translation.
         var translated = new LrAction(contribution.Value);
-        Debug.Assert(translated.IsShift || translated.IsReduce);
+        Debug.Assert(!translated.IsError);
         Debug.Assert(!contribution.IsShift(out int shiftState) || (translated.IsShift && translated.ShiftState == shiftState));
         Debug.Assert(!contribution.IsReduce(out Production production) || (translated.IsReduce && translated.ReduceProduction == TranslateProduction(production)));
         return translated;
+    }
+
+    public static LrEndOfFileAction TranslateEndOfFileConflictContribution(LrConflictContribution contribution)
+    {
+        Debug.Assert(!contribution.IsShift(out _));
+        if (contribution.IsAccept)
+        {
+            return LrEndOfFileAction.Accept;
+        }
+        bool isReduce = contribution.IsReduce(out Production production);
+        Debug.Assert(isReduce);
+        return LrEndOfFileAction.CreateReduce(TranslateProduction(production));
     }
 
     public ProductionCollection EnumerateNonterminalProductions(int nonterminalIndex)

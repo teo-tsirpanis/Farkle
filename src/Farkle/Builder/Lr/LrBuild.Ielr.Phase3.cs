@@ -78,11 +78,12 @@ partial struct LrBuild
                     } while (compatibleState != next.ToState);
                     if (!found)
                     {
-                        var newState = AddState(next.FromState, lookaheads);
+                        var newState = AddState(next.ToState, lookaheads);
                         UpdateTransition(next.FromState, next.Symbol, newState);
                     }
                     else if (!lookaheadsRecomputed[compatibleState])
                     {
+                        Debug.Assert(lookaheads is null || newStates[compatibleState].KernelItems.Count == lookaheads.Length);
                         itemLookaheadSets[compatibleState] = lookaheads;
                         lookaheadsRecomputed[compatibleState] = true;
                     }
@@ -114,6 +115,7 @@ partial struct LrBuild
             if (stateLookaheads is null)
             {
                 // No lookaheads have been present for this state, so we can just assign the new lookaheads.
+                Debug.Assert(newStates[state].KernelItems.Count == lookaheads.Length);
                 itemLookaheadSets[state] = lookaheads;
                 merged = true;
             }
@@ -144,15 +146,18 @@ partial struct LrBuild
             {
                 return true;
             }
+            var stateLookaheads = itemLookaheadSets[state];
             foreach (var annotation in annotationList.GetAnnotations(lalrIsocores[state]))
             {
                 stateContributions.Clear();
                 candidateContributions.Clear();
-                if (!TryFillDominantContributions(@this, annotation, itemLookaheadSets[state], stateContributions)
+                if (!TryFillDominantContributions(@this, annotation, stateLookaheads, stateContributions)
                     || !TryFillDominantContributions(@this, annotation, candidateLookaheads, candidateContributions))
                 {
                     continue;
                 }
+                stateContributions.Sort();
+                candidateContributions.Sort();
                 if (!stateContributions.SequenceEqual(candidateContributions))
                 {
                     return false;
@@ -177,6 +182,7 @@ partial struct LrBuild
                 if (result.Count == 0)
                 {
                     result.Add(candidateContribution);
+                    continue;
                 }
                 // This works similarly to IsSplitStableDominantContribution from Phase 2, but we need to keep
                 // track of which contributions are dominant.
@@ -235,7 +241,6 @@ partial struct LrBuild
                 return null;
             }
             var kernelItems = newStates[toState].KernelItems;
-            var predecessorLookeaheads = itemLookaheadSets[fromState];
             var result = NewLookaheadSet(kernelItems.Count);
             for (int i = 0; i < result.Length; i++)
             {
@@ -250,13 +255,11 @@ partial struct LrBuild
                     var productionHead = syntax.GetProductionHead(item.Production.Index);
                     FillGotoFollowSet(fromState, productionHead, resultRow);
                 }
-                else
+                else if (itemLookaheadSets[fromState] is { } predecessorLookaheads)
                 {
-                    // At this point, we should have computed the predecessor's lookahead set.
-                    Debug.Assert(predecessorLookeaheads is not null);
                     var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
                     int previousItemIndex = newStates[fromState].KernelItems.IndexOf(previousItem);
-                    resultRow.Or(predecessorLookeaheads[previousItemIndex]);
+                    resultRow.Or(predecessorLookaheads[previousItemIndex]);
                 }
                 resultRow.And(filter);
             }
@@ -266,12 +269,15 @@ partial struct LrBuild
         void FillGotoFollowSet(int state, Symbol productionHead, TerminalSet result)
         {
             Debug.Assert(!productionHead.IsTerminal);
-            state = lalrIsocores[state];
-            int gotoIndex = newStates[state].Transitions[productionHead];
+            if (!newStates[lalrIsocores[state]].Transitions.TryGetValue(productionHead, out int gotoIndex))
+            {
+                Debug.Assert(productionHead.Equals(syntax.StartSymbol));
+                return;
+            }
 
             result.Or(alwaysFollows[gotoIndex]);
 
-            var lookaheadSet = itemLookaheadSets[gotoIndex];
+            var lookaheadSet = itemLookaheadSets[state];
             foreach (var item in followKernelItems[gotoIndex])
             {
                 // At this point, we should have computed the state's lookahead set.
@@ -295,6 +301,7 @@ partial struct LrBuild
             filters = NewLookaheadSet(newStates[state].KernelItems.Count);
             foreach (var annotation in annotations)
             {
+                Debug.Assert(annotation.StateIndex == state);
                 var conflictSymbol = conflicts[annotation.ConflictIndex].Symbol;
                 foreach (var row in annotation.ContributionMatrix)
                 {
@@ -325,6 +332,7 @@ partial struct LrBuild
 
         int AddState(int originalState, TerminalSet[]? lookaheads)
         {
+            Debug.Assert(lookaheads is null || newStates[originalState].KernelItems.Count == lookaheads.Length);
             int newStateIndex = newStates.Count;
             var newState = newStates[originalState].Clone();
             foreach (var transition in newState.Transitions)

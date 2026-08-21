@@ -105,7 +105,7 @@ partial struct LrBuild
             changed = false;
             foreach (var dependency in dependencies)
             {
-                if (dependency.GetDependencyKind(gotos) != GotoFollowDependencyKinds.Internal)
+                if (dependency.DependencyKind != GotoFollowDependencyKinds.Internal)
                 {
                     continue;
                 }

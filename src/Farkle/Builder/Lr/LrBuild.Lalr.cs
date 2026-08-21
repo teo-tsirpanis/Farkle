@@ -4,6 +4,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using BitCollections;
@@ -80,18 +81,13 @@ internal readonly partial struct LrBuild
     /// <summary>
     /// Computes and propagates GOTO follow sets.
     /// </summary>
-    /// <param name="stateMachine">The state machine.</param>
     /// <param name="dependencies">The GOTO follow dependencies, computed by
     /// <see cref="ComputeGotoFollowDependencies"/>.</param>
     /// <param name="dependencyKindsToPropagate">The kinds of dependencies to propagate.</param>
     /// <param name="follows">The existing GOTO follow sets that will be propagated in-place.</param>
-    private void PropagateGotoFollows(Lr0StateMachine stateMachine,
-        ImmutableArray<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
-        ImmutableArray<TerminalSet> follows)
+    private void PropagateGotoFollows(ImmutableArray<GotoFollowDependency> dependencies,
+        GotoFollowDependencyKinds dependencyKindsToPropagate, ImmutableArray<TerminalSet> follows)
     {
-        var gotos = stateMachine.Gotos;
-        Debug.Assert(follows.Length == gotos.Length);
-
         Log.Debug($"Propagating {dependencyKindsToPropagate} GOTO follow dependencies");
         bool changed;
         int iterations = 0;
@@ -103,7 +99,7 @@ internal readonly partial struct LrBuild
             iterations++;
             foreach (var dependency in dependencies)
             {
-                if ((dependencyKindsToPropagate & dependency.GetDependencyKind(gotos)) != 0)
+                if ((dependencyKindsToPropagate & dependency.DependencyKind) != 0)
                 {
                     changed |= follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
                 }
@@ -187,7 +183,7 @@ internal readonly partial struct LrBuild
                 }
                 if (nullableNonterminals[gotos[transition.Value].NonterminalIndex])
                 {
-                    dependencies.Add(new(i, transition.Value, isSuccessor: true));
+                    dependencies.Add(new(i, transition.Value, GotoFollowDependencyKinds.Successor));
                     successorCount++;
                 }
             }
@@ -251,7 +247,8 @@ internal readonly partial struct LrBuild
                     // <B> → • b <A>
                     if (gotoIdx != i)
                     {
-                        dependencies.Add(new(gotoIdx, i, isSuccessor: false));
+                        var kind = @goto.FromState == state ? GotoFollowDependencyKinds.Internal : GotoFollowDependencyKinds.Predecessor;
+                        dependencies.Add(new(gotoIdx, i, kind));
 
                         // We don't specifically store whether a dependency is internal or predecessor,
                         // but we keep a count of each kind for diagnostic purposes.
@@ -598,54 +595,46 @@ internal readonly partial struct LrBuild
     /// <summary>
     /// Represents a dependency between the follow sets of two GOTO transitions.
     /// </summary>
-    [DebuggerDisplay("{FromGoto} → {ToGoto}, {DebuggerDependencyKind,nq}")]
+    [DebuggerDisplay("{FromGoto} → {ToGoto}, {DependencyKind}")]
     private readonly struct GotoFollowDependency
     {
-        private const uint IsSuccessorMask = 1u << 31;
+        private const uint FlagsMask = 1u << 31;
 
-        private readonly uint _fromGotoAndIsSuccessor;
+        private readonly uint _fromGotoAndHighFlag;
 
-        public GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
+        private readonly uint _toGotoAndLowFlag;
+
+        public GotoFollowDependency(int fromGoto, int toGoto, GotoFollowDependencyKinds kind)
         {
             Debug.Assert(fromGoto != toGoto);
-            _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
-            ToGoto = toGoto;
+            Debug.Assert(BitOperations.PopCount((uint)kind) == 1);
+            // Only one of the flags is set, so we can compress it to two bytes by taking its log2.
+            var flags = (uint)BitOperations.TrailingZeroCount((uint)kind);
+            _fromGotoAndHighFlag = (uint)fromGoto | ((flags << 30) & FlagsMask);
+            _toGotoAndLowFlag = (uint)toGoto | (flags << 31);
+            Debug.Assert(DependencyKind == kind);
         }
-
-        private string DebuggerDependencyKind => IsSuccessor ? "Successor" : "Include";
 
         /// <summary>
         /// The GOTO transition from which the dependency originates.
         /// </summary>
-        public int FromGoto => (int)(_fromGotoAndIsSuccessor & ~IsSuccessorMask);
+        public int FromGoto => (int)(_fromGotoAndHighFlag & ~FlagsMask);
 
         /// <summary>
         /// The GOTO transition to which the dependency leads.
         /// </summary>
-        public int ToGoto { get; }
+        public int ToGoto => (int)(_toGotoAndLowFlag & ~FlagsMask);
 
         /// <summary>
-        /// Whether the dependency is a successor dependency, otherwise it is an include dependency.
+        /// The kind of the dependency.
         /// </summary>
-        private bool IsSuccessor => (_fromGotoAndIsSuccessor & IsSuccessorMask) != 0;
-
-        /// <summary>
-        /// Gets the exact kind of the dependency, which requires the table with the GOTOs.
-        /// </summary>
-        public GotoFollowDependencyKinds GetDependencyKind(ImmutableArray<GotoInfo> gotos)
+        public GotoFollowDependencyKinds DependencyKind
         {
-            if (IsSuccessor)
+            get
             {
-                return GotoFollowDependencyKinds.Successor;
+                var flags = ((_fromGotoAndHighFlag >> 30) & 0b10) | (_toGotoAndLowFlag >> 31);
+                return (GotoFollowDependencyKinds)(1 << (int)flags);
             }
-            // We could keep the full kind in the struct, taking advantage of both integers'
-            // high bits. It will complicate things a bit, let's not do it right now, unless
-            // this proves to be a performance bottleneck.
-            if (gotos[FromGoto].FromState == gotos[ToGoto].FromState)
-            {
-                return GotoFollowDependencyKinds.Internal;
-            }
-            return GotoFollowDependencyKinds.Predecessor;
         }
     }
 

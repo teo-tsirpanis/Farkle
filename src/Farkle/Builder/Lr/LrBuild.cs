@@ -52,12 +52,10 @@ internal readonly partial struct LrBuild
         // The rule is, after taking a successor dependency, no internal dependency can be followed.
         // We can propagate all successor dependencies first, but can also propagate internal dependencies
         // at the same time. This has an equivalent effect according to §3.3.3 of the IELR paper.
-        PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies,
-            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, gotoFollows);
+        PropagateGotoFollows(gotoFollowDependencies, GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, gotoFollows);
         // IELR needs the always follows.
         var alwaysFollows = algorithm == ParserGenerationAlgorithm.Ielr1 ? Clone(gotoFollows) : default;
-        PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies,
-            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
+        PropagateGotoFollows(gotoFollowDependencies, GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
         var reductionLookaheads = ComputeReductionLookaheads(lr0StateMachine, gotoFollows);
 
         LrStateMachine stateMachine;
@@ -82,10 +80,8 @@ internal readonly partial struct LrBuild
                 // IELR Phase 4: Compute Reduction Lookaheads
                 var newGotoFollowDependencies = ComputeGotoFollowDependencies(newLr0StateMachine, nullableNonterminals, productionNullableStarts);
                 var newGotoFollows = ComputeInitialGotoFollows(newLr0StateMachine);
-                PropagateGotoFollows(newLr0StateMachine, newGotoFollowDependencies,
-                    GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, newGotoFollows);
-                PropagateGotoFollows(newLr0StateMachine, newGotoFollowDependencies,
-                    GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, newGotoFollows);
+                PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, newGotoFollows);
+                PropagateGotoFollows(newGotoFollowDependencies, GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, newGotoFollows);
                 var newReductionLookaheads = ComputeReductionLookaheads(newLr0StateMachine, newGotoFollows);
                 stateMachine = new DefaultLrStateMachine(newLr0StateMachine, newReductionLookaheads);
             }

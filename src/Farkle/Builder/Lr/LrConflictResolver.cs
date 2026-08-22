@@ -13,6 +13,12 @@ namespace Farkle.Builder.Lr;
 internal abstract class LrConflictResolver
 {
     /// <summary>
+    /// Returns whether the given terminal or production has precedence and associativity information.
+    /// </summary>
+    /// <param name="symbol">The symbol to check.</param>
+    public abstract bool HasPrecedenceInfo(EntityHandle symbol);
+
+    /// <summary>
     /// Resolves a Shift-Reduce conflict.
     /// </summary>
     /// <param name="shiftTerminal">The terminal on which the action will be taken.</param>

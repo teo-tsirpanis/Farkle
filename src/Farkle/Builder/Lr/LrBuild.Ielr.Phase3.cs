@@ -149,10 +149,12 @@ partial struct LrBuild
             var stateLookaheads = itemLookaheadSets[state];
             foreach (var annotation in annotationList.GetAnnotations(lalrIsocores[state]))
             {
+                var conflict = conflicts[annotation.ConflictIndex];
+                var matrix = annotation.ContributionMatrix;
                 stateContributions.Clear();
                 candidateContributions.Clear();
-                if (!TryFillDominantContributions(@this, annotation, stateLookaheads, stateContributions)
-                    || !TryFillDominantContributions(@this, annotation, candidateLookaheads, candidateContributions))
+                if (!@this.TryFillDominantContributions(conflict, matrix, stateLookaheads, stateContributions)
+                    || !@this.TryFillDominantContributions(conflict, matrix, candidateLookaheads, candidateContributions))
                 {
                     continue;
                 }
@@ -164,71 +166,6 @@ partial struct LrBuild
                 }
             }
             return true;
-        }
-
-        bool TryFillDominantContributions(in LrBuild @this, InadequacyAnnotation annotation, TerminalSet[]? lookaheads, List<LrConflictContribution> result)
-        {
-            Debug.Assert(result.Count == 0);
-            var conflict = conflicts[annotation.ConflictIndex];
-            bool isChooseNeitherDominating = false;
-            for (int i = 0; i < conflict.Contributions.Length; i++)
-            {
-                var candidateContribution = conflict.Contributions[i];
-                var matrixRow = annotation.ContributionMatrix[i];
-                if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
-                {
-                    continue;
-                }
-                if (result.Count == 0)
-                {
-                    result.Add(candidateContribution);
-                    continue;
-                }
-                // This works similarly to IsSplitStableDominantContribution from Phase 2, but we need to keep
-                // track of which contributions are dominant.
-                var decision = @this.ResolveConflict(conflict.Symbol, result[0], candidateContribution);
-                switch (decision)
-                {
-                    case LrConflictResolverDecision.ChooseOption1:
-                        break;
-                    case LrConflictResolverDecision.ChooseOption2:
-                        result.Clear();
-                        result.Add(candidateContribution);
-                        isChooseNeitherDominating = false;
-                        break;
-                    case LrConflictResolverDecision.CannotChoose:
-                    case LrConflictResolverDecision.ChooseNeither:
-                        isChooseNeitherDominating |= decision == LrConflictResolverDecision.ChooseNeither;
-                        result.Add(candidateContribution);
-                        break;
-                }
-            }
-
-            // We need to distinguish between "no contributions passed the filter", and
-            // "some contributions passed the filter", but we return none of them, because
-            // the conflict resolver decided that none of them should be chosen.
-            bool hasResult = result.Count != 0;
-            if (isChooseNeitherDominating)
-            {
-                result.Clear();
-            }
-            return hasResult;
-
-            static bool FilterContribution(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
-            {
-                if (row is null)
-                {
-                    return true;
-                }
-                foreach (var column in row.Value)
-                {
-                    if (lookaheads?[column][conflictSymbol] ?? false)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
         }
 
         TerminalSet[]? PropagateLookaheads(int fromState, int toState)
@@ -370,5 +307,85 @@ partial struct LrBuild
 
         int FollowTransition(KeyValuePair<Symbol, int> transition) =>
             transition.Key.IsTerminal ? transition.Value : newGotos[transition.Value].ToState;
+    }
+
+    private bool TryFillDominantContributions(ConflictDescription conflict, InadequacyContributionMatrix matrix, TerminalSet[]? lookaheads, List<LrConflictContribution> result)
+    {
+        Debug.Assert(result.Count == 0);
+        bool isFullyResolvable = true;
+        for (int i = 0; i < conflict.Contributions.Length; i++)
+        {
+            var candidateContribution = conflict.Contributions[i];
+            var matrixRow = matrix[i];
+            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            {
+                continue;
+            }
+            if (!HasPrecedenceInfo(conflict.Symbol, candidateContribution))
+            {
+                isFullyResolvable = false;
+                break;
+            }
+        }
+        bool isChooseNeitherDominating = false;
+        for (int i = 0; i < conflict.Contributions.Length; i++)
+        {
+            var candidateContribution = conflict.Contributions[i];
+            var matrixRow = matrix[i];
+            if (!FilterContribution(matrixRow, conflict.Symbol, lookaheads))
+            {
+                continue;
+            }
+            // If some contributions do not have precedence info, include all eligible contributions in the result.
+            if (!isFullyResolvable || result.Count == 0)
+            {
+                result.Add(candidateContribution);
+                continue;
+            }
+            // This works similarly to IsSplitStableDominantContribution from Phase 2, but we need to keep
+            // track of which contributions are dominant.
+            var decision = ResolveConflict(conflict.Symbol, result[0], candidateContribution);
+            switch (decision)
+            {
+                case LrConflictResolverDecision.ChooseOption1:
+                    break;
+                case LrConflictResolverDecision.ChooseOption2:
+                    result.Clear();
+                    result.Add(candidateContribution);
+                    isChooseNeitherDominating = false;
+                    break;
+                case LrConflictResolverDecision.CannotChoose:
+                case LrConflictResolverDecision.ChooseNeither:
+                    isChooseNeitherDominating |= decision == LrConflictResolverDecision.ChooseNeither;
+                    result.Add(candidateContribution);
+                    break;
+            }
+        }
+
+        // We need to distinguish between "no contributions passed the filter", and
+        // "some contributions passed the filter", but we return none of them, because
+        // the conflict resolver decided that none of them should be chosen.
+        bool hasResult = result.Count != 0;
+        if (isChooseNeitherDominating)
+        {
+            result.Clear();
+        }
+        return hasResult;
+
+        static bool FilterContribution(BitSet? row, Symbol conflictSymbol, TerminalSet[]? lookaheads)
+        {
+            if (row is null)
+            {
+                return true;
+            }
+            foreach (var column in row.Value)
+            {
+                if (lookaheads?[column][conflictSymbol] ?? false)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

@@ -157,6 +157,19 @@ partial struct LrBuild
 
     private bool IsSplitStableDominantContribution(InadequacyAnnotation annotation, ConflictDescription conflict)
     {
+        if (!IsConflictFullyResolvable(conflict))
+        {
+            // Employ simple split-stable dominance check, where the matrix contains only always or never contributions.
+            foreach (var contribution in annotation.ContributionMatrix)
+            {
+                if (ClassifyContribution(contribution) == InadequacyContributionClassification.Potential)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // An annotation specifies a split-stable dominant contribution if, after removing never contributions,
         // the set of contributions preferred by conflict resolution contains no potential contributions.
         // If conflict resolution is not specified by the user, we would always get CannotChoose, which reduces
@@ -207,6 +220,22 @@ partial struct LrBuild
             }
         }
         return !isPotentialContributionInDominantSet;
+    }
+
+    /// <summary>
+    /// Returns whether <see cref="ConflictResolver"/> contains precedence and
+    /// associativity information for all contributions of the given conflict.
+    /// </summary>
+    private bool IsConflictFullyResolvable(ConflictDescription conflict)
+    {
+        foreach (var contribution in conflict.Contributions)
+        {
+            if (!HasPrecedenceInfo(conflict.Symbol, contribution))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static InadequacyContributionClassification ClassifyContribution(BitSet? contribution) => contribution switch

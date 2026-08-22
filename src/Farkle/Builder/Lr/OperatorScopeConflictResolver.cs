@@ -96,6 +96,8 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         }
     }
 
+    public override bool HasPrecedenceInfo(EntityHandle symbol) => TryGetPrecedenceInfo(symbol, out _, out _);
+
     public override LrConflictResolverDecision ResolveShiftReduceConflict(TokenSymbolHandle shiftTerminal, ProductionHandle reduceProduction)
     {
         if (!TryGetPrecedenceInfo(shiftTerminal, out int shiftPrecedence, out AssociativityType shiftAssociativity)

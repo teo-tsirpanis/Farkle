@@ -11,6 +11,23 @@ namespace Farkle.Builder.Lr;
 partial struct LrBuild
 {
     /// <summary>
+    /// Wraps <see cref="LrConflictResolver.HasPrecedenceInfo"/> to work with LR builder types.
+    /// </summary>
+    private bool HasPrecedenceInfo(Symbol symbol, LrConflictContribution contribution)
+    {
+        Debug.Assert(symbol.IsTerminal);
+        if (ConflictResolver is null)
+        {
+            return false;
+        }
+        if (contribution.IsAccept)
+        {
+            return false;
+        }
+        return ConflictResolver.HasPrecedenceInfo(contribution.IsReduce(out Production production) ? TranslateProduction(production) : TranslateTerminal(symbol));
+    }
+
+    /// <summary>
     /// Resolves a conflict between two contributions when encountering the given symbol.
     /// </summary>
     /// <remarks>

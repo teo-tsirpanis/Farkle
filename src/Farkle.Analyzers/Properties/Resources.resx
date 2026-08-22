@@ -63,6 +63,9 @@
   <data name="IGrammarSymbolUpcastSuppressor_Justification" xml:space="preserve">
     <value>Cast to IGrammarSymbol is not unnecessary, since removing it would cause the production factory generator to emit a different overload.</value>
   </data>
+  <data name="PrecompilerInputMethodUnusedSuppressor_Justification" xml:space="preserve">
+    <value>Method with [PrecompilerInput] is not unused, since it will be discovered and executed by the precompiler.</value>
+  </data>
   <data name="AddUseEnhancedSyntaxAttribute_Title" xml:space="preserve">
     <value>Add [UseEnhancedSyntax]</value>
   </data>

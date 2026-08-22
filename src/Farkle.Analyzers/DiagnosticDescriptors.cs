@@ -87,4 +87,9 @@ public static class DiagnosticDescriptors
         id: "FARKLE2001",
         suppressedDiagnosticId: "IDE0004",
         justification: Localize(nameof(Resources.IGrammarSymbolUpcastSuppressor_Justification)));
+
+    public static readonly SuppressionDescriptor PrecompilerInputMethodUnusedSuppressor = new(
+        id: "FARKLE2002",
+        suppressedDiagnosticId: "IDE0051",
+        justification: Localize(nameof(Resources.PrecompilerInputMethodUnusedSuppressor_Justification)));
 }

@@ -103,15 +103,17 @@ partial struct LrBuild
                 Lr0Item item = state.KernelItems[i];
                 var productionMembers = Syntax.GetProductionMembers(item.Production);
                 // Skip items whose dot is at the end (they won't have a transition),
-                // or whose symbols after the dot are not all nullable.
+                // whose production is the start production (because of the implicit
+                // end symbol), whose symbol at the dot is not a nonterminal (or we
+                // wouldn't have a GOTO), or whose symbols after the dot are not all
+                // nullable.
                 if (item.DotPosition == productionMembers.Count
-                    || item.DotPosition < productionNullableStarts[item.Production.Index])
+                    || item.Production.Equals(Syntax.StartProduction)
+                    || productionMembers[item.DotPosition] is not { IsTerminal: false } symbolAtDot
+                    || item.DotPosition + 1 < productionNullableStarts[item.Production.Index])
                 {
                     continue;
                 }
-                var symbolAtDot = productionMembers[item.DotPosition];
-                // Due to productionNullableStarts check above, the symbol at the dot must be a nonterminal.
-                Debug.Assert(!symbolAtDot.IsTerminal);
                 int gotoIndex = state.Transitions[symbolAtDot];
                 followKernelItems[gotoIndex] = BitSet.Singleton(i);
             }

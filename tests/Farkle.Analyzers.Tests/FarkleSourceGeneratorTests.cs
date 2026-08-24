@@ -4,20 +4,15 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Farkle.Analyzers.Tests;
 
-public sealed class FarkleAnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer, NUnitVerifier>
-    where TAnalyzer : DiagnosticAnalyzer, new()
+public class FarkleSourceGeneratorTest<TSourceGenerator> : CSharpSourceGeneratorTest<TSourceGenerator, NUnitVerifier>
+    where TSourceGenerator : IIncrementalGenerator, new()
 {
-    public FarkleAnalyzerTest()
+    public FarkleSourceGeneratorTest()
     {
         this.CommonInitialize();
-        TestState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
-        // Because the source generator does not run in these tests, this warning will fire on every production factory call.
-        // We suppress it.
-        DisabledDiagnostics.Add("FARKLE1009");
     }
 
     protected override ParseOptions CreateParseOptions() =>

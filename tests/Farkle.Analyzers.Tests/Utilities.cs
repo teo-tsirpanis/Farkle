@@ -4,6 +4,7 @@
 using System.Reflection;
 using System.Reflection.Metadata;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Testing;
 
 namespace Farkle.Analyzers.Tests;
 
@@ -48,6 +49,20 @@ public static class Utilities
                 var assemblyMd = AssemblyMetadata.Create(moduleMd);
                 return assemblyMd.GetReference(filePath: assembly.Location, display: assembly.FullName);
             }
+        }
+    }
+
+    extension<TVerify>(AnalyzerTest<TVerify> test) where TVerify : IVerifier, new()
+    {
+        public void CommonInitialize()
+        {
+            if (FarkleReference is null)
+            {
+                Assert.Inconclusive("Could not create a metadata reference for the Farkle assembly.");
+            }
+
+            test.TestState.OutputKind = OutputKind.ConsoleApplication; // Allow top-level statements.
+            test.TestState.AdditionalReferences.Add(FarkleReference);
         }
     }
 }

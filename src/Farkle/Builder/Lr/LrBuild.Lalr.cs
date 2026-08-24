@@ -51,7 +51,9 @@ internal readonly partial struct LrBuild
         // There is one more GOTO to propagate, the one on <S'> → • <S>. The loop before propagated
         // the GOTO follows on the derived productions of <S>, but did not follow the GOTO itself.
         // This is necessary to add the accept action.
-        PropagateLookaheads(in Syntax, states, gotos, 0, StartSymbolIndex, gotoFollows[0]);
+        var endSymbolLookahead = new TerminalSet(Syntax);
+        endSymbolLookahead[Syntax.EndSymbol] = true;
+        PropagateLookaheads(in Syntax, states, gotos, 0, StartSymbolIndex, endSymbolLookahead);
         Log.Debug("Computed reduction lookaheads");
         return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
 
@@ -133,14 +135,7 @@ internal readonly partial struct LrBuild
         var gotos = stateMachine.Gotos.AsSpan();
         var follows = ImmutableArray.CreateBuilder<TerminalSet>(gotos.Length);
         Log.Debug("Generating initial GOTO follow sets");
-        // The first GOTO is the one on <S'> → • <S>, and its follow set consists of only the end symbol.
-        // This happens because the reducing the start production means accepting, and we can only accept
-        // at the end of input.
-        var initialFollow = new TerminalSet(Syntax);
-        initialFollow[Syntax.EndSymbol] = true;
-        follows.Add(initialFollow);
-        // Add the follow sets of the rest of the GOTOs.
-        foreach (ref readonly var @goto in gotos[1..])
+        foreach (ref readonly var @goto in gotos)
         {
             var follow = new TerminalSet(Syntax);
             foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
@@ -152,6 +147,9 @@ internal readonly partial struct LrBuild
             }
             follows.Add(follow);
         }
+        // Include the implicit end symbol in the first GOTO's follow set, which is the one on <S'> → • <S>.
+        // This is necessary to add the accept action.
+        follows[0].Set(Syntax.EndSymbol, true);
         Log.Debug("Generated initial GOTO follow sets");
         return follows.MoveToImmutable();
     }

@@ -10,7 +10,7 @@
 - name: How-to guides
 - href: the-precompiler.md
 - href: enhanced-syntax.md
-# - href: customizing-grammar.md
+- href: customizing-grammar.md
 # - href: resolving-conflicts.md
 - name: Reference
 - href: string-regexes.md

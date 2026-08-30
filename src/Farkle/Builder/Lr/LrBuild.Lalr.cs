@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using BitCollections;
+using Farkle.Collections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.StateMachines;
@@ -30,13 +31,13 @@ internal readonly partial struct LrBuild
     /// </list>
     /// If a dictionary for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
-    private ImmutableArray<Dictionary<Production, TerminalSet>?> ComputeReductionLookaheads(
+    private GroupedIndexedList<ReductionLookahead> ComputeReductionLookaheads(
         Lr0StateMachine stateMachine, ImmutableArray<TerminalSet> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = new Dictionary<Production, TerminalSet>?[states.Length];
+        var reductionLookaheads = new Dictionary<(int State, Production), TerminalSet>();
         // For each GOTO in the grammar, we take its follow set and push it through the productions
         // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
         // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
@@ -46,18 +47,24 @@ internal readonly partial struct LrBuild
         {
             CancellationToken.ThrowIfCancellationRequested();
             ref readonly GotoInfo @goto = ref gotos[i];
-            PropagateLookaheads(in Syntax, states, gotos, @goto.FromState, @goto.NonterminalIndex, gotoFollows[i]);
+            PropagateLookaheads(Syntax, states, gotos, @goto.FromState, @goto.NonterminalIndex, gotoFollows[i]);
         }
         // There is one more GOTO to propagate, the one on <S'> → • <S>. The loop before propagated
         // the GOTO follows on the derived productions of <S>, but did not follow the GOTO itself.
         // This is necessary to add the accept action.
         var endSymbolLookahead = new TerminalSet(Syntax);
         endSymbolLookahead[Syntax.EndSymbol] = true;
-        PropagateLookaheads(in Syntax, states, gotos, 0, StartSymbolIndex, endSymbolLookahead);
+        PropagateLookaheads(Syntax, states, gotos, 0, StartSymbolIndex, endSymbolLookahead);
         Log.Debug("Computed reduction lookaheads");
-        return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
 
-        void PropagateLookaheads(in AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
+        var lookaheadsBuilder = ImmutableArray.CreateBuilder<ReductionLookahead>(reductionLookaheads.Count);
+        foreach (var ((state, p), lookahead) in reductionLookaheads) {
+            lookaheadsBuilder.Add(new(state, p, lookahead));
+        }
+        lookaheadsBuilder.Sort(static (x, y) => x.State.CompareTo(y.State));
+        return new(stateMachine.States.Length, lookaheadsBuilder.MoveToImmutable(), static x => x.State);
+
+        void PropagateLookaheads(AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
             int state, int nonterminal, TerminalSet lookahead)
         {
             foreach (Production p in syntax.EnumerateNonterminalProductions(nonterminal))
@@ -67,10 +74,10 @@ internal readonly partial struct LrBuild
                 {
                     currentState = states[currentState].FollowTransition(s, gotos);
                 }
-                var dict = reductionLookaheads[currentState] ??= [];
-                if (!dict.TryGetValue(p, out TerminalSet existingLookahead))
+                ref TerminalSet existingLookahead = ref CollectionsMarshal.GetValueRefOrAddDefault(reductionLookaheads, (currentState, p), out bool exists);
+                if (!exists)
                 {
-                    dict.Add(p, new(lookahead));
+                    existingLookahead = new(lookahead);
                 }
                 else
                 {
@@ -509,12 +516,11 @@ internal readonly partial struct LrBuild
         return true;
     }
 
-    private sealed class DefaultLrStateMachine(Lr0StateMachine states,
-        ImmutableArray<Dictionary<Production, TerminalSet>?> reductionLookaheads) : LrStateMachine
+    private sealed class DefaultLrStateMachine(Lr0StateMachine states, GroupedIndexedList<ReductionLookahead> reductionLookaheads) : LrStateMachine
     {
         public Lr0StateMachine Lr0StateMachine { get; } = states;
 
-        public ImmutableArray<Dictionary<Production, TerminalSet>?> ReductionLookaheads { get; } = reductionLookaheads;
+        public GroupedIndexedList<ReductionLookahead> ReductionLookaheads { get; } = reductionLookaheads;
 
         public override int StateCount => Lr0StateMachine.States.Length;
 
@@ -532,15 +538,11 @@ internal readonly partial struct LrBuild
                 }
             }
 
-            if (ReductionLookaheads[state] is not { } lookaheads)
+            foreach (var x in ReductionLookaheads.EnumerateItemsWithKey(state))
             {
-                yield break;
-            }
-            foreach ((var p, TerminalSet lookahead) in lookaheads)
-            {
-                if (p.Index == StartProductionIndex)
+                if (x.Production.Index == StartProductionIndex)
                 {
-                    foreach (Symbol terminal in lookahead)
+                    foreach (Symbol terminal in x.Lookahead)
                     {
                         Debug.Assert(terminal.Index == EndSymbolIndex);
                         yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.Accept);
@@ -548,8 +550,8 @@ internal readonly partial struct LrBuild
                 }
                 else
                 {
-                    var productionHandle = TranslateProduction(p);
-                    foreach (Symbol terminal in lookahead)
+                    var productionHandle = TranslateProduction(x.Production);
+                    foreach (Symbol terminal in x.Lookahead)
                     {
                         if (terminal.Index == EndSymbolIndex)
                         {
@@ -563,6 +565,27 @@ internal readonly partial struct LrBuild
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Represents a reduce action in an LR state machine.
+    /// </summary>
+    private readonly struct ReductionLookahead(int state, Production production, TerminalSet lookahead)
+    {
+        /// <summary>
+        /// The state in which the reduction happens.
+        /// </summary>
+        public int State { get; } = state;
+
+        /// <summary>
+        /// The production to reduce.
+        /// </summary>
+        public Production Production { get; } = production;
+
+        /// <summary>
+        /// The terminals on which the reduction is performed.
+        /// </summary>
+        public TerminalSet Lookahead { get; } = lookahead;
     }
 
     /// <summary>
@@ -587,7 +610,7 @@ internal readonly partial struct LrBuild
         /// <summary>
         /// Propagate dependencies between a GOTO and an eventual predecessor of it.
         /// </summary>
-        Predecessor = 4
+        Predecessor = 4,
     }
 
     /// <summary>

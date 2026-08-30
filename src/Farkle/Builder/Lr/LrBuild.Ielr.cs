@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using BitCollections;
+using Farkle.Collections;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
@@ -147,7 +148,7 @@ partial struct LrBuild
     }
 
     private ImmutableArray<ConflictDescription> ComputeConflicts(Lr0StateMachine stateMachine,
-        ImmutableArray<Dictionary<Production, TerminalSet>?> reductionLookaheads)
+        GroupedIndexedList<ReductionLookahead> reductionLookaheads)
     {
         var conflicts = ImmutableArray.CreateBuilder<ConflictDescription>();
         var seenTerminals = new TerminalSet(Syntax);
@@ -163,8 +164,9 @@ partial struct LrBuild
             conflictingTerminals.SetAll(false);
 
             var state = stateMachine.States[i];
+            var reductions = reductionLookaheads.GetItemsWithKey(i);
             // A state with no reduce actions cannot have conflicts.
-            if (reductionLookaheads[i] is not { } lookaheads)
+            if (reductions is [])
             {
                 continue;
             }
@@ -178,9 +180,9 @@ partial struct LrBuild
                 // Shift actions are unique per terminal, so we don't need to check for duplicates.
                 seenTerminals[s] = true;
             }
-            foreach (var x in lookaheads.Values)
+            foreach (var r in reductions)
             {
-                foreach (var s in x)
+                foreach (var s in r.Lookahead)
                 {
                     if (seenTerminals.Set(s, true))
                     {
@@ -199,11 +201,11 @@ partial struct LrBuild
                 {
                     contributions.Add(LrConflictContribution.CreateShift(shiftState, Syntax));
                 }
-                foreach (var x in lookaheads)
+                foreach (var r in reductions)
                 {
-                    if (x.Value[t])
+                    if (r.Lookahead[t])
                     {
-                        contributions.Add(LrConflictContribution.CreateReduce(x.Key, Syntax));
+                        contributions.Add(LrConflictContribution.CreateReduce(r.Production, Syntax));
                     }
                 }
 

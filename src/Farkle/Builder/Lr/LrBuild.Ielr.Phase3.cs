@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using BitCollections;
+using Farkle.Collections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
@@ -12,7 +13,7 @@ namespace Farkle.Builder.Lr;
 
 partial struct LrBuild
 {
-    private Lr0StateMachine SplitStates(Lr0StateMachine stateMachine, InadequacyAnnotationList annotationList,
+    private Lr0StateMachine SplitStates(Lr0StateMachine stateMachine, GroupedIndexedList<InadequacyAnnotation> annotationList,
         ImmutableArray<ConflictDescription> conflicts, ImmutableArray<TerminalSet> alwaysFollows,
         ImmutableArray<BitSet> followKernelItems)
     {
@@ -147,7 +148,7 @@ partial struct LrBuild
                 return true;
             }
             var stateLookaheads = itemLookaheadSets[state];
-            foreach (var annotation in annotationList.GetAnnotations(lalrIsocores[state]))
+            foreach (var annotation in annotationList.GetItemsWithKey(lalrIsocores[state]))
             {
                 var conflict = conflicts[annotation.ConflictIndex];
                 var matrix = annotation.ContributionMatrix;
@@ -230,7 +231,7 @@ partial struct LrBuild
             {
                 return filters;
             }
-            var annotations = annotationList.GetAnnotations(state);
+            var annotations = annotationList.GetItemsWithKey(state);
             if (annotations.IsEmpty)
             {
                 return null;

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using BitCollections;
+using Farkle.Collections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
@@ -15,7 +16,7 @@ namespace Farkle.Builder.Lr;
 
 partial struct LrBuild
 {
-    private InadequacyAnnotationList ComputeAnnotations(Lr0StateMachine stateMachine,
+    private GroupedIndexedList<InadequacyAnnotation> ComputeAnnotations(Lr0StateMachine stateMachine,
         ImmutableArray<ConflictDescription> conflicts, ImmutableArray<TerminalSet> gotoFollows,
         ImmutableArray<TerminalSet> alwaysFollows, ImmutableArray<BitArrayNeo> predecessors,
         ImmutableArray<BitSet> gotoFollowKernelItems)
@@ -119,7 +120,10 @@ partial struct LrBuild
             Log.Debug($"Computed {annotations.Count} IELR annotations (discarded {discardedAnnotations})");
         }
 
-        return new(stateMachine.States.Length, annotations);
+        var annotationsBuilder = ImmutableArray.CreateBuilder<InadequacyAnnotation>(annotations.Count);
+        annotationsBuilder.AddRange(annotations);
+        annotationsBuilder.Sort(static (x, y) => x.StateIndex.CompareTo(y.StateIndex));
+        return new(stateMachine.States.Length, annotationsBuilder.MoveToImmutable(), static x => x.StateIndex);
 
         void AddAnnotation(in LrBuild @this, InadequacyAnnotation annotation)
         {
@@ -244,51 +248,6 @@ partial struct LrBuild
         { IsEmpty: true } => InadequacyContributionClassification.Never,
         _ => InadequacyContributionClassification.Potential,
     };
-
-    private readonly struct InadequacyAnnotationList : IReadOnlyCollection<InadequacyAnnotation>
-    {
-        private readonly ImmutableArray<InadequacyAnnotation> _annotations;
-
-        private readonly int[] _firstAnnotationOfState;
-
-        public InadequacyAnnotationList(int stateCount, IReadOnlyCollection<InadequacyAnnotation> annotations)
-        {
-            var annotationsBuilder = ImmutableArray.CreateBuilder<InadequacyAnnotation>(annotations.Count);
-            annotationsBuilder.AddRange(annotations);
-            annotationsBuilder.Sort(static (a, b) => a.StateIndex.CompareTo(b.StateIndex));
-            _annotations = annotationsBuilder.MoveToImmutable();
-
-            _firstAnnotationOfState = new int[stateCount];
-            int previousStateIndex = 0;
-            int i;
-            for (i = 0; i < _annotations.Length; i++)
-            {
-                int stateIndex = _annotations[i].StateIndex;
-                while (previousStateIndex < stateIndex + 1)
-                {
-                    _firstAnnotationOfState[previousStateIndex++] = i;
-                }
-            }
-            while (previousStateIndex < _firstAnnotationOfState.Length)
-            {
-                _firstAnnotationOfState[previousStateIndex++] = i;
-            }
-        }
-
-        public int Count => _annotations.Length;
-
-        public IEnumerator<InadequacyAnnotation> GetEnumerator() => ((IEnumerable<InadequacyAnnotation>)_annotations).GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_annotations).GetEnumerator();
-
-        public ReadOnlySpan<InadequacyAnnotation> GetAnnotations(int stateIndex)
-        {
-            int firstAnnotation = _firstAnnotationOfState[stateIndex];
-            int firstAnnotationOfNext = stateIndex + 1 < _firstAnnotationOfState.Length ? _firstAnnotationOfState[stateIndex + 1] : _annotations.Length;
-            int annotationCount = firstAnnotationOfNext - firstAnnotation;
-            return annotationCount == 0 ? [] : _annotations.AsSpan().Slice(firstAnnotation, annotationCount);
-        }
-    }
 
     private sealed class InadequacyAnnotation(int stateIndex, int conflictIndex, InadequacyContributionMatrix contributionMatrix) : IEquatable<InadequacyAnnotation>
     {

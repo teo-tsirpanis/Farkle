@@ -218,9 +218,10 @@ partial struct LrBuild
             var lookaheadSet = itemLookaheadSets[state];
             foreach (var item in followKernelItems[gotoIndex])
             {
-                // At this point, we should have computed the state's lookahead set.
-                Debug.Assert(lookaheadSet is not null);
-                result.Or(lookaheadSet[item]);
+                if (lookaheadSet?[item] is { } set)
+                {
+                    result.Or(set);
+                }
             }
         }
 

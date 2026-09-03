@@ -129,6 +129,7 @@ public sealed class ProductionBuilder : IProductionBuilder<ProductionBuilder>, I
     /// <param name="fuser">A function that produces the value of the production.</param>
     public IProduction<T> Finish<T>(Func<T> fuser)
     {
+        ArgumentNullException.ThrowIfNull(fuser);
         object? fBoxed(ref ParserState state, Span<object?> input) => fuser();
         // We don't use [.. _members] because it generates more IL.
         return new Production<T>(_members.ToImmutableArray(), fBoxed, _precedenceToken);

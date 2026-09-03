@@ -27,6 +27,8 @@ public static class GrammarExtensions
     /// and <paramref name="throwIfNotFound"/> had a value of <see langword="true"/>.</exception>
     public static TokenSymbolHandle GetTokenSymbolFromSpecialName(this IGrammarProvider grammarProvider, string specialName, bool throwIfNotFound = true)
     {
+        ArgumentNullException.ThrowIfNull(grammarProvider);
+        ArgumentNullException.ThrowIfNull(specialName);
         EntityHandle handle = grammarProvider.GetSymbolFromSpecialName(specialName, throwIfNotFound);
 
         if (handle.IsTokenSymbol)
@@ -61,6 +63,8 @@ public static class GrammarExtensions
     /// and <paramref name="throwIfNotFound"/> had a value of <see langword="true"/>.</exception>
     public static NonterminalHandle GetNonterminalFromSpecialName(this IGrammarProvider grammarProvider, string specialName, bool throwIfNotFound = true)
     {
+        ArgumentNullException.ThrowIfNull(grammarProvider);
+        ArgumentNullException.ThrowIfNull(specialName);
         EntityHandle handle = grammarProvider.GetSymbolFromSpecialName(specialName, throwIfNotFound);
 
         if (handle.IsNonterminal)

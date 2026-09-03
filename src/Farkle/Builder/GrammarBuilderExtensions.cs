@@ -31,8 +31,12 @@ namespace Farkle.Builder;
 /// </remarks>
 public static class GrammarBuilderExtensions
 {
-    internal static ref readonly GrammarGlobalOptions GetOptions(this IGrammarBuilder builder) =>
-        ref builder is GrammarBuilderWrapper wrapper ? ref wrapper.Options : ref GrammarGlobalOptions.Default;
+    internal static ref readonly GrammarGlobalOptions GetOptions(this IGrammarBuilder builder)
+    {
+        // This implicitly checks the builder for null in all extension methods.
+        ArgumentNullException.ThrowIfNull(builder);
+        return ref builder is GrammarBuilderWrapper wrapper ? ref wrapper.Options : ref GrammarGlobalOptions.Default;
+    }
 
     private static IGrammarBuilder WithOptions(this IGrammarBuilder builder, in GrammarGlobalOptions options)
     {
@@ -81,6 +85,7 @@ public static class GrammarBuilderExtensions
     /// <param name="value">The case sensitivity option for the grammar.</param>
     public static IGrammarBuilder CaseSensitive(this IGrammarBuilder builder, CaseSensitivity value)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         if (value < CaseSensitivity.CaseSensitive || value > CaseSensitivity.CaseInsensitive)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
@@ -94,6 +99,7 @@ public static class GrammarBuilderExtensions
     /// <inheritdoc cref="CaseSensitive(IGrammarBuilder, CaseSensitivity)"/>
     public static IGrammarBuilder<T> CaseSensitive<T>(this IGrammarBuilder<T> builder, CaseSensitivity value)
     {
+        ArgumentNullException.ThrowIfNull(builder);
         if (value < CaseSensitivity.CaseSensitive || value > CaseSensitivity.CaseInsensitive)
         {
             ThrowHelpers.ThrowArgumentOutOfRangeException(nameof(value));
@@ -259,6 +265,7 @@ public static class GrammarBuilderExtensions
     public static IGrammarBuilder AddBlockComment(this IGrammarBuilder builder, string start, string end)
     {
         ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
 
         return builder.WithOptions(builder.GetOptions().AddBlockComment(start, end));
     }
@@ -267,6 +274,7 @@ public static class GrammarBuilderExtensions
     public static IGrammarBuilder<T> AddBlockComment<T>(this IGrammarBuilder<T> builder, string start, string end)
     {
         ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(end);
 
         return builder.WithOptions(builder.GetOptions().AddBlockComment(start, end));
     }

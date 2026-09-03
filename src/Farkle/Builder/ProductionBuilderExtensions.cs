@@ -22,6 +22,7 @@ public static class ProductionBuilderExtensions
     /// <seealso cref="Terminal.Literal"/>
     public static T Append<T>(this T builder, string literal) where T : IProductionBuilder<T>
     {
+        ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(literal);
         return builder.Append(Terminal.Literal(literal));
     }
@@ -37,6 +38,7 @@ public static class ProductionBuilderExtensions
     /// <seealso cref="IProductionBuilder{T}.WithPrecedence"/>
     public static T WithPrecedence<T>(this T builder, out object precedenceToken) where T : IProductionBuilder<T>
     {
+        ArgumentNullException.ThrowIfNull(builder);
         precedenceToken = new object();
         return builder.WithPrecedence(precedenceToken);
     }

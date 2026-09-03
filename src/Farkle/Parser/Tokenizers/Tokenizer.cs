@@ -95,6 +95,7 @@ public static class Tokenizer
     /// <exception cref="InvalidOperationException">The grammar cannot be used for tokenizing.</exception>
     public static Tokenizer<TChar> Create<TChar>(Grammar grammar)
     {
+        ArgumentNullException.ThrowIfNull(grammar);
         if (typeof(TChar) == typeof(char))
         {
             return (Tokenizer<TChar>)(object)Create(grammar, throwIfError: true);

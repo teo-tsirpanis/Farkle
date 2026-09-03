@@ -73,6 +73,7 @@ public static class GrammarSymbolExtensions
     public static IGrammarSymbol AddSpecialName(this IGrammarSymbol symbol, string name)
     {
         ArgumentNullException.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(name);
         return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
@@ -80,6 +81,7 @@ public static class GrammarSymbolExtensions
     public static IGrammarSymbol<T> AddSpecialName<T>(this IGrammarSymbol<T> symbol, string name)
     {
         ArgumentNullException.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(name);
         return symbol.WithOptions(symbol.GetOptions().AddSpecialName(name));
     }
 
@@ -132,6 +134,7 @@ public static class GrammarSymbolExtensions
         where TCollection : ICollection<T>, new()
     {
         ArgumentNullException.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(separator);
         Nonterminal<TCollection> nont = Nonterminal.Create<TCollection>($"{symbol.Name}{(atLeastOnce ? " Non-empty" : "")} Sequence Separated By {separator.Name}");
         if (atLeastOnce)
         {

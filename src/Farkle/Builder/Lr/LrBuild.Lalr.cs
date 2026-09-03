@@ -37,7 +37,7 @@ internal readonly partial struct LrBuild
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = new Dictionary<(int State, Production), TerminalSet>();
+        var reductionLookaheads = new Dictionary<(int State, Production), TerminalSetCow>();
         // For each GOTO in the grammar, we take its follow set and push it through the productions
         // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
         // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
@@ -58,8 +58,9 @@ internal readonly partial struct LrBuild
         Log.Debug("Computed reduction lookaheads");
 
         var lookaheadsBuilder = ImmutableArray.CreateBuilder<ReductionLookahead>(reductionLookaheads.Count);
-        foreach (var ((state, p), lookahead) in reductionLookaheads) {
-            lookaheadsBuilder.Add(new(state, p, lookahead));
+        foreach (var ((state, p), lookahead) in reductionLookaheads)
+        {
+            lookaheadsBuilder.Add(new(state, p, lookahead.Set));
         }
         lookaheadsBuilder.Sort(static (x, y) => x.State.CompareTo(y.State));
         return new(stateMachine.States.Length, lookaheadsBuilder.MoveToImmutable(), static x => x.State);
@@ -74,15 +75,7 @@ internal readonly partial struct LrBuild
                 {
                     currentState = states[currentState].FollowTransition(s, gotos);
                 }
-                ref TerminalSet existingLookahead = ref CollectionsMarshal.GetValueRefOrAddDefault(reductionLookaheads, (currentState, p), out bool exists);
-                if (!exists)
-                {
-                    existingLookahead = new(lookahead);
-                }
-                else
-                {
-                    existingLookahead.Or(lookahead);
-                }
+                CollectionsMarshal.GetValueRefOrAddDefault(reductionLookaheads, (currentState, p), out _).Or(lookahead);
             }
         }
     }
@@ -586,6 +579,41 @@ internal readonly partial struct LrBuild
         /// The terminals on which the reduction is performed.
         /// </summary>
         public TerminalSet Lookahead { get; } = lookahead;
+    }
+
+    /// <summary>
+    /// Provides a copy-on-write wrapper around a <see cref="TerminalSet"/>.
+    /// </summary>
+    private struct TerminalSetCow
+    {
+        private bool _isCopied;
+
+        /// <summary>
+        /// The terminal set. Do not modify directly; use methods on the <see cref="TerminalSetCow"/>.
+        /// </summary>
+        public TerminalSet Set { get; private set; }
+
+        /// <summary>
+        /// Adds the terminals of the given set to this set.
+        /// </summary>
+        /// <remarks>
+        /// The first time this method is called, <paramref name="other"/> is moved to this wrapper without copying.
+        /// If the method is called again, a copy of <see cref="Set"/> will be made.
+        /// </remarks>
+        public bool Or(TerminalSet other)
+        {
+            if (Set.IsDefault)
+            {
+                Set = other;
+                return true;
+            }
+            if (!_isCopied)
+            {
+                Set = new(Set);
+                _isCopied = true;
+            }
+            return Set.Or(other);
+        }
     }
 
     /// <summary>

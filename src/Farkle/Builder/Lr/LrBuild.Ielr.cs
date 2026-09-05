@@ -116,9 +116,7 @@ partial struct LrBuild
                     continue;
                 }
                 int gotoIndex = state.Transitions[symbolAtDot];
-                // Gotos are unique for each transition; we should not have already set this before.
-                Debug.Assert(followKernelItems[gotoIndex].IsEmpty);
-                followKernelItems[gotoIndex] = BitSet.Singleton(i);
+                followKernelItems[gotoIndex] = followKernelItems[gotoIndex].Set(i, true);
             }
         }
 

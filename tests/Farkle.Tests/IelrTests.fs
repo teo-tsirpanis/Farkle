@@ -10,6 +10,23 @@ open Farkle.Diagnostics.Builder
 
 [<Tests>]
 let tests = testList "IELR(1) tests" [
+    test "IELR(1) is the default" {
+        let grammar =
+            let A = "A" |||= [!& "c"]
+            let B = "B" |||= [!& "c"]
+
+            "S" |||= [
+                !& "a" .>> A .>> "d"
+                !& "b" .>> B .>> "d"
+                !& "a" .>> B .>> "e"
+                !& "b" .>> A .>> "e"
+            ]
+            |> _.AutoWhitespace(false)
+
+        let resultIelr = grammar.BuildSyntaxCheck()
+        Expect.isFalse resultIelr.IsFailing "Building with IELR(1) failed"
+    }
+
     test "Simple non-LALR(1) grammar" {
         let grammar =
             let A = "A" |||= [!& "c"]

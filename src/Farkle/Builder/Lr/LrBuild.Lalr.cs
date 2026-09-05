@@ -245,11 +245,6 @@ internal readonly partial struct LrBuild
                     // <B> → • b <A>
                     if (gotoIdx != i)
                     {
-                        var kind = @goto.FromState == state ? GotoFollowDependencyKinds.Internal : GotoFollowDependencyKinds.Predecessor;
-                        dependencies.Add(new(gotoIdx, i, kind));
-
-                        // We don't specifically store whether a dependency is internal or predecessor,
-                        // but we keep a count of each kind for diagnostic purposes.
                         // The most reliable indicator of an internal dependency is that both GOTOs are in
                         // the same state. The IELR paper says that an equivalent definition is that α is
                         // empty (i.e. B is the first member of the production), but this equivalence does
@@ -261,8 +256,10 @@ internal readonly partial struct LrBuild
                         // There is a dependency from the GOTO on <C> to the GOTO on <B>, but following `a`
                         // while we are on <A> → a • <B> will lead us back to the same state, while `a` is
                         // not empty.
-                        bool isInternalDependency = gotos[gotoIdx].FromState == gotos[i].FromState;
-                        if (isInternalDependency)
+                        var kind = @goto.FromState == state ? GotoFollowDependencyKinds.Internal : GotoFollowDependencyKinds.Predecessor;
+                        dependencies.Add(new(gotoIdx, i, kind));
+
+                        if (kind == GotoFollowDependencyKinds.Internal)
                         {
                             internalCount++;
                         }

@@ -18,9 +18,9 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
 
             public class MyGrammar
             {
-                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Build|}("a");
 
-                public ProductionBuilder MyProduction2 => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction2 => {|FARKLE1005:Production.Build|}("a");
             }
             """,
             FixedCode = """
@@ -29,10 +29,10 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             public class MyGrammar
             {
                 [UseEnhancedSyntax]
-                public ProductionBuilder MyProduction => Production.Create("a");
+                public ProductionBuilder MyProduction => Production.Build("a");
 
                 [UseEnhancedSyntax]
-                public ProductionBuilder MyProduction2 => Production.Create("a");
+                public ProductionBuilder MyProduction2 => Production.Build("a");
             }
             """,
             CodeActionEquivalenceKey = AddUseEnhancedSyntaxAttributeFixer.AddOnDeclaringMemberKey,
@@ -51,9 +51,9 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
 
             public class MyGrammar
             {
-                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Build|}("a");
 
-                public ProductionBuilder MyProduction2 => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction2 => {|FARKLE1005:Production.Build|}("a");
             }
             """,
             FixedCode = """
@@ -62,9 +62,9 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             [UseEnhancedSyntax]
             public class MyGrammar
             {
-                public ProductionBuilder MyProduction => Production.Create("a");
+                public ProductionBuilder MyProduction => Production.Build("a");
 
-                public ProductionBuilder MyProduction2 => Production.Create("a");
+                public ProductionBuilder MyProduction2 => Production.Build("a");
             }
             """,
             CodeActionEquivalenceKey = AddUseEnhancedSyntaxAttributeFixer.AddOnDeclaringTypeKey,
@@ -79,12 +79,12 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
         var test = new TestCS
         {
             TestCode = """
-            _ = {|FARKLE1005:Production.Create|}("a");
+            _ = {|FARKLE1005:Production.Build|}("a");
             """,
             FixedCode = """
             [module: UseEnhancedSyntax]
 
-            _ = Production.Create("a");
+            _ = Production.Build("a");
             """,
             CodeActionEquivalenceKey = AddUseEnhancedSyntaxAttributeFixer.AddOnDeclaringMemberKey,
         };
@@ -105,7 +105,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             /// </summary>
             public class MyGrammar
             {
-                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Build|}("a");
             }
 
             /// <summary>
@@ -114,7 +114,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             [System.Obsolete]
             public class MyGrammar2
             {
-                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Create|}("a");
+                public ProductionBuilder MyProduction => {|FARKLE1005:Production.Build|}("a");
             }
             """,
             FixedCode = """
@@ -126,7 +126,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             [UseEnhancedSyntax]
             public class MyGrammar
             {
-                public ProductionBuilder MyProduction => Production.Create("a");
+                public ProductionBuilder MyProduction => Production.Build("a");
             }
 
             /// <summary>
@@ -136,7 +136,7 @@ public class AddUseEnhancedSyntaxAttributeFixerTests
             [UseEnhancedSyntax]
             public class MyGrammar2
             {
-                public ProductionBuilder MyProduction => Production.Create("a");
+                public ProductionBuilder MyProduction => Production.Build("a");
             }
             """,
             CodeActionEquivalenceKey = AddUseEnhancedSyntaxAttributeFixer.AddOnDeclaringTypeKey,

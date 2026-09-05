@@ -206,9 +206,9 @@ internal static class RegexGrammar
         var regex = Nonterminal.Create<Regex>("Regex");
 
         var quantifier = Nonterminal.Create("Quantifier",
-            ProductionFactory.Create("*").FinishConstant((Regex r) => r.ZeroOrMore()),
-            ProductionFactory.Create("+").FinishConstant((Regex r) => r.AtLeast(1)),
-            ProductionFactory.Create("?").FinishConstant((Regex r) => r.Optional()),
+            ProductionFactory.Build("*").FinishConstant((Regex r) => r.ZeroOrMore()),
+            ProductionFactory.Build("+").FinishConstant((Regex r) => r.AtLeast(1)),
+            ProductionFactory.Build("?").FinishConstant((Regex r) => r.Optional()),
             quantRepeat.AsProduction(),
             quantAtLeast.AsProduction(),
             quantBetween.AsProduction()
@@ -216,11 +216,11 @@ internal static class RegexGrammar
 
         // Use explicit type to avoid FARKLE1009 warnings.
         IGrammarSymbol<Regex> regexItem = Nonterminal.Create("Regex item",
-            ProductionFactory.Create(".").FinishConstant(Regex.Any),
-            ProductionFactory.Create("\\d").FinishConstant(Regex.OneOf(numbers)),
-            ProductionFactory.Create("\\D").FinishConstant(Regex.NotOneOf(numbers)),
-            ProductionFactory.Create("\\s").FinishConstant(Regex.OneOf(whitespace)),
-            ProductionFactory.Create("\\S").FinishConstant(Regex.NotOneOf(whitespace)),
+            ProductionFactory.Build(".").FinishConstant(Regex.Any),
+            ProductionFactory.Build("\\d").FinishConstant(Regex.OneOf(numbers)),
+            ProductionFactory.Build("\\D").FinishConstant(Regex.NotOneOf(numbers)),
+            ProductionFactory.Build("\\s").FinishConstant(Regex.OneOf(whitespace)),
+            ProductionFactory.Build("\\S").FinishConstant(Regex.NotOneOf(whitespace)),
             anyCharacter.AsProduction(),
             escapedCharacter.AsProduction(),
             predefinedSet.AsProduction(),
@@ -229,12 +229,12 @@ internal static class RegexGrammar
             allButCategory.AsProduction(),
             characterSet.AsProduction(),
             allButCharacterSet.AsProduction(),
-            ProductionFactory.Create("(", regex, ")").AsProduction()
+            ProductionFactory.Build("(", regex, ")").AsProduction()
         );
 
         var regexQuantified = Nonterminal.Create("Regex quantified",
             regexItem.AsProduction(),
-            ProductionFactory.Create(regexItem, quantifier).Finish((r, f) => f(r))
+            ProductionFactory.Build(regexItem, quantifier).Finish((r, f) => f(r))
         );
 
         // We don't use an immutable array builder because it does not have a default constructor.

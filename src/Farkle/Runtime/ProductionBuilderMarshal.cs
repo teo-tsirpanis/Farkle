@@ -20,7 +20,7 @@ public static class ProductionBuilderMarshal
     /// <para>
     /// Creating production builders from this method is more efficient than using the fluent API.
     /// Most users don't need to use this method directly, as the enhanced syntax source generator
-    /// will generate compatible overloads of the <c>Production.Create</c> method for each symbol
+    /// will generate compatible overloads of the <c>Production.Build</c> method for each symbol
     /// type combination.
     /// </para>
     /// <para>

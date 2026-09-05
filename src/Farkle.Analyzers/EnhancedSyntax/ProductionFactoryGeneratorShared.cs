@@ -54,7 +54,7 @@ public static class ProductionFactoryGeneratorShared
         }
 
         var symbolInfo = semanticModel.GetSymbolInfo(invocation.Expression, cancellationToken);
-        // Generate an overload even if we did not cleanly bind to Production.Create(ROS<object>).
+        // Generate an overload even if we did not cleanly bind to Production.Build(ROS<object>).
         // This will help in at least the following cases, but there could be more:
         // 1. Some of the parameters are passed by reference. We emit an overload with by value
         //    parameters, and the compiler emits a clear diagnostic that guides the user to pass

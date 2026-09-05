@@ -76,7 +76,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder.Finish"/>.
     /// </remarks>
     public static IProduction<T> Finish<T>(this string literal, Func<T> fuser) =>
-        ProductionFactory.Create(literal).Finish(fuser);
+        ProductionFactory.Build(literal).Finish(fuser);
 
     /// <summary>
     /// Creates a production made of a symbol, that produces a value.
@@ -89,7 +89,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder.Finish"/>.
     /// </remarks>
     public static IProduction<T> Finish<T>(this IGrammarSymbol symbol, Func<T> fuser) =>
-        ProductionFactory.Create(symbol).Finish(fuser);
+        ProductionFactory.Build(symbol).Finish(fuser);
 
     /// <summary>
     /// Creates a production made of a symbol, that produces a value transformed
@@ -104,7 +104,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder{T1}.Finish"/>.
     /// </remarks>
     public static IProduction<T> Finish<T1, T>(this IGrammarSymbol<T1> symbol, Func<T1, T> fuser) =>
-        ProductionFactory.Create(symbol).Finish(fuser);
+        ProductionFactory.Build(symbol).Finish(fuser);
 
     /// <summary>
     /// Creates a production made of a literal, that produces a constant value.
@@ -117,7 +117,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder.FinishConstant"/>.
     /// </remarks>
     public static IProduction<T> FinishConstant<T>(this string literal, T value) =>
-        ProductionFactory.Create(literal).FinishConstant(value);
+        ProductionFactory.Build(literal).FinishConstant(value);
 
     /// <summary>
     /// Creates a production made of a symbol, that produces a constant value.
@@ -130,7 +130,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder.FinishConstant"/>.
     /// </remarks>
     public static IProduction<T> FinishConstant<T>(this IGrammarSymbol symbol, T value) =>
-        ProductionFactory.Create(symbol).FinishConstant(value);
+        ProductionFactory.Build(symbol).FinishConstant(value);
 
     /// <summary>
     /// Creates a production made of a symbol, that produces the same value as the symbol.
@@ -142,7 +142,7 @@ public static class ProductionBuilderExtensions
     /// <see cref="ProductionBuilder{T1}.AsProduction"/>.
     /// </remarks>
     public static IProduction<T> AsProduction<T>(this IGrammarSymbol<T> symbol) =>
-        ProductionFactory.Create(symbol).AsProduction();
+        ProductionFactory.Build(symbol).AsProduction();
 
     /// <summary>
     /// Obsolete, use <see cref="AsProduction"/> instead.

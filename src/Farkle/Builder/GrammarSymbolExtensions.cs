@@ -104,14 +104,14 @@ public static class GrammarSymbolExtensions
         {
             nont.SetProductions(
                 symbol.Finish(x => new TCollection { x }),
-                ProductionFactory.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Build(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         else
         {
             nont.SetProductions(
                 ProductionBuilder.Empty.Finish(() => new TCollection()),
-                ProductionFactory.Create(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Build(nont, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         return nont;
@@ -140,7 +140,7 @@ public static class GrammarSymbolExtensions
         {
             nont.SetProductions(
                 symbol.Finish(x => new TCollection { x }),
-                ProductionFactory.Create(nont, separator, symbol).Finish((c, x) => { c.Add(x); return c; })
+                ProductionFactory.Build(nont, separator, symbol).Finish((c, x) => { c.Add(x); return c; })
             );
         }
         else

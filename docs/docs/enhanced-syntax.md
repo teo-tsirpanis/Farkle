@@ -2,7 +2,7 @@
 
 The enhanced syntax APIs were added in version 7.1.0, allowing you to use Farkle more ergonomically. With the help of a source generator, these APIs can provide an experience that is not possible using standard C# language features.
 
-Currently, the only enhanced syntax feature is the production factory methods, which allow you to define a production with a single call to `Production.Create` rather than chaining calls to the `Append` and `Extend` methods.
+Currently, the only enhanced syntax feature is the production factory methods, which allow you to define a production with a single call to `Production.Build` rather than chaining calls to the `Append` and `Extend` methods.
 
 ## How to enable
 
@@ -21,12 +21,12 @@ public static class MyGrammar
         IGrammarSymbol<int> number = Terminals.Int32("Number");
 
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number).Finish((a, b) => a + b));
+            Production.Build(number, "+", number).Finish((a, b) => a + b));
     }
 }
 ```
 
-Inside the code under the scope of the attribute, the source generator looks for calls to `Production.Create(...)` and generates appropriate overloads that match the types of the production's members. For the code above, the generator will create the following overload:
+Inside the code under the scope of the attribute, the source generator looks for calls to `Production.Build(...)` and generates appropriate overloads that match the types of the production's members. For the code above, the generator will create the following overload:
 
 ```csharp
 internal static partial class Production
@@ -64,7 +64,7 @@ The production builder API is shorter and easier to read, especially when your p
 
 ```csharp
 return Nonterminal.Create("Expression",
-    Production.Create(expr, "+", expr).Finish((x1, x2) => x1 + x2));
+    Production.Build(expr, "+", expr).Finish((x1, x2) => x1 + x2));
 ```
 
 A code fix is provided to migrate uses of the fluent API to production builders. The fluent API remains available, and there are no plans to remove it.

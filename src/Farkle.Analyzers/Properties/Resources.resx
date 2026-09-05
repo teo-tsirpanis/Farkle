@@ -43,13 +43,13 @@
     <value>The 'UseEnhancedSyntaxAttribute' attribute is unnecessary on this type or member, as no code in it requires its use.</value>
   </data>
   <data name="SwitchToProductionFactories_Title" xml:space="preserve">
-    <value>Use 'Production.Create' to create production builder</value>
+    <value>Use 'Production.Build' to create production builder</value>
   </data>
   <data name="SwitchToProductionFactories_MessageFormat" xml:space="preserve">
-    <value>Use 'Production.Create' instead of 'Append'/'Extend' methods to create production builder</value>
+    <value>Use 'Production.Build' instead of 'Append'/'Extend' methods to create production builder</value>
   </data>
   <data name="SwitchToProductionFactories_Description" xml:space="preserve">
-    <value>Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Create' results in more readable and performant code.</value>
+    <value>Instead of chaining calls to 'Append' and 'Extend' methods to create a production builder, using 'Production.Build' results in more readable and performant code.</value>
   </data>
   <data name="CannotInferProductionFactoryParameters_Title" xml:space="preserve">
     <value>Cannot infer types of production factory arguments</value>

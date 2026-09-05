@@ -38,7 +38,7 @@ public static class MyGrammar
     {
         IGrammarSymbol<int> number = Terminals.Int32("Number");
         return Nonterminal.Create("Add Expression",
-            Production.Create(number, "+", number).Finish((a, b) => a + b));
+            Production.Build(number, "+", number).Finish((a, b) => a + b));
     }
 }
 ```

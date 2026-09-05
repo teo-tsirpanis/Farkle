@@ -20,13 +20,13 @@ namespace Farkle.Samples.CSharp
             var expression = Nonterminal.Create<double>("Expression");
             expression.SetProductions(
                 number.AsProduction(),
-                Production.Create(expression, "+", expression).Finish((x1, x2) => x1 + x2),
-                Production.Create(expression, "-", expression).Finish((x1, x2) => x1 - x2),
-                Production.Create(expression, "*", expression).Finish((x1, x2) => x1 * x2),
-                Production.Create(expression, "/", expression).Finish((x1, x2) => x1 / x2),
-                Production.Create("-", expression).WithPrecedence(out var NEG).Finish(x => -x),
-                Production.Create(expression, "^", expression).Finish(Math.Pow),
-                Production.Create("(", expression, ")").AsProduction());
+                Production.Build(expression, "+", expression).Finish((x1, x2) => x1 + x2),
+                Production.Build(expression, "-", expression).Finish((x1, x2) => x1 - x2),
+                Production.Build(expression, "*", expression).Finish((x1, x2) => x1 * x2),
+                Production.Build(expression, "/", expression).Finish((x1, x2) => x1 / x2),
+                Production.Build("-", expression).WithPrecedence(out var NEG).Finish(x => -x),
+                Production.Build(expression, "^", expression).Finish(Math.Pow),
+                Production.Build("(", expression, ")").AsProduction());
 
             Builder = expression.WithOperatorScope([
                 new LeftAssociative("+", "-"),

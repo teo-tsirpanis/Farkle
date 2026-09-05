@@ -52,7 +52,7 @@ namespace Farkle.Samples.CSharp
 
             var arrayReversed = Nonterminal.Create<JsonArray>("Array Reversed");
             arrayReversed.SetProductions(
-                Production.Create(arrayReversed, ",", value).Finish((xs, x) =>
+                Production.Build(arrayReversed, ",", value).Finish((xs, x) =>
                 {
                     xs.Add(x);
                     return xs;
@@ -61,22 +61,22 @@ namespace Farkle.Samples.CSharp
             var arrayOptional = Nonterminal.Create("Array Optional",
                 arrayReversed.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonArray()));
-            jsonArray.SetProductions(Production.Create("[", arrayOptional, "]").AsProduction());
+            jsonArray.SetProductions(Production.Build("[", arrayOptional, "]").AsProduction());
 
             var objectElement = Nonterminal.Create<JsonObject>("Object Element");
             objectElement.SetProductions(
-                Production.Create(objectElement, ",", jsonString, ":", value)
+                Production.Build(objectElement, ",", jsonString, ":", value)
                     .Finish((xs, k, v) =>
                     {
                         xs.Add(k, v);
                         return xs;
                     }),
-                Production.Create(jsonString, ":", value)
+                Production.Build(jsonString, ":", value)
                     .Finish((k, v) => new JsonObject { { k, v } }));
             var objectOptional = Nonterminal.Create("Object Optional",
                 objectElement.AsProduction(),
                 ProductionBuilder.Empty.Finish(() => new JsonObject()));
-            jsonObject.SetProductions(Production.Create("{", objectOptional, "}").AsProduction());
+            jsonObject.SetProductions(Production.Build("{", objectOptional, "}").AsProduction());
 
             Builder = value.CaseSensitive();
             Parser = Builder.Build();

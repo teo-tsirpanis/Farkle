@@ -13,9 +13,9 @@ public static class Constants
 
     public const string ProductionFactoryClassName = "Farkle.Builder.Production";
 
-    public const string ProductionFactoryCreateMethodName = "Create";
+    public const string ProductionFactoryBuildMethodName = "Build";
 
-    public const string ProductionFactoryCreateMethodFullName = $"{ProductionFactoryClassName}.{ProductionFactoryCreateMethodName}";
+    public const string ProductionFactoryBuildMethodFullName = $"{ProductionFactoryClassName}.{ProductionFactoryBuildMethodName}";
 
     public const string UseEnhancedSyntaxAttributeName = "Farkle.Builder.UseEnhancedSyntaxAttribute";
 }

@@ -25,7 +25,7 @@ public class MigrateToProductionFactoryFixerTests
             IGrammarSymbol<int> symbol = null;
             IGrammarSymbol symbolU = null;
 
-            _ = Production.Create(str, symbol, symbol, symbolU);
+            _ = Production.Build(str, symbol, symbol, symbolU);
             """);
     }
 
@@ -49,7 +49,7 @@ public class MigrateToProductionFactoryFixerTests
             IGrammarSymbol<int> symbol = null;
             IGrammarSymbol symbolU = null;
 
-            _ = Production.Create(str, symbol, symbol, symbolU);
+            _ = Production.Build(str, symbol, symbol, symbolU);
             """);
     }
 
@@ -71,7 +71,7 @@ public class MigrateToProductionFactoryFixerTests
             IGrammarSymbol<int> symbol = null;
             IGrammarSymbol symbolU = null;
 
-            _ = Production.Create(str, symbol, (IGrammarSymbol)symbol, symbolU);
+            _ = Production.Build(str, symbol, (IGrammarSymbol)symbol, symbolU);
             """);
     }
 }

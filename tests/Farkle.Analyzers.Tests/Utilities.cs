@@ -30,7 +30,7 @@ public static class Utilities
 
         internal static partial class Production
         {
-            public static ProductionBuilder Create(params object[] members) => new(members);
+            public static ProductionBuilder Build(params object[] members) => new(members);
         }
 
         """;

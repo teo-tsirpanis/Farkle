@@ -17,10 +17,10 @@ public class ProductionFactoryAnalyzerTests
         IGrammarSymbol<int> symbol = null;
         IGrammarSymbol symbolU = null;
 
-        _ = Production.Create(str, symbol, symbolU);
-        _ = Production.Create(str, str, str);
-        _ = Production.Create(symbol, symbol, symbol);
-        _ = Production.Create(symbol, symbolU, symbolU);
+        _ = Production.Build(str, symbol, symbolU);
+        _ = Production.Build(str, str, str);
+        _ = Production.Build(symbol, symbol, symbol);
+        _ = Production.Build(symbol, symbolU, symbolU);
         """);
     }
 
@@ -30,7 +30,7 @@ public class ProductionFactoryAnalyzerTests
         await VerifyCS.VerifyAnalyzerAsync("""
         [module: UseEnhancedSyntax]
 
-        _ = Production.Create(default(MyString));
+        _ = Production.Build(default(MyString));
 
         struct MyString
         {
@@ -48,8 +48,8 @@ public class ProductionFactoryAnalyzerTests
         int i = 670;
         IGrammarBuilder builder = null;
 
-        _ = Production.Create({|#0:i|});
-        _ = Production.Create({|#1:builder|});
+        _ = Production.Build({|#0:i|});
+        _ = Production.Build({|#1:builder|});
         """,
         VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryUnsupportedType).WithLocation(0).WithArguments("0", "int"),
         VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryUnsupportedType).WithLocation(1).WithArguments("0", "Farkle.Builder.IGrammarBuilder"));
@@ -65,8 +65,8 @@ public class ProductionFactoryAnalyzerTests
         IGrammarSymbol<int> symbol = null;
         IGrammarSymbol symbolU = null;
 
-        _ = Production.Create(str, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, str);
-        _ = {|#0:Production.Create(str, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, str)|};
+        _ = Production.Build(str, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, str);
+        _ = {|#0:Production.Build(str, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, str)|};
         """,
         VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols).WithLocation(0).WithArguments("16"));
     }
@@ -77,7 +77,7 @@ public class ProductionFactoryAnalyzerTests
         await VerifyCS.VerifyAnalyzerAsync("""
         [module: UseEnhancedSyntax, {|#0:UseEnhancedSyntax|}]
 
-        _ = Production.Create();
+        _ = Production.Build();
 
         [{|#1:UseEnhancedSyntax|}]
         static class C
@@ -85,7 +85,7 @@ public class ProductionFactoryAnalyzerTests
             [UseEnhancedSyntax]
             static void M()
             {
-                _ = Production.Create();
+                _ = Production.Build();
             }
         }
         """,
@@ -104,7 +104,7 @@ public class ProductionFactoryAnalyzerTests
 
         static partial class C
         {
-            static void M() => {|#1:Production.Create|}();
+            static void M() => {|#1:Production.Build|}();
         }
 
         static partial class C2
@@ -115,7 +115,7 @@ public class ProductionFactoryAnalyzerTests
 
         static partial class C2
         {
-            static partial void M2() => {|#3:Production.Create|}();
+            static partial void M2() => {|#3:Production.Build|}();
         }
         """,
         VerifyCS.Diagnostic(DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary).WithLocation(0),

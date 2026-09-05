@@ -22,7 +22,7 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
     private static readonly ExpressionSyntax s_productionFactoryCreateNode =
-        SyntaxFactory.ParseExpression($"{Constants.GlobalAlias}{Constants.ProductionFactoryCreateMethodFullName}")
+        SyntaxFactory.ParseExpression($"{Constants.GlobalAlias}{Constants.ProductionFactoryBuildMethodFullName}")
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
     public override ImmutableArray<string> FixableDiagnosticIds { get; } = [

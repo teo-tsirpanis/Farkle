@@ -34,7 +34,7 @@ public class RemoveUnnecessaryAttributeFixerTests
             [UseEnhancedSyntax]
             void f()
             {
-                _ = Production.Create("a");
+                _ = Production.Build("a");
             }
             """,
             """
@@ -43,7 +43,7 @@ public class RemoveUnnecessaryAttributeFixerTests
             [UseEnhancedSyntax]
             void f()
             {
-                _ = Production.Create("a");
+                _ = Production.Build("a");
             }
             """);
     }

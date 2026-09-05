@@ -76,7 +76,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
                 wroteAny = true;
 
                 // Write method signature.
-                w.Write($"public static {extraNamespace}ProductionBuilder{genericParams} Create{genericParams}(");
+                w.Write($"public static {extraNamespace}ProductionBuilder{genericParams} Build{genericParams}(");
                 for (int i = 0, genericIdx = 1; i < x.MemberTypes.Count; i++)
                 {
                     if (i > 0)
@@ -151,14 +151,14 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
         /// on the member or any of its containing types.
         /// </para>
         /// <para>
-        /// A source generator will detect calls to the <c>Production.Create</c> method, and generate overloads
+        /// A source generator will detect calls to the <c>Production.Build</c> method, and generate overloads
         /// that return a production builder with the specific number of significant members.
         /// </para>
         /// </remarks>
         [global::Microsoft.CodeAnalysis.EmbeddedAttribute]
         internal static partial class Production
         {
-            public static ProductionBuilder Create(params object[] members) => new(members);
+            public static ProductionBuilder Build(params object[] members) => new(members);
         }
 
         """;
@@ -177,7 +177,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
         /// <remarks>
         /// <para>
         /// At this moment, this includes using factory methods in the <see cref="Production"/>
-        /// class. A source generator will detect calls to the <c>Production.Create</c> method,
+        /// class. A source generator will detect calls to the <c>Production.Build</c> method,
         /// and generate overloads that return a production builder with the specific number of
         /// significant members.
         /// </para>

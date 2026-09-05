@@ -8,17 +8,20 @@ namespace Farkle.Analyzers.EnhancedSyntax;
 public sealed class ProductionFactorySymbols
 {
     /// <summary>
-    /// <c>Farkle.Builder.Production.ProductionBuilder.Create(params ReadOnlySpan&lt;object&gt;)</c>
+    /// <c>Farkle.Builder.ProductionBuilder Farkle.Builder.Production.Build(params ReadOnlySpan&lt;object&gt;)</c>
     /// </summary>
     public required IMethodSymbol ProductionCreateBoilerplate { get; init; }
+
     /// <summary>
     /// <see cref="string"/>
     /// </summary>
     public required INamedTypeSymbol String { get; init; }
+
     /// <summary>
     /// <c>Farkle.Builder.IGrammarSymbol</c>
     /// </summary>
     public required INamedTypeSymbol? IGrammarSymbol { get; init; }
+
     /// <summary>
     /// <c>Farkle.Builder.IGrammarSymbol&lt;T&gt;</c>
     /// </summary>
@@ -30,7 +33,7 @@ public sealed class ProductionFactorySymbols
     {
         var productionCreateMethod = compilation.Assembly
             .GetTypeByMetadataName(Constants.ProductionFactoryClassName)
-            ?.GetMembers("Create")
+            ?.GetMembers(Constants.ProductionFactoryBuildMethodName)
             .OfType<IMethodSymbol>()
             // The source generator will only see one overload, but the analyzer will also see all generated overloads.
             // We pick the one generated in post-initialization, which is the only one with a single params parameter.

@@ -197,6 +197,7 @@ partial struct LrBuild
                 {
                     var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
                     int previousItemIndex = newStates[fromState].KernelItems.IndexOf(previousItem);
+                    Debug.Assert(previousItemIndex >= 0);
                     resultRow.Or(predecessorLookaheads[previousItemIndex]);
                 }
                 resultRow.And(filter);

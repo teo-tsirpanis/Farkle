@@ -99,6 +99,7 @@ partial struct LrBuild
                             default:
                                 var previousItem = new Lr0Item(item.Production, item.DotPosition - 1);
                                 int previousItemIndex = stateMachine.States[predecessor].KernelItems.IndexOf(previousItem);
+                                Debug.Assert(previousItemIndex >= 0);
                                 if (lookaheadSetCache.GetLookaheadSet(predecessor, previousItemIndex)[conflict.Symbol])
                                 {
                                     newRow = newRow.Set(previousItemIndex, true);

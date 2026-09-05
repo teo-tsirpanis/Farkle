@@ -334,7 +334,7 @@ internal static class GrammarBuild
             var conflictResolver = operatorScope is not null
                 ? new OperatorScopeConflictResolver(operatorScope, operatorSymbolMap!, literalsCaseInsensitive, log)
                 : null;
-            writer.AddStateMachine(LalrBuild.Build(writer, conflictResolver, log, options.CancellationToken));
+            writer.AddStateMachine(LrBuild.Build(writer, globalOptions.ParserGenerationAlgorithm, conflictResolver, log, options.CancellationToken));
         }
 
         // Farkle's builder can be trusted to not produce malformed grammars, so we can skip content validation.

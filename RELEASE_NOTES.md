@@ -1,4 +1,5 @@
 #### 7.1.0
+* Added support for the IELR(1) algorithm in the builder, which provides the full expressive power of LR(1) grammars without being susceptible to mysterious conflicts that can occur with LALR(1), while generating only slightly larger tables. IELR(1) is used by default.
 * Added [enhanced syntax](./docs/docs/enhanced-syntax.md), which is a set of convenience APIs powered by source generators. At this moment, they provide a simpler way to create production builders.
 
 #### 7.0.1 - 09-07-2026

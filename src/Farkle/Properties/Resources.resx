@@ -171,6 +171,9 @@
   <data name="Builder_BuildingStarted" xml:space="preserve">
     <value>Building grammar {0}</value>
   </data>
+  <data name="Builder_FoundConflictsSwitchingToIelr" xml:space="preserve">
+    <value>Found {0} conflicts. Attempting to resolve them with the IELR(1) algorithm.</value>
+  </data>
   <data name="Builder_BuildingFinished" xml:space="preserve">
     <value>Successfully built grammar {0}: {1} terminals, {2} nonterminals, {3} productions, {4} LR states, {5} DFA states</value>
   </data>

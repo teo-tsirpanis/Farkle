@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Farkle;
 
@@ -45,6 +46,12 @@ internal static class Utilities
     {
         ArgumentNullException.ThrowIfNull(array, paramName);
         return ImmutableArray.Create(array);
+    }
+
+    extension<T>(List<T>? list)
+    {
+        public bool SequenceEqual(List<T>? other) =>
+            CollectionsMarshal.AsSpan(list).SequenceEqual(CollectionsMarshal.AsSpan(other));
     }
 
     /// <summary>

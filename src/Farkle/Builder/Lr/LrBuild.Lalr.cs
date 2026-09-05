@@ -4,67 +4,20 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 using BitCollections;
+using Farkle.Collections;
 using Farkle.Diagnostics;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars.StateMachines;
-using Farkle.Grammars.Writers;
 using static Farkle.Builder.Lr.AugmentedSyntaxProvider;
 
 namespace Farkle.Builder.Lr;
 
-/// <summary>
-/// Contains the logic for building an LALR(1) state machine from a set of
-/// syntax rules.
-/// </summary>
-internal readonly struct LalrBuild
+internal readonly partial struct LrBuild
 {
-    private readonly AugmentedSyntaxProvider Syntax;
-
-    private readonly CancellationToken CancellationToken;
-
-    private readonly BuilderLogger Log;
-
-    private LalrBuild(IGrammarSyntaxProvider syntax, BuilderLogger log, CancellationToken cancellationToken)
-    {
-        Syntax = new(syntax);
-        CancellationToken = cancellationToken;
-        Log = log;
-    }
-
-    /// <summary>
-    /// Builds an LR(1) state machine that can parse the syntax of a grammar.
-    /// </summary>
-    /// <param name="syntax">The syntax of the grammar.</param>
-    /// <param name="conflictResolver">The conflict resolver to use. Optional.</param>
-    /// <param name="log">Used to log events in the building process.</param>
-    /// <param name="cancellationToken">Used to cancel the building process.</param>
-    public static LrWriter Build(IGrammarSyntaxProvider syntax, LrConflictResolver? conflictResolver = null, BuilderLogger log = default, CancellationToken cancellationToken = default)
-    {
-        var @this = new LalrBuild(syntax, log, cancellationToken);
-        var lr0StateMachine = @this.ComputeLr0StateMachine();
-        var nullableNonterminals = @this.ComputeNullableNonterminals();
-        var productionNullableStarts = @this.ComputeProductionNullableStarts(nullableNonterminals);
-        var gotoFollowDependencies = @this.ComputeGotoFollowDependencies(lr0StateMachine, nullableNonterminals, productionNullableStarts.AsSpan());
-        var gotoFollows = @this.ComputeInitialGotoFollows(lr0StateMachine);
-        // The rule is, after taking a successor dependency, no internal dependency can be followed.
-        // We can propagate all successor dependencies first, but can also propagate internal dependencies
-        // at the same time. This has an equivalent effect according to §3.3.3 of the IELR paper.
-        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Successor | GotoFollowDependencyKinds.Internal, gotoFollows);
-        @this.PropagateGotoFollows(lr0StateMachine, gotoFollowDependencies.AsSpan(),
-            GotoFollowDependencyKinds.Internal | GotoFollowDependencyKinds.Predecessor, gotoFollows);
-        var reductionLookaheads = @this.ComputeReductionLookaheads(lr0StateMachine, gotoFollows.AsSpan());
-
-        LrStateMachine stateMachine = new DefaultLrStateMachine(lr0StateMachine, reductionLookaheads);
-        if (conflictResolver is not null)
-        {
-            stateMachine = new ConflictResolvingLrStateMachine(stateMachine, conflictResolver);
-        }
-        return stateMachine.ToLrWriter();
-    }
-
     /// <summary>
     /// Computes the reduction lookahead sets of each state.
     /// </summary>
@@ -78,13 +31,13 @@ internal readonly struct LalrBuild
     /// </list>
     /// If a dictionary for a state is <see langword="null"/>, it means that no reductions happen in this state.
     /// </returns>
-    private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ComputeReductionLookaheads(
-        Lr0StateMachine stateMachine, ReadOnlySpan<BitArrayNeo> gotoFollows)
+    private GroupedIndexedList<ReductionLookahead> ComputeReductionLookaheads(
+        Lr0StateMachine stateMachine, ImmutableArray<TerminalSet> gotoFollows)
     {
         Log.Debug("Computing reduction lookaheads");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
         ReadOnlySpan<GotoInfo> gotos = stateMachine.Gotos.AsSpan();
-        var reductionLookaheads = new Dictionary<Production, BitArrayNeo>?[states.Length];
+        var reductionLookaheads = new Dictionary<(int State, Production), TerminalSetCow>();
         // For each GOTO in the grammar, we take its follow set and push it through the productions
         // of each non-kernel item derived by the GOTO. We don't have to actually compute the non-
         // kernel items, we can get all productions of the nonterminal that triggers the GOTO. We
@@ -94,17 +47,26 @@ internal readonly struct LalrBuild
         {
             CancellationToken.ThrowIfCancellationRequested();
             ref readonly GotoInfo @goto = ref gotos[i];
-            PropagateLookaheads(in Syntax, states, gotos, @goto.FromState, @goto.NonterminalIndex, gotoFollows[i]);
+            PropagateLookaheads(Syntax, states, gotos, @goto.FromState, @goto.NonterminalIndex, gotoFollows[i]);
         }
         // There is one more GOTO to propagate, the one on <S'> → • <S>. The loop before propagated
         // the GOTO follows on the derived productions of <S>, but did not follow the GOTO itself.
         // This is necessary to add the accept action.
-        PropagateLookaheads(in Syntax, states, gotos, 0, StartSymbolIndex, gotoFollows[0]);
+        var endSymbolLookahead = new TerminalSet(Syntax);
+        endSymbolLookahead[Syntax.EndSymbol] = true;
+        PropagateLookaheads(Syntax, states, gotos, 0, StartSymbolIndex, endSymbolLookahead);
         Log.Debug("Computed reduction lookaheads");
-        return ImmutableCollectionsMarshal.AsImmutableArray(reductionLookaheads);
 
-        void PropagateLookaheads(in AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
-            int state, int nonterminal, BitArrayNeo lookahead)
+        var lookaheadsBuilder = ImmutableArray.CreateBuilder<ReductionLookahead>(reductionLookaheads.Count);
+        foreach (var ((state, p), lookahead) in reductionLookaheads)
+        {
+            lookaheadsBuilder.Add(new(state, p, lookahead.Set));
+        }
+        lookaheadsBuilder.Sort(static (x, y) => x.State.CompareTo(y.State));
+        return new(stateMachine.States.Length, lookaheadsBuilder.MoveToImmutable(), static x => x.State);
+
+        void PropagateLookaheads(AugmentedSyntaxProvider syntax, ReadOnlySpan<Lr0State> states, ReadOnlySpan<GotoInfo> gotos,
+            int state, int nonterminal, TerminalSet lookahead)
         {
             foreach (Production p in syntax.EnumerateNonterminalProductions(nonterminal))
             {
@@ -113,15 +75,7 @@ internal readonly struct LalrBuild
                 {
                     currentState = states[currentState].FollowTransition(s, gotos);
                 }
-                var dict = reductionLookaheads[currentState] ??= [];
-                if (!dict.TryGetValue(p, out BitArrayNeo? existingLookahead))
-                {
-                    dict.Add(p, new(lookahead));
-                }
-                else
-                {
-                    existingLookahead.Or(lookahead);
-                }
+                CollectionsMarshal.GetValueRefOrAddDefault(reductionLookaheads, (currentState, p), out _).Or(lookahead);
             }
         }
     }
@@ -129,18 +83,13 @@ internal readonly struct LalrBuild
     /// <summary>
     /// Computes and propagates GOTO follow sets.
     /// </summary>
-    /// <param name="stateMachine">The state machine.</param>
     /// <param name="dependencies">The GOTO follow dependencies, computed by
     /// <see cref="ComputeGotoFollowDependencies"/>.</param>
     /// <param name="dependencyKindsToPropagate">The kinds of dependencies to propagate.</param>
     /// <param name="follows">The existing GOTO follow sets that will be propagated in-place.</param>
-    private void PropagateGotoFollows(Lr0StateMachine stateMachine,
-        ReadOnlySpan<GotoFollowDependency> dependencies, GotoFollowDependencyKinds dependencyKindsToPropagate,
-        ImmutableArray<BitArrayNeo> follows)
+    private void PropagateGotoFollows(ImmutableArray<GotoFollowDependency> dependencies,
+        GotoFollowDependencyKinds dependencyKindsToPropagate, ImmutableArray<TerminalSet> follows)
     {
-        var gotos = stateMachine.Gotos.AsSpan();
-        Debug.Assert(follows.Length == gotos.Length);
-
         Log.Debug($"Propagating {dependencyKindsToPropagate} GOTO follow dependencies");
         bool changed;
         int iterations = 0;
@@ -152,7 +101,7 @@ internal readonly struct LalrBuild
             iterations++;
             foreach (var dependency in dependencies)
             {
-                if ((dependencyKindsToPropagate & dependency.GetDependencyKind(gotos)) != 0)
+                if ((dependencyKindsToPropagate & dependency.DependencyKind) != 0)
                 {
                     changed |= follows[dependency.FromGoto].Or(follows[dependency.ToGoto]);
                 }
@@ -163,9 +112,9 @@ internal readonly struct LalrBuild
             Log.Debug($"Propagated after {iterations} iterations");
             if (Log.IsEnabled(DiagnosticSeverity.Verbose))
             {
-                foreach (BitArrayNeo x in follows)
+                foreach (TerminalSet x in follows)
                 {
-                    Log.Verbose($"{x}");
+                    Log.Verbose($"{x.GetDebuggerDisplay()}");
                 }
             }
         }
@@ -181,30 +130,26 @@ internal readonly struct LalrBuild
     /// as well, and they can be computed by propagating the follow sets using
     /// <see cref="PropagateGotoFollows"/>.
     /// </remarks>
-    private ImmutableArray<BitArrayNeo> ComputeInitialGotoFollows(Lr0StateMachine stateMachine)
+    private ImmutableArray<TerminalSet> ComputeInitialGotoFollows(Lr0StateMachine stateMachine)
     {
         var gotos = stateMachine.Gotos.AsSpan();
-        var follows = ImmutableArray.CreateBuilder<BitArrayNeo>(gotos.Length);
+        var follows = ImmutableArray.CreateBuilder<TerminalSet>(gotos.Length);
         Log.Debug("Generating initial GOTO follow sets");
-        // The first GOTO is the one on <S'> → • <S>, and its follow set consists of only the end symbol.
-        // This happens because the reducing the start production means accepting, and we can only accept
-        // at the end of input.
-        var initialFollow = new BitArrayNeo(Syntax.TerminalCount);
-        initialFollow[EndSymbolIndex] = true;
-        follows.Add(initialFollow);
-        // Add the follow sets of the rest of the GOTOs.
-        foreach (ref readonly var @goto in gotos[1..])
+        foreach (ref readonly var @goto in gotos)
         {
-            var follow = new BitArrayNeo(Syntax.TerminalCount);
+            var follow = new TerminalSet(Syntax);
             foreach (Symbol s in stateMachine.States[@goto.ToState].Transitions.Keys)
             {
                 if (s.IsTerminal)
                 {
-                    follow.Set(s.Index, true);
+                    follow.Set(s, true);
                 }
             }
             follows.Add(follow);
         }
+        // Include the implicit end symbol in the first GOTO's follow set, which is the one on <S'> → • <S>.
+        // This is necessary to add the accept action.
+        follows[0].Set(Syntax.EndSymbol, true);
         Log.Debug("Generated initial GOTO follow sets");
         return follows.MoveToImmutable();
     }
@@ -213,7 +158,7 @@ internal readonly struct LalrBuild
     /// Computes the dependencies between the follow sets of GOTO transitions.
     /// </summary>
     private ImmutableArray<GotoFollowDependency> ComputeGotoFollowDependencies(Lr0StateMachine stateMachine,
-        BitArrayNeo nullableNonterminals, ReadOnlySpan<int> productionNullableStarts)
+        BitArrayNeo nullableNonterminals, ImmutableArray<int> productionNullableStarts)
     {
         Log.Debug("Computing GOTO follow dependencies");
         ReadOnlySpan<Lr0State> states = stateMachine.States.AsSpan();
@@ -236,7 +181,7 @@ internal readonly struct LalrBuild
                 }
                 if (nullableNonterminals[gotos[transition.Value].NonterminalIndex])
                 {
-                    dependencies.Add(new(i, transition.Value, isSuccessor: true));
+                    dependencies.Add(new(i, transition.Value, GotoFollowDependencyKinds.Successor));
                     successorCount++;
                 }
             }
@@ -300,10 +245,6 @@ internal readonly struct LalrBuild
                     // <B> → • b <A>
                     if (gotoIdx != i)
                     {
-                        dependencies.Add(new(gotoIdx, i, isSuccessor: false));
-
-                        // We don't specifically store whether a dependency is internal or predecessor,
-                        // but we keep a count of each kind for diagnostic purposes.
                         // The most reliable indicator of an internal dependency is that both GOTOs are in
                         // the same state. The IELR paper says that an equivalent definition is that α is
                         // empty (i.e. B is the first member of the production), but this equivalence does
@@ -315,8 +256,10 @@ internal readonly struct LalrBuild
                         // There is a dependency from the GOTO on <C> to the GOTO on <B>, but following `a`
                         // while we are on <A> → a • <B> will lead us back to the same state, while `a` is
                         // not empty.
-                        bool isInternalDependency = gotos[gotoIdx].FromState == gotos[i].FromState;
-                        if (isInternalDependency)
+                        var kind = @goto.FromState == state ? GotoFollowDependencyKinds.Internal : GotoFollowDependencyKinds.Predecessor;
+                        dependencies.Add(new(gotoIdx, i, kind));
+
+                        if (kind == GotoFollowDependencyKinds.Internal)
                         {
                             internalCount++;
                         }
@@ -563,12 +506,11 @@ internal readonly struct LalrBuild
         return true;
     }
 
-    private sealed class DefaultLrStateMachine(Lr0StateMachine states,
-        ImmutableArray<Dictionary<Production, BitArrayNeo>?> reductionLookaheads) : LrStateMachine
+    private sealed class DefaultLrStateMachine(Lr0StateMachine states, GroupedIndexedList<ReductionLookahead> reductionLookaheads) : LrStateMachine
     {
-        private Lr0StateMachine Lr0StateMachine { get; } = states;
+        public Lr0StateMachine Lr0StateMachine { get; } = states;
 
-        private ImmutableArray<Dictionary<Production, BitArrayNeo>?> ReductionLookaheads { get; } = reductionLookaheads;
+        public GroupedIndexedList<ReductionLookahead> ReductionLookaheads { get; } = reductionLookaheads;
 
         public override int StateCount => Lr0StateMachine.States.Length;
 
@@ -576,47 +518,98 @@ internal readonly struct LalrBuild
         {
             foreach (var transition in Lr0StateMachine.States[state].Transitions)
             {
-                switch (transition.Key)
+                if (transition.Key.IsTerminal)
                 {
-                    case { IsTerminal: true, Index: int idx }:
-                        yield return LrStateEntry.Create(TranslateTerminalIndex(idx), LrAction.CreateShift(transition.Value));
-                        break;
-                    case { IsTerminal: false, Index: int idx }:
-                        yield return LrStateEntry.CreateGoto(TranslateNonterminalIndex(idx), Lr0StateMachine.Gotos[transition.Value].ToState);
-                        break;
+                    yield return LrStateEntry.Create(TranslateTerminal(transition.Key), LrAction.CreateShift(transition.Value));
+                }
+                else
+                {
+                    yield return LrStateEntry.CreateGoto(TranslateNonterminal(transition.Key), Lr0StateMachine.Gotos[transition.Value].ToState);
                 }
             }
 
-            if (ReductionLookaheads[state] is not { } lookaheads)
+            foreach (var x in ReductionLookaheads.EnumerateItemsWithKey(state))
             {
-                yield break;
-            }
-            foreach ((var p, BitArrayNeo lookahead) in lookaheads)
-            {
-                if (p.Index == StartProductionIndex)
+                if (x.Production.Index == StartProductionIndex)
                 {
-                    foreach (int terminal in lookahead)
+                    foreach (Symbol terminal in x.Lookahead)
                     {
-                        Debug.Assert(terminal == EndSymbolIndex);
+                        Debug.Assert(terminal.Index == EndSymbolIndex);
                         yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.Accept);
                     }
                 }
                 else
                 {
-                    var productionHandle = TranslateProductionIndex(p.Index);
-                    foreach (int terminal in lookahead)
+                    var productionHandle = TranslateProduction(x.Production);
+                    foreach (Symbol terminal in x.Lookahead)
                     {
-                        if (terminal == EndSymbolIndex)
+                        if (terminal.Index == EndSymbolIndex)
                         {
                             yield return LrStateEntry.CreateEndOfFileAction(LrEndOfFileAction.CreateReduce(productionHandle));
                         }
                         else
                         {
-                            yield return LrStateEntry.Create(TranslateTerminalIndex(terminal), LrAction.CreateReduce(productionHandle));
+                            yield return LrStateEntry.Create(TranslateTerminal(terminal), LrAction.CreateReduce(productionHandle));
                         }
                     }
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Represents a reduce action in an LR state machine.
+    /// </summary>
+    private readonly struct ReductionLookahead(int state, Production production, TerminalSet lookahead)
+    {
+        /// <summary>
+        /// The state in which the reduction happens.
+        /// </summary>
+        public int State { get; } = state;
+
+        /// <summary>
+        /// The production to reduce.
+        /// </summary>
+        public Production Production { get; } = production;
+
+        /// <summary>
+        /// The terminals on which the reduction is performed.
+        /// </summary>
+        public TerminalSet Lookahead { get; } = lookahead;
+    }
+
+    /// <summary>
+    /// Provides a copy-on-write wrapper around a <see cref="TerminalSet"/>.
+    /// </summary>
+    private struct TerminalSetCow
+    {
+        private bool _isCopied;
+
+        /// <summary>
+        /// The terminal set. Do not modify directly; use methods on the <see cref="TerminalSetCow"/>.
+        /// </summary>
+        public TerminalSet Set { get; private set; }
+
+        /// <summary>
+        /// Adds the terminals of the given set to this set.
+        /// </summary>
+        /// <remarks>
+        /// The first time this method is called, <paramref name="other"/> is moved to this wrapper without copying.
+        /// If the method is called again, a copy of <see cref="Set"/> will be made.
+        /// </remarks>
+        public bool Or(TerminalSet other)
+        {
+            if (Set.IsDefault)
+            {
+                Set = other;
+                return true;
+            }
+            if (!_isCopied)
+            {
+                Set = new(Set);
+                _isCopied = true;
+            }
+            return Set.Or(other);
         }
     }
 
@@ -642,60 +635,52 @@ internal readonly struct LalrBuild
         /// <summary>
         /// Propagate dependencies between a GOTO and an eventual predecessor of it.
         /// </summary>
-        Predecessor = 4
+        Predecessor = 4,
     }
 
     /// <summary>
     /// Represents a dependency between the follow sets of two GOTO transitions.
     /// </summary>
-    [DebuggerDisplay("{FromGoto} → {ToGoto}, {DebuggerDependencyKind,nq}")]
+    [DebuggerDisplay("{FromGoto} → {ToGoto}, {DependencyKind}")]
     private readonly struct GotoFollowDependency
     {
-        private const uint IsSuccessorMask = 1u << 31;
+        private const uint FlagsMask = 1u << 31;
 
-        private readonly uint _fromGotoAndIsSuccessor;
+        private readonly uint _fromGotoAndHighFlag;
 
-        public GotoFollowDependency(int fromGoto, int toGoto, bool isSuccessor)
+        private readonly uint _toGotoAndLowFlag;
+
+        public GotoFollowDependency(int fromGoto, int toGoto, GotoFollowDependencyKinds kind)
         {
             Debug.Assert(fromGoto != toGoto);
-            _fromGotoAndIsSuccessor = (uint)fromGoto | (isSuccessor ? IsSuccessorMask : 0);
-            ToGoto = toGoto;
+            Debug.Assert(BitOperations.PopCount((uint)kind) == 1);
+            // Only one of the flags is set, so we can compress it to two bytes by taking its log2.
+            var flags = (uint)BitOperations.TrailingZeroCount((uint)kind);
+            _fromGotoAndHighFlag = (uint)fromGoto | ((flags << 30) & FlagsMask);
+            _toGotoAndLowFlag = (uint)toGoto | (flags << 31);
+            Debug.Assert(DependencyKind == kind);
         }
-
-        private string DebuggerDependencyKind => IsSuccessor ? "Successor" : "Include";
 
         /// <summary>
         /// The GOTO transition from which the dependency originates.
         /// </summary>
-        public int FromGoto => (int)(_fromGotoAndIsSuccessor & ~IsSuccessorMask);
+        public int FromGoto => (int)(_fromGotoAndHighFlag & ~FlagsMask);
 
         /// <summary>
         /// The GOTO transition to which the dependency leads.
         /// </summary>
-        public int ToGoto { get; }
+        public int ToGoto => (int)(_toGotoAndLowFlag & ~FlagsMask);
 
         /// <summary>
-        /// Whether the dependency is a successor dependency, otherwise it is an include dependency.
+        /// The kind of the dependency.
         /// </summary>
-        private bool IsSuccessor => (_fromGotoAndIsSuccessor & IsSuccessorMask) != 0;
-
-        /// <summary>
-        /// Gets the exact kind of the dependency, which requires the table with the GOTOs.
-        /// </summary>
-        public GotoFollowDependencyKinds GetDependencyKind(ReadOnlySpan<GotoInfo> gotos)
+        public GotoFollowDependencyKinds DependencyKind
         {
-            if (IsSuccessor)
+            get
             {
-                return GotoFollowDependencyKinds.Successor;
+                var flags = ((_fromGotoAndHighFlag >> 30) & 0b10) | (_toGotoAndLowFlag >> 31);
+                return (GotoFollowDependencyKinds)(1 << (int)flags);
             }
-            // We could keep the full kind in the struct, taking advantage of both integers'
-            // high bits. It will complicate things a bit, let's not do it right now, unless
-            // this proves to be a performance bottleneck.
-            if (gotos[FromGoto].FromState == gotos[ToGoto].FromState)
-            {
-                return GotoFollowDependencyKinds.Internal;
-            }
-            return GotoFollowDependencyKinds.Predecessor;
         }
     }
 
@@ -721,26 +706,48 @@ internal readonly struct LalrBuild
     /// Contains detailed information about a GOTO transition.
     /// </summary>
     [DebuggerDisplay("{FromState} → {ToState} ({_symbol})")]
-    private readonly struct GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
+    private readonly struct GotoInfo
     {
         // Even though it's always a nonterminal, we use a full symbol to take
         // advantage of better debugger display.
-        private readonly Symbol _symbol = Symbol.CreateNonterminal(nonterminal, syntax);
+        private readonly Symbol _symbol;
+
+        private GotoInfo(int fromState, int toState, Symbol symbol)
+        {
+            _symbol = symbol;
+            FromState = fromState;
+            ToState = toState;
+        }
+
+        public GotoInfo(int fromState, int toState, int nonterminal, AugmentedSyntaxProvider syntax)
+            : this(fromState, toState, Symbol.CreateNonterminal(nonterminal, syntax))
+        {
+        }
 
         /// <summary>
         /// The state from which the GOTO originates.
         /// </summary>
-        public int FromState { get; } = fromState;
+        public int FromState { get; }
 
         /// <summary>
         /// The state to which the GOTO leads.
         /// </summary>
-        public int ToState { get; } = toState;
+        public int ToState { get; }
 
         /// <summary>
         /// The index of the nonterminal that triggers the GOTO.
         /// </summary>
         public int NonterminalIndex => _symbol.Index;
+
+        /// <summary>
+        /// Returns a new <see cref="GotoInfo"/> with a different <see cref="FromState"/>.
+        /// </summary>
+        public GotoInfo WithFromState(int fromState) => new(fromState, ToState, _symbol);
+
+        /// <summary>
+        /// Returns a new <see cref="GotoInfo"/> with a different <see cref="ToState"/>.
+        /// </summary>
+        public GotoInfo WithToState(int toState) => new(FromState, toState, _symbol);
     }
 
     /// <summary>
@@ -755,7 +762,8 @@ internal readonly struct LalrBuild
         public KernelItemSet KernelItems { get; } = kernelItems;
 
         /// <summary>
-        /// The transitions from this state to other states. Do not modify.
+        /// The transitions from this state to other states. Do not modify after returning in
+        /// an <see cref="Lr0StateMachine"/>.
         /// </summary>
         /// <remarks>
         /// IMPORTANT: If the key is a terminal, the value is an index in <see cref="Lr0StateMachine.States"/>,
@@ -763,6 +771,12 @@ internal readonly struct LalrBuild
         /// </remarks>
         /// <seealso cref="FollowTransition"/>
         public Dictionary<Symbol, int> Transitions { get; } = transitions;
+
+        /// <summary>
+        /// Creates a copy of the <see cref="Lr0State"/>. Changes to <see cref="Transitions"/> in the cloned
+        /// state do not affect the original state.
+        /// </summary>
+        public Lr0State Clone() => new(KernelItems, new(Transitions));
 
         /// <summary>
         /// Follows a transition from this state.
@@ -788,9 +802,9 @@ internal readonly struct LalrBuild
     /// Represents a set of LR(0) items. This is a transparent wrapper around a
     /// <see cref="List{T}"/> that provides structural equality semantics.
     /// </summary>
-    [DebuggerDisplay("Count = {Count}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     [DebuggerTypeProxy(typeof(FlatCollectionProxy<Lr0Item, KernelItemSet>))]
-    private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyCollection<Lr0Item>
+    private readonly struct KernelItemSet : IEquatable<KernelItemSet>, IReadOnlyList<Lr0Item>
     {
         private readonly List<Lr0Item> _items;
 
@@ -804,7 +818,29 @@ internal readonly struct LalrBuild
             _items = items;
         }
 
+        private string GetDebuggerDisplay()
+        {
+            var sb = new StringBuilder();
+            sb.Append('{');
+            bool hasElement = false;
+            foreach (var x in _items)
+            {
+                if (hasElement)
+                {
+                    sb.Append(", ");
+                }
+                hasElement = true;
+                sb.Append(x.GetDebuggerDisplay());
+            }
+            sb.Append('}');
+            return sb.ToString();
+        }
+
         public int Count => _items.Count;
+
+        public Lr0Item this[int index] => _items[index];
+
+        public int IndexOf(Lr0Item x) => _items.IndexOf(x);
 
         public List<Lr0Item>.Enumerator GetEnumerator() => _items.GetEnumerator();
 
@@ -812,21 +848,7 @@ internal readonly struct LalrBuild
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public bool Equals(KernelItemSet other)
-        {
-            if (Count != other.Count)
-            {
-                return false;
-            }
-            for (int i = 0; i < Count; i++)
-            {
-                if (!_items[i].Equals(other._items[i]))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+        public bool Equals(KernelItemSet other) => _items.SequenceEqual(other._items);
 
         public override bool Equals(object? obj) => obj is KernelItemSet x && Equals(x);
 
@@ -842,7 +864,7 @@ internal readonly struct LalrBuild
         }
     }
 
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
     private readonly struct Lr0Item(Production production, int dotPosition) : IEquatable<Lr0Item>, IComparable<Lr0Item>
     {
         public Production Production { get; } = production;
@@ -850,9 +872,9 @@ internal readonly struct LalrBuild
         public int DotPosition { get; } = dotPosition;
 
 #if DEBUG
-        private string DebuggerDisplay => Production.GetDebuggerDisplay(DotPosition);
+        public string GetDebuggerDisplay() => Production.GetDebuggerDisplay(DotPosition);
 #else
-        private string DebuggerDisplay => $"Production {Production.Index} @ {DotPosition}";
+        public string GetDebuggerDisplay() => $"Production {Production.Index} @ {DotPosition}";
 #endif
 
         public bool Equals(Lr0Item other) => Production.Equals(other.Production) && DotPosition == other.DotPosition;

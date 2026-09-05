@@ -53,6 +53,17 @@ You can use the @"Farkle.Grammars.GrammarInfo.Name" property to retrieve a gramm
 
 You can set [operator precedence and associativity](quickstart.md#operator-precedence-and-associativity) for your grammar by using the @"Farkle.Builder.GrammarBuilderExtensions.WithOperatorScope(Farkle.Builder.IGrammarBuilder,Farkle.Builder.OperatorPrecedence.OperatorScope)" extension method.
 
+### Parser table generation algorithm
+
+Farkle supports two algorithms for generating the grammar's LR(1) parser tables:
+
+* [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser)
+* [IELR(1)](https://www.sciencedirect.com/science/article/pii/S0167642309001191)
+
+IELR(1) is the default algorithm, and provides the full expressive power of LR(1) grammars without being susceptible to mysterious conflicts that can occur with LALR(1), while generating only slightly larger tables.
+
+If a grammar produces parser tables without conflicts (before considering operator precedence and associativity), LALR(1) and IELR(1) will produce identical tables. Using LALR(1) might still be useful for educational or diagnostic purposes. You can use the @"Farkle.Builder.GrammarBuilderExtensions.WithParserGenerationAlgorithm(Farkle.Builder.IGrammarBuilder,Farkle.Builder.ParserGenerationAlgorithm)" extension method to specify which algorithm to use.
+
 ### Comments
 
 You can use the @"Farkle.Builder.GrammarBuilderExtensions.AddLineComment(Farkle.Builder.IGrammarBuilder,System.String)" and @"Farkle.Builder.GrammarBuilderExtensions.AddBlockComment(Farkle.Builder.IGrammarBuilder,System.String,System.String)" extension methods to specify line and block comments for your grammar. These comments will be automatically ignored by the tokenizer.

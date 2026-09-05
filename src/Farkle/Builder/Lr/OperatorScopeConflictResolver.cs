@@ -59,8 +59,7 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         return false;
     }
 
-    private bool TryGetPrecedenceInfo(EntityHandle symbol,
-        out int precedence, out AssociativityType associativity)
+    private bool TryGetPrecedenceInfo(EntityHandle symbol, out int precedence, out AssociativityType associativity)
     {
         if (!TryGetSymbolObject(symbol, out object? symbolObject) || !_precedenceMap.TryGetValue(symbolObject, out precedence))
         {
@@ -96,6 +95,8 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
             }
         }
     }
+
+    public override bool HasPrecedenceInfo(EntityHandle symbol) => TryGetPrecedenceInfo(symbol, out _, out _);
 
     public override LrConflictResolverDecision ResolveShiftReduceConflict(TokenSymbolHandle shiftTerminal, ProductionHandle reduceProduction)
     {

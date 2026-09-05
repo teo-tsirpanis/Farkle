@@ -4,8 +4,11 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+#if DEBUG
 using System.Text;
+#endif
 using Farkle.Grammars;
+using Farkle.Grammars.StateMachines;
 
 namespace Farkle.Builder.Lr;
 
@@ -35,7 +38,13 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
 
     public const int StartSymbolIndex = 0;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public Symbol StartSymbol => Symbol.CreateNonterminal(StartSymbolIndex, this);
+
+    /// <summary>
+    /// The index of <see cref="EndSymbol"/>.
+    /// </summary>
+    public const int EndSymbolIndex = 0;
 
     /// <summary>
     /// The index of the symbol signifying the end of the input.
@@ -44,7 +53,8 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// This symbol does not appear in productions. It emerges in the follow set of
     /// <see cref="StartProduction"/>'s GOTO, and gets propagated from there.
     /// </remarks>
-    public const int EndSymbolIndex = 0;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    public Symbol EndSymbol => Symbol.CreateTerminal(EndSymbolIndex, this);
 
     /// <summary>
     /// The index of <see cref="StartProduction"/>.
@@ -61,6 +71,7 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// on the end of input are not possible, and the current scheme is
     /// simpler to implement and requires taking fewer special cases.
     /// </remarks>
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public Production StartProduction => new(StartProductionIndex, this);
 
     public ProductionCollection AllProductions => new(0, ProductionCount, this);
@@ -84,32 +95,65 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         }
     }
 
-    // Converts indices of the Builder API to indices of the Grammars API.
-    public static TokenSymbolHandle TranslateTerminalIndex(int index)
+    // Converts types of the Builder API to types of the Grammars API.
+    public static TokenSymbolHandle TranslateTerminal(Symbol symbol)
     {
-        Debug.Assert(index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
+        Debug.Assert(symbol.IsTerminal);
+        Debug.Assert(symbol.Index != EndSymbolIndex, "EndSymbol should be filtered out before translating to token symbol handle");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)symbol.Index);
     }
 
-    public static NonterminalHandle TranslateNonterminalIndex(int index)
+    public static NonterminalHandle TranslateNonterminal(Symbol symbol)
     {
-        Debug.Assert(index != StartSymbolIndex, "No grammar should ever have a GOTO on the start symbol");
+        Debug.Assert(!symbol.IsTerminal);
+        Debug.Assert(symbol.Index != StartSymbolIndex, "No grammar should ever have a GOTO on the start symbol");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)symbol.Index);
     }
 
-    public static ProductionHandle TranslateProductionIndex(int index)
+    public static ProductionHandle TranslateProduction(Production production)
     {
-        Debug.Assert(index != StartProductionIndex, "Reducing the start production should be filtered earlier as accepting");
+        Debug.Assert(production.Index != StartProductionIndex, "Reducing the start production should be filtered earlier as accepting");
         // IGrammarSyntaxProvider indexes its symbols starting from zero,
         // while AugmentedSyntaxProvider and the grammars API index them
         // starting from one. Return the index unchanged.
-        return new((uint)index);
+        return new((uint)production.Index);
+    }
+
+    /// <summary>
+    /// Translates a <see cref="LrConflictContribution"/> to an <see cref="LrAction"/>.
+    /// This also converts indices from the augmented grammar to the original grammar.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="contribution"/> must not be an Accept contribution.
+    /// </remarks>
+    public static LrAction TranslateConflictContribution(LrConflictContribution contribution)
+    {
+        Debug.Assert(!contribution.IsAccept, "Accept contributions should be filtered out before translating to LrAction");
+        // The internal representations of LrConflictContribution and LrAction happen to match with each other
+        // in shift and reduce cases, after accounting for symbol index translation.
+        var translated = new LrAction(contribution.Value);
+        Debug.Assert(!translated.IsError);
+        Debug.Assert(!contribution.IsShift(out int shiftState) || (translated.IsShift && translated.ShiftState == shiftState));
+        Debug.Assert(!contribution.IsReduce(out Production production) || (translated.IsReduce && translated.ReduceProduction == TranslateProduction(production)));
+        return translated;
+    }
+
+    public static LrEndOfFileAction TranslateEndOfFileConflictContribution(LrConflictContribution contribution)
+    {
+        Debug.Assert(!contribution.IsShift(out _));
+        if (contribution.IsAccept)
+        {
+            return LrEndOfFileAction.Accept;
+        }
+        bool isReduce = contribution.IsReduce(out Production production);
+        Debug.Assert(isReduce);
+        return LrEndOfFileAction.CreateReduce(TranslateProduction(production));
     }
 
     public ProductionCollection EnumerateNonterminalProductions(int nonterminalIndex)
@@ -153,26 +197,32 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
     /// <summary>
     /// Represents a terminal or nonterminal symbol in an augmented grammar.
     /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
-#pragma warning disable CS9113 // Parameter is unread.
-    public readonly struct Symbol(uint value, AugmentedSyntaxProvider syntax) : IEquatable<Symbol>, IComparable<Symbol>
-#pragma warning restore CS9113 // Parameter is unread.
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
+    public readonly struct Symbol : IEquatable<Symbol>, IComparable<Symbol>
     {
-        private readonly uint _value = value;
+        private readonly uint _value;
 
         private const uint ValueMask = 0x80000000;
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax = syntax;
+        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
-        private string DebuggerDisplay => IsTerminal ?
+        public string GetDebuggerDisplay() => IsTerminal ?
             _debugOnlySyntax.GetTerminalName(Index) :
             $"<{_debugOnlySyntax.GetNonterminalName(Index)}>";
 #else
-        private string DebuggerDisplay => IsTerminal ?
+        public string GetDebuggerDisplay() => IsTerminal ?
             $"Terminal {Index}" :
             $"Nonterminal {Index}";
 #endif
+
+        public Symbol(uint value, AugmentedSyntaxProvider syntax)
+        {
+            _value = value;
+#if DEBUG
+            _debugOnlySyntax = syntax;
+#endif
+        }
 
         public bool IsTerminal => _value < ValueMask;
 
@@ -244,15 +294,13 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
         public void Reset() => _index = -1;
     }
 
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
-#pragma warning disable CS9113 // Parameter is unread.
-    internal readonly struct Production(int index, AugmentedSyntaxProvider syntax) : IEquatable<Production>
-#pragma warning restore CS9113 // Parameter is unread.
+    [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]
+    internal readonly struct Production : IEquatable<Production>
     {
-        public int Index { get; } = index;
+        public int Index { get; }
 
 #if DEBUG
-        private readonly AugmentedSyntaxProvider _debugOnlySyntax = syntax;
+        private readonly AugmentedSyntaxProvider _debugOnlySyntax;
 
         [ExcludeFromCodeCoverage]
         public readonly string GetDebuggerDisplay(int dotPosition = -1)
@@ -288,11 +336,17 @@ internal readonly struct AugmentedSyntaxProvider(IGrammarSyntaxProvider provider
             }
             return sb.ToString();
         }
-
-        private readonly string DebuggerDisplay => GetDebuggerDisplay();
 #else
-    private readonly string DebuggerDisplay => "Production " + Index;
+        public readonly string GetDebuggerDisplay() => "Production " + Index;
 #endif
+
+        public Production(int index, AugmentedSyntaxProvider syntax)
+        {
+            Index = index;
+#if DEBUG
+            _debugOnlySyntax = syntax;
+#endif
+        }
 
         public bool Equals(Production other) => Index == other.Index;
 

@@ -4,7 +4,7 @@
     <Copyright>Copyright © 2017 Theodore Tsirpanis. Licensed under the MIT License.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://farkle.dev</PackageProjectUrl>
-    <PackageTags>farkle;parser;lalr;gold-parser</PackageTags>
+    <PackageTags>farkle;parser;lalr;ielr;gold-parser</PackageTags>
     <PackageReleaseNotes>You can see information about the latest releases on https://github.com/teo-tsirpanis/Farkle/releases</PackageReleaseNotes>
   </PropertyGroup>
 </Project>

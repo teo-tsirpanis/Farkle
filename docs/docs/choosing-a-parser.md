@@ -10,7 +10,7 @@ The comparison between Farkle, [FParsec] and [FsLexYacc] is outlined in the foll
 |-|-|-|-|
 |Type|Library|Library|Parser generator|
 |Grammar definition language|Code|Code|Separate files|
-|Parsing algorithm|LALR|Recursive descent|LALR|
+|Parsing algorithm|IELR|Recursive descent|LALR|
 |Separate lexing step|Less decoupled|No|More decoupled|
 |Lexing algorithm|DFAs|N/A|DFAs|
 |Left recursion support|Yes|No|Yes|
@@ -32,9 +32,11 @@ In Farkle and FParsec, the languages are specified in code, resulting in higher 
 
 FParsec uses parser combinators which are little functions that parse fragments of text and can be composed into bigger ones. FParsec's parsers are therefore the most flexible of the three libraries, allowing context-sensitive grammars with infinite lookahead and their behavior can be fully customized by arbitrary code. This immense flexibility parser combinators bring to the table makes the library user responsible to keep their parser's performance adequate and predictable. Furthermore, parser combinator libraries use a form of recursive descent parsing, prohibiting the use of left recursion.
 
-The other two libraries use a universal LALR parser whose behavior is customized with parsing tables generated from a grammar. While it restricts the allowed grammars to those who adhere to a set of parsing formalisms, this erga omnes approach makes the parser's performance more predictable, guaranteeing it will finish in linear time, but it also means that if the parser is slow, there are little things the user can do; only the library's author can make it faster. Custom code can be injected in far fewer places than anywhere, namely when the parser reduces a production and between the lexer and the parser. Context-sensitive grammars can still be created with a bit of creativity.
+The other two libraries use a universal LR parser whose behavior is customized with parsing tables generated from a grammar. While it restricts the allowed grammars to those who adhere to a set of parsing formalisms, this erga omnes approach makes the parser's performance more predictable, guaranteeing it will finish in linear time, but it also means that if the parser is slow, there are little things the user can do; only the library's author can make it faster. Custom code can be injected in far fewer places than anywhere, namely when the parser reduces a production and between the lexer and the parser. Context-sensitive grammars can still be created with a bit of creativity.
 
-As stated before, FsYacc uses an external grammar definition language. Farkle sits between FsYacc and FParsec, supporting composing grammars from smaller grammars (called _designtime Farkles_). Designtime Farkles however are not parser combinators; they are backed by a formal grammar element, either a terminal or a nonterminal.
+FsLexYacc uses the LALR algorithm to generate parsing tables, while Farkle uses IELR by default. IELR is a more powerful algorithm than LALR, supporting a wider range of grammars without being susceptible to mysterious conflicts that can occur with LALR.
+
+As stated above, FsYacc uses an external grammar definition language. Farkle sits between FsYacc and FParsec, supporting composing grammars from smaller grammar symbols. Grammar symbols however are not parser combinators; they are backed by a formal grammar element, either a terminal or a nonterminal. A dedicated build step converts the grammar symbols into a grammar that contains parsing and lexing tables, which is then used to create a parser object.
 
 Parsing text with all three libraries ends up with the parser returning a custom object, usually representing an Abstract Syntax Tree (AST). Farkle supports easily changing the returned object of a grammar (for example to just perform syntax checking without creating an AST).
 

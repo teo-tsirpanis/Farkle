@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
     <Description>Farkle's integration with MSBuild. Using this package on a project will precompile its grammars ahead of time when it is built.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>$(PackageTags);msbuild;sigourney</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
@@ -29,6 +30,7 @@
     <Compile Include="FarkleGenerateHtml.Dummy.fs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
     <Content Include="build/**" Pack="true" PackagePath="build" />
     <EmbeddedResource Update="Properties/*.resx" ManifestResourceName="Farkle.Tools.MSBuild.%(Filename)" />
   </ItemGroup>

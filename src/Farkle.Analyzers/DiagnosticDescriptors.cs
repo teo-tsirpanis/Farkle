@@ -25,30 +25,30 @@ public static class DiagnosticDescriptors
 
     private const string CategoryMaintainability = "Maintainability";
 
-    public static readonly DiagnosticDescriptor ProductionFactoryRequiresEnhancedSyntax = Create(
+    public static readonly DiagnosticDescriptor ProductionBuilderFactoryRequiresEnhancedSyntax = Create(
         id: "FARKLE1005",
-        title: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_Title)),
-        messageFormat: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_MessageFormat)),
+        title: Localize(nameof(Resources.ProductionBuilderFactoryRequiresEnhancedSyntax_Title)),
+        messageFormat: Localize(nameof(Resources.ProductionBuilderFactoryRequiresEnhancedSyntax_MessageFormat)),
         category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: Localize(nameof(Resources.ProductionFactoryRequiresEnhancedSyntax_Description)),
+        description: Localize(nameof(Resources.ProductionBuilderFactoryRequiresEnhancedSyntax_Description)),
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
-    public static readonly DiagnosticDescriptor ProductionFactoryUnsupportedType = Create(
+    public static readonly DiagnosticDescriptor ProductionBuilderFactoryUnsupportedType = Create(
         id: "FARKLE1006",
         title: Localize(nameof(Resources.FARKLE1006_Common_Title)),
-        messageFormat: Localize(nameof(Resources.ProductionFactoryUnsupportedType_MessageFormat)),
+        messageFormat: Localize(nameof(Resources.ProductionBuilderFactoryUnsupportedType_MessageFormat)),
         category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
-        description: Localize(nameof(Resources.ProductionFactoryUnsupportedType_Description)),
+        description: Localize(nameof(Resources.ProductionBuilderFactoryUnsupportedType_Description)),
         customTags: [WellKnownDiagnosticTags.NotConfigurable]);
 
-    public static readonly DiagnosticDescriptor ProductionFactoryTooManyTypedGrammarSymbols = Create(
+    public static readonly DiagnosticDescriptor ProductionBuilderFactoryTooManyTypedGrammarSymbols = Create(
         id: "FARKLE1006",
         title: Localize(nameof(Resources.FARKLE1006_Common_Title)),
-        messageFormat: Localize(nameof(Resources.ProductionFactoryTooManyTypedSymbols_MessageFormat)),
+        messageFormat: Localize(nameof(Resources.ProductionBuilderFactoryTooManyTypedSymbols_MessageFormat)),
         category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -74,14 +74,14 @@ public static class DiagnosticDescriptors
         description: Localize(nameof(Resources.SwitchToProductionFactories_Description)),
         customTags: [WellKnownDiagnosticTags.Unnecessary]);
 
-    public static readonly DiagnosticDescriptor CannotInferProductionFactoryParameters = Create(
+    public static readonly DiagnosticDescriptor CannotInferProductionBuilderFactoryParameters = Create(
         id: "FARKLE1009",
-        title: Localize(nameof(Resources.CannotInferProductionFactoryParameters_Title)),
-        messageFormat: Localize(nameof(Resources.CannotInferProductionFactoryParameters_MessageFormat)),
+        title: Localize(nameof(Resources.CannotInferProductionBuilderFactoryParameters_Title)),
+        messageFormat: Localize(nameof(Resources.CannotInferProductionBuilderFactoryParameters_MessageFormat)),
         category: CategoryUsage,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: Localize(nameof(Resources.CannotInferProductionFactoryParameters_Description)));
+        description: Localize(nameof(Resources.CannotInferProductionBuilderFactoryParameters_Description)));
 
     public static readonly SuppressionDescriptor IGrammarSymbolUpcastSuppressor = new(
         id: "FARKLE2001",

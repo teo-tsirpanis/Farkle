@@ -1,11 +1,11 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using VerifyCS = Farkle.Analyzers.Tests.FarkleAnalyzerVerifier<Farkle.Analyzers.EnhancedSyntax.ProductionFactoryAnalyzer>;
+using VerifyCS = Farkle.Analyzers.Tests.FarkleAnalyzerVerifier<Farkle.Analyzers.EnhancedSyntax.ProductionBuilderFactoryAnalyzer>;
 
 namespace Farkle.Analyzers.Tests;
 
-public class ProductionFactoryAnalyzerTests
+public class ProductionBuilderFactoryAnalyzerTests
 {
     [Test]
     public async Task TestHappyPath()
@@ -51,8 +51,8 @@ public class ProductionFactoryAnalyzerTests
         _ = Production.Build({|#0:i|});
         _ = Production.Build({|#1:builder|});
         """,
-        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryUnsupportedType).WithLocation(0).WithArguments("0", "int"),
-        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryUnsupportedType).WithLocation(1).WithArguments("0", "Farkle.Builder.IGrammarBuilder"));
+        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionBuilderFactoryUnsupportedType).WithLocation(0).WithArguments("0", "int"),
+        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionBuilderFactoryUnsupportedType).WithLocation(1).WithArguments("0", "Farkle.Builder.IGrammarBuilder"));
     }
 
     [Test]
@@ -68,7 +68,7 @@ public class ProductionFactoryAnalyzerTests
         _ = Production.Build(str, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, symbolU, str);
         _ = {|#0:Production.Build(str, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, symbol, str)|};
         """,
-        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols).WithLocation(0).WithArguments("16"));
+        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionBuilderFactoryTooManyTypedGrammarSymbols).WithLocation(0).WithArguments("16"));
     }
 
     [Test]
@@ -119,8 +119,8 @@ public class ProductionFactoryAnalyzerTests
         }
         """,
         VerifyCS.Diagnostic(DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary).WithLocation(0),
-        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax).WithLocation(1),
+        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionBuilderFactoryRequiresEnhancedSyntax).WithLocation(1),
         VerifyCS.Diagnostic(DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary).WithLocation(2),
-        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax).WithLocation(3));
+        VerifyCS.Diagnostic(DiagnosticDescriptors.ProductionBuilderFactoryRequiresEnhancedSyntax).WithLocation(3));
     }
 }

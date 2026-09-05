@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Operations;
 namespace Farkle.Analyzers.EnhancedSyntax;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
+public sealed class MigrateToProductionBuilderFactoryAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = [
         DiagnosticDescriptors.SwitchToProductionFactories,
@@ -90,7 +90,7 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
         {
             IInvocationOperation? chain = null;
 
-            var migration = new ProductionFactoryMigration();
+            var migration = new ProductionBuilderFactoryMigration();
             while (true)
             {
                 if (operation is null)
@@ -153,12 +153,12 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
                 // that. This is a secondary concern for the user to address.
                 bool needsCast = isAppend
                     && arg.Value is IConversionOperation { IsImplicit: true, Operand.Type: { } t }
-                    && ProductionFactoryGeneratorShared.IsSymbolAssignableToGeneric(t, IGrammarSymbol1);
+                    && ProductionBuilderFactoryGeneratorShared.IsSymbolAssignableToGeneric(t, IGrammarSymbol1);
 
-                var parameterOptions = ProductionFactoryParameterOptions.None;
+                var parameterOptions = ProductionBuilderFactoryParameterOptions.None;
                 if (needsCast)
                 {
-                    parameterOptions |= ProductionFactoryParameterOptions.CastToUntypedIGrammarSymbol;
+                    parameterOptions |= ProductionBuilderFactoryParameterOptions.CastToUntypedIGrammarSymbol;
                 }
                 migration.Parameters.Add(new(arg.Syntax.Span, parameterOptions));
 
@@ -170,7 +170,7 @@ public sealed class MigrateToProductionFactoryAnalyzer : DiagnosticAnalyzer
             {
                 if (!IsUnderAttribute)
                 {
-                    migration.Options |= ProductionFactoryMigrationOptions.AddUseEnhancedSyntaxAttribute;
+                    migration.Options |= ProductionBuilderFactoryMigrationOptions.AddUseEnhancedSyntaxAttribute;
                 }
                 Context.ReportDiagnostic(migration.ToDiagnostic(chain.Syntax.GetLocation()));
             }

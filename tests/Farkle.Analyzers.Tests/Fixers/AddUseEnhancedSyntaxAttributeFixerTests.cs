@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using Farkle.Analyzers.EnhancedSyntax.Fixers;
-using TestCS = Farkle.Analyzers.Tests.FarkleCodeFixTest<Farkle.Analyzers.EnhancedSyntax.ProductionFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.AddUseEnhancedSyntaxAttributeFixer>;
+using TestCS = Farkle.Analyzers.Tests.FarkleCodeFixTest<Farkle.Analyzers.EnhancedSyntax.ProductionBuilderFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.AddUseEnhancedSyntaxAttributeFixer>;
 
 namespace Farkle.Analyzers.Fixers.Tests;
 

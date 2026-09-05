@@ -3,11 +3,11 @@
 
 namespace Farkle.Analyzers.Models;
 
-public readonly record struct ProductionFactoryInvocation(EquatableArray<ProductionMemberType> MemberTypes) : IComparable<ProductionFactoryInvocation>
+public readonly record struct ProductionBuilderFactoryInvocation(EquatableArray<ProductionMemberType> MemberTypes) : IComparable<ProductionBuilderFactoryInvocation>
 {
     public int TypeArity => MemberTypes.Count(x => x == ProductionMemberType.IGrammarSymbol);
 
-    public int CompareTo(ProductionFactoryInvocation other)
+    public int CompareTo(ProductionBuilderFactoryInvocation other)
     {
         var arityComparison = TypeArity.CompareTo(other.TypeArity);
         if (arityComparison != 0)

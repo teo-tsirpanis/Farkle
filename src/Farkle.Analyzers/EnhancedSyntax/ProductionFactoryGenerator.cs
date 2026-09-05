@@ -11,21 +11,21 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Farkle.Analyzers.EnhancedSyntax;
 
 [Generator]
-public sealed class ProductionFactoryGenerator : IIncrementalGenerator
+public sealed class ProductionBuilderFactoryGenerator : IIncrementalGenerator
 {
-    private static EquatableArray<ProductionFactoryInvocation> FindProductionFactoryInvocations(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
+    private static EquatableArray<ProductionBuilderFactoryInvocation> FindProductionBuilderFactoryInvocations(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
     {
-        if (ProductionFactorySymbols.Create(context.SemanticModel.Compilation) is not { } symbols)
+        if (ProductionBuilderFactorySymbols.Create(context.SemanticModel.Compilation) is not { } symbols)
         {
             return [];
         }
 
-        var builder = ImmutableArray.CreateBuilder<ProductionFactoryInvocation>();
-        var resultContext = new GeneratorOrAnalyzerContext<ProductionFactoryInvocation>(builder.Add, context.SemanticModel);
+        var builder = ImmutableArray.CreateBuilder<ProductionBuilderFactoryInvocation>();
+        var resultContext = new GeneratorOrAnalyzerContext<ProductionBuilderFactoryInvocation>(builder.Add, context.SemanticModel);
 
         foreach (var invocation in context.TargetNode.DescendantNodes().OfType<InvocationExpressionSyntax>())
         {
-            ProductionFactoryGeneratorShared.AnalyzeInvocation(resultContext, symbols, invocation, cancellationToken);
+            ProductionBuilderFactoryGeneratorShared.AnalyzeInvocation(resultContext, symbols, invocation, cancellationToken);
         }
 
         return builder.DrainToEquatable();
@@ -39,7 +39,7 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
     };
 
-    private static void WriteSourceOutput(SourceProductionContext context, EquatableArray<ProductionFactoryInvocation> invocations)
+    private static void WriteSourceOutput(SourceProductionContext context, EquatableArray<ProductionBuilderFactoryInvocation> invocations)
     {
         if (invocations.Count == 0)
         {
@@ -214,8 +214,8 @@ public sealed class ProductionFactoryGenerator : IIncrementalGenerator
 
         var invocations = context.SyntaxProvider.ForAttributeWithMetadataName(
             Constants.UseEnhancedSyntaxAttributeName,
-            (node, _) => ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(node),
-            FindProductionFactoryInvocations)
+            (node, _) => ProductionBuilderFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(node),
+            FindProductionBuilderFactoryInvocations)
             .SelectMany((invocations, _) => invocations.ToImmutableArray())
             .Collect()
             .Select((invocations, _) => invocations.Distinct().Order().ToEquatableArray());

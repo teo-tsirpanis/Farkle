@@ -14,15 +14,15 @@ using Microsoft.CodeAnalysis.Simplification;
 
 namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
 
-[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MigrateToProductionFactoryFixer)), Shared]
-public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MigrateToProductionBuilderFactoryFixer)), Shared]
+public sealed class MigrateToProductionBuilderFactoryFixer : CodeFixProvider
 {
     private static readonly TypeSyntax s_iGrammarSymbolNode =
         SyntaxFactory.ParseTypeName($"{Constants.GlobalAlias}{Constants.IGrammarSymbolName}")
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
-    private static readonly ExpressionSyntax s_productionFactoryCreateNode =
-        SyntaxFactory.ParseExpression($"{Constants.GlobalAlias}{Constants.ProductionFactoryBuildMethodFullName}")
+    private static readonly ExpressionSyntax s_productionBuilderFactoryCreateNode =
+        SyntaxFactory.ParseExpression($"{Constants.GlobalAlias}{Constants.ProductionBuilderFactoryBuildMethodFullName}")
             .WithAdditionalAnnotations(Simplifier.Annotation);
 
     public override ImmutableArray<string> FixableDiagnosticIds { get; } = [
@@ -50,9 +50,9 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                Resources.MigrateToProductionFactoryFixer_Title,
+                Resources.MigrateToProductionBuilderFactoryFixer_Title,
                 cancellationToken => ApplyMigrationAsync(context.Document, root, context.Diagnostics, cancellationToken),
-                nameof(MigrateToProductionFactoryFixer)),
+                nameof(MigrateToProductionBuilderFactoryFixer)),
             context.Diagnostics);
     }
 
@@ -65,16 +65,16 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
         foreach (var diagnostic in diagnostics)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var migration = ProductionFactoryMigration.CreateFromDiagnostic(diagnostic);
+            var migration = ProductionBuilderFactoryMigration.CreateFromDiagnostic(diagnostic);
             if (migration is null)
             {
                 continue;
             }
             var method = root.FindNode(diagnostic.Location.SourceSpan);
             ApplyMigration(editor, root, method, migration);
-            if ((migration.Options & ProductionFactoryMigrationOptions.AddUseEnhancedSyntaxAttribute) != 0)
+            if ((migration.Options & ProductionBuilderFactoryMigrationOptions.AddUseEnhancedSyntaxAttribute) != 0)
             {
-                var attributeTarget = method.Ancestors().FirstOrDefault(ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute);
+                var attributeTarget = method.Ancestors().FirstOrDefault(ProductionBuilderFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute);
                 if (attributeTarget is not null && nodesWithAttributes.Add(attributeTarget))
                 {
                     editor.AddUseEnhancedSyntaxAttribute(attributeTarget);
@@ -86,7 +86,7 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
         return document.WithSyntaxRoot(newRoot);
     }
 
-    private static void ApplyMigration(SyntaxEditor editor, SyntaxNode root, SyntaxNode method, ProductionFactoryMigration migration)
+    private static void ApplyMigration(SyntaxEditor editor, SyntaxNode root, SyntaxNode method, ProductionBuilderFactoryMigration migration)
     {
         foreach (var parameter in migration.Parameters)
         {
@@ -102,19 +102,19 @@ public sealed class MigrateToProductionFactoryFixer : CodeFixProvider
                 {
                     throw new InvalidOperationException("Tracked node not found.");
                 }
-                if ((parameter.Options & ProductionFactoryParameterOptions.CastToUntypedIGrammarSymbol) != 0)
+                if ((parameter.Options & ProductionBuilderFactoryParameterOptions.CastToUntypedIGrammarSymbol) != 0)
                 {
                     paramNode = SyntaxFactory.CastExpression(s_iGrammarSymbolNode, paramNode.WithoutTrivia()).WithTriviaFrom(paramNode);
                 }
                 b.Add(SyntaxFactory.Argument(paramNode));
             }
             return SyntaxFactory.InvocationExpression(
-                s_productionFactoryCreateNode,
+                s_productionBuilderFactoryCreateNode,
                 SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(b.MoveToImmutable()))
             ).WithTriviaFrom(node);
         });
 
-        ExpressionSyntax GetExpressionNodeForParameter(ProductionFactoryMigrationParameter parameter)
+        ExpressionSyntax GetExpressionNodeForParameter(ProductionBuilderFactoryMigrationParameter parameter)
         {
             var paramNode = root.FindNode(parameter.Span, getInnermostNodeForTie: true).FirstAncestorOrSelf<ExpressionSyntax>();
             if (paramNode is null)

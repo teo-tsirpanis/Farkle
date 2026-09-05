@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Farkle.Analyzers.EnhancedSyntax;
 
-public sealed class ProductionFactorySymbols
+public sealed class ProductionBuilderFactorySymbols
 {
     /// <summary>
     /// <c>Farkle.Builder.ProductionBuilder Farkle.Builder.Production.Build(params ReadOnlySpan&lt;object&gt;)</c>
@@ -27,13 +27,13 @@ public sealed class ProductionFactorySymbols
     /// </summary>
     public required INamedTypeSymbol? IGrammarSymbol1 { get; init; }
 
-    private ProductionFactorySymbols() { }
+    private ProductionBuilderFactorySymbols() { }
 
-    public static ProductionFactorySymbols? Create(Compilation compilation)
+    public static ProductionBuilderFactorySymbols? Create(Compilation compilation)
     {
         var productionCreateMethod = compilation.Assembly
-            .GetTypeByMetadataName(Constants.ProductionFactoryClassName)
-            ?.GetMembers(Constants.ProductionFactoryBuildMethodName)
+            .GetTypeByMetadataName(Constants.ProductionBuilderFactoryClassName)
+            ?.GetMembers(Constants.ProductionBuilderFactoryBuildMethodName)
             .OfType<IMethodSymbol>()
             // The source generator will only see one overload, but the analyzer will also see all generated overloads.
             // We pick the one generated in post-initialization, which is the only one with a single params parameter.
@@ -43,7 +43,7 @@ public sealed class ProductionFactorySymbols
             return null;
         }
 
-        return new ProductionFactorySymbols()
+        return new ProductionBuilderFactorySymbols()
         {
             ProductionCreateBoilerplate = productionCreateMethod,
             String = compilation.GetSpecialType(SpecialType.System_String),

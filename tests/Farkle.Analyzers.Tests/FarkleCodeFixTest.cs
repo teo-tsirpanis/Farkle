@@ -30,7 +30,7 @@ public sealed class FarkleCodeFixTest<TAnalyzer, TCodeFix> : CSharpCodeFixTest<T
         TestState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
         TestState.AdditionalReferences.Add(Utilities.FarkleReference);
         FixedState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
-        // Because the source generator does not run in these tests, this warning will fire on every production factory call.
+        // Because the source generator does not run in these tests, this warning will fire on every production builder factory call.
         // We suppress it.
         DisabledDiagnostics.Add("FARKLE1009");
     }

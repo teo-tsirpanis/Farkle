@@ -1,11 +1,11 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using VerifyCS = Farkle.Analyzers.Tests.FarkleCodeFixVerify<Farkle.Analyzers.EnhancedSyntax.MigrateToProductionFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.MigrateToProductionFactoryFixer>;
+using VerifyCS = Farkle.Analyzers.Tests.FarkleCodeFixVerify<Farkle.Analyzers.EnhancedSyntax.MigrateToProductionBuilderFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.MigrateToProductionBuilderFactoryFixer>;
 
 namespace Farkle.Analyzers.Fixers.Tests;
 
-public class MigrateToProductionFactoryFixerTests
+public class MigrateToProductionBuilderFactoryFixerTests
 {
     [Test]
     public async Task TestSimpleMigration()

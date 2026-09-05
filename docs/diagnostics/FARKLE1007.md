@@ -30,7 +30,7 @@ public static class MyGrammar
     }
 }
 
-// Compliant code: the code has migrated to use source-generated production factory methods, so the  [UseEnhancedSyntax] attribute is now required
+// Compliant code: the code has migrated to use source-generated production builder factory methods, so the  [UseEnhancedSyntax] attribute is now required
 public static class MyGrammar
 {
     [UseEnhancedSyntax]

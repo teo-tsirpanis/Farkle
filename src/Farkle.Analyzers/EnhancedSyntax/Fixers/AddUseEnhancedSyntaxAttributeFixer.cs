@@ -15,7 +15,7 @@ namespace Farkle.Analyzers.EnhancedSyntax.Fixers;
 public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
 {
     public override ImmutableArray<string> FixableDiagnosticIds { get; } = [
-        DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax.Id,
+        DiagnosticDescriptors.ProductionBuilderFactoryRequiresEnhancedSyntax.Id,
     ];
 
     public const string AddOnDeclaringMemberKey = "AddUseEnhancedSyntaxAttribute";
@@ -56,7 +56,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
 
         SyntaxNode GetParentToAddAttribute(SyntaxNode node) =>
             node.AncestorsAndSelf().First(x =>
-                ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(x)
+                ProductionBuilderFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute(x)
                 && (addOnMember || SyntaxFacts.IsTypeDeclaration(x.Kind())));
     }, Utilities.DefaultFixAllScopes);
 
@@ -68,7 +68,7 @@ public class AddUseEnhancedSyntaxAttributeFixer : CodeFixProvider
             return;
         }
 
-        var declaringMember = root.FindNode(context.Span).FirstAncestorOrSelf<SyntaxNode>(ProductionFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute);
+        var declaringMember = root.FindNode(context.Span).FirstAncestorOrSelf<SyntaxNode>(ProductionBuilderFactoryGeneratorShared.CanHaveUseEnhancedSyntaxAttribute);
         if (declaringMember is null)
         {
             return;

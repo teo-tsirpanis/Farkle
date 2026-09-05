@@ -1,7 +1,7 @@
 // Copyright © Theodore Tsirpanis and Contributors.
 // SPDX-License-Identifier: MIT
 
-using VerifyCS = Farkle.Analyzers.Tests.FarkleCodeFixVerify<Farkle.Analyzers.EnhancedSyntax.ProductionFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.RemoveUnnecessaryAttributeFixer>;
+using VerifyCS = Farkle.Analyzers.Tests.FarkleCodeFixVerify<Farkle.Analyzers.EnhancedSyntax.ProductionBuilderFactoryAnalyzer, Farkle.Analyzers.EnhancedSyntax.Fixers.RemoveUnnecessaryAttributeFixer>;
 
 namespace Farkle.Analyzers.Fixers.Tests;
 

@@ -1,6 +1,6 @@
-# FARKLE1008: Migrate to production factory API
+# FARKLE1008: Migrate to production builder factory API
 
-This diagnostic is emitted when your code creates production builder objects using the fluent API based on the `Append` and `Extend` methods, and suggests using the source-generated production factory API. A code fix will be provided to automatically migrate to the new API.
+This diagnostic is emitted when your code creates production builder objects using the fluent API based on the `Append` and `Extend` methods, and suggests using the source-generated production builder factory API. A code fix will be provided to automatically migrate to the new API.
 
 ## Example code
 

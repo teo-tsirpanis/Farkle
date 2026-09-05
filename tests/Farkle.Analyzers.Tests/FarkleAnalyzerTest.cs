@@ -15,7 +15,7 @@ public sealed class FarkleAnalyzerTest<TAnalyzer> : CSharpAnalyzerTest<TAnalyzer
     {
         this.CommonInitialize();
         TestState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
-        // Because the source generator does not run in these tests, this warning will fire on every production factory call.
+        // Because the source generator does not run in these tests, this warning will fire on every production builder factory call.
         // We suppress it.
         DisabledDiagnostics.Add("FARKLE1009");
     }

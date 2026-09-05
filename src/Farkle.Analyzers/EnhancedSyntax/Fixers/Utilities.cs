@@ -37,7 +37,7 @@ public static class Utilities
         public SyntaxNode AddUseEnhancedSyntaxAttribute()
         {
             var attributeNode = node.IsKind(SyntaxKind.CompilationUnit) ? UseEnhancedSyntaxAttributeOnModuleNode : UseEnhancedSyntaxAttributeNode;
-            return ProductionFactoryGeneratorShared.AddAttributeLists(node, attributeNode);
+            return ProductionBuilderFactoryGeneratorShared.AddAttributeLists(node, attributeNode);
         }
     }
 

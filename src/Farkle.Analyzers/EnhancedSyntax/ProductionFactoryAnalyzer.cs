@@ -11,14 +11,14 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Farkle.Analyzers.EnhancedSyntax;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
+public sealed class ProductionBuilderFactoryAnalyzer : DiagnosticAnalyzer
 {
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = [
-        DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax,
-        DiagnosticDescriptors.ProductionFactoryUnsupportedType,
-        DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols,
+        DiagnosticDescriptors.ProductionBuilderFactoryRequiresEnhancedSyntax,
+        DiagnosticDescriptors.ProductionBuilderFactoryUnsupportedType,
+        DiagnosticDescriptors.ProductionBuilderFactoryTooManyTypedGrammarSymbols,
         DiagnosticDescriptors.UseEnhancedSyntaxAttributeUnnecessary,
-        DiagnosticDescriptors.CannotInferProductionFactoryParameters,
+        DiagnosticDescriptors.CannotInferProductionBuilderFactoryParameters,
     ];
 
     public override void Initialize(AnalysisContext context)
@@ -31,7 +31,7 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(context =>
         {
-            if (ProductionFactorySymbols.Create(context.Compilation) is not { } symbols)
+            if (ProductionBuilderFactorySymbols.Create(context.Compilation) is not { } symbols)
             {
                 return;
             }
@@ -40,14 +40,14 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
             {
                 var invocation = (InvocationExpressionSyntax)syntaxContext.Node;
 
-                ProductionFactoryGeneratorShared.AnalyzeInvocation(new(syntaxContext.ReportDiagnostic, syntaxContext.SemanticModel), symbols, invocation, syntaxContext.CancellationToken);
+                ProductionBuilderFactoryGeneratorShared.AnalyzeInvocation(new(syntaxContext.ReportDiagnostic, syntaxContext.SemanticModel), symbols, invocation, syntaxContext.CancellationToken);
             }, SyntaxKind.InvocationExpression);
         });
 
         context.RegisterCompilationStartAction(context =>
         {
             var useEnhancedSyntaxAttributeSymbol = context.Compilation.GetTypeByMetadataName(Constants.UseEnhancedSyntaxAttributeName);
-            var productionSymbol = context.Compilation.Assembly.GetTypeByMetadataName(Constants.ProductionFactoryClassName);
+            var productionSymbol = context.Compilation.Assembly.GetTypeByMetadataName(Constants.ProductionBuilderFactoryClassName);
 
             if (useEnhancedSyntaxAttributeSymbol is null || productionSymbol is null)
             {
@@ -86,11 +86,11 @@ public sealed class ProductionFactoryAnalyzer : DiagnosticAnalyzer
                 MarkAttributeAsUsed();
                 if (!IsUnderAttribute)
                 {
-                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryRequiresEnhancedSyntax, node.Expression.GetLocation()));
+                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.ProductionBuilderFactoryRequiresEnhancedSyntax, node.Expression.GetLocation()));
                 }
                 else if (node.ArgumentList.Arguments.Count > 0 && symbolInfo.Symbol is IMethodSymbol { Parameters: [{ IsParams: true}] })
                 {
-                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.CannotInferProductionFactoryParameters, node.Expression.GetLocation()));
+                    Context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.CannotInferProductionBuilderFactoryParameters, node.Expression.GetLocation()));
                 }
             }
 

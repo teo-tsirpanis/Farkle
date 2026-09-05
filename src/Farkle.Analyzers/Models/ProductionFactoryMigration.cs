@@ -8,13 +8,13 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Farkle.Analyzers.Models;
 
-public sealed class ProductionFactoryMigration
+public sealed class ProductionBuilderFactoryMigration
 {
-    public List<ProductionFactoryMigrationParameter> Parameters { get; } = new();
+    public List<ProductionBuilderFactoryMigrationParameter> Parameters { get; } = new();
 
-    public ProductionFactoryMigrationOptions Options { get; set; }
+    public ProductionBuilderFactoryMigrationOptions Options { get; set; }
 
-    public static ProductionFactoryMigration? CreateFromDiagnostic(Diagnostic diagnostic)
+    public static ProductionBuilderFactoryMigration? CreateFromDiagnostic(Diagnostic diagnostic)
     {
         if (diagnostic.Id != DiagnosticDescriptors.SwitchToProductionFactories.Id)
         {
@@ -30,9 +30,9 @@ public sealed class ProductionFactoryMigration
             return null;
         }
 
-        var migration = new ProductionFactoryMigration
+        var migration = new ProductionBuilderFactoryMigration
         {
-            Options = (ProductionFactoryMigrationOptions)options,
+            Options = (ProductionBuilderFactoryMigrationOptions)options,
         };
         // TODO: Use spans when the project can target modern .NET.
         foreach (var parameterString in parametersString.Split([';']))
@@ -45,7 +45,7 @@ public sealed class ProductionFactoryMigration
             {
                 return null;
             }
-            migration.Parameters.Add(new(new(spanStart, spanLength), (ProductionFactoryParameterOptions)parameterOptions));
+            migration.Parameters.Add(new(new(spanStart, spanLength), (ProductionBuilderFactoryParameterOptions)parameterOptions));
         }
         return migration;
     }
@@ -79,15 +79,15 @@ public sealed class ProductionFactoryMigration
     }
 }
 
-public readonly struct ProductionFactoryMigrationParameter(TextSpan span, ProductionFactoryParameterOptions options)
+public readonly struct ProductionBuilderFactoryMigrationParameter(TextSpan span, ProductionBuilderFactoryParameterOptions options)
 {
     public TextSpan Span { get; } = span;
 
-    public ProductionFactoryParameterOptions Options { get; } = options;
+    public ProductionBuilderFactoryParameterOptions Options { get; } = options;
 }
 
 [Flags]
-public enum ProductionFactoryMigrationOptions
+public enum ProductionBuilderFactoryMigrationOptions
 {
     None = 0,
 
@@ -95,7 +95,7 @@ public enum ProductionFactoryMigrationOptions
 }
 
 [Flags]
-public enum ProductionFactoryParameterOptions
+public enum ProductionBuilderFactoryParameterOptions
 {
     None = 0,
 

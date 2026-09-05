@@ -11,11 +11,11 @@ public static class Constants
 
     public const string IGrammarSymbol1Name = "Farkle.Builder.IGrammarSymbol`1";
 
-    public const string ProductionFactoryClassName = "Farkle.Builder.Production";
+    public const string ProductionBuilderFactoryClassName = "Farkle.Builder.Production";
 
-    public const string ProductionFactoryBuildMethodName = "Build";
+    public const string ProductionBuilderFactoryBuildMethodName = "Build";
 
-    public const string ProductionFactoryBuildMethodFullName = $"{ProductionFactoryClassName}.{ProductionFactoryBuildMethodName}";
+    public const string ProductionBuilderFactoryBuildMethodFullName = $"{ProductionBuilderFactoryClassName}.{ProductionBuilderFactoryBuildMethodName}";
 
     public const string UseEnhancedSyntaxAttributeName = "Farkle.Builder.UseEnhancedSyntaxAttribute";
 }

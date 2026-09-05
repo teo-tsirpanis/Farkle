@@ -17,9 +17,9 @@ public sealed class GrammarSymbolUpcastSuppressor : DiagnosticSuppressor
     {
         var iGrammarSymbolType = context.Compilation.GetTypeByMetadataName(Constants.IGrammarSymbolName);
         var iGrammarSymbol1Type = context.Compilation.GetTypeByMetadataName(Constants.IGrammarSymbol1Name);
-        var productionFactoryType = context.Compilation.GetTypeByMetadataName(Constants.ProductionFactoryClassName);
+        var productionBuilderFactoryType = context.Compilation.GetTypeByMetadataName(Constants.ProductionBuilderFactoryClassName);
 
-        if (iGrammarSymbolType is null || iGrammarSymbol1Type is null || productionFactoryType is null)
+        if (iGrammarSymbolType is null || iGrammarSymbol1Type is null || productionBuilderFactoryType is null)
         {
             return;
         }
@@ -43,9 +43,9 @@ public sealed class GrammarSymbolUpcastSuppressor : DiagnosticSuppressor
 
             var semanticModel = context.GetSemanticModel(diagnostic.Location.SourceTree);
 
-            // The invocation must be a call to a method of the production factory class.
+            // The invocation must be a call to a method of the production builder factory class.
             var invocationMethodSymbol = semanticModel.GetSymbolInfo(invocation.Expression, context.CancellationToken).Symbol;
-            if (!SymbolEqualityComparer.Default.Equals(invocationMethodSymbol?.ContainingType, productionFactoryType))
+            if (!SymbolEqualityComparer.Default.Equals(invocationMethodSymbol?.ContainingType, productionBuilderFactoryType))
             {
                 continue;
             }
@@ -59,7 +59,7 @@ public sealed class GrammarSymbolUpcastSuppressor : DiagnosticSuppressor
 
             // The expression being cast must implement IGrammarSymbol<T> for some T.
             var expressionType = semanticModel.GetTypeInfo(cast.Expression, context.CancellationToken).Type;
-            if (expressionType is null || !ProductionFactoryGeneratorShared.IsSymbolAssignableToGeneric(expressionType, iGrammarSymbol1Type))
+            if (expressionType is null || !ProductionBuilderFactoryGeneratorShared.IsSymbolAssignableToGeneric(expressionType, iGrammarSymbol1Type))
             {
                 continue;
             }

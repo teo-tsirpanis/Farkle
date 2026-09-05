@@ -2,7 +2,7 @@
 
 The enhanced syntax APIs were added in version 7.1.0, allowing you to use Farkle more ergonomically. With the help of a source generator, these APIs can provide an experience that is not possible using standard C# language features.
 
-Currently, the only enhanced syntax feature is the production factory methods, which allow you to define a production with a single call to `Production.Build` rather than chaining calls to the `Append` and `Extend` methods.
+Currently, the only enhanced syntax feature is the production builder factory methods, which allow you to define a production with a single call to `Production.Build` rather than chaining calls to the `Append` and `Extend` methods.
 
 ## How to enable
 

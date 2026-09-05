@@ -20,7 +20,7 @@ public class AnalyzerDependencyTests
         {
             // Load all types not in a namespace ending in ".Fixers", and observe that
             // they don't attempt to load any Roslyn Workspaces assemblies.
-            var analyzersAssembly = alc.LoadFromAssemblyPath(typeof(ProductionFactoryAnalyzer).Assembly.Location);
+            var analyzersAssembly = alc.LoadFromAssemblyPath(typeof(ProductionBuilderFactoryAnalyzer).Assembly.Location);
             List<int> nonFixerTypeDefinitionTokens = GetNonFixerTypeDefinitionTokens(analyzersAssembly);
             foreach (var mdToken in nonFixerTypeDefinitionTokens)
             {

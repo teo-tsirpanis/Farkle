@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Farkle.Analyzers.EnhancedSyntax;
 
-public static class ProductionFactoryGeneratorShared
+public static class ProductionBuilderFactoryGeneratorShared
 {
     public static bool CanHaveUseEnhancedSyntaxAttribute(SyntaxNode node) => node
         is CompilationUnitSyntax
@@ -41,8 +41,8 @@ public static class ProductionFactoryGeneratorShared
         return nodeWithAttribute.WithLeadingTrivia(node.GetLeadingTrivia());
     }
 
-    public static void AnalyzeInvocation(GeneratorOrAnalyzerContext<ProductionFactoryInvocation> context,
-        ProductionFactorySymbols symbols, InvocationExpressionSyntax invocation, CancellationToken cancellationToken)
+    public static void AnalyzeInvocation(GeneratorOrAnalyzerContext<ProductionBuilderFactoryInvocation> context,
+        ProductionBuilderFactorySymbols symbols, InvocationExpressionSyntax invocation, CancellationToken cancellationToken)
     {
         var semanticModel = context.SemanticModel;
 
@@ -78,7 +78,7 @@ public static class ProductionFactoryGeneratorShared
             var typeInfo = semanticModel.GetTypeInfo(arg.Expression, cancellationToken);
             if (typeInfo.Type is null or IErrorTypeSymbol)
             {
-                context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type?.ToDisplayString() ?? "<null>"));
+                context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionBuilderFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type?.ToDisplayString() ?? "<null>"));
                 argumentTypes = null;
                 continue;
             }
@@ -87,7 +87,7 @@ public static class ProductionFactoryGeneratorShared
             {
                 if (arity == MaxGenericParametersSupported)
                 {
-                    context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryTooManyTypedGrammarSymbols, invocation.GetLocation(), MaxGenericParametersSupported));
+                    context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionBuilderFactoryTooManyTypedGrammarSymbols, invocation.GetLocation(), MaxGenericParametersSupported));
                     argumentTypes = null;
                     continue;
                 }
@@ -108,7 +108,7 @@ public static class ProductionFactoryGeneratorShared
             }
             else
             {
-                context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type.ToDisplayString()));
+                context.ReportDiagnostic?.Invoke(Diagnostic.Create(DiagnosticDescriptors.ProductionBuilderFactoryUnsupportedType, arg.GetLocation(), i, typeInfo.Type.ToDisplayString()));
                 argumentTypes = null;
             }
         }

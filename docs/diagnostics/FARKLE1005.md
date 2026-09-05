@@ -1,6 +1,6 @@
 # FARKLE1005: This API requires `[UseEnhancedSyntax]` attribute
 
-This error is emitted when you attempt to use an API that requires the `Farkle.Builder.UseEnhancedSyntaxAttribute` attribute. One example of such an API is the source-generated production factory methods.
+This error is emitted when you attempt to use an API that requires the `Farkle.Builder.UseEnhancedSyntaxAttribute` attribute. One example of such an API is the source-generated production builder factory methods.
 
 You can resolve the error by adding the `[UseEnhancedSyntax]` attribute to a member containing the code that is using the API.
 
@@ -12,7 +12,7 @@ You can resolve the error by adding the `[UseEnhancedSyntax]` attribute to a mem
 ```csharp
 using Farkle.Builder;
 
-// Non-compliant code: the production factory method requires the [UseEnhancedSyntax] attribute
+// Non-compliant code: the production builder factory method requires the [UseEnhancedSyntax] attribute
 public static class MyGrammar
 {
     public static IGrammarBuilder<int> Builder()

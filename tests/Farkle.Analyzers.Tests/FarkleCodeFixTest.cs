@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -21,14 +20,8 @@ public sealed class FarkleCodeFixTest<TAnalyzer, TCodeFix> : CSharpCodeFixTest<T
 
     public FarkleCodeFixTest()
     {
-        if (Utilities.FarkleReference is null)
-        {
-            Assert.Inconclusive("Could not create a metadata reference for the Farkle assembly.");
-        }
-
-        TestState.OutputKind = OutputKind.ConsoleApplication; // Allow top-level statements.
+        this.CommonInitialize();
         TestState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
-        TestState.AdditionalReferences.Add(Utilities.FarkleReference);
         FixedState.Sources.Add(Utilities.EnhancedSyntaxBoilerplate);
         // Because the source generator does not run in these tests, this warning will fire on every production builder factory call.
         // We suppress it.

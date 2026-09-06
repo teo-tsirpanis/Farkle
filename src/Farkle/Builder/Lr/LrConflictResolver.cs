@@ -10,6 +10,9 @@ namespace Farkle.Builder.Lr;
 /// <summary>
 /// Contains the logic to resolve LR conflicts.
 /// </summary>
+// TODO-PERF: This needs to be refactored to improve performance, now that it's used more frequently with IELR.
+// One idea is to convert the class into a precedence and associativity provider, and have the LR builder
+// compare them and handle conflicts.
 internal abstract class LrConflictResolver
 {
     /// <summary>

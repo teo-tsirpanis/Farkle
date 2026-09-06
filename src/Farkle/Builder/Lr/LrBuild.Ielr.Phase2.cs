@@ -162,16 +162,20 @@ partial struct LrBuild
 
     private bool IsSplitStableDominantContribution(InadequacyAnnotation annotation, ConflictDescription conflict)
     {
-        if (!IsConflictFullyResolvable(conflict))
+        bool hasPotential = false;
+        // Employ simple split-stable dominance check, where the matrix contains only always or never contributions.
+        // We do it first to avoid conflict resolution if we can, which shows up in profiling.
+        foreach (var contribution in annotation.ContributionMatrix)
         {
-            // Employ simple split-stable dominance check, where the matrix contains only always or never contributions.
-            foreach (var contribution in annotation.ContributionMatrix)
+            if (ClassifyContribution(contribution) == InadequacyContributionClassification.Potential)
             {
-                if (ClassifyContribution(contribution) == InadequacyContributionClassification.Potential)
-                {
-                    return false;
-                }
+                hasPotential = true;
+                break;
             }
+        }
+
+        if (!hasPotential)
+        {
             return true;
         }
 
@@ -227,22 +231,6 @@ partial struct LrBuild
         return !isPotentialContributionInDominantSet;
     }
 
-    /// <summary>
-    /// Returns whether <see cref="ConflictResolver"/> contains precedence and
-    /// associativity information for all contributions of the given conflict.
-    /// </summary>
-    private bool IsConflictFullyResolvable(ConflictDescription conflict)
-    {
-        foreach (var contribution in conflict.Contributions)
-        {
-            if (!HasPrecedenceInfo(conflict.Symbol, contribution))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private static InadequacyContributionClassification ClassifyContribution(BitSet? contribution) => contribution switch
     {
         null => InadequacyContributionClassification.Always,
@@ -266,7 +254,8 @@ partial struct LrBuild
 
         public override bool Equals(object? obj) => obj is InadequacyAnnotation other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(StateIndex, ConflictIndex, ContributionMatrix);
+        // Do not include the matrix in the hash code, because computing it is expensive.
+        public override int GetHashCode() => HashCode.Combine(StateIndex, ConflictIndex);
     }
 
     [DebuggerDisplay("{GetDebuggerDisplay(),nq}")]

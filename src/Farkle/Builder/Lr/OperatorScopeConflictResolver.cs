@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Farkle.Builder.OperatorPrecedence;
 using Farkle.Diagnostics.Builder;
 using Farkle.Grammars;
@@ -23,23 +24,27 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
     // Maps builder objects to their precedence level.
     private readonly Dictionary<object, int> _precedenceMap;
 
+    // Caches the computed precedence level of symbol handles.
+    // The precedence level is -1 if the symbol has no precedence information.
+    private readonly Dictionary<EntityHandle, int> _symbolPrecedenceCache = [];
+
     private const LrConflictResolverDecision ChooseShift = LrConflictResolverDecision.ChooseOption1;
 
     private const LrConflictResolverDecision ChooseReduce = LrConflictResolverDecision.ChooseOption2;
 
-    private bool TryGetSymbolObject(EntityHandle handle, [MaybeNullWhen(false)] out object productionObject)
+    private int TryGetPrecedenceSlow(EntityHandle handle)
     {
+        int precedence;
         if (!handle.IsProduction)
         {
-            return _objectMap.TryGetValue(handle, out productionObject);
+            return _objectMap.TryGetValue(handle, out var obj) && _precedenceMap.TryGetValue(obj, out precedence) ? precedence : -1;
         }
         // Handle productions. Unless the production has a contextual precedence token,
         // it assumes the P&A of the last terminal it has. This is what (Fs)Yacc does.
         var production = (IProduction)_objectMap[handle];
         if (production.PrecedenceToken is { } precedenceToken)
         {
-            productionObject = precedenceToken;
-            return true;
+            return _precedenceMap.TryGetValue(precedenceToken, out precedence) ? precedence : -1;
         }
         var members = production.Members;
         for (int i = members.Length - 1; i >= 0; i--)
@@ -49,21 +54,23 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
             {
                 continue;
             }
-            if (_precedenceMap.ContainsKey(symbol))
+            if (_precedenceMap.TryGetValue(symbol, out precedence))
             {
-                productionObject = symbol;
-                return true;
+                return precedence;
             }
         }
-        productionObject = null;
-        return false;
+        return -1;
     }
 
     private bool TryGetPrecedenceInfo(EntityHandle symbol, out int precedence, out AssociativityType associativity)
     {
-        if (!TryGetSymbolObject(symbol, out object? symbolObject) || !_precedenceMap.TryGetValue(symbolObject, out precedence))
+        if (!_symbolPrecedenceCache.TryGetValue(symbol, out precedence))
         {
-            precedence = 0;
+            precedence = TryGetPrecedenceSlow(symbol);
+            _symbolPrecedenceCache.Add(symbol, precedence);
+        }
+        if (precedence < 0)
+        {
             associativity = AssociativityType.NonAssociative;
             return false;
         }
@@ -81,7 +88,8 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
         {
             foreach (var x in operatorScope.AssociativityGroups[i].Symbols)
             {
-                if (_precedenceMap.TryGetValue(x, out int existingPrecedence))
+                ref int existingPrecedence = ref CollectionsMarshal.GetValueRefOrAddDefault(_precedenceMap, x, out bool exists);
+                if (exists)
                 {
                     if (existingPrecedence != i)
                     {
@@ -90,7 +98,7 @@ internal sealed class OperatorScopeConflictResolver : LrConflictResolver
                 }
                 else
                 {
-                    _precedenceMap.Add(x, i);
+                    existingPrecedence = i;
                 }
             }
         }

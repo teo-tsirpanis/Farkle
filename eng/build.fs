@@ -134,7 +134,7 @@ Target.create "GenerateCode" (fun _ ->
 
 Target.description "Runs all tests"
 Target.create "Test" (fun _ ->
-    CreateProcess.fromRawCommand "dotnet" ["test"; "--solution"; farkleSolution; "--coverage"; "--coverage-output-format"; "xml"]
+    CreateProcess.fromRawCommand "dotnet" ["test"; "--solution"; farkleSolution; "--report-gh"; "--coverage"; "--coverage-output-format"; "xml"]
     |> CreateProcess.ensureExitCode
     |> Proc.run
     |> _.Result

@@ -12,7 +12,7 @@ internal class AugmentedSyntaxProviderTests
     {
         // We don't bother with creating a dummy IGrammarSyntaxProvider,
         // it gets used only for debugger displaying.
-        var symbol = Symbol.Create((index, isTerminal), default);
+        var symbol = Symbol.Create(index, isTerminal, default);
 
         using (Assert.EnterMultipleScope())
         {

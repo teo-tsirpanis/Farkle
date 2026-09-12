@@ -32,7 +32,7 @@ You can see the names of all precompiled grammars with the `farkle list` command
 
 For the rest of this guide, we will assume that we have a project with a precompiled grammar next to us. Once we build it, we can create an HTML page by running `farkle render`.
 
-If everything went well, we will see a file named like `MyAwesomeGrammar.html`. It describes the grammar's syntax, its LALR states, its DFA states and more. If you are just watching, take a look at a sample [HTML file generated for a JSON grammar](JSON-generated.html) to get a better idea.
+If everything went well, we will see a file named like `MyAwesomeGrammar.html`. It describes the grammar's syntax, its LR states, its DFA states and more. If you are just watching, take a look at a sample [HTML file generated for a JSON grammar](JSON-generated.html) to get a better idea.
 
 These HTML files can be customized by omitting the state tables, the CSS styling, or by adding custom content at the end if their `<head>`. Run `farkle render --help` to get all the available options.
 

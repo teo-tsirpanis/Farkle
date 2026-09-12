@@ -36,7 +36,7 @@ let tests = testList "HTML tests" [
         assertHasIds "prod" grammar.Productions.Count
         match grammar.LrStateMachine with
         | null -> ()
-        | lalr -> assertHasIds "lalr" lalr.Count
+        | lr -> assertHasIds "lr" lr.Count
         match grammar.DfaOnChar with
         | null -> ()
         | dfa -> assertHasIds "dfa" dfa.Count

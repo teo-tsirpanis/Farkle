@@ -6,6 +6,6 @@ https://opensource.org/licenses/MIT ~}}
     <a href="#properties">Properties</a>
     <a href="#syntax">Syntax</a>
     {{if !grammar.groups.empty?}}<a href="#groups">Groups</a>{{end}}
-    {{if !no_lalrstates}}<a href="#lalr-states">LALR States</a>{{end}}
+    {{if !no_lrstates}}<a href="#lr-states">LR States</a>{{end}}
     {{if !no_dfastates}}<a href="#dfa-states">DFA States</a>{{end}}
 </nav>

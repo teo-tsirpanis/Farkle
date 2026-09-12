@@ -5,7 +5,7 @@ https://opensource.org/licenses/MIT ~}}
 {{~file_extension = '.html'
 grammar_name = grammar.grammar_info.name
 # The no_ variables are specified by the user. Update them to account for the state machine not existing.
-no_lalrstates = no_lalrstates || grammar.lr_state_machine == null
+no_lrstates = no_lrstates || grammar.lr_state_machine == null
 no_dfastates = no_dfastates || grammar.dfa_on_char == null~}}
 <!DOCTYPE html>
 <html lang="en"{{if is_conflict_report}} class="conflict-report"{{end}}>

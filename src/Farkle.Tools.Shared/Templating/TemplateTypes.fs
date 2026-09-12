@@ -18,11 +18,11 @@ with
 type HtmlOptions = {
     CustomHeadContent: string
     NoCss: bool
-    NoLALRStates: bool
+    NoLRStates: bool
     NoDFAStates: bool
 }
 with
-    static let ``default`` = {CustomHeadContent = ""; NoCss = false; NoLALRStates = false; NoDFAStates = false}
+    static let ``default`` = {CustomHeadContent = ""; NoCss = false; NoLRStates = false; NoDFAStates = false}
 
     static member Default = ``default``
 

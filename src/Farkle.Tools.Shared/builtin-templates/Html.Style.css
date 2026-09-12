@@ -116,20 +116,20 @@ table {
     font-weight: 700;
 }
 
-.lalr-shift {
+.lr-shift {
     background-color: #eff0d1;
 }
 
-.lalr-reduce {
+.lr-reduce {
     background-color: #ffcc80;
 }
 
-.lalr-accept,
+.lr-accept,
 .dfa-accept {
     background-color: #77ba99;
 }
 
-.lalr-goto,
+.lr-goto,
 .dfa-goto {
     background-color: #5cc1ff;
 }

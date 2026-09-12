@@ -34,7 +34,7 @@ type FarkleGenerateHtml() =
         let htmlOptions = {
             CustomHeadContent = ""
             NoCss = false
-            NoLALRStates = false
+            NoLRStates = false
             NoDFAStates = false
         }
         let templateType = GrammarHtml(grammarInput, htmlOptions)

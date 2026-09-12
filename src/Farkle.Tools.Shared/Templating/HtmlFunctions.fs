@@ -16,7 +16,7 @@ type HtmlFunctions(options) =
 
     member _.custom_head = options.CustomHeadContent
     member _.no_css = options.NoCss
-    member _.no_lalrstates = options.NoLALRStates
+    member _.no_lrstates = options.NoLRStates
     member _.no_dfastates = options.NoDFAStates
     static member attr_escape x = HttpUtility.HtmlAttributeEncode x
     static member format_char_range (x: DfaEdge<char>) =

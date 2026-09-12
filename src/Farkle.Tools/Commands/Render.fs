@@ -22,7 +22,7 @@ type Arguments =
     | [<Unique>] Html
     | [<Unique>] ``Custom-head`` of string
     | [<Unique>] ``No-css``
-    | [<Unique>] ``No-lalr``
+    | [<Unique; AltCommandLine("--no-lr")>] ``No-lr``
     | [<Unique>] ``No-dfa``
     | [<Unique; Hidden>] GrammarSkeleton
     | [<Unique; Hidden; AltCommandLine("-lang")>] Language of string
@@ -43,7 +43,7 @@ Defaults to the input file's name, with an extension set by the template, which 
             | Html -> "Generate an HTML web page describing the grammar. This is the default."
             | ``Custom-head`` _ -> "A file whose content will be appended to the resulting HTML page's head."
             | ``No-css`` -> "Do not generate inline CSS for the resulting HTML page."
-            | ``No-lalr`` -> "Do not generate the LALR state tables in the resulting HTML page."
+            | ``No-lr`` -> "Do not generate the LR state tables in the resulting HTML page."
             | ``No-dfa`` -> "Do not generate the DFA state tables in the resulting HTML page."
             | GrammarSkeleton -> "Generate a skeleton source file for the grammar in either C# or F#. \
 The source's namespace and language can be adjusted by the respective arguments."
@@ -65,7 +65,7 @@ let getTemplateType grammarInput (args: ParseResults<_>) = either {
         let options = {
             CustomHeadContent = customHead
             NoCss = args.Contains ``No-css``
-            NoLALRStates = args.Contains ``No-lalr``
+            NoLRStates = args.Contains ``No-lr``
             NoDFAStates = args.Contains ``No-dfa``
         }
         return GrammarHtml(grammarInput, options)
@@ -99,7 +99,7 @@ let warnOnUnusedArguments (grammarPath: string) (args: ParseResults<_>) =
         isProjectExtension extension
     doWarnIfNot isHtml <@ ``Custom-head`` @> "--custom-head"
     doWarnIfNotOpt isHtml <@ ``No-css`` @> "--no-css"
-    doWarnIfNotOpt isHtml <@ ``No-lalr`` @> "--no-lalr"
+    doWarnIfNotOpt isHtml <@ ``No-lr`` @> "--no-lr"
     doWarnIfNotOpt isHtml <@ ``No-dfa`` @> "--no-dfa"
     doWarnIgnored <@ Language @> "-lang"
     doWarnIgnored <@ Namespace @> "-ns"

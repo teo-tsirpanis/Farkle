@@ -22,16 +22,16 @@ end
     <h1>{{if is_conflict_report; "Conflict report for "; end}}{{html.escape grammar_name}}</h1>
     {{~ if is_conflict_report ~}}
     <div id="conflicts" class="flex-container">
-        {{~ if !no_lalrstates && grammar.lr_state_machine.has_conflicts
+        {{~ if !no_lrstates && grammar.lr_state_machine.has_conflicts
             has_conflicts(state) = state.has_conflicts;
             $conflicted_lr_states = grammar.lr_state_machine | array.filter @has_conflicts | array.map "state_index";
             $state_states = string.pluralize (array.size $conflicted_lr_states) "state" "states";
             $has_have = string.pluralize (array.size $conflicted_lr_states) "has" "have"; ~}}
         <section id="lr-conflicts">
-            <p><strong>{{ array.size $conflicted_lr_states }}</strong> LALR {{ $state_states }} {{ $has_have }} conflicts:</p>
+            <p><strong>{{ array.size $conflicted_lr_states }}</strong> LR {{ $state_states }} {{ $has_have }} conflicts:</p>
             <ul>
                 {{~ for conflict in $conflicted_lr_states ~}}
-                <li><a href="#lalr{{ conflict }}">State {{ conflict }}</a></li>
+                <li><a href="#lr{{ conflict }}">State {{ conflict }}</a></li>
                 {{~ end ~}}
             </ul>
         </section>
@@ -81,6 +81,6 @@ end
     </section>
     {{~include "builtin://Syntax" grammar.nonterminals~}}
     {{~if !grammar.groups.empty?; include "builtin://Groups" grammar.groups; end~}}
-    {{~if !no_lalrstates; include "builtin://LALRStates" grammar.lr_state_machine; end~}}
+    {{~if !no_lrstates; include "builtin://LRStates" grammar.lr_state_machine; end~}}
     {{~if !no_dfastates; include "builtin://DFAStates" grammar.dfa_on_char; end~}}
 </main>

@@ -9,6 +9,8 @@ open Expecto
 open Farkle
 open Farkle.Builder
 open Farkle.Diagnostics
+open Farkle.Grammars
+open Farkle.Parser
 open Farkle.Samples.FSharp.IndentBased
 
 [<Tests>]
@@ -50,5 +52,20 @@ USS Oriskany
         Expect.isNotNull grammar.DfaOnChar "The grammar does not have a DFA"
         Expect.hasLength grammar.DfaOnChar 1 "The DFA does not have the expected number of states"
         Expect.isEmpty grammar.DfaOnChar.[0].Edges "The DFA should not have edges"
+    }
+
+    test "The transformer of a typed virtual terminal is invoked when it must be" {
+        // No need to spin up a full parser with a custom tokenizer for this.
+        let mutable invoked = false
+        let output =
+            virtualTerminalT "X" (T(fun _ _ -> invoked <- true; 42))
+            |> _.AddSpecialName("X")
+            |> _.AutoWhitespace(false)
+            |> _.Build(BuilderOutputs.GrammarSummary ||| BuilderOutputs.SemanticProviderOnChar)
+        let handle = output.Grammar.GetTokenSymbolFromSpecialName "X"
+        let mutable parserState = ParserState()
+        let semanticValue = output.SemanticProviderOnChar.Transform(&parserState, handle, "")
+        Expect.isTrue invoked "The transformer was not invoked"
+        Expect.equal semanticValue 42 "The returned semantic value is different from the expected"
     }
 ]

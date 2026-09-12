@@ -96,14 +96,49 @@ public static class Terminal
     }
 
     /// <summary>
-    /// Creates a terminal that is never produced by Farkle's default tokenizer.
-    /// Users will have to provide a custom tokenizer to match this terminal.
+    /// Creates a virtual terminal with an associated transformer that produces a value.
+    /// </summary>
+    /// <typeparam name="T">The type of values the terminal will produce.</typeparam>
+    /// <param name="name">The name of the virtual terminal.</param>
+    /// <param name="transformer">The transformer that is associated with the virtual terminal.</param>
+    /// <param name="options">Options to configure the terminal. Optional.</param>
+    /// <remarks>
+    /// <para>
+    /// Virtual terminals are never produced by Farkle's default tokenizer, and require
+    /// a custom tokenizer to match them. You can do this by adding a special name to the
+    /// terminal, and looking it from the <see cref="Grammars.IGrammarProvider"/> that is
+    /// passed to the tokenizer on construction.
+    /// </para>
+    /// <para>
+    /// In your custom tokenizer, invoking <see cref="Parser.Semantics.ITokenSemanticProvider{TChar}.Transform"/>
+    /// with the virtual terminal's symbol will invoke <paramref name="transformer"/> and return its result.
+    /// </para>
+    /// </remarks>
+    /// <seealso cref="GrammarSymbolExtensions.AddSpecialName{T}"/>
+    /// <seealso cref="Grammars.GrammarExtensions.GetTokenSymbolFromSpecialName"/>
+    public static IGrammarSymbol<T> Virtual<T>(string name, Transformer<char, T> transformer, TerminalOptions options = TerminalOptions.None)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(transformer);
+        return new VirtualTerminal<T>(name, Transformer.Box(transformer), options);
+    }
+
+    /// <summary>
+    /// Creates a virtual terminal with an associated transformer that produces a value.
     /// </summary>
     /// <param name="name">The name of the virtual terminal.</param>
     /// <param name="options">Options to configure the terminal. Optional.</param>
+    /// <remarks>
+    /// Virtual terminals are never produced by Farkle's default tokenizer, and require
+    /// a custom tokenizer to match them. You can do this by adding a special name to the
+    /// terminal, and looking it from the <see cref="Grammars.IGrammarProvider"/> that is
+    /// passed to the tokenizer on construction.
+    /// </remarks>
+    /// <seealso cref="GrammarSymbolExtensions.AddSpecialName"/>
+    /// <seealso cref="Grammars.GrammarExtensions.GetTokenSymbolFromSpecialName"/>
     public static IGrammarSymbol Virtual(string name, TerminalOptions options = TerminalOptions.None)
     {
         ArgumentNullException.ThrowIfNull(name);
-        return new VirtualTerminal(name, options);
+        return new VirtualTerminal(name, Transformer.GetIdentity<char, object?>(), options);
     }
 }

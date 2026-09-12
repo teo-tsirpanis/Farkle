@@ -21,6 +21,7 @@ internal static class SemanticProviderBuild
         {
             Transformer<char, object?> transformer = terminal switch {
                 TerminalBase x => x.Transformer,
+                VirtualTerminal x => x.Transformer,
                 GroupBase x => x.Transformer,
                 _ => Transformer.GetIdentity<char, object?>()
             };

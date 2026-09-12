@@ -1,6 +1,7 @@
 #### 7.1.0
 * Added support for the IELR(1) algorithm in the builder, which provides the full expressive power of LR(1) grammars without being susceptible to mysterious conflicts that can occur with LALR(1), while generating only slightly larger tables. IELR(1) is used by default.
 * Added [enhanced syntax](./docs/docs/enhanced-syntax.md), which is a set of convenience APIs powered by source generators. At this moment, they provide a simpler way to create production builders.
+* Added support for typed virtual terminals in the builder, allowing them to participate in semantic analysis. This is exposed through the generic overload of the `Terminal.Virtual` method and the `virtualTerminalT` function in the F# API.
 * The `--no-lalr` option in the `farkle render` CLI tool subcommand has been replaced with the `--no-lr` option. The previous option is kept for compatibility.
 
 #### 7.0.1 - 09-07-2026
@@ -15,7 +16,6 @@
 #### 7.0.0 - 29-06-2026
 * Farkle was rewritten in C#, and features performance improvements across the board, as well as an improved and extensible architecture.
   * There are several breaking changes; please consult the [migration guide](https://farkle.dev/migration/60-70.html) for more details.
-  * The precompiler is not yet supported; it will be ported in a subsequent preview version.
 * The parser became faster and allocation-free (allocations happen only in semantic analysis, fka post-processing), and supports parsing text from `ReadOnlySpan<char>`, as well as parsing streaming input asynchronously.
 * The grammar format was redesigned to be extensible and have a significantly reduced reading overhead. Building grammars is also significantly faster as well. Take a look at the [benchmarks](https://github.com/teo-tsirpanis/Farkle/blob/rel-notes/performance/reports/GrammarReaderBenchmark.7.0.0-pre-builder.md) for more information.
   * Reading GOLD Parser grammars is still supported, and works by converting them to the new format.

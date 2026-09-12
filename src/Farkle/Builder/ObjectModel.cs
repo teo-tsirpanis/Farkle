@@ -113,9 +113,11 @@ internal class TerminalBase(string name, Regex regex, Transformer<char, object?>
     public TerminalOptions Options { get; } = options;
 }
 
-internal sealed class VirtualTerminal(string name, TerminalOptions options) : ISymbolBase
+internal class VirtualTerminal(string name, Transformer<char, object?> transformer, TerminalOptions options) : ISymbolBase
 {
     public string Name { get; } = name;
+
+    public Transformer<char, object?> Transformer { get; } = transformer;
 
     public TerminalOptions Options { get; } = options;
 }
@@ -180,6 +182,8 @@ internal interface INonterminal : ISymbolBase
 }
 
 internal sealed class Terminal<T>(string name, Regex regex, Transformer<char, object?> transformer, TerminalOptions options) : TerminalBase(name, regex, transformer, options), IGrammarSymbol<T>;
+
+internal sealed class VirtualTerminal<T>(string name, Transformer<char, object?> transformer, TerminalOptions options) : VirtualTerminal(name, transformer, options), IGrammarSymbol<T>;
 
 internal sealed class LineGroup<T>(string name, string groupStart, Transformer<char, object?> transformer, GroupOptions options) : LineGroup(name, groupStart, transformer, options), IGrammarSymbol<T>;
 

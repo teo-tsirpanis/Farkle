@@ -489,6 +489,8 @@ module internal GrammarBuilderOperators =
     /// Users will have to provide a custom tokenizer to match it.
     let inline virtualTerminal name = Terminal.Virtual(name)
 
+    let inline virtualTerminalT<'a> name (fTransform: T<_,'a>) = Terminal.Virtual(name, fTransform)
+
     /// Creates a terminal that matches a literal string.
     let inline literal str = Terminal.Literal str
 
